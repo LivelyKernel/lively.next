@@ -467,6 +467,12 @@ export class Halo extends Morph {
   get isHalo() { return true }
 
   get target() { return this.state.target; }
+  set target(t) { 
+    disconnect(this.state.target, "onChange", this, "alignWithTarget");
+    connect(t, "onChange", this, "alignWithTarget");
+    this.targetProxy && this.targetProxy.remove();
+    this.state.target = t 
+  }
 
   morphsContainingPoint(list) { return list }
 
@@ -475,10 +481,7 @@ export class Halo extends Morph {
   }
 
   refocus(newTarget) {
-    var owner = this.owner;
-    this.remove();
-    this.state.target = newTarget;
-    owner.addMorphAt(this, 0);
+    this.target = newTarget;
     this.alignWithTarget();
   }
 
@@ -696,6 +699,7 @@ export class Halo extends Morph {
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
         this.halo.toggleMorphHighlighter(false, this.prevDropTarget);
+        this.halo.clearMorphHighlighters();
         this.halo.target.undoStop("grab-halo");
       },
 
@@ -888,13 +892,13 @@ export class Halo extends Morph {
       tooltip: "Copy morph",
       init: (hand) => {
         var pos = this.target.globalPosition,
-            copy = this.target.copy();
+            copy = this.target.copy().openInWorld();
         copy.undoStart("copy-halo");
         hand.grab(copy);
         copy.globalPosition = pos;
         this.refocus(copy);
       },
-      update(hand) {
+      stop(hand) {
         var dropTarget = this.morphBeneath(hand.position),
             undo = this.halo.target.undoInProgress;
         undo.addTarget(dropTarget);
@@ -906,7 +910,7 @@ export class Halo extends Morph {
         this.init(evt.hand)
       },
       onDragEnd(evt) {
-        this.update(evt.hand);
+        this.stop(evt.hand);
       }
     }));
   }
@@ -1131,6 +1135,13 @@ export class Halo extends Morph {
       }
     });
     return this.morphHighlighters[morph.id];
+  }
+
+  clearMorphHighlighters() {
+     for (var id in this.morphHighlighters) {
+        this.morphHighlighters[id].remove();
+        delete this.morphHighlighters[id];
+     }
   }
 
   toggleMorphHighlighter(active, target, showLayout = false) {
