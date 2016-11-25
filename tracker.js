@@ -25,8 +25,6 @@ export default class L2LTracker extends L2LConnection {
       tracker = new this(namespace, io);
       this._trackers.set(key, tracker);
       if (autoOpen || autoOpen === undefined) tracker.open();
-      Object.keys(defaultActions).forEach(name =>
-        tracker.addService(name, defaultActions[name]));
     }
     return tracker;
   }
@@ -43,6 +41,9 @@ export default class L2LTracker extends L2LConnection {
       (tracker, msg, ackfn, socket) => tracker.registerClient(msg, ackfn, socket));
     this.addService("unregister",
       (tracker, msg, ackfn, socket) => tracker.unregisterClient(msg, ackfn, socket));
+      
+    Object.keys(defaultActions).forEach(name =>
+      this.addService(name, defaultActions[name]));
   }
 
   get ioNamespace() { return this.io.of(this.namespace); }
@@ -130,6 +131,30 @@ export default class L2LTracker extends L2LConnection {
     this.debug && console.log(`[${this}] got unregister request ${clientId}`);
     this.clients.delete(clientId);
     typeof answerFn === "function" && answerFn();
+  }
+
+  receive(msg, socket, ackFn) {
+
+    // 1. is the message for the tracker itself?
+    if (!msg.target || msg.target === this.id || msg.target === "tracker") {
+      this.dispatchL2LMessageToSelf(msg, socket, ackFn);
+      return;
+    }
+
+    // 2. do we know the target? if not return error
+    var targetSocket = this.getSocketForClientId(msg.target);
+    if (!targetSocket) {
+      var error = `target ${msg.target} not found`;
+      console.warn(error)
+      if (typeof ackFn === "function")
+         ackFn(this.prepareAnswerMessage(msg, {error}));
+      return;
+    }
+
+    // 3. otherwise dispatch message and relay answer
+    typeof ackFn === "function" ?
+      targetSocket.emit(msg.action, msg, ackFn) :
+      targetSocket.emit(msg.action, msg)
   }
 
   send(msg, ackFn) {
