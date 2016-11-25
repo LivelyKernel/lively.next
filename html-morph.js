@@ -77,4 +77,10 @@ export class HTMLMorph extends Morph {
     return new CustomVNode(this, renderer);
   }
 
+  copy() {
+     const copiedHtmlMorph = super.copy();
+     copiedHtmlMorph.html = this.html;
+     return copiedHtmlMorph;
+  }
+
 }
