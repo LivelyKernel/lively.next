@@ -209,10 +209,16 @@ export async function applyPatchesFromEditor(action, diffEditor, options = {}) {
   var hasSelection = !diffEditor.selection.isEmpty(), patches;
 
   if (!hasSelection) {
-    var patchInfo = mode.getPatchAtCursor(diffEditor);
-    patches = patchInfo && patchInfo.patch ? [patchInfo.patch] : null;
+    var patchInfo = mode.getPatchAtCursor(diffEditor),
+        {patch, hunk} = patchInfo || {};
+    if (hunk) {
+      patch = patch.copy();
+      patch.hunks = [hunk];
+    }
+    patches = patch ? [patch] : null;
   } else {
     patches = mode.getPatchesFromSelection(diffEditor);
+    patches[0].createPatchString()
   }
 
   if (!patches) throw new Error("Could not read patches");
@@ -289,7 +295,7 @@ export async function stageOrUnstageOrDiscardFiles(action, fileObjects, options 
 }
 
 export async function commit(opts) {
-  opts = {askForCommitInLively: true, ...opts};
+  opts = {askForCommitInLively: false, ...opts};
 
   var world = $$world; // FIXME
 

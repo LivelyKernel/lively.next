@@ -55,6 +55,10 @@ export class FilePatch {
     this.command = "";
   }
 
+  copy() {
+    return Object.assign(new this.constructor(), this);
+  }
+
   get isFilePatch() { return true }
 
   read(patchStringOrLines) {

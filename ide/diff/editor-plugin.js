@@ -89,7 +89,7 @@ export class DiffEditorPlugin extends EditorPlugin {
         modifiedPatchString = null,
         startLine = range.start.row,
         endLine = range.end.row,
-        offset = 0;
+        offset = startPatch ? startPatch.tokens[0].start.row : 0;
 
     return patches.slice(from, to+1).map((ea, i) => {
       var patchString = ea.createPatchStringFromRows(startLine-offset, endLine-offset);
@@ -174,6 +174,8 @@ var commands = [
         if (baseDir)
           filePath = string.joinPath(baseDir, filePath);
       }
+
+      if (lineNo) filePath += ":" + lineNo;
 
       return ed.world().execCommand("open file", {url: filePath});
     }
