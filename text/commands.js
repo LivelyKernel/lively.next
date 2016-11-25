@@ -178,6 +178,7 @@ var commands = [
       if (sel.isEmpty()) sel.growLeft(1);
       sel.text = "";
       sel.collapse();
+      if (morph.activeMark) morph.activeMark = null;
       return true;
     }
   },
@@ -191,6 +192,7 @@ var commands = [
       if (sel.isEmpty()) sel.growRight(1);
       sel.text = "";
       sel.collapse();
+      if (morph.activeMark) morph.activeMark = null;
       return true;
     }
   },
@@ -549,6 +551,7 @@ var commands = [
   {
     name: "delete left until beginning of line",
     exec: function(morph) {
+      if (morph.activeMark) morph.activeMark = null;
       if (!morph.selection.isEmpty()) {
         morph.selection.text = "";
         return true;
