@@ -31,6 +31,30 @@ export async function env(l2lClient) {
   return env;
 }
 
+export function readFile(path, options = {}) {
+  options = options || {};
+  var cmd = runCommand(`cat "${path}"`, options);
+  return cmd.whenDone().then(() => {
+    if (cmd.exitCode) throw new Error(`Read ${path} failed: ${cmd.stderr}`);
+    return cmd.output
+  });
+}
+
+export function writeFile(path, content, options) {
+  if (!options && content && content.content) {
+    options = content;
+    content = options.content;
+  }
+  content = content || '';
+  var cmd = runCommand(`tee "${path}"`, {stdin: content, ...options});
+  return cmd.whenDone().then(() => {
+    if (cmd.exitCode) throw new Error(`Write ${path} failed: ${cmd.stderr}`);
+    return cmd;
+  });
+}
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 export default class ClientCommand extends CommandInterface {
 
