@@ -163,9 +163,6 @@ var worldCommands = [
         world.undoStart("window close");
         win.close();
         world.undoStop("window close");
-        var next = arr.last(world.getWindows());
-        if (next) next.activate();
-        else world.focus();
       }
       return true;
     }
@@ -485,15 +482,39 @@ var worldCommands = [
 
   {
     name: "open file",
-    exec: async (world, opts = {url: null}) => {
+    exec: async (world, opts = {url: null, lineNumber: null}) => {
       var { default: TextEditor } = await System.import("lively.morphic/ide/text-editor.js"),
-          { url } = opts;
+          { url, lineNumber } = opts;
       if (!url)
         url = await world.prompt("Enter file location", {
           historyId: "lively.morphic-open-file-history", useLastInput: true
         });
-
+      if (lineNumber) url += ":" + lineNumber;
       return url ? TextEditor.openURL(url, obj.dissoc(opts, ["url"])) : null;
+    }
+  },
+  
+  {
+    name: "open file for EDITOR",
+    exec: async (world, opts = {url: null, lineNumber: null}) => {
+      // for using from command line, see l2l default client actions and
+      // lively.shell/bin/lively-as-editor.js
+      var { default: TextEditor } = await System.import("lively.morphic/ide/text-editor.js"),
+          { url, lineNumber } = opts;          
+      // "saved" || "aborted"
+      return  await TextEditor.openAsEDITOR(url, {});
+    }
+  },
+
+  {
+    name: "[lively.installer] publish new version of a package",
+    exec: async world => {
+      await lively.modules.registerPackage(
+        document.location.origin + "/node_modules/lively.installer");
+      var {default: publishPackage} = await System.import(
+        "lively.installer/packages/publish-new-package-version.js")
+      await publishPackage();
+      return true;
     }
   }
 ]
