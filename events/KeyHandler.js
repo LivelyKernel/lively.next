@@ -141,6 +141,9 @@ export function findKeysForPlatform(binding, platform/*bowser OS flag*/) {
   // bada
   // tizen
   // sailfish
+
+  if (typeof binding === "string") return binding;
+
   if (!binding || typeof binding !== "object") return null;
 
   switch (platform) {

@@ -148,6 +148,7 @@ function identifyKeyFromCode({code}) {
     case 'Comma':         return ","
     case 'Help':          return "Insert"
     case 'Equal':         return "=";
+    case 'Backslash':
     case 'IntlBackslash': return "\\";
     case 'Equal':         return "=";
     case "Minus":         return "-";
