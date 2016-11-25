@@ -76,7 +76,7 @@ export default function browserCommands(browser) {
           browser.world().inform(`Error while reloading ${m.name}:\n${err.stack || err}`, {requester: browser});
           return true;
         }
-        show(`Reloaded ${m.name}`);
+        browser.setStatusMessage(`Reloaded ${m.name}`);
         browser.selectModuleNamed(m.nameInPackage);
         return true;
       }
@@ -92,14 +92,14 @@ export default function browserCommands(browser) {
           var mods = await system.interactivelyAddModule(browser, m ? m.name : p ? p.address : null);
         } catch(e) {
           e === "Canceled" ?
-            show(e) :
+            browser.setStatusMessage(e) :
             browser.world().inform(`Error while trying to load modules:\n${e.stack || e}`, {requester: browser});
           return;
         }
 
         mods.forEach(({name, error}) =>
-          error ? show(`Error while loading module ${name}: ${error.stack || error}`) :
-                  show(`Module ${name} loaded`))
+          error ? browser.showError(`Error while loading module ${name}: ${error.stack || error}`) :
+                  browser.setStatusMessage(`Module ${name} loaded`))
         await browser.updateModuleList(p);
         mods.length && browser.selectModuleNamed(mods[0].name);
         return true;

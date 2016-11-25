@@ -17,18 +17,20 @@ export async function doSearch(livelySystem, searchTerm, excludes = [/systemjs-p
     show(`Errors in search results:\n${arr.pluck(errors, "value").join("\n")}`);
   }
 
-  var items = found.reduce((result, ea) => {
-        var nameAndLine = `${ea.packageName}${ea.pathInPackage.replace(/^\./, "")}:${ea.line}`;
-        result.maxModuleNameLength = Math.max(result.maxModuleNameLength, nameAndLine.length) + 1;
-        result.items.push({
-          isListItem: true,
-          get string() { return nameAndLine + string.pad(ea.lineString, result.maxModuleNameLength - nameAndLine.length, true); },
-          value: ea
-        });
-        return result;
-      }, {items: [], maxModuleNameLength: 0}).items;
+  return found.reduce((result, ea) => {
+    var nameAndLine = `${ea.packageName}${ea.pathInPackage.replace(/^\./, "")}:${ea.line}`;
+    result.maxModuleNameLength = Math.max(result.maxModuleNameLength, nameAndLine.length);
+    result.items.push({
+      isListItem: true,
+      value: ea,
+      get string() {
+        return nameAndLine
+             + string.pad(ea.lineString, result.maxModuleNameLength - nameAndLine.length, true);
+      }
+    });
+    return result;
+  }, {items: [], maxModuleNameLength: 0}).items;
 
-  return items;
 }
 
 

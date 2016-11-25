@@ -39,7 +39,7 @@ var browserCommands = [
 
       } else {
         var editor = TextEditor.openURL(sel.url, {extent: pt(600,800)});
-        setTimeout(() => editor.activate(), 100);
+        setTimeout(() => editor.getWindow().activate(), 100);
       }
       return true;
     }

@@ -26,7 +26,7 @@ function buildEvalOpts(morph, additionalOpts) {
       format = format || "esm";
   if (remote === "local") remote = null;
   return remote ?
-    {targetModule, format, sourceURL, remote} : 
+    {targetModule, format, sourceURL, remote} :
     {System, targetModule, format, context, sourceURL}
 }
 
@@ -229,7 +229,7 @@ export var jsEditorCommands = [
       var {varName, position} = opts;
 
       if (!varName) {
-        if (!position) position = ed.cursorPosition;  
+        if (!position) position = ed.cursorPosition;
         var nav = ed.pluginInvokeFirst("getNavigator"),
             parsed = nav.ensureAST(ed),
             node = lively.ast.query.nodesAt(ed.positionToIndex(position), parsed)
@@ -420,6 +420,7 @@ export var deleteBackwardsWithBehavior = {
     } else  if (sel.isEmpty()) sel.growLeft(1);
     sel.text = "";
     sel.collapse();
+    if (morph.activeMark) morph.activeMark = null;
     return true;
   }
 }
@@ -436,7 +437,7 @@ function pToI(ed, pos) { return ed.positionToIndex(pos); }
 function iToP(ed, pos) { return ed.indexToPosition(pos); }
 
 export var astEditorCommands = [
-  
+
   {
     name: "selectDefinition",
     readOnly: true,
@@ -444,13 +445,13 @@ export var astEditorCommands = [
     exec: function(ed, args) {
       var nav = ed.pluginInvokeFirst("getNavigator");
       if (!nav) return true;
-  
+
       var found = nav.resolveIdentifierAt(ed, ed.cursorPosition);
       if (!found || !found.id) { show("No symbol identifier selected"); return true; }
       if (!found.decl) { show("Cannot find declaration of " + found.name); return true; }
-  
+
       ed.saveMark();
-  
+
       ed.selection = {
         start: ed.indexToPosition(found.decl.start),
         end: ed.indexToPosition(found.decl.end)
@@ -459,21 +460,21 @@ export var astEditorCommands = [
       return true;
     }
   },
-  
+
   {
     name: "selectSymbolReferenceOrDeclarationNext",
     readOnly: true,
     multiSelectAction: "single",
     exec: function(ed) { ed.execCommand('selectSymbolReferenceOrDeclaration', {direction: 'next'}); }
   },
-  
+
   {
     name: "selectSymbolReferenceOrDeclarationPrev",
     readOnly: true,
     multiSelectAction: "single",
     exec: function(ed) { ed.execCommand('selectSymbolReferenceOrDeclaration', {direction: 'prev'}); }
   },
-  
+
   {
     name: "selectSymbolReferenceOrDeclaration",
     readOnly: true,
@@ -483,13 +484,13 @@ export var astEditorCommands = [
       // ast to select references and declarations whose name matches the symbol
       // in the current scope
       // 1. get the token / identifier info of what is currently selected
-  
+
       var nav = ed.pluginInvokeFirst("getNavigator");
       if (!nav) return true;
-  
+
       var found = nav.resolveIdentifierAt(ed, ed.cursorPosition);
       if (!found || !found.refs) { show("No symbol identifier selected"); return true; }
-  
+
       // 3. map the AST ref / decl nodes to actual text ranges
       var sel = ed.selection,
           ranges = found.refs.map(({start, end}) => Range.fromPositions(iToP(ed, start), iToP(ed, end)))
@@ -497,9 +498,9 @@ export var astEditorCommands = [
                 Range.fromPositions(iToP(ed, found.decl.start), iToP(ed, found.decl.end)): [])
               // .filter(range => !sel.ranges.some(otherRange => range.equals(otherRange)))
               .sort(Range.compare);
-  
+
       if (!ranges.length) return true;
-  
+
       // do we want to select all ranges or jsut the next/prev one?
       var currentRangeIdx = ranges.map(String).indexOf(String(sel.range));
       if (args.direction === 'next' || args.direction === 'prev') {
@@ -511,7 +512,7 @@ export var astEditorCommands = [
           ranges = [ranges[nextIdx]];
         }
       } else { /*select all ranges*/ }
-  
+
       // do the actual selection
       ranges.forEach(range => {
         var existing = sel.selections.findIndex(ea => ea.range.equals(range)),
