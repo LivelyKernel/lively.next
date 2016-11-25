@@ -200,4 +200,7 @@ export class ShellEditorPlugin extends EditorPlugin {
   getCompleters(completers) {
     return completers.concat(shellCompleters);
   }
+  
+  getComment() { return {lineCommentStart: "#"}; }
+
 }

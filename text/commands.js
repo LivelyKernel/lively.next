@@ -1143,4 +1143,7 @@ commands.push(...multiSelectCommands);
 import { commands as navCommands } from "./code-navigation-commands.js";
 commands.push(...navCommands);
 
+import { commands as codeCommands } from "./generic-code-commands.js";
+commands.push(...codeCommands);
+
 export default commands;

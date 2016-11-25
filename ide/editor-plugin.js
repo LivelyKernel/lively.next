@@ -31,7 +31,7 @@ export default class EditorPlugin {
   attach(editor) {
     this.textMorph = editor;
     connect(editor, "textChange", this, "onTextChange");
-    this.highlight();
+    this.textMorph.whenRendered().then(() => this.highlight());
   }
 
   detach(editor) {
@@ -53,6 +53,8 @@ export default class EditorPlugin {
   }
 
   // optional hooks:
+  // 
+  // getComment() { /*{lineCommentStart: STRING, blockCommentStart: STRING, blockCommentEnd: STRING}*/ }
   // 
   // getCompleters(otherCompleters) { /*list of completers, see lively.morphic/text/completion.js*/ }
   // 
