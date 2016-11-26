@@ -328,6 +328,17 @@ export var jsIdeCommands = [
       }
       return true;
     }
+  },
+
+  {
+    name: "[javascript] inject import",
+    exec: async (text, opts = {gotoImport: true}) => {
+      var {interactivelyInjectImportIntoText} =
+        await System.import("lively.morphic/ide/js/import-helper");
+      var result = await interactivelyInjectImportIntoText(text, opts);
+      if (!result) text.setStatusMessage("canceled");
+      return result;
+    }
   }
 
 ];

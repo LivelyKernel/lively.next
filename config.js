@@ -229,6 +229,7 @@ var config = {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // ide related
       {keys: "Ctrl-C E", command: "[javascript] list errors and warnings"},
+      {keys: "Ctrl-C I", command: "[javascript] inject import"},
 
       {keys: {win: 'Shift-Ctrl-S|Ctrl-Alt-Space', mac: 'Ctrl-Command-space|Ctrl-Alt-Space'},      command: 'contractRegion'},
       {keys: {win: 'Shift-Ctrl-E|Ctrl-Shift-Space', mac: 'Shift-Command-Space|Ctrl-Shift-Space'}, command: 'expandRegion'},
@@ -245,7 +246,7 @@ var config = {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // helpful stuff
       {keys: {mac: "Meta-Shift-L D A T E", win: "Ctrl-Shift-L D A T E"}, command: 'insert date'},
-      {keys: "Ctrl-C i", command: "change string inflection"},
+      {keys: "Ctrl-C Ctrl-I", command: "change string inflection"},
       {keys: "Alt-Shift-4"/*Alt-Shift-$*/, command: 'spell check word'},
       {keys: "Alt-Shift-\\"/*Alt-Shift-|*/, command: "[shell] run shell command on region"},
       {keys: {mac: "Meta-Shift-L O P E N", win: "Ctrl-Shift-L O P E N"}, command: "open file at cursor"},
