@@ -575,7 +575,7 @@ export class FilterableList extends Morph {
     connect(this.get("list"), "selection", this, "selectionChanged");
     this.layout = new GridLayout({grid: [["input"], ["list"]]})
     this.layout.row(0).fixed = 25;
-    this.layout.row(0).paddingBottom = 5;
+    this.layout.row(0).paddingBottom = 3;
   }
 
   get isList() { return true; }
