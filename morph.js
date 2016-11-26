@@ -351,12 +351,26 @@ export class Morph {
       this.addValueChange("dropShadow", value);
   }
 
-  get styleClasses()       { return this.getProperty("styleClasses").slice(); }
-  set styleClasses(value)  {
-    // every morph is a css "morph"
-    if (!value.includes("morph")) value.push("morph");
-    this.addValueChange("styleClasses", value);
+  static get styleClasses() {
+    // we statically determine default style classes based on the Morph
+    // inheritance chain, i.e. by default a morph gets the style class names of
+    // its class and all the classes up to morph.
+    // Can be overridden on the instance level see Morph>>get styleClasses()
+    if (this._styclassNames) return this._styclassNames;
+    var klass = this,
+        classNames = [];
+    while (klass) {
+      if (klass === Object) break;
+      classNames.push(klass.name);
+      klass = klass[Symbol.for("lively-instance-superclass")];
+    }
+    return this._styclassNames = classNames;
   }
+
+  get styleClasses() {
+    return this.constructor.styleClasses.concat(this.getProperty("styleClasses"));
+  }
+  set styleClasses(value)  { this.addValueChange("styleClasses", value); }
 
   addStyleClass(className)  { this.styleClasses = arr.uniq(this.styleClasses.concat(className)) }
   removeStyleClass(className)  { this.styleClasses = this.styleClasses.filter(ea => ea != className) }
