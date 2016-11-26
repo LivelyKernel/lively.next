@@ -87,7 +87,8 @@ export default class Terminal extends Morph {
     this.build(props);
     if (props.command)
       this.command = props.command;
-    this.cwd = props.cwd || defaultDirectory();
+    if (props.cwd) this.cwd = props.cwd;
+    else Promise.resolve(() => this.cwd = defaultDirectory());
   }
 
   get defaultStyle() {
