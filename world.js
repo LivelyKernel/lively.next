@@ -136,6 +136,12 @@ var worldCommands = [
   {
     name: "window switcher",
     exec: async (world) => {
+      var p = world.activePrompt();
+      if (p && p.historyId === "lively.morphic-window switcher") {
+        p.focus();
+        return p.get("list").execCommand("select down");
+      }
+
       var wins = world.submorphs.filter(({isWindow}) => isWindow).reverse()
             .map(win => ({isListItem: true, string: win.title || String(win), value: win})),
           answer = await world.filterableListPrompt(
@@ -552,6 +558,10 @@ export class World extends Morph {
 
   activeWindow() { return this.getWindows().reverse().find(ea => ea.isActive()); }
   getWindows() { return this.submorphs.filter(ea => ea.isWindow); }
+
+  activePrompt() { return this.getPrompts().reverse().find(ea => ea.isActive()); }
+  getPrompts() { return this.submorphs.filter(ea => ea.isPrompt); }
+
   openInWindow(morph, opts = {title: morph.name, name: "window for " + morph.name}) {
     return new Window({...opts, extent: morph.extent.addXY(0, 25), targetMorph: morph}).openInWorld();
   }
