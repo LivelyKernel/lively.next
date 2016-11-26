@@ -1,5 +1,5 @@
 import { Window, GridLayout, FillLayout, Ellipse, Text,
-         VerticalLayout, HorizontalLayout, Image, 
+         VerticalLayout, HorizontalLayout, Image,
          TilingLayout, Morph, morph, Menu, Path } from "../index.js";
 import { Rectangle, Color, LinearGradient, pt, Point, rect } from "lively.graphics";
 import { obj, num, arr } from "lively.lang";
@@ -28,7 +28,7 @@ export class Slider extends Morph {
            new Path({
                 borderColor: Color.gray.darker(),
                 borderWidth: 1,
-                vertices: [this.leftCenter.addXY(7.5,0), 
+                vertices: [this.leftCenter.addXY(7.5,0),
                            this.rightCenter.addXY(-7.5,0)]
               }),
               {type: "ellipse", fill: Color.gray, name: "slideHandle",
@@ -57,54 +57,55 @@ export class Slider extends Morph {
        this.target[this.property] = Math.max(this.min, Math.min(this.max, newValue));
        this.update();
     }
-    
+
 }
 
 export class DropDownSelector extends Morph {
 
-     constructor(props) {
-        const {target, property} = props;
-        this.dropDownLabel = Icon.makeLabel("chevron-circle-down", {
-                                     opacity: 0, fontSize: 14, 
-                                     fontColor: Color.gray.darker()
-                              });
-        super({border: {
-                  radius: 3, 
-                  color: Color.gray.darker(), 
-                  style: "solid"},
-                layout: new HorizontalLayout({spacing: 4}),
-                ...props,
-                submorphs: [{
-                    type: "text", name: "currentValue", 
-                    textString: target[property], 
-                    padding: 0, readOnly: true,
-                  }, this.dropDownLabel]
-               });
-     }
+  constructor(props) {
+    const {target, property} = props;
+    this.dropDownLabel = Icon.makeLabel("chevron-circle-down",
+                            {opacity: 0, fontSize: 14, fontColor: Color.gray.darker()});
+    super({
+      border: {
+        radius: 3,
+        color: Color.gray.darker(),
+        style: "solid"
+      },
+      layout: new HorizontalLayout({spacing: 4}),
+      ...props,
+      submorphs: [{
+        type: "text", name: "currentValue",
+        textString: target[property],
+        padding: 0, readOnly: true,
+      }, this.dropDownLabel]
+   });
+  }
 
-     get commands() {
-        return this.values.map(v => {return {name: v, exec: (self, v) => { this.value = v }}});
-     }
+  get commands() {
+    return this.values.map(v =>
+      ({name: v, exec: (self, v) => this.value = v}));
+  }
 
-     set value(v) {
-        this.target[this.property] = v;
-        this.get("currentValue").textString = obj.safeToString(v);
-     }
+  set value(v) {
+    this.target[this.property] = v;
+    this.get("currentValue").textString = obj.safeToString(v);
+  }
 
-     onHoverIn() {
-        this.dropDownLabel.animate({opacity: 1, duration: 300});
-     }
+  onHoverIn() {
+    this.dropDownLabel.animate({opacity: 1, duration: 300});
+  }
 
-     onHoverOut() {
-        this.dropDownLabel.animate({opacity: 0, duration: 200});
-     }
- 
-     onMouseDown(evt) {
-         this.menu = this.world().openWorldMenu(this.values.map(v => 
-           { return {command: v, target: this, args: v}}));
-         this.menu.globalPosition = this.globalPosition;
-         this.menu.isHaloItem = this.isHaloItem;
-     }
+  onHoverOut() {
+    this.dropDownLabel.animate({opacity: 0, duration: 200});
+  }
+
+  onMouseDown(evt) {
+    var items = this.values.map(v => ({command: v, target: this, args: v}))
+    this.menu = this.world().openWorldMenu(evt, items);
+    this.menu.globalPosition = this.globalPosition;
+    this.menu.isHaloItem = this.isHaloItem;
+  }
 
 }
 
@@ -118,13 +119,13 @@ export class PropertyInspector extends Morph {
        super({
            name,
            fill: Color.transparent,
-           extent:pt(55, 20), 
+           extent:pt(55, 20),
            submorphs: [new ValueScrubber({
-                        name: "value", 
+                        name: "value",
                         borderRadius: 3, fill: Color.white,
                         padding: 3, fontSize: 13,
-                        borderColor: Color.gray.darker(), 
-                        value: target[property], 
+                        borderColor: Color.gray.darker(),
+                        value: target[property],
                         ...obj.dissoc(props, ["name"])}),
                         {name: "up", ...btnStyle, label: Icon.makeLabel(
                                   "sort-asc", {padding: rect(2,0,0,0)})},
@@ -176,8 +177,8 @@ class ColorHarmony {
    get name() { return "Color Harmony"}
 
    chord() {
-      const {hue, saturation, brightness} = this.colorPicker, 
-             offsets = this.offsets() || arr.range(0, this.steps()).map(i => i * this.stepSize());       
+      const {hue, saturation, brightness} = this.colorPicker,
+             offsets = this.offsets() || arr.range(0, this.steps()).map(i => i * this.stepSize());
       return offsets.map(offset => Color.hsb(hue + offset % 360, saturation, brightness));
    }
 
@@ -195,14 +196,14 @@ class Triadic extends ColorHarmony {
 
    get name() { return "Triadic" }
    steps() { return 2 }
-   stepSize() { return 120 } 
-   
+   stepSize() { return 120 }
+
 }
 
 class Tetradic extends ColorHarmony {
 
    get name() { return "Tetradic" }
-   offsets() { return [0, 60, 180, 240] } 
+   offsets() { return [0, 60, 180, 240] }
 
 }
 
@@ -255,7 +256,7 @@ export class ColorPicker extends Window {
   }
 
   get harmony() { return this._harmony }
-  set harmony(h) { 
+  set harmony(h) {
       const harmonyLabel = this.getSubmorphNamed("harmonyLabel");
       if (harmonyLabel) harmonyLabel.textString = h.name;
       this._harmony = h;
@@ -264,9 +265,9 @@ export class ColorPicker extends Window {
   get commands() {
     return [Complementary, Triadic, Tetradic, Quadratic,  Analogous, Neutral].map(harmony => {
        return {name: harmony.name,
-               exec: colorPicker => { 
+               exec: colorPicker => {
                     colorPicker.harmony = new harmony(colorPicker);
-                    colorPicker.harmonyMenu.remove(); 
+                    colorPicker.harmonyMenu.remove();
                     colorPicker.update();
                   }
                }
@@ -278,7 +279,7 @@ export class ColorPicker extends Window {
     this.hue = h
     this.saturation = s;
     this.brightness = b;
-    signal(this, "color", c); 
+    signal(this, "color", c);
   }
 
   get color() {
@@ -316,7 +317,7 @@ export class ColorPicker extends Window {
      //      when lightness or saturation drop to 0, this.color can not serve
      //      as the canonical place but only as a getter for the morph that retrieves
      //      the picker's color.
-     signal(this, "color", this.color); 
+     signal(this, "color", this.color);
   }
 
   colorPalette() {
@@ -531,10 +532,10 @@ export class ColorPicker extends Window {
          setColor(c) {
             const [colorView, hashView] = this.submorphs;
             colorView.fill = c;
-            hashView.textString = c.toHexString(); 
+            hashView.textString = c.toHexString();
          },
          submorphs: [
-            new Morph({fill: color, extent: pt(80, 50), 
+            new Morph({fill: color, extent: pt(80, 50),
                        onMouseDown(evt) {
                            picker.color = this.fill;
                            picker.update();
@@ -546,7 +547,7 @@ export class ColorPicker extends Window {
   }
 
   toggleHarmoniesButton() {
-     return this.getSubmorphNamed("toggleHarmonies") || 
+     return this.getSubmorphNamed("toggleHarmonies") ||
        {name: "toggleHarmonies", fill: Color.transparent,
         active: false,
         onMouseDown(evt) {
@@ -579,7 +580,7 @@ export class ColorPicker extends Window {
            textString: "Harmonies",
            readOnly: true,
            onMouseDown: (evt) => {
-               
+
            }
         }]};
   }
@@ -641,7 +642,7 @@ export class ColorPicker extends Window {
                    });
              if (harmonyPoints.submorphs.length != colorPoints.length) {
                  harmonyPoints.submorphs = colorPoints.map(p => new Ellipse({
-                        center: p, fill: Color.transparent, 
+                        center: p, fill: Color.transparent,
                         borderWidth: 1, borderColor: Color.black
                      }));
              } else {
@@ -671,8 +672,8 @@ export class ColorPicker extends Window {
          fill: Color.transparent,
          onMouseDown: (evt) => {
                this.harmonyMenu = Menu.forItems([
-                  {command: "Complement", target: this}, {command: "Triadic", target: this}, 
-                  {command: "Tetradic", target: this}, {command: "Quadratic", target: this}, 
+                  {command: "Complement", target: this}, {command: "Triadic", target: this},
+                  {command: "Tetradic", target: this}, {command: "Quadratic", target: this},
                   {command: "Analogous", target: this}, {command: "Neutral", target: this}
                ]).openInWorld();
                this.harmonyMenu.globalPosition = this.harmonySelector().globalPosition;
@@ -693,7 +694,7 @@ export class ColorPicker extends Window {
             textString: this.harmony.name}),
           dropDownIndicator]
      });
-     
+
   }
 }
 
@@ -712,14 +713,14 @@ export class ColorPickerField extends Morph {
       })
       const topRight = this.innerBounds().topRight(),
             bottomLeft = this.innerBounds().bottomLeft();
-      
+
       this.submorphs = [{
              name: "topLeft",
              extent: pt(20,20)
          }, {
              name: "bottomRight",
              extent: pt(40,20),
-             origin: pt(40,0), topRight, 
+             origin: pt(40,0), topRight,
              rotation: num.toRadians(-45)
       }];
 
@@ -736,7 +737,7 @@ export class ColorPickerField extends Morph {
 
    onMouseDown(evt) {
       const p = this.picker || new ColorPicker({
-                    extent: pt(400,310), 
+                    extent: pt(400,310),
                     color: this.target[this.property]})
       p.openInWorldNearHand();
       p.adjustOrigin(evt.positionIn(p));
@@ -781,7 +782,7 @@ class StyleEditor extends Morph {
       signal(this, "close", false);
       this.remove()
    }
-   
+
    async open() {
       if (this.active) return;
       const [wrapper] = this.submorphs,
@@ -810,12 +811,12 @@ class StyleEditor extends Morph {
 
    createControl(name, controlElement) {
      return {
-      fill: Color.transparent, 
+      fill: Color.transparent,
       draggable: true, onDrag: (evt) =>  this.onDrag(evt),
       layout: new VerticalLayout({spacing: 5}),
       submorphs: [
         {type: "text", textString: name, fontSize: 12, fontWeight: 'bold',
-         fontColor: Color.black, padding: rect(5,0,0,0), 
+         fontColor: Color.black, padding: rect(5,0,0,0),
          fill: Color.transparent},
         controlElement
      ]}
@@ -826,7 +827,7 @@ class StyleEditor extends Morph {
     const toggler = new CheckBox({checked: target[property]}),
           flap = new Morph({
             clipMode: "hidden",
-            fill: Color.transparent, 
+            fill: Color.transparent,
             draggable: true, onDrag: (evt) =>  this.onDrag(evt),
             layout: new VerticalLayout({spacing: 5}),
             toggle(value) {
@@ -844,11 +845,11 @@ class StyleEditor extends Morph {
               {fill: Color.transparent, layout: new HorizontalLayout(),
                submorphs: [
                 {type: "text", textString: title, fontSize: 12, fontWeight: "bold",
-                 fontColor: Color.black, padding: rect(5,0,0,0), 
+                 fontColor: Color.black, padding: rect(5,0,0,0),
                  fill: Color.transparent},
                 toggler]}
            ]});
-           
+
      connect(toggler, "toggle", flap, "toggle");
      flap.toggle(target[property]);
      return flap;
@@ -858,7 +859,7 @@ class StyleEditor extends Morph {
 }
 
 export class BodyStyleEditor extends StyleEditor {
-   
+
    controls(target) {
        return [
            this.fillControl(target),
@@ -869,7 +870,7 @@ export class BodyStyleEditor extends StyleEditor {
 
    opacityControl(target) {
       return this.createControl("Opacity", new Slider({
-             target, min: 0, max: 1, 
+             target, min: 0, max: 1,
              property: "opacity", width: 150
       }));
    }
@@ -885,7 +886,7 @@ export class BodyStyleEditor extends StyleEditor {
           render: (value) => {
              if (!value) return null;
              const distanceInspector = new PropertyInspector({
-                  name: "distanceSlider", 
+                  name: "distanceSlider",
                   min: 0, target: value,
                   property: "distance"
              }),
@@ -901,17 +902,17 @@ export class BodyStyleEditor extends StyleEditor {
                  property: "blur"
              });
              const control = new Morph({
-                  width: 150, height: 100, fill: Color.transparent, 
+                  width: 150, height: 100, fill: Color.transparent,
                   layout: new GridLayout({
-                      autoAssign: false, 
+                      autoAssign: false,
                       fitToCell: false,
                       grid: [
                       ["distanceLabel", null, "distanceSlider"],
                       ["blurLabel", null, "blurSlider"],
                       ["angleLabel", "angleSlider", "colorPicker"]]}),
                   submorphs: [
-                    {type: "label", value: "Distance: ", name: "distanceLabel"}, distanceInspector, 
-                    {type: "label", value: "Blur: ", name: "blurLabel"}, blurInspector, 
+                    {type: "label", value: "Distance: ", name: "distanceLabel"}, distanceInspector,
+                    {type: "label", value: "Blur: ", name: "blurLabel"}, blurInspector,
                     {type: "label", value: "Angle: ", name: "angleLabel"}, angleSlider,
                     new ColorPickerField({
                          target: value,
@@ -927,7 +928,7 @@ export class BodyStyleEditor extends StyleEditor {
           }
           })
   }
-   
+
 }
 
 export class BorderStyleEditor extends StyleEditor {
@@ -938,15 +939,15 @@ export class BorderStyleEditor extends StyleEditor {
          this.clipControl(target)
       ]
   }
-  
+
   clipControl(target) {
-     return this.createControl("Clip Mode", 
+     return this.createControl("Clip Mode",
        {layout: new HorizontalLayout({spacing: 5}),
         fill: Color.transparent,
         submorphs: [
          new DropDownSelector({
              isHaloItem: true,
-             target, property: "clipMode", 
+             target, property: "clipMode",
              values: ["visible", "hidden", "scroll"]
        })]
      });
@@ -955,23 +956,23 @@ export class BorderStyleEditor extends StyleEditor {
   borderControl(target) {
      return this.createControl("Border", {
              layout: new HorizontalLayout({spacing: 5, compensateOrigin: true}),
-             fill: Color.transparent, 
-             submorphs: [new DropDownSelector({target, isHaloItem: true, property: "borderStyle", values: ["solid", "dashed", "dotted"]}), 
+             fill: Color.transparent,
+             submorphs: [new DropDownSelector({target, isHaloItem: true, property: "borderStyle", values: ["solid", "dashed", "dotted"]}),
                          new ColorPickerField({target, property: "borderColor"}),
                          new PropertyInspector({min: 0, target, unit: "pt", property: "borderWidth"})]
               })
   }
-  
+
 }
 
 export class LayoutStyleEditor extends Morph {
 
     getLayoutObjects() {
        return [null,
-               new HorizontalLayout({autoResize: false}), 
-               new VerticalLayout({autoResize: false}), 
-               new FillLayout(), 
-               new TilingLayout(), 
+               new HorizontalLayout({autoResize: false}),
+               new VerticalLayout({autoResize: false}),
+               new FillLayout(),
+               new TilingLayout(),
                new GridLayout({grid: [[null], [null], [null]]})];
    }
 
@@ -1023,26 +1024,25 @@ export class LayoutStyleEditor extends Morph {
       return l ? l.name() + " Layout" : "No Layout";
    }
 
-   openLayoutMenu() {
+   openLayoutMenu(evt) {
      if (this.layoutHalo) return;
-     var menu = this.world().openWorldMenu(
-        this.getLayoutObjects().map(l => {
-           return [this.getLayoutName(l), 
-                   () => {
-                       const p = this.getSubmorphNamed("layoutPicker");
-                       this.target.animate({layout: l, 
-                                            easing: "easeOutQuint"});
-                       p.textString = this.getLayoutName(l);
-                       p.fitIfNeeded();
-                       this.update();
-                   }]
-        })
-     )
+     var items = this.getLayoutObjects().map(l => {
+       return [this.getLayoutName(l),
+         () => {
+             const p = this.getSubmorphNamed("layoutPicker");
+             this.target.animate({layout: l,
+                                  easing: "easeOutQuint"});
+             p.textString = this.getLayoutName(l);
+             p.fitIfNeeded();
+             this.update();
+         }]
+       });
+     var menu = this.world().openWorldMenu(evt, items);
      menu.globalPosition = this.getSubmorphNamed("layoutPicker").globalPosition;
      menu.isHaloItem = true;
    }
 
-   update(animated) { 
+   update(animated) {
       const topCenter = this.target
                             .globalBounds()
                             .withX(0).withY(0)
@@ -1070,7 +1070,7 @@ export class LayoutStyleEditor extends Morph {
            fill: Color.gray.lighter(),
            layout: new VerticalLayout(),
            isHaloItem: true,
-           ...props, 
+           ...props,
        });
        this.submorphs = [{
             name: "layoutControlPickerWrapper",
@@ -1089,9 +1089,7 @@ export class LayoutStyleEditor extends Morph {
           padding: 2, readOnly: true,  fontColor: Color.black.lighter(),
           fontWeight: 'bold', nativeCursor: "pointer", padding: 3,
           fontStyle: 'bold', textString: this.getCurrentLayoutName(),
-          onMouseDown: (evt) => {
-             this.openLayoutMenu();
-        }
+          onMouseDown: (evt) => this.openLayoutMenu(evt)
       }
    }
 

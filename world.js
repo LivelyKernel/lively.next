@@ -675,25 +675,30 @@ export class World extends Morph {
 
   menuItems() {
     return [
+      {title: "World menu"},
       {command: "undo",                     target: this, showKeyShortcuts: true},
       {command: "redo",                     target: this, showKeyShortcuts: true},
+      {isDivider: true},
       {command: "run command",              target: this, showKeyShortcuts: true},
       {command: "select morph",             target: this, showKeyShortcuts: true},
       {command: "resize to fit window",     target: this, showKeyShortcuts: true},
       {command: "window switcher",          target: this, showKeyShortcuts: true},
-      {command: "open object drawer",       target: this, showKeyShortcuts: true},
-      {command: "open workspace",           target: this, showKeyShortcuts: true},
-      {command: "open browser",             target: this, showKeyShortcuts: true},
-      {command: "choose and browse module", target: this, showKeyShortcuts: true},
-      {command: "open code search",         target: this, showKeyShortcuts: true},
-      {command: "open test runner",         target: this, showKeyShortcuts: true}];
+      {isDivider: true},
+      ["Tools", [
+        {command: "open object drawer",       target: this, showKeyShortcuts: true},
+        {command: "open workspace",           target: this, showKeyShortcuts: true},
+        {command: "open browser",             target: this, showKeyShortcuts: true},
+        {command: "choose and browse module", target: this, showKeyShortcuts: true},
+        {command: "open code search",         target: this, showKeyShortcuts: true},
+        {command: "open test runner",         target: this, showKeyShortcuts: true}]
+      ]];
   }
 
-  openWorldMenu(items) {
+  openWorldMenu(evt, items) {
     var eventState =  this.env.eventDispatcher.eventState;
     if (eventState.menu) eventState.menu.remove();
     return eventState.menu = items && items.length ?
-      Menu.forItems(items).openInWorldNearHand() : null;
+      Menu.openAtHand(items, {hand: (evt && evt.hand) || this.firstHand}) : null;
   }
 
   onWindowScroll(evt) {}
