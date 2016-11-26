@@ -1004,9 +1004,7 @@ export class Text extends Morph {
         // if no line wrapping is enabled we add a little horizontal offset so
         // that characters at line end are better visible
         charBounds =   this.lineWrapping ? charBounds : charBounds.insetByPt(pt(-20, 0)),
-        delta = charBounds.topLeft()
-          .addXY(-this.padding.left(), 0)
-          .subPt(paddedBounds.translateForInclusion(charBounds).topLeft());
+        delta = charBounds.topLeft().subPt(paddedBounds.translateForInclusion(charBounds).topLeft());
     this.scroll = this.scroll.addPt(delta).addPt(offset);
   }
 
