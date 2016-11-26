@@ -27,6 +27,7 @@ export class AbstractPrompt extends Morph {
   }
 
   get isEpiMorph() { return true }
+  get isPrompt() { return true }
 
   get label() { return this.get("label").textString; }
   set label(label) {
@@ -43,6 +44,8 @@ export class AbstractPrompt extends Morph {
       promise.finally(this.state.answer.promise, () => this.fadeOut(500));
     return this.state.answer.promise;
   }
+
+  isActive() { return !!this.world() && this.state.answer; }
 
   build() { throw new Error("Not yet implemented"); }
   applyLayout() { throw new Error("Not yet implemented"); }
@@ -260,19 +263,22 @@ export class TextPrompt extends AbstractPrompt {
     var inputLine = this.addMorph(Text.makeInputLine({
       historyId,
       name: "input", textString: input || "",
-      borderWidth: 0, borderRadius: 20, fill: Color.gray.withA(0.8),
-      fontColor: Color.gray.darker(), padding: Rectangle.inset(10,4)
+      borderWidth: 0, borderRadius: 20, fill: Color.rgbHex("#DDD"),
+      fontSize: 14, fontColor: Color.rgbHex("#666"), padding: Rectangle.inset(10,5)
     }));
+
     if (historyId && useLastInput) {
       var lastInput = arr.last(inputLine.inputHistory.items)
       if (lastInput) inputLine.textString = lastInput;
     }
+
     inputLine.gotoDocumentEnd();
     inputLine.scrollCursorIntoView();
+
     var inputWidth = inputLine.textBounds().width;
     // if the input string we pre-fill is wide than we try to make it fit
-    if (inputWidth > this.width-10)
-      this.width = Math.min(this.maxWidth, inputWidth+10);
+    if (inputWidth > this.width-25)
+      this.width = Math.min(this.maxWidth, inputWidth+25);
 
     this.addMorph({name: "ok button", type: "button", label: "OK", ...this.okButtonStyle});
     this.addMorph({name: "cancel button", type: "button", label: "Cancel", ...this.cancelButtonStyle});
@@ -291,14 +297,12 @@ export class TextPrompt extends AbstractPrompt {
                ["input", "input", "input"],
                [null,    "ok button", "cancel button"]]
      });
+     l.col(0).paddingLeft = 2.5;
+     l.col(2).paddingRight = 2.5;
      l.col(2).fixed = 100;
      l.col(1).fixed = 100;
-     l.col(2).paddingRight = 5;
-     l.col(2).paddingLeft = 2.5;
-     l.col(0).paddingLeft = 5;
-     l.col(0).paddingRight = 2.5;
-     l.row(1).paddingBottom = 5;
-     l.row(2).paddingBottom = 5;
+     l.row(2).paddingTop = 2.5;
+     l.row(2).paddingBottom = 2.5;
   }
 
   focus() { this.get("input").focus(); }
