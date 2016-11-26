@@ -149,7 +149,7 @@ var worldCommands = [
               itemPadding: Rectangle.inset(4)
             }),
           {selected: [win]} = answer;
-      if (win) { win.bringToFront(); win.focus(); }
+      win && win.activate();
       return true;
     }
   },

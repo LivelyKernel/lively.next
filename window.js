@@ -126,7 +126,7 @@ export default class Window extends Morph {
       fill: Color.transparent,
       fontColor: Color.darkGray,
       reactsToPointer: false,
-      textString: ""
+      value: ""
     };
   }
 
@@ -147,8 +147,17 @@ export default class Window extends Morph {
 
   get title() { return this.titleLabel().textString; }
   set title(title) {
-    var sanitized = string.truncate(String(title).replace(/\n/g, ""), 300);
-    this.titleLabel().textString = sanitized;
+    var textAndAttrs = typeof title === "string" ? [[title, {}]] : title,
+        maxLength = 100, length = 0, truncated = [];
+    for (let ea of textAndAttrs) {
+      let [string, attr] = ea;
+      string = string.replace(/\n/g, "");
+      var delta = string.length + length - maxLength;
+      if (delta > 0) string = string.slice(0, -delta);
+      truncated.push([string, attr || {}]);
+      if (length >= maxLength) break;
+    }
+    this.titleLabel().value = truncated;
   }
 
   toggleMinimize() {
@@ -187,12 +196,15 @@ export default class Window extends Morph {
 
   close() {
     var world = this.world();
+    this.deactivate();
     this.remove();
+
+    var next = world.activeWindow() || arr.last(world.getWindows());
+    next && next.activate();
+    
     signal(this, "windowClosed", this);
     if (this.targetMorph && typeof this.targetMorph.onWindowClose === "function")
       this.targetMorph.onWindowClose();
-
-    world.activeWindow() && world.activeWindow().focus();
   }
 
   onMouseDown(evt) {
@@ -209,7 +221,9 @@ export default class Window extends Morph {
 
   isActive() {
     var w = this.world();
-    return w ? arr.last(w.getWindows()) === this : false;
+    if (!w) return false;
+    if (this.titleLabel().fontWeight != "bold") return false;
+    return arr.last(w.getWindows()) === this;
   }
 
   activate() {
@@ -221,11 +235,14 @@ export default class Window extends Morph {
     var w = this.world() || this.env.world;
 
     arr.without(w.getWindows(), this).forEach(ea => ea.deactivate());
+    this.titleLabel().fontWeight = "bold";
     this.focus();
 
     signal(this, "windowActivated", this);
     return this;
   }
 
-  deactivate() {}
+  deactivate() {
+    this.titleLabel().fontWeight = "normal";
+  }
 }
