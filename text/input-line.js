@@ -85,7 +85,7 @@ export default class InputLine extends Text {
     var {label, placeholder} = props;
     super({
       extent: pt(100, 20), padding: Rectangle.inset(1),
-      clipMode: "auto", lineWrapping: false,
+      clipMode: "hidden", lineWrapping: false,
       historyId: null, clearOnInput: false,
       ...obj.dissoc(props, ["label", "placeholder"])
     })
