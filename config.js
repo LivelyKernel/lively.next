@@ -58,7 +58,7 @@ var config = {
     {keys: "Alt-Shift-Up",     command: {command: "move or resize halo target", args: {what: "resize", direction: "up",    offset: 100}}},
     {keys: "Alt-Shift-Down",   command: {command: "move or resize halo target", args: {what: "resize", direction: "down",  offset: 100}}},
 
-    {keys: {win: "Ctrl-1", mac: "Meta-1"}, command: "window switcher"},
+    {keys: {win: "Ctrl-`|Alt-`", mac: "Meta-1"}, command: "window switcher"},
 
     {keys: "Meta-Shift-L R E S 1", command: {command: "resize active window", args: {how: "col1"}}},
     {keys: "Meta-Shift-L R E S 2", command: {command: "resize active window", args: {how: "col2"}}},
