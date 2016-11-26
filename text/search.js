@@ -267,7 +267,7 @@ export class SearchWidget extends Morph {
     inputMorph.addCommands([
       {name: "realign top-bottom-center", exec: async () => {
         this.targetText.execCommand("realign top-bottom-center");
-        this.addSearchMarkersForPreview(this.state.inProgress && this.state.inProgress.found, false);
+        this.addSearchMarkersForPreview(this.state.inProgress && this.state.inProgress.found, false)
         return true;
       }}
     ]);
@@ -360,7 +360,7 @@ export class SearchWidget extends Morph {
         {backwards, found: {range: {start, end}}} = searchResult,
         pos = backwards ? start : end;
     select ? sel.lead = pos : text.cursorPosition = pos;
-    text.centerRow();
+    if (!text.isLineVisible(pos.row)) text.centerRow();
     return searchResult;
   }
 
@@ -411,13 +411,14 @@ export class SearchWidget extends Morph {
       style: {
         "pointer-events": "none",
         "box-sizing": "border-box",
-        [this.state.backwards ? "border-left" : "border-right"]: "3px orange solid",
+        [this.state.backwards ? "border-left" : "border-right"]: "3px red solid",
       }
     });
   }
 
   addSearchMarkersForPreview(found, noCursor = true) {
-    found && this.whenRendered().then(() => {
+    
+    found && this.whenRendered().then(() => promise.delay(20)).then(() => {
       this.addSearchMarkers(found);
       noCursor && this.targetText.removeMarker("search-highlight-cursor");
     });
