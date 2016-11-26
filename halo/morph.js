@@ -355,7 +355,6 @@ export class Halo extends Morph {
 
   constructor(pointerId, target) {
     super({
-      styleClasses: ["morph", "halo"],
       fill: Color.transparent,
     });
     this.borderBox = this.addMorph({
@@ -642,7 +641,7 @@ export class Halo extends Morph {
   closeHalo() {
     return this.getSubmorphNamed("close") || this.addMorph(new HaloItem({
       name: "close",
-      styleClasses: ["halo-item", "fa", "fa-close"],
+      styleClasses: ["fa", "fa-close"],
       draggable: false,
       halo: this,
       tooltip: "Remove this morph from the world",
@@ -663,7 +662,7 @@ export class Halo extends Morph {
     var dropTarget;
     return this.getSubmorphNamed("grab") || this.addMorph(new HaloItem({
       name: "grab",
-      styleClasses: ["halo-item", "fa", "fa-hand-rock-o"],
+      styleClasses: ["fa", "fa-hand-rock-o"],
       halo: this,
       tooltip: "Grab the morph",
       valueForPropertyDisplay() {
@@ -716,7 +715,7 @@ export class Halo extends Morph {
   dragHalo() {
     return this.getSubmorphNamed("drag") || this.addMorph(new HaloItem({
       name: "drag",
-      styleClasses: ["halo-item", "fa", "fa-arrows"],
+      styleClasses: ["fa", "fa-arrows"],
       property: 'position',
       halo: this,
       tooltip: "Change the morph's position. Press (alt) while dragging to align the morph's position along a grid.",
@@ -753,7 +752,7 @@ export class Halo extends Morph {
   inspectHalo() {
     return this.getSubmorphNamed("inspect") || this.addMorph(new HaloItem({
       name: "inspect",
-      styleClasses: ["halo-item", "fa", "fa-eye"],
+      styleClasses: ["fa", "fa-eye"],
       draggable: false,
       halo: this,
       tooltip: "Inspect the morph's local state",
@@ -767,7 +766,7 @@ export class Halo extends Morph {
   editHalo() {
     return this.getSubmorphNamed("edit") || this.addMorph(new HaloItem({
       name: "edit",
-      styleClasses: ["halo-item", "fa", "fa-pencil"],
+      styleClasses: ["fa", "fa-pencil"],
       draggable: false,
       halo: this,
       tooltip: "Edit the morph's definition",
@@ -786,7 +785,7 @@ export class Halo extends Morph {
       name: "rotate",
       property: "rotation",
       tooltip: "Rotate morph",
-      styleClasses: ["halo-item", "fa", "fa-repeat"],
+      styleClasses: ["fa", "fa-repeat"],
       halo: this,
       valueForPropertyDisplay: () => scaleGauge ?
                                        this.target.scale.toFixed(4).toString() :
@@ -835,7 +834,7 @@ export class Halo extends Morph {
       },
 
       adaptAppearance(scaling) {
-        this.styleClasses = ["halo-item", "fa", scaling ? "fa-search-plus" : "fa-repeat"];
+        this.styleClasses = ["fa", scaling ? "fa-search-plus" : "fa-repeat"];
         this.tooltip = scaling ? "Scale morph" : "Rotate morph";
       },
 
@@ -887,7 +886,7 @@ export class Halo extends Morph {
   copyHalo() {
     return this.getSubmorphNamed("copy") || this.addMorph(new HaloItem({
       name: "copy",
-      styleClasses: ["halo-item", "fa", "fa-clone"],
+      styleClasses: ["fa", "fa-clone"],
       halo: this,
       tooltip: "Copy morph",
       init: (hand) => {
@@ -957,7 +956,7 @@ export class Halo extends Morph {
   stylizeHalo() {
     return this.getSubmorphNamed("style") || this.addMorph(new HaloItem({
       name: "style",
-      styleClasses: ["halo-item", "fa", "fa-picture-o"],
+      styleClasses: ["fa", "fa-picture-o"],
       halo: this,
       tooltip: "Open stylize editor",
       onMouseDown: (evt) => {
@@ -1027,7 +1026,7 @@ export class Halo extends Morph {
             name: "mesh", opacity: 0,
             onKeyUp: (evt) => this.toggleMesh(false),
             extent, position: this.localize(pt(2,2)),
-            styleClasses: ["morph", "halo-mesh"], fill: null,
+            styleClasses: ["halo-mesh"], fill: null,
             submorphs: [horizontal, vertical],
             alignWithHalo: () => {
               var {x, y} = this.target.worldPoint(pt(-3,-3)),

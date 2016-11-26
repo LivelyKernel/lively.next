@@ -26,7 +26,7 @@ const defaultCSS = `
   background-position:-2px -2px, -2px -2px, -1px -1px, -1px -1px;
 }
 
-.morph {
+.Morph {
   outline: none;
   /*for aliasing issue in chrome: http://stackoverflow.com/questions/6492027/css-transform-jagged-edges-in-chrome*/
   -webkit-backface-visibility: hidden;
@@ -44,15 +44,15 @@ const defaultCSS = `
   zIndex: 1010
 }
 
-.tooltip {
+.Tooltip {
  z-index:  3;
 }
 
-.hand {
+.Hand {
   z-index: 1;
 }
 
-.halo {
+.Halo {
   z-index: 2;
 }
 
@@ -61,7 +61,7 @@ const defaultCSS = `
 	vertical-align: middle;
 }
 
-.halo-item {
+.HaloItem {
   /*FIXME: we shouldn't need to hardcode the size...*/
 	line-height: 24px !important;
 	text-align: center;

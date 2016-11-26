@@ -86,7 +86,7 @@ export default class Window extends Morph {
         onMouseDown: (evt) => { this.close(); },
         submorphs: [{
           fill: Color.black.withA(0), scale: 0.7, visible: false,
-          styleClasses: ["morph", "fa", "fa-times"],
+          styleClasses: ["fa", "fa-times"],
           center: pt(5.5, 5), opacity: 0.5
         }]
       },
@@ -100,7 +100,7 @@ export default class Window extends Morph {
         onMouseDown: (evt) => { this.toggleMinimize(); },
         submorphs: [{
           fill: Color.black.withA(0), scale: 0.7, visible: false,
-          styleClasses: ["morph", "fa", "fa-minus"], center: pt(5.5,5), opacity: 0.5
+          styleClasses: ["fa", "fa-minus"], center: pt(5.5,5), opacity: 0.5
         }]
       },
 
@@ -113,7 +113,7 @@ export default class Window extends Morph {
         onMouseDown: (evt) => { this.toggleMaximize(); },
         submorphs: [{
           fill: Color.black.withA(0), scale: 0.7, visible: false,
-          styleClasses: ["morph", "fa", "fa-plus"], center: pt(5.5,5), opacity: 0.5
+          styleClasses: ["fa", "fa-plus"], center: pt(5.5,5), opacity: 0.5
         }]
       }) : undefined
     ]
@@ -209,7 +209,6 @@ export default class Window extends Morph {
 
   onMouseDown(evt) {
     this.activate();
-    this.styleClasses = ["morph"];
   }
 
   focus() {

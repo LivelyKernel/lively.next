@@ -108,7 +108,7 @@ export class Morph {
         this.updateTransform();
     if (change.prop == "layout") {
        if (anim) {
-          change.value && change.value.attachAnimated(anim.duration, this, anim.easing);  
+          change.value && change.value.attachAnimated(anim.duration, this, anim.easing);
        } else {
           change.value && change.value.apply();
        }
@@ -356,7 +356,9 @@ export class Morph {
     // inheritance chain, i.e. by default a morph gets the style class names of
     // its class and all the classes up to morph.
     // Can be overridden on the instance level see Morph>>get styleClasses()
-    if (this._styclassNames) return this._styclassNames;
+    if (this.hasOwnProperty("_styclassNames"))
+      return this._styleClasses;
+
     var klass = this,
         classNames = [];
     while (klass) {
@@ -364,7 +366,7 @@ export class Morph {
       classNames.push(klass.name);
       klass = klass[Symbol.for("lively-instance-superclass")];
     }
-    return this._styclassNames = classNames;
+    return this._styleClasses = classNames;
   }
 
   get styleClasses() {

@@ -77,7 +77,6 @@ export class Tooltip extends Morph {
   constructor(props) {
     super({
       ...props,
-      styleClasses: ["morph", "tooltip"],
       draggable: false,
       fill: Color.black.withA(.5),
       borderRadius: 4,

@@ -477,7 +477,7 @@ export default class EventDispatcher {
       while (true) {
         var cssClasses = targetNode.className;
         // Maybe better "is-morph-node" test?
-        if (cssClasses && cssClasses.includes("morph")) break;
+        if (cssClasses && cssClasses.includes("Morph")) break;
         if (!(targetNode = targetNode.parentNode)) return;
       }
       var targetId = targetNode.id;

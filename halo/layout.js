@@ -198,14 +198,14 @@ class AxisHalo extends Morph {
           extent: pt(25,25),
           submorphs: [{center: pt(12.5, 12.5), 
                       fill: Color.transparent,
-                      styleClasses: ["morph", "fa", "fa-unlock"]}],
+                      styleClasses: ["fa", "fa-unlock"]}],
           alignWithTarget() {
             if (self.targetAxis.fixed) {
               this.fontColor = Color.red;
-              this.submorphs[0].styleClasses = ["morph", "fa", "fa-lock"];
+              this.submorphs[0].styleClasses = ["fa", "fa-lock"];
             } else {
               this.fontColor = Color.green;
-              this.submorphs[0].styleClasses = ["morph", "fa", "fa-unlock"];
+              this.submorphs[0].styleClasses = ["fa", "fa-unlock"];
             }
           },
           onMouseDown() {
@@ -239,7 +239,7 @@ class AxisHalo extends Morph {
             fill: Color.transparent,
             extent: pt(25,25),
             submorphs: [{fill: Color.transparent,
-                         styleClasses: ["morph", "fa", "fa-cog"], 
+                         styleClasses: ["fa", "fa-cog"], 
                          center: pt(12.5,12.5)}],
             onMouseDown(evt) {
               // is menu open keep menu visible at all times
@@ -258,7 +258,7 @@ class AxisHalo extends Morph {
   
   viewer({position, alignWithTarget}) {
     return this.halo.addGuide(new Text({
-        styleClasses: ["morph", "halo"],
+        styleClasses: ["Halo"],
         padding: 6,
         visible: false,
         borderRadius: 10,
@@ -357,7 +357,7 @@ export class GridLayoutHalo extends Morph {
 
   constructor(container, pointerId) {
     super({
-      styleClasses: ["morph", "halo"],
+      styleClasses: ["Halo"],
       borderColor: Color.orange,
       borderWidth: 2,
       borderRadius: container.borderRadius,
@@ -599,7 +599,7 @@ export class TilingLayoutHalo extends Morph {
   constructor(container, pointerId) {
     super({
       isHaloItem: true,
-      styleClasses: ["morph", "halo"],
+      styleClasses: ["Halo"],
       extent: container.extent,
       fill: Color.transparent
     });
@@ -635,7 +635,7 @@ export class FlexLayoutHalo extends Morph {
   constructor(container, pointerId) {
     super({
       isHaloItem: true,
-      styleClasses: ["morph", "halo"],
+      styleClasses: ["Halo"],
       extent: container.extent,
       fill: Color.transparent
     });

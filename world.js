@@ -531,7 +531,6 @@ export class World extends Morph {
 
   constructor(props) {
     super(props);
-    this.addStyleClass("world");
     this._renderer = null; // assigned in rendering/renderer.js
     this._tooltipViewer = new TooltipViewer(this);
   }
@@ -927,7 +926,6 @@ export class Hand extends Morph {
     });
     this.prevMorphProps = {};
     this.pointerId = pointerId;
-    this.addStyleClass("hand");
   }
 
   get isHand() { return true }
