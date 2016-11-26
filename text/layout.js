@@ -641,6 +641,14 @@ export default class TextLayout {
     return this.lastVisibleLine + (bounds.bottom() > morph.scroll.y + morph.height ? -1 : 0);
   }
 
+  isLineVisible(morph, row) {
+    return row >= this.firstVisibleLine && row <= this.lastVisibleLine;
+  }
+
+  isLineFullyVisible(morph, row) {
+    return row >= this.firstFullVisibleLine(morph) && row <= this.lastFullVisibleLine(morph);
+  }
+
   defaultCharSize(morph) {
     return this.fontMetric.sizeFor(morph.fontFamily, morph.fontSize, "X");
   }

@@ -531,6 +531,14 @@ export class Text extends Morph {
     return this.textLayout.wrappedLines(this)[row].text
   }
 
+  isLineVisible(row = this.cursorScreenPosition.row) {
+    return this.textLayout.isLineVisible(this, row);
+  }
+
+  isLineFullyVisible(row = this.cursorScreenPosition.row) {
+    return this.textLayout.isLineFullyVisible(this, row);
+  }
+
   getLine(row = this.cursorPosition.row) {
     var doc = this.document;
     return doc.getLine(row);
