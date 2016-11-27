@@ -159,6 +159,17 @@ export function findKeysForPlatform(binding, platform/*bowser OS flag*/) {
   }
 }
 
+var regexps = {
+  meta: /Meta|Cmd|Command/gi,
+  alt: /Alt/gi,
+  ctrl: /Ctrl|Control/gi,
+  tab: /Tab/gi,
+  enter: /Enter|Return/gi,
+  shift: /Shift/gi,
+  backspace: /Backspace/gi,
+  keySpacer: /([^-])-/g,
+  seqSpacer: /([^\s])\s/g
+}
 
 export default class KeyHandler {
 
@@ -187,15 +198,15 @@ export default class KeyHandler {
     var map = this._prettyCombos || (this._prettyCombos = {})
     if (this._prettyCombos[combo]) return map[combo];
     return map[combo] = combo
-      .replace(/Meta/g, "⌘")
-      .replace(/Alt/g, "⌥")
-      .replace(/Ctrl/g, "⌃")
-      .replace(/Tab/g, "⇥")
-      .replace(/Enter/g, "⏎")
-      .replace(/Shift/g, "⇧")
-      .replace(/Backspace/g, "⌫")
-      .replace(/([^-])-/g, "$1")
-      .replace(/([^\s])\s/g, "$1 - ")
+      .replace(regexps.meta,      "⌘")
+      .replace(regexps.alt,       "⌥")
+      .replace(regexps.ctrl,      "⌃")
+      .replace(regexps.tab,       "⇥")
+      .replace(regexps.enter,     "⏎")
+      .replace(regexps.shift,     "⇧")
+      .replace(regexps.backspace, "⌫")
+      .replace(regexps.keySpacer, "$1")
+      .replace(regexps.seqSpacer, "$1-")
   }
 
   static generateCommandToKeybindingMap(morph, includeOwnerCommands = false, prettyKeys = true) {
