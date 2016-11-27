@@ -18,6 +18,7 @@ var dir = System.decanonicalize("lively.modules/tests/"),
       "file5.js": "import Foo from './file4.js'; class Bar extends Foo {}",
       "package.json": JSON.stringify({
                         "name": "test-project-1",
+                        "version": "1.2.3",
                         "main": "file1.js",
                         "systemjs": {"meta": {"file3.js": {format: "global", exports: "z"}}}
                       })
@@ -96,7 +97,7 @@ describe("instrumentation", () => {
       expect(Foo[Symbol.for("lively-instance-module-meta")]).deep.equals({
         package: {
           name: "test-project-1",
-          version: undefined
+          version: "1.2.3"
         },
         pathInPackage: "./file4.js"
       });

@@ -6,6 +6,7 @@ import { computeRequireMap as requireMap } from './dependencies.js'
 import { knownModuleNames } from './system.js'
 import { isJsFile, asDir, isURL, urlResolve, join } from "./url-helpers.js";
 
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // internal
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -17,7 +18,6 @@ function normalizeInsidePackage(System, urlOrName, packageURL) {
 }
 
 function normalizePackageURL(System, packageURL) {
-
   if (allPackageNames(System).some(ea => ea === packageURL))
     return packageURL;
 
@@ -36,6 +36,14 @@ function normalizePackageURL(System, packageURL) {
 
   return String(url).replace(/\/$/, "");
 }
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// We add instances of Package to the System which basically serves as
+// "database" for all module / package related state.
+// This also makes it easy to completely replace the module / package state by
+// simply replacing the System instance
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function packageStore(System) {
   return System.get("@lively-env").packages;
@@ -59,172 +67,178 @@ function findPackageNamed(System, name) {
     .find(ea => ea.name === name);
 }
 
+function getPackage(System, packageURL, isNormalized = false) {
+  var url = isNormalized ? packageURL : normalizePackageURL(System, packageURL);
+  return packageStore(System).hasOwnProperty(url) ?
+    packageStore(System)[url] :
+    addToPackageStore(System, new Package(System, url));
+}
+
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // config
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-async function tryToLoadPackageConfig(System, packageURL) {
-  var packageConfigURL = packageURL + "/package.json";
-  System.config({
-    meta: {[packageConfigURL]: {format: "json"}},
-    packages: {[packageURL]: {meta: {"package.json": {format: "json"}}}}
-  });
+class PackageConfiguration {
 
-  System.debug && console.log("[lively.modules package reading config] %s", packageConfigURL)
-
-  try {
-    var config = System.get(packageConfigURL) || await System.import(packageConfigURL);
-    arr.pushIfNotIncluded(System.packageConfigPaths, packageConfigURL); // to inform systemjs that there is a config
-    return config;
-  } catch (err) {
-    console.log("[lively.modules package] Unable loading package config %s for package: ", packageConfigURL, err);
-    delete System.meta[packageConfigURL];
-    var name = packageURL.split("/").slice(-1)[0];
-    return {name: name}; // "pseudo-config"
-  }
-}
-
-function applyConfig(System, packageConfig, packageURL) {
-  // takes a config json object (typically read from a package.json file but
-  // can be used standalone) and changes the System configuration to what it finds
-  // in it.
-  // In particular uses the "systemjs" section as described in https://github.com/systemjs/systemjs/blob/master/docs/config-api.md
-  // and uses the "lively" section as described in `applyLivelyConfig`
-
-  var name            = packageConfig.name || packageURL.split("/").slice(-1)[0],
-      sysConfig       = packageConfig.systemjs || {},
-      livelyConfig    = packageConfig.lively,
-      main            = packageConfig.main || "index.js";
-
-  System.config({
-    map: {[name]: packageURL},
-    packages: {[packageURL]: sysConfig}
-  });
-
-  var packageInSystem = System.getConfig().packages[packageURL] || {};
-  if (!packageInSystem.map) packageInSystem.map = {};
-
-  if (sysConfig) {
-    if (sysConfig.main) main = sysConfig.main;
-    applySystemJSConfig(System, sysConfig, packageURL)
+  constructor(pkg) {
+    this.pkg = pkg;
   }
 
-  packageInSystem.referencedAs = packageInSystem.referencedAs || [];
-  arr.pushIfNotIncluded(packageInSystem.referencedAs, name);
+  get System() { return this.pkg.System; }
+  get packageURL() { return this.pkg.url; }
 
-  if (!main.match(/\.[^\/\.]+/)) main += ".js";
-  packageInSystem.main = main;
+  applyConfig(config) {
+    // takes a config json object (typically read from a package.json file but
+    // can be used standalone) and changes the System configuration to what it finds
+    // in it.
+    // In particular uses the "systemjs" section as described in https://github.com/systemjs/systemjs/blob/master/docs/config-api.md
+    // and uses the "lively" section as described in `applyLivelyConfig`
 
-  // System.packages doesn't allow us to store our own properties
-  var p = getPackage(System, packageURL);
-  p.mergeWithConfig(packageInSystem);
+    var {System, packageURL, pkg} = this,
+        name                      = config.name || packageURL.split("/").slice(-1)[0],
+        version                   = config.version,
+        sysConfig                 = config.systemjs || {},
+        livelyConfig              = config.lively,
+        main                      = config.main || "index.js";
 
-  var packageApplyResult = livelyConfig ?
-    applyLivelyConfig(System, livelyConfig, p) :
-    {subPackages: []};
+    System.config({
+      map: {[name]: packageURL},
+      packages: {[packageURL]: sysConfig}
+    });
 
-  return packageApplyResult;
-}
+    var packageInSystem = System.getConfig().packages[packageURL] || {};
+    if (!packageInSystem.map) packageInSystem.map = {};
 
-function applySystemJSConfig(System, sysConfig, pkg) {
-  // console.log("[lively.modules package configuration] applying SystemJS config of %s", pkg);
-  // console.log(JSON.stringify(systemjsConfig));
-  if (sysConfig.packageConfigPaths)
-    System.packageConfigPaths = arr.uniq(System.packageConfigPaths.concat(sysConfig.packageConfigPaths))
-  if (sysConfig.packages) // packages is normaly not support locally in a package.json
-    System.config({packages: sysConfig.packages})
-}
-
-function applyLivelyConfig(System, livelyConfig, pkg) {
-  // configures System object from lively config JSON object.
-  // - adds System.package entry for package
-  // - adds name to System.package[pkg.url].referencedAs
-  // - installs hook from {hooks: [{name, source}]}
-  // - merges livelyConfig.packageMap into System.package[pkg.url].map
-  //   entries in packageMap are specifically meant to be sub-packages!
-  // Will return a {subPackages: [{name, address},...]} object
-  applyLivelyConfigMeta(System, livelyConfig, pkg);
-  applyLivelyConfigHooks(System, livelyConfig, pkg);
-  applyLivelyConfigBundles(System, livelyConfig, pkg);
-  return applyLivelyConfigPackageMap(System, livelyConfig, pkg);
-}
-
-function applyLivelyConfigHooks(System, livelyConfig, pkg) {
-  (livelyConfig.hooks || []).forEach(h => {
-    try {
-      var f = eval("(" + h.source + ")");
-      if (!f.name || !isHookInstalled(System, h.target, f.name))
-        installHook(System, h.target, f);
-    } catch (e) {
-      console.error("Error installing hook for %s: %s", pkg.url, e, h);
+    if (sysConfig) {
+      if (sysConfig.main) main = sysConfig.main;
+      this.applySystemJSConfig(sysConfig);
     }
-  });
-}
 
-function applyLivelyConfigBundles(System, livelyConfig, pkg) {
-  if (!livelyConfig.bundles) return Promise.resolve();
-  var normalized = Object.keys(livelyConfig.bundles).reduce((bundles, name) => {
-    var absName = pkg.url + "/" + name,
-        files = livelyConfig.bundles[name].map(f => System.decanonicalize(f, pkg.url + "/"));
-    bundles[absName] = files;
-    return bundles;
-  }, {});
-  System.config({bundles: normalized});
-  return Promise.resolve();
-}
+    packageInSystem.referencedAs = packageInSystem.referencedAs || [];
+    arr.pushIfNotIncluded(packageInSystem.referencedAs, name);
 
-function applyLivelyConfigMeta(System, livelyConfig, pkg) {
-  if (!livelyConfig.meta) return;
-  var pConf = System.getConfig().packages[pkg.url] || {},
-      c = {meta: {}, packages: {[pkg.url]: pConf}};
-  Object.keys(livelyConfig.meta).forEach(key => {
-    var val = livelyConfig.meta[key];
-    if (isURL(key)) {
-      c.meta[key] = val;
-    } else {
-      if (!pConf.meta) pConf.meta = {};
-      pConf.meta[key] = val;
-    }
-  });
-  System.config(c);
-}
+    if (!main.match(/\.[^\/\.]+/)) main += ".js";
+    packageInSystem.main = main;
 
-function applyLivelyConfigPackageMap(System, livelyConfig, pkg) {
-  var subPackages = livelyConfig.packageMap ?
-    Object.keys(livelyConfig.packageMap).map(name =>
-      subpackageNameAndAddress(System, livelyConfig, name, pkg)) : [];
-  return {subPackages: subPackages};
-}
+    // System.packages doesn't allow us to store our own properties
+    pkg.version = version;
+    pkg.mergeWithConfig(packageInSystem);
 
-function subpackageNameAndAddress(System, livelyConfig, subPackageName, pkg) {
-  // var pConf = System.packages[packageURL],
-  var preferLoadedPackages = livelyConfig.hasOwnProperty("preferLoadedPackages") ?
-        livelyConfig.preferLoadedPackages : true,
-      normalized = System.decanonicalize(subPackageName, pkg.url);
-
-  if (preferLoadedPackages) {
-    var subpackageURL,
-        existing = findPackageNamed(System, subPackageName);
-
-    if (existing)                        subpackageURL = existing.url;
-    else if (pkg.map[subPackageName])    subpackageURL = normalizeInsidePackage(System, pkg.map[subPackageName], pkg.url);
-    else if (System.map[subPackageName]) subpackageURL = normalizeInsidePackage(System, System.map[subPackageName], pkg.url);
-    else if (System.get(normalized))     subpackageURL = System.decanonicalize(subPackageName, pkg.url + "/");
-
-    if (subpackageURL) {
-      if (System.get(subpackageURL)) subpackageURL = subpackageURL.split("/").slice(0,-1).join("/"); // force to be dir
-      System.debug && console.log("[lively.module package] Package %s required by %s already in system as %s", subPackageName, pkg, subpackageURL);
-      return getPackage(System, subpackageURL);
-    }
+    return livelyConfig ? this.applyLivelyConfig(livelyConfig) : {subPackages: []};
   }
 
-  pkg.addMapping(subPackageName, livelyConfig.packageMap[subPackageName])
+  applySystemJSConfig(sysConfig) {
+    var {System} = this;
+    // System.debug && console.log("[lively.modules package configuration] applying SystemJS config of %s", pkg);
+    if (sysConfig.packageConfigPaths)
+      System.packageConfigPaths = arr.uniq(System.packageConfigPaths.concat(sysConfig.packageConfigPaths));
+    if (sysConfig.packages) // packages is normaly not support locally in a package.json
+      System.config({packages: sysConfig.packages})
+  }
 
-  // lookup
-  var subpackageURL = normalizeInsidePackage(System, livelyConfig.packageMap[subPackageName], pkg.url);
-  System.debug && console.log("[lively.module package] Package %s required by %s NOT in system, will be loaded as %s", subPackageName, pkg, subpackageURL);
-  return getPackage(System, subpackageURL);
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // lively config
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  applyLivelyConfig(livelyConfig) {
+    // configures System object from lively config JSON object.
+    // - adds System.package entry for package
+    // - adds name to System.package[pkg.url].referencedAs
+    // - installs hook from {hooks: [{name, source}]}
+    // - merges livelyConfig.packageMap into System.package[pkg.url].map
+    //   entries in packageMap are specifically meant to be sub-packages!
+    // Will return a {subPackages: [{name, address},...]} object
+
+    this.applyLivelyConfigMeta(livelyConfig);
+    this.applyLivelyConfigHooks(livelyConfig);
+    this.applyLivelyConfigBundles(livelyConfig);
+    return this.applyLivelyConfigPackageMap(livelyConfig);
+  }
+
+  applyLivelyConfigHooks(livelyConfig) {
+    (livelyConfig.hooks || []).forEach(h => {
+      try {
+        var f = eval("(" + h.source + ")");
+        if (!f.name || !isHookInstalled(this.System, h.target, f.name))
+          installHook(this.System, h.target, f);
+      } catch (e) {
+        console.error("Error installing hook for %s: %s", this.packageURL, e, h);
+      }
+    });
+  }
+
+  applyLivelyConfigBundles(livelyConfig) {
+    if (!livelyConfig.bundles) return Promise.resolve();
+    var normalized = Object.keys(livelyConfig.bundles).reduce((bundles, name) => {
+      var absName = this.packageURL + "/" + name,
+          files = livelyConfig.bundles[name].map(f => this.System.decanonicalize(f, this.packageURL + "/"));
+      bundles[absName] = files;
+      return bundles;
+    }, {});
+    this.System.config({bundles: normalized});
+    return Promise.resolve();
+  }
+
+  applyLivelyConfigMeta(livelyConfig) {
+    if (!livelyConfig.meta) return;
+    var pConf = this.System.getConfig().packages[this.packageURL] || {},
+        c = {meta: {}, packages: {[this.packageURL]: pConf}};
+    Object.keys(livelyConfig.meta).forEach(key => {
+      var val = livelyConfig.meta[key];
+      if (isURL(key)) {
+        c.meta[key] = val;
+      } else {
+        if (!pConf.meta) pConf.meta = {};
+        pConf.meta[key] = val;
+      }
+    });
+    this.System.config(c);
+  }
+
+  applyLivelyConfigPackageMap(livelyConfig) {
+    var subPackages = livelyConfig.packageMap ?
+      Object.keys(livelyConfig.packageMap).map(name =>
+        this.subpackageNameAndAddress(livelyConfig, name)) : [];
+    return {subPackages};
+  }
+
+  subpackageNameAndAddress(livelyConfig, subPackageName) {
+    // find out what other packages are dependencies of this.pkg
+
+    var {System, packageURL, pkg} = this,
+        preferLoadedPackages = livelyConfig.hasOwnProperty("preferLoadedPackages") ?
+          livelyConfig.preferLoadedPackages : true,
+        normalized = System.decanonicalize(subPackageName, packageURL);
+
+    if (preferLoadedPackages) {
+      var subpackageURL,
+          existing = findPackageNamed(System, subPackageName);
+
+      if (existing)                        subpackageURL = existing.url;
+      else if (pkg.map[subPackageName])    subpackageURL = normalizeInsidePackage(System, pkg.map[subPackageName], packageURL);
+      else if (System.map[subPackageName]) subpackageURL = normalizeInsidePackage(System, System.map[subPackageName], packageURL);
+      else if (System.get(normalized))     subpackageURL = System.decanonicalize(subPackageName, packageURL + "/");
+
+      if (subpackageURL) {
+        if (System.get(subpackageURL)) subpackageURL = subpackageURL.split("/").slice(0,-1).join("/"); // force to be dir
+        System.debug && console.log("[lively.module package] Package %s required by %s already in system as %s", subPackageName, pkg, subpackageURL);
+        return getPackage(System, subpackageURL);
+      }
+    }
+
+    pkg.addMapping(subPackageName, livelyConfig.packageMap[subPackageName])
+
+    // lookup
+    var subpackageURL = normalizeInsidePackage(System, livelyConfig.packageMap[subPackageName], pkg.url);
+    System.debug && console.log("[lively.module package] Package %s required by %s NOT in system, will be loaded as %s", subPackageName, pkg, subpackageURL);
+
+    return getPackage(System, subpackageURL);
+  }
+
 }
+
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // package object
@@ -246,9 +260,14 @@ class Package {
     this.referencedAs = [];
     this.url = packageURL;
     this.System = System;
+    this.version = null;
     this.registerProcess = null;
     this.map = {};
   }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // accessing
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   get name() {
     if (this._name) return this._name;
@@ -268,6 +287,38 @@ class Package {
 
   toString() { return `Package(${this._name} – ${this.path()}/)`; }
 
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // confiuration
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  async tryToLoadPackageConfig() {
+    var {System, url} = this,
+        packageConfigURL = url + "/package.json";
+
+    System.config({
+      meta: {[packageConfigURL]: {format: "json"}},
+      packages: {[url]: {meta: {"package.json": {format: "json"}}}}
+    });
+
+    System.debug && console.log("[lively.modules package reading config] %s", packageConfigURL);
+
+    try {
+      var config = System.get(packageConfigURL) || await System.import(packageConfigURL);
+      arr.pushIfNotIncluded(System.packageConfigPaths, packageConfigURL); // to inform systemjs that there is a config
+      return config;
+    } catch (err) {
+      console.log("[lively.modules package] Unable loading package config %s for package: ", packageConfigURL, err);
+      delete System.meta[packageConfigURL];
+      var name = url.split("/").slice(-1)[0];
+      return {name: name}; // "pseudo-config"
+    }
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // register / load
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   async import() {
     await this.register();
     // *after* the package is registered the normalize call should resolve to the
@@ -285,8 +336,8 @@ class Package {
     this.registerProcess = promise.deferred();
 
     System.debug && console.log("[lively.modules package register] %s", url);
-    var cfg = await tryToLoadPackageConfig(System, url),
-        packageConfigResult = await applyConfig(System, cfg, url)
+    var cfg = await this.tryToLoadPackageConfig(),
+        packageConfigResult = await new PackageConfiguration(this).applyConfig(cfg);
 
     for (let supPkg of packageConfigResult.subPackages) {
       // stop here to support circular deps
@@ -378,12 +429,6 @@ class Package {
 
 }
 
-function getPackage(System, packageURL, isNormalized = false) {
-  var url = isNormalized ? packageURL : normalizePackageURL(System, packageURL);
-  return packageStore(System).hasOwnProperty(url) ?
-    packageStore(System)[url] :
-    addToPackageStore(System, new Package(System, url));
-}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // interface
@@ -427,13 +472,15 @@ function groupIntoPackages(System, moduleIds, packageNames) {
 
 
 function getPackages(System) {
-  // returns a list like
+  // Note does not return package instances but spec objects that can be JSON
+  // stringified(!) like
   // ```
   // [{
   //   address: package-address,
   //   modules: [module-name-1, module-name-2, ...],
   //   name: package-name,
   //   names: [package-name, ...]
+  //   version: semver version number
   // }, ... ]
   // ```
 
@@ -448,15 +495,20 @@ function getPackages(System) {
     var systemP = sysPackages[packageAddress],
         livelyP = livelyPackages[packageAddress],
         p = livelyP && systemP ? livelyP.mergeWithConfig(systemP) : livelyP || systemP,
-        referencedAs = p ? p.referencedAs : [];
-    if (!referencedAs || !referencedAs.length) referencedAs = [packageAddress.replace(/^(?:.+\/)?([^\/]+)$/, "$1")];
+        referencedAs = p ? p.referencedAs : [],
+        version = p ? p.version : undefined;
 
-    moduleNames = moduleNames.filter(name => name !== packageAddress && name !== packageAddress + "/")
+    if (!referencedAs || !referencedAs.length)
+      referencedAs = [packageAddress.replace(/^(?:.+\/)?([^\/]+)$/, "$1")];
+
+    moduleNames = moduleNames.filter(name =>
+      name !== packageAddress && name !== packageAddress + "/");
 
     result.push(Object.assign({}, p || {}, {
       address: packageAddress,
       name: referencedAs[0],
       names: referencedAs,
+      version,
       modules: moduleNames.map(name => ({
         name: name,
         deps: map[name]
@@ -466,6 +518,11 @@ function getPackages(System) {
 
   return result;
 }
+
+function applyConfig(System, packageConfig, packageURL) {
+  return new PackageConfiguration(getPackage(System, packageURL)).applyConfig(packageConfig);
+}
+
 
 export {
   Package,
