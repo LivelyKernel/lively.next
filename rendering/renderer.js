@@ -7,6 +7,8 @@ import { pt } from "lively.graphics";
 
 const defaultCSS = `
 
+/*-=- html fixes -=-*/
+
 .no-html-select {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -16,15 +18,13 @@ const defaultCSS = `
   user-select: none;
 }
 
-.halo-mesh {
-  background-color:transparent;
-  background-image: linear-gradient(rgba(0,0,0,.1) 2px, transparent 2px),
-  linear-gradient(90deg, rgba(0,0,0,.1) 2px, transparent 2px),
-  linear-gradient(rgba(0,0,0,.1) 1px, transparent 1px),
-  linear-gradient(90deg, rgba(0,0,0,.1) 1px, transparent 1px);
-  background-size:100px 100px, 100px 100px, 10px 10px, 10px 10px;
-  background-position:-2px -2px, -2px -2px, -1px -1px, -1px -1px;
+.hiddenScrollbar::-webkit-scrollbar { 
+  /* This is the magic bit */
+  display: none;
 }
+
+
+/*-=- generic morphic -=-*/
 
 .Morph {
   outline: none;
@@ -45,27 +45,31 @@ const defaultCSS = `
 }
 
 .Tooltip {
- z-index:  3;
+  z-index:  3;
 }
 
 .Hand {
   z-index: 1;
 }
 
+/*-=- halos -=-*/
+
 .Halo {
   z-index: 2;
 }
 
-.center-text {
-	text-align: center;
-	vertical-align: middle;
-}
-
 .HaloItem {
   /*FIXME: we shouldn't need to hardcode the size...*/
-	line-height: 24px !important;
-	text-align: center;
-	vertical-align: middle;
+	 line-height: 24px !important;
+	 text-align: center;
+	 vertical-align: middle;
+}
+
+/*-=- text -=-*/
+
+.center-text {
+	 text-align: center;
+	 vertical-align: middle;
 }
 
 div.text-layer span {
@@ -73,11 +77,15 @@ div.text-layer span {
   line-height: normal;
 }
 
-.hiddenScrollbar::-webkit-scrollbar { 
-  /* This is the magic bit */
-  display: none;
-}
+/*-=- text -=-*/
 
+.Label .annotation {
+  float: right;
+  /*vertical align*/
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}
 `;
 
 export class Renderer {

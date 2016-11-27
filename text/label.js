@@ -73,11 +73,61 @@ export class Label extends Morph {
   get textString() { return this.textAndAttributes.map(([text]) => text).join(""); }
   set textString(value) { this.textAndAttributes = [[value, {}]]; }
 
-  get textAndAttributes() { return this.getProperty("textAndAttributes") || [[""]]; }
+  get textAndAttributes() {
+    var val = this.getProperty("textAndAttributes");
+    if (!val || val.length < 1) val = [[""]];
+    return val;
+  }
+
   set textAndAttributes(value) {
+    if (!Array.isArray(value)) value = [[String(value), {}]];
+    if (value.length === 0) value = [["", {}]];
     this._cachedTextBounds = null;
     this.addValueChange("textAndAttributes", value);
     if (this.autofit) this._needsFit = true;
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // valueAndAnnotation is a way to put rich text content followed by a right
+  // aligned annotation into a label. It simply is using textAndAttributes with
+  // the convention that the last string/attribue pair in textAndAttributes is the
+  // annotation (the attribute includes the textStyleClass "annotation")
+
+  get valueAndAnnotation() {
+    var value = this.textAndAttributes, annotation = null;
+    if (value.length > 1)  {
+      var [string, props] = arr.last(value);
+      if (props && props.textStyleClasses && props.textStyleClasses.includes("annotation")) {
+        value = value.slice(0, -1);
+        annotation = [string, props];
+      }
+    }
+    return {value, annotation};
+  }
+
+  set valueAndAnnotation(valueAndAnnotation) {
+    var {value, annotation} = valueAndAnnotation;
+    
+    // Ensure value is in the right format for being the prefix in textAndAttributes
+    if (!value) value = "";
+    if (typeof value === "string") value = [[value, {}]]
+    if (!Array.isArray(value)) value = String(value);
+    else if (value.length === 2 && typeof value[0] === "string") value = [value]
+
+    var textAndAttributes = value.slice();
+
+    // convert and add the annotation
+    if (annotation) {
+      if (typeof annotation === "string") annotation = [annotation, {}];
+      textAndAttributes.push(annotation);
+      var annAttr = annotation[1];
+      if (!annAttr) annAttr = annotation[1] = {};
+      annAttr.textStyleClasses = (annAttr.textStyleClasses || []).concat("annotation");
+      if (!annAttr.textStyleClasses.includes("annotation"))
+        annAttr.textStyleClasses.push("annotation");
+    }
+
+    this.textAndAttributes = textAndAttributes;
   }
 
   get autofit() { return this.getProperty("autofit") }
@@ -314,7 +364,7 @@ export class Label extends Morph {
         attrs = {style};
     if (backgroundColor) style.backgroundColor = String(backgroundColor);
     if (fontFamily) style.fontFamily = fontFamily;
-    if (fontSize) style.fontSize = fontSize + "px";
+    if (fontSize) style.fontSize = typeof fontSize === "number" ? fontSize + "px" : fontSize;
     if (fontColor) style.fontColor = String(fontColor);
     if (fontWeight !== "normal") style.fontWeight = fontWeight;
     if (fontStyle !== "normal") style.fontStyle = fontStyle;

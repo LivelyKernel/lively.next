@@ -47,6 +47,23 @@ export class MenuItem extends Label {
     }
   }
 
+  get labelAndAnnotation() {
+    var {value, annotation} = this.valueAndAnnotation,
+        label = value.map(([string]) => string).join("\n");
+    return {label, annotation};
+  }
+
+  set labelAndAnnotation(value) {
+    var {label, annotation} = value;
+    this.valueAndAnnotation = {value: label, annotation}
+  }
+
+  get label() { return this.labelAndAnnotation.label; }
+  set label(label) { this.labelAndAnnotation = {label, annotation: this.annotation}; }
+
+  get annotation() { return this.labelAndAnnotation.annotation; }
+  set annotation(annotation) { this.labelAndAnnotation = {label: this.label, annotation}; }
+
   get action() { return this.getProperty("action") }
   set action(value) { this.addValueChange("action", value); }
 

@@ -42,8 +42,12 @@ class ListItemMorph extends Label {
     if (props.fontSize) this.fontSize = props.fontSize;
     if (props.padding) this.padding = props.padding;
 
-    this.itemIndex = itemIndex;
-    this.textString = item.string || "no item.string";
+    var label = item.string || "no item.string";
+    if (item.annotation) this.valueAndAnnotation = {value: label, annotation: item.annotation}
+    else if (typeof label === "string") this.textString = label
+    else this.value = label
+
+    this.itemIndex = itemIndex;    
     this.position = pos;
     this.extent = pt(this.owner.width, itemHeight);
     this.fill = isSelected ? this.selectionColor : null;
