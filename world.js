@@ -1,6 +1,6 @@
 /*global System*/
 import { Rectangle, Color, pt, rect } from "lively.graphics";
-import { tree, arr, obj, promise } from "lively.lang";
+import { tree, arr, string, obj, promise } from "lively.lang";
 import { Halo } from "./halo/morph.js"
 import { Menu } from "./menus.js"
 import { show, StatusMessage } from "./markers.js";
