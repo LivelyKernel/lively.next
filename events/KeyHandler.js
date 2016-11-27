@@ -159,6 +159,7 @@ export function findKeysForPlatform(binding, platform/*bowser OS flag*/) {
   }
 }
 
+
 export default class KeyHandler {
 
   static invokeKeyHandlers(morph, evt, noInputEvents = false) {
@@ -182,14 +183,35 @@ export default class KeyHandler {
     return handler;
   }
 
-  static generateCommandToKeybindingMap(morph, includeOwnerCommands = false) {
+  static prettyCombo(combo) {
+    var map = this._prettyCombos || (this._prettyCombos = {})
+    if (this._prettyCombos[combo]) return map[combo];
+    return map[combo] = combo
+      .replace(/Meta/g, "⌘")
+      .replace(/Alt/g, "⌥")
+      .replace(/Ctrl/g, "⌃")
+      .replace(/Tab/g, "⇥")
+      .replace(/Enter/g, "⏎")
+      .replace(/Shift/g, "⇧")
+      .replace(/Backspace/g, "⌫")
+      .replace(/([^-])-/g, "$1")
+      .replace(/([^\s])\s/g, "$1 - ")
+  }
+
+  static generateCommandToKeybindingMap(morph, includeOwnerCommands = false, prettyKeys = true) {
     var keyMaps = {}, commandsToKeys = {},
         commands = includeOwnerCommands ?
           morph.commandsIncludingOwners :
           morph.commands.map(command => ({command, target: morph}));
 
-    return commands.map(({target, command}) =>
-      ({keys: commandsToKeysFor(target)[command.name], target, command}));
+    return commands.map(({target, command}) => {
+      var keys = commandsToKeysFor(target)[command.name];
+      return {
+        keys,
+        target, command,
+        prettyKeys: keys && prettyKeys ? keys.map(ea => this.prettyCombo(ea)) : null,
+      }
+    });
 
     function commandsToKeysFor(target) {
       if (commandsToKeys[target.id]) return commandsToKeys[target.id];
