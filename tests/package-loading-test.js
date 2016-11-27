@@ -197,8 +197,9 @@ describe("package configuration test", () => {
       .then(n => expect(n).to.match(/foox.js$/)));
 
   it("installs meta data in package", async () => {
-    await applyConfig(S, {lively: {meta: {"foo": {format: "global"}}}}, "some-project-url");
-    expect(S.getConfig().packages[S.decanonicalize("some-project-url")].meta).to.deep.equal({"foo": {format: "global"}});
+    var p = await applyConfig(S, {lively: {meta: {"foo": {format: "global"}}}}, "some-project-url");
+    var pURL = S.decanonicalize("some-project-url/").replace(/\/$/, "")
+    expect(S.getConfig().packages[pURL].meta).to.deep.equal({"foo": {format: "global"}});
   });
 
   it("installs absolute addressed meta data in System.meta", async () => {
