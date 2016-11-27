@@ -140,7 +140,7 @@ class ExportPrompt {
 
   buildItems(exportData) {
     var string1MaxWidth = 0;
-    return exports.map(ea => {
+    return exportData.map(ea => {
       var {exportString, annotation} = this.buildItemString(ea);
       string1MaxWidth = Math.min(60, Math.max(string1MaxWidth, exportString.length))
 
@@ -164,9 +164,9 @@ class ExportPrompt {
     var exportString = `${type} ${exportName}`;
     if (fromModule) exportString += ` from ${fromModule}`
 
-    var annotation = ` [${packageName}/`;
-    if (packageVersion) annotation += `@${packageVersion}`;
-    annotation += pathInPackage + "]";
+    var annotation = ` [${packageName}/${pathInPackage}`;
+    if (packageVersion) annotation += ` ${packageVersion}`;
+    annotation += "]";
 
     return {exportString, annotation}
   }
