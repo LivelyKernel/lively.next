@@ -803,6 +803,8 @@ class StyleEditor extends Morph {
     }]});
    }
 
+   onMouseDown() { this.open() }
+
    close() {
       this.active = false;
       signal(this, "close", false);
@@ -928,18 +930,20 @@ export class BodyStyleEditor extends StyleEditor {
                  property: "blur"
              });
              const control = new Morph({
-                  width: 150, height: 100, fill: Color.transparent,
+                  width: 150, height: 120, fill: Color.transparent,
                   layout: new GridLayout({
                       autoAssign: false,
                       fitToCell: false,
                       grid: [
                       ["distanceLabel", null, "distanceSlider"],
                       ["blurLabel", null, "blurSlider"],
-                      ["angleLabel", "angleSlider", "colorPicker"]]}),
+                      ["angleLabel", null, "angleSlider"],
+                      ["colorLabel", null, "colorPicker"]]}),
                   submorphs: [
-                    {type: "label", value: "Distance: ", name: "distanceLabel"}, distanceInspector,
-                    {type: "label", value: "Blur: ", name: "blurLabel"}, blurInspector,
-                    {type: "label", value: "Angle: ", name: "angleLabel"}, angleSlider,
+                    {type: "label", value: "Distance: ", padding: 4, name: "distanceLabel"}, distanceInspector,
+                    {type: "label", value: "Blur: ", padding: 4, name: "blurLabel"}, blurInspector,
+                    {type: "label", value: "Angle: ", padding: 4, name: "angleLabel"}, angleSlider,
+                    {type: "label", value: "Color: ", padding: 4, name: "colorLabel"},
                     new ColorPickerField({
                          target: value,
                          name: "colorPicker",
@@ -950,6 +954,7 @@ export class BodyStyleEditor extends StyleEditor {
              control.layout.row(0).paddingBottom = 5;
              control.layout.row(1).paddingBottom = 5;
              control.layout.row(2).paddingBottom = 5;
+             control.layout.row(3).paddingBottom = 5;
              return control;
           }
           })
