@@ -189,6 +189,7 @@ var worldCommands = [
 
         var {window, how} = opts,
             win = window || world.activeWindow();
+
         if (!win) return;
 
         var worldB = world.visibleBounds().insetBy(20),
@@ -198,7 +199,7 @@ var worldCommands = [
         // FIXME!
         if (!win._normalBounds) win._normalBounds = winB;
 
-        var thirdWMin = 750,
+        var thirdWMin = 700,
             thirdW = Math.min(thirdWMin, Math.max(1000, bounds.width/3)),
             thirdColBounds = bounds.withWidth(thirdW);
 
@@ -219,20 +220,19 @@ var worldCommands = [
         }
 
         function doResize(how) {
+
             switch(how) {
                 case 'full': case 'fullscreen': break;
-                case 'center': bounds = thirdColBounds.withCenter(worldB.center()); break;
-                case 'right': bounds = thirdColBounds.withTopRight(worldB.topRight()); break;
-                case 'left': bounds = thirdColBounds.withTopLeft(bounds.topLeft()); break;
+                case 'left': bounds = thirdColBounds; break;
                 case 'col3': case 'center': bounds = thirdColBounds.withCenter(worldB.center()); break;
-                case 'col5': case 'right': bounds = thirdColBounds.withTopRight(worldB.topRight()); break;
+                case 'col5': case 'right': bounds = thirdColBounds.translatedBy(pt(worldB.width - thirdW, 0)); break;
                 case 'col1': case 'left': bounds = thirdColBounds.withTopLeft(bounds.topLeft()); break;
                 case 'bottom': bounds = bounds.withY(bounds.y + bounds.height/2);
                 case 'top': bounds = bounds.withHeight(bounds.height/2); break;
                 case 'col2': bounds = thirdColBounds.withTopLeft(worldB.topCenter().scaleByPt(pt(.333,1))).withWidth(thirdW); break;
-                case 'col4': bounds = thirdColBounds.withTopRight(worldB.topCenter().scaleByPt(pt(1.666,1))).withWidth(thirdW); break;
+                case 'col4': bounds = thirdColBounds.translatedBy(worldB.topCenter().withY(0)); break;
                 case 'halftop': bounds = winB.withY(bounds.top()).withHeight(bounds.height/2); break;
-                case 'halfbottom': bounds = winB.withY(bounds.height/2).withHeight(bounds.height/2); break;
+                case 'halfbottom': bounds = winB.withY(bounds.center().y).withHeight(bounds.height/2); break;
                 case 'reset': bounds = win.normalBounds || pt(500,400).extentAsRectangle().withCenter(bounds.center()); break;
                 default: return;
             }
@@ -499,14 +499,14 @@ var worldCommands = [
       return url ? TextEditor.openURL(url, obj.dissoc(opts, ["url"])) : null;
     }
   },
-  
+
   {
     name: "open file for EDITOR",
     exec: async (world, opts = {url: null, lineNumber: null}) => {
       // for using from command line, see l2l default client actions and
       // lively.shell/bin/lively-as-editor.js
       var { default: TextEditor } = await System.import("lively.morphic/ide/text-editor.js"),
-          { url, lineNumber } = opts;          
+          { url, lineNumber } = opts;
       // "saved" || "aborted"
       return  await TextEditor.openAsEDITOR(url, {});
     }
@@ -582,11 +582,11 @@ export class World extends Morph {
   onMouseDown(evt) {
     var target = evt.state.clickedOnMorph;
 
-    if (!target.isHaloItem && 
+    if (!target.isHaloItem &&
          evt.halo && evt.halo.borderBox != target &&
          evt.isCommandKey() && evt.isShiftDown()) {
        evt.halo.addMorphToSelection(target);
-       return;  
+       return;
     }
 
     var addHalo = target.halosEnabled && !evt.halo && evt.isCommandKey();
