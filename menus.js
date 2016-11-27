@@ -209,8 +209,9 @@ export class Menu extends Morph {
           typeof showKeyShortcuts === "string" ?
             showKeyShortcuts :
             target.keysForCommand(command),
-          descr = (alias || command) + (keys ? ` [${keys}]` : "");
-      return {string: descr, action: () => target.execCommand(command, args)};
+          label = alias || command,
+          annotation = keys ? [`\t${keys}`, {fontSize: "70%"}] : ["", {}];
+      return {string: label, annotation, action: () => target.execCommand(command, args)};
     }
 
     return invalidItem;
@@ -243,12 +244,12 @@ export class Menu extends Morph {
       maxWidth = Math.max(title.width, maxWidth);
     }
 
-    this.items.forEach(({string, action, submenu, isDivider}) => {
+    this.items.forEach(({string: label, annotation, action, submenu, isDivider}) => {
       var itemMorph = this.addMorph(
         isDivider ?
           new MenuDivider({position: pos}) :
           new MenuItem({
-             textString: string,
+             label, annotation,
              action, submenu,
              position: pos,
              ...defaultStyle
@@ -260,6 +261,7 @@ export class Menu extends Morph {
     this.submorphs.forEach(ea => {
       if (ea.isLabel) {
         ea.fit();
+        ea.autofit = false;
         ea.fixedWidth = true;
         ea.fixedHeight = true;
       }

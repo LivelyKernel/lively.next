@@ -924,19 +924,22 @@ export class Morph {
           command = binding.command,
           name = typeof command === "string" ? command : command.command || command.name;
 
-      if (typeof platformKeys !== "string") {
-        // console.warn(`in ${this}.keyCommandMap: platformKeys for ${command} is strange:`, platformKeys);
-        return keyMap;
-      }
+      if (typeof platformKeys !== "string") return keyMap;
 
       return platformKeys.split("|").reduce((keyMap, combo) =>
-        Object.assign(keyMap, {[combo]: {name, command}}), keyMap);
+        Object.assign(keyMap, {
+          [combo]: {
+            name, command,
+            prettyKeys: KeyHandler.prettyCombo(combo)
+          }
+        }), keyMap);
     }, {});
   }
 
-  keysForCommand(commandName) {
-    var map = this.keyCommandMap;
-    return Object.keys(map).find(key => map[key].name === commandName);
+  keysForCommand(commandName, pretty = true) {
+    var map = this.keyCommandMap,
+        rawKey = Object.keys(map).find(key => map[key].name === commandName);
+    return rawKey && pretty ? map[rawKey].prettyKeys : rawKey
   }
 
   simulateKeys(keyString) { return KeyHandler.simulateKeys(this, keyString); }

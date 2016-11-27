@@ -48,10 +48,15 @@ var worldCommands = [
     handlesCount: true,
     exec: async (world, args, count) => {
       var items = KeyHandler.generateCommandToKeybindingMap(world.focusedMorph || world, true).map(ea => {
-            var {keys, target, command: {name}} = ea,
+            var {prettyKeys, target, command: {name}} = ea,
                 targetName = target.constructor.name,
-                keysPrinted = keys ? ` [${keys.join(", ")}]` : "";
-            return {isListItem: true, string: `[${targetName}] ${name}${keysPrinted}`, value: ea};
+                keysPrinted = prettyKeys ? string.truncate(prettyKeys.join(", "), 20) : "";
+            return {
+              isListItem: true,
+              string: `[${targetName}] ${name}`,
+              annotation: keysPrinted,
+              value: ea
+            };
           }),
           {prompt, selected: [cmd]} = await world.filterableListPrompt(
             "Run command", items, {
