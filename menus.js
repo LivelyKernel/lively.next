@@ -194,9 +194,17 @@ export class Menu extends Morph {
     if (Array.isArray(item)) {
       var [name, actionOrList] = item;
       if (typeof name !== "string") return invalidItem;
+
       if (!actionOrList || typeof actionOrList === "function")
         return {string: name, action: actionOrList || show.bind(null, name)};
-      if (Array.isArray(actionOrList)) return {string: name, submenu: actionOrList};
+
+      if (Array.isArray(actionOrList))
+        return {
+          string: name,
+          submenu: actionOrList,
+          annotation: [" ", {textStyleClasses: ["fa", "fa-caret-right"]}]
+        };
+
       return invalidItem;
     }
 
