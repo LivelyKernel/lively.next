@@ -732,46 +732,75 @@ export class ColorPickerField extends Morph {
       const {property, target} = props;
       super({
          property, target,
-         extent: pt(20,20),
-         borderRadius: 5, clipMode: "hidden",
+         extent: pt(70,30), layout: new HorizontalLayout(),
+         borderRadius: 5, fill: Color.gray, clipMode: "hidden",
          borderWidth: 1, borderColor: Color.gray.darker(),
          ...props
       })
       const topRight = this.innerBounds().topRight(),
             bottomLeft = this.innerBounds().bottomLeft();
 
-      this.submorphs = [{
-             name: "topLeft",
-             extent: pt(20,20)
-         }, {
-             name: "bottomRight",
-             extent: pt(40,20),
-             origin: pt(40,0), topRight,
-             rotation: num.toRadians(-45)
-      }];
+      this.submorphs = [
+        {extent: pt(40,25), clipMode: "hidden", onMouseDown: (evt) => this.openPalette(evt),
+         submorphs: [{
+               name: "topLeft",
+               extent: pt(70,70)
+           }, {
+               name: "bottomRight",
+               extent: pt(70,80),
+               origin: pt(35,0), topRight,
+               rotation: num.toRadians(-45)
+        }]},
+        {fill: Color.transparent, extent: pt(25, 25), 
+         onHoverIn() { this.fill = Color.black.withA(.2); },
+         onHoverOut() { this.fill = Color.transparent; },
+         submorphs: [{
+          type: "image", imageUrl: WHEEL_URL, extent: pt(20,20), nativeCursor: "pointer",
+          fill: Color.transparent, position: pt(3,3), onMouseDown: (evt) => this.openPicker(evt)}]}];
 
       this.update();
       connect(this.target, "onChange", this, "update");
    }
-
-
 
    update() {
       this.get("topLeft").fill = this.target[this.property];
       this.get("bottomRight").fill = this.target[this.property].withA(1);
    }
 
-   onMouseDown(evt) {
+   async fadeIntoWorld(evt, widget) {
+      const w = new Morph({extent: pt(400,310), fill: Color.transparent, submorphs: [widget]});
+      w.openInWorldNearHand();
+      w.adjustOrigin(w.innerBounds().topCenter());
+      w.position = evt.position;
+      w.scale = 0; w.opacity = 0;
+      await w.animate({opacity: 1, scale: 1, duration: 300});
+      this.world().addMorph(widget);
+      w.remove();
+      return widget;
+   }
+
+   async openPicker(evt) {
       const p = this.picker || new ColorPicker({
-                    extent: pt(400,310),
-                    color: this.target[this.property]})
-      p.openInWorldNearHand();
-      p.adjustOrigin(evt.positionIn(p));
-      p.scale = 0; p.opacity = 0;
-      p.animate({opacity: 1, scale: 1, duration: 200});
+                    color: this.target[this.property]});
       connect(p, "color", this.target, this.property);
       connect(p, "color", this, "update");
-      this.picker = p;
+      this.picker = await this.fadeIntoWorld(evt, p);
+      this.palette && this.palette.remove();
+   }
+
+   async openPalette(evt) {
+      const p = this.palette || new ColorPalette({
+                    extent: pt(400,310), 
+                    selectedColor: this.target[this.property]});
+      connect(p, "selectedColor", this.target, this.property);
+      connect(p, "selectedColor", this, "update");
+      this.palette = await this.fadeIntoWorld(evt, p);
+      this.picker && this.picker.remove();
+   }
+   
+   remove() {
+      super.remove();
+      this.picker.remove();
    }
 
 }
