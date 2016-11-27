@@ -20,6 +20,8 @@ export async function interactivelyInjectImportIntoText(textMorph, opts = {gotoI
   var moduleId = textMorph.evalEnvironment.targetModule,
       source, generated, from, to, pos, ranges = [];
 
+  textMorph.saveMark(); // so we can easily jump to where we were after insertion
+
   textMorph.undoManager.group();
   while (choices.length) {
     let choice = choices.shift();
