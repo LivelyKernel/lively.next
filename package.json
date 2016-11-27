@@ -1,6 +1,6 @@
 {
   "name": "lively.modules",
-  "version": "0.5.47",
+  "version": "0.6.0",
   "main": "dist/lively.modules.js",
   "repository": "https://github.com/LivelyKernel/lively.modules",
   "author": "Robert Krahn <robert.krahn@gmail.com>",
@@ -32,11 +32,11 @@
     }
   },
   "dependencies": {
-    "lively.ast": "^0.7.40",
+    "lively.ast": "^0.8.0",
     "lively.lang": "^0.7.0",
     "lively.notifications": "^0.3.0",
     "lively.resources": "^0.1.2",
-    "lively.vm": "^0.7.36",
+    "lively.vm": "^0.8.0",
     "semver": "^5.3.0",
     "systemjs": "^0.19.40",
     "systemjs-plugin-babel": "0.0.13"
