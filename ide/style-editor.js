@@ -1,8 +1,10 @@
 import { Window, GridLayout, FillLayout, Ellipse, Text,
          VerticalLayout, HorizontalLayout, Image,
          TilingLayout, Morph, morph, Menu, Path } from "../index.js";
-import { Rectangle, Color, LinearGradient, pt, Point, rect } from "lively.graphics";
-import { obj, num, arr } from "lively.lang";
+import { Rectangle, Color, LinearGradient, pt, Point, rect,
+         materialDesignColors, flatDesignColors, RadialGradient,
+         webSafeColors } from "lively.graphics";
+import { obj, num, arr, properties } from "lively.lang";
 import { signal, connect } from "lively.bindings";
 import { ValueScrubber, CheckBox } from "../widgets.js";
 import { Icon } from "../icons.js";
@@ -27,13 +29,13 @@ export class Slider extends Morph {
         this.submorphs = [
            new Path({
                 borderColor: Color.gray.darker(),
-                borderWidth: 1,
-                vertices: [this.leftCenter.addXY(7.5,0),
-                           this.rightCenter.addXY(-7.5,0)]
+                borderWidth: 2,
+                vertices: [this.leftCenter.addXY(5,0),
+                           this.rightCenter.addXY(-5,0)]
               }),
               {type: "ellipse", fill: Color.gray, name: "slideHandle",
-               borderColor: Color.gray.darker(), borderWidth: 1, dropShadow: true,
-               extent: pt(15,15),
+               borderColor: Color.gray.darker(), borderWidth: 1, dropShadow: {blur: 5},
+               extent: pt(15,15), nativeCursor: "grab",
                onDrag(evt) {
                   slider.onSlide(this, evt.state.dragDelta);
                }}
@@ -48,7 +50,7 @@ export class Slider extends Morph {
 
     update() {
         const x = (this.width - 15) * this.normalize(this.target[this.property]);
-        this.get("slideHandle").center = pt(x + 7.5, 10);
+        this.get("slideHandle").center = pt(x + 7.5, 12);
     }
 
     onSlide(slideHandle, delta) {
