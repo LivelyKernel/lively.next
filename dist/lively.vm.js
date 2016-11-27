@@ -4020,6 +4020,11 @@
             truncation = truncation === undefined ? '...' : truncation;
             return s.length > length ? s.slice(0, length - truncation.length) + truncation : String(s);
         },
+        truncateLeft: function (s, length, truncation) {
+            length = length || 30;
+            truncation = truncation === undefined ? '...' : truncation;
+            return s.length > length ? truncation + s.slice(-length) : String(s);
+        },
         regExpEscape: function (s) {
             return s.replace(/([-()\[\]{}+?*.$\^|,:#<!\\])/g, '\\$1').replace(/\x08/g, '\\x08');
         },
@@ -12402,11 +12407,13 @@ module.exports = function(acorn) {
           return parenthesize(result, Precedence.Member, precedence);
         },
         MetaProperty: function (expr, precedence, flags) {
-          var result;
+          var result, meta, property;
+          meta = typeof expr.meta.type === 'string' && expr.meta.type === Syntax.Identifier ? expr.meta.name : expr.meta;
+          property = typeof expr.property.type === 'string' && expr.property.type === Syntax.Identifier ? expr.property.name : expr.property;
           result = [
-            expr.meta.type === Syntax.Identifier ? expr.meta.name : String(expr.meta),
+            meta,
             '.',
-            expr.property.type === Syntax.Identifier ? expr.property.name : String(expr.property)
+            property
           ];
           return parenthesize(result, Precedence.Member, precedence);
         },
@@ -17282,7 +17289,16 @@ var ScopeVisitor = function (_Visitor3) {
   }, {
     key: "visitFunction",
     value: function visitFunction(node, scope, path) {
+      var visitor = this;
       var newScope = this.newScope(node, scope);
+
+      // AssignmentPattern = default params
+      // only visit the right side of a default param, we track the declarations
+      // in newScope.params specificially
+      node.params.forEach(function (param, i) {
+        if (param.type === "AssignmentPattern") visitor.accept(param.right, scope, path.concat("params", i, "right"));
+      });
+
       newScope.params = Array.prototype.slice.call(node.params);
       return newScope;
     }
@@ -18306,7 +18322,24 @@ function parse(source, options) {
     };
   }
 
-  var parsed = acorn.parse(source, options);
+  try {
+    var parsed = acorn.parse(source, options);
+  } catch (err) {
+    if (typeof SyntaxError !== "undefined" && err instanceof SyntaxError && err.loc) {
+      var lines = source.split("\n");
+      var message = err.message;
+      var _err$loc = err.loc;
+      var row = _err$loc.line;
+      var column = _err$loc.column;
+      var pos = err.pos;
+      var line = lines[row - 1];
+      var newMessage = "Syntax error at line " + row + " column " + column + " (index " + pos + ") \"" + message + "\"\nsource: " + line.slice(0, column) + "<--SyntaxError-->" + line.slice(column);
+      var betterErr = new SyntaxError(newMessage);
+      betterErr.loc = { line: row, column: column };
+      betterErr.pos = pos;
+      throw betterErr;
+    } else throw err;
+  }
 
   if (options.addSource) addSource(parsed, source);
 
@@ -18761,6 +18794,7 @@ var helpers = {
       if (!ea) return [];
       if (ea.type === "Identifier") return [ea];
       if (ea.type === "RestElement") return [ea.argument];
+      // AssignmentPattern: default arg like function(local = defaultVal) {}
       if (ea.type === "AssignmentPattern") return helpers.declIds([ea.left]);
       if (ea.type === "ObjectPattern") return helpers.declIds(lively_lang.arr.pluck(ea.properties, "value"));
       if (ea.type === "ArrayPattern") return helpers.declIds(ea.elements);
@@ -18819,7 +18853,7 @@ var helpers = {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "lively", "pt", "rect", "rgb", "$super", "$morph", "$world", "show"];
+var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "lively"];
 
 function scopes(parsed) {
   var vis = new ScopeVisitor(),
@@ -21028,6 +21062,32 @@ var comments = Object.freeze({
 	extractComments: extractComments
 });
 
+/*
+
+types found:
+
+The def data structure:
+  {type, name, node, children?, parent?}
+
+class-decl
+  class-constructor
+  class-instance-method
+  class-class-method
+  class-instance-getter
+  class-instance-setter
+  class-class-getter
+  class-class-setter
+
+function-decl
+
+var-decl
+
+object-decl
+  object-method
+  object-property
+
+*/
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // main method
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -21039,151 +21099,188 @@ function findDecls(parsed, options) {
   if (typeof parsed === "string") parsed = parse(parsed, { addSource: true });
 
   var topLevelNodes = parsed.type === "Program" ? parsed.body : parsed.body.body,
-      defs = lively_lang.arr.flatmap(topLevelNodes, function (n) {
-    return moduleDef(n, options) || functionWrapper(n, options) || varDefs(n) || funcDef(n) || classDef(n) || es6ClassDef(n) || extendDef(n) || someObjectExpressionCall(n);
-  });
+      defs = [],
+      hideOneLiners = options.hideOneLiners && parsed.source;
 
-  if (options.hideOneLiners && parsed.source) {
-    defs = defs.reduce(function (defs, def) {
-      if (def.parent && defs.indexOf(def.parent) > -1) defs.push(def);else if ((def.node.source || "").indexOf("\n") > -1) defs.push(def);
-      return defs;
-    }, []);
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = topLevelNodes[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var node = _step.value;
+
+      node = unwrapExport(node);
+      var found = functionWrapper(node, options) || varDefs(node) || funcDef(node) || es6ClassDef(node) || someObjectExpressionCall(node);
+
+      if (!found) continue;
+
+      if (options.hideOneLiners) {
+        if (parsed.loc) {
+          found = found.filter(function (def) {
+            return !def.node.loc || def.node.loc.start.line !== def.node.loc.end.line;
+          });
+        } else if (parsed.source) {
+          var filtered = [];
+          var _iteratorNormalCompletion2 = true;
+          var _didIteratorError2 = false;
+          var _iteratorError2 = undefined;
+
+          try {
+            for (var _iterator2 = found[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+              var def = _step2.value;
+
+              if (def.parent && filtered.includes(def.parent) || // parent is in
+              (def.node.source || "").includes("\n") // more than one line
+              ) filtered.push(def);
+            }
+          } catch (err) {
+            _didIteratorError2 = true;
+            _iteratorError2 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                _iterator2.return();
+              }
+            } finally {
+              if (_didIteratorError2) {
+                throw _iteratorError2;
+              }
+            }
+          }
+
+          found = filtered;
+        }
+      }
+
+      defs.push.apply(defs, toConsumableArray(found));
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
   }
-
-  if (options.hideOneLiners && parsed.loc) defs = defs.filter(function (def) {
-    return !def.node.loc || def.node.loc.start.line !== def.node.loc.end.line;
-    parsed;
-  });
 
   return defs;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// helpers
+// defs
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function objectKeyValsAsDefs(objectExpression) {
-  return objectExpression.properties.map(function (prop) {
-    return {
-      name: prop.key.name || prop.key.value,
-      type: prop.value.type === "FunctionExpression" ? "method" : "property",
-      node: prop
-    };
-  });
-}
-
-function classDef(node) {
-  if (lively_lang.Path("expression.callee.property.name").get(node) !== "subclass") return null;
-  var def = {
-    type: "lively-class-definition",
-    name: lively_lang.Path("expression.arguments.0.value").get(node),
-    node: node
-  };
-  var props = lively_lang.arr.flatmap(node.expression.arguments, function (argNode) {
-    if (argNode.type !== "ObjectExpression") return [];
-    return objectKeyValsAsDefs(argNode).map(function (ea) {
-      ea.type = "lively-class-instance-" + ea.type;
-      ea.parent = def;
-      return ea;
-    });
-  });
-  return [def].concat(props);
-}
 
 function es6ClassDef(node) {
+  var _def$children;
+
   if (node.type !== "ClassDeclaration") return null;
   var def = {
-    type: "class",
+    type: "class-decl",
     name: node.id.name,
-    node: node
+    node: node,
+    children: []
   };
-  // FIXME need to differentiate between class / instance methods, getters, setters!
-  var props = node.body.body.map(function (propNode) {
-    if (propNode.type === "MethodDefinition") {
-      return {
-        type: "class-method",
-        parent: def,
-        name: propNode.key.name,
-        node: propNode
-      };
-    }
-    return null;
-  }).filter(function (ea) {
-    return !!ea;
-  });
-  return [def].concat(props);
+  (_def$children = def.children).push.apply(_def$children, toConsumableArray(node.body.body.map(function (node, i) {
+    return es6ClassMethod(node, def, i);
+  }).filter(Boolean)));
+  return [def].concat(toConsumableArray(def.children));
 }
 
-function extendDef(node) {
-  if (lively_lang.Path("expression.callee.property.name").get(node) !== "extend" || lively_lang.Path("expression.arguments.0.type").get(node) !== "ObjectExpression") return null;
-  var name = lively_lang.Path("expression.arguments.0.name").get(node);
-  if (!name) return null;
-  var def = {
-    name: name, node: node,
-    type: "lively-extend-definition"
-  };
-  var props = (objectKeyValsAsDefs(lively_lang.Path("expression.arguments.1").get(node)) || []).map(function (d) {
-    d.parent = def;return d;
-  });
-  return [def].concat(props);
+function es6ClassMethod(node, parent, i) {
+  if (node.type !== "MethodDefinition") return null;
+  var type;
+  if (node.kind === "constructor") type = "class-constructor";else if (node.kind === "method") type = node.static ? "class-class-method" : "class-instance-method";else if (node.kind === "get") type = node.static ? "class-class-getter" : "class-instance-getter";else if (node.kind === "set") type = node.static ? "class-class-setter" : "class-instance-setter";
+  return type ? {
+    type: type, parent: parent, node: node,
+    name: node.key.name
+  } : null;
 }
 
 function varDefs(node) {
   if (node.type !== "VariableDeclaration") return null;
-  return lively_lang.arr.flatmap(withVarDeclIds(node), function (ea) {
-    return lively_lang.arr.flatmap(ea.ids, function (id) {
-      var def = { name: id.name, node: ea.node, type: "var-decl" };
-      if (!def.node.init) return [def];
-      var node = def.node.init;
-      while (node.type === "AssignmentExpression") {
-        node = node.right;
-      }if (node.type === "ObjectExpression") {
-        return [def].concat(objectKeyValsAsDefs(node).map(function (ea) {
-          ea.type = "object-" + ea.type;ea.parent = def;return ea;
-        }));
+  var result = [];
+
+  var _iteratorNormalCompletion3 = true;
+  var _didIteratorError3 = false;
+  var _iteratorError3 = undefined;
+
+  try {
+    for (var _iterator3 = withVarDeclIds(node)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+      var _step3$value = _step3.value;
+      var id = _step3$value.id;
+      var _node = _step3$value.node;
+
+      var def = { name: id.name, node: _node, type: "var-decl" };
+      result.push(def);
+      if (!def.node.init) continue;
+
+      var _node = def.node.init;
+      while (_node.type === "AssignmentExpression") {
+        _node = _node.right;
+      }if (_node.type === "ObjectExpression") {
+        def.type = "object-decl";
+        def.children = objectKeyValsAsDefs(_node).map(function (ea) {
+          return _extends({}, ea, { type: "object-" + ea.type, parent: def });
+        });
+        result.push.apply(result, toConsumableArray(def.children));
+        continue;
       }
-      var objDefs = someObjectExpressionCall(node);
-      if (objDefs) return [def].concat(objDefs.map(function (d) {
-        d.parent = def;return d;
-      }));
-      return [def];
-    });
-  });
+
+      var objDefs = someObjectExpressionCall(_node, def);
+      if (objDefs) {
+        def.children = objDefs.map(function (d) {
+          return _extends({}, d, { parent: def });
+        });
+        result.push.apply(result, toConsumableArray(def.children));
+      }
+    }
+  } catch (err) {
+    _didIteratorError3 = true;
+    _iteratorError3 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion3 && _iterator3.return) {
+        _iterator3.return();
+      }
+    } finally {
+      if (_didIteratorError3) {
+        throw _iteratorError3;
+      }
+    }
+  }
+
+  return result;
 }
 
 function funcDef(node) {
   if (node.type !== "FunctionStatement" && node.type !== "FunctionDeclaration") return null;
-  return [{
-    name: node.id.name,
-    node: node,
-    type: "function-decl"
-  }];
+  return [{ name: node.id.name, node: node, type: "function-decl" }];
 }
 
-function someObjectExpressionCall(node) {
+function someObjectExpressionCall(node, parentDef) {
+  // like Foo({....})
   if (node.type === "ExpressionStatement") node = node.expression;
   if (node.type !== "CallExpression") return null;
-  var objArg = node.arguments.detect(function (a) {
+  var objArg = node.arguments.find(function (a) {
     return a.type === "ObjectExpression";
   });
   if (!objArg) return null;
-  return objectKeyValsAsDefs(objArg);
-}
-
-function moduleDef(node, options) {
-  if (!isModuleDeclaration(node)) return null;
-  var decls = findDecls(lively_lang.Path("expression.arguments.0").get(node), options),
-      parent = { node: node, name: lively_lang.Path("expression.callee.object.callee.object.arguments.0.value").get(node) };
-  decls.forEach(function (decl) {
-    return decl.parent = parent;
-  });
-  return decls;
+  return objectKeyValsAsDefs(objArg, parentDef);
 }
 
 function functionWrapper(node, options) {
   if (!isFunctionWrapper(node)) return null;
   var decls;
   // Is it a function wrapper passed as arg?
-  // like ;(function(run) {... })(function(exports) {...})      
+  // like ;(function(run) {... })(function(exports) {...})
   var argFunc = lively_lang.Path("expression.arguments.0").get(node);
   if (argFunc && argFunc.type === "FunctionExpression" && lively_lang.string.lines(argFunc.source || "").length > 5) {
     // lively.debugNextMethodCall(lively.ast.CodeCategorizer, "findDecls");
@@ -21199,9 +21296,21 @@ function functionWrapper(node, options) {
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// helpers
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function isModuleDeclaration(node) {
-  return lively_lang.Path("expression.callee.object.callee.object.callee.name").get(node) === "module" && lively_lang.Path("expression.callee.property.name").get(node) === "toRun";
+function unwrapExport(node) {
+  return (node.type === "ExportNamedDeclaration" || node.type === "ExportDefaultDeclaration") && node.declaration ? node.declaration : node;
+}
+
+function objectKeyValsAsDefs(objectExpression, parent) {
+  return objectExpression.properties.map(function (node) {
+    return {
+      name: node.key.name || node.key.value,
+      type: node.value.type === "FunctionExpression" ? "method" : "property",
+      node: node, parent: parent
+    };
+  });
 }
 
 function isFunctionWrapper(node) {
@@ -21222,9 +21331,11 @@ function declIds$1(idNodes) {
 function withVarDeclIds(varNode) {
   return varNode.declarations.map(function (declNode) {
     if (!declNode.source && declNode.init) declNode.source = declNode.id.name + " = " + declNode.init.source;
-    return { node: declNode, ids: declIds$1([declNode.id]) };
+    return { node: declNode, id: declNode.id };
   });
 }
+
+
 
 var codeCategorizer = Object.freeze({
 	findDecls: findDecls
