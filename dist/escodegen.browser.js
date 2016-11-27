@@ -1625,11 +1625,13 @@
           return parenthesize(result, Precedence.Member, precedence);
         },
         MetaProperty: function (expr, precedence, flags) {
-          var result;
+          var result, meta, property;
+          meta = typeof expr.meta.type === 'string' && expr.meta.type === Syntax.Identifier ? expr.meta.name : expr.meta;
+          property = typeof expr.property.type === 'string' && expr.property.type === Syntax.Identifier ? expr.property.name : expr.property;
           result = [
-            expr.meta.type === Syntax.Identifier ? expr.meta.name : String(expr.meta),
+            meta,
             '.',
-            expr.property.type === Syntax.Identifier ? expr.property.name : String(expr.property)
+            property
           ];
           return parenthesize(result, Precedence.Member, precedence);
         },

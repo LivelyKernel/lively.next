@@ -6955,11 +6955,13 @@ module.exports = function(acorn) {
           return parenthesize(result, Precedence.Member, precedence);
         },
         MetaProperty: function (expr, precedence, flags) {
-          var result;
+          var result, meta, property;
+          meta = typeof expr.meta.type === 'string' && expr.meta.type === Syntax.Identifier ? expr.meta.name : expr.meta;
+          property = typeof expr.property.type === 'string' && expr.property.type === Syntax.Identifier ? expr.property.name : expr.property;
           result = [
-            expr.meta.type === Syntax.Identifier ? expr.meta.name : String(expr.meta),
+            meta,
             '.',
-            expr.property.type === Syntax.Identifier ? expr.property.name : String(expr.property)
+            property
           ];
           return parenthesize(result, Precedence.Member, precedence);
         },
@@ -11835,7 +11837,16 @@ var ScopeVisitor = function (_Visitor3) {
   }, {
     key: "visitFunction",
     value: function visitFunction(node, scope, path) {
+      var visitor = this;
       var newScope = this.newScope(node, scope);
+
+      // AssignmentPattern = default params
+      // only visit the right side of a default param, we track the declarations
+      // in newScope.params specificially
+      node.params.forEach(function (param, i) {
+        if (param.type === "AssignmentPattern") visitor.accept(param.right, scope, path.concat("params", i, "right"));
+      });
+
       newScope.params = Array.prototype.slice.call(node.params);
       return newScope;
     }
@@ -13331,6 +13342,7 @@ var helpers = {
       if (!ea) return [];
       if (ea.type === "Identifier") return [ea];
       if (ea.type === "RestElement") return [ea.argument];
+      // AssignmentPattern: default arg like function(local = defaultVal) {}
       if (ea.type === "AssignmentPattern") return helpers.declIds([ea.left]);
       if (ea.type === "ObjectPattern") return helpers.declIds(lively_lang.arr.pluck(ea.properties, "value"));
       if (ea.type === "ArrayPattern") return helpers.declIds(ea.elements);
@@ -13389,7 +13401,7 @@ var helpers = {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "lively", "pt", "rect", "rgb", "$super", "$morph", "$world", "show"];
+var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "lively"];
 
 function scopes(parsed) {
   var vis = new ScopeVisitor(),

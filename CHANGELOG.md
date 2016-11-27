@@ -1,5 +1,31 @@
 # changelog lively.ast
 
+## 0.8.0
+ - remove old lively globals from default known globals.
+    This is a BREAKING CHANGE i.e. this will break use of lively.ast in
+    LivelyKernel. From this point on forward this lively.ast package is only
+    suitable for usage in lively.next packages!!!
+- fix recogizing vars that are default args in function params
+
+## 0.7.46
+- better code categorizer
+
+## 0.7.44
+- improved parser error messages
+
+## 0.7.42
+- improve how export vars are captured
+
+## 0.7.41
+- fix scope visitor for new.target
+## 0.7.40
+- switching to new version of escodegen that fixes lively.vm/issues#6
+
+## 0.7.38
+- class transform: only use class holder for class declarations
+- don't report export froms as undeclared refs
+- add declaration wrapper to class def
+- add declaration wrapper to assignment
 
 ## 0.7.37
 - acorn@4
