@@ -17295,7 +17295,7 @@ var ScopeVisitor = function (_Visitor3) {
       // only visit the right side of a default param, we track the declarations
       // in newScope.params specificially
       node.params.forEach(function (param, i) {
-        if (param.type === "AssignmentPattern") visitor.accept(param.right, scope, path.concat("params", i, "right"));
+        if (param.type === "AssignmentPattern") visitor.accept(param.right, newScope, path.concat("params", i, "right"));
       });
 
       newScope.params = Array.prototype.slice.call(node.params);
