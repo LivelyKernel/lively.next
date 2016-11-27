@@ -179,6 +179,7 @@ describe('http', function() {
   })
 });
 
+
 describe("url operations", () => {
 
   it("is parent", () => {
@@ -200,7 +201,52 @@ describe("url operations", () => {
     expect(r1.commonDirectory(r5).url).equals("http://foo/");
   });
 
+
+  it("remove relative parts", () => {
+    expect(resource('http://foo.com/bar/../baz/').withRelativePartsResolved().url)
+      .equals('http://foo.com/baz/');
+  
+    expect(resource('http://localhost/webwerkstatt/projects/HTML5/presentation100720/../../../').withRelativePartsResolved().url)
+      .equals('http://localhost/webwerkstatt/');
+  
+    expect(resource('http://localhost/foo//bar').withRelativePartsResolved().url)
+      .equals('http://localhost/foo/bar');
+  
+    expect(resource('http://localhost/foo/./bar').withRelativePartsResolved().url)
+      .equals('http://localhost/foo/bar');
+  });
+
+  it("relative path from-to", () => {
+
+    expect(resource("http://foo/bar/oink/baz.js").relativePathFrom(resource("http://foo/bar/")))
+      .equals("oink/baz.js");
+    expect(resource("http://foo/bar/oink/baz.js").relativePathFrom(resource("http://foo/bar/baz.js")))
+      .equals("oink/baz.js");
+    expect(resource("http://foo/bar/oink/baz.js").relativePathFrom(resource("http://foo/bar/zork/")))
+      .equals("../oink/baz.js");
+
+    expect(resource('http://www.foo.org/test/bar/baz')
+      .relativePathFrom(resource('http://www.foo.org/')))
+        .equals('test/bar/baz')
+
+    // fixme subdomains?
+    // expect(resource('http://www.foo.org/test/bar/baz')
+    //   .relativePathFrom(resource('http://foo.org/')))
+    //     .equals('test/bar/baz')
+
+    expect(() => resource('http://foo.com/').relativePathFrom(resource('http://foo.org/')))
+      .throws();
+
+    var a = resource("http://northwestern.itsapirateslife.net:9001/core/lively/bootstrap.js"),
+        b = resource("http://northwestern.itsapirateslife.net:9001//questions/Worlds/unknown_user_1434404507629_original.html?autosave=true");
+    expect(a.relativePathFrom(b)).equals("../../core/lively/bootstrap.js")
+
+    var a = resource('http://www.foo.org/bar/');
+    expect(a.relativePathFrom(a)).equals("", "identity");
+  });
+
 });
+
 
 describe("extensions", () => {
 
@@ -217,4 +263,5 @@ describe("extensions", () => {
     expect(() => resource("xxx:fooo")).throws();
   });
 
-})
+});
+

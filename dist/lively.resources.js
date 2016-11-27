@@ -1467,6 +1467,7 @@ var WebDAVResource = function (_Resource) {
     key: "read",
     value: function () {
       var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+        var res;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -1475,9 +1476,19 @@ var WebDAVResource = function (_Resource) {
                 return fetch(this.url, { mode: 'cors' });
 
               case 2:
-                return _context.abrupt("return", _context.sent.text());
+                res = _context.sent;
 
-              case 3:
+                if (res.ok) {
+                  _context.next = 5;
+                  break;
+                }
+
+                throw new Error("Cannot read " + this.url + ": " + res.statusText + " " + res.status);
+
+              case 5:
+                return _context.abrupt("return", res.text());
+
+              case 6:
               case "end":
                 return _context.stop();
             }
@@ -1495,6 +1506,7 @@ var WebDAVResource = function (_Resource) {
     key: "write",
     value: function () {
       var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(content) {
+        var res;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
@@ -1511,9 +1523,19 @@ var WebDAVResource = function (_Resource) {
                 return fetch(this.url, { mode: 'cors', method: "PUT", body: content });
 
               case 4:
+                res = _context2.sent;
+
+                if (res.ok) {
+                  _context2.next = 7;
+                  break;
+                }
+
+                throw new Error("Cannot write " + this.url + ": " + res.statusText + " " + res.status);
+
+              case 7:
                 return _context2.abrupt("return", this);
 
-              case 5:
+              case 8:
               case "end":
                 return _context2.stop();
             }
@@ -1531,6 +1553,7 @@ var WebDAVResource = function (_Resource) {
     key: "mkdir",
     value: function () {
       var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+        var res;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -1547,9 +1570,19 @@ var WebDAVResource = function (_Resource) {
                 return fetch(this.url, { mode: 'cors', method: "MKCOL" });
 
               case 4:
+                res = _context3.sent;
+
+                if (res.ok) {
+                  _context3.next = 7;
+                  break;
+                }
+
+                throw new Error("Cannot create directory " + this.url + ": " + res.statusText + " " + res.status);
+
+              case 7:
                 return _context3.abrupt("return", this);
 
-              case 5:
+              case 8:
               case "end":
                 return _context3.stop();
             }
@@ -1608,6 +1641,7 @@ var WebDAVResource = function (_Resource) {
     key: "remove",
     value: function () {
       var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+        var res;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
@@ -1616,9 +1650,19 @@ var WebDAVResource = function (_Resource) {
                 return fetch(this.url, { mode: 'cors', method: "DELETE" });
 
               case 2:
+                res = _context5.sent;
+
+                if (res.ok) {
+                  _context5.next = 5;
+                  break;
+                }
+
+                throw new Error("Cannot delete " + this.url + ": " + res.statusText + " " + res.status);
+
+              case 5:
                 return _context5.abrupt("return", this);
 
-              case 3:
+              case 6:
               case "end":
                 return _context5.stop();
             }

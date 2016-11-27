@@ -80,7 +80,7 @@ export default class Resource {
     return otherRes.schemeAndHost() === this.schemeAndHost()
         && otherRes.parents().some(p => p.equals(this));
   }
-  
+
   commonDirectory(other) {
     if (other.schemeAndHost() !== this.schemeAndHost()) return null;
     if (this.isDirectory() && this.equals(other)) return this;
@@ -88,13 +88,57 @@ export default class Resource {
     if (other.isRoot()) return other.asDirectory();
     var otherParents = other.parents(),
         myParents = this.parents(),
-        common = this.root();    
+        common = this.root();
     for (var i = 0; i < myParents.length; i++) {
       var myP = myParents[i], otherP = otherParents[i];
       if (!otherP || !myP.equals(otherP)) return common;
       common = myP;
     }
     return common;
+  }
+
+  withRelativePartsResolved() {
+    var path = this.path(),
+        result = path;
+    // /foo/../bar --> /bar
+    do {
+      path = result;
+      result = path.replace(/\/[^\/]+\/\.\./, '');
+    } while (result != path);
+
+    // foo//bar --> foo/bar
+    result = result.replace(/(^|[^:])[\/]+/g, '$1/');
+    // foo/./bar --> foo/bar
+    result = result.replace(/\/\.\//g, '/');
+    return result === this.path() ? this : this.root().join(result);
+  }
+
+  relativePathFrom(fromResource) {
+    if (fromResource.root().url != this.root().url)
+        throw new Error('hostname differs in relativePathFrom ' + fromResource + ' vs ' + this);
+
+    var myPath = this.withRelativePartsResolved().path(),
+        otherPath = fromResource.withRelativePartsResolved().path();
+    if (myPath == otherPath) return '';
+    var relPath = checkPathes(myPath, otherPath);
+    if (!relPath)
+        throw new Error('pathname differs in relativePathFrom ' + fromResource + ' vs ' + this);
+    return relPath;
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    function checkPathes(path1, path2) {
+      var paths1 = path1.split('/'),
+          paths2 = path2.split('/');
+      paths1.shift();
+      paths2.shift();
+      for (var i = 0; i < paths2.length; i++)
+          if (!paths1[i] || (paths1[i] != paths2[i])) break;
+      // now that's some JavaScript FOO
+      var result = '../'.repeat(Math.max(0, paths2.length - i - 1))
+                 + paths1.splice(i, paths1.length).join('/');
+      return result;
+    }
   }
 
   join(path) {
