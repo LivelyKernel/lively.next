@@ -141,12 +141,31 @@ describe("ast.capturing", function() {
                  "_rec.x = 23;\n_rec.y = _rec.x + 1;");
     });
 
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+
     describe("enhanced object literals", () => {
 
       testVarTfm("captures shorthand properties",
                  "var x = 23, y = {x};",
                  "_rec.x = 23;\n_rec.y = { x: _rec.x };");
     });
+
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+
+    describe("default args", () => {
+
+      testVarTfm("captures default arg",
+                 "function x(arg = foo) {}",
+                 "function x(arg = _rec.foo) {\n}\n_rec.x = x;\nx;");
+    });
+
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 
     describe("class", () => {
 
@@ -160,19 +179,19 @@ describe("ast.capturing", function() {
                                                        + "        return 23;\n"
                                                        + "    }\n"
                                                        + "}]", 'undefined', "_rec", 'undefined'));
-  
+
         testVarTfm("exported def",
                    "export class Foo {}",
                    `export ${classTemplateDecl('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined')}\n_rec.Foo = Foo;`);
-  
+
         testVarTfm("exported default def",
                    "export default class Foo {}",
                    `${classTemplateDecl('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined')}\nFoo = _rec.Foo;\nexport default Foo;`);
-  
+
         testVarTfm("does not capture class expr",
                    "var bar = class Foo {}",
                    `_rec.bar = ${classTemplate('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined', false)};`);
-  
+
         testVarTfm("captures var that has same name as class expr",
                    "var Foo = class Foo {}; new Foo();",
                    `_rec.Foo = ${classTemplate('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined', false)};\nnew _rec.Foo();`);
@@ -187,22 +206,22 @@ describe("ast.capturing", function() {
                    opts,
                    "class Foo {\n  a() {\n    return 23;\n  }\n}",
                    'class Foo {\n    a() {\n        return 23;\n    }\n}\n_rec.Foo = Foo;');
-  
+
         testVarTfm("exported def",
                    opts,
                    "export class Foo {}",
                    "export class Foo {\n}\n_rec.Foo = Foo;");
-  
+
         testVarTfm("exported default def",
                    opts,
                    "export default class Foo {}",
                    "export default class Foo {\n}\n_rec.Foo = Foo;");
-  
+
         testVarTfm("does not capture class expr",
                    opts,
                    "var bar = class Foo {}",
                    "_rec.bar = class Foo {\n};");
-  
+
         testVarTfm("captures var that has same name as class expr",
                    opts,
                    "var Foo = class Foo {}; new Foo();",
@@ -533,9 +552,9 @@ describe("ast.capturing", function() {
                                                   + "}]", 'undefined', "_rec", 'undefined')
                 + ", _rec);\n"
                 + "_moduleExport('Foo', _rec.Foo);\n;"
-                
 
-                
+
+
                 );
 
       testVarTfm("named",
@@ -635,9 +654,9 @@ _rec.y = _define('y', 'var', destructured_1[1], _rec);`);
 
 
 describe("System.register", () => {
-  
+
   describe("setters", () => {
-    var input = 
+    var input =
 `System.register(["foo:a.js", "http://zork/b.js"], function (_export, _context) {
 "use strict";
 var x, y, z, _rec;

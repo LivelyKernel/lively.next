@@ -27,21 +27,21 @@ describe('query', function() {
       expect(["bar", "xxx", "x"]).deep.equals(refIds, "ref ids");
     });
 
-    it("recognizeFunctionDeclaration", function() {
+    it("recognize function declaration", function() {
       var code = "this.addScript(function run(n) { if (n > 0) run(n-1); show('done'); });",
           result = query.topLevelDeclsAndRefs(code),
           expected = ["show"];
       expect(expected).deep.equals(result.undeclaredNames);
     });
 
-    it("recognizeArrowFunctionDeclaration", function() {
+    it("recognize arrow function declaration", function() {
       var code = "this.addScript((n, run) => { if (n > 0) run(n-1); show('done'); });",
           result = query.topLevelDeclsAndRefs(code),
           expected = ["show"];
       expect(expected).deep.equals(result.undeclaredNames);
     });
 
-    it("recognizeClassDeclaration", function() {
+    it("recognize class declaration", function() {
       var code = "class Foo {\n" + "  constructor(name) { this.name = name; }\n" + "}\n"+ "new Foo();",
           result = query.topLevelDeclsAndRefs(code),
           expected = [];
