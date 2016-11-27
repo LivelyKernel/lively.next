@@ -137,24 +137,23 @@ export class PropertyInspector extends Morph {
 
    constructor(props) {
        const btnStyle = {
-          type: "button",
-          border: {radius: 3, style: "solid", color: Color.gray}
+          type: "button", activeStyle: {fill: Color.transparent, borderWidth: 0, fontColor: Color.white.darker()}, 
+                          triggerStyle: {fill: Color.transparent, fontColor: Color.black}
        }, {target, property, name} = props;
        super({
            name,
-           fill: Color.transparent,
-           extent:pt(55, 20),
+           extent:pt(55, 25), borderRadius: 5,
+           borderWidth: 1, borderColor: Color.gray, 
+           clipMode: "hidden",
            submorphs: [new ValueScrubber({
-                        name: "value",
-                        borderRadius: 3, fill: Color.white,
-                        padding: 3, fontSize: 13,
-                        borderColor: Color.gray.darker(),
+                        name: "value", fill: Color.white,
+                        padding: 4, fontSize: 15,
                         value: target[property],
                         ...obj.dissoc(props, ["name"])}),
-                        {name: "up", ...btnStyle, label: Icon.makeLabel(
-                                  "sort-asc", {padding: rect(2,0,0,0)})},
                         {name: "down", ...btnStyle, label: Icon.makeLabel(
-                                  "sort-desc", {padding: rect(0,0,0,2)})}]
+                                  "sort-desc", {padding: rect(2,2,0,0), fontSize: 12})},
+                        {name: "up", ...btnStyle, label: Icon.makeLabel(
+                                  "sort-asc", {padding: rect(2,2,0,0), fontSize: 12})}]
        });
        this.target = target;
        this.property = property;
@@ -180,6 +179,7 @@ export class PropertyInspector extends Morph {
       l.col(1).paddingLeft = 5;
       l.col(1).paddingRight = 5;
       l.col(1).fixed = 25;
+      l.row(1).paddingTop = -10;
       return l;
    }
 
