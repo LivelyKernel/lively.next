@@ -190,19 +190,16 @@ export class PropertyInspector extends Morph {
 
 class ColorHarmony {
 
-   constructor(colorPicker) { this.colorPicker = colorPicker }
+   static offsets() { return null }
 
-   offsets() { return null }
+   static stepCount() { return 0 }
 
-   stepCount() { return 0 }
+   static stepSize() { return 0; }
 
-   stepSize() { return 0; }
+   static get name() { return "Color Harmony"}
 
-   get name() { return "Color Harmony"}
-
-   chord() {
-      const {hue, saturation, brightness} = this.colorPicker,
-             offsets = this.offsets() || arr.range(0, this.steps()).map(i => i * this.stepSize());
+   static chord({hue, saturation, brightness}) {
+      const offsets = this.offsets() || arr.range(0, this.steps()).map(i => i * this.stepSize());
       return offsets.map(offset => Color.hsb(hue + offset % 360, saturation, brightness));
    }
 
@@ -210,48 +207,48 @@ class ColorHarmony {
 
 class Complementary extends ColorHarmony {
 
-    get name() { return "Complement" }
-    steps() { return 1 }
-    stepSize() { return 180 }
+    static get name() { return "Complement" }
+    static steps() { return 1 }
+    static stepSize() { return 180 }
 
 }
 
 class Triadic extends ColorHarmony {
 
-   get name() { return "Triadic" }
-   steps() { return 2 }
-   stepSize() { return 120 }
+   static get name() { return "Triadic" }
+   static steps() { return 2 }
+   static stepSize() { return 120 }
 
 }
 
 class Tetradic extends ColorHarmony {
 
-   get name() { return "Tetradic" }
-   offsets() { return [0, 60, 180, 240] }
+   static get name() { return "Tetradic" }
+   static offsets() { return [0, 60, 180, 240] }
 
 }
 
 class Quadratic extends ColorHarmony {
 
-   get name() { return "Quadratic" }
-   steps() { return 3 }
-   stepSize() { return 90 }
+   static get name() { return "Quadratic" }
+   static steps() { return 3 }
+   static stepSize() { return 90 }
 
 }
 
 class Analogous extends ColorHarmony {
 
-   get name() { return "Analogous" }
-   steps() { return 5 }
-   stepSize() { return 30 }
+   static get name() { return "Analogous" }
+   static steps() { return 5 }
+   static stepSize() { return 30 }
 
 }
 
 class Neutral extends ColorHarmony {
 
-   get name() { return "Neutral" }
-   steps() { return 5 }
-   stepSize() { return 15 }
+   static get name() { return "Neutral" }
+   static steps() { return 5 }
+   static stepSize() { return 15 }
 
 }
 
