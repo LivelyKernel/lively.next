@@ -1,4 +1,4 @@
-import { Morph, Text, show, GridLayout, Button } from "./index.js"
+import { Morph, Text, show, Button } from "./index.js"
 import { Label } from "./text/label.js"
 import { Icon } from "./icons.js"
 import { pt, Color, Rectangle, rect } from "lively.graphics";
@@ -393,7 +393,7 @@ export class List extends Morph {
 
   get listItemContainer() {
     return this.getSubmorphNamed("listItemContainer") || this.addMorph({
-      name: "listItemContainer", fill: null, clipMode: "visible"
+      name: "listItemContainer", fill: null, clipMode: "hidden"
     });
   }
 
@@ -428,7 +428,8 @@ export class List extends Morph {
           firstItemIndex = Math.floor((top + padTop) / itemHeight),
           lastItemIndex = Math.ceil((top + height + padTop) / itemHeight);
 
-      listItemContainer.extent = pt(this.width + padLeft + padRight, Math.max(padTop + padBottom + itemHeight*items.length, this.height));
+      listItemContainer.position = pt(padLeft, padTop);
+      listItemContainer.extent = pt(this.width - (padLeft + padRight), Math.max(padTop + padBottom + itemHeight*items.length, this.height));
 
       for (var i = 0; i < lastItemIndex-firstItemIndex; i++) {
         var itemIndex = firstItemIndex+i,
@@ -445,7 +446,7 @@ export class List extends Morph {
                           new ListItemMorph({fontFamily, fontSize})));
 
         itemMorph.displayItem(item, itemIndex, itemHeight,
-          pt(padLeft, padTop+itemHeight*itemIndex),
+          pt(0, 0+itemHeight*itemIndex),
           selectedIndexes.includes(itemIndex),
           {fontFamily, selectionColor, selectionFontColor, nonSelectionFontColor,
            fontSize, padding: itemPadding || Rectangle.inset(0)});
@@ -478,6 +479,7 @@ export class List extends Morph {
         {selectedIndexes} = this,
         isClickOnSelected = selectedIndexes.includes(itemI),
         indexes = [];
+
     if (this.multiSelect) {
       if (evt.isCommandKey()) {
 
@@ -488,7 +490,6 @@ export class List extends Morph {
           // just add clicked item to selection list
           indexes = [itemI].concat(selectedIndexes.filter(ea => ea != itemI))
         }
-
 
       } else if (evt.isShiftDown()) {
 
@@ -501,10 +502,10 @@ export class List extends Morph {
           indexes = added.concat(selectedIndexes.filter(ea => !added.includes(ea)))
         }
 
-      } else {
-        indexes = [itemI];
-      }
+      } else indexes = [itemI];
+
     } else indexes = [itemI];
+
     this.selectedIndexes = indexes;
   }
 
@@ -577,29 +578,34 @@ export class FilterableList extends Morph {
 
     connect(this.get("input"), "inputChanged", this, "updateFilter");
     connect(this.get("list"), "selection", this, "selectionChanged");
-    this.layout = new GridLayout({grid: [["input"], ["list"]]})
-    this.layout.row(0).fixed = 25;
-    this.layout.row(0).paddingBottom = 3;
+    connect(this, "extent", this, "relayout");
+    this.relayout();
+  }
+
+  relayout() {
+    var input = this.get("input"), list = this.get("list");
+    list.width = input.width = this.width;
+    list.setBounds(this.innerBounds().withTopLeft(input.bottomLeft));
   }
 
   get isList() { return true; }
 
   inputStyle(theme) {
-     if (theme == "dark") {
-        return {
-          borderWidth: 0,
-          borderRadius: 20,
-          fill: Color.gray.withA(0.8),
-          fontColor: Color.gray.darker(),
-          padding: rect(10,2,0,-2)
-        }
-      } else {
-        return {
-          borderWidth: 1,
-          borderColor: Color.gray,
-          padding: Rectangle.inset(2)
-        }
+   if (theme == "dark") {
+      return {
+        borderWidth: 0,
+        borderRadius: 20,
+        fill: Color.gray.withA(0.8),
+        fontColor: Color.gray.darker(),
+        padding: rect(10,2,0,-2)
       }
+    } else {
+      return {
+        borderWidth: 1,
+        borderColor: Color.gray,
+        padding: Rectangle.inset(2)
+      }
+    }
   }
 
   focus() { this.get("input").focus(); }
