@@ -68,8 +68,9 @@ const defaultCSS = `
 /*-=- text -=-*/
 
 .center-text {
-	 text-align: center;
-	 vertical-align: middle;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 div.text-layer span {

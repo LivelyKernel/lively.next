@@ -6,9 +6,16 @@ import { arr, fun, obj } from "lively.lang";
 import { signal } from "lively.bindings";
 
 function asItem(obj) {
-  return obj && obj.isListItem ? obj : {
-    isListItem: true, value: obj, string: String(obj)
-  }
+  // make sure that object is of the form
+  // {isListItem: true, string: STRING, value: OBJECT}
+  if (obj && obj.isListItem && typeof obj.string === "string") return obj;
+  if (!obj || !obj.isListItem) return {isListItem: true, string: String(obj), value: obj};
+  var label = obj.string || obj.label || "no item.string";  
+  obj.string = typeof label === "string" ? label :
+    Array.isArray(label) ?
+      label.map(ea => String(ea[0])).join("") :
+      String(label);
+  return obj;
 }
 
 class ListItemMorph extends Label {
@@ -42,7 +49,7 @@ class ListItemMorph extends Label {
     if (props.fontSize) this.fontSize = props.fontSize;
     if (props.padding) this.padding = props.padding;
 
-    var label = item.string || "no item.string";
+    var label = item.label || item.string || "no item.string";
     if (item.annotation) this.valueAndAnnotation = {value: label, annotation: item.annotation}
     else if (typeof label === "string") this.textString = label
     else this.value = label
@@ -393,7 +400,7 @@ export class List extends Morph {
 
   get listItemContainer() {
     return this.getSubmorphNamed("listItemContainer") || this.addMorph({
-      name: "listItemContainer", fill: null, clipMode: "hidden"
+      name: "listItemContainer", fill: null, clipMode: "visible"
     });
   }
 
