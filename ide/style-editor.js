@@ -64,47 +64,69 @@ export class Slider extends Morph {
 
 export class DropDownSelector extends Morph {
 
-  constructor(props) {
-    const {target, property} = props;
-    this.dropDownLabel = Icon.makeLabel("chevron-circle-down",
-                            {opacity: 0, fontSize: 14, fontColor: Color.gray.darker()});
-    super({
-      border: {
-        radius: 3,
-        color: Color.gray.darker(),
-        style: "solid"
-      },
-      layout: new HorizontalLayout({spacing: 4}),
-      ...props,
-      submorphs: [{
-        type: "text", name: "currentValue",
-        textString: target[property],
-        padding: 0, readOnly: true,
-      }, this.dropDownLabel]
-   });
-  }
+   constructor(props) {
+      const {target, property, values} = props;
+      this.values = values;
+      this.dropDownLabel = Icon.makeLabel("chevron-circle-down", {
+                                   opacity: 0, fontSize: 16, 
+                                   fontColor: Color.gray.darker()
+                            });
+      super({border: {
+                radius: 3, 
+                color: Color.gray.darker(), 
+                style: "solid"},
+              layout: new HorizontalLayout({spacing: 4}),
+              ...props,
+              submorphs: [{
+                  type: "text", name: "currentValue", 
+                  textString: this.getNameFor(target[property]), 
+                  padding: 0, readOnly: true,
+                }, this.dropDownLabel]
+             });
+   }
 
-  get commands() {
-    return this.values.map(v =>
-      ({name: v, exec: (self, v) => this.value = v}));
-  }
+   getMenuEntries() {
+      return this.commands.map(c => { 
+          return {command: c.name, target: this}
+         });
+   }
 
-  set value(v) {
-    this.target[this.property] = v;
-    this.get("currentValue").textString = obj.safeToString(v);
-  }
+   get commands() {
+      if (obj.isArray(this.values)) {
+         return this.values.map(v => {
+             return {name: v, exec: () => { this.value = v }}
+         });
+      } else {
+         return properties.forEachOwn(this.values, (name, v) => {
+             return {name, exec: () => { this.value = v }}
+         });
+      }
+      
+   }
 
-  onHoverIn() {
-    this.dropDownLabel.animate({opacity: 1, duration: 300});
-  }
+   getNameFor(value) {
+      if (obj.isArray(this.values)) {
+         return obj.safeToString(value);
+      } else {
+         return obj.safeToString(properties.nameFor(this.values, value));
+      }
+   }
 
-  onHoverOut() {
-    this.dropDownLabel.animate({opacity: 0, duration: 200});
-  }
+   set value(v) {
+      this.target[this.property] = v;
+      this.get("currentValue").textString = this.getNameFor(v);
+   }
 
+   onHoverIn() {
+      this.dropDownLabel.animate({opacity: 1, duration: 300});
+   }
+
+   onHoverOut() {
+      this.dropDownLabel.animate({opacity: 0, duration: 200});
+   }
+ 
   onMouseDown(evt) {
-    var items = this.values.map(v => ({command: v, target: this, args: v}))
-    this.menu = this.world().openWorldMenu(evt, items);
+    this.menu = this.world().openWorldMenu(evt, this.getMenuEntries());
     this.menu.globalPosition = this.globalPosition;
     this.menu.isHaloItem = this.isHaloItem;
   }
