@@ -124,18 +124,25 @@ function readXMLPropfindResult(xmlString) {
 export default class WebDAVResource extends Resource {
 
   async read() {
-    return (await fetch(this.url, {mode: 'cors'})).text();
+    var res = await fetch(this.url, {mode: 'cors'});
+    if (!res.ok)
+      throw new Error(`Cannot read ${this.url}: ${res.statusText} ${res.status}`);
+    return res.text();
   }
 
   async write(content) {
     if (!this.isFile()) throw new Error(`Cannot write a non-file: ${this.url}`);
-    await fetch(this.url, {mode: 'cors', method: "PUT", body: content});
+    var res = await fetch(this.url, {mode: 'cors', method: "PUT", body: content});
+    if (!res.ok)
+      throw new Error(`Cannot write ${this.url}: ${res.statusText} ${res.status}`);
     return this;
   }
 
   async mkdir() {
     if (this.isFile()) throw new Error(`Cannot mkdir on a file: ${this.url}`);
-    await fetch(this.url, {mode: 'cors', method: "MKCOL"});
+    var res = await fetch(this.url, {mode: 'cors', method: "MKCOL"});
+    if (!res.ok)
+      throw new Error(`Cannot create directory ${this.url}: ${res.statusText} ${res.status}`);
     return this;
   }
 
