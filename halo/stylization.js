@@ -255,6 +255,7 @@ class StyleHalo extends Morph {
           update(evt) { this.center = getPos(); },
           onDragStart(evt) { 
              this.active = true; halo.deselect();
+             this.targetTransform = halo.target.getGlobalTransform().inverse();
              this.borderRadiusView = this.addMorph(new Text({
                 fill: Color.black.withA(.7), borderRadius: 5,
                 padding: 5, fontColor: Color.white,
@@ -264,7 +265,7 @@ class StyleHalo extends Morph {
           onDrag(evt) {
              var r = halo.target.borderRadius;
              halo.update(evt);
-             r -= evt.state.dragDelta.x;
+             r -= this.targetTransform.transformDirection(evt.state.dragDelta).x
              r = Math.round(Math.min(halo.target.width / 2, Math.max(r, 0)));
              halo.target.borderRadius = r;
              this.position = getPos();
