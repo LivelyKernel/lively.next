@@ -60,9 +60,6 @@ export class CompletionController {
         console.warn(`Error in completer ${c}: ${e.stack || e}`);
       }
 
-    var infoCol = completions.reduce((maxCol, ea) => Math.max(ea.completion.length, maxCol), 0) + 1,
-        maxCol = infoCol;
-
     // if multiple options with same completion exist, uniq by the highest priority
     // note: there is a lively.lang bug that breaks groupBy if key === constructor...!
     var groups = new Map();
@@ -71,20 +68,19 @@ export class CompletionController {
       if (!group) { group = []; groups.set(ea.completion, group); }
       group.push(ea);
     });
+
     var withHighestPriority = [];
     for (let val of groups.values())
       withHighestPriority.push(arr.last(arr.sortByKey(val, "priority")))
 
+    var maxCol = 0;
     var items = arr.sortByKey(withHighestPriority, "priority")
       .reverse()
       .map(ea => {
-        var info = (ea.info || "");
-        maxCol = Math.max(maxCol, infoCol+info.length);
-        return {
-          isListItem: true,
-          string: string.pad(ea.completion, infoCol-ea.completion.length, false) + info,
-          value: ea
-        };
+        var string = ea.completion,
+            annotation = String(ea.info || "");
+        maxCol = Math.max(maxCol, string.length + annotation.length)
+        return {isListItem: true, string, annotation, value: ea};
       });
     return {items, maxCol}
   }
@@ -100,7 +96,7 @@ export class CompletionController {
     var m = this.textMorph,
         cursorBounds = m.charBoundsFromTextPosition(m.cursorPosition).translatedBy(m.scroll.negated()),
         globalCursorBounds = m.getGlobalTransform().transformRectToRect(cursorBounds);
-    return globalCursorBounds.topLeft().addXY(m.padding.left()-1, m.padding.top()-1);
+    return globalCursorBounds.topLeft().addXY(m.padding.left()-1, -m.padding.top());
   }
 
   async completionListSpec() {
@@ -110,9 +106,9 @@ export class CompletionController {
         prefix = this.prefix(),
         {items, maxCol} = await this.computeCompletions(prefix),
         charBounds = m.env.fontMetric.sizeFor(fontFamily, fontSize, "M"),
-        minWidth = 300,
-        maxWidth = m.width,
-        width = Math.max(minWidth, Math.min(maxWidth, charBounds.width*maxCol)),
+        minWidth = 80,
+        textWidth = charBounds.width*maxCol,
+        width = Math.max(minWidth, textWidth < m.width ? textWidth : m.width),
         minHeight = 70, maxHeight = 700,
         fullHeight = charBounds.height*items.length+charBounds.height+10,
         height = Math.max(minHeight, Math.min(maxHeight, fullHeight)),
