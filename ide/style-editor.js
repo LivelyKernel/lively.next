@@ -260,7 +260,7 @@ export class ColorPicker extends Window {
     super({
       title: "Color Picker",
       name: "Color Picker",
-      extent: pt(400, 300),
+      extent: pt(400, 320),
       fill: Color.black.withA(.7),
       borderWidth: 0,
       resizable: false,
@@ -276,35 +276,24 @@ export class ColorPicker extends Window {
      if (this.harmonyMenu) this.harmonyMenu.remove();
   }
 
-  get harmony() { return this._harmony }
-  set harmony(h) {
-      const harmonyLabel = this.getSubmorphNamed("harmonyLabel");
-      if (harmonyLabel) harmonyLabel.textString = h.name;
-      this._harmony = h;
-   }
-
-  get commands() {
-    return [Complementary, Triadic, Tetradic, Quadratic,  Analogous, Neutral].map(harmony => {
-       return {name: harmony.name,
-               exec: colorPicker => {
-                    colorPicker.harmony = new harmony(colorPicker);
-                    colorPicker.harmonyMenu.remove();
-                    colorPicker.update();
-                  }
-               }
-       });
-  }
-
   set color(c) {
     const [h, s, b] = c.toHSB();
     this.hue = h
     this.saturation = s;
     this.brightness = b;
+    this._alpha = c.a;
     signal(this, "color", c);
   }
 
+  set alpha(a) {
+     this._alpha = a;
+     this.update();
+  }
+
+  get alpha() { return this._alpha}
+
   get color() {
-    return Color.hsb(this.hue, this.saturation, this.brightness);
+    return Color.hsb(this.hue, this.saturation, this.brightness).withA(this.alpha);
   }
 
   get pickerPosition() {
@@ -349,9 +338,7 @@ export class ColorPicker extends Window {
       layout: new GridLayout({grid: [["field", "scale", "details"],
                                      ["toggleHarmonies", "toggleHarmonies", "toggleHarmonies"],
                                      ["harmonies", "harmonies", "harmonies"]]}),
-      submorphs: [this.fieldPicker(), this.scalePicker(), this.colorDetails(),
-                  this.toggleHarmoniesButton(),
-                  this.harmonies()]
+      submorphs: [this.fieldPicker(), this.scalePicker(), this.colorDetails(), this.alphaSlider()]
     })
     colorPalette.layout.col(0).paddingLeft = 10;
     colorPalette.layout.col(1).fixed = 55;
@@ -359,6 +346,23 @@ export class ColorPicker extends Window {
     colorPalette.layout.row(0).fixed = this.colorDetails().height;
     colorPalette.layout.row(1).fixed = 20;
     return colorPalette;
+  }
+  
+  alphaSlider() {
+    return {
+       name: "alphaSlide",
+       fill: Color.transparent, layout: new HorizontalLayout({spacing: 3}),
+       update(colorPicker) {
+          this.get("alphaDisplay").value = (colorPicker.color.a * 100).toFixed();
+       },
+       submorphs: [
+        {type: "label", padding: 3, value: "Alpha", fontColor: Color.gray, fontWeight: 'bold'},
+        new Slider({
+             target: this, min: 0, max: 1,
+             property: "alpha", width: 170
+      }), {type: "label", padding: 3, value: (this.alpha * 100).toFixed(), 
+           fontSize: 12, fontColor: Color.gray, name: "alphaDisplay"}]
+    }
   }
 
   fieldPicker() {
@@ -566,6 +570,7 @@ export class ColorPicker extends Window {
          ]
      });
   }
+}
 
   toggleHarmoniesButton() {
      return this.getSubmorphNamed("toggleHarmonies") ||
