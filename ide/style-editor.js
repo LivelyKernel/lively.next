@@ -548,90 +548,363 @@ export class ColorPicker extends Window {
     })
   }
 
-  colorField(color) {
-     const picker = this;
-     return new Morph({
-         extent: pt(80, 80),
+}
+
+export class ColorPalette extends Morph {
+
+   constructor(props) {
+      this.harmony = Complementary;
+      super({
+         fill: Color.gray,
+         dropShadow: true, 
+         colorFieldWidth: 20,
+         extent: pt(200,300),
+         borderRadius: 5,
+         selectedColor: props.selectedColor || Color.blue,
          layout: new VerticalLayout(),
+         ...props,
+      });
+      this.pivotColor = this.selectedColor;
+      this.build();
+      this.active = true;
+      this.focus();
+   }
+
+   isHaloItem() { return true }
+
+   onKeyDown(evt) {
+      if (evt.key == "Escape") this.remove();
+   }
+
+   get harmony() { return this._harmony }
+   set harmony(h) { 
+      this._harmony = h;
+      this.active && this.relayout();
+   }
+
+   build() {
+     this.cachedPalette = {};
+     this.submorphs = [this.fillTypeSelector(),
+                       this.paletteView()];
+     this.selectSolidMode();
+   }
+
+   relayout() {
+      const config = this.get('paletteConfig'), 
+            harmonyPalette = this.get('harmonyPalette'),
+            fillTypeSelector = this.get("fillTypeSelector"),
+            paletteView = this.get("paletteView");
+      paletteView.relayout();
+      fillTypeSelector.animate({width: this.get("paletteView").bounds().width, duration: 200});
+      fillTypeSelector.relayout();
+      harmonyPalette.relayout();
+   }
+
+   paletteView() {
+      return {
+        fill: Color.transparent,
+        name: "paletteView",
+        clipMode: "hidden",
+        relayout() {
+           this.animate({extent: this.submorphs.find(p => p.visible).extent, duration: 300});
+        },
+        submorphs: [this.solidColorPalette(), this.gradientPalette(), this.harmonyPalette()]
+      }
+   }
+
+   selectSolidMode() {
+      var duration = 200,
+          paletteView = this.get("paletteView"),
+          selector = this.get('fillTypeSelector');
+       if (this.get("solidColorPalette").opacity) return;
+       paletteView.submorphs.forEach(m => m.animate({opacity: 0, visible: false, duration}));
+       this.get("solidColorPalette").animate({opacity: 1, visible: true, duration});
+       this.relayout();
+       selector.switchLabel("labelSolid");
+   }
+
+   selectHarmonyMode() {
+      var duration = 200,
+          paletteView = this.get("paletteView"),
+          selector = this.get('fillTypeSelector');
+      if (this.get("harmonyPalette").opacity) return;
+      paletteView.submorphs.forEach(m => m.animate({opacity: 0, visible: false, duration}));
+      this.get("harmonyPalette").animate({opacity: 1, visible: true, duration});
+      this.relayout();
+      selector.switchLabel("labelHarmonies");
+   }
+
+   fillTypeSelector() {
+      // switch between gradient or solid
+      return {
+         name: "fillTypeSelector",
+         fill: Color.transparent, 
+         height: 30, width: 300, origin: pt(0,5),
+         layout: new GridLayout({
+             grid: [[null, "labelSolid", null, "labelHarmonies", null]],
+             autoAssign: false, fitToCell: false, 
+         }),
+         relayout() { this.currentLabel && this.get("typeMarker").setBounds(this.currentLabel.bounds()); },
+         switchLabel(newLabelName) {
+             const newLabel = this.get(newLabelName), duration = 200;
+             this.get("typeMarker").animate({bounds: newLabel.bounds(), duration});
+             newLabel.animate({fontColor: Color.white, duration});
+             this.currentLabel && this.currentLabel.animate({fontColor: Color.black, duration});
+             this.currentLabel = newLabel;
+         },
+         submorphs: [
+            {name: "typeMarker", fill: Color.gray.darker(), borderRadius: 3},
+            {name: "labelSolid", type: "label", fontWeight: 'bold', nativeCursor: "pointer",
+             padding: 4, value: "Color Palettes", onMouseDown: () => {
+                this.selectSolidMode();
+            }},
+            {name: "labelHarmonies", type: "label", fontWeight: 'bold', nativeCursor: 'pointer',
+             padding: 4, value: "Color Harmonies", tooltip: this.getPaletteDescription("harmony"), 
+             onMouseDown: () => {
+                this.selectHarmonyMode();
+            }}
+         ]
+      }
+   }
+
+   gradientPalette() {
+      const palette = this,
+            defaultLinearGradient = new LinearGradient([
+              {color: Color.white, offset: "0%"},
+              {color: Color.black, offset: "100%"}]),
+            defaultRadialGradient = new RadialGradient([
+              {color: Color.white, offset: "0%"},
+              {color: Color.black, offset: "100%"}]);
+      return {
+         name: "gradientPalette",
+         fill: Color.transparent,
+         layout: new VerticalLayout(),
+         relayout() {
+            if (palette.selectedColor.isGradient) {
+              // select the approporiate gradient type,
+              // attach gradient editor to the found gradient
+            } else {
+               // signify user to select a Gradient Type
+               // disable the gradient editor
+            }
+         },
+         submorphs: [
+             {fill: Color.transparent, 
+              layout: new GridLayout({grid: [["selectInst", "radialMode", "linearMode", null]],
+                                      autoAssign: false, fitToCell: false}),
+              width: 400,
+              height: 100,
+              submorphs: [{
+                 type: "label", name: "selectInst",
+                 value: "Select Gradient Type:"
+              }, {
+                 name: "radialMode",
+                 extent: pt(50,50), borderRadius: 5,
+                 fill: defaultRadialGradient,
+                 onMouseDown(evt) {
+                    palette.applyGradient(RadialGradient)
+                 }
+              }, {
+                 name: "linearMode",
+                 extent: pt(50,50), borderRadius: 5,
+                 fill: defaultLinearGradient,
+                 onMouseDown: (evt) => {
+                    palette.applyGradient(LinearGradient)
+                 }
+              }]}, 
+              this.gradientEditor()],
+      }
+   }
+
+   gradientEditor() {
+      return {
+         name: "gradientEditor",
+         width: 400,
+         height: 100,
+         borderWidth: 5, borderColor: Color.gray.darker(),
+         fill: Color.gray,
+         submorphs: [{
+            type: "label", name: "gradientInst", value: "Please select a Gradient Type",
+            fontSize: 20, fontWeight: "bold", fontColor: Color.gray.darker()
+         }]
+      }
+   }
+
+   solidColorPalette() {
+      // switch between different palettes (material, flat, harmonies, custom)
+      // custom allows to add new colors via color picker
+      return {
+         opacity: 0, 
+         name: "solidColorPalette",
+         fill: Color.transparent,
+         layout: new VerticalLayout(),
+         submorphs: [this.getCurrentPalette(),
+                     this.paletteConfig()]
+      }
+   }
+
+   getCurrentPalette() {
+      const {name, colors, mod} = this.getColorsFor(this.colorPalette);
+      return this.cachedPalette[name] || this.getPalette(colors, mod)
+   }
+
+   getPalette(colors, mod) {
+       const cols = Math.max(Math.ceil(colors.length / mod), 15),
+             height = cols * this.colorFieldWidth, 
+             width =  mod * this.colorFieldWidth,
+             paddedColors = [...colors, ...arr.withN((cols * mod) - colors.length, null)];
+       return {fill: Color.transparent, 
+               width, height,
+               layout: new TilingLayout(), 
+               rotation: num.toRadians(90),
+               submorphs: paddedColors.map(c => {
+                  const  fill = c && Color.rgbHex(c)
+                  return c ? {
+                     extent: pt(this.colorFieldWidth, this.colorFieldWidth),
+                     fill,
+                     borderColor: Color.transparent,
+                     borderWidth: 2,
+                     onHoverIn() {
+                        const [h,s,b] = fill.toHSB();
+                        this.borderColor = Color.hsb(h,s + .5 > 1 ? s - .5 : s + .5, b + .5 > 1 ? b - .5 : b + .5)
+                     },
+                     onHoverOut() {
+                        this.borderColor = Color.transparent;
+                     },
+                     onMouseDown: () => { 
+                        this.selectedColor = Color.rgbHex(c);
+                        signal(this, "selectedColor", this.selectedColor);
+                        this.fadeOut(200);
+                     } 
+                  } : {
+                     extent: pt(this.colorFieldWidth, this.colorFieldWidth),
+                     borderColor: Color.black.lighter().lighter(), borderWidth: 1,
+                     fill: Color.transparent
+                  }
+               })};
+   }
+
+   switchPalette({name, colors, mod}) {
+      const colorPalette = this.get("solidColorPalette"),
+            [_, config] = colorPalette.submorphs;
+      this.cachedPalette[name] = this.cachedPalette[name] || this.getPalette(colors, mod, name);
+      colorPalette.submorphs = [this.cachedPalette[name], config];
+      this.relayout();
+   }
+
+   getPaletteDescription(paletteName) {
+      const descriptions = {
+         harmony: 'Color harmonies are particularly pleasing combinations\n' +
+                  'of two or more colors derived from their relationship\n' + 
+                  'on a color wheel. Also known as color chords, color\n' + 
+                  'harmonies are useful when exploring a possible color\n' + 
+                  'palette, or can be used as a standalone color scheme.\n',
+         custom: `Your personal set of customly defined colors.`,
+         materialDesign: 'Material design is a visual language and design\n' +
+                         'system developed by Google with an almost flat\n' +
+                         'style and vibrant color schemes.',
+         flatDesign: 'Flat design or flat UI colors are quite popular\n' +
+                     'in web design today where bold, bright colors\n' +
+                     'are used to create clean, simple interfaces.',
+         webSafe: 'Web safe colors emerged during the early era of' +
+                  'the internet; a standardized palette of 216 colors' + 
+                  'that displayed consistently across all major browsers.'
+      }
+      return descriptions[paletteName];
+   }
+
+   updatePaletteDescription() {
+      const description = this.get("paletteSelector");
+      description.tooltip = this.getPaletteDescription(this.colorPalette);
+   }
+
+   set colorPalette(paletteName) {
+       this._currentPalette = paletteName;
+       this.switchPalette(this.getColorsFor(paletteName));
+       this.updatePaletteDescription();
+   }
+
+   getColorsFor(paletteName) {
+       const nameToColors = {
+          flatDesign: {colors: flatDesignColors, mod: 11},
+          materialDesign: {colors: materialDesignColors, mod: 15},
+          webSafe: {colors: webSafeColors, mod: 12}
+       };
+       return {name: paletteName, ...nameToColors[paletteName]};
+   }
+
+   get colorPalette() { return this._currentPalette || "flatDesign" }
+
+   paletteConfig() {
+      return {
+         name: "paletteConfig",
+         fill: Color.transparent,
+         layout: new HorizontalLayout({spacing: 5}),
+         submorphs: [new DropDownSelector({
+             isHaloItem: true, name: "paletteSelector",
+             target: this, property: "colorPalette", 
+             tooltip: this.getPaletteDescription(this.colorPalette),
+             values: {"Flat Design" : "flatDesign",
+                      "Material Design" : "materialDesign",
+                      "Web Safe" : "webSafe"}
+       })]
+      }
+   }
+
+   
+  harmonyPalette() {
+    return {
+      name: "harmonyPalette",
+      layout: new HorizontalLayout({spacing: 5}),
+      fill: Color.transparent,
+      relayout() {
+          const harmonyVisualizer = this.get("harmonyVisualizer"),
+                harmonies = this.get("harmonies");
+          harmonyVisualizer.update();
+          harmonies.update();
+      },
+      submorphs: [this.harmonies(), this.harmonyControl()]
+    }
+  }
+
+  colorField(color) {
+     const colorPalette = this,
+           [h,s,b] = color.toHSB();
+     return new Morph({
+         extent: pt(80, 60),
          fill: Color.transparent,
          setColor(c) {
-            const [colorView, hashView] = this.submorphs;
+            const [colorView, hashView] = this.submorphs,
+                  [h,s,b] = c.toHSB();
             colorView.fill = c;
             hashView.textString = c.toHexString();
+            hashView.fontColor = Color.hsb(h,s + .5 > 1 ? s - .5 : s + .5, b + .5 > 1 ? b - .5 : b + .5);
          },
          submorphs: [
             new Morph({fill: color, extent: pt(80, 50),
                        onMouseDown(evt) {
-                           picker.color = this.fill;
-                           picker.update();
+                           colorPalette.selectedColor = this.fill;
+                           signal(colorPalette, "selectedColor", this.fill);
+                           colorPalette.relayout();
                        }}),
-            new Text({textString: color.toHexString(), fill: Color.transparent,
-                      fontColor: Color.gray})
+            new Text({textString: `${h.toFixed()}, ${s.toFixed(2)}, ${b.toFixed(2)}`, fill: Color.transparent,
+                      fontColor: Color.gray.darker(), bottomLeft: pt(0,50)})
          ]
      });
   }
-}
-
-  toggleHarmoniesButton() {
-     return this.getSubmorphNamed("toggleHarmonies") ||
-       {name: "toggleHarmonies", fill: Color.transparent,
-        active: false,
-        onMouseDown(evt) {
-           const [toggleIndicator, _] = this.submorphs;
-           this.toggle(this.active = !this.active, toggleIndicator);
-        },
-        toggle: (active, toggleIndicator) => {
-           const duration = 300, easing = 'ease-out';
-           if (active) {
-              toggleIndicator.animate({rotation: num.toRadians(90), duration});
-              this.harmonies().animate({opacity: 1, duration, easing});
-              this.animate({height: this.height + this.harmonies().height, duration});
-           } else {
-              toggleIndicator.animate({rotation: 0, duration});
-              this.animate({height: this.height - this.harmonies().height, duration});
-              this.harmonies().animate({opacity: 0, duration, easing});
-           }
-        },
-        layout: new HorizontalLayout({spacing: 5}),
-        submorphs: [
-        {extent: pt(30,30), clipMode: "hidden", origin: pt(15,15), scale: 0.5,
-         position: pt(20,20), fill: Color.transparent, submorphs: [
-             {extent: pt(30,30), rotation: num.toRadians(45), origin: pt(15,15), position: pt(-20,0),
-              fill: Color.gray}]},
-        {
-           type: "text",
-           fill: Color.transparent,
-           fontColor: Color.gray,
-           fontWeight: 'bold',
-           textString: "Harmonies",
-           readOnly: true,
-           onMouseDown: (evt) => {
-
-           }
-        }]};
-  }
 
   harmonies() {
-    return this.getSubmorphNamed("harmonies") || new Morph({
-      name: "harmonies",
-      layout: new HorizontalLayout({spacing: 5}),
-      fill: Color.transparent,
-      opacity: 0,
-      submorphs: [this.harmonyPalette(), this.harmonyControl()]
-    })
-  }
-
-  harmonyPalette() {
-     const colorPicker = this;
-     return this.getSubmorphNamed("harmonyPalette") || new Morph({
-         name: "harmonyPalette",
+     const colorPalette = this;
+     return {
+         name: "harmonies",
          layout: new TilingLayout({spacing: 5}),
          fill: Color.transparent,
          width: 260,
-         update(colorPicker) {
-             const colors = colorPicker.harmony.chord();
+         update() {
+             const [hue, saturation, brightness] = colorPalette.pivotColor.toHSB(),
+                   colors = colorPalette.harmony.chord({hue, saturation, brightness});
              if (colors.length != this.submorphs.length) {
-                this.submorphs = colors.map(c => colorPicker.colorField(c))
+                this.submorphs = colors.map(c => colorPalette.colorField(c))
              } else {
                 arr.zip(this.submorphs, colors)
                    .forEach(([f, c]) => {
@@ -639,7 +912,7 @@ export class ColorPicker extends Window {
                 });
              }
          }
-     });
+     }
   }
 
   harmonyControl() {
@@ -653,78 +926,91 @@ export class ColorPicker extends Window {
   }
 
   harmonyVisualizer() {
+     const colorPalette = this;
      return this.getSubmorphNamed("harmonyVisualizer") || new Image({
          name: "harmonyVisualizer",
          extent: pt(110,110),
          fill: Color.transparent,
          imageUrl: WHEEL_URL,
-         update(colorPicker) {
+         update() {
              const [harmonyPoints] = this.submorphs,
-                   chord = colorPicker.harmony.chord(),
+                   pivotControl = this.get("pivotControl"),
+                   [hue, saturation, brightness] = colorPalette.pivotColor.toHSB(),
+                   chord = colorPalette.harmony.chord({hue, saturation, brightness}),
                    colorPoints = chord.map(c => {
                       const [h,s,_] = c.toHSB(),
                              angle = num.toRadians(h);
                       return Point.polar(50 * s, angle);
                    });
-             if (harmonyPoints.submorphs.length != colorPoints.length) {
-                 harmonyPoints.submorphs = colorPoints.map(p => new Ellipse({
-                        center: p, fill: Color.transparent,
+             if (harmonyPoints.submorphs.length - 1 != colorPoints.length) {
+                 harmonyPoints.submorphs = [...colorPoints.map(p => new Ellipse({
+                        center: p, fill: Color.transparent, draggable: false, 
                         borderWidth: 1, borderColor: Color.black
-                     }));
+                     })), pivotControl];
              } else {
-                 arr.zip(harmonyPoints.submorphs, colorPoints).forEach(([m, p]) => { m.center = p});
+                 arr.zip(harmonyPoints.submorphs, colorPoints).forEach(([m, p]) => {if (p) m.center = p});
+                 pivotControl.update();
              }
          },
          submorphs: [new Ellipse({
             name: "harmonyPoints",
+            draggable: false, 
             extent: pt(100,100),
             origin: pt(50,50),
             position: pt(50,50),
             fill: Color.transparent,
-            borderWidth: 1
+            borderWidth: 1,
+            submorphs: [{
+              name: "pivotControl",
+              type: "ellipse",
+              draggable: false,
+              fill: Color.transparent,
+              borderColor: Color.black,
+              borderWidth: 3,
+              extent: pt(18,18),
+              update() {
+                 const [h,s,_] = colorPalette.pivotColor.toHSB(),
+                       angle = num.toRadians(h),
+                       currentPos = Point.polar(50 * s, angle);
+                 this.center = currentPos;
+              },
+              submorphs: [{
+                type: "ellipse",
+                fill: Color.transparent,
+                borderColor: Color.white,
+                onDrag: (evt) => {
+                   var  [h,s,b] = colorPalette.pivotColor.toHSB(),
+                         angle = num.toRadians(h),
+                         currentPos = Point.polar(50 * s, angle),
+                         newPos = currentPos.addPt(evt.state.dragDelta),
+                         h = num.toDegrees(newPos.theta()),
+                         h = h < 0 ? h + 360 : h,
+                         s = Math.min(newPos.r()/50, 1);
+                   colorPalette.pivotColor = Color.hsb(h, s, b);
+                   colorPalette.relayout();
+                },
+                borderWidth: 3,
+                center: pt(8,8),
+                extent: pt(12,12)
+              }]
+          }]
          })]
      });
   }
 
   harmonySelector() {
-     const dropDownIndicator = Icon.makeLabel("chevron-circle-down", {
-               fontColor: Color.gray.lighter(),
-               fontSize: 14, opacity: 0}
-           );
-     return this.getSubmorphNamed("harmonySelector") || new Morph({
-         name: "harmonySelector",
-         extent: pt(150, 50),
-         layout: new HorizontalLayout({spacing: 5}),
-         fill: Color.transparent,
-         onMouseDown: (evt) => {
-               this.harmonyMenu = Menu.forItems([
-                  {command: "Complement", target: this}, {command: "Triadic", target: this},
-                  {command: "Tetradic", target: this}, {command: "Quadratic", target: this},
-                  {command: "Analogous", target: this}, {command: "Neutral", target: this}
-               ]).openInWorld();
-               this.harmonyMenu.globalPosition = this.harmonySelector().globalPosition;
-            },
-         onHoverIn() {
-            dropDownIndicator.animate({opacity: 1, duration: 200});
-         },
-         onHoverOut() {
-            dropDownIndicator.animate({opacity: 0, duration: 200});
-         },
-         submorphs: [new Text({
-            name: "harmonyLabel",
-            nativeCursor: "pointer",
-            fill: Color.transparent,
-            readOnly: true,
-            fontSize: 15,
-            fontColor: Color.gray.lighter(),
-            textString: this.harmony.name}),
-          dropDownIndicator]
+     return this.getSubmorphNamed("harmonySelector") || new DropDownSelector({
+         name: "harmonySelector", target: this, property: "harmony",
+         values: {Complement: Complementary, 
+                  Triadic: Triadic, 
+                  Tetradic: Tetradic, 
+                  Quadratic: Quadratic, 
+                  Analogous: Analogous, 
+                  Neutral: Neutral}
      });
-
   }
-}
 
-// TODO: add Color palette as first instance to selecting a color
+}
 
 export class ColorPickerField extends Morph {
 
