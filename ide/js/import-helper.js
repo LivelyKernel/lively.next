@@ -162,34 +162,38 @@ class ExportPrompt {
   buildItems(exportData) {
     var string1MaxWidth = 0;
     return exportData.map(ea => {
-      var {exportString, annotation} = this.buildItemString(ea);
-      string1MaxWidth = Math.min(60, Math.max(string1MaxWidth, exportString.length))
-
       return {
         isListItem: true,
         value: ea,
-        get string() {
-          var string = exportString;
-          string += " ".repeat(Math.max(1, string1MaxWidth - exportString.length));
-          string += annotation;
-          return string;
-        }
+        ...this.buildLabel(ea),
       }
-    })
+    });
   }
 
-  buildItemString({type, exported, local, fromModule, pathInPackage, packageName, packageVersion}) {
+  buildLabel({type, exported, local, fromModule, pathInPackage, packageName, packageVersion}) {
     // like "var foo (from ./bar.js)        [project/foo.js]"
     var exportName = exported === "default" ?
       `${local} (default)` : exported;
-    var exportString = `${type} ${exportName}`;
-    if (fromModule) exportString += ` from ${fromModule}`
 
-    var annotation = ` [${packageName}/${pathInPackage}`;
-    if (packageVersion) annotation += ` ${packageVersion}`;
-    annotation += "]";
+    if (fromModule) var reexportString = ` rexported from ${fromModule}`
 
-    return {exportString, annotation}
+    var annotationString = ` [${packageName}/${pathInPackage}`;
+    if (packageVersion) annotationString += ` ${packageVersion}`;
+    annotationString += "]";
+
+    var label = [
+      [exportName, {}],
+      [
+      `${type} ${reexportString || ""} ${annotationString}`, {
+        fontSize: "70%",
+        textStyleClasses: ["truncated-text", "annotation"],
+        // maxWidth: 300
+      }]
+    ]
+    
+    // var annotation = 
+
+    return {label}
   }
 
 }
