@@ -17,7 +17,7 @@ class Layout {
   description() { return "Describe the layout behavior here." }
   name() { return "Name presented to the user." }
 
-  onSubmorphResized(submorph) { this.apply() }
+  onSubmorphResized(submorph) { this.container.submorphs.includes(submorph) && this.apply() }
   onSubmorphAdded(submorph) { this.apply() }
   onSubmorphRemoved(submorph) { this.apply() }  
   
@@ -139,7 +139,7 @@ export class VerticalLayout extends Layout {
         m.topLeft = pos;
       }
       pos = m.bottomLeft.addPt(pt(0, this.spacing));
-      maxWidth = Math.max(m.width, maxWidth);
+      maxWidth = Math.max(m.bounds().width, maxWidth);
     });
     if (this.autoResize && this.container.submorphs.length > 0) 
         this.container.extent = pt(maxWidth + 2 * this.spacing, pos.y)
@@ -179,7 +179,7 @@ export class HorizontalLayout extends Layout {
         m.topLeft = pos;
       }
       pos = m.topRight.addPt(pt(this.spacing, 0));
-      maxHeight = Math.max(m.height, maxHeight);
+      maxHeight = Math.max(m.bounds().height, maxHeight);
     });
     if (this.autoResize && this.container.submorphs.length > 0) 
          this.container.extent = pt(pos.x, maxHeight + 2 * this.spacing);
