@@ -62,7 +62,7 @@ class StyleHalo extends Morph {
    onMouseMove(evt) { this.update(evt) }
 
    onMouseDown(evt) { 
-      this.get("borderHalo").onMouseDown(evt) 
+      !this.get("borderHalo").onMouseDown(evt) && evt.state.clickedOnMorph == this && this.remove();
    }
 
    remove() {
@@ -126,7 +126,6 @@ class StyleHalo extends Morph {
          fill: Color.transparent,
          borderColor: Color.orange.withA(0.4),
          borderRadius: this.target.borderRadius,
-         extent: this.target.extent,
          isHaloItem: true,
          selectBorder() {
             this.borderColor = Color.orange;
@@ -145,6 +144,8 @@ class StyleHalo extends Morph {
             }
          },
          alignWithTarget() {
+           // const {x, y, width, height} = target.globalBounds().intersection(target.world().bounds());
+           // this.setBounds(this.localize(pt(x,y)).extent(pt(width,height)));
            this.extent = target.extent;
            this.borderWidth = Math.max(3, target.borderWidth);
            this.borderRadius = target.borderRadius;
@@ -154,8 +155,11 @@ class StyleHalo extends Morph {
                 !halo.borderStyler.active && halo.openBorderStyler();
             } else if (halo.bodyStyler) {
                 !halo.bodyStyler.active && halo.openBodyStyler();
+            } else {
+               return false;
             }
             this.borderColor = Color.transparent;
+            return true;
          },
          ...props
       }

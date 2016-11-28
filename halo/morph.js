@@ -139,7 +139,7 @@ class NameHalo extends HaloItem {
     this.validityIndicator = Icon.makeLabel("check", {
       fontColor: Color.green,
       fontSize: 15,
-      padding: rect(4,4,4,0),
+      padding: rect(4,2,4,0),
       onMouseDown: (evt) => {
         const m = this.conflictingMorph;
         if (this.conflictingMorph) {
@@ -411,6 +411,8 @@ export class Halo extends Morph {
         this.target.owner && this.world().showHaloFor(this.target.owner, evt.domEvt.pointerId);
         this.remove();
      }
+
+     if (target == this) this.remove();
   } 
 
   prepareTarget(target) {
