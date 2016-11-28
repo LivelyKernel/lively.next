@@ -270,6 +270,11 @@ export class ColorPicker extends Window {
     });
     this.titleLabel().fontColor = Color.gray;
     this.update();
+    this.focus();
+  }
+
+  onKeyDown(evt) {
+     if (evt.key == "Escape") this.remove();
   }
 
   onMouseDown(evt) {
@@ -282,7 +287,6 @@ export class ColorPicker extends Window {
     this.saturation = s;
     this.brightness = b;
     this._alpha = c.a;
-    signal(this, "color", c);
   }
 
   set alpha(a) {
@@ -561,7 +565,7 @@ export class ColorPalette extends Morph {
          extent: pt(200,300),
          borderRadius: 5,
          selectedColor: props.selectedColor || Color.blue,
-         layout: new VerticalLayout(),
+         layout: new VerticalLayout({ignore: ["arrow"]}),
          ...props,
       });
       this.pivotColor = this.selectedColor;
@@ -584,13 +588,16 @@ export class ColorPalette extends Morph {
 
    build() {
      this.cachedPalette = {};
-     this.submorphs = [this.fillTypeSelector(),
+     this.submorphs = [{type: "triangle", name: "arrow", 
+                        fill: this.fill, grabbable: false, 
+                        draggable: false},
+                       this.fillTypeSelector(),
                        this.paletteView()];
      this.selectSolidMode();
    }
 
    relayout() {
-      const config = this.get('paletteConfig'), 
+      const arrow = this.get('arrow'), 
             harmonyPalette = this.get('harmonyPalette'),
             fillTypeSelector = this.get("fillTypeSelector"),
             paletteView = this.get("paletteView");
@@ -598,6 +605,8 @@ export class ColorPalette extends Morph {
       fillTypeSelector.animate({width: this.get("paletteView").bounds().width, duration: 200});
       fillTypeSelector.relayout();
       harmonyPalette.relayout();
+      arrow.extent = pt(this.width/15, this.width/15);
+      arrow.bottomCenter = pt(this.width/2, 1);
    }
 
    paletteView() {
