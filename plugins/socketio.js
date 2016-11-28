@@ -3,17 +3,17 @@ import socketio from "socket.io";
 
 export default class SocketioPlugin {
 
-  constructor(opts) {
-    opts = {
-      socketIOPath: '/lively-socket.io',
-      ...opts
-    }
-    this.socketIOPath = opts.socketIOPath;
+  constructor() {
+    this.socketIOPath = '/lively-socket.io';
     this.io = null;
     this.httpHandler = null;
   }
 
-  get name() { return "socketio"; }
+  setOptions({socketIOPath} = {}) {
+    this.socketIOPath = socketIOPath;
+  }
+
+  get pluginId() { return "socketio"; }
 
   get after() { return ["cors"]; }
 

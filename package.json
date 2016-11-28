@@ -2,11 +2,12 @@
   "name": "lively.server",
   "version": "0.1.0",
   "dependencies": {
+    "jsDAV": "^0.3.4",
     "lively-system-interface": "https://github.com/LivelyKernel/lively-system-interface",
+    "lively.2lively": "https://github.com/LivelyKernel/lively.2lively.git",
     "lively.modules": "*",
     "lively.resources": "*",
     "lively.shell": "https://github.com/LivelyKernel/lively.shell",
-    "lively.2lively": "https://github.com/LivelyKernel/lively.2lively.git",
     "minimist": "^1.2.0",
     "socket.io": "^1.5.1",
     "socket.io-client": "^1.5.1",

@@ -2,7 +2,7 @@ import ServerCommand from "lively.shell/server-command.js";
 
 export default class ShellPlugin {
 
-  get name() { return "shell" }
+  get pluginId() { return "shell" }
 
   get after() { return ["l2l"]; }
 

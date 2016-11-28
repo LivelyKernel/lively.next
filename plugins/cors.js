@@ -1,6 +1,6 @@
 export default class CorsPlugin {
 
-  get name() { return "cors" }
+  get pluginId() { return "cors" }
 
   handleRequest(req, res, next) {
     var allowOrigin = req.headers.origin || "*";

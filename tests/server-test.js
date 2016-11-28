@@ -54,23 +54,25 @@ describe('lively.server middleware', function() {
 
   function makePlugin(n) {
     return {
-      name: "plugin" + n,
+      pluginId: "plugin" + n,
+      setOptionsCalled: 0,
       setupCalled: 0,
       closeCalled: 0,
+      setOptions() { this.setOptionsCalled++; },
       setup() { this.setupCalled++; },
       close() { this.closeCalled++; }
     };
   }
 
   var server;
-  beforeEach(() => server = new LivelyServer());
+  beforeEach(() => server = new LivelyServer({plugin1: {}}));
 
   it("finds right order for handlers", () => {
-    expect(server.orderPlugins([{name: "foo", after: ["bar"]}, {name: "bar"}]).map(ea => ea.name))
+    expect(server.orderPlugins([{pluginId: "foo", after: ["bar"]}, {pluginId: "bar"}]).map(ea => ea.pluginId))
       .equals(["bar", "foo"]);
-    expect(server.orderPlugins([{name: "foo", after: ["bar"]}, {name: "bar"}, {name: "zork", before: ["foo"]}]).map(ea => ea.name))
+    expect(server.orderPlugins([{pluginId: "foo", after: ["bar"]}, {pluginId: "bar"}, {pluginId: "zork", before: ["foo"]}]).map(ea => ea.pluginId))
       .equals(["bar", "zork", "foo"]);
-    expect(() => server.orderPlugins([{name: "foo", after: ["bar"]}, {name: "bar", after: ["foo"]}]))
+    expect(() => server.orderPlugins([{pluginId: "foo", after: ["bar"]}, {pluginId: "bar", after: ["foo"]}]))
       .throws(/could not resolve handlers foo, bar/)
   });
 
@@ -79,6 +81,7 @@ describe('lively.server middleware', function() {
 
     server.addPlugin(plugin1);
     expect(server.plugins).equals([plugin1]);
+    expect(plugin1.setOptionsCalled).equals(1);
     expect(plugin1.setupCalled).equals(1);
     expect(plugin1.closeCalled).equals(0);
 

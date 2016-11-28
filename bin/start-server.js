@@ -8,15 +8,18 @@ require("socket.io");
 var parseArgs = require('minimist'),
     port = 3000,
     hostname = "localhost",
+    rootDirectory = process.cwd(),
     isMain = !module.parent,
     step = 1;
 
 if (isMain) {
   var args = parseArgs(process.argv.slice(2), {
-    alias: {port: "p"}
+    alias: {port: "p", "root-directory": "d"}
   });
+
   if ("port" in args) port = args.port;
   if ("hostname" in args) hostname = args.hostname;
+  if ("root-directory" in args) rootDirectory = args["root-directory"];
 }
 
 lively.modules.registerPackage(".")
@@ -30,7 +33,7 @@ lively.modules.registerPackage(".")
   // 2. this loads and starts the server
   .then(() => console.log(`[lively.server] ${step++}. starting server...`))
   .then(() => System.import("./server.js"))
-  .then(serverMod => serverMod.start({port, hostname}))
+  .then(serverMod => serverMod.start({port, hostname, jsdav: {rootDirectory}}))
   .then((server) => console.log(`[lively.server] ${step++}. ${server} running`))
 
   .catch(err => {

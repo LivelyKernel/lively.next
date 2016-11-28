@@ -2,12 +2,17 @@ import Tracker from "lively.2lively/tracker.js";
 
 export default class Lively2LivelyPlugin {
 
-  constructor(opts = {l2lNamespace: "l2l"}) {
-    this.l2lNamespace = opts.l2lNamespace;
+  constructor() {
+    this.l2lNamespace = "l2l";
     this.l2lTracker = null
   }
 
-  get name() { return "l2l" }
+  setOptions({l2lNamespace, l2lTracker} = {}) {
+    this.l2lNamespace = l2lNamespace;
+    this.l2lTracker = l2lTracker;
+  }
+
+  get pluginId() { return "l2l" }
 
   get after() { return ["socketio"]; }
 

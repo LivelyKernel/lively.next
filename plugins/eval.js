@@ -1,11 +1,14 @@
 export default class EvalPlugin {
 
-  constructor(route = "/eval") {
-    if (!route) throw new Error("EvalPlugin needs route!")
+  constructor() {
+    this.route = "/eval";
+  }
+
+  setOptions({route} = {}) {
     this.route = route;
   }
 
-  get name() { return "eval" }
+  get pluginId() { return "eval" }
 
   get after() { return ["cors"]; }
 
