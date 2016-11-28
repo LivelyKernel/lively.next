@@ -98,17 +98,18 @@ function modificationsToRemoveUnusedImports(source) {
 export async function interactivelyInjectImportIntoText(textMorph, opts = {gotoImport: true}) {
 // textMorph = that
 
+  var jsPlugin = textMorph.pluginFind(p => p.isJSEditorPlugin);
+  if (!jsPlugin)
+     throw new Error(`cannot find js plugin of ${textMorph}`)
+
   var {gotoImport} = opts,
-      exports = await ExportLookup.run(System),
+      exports = await jsPlugin.systemInterface().exportsOfModules(),
       choices = await ExportPrompt.run(textMorph.world(), exports);
 
   if (!choices.length) return null;
 
   var moduleId = textMorph.evalEnvironment.targetModule,
-      jsPlugin = textMorph.pluginFind(p => p.isJSEditorPlugin),
       source, generated, standaloneImport, from, to, pos, ranges = [];
-
-  console.assert(!!jsPlugin, "cannot find js plugin of text");
 
   textMorph.saveMark(); // so we can easily jump to where we were after insertion
 
@@ -137,82 +138,6 @@ export async function interactivelyInjectImportIntoText(textMorph, opts = {gotoI
   }
 
   return {ranges};
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// finding the exports available in currently loaded modules
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-class ExportLookup {
-
-  static run(System) {
-    return new this().systemExports(System);
-  }
-
-  async systemExports(System) {
-    var exportsByModule = await this.rawExportsByModule(System);
-    Object.keys(exportsByModule).forEach(id =>
-      this.resolveExportsOfModule(System, id, exportsByModule))
-
-    return arr.flatmap(Object.keys(exportsByModule),
-      id => exportsByModule[id].resolvedExports || exportsByModule[id].rawExports)
-  }
-
-  async rawExportsByModule(System) {
-    var livelyEnv = System.get("@lively-env") || {},
-        mods = Object.keys(livelyEnv.loadedModules || {}),
-        exportsByModule = {}
-
-    await Promise.all(mods.map(async moduleId => {
-      var mod = lively.modules.module(moduleId),
-          pathInPackage = mod.pathInPackage().replace(/^\.\//, ""),
-          p = mod.package(),
-          isMain = p.main && pathInPackage === p.main,
-          packageURL = p.url,
-          packageName = p.name,
-          packageVersion = p.version,
-          result = {
-            moduleId, isMain,
-            pathInPackage, packageName, packageURL, packageVersion,
-            exports: []
-          }
-      try { result.exports = await mod.exports(); } catch(e) { result.error = e;  }
-      exportsByModule[moduleId] = {rawExports: result};
-    }))
-
-    return exportsByModule;
-  }
-
-  resolveExportsOfModule(System, moduleId, exportsByModule, locked = {}) {
-    // takes the `rawExports` in `exportsByModule` that was produced by
-    // `rawExportsByModule` and resolves all "* from" exports. Extends the
-    // `rawExportsByModule` map woth a `resolvedExports` property
-
-    // prevent endless recursion
-    if (locked[moduleId]) return;
-    locked[moduleId] = true;
-
-    var data = exportsByModule[moduleId];
-    if (!data || data.resolvedExports) return;
-
-    var base = obj.select(data.rawExports, [
-      "moduleId", "isMain", "packageName", "packageURL",
-      "packageVersion", "pathInPackage"]);
-
-    data.resolvedExports = arr.flatmap(data.rawExports.exports, ({type, exported, local, fromModule}) => {
-      if (type !== "all") return [{...base, type, exported, local, fromModule}];
-
-      // resolve "* from"
-      var fromId = System.decanonicalize(fromModule, moduleId);
-      this.resolveExportsOfModule(System, fromId, exportsByModule, locked);
-      return (exportsByModule[fromId].resolvedExports || []).map(resolvedExport => {
-        var {type, exported, local, fromModule: resolvedFromModule} = resolvedExport;
-        return {...base, type, exported, local, fromModule: resolvedFromModule || fromModule};
-      })
-    });
-
-    locked[moduleId] = false;
-  }
 }
 
 
