@@ -213,7 +213,7 @@ try {
   searchInPackage(packageURL, searchString, options) {
     return this.runEvalAndStringify(`
       var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
-      await livelySystem.localInterface.localInterface.searchInPackage(${JSON.stringify(packageURL)}, ${JSON.stringify(searchString)}, ${JSON.stringify(options)})`);
+      await livelySystem.localInterface.searchInPackage(${JSON.stringify(packageURL)}, ${JSON.stringify(searchString)}, ${JSON.stringify(options)})`);
   }
 
 
