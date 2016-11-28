@@ -1,15 +1,66 @@
 /*global declare, it, describe, beforeEach, afterEach*/
 import { expect } from "mocha-es6";
 
-import { ImportInjector } from "lively.morphic/ide/js/import-helper.js";
+import { ImportInjector, cleanupUnusedImports, interactivelyInjectImportIntoText } from "lively.morphic/ide/js/import-helper.js";
+
+import { Text } from 'lively.morphic';
+import { JavaScriptEditorPlugin } from "lively.morphic/ide/js/editor-plugin.js";
 
 // that.doitContext = new ImportInjector(S, m, src, importData)
+
+describe("import helper - cleanup unused imports", () => {
+
+  it("runs command on text", async () => {
+    var ed = new Text({plugins: [new JavaScriptEditorPlugin()]}),
+        dummyWorld = {confirm: () => true};
+
+    ed.world = () => dummyWorld;
+    ed.textString = `import { Text } from "lively.morphic";\nfooo;`;
+    
+    await cleanupUnusedImports(ed);
+    expect(ed.textString).equals(`\nfooo;`, "1");
+
+    ed.textString = `import Text, { Text, Morph } from "lively.morphic";\nMorph;`;
+    await cleanupUnusedImports(ed);
+    expect(ed.textString).equals(`import { Morph } from 'lively.morphic';\nMorph;`, "1");
+  });
+
+});
+
+
+describe("import helper - injection command", () => {
+
+  it("runs command on text and inserts code + imports object", async () => {
+    // end-to-end test
+    var ed = new Text({plugins: [new JavaScriptEditorPlugin()]}),
+        targetModule = `lively://import-helper-test/${Date.now()}`,
+        dummyWorld = {
+          filterableListPrompt: (_, items) => {
+            return {selected: [items.find(ea => ea.string.includes("class Morph from")).value]}
+          }
+        }
+
+    ed.plugins[0].evalEnvironment.targetModule  = targetModule;
+    ed.textString = `import { Text } from "lively.morphic";`;
+    ed.world = () => dummyWorld;
+    
+    await interactivelyInjectImportIntoText(ed);
+
+    expect(ed.textString)
+      .equals(`import { Text, Morph } from "lively.morphic";`, "transformed code");
+    expect(ed.selection.text).stringEquals(", Morph", "selection");
+    expect((await ed.plugins[0].runEval("Morph")).value.name)
+      .equals("Morph", "import not evaluated");
+  });
+
+});
+
 
 describe("import helper - import injector", () => {
 
   var S = System
   var importData;
-  var m, src, newSource, generated, from, to;
+  var m, src, newSource, generated, from, to, standaloneImport;
 
   beforeEach(() => {
     importData = {
@@ -24,11 +75,12 @@ describe("import helper - import injector", () => {
   it("injects new import at top", () => {
     m = "http://foo/a.js";
     src = "class Foo {}";
-    ({generated, newSource, from, to} = ImportInjector.run(S, m, src, importData));
+    ({generated, newSource, from, to, standaloneImport} = ImportInjector.run(S, m, src, importData));
     expect(generated).equals(`import { xxx } from "./src/b.js";\n`);
     expect(newSource).equals(`import { xxx } from "./src/b.js";\nclass Foo {}`);
     expect(from).equals(0);
     expect(to).equals(34);
+    expect(standaloneImport).equals(`import { xxx } from "./src/b.js";`);
   });
 
   it("leaves source with existing imported as is", () => {
@@ -55,8 +107,9 @@ describe("import helper - import injector", () => {
 
   it("modifies default import from same module 2", () => {
     src = `class Foo {}\nimport yyy, { zzz } from "./src/b.js";`;
-    ({newSource, from, to} = ImportInjector.run(S, m, src, importData));
+    ({newSource, from, to, standaloneImport} = ImportInjector.run(S, m, src, importData));
     expect(newSource).equals(`class Foo {}\nimport yyy, { zzz, xxx } from "./src/b.js";`);
+    expect(standaloneImport).equals(`import { xxx } from "./src/b.js";`);
   });
 
   it("adds new import below existing from same module", () => {
@@ -84,8 +137,9 @@ describe("import helper - import injector", () => {
 
     it("leaves source with existing imported as is", () => {
       src = `class Foo {}\nimport xxx\n from "./src/b.js";`;
-      ({newSource} = ImportInjector.run(S, m, src, importData));
+      ({newSource, standaloneImport} = ImportInjector.run(S, m, src, importData));
       expect(newSource).equals(src);
+      expect(standaloneImport).equals(`import xxx from "./src/b.js";`)
     });
 
     it("leaves source with existing imported as is 2", () => {

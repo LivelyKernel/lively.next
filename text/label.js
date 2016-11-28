@@ -333,8 +333,7 @@ export class Label extends Morph {
           paddingRight: padding.right() + "px",
           paddingTop: padding.top() + "px",
           paddingBottom: padding.bottom() + "px",
-          cursor: this.nativeCursor,
-          whiteSpace: "pre"
+          cursor: this.nativeCursor
         },
         attrs = defaultAttributes(this, renderer);
 
@@ -358,7 +357,10 @@ export class Label extends Morph {
           fontStyle,
           fontWeight,
           textDecoration,
-          textStyleClasses
+          textStyleClasses,
+          width, height,
+          maxWidth, maxHeight,
+          textAlign
         } = chunkStyle || {},
         style = {},
         attrs = {style};
