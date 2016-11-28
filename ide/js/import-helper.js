@@ -1,12 +1,99 @@
 import { arr, obj, Path } from "lively.lang";
 import { pt } from "lively.graphics";
-import { parse, stringify } from "lively.ast";
+import { parse, query, stringify } from "lively.ast";
 import { resource } from "lively.resources";
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // interface
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+// await cleanupUnusedImports(that)
+
+export async function cleanupUnusedImports(textMorph, opts = {query: true}) {
+
+  var source = textMorph.textString;
+
+  var modifications = modificationsToRemoveUnusedImports(source);
+  if (!modifications || !modifications.changes.length) return "nothing to remove";
+
+  var removed = modifications.removedImports
+    .map(({name, from}) => `${name} from ${from}`).join("\n")
+
+  var really = opts.query ?
+    await textMorph.world().confirm(`Really remove these imports?\n${removed}`) :
+    true;
+  if (!really) return "canceled";
+
+  textMorph.undoManager.group();
+  for (let {replacement, start, end} of modifications.changes) {
+    var range = {
+      start: textMorph.indexToPosition(start),
+      end: textMorph.indexToPosition(end)
+    };
+    textMorph.replace(range, replacement);
+  }
+  textMorph.undoManager.group();
+
+  return "imports removed";
+}
+
+
+function modificationsToRemoveUnusedImports(source) {
+  // returns {
+  //   source: STRING,
+  //   modifications: [{start: NUMBER, end: NUMBER, replacement: STRING}]
+  //   removedImports: [{name: STRING, from: STRING}]
+  // }
+
+  var parsed = parse(source);
+
+  // 1.get imports with specifiers
+  var imports = arr.flatmap(parsed.body, ea => {
+        if (ea.type !== "ImportDeclaration" || !ea.specifiers.length) return [];
+        return ea.specifiers.map(spec => ({local: spec.local, importStmt: ea}));
+      }),
+      importIdentifiers = imports.map(ea => ea.local)
+
+  // 2. get all var references of source without those included in the import
+  // statments
+  var scope = query.resolveReferences(query.scopes(parsed)),
+      refsWithoutImports = Array.from(scope.resolvedRefMap.keys()).filter(ea =>
+                              !importIdentifiers.includes(ea)),
+      realRefs = arr.uniq(refsWithoutImports.map(ea => ea.name));
+
+  // 3. figure out what imports need to be removed or changed
+  var importsToChange = imports.filter(ea => !realRefs.includes(ea.local.name)),
+      removedImports = importsToChange.map(ea =>
+        ({name: ea.local.name, from: ea.importStmt.source.value})),
+      affectedStmts = arr.uniq(importsToChange.map(ea => {
+        var specToRemove = ea.importStmt.specifiers.find(spec => ea.local === spec.local);
+        arr.remove(ea.importStmt.specifiers, specToRemove);
+        return ea.importStmt;
+      }));
+
+  // 4. Compute the actual modifications to transform source and also new source itself
+  var modifications = affectedStmts.slice().reverse().reduce((state, importStmt) => {
+    var {source, changes} = state,
+        {start, end, specifiers} = importStmt,
+        pre = source.slice(0, start), post = source.slice(end),
+        removed = source.slice(start, end),
+        replacement = !specifiers.length ? "" : stringify(importStmt);
+
+    if (replacement && replacement.includes("\n") && !removed.includes("\n"))
+      replacement = replacement.replace(/\s+/g, " ");
+
+    source = pre + replacement + post;
+    changes = changes.concat({replacement, start, end});
+   return {source, changes};
+  }, {source, changes: []})
+
+  return {...modifications, removedImports};
+}
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 
 export async function interactivelyInjectImportIntoText(textMorph, opts = {gotoImport: true}) {
 // textMorph = that
@@ -18,7 +105,10 @@ export async function interactivelyInjectImportIntoText(textMorph, opts = {gotoI
   if (!choices.length) return null;
 
   var moduleId = textMorph.evalEnvironment.targetModule,
-      source, generated, from, to, pos, ranges = [];
+      jsPlugin = textMorph.pluginFind(p => p.isJSEditorPlugin),
+      source, generated, standaloneImport, from, to, pos, ranges = [];
+
+  console.assert(!!jsPlugin, "cannot find js plugin of text");
 
   textMorph.saveMark(); // so we can easily jump to where we were after insertion
 
@@ -26,9 +116,13 @@ export async function interactivelyInjectImportIntoText(textMorph, opts = {gotoI
   while (choices.length) {
     let choice = choices.shift();
     source = textMorph.textString,
-    {generated, from, to} = ImportInjector.run(System, moduleId, source, choice),
+    {generated, from, to, standaloneImport} = ImportInjector.run(System, moduleId, source, choice),
     pos = textMorph.indexToPosition(from);
     if (generated) ranges.push(textMorph.insertText(generated, pos));
+    if (standaloneImport) {
+      try { await jsPlugin.runEval(standaloneImport); }
+      catch (e) { console.error(`Error when trying to import ${standaloneImport}: ${e.stack}`); }
+    }
   }
   textMorph.undoManager.group();
 
@@ -39,7 +133,7 @@ export async function interactivelyInjectImportIntoText(textMorph, opts = {gotoI
     } else {
       textMorph.selection = {start: pos, end: textMorph.indexToPosition(to)};
       textMorph.scrollCursorIntoView();
-    }    
+    }
   }
 
   return {ranges};
@@ -196,6 +290,7 @@ export class ImportInjector {
   }
 
   run() {
+    var standaloneImport = this.generateImportStatement();
     var {imports, importsOfVar} = this.existingImportsOfFromModule();
 
     // already imported?
@@ -203,17 +298,18 @@ export class ImportInjector {
       status: "not modified",
       newSource: this.intoModuleSource,
       generated: "",
+      standaloneImport,
       from: importsOfVar[0].start, to: importsOfVar[0].end
     };
 
     // modify an existing import?
     if (imports.length) {
-      var modified = this.modifyExistingImport(imports);
+      var modified = this.modifyExistingImport(imports, standaloneImport);
       if (modified) return modified;
     }
 
     // prepend new import
-    return this.insertNewImport(imports);
+    return this.insertNewImport(imports, standaloneImport);
   }
 
   generateImportStatement() {
@@ -262,7 +358,7 @@ export class ImportInjector {
     }
   }
 
-  modifyExistingImport(imports) {
+  modifyExistingImport(imports, standaloneImport) {
   // var imports = this.existingImportsOfFromModule().imports
 
     var specifiers = arr.flatmap(imports, ({specifiers}) => specifiers || [])
@@ -296,6 +392,7 @@ export class ImportInjector {
         status: "modified",
         newSource: `${pre}${generated}${post}`,
         generated,
+        standaloneImport,
         from: pos, to: pos + generated.length
       }
     }
@@ -307,12 +404,13 @@ export class ImportInjector {
       status: "modified",
       newSource: `${src.slice(0, pos)}${generated}${src.slice(pos)}`,
       generated,
+      standaloneImport,
       from: pos, to: pos + generated.length
     };
 
   }
 
-  insertNewImport(importsOfFromModule) {
+  insertNewImport(importsOfFromModule, standaloneImport) {
     var pos = 0;
     if (importsOfFromModule && importsOfFromModule.length)
       pos = arr.last(importsOfFromModule).end;
@@ -320,7 +418,7 @@ export class ImportInjector {
     var src = this.intoModuleSource,
         pre = src.slice(0, pos),
         post = src.slice(pos),
-        generated = this.generateImportStatement();
+        generated = standaloneImport;
 
     if (pre.length && !pre.endsWith("\n")) generated = "\n" + generated;
     if (post.length && !post.startsWith("\n")) generated += "\n";
@@ -329,6 +427,7 @@ export class ImportInjector {
       status: "modified",
       newSource: pre + generated + post,
       generated,
+      standaloneImport,
       from: pos, to: pos + generated.length
     };
   }
