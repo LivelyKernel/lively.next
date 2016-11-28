@@ -299,8 +299,11 @@ export async function commit(opts) {
 
   var world = $$world; // FIXME
 
-  var {user, email} = await checkForUserNameAndEmail(opts);
-  return doCommit(opts, user, email)
+  var {user, email} = await checkForUserNameAndEmail(opts),
+      {cmdCommit: {exitCode, stderr, output}} = await doCommit(opts, user, email);
+  if (exitCode) throw new Error("Commit failed: " + stderr);
+
+  return output
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -323,7 +326,6 @@ export async function commit(opts) {
       var commands = [{
         name: "commit",
         gitCommand: commitCmd(message, username, email),
-        transform: cmd => cmd.code ? cmd.stderr : cmd.stdout,
         options
       }];
       return runGitCommands(commands);
@@ -333,7 +335,6 @@ export async function commit(opts) {
       var commands = [{
         name: "commit",
         gitCommand: commitCmd(null, username, email),
-        transform: cmd => cmd.code ? cmd.stderr : cmd.stdout,
         options
       }];
       return runGitCommands(commands);

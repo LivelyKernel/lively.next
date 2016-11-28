@@ -188,7 +188,7 @@ var commands = [
       try {
         await git.commit({cwd: mode.cwd});
         ed.setStatusMessage("Commit successful");
-      } catch (e) { ed.$morph.showError(e) }
+      } catch (e) { ed.showError(e) }
       return true;
     }
   },
