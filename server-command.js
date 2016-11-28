@@ -146,7 +146,6 @@ export default class ServerCommand extends CommandInterface {
       ["cmd", ["/C", command]] :
       ["/bin/bash", ["-c", command]]
 
-console.log(env)
     var proc = spawn(command, args, {env, cwd, stdio: 'pipe', detached: true});
 
     if (this.debug) console.log('Running command: "%s" (%s)', [command].concat(args).join(' '), proc.pid);
