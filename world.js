@@ -54,7 +54,7 @@ var worldCommands = [
             return {
               isListItem: true,
               label: [
-                [`${targetName}\t`, {fontSize: "70%", textStyleClasses: [".center-text"]}],
+                [`${targetName}`, {fontSize: "70%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"}],
                 [`${name}`, {}]],
               annotation: [keysPrinted, {fontSize: "70%", textStyleClasses: ["truncated-text"], maxWidth: 140}],
               value: ea

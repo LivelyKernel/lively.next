@@ -353,20 +353,16 @@ export class Label extends Morph {
           backgroundColor,
           fontColor,
           fontFamily,
-          fontSize,
           fontStyle,
           fontWeight,
           textDecoration,
           textStyleClasses,
-          width, height,
-          maxWidth, maxHeight,
           textAlign
         } = chunkStyle || {},
         style = {},
         attrs = {style};
     if (backgroundColor) style.backgroundColor = String(backgroundColor);
     if (fontFamily) style.fontFamily = fontFamily;
-    if (fontSize) style.fontSize = typeof fontSize === "number" ? fontSize + "px" : fontSize;
     if (fontColor) style.fontColor = String(fontColor);
     if (fontWeight !== "normal") style.fontWeight = fontWeight;
     if (fontStyle !== "normal") style.fontStyle = fontStyle;
@@ -374,10 +370,15 @@ export class Label extends Morph {
     if (textAlign) style.textAlign = textAlign;
     if (textStyleClasses && textStyleClasses.length)
       attrs.className = textStyleClasses.join(" ");
-    if (width !== undefined) style.width = typeof width === "number" ? width + "px" : width;
-    if (height !== undefined) style.height = typeof height === "number" ? height + "px" : height;
-    if (maxWidth !== undefined) style.maxWidth = typeof maxWidth === "number" ? maxWidth + "px" : maxWidth;
-    if (maxHeight !== undefined) style.maxHeight = typeof maxHeight === "number" ? maxHeight + "px" : maxHeight;
+
+    var lengthAttrs = ["fontSize", "width", "height", "maxWidth", "maxHeight", "top", "left", "padding", "paddingLeft", "paddingRight", "paddingBottom", "paddingTop"];
+    for (var i = 0; i < lengthAttrs.length; i++) {
+      var name = lengthAttrs[i];
+      if (!chunkStyle.hasOwnProperty(name)) continue;
+      var value = chunkStyle[name]
+      style[name] = typeof value === "number" ? value + "px" : value;
+    }
+
     return h("span", attrs, text);
   }
 }

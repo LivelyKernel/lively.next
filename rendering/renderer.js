@@ -68,6 +68,10 @@ const defaultCSS = `
 /*-=- text -=-*/
 
 .center-text {
+	 text-align: center;
+}
+
+.v-center-text {
   position: relative;
   top: 50%;
   transform: translateY(-50%);

@@ -468,10 +468,10 @@ export default class Browser extends Window {
 
       if (!m.isLoaded && m.name.endsWith(".js")) {
         var err;
-        try { system.importModule(m.name); }
+        try { await system.importModule(m.name); }
         catch(e) { err = e; }
 
-        if (err) this.world().logError(err);
+        if (err) this.showError(err);
 
         var p = await system.getPackage(pack.address),
             isLoadedNow = p.modules.map(ea => ea.name).includes(m.name);
