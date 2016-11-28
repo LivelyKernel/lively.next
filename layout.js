@@ -17,7 +17,7 @@ class Layout {
   description() { return "Describe the layout behavior here." }
   name() { return "Name presented to the user." }
 
-  onSubmorphResized(submorph) { this.container.submorphs.includes(submorph) && this.apply() }
+  onSubmorphResized(submorph, change) { this.container.submorphs.includes(submorph) && this.apply(change.meta.animation) }
   onSubmorphAdded(submorph) { this.apply() }
   onSubmorphRemoved(submorph) { this.apply() }  
   
@@ -41,7 +41,7 @@ class Layout {
   }
 
   onSubmorphChange(submorph, change) {
-    if ("extent" == change.prop && !change.value.equals(change.prevValue)) this.onSubmorphResized(submorph);
+    if ("extent" == change.prop && !change.value.equals(change.prevValue)) this.onSubmorphResized(submorph, change);
     if (this.affectsLayout(submorph, change)) this.apply();
   }
   
@@ -141,8 +141,15 @@ export class VerticalLayout extends Layout {
       pos = m.bottomLeft.addPt(pt(0, this.spacing));
       maxWidth = Math.max(m.bounds().width, maxWidth);
     });
-    if (this.autoResize && this.container.submorphs.length > 0) 
-        this.container.extent = pt(maxWidth + 2 * this.spacing, pos.y)
+    if (this.autoResize && this.container.submorphs.length > 0) {
+        const newExtent = pt(maxWidth + 2 * this.spacing, pos.y);
+        if (animate) {
+            const {duration, easing} = animate;
+            this.container.animate({extent: newExtent, duration, easing});
+        } else {
+           this.container.extent = newExtent;
+        }
+    }
     this.active = false;
   }
 
@@ -181,8 +188,15 @@ export class HorizontalLayout extends Layout {
       pos = m.topRight.addPt(pt(this.spacing, 0));
       maxHeight = Math.max(m.bounds().height, maxHeight);
     });
-    if (this.autoResize && this.container.submorphs.length > 0) 
-         this.container.extent = pt(pos.x, maxHeight + 2 * this.spacing);
+    if (this.autoResize && this.container.submorphs.length > 0) {
+        const newExtent = pt(pos.x, maxHeight + 2 * this.spacing);
+        if (animate) {
+           const {duration, easing} = animate;
+           this.container.animate({extent: newExtent, duration, easing})
+        } else {
+           this.container.extent = newExtent;
+        }
+    }
     this.active = false;
  }
 
