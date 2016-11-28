@@ -50,13 +50,13 @@ var worldCommands = [
       var items = KeyHandler.generateCommandToKeybindingMap(world.focusedMorph || world, true).map(ea => {
             var {prettyKeys, target, command: {name}} = ea,
                 targetName = target.constructor.name,
-                keysPrinted = prettyKeys ? string.truncate(prettyKeys.join(", "), 30) : "";
+                keysPrinted = prettyKeys ? prettyKeys.join(", ") : "";
             return {
               isListItem: true,
               label: [
                 [`${targetName}\t`, {fontSize: "70%", textStyleClasses: [".center-text"]}],
                 [`${name}`, {}]],
-              annotation: [keysPrinted, {fontSize: "70%"}],
+              annotation: [keysPrinted, {fontSize: "70%", textStyleClasses: ["truncated-text"], maxWidth: 140}],
               value: ea
             };
           }),
