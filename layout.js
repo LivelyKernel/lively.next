@@ -6,12 +6,13 @@ import { Morph } from "./index.js";
 
 class Layout {
   
-  constructor({spacing, border, container, autoResize} = {}) {
+  constructor({spacing, border, container, autoResize, ignore} = {}) {
     this.border = {top: 0, left: 0, right: 0, bottom: 0, ...border};
     this.spacing = spacing || 0;
     this.active = false;
     this.container = container;
     this.autoResize = autoResize != undefined ? autoResize : true;
+    this.ignore = ignore || [];
   }
 
   description() { return "Describe the layout behavior here." }
@@ -127,7 +128,7 @@ export class VerticalLayout extends Layout {
   apply(animate = false) {
     if (this.active || !this.container) return;
     var pos = pt(this.spacing, this.spacing),
-        submorphs = this.container.submorphs,
+        submorphs = this.container.submorphs.filter(m => !this.ignore.includes(m.name)),
         maxWidth = 0;
 
     this.active = true;
@@ -141,7 +142,7 @@ export class VerticalLayout extends Layout {
       pos = m.bottomLeft.addPt(pt(0, this.spacing));
       maxWidth = Math.max(m.bounds().width, maxWidth);
     });
-    if (this.autoResize && this.container.submorphs.length > 0) {
+    if (this.autoResize && submorphs.length > 0) {
         const newExtent = pt(maxWidth + 2 * this.spacing, pos.y);
         if (animate) {
             const {duration, easing} = animate;
@@ -173,7 +174,7 @@ export class HorizontalLayout extends Layout {
   apply(animate = false) {
     if (this.active || !this.container) return;
     var pos = pt(this.spacing, this.spacing),
-        submorphs = this.container.submorphs,
+        submorphs = this.container.submorphs.filter(m => !this.ignore.includes(m.name)),
         maxHeight = 0;
 
     this.maxHeight = 0;
@@ -188,7 +189,7 @@ export class HorizontalLayout extends Layout {
       pos = m.topRight.addPt(pt(this.spacing, 0));
       maxHeight = Math.max(m.bounds().height, maxHeight);
     });
-    if (this.autoResize && this.container.submorphs.length > 0) {
+    if (this.autoResize && submorphs.length > 0) {
         const newExtent = pt(pos.x, maxHeight + 2 * this.spacing);
         if (animate) {
            const {duration, easing} = animate;
