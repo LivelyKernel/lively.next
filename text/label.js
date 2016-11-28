@@ -369,8 +369,13 @@ export class Label extends Morph {
     if (fontWeight !== "normal") style.fontWeight = fontWeight;
     if (fontStyle !== "normal") style.fontStyle = fontStyle;
     if (textDecoration !== "none") style.textDecoration = textDecoration;
+    if (textAlign) style.textAlign = textAlign;
     if (textStyleClasses && textStyleClasses.length)
       attrs.className = textStyleClasses.join(" ");
+    if (width !== undefined) style.width = typeof width === "number" ? width + "px" : width;
+    if (height !== undefined) style.height = typeof height === "number" ? height + "px" : height;
+    if (maxWidth !== undefined) style.maxWidth = typeof maxWidth === "number" ? maxWidth + "px" : maxWidth;
+    if (maxHeight !== undefined) style.maxHeight = typeof maxHeight === "number" ? maxHeight + "px" : maxHeight;
     return h("span", attrs, text);
   }
 }

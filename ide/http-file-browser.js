@@ -327,15 +327,20 @@ export default class HTTPFileBrowser extends Morph {
 
     var browser = this;
     var treeData = new (class extends TreeData {
+
       display({resource}) {
         var col1Size = 19, col2Size = 8,
             {lastModified, size} = resource,
             datePrinted = lastModified ?
               date.format(lastModified, "yyyy-mm-dd HH:MM:ss") : " ".repeat(col1Size),
-            sizePrinted = size ? num.humanReadableByteSize(size) : "",
-            printed = `${string.pad(datePrinted, col1Size-datePrinted.length, true)} ${string.pad(sizePrinted, Math.max(0, col2Size-sizePrinted.length), true)} ${resource.name()}`
-        return printed
+            sizePrinted = size ? num.humanReadableByteSize(size) : ""
+
+        return [
+          [resource.name(), {}],
+          [`\t${sizePrinted} ${datePrinted}`, {fontSize: "70%", textStyleClasses: ["annotation"]}]
+        ]
       }
+
       isCollapsed({isCollapsed}) { return isCollapsed; }
       async collapse(node, bool) {
         if (!node.resource) return;
@@ -363,7 +368,7 @@ export default class HTTPFileBrowser extends Morph {
     });
 
     var fileTree = this.addMorph(new Tree({
-      name: "fileTree", treeData,
+      name: "fileTree", treeData, resizeNodes: true/*for right align size + date*/,
       fill: Color.white, border: {color: Color.gray, width: 1},
       padding: Rectangle.inset(4)
     }))
@@ -554,4 +559,5 @@ export default class HTTPFileBrowser extends Morph {
       {keys: "g", command: "refresh contents"}
     ].concat(super.keybindings);
   }
+
 }

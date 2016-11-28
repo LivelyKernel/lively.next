@@ -169,7 +169,9 @@ export var defaultRenderer = {
     return h('div.text-layer', {
       style: {
         whiteSpace: "pre",
-        width: textWidth+"px", height: textHeight+"px",
+        width: "100%",
+        // width: textWidth+"px",
+        height: textHeight+"px",
         padding: `${padding.top()}px ${padding.right()}px ${padding.bottom()}px ${padding.left()}px`
       }
     }, [spacerBefore].concat(renderedLines).concat(spacerAfter));
