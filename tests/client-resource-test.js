@@ -20,13 +20,13 @@ var hostname = "localhost", port = 9012, ioNamespace = "lively.shell-test";
 var testServer, l2lTracker, l2lClient;
 
 async function setup() {
-  testServer = LivelyServer.ensure({port, hostname});
+  testServer = LivelyServer.ensure({port, hostname, l2l: {l2lNamespace: ioNamespace}});
   await testServer.whenStarted();
   await testServer.addPlugins([
     new CorsPlugin(),
     new SocketioPlugin(),
     new ShellPlugin(),
-    new L2lPlugin({l2lNamespace: ioNamespace})
+    new L2lPlugin()
   ]);
 
   var io = testServer.findPlugin("socketio").io;
