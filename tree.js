@@ -1,4 +1,4 @@
-import { arr, obj, fun, tree } from "lively.lang"
+import { arr, obj, fun, tree, string } from "lively.lang"
 import { pt, Rectangle, rect, Color } from "lively.graphics"
 import { Label } from "lively.morphic/text/label.js";
 import { Morph, show } from "lively.morphic"
@@ -55,7 +55,7 @@ export class TreeNode extends Morph {
     this.state = {node: null};
   }
 
-  displayNode(displayedNode, node, pos, defaultToggleWidth, isSelected, isCollapsable, isCollapsed) {
+  displayNode(displayedNode, node, pos, defaultToggleWidth, goalWidth, isSelected, isCollapsable, isCollapsed) {
     this.fill = isSelected ? this.selectionColor : null;
 
     this.state = null;
@@ -76,8 +76,12 @@ export class TreeNode extends Morph {
     } else {
       if (!label.owner) this.addMorph(label);
       displayedMorph = this.displayedMorph = label;
-      this.labelString = displayedNode;
-      displayedMorph.fit();
+      this.labelValue = displayedNode;
+      if (goalWidth) {
+        displayedMorph.width = Math.max(
+          displayedMorph.textBounds().width,
+          goalWidth - defaultToggleWidth);
+      } else displayedMorph.fit();
     }
 
     this.fontColor = isSelected ? this.selectionFontColor : this.nonSelectionFontColor;
@@ -92,6 +96,8 @@ export class TreeNode extends Morph {
       displayedMorph.topLeft = pt(defaultToggleWidth, 0);
       this.extent = displayedMorph.extent.addXY(defaultToggleWidth, 0)
     }
+
+// if (this.owner) this.width = this.owner.width;
 
     this.state = {node};
   }
@@ -124,14 +130,14 @@ export class TreeNode extends Morph {
 
   get label() {
     return this._label || (this._label = this.addMorph({
-      type: Label, name: "label",
+      type: Label, name: "label", autofit: false,
       fontSize: this.fontSize, fontWeight: this.fontWeight, fontFamily: this.fontFamily,
       fill: null
     }));
   }
 
-  get labelString() { var l = this.label; return l.owner ? l.textString : ""; }
-  set labelString(s) { var l = this.label; l.textString = s; }
+  get labelValue() { var l = this.label; return l.owner ? l.value : ""; }
+  set labelValue(val) { var l = this.label; l.value = val; }
 
   get displayedMorph() { return arr.without(this.submorphs, this.toggle)[0]; }
   set displayedMorph(m) {
@@ -233,6 +239,7 @@ export class Tree extends Morph {
       fontSize: 15,
       fontFamily: "Inconsolata, monospace",
       fontColor: Color.almostBlack,
+      resizeNodes: false,
       ...props
     });
 
@@ -259,9 +266,13 @@ export class Tree extends Morph {
       fontFamily: this.fontFamily,
       fontSize: this.fontSize,
       fontColor: this.fontColor,
-      fontWeight: this.fontWeight
+      fontWeight: this.fontWeight,
+      autofit: !this.resizeNodes
     }
   }
+
+  get resizeNodes() { return this.getProperty("resizeNodes"); }
+  set resizeNodes(val) { this.addValueChange("resizeNodes", val); this.resetCache(); this.update(); }
 
   get treeData() { return this.getProperty("treeData"); }
   set treeData(val) { this.addValueChange("treeData", val); this.resetCache(); this.update(); }
@@ -303,7 +314,7 @@ export class Tree extends Morph {
   get defaultNodeMorphTextBounds() {
     if (this._cachedNodeMorphBounds) return this._cachedNodeMorphBounds;
     var nodeMorph = new TreeNode(this.nodeStyle);
-    nodeMorph.displayNode("x", null, pt(0,0), 0, false, true, true);
+    nodeMorph.displayNode("x", null, pt(0,0), 0, 0, false, true, true);
     var {width, height} = nodeMorph,
         {width: toggleWidth, height: toggleHeight} = nodeMorph.toggle;
     toggleWidth += nodeMorph.toggle.padding.right();
@@ -328,15 +339,19 @@ export class Tree extends Morph {
     var {
           treeData,
           padding, scroll: {y: visibleTop}, extent,
-          defaultNodeMorphTextBounds,
-          nodeMorphs, nodeItemContainer: container, selection} = this,
+          defaultNodeMorphTextBounds, resizeNodes,
+          nodeMorphs, nodeItemContainer: container, selection
+        } = this,
+        {
+          width: defaultCharWidth,
+          height: defaultNodeHeight,
+          toggleWidth
+        } = defaultNodeMorphTextBounds,
         visibleBottom = visibleTop + extent.y,
         nodes = treeData.asListWithIndexAndDepth(),
-        {height: defaultNodeHeight, toggleWidth} = defaultNodeMorphTextBounds,
-        i = 1, y = padding.top(), x = padding.left();
-
-    // resize container to allow scrolling
-    container.extent = pt(this.width, padding.top()+padding.bottom()+nodes.length*defaultNodeHeight);
+        i = 1, y = padding.top(), x = padding.left(),
+        goalWidth = resizeNodes ? extent.x - (padding.left() + padding.right()) : null,
+        maxWidth = 0;
 
     var dummyNodeMorph = new TreeNode(this.nodeStyle);
 
@@ -352,13 +367,17 @@ export class Tree extends Morph {
             displayed = treeData.display(node);
         if (typeof displayed === "string") {
           height = defaultNodeHeight;
+          maxWidth = Math.max(maxWidth, displayed.length*defaultCharWidth);
         } else {
           dummyNodeMorph.displayNode(
             displayed, null,
             pt(x+(toggleWidth+4)*(nodes[i].depth-1), y),
             toggleWidth,
+            goalWidth,
             false, true, true);
+
           height = dummyNodeMorph.height;
+          maxWidth = Math.max(maxWidth, dummyNodeMorph.width);
         }
         lineHeightCache[i] = height;
       }
@@ -366,33 +385,37 @@ export class Tree extends Morph {
       y += height;
     }
 
-    // render visible nodes
-    for (; i < nodes.length; i++) {
-      if (y >= visibleBottom) break;
-      var nodeMorph = nodeMorphs.shift();
-      if (!nodeMorph) {
-        nodeMorph = container.addMorph(new TreeNode(this.nodeStyle));
-        connect(nodeMorph, 'collapseChanged', this, 'onNodeCollapseChanged');
-        connect(nodeMorph, 'selected', this, 'selection');
+    this.dontRecordChangesWhile(() => {
+      // render visible nodes
+      for (; i < nodes.length; i++) {
+        if (y >= visibleBottom) break;
+        var nodeMorph = nodeMorphs.shift();
+        if (!nodeMorph) {
+          nodeMorph = container.addMorph(new TreeNode(this.nodeStyle));
+          connect(nodeMorph, 'collapseChanged', this, 'onNodeCollapseChanged');
+          connect(nodeMorph, 'selected', this, 'selection');
+        }
+  
+        var node = nodes[i].node;
+        nodeMorph.displayNode(
+          treeData.display(node),
+          node,
+          pt(x+(toggleWidth+4)*(nodes[i].depth-1), y),
+          toggleWidth,
+          goalWidth,
+          node === selection,
+          !treeData.isLeaf(node),
+          treeData.isCollapsed(node));
+  
+        var height = nodeMorph.height;
+        lineHeightCache[i] = height;
+        maxWidth = Math.max(maxWidth, nodeMorph.width);
+  
+        y += height;
       }
-
-      var node = nodes[i].node;
-      nodeMorph.displayNode(
-        treeData.display(node),
-        node,
-        pt(x+(toggleWidth+4)*(nodes[i].depth-1), y),
-        toggleWidth,
-        node === selection,
-        !treeData.isLeaf(node),
-        treeData.isCollapsed(node));
-
-      var height = nodeMorph.height;
-      lineHeightCache[i] = height;
-
-      y += height;
-    }
-
-    nodeMorphs.forEach(ea => ea.remove()); // remove invisible left overs
+  
+      nodeMorphs.forEach(ea => ea.remove()); // remove invisible left overs
+    });
 
     for (; i < nodes.length; i++) {
       var height;
@@ -403,13 +426,16 @@ export class Tree extends Morph {
             displayed = treeData.display(node), height;
         if (typeof displayed === "string") {
           height = defaultNodeHeight;
+          maxWidth = Math.max(maxWidth, displayed.length*defaultCharWidth);
         } else {
           dummyNodeMorph.displayNode(
             displayed, null,
             pt(x+(toggleWidth+4)*(nodes[i].depth-1), y),
             toggleWidth,
+            goalWidth,
             false, true, true);
           height = dummyNodeMorph.height;
+          maxWidth = Math.max(maxWidth, dummyNodeMorph.width);
         }
         lineHeightCache[i] = height;
       }
@@ -418,6 +444,10 @@ export class Tree extends Morph {
 
     if (lineHeightCache.length > i)
       lineHeightCache.splice(i, lineHeightCache.length-i)
+
+    // resize container to allow scrolling
+    container.extent = pt(maxWidth, y+padding.bottom());
+
   }
 
   buildViewState(nodeIdFn) {
@@ -861,18 +891,20 @@ var treeCommands = [
   {
     name: "print contents in text window",
     exec: treeMorph => {
-      var printedNodes = [],
-          td = treeMorph.treeData;
+      var td = treeMorph.treeData,
+          content = string.printTree(td.root, printNode, td.getChildren.bind(td)),
+          title = treeMorph.getWindow() ?
+            "printed " + treeMorph.getWindow().title :
+            treeMorph.name;
 
-      tree.prewalk(
-        td.root,
-        (node, i, depth) => printedNodes.push(" ".repeat(Math.max(0, depth-1))+td.display(node)),
-        td.getChildren.bind(td));
-      printedNodes.shift();
-
-      var content = lively.lang.string.printTree(td.root, td.display.bind(td), td.getChildren.bind(td)),
-          title = treeMorph.getWindow() ? "printed " + treeMorph.getWindow().title : treeMorph.name;
       return treeMorph.world().execCommand("open text window", {title, content, name: title, fontFamily: "Inconsolata, monospace"});
+      
+      function printNode(node) {
+        var value = td.display(node);
+        if (typeof value === "string") return value;
+        if (!value || !Array.isArray(value)) return String(value);
+        return value.map(([ea]) => ea).join("");
+      }
     }
   }
 
