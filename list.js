@@ -41,7 +41,7 @@ class ListItemMorph extends Label {
   get selectionColor() { return this.getProperty("selectionColor"); }
   set selectionColor(c) { this.addValueChange("selectionColor", c); }
 
-  displayItem(item, itemIndex, itemHeight, pos, isSelected = false, props) {
+  displayItem(item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, props) {
     if (props.fontFamily) this.fontFamily = props.fontFamily;
     if (props.selectionColor) this.selectionColor = props.selectionColor;
     if (props.selectionFontColor) this.selectionFontColor = props.selectionFontColor;
@@ -56,7 +56,8 @@ class ListItemMorph extends Label {
 
     this.itemIndex = itemIndex;    
     this.position = pos;
-    this.extent = pt(this.owner.width, itemHeight);
+    // if its wider, its wider...
+    this.extent = pt(Math.max(goalWidth, this.textBounds().width), itemHeight);
     this.fill = isSelected ? this.selectionColor : null;
     this.fontColor = isSelected ? this.selectionFontColor : this.nonSelectionFontColor;
   }
@@ -198,9 +199,27 @@ var listCommands = [
   {
     name: "print contents in text window",
     exec: list => {      
-      var content = arr.pluck(list.items, "string").join("\n"),
-          title = "items of " + list.name;
-      return list.world().execCommand("open text window", {title, content, name: title, fontFamily: "Inconsolata, monospace"});
+      var title = "items of " + list.name,
+          content = list.items.map(item => {
+            if (typeof item === "string") return item;
+            var {string, label, annotation} = item,
+                result = "";
+
+            if (label) {
+              if (typeof label === "string") result += label;
+              else result += label.map(([ea]) => ea).join("")
+            } else if (string) result += "string";
+
+            if (annotation) {
+              result += " ";
+              if (typeof annotation === "string") result += annotation;
+              else result += annotation[0];
+            }
+            return result;
+          }).join("\n");
+
+      return list.world().execCommand("open text window",
+        {title, content, name: title, fontFamily: "Inconsolata, monospace"});
     }
   }
 ];
@@ -433,10 +452,10 @@ export class List extends Morph {
           padTop = padding.top(), padLeft = padding.left(),
           padBottom = padding.bottom(), padRight = padding.right(),
           firstItemIndex = Math.floor((top + padTop) / itemHeight),
-          lastItemIndex = Math.ceil((top + height + padTop) / itemHeight);
+          lastItemIndex = Math.ceil((top + height + padTop) / itemHeight),
+          maxWidth = 0,
+          goalWidth = this.width - (padLeft + padRight);
 
-      listItemContainer.position = pt(padLeft, padTop);
-      listItemContainer.extent = pt(this.width - (padLeft + padRight), Math.max(padTop + padBottom + itemHeight*items.length, this.height));
 
       for (var i = 0; i < lastItemIndex-firstItemIndex; i++) {
         var itemIndex = firstItemIndex+i,
@@ -452,14 +471,19 @@ export class List extends Morph {
                     || (itemMorphs[i] = listItemContainer.addMorph(
                           new ListItemMorph({fontFamily, fontSize})));
 
-        itemMorph.displayItem(item, itemIndex, itemHeight,
+        itemMorph.displayItem(item, itemIndex,
+          goalWidth, itemHeight,
           pt(0, 0+itemHeight*itemIndex),
           selectedIndexes.includes(itemIndex),
           {fontFamily, selectionColor, selectionFontColor, nonSelectionFontColor,
            fontSize, padding: itemPadding || Rectangle.inset(0)});
+        maxWidth = Math.max(maxWidth, itemMorph.width);
       }
 
       itemMorphs.slice(lastItemIndex-firstItemIndex).forEach(ea => ea.remove());
+    
+      listItemContainer.position = pt(padLeft, padTop);
+      listItemContainer.extent = pt(maxWidth, Math.max(padTop + padBottom + itemHeight*items.length, this.height));
     });
   }
 

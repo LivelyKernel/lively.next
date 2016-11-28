@@ -98,11 +98,12 @@ describe("import helper - import injector", () => {
 
     it("adds new import to existing from same module", () => {
       src = `class Foo {}\nimport { yyy } from "./src/b.js";`;
-      ({newSource, to, from, generated} = ImportInjector.run(S, m, src, importData));
+      ({newSource, to, from, generated, standaloneImport} = ImportInjector.run(S, m, src, importData));
       expect(generated).equals(` xxx,`);
       expect(newSource).equals(`class Foo {}\nimport xxx, { yyy } from "./src/b.js";`);
       expect(from).equals(19);
       expect(to).equals(19+5);
+      expect(standaloneImport).equals(`import xxx from "./src/b.js";`)
     });
 
   });

@@ -80,12 +80,25 @@ div.text-layer span {
 
 /*-=- text -=-*/
 
+.Label span {
+  white-space: nowrap;
+}
+
 .Label .annotation {
-  float: right;
+/*  vertical-align: middle;
+  height: 100%;*/
   /*vertical align*/
+  float: right;
   position: relative;
   top: 50%;
   transform: translateY(-50%);
+  text-align: right;
+}
+
+.truncated-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 `;
 
