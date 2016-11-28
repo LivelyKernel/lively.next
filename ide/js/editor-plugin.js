@@ -77,15 +77,21 @@ export class JavaScriptEditorPlugin extends EditorPlugin {
   getMenuItems(items) {
     var editor = this.textMorph;
     items = items.concat([
+      {isDivider: true},
       {command: "doit", target: editor, showKeyShortcuts: true},
     ]);
+
+    if (this.evalEnvironment.targetModule)
+      items.push(
+        {command: "[javascript] inject import", alias: `add import`, target: editor},
+        {command: "[javascript] remove unused imports", alias: `remove unused imports`, target: editor});
 
     var nav = this.getNavigator();
     var ref = nav.resolveIdentifierAt(editor, editor.cursorPosition);
     if (ref) {
       items.push(
-        {command: "selectDefinition", alias: `jump to definition`, target: editor},
-        {command: "selectSymbolReferenceOrDeclaration", alias: `select all occurrences`, target: editor});
+        {command: "selectDefinition", alias: `jump to definition of "${ref.name}"`, target: editor},
+        {command: "selectSymbolReferenceOrDeclaration", alias: `select all occurrences of "${ref.name}"`, target: editor});
     }
     return items;
   }
@@ -94,5 +100,32 @@ export class JavaScriptEditorPlugin extends EditorPlugin {
   
   getComment() {
     return {lineCommentStart: "//", blockCommentStart: "/*", blockCommentEnd: "*/"}
+  }
+
+  sanatizedJsEnv(envMixin) {
+    var env = {...this.evalEnvironment, ...envMixin},
+        {targetModule, context, format, remote} = env,
+        context = context || this.textMorph,
+        // targetModule = targetModule || "lively://lively.next-prototype_2016_08_23/" + morph.id,
+        sourceURL = targetModule + "_doit_" + Date.now(),
+        format = format || "esm";    
+    if (remote === "local") remote = null;
+    return remote ?
+      {targetModule, format, sourceURL, remote} :
+      {System, targetModule, format, context, sourceURL}
+  }
+
+  systemInterface(envMixin) {
+    var {serverInterfaceFor, localInterface} = System.get(System.decanonicalize("lively-system-interface"))
+    if (!serverInterfaceFor || !localInterface)
+      throw new Error("doit not possible: lively-system-interface not available!")
+    var env = this.sanatizedJsEnv(envMixin);
+    return env.remote ? serverInterfaceFor(env.remote) : localInterface;
+  }
+
+  runEval(code, opts) {
+    var env = this.sanatizedJsEnv(opts),
+        endpoint = this.systemInterface(env);
+    return endpoint.runEval(code, env);
   }
 }

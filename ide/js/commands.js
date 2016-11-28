@@ -16,33 +16,15 @@ function setEvalEnv(morph, newEnv) {
   return plugin.evalEnvironment;
 }
 
-function buildEvalOpts(morph, additionalOpts) {
-  // FIXME, also in text/commands
-  var env = {...morph.evalEnvironment, ...additionalOpts},
-      {targetModule, context, format, remote} = env,
-      context = context || morph,
-      // targetModule = targetModule || "lively://lively.next-prototype_2016_08_23/" + morph.id,
-      sourceURL = targetModule + "_doit_" + Date.now(),
-      format = format || "esm";
-  if (remote === "local") remote = null;
-  return remote ?
-    {targetModule, format, sourceURL, remote} :
-    {System, targetModule, format, context, sourceURL}
-}
-
 function doEval(
   morph,
   range = morph.selection.isEmpty() ? morph.lineRange() : morph.selection.range,
   additionalOpts,
   code = morph.textInRange(range)) {
-
-  var {serverInterfaceFor, localInterface} = System.get(System.decanonicalize("lively-system-interface"))
-  if (!serverInterfaceFor || !localInterface)
-    throw new Error("doit not possible: lively-system-interface not available!")
-
-  var opts = buildEvalOpts(morph, additionalOpts),
-      endpoint = opts.remote ? serverInterfaceFor(opts.remote) : localInterface;
-  return endpoint.runEval(code, opts);
+  var jsPlugin = morph.pluginFind(p => p.isJSEditorPlugin);
+  if (!jsPlugin)
+    throw new Error(`doit not possible: cannot find js editor plugin of !${morph}`)
+  return jsPlugin.runEval(code, additionalOpts);
 }
 
 function maybeSelectCommentOrLine(morph) {
@@ -225,8 +207,8 @@ export var jsEditorCommands = [
   {
     name: "undefine variable",
     doc: "Finds the variable at cursor position (or position passed) and undefines it in the module toplevel scope.",
-    exec: async function(ed, opts = {varName: null, position: null}) {
-      var {varName, position} = opts;
+    exec: async function(ed, env = {varName: null, position: null}) {
+      var {varName, position} = env;
 
       if (!varName) {
         if (!position) position = ed.cursorPosition;
@@ -238,12 +220,13 @@ export var jsEditorCommands = [
         varName = node.name
       }
 
-      var opts = buildEvalOpts(ed),
-          source = `lively.modules.module("${opts.targetModule}").undefine("${varName}")`,
+      // this.pluginFind(p => p.isJSEditorPlugin).sanatizedJsEnv()
+      var env = ed.pluginFind(p => p.isJSEditorPlugin).sanatizedJsEnv(),
+          source = `lively.modules.module("${env.targetModule}").undefine("${varName}")`,
           result, err;
 
       try {
-        result = await doEval(ed, null, opts, source);
+        result = await doEval(ed, null, env, source);
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
 
@@ -334,10 +317,21 @@ export var jsIdeCommands = [
     name: "[javascript] inject import",
     exec: async (text, opts = {gotoImport: true}) => {
       var {interactivelyInjectImportIntoText} =
-        await System.import("lively.morphic/ide/js/import-helper");
+        await System.import("lively.morphic/ide/js/import-helper.js");
       var result = await interactivelyInjectImportIntoText(text, opts);
       if (!result) text.setStatusMessage("canceled");
       return result;
+    }
+  },
+
+  {
+    name: "[javascript] remove unused imports",
+    exec: async (text, opts = {query: true}) => {
+      var {cleanupUnusedImports} =
+        await System.import("lively.morphic/ide/js/import-helper.js");
+      var status = await cleanupUnusedImports(text, opts);
+      text.setStatusMessage(status);
+      return true
     }
   }
 
