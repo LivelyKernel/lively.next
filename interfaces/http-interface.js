@@ -185,16 +185,26 @@ try {
     return this.runEvalAndStringify(`lively.modules.module(${JSON.stringify(moduleName)}).changeSource(${JSON.stringify(newSource)}, ${JSON.stringify(options)})`);
   }
 
+  keyValueListOfVariablesInModule(moduleName, sourceOrAst) {
+    return this.runEvalAndStringify(`
+      var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
+      await livelySystem.localInterface.keyValueListOfVariablesInModule(${JSON.stringify(moduleName)}, ${JSON.stringify(sourceOrAst)})`);
+  }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // imports/exports
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   importsAndExportsOf(modId, sourceOrAst) {
     return this.runEvalAndStringify(`({
       imports: await lively.modules.module(${JSON.stringify(modId)}).imports(),
       exports: await lively.modules.module(${JSON.stringify(modId)}).exports()})`);
   }
 
-  keyValueListOfVariablesInModule(moduleName, sourceOrAst) {
+  exportsOfModules() {
     return this.runEvalAndStringify(`
       var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
-      await livelySystem.localInterface.keyValueListOfVariablesInModule(${JSON.stringify(moduleName)}, ${JSON.stringify(sourceOrAst)})`);
+      await livelySystem.localInterface.exportsOfModules()`);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -203,7 +213,7 @@ try {
   searchInPackage(packageURL, searchString, options) {
     return this.runEvalAndStringify(`
       var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
-      await livelySystem.localInterface.searchInPackage(${JSON.stringify(packageURL)}, ${JSON.stringify(searchString)}, ${JSON.stringify(options)})`);
+      await livelySystem.localInterface.localInterface.searchInPackage(${JSON.stringify(packageURL)}, ${JSON.stringify(searchString)}, ${JSON.stringify(options)})`);
   }
 
 

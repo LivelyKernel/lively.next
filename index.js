@@ -60,12 +60,14 @@ export class Interface {
   getModulesInPackage(name)  { return modulesInPackage(this.coreInterface, name); }
 
   shortModuleName(moduleId, itsPackage)                               { return shortModuleName(this.coreInterface, moduleId, itsPackage); }
-  showExportsAndImportsOf(a, b)                                       { return showExportsAndImportsOf(this.coreInterface, a, b); }
   interactivelyChangeModule(moduleName, newSource, options)           { return interactivelyChangeModule(this.coreInterface, moduleName, newSource, options); }
   interactivelyReloadModule(vmEditor, moduleName)                     { return interactivelyReloadModule(this.coreInterface, vmEditor, moduleName); }
   interactivelyUnloadModule(vmEditor, moduleName)                     { return interactivelyUnloadModule(this.coreInterface, vmEditor, moduleName); }
   interactivelyRemoveModule(requester, moduleName)                    { return interactivelyRemoveModule(this.coreInterface, requester, moduleName); }
   interactivelyAddModule(requester, relatedPackageOrModule)           { return interactivelyAddModule(this.coreInterface, requester, relatedPackageOrModule); }
+
+  showExportsAndImportsOf(packageAddress, world) { return showExportsAndImportsOf(this.coreInterface, packageAddress, world); }
+  exportsOfModules()                             { return this.coreInterface.exportsOfModules(); }
 
   // -=-=-=-
   // search
@@ -87,8 +89,12 @@ export class Interface {
   // -=-=-=-=-
   // testing
   // -=-=-=-=-
-  loadMochaTestFile(file, testsByFile) { return this.coreInterface.loadMochaTestFile(file, testsByFile); }
-  runMochaTests(grep, testsByFile, onChange, onError) { return this.coreInterface.runMochaTests(grep, testsByFile, onChange, onError); }
+  loadMochaTestFile(file, testsByFile) {
+    return this.coreInterface.loadMochaTestFile(file, testsByFile);
+  }
+  runMochaTests(grep, testsByFile, onChange, onError) {
+    return this.coreInterface.runMochaTests(grep, testsByFile, onChange, onError);
+  }
 
 }
 
