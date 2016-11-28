@@ -1036,7 +1036,14 @@ export class ColorPickerField extends Morph {
             bottomLeft = this.innerBounds().bottomLeft();
 
       this.submorphs = [
-        {extent: pt(40,25), clipMode: "hidden", onMouseDown: (evt) => this.openPalette(evt),
+        {extent: pt(40,25), clipMode: "hidden", 
+         onMouseDown: (evt) => this.openPalette(evt),
+         onHoverIn() {
+            this.get("dropDownIndicator").animate({opacity: 1, duration: 300});
+         },
+         onHoverOut() {
+            this.get("dropDownIndicator").animate({opacity: 0, duration: 300});
+         },
          submorphs: [{
                name: "topLeft",
                extent: pt(70,70)
@@ -1045,7 +1052,11 @@ export class ColorPickerField extends Morph {
                extent: pt(70,80),
                origin: pt(35,0), topRight,
                rotation: num.toRadians(-45)
-        }]},
+        }, Icon.makeLabel("chevron-down", {
+               opacity: 0,
+               name: "dropDownIndicator", 
+               center: pt(30,12.5)
+          })]},
         {fill: Color.transparent, extent: pt(25, 25), 
          onHoverIn() { this.fill = Color.black.withA(.2); },
          onHoverOut() { this.fill = Color.transparent; },
@@ -1057,6 +1068,13 @@ export class ColorPickerField extends Morph {
       connect(this.target, "onChange", this, "update");
    }
 
+   onKeyDown(evt) {
+      if (evt.key == "Escape") {
+         this.picker && this.picker.remove();
+         this.palette && this.palette.remove();
+      }   
+   }
+
    update() {
       this.get("topLeft").fill = this.target[this.property];
       this.get("bottomRight").fill = this.target[this.property].withA(1);
@@ -1066,7 +1084,7 @@ export class ColorPickerField extends Morph {
       const w = new Morph({extent: pt(400,310), fill: Color.transparent, submorphs: [widget]});
       w.openInWorldNearHand();
       w.adjustOrigin(w.innerBounds().topCenter());
-      w.position = evt.position;
+      w.position = this.globalBounds().bottomCenter();
       w.scale = 0; w.opacity = 0;
       await w.animate({opacity: 1, scale: 1, duration: 300});
       this.world().addMorph(widget);
@@ -1077,9 +1095,11 @@ export class ColorPickerField extends Morph {
    async openPicker(evt) {
       const p = this.picker || new ColorPicker({
                     color: this.target[this.property]});
+      p.position = pt(0,0);
       connect(p, "color", this.target, this.property);
       connect(p, "color", this, "update");
       this.picker = await this.fadeIntoWorld(evt, p);
+      this.picker.focus();
       this.palette && this.palette.remove();
    }
 
@@ -1087,9 +1107,11 @@ export class ColorPickerField extends Morph {
       const p = this.palette || new ColorPalette({
                     extent: pt(400,310), 
                     selectedColor: this.target[this.property]});
+      p.position = pt(0,0);
       connect(p, "selectedColor", this.target, this.property);
       connect(p, "selectedColor", this, "update");
       this.palette = await this.fadeIntoWorld(evt, p);
+      this.palette.focus();
       this.picker && this.picker.remove();
    }
    
@@ -1191,7 +1213,7 @@ class StyleEditor extends Morph {
                 target[property] = value;
                 const [title] = this.submorphs,
                       controls =  render(target[property]);
-                this.submorphs = [title, ...controls ? [controls] : []];
+                this.animate({submorphs: [title, ...controls ? [controls] : []], duration: 300});
             },
             submorphs: [
               {fill: Color.transparent, layout: new HorizontalLayout(),
@@ -1278,7 +1300,6 @@ export class BodyStyleEditor extends StyleEditor {
              control.layout.row(0).paddingBottom = 5;
              control.layout.row(1).paddingBottom = 5;
              control.layout.row(2).paddingBottom = 5;
-             control.layout.row(3).paddingBottom = 5;
              return control;
           }
           })
