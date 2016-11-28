@@ -167,6 +167,11 @@ var regexps = {
   enter: /Enter|Return/gi,
   shift: /Shift/gi,
   backspace: /Backspace/gi,
+  delete: /del(ete)?/gi,
+  left: /left/gi,
+  right: /right/gi,
+  up: /up/gi,
+  down: /down/gi,
   keySpacer: /([^-])-/g,
   seqSpacer: /([^\s])\s/g
 }
@@ -205,6 +210,11 @@ export default class KeyHandler {
       .replace(regexps.enter,     "⏎")
       .replace(regexps.shift,     "⇧")
       .replace(regexps.backspace, "⌫")
+      .replace(regexps.delete, "⌦")
+      .replace(regexps.left, "→")
+      .replace(regexps.right, "←")
+      .replace(regexps.up, "↑")
+      .replace(regexps.down, "↓")
       .replace(regexps.keySpacer, "$1")
       .replace(regexps.seqSpacer, "$1-")
   }
