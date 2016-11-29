@@ -21,7 +21,7 @@ export class Package {
   printLog() { return this._log.join(""); }
 
   get version() { return this.config.version || null; }
-  get name() { return this.config.name || this.directory.split("/").filter(Boolean).slice(-1)[0] || ""; }
+  get name() { return this.config.name || ""; }
   get dependencies() {
     return Object.assign({}, this.config.dependencies, this.config.devDependencies);
   }
@@ -29,9 +29,9 @@ export class Package {
   async readConfig() {
     var url = this.directory.startsWith("/") ? "file://" + this.directory : this.directory,
         configFile = join(url, "package.json")
-    if (!await lively.resources.resource(url) || !await lively.resources.resource(join(url, "package.json"))) {
+    if (!await lively.resources.resource(url).exists() || !await lively.resources.resource(join(url, "package.json")).exists()) {
       console.log(`package ${this.directory} does not exit yet`);
-      return;
+      return this;
     }
 
     try {

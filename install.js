@@ -60,17 +60,21 @@ export async function install(baseDir, toURL) {
       pBar && pBar.setValue(++i / packages.length)
     }
 
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // initial world files
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    console.log(`=> setting up initial lively world`);
+
+    exec(`cp ${baseDir}/lively.morphic/examples/initial/* .`);
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
     pBar && pBar.remove();
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // Installing tools into old Lively
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
     indicator && indicator.remove();
 
     var livelyServerDir = join(baseDir, "lively.installer/")
     if (hasUI) $$world.inform("Packages successfully updated!\n" + packages.map(ea => ea.name).join("\n"));
-    else console.log(`=> Done!\npackages installed and / or updated! You can start a lively server by running 'npm start' inside ${livelyServerDir}. Afterwards your lively.system development world is running at http://localhost:9001/development.html`)
+    else console.log(`=> Done!\npackages installed and / or updated! You can start a lively server by running './start.sh' inside ${livelyServerDir}.\nAfterwards your first lively.next world is ready to run at http://localhost:9011/index.html`);
   } catch (e) {
     console.error("Error occurred during installation: " + e.stack);
     log.push(e.stack || e);
