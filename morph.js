@@ -1284,7 +1284,7 @@ export class Image extends Morph {
   constructor(props) {
     super(props);
     if (!this.imageUrl)
-      this.imageUrl = '/core/media/lively-web-logo-small.png'
+      this.imageUrl = System.decanonicalize("lively.morphic/lively-web-logo-small.png");
   }
 
   get isImage() { return true }
