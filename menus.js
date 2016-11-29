@@ -47,22 +47,15 @@ export class MenuItem extends Label {
     }
   }
 
-  get labelAndAnnotation() {
-    var {value, annotation} = this.valueAndAnnotation,
+  get label() {
+    var {value} = this.valueAndAnnotation,
         label = value.map(([string]) => string).join("\n");
-    return {label, annotation};
+    return label;
   }
+  set label(value) { this.valueAndAnnotation = {value, annotation: this.annotation}; }
 
-  set labelAndAnnotation(value) {
-    var {label, annotation} = value;
-    this.valueAndAnnotation = {value: label, annotation}
-  }
-
-  get label() { return this.labelAndAnnotation.label; }
-  set label(label) { this.labelAndAnnotation = {label, annotation: this.annotation}; }
-
-  get annotation() { return this.labelAndAnnotation.annotation; }
-  set annotation(annotation) { this.labelAndAnnotation = {label: this.label, annotation}; }
+  get annotation() { return this.valueAndAnnotation.annotation; }
+  set annotation(annotation) { this.valueAndAnnotation = {value: this.value, annotation}; }
 
   get action() { return this.getProperty("action") }
   set action(value) { this.addValueChange("action", value); }
@@ -193,14 +186,15 @@ export class Menu extends Morph {
 
     if (Array.isArray(item)) {
       var [name, actionOrList] = item;
-      if (typeof name !== "string") return invalidItem;
+
+      if (typeof name !== "string" && !Array.isArray(name)/*rich text*/) return invalidItem;
 
       if (!actionOrList || typeof actionOrList === "function")
-        return {string: name, action: actionOrList || show.bind(null, name)};
+        return {label: name, action: actionOrList || show.bind(null, name)};
 
       if (Array.isArray(actionOrList))
         return {
-          string: name,
+          label: name,
           submenu: actionOrList,
           annotation: [" ", {textStyleClasses: ["fa", "fa-caret-right"]}]
         };
@@ -252,12 +246,12 @@ export class Menu extends Morph {
       maxWidth = Math.max(title.width, maxWidth);
     }
 
-    this.items.forEach(({string: label, annotation, action, submenu, isDivider}) => {
+    this.items.forEach(({label, string, annotation, action, submenu, isDivider}) => {
       var itemMorph = this.addMorph(
         isDivider ?
           new MenuDivider({position: pos}) :
           new MenuItem({
-             label, annotation,
+             label: label || string, annotation,
              action, submenu,
              position: pos,
              ...defaultStyle
