@@ -21,18 +21,19 @@ export default class ShellClientResource extends Resource {
     });
   }
 
-  write(content) {
-    content = content || '';
-    var cmd = runCommand(`tee "${this.url}"`, {stdin: content, ...this.options});
-    return cmd.whenDone().then(() => {
-      if (cmd.exitCode) throw new Error(`Write ${this.url} failed: ${cmd.stderr}`);
-      return this;
-    });
+  async write(content) {
+    var cmd = !content ?
+      await runCommand(`echo -n > "${this.url}"`, {...this.options}).whenDone() :
+      await runCommand(`touch "${this.url}" && tee "${this.url}"`,
+        {stdin: String(content), ...this.options}).whenDone();
+    if (cmd.exitCode) throw new Error(`Write ${this.url} failed: ${cmd.stderr}`);
+    return this;
   }
 
-  exists() {
-    var cmd = runCommand(`test -d "${this.url}" || test -f "${this.url}"`, this.options);
-    return cmd.whenDone().then(() => cmd.exitCode === 0);
+  async mkdir() {
+    var cmd = await runCommand(`mkdir -p "${this.url}"`, this.options).whenDone();
+    if (cmd.exitCode) throw new Error(`${this} cannot create directory: ${cmd.stderr}`);
+    return this;
   }
 
   exists() {
