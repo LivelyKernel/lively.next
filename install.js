@@ -38,7 +38,7 @@ export async function install(baseDir, toURL) {
     console.log(`=> Installing and updating ${packages.length} packages`);
     i = 0; for (let p of packages) {
       if (pBar) pBar.setLabel(`updating ${p.name}`);
-      else console.log(`installing / updating ${p.name}`);
+      else console.log(`${p.name}`);
       await p.installOrUpdate(packages);
       pBar && pBar.setValue(++i / packages.length);
     }
@@ -64,8 +64,9 @@ export async function install(baseDir, toURL) {
     // initial world files
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     console.log(`=> setting up initial lively world`);
-
-    exec(`cp ${baseDir}/lively.morphic/examples/initial/* .`);
+    var baseDirForExec = baseDir.replace(/^file:\/\//, ""),
+        {code, output} = await exec(`cp ${baseDirForExec}/lively.morphic/examples/initial/* ${baseDirForExec}`);
+    if (code) console.error("workspace setup failed", output);
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
