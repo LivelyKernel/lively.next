@@ -700,21 +700,23 @@ export class World extends Morph {
   menuItems() {
     return [
       {title: "World menu"},
-      {command: "undo",                     target: this, showKeyShortcuts: true},
-      {command: "redo",                     target: this, showKeyShortcuts: true},
+      {command: "undo",                     target: this},
+      {command: "redo",                     target: this},
       {isDivider: true},
-      {command: "run command",              target: this, showKeyShortcuts: true},
-      {command: "select morph",             target: this, showKeyShortcuts: true},
-      {command: "resize to fit window",     target: this, showKeyShortcuts: true},
-      {command: "window switcher",          target: this, showKeyShortcuts: true},
+      {command: "run command",              target: this},
+      {command: "select morph",             target: this},
+      {command: "resize to fit window",     target: this},
+      {command: "window switcher",          target: this},
       {isDivider: true},
       ["Tools", [
-        {command: "open object drawer",       target: this, showKeyShortcuts: true},
-        {command: "open workspace",           target: this, showKeyShortcuts: true},
-        {command: "open browser",             target: this, showKeyShortcuts: true},
-        {command: "choose and browse module", target: this, showKeyShortcuts: true},
-        {command: "open code search",         target: this, showKeyShortcuts: true},
-        {command: "open test runner",         target: this, showKeyShortcuts: true}]
+        {command: "open object drawer",       target: this},
+        {command: "open workspace",           target: this},
+        {command: "open browser",             target: this},
+        {command: "choose and browse module", target: this},
+        {command: "open code search",         target: this},
+        {command: "open test runner",         target: this},
+        {command: "open shell workspace",     target: this}
+        ]
       ]];
   }
 
