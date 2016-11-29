@@ -1,6 +1,6 @@
 {
   "name": "lively.installer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/LivelyKernel/lively.installer"
@@ -18,7 +18,7 @@
     }
   },
   "dependencies": {
-    "lively.modules": "^0.5.11",
+    "lively.modules": "*",
     "systemjs": "^0.19.31"
   }
 }

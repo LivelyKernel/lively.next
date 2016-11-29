@@ -1,6 +1,7 @@
 import { exec } from "./shell-exec.js";
-import { join, read } from "./helpers.js";
+import { join } from "./helpers.js";
 import { Repository } from "./git-repo.js";
+import { resource } from "lively.resources";
 
 export class Package {
 
@@ -28,7 +29,7 @@ export class Package {
 
   async readConfig() {
     try {
-      var content = await read(join(this.directory, "package.json"));
+      var content = await resource(join(this.directory, "package.json")).read();
       if (content) this.config = Object.assign(this.config, JSON.parse(content));
     } catch (e) {
       console.warn(`Error when reading package config for ${this.directory}: ${e}`)
@@ -154,7 +155,7 @@ function rm(path) {
     for (let p of packages) {
       if (indicator) indicator.setLabel(`npm install\n${p}`);
       var {code, output} = await exec(`npm install ${p}`, {log: this._log, cwd: this.directory});
-      if (code && typeof $world !== "undefined") await $world.inform(`npm install of ${p}failed:\n${output}`);
+      if (code && typeof $$world !== "undefined") await $$world.inform(`npm install of ${p}failed:\n${output}`);
     }
     indicator && indicator.remove();
   }

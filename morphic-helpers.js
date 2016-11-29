@@ -1,3 +1,6 @@
+import { rect, pt, Color } from "lively.graphics";
+import { connect } from "lively.bindings";
+import { Button, morph } from "lively.morphic";
 "format esm";
 
 export class TextFlow {
@@ -8,32 +11,29 @@ export class TextFlow {
   }
   
   button(label, action, closureMapping) {
-    var b = new lively.morphic.Button(rect(0,0, 100,20), label);
+    var b = new Button(rect(0,0, 100,20), label);
     b.setLabel(label);
     b.addScript(action, "doAction", closureMapping);
     b.applyStyle({fill: Color.white, cssStylingMode: false})
-    lively.bindings.connect(b, 'fire', b, 'doAction');
+    connect(b, 'fire', b, 'doAction');
     return b;
   }
   
   text(stringOrList) {
-    var t = lively.morphic.newMorph({klass: lively.morphic.Text, extent: pt(20,20)})
+    var t = morph({type: "text", extent: pt(20,20), fixedWidth: false, fixedHeight: false, fill: null, borderWidth: 0, readOnly: true})
     if (Array.isArray(stringOrList)) {
-      if (!Array.isArray(stringOrList[0])) stringOrList = [stringOrList];
-      t.setRichTextMarkup(stringOrList);
+      if (!Array.isArray(stringOrList[0])) stringOrList = [[stringOrList]];
+      t.textAndAttributes = stringOrList;
     }
     else t.textString = stringOrList;
-    t.applyStyle({fixedWidth: false, fixedHeight: false, fill: null, borderWidth: 0, allowInput: false, whiteSpaceHandling: 'nowrap'});
     return t;
   }
   
   async add(target, morph, pos = pt(0,0)) {
     target.addMorph(morph);
     morph.setPosition(pos);
-    if (morph.isText) await new Promise((resolve, reject) => morph.fitThenDo(() => resolve()));
     if (morph.isButton) {
       var measure = target.addMorph(this.text(morph.getLabel()));
-      await new Promise((resolve, reject) => measure.fitThenDo(() => resolve()))
       measure.remove();
       morph.setExtent(measure.getExtent());
     }
@@ -44,7 +44,7 @@ export class TextFlow {
     // render(that, [["hello world", {fontWeight: "bold"}], br, br, "test", button("test", () => show('hello'))])
     var pos = pt(0,0), maxY = 0;
     target.removeAllMorphs()
-    target.applyStyle({beClip: true})
+    target.clipMode("auto");
     for (let part of summary) {
       if (part === this.nothing) continue;
       if (part === this.br) {
