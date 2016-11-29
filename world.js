@@ -529,6 +529,14 @@ var worldCommands = [
       await publishPackage();
       return true;
     }
+  },
+
+  {
+    name: "report a bug",
+    exec: async world => {
+      window.open("https://github.com/LivelyKernel/lively.morphic/issues/new", "_blank");
+      return true;
+    }
   }
 ]
 
