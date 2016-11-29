@@ -110,6 +110,27 @@ export class DiffEditorPlugin extends EditorPlugin {
     }
   }
 
+  getMenuItems(items) {
+    var target = this.textMorph,
+        hasSelection = !target.selection.isEmpty();
+
+    items.push(...[
+      {isDivider: true},
+      {target, command: "[patch] open file at cursor"},
+      {target, command: "[patch] show selected patch"},
+      {target, command: "[git] apply selection"},
+      {target, command: "[git] reverse apply selection"},
+      {target, command: "[git] stage " + (hasSelection ? "selection" : "all")},
+      {target, command: "[git] unstage "   + (hasSelection ? "selection" : "all")},
+      {target, command: "[git] discard "   + (hasSelection ? "selection" : "all")},
+      {target, command: "[git] stage " + (hasSelection ? "selection" : "all")},
+      {target, command: "[git] update"},
+      {target, command: "[git] commit"}
+    ]);
+
+    return items;
+  }
+
 }
 
 
@@ -204,7 +225,7 @@ var commands = [
         return true;
       }
 
-      
+
       var mode = ed.pluginFind(p => p.isDiffEditorPlugin),
           cmd = await runCommand(input, {cwd: mode.cwd});
       await cmd.whenDone();
@@ -302,28 +323,3 @@ async function patchApplySelection(ed, action, options) {
   ed.setStatusMessage(string.capitalize(action) + "\n" + arr.invoke(patches, "createPatchString").join("\n"));
   return {commands, patches}
 }
-
-
-
-
-//     morphMenuItems: function(items, editor) {
-//         var mode = this;
-//         var hasSelection = !editor.getSelectionRangeAce().isEmpty();
-//
-//         items.pushAll([
-//           {isMenuItem: true, isDivider: true},
-//           ["open file at patch", function() { editor.aceEditor.execCommand("patch.openFileAtCursor"); }],
-//           ["show selected patch", function() { editor.aceEditor.execCommand("patch.showSelectedPatch"); }],
-//           ["apply selection",                                        function() { editor.aceEditor.execCommand("diff.applySelection"); }],
-//           ["reverse apply selection",                                function() { editor.aceEditor.execCommand("diff.reverseApplySelection"); }],
-//           ["[git] stage "   + (hasSelection ? "selection" : "everything"), function() { editor.aceEditor.execCommand("git.stage" + (hasSelection ? "Selection" : "All")); }],
-//           ["[git] unstage " + (hasSelection ? "selection" : "everything"), function() { editor.aceEditor.execCommand("git.unstage"  + (hasSelection ? "Selection" : "All")); }],
-//           ["[git] discard " + (hasSelection ? "selection" : "everything"), function() { editor.aceEditor.execCommand("git.discard"  + (hasSelection ? "Selection" : "All")); }],
-//           ["[git] stage "   + (hasSelection ? "selection" : "everything"), function() { editor.aceEditor.execCommand("git.stage" + (hasSelection ? "Selection" : "All")); }],
-//           ["[git] update diff...", function() { editor.aceEditor.execCommand("git.update"); }],
-//           ["[git] commit...", function() { editor.aceEditor.execCommand("git.commit"); }],
-//         ]);
-//
-//         return items;
-//     },
-
