@@ -1167,6 +1167,7 @@ export class Text extends Morph {
 
   menuItems() {
     var items = [
+      ["run command", () => { this.focus(); this.world().execCommand("run command")}],
       {command: "text undo", alias: "undo", target: this, showKeyShortcuts: true},
       {command: "text redo", alias: "redo", target: this, showKeyShortcuts: true},
       {command: "manual clipboard copy", alias: "copy", target: this, showKeyShortcuts: this.keysForCommand("clipboard copy"), args: {collapseSelection: false, delete: false}},
