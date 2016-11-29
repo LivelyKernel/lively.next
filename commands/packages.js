@@ -1,4 +1,5 @@
 import { parseJsonLikeObj } from "../helpers.js";
+import { arr } from "lively.lang";
 import { resource } from "lively.resources";
 
 async function loadPackage(system, spec) {
@@ -172,8 +173,8 @@ export async function showExportsAndImportsOf(system, packageAddress, world = $w
 
     if (importsExports.imports.length) {
       report += "\n  imports:\n"
-      report += importsExports.imports
-        .groupByKey("fromModule").mapGroups((from, imports) =>
+      report += arr.groupByKey(importsExports.imports, "fromModule")
+        .mapGroups((from, imports) =>
           `from ${from}: `
             + imports.map(ea =>
               !ea.local && !ea.imported ?
@@ -201,10 +202,8 @@ export async function showExportsAndImportsOf(system, packageAddress, world = $w
     reports.push(report);
   }
 
-  world.addCodeEditor({
+  await world.execCommand("open text window", {
     title: "imports and exports of " + packageAddress,
     content: reports.join("\n\n"),
-    textMode: "text",
-    extent: pt(700, 700)
-  }).getWindow().comeForward();
+  });
 }
