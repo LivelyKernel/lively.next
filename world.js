@@ -716,7 +716,9 @@ export class World extends Morph {
         {command: "open code search",         target: this},
         {command: "open test runner",         target: this},
         {command: "open shell workspace",     target: this}]
-      ]];
+      ],
+      {command: "report a bug",          target: this},
+      ];
   }
 
   openWorldMenu(evt, items) {
