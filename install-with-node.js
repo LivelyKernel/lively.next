@@ -15,5 +15,5 @@ console.log("Installing lively.system packages into %s", installDir);
 
 lively.modules.importPackage(".")
   .then(() => System.import("./install.js"))
-  .then(installler => installler.install(installDir))
+  .then(installer => installer.install(installDir))
   .catch(err => { console.err("Error!" + err); process.exit(2); })

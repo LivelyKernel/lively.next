@@ -1,5 +1,4 @@
 import { exec } from "./shell-exec.js";
-import { resource } from "lively.resources";
 
 export function join() {
   var args = Array.prototype.slice.call(arguments);
@@ -19,5 +18,6 @@ export function getPackageSpec() {
 }
 
 export async function readPackageSpec(pkgSpec) {
-  return await resource(pkgSpec).read();
+  if (pkgSpec.startsWith("/")) pkgSpec = "file://" + pkgSpec;
+  return JSON.parse(await lively.resources.resource(pkgSpec).read());
 }

@@ -23,7 +23,9 @@ install_from_git() {
       echo >&2 "Failed to update lively.installer, run 'git fetch' in $LIVELY_INSTALLER_DIR yourself." && exit 1
     })
     git pull 2> /dev/null
+
   else
+
     # Cloning to $LIVELY_INSTALLER_DIR
     echo "=> Downloading lively.installer from git to '$LIVELY_INSTALLER_DIR'"
     printf "\r=> "

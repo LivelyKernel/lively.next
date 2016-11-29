@@ -1,14 +1,13 @@
 import { exec } from "./shell-exec.js";
 import { join } from "./helpers.js";
 import { Repository } from "./git-repo.js";
-import { resource } from "lively.resources";
 
 export class Package {
 
   constructor(dir, config = {}, log = []) {
     config = Object.assign({name: "", repoURL: "", branch: "master"}, config);
     this._log = log;
-    this.directory = dir;
+    this.directory = dir.replace(/^file:\/\//, "");
     this.config = config;
     this.repo = new Repository(this.directory, {log: this._log});
     this.exists = undefined;
@@ -22,14 +21,21 @@ export class Package {
   printLog() { return this._log.join(""); }
 
   get version() { return this.config.version || null; }
-  get name() { return this.config.name || ""; }
+  get name() { return this.config.name || this.directory.split("/").filter(Boolean).slice(-1)[0] || ""; }
   get dependencies() {
     return Object.assign({}, this.config.dependencies, this.config.devDependencies);
   }
 
   async readConfig() {
+    var url = this.directory.startsWith("/") ? "file://" + this.directory : this.directory,
+        configFile = join(url, "package.json")
+    if (!await lively.resources.resource(url) || !await lively.resources.resource(join(url, "package.json"))) {
+      console.log(`package ${this.directory} does not exit yet`);
+      return;
+    }
+
     try {
-      var content = await resource(join(this.directory, "package.json")).read();
+      var content = await lively.resources.resource(configFile).read();
       if (content) this.config = Object.assign(this.config, JSON.parse(content));
     } catch (e) {
       console.warn(`Error when reading package config for ${this.directory}: ${e}`)
