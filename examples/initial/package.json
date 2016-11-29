@@ -1,0 +1,11 @@
+{
+  "name": "lively.web",
+  "lively": {
+    "packageMap": {
+      "lively.morphic": "./lively.morphic",
+      "lively.graphics": "./lively.graphics",
+      "lively.lang": "./node_modules/lively.lang",
+      "mocha-es6": "./node_modules/mocha-es6"
+    }
+  }
+}
