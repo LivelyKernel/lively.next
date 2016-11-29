@@ -16,7 +16,7 @@
   "systemjs": {
     "map": {
       "socket.io-client": {
-        "~node": "socket.io-client/socket.io.js",
+        "~node": "socket.io-client/dist/socket.io.js",
         "node": "socket.io-client/lib/index.js"
       }
     }
