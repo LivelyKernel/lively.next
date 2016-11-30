@@ -71,4 +71,4 @@ function map_node_modules(dir, knownPackages) {
 
 var dir = __dirname + "/..";
 
-recursively_map_node_modules(dir)
+// recursively_map_node_modules(dir)
