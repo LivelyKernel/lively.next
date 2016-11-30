@@ -1,4 +1,3 @@
-
 import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree, properties } from "lively.lang";
 import { signal } from "lively.bindings";

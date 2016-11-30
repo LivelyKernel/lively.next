@@ -64,7 +64,7 @@ describe("menus", () => {
       position: menu.itemMorphs[0].globalBounds().center()});
     await wait(.2);
 
-    expect(menu.subMenu.items[0].string).equals('bar', 'sub menu is wrong');
+    expect(menu.subMenu.items[0].label).equals('bar', 'sub menu is wrong');
   });
 
   
