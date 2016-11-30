@@ -3,7 +3,7 @@
 import { obj } from "lively.lang";
 
 // FIXME...
-var serverDir = System.decanonicalize("lively.server/").replace("file://"),
+var serverDir = System.decanonicalize("lively.server/").replace("file://", ""),
     DavHandler = System._nodeRequire(`${serverDir}/node_modules/jsDAV/lib/DAV/handler`),
     FsTree = System._nodeRequire(`${serverDir}/node_modules/jsDAV/lib/DAV/backends/fs/tree`),
     defaultPlugins = System._nodeRequire(`${serverDir}/node_modules/jsDAV/lib/DAV/server`).DEFAULT_PLUGINS;
