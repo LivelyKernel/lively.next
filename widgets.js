@@ -117,7 +117,7 @@ export class CheckBox extends Morph {
 export class ModeSelector extends Morph {
 
    constructor(props) {
-     var {items, initLabel, tooltips = {}} = props, keys, values;
+     var {items, init, tooltips = {}} = props, keys, values;
      if (obj.isArray(items)) {
          keys = values = items;
      } else {
@@ -134,7 +134,8 @@ export class ModeSelector extends Morph {
          ...props
       })
       this.build();
-      this.switchLabel(initLabel ? initLabel : keys[0]);
+      this.update(init ? init : keys[0], 
+                   values[keys.includes(init) ? keys.indexOf(init) : 0]);
       connect(this, "extent", this, "relayout");
     }
 
@@ -176,7 +177,7 @@ export class ModeSelector extends Morph {
                       type: "label", value: name, 
                       ...tooltip && {tooltip},
                       onMouseDown: () => {
-                         this.switchLabel(name, value);
+                         this.update(name, value);
                 }}});
     }
 
@@ -184,12 +185,14 @@ export class ModeSelector extends Morph {
         return this.currentLabel && this.get("typeMarker").animate({bounds: this.currentLabel.bounds(), duration: 200}); 
     }
     
-    async switchLabel(label, value) {
+    async update(label, value) {
+       console.log(value);
        const newLabel = this.get(label + "Label"), duration = 200;
        newLabel.animate({fontColor: Color.white, duration});
        this.currentLabel && this.currentLabel.animate({fontColor: Color.black, duration});
        this.currentLabel = newLabel;
        await this.relayout();
        signal(this, label, value)
+       signal(this, "switchLabel", value);
     }
 }
