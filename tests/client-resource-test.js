@@ -107,13 +107,13 @@ describe('shell client resource', function() {
       expect(list.map(ea => ea.url)).deep.equals([join(testDir, "foo.txt"), join(testDir, "subdir/")])
 
       var list = await new ShellClientResource(testDir, l2lClient).dirList("infinity");
-      expect(list.map(ea => ea.url)).deep.equals([
+      expect(list.map(ea => ea.url).sort()).deep.equals([
         join(testDir, "foo.txt"),
         join(testDir, "subdir/"),
         join(testDir, "subdir/bar.txt"),
         join(testDir, "subdir/subsubdir/"),
         join(testDir, "subdir/subsubdir/zork.txt")
-      ])
+      ].sort());
     })
   });
 
