@@ -20,7 +20,7 @@ function requireFromPackage(moduleName, pkgName) {
 }
 
 requireFromPackage("socket.io", "lively.server");
-requireFromPackage("socket.io-client", "lively.2lively");
+requireFromPackage("socket.io-client", "lively.server");
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
