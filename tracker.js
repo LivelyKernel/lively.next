@@ -104,6 +104,9 @@ export default class L2LTracker extends L2LConnection {
   onConnection(socket) {
     if (this.debug) console.log(`[${this}] got connection request ${socket.id}`);
 
+    // FIXME, remove this
+    console.log(`[${this}] client connected ${socket.id} ${socket.request.headers["x-real-ip"] || socket.request.socket.remoteAddress}`);
+
     socket.on("error", (err) => this.onError(err));
     socket.on("connect", () => this.onConnect(socket));
     socket.on("disconnect", () => this.onDisconnect(socket));

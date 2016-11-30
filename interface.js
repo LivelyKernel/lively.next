@@ -2,7 +2,7 @@ import { string, promise } from "lively.lang";
 
 function nyi(msg) { throw new Error(`Not yet implemented: ${msg}`); }
 
-var debugMessageOrder = true;
+var debugMessageOrder = false;
 
 export default class L2LConnection {
 
@@ -108,7 +108,7 @@ export default class L2LConnection {
         // as it matters in the message ordering
         var incomingN = sender._incomingOrderNumberingBySenders.get(msg.sender) || 0;
 
-        (sender.debug || debugMessageOrder) && console.log(`[MSG ORDER] ${sender} received ack for ${msg.action} as msg ${incomingN}`);
+        (sender.debug && debugMessageOrder) && console.log(`[MSG ORDER] ${sender} received ack for ${msg.action} as msg ${incomingN}`);
 
         try { originalAckFn.apply(null, arguments); } catch (err) {
           console.error(`Error in ack fn of ${sender}: ${err.stack}`);
@@ -118,7 +118,7 @@ export default class L2LConnection {
       }
     }
 
-    (this.debug || debugMessageOrder) && console.log(`[MSG ORDER] ${this} sending ${n} (${msg.action}) to ${target}`);
+    (this.debug && debugMessageOrder) && console.log(`[MSG ORDER] ${this} sending ${n} (${msg.action}) to ${target}`);
 
     return [msg, ackFn];
   }
@@ -179,7 +179,7 @@ export default class L2LConnection {
       }
 
       if (!ignoreN && msg.n > expectedN) {
-        if (this.debug || debugMessageOrder)
+        if (this.debug && debugMessageOrder)
           console.log(`[MSG ORDER] [${this}] storing out of order message ${selector} (${msg.n}) for later invocation`);
         var cache = this._outOfOrderCacheBySenders.get(msg.sender);
         if (!cache) { cache = []; this._outOfOrderCacheBySenders.set(msg.sender, cache); }
@@ -226,7 +226,7 @@ export default class L2LConnection {
   }
 
   invokeServiceHandler(selector, msg, ackFn, socket) {
-    if (this.debug || debugMessageOrder)
+    if (this.debug && debugMessageOrder)
       console.log(`[MSG ORDER] ${this} received ${msg.n} (${msg.action}) from ${msg.sender}`)
 
     this._incomingOrderNumberingBySenders.set(msg.sender, msg.n + 1);
@@ -255,7 +255,7 @@ export default class L2LConnection {
 
         ackFn(this.prepareAnswerMessage(msg, answerData));
 
-        if (this.debug || debugMessageOrder)
+        if (this.debug && debugMessageOrder)
           console.log(`[MSG ORDER] ${this} sending ${ackN} (ack for ${msg.action})`);
       };
 
