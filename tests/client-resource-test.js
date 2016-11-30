@@ -104,7 +104,8 @@ describe('shell client resource', function() {
 
     it("can reads dir list", async () => {
       var list = await new ShellClientResource(testDir, l2lClient).dirList();
-      expect(list.map(ea => ea.url)).deep.equals([join(testDir, "foo.txt"), join(testDir, "subdir/")])
+      expect(list.map(ea => ea.url).sort()).deep.equals([
+        join(testDir, "foo.txt"), join(testDir, "subdir/")].sort());
 
       var list = await new ShellClientResource(testDir, l2lClient).dirList("infinity");
       expect(list.map(ea => ea.url).sort()).deep.equals([
