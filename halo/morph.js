@@ -41,36 +41,40 @@ class HaloItem extends Morph {
 
 }
 
-class NameHolder extends Text {
+class NameHolder extends Morph {
 
    constructor(props) {
       super({
-        padding: 6,
         tooltip: "Click to edit the morph's name",
         draggable: false,
         fill: Color.transparent,
-        fontColor: Color.darkgray,
-        active: true,
-        ...props});
+        layout: new HorizontalLayout({spacing: 7}),
+        ...props
+       });
+       this.nameHolder = new Text({
+            fill:Color.transparent,
+            fontColor: Color.darkgray,
+            active: true})
+       this.submorphs = [this.nameHolder];
    }
 
    onHoverIn(evt) {
-     if (this.highlightOnHover && this.active) {
+     if (this.highlightOnHover && this.nameHolder.active) {
            this.halo.toggleMorphHighlighter(true, this.target);
-           this.fontColor = Color.orange;
+           this.nameHolder.fontColor = Color.orange;
         }
    }
 
    onHoverOut(evt) {
       if (this.highlightOnHover) {
          this.halo.toggleMorphHighlighter(false, this.target);
-         this.fontColor = Color.darkgray;
+         this.nameHolder.fontColor = Color.darkgray;
       }
    }
 
    onKeyDown(evt) {
     if ("Enter" == evt.keyCombo) {
-      this.updateName(this.textString);
+      this.updateName(this.nameHolder.textString);
       evt.stop();
     } else {
       super.onKeyDown(evt);
@@ -82,14 +86,12 @@ class NameHolder extends Text {
   }
 
   onMouseDown(evt) {
-    super.onMouseDown(evt);
-    this.fontColor = Color.darkgray;
+    this.nameHolder.fontColor = Color.darkgray;
     this.halo.toggleMorphHighlighter(false, this.target);
   }
 
   onKeyUp(evt) {
-    super.onKeyUp(evt);
-    const newName = this.textString,
+    const newName = this.nameHolder.textString,
           owner = this.target.owner;
     this.validName = (!owner || !owner.getSubmorphNamed(newName) ||
                           this.target.name == newName);
@@ -97,20 +99,20 @@ class NameHolder extends Text {
   }
 
   update() {
-     this.textString = this.target.name;
-     this.fit();
+     this.nameHolder.textString = this.target.name;
+     this.nameHolder.fit();
   }
 
   activate() {
-     this.readOnly = false;
-     this.active = true;
-     this.animate({opacity: 1});
+     this.nameHolder.readOnly = false;
+     this.nameHolder.active = true;
+     this.nameHolder.animate({opacity: 1});
   }
 
   deactivate() {
-     this.readOnly = true;
-     this.active = false;
-     this.animate({opacity: .3});
+     this.nameHolder.readOnly = true;
+     this.nameHolder.active = false;
+     this.nameHolder.animate({opacity: .3});
   }
 
   updateName(newName) {
@@ -167,7 +169,7 @@ class NameHalo extends HaloItem {
                return nh;
             });
     this.submorphs = arr.interpose(this.nameHolders, {
-          extent: pt(1,25), fill: Color.black.withA(.4)
+          extent: pt(1,28), fill: Color.black.withA(.4)
       });
   }
 
