@@ -332,7 +332,7 @@ class Gradient {
 
 export class LinearGradient extends Gradient {
   
-  constructor(stops, vector) {
+  constructor({stops, vector}) {
     super(stops);
     this.vector = vector;
   }
@@ -378,7 +378,7 @@ export class LinearGradient extends Gradient {
 
 export class RadialGradient extends Gradient {
   
-  constructor(stops, focus, bounds) {
+  constructor({stops, focus, bounds}) {
     super(stops);
     this.focus = focus || pt(0.5, 0.5);
     this.bounds = bounds || new Rectangle(0,0, 20, 20);
