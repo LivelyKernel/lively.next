@@ -186,11 +186,11 @@ export class ModeSelector extends Morph {
     }
     
     async update(label, value) {
-       console.log(value);
        const newLabel = this.get(label + "Label"), duration = 200;
-       newLabel.animate({fontColor: Color.white, duration});
+       if (newLabel == this.currentLabel) return;
        this.currentLabel && this.currentLabel.animate({fontColor: Color.black, duration});
        this.currentLabel = newLabel;
+       newLabel.animate({fontColor: Color.white, duration});
        await this.relayout();
        signal(this, label, value)
        signal(this, "switchLabel", value);
