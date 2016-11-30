@@ -370,7 +370,7 @@ export class LinearGradient extends Gradient {
         ${this.vector.maxX() * 100.0}\% 
         ${this.vector.maxY() * 100.0}\%`;
     for (var i = 0; i < this.stops.length; i++)
-        str += `,color-stop(${this.stops[i].offset}, ${this.stops[i].color.toRGBAString()})`;
+        str += `,color-stop(${(this.stops[i].offset * 100).toFixed() + "%"}, ${this.stops[i].color.toRGBAString()})`;
     str += ')';
     return str;
   }
@@ -403,7 +403,7 @@ export class RadialGradient extends Gradient {
                ${outerCircleRadius}`;
     for (var i = 0; i < this.stops.length; i++)
         str += ` ,color-stop(
-          ${this.stops[i].offset}, 
+          ${(this.stops[i].offset * 100).toFixed() + "%"}, 
           ${this.stops[i].color.toRGBAString()}
           )`;
     str += ')';
