@@ -10,9 +10,9 @@ export class ShadowObject {
     constructor(args) {
         if (obj.isBoolean(args)) args = config.defaultShadow;
         const {rotation, distance, blur, color, morph} = args;
-        this.rotation = rotation || 45; // in degrees
-        this.distance = distance || 2;
-        this.blur = blur || 6;
+        this.rotation = obj.isNumber(rotation) ? rotation : 45; // in degrees
+        this.distance = obj.isNumber(distance) ? distance : 2;
+        this.blur = obj.isNumber(blur) ? blur : 6;
         this.color = color || Color.gray.darker();
         this.morph = morph;
     }
