@@ -7,12 +7,9 @@ async function loadPackage(system, spec) {
   if (spec.main) await system.importModule(spec.main.toString());
   if (spec.test) {
     try {
-      // FIXME: system should have an interface for test runs...!
-      await system.importPackage("mocha-es6");
-      var testLoad = `
-        var mochaEs6 = System.get(System.decanonicalize("mocha-es6"))
-        await mochaEs6.loadTestFiles([${spec.test.toString()}], {})`
-      system.runEval(testLoad, {targetModule: system.normalizeSync("mocha-es6")})
+      // FIXME: system should have an interface for test runs...!      
+      var mochaEs6 = await system.importPackage("mocha-es6");
+      await mochaEs6.installSystemInstantiateHook()
       await system.importModule(spec.test.toString());
     } catch (e) {
       console.warn(`Cannot load test of new package: ${e}`);

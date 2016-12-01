@@ -1,13 +1,8 @@
 import { arr } from "lively.lang";
 
 export async function loadMochaTestFile(file, testsByFile = []) {
-  var tester = await System.import("mocha-es6/index.js"),
-      {mocha, tests, file: url} = await tester.loadTestFile(file, {});
-
-  var prev = testsByFile.findIndex(ea => ea.file === url);
-  if (prev > -1) testsByFile.splice(prev, 1, {file: url, tests});
-  else testsByFile.push({file: url, tests});
-  return {mocha, testsByFile};
+  var tester = await System.import("mocha-es6/index.js");
+  return tester.loadTestModuleAndExtractTestState(file, testsByFile)
 }
 
 export async function runMochaTests(grep, testsByFile, onChange, onError) {
