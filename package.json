@@ -51,7 +51,7 @@
     "babel-preset-es2015-rollup": "^1.1.1",
     "babel-regenerator-runtime": "^6.5.0",
     "doc-comments": "^0.1.4",
-    "mocha-es6": "^0.3.1",
+    "mocha-es6": "^0.4",
     "rollup": "^0.36.1",
     "rollup-plugin-babel": "^2.6.1"
   }
