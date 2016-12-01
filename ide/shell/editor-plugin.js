@@ -190,7 +190,6 @@ export class ShellEditorPlugin extends EditorPlugin {
     return otherKeybindings.concat([
       {keys: {mac: "Meta-D", win: "Ctrl-D"}, command: {command: "[shell] spawn command from selected text", args: {printit: false}}},
       {keys: {mac: "Meta-P", win: "Ctrl-P"}, command: {command: "[shell] spawn command from selected text", args: {printit: true}}},
-      {keys: "Ctrl-C", command: {command: "[shell] kill current command", args: {signal: "INT"}}},
       {keys: {mac: "Meta-Shift-L D I R", win: "Ctrl-Shift-L D I R"}, command: "[shell] change working directory"}
     ]);
   }
