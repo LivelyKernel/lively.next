@@ -23,8 +23,14 @@ var chaiSrc = (function() {
   (function() {
     var module = {exports: {}};
     ${chaiSubsetCode}
-    if (module.exports && module.exports.chaiSubset)
-      GLOBAL.chai.use(module.exports); // install then forget
+
+    if (module.exports) {
+      var ex = module.exports,
+          chaiSubset = ex.chaiSubset || (typeof ex === "function" && ex);
+    }
+
+    if (chaiSubset)
+      GLOBAL.chai.use(chaiSubset); // install then forget
   }).call(GLOBAL);
 })();`
 

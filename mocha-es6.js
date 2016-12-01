@@ -19376,8 +19376,14 @@ Library.prototype.test = function(obj, type) {
 }).call(this);
 
 
-    if (module.exports && module.exports.chaiSubset)
-      GLOBAL.chai.use(module.exports); // install then forget
+
+    if (module.exports) {
+      var ex = module.exports,
+          chaiSubset = ex.chaiSubset || (typeof ex === "function" && ex);
+    }
+
+    if (chaiSubset)
+      GLOBAL.chai.use(chaiSubset); // install then forget
   }).call(GLOBAL);
 })();
 (function() {
@@ -19516,7 +19522,6 @@ var loadTestModuleAndExtractTestState = function () {
         switch (_context.prev = _context.next) {
           case 0:
             mod = modules.module(testModuleName), id = mod.id;
-
             _context.next = 3;
             return mod.reload({ reloadEnv: false, reloadDeps: false });
 
