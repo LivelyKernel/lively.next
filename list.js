@@ -208,7 +208,7 @@ var listCommands = [
             if (label) {
               if (typeof label === "string") result += label;
               else result += label.map(([ea]) => ea).join("")
-            } else if (string) result += "string";
+            } else if (string) result += string;
 
             if (annotation) {
               result += " ";

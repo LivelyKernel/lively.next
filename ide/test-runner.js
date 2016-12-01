@@ -8,6 +8,8 @@ import { DropDownList } from "lively.morphic/list.js"
 import { connect, noUpdate } from "lively.bindings"
 import EvalBackendChooser from "./js/eval-backend-ui.js";
 
+import "mocha-es6";
+
 function testsFromSource(source) {
   // Traverses the ast and constructs the nested mocha suites and tests as a list like
   // [{fullTitle: "completion", node: {/*...*/}, type: "suite"},
@@ -265,9 +267,11 @@ export default class TestRunner extends HTMLMorph {
     this.update();
   }
 
-  runAllTests() {
+  async runAllTests() {
     var files = arr.pluck(this.state.loadedTests, "file");
-    lively.lang.promise.chain(files.map(f => () => this.runTestFile(f)))
+    try {
+      for (let f of files) await this.runTestFile(f);
+    } catch (e) { this.world().logError(e); }
   }
 
   async runSuite(suiteName) {
@@ -300,19 +304,39 @@ export default class TestRunner extends HTMLMorph {
     if (!this.state.loadedTests) this.state.loadedTests = [];
     if (!this.state.loadedTests.some(ea => ea.file === file))
       this.state.loadedTests.push({file, tests: []});
+
+    // make sure to run only one module!
+    var recordIndex = this.state.loadedTests.findIndex(ea => ea.file === file),
+        result = await this.runTestFiles([file], grep, options);
+
+    this.state.loadedTests[recordIndex] = result.find(ea => ea.file === file);
+    
+    this.update();
+
+    return this.state.loadedTests[recordIndex];
+  }
+
+  async runTestFiles(files, grep, options) {
+    var testRecords = files.map(file => ({file, tests: []}));
+
+    grep = grep || this.state.grep || /.*/;
+
     try {
       var livelySystem = await this.getLivelySystem();
-      this.update();
-      grep = grep || this.state.grep || /.*/;
-      var {testsByFile} = await livelySystem.runMochaTests(
-                                    grep, this.state.loadedTests || [],
+      var result = await livelySystem.runMochaTests(
+                                    grep, testRecords,
                                     () => this.update(),
                                     (err, when) => this.showError(`Error during ${when}: ${err}`));
-      this.state.loadedTests = testsByFile;
-      this.update();
+      if (result && result.isError)
+        throw new Error(result.value.stack || result.value)
+
+      if (!result || !result.testsByFile)
+        throw new Error(`No test results when runnin tests of ${files}`);
+
+      return result.testsByFile;
     } catch(err) {
       this.showError(err);
-      this.update();
+      await this.update();
       throw err;
     }
   }

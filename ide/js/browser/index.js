@@ -13,6 +13,8 @@ import EvalBackendChooser from "../eval-backend-ui.js";
 import browserCommands from "./commands.js";
 import { Tree, TreeData } from "lively.morphic/tree.js"
 
+import "mocha-es6/index.js";
+
 // -=-=-=-=-=-
 // Browser UI
 // -=-=-=-=-=-
@@ -756,4 +758,9 @@ export default class Browser extends Window {
       .concat(EvalBackendChooser.default.activateEvalBackendCommand(this));
   }
 
+  menuItems() {
+    return [
+      ["test", () => {}]
+    ]
+  }
 }

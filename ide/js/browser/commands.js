@@ -1,4 +1,6 @@
-import { arr, Path } from "lively.lang";
+import { arr } from "lively.lang";
+import { extractTestDescriptors } from "mocha-es6/test-analysis.js";
+
 
 export default function browserCommands(browser) {
   var pList = browser.get("packageList"),
@@ -219,6 +221,7 @@ export default function browserCommands(browser) {
      {
        name: "run setup code of tests (before and beforeEach)",
        exec: async (browser, args = {what: "setup"}) => {
+       
           var m = browser.selectedModule;
           if (!m) return browser.world().inform("No module selected", {requester: browser});
 
@@ -235,7 +238,8 @@ export default function browserCommands(browser) {
           // the stringified body of all before(() => ...) or after(() => ...) calls
           var what = (args && args.what) || "setup", // or: teardown
               prop = what === "setup" ? "setupCalls" : "teardownCalls",
-              beforeCode = testDescriptors[0][prop].map(beforeFn => {
+              beforeCode = testDescriptors[0][prop].map((beforeFn, i) => {
+                return `await ((${lively.ast.stringify(beforeFn)})());`;
                 var bodyStmts = beforeFn.body.body || [beforeFn.body];
                 return bodyStmts.map(lively.ast.stringify).join("\n")
               }),
@@ -284,47 +288,5 @@ export default function browserCommands(browser) {
     return spec ?
       runner[spec.type === "suite" ? "runSuite" : "runTest"](spec.fullTitle):
       runner.runTestFile(moduleName);
-  }
-
-  async function extractTestDescriptors(source, positionAsIndex) {
-    // Expects mocha.js like test definitions: https://mochajs.org/#getting-started
-    // Extracts nested "describe" and "it" suite and test definitions from the
-    // source code and associates setup (before(Each)) and tear down (after(Each))
-    // code with them. Handy to run tests at point etc.
-
-    var {parse, query: {nodesAt}} = await System.import("lively.ast"),
-         parsed = parse(source),
-         nodes = nodesAt(positionAsIndex, parsed)
-                   .filter(n => n.type === "CallExpression"
-                             && n.callee.name
-                             && n.callee.name.match(/describe|it/)
-                             && n.arguments[0].type === "Literal"),
-         setupCalls = nodes.map(n => {
-                         var innerCode = Path("arguments.1.body.body").get(n);
-                         if (!innerCode) return null;
-                         return innerCode
-                                   .filter(n =>
-                                        n.expression && n.expression.type === "CallExpression"
-                                     && n.expression.callee.name
-                                     && n.expression.callee.name.match(/before(Each)?/))
-                                   .map(n => n.expression.arguments[0]); }),
-         teardownCalls = nodes.map(n => {
-                         var innerCode = Path("arguments.1.body.body").get(n);
-                         if (!innerCode) return null;
-                         return innerCode
-                                   .filter(n =>
-                                        n.expression && n.expression.type === "CallExpression"
-                                     && n.expression.callee.name
-                                     && n.expression.callee.name.match(/after(Each)?/))
-                                   .map(n => n.expression.arguments[0]); }),
-
-         testDescriptors = nodes.map((n,i) => ({
-           type: n.callee.name.match(/describe/) ? "suite" : "test",
-           title: n.arguments[0].value,
-           astNode: n,
-           setupCalls: setupCalls[i],
-           teardownCalls: teardownCalls[i],
-         }));
-    return testDescriptors;
   }
 }
