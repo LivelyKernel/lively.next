@@ -19516,10 +19516,9 @@ var loadTestModuleAndExtractTestState = function () {
         switch (_context.prev = _context.next) {
           case 0:
             mod = modules.module(testModuleName), id = mod.id;
+
             _context.next = 3;
-            return recordTestsWhile(id, function () {
-              return mod.reload({ reloadEnv: false, reloadDeps: false });
-            }, opts);
+            return mod.reload({ reloadEnv: false, reloadDeps: false });
 
           case 3:
 

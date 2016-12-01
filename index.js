@@ -111,7 +111,7 @@ function prepareMocha(mocha, GLOBAL) {
 async function loadTestModuleAndExtractTestState(testModuleName, testsByFile = [], opts) {
   var mod = modules.module(testModuleName), id = mod.id;
 
-  await recordTestsWhile(id, () => mod.reload({reloadEnv: false, reloadDeps: false}), opts);
+  await mod.reload({reloadEnv: false, reloadDeps: false});
 
   mod = modules.module(id);
   var mocha = mod.recorder.mocha;
