@@ -1,10 +1,73 @@
-import { num } from "lively.lang";
+import { num, arr } from "lively.lang";
 import { parse } from "./color-parser.js";
 import { Rectangle, rect, pt } from "./geometry-2d.js";
 
 function floor(x) { return Math.floor(x*255.99) };
 
 const rgbaRegex = new RegExp('\\s*rgba?\\s*\\(\\s*(\\d+)(%?)\\s*,\\s*(\\d+)(%?)\\s*,\\s*(\\d+)(%?)\\s*(?:,\\s*([0-9\\.]+)\\s*)?\\)\\s*');
+
+class ColorHarmony {
+
+   static offsets() { return null }
+
+   static stepCount() { return 0 }
+
+   static stepSize() { return 0; }
+
+   static get name() { return "Color Harmony"}
+
+   static chord({hue, saturation, brightness}) {
+      const offsets = this.offsets() || arr.range(0, this.steps()).map(i => i * this.stepSize());
+      return offsets.map(offset => Color.hsb(hue + offset % 360, saturation, brightness));
+   }
+
+}
+
+export class Complementary extends ColorHarmony {
+
+    static get name() { return "Complement" }
+    static steps() { return 1 }
+    static stepSize() { return 180 }
+
+}
+
+export class Triadic extends ColorHarmony {
+
+   static get name() { return "Triadic" }
+   static steps() { return 2 }
+   static stepSize() { return 120 }
+
+}
+
+export class Tetradic extends ColorHarmony {
+
+   static get name() { return "Tetradic" }
+   static offsets() { return [0, 60, 180, 240] }
+
+}
+
+export class Quadratic extends ColorHarmony {
+
+   static get name() { return "Quadratic" }
+   static steps() { return 3 }
+   static stepSize() { return 90 }
+
+}
+
+export class Analogous extends ColorHarmony {
+
+   static get name() { return "Analogous" }
+   static steps() { return 5 }
+   static offsets() { return [-60, -30, 0, 30, 60] }
+
+}
+
+export class Neutral extends ColorHarmony {
+
+   static get name() { return "Neutral" }
+   static offsets() { return [-30, -15, 0, 15, 30] }
+
+}
 
 export class Color {
 
