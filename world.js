@@ -500,7 +500,7 @@ var worldCommands = [
           { url, lineNumber } = opts;
       if (!url)
         url = await world.prompt("Enter file location", {
-          historyId: "lively.morphic-open-file-history", useLastInput: true
+          historyId: "lively.morphic-text editor url", useLastInput: true
         });
       if (lineNumber) url += ":" + lineNumber;
       return url ? TextEditor.openURL(url, obj.dissoc(opts, ["url"])) : null;
@@ -523,7 +523,7 @@ var worldCommands = [
     name: "[lively.installer] publish new version of a package",
     exec: async world => {
       await lively.modules.registerPackage(
-        document.location.origin + "/node_modules/lively.installer");
+        document.location.origin + "/lively.installer");
       var {default: publishPackage} = await System.import(
         "lively.installer/packages/publish-new-package-version.js")
       await publishPackage();
