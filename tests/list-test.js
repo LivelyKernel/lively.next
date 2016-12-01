@@ -4,7 +4,8 @@ import { expect } from "mocha-es6";
 import { arr } from "lively.lang";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 
-var it = System.get("@system-env").browser ? System.global.it : System.global.xit;
+var inBrowser = System.get("@system-env").browser ? it :
+  (title) => { console.warn(`Test ${title} is currently only supported in a browser`); return xit(title); }
 
 var env, world;
 function createDummyWorld() {
@@ -23,7 +24,7 @@ describe("lists", function () {
 
   describe("interface", () => {
 
-    it("adds items", () => {
+    inBrowser("adds items", () => {
       list.addItem("foo");
       list.addItem("bar");
       expect(list.items).containSubset([{string: "foo", value: "foo"}, {string: "bar", value: "bar"}]);
@@ -34,7 +35,7 @@ describe("lists", function () {
 
   describe("selection", () => {
     
-    it("selects item", () => {
+    inBrowser("selects item", () => {
       list.addItem("foo");
       list.addItem("bar");
       list.selection = "foo";
@@ -47,16 +48,17 @@ describe("lists", function () {
 
   describe("layout", () => {
 
-    it("renders items as morphs and aligns them vertically", () => {
+    inBrowser("renders items as morphs and aligns them vertically", () => {
       list.addItem("foo");
       list.addItem("bar");
       expect(list.itemMorphs).containSubset([{textString: "foo"}, {textString: "bar"}]);
+
       var [a, b] = list.itemMorphs;
-      expect(a.topLeft).equals(list.padding.topLeft());
-      expect(b.topLeft).equals(a.bottomLeft.addXY(0, a.padding.bottom() + b.padding.top()));
+      expect(list.listItemContainer.topLeft).equals(list.padding.topLeft());
+      expect(b.topLeft).equals(a.bottomLeft);
     });
 
-    it("only renders necessary items", () => {
+    inBrowser("only renders necessary items", () => {
       list.items = arr.range(0,100);
       list.openInWorld();      
       var nVisible = Math.ceil(list.height / list.itemMorphs[0].height);
@@ -68,13 +70,13 @@ describe("lists", function () {
 
   describe("multi select", () => {
 
-    it("test01GetSelections", function() {
+    inBrowser("test01GetSelections", function() {
         list.items = ['1', '2', '3'];
         list.selection = '2';
         expect(['2']).equals(list.selections);
     });
 
-    it("test02TurnOnMultipleSelectionMode", function() {
+    inBrowser("test02TurnOnMultipleSelectionMode", function() {
         list.items = ['1', '2', '3'];
         list.selection = '2';
         list.multiSelect = true;
@@ -82,7 +84,7 @@ describe("lists", function () {
         expect(['1', '3']).equals(list.selections);
     });
 
-    it("test03SetSelection", function() {
+    inBrowser("test03SetSelection", function() {
         list.items = ['1', '2', '3'];
         list.multiSelect = true;
         list.selection = '2';

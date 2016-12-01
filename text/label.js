@@ -60,7 +60,7 @@ export class Label extends Morph {
     var {textAndAttributes} = this;
     if (textAndAttributes.length === 1) {
       var [text, style] = textAndAttributes[0];
-      if (!Object.keys(style).length) return text;
+      if (!Object.keys(style || {}).length) return text;
     }
     return textAndAttributes;
   }

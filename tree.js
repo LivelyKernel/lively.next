@@ -588,6 +588,7 @@ export class Tree extends Morph {
 
 }
 
+
 export class TreeData {
 
   constructor(root) {
@@ -600,6 +601,14 @@ export class TreeData {
   collapse(node, bool) { throw new Error("Not yet implemented"); }
   getChildren(node) { throw new Error("Not yet implemented"); }
   isLeaf(node) { throw new Error("Not yet implemented"); }
+
+  nodeToString(node) {
+    // for extracting rich text in textAttributes format
+    var value = this.display(node);
+    if (typeof value === "string") return value;
+    if (!value || !Array.isArray(value)) return String(value);
+    return value.map(([ea]) => ea).join("");
+  }
 
   parentNode(childNode) {
     return this.parentMap.get(childNode) || tree.detect(this.root,
@@ -674,10 +683,14 @@ var treeCommands = [
   {
     name: "select via filter",
     exec: async tree => {
-      var treeData = tree.treeData;
-      var nodes = treeData.asListWithIndexAndDepth()
-      var items = nodes.map(({node, depth, i}) => ({isListItem: true, string: " ".repeat(depth)+treeData.display(node), value: node}))
-      var {selected: [node]} = await tree.world().filterableListPrompt("Select item", items);
+      var td = tree.treeData,
+          nodes = td.asListWithIndexAndDepth(),
+          data = td.asListWithIndexAndDepth().map(ea =>
+            Object.assign(ea, {string: td.nodeToString(ea.node)})),
+          lines = string.lines(
+            string.printTree(td.root, td.nodeToString.bind(td), td.getChildren.bind(td))),
+          items = td.asList().map((ea, i) => ({isListItem: true, string: lines[i], value: ea})),
+          {selected: [node]} = await tree.world().filterableListPrompt("Select item", items);
       if (node) {
         tree.selection = node;
         tree.scrollSelectionIntoView();
@@ -892,19 +905,12 @@ var treeCommands = [
     name: "print contents in text window",
     exec: treeMorph => {
       var td = treeMorph.treeData,
-          content = string.printTree(td.root, printNode, td.getChildren.bind(td)),
+          content = string.printTree(td.root, td.nodeToString.bind(td), td.getChildren.bind(td)),
           title = treeMorph.getWindow() ?
             "printed " + treeMorph.getWindow().title :
             treeMorph.name;
 
       return treeMorph.world().execCommand("open text window", {title, content, name: title, fontFamily: "Inconsolata, monospace"});
-      
-      function printNode(node) {
-        var value = td.display(node);
-        if (typeof value === "string") return value;
-        if (!value || !Array.isArray(value)) return String(value);
-        return value.map(([ea]) => ea).join("");
-      }
     }
   }
 
