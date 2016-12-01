@@ -167,7 +167,12 @@ export default class L2LClient extends L2LConnection {
     this.debug && console.log(`[${this}] register`)
 
     try {
-      var {data: {trackerId, messageNumber}} = await this.sendToAndWait("tracker", "register", {});
+      var answer = await this.sendToAndWait("tracker", "register", {});
+      if (!answer.data)
+        throw new Error(`Register answer is empty!`);
+
+      var {data: {trackerId, messageNumber}} = answer
+
       this.trackerId = trackerId;
       this._incomingOrderNumberingBySenders.set(trackerId, messageNumber || 0);
     } catch (e) {
