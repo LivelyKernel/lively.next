@@ -13,6 +13,7 @@ module.exports = new Promise((resolve, reject) => {
         var module = undefined, exports = undefined; // no cjs require should be used!
         ${chaiCode}
       }).call(GLOBAL);
+      
       if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.chai;
       (function() {
         var module = {exports: {}}

@@ -18,11 +18,13 @@ var chaiSrc = (function() {
     var module = undefined, exports = undefined; // no cjs require should be used!
     ${chaiCode}
   }).call(GLOBAL);
+
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.chai;
   (function() {
-    var module = {exports: {}}
+    var module = {exports: {}};
     ${chaiSubsetCode}
-    GLOBAL.chai.use(module.exports); // install then forget
+    if (module.exports && module.exports.chaiSubset)
+      GLOBAL.chai.use(module.exports); // install then forget
   }).call(GLOBAL);
 })();`
 
@@ -56,7 +58,8 @@ module.exports = Promise.resolve()
       globals: {
         "mocha": "mocha",
         "chai": "chai",
-        "lively.modules": "lively.modules"
+        "lively.modules": "lively.modules",
+        "lively.ast": "lively.ast"
       }
     }))
 

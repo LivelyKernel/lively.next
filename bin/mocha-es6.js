@@ -29,6 +29,8 @@ lively.lang.promise.chain([
   (_, state) => console.log(`${step++}. Running tests in\n  ${state.testFiles.join("\n  ")}`),
   (_, state) => {
     lively.modules.changeSystem(lively.modules.getSystem("system-for-test"), true);
+    cacheMocha("file://" + mochaDir);
+    mochaEs6.installSystemInstantiateHook();
     return mochaEs6.runTestFiles(state.testFiles, {package: "file://" + dir});
   },
   failureCount => process.exit(failureCount)
@@ -71,14 +73,13 @@ function cacheMocha(mochaDirURL) {
     System.config({
       map: {
         "mocha-es6": mochaDirURL,
-        "lively.modules": mochaDirURL + "/node_modules/lively.modules/dist/lively.modules.js",
         "mocha": mochaDirURL + "/dist/mocha.js",
         "chai": mochaDirURL + "/dist/chai.js"
       }
     });
     System.set(mochaDirURL + "/node_modules/lively.modules/dist/lively.modules.js", System.newModule(modules));
-    System.set(mochaDirURL + "index.js", System.newModule(mochaEs6));
-    System.set(mochaDirURL + "mocha-es6.js", System.newModule(mochaEs6));
+    System.set(mochaDirURL + "/index.js", System.newModule(mochaEs6));
+    System.set(mochaDirURL + "/mocha-es6.js", System.newModule(mochaEs6));
     System.set(mochaDirURL + "/dist/mocha.js", System.newModule(mochaEs6.mocha));
     System.set(mochaDirURL + "/dist/chai.js", System.newModule(mochaEs6.chai));
   }
