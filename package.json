@@ -7,7 +7,7 @@
     "socket.io-client": "^1.5.1"
   },
   "devDependencies": {
-    "mocha-es6": "^0.3.11",
+    "mocha-es6": "^0.4",
     "lively.server": "https://github.com/LivelyKernel/lively.server.git"
   },
   "scripts": {
