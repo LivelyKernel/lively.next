@@ -5,7 +5,7 @@ import { Color, pt, rect} from "lively.graphics";
 import { Intersection, IntersectionParams } from 'kld-intersections';
 import { arr } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
-import { ColorPicker, BorderStyleEditor, BodyStyleEditor, LayoutStyleEditor } from "../ide/style-editor.js";
+import { ColorPicker, BorderStyleEditor, BodyStyleEditor, LayoutStyleEditor } from "../ide/styling/style-editor.js";
 import { Icon } from "../icons.js";
 
 /* rms: I tried doing this via polymorphic dispatch

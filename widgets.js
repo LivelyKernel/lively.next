@@ -1,10 +1,107 @@
-import { obj, num, arr } from "lively.lang";
-import { pt, Color, Rectangle } from "lively.graphics";
-import { Morph, Button, List, Text, GridLayout } from "./index.js";
+import { obj, num, arr, properties } from "lively.lang";
+import { pt, Color, Rectangle, rect } from "lively.graphics";
+import { Morph, Button, List, Text, GridLayout, HorizontalLayout, Path } from "./index.js";
 import { Icon } from "./icons.js";
 import { signal, connect } from "lively.bindings";
 import { Tooltip } from "./tooltips.js";
 import config from "./config.js";
+
+export class Slider extends Morph {
+
+    constructor(props) {
+        const slider = this;
+        super({
+           height: 20,
+           fill: Color.transparent,
+           ...props
+        });
+        this.submorphs = [
+           new Path({
+                borderColor: Color.gray.darker(),
+                borderWidth: 2,
+                vertices: [this.leftCenter.addXY(5,0),
+                           this.rightCenter.addXY(-5,0)]
+              }),
+              {type: "ellipse", fill: Color.gray, name: "slideHandle",
+               borderColor: Color.gray.darker(), borderWidth: 1, dropShadow: {blur: 5},
+               extent: pt(15,15), nativeCursor: "grab",
+               onDrag(evt) {
+                  slider.onSlide(this, evt.state.dragDelta);
+               }}
+         ];
+         connect(this, "extent", this, "update");
+         this.update();
+    }
+
+    normalize(v) {
+        return Math.abs(v / (this.max - this.min));
+    }
+
+    update() {
+        const x = (this.width - 15) * this.normalize(this.target[this.property]);
+        this.get("slideHandle").center = pt(x + 7.5, 12);
+    }
+
+    onSlide(slideHandle, delta) {
+       const oldValue = this.target[this.property],
+             newValue = oldValue + delta.x / this.width;
+       this.target[this.property] = Math.max(this.min, Math.min(this.max, newValue));
+       this.update();
+    }
+
+}
+
+export class PropertyInspector extends Morph {
+
+   constructor(props) {
+       const btnStyle = {
+          type: "button", activeStyle: {fill: Color.transparent, borderWidth: 0, fontColor: Color.white.darker()}, 
+                          triggerStyle: {fill: Color.transparent, fontColor: Color.black}
+       }, {target, property, name} = props;
+       super({
+           name,
+           extent:pt(55, 25), borderRadius: 5,
+           borderWidth: 1, borderColor: Color.gray, 
+           clipMode: "hidden",
+           submorphs: [new ValueScrubber({
+                        name: "value", fill: Color.white,
+                        padding: 4, fontSize: 15,
+                        value: target[property],
+                        ...obj.dissoc(props, ["name"])}),
+                        {name: "down", ...btnStyle, label: Icon.makeLabel(
+                                  "sort-desc", {padding: rect(2,2,0,0), fontSize: 12})},
+                        {name: "up", ...btnStyle, label: Icon.makeLabel(
+                                  "sort-asc", {padding: rect(2,2,0,0), fontSize: 12})}]
+       });
+       this.target = target;
+       this.property = property;
+       this.initLayout();
+       connect(this.get("value"), "scrub", this.target, this.property);
+       connect(this.get("up"), "fire", this, "increment");
+       connect(this.get("down"), "fire", this, "decrement");
+   }
+
+   update() {
+       this.get("value").value = this.target[this.property];
+   }
+
+   increment() { this.target[this.property] += 1; this.update() }
+
+   decrement() { this.target[this.property] -= 1; this.update() }
+
+   initLayout() {
+      const l = this.layout = new GridLayout({
+                      grid:[["value", "up"],
+                            ["value", "down"]]
+                    });
+      l.col(1).paddingLeft = 5;
+      l.col(1).paddingRight = 5;
+      l.col(1).fixed = 25;
+      l.row(1).paddingTop = -10;
+      return l;
+   }
+
+}
 
 export class ValueScrubber extends Text {
 
@@ -195,4 +292,75 @@ export class ModeSelector extends Morph {
        signal(this, label, value)
        signal(this, "switchLabel", value);
     }
+}
+
+export class DropDownSelector extends Morph {
+
+   constructor(props) {
+      const {target, property, values} = props;
+      this.values = values;
+      this.dropDownLabel = Icon.makeLabel("chevron-circle-down", {
+                                   opacity: 0, fontSize: 16, 
+                                   fontColor: Color.gray.darker()
+                            });
+      super({border: {
+                radius: 3, 
+                color: Color.gray.darker(), 
+                style: "solid"},
+              layout: new HorizontalLayout({spacing: 4}),
+              ...props,
+              submorphs: [{
+                  type: "text", name: "currentValue", 
+                  textString: this.getNameFor(target[property]), 
+                  padding: 0, readOnly: true,
+                }, this.dropDownLabel]
+             });
+   }
+
+   getMenuEntries() {
+      return this.commands.map(c => { 
+          return {command: c.name, target: this}
+         });
+   }
+
+   get commands() {
+      if (obj.isArray(this.values)) {
+         return this.values.map(v => {
+             return {name: v, exec: () => { this.value = v }}
+         });
+      } else {
+         return properties.forEachOwn(this.values, (name, v) => {
+             return {name, exec: () => { this.value = v }}
+         });
+      }
+      
+   }
+
+   getNameFor(value) {
+      if (obj.isArray(this.values)) {
+         return obj.safeToString(value);
+      } else {
+         return obj.safeToString(properties.nameFor(this.values, value));
+      }
+   }
+
+   set value(v) {
+      this.target[this.property] = v;
+      this.get("currentValue").textString = this.getNameFor(v);
+   }
+
+   onHoverIn() {
+      this.dropDownLabel.animate({opacity: 1, duration: 300});
+   }
+
+   onHoverOut() {
+      this.dropDownLabel.animate({opacity: 0, duration: 200});
+   }
+ 
+  onMouseDown(evt) {
+    this.menu = this.world().openWorldMenu(evt, this.getMenuEntries());
+    this.menu.globalPosition = this.globalPosition;
+    this.menu.isHaloItem = this.isHaloItem;
+  }
+
 }

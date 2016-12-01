@@ -3,9 +3,8 @@ import { Ellipse, Morph, Path, Text,
          VerticalLayout, morph, Menu } from "../index.js";
 import { Color, pt, rect, Line, Rectangle } from "lively.graphics";
 import { string, obj, arr, num, grid } from "lively.lang";
-import { CheckBox, ValueScrubber} from "../widgets.js";
+import { CheckBox, ValueScrubber, PropertyInspector } from "../widgets.js";
 import { connect } from "lively.bindings";
-import { PropertyInspector } from "../ide/style-editor.js"
 
 class AxisHalo extends Morph {
   

@@ -4,7 +4,7 @@ import { pt, Rectangle, rect, Color } from "lively.graphics"
 import { connect } from "lively.bindings"
 import { TextAttribute, TextStyleAttribute } from "./attribute.js";
 import { Icon } from "../icons.js";
-import { ColorPicker } from "../ide/style-editor.js";
+import { ColorPicker } from "../ide/styling/color-picker.js";
 
 const cachedControls = new WeakMap();
 
@@ -163,7 +163,7 @@ export class RichTextControl extends Morph {
   incFontSize() {
     setSingleStyleProperty(this.target, "fontSize", oldSize => oldSize+(oldSize >= 18 ? 2 : 1))
   }
-  
+
   decFontSize() {
     setSingleStyleProperty(this.target, "fontSize", oldSize => oldSize-(oldSize <= 18 ? 1 : 2))
   }

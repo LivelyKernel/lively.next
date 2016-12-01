@@ -4,7 +4,7 @@ import { Ellipse, Morph, Path, Text,
 import { Color, pt, rect, Line, Rectangle } from "lively.graphics";
 import { string, obj, arr, num, grid, properties } from "lively.lang";
 import { connect, disconnect, disconnectAll, signal, once } from "lively.bindings";
-import { ColorPicker } from "../ide/style-editor.js";
+import { ColorPicker } from "../ide/styling/style-editor.js";
 import Inspector from "../ide/js/inspector.js";
 import { styleHaloFor } from './stylization.js';
 import { Icon } from '../icons.js';
