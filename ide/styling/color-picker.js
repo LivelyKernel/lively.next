@@ -78,26 +78,13 @@ export class ColorPickerField extends Morph {
       this.get("bottomRight").fill = this.targetProperty.withA(1);
    }
 
-   async fadeIntoWorld(evt, widget) {
-      const w = new Morph({extent: pt(400,310), fill: Color.transparent, submorphs: [widget]});
-      w.openInWorldNearHand();
-      w.adjustOrigin(w.innerBounds().topCenter());
-      w.position = this.globalBounds().bottomCenter();
-      w.scale = 0; w.opacity = 0;
-      await w.animate({opacity: 1, scale: 1, duration: 300});
-      this.world().addMorph(widget);
-      w.remove();
-      return widget;
-   }
-
    async openPicker(evt) {
       const p = this.picker || new ColorPicker({
                     color: this.targetProperty});
       p.position = pt(0,0);
       connect(p, "color", this.target, this.property);
       connect(p, "color", this, "update");
-      this.picker = await this.fadeIntoWorld(evt, p);
-      this.picker.focus();
+      this.picker = await p.fadeIntoWorld(this.globalBounds().bottomCenter());
       this.palette && this.palette.remove();
    }
 
@@ -108,8 +95,7 @@ export class ColorPickerField extends Morph {
       p.position = pt(0,0);
       connect(p, "selectedColor", this.target, this.property);
       connect(p, "selectedColor", this, "update");
-      this.palette = await this.fadeIntoWorld(evt, p);
-      this.palette.focus();
+      this.palette = await p.fadeIntoWorld(this.globalBounds().bottomCenter());
       this.picker && this.picker.remove();
    }
 

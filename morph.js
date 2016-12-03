@@ -621,6 +621,19 @@ export class Morph {
     this.opacity = 1;
   }
 
+  async fadeIntoWorld(pos, duration=300, origin=this.innerBounds().topCenter()) {
+      const w = new Morph({extent: this.extent, opacity: 0, scale: 0, 
+                           fill: Color.transparent, submorphs: [this]}),
+            world = this.env.world;
+      w.openInWorldNearHand();
+      w.adjustOrigin(origin);
+      w.position = pos || world.visibleBounds().center();
+      await w.animate({opacity: 1, scale: 1, duration});
+      world.addMorph(this);
+      w.remove();
+      return this;
+   }
+
   removeAllMorphs() { this.submorphs = []; }
 
   bringToFront() {
