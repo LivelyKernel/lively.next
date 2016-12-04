@@ -13,12 +13,16 @@ class Layout {
     this.container = container;
     this.autoResize = autoResize != undefined ? autoResize : true;
     this.ignore = ignore || [];
+    this.lastBounds = this.container && this.container.bounds();
   }
 
   description() { return "Describe the layout behavior here." }
   name() { return "Name presented to the user." }
 
-  onSubmorphResized(submorph, change) { this.container.submorphs.includes(submorph) && this.apply(change.meta.animation) }
+  get boundsChanged() { return !this.container.bounds().equals(this.lastBounds) }
+
+  onSubmorphResized(submorph, change) { (this.container.submorphs.includes(submorph) || 
+                                         this.boundsChanged) && this.apply(change.meta.animation) }
   onSubmorphAdded(submorph) { this.apply() }
   onSubmorphRemoved(submorph) { this.apply() }  
   
@@ -52,6 +56,10 @@ class Layout {
      this.active = true;
      container.layout = this;
      this.active = false;
+  }
+
+  apply(animated) {
+      this.lastBounds = this.container && this.container.bounds();
   }
 }
 
@@ -89,6 +97,7 @@ export class FillLayout extends Layout {
   
   apply(animate = false) {
     /* FIXME: Add support for destructuring default values */
+    super.apply(animate);
     if (this.active || !this.container) return;
     const {fixedWidth, fixedHeight} = this,
           {top, bottom, left, right} = this.spacing,
@@ -126,6 +135,7 @@ export class VerticalLayout extends Layout {
   set spacing(offset) { this._spacing = offset; this.apply(); }
 
   apply(animate = false) {
+    super.apply(animate);
     if (this.active || !this.container) return;
     var pos = pt(this.spacing, this.spacing),
         submorphs = this.container.submorphs.filter(m => !this.ignore.includes(m.name)),
@@ -172,6 +182,7 @@ export class HorizontalLayout extends Layout {
   set spacing(offset) { this._spacing = offset; this.apply(); }
 
   apply(animate = false) {
+    super.apply(animate);
     if (this.active || !this.container) return;
     var pos = pt(this.spacing, this.spacing),
         submorphs = this.container.submorphs.filter(m => !this.ignore.includes(m.name)),
@@ -213,6 +224,7 @@ export class TilingLayout extends Layout {
   }
 
   apply(animate = false) {
+    super.apply(animate);
     var width = this.getOptimalWidth(),
         currentRowHeight = 0,
         currentRowWidth = 0,
@@ -876,6 +888,7 @@ export class GridLayout extends Layout {
   }
 
   apply(animate = false) {
+    super.apply(animate);
     if (this.active) return;
     this.active = true;
     if (!this.grid) this.initGrid();
