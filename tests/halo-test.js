@@ -81,7 +81,7 @@ describe("halos", () => {
 
   it("name shows name", () => {
     var halo = world.showHaloFor(submorph1);
-    expect(halo.nameHalo().nameHolders[0].textString).equals(submorph1.name);
+    expect(halo.nameHalo().nameHolders[0].submorphs[0].textString).equals(submorph1.name);
   })
 
   it("drag drags", () => {
