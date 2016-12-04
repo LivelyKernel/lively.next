@@ -621,6 +621,12 @@ export class Morph {
     this.opacity = 1;
   }
 
+  async fadeIn(duration=1000) {
+     this.opacity = 0;
+     this.animate({opacity: 1, duration});
+     return this;
+  }
+
   async fadeIntoWorld(pos, duration=300, origin=this.innerBounds().topCenter()) {
       const w = new Morph({extent: this.extent, opacity: 0, scale: 0, 
                            fill: Color.transparent, submorphs: [this]}),
