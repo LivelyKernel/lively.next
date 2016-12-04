@@ -172,7 +172,6 @@ export class GradientEditor extends Morph {
              gradientEditor.updateStop(idx, {offset});
              this.offsetView.textString = (offset * 100).toFixed(2) + "%"
              this.offsetView.position = evt.hand.position.addPt(pt(10,10));
-             gradientEditor.toggleStopPreview(false);
           },
           onDragEnd() {
              this.nativeCursor = '-webkit-grab';
@@ -299,7 +298,6 @@ export class GradientEditor extends Morph {
             this.get("instruction").animate({opacity: 0, visible: false, duration: 300});
             this.renderStopControls(gradient)
          },
-         onHoverIn() { this.toggleStopPreview(true) },
          onHoverOut() { this.toggleStopPreview(false) },
          onMouseMove(evt) {
             const pos = evt.positionIn(this),
@@ -313,8 +311,9 @@ export class GradientEditor extends Morph {
          },
          onMouseDown(evt) {
             if (!this.get("stopControlPreview").visible) return;
-            const offset = evt.positionIn(this).x / this.width,
+            var   offset = evt.positionIn(this).x / this.width,
                   idx = self.targetProperty.stops.findIndex(m => m.offset > offset);
+            idx = idx < 0 ? self.targetProperty.stops.length - 1 : idx;
             this.insertStop(idx, offset);
          },
          toggleStopPreview(visible) { 
