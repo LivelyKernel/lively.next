@@ -286,10 +286,8 @@ export class PropertyAnimation {
                        this.duration / 1000, 
                        {attr: before}, 
                        {attr: after, ease: this.easing,
-                        onOverwrite: (args) => {
-                           this.finish();
-                         },
-                         onComplete: () => {
+                        overwrite: false,
+                        onComplete: () => {
                            this.finish();
                            this.morph.makeDirty();
                        }});
@@ -305,9 +303,7 @@ export class PropertyAnimation {
                          animationProps[0],
                         {...animationProps[1],
                          ease: this.easing,
-                         onOverwrite: (args) => {
-                           this.finish();
-                         },
+                         overwrite: false,
                          onComplete: () => {
                            this.finish();
                            this.morph.makeDirty();
