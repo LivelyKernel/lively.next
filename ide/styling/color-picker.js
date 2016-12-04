@@ -51,9 +51,15 @@ export class ColorPickerField extends Morph {
          submorphs: [{
           type: "image", imageUrl: WHEEL_URL, extent: pt(20,20), nativeCursor: "pointer",
           fill: Color.transparent, position: pt(3,3), onMouseDown: (evt) => this.openPicker(evt)}]}];
-
       this.update();
       connect(this.target, "onChange", this, "update");
+   }
+
+   onHoverIn() {
+      if (!this.palette) 
+          this.palette = new ColorPalette({
+                    extent: pt(400,310),
+                    color: this.targetProperty});
    }
 
    onKeyDown(evt) {
@@ -91,10 +97,10 @@ export class ColorPickerField extends Morph {
    async openPalette(evt) {
       const p = this.palette || new ColorPalette({
                     extent: pt(400,310),
-                    selectedColor: this.targetProperty});
+                    color: this.targetProperty});
       p.position = pt(0,0);
-      connect(p, "selectedColor", this.target, this.property);
-      connect(p, "selectedColor", this, "update");
+      connect(p, "color", this.target, this.property);
+      connect(p, "color", this, "update");
       this.palette = await p.fadeIntoWorld(this.globalBounds().bottomCenter());
       this.picker && this.picker.remove();
    }
@@ -129,7 +135,14 @@ export class ColorPicker extends Window {
   }
 
   onKeyDown(evt) {
-     if (evt.key == "Escape") this.remove();
+     if (evt.key == "Escape") { 
+         this.close();
+     }
+  }
+
+  close() {
+     super.close();
+     signal(this, 'close');
   }
 
   onMouseDown(evt) {

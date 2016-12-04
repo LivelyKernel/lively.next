@@ -19,11 +19,11 @@ export class ColorPalette extends Morph {
          colorFieldWidth: 20,
          extent: pt(200,300),
          borderRadius: 5,
-         selectedColor: props.selectedColor || Color.blue,
+         color: props.color || Color.blue,
          layout: new VerticalLayout({ignore: ["arrow"]}),
          ...props,
       });
-      const [h,s,b] = this.selectedColor.toHSB();
+      const [h,s,b] = this.color.toHSB();
       this.pivotColor = Color.hsb(h,s,1);
       this.build();
       this.active = true;
@@ -32,16 +32,21 @@ export class ColorPalette extends Morph {
    isHaloItem() { return true }
 
    onKeyDown(evt) {
-      if (evt.key == "Escape") this.remove();
+      if (evt.key == "Escape") this.close();
    }
 
+   close(duration) {
+      duration ? this.fadeOut(duration) : this.remove();
+      signal(this, 'close');
+   }
+   
    get pivotBrightness() {
-      const [h,s,b] = (this.pivotColor || this.selectedColor).toHSB();
+      const [h,s,b] = (this.pivotColor || this.color).toHSB();
       return b;
    }
 
    set pivotBrightness(b) {
-      const [h,s] = (this.pivotColor || this.selectedColor).toHSB();
+      const [h,s] = (this.pivotColor || this.color).toHSB();
       this.pivotColor = Color.hsb(h,s,b);
       this.relayout();
    }
@@ -159,9 +164,9 @@ export class ColorPalette extends Morph {
                         this.borderColor = Color.transparent;
                      },
                      onMouseDown: () => {
-                        this.selectedColor = Color.rgbHex(c);
-                        signal(this, "selectedColor", this.selectedColor);
-                        this.fadeOut(200);
+                        this.color = Color.rgbHex(c);
+                        signal(this, "color", this.color);
+                        this.close(200);
                      }
                   } : {
                      extent: pt(this.colorFieldWidth, this.colorFieldWidth),
@@ -270,8 +275,8 @@ export class ColorPalette extends Morph {
          submorphs: [
             new Morph({fill: color, extent: pt(80, 50),
                        onMouseDown(evt) {
-                           colorPalette.selectedColor = this.fill;
-                           signal(colorPalette, "selectedColor", this.fill);
+                           colorPalette.color = this.fill;
+                           signal(colorPalette, "color", this.fill);
                            colorPalette.relayout();
                        }}),
             new Text({textString: `${h.toFixed()}, ${s.toFixed(2)}, ${b.toFixed(2)}`, fill: Color.transparent,
