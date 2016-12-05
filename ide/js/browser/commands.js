@@ -186,10 +186,12 @@ export default function browserCommands(browser) {
 
     {
       name: "run all tests in module",
-      exec: (browser) => {
+      exec: async browser => {
          var m = browser.selectedModule;
           if (!m) return browser.world().inform("No module selected", {requester: browser});
-         return runTestsInModule(browser, m.name, null);
+         var results = await runTestsInModule(browser, m.name, null);
+         browser.focus();
+         return results;
       }
     },
 
@@ -214,7 +216,9 @@ export default function browserCommands(browser) {
           file: m.name
         }
 
-        return runTestsInModule(browser, m.name, spec);
+         var results = await runTestsInModule(browser, m.name, spec);
+         browser.focus();
+         return results;
        }
      },
 
@@ -284,7 +288,9 @@ export default function browserCommands(browser) {
       runner.toggleMinimize();
 
     runner = runner.getWindow().targetMorph;
-    runner.backend = browser.backend;
+
+    if (runner.backend != browser.backend)
+      runner.backend = browser.backend;
 
     return spec ?
       runner[spec.type === "suite" ? "runSuite" : "runTest"](spec.fullTitle):
