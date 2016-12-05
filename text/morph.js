@@ -133,14 +133,15 @@ export class Text extends Morph {
   get isText() { return true }
 
   get defaultProperties() {
-    return Object.assign({
+    return {
+      ...super.defaultProperties,
       readOnly: false, draggable: false,
       fixedWidth: false, fixedHeight: false,
       padding: Rectangle.inset(0),
       useSoftTabs: config.text.useSoftTabs !== undefined ? config.text.useSoftTabs : true,
       tabWidth: config.text.tabWidth || 2,
       savedMarks: [],
-    }, super.defaultProperties);
+    };
   }
 
   onChange(change) {
