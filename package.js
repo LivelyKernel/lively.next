@@ -140,7 +140,7 @@ function rm(path) {
     var cmd = await exec('npm list --depth 1 --json --silent', {log: this._log, cwd: this.directory}),
         { stdout } = cmd,
         npmList = JSON.parse(stdout),
-        depNames = Object.getOwnPropertyNames(npmList.dependencies);
+        depNames = Object.getOwnPropertyNames(npmList.dependencies || {});
     return depNames.reduce(function(depsToFix, name) {
       var dep = npmList.dependencies[name];
       if (dep.missing || dep.invalid) depsToFix.push(name);
