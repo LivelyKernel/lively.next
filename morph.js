@@ -129,10 +129,12 @@ export class Morph {
        }
     }
     this.layout && this.layout.onChange(change);
+    this.styleRules && this.styleRules.onMorphChange(this, change);
   }
 
   onSubmorphChange(change, submorph) {
-    this.layout && typeof this.layout.onSubmorphChange === "function" && this.layout.onSubmorphChange(submorph, change);
+    this.layout && this.layout.onSubmorphChange(submorph, change);
+    this.styleRules && this.styleRules.onMorphChange(submorph, change);
   }
 
   get changes() { return this.env.changeManager.changesFor(this); }
@@ -198,6 +200,15 @@ export class Morph {
     return anim ? anim.asPromise() : this;
   }
 
+  get morphClasses() { return this.getProperty("morphClasses"); }
+  set morphClasses(classes) { this.addValueChange("morphClasses", classes); }
+
+  get styleRules() { return this.getProperty("styleRules"); }
+  set styleRules(rules) {
+     if (rules) rules.applyToAll(this);
+     this.addValueChange("styleRules", rules);
+  }
+  
   get layout()         { return this.getProperty("layout") }
   set layout(value)    {
     if (value) value.container = this;
