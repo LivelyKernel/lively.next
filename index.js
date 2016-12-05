@@ -1,6 +1,8 @@
-import { string, arr, obj } from "lively.lang";
+import "./object-extensions.js";
 
+import { string, arr, obj } from "lively.lang";
 import ClassHelper from "./class-helper.js";
+import ExpressionSerializer from "./plugins/expression-serializer.js";
 
 function isPrimitive(obj) {
   // primitive objects don't need to be registered
@@ -10,48 +12,9 @@ function isPrimitive(obj) {
   return false;
 }
 
-// note __boundValues__ becomes a dynamically scoped "variable" inside eval
-function __eval__(__source__, __boundValues__) { return eval(__source__) }
-
-function defaultExpressionEvaluator(exprObj) {
-  var source = exprObj.__expr__;
-  if (exprObj.bindings) {
-    var __boundValues__ = {},
-        names = Object.keys(exprObj.bindings);
-    for (var i = 0; i < names.length; i++) {
-      var name = names[i],
-          module = System.get(System.decanonicalize(exprObj.bindings[name]));
-      if (module) {
-        __boundValues__[name] = module[name];
-        source = `var ${name} = __boundValues__.${name};\n${source}`;
-      }
-    }
-  }
-  return __eval__(source, __boundValues__);
-}
-
-
-Object.defineProperty(Symbol.prototype, "__serialize__", {
-  configurable: true,
-  value: (() => {
-    const knownSymbols = (() =>
-      Object.getOwnPropertyNames(Symbol)
-        .filter(ea => typeof Symbol[ea] === "symbol")
-        .reduce((map, ea) => map.set(Symbol[ea], "Symbol." + ea), new Map()))();
-    const symMatcher = /^Symbol\((.*)\)$/;
-
-    return function() {
-      // turns a symbol into a __expr__ object.
-      if (Symbol.keyFor(this)) return {__expr__: `Symbol.for("${Symbol.keyFor(this)}")`};
-      if (knownSymbols.get(this)) return {__expr__: knownSymbols.get(this)};
-      var match = String(this).match(symMatcher)
-      return {__expr__: match ? `Symbol("${match[1]}")` : "Symbol()", isValue: false};
-    }
-  })()
-})
-
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 
 export class ObjectRef {
 
