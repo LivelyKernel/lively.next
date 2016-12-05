@@ -14,11 +14,8 @@ export class MorphicEnv {
     while (true) {
       var env = this.popDefault();
       if (!env) break;
-      try {
-        env.uninstall()
-      } catch (err) {
-        console.error(`Error uninstalling MorphicEnv: ${err.stack || err}`);
-      }
+      try { env.uninstall() }
+      catch (err) { console.error(`Error uninstalling MorphicEnv: ${err.stack || err}`); }
     }
   }
 
@@ -94,7 +91,7 @@ export class MorphicEnv {
     this.renderer = new Renderer(world, rootNode, this.domEnv).startRenderWorldLoop();
     this.eventDispatcher = new EventDispatcher(this.domEnv.window, world).install(rootNode);
     world.makeDirty();
-    
+
     return world.whenRendered().then(() => this);
   }
 
@@ -114,7 +111,7 @@ export class MorphicEnv {
       undoChanges += ea.undoManager.undos.length + ea.undoManager.redos.length
     });
     return `${changeManager.changes.length} changes recorded\n${morphsWithUndo} morphs with undos\n${undoChanges} undo changes`
-    
+
   }
 
 }

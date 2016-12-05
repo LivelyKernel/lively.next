@@ -276,6 +276,7 @@ export default function browserCommands(browser) {
   }
 
   async function runTestsInModule(browser, moduleName, spec) {
+
     var runner = browser.get("test runner window");
     if (!runner)
       runner = await world.execCommand("open test runner");

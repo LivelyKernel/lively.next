@@ -190,8 +190,8 @@ class ExportPrompt {
         // maxWidth: 300
       }]
     ]
-    
-    // var annotation = 
+
+    // var annotation =
 
     return {label}
   }

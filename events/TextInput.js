@@ -8,7 +8,7 @@ export default class TextInput {
 
   constructor(eventDispatcher) {
     this.eventDispatcher = eventDispatcher;
-    
+
     this.domState = {
       rootNode: null,
       textareaNode: null,
@@ -42,6 +42,7 @@ export default class TextInput {
 
     var doc = newRootNode.ownerDocument,
         textareaNode = domState.textareaNode = doc.createElement("textarea");
+
 
     textareaNode.setAttribute("style", `
       position: absolute;
