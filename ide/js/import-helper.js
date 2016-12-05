@@ -1,5 +1,5 @@
 import { arr, obj, Path } from "lively.lang";
-import { pt } from "lively.graphics";
+import { pt, Color } from "lively.graphics";
 import { fuzzyParse, query, stringify } from "lively.ast";
 import { resource } from "lively.resources";
 
@@ -17,11 +17,17 @@ export async function cleanupUnusedImports(textMorph, opts = {query: true}) {
   var modifications = modificationsToRemoveUnusedImports(source);
   if (!modifications || !modifications.changes.length) return "nothing to remove";
 
-  var removed = modifications.removedImports
-    .map(({name, from}) => `${name} from ${from}`).join("\n")
+  var removed = arr.flatten(
+          modifications.removedImports
+                .map(({name, from}) => [
+                     [`${name}`, {fontWeight: "bold"}], [" from ", {}],
+                     [`${from}\n`, {fontStyle: "italic"}]]), 1);
+
+  var instructions = [[`Really remove these imports?\n\n`, {fontWeight: "bold", fontSize: 15}], 
+                      ...removed]
 
   var really = opts.query ?
-    await textMorph.world().confirm(`Really remove these imports?\n${removed}`) :
+    await textMorph.world().confirm(instructions) :
     true;
   if (!really) return "canceled";
 

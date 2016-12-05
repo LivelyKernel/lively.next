@@ -1,11 +1,11 @@
 /*global System*/
-import { Rectangle, Color, pt, rect } from "lively.graphics";
+import { Rectangle, Color, pt } from 'lively.graphics';
 import { arr, obj, promise } from "lively.lang";
 import { List, FilterableList } from "./list.js"
 import { PasswordInputLine } from "./text/input-line.js"
 import { Icon } from "./icons.js"
-import { Morph, Text, Label, GridLayout } from "./index.js";
-import { connect, disconnectAll } from "lively.bindings";
+import { Morph, Text, GridLayout } from './index.js';
+import { connect } from 'lively.bindings';
 
 
 export class AbstractPrompt extends Morph {
@@ -170,8 +170,10 @@ export class ConfirmPrompt extends AbstractPrompt {
   initLayout() {
      // fixme: layout should be able to let one morph
      //         define the overall width of the container
-     this.get("label").fit()
-     this.width = this.get("label").width + 10;
+     const label = this.get("label");
+     label.fit();
+     this.width = label.width + 10;
+     this.height = label.height + 30;
      const l = this.layout = new GridLayout({
         grid: [["label", "label"],
                ["ok button", "cancel button"]]
