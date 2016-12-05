@@ -7,6 +7,7 @@ import {Morph, Image, VerticalLayout, GridLayout,
         Text, Path, HorizontalLayout} from "../../index.js";
 import {num, obj, arr} from "lively.lang";
 import {Icon} from "../../icons.js";
+import {StyleRules} from "../../style-rules.js";
 import {connect, signal} from "lively.bindings";
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
@@ -22,44 +23,26 @@ export class GradientEditor extends Morph {
       this.build();
    }
 
-   get styler() {
-      return {controlElement: {fill: Color.transparent},
+   getStyler() {
+      return new StyleRules({
+              controlElement: {fill: Color.transparent},
               addStopLabel: {fontSize: 18, fontColor: Color.orange, center: pt(1, -16)},
               stopControlPreview: {extent: pt(2, 50), fill: Color.orange},
               propertyView: {fill: Color.black.withA(.7), borderRadius: 5,
                              padding: 5, fontColor: Color.white},
-              stopControlLine: {extent: pt(2,50), fill: Color.gray.darker()},
+              stopControlLine: {extent: pt(2,50), fill: Color.gray.darker(), tooltip: "Drag to change proportional offset of stop"},
               stopControlHead: {fill: Color.black.withA(.3), borderRadius: 20, center: pt(1,-15)},
-              pickerField: {imageUrl: WHEEL_URL, extent: pt(15,15), 
+              pickerField: {imageUrl: WHEEL_URL, extent: pt(15,15), tooltip: "Open Color Picker",
                             nativeCursor: "pointer",fill: Color.transparent,},
-              paletteField: {nativeCursor: "pointer", clipMode: "hidden"},
+              paletteField: {nativeCursor: "pointer", clipMode: "hidden", tooltip: "Open Color Palette"},
               typeSelector: {fill: Color.transparent, extent: pt(180, 40)},
               modeButton: {extent: pt(30,30), borderWidth: 2},
               instruction: {fontSize: 15, padding: 15, fontWeight: "bold", fontColor: Color.black.lighter()},
-              closeButton: {fontColor: Color.gray, fontSize: 18, nativeCursor: "pointer"},
+              closeButton: {fontColor: Color.gray.lighter(), 
+                            tooltip: "Remove Stop", fontSize: 17, nativeCursor: "pointer"},
               gradientEditor: {width: 180, height: 50, borderRadius: 5,
-                               borderWidth: 1, borderColor: Color.gray.darker()}};
+                               borderWidth: 1, borderColor: Color.gray.darker()}});
    }
-
-   applyStyler() {
-      if (this.stylerActive) return;
-      this.stylerActive = true;
-      this.withAllSubmorphsDo(m => {
-         var styleProps;
-         if (styleProps = this.styler[m.name]) {
-            Object.assign(m, styleProps);
-         } else if (m.morphClasses) {
-            styleProps = obj.merge(arr.compact(m.morphClasses.map(c => this.styler[c])));
-            Object.assign(m, styleProps);
-         }
-      })
-      this.stylerActive = false;
-   }
-
-   onSubmorphChange(change, submorph) {
-      this.applyStyler();
-      super.onSubmorphChange(change, submorph);
-   } 
 
    get targetProperty() { return this.target[this.property]; }
    set targetProperty(v) { this.target[this.property] = v; signal(this, "targetProperty", v); }
@@ -107,6 +90,7 @@ export class GradientEditor extends Morph {
        this.submorphs = [this.typeSelector(), this.gradientEditor()];
        connect(this, "targetProperty", this, "update");
        this.update(this.targetProperty);
+       this.styleRules = this.getStyler();
    }
 
    typeSelector() {
