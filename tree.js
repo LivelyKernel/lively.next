@@ -364,7 +364,7 @@ export class Tree extends Morph {
         height = lineHeightCache[i];
       } else {
         var node = nodes[i].node,
-            displayed = treeData.display(node);
+            displayed = treeData.safeDisplay(node);
         if (typeof displayed === "string") {
           height = defaultNodeHeight;
           maxWidth = Math.max(maxWidth, displayed.length*defaultCharWidth);
@@ -398,7 +398,7 @@ export class Tree extends Morph {
   
         var node = nodes[i].node;
         nodeMorph.displayNode(
-          treeData.display(node),
+          treeData.safeDisplay(node),
           node,
           pt(x+(toggleWidth+4)*(nodes[i].depth-1), y),
           toggleWidth,
@@ -423,7 +423,7 @@ export class Tree extends Morph {
         height = lineHeightCache[i];
       } else {
         var node = nodes[i].node,
-            displayed = treeData.display(node), height;
+            displayed = treeData.safeDisplay(node), height;
         if (typeof displayed === "string") {
           height = defaultNodeHeight;
           maxWidth = Math.max(maxWidth, displayed.length*defaultCharWidth);
@@ -602,9 +602,14 @@ export class TreeData {
   getChildren(node) { throw new Error("Not yet implemented"); }
   isLeaf(node) { throw new Error("Not yet implemented"); }
 
+  safeDisplay(node) {
+    try { return this.display(node); }
+    catch (e) { return `[TreeData] Error when trying to display node: ${e}`}
+  }
+
   nodeToString(node) {
     // for extracting rich text in textAttributes format
-    var value = this.display(node);
+    var value = this.safeDisplay(node);
     if (typeof value === "string") return value;
     if (!value || !Array.isArray(value)) return String(value);
     return value.map(([ea]) => ea).join("");
@@ -668,7 +673,7 @@ export class TreeData {
           nextNode = this.getChildren(currentNode).find(ea => eqFn(nextPathPart, ea));
 
       if (!nextNode)
-        throw new Error(`Cannot descend into tree, next node of ${path.join(".")} not found at ${this.display(currentNode)}`);
+        throw new Error(`Cannot descend into tree, next node of ${path.join(".")} not found at ${this.safeDisplay(currentNode)}`);
 
       currentNode = nextNode;
     }
