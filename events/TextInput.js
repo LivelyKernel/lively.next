@@ -75,6 +75,7 @@ export default class TextInput {
     textareaNode.setAttribute("autocorrect", "off");
     textareaNode.setAttribute("autocapitalize", "off");
     textareaNode.setAttribute("spellcheck", false);
+    textareaNode.className = "lively-text-input";
     textareaNode.value = "";
     newRootNode.insertBefore(textareaNode, newRootNode.firstChild);
 
@@ -141,12 +142,15 @@ export default class TextInput {
 
   }
 
-  focus() {
+  focus(morph, world) {
     var node = this.domState.textareaNode;
     if (!node) return;
     node.ownerDocument.activeElement !== node && node.focus();
     if (bowser.firefox) // FF needs an extra invitation...
       Promise.resolve().then(() => node.ownerDocument.activeElement !== node && node.focus());
+
+    if (morph && morph.isText) this.ensureBeingAtCursorOfText(morph);
+    else if (world) this.ensureBeingInVisibleBoundsOfWorld(world);
   }
 
   blur() {
@@ -237,5 +241,23 @@ export default class TextInput {
 
   onCompositionEnd(evt) {
     this.inputState.composition = null;
+  }
+
+  setPosition(pos) {
+    var {textareaNode} = this.domState || {};
+    if (!textareaNode) return;
+    textareaNode.style.left = pos.x + "px";
+    textareaNode.style.top = pos.y + "px";
+  }
+
+  ensureBeingInVisibleBoundsOfWorld(world) {
+    this.setPosition(world.visibleBounds().center());
+  }
+
+  ensureBeingAtCursorOfText(textMorph) {
+    // move the textarea to the text cursor
+    let localCursorPos = textMorph.textLayout.pixelPositionFor(textMorph, textMorph.cursorPosition),
+        globalCursorPos = textMorph.worldPoint(localCursorPos.subPt(textMorph.scroll));
+    this.setPosition(globalCursorPos);
   }
 }

@@ -728,7 +728,10 @@ export class World extends Morph {
       Menu.openAtHand(items, {hand: (evt && evt.hand) || this.firstHand}) : null;
   }
 
-  onWindowScroll(evt) {}
+  onWindowScroll(evt) {
+    // this.env.eventDispatcher
+    this._cachedWindowBounds = null;
+  }
 
   onWindowResize(evt) {
     this._cachedWindowBounds = null;
@@ -776,15 +779,13 @@ export class World extends Morph {
 
   windowBounds(optWorldDOMNode) {
     if (this._cachedWindowBounds) return this._cachedWindowBounds;
-    var canvas = optWorldDOMNode || this.env.renderer.domNode,
-        topmost = canvas.ownerDocument.documentElement,
-        body = canvas.ownerDocument.body,
+    var {window} = this.env.domEnv,
         scale = 1 / this.scale,
-        topLeft = pt(body.scrollLeft - (canvas.offsetLeft || 0), body.scrollTop - (canvas.offsetTop || 0)),
-        {window} = this.env.domEnv,
+        x = window.scrollX * scale,
+        y = window.scrollY * scale,
         width = (window.innerWidth || this.width) * scale,
         height = (window.innerHeight || this.height) * scale;
-    return this._cachedWindowBounds = topLeft.scaleBy(scale).extent(pt(width, height));
+    return this._cachedWindowBounds = new Rectangle(x, y, width, height);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -876,7 +877,6 @@ export class World extends Morph {
        await animator.animate({scale: 1, opacity: 1, duration: 500});
        animator.remove(); promptMorph.openInWorld();
     }
-
     return promise.finally(promptMorph.activate(), () => focused && focused.focus());
   }
 

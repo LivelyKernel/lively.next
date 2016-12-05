@@ -439,9 +439,15 @@ export class ListPrompt extends AbstractPrompt {
     return this.state.answer.resolve(answer);
   }
 
-  reject() { return this.state.answer.resolve({prompt: this, selected: [], filtered: [], status: "canceled"}); }
+  reject() {
+    return this.state.answer.resolve({
+      prompt: this, selected: [],
+      filtered: [], status: "canceled"
+    });
+  }
 
   focus() { this.get("list").focus(); }
+
 }
 
 

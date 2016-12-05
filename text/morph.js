@@ -544,6 +544,10 @@ export class Text extends Morph {
     return doc.getLine(row);
   }
   isLineEmpty(row) { return !this.getLine(row).trim(); }
+  isAtLineEnd(pos = this.cursorPosition) {
+    var line = this.getLine(pos.row);
+    return pos.column === line.length;
+  }
 
   wordsOfLine(row = this.cursorPosition.row) { return this.document.wordsOfLine(row); }
   wordAt(pos = this.cursorPosition) { return this.document.wordAt(pos); }
@@ -1006,6 +1010,8 @@ export class Text extends Morph {
         charBounds =   this.lineWrapping ? charBounds : charBounds.insetByPt(pt(-20, 0)),
         delta = charBounds.topLeft().subPt(paddedBounds.translateForInclusion(charBounds).topLeft());
     this.scroll = this.scroll.addPt(delta).addPt(offset);
+
+    if (this.isFocused()) this.ensureKeyInputHelperAtCursor();
   }
 
   keepPosAtSameScrollOffsetWhile(doFn, pos = this.cursorPosition) {
@@ -1126,21 +1132,16 @@ export class Text extends Morph {
 
     if (evt.isShiftDown()) {
       this.selection.lead = this.textPositionFromPoint(this.scroll.addPt(this.localize(position)));
-      return true;
-    }
-
-    if (evt.isAltDown()) {
+    } else if (evt.isAltDown()) {
       this.selection.addRange(Range.at(this.textPositionFromPoint(this.scroll.addPt(this.localize(position)))));
-      return true;
+    } else {
+      this.selection.disableMultiSelect();
+      if (normedClickCount === 1) this.onMouseMove(evt);
+      else if (normedClickCount === 2) this.execCommand("select word", null, 1, evt);
+      else if (normedClickCount === 3) this.execCommand("select line", null, 1, evt);
     }
 
-    this.selection.disableMultiSelect();
-
-    if (normedClickCount === 1) return this.onMouseMove(evt);
-
-    if (normedClickCount === 2) return this.execCommand("select word", null, 1, evt);
-
-    if (normedClickCount === 3) return this.execCommand("select line", null, 1, evt);
+    if (this.isFocused()) this.ensureKeyInputHelperAtCursor();
   }
 
   onMouseMove(evt) {
@@ -1150,11 +1151,12 @@ export class Text extends Morph {
 
     var textPosClicked = this.textPositionFromPoint(this.scroll.addPt(this.localize(evt.position)));
 
-    this.selection.lead = textPosClicked;
+    var selRange = {start: textPosClicked, end: textPosClicked};
     if (!evt.isShiftDown()) {
       var start = this.textPositionFromPoint(this.scroll.addPt(this.localize(clickedOnPosition)));
-      this.selection.anchor = start;
+      selRange.start = start;
     }
+    this.selection = selRange
   }
 
   onContextMenu(evt) {
@@ -1236,6 +1238,17 @@ export class Text extends Morph {
   onFocus(evt) {
     this.makeDirty();
     this.selection.cursorBlinkStart();
+  }
+
+  onScroll(evt) {
+    if (this.isFocused())
+      this.ensureKeyInputHelperAtCursor();
+  }
+
+  ensureKeyInputHelperAtCursor() {
+    // move the textarea to the text cursor
+    if (this.env.eventDispatcher.keyInputHelper)
+      this.env.eventDispatcher.keyInputHelper.ensureBeingAtCursorOfText(this);
   }
 
   onBlur(evt) {

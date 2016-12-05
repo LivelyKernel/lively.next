@@ -188,7 +188,7 @@ export default class EventDispatcher {
   }
 
   focusMorph(morph) {
-    this.keyInputHelper && this.keyInputHelper.focus();
+    this.keyInputHelper && this.keyInputHelper.focus(morph, this.world);
     focusEvents(this, morph).forEach(evt => this.dispatchEvent(evt));
   }
 
