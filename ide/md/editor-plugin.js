@@ -1,6 +1,6 @@
 import EditorPlugin from "../editor-plugin.js";
 
-import MarkdownMorph from "./md-morph.js";
+// import MarkdownMorph from "./md-morph.js";
 import MarkdownStyler from "./highlighter.js";
 
 import * as marked from "https://raw.githubusercontent.com/chjj/marked/master/lib/marked.js"
