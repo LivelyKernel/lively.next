@@ -67,15 +67,7 @@ export class Text extends Morph {
       "backgroundColor", "fixedCharacterSpacing", "textStyleClasses"
     ]);
 
-    super({
-      readOnly: false, draggable: false,
-      fixedWidth: false, fixedHeight: false,
-      padding: 0,
-      useSoftTabs: config.text.useSoftTabs !== undefined ? config.text.useSoftTabs : true,
-      tabWidth: config.text.tabWidth || 2,
-      savedMarks: [],
-      ...props
-    });
+    super(props);
 
     this.textLayout = textLayout || new TextLayout(fontMetric || this.env.fontMetric);
     this.textRenderer = textRenderer || defaultRenderer;
@@ -124,7 +116,32 @@ export class Text extends Morph {
     if (center !== undefined) this.center = center;
   }
 
+  __deserialize__(snapshot, meta, objRef) {
+    super.__deserialize__(snapshot, meta, objRef);
+
+    this.textLayout = new TextLayout(this.env.fontMetric);
+    this.textRenderer = defaultRenderer;
+    this.changeDocument(TextDocument.fromString(""), true);
+    this.undoManager = new UndoManager();
+    this._anchors = null;
+    this._markers = null;
+    this.setDefaultTextStyle(defaultTextStyle);
+    // this.fit();
+    // this._needsFit = false;
+  }
+
   get isText() { return true }
+
+  get defaultProperties() {
+    return Object.assign({
+      readOnly: false, draggable: false,
+      fixedWidth: false, fixedHeight: false,
+      padding: Rectangle.inset(0),
+      useSoftTabs: config.text.useSoftTabs !== undefined ? config.text.useSoftTabs : true,
+      tabWidth: config.text.tabWidth || 2,
+      savedMarks: [],
+    }, super.defaultProperties);
+  }
 
   onChange(change) {
     var textChange = change.selector === "insertText"
@@ -1209,6 +1226,7 @@ export class Text extends Morph {
 
   onCut(evt) {
     if (this.rejectsInput() || !this.isFocused()) return;
+    if (config.emacs) return;
     this.onCopy(evt, !this.rejectsInput())
   }
 

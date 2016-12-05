@@ -12,7 +12,6 @@ import { connect } from "lively.bindings";
 
 const defaultCommandHandler = new CommandHandler();
 
-
 const defaultProperties = {
   visible: true,
   name: "a morph",
@@ -57,7 +56,7 @@ export class Morph {
     this._dirty = true; // for renderer, signals need  to re-render
     this._rendering = false; // for knowing when rendering is done
     this._submorphOrderChanged = false; // extra info for renderer
-    this._currentState = {...defaultProperties};
+    this._currentState = {...this.defaultProperties};
     this._id = newMorphId(this.constructor.name);
     this._animationQueue = new AnimationQueue(this);
     this.tickingScripts = [];
@@ -68,6 +67,21 @@ export class Morph {
     if (props.layout) this.layout = props.layout;
   }
 
+  __deserialize__(snapshot, meta, objRef) {
+    // inspect({snapshot, meta, objRef})
+    this._env = MorphicEnv.default(); // FIXME!
+    this._rev = snapshot.rev;
+    this._owner = null;
+    this._dirty = true; // for renderer, signals need  to re-render
+    this._rendering = false; // for knowing when rendering is done
+    this._submorphOrderChanged = false; // extra info for renderer
+    this._currentState = {...this.defaultProperties};
+    this._id = objRef.id;
+    this._animationQueue = new AnimationQueue(this);
+    this.tickingScripts = [];
+    this.updateTransform();
+  }
+
   get __only_serialize__() { return Object.keys(this._currentState); }
 
   get isMorph() { return true; }
@@ -75,6 +89,7 @@ export class Morph {
 
   get env() { return this._env; }
 
+  get defaultProperties() { return defaultProperties }
   defaultProperty(key) { return defaultProperties[key]; }
   getProperty(key) { return this._currentState[key]; }
 
@@ -973,8 +988,10 @@ export class Morph {
   onContextMenu(evt) {
     if (evt.targetMorph !== this) return;
     evt.stop();
-    var items = this.menuItems();
-    if (items && items.length) evt.world.openWorldMenu(evt, items);
+    this.openMenu(this.menuItems(), evt);
+  }
+  openMenu(items, optEvt) {
+    return items && items.length ? this.world().openWorldMenu(optEvt, items) : null;
   }
   menuItems() {}
 

@@ -755,20 +755,23 @@ export class DropDownList extends Button {
     super({
       borderRadius: 2,
       padding: Rectangle.inset(3,2),
-      ...obj.dissoc(props, ["items", "selection"])
+      ...props
     });
-    this.list = new List({
-      items: props.items || [],
+    connect(this, "fire", this, "toggleList");
+  }
+
+  isListVisible() { return this.list.owner === this; }
+
+  get list() {
+    if (this._list) return this._list;
+    return this._list = new List({
+      name: "list",
       fontSize: this.fontSize,
       fontFamily: this.fontFamily,
       fontColor: this.fontColor,
       border: this.border
     });
-    connect(this, "fire", this, "toggleList");
-    if (props.selection) this.selection = props.selection;
   }
-
-  isListVisible() { return this.list.owner === this; }
 
   get items() { return this.list.items; }
   set items(value) { this.list.items = value; }
