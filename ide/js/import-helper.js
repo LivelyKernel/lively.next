@@ -1,6 +1,6 @@
 import { arr, obj, Path } from "lively.lang";
 import { pt } from "lively.graphics";
-import { parse, query, stringify } from "lively.ast";
+import { fuzzyParse, query, stringify } from "lively.ast";
 import { resource } from "lively.resources";
 
 
@@ -46,7 +46,7 @@ function modificationsToRemoveUnusedImports(source) {
   //   removedImports: [{name: STRING, from: STRING}]
   // }
 
-  var parsed = parse(source);
+  var parsed = fuzzyParse(source);
 
   // 1.get imports with specifiers
   var imports = arr.flatmap(parsed.body, ea => {
@@ -95,38 +95,61 @@ function modificationsToRemoveUnusedImports(source) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 
-export async function interactivelyInjectImportIntoText(textMorph, opts = {gotoImport: true}) {
+export async function interactivelyInjectImportIntoText(textMorph, opts) {
 // textMorph = that
+
+  var {gotoImport, insertImportAtCursor} = {
+    gotoImport: true,
+    insertImportAtCursor: false,
+    ...opts
+  }
 
   var jsPlugin = textMorph.pluginFind(p => p.isJSEditorPlugin);
   if (!jsPlugin)
      throw new Error(`cannot find js plugin of ${textMorph}`)
 
-  var {gotoImport} = opts,
-      exports = await jsPlugin.systemInterface().exportsOfModules(),
+  // 1. Ask what to import + generate insertions
+  var exports = await jsPlugin.systemInterface().exportsOfModules(),
       choices = await ExportPrompt.run(textMorph.world(), exports);
 
   if (!choices.length) return null;
 
   var moduleId = textMorph.evalEnvironment.targetModule,
-      source, generated, standaloneImport, from, to, pos, ranges = [];
+      from, to, pos, importedVarNames = [], ranges = [];
 
-  textMorph.saveMark(); // so we can easily jump to where we were after insertion
+  if (gotoImport)
+    textMorph.saveMark(); // so we can easily jump to where we were after insertion
 
   textMorph.undoManager.group();
+
+  // 2. Insert new import statements or extend existing
   while (choices.length) {
-    let choice = choices.shift();
-    source = textMorph.textString,
-    {generated, from, to, standaloneImport} = ImportInjector.run(System, moduleId, source, choice),
+    let choice = choices.shift(),
+        source = textMorph.textString;
+
+    var {generated, from, to, standaloneImport, importedVarName} =
+      ImportInjector.run(System, moduleId, source, choice),
+
     pos = textMorph.indexToPosition(from);
+
     if (generated) ranges.push(textMorph.insertText(generated, pos));
+    if (importedVarName) importedVarNames.push(importedVarName);
     if (standaloneImport) {
       try { await jsPlugin.runEval(standaloneImport); }
       catch (e) { console.error(`Error when trying to import ${standaloneImport}: ${e.stack}`); }
     }
   }
+
+  // 3. insert imported var names at cursor
+  if (insertImportAtCursor) {
+    let source = importedVarNames.join("\n");
+    textMorph.selection.text = source;
+    if (!gotoImport) textMorph.scrollCursorIntoView();
+  }
+
   textMorph.undoManager.group();
 
+  // 4. select changes in import statements
   if (gotoImport) {
     if (ranges.length) {
       textMorph.selection = arr.last(ranges);
@@ -215,30 +238,33 @@ export class ImportInjector {
     this.intoModuleSource = intoModuleSource
     this.fromModuleId = importData.moduleId;
     this.importData = importData
-    this.parsed = optAst || parse(intoModuleSource);
+    this.parsed = optAst || fuzzyParse(intoModuleSource);
   }
 
   run() {
-    var standaloneImport = this.generateImportStatement();
-    var {imports, importsOfVar} = this.existingImportsOfFromModule();
+    var {standaloneImport, importedVarName} = this.generateImportStatement();
+    var {imports, importsOfFromModule, importsOfVar} = this.existingImportsOfFromModule();
 
     // already imported?
     if (importsOfVar.length) return {
       status: "not modified",
       newSource: this.intoModuleSource,
       generated: "",
+      importedVarName: "",
       standaloneImport,
       from: importsOfVar[0].start, to: importsOfVar[0].end
     };
 
     // modify an existing import?
-    if (imports.length) {
-      var modified = this.modifyExistingImport(imports, standaloneImport);
+    if (importsOfFromModule.length) {
+      var modified = this.modifyExistingImport(importsOfFromModule, standaloneImport);
       if (modified) return modified;
     }
 
     // prepend new import
-    return this.insertNewImport(imports, standaloneImport);
+    var lastImport = arr.last(imports),
+        insertPos = lastImport ? lastImport.end : 0;
+    return this.insertNewImport(importsOfFromModule, standaloneImport, importedVarName, insertPos);
   }
 
   generateImportStatement() {
@@ -259,9 +285,12 @@ export class ImportInjector {
       }
     }
 
-    return isDefault ?
-      `import ${varName} from "${exportPath}";` :
-      `import { ${varName} } from "${exportPath}";`;
+    return {
+      standaloneImport: isDefault ?
+        `import ${varName} from "${exportPath}";` :
+        `import { ${varName} } from "${exportPath}";`,
+      importedVarName: varName
+    }
   }
 
   existingImportsOfFromModule() {
@@ -269,27 +298,25 @@ export class ImportInjector {
         isDefault = impName === "default",
         imports = parsed.body.filter(({type}) => type === "ImportDeclaration")
 
-    var importsFromModule = imports.filter(ea => {
+    var importsOfFromModule = imports.filter(ea => {
       if (!ea.source || typeof ea.source.value !== "string") return null;
       var sourceId = System.decanonicalize(ea.source.value, intoModuleId)
       return fromModuleId === sourceId;
     });
 
-    var importsOfImportedVar = importsFromModule.filter(ea =>
+    var importsOfImportedVar = importsOfFromModule.filter(ea =>
         (ea.specifiers || []).some(iSpec =>
           isDefault ?
             iSpec.type === "ImportDefaultSpecifier" :
             Path("imported.name").get(iSpec) === impName));
 
     return {
-      imports: importsFromModule,
+      imports, importsOfFromModule,
       importsOfVar: importsOfImportedVar
     }
   }
 
   modifyExistingImport(imports, standaloneImport) {
-  // var imports = this.existingImportsOfFromModule().imports
-
     var specifiers = arr.flatmap(imports, ({specifiers}) => specifiers || [])
     if (!specifiers.length) return null;
 
@@ -322,6 +349,7 @@ export class ImportInjector {
         newSource: `${pre}${generated}${post}`,
         generated,
         standaloneImport,
+        importedVarName: defaultImpName,
         from: pos, to: pos + generated.length
       }
     }
@@ -334,19 +362,19 @@ export class ImportInjector {
       newSource: `${src.slice(0, pos)}${generated}${src.slice(pos)}`,
       generated,
       standaloneImport,
+      importedVarName: impName,
       from: pos, to: pos + generated.length
     };
 
   }
 
-  insertNewImport(importsOfFromModule, standaloneImport) {
-    var pos = 0;
+  insertNewImport(importsOfFromModule, standaloneImport, importedVarName, insertPos = 0) {
     if (importsOfFromModule && importsOfFromModule.length)
-      pos = arr.last(importsOfFromModule).end;
+      insertPos = arr.last(importsOfFromModule).end;
 
     var src = this.intoModuleSource,
-        pre = src.slice(0, pos),
-        post = src.slice(pos),
+        pre = src.slice(0, insertPos),
+        post = src.slice(insertPos),
         generated = standaloneImport;
 
     if (pre.length && !pre.endsWith("\n")) generated = "\n" + generated;
@@ -357,7 +385,8 @@ export class ImportInjector {
       newSource: pre + generated + post,
       generated,
       standaloneImport,
-      from: pos, to: pos + generated.length
+      importedVarName,
+      from: insertPos, to: insertPos + generated.length
     };
   }
 }
