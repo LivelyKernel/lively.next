@@ -20,6 +20,11 @@ describe("Style Rules", () => {
                                        child: {fill: Color.green}})
        m1.addMorph(m2);
        expect(m2.fill).equals(Color.green);
+       m2.submorphs = [{morphClasses: ['child'], 
+                        submorphs: [{morphClasses: ['child']}]}, 
+                       {morphClasses: ['child']},  {morphClasses: ['root']}]
+       expect(m2.submorphs.map(m => m.fill)).equals([Color.green, Color.green, Color.orange]);
+       expect(m2.submorphs[0].submorphs[0].fill).equals(Color.green);
    });
 
    it("updates the style once a morph changes morphClass", () => {

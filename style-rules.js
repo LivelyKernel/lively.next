@@ -25,7 +25,7 @@ export class StyleRules {
 
    onMorphChange(morph, {selector, args, prop}) {
     if (selector == "addMorphAt") {
-        this.applyToAll(args[0]);
+        this.applyToAll(morph);
     } else if (prop == "name" || prop == "morphClasses") {
         this.enforceRulesOn(morph);
     }
@@ -33,9 +33,7 @@ export class StyleRules {
 
   getShadowedProps(morph) {
      var props  = {};
-     console.log("shadow...")
      while (morph && morph.styleRules != this) {
-         console.log(morph)
          if (morph.styleRules) props = {...props, ...morph.styleRules.getStyleProps(morph)}
          morph = morph.owner;
      }
