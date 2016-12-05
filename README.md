@@ -13,11 +13,13 @@ cookie!!
 
 ### Initial install from command line
 
-1. Create an empty directory: `$ mkdir lively-dev; cd lively-dev`
-2. Now run `$ curl -o- https://raw.githubusercontent.com/LivelyKernel/lively.installer/master/web-install.sh | bash`
+1. In a terminal create an empty directory: `mkdir lively-dev; cd lively-dev`
+2. Now run `curl -o- https://raw.githubusercontent.com/LivelyKernel/lively.installer/master/web-install.sh | bash`
+3. After the installation is done (can take a few minutes) enter `./start.sh` and press enter, a Lively server will start.
+4. Visit [http://localhost:9011/index.html]() to open a Lively world. Initial load might take a while.
 
 ### Update from command line
 
 Similar to the above, 
 1. Change into your live dev directory: `$ cd lively-dev`
-2. Once again run `$ curl -o- https://raw.githubusercontent.com/LivelyKernel/lively.installer/master/web-install.sh | bash`
+2. Run `$ ./update.sh`
