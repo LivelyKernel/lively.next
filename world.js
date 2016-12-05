@@ -915,7 +915,15 @@ export class World extends Morph {
       label, items, ...opts}), opts);
   }
 
-  filterableListPrompt(label = "", items = [], opts = {requester: null, onSelection: null, preselect: 0, multiSelect: false, historyId: null}) {
+  filterableListPrompt(
+    label = "",
+    items = [],
+    opts = {
+      requester: null, onSelection: null,
+      preselect: 0, multiSelect: false,
+      historyId: null
+    }) {
+
     if (opts.prompt) {
       var list = opts.prompt.get("list");
       list.items = items;
@@ -984,5 +992,3 @@ export class Hand extends Morph {
     });
   }
 }
-
-export function $world() { return World.defaultWorld(); }
