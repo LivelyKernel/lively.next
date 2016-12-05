@@ -19,6 +19,7 @@ export class AbstractPrompt extends Morph {
     this.build(props);
     this.state = {
       answer: null,
+      isActive: false,
       autoRemove: props.hasOwnProperty("autoRemove") ? props.autoRemove : true
     };
 
@@ -40,12 +41,14 @@ export class AbstractPrompt extends Morph {
   async activate() {
     this.focus();
     this.state.answer = promise.deferred();
+    this.state.isActive = true;
+    promise.finally(this.state.answer.promise, () => this.state.isActive = false);
     if (this.state.autoRemove)
       promise.finally(this.state.answer.promise, () => this.fadeOut(500));
     return this.state.answer.promise;
   }
 
-  isActive() { return !!this.world() && this.state.answer; }
+  isActive() { return !!this.world() && this.state.isActive; }
 
   build() { throw new Error("Not yet implemented"); }
   applyLayout() { throw new Error("Not yet implemented"); }
