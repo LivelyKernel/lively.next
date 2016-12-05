@@ -211,7 +211,7 @@ export default class TestRunner extends HTMLMorph {
     this.get("eval backend list").topRight = this.innerBounds().topRight();
   }
 
-  get backend() { return this.state.backend; }
+  get backend() { return this.state.backend || "local"; }
   set backend(x) {
     this.state.backend = x;
     this.get("eval backend list") && (this.get("eval backend list").selection = x);
@@ -296,9 +296,7 @@ export default class TestRunner extends HTMLMorph {
     await this.scrollIntoView(suiteName);
   }
 
-  runTest(testName) {
-    return this.runSuite(testName);
-  }
+  runTest(testName) { return this.runSuite(testName); }
 
   async runTestFile(file, grep, options) {
     if (!this.state.loadedTests) this.state.loadedTests = [];
@@ -584,7 +582,7 @@ export default class TestRunner extends HTMLMorph {
     if (System.global.JsDiff && printed) {
       return `${msg}<p>diff + = actual, - = expected:</p><pre>${diffIt(printed.expected, printed.actual)}</pre>`;
     } else {
-      return `${msg}<p>expected:</p><pre>${test.error.expected}</pre><p>actual:</p><pre>${test.error.actual}</pre>`;
+      return `${msg}<p>expected:</p><pre>${String(test.error.expected)}</pre><p>actual:</p><pre>${String(test.error.actual)}</pre>`;
     }
 
     function diffIt(a, b) {
