@@ -8,12 +8,12 @@ export default class ClassHelper {
   static get moduleMetaInClassProp() { return moduleMetaInClassProp }
   static get classMetaForSerializationProp() { return classMetaForSerializationProp }
 
-  get isInstanceRestorer() { return true } // for Class.intializer
   get classNameProperty() { return '__LivelyClassName__'; }
   get sourceModuleNameProperty() { return '__SourceModuleName__'; }
 
   constructor(options) {
     this.options = {ignoreClassNotFound: true, ...options};
+    this[Symbol.for('lively-instance-restorer')] = true; // for Class.intializer
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -43,13 +43,16 @@ export default class ClassHelper {
 
     var klass = this.locateClass(meta);
     if (!klass || typeof klass !== "function") {
-      var msg = `Trying to deserialize instance of ${meta.className} but this class cannot be found!`;
+      var msg = `Trying to deserialize instance of ${JSON.stringify(meta)} but this class cannot be found!`;
       if (!this.options.ignoreClassNotFound) throw new Error(msg);
       console.error(msg);
       return {isClassPlaceHolder: true, className: meta.className};
     }
 
-    return new klass(this);
+    var instance = new klass(this);
+    if (typeof instance.__deserialize__ === "function")
+      instance.__deserialize__(snapshot, meta, objRef)
+    return instance;
   }
 
   locateClass(meta) {
