@@ -9,6 +9,12 @@ const defaultCSS = `
 
 /*-=- html fixes -=-*/
 
+textarea.lively-text-input.debug {
+  z-index: 20 !important;
+  opacity: 1 !important;
+  background: rgba(0,255,0,0.5) !important;
+}
+
 .no-html-select {
   -webkit-touch-callout: none;
   -webkit-user-select: none;

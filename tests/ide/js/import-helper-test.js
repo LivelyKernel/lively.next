@@ -8,6 +8,19 @@ import { JavaScriptEditorPlugin } from "lively.morphic/ide/js/editor-plugin.js";
 
 // that.doitContext = new ImportInjector(S, m, src, importData)
 
+function listItem(item) {
+  // make sure that object is of the form
+  // {isListItem: true, string: STRING, value: OBJECT}
+  if (item && item.isListItem && typeof item.string === "string") return item;
+  if (!item || !item.isListItem) return {isListItem: true, string: String(item), value: item};
+  var label = item.string || item.label || "no item.string";
+  item.string = typeof label === "string" ? label :
+    Array.isArray(label) ?
+      label.map(ea => String(ea[0])).join(" ") :
+      String(label);
+  return item;
+}
+
 describe("import helper - cleanup unused imports", () => {
 
   it("runs command on text", async () => {
@@ -16,7 +29,7 @@ describe("import helper - cleanup unused imports", () => {
 
     ed.world = () => dummyWorld;
     ed.textString = `import { Text } from "lively.morphic";\nfooo;`;
-    
+
     await cleanupUnusedImports(ed);
     expect(ed.textString).equals(`\nfooo;`, "1");
 
@@ -29,28 +42,43 @@ describe("import helper - cleanup unused imports", () => {
 
 
 describe("import helper - injection command", () => {
+  // end-to-end test
 
-  it("runs command on text and inserts code + imports object", async () => {
-    // end-to-end test
-    var ed = new Text({plugins: [new JavaScriptEditorPlugin()]}),
-        targetModule = `lively://import-helper-test/${Date.now()}`,
+  var ed, queryMatcher;
+  beforeEach(() => {
+    ed = new Text({plugins: [new JavaScriptEditorPlugin()]});
+    var targetModule = `lively://import-helper-test/${Date.now()}`,
         dummyWorld = {
-          filterableListPrompt: (_, items) => {
-            return {selected: [items.find(ea => ea.string.includes("class Morph from")).value]}
-          }
-        }
+          filterableListPrompt: (_, items) =>
+            ({selected: items
+                        .filter(item => queryMatcher(listItem(item).string))
+                        .map(ea => ea.value)})
+          };
 
     ed.plugins[0].evalEnvironment.targetModule  = targetModule;
     ed.textString = `import { Text } from "lively.morphic";`;
     ed.world = () => dummyWorld;
-    
-    await interactivelyInjectImportIntoText(ed);
+  });
 
+  it("runs command on text and inserts code and imports object", async () => {
+    queryMatcher = string => string.match(/^(HTML)?Morph\s.*morphic\/index\.js/);
+    await interactivelyInjectImportIntoText(ed, {gotoImport: true});
     expect(ed.textString)
-      .equals(`import { Text, Morph } from "lively.morphic";`, "transformed code");
-    expect(ed.selection.text).stringEquals(", Morph", "selection");
+      .equals(`import { Text, HTMLMorph, Morph } from "lively.morphic";`, "transformed code");
+    expect(ed.selection.text).stringEquals(", HTMLMorph", "selection");
     expect((await ed.plugins[0].runEval("Morph")).value.name)
       .equals("Morph", "import not evaluated");
+    expect((await ed.plugins[0].runEval("HTMLMorph")).value.name)
+      .equals("HTMLMorph", "import not evaluated");
+  });
+
+  it("runs command on text and inserts imports", async () => {
+    queryMatcher = string => string.match(/^(HTML)?Morph\s.*morphic\/index\.js/);
+    ed.gotoDocumentEnd()
+    await interactivelyInjectImportIntoText(ed, {gotoImport: false, insertImportAtCursor: true});
+    expect(ed.textString)
+      .equals(`import { Text, HTMLMorph, Morph } from "lively.morphic";\nMorph\nHTMLMorph`, "transformed code");
+    expect(ed.cursorPosition).deep.equals(ed.documentEndPosition);
   });
 
 });
@@ -60,7 +88,7 @@ describe("import helper - import injector", () => {
 
   var S = System
   var importData;
-  var m, src, newSource, generated, from, to, standaloneImport;
+  var m, src, newSource, generated, from, to, standaloneImport, importedVarName;
 
   beforeEach(() => {
     importData = {
@@ -75,12 +103,14 @@ describe("import helper - import injector", () => {
   it("injects new import at top", () => {
     m = "http://foo/a.js";
     src = "class Foo {}";
-    ({generated, newSource, from, to, standaloneImport} = ImportInjector.run(S, m, src, importData));
+    ({generated, newSource, from, to, standaloneImport, importedVarName} =
+      ImportInjector.run(S, m, src, importData));
     expect(generated).equals(`import { xxx } from "./src/b.js";\n`);
     expect(newSource).equals(`import { xxx } from "./src/b.js";\nclass Foo {}`);
     expect(from).equals(0);
     expect(to).equals(34);
     expect(standaloneImport).equals(`import { xxx } from "./src/b.js";`);
+    expect(importedVarName).equals("xxx");
   });
 
   it("leaves source with existing imported as is", () => {
@@ -112,10 +142,16 @@ describe("import helper - import injector", () => {
     expect(standaloneImport).equals(`import { xxx } from "./src/b.js";`);
   });
 
-  it("adds new import below existing from same module", () => {
+  it("adds new import to default import of same module", () => {
     src = `class Foo {}\nimport yyy from "./src/b.js";`;
     ({newSource} = ImportInjector.run(S, m, src, importData));
     expect(newSource).equals(`class Foo {}\nimport yyy, { xxx } from "./src/b.js";`);
+  });
+
+  it("adds new import below existing", () => {
+    src = `class Foo {}\nimport yyy from "./src/c.js";`;
+    ({newSource} = ImportInjector.run(S, m, src, importData));
+    expect(newSource).equals(`class Foo {}\nimport yyy from "./src/c.js";\nimport { xxx } from "./src/b.js";`);
   });
 
   describe("default imports", () => {
@@ -131,8 +167,9 @@ describe("import helper - import injector", () => {
     it("injects new import at top", () => {
       m = "http://foo/a.js";
       src = "class Foo {}";
-      ({newSource} = ImportInjector.run(S, m, src, importData));
+      ({newSource, importedVarName} = ImportInjector.run(S, m, src, importData));
       expect(newSource).equals(`import xxx from "./src/b.js";\nclass Foo {}`);
+      expect(importedVarName).equals("xxx");
     });
 
     it("leaves source with existing imported as is", () => {
