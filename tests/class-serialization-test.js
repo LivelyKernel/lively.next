@@ -67,13 +67,13 @@ describe('class serialization', function() {
     expect(result).to.deep.equal([{
       className: "TestDummy",
       module: {
-        package: {name: "lively.serializer2"},
+        package: {name: "lively.serializer2", version: "0.1.0"},
         pathInPackage: "./tests/class-serialization-test.js"
       }
     }]);
   });
 
-  it("testRaiseErrorWhenClassNotFound", function() {
+  it("raise error when class not found", function() {
     var objPool = new ObjectPool(),
         klass = class Dummy_testRaiseErrorWhenClassNotFound {},
         instance = new klass(),
@@ -88,7 +88,7 @@ describe('class serialization', function() {
     expect().assert(false, 'No error rasied when deserializing obj without class')
   });
 
-  it("testRaiseNoErrorWhenClassNotFoundWhenOverridden", function() {
+  it("raise no error when class not found when overridden", function() {
   
     var objPool = new ObjectPool(),
         klass = class Dummy_testDontRaiseErrorWhenClassNotFound {},

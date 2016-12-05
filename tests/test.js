@@ -52,7 +52,8 @@ describe("snapshots", () => {
         objPool2 = ObjectPool.fromJSONSnapshot(snapshot);
 
     expect(objPool2.resolveToObj(ref.id)).not.equals(o, "identical object");
-    expect(objPool2.resolveToObj(ref.id)).deep.equals({...o, _rev: 0, ref: {...o.ref, _rev: 0}}, "object structure changed");
+    expect(objPool2.resolveToObj(ref.id))
+      .deep.equals({...o, _rev: 0, ref: {...o.ref, _rev: 0}}, "object structure changed");
     expect(objPool.objects()).to.have.length(2);
     expect(objPool2.objects()).containSubset(objPool.objects(), "object list diverged");
   });
@@ -66,8 +67,8 @@ describe("marshalling", () => {
 
   describe("symbols", () => {
 
-    itSerializesInto(Symbol.for("test"), {__expr__: 'Symbol.for("test")'});
-    itSerializesInto(Symbol.iterator, {__expr__: 'Symbol.iterator'});
+    itSerializesInto(Symbol.for("test"), {__expr__: '__lv_expr__:Symbol.for("test")'});
+    itSerializesInto(Symbol.iterator, {__expr__: '__lv_expr__:Symbol.iterator'});
 
     it("registers custom symbol", () => {
       var s = Symbol("foo"),
@@ -75,7 +76,7 @@ describe("marshalling", () => {
       expect(ref).to.have.property("id")
       expect(ref.isObjectRef).equals(true);
       objPool.snapshot();
-      expect(ref.currentSnapshot.__expr__).equals('Symbol("foo")');
+      expect(ref.currentSnapshot.__expr__).equals('__lv_expr__:Symbol("foo")');
       expect(objPool.resolveToObj(ref.id)).equals(s);
     });
 
@@ -92,12 +93,12 @@ describe("marshalling", () => {
       expect(foo).not.equals(obj.foo);
       expect(foo).stringEquals(obj.foo);
     });
-
+    
     it("property symbols are ignored", () => {
       var obj = {[Symbol.for("test")]: 23, foo: 24};
       expect(serializationRoundtrip(obj)).deep.equals({foo: 24, _rev: 0});
     });
-
+    
     it("serializes symbol directly", () => {
       var obj = {foo: Symbol("test")},
           obj2 = serializationRoundtrip(Symbol("test"));
@@ -119,9 +120,9 @@ describe("marshalling", () => {
       expect(obj2.foo).property("__serialize__").to.be.a("function");
     });
 
-    it("with expression evaluator", () => {
+    xit("with expression evaluator", () => {
       var proto = {n: 1, __serialize__() { return {__expr__: `foo(${this.n+1})`}; }},
-          obj = obj = {foo: Object.create(proto)},
+          obj = {foo: Object.create(proto)},
           {id} = objPool.add(obj),
           objPool2 = new ObjectPool();
 
@@ -146,12 +147,29 @@ describe("marshalling", () => {
       expect(obj2).property("n", 2);
     });
 
-    it("bindings via object import", () => {
+    it("__serialize__ in property is inlined in snapshot", () => {
+      var foo = {__serialize__: () => ({__expr__: "foo()"})},
+          obj = {foo},
+          {id} = objPool.add(obj),
+          snapshot = objPool.snapshot();
+      expect(snapshot).deep.equals(
+        {[id]: {rev: 0, props: [{key: "foo", value: "__lv_expr__:foo()"}]}});
+      try {
+        window.foo = () => foo;
+        var obj2 = ObjectPool.fromSnapshot(objPool.snapshot()).resolveToObj(id);
+      } finally { delete window.foo; }
+      expect(obj2).deep.equals(obj2, "deserialize not working");
+    });
+
+    it("bindings via object import", async () => {
+      // lively.modules.module("lively.serializer2/tests/test-resources/module1.js").unload()
+      await System.import("lively.serializer2/tests/test-resources/module1.js");
+
       var exprObj = {
         n: 1, __serialize__() {
           return {
             __expr__: `createSomeObject(${this.n})`,
-            bindings: {"createSomeObject": "lively.serializer2/tests/test-resources/module1.js"}
+            bindings: {"lively.serializer2/tests/test-resources/module1.js": ["createSomeObject"]}
           }
         }
       },
@@ -159,7 +177,24 @@ describe("marshalling", () => {
           obj2 = ObjectPool.fromSnapshot(objPool.snapshot()).objects()[0];
       expect(obj2).property("n", 2);
     });
+    
+    it("finds required modules", async () => {
+      // lively.modules.module("lively.serializer2/tests/test-resources/module1.js").unload()
+      await System.import("lively.serializer2/tests/test-resources/module1.js");
 
+      var exprObj = {
+            n: 1, __serialize__() {
+              return {
+                __expr__: `createSomeObject(${this.n})`,
+                bindings: {"lively.serializer2/tests/test-resources/module1.js": ["createSomeObject"]}
+              }
+            }
+          },
+          _ = objPool.add(exprObj);
+
+      expect(objPool.requiredModulesOfSnapshot(objPool.snapshot()))
+        .equals(["lively.serializer2/tests/test-resources/module1.js"])
+    });
 
   });
 
@@ -207,43 +242,43 @@ describe("marshalling", () => {
 
   });
 });
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-function benchmarks() {
-
-  var n = 100;
-  var objs = Array.range(1,n).map(i => ({n: i}))
-  objs.slice(0, -1).forEach((obj, i) => obj.next = objs[i+1]);
-  objs[objs.length-1].first = objs[0]
-
-  lively.lang.fun.timeToRunN(() => { new ObjectPool().add(objs[0]) }, 1000)
-
-  lively.lang.fun.timeToRunN(() => {
-    var r = new ObjectPool();
-    r.add(objs[0])
-    objPool.snapshot()
-  }, 1000);
-
-
-console.profile("s")
-// var uuids = Array.range(0,10000).map(ea => lively.lang.string.newUUID())
-  lively.lang.fun.timeToRunN(() => {
-    var r = new ObjectPool(() => uuids.pop() || lively.lang.string.newUUID());
-    r.add(objs[0])
-    // var r2 = ObjectPool.fromJSONSnapshot(r.jsonSnapshot())
-    var r2 = ObjectPool.fromSnapshot(r.snapshot())
-  }, 100);
-console.profileEnd("s")
-
-  lively.lang.fun.timeToRunN(() => {
-    lively.persistence.Serializer.copy(objs[0])
-  }, 100);
-
-  var firstNewObj = objPool2.resolveToObj(objPool.ref(objs[0]).id)
-  expect(objs[0]).not.equals(firstNewObj)
-  expect(objs[0]).deep.equals(firstNewObj)
-  expect(objs).deep.equals(objPool2.objects())
-
-
-}
+//
+// // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//
+// function benchmarks() {
+//
+//   var n = 100;
+//   var objs = Array.range(1,n).map(i => ({n: i}))
+//   objs.slice(0, -1).forEach((obj, i) => obj.next = objs[i+1]);
+//   objs[objs.length-1].first = objs[0]
+//
+//   lively.lang.fun.timeToRunN(() => { new ObjectPool().add(objs[0]) }, 1000)
+//
+//   lively.lang.fun.timeToRunN(() => {
+//     var r = new ObjectPool();
+//     r.add(objs[0])
+//     objPool.snapshot()
+//   }, 1000);
+//
+//
+// console.profile("s")
+// // var uuids = Array.range(0,10000).map(ea => lively.lang.string.newUUID())
+//   lively.lang.fun.timeToRunN(() => {
+//     var r = new ObjectPool(() => uuids.pop() || lively.lang.string.newUUID());
+//     r.add(objs[0])
+//     // var r2 = ObjectPool.fromJSONSnapshot(r.jsonSnapshot())
+//     var r2 = ObjectPool.fromSnapshot(r.snapshot())
+//   }, 100);
+// console.profileEnd("s")
+//
+//   lively.lang.fun.timeToRunN(() => {
+//     lively.persistence.Serializer.copy(objs[0])
+//   }, 100);
+//
+//   var firstNewObj = objPool2.resolveToObj(objPool.ref(objs[0]).id)
+//   expect(objs[0]).not.equals(firstNewObj)
+//   expect(objs[0]).deep.equals(firstNewObj)
+//   expect(objs).deep.equals(objPool2.objects())
+//
+//
+// }
