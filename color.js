@@ -365,7 +365,7 @@ export class Color {
   __serialize__() {
     return {
       __expr__: "Color." + this.toString(),
-      bindings: {Color: "lively.graphics/color.js"}
+      bindings: {"lively.graphics/color.js": ["Color"]}
     }
   }
 

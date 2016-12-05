@@ -247,7 +247,7 @@ export class Point {
   // serialization
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   __serialize__() {
-    return {__expr__: this.toString(), bindings: {pt: "lively.graphics/geometry-2d.js"}}
+    return {__expr__: this.toString(), bindings: {"lively.graphics/geometry-2d.js": ["pt"]}}
   }
 }
 
@@ -774,7 +774,7 @@ export class Rectangle {
   // serialization
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   __serialize__() {
-    return {__expr__: this.toString(), bindings: {rect: "lively.graphics/geometry-2d.js"}}
+    return {__expr__: this.toString(), bindings: {"lively.graphics/geometry-2d.js": ["rect"]}}
   }
 }
 
@@ -1011,7 +1011,7 @@ export class Transform {
   __serialize__() {
     return {
       __expr__: `new Transform({a: ${this.a}, b: ${this.b}, c: ${this.c}, d: ${this.d}, e: ${this.e}, f: ${this.f}})`,
-      bindings: {Transform: "lively.graphics/geometry-2d.js"}
+      bindings: {"lively.graphics/geometry-2d.js": ["Transform"]}
     }
   }
 
@@ -1140,7 +1140,7 @@ export class Line {
   __serialize__() {
     return {
       __expr__: `Line.fromCoords(${this.start.x}, ${this.start.y}, ${this.end.x}, ${this.end.y})`,
-      bindings: {Line: "lively.graphics/geometry-2d.js"}
+      bindings: {"lively.graphics/geometry-2d.js": ["Line"]}
     }
   }
 
