@@ -89,8 +89,8 @@ export class GradientEditor extends Morph {
    build() {
        this.submorphs = [this.typeSelector(), this.gradientEditor()];
        connect(this, "targetProperty", this, "update");
-       this.update(this.targetProperty);
        this.styleRules = this.getStyler();
+       this.update();
    }
 
    typeSelector() {
@@ -205,14 +205,14 @@ export class GradientEditor extends Morph {
            async shrink() {
               if (this.shrinking || this.submorphs.length == 1) return;
               this.expansion && await this.expansion;
-              const oldCenter = this.stopControl.localize(this.center),
+              const oldCenter = this.center,
                     oldLayout = this.layout,
                     [close, palette, picker] = this.submorphs;
               this.layout = null; close.remove(); picker.remove();
               palette.animate({extent: pt(10,10), duration: 200});
-              this.stopControl.addMorph(this);
               this.shrinking = this.animate({layout: oldLayout, center: oldCenter, duration: 200});
               await this.shrinking; this.shrinking = null;
+              this.stopControl.addMorph(this);
               
            },
            onWidgetClosed() {
