@@ -23,7 +23,7 @@ export function styleHaloFor(x, pointerId) {
     } else if (x instanceof Polygon || x instanceof Path) {
        styleHaloClass = SvgStyleHalo;
     }
-    return new styleHaloClass(x, pointerId);
+    return new styleHaloClass(x, pointerId).openInWorld().update();
 }
 
 class StyleHalo extends Morph {
@@ -84,6 +84,7 @@ class StyleHalo extends Morph {
       controls.position = this.localizePointFrom(this.target.origin.negated(), this.target);
       controls.submorphs.forEach(s => s.update && s.update(evt));
       layoutControl.update(evt);
+      return this;
    }
 
    mouseCapturer() {
@@ -98,7 +99,7 @@ class StyleHalo extends Morph {
 
    isOnMorphBorder(evt) {
       if (!evt) return false;
-      const {x,y} = evt.positionIn(this.getSubmorphNamed("borderHalo")),
+      const {x,y} = evt.positionIn(this.submorphs[0]),
             brHalo = this.getSubmorphNamed("borderRadiusHalo") || {active: false},
             br = this.target.borderRadius,
             {width, height} = this.target;
@@ -144,11 +145,29 @@ class StyleHalo extends Morph {
             }
          },
          alignWithTarget() {
-           // const {x, y, width, height} = target.globalBounds().intersection(target.world().bounds());
-           // this.setBounds(this.localize(pt(x,y)).extent(pt(width,height)));
-           this.extent = target.extent;
+           const globalBounds = target.globalBounds(), visibleBounds = target.world().visibleBounds(),
+                 {x, y, width, height} = globalBounds.intersection(visibleBounds),
+                 cornersInWorld = ["topLeft", "topRight", "bottomRight", "bottomLeft"].filter(s => 
+                      visibleBounds.containsPoint(globalBounds[s]())),
+                 b = this.owner.localize(pt(x,y)).extent(pt(width,height));
+           this.setBounds(b);
            this.borderWidth = Math.max(3, target.borderWidth);
-           this.borderRadius = target.borderRadius;
+           this.borderRadius = 0;
+           cornersInWorld.forEach(s => {
+              switch (s) {
+                 case "topLeft":
+                    this.borderRadiusTop = this.borderRadiusLeft = target.borderRadius;
+                    break;
+                 case "topRight":
+                    this.borderRadiusTop = this.borderRadiusRight = target.borderRadius;
+                    break;
+                 case "bottomRight":
+                    this.borderRadiusBottom = this.borderRadiusRight = target.borderRadius;
+                    break;
+                 case "bottomLeft":
+                    this.borderRadiusBottom = this.borderRadiusLeft = target.borderRadius;
+              }
+           })
          },
          onMouseDown(evt) {
             if (halo.borderStyler) {
@@ -189,28 +208,21 @@ class StyleHalo extends Morph {
       });
    }
 
-   getInstructor(instruction, center=this.innerBounds().center()) {
-      return {
-         type: "text", borderWidth: 3, opacity: 0,
-         borderRadius: 10, borderColor: Color.gray,
-         padding: 5,
-         fill: Color.black.withA(.7),
-         center, fontWeight: "bold",
-         fontColor: Color.gray, fontSize: 14,
-         textString: instruction
-      }
-   }
-
    selectBorder() {
       this.bodyStyler && this.bodyStyler.fadeOut(300);
       this.bodyStyler = null;
       if (!this.borderStyler) {
+          const visibleBounds = this.world().visibleBounds(),
+                globalBounds = this.target.globalBounds().insetByRect(rect(-100, -50, 100, 100)),
+                sideInWorld = ["topCenter", ...visibleBounds.sides, ...visibleBounds.corners].find(s => {
+                                      return visibleBounds.containsPoint(globalBounds[s]())
+                                });
           this.borderStyler = new BorderStyleEditor({
                target: this.target,
                title: "Change Border Style",
           });
           this.borderStyler.openInWorld();
-          this.borderStyler.center = this.globalBounds().topCenter();
+          this.borderStyler.center = this.get("borderHalo").globalBounds().insetByRect(rect(-100, -50, 0, -50))[sideInWorld]();
           this.borderStyler.animate({opacity: 1, duration: 300});
       }
    }
@@ -224,7 +236,7 @@ class StyleHalo extends Morph {
                title: "Change Body Style",
           });
           this.bodyStyler.openInWorld();
-          this.bodyStyler.center = this.globalBounds().center();
+          this.bodyStyler.center = this.get("borderHalo").globalBounds().center();
           this.bodyStyler.animate({opacity: 1, duration: 300});
       }
    }
