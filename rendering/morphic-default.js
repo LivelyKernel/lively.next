@@ -80,10 +80,18 @@ class StyleMapper {
              borderWidthBottom, borderColorBottom, borderStyleBottom,
              borderWidthTop, borderColorTop, borderStyleTop}) {
     return {
-      "border-left":   `${borderWidthLeft}px   ${borderStyleLeft}   ${borderColorLeft ? borderColorLeft.toString() : "transparent"}`,
-      "border-right":  `${borderWidthRight}px  ${borderStyleRight}  ${borderColorRight ? borderColorRight.toString() : "transparent"}`,
-      "border-bottom": `${borderWidthBottom}px ${borderStyleBottom} ${borderColorBottom ? borderColorBottom.toString() : "transparent"}`,
-      "border-top":    `${borderWidthTop}px    ${borderStyleTop}    ${borderColorTop ? borderColorTop.toString() : "transparent"}`
+      "border-left-style":   `${borderStyleLeft}`,
+      "border-right-style":  `${borderStyleRight}`,
+      "border-bottom-style": `${borderStyleBottom}`,
+      "border-top-style":    `${borderStyleTop}`,
+      "border-left-width":   `${borderWidthLeft}px`,
+      "border-right-width":  `${borderWidthRight}px`,
+      "border-bottom-width": `${borderWidthBottom}px`,
+      "border-top-width":    `${borderWidthTop}px`,
+      "border-top-color": borderColorTop ? borderColorTop.toString() : "transparent",
+      "border-right-color": borderColorRight ? borderColorRight.toString() : "transparent",
+      "border-bottom-color": borderColorBottom ? borderColorBottom.toString() : "transparent",
+      "border-left-color": borderColorLeft ? borderColorLeft.toString() : "transparent"
     }
   }
 
