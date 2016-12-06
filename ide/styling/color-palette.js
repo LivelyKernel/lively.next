@@ -6,6 +6,7 @@ import { Morph, VerticalLayout, HorizontalLayout,
 import { DropDownSelector, ModeSelector, Slider } from "../../widgets.js";
 import { connect, disconnect, signal } from "lively.bindings";
 import { num, arr } from "lively.lang";
+import { StyleRules } from "../../style-rules.js"; 
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
 
@@ -13,20 +14,79 @@ export class ColorPalette extends Morph {
 
    constructor(props) {
       this.harmony = Complementary;
+      this.color = props.color || Color.blue,
+      this.colorFieldWidth = 20,
       super({
-         fill: Color.gray,
-         dropShadow: true,
-         colorFieldWidth: 20,
-         extent: pt(200,300),
-         borderRadius: 5,
-         color: props.color || Color.blue,
-         layout: new VerticalLayout({ignore: ["arrow"]}),
+         morphClasses: ['body'],
+         styleRules: this.styler,
          ...props,
       });
       const [h,s,b] = this.color.toHSB();
       this.pivotColor = Color.hsb(h,s,1);
       this.build();
       this.active = true;
+   }
+
+   get styler() {
+      const fill = Color.gray;
+      return new StyleRules({
+         body:{
+           fill,
+           dropShadow: true,
+           extent: pt(200,300),
+           borderRadius: 5,
+           layout: new VerticalLayout({ignore: ["arrow"]})},
+         arrow: { fill, grabbable: false, draggable: false },
+         paletteFormatter: {layout: new HorizontalLayout({spacing: 5}),
+                            fill: Color.transparent},
+         harmonyControl: {layout: new VerticalLayout({spacing: 5}),
+                            fill: Color.transparent},
+         paletteView: {clipMode: "hidden", fill: Color.transparent},
+         solidColorPalette: {fill: Color.transparent, layout: new VerticalLayout()},
+         paletteContainer: {fill: Color.transparent, layout: new TilingLayout(),
+                            rotation: num.toRadians(90)},
+         vacantColorField: {
+             extent: pt(this.colorFieldWidth, this.colorFieldWidth),
+             borderColor: Color.black.lighter().lighter(), borderWidth: 1,
+             fill: Color.transparent
+         },
+         colorField: {
+            extent: pt(this.colorFieldWidth, this.colorFieldWidth),
+            borderColor: Color.transparent,
+            borderWidth: 2
+         },
+         harmonies: {
+            layout: new TilingLayout({spacing: 5}),
+            fill: Color.transparent,
+            width: 260,
+         },
+         harmonyVisualizer: {
+            extent: pt(110,110),
+            fill: Color.transparent,
+            imageUrl: WHEEL_URL,
+         },
+         harmonyPoints: {
+            borderWidth: 1,
+            draggable: false,
+            extent: pt(100,100),
+            origin: pt(50,50),
+            position: pt(50,50),
+         },
+         pivotControl: {
+            draggable: false,
+            fill: Color.transparent,
+            borderColor: Color.black,
+            borderWidth: 3,
+            extent: pt(18,18)
+         },
+         pivotControlCenter: {
+            fill: Color.transparent,
+            borderColor: Color.white,
+            borderWidth: 3,
+            center: pt(8,8),
+            extent: pt(12,12)
+         }
+      })
    }
 
    isHaloItem() { return true }
@@ -59,9 +119,7 @@ export class ColorPalette extends Morph {
 
    build() {
      this.cachedPalette = {};
-     this.submorphs = [{type: "triangle", name: "arrow",
-                        fill: this.fill, grabbable: false,
-                        draggable: false},
+     this.submorphs = [{type: "triangle", name: "arrow"},
                        this.fillTypeSelector(),
                        this.paletteView()];
      this.selectSolidMode();
@@ -81,9 +139,7 @@ export class ColorPalette extends Morph {
 
    paletteView() {
       return {
-        fill: Color.transparent,
         name: "paletteView",
-        clipMode: "hidden",
         relayout() {
            this.animate({extent: this.submorphs.find(p => p.visible).extent, duration: 300});
         },
@@ -94,7 +150,7 @@ export class ColorPalette extends Morph {
    selectSolidMode() {
       var duration = 200,
           paletteView = this.get("paletteView");
-       if (this.get("solidColorPalette").opacity) return;
+       if (this.get("solidColorPalette").visible) return;
        paletteView.submorphs.forEach(m => m.animate({opacity: 0, visible: false, duration}));
        this.get("solidColorPalette").animate({opacity: 1, visible: true, duration});
        this.relayout();
@@ -103,7 +159,7 @@ export class ColorPalette extends Morph {
    selectHarmonyMode() {
       var duration = 200,
           paletteView = this.get("paletteView");
-      if (this.get("harmonyPalette").opacity) return;
+      if (this.get("harmonyPalette").visible) return;
       paletteView.submorphs.forEach(m => m.animate({opacity: 0, visible: false, duration}));
       this.get("harmonyPalette").animate({opacity: 1, visible: true, duration});
       this.relayout();
@@ -126,10 +182,7 @@ export class ColorPalette extends Morph {
       // switch between different palettes (material, flat, harmonies, custom)
       // custom allows to add new colors via color picker
       return {
-         opacity: 0,
-         name: "solidColorPalette",
-         fill: Color.transparent,
-         layout: new VerticalLayout(),
+         name: "solidColorPalette", visible: false,
          submorphs: [this.getCurrentPalette(),
                      this.paletteConfig()]
       }
@@ -145,17 +198,12 @@ export class ColorPalette extends Morph {
              height = cols * this.colorFieldWidth,
              width =  mod * this.colorFieldWidth,
              paddedColors = [...colors, ...arr.withN((cols * mod) - colors.length, null)];
-       return {fill: Color.transparent,
-               width, height,
-               layout: new TilingLayout(),
-               rotation: num.toRadians(90),
+       return {width, height, name: "paletteContainer",
                submorphs: paddedColors.map(c => {
                   const  fill = c && Color.rgbHex(c)
                   return c ? {
-                     extent: pt(this.colorFieldWidth, this.colorFieldWidth),
                      fill,
-                     borderColor: Color.transparent,
-                     borderWidth: 2,
+                     morphClasses: ['colorField'],
                      onHoverIn() {
                         const [h,s,b] = fill.toHSB();
                         this.borderColor = Color.hsb(h,s + .5 > 1 ? s - .5 : s + .5, b + .5 > 1 ? b - .5 : b + .5)
@@ -169,9 +217,7 @@ export class ColorPalette extends Morph {
                         this.close(200);
                      }
                   } : {
-                     extent: pt(this.colorFieldWidth, this.colorFieldWidth),
-                     borderColor: Color.black.lighter().lighter(), borderWidth: 1,
-                     fill: Color.transparent
+                     morphClasses: ['vacantColorField'], 
                   }
                })};
    }
@@ -229,9 +275,7 @@ export class ColorPalette extends Morph {
 
    paletteConfig() {
       return {
-         name: "paletteConfig",
-         fill: Color.transparent,
-         layout: new HorizontalLayout({spacing: 5}),
+         name: "paletteConfig", morphClasses: ['paletteFormatter'],
          submorphs: [new DropDownSelector({
              isHaloItem: true, name: "paletteSelector",
              target: this, property: "colorPalette",
@@ -246,9 +290,7 @@ export class ColorPalette extends Morph {
 
   harmonyPalette() {
     return {
-      name: "harmonyPalette",
-      layout: new HorizontalLayout({spacing: 5}),
-      fill: Color.transparent,
+      name: "harmonyPalette", morphClasses: ['paletteFormatter'], visible: false,
       relayout() {
           const harmonyVisualizer = this.get("harmonyVisualizer"),
                 harmonies = this.get("harmonies");
@@ -289,9 +331,6 @@ export class ColorPalette extends Morph {
      const colorPalette = this;
      return {
          name: "harmonies",
-         layout: new TilingLayout({spacing: 5}),
-         fill: Color.transparent,
-         width: 260,
          update() {
              const [hue, saturation, brightness] = colorPalette.pivotColor.toHSB(),
                    colors = colorPalette.harmony.chord({hue, saturation, brightness});
@@ -310,8 +349,6 @@ export class ColorPalette extends Morph {
   harmonyControl() {
      return this.getSubmorphNamed("harmonyControl") || new Morph({
          name: "harmonyControl",
-         layout: new VerticalLayout({spacing: 5}),
-         fill: Color.transparent,
          submorphs: [this.harmonyVisualizer(),
                      new Slider({
                        target: this, min: 0, max: 1, tooltip: "Adjust Brightness",
@@ -325,9 +362,6 @@ export class ColorPalette extends Morph {
      const colorPalette = this;
      return this.getSubmorphNamed("harmonyVisualizer") || new Image({
          name: "harmonyVisualizer",
-         extent: pt(110,110),
-         fill: Color.transparent,
-         imageUrl: WHEEL_URL,
          update() {
              const [harmonyPoints] = this.submorphs,
                    pivotControl = this.get("pivotControl"),
@@ -349,22 +383,13 @@ export class ColorPalette extends Morph {
                  pivotControl.update();
              }
          },
-         submorphs: [new Ellipse({
+         submorphs: [{
+            type: "ellipse",
             name: "harmonyPoints",
-            draggable: false,
-            extent: pt(100,100),
-            origin: pt(50,50),
-            position: pt(50,50),
             fill: Color.black.withA(1 - this.pivotColor.toHSB()[2]),
-            borderWidth: 1,
             submorphs: [{
               name: "pivotControl",
               type: "ellipse",
-              draggable: false,
-              fill: Color.transparent,
-              borderColor: Color.black,
-              borderWidth: 3,
-              extent: pt(18,18),
               update() {
                  const [h,s,_] = colorPalette.pivotColor.toHSB(),
                        angle = num.toRadians(h),
@@ -372,9 +397,7 @@ export class ColorPalette extends Morph {
                  this.center = currentPos;
               },
               submorphs: [{
-                type: "ellipse",
-                fill: Color.transparent,
-                borderColor: Color.white,
+                type: "ellipse", morphClasses: ['pivotControlCenter'],
                 onDrag: (evt) => {
                    var  [h,s,b] = colorPalette.pivotColor.toHSB(),
                          angle = num.toRadians(h),
@@ -386,12 +409,9 @@ export class ColorPalette extends Morph {
                    colorPalette.pivotColor = Color.hsb(h, s, b);
                    colorPalette.relayout();
                 },
-                borderWidth: 3,
-                center: pt(8,8),
-                extent: pt(12,12)
               }]
           }]
-         })]
+         }]
      });
   }
 
