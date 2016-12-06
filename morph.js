@@ -529,9 +529,11 @@ export class Morph {
 
   get submorphs() { return this.getProperty("submorphs").slice(); }
   set submorphs(newSubmorphs) {
+    this.layout && this.layout.disable();
     this.submorphs.forEach(m => newSubmorphs.includes(m) || m.remove());
     newSubmorphs.forEach((m, i) =>
       this.submorphs[i] !== m && this.addMorph(m, this.submorphs[i]));
+    this.layout && this.layout.enable();
   }
 
   addMorphAt(submorph, index) {

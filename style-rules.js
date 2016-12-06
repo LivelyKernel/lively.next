@@ -20,7 +20,13 @@ export class StyleRules {
    }
 
    applyToAll(root) {
-      root.withAllSubmorphsDo(m => this.enforceRulesOn(m))
+      const removedLayouts = {};
+      root.withAllSubmorphsDo(m => { removedLayouts[m.id] = m.layout; m.layout = null });
+      root.withAllSubmorphsDo(m => this.enforceRulesOn(m));
+      root.withAllSubmorphsDo(m => {
+         (m.layout = removedLayouts[m.id]) || this.applyLayout(m);
+      });
+      
    }
 
    onMorphChange(morph, {selector, args, prop}) {
@@ -28,6 +34,7 @@ export class StyleRules {
         this.applyToAll(morph);
     } else if (prop == "name" || prop == "morphClasses") {
         this.enforceRulesOn(morph);
+        this.applyLayout(morph);
     }
   }
 
@@ -37,7 +44,7 @@ export class StyleRules {
          if (morph.styleRules) props = {...props, ...morph.styleRules.getStyleProps(morph)}
          morph = morph.owner;
      }
-     return Object.keys(props);
+     return ["layout", Object.keys(props)];
   }
 
   getStyleProps(morph) {
@@ -53,6 +60,11 @@ export class StyleRules {
      var styleProps = this.getStyleProps(morph), 
          shadowedProps = this.getShadowedProps(morph);
      styleProps && this.applyToMorph(morph, obj.dissoc(styleProps, shadowedProps));
+   }
+
+   applyLayout(morph) {
+      const layout = this.getStyleProps(morph).layout;
+      if (layout) morph.layout = layout;
    }
 
    applyToMorph(morph, styleProps) {

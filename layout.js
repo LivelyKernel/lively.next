@@ -19,6 +19,9 @@ class Layout {
   description() { return "Describe the layout behavior here." }
   name() { return "Name presented to the user." }
 
+  disable() { this.active = true }
+  enable() { this.active = false; this.apply() }
+
   get boundsChanged() { return !this.container.bounds().equals(this.lastBounds) }
 
   onSubmorphResized(submorph, change) { (this.container.submorphs.includes(submorph) || 
