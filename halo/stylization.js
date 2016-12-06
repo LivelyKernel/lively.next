@@ -7,6 +7,7 @@ import { arr } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
 import { ColorPicker, BorderStyleEditor, BodyStyleEditor, LayoutStyleEditor } from "../ide/styling/style-editor.js";
 import { Icon } from "../icons.js";
+import { StyleRules } from "../style-rules.js";
 
 /* rms: I tried doing this via polymorphic dispatch
          on the different morphs directly, but
@@ -29,16 +30,16 @@ export function styleHaloFor(x, pointerId) {
 class StyleHalo extends Morph {
 
    constructor(target, pointerId) {
+       this.target = target;
        super({
-          draggable: false,
-          fill: Color.transparent,
+          morphClasses: ['formatter'],
           bounds: target.globalBounds().insetBy(-10),
+          styleRules: this.styler,
        });
        this.state = {pointerId};
-       this.target = target;
        this.submorphs = [{
+           morphClasses: ['formatter'],
            position: pt(10,10),
-           fill: Color.transparent,
            submorphs: [
              this.borderHalo(),
              this.borderRadiusHalo()
@@ -58,6 +59,26 @@ class StyleHalo extends Morph {
 
    get isLayoutHalo() { return true; }
    get isHaloItem() { return true; }
+
+   get styler() {
+      return new StyleRules({
+         formatter: {draggable: false, fill: Color.transparent},
+         borderHalo: {
+           draggable: false,
+           borderWidth: Math.max(3, this.target.borderWidth), 
+           fill: Color.transparent,
+           borderColor: Color.orange.withA(0.4)},
+         borderRadiusHalo: {
+            fill: Color.red,
+            isHaloItem: true,
+            nativeCursor: 'ew-resize',
+            borderWidth: 1,
+            borderColor: Color.black,
+            extent: pt(10,10),
+            origin: pt(5,5),
+            tooltip: "Change border radius",
+            rotation: -this.target.rotation}});
+   }
    
    onMouseMove(evt) { this.update(evt) }
 
@@ -122,10 +143,6 @@ class StyleHalo extends Morph {
    borderHaloShape(props) {
       const halo = this, target = this.target;
       return {
-         draggable: false,
-         borderWidth: Math.max(3, this.target.borderWidth), 
-         fill: Color.transparent,
-         borderColor: Color.orange.withA(0.4),
          borderRadius: this.target.borderRadius,
          isHaloItem: true,
          selectBorder() {
@@ -250,24 +267,13 @@ class StyleHalo extends Morph {
 
    borderRadiusHalo() {
        const halo = this,
-             getPos = () => {
-          return pt(halo.target.width - halo.target.borderRadius, 0)
-       };
+             getPos = () => pt(halo.target.width - halo.target.borderRadius, 0);
        return {
           name: "borderRadiusHalo",
-          type: 'ellipse',
-          fill: Color.red,
-          isHaloItem: true,
-          nativeCursor: 'ew-resize',
-          borderWidth: 1,
-          borderColor: Color.black,
-          extent: pt(10,10),
-          origin: pt(5,5),
           center: getPos(),
-          tooltip: "Change border radius",
+          type: 'ellipse',
           onHoverIn() { this.active = true; halo.deselect() },
           onHoverOut(evt) { if (evt.state.draggedMorph != this) this.active = false; },
-          rotation: -halo.target.rotation,
           update(evt) { this.center = getPos(); },
           onDragStart(evt) { 
              this.active = true; halo.deselect();
