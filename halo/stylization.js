@@ -6,7 +6,8 @@ import { Intersection, IntersectionParams } from 'kld-intersections';
 import { arr } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
 import { ColorPicker, BorderStyleEditor, BodyStyleEditor, 
-         LayoutStyleEditor, HTMLEditor } from "../ide/styling/style-editor.js";
+         LayoutStyleEditor, HTMLEditor,
+         ImageEditor } from "../ide/styling/style-editor.js";
 import { Icon } from "../icons.js";
 import { StyleRules } from "../style-rules.js";
 
@@ -433,10 +434,16 @@ class HTMLStyleHalo extends StyleHalo {
 
 class ImageStyleHalo extends StyleHalo {
 
+    getBodyStyler() {
+       return new ImageEditor({target: this.target});
+    }
 
 }
 
 class TextStyleHalo extends StyleHalo {
 
+    getBodyStyler() {
+       return new RichTextEditor({target: this.target});
+    }
 
 }

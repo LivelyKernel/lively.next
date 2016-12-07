@@ -12,6 +12,7 @@ import { ValueScrubber, CheckBox, ModeSelector, DropDownSelector,
 import { ColorPickerField } from "./color-picker.js";
 import { GradientEditor } from "./gradient-editor.js";
 import { Icon } from "../../icons.js";
+import { StyleRules } from "../../style-rules.js";
 
 class StyleEditor extends Morph {
 
@@ -431,6 +432,50 @@ export class HTMLEditor extends Morph {
       ]
    }
    
+}
+
+export class ImageEditor extends StyleEditor {
+
+    constructor(props) {
+       super({title: "Change Image URL", 
+              styleRules: new StyleRules({
+                 urlBar: {borderRadius: 5,
+                   padding: 4, fill: Color.white.withA(.8),
+                   fontColor: Color.gray.darker(), fontSize: 15
+                 },
+                  saveButton: {
+                     fontSize: 18, padding: 2,
+                     nativeCursor: "pointer",
+                     fontColor: Color.gray.darker(),
+                     tooltip: "Update the image URL"
+                  }
+              }),
+             ...props});
+    }
+
+    controls(target) {
+       return [this.urlEditor(target)]
+    }
+
+    urlEditor(target) {
+       return {
+          layout: new HorizontalLayout({spacing: 3}),
+          fill: Color.transparent, 
+          submorphs: [{
+           type: "text", name: "urlBar",
+           textString: target.imageUrl,
+           doSave() { target.imageUrl = this.textString }
+       }, Icon.makeLabel("check-circle", {
+             name: "saveButton",
+             onMouseDown() {
+                this.fontColor = Color.black;
+                this.get("urlBar").doSave()
+             },
+             onMouseUp() {
+                this.fontColor = Color.gray.darker();
+             }})]}
+    }
+    
 }
 
 
