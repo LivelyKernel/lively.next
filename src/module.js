@@ -186,6 +186,15 @@ class ModuleInterface {
     await this.load();
   }
 
+  whenLoaded(cb) {
+    if (this.isLoaded()) {
+      try { cb(this); } catch (e) { console.error(e); }
+      return;
+    }
+    livelySystemEnv(this.System).onLoadCallbacks.push(
+      {moduleName: this.id, resolved: true, callback: cb});
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // change
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

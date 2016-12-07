@@ -248,7 +248,8 @@ import { obj, arr } from "lively.lang";
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import {
   getSystem, removeSystem, prepareSystem,
-  printSystemConfig as _printSystemConfig
+  printSystemConfig as _printSystemConfig,
+  whenLoaded as _whenLoaded
 } from "./src/system.js";
 import _module from "./src/module.js";
 
@@ -265,12 +266,14 @@ function changeSystem(newSystem, makeGlobal) {
 function loadedModules() { return Object.keys(lively.modules.requireMap()); }
 function module(id) { return _module(defaultSystem, id); }
 function printSystemConfig() { return _printSystemConfig(defaultSystem); }
+function whenLoaded(moduleName, callback) { return _whenLoaded(defaultSystem, moduleName, callback); }
 export {
   defaultSystem as System,
   getSystem,
   removeSystem,
   loadedModules,
   printSystemConfig,
+  whenLoaded,
   changeSystem,
   module
 }

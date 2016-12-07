@@ -1,5 +1,5 @@
 import * as ast from "lively.ast";
-import { arr, obj, properties } from "lively.lang";
+import { arr, obj, properties, promise } from "lively.lang";
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 import module from "./module.js";
 
@@ -15,6 +15,7 @@ var defaultOptions = {
   notificationLimit: null
 }
 
+// Accessible system-wide via System.get("@lively-env")
 function livelySystemEnv(System) {
   return {
     moduleEnv(id) { return module(System, id); },
@@ -49,7 +50,8 @@ function livelySystemEnv(System) {
     pendingExportChanges: System["__lively.modules__pendingExportChanges"]       || (System["__lively.modules__pendingExportChanges"] = {}),
     notifications: System["__lively.modules__notifications"]                     || (System["__lively.modules__notifications"] = []),
     notificationSubscribers: System["__lively.modules__notificationSubscribers"] || (System["__lively.modules__notificationSubscribers"] = {}),
-    options: System["__lively.modules__options"]                                 || (System["__lively.modules__options"] = obj.deepCopy(defaultOptions))
+    options: System["__lively.modules__options"]                                 || (System["__lively.modules__options"] = obj.deepCopy(defaultOptions)),
+    onLoadCallbacks: System["__lively.modules__onLoadCallbacks"]                 || (System["__lively.modules__onLoadCallbacks"] = [])
   }
 }
 
@@ -78,9 +80,7 @@ function removeSystem(nameOrSystem) {
 import { wrapModuleLoad } from "./instrumentation.js"
 import { wrapResource } from "./resource.js"
 
-function makeSystem(cfg) {
-  return prepareSystem(new SystemClass(), cfg);
-}
+function makeSystem(cfg) { return prepareSystem(new SystemClass(), cfg); }
 
 function prepareSystem(System, config) {
   System.trace = true;
@@ -103,6 +103,9 @@ function prepareSystem(System, config) {
 
   if (!isHookInstalled(System, "newModule", "newModule_volatile"))
     installHook(System, "newModule", newModule_volatile);
+
+  if (!isHookInstalled(System, "instantiate", "instantiate_triggerOnLoadCallbacks"))
+    installHook(System, "instantiate", instantiate_triggerOnLoadCallbacks);
 
   if (isNode) {
     var nodejsCoreModules = ["addons", "assert", "buffer", "child_process",
@@ -136,6 +139,7 @@ function prepareSystem(System, config) {
   return System;
 }
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // FIXME! proper config!
 function urlQuery() {
   if (typeof document === "undefined" || !document.location) return {};
@@ -148,6 +152,11 @@ function urlQuery() {
       return query;
     }, {});
 }
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// name resolution extensions
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function normalizeHook(proceed, name, parent, parentAddress) {
   var System = this;
@@ -286,6 +295,44 @@ function printSystemConfig(System) {
   return JSON.stringify(json, null, 2);
 }
 
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// on-load / import extensions
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function instantiate_triggerOnLoadCallbacks(proceed, load) {
+  var System = this;
+
+  return proceed(load).then(result => {
+    // Wait until module is properly loaded, i.e. added to the System moule cache.
+    // Then find those callbacks in System.get("@lively-env").onLoadCallbacks that
+    // resolve to the loaded module, trigger + remove them
+    promise.waitFor(() => System.get(load.name)).then(() => {
+      var modId = load.name,
+          mod = module(System, modId),
+          callbacks = System.get("@lively-env").onLoadCallbacks;
+
+      for (var i = callbacks.length; i--; ) {
+        var {moduleName, resolved, callback} = callbacks[i],
+            id = resolved ? moduleName : System.decanonicalize(moduleName);
+        if (id !== modId) continue;
+        callbacks.splice(i, 1);
+        try { callback(mod) } catch (e) { console.error(e); }
+      }
+    });
+
+    return result;
+  });
+}
+
+export function whenLoaded(System, moduleName, callback) {
+  var modId = System.decanonicalize(moduleName);
+  if (System.get(modId)) {
+    try { callback(module(System, modId)) } catch (e) { console.error(e); }
+    return;
+  }
+  System.get("@lively-env").onLoadCallbacks.push({moduleName, resolved: false, callback});
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // module state
