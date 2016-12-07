@@ -44,7 +44,7 @@ export class StyleRules {
          if (morph.styleRules) props = {...props, ...morph.styleRules.getStyleProps(morph)}
          morph = morph.owner;
      }
-     return ["layout", Object.keys(props)];
+     return ["layout", ...Object.keys(props)];
   }
 
   getStyleProps(morph) {
