@@ -16,8 +16,8 @@ export class GradientEditor extends Morph {
 
    constructor(props) {
       super({
-         morphClasses: ['controlElement'],
-         layout: new VerticalLayout({spacing: 3}),
+         morphClasses: ['body'],
+         styleRules: this.getStyler(),
          ...props
       });
       this.build();
@@ -25,15 +25,16 @@ export class GradientEditor extends Morph {
 
    getStyler() {
       return new StyleRules({
-              controlElement: {fill: Color.transparent},
-              addStopLabel: {fontSize: 18, fontColor: Color.orange, center: pt(1, -16)},
+              body: {layout: new VerticalLayout({spacing: 3}),fill: Color.transparent},
+              addStopLabel: {fontSize: 18, fontColor: Color.orange, center: pt(-1, -17), extent: pt(10,10), 
+                             padding: 0, fixedWidth: true, fixedHeight: true},
               stopControlPreview: {extent: pt(2, 50), fill: Color.orange},
               propertyView: {fill: Color.black.withA(.7), borderRadius: 5,
                              padding: 5, fontColor: Color.white},
               stopControlLine: {extent: pt(2,50), fill: Color.gray.darker(), tooltip: "Drag to change proportional offset of stop"},
-              stopControlHead: {fill: Color.black.withA(.3), borderRadius: 20, center: pt(1,-15)},
+              stopControlHead: {fill: Color.black.withA(.3), borderRadius: 20, extent: pt(15,15), center: pt(1, -13)},
               pickerField: {imageUrl: WHEEL_URL, extent: pt(15,15), tooltip: "Open Color Picker",
-                            nativeCursor: "pointer",fill: Color.transparent,},
+                            nativeCursor: "pointer",fill: Color.transparent},
               paletteField: {nativeCursor: "pointer", clipMode: "hidden", tooltip: "Open Color Palette"},
               typeSelector: {fill: Color.transparent, extent: pt(180, 40)},
               modeButton: {extent: pt(30,30), borderWidth: 2},
@@ -89,8 +90,8 @@ export class GradientEditor extends Morph {
    build() {
        this.submorphs = [this.typeSelector(), this.gradientEditor()];
        connect(this, "targetProperty", this, "update");
-       this.styleRules = this.getStyler();
        this.update();
+       this.styleRules = this.styleRules;
    }
 
    typeSelector() {
@@ -134,7 +135,8 @@ export class GradientEditor extends Morph {
    }
 
    gradientStopControl(gradientEditor, idx) {
-       return new Morph({
+       const head = this.stopControlHead(gradientEditor, idx),
+             stopControl = new Morph({
           morphClasses: ['stopControlLine'],
           nativeCursor: '-webkit-grab',
           update(gradient) {
@@ -162,13 +164,16 @@ export class GradientEditor extends Morph {
              gradientEditor.nativeCursor = 'auto';
              this.offsetView.remove();
           },
-          submorphs: [this.stopControlHead(gradientEditor, idx)],
        });
+       head.stopControl = stopControl;
+       stopControl.addMorph(head);
+       return stopControl;
    }
 
    stopControlHead(gradientEditor, idx) {
         const self = this;
         return {
+           queue: [],
            isHaloItem: true,
            morphClasses: ['stopControlHead'],
            layout: new HorizontalLayout({spacing: 3}),
@@ -183,37 +188,48 @@ export class GradientEditor extends Morph {
               
            },
            onHoverIn() {
-              this.expand();
+              this.scheduleExpand();
            },
            onHoverOut() {
-              this.shrink();
+              this.scheduleShrink();
+           },
+           scheduleExpand() {
+              if (this.queue.pop()) return;
+              this.queue.push(this.expand);
+              this.dequeue();
+           },
+           scheduleShrink() {
+              if (this.queue.pop()) return;
+              this.queue.push(this.shrink);
+              this.dequeue();
+           },
+           async dequeue() {
+              if (this.queueActive) return;
+              this.queueActive = true;
+              while (this.queue.length > 0) {
+                 await this.queue.shift().bind(this)()
+              }
+              this.queueActive = false;
            },
            async expand() {
-              if (this.expansion || this.submorphs.length == 3) return; 
-              this.shrinking && await this.shrinking
+              if (this.submorphs.length > 1) return; 
               const oldCenter = this.globalBounds().center(),
-                    oldLayout = this.layout,
-                    [palette] = this.submorphs;
-              this.layout = null; this.stopControl = this.owner;
+                    palette = this.get("paletteField");
+              this.layout = null;
               this.submorphs = [this.closeButton(), palette, this.pickerField()];
-              palette.animate({extent: pt(15,15), duration: 200});
               this.openInWorld(this.globalPosition);
-              this.expansion = this.animate({layout: oldLayout, center: oldCenter, duration: 200});
+              palette.animate({extent: pt(15,15), duration: 200});
+              await this.animate({layout: new HorizontalLayout({spacing: 3}), center: oldCenter, duration: 200});
               self.update();
-              await this.expansion; this.expansion = null;
            },
            async shrink() {
-              if (this.shrinking || this.submorphs.length == 1) return;
-              this.expansion && await this.expansion;
+              if (this.submorphs.length < 3) return;
               const oldCenter = this.center,
-                    oldLayout = this.layout,
-                    [close, palette, picker] = this.submorphs;
-              this.layout = null; close.remove(); picker.remove();
+                    [close, palette, picker] = [this.get("close"), this.get("paletteField"), this.get("pickerField")];
               palette.animate({extent: pt(10,10), duration: 200});
-              this.shrinking = this.animate({layout: oldLayout, center: oldCenter, duration: 200});
-              await this.shrinking; this.shrinking = null;
+              this.layout = null; close.remove(); picker.remove();
+              await this.animate({layout: new HorizontalLayout({spacing: 3}), center: oldCenter, duration: 200});
               this.stopControl.addMorph(this);
-              
            },
            onWidgetClosed() {
                this.palette = this.picker = null;
@@ -221,6 +237,7 @@ export class GradientEditor extends Morph {
            },
            closeButton() {
               return new Morph({
+                 name: "close",
                  extent: pt(15,15), fill: Color.transparent, 
                  origin: pt(0,-3), clipMode: 'hidden',
                  submorphs: [Icon.makeLabel("close", {
@@ -260,7 +277,7 @@ export class GradientEditor extends Morph {
            },
            pickerField() {
                return new Image({
-                  morphClasses: ["pickerField"],
+                  name: "pickerField",
                   update: (gradient) => {
                      this.stopColor = gradient.stops[idx].color
                   },
