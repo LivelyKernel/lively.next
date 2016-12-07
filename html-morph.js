@@ -57,8 +57,27 @@ class CustomVNode {
 
 export class HTMLMorph extends Morph {
 
+  constructor(props = {}) {
+     super({extent: pt(420, 330), ...props});
+     this.html = props.html || this.defaultHTML;
+  }
+
   get html() { return this.domNode.innerHTML; }
   set html(value) { this.domNode.innerHTML = value; }
+
+  get defaultHTML() {
+     return `
+<div style="width: 100%; height: 100%; background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))">
+ <p style="left: 30%;
+            top: 25%;
+            font-size: 40pt;
+            font-weight: bold;
+            position: absolute;
+            font-family: Inconsolata, monospace;
+            color: lightgray;">
+  &lt;HTML&gt;</p>
+</div>`
+  }
 
   get domNode() {
     if (!this._domNode) {

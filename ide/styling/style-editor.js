@@ -63,7 +63,9 @@ class StyleEditor extends Morph {
          this.addMorph(c).animate({opacity: 1, duration});
       });
       this.animate({
-          fill: Color.gray.lighter(),
+          fill: new LinearGradient({stops: [
+                 {color: Color.rgb(242,243,244), offset: 0},
+                 {color: Color.rgb(229,231,233), offset: 1}]}),
           borderWidth: 1, borderRadius: 7,
           borderColor: Color.gray,
           duration, layout: new VerticalLayout({spacing: 5})
@@ -403,3 +405,32 @@ export class LayoutStyleEditor extends Morph {
                })
    }
 }
+
+export class HTMLEditor extends Morph {
+   
+   constructor(props) {
+      super({
+        extent: props.target.extent,
+        fill: Color.black.withA(.5),
+        borderRadius: props.target.borderRadius,
+        ...props,
+      });
+      this.build();
+   }
+
+   get isHaloItem() { return true }
+
+   build() {
+      const htmlMorph = this.target;
+      this.submorphs = [
+         {type: "text", textString: this.target.html, fontColor: Color.white,
+          fontFamily: "Inconsolata, monospace",
+          padding: Rectangle.inset(10, 10, 10, 2),
+          fontSize: 14, fill: Color.transparent, extent: this.extent,
+          clipMode: "auto", doSave() { htmlMorph.html = this.textString }}
+      ]
+   }
+   
+}
+
+

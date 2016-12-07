@@ -1,11 +1,12 @@
-import { Morph, Text, Ellipse, Polygon, Image, Path} from "../index.js";
+import { Morph, Text, Ellipse, Polygon, Image, Path, HTMLMorph} from "../index.js";
 import { VerticalLayout, HorizontalLayout, FillLayout,
          TilingLayout, GridLayout} from '../layout.js';
 import { Color, pt, rect} from "lively.graphics";
 import { Intersection, IntersectionParams } from 'kld-intersections';
 import { arr } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
-import { ColorPicker, BorderStyleEditor, BodyStyleEditor, LayoutStyleEditor } from "../ide/styling/style-editor.js";
+import { ColorPicker, BorderStyleEditor, BodyStyleEditor, 
+         LayoutStyleEditor, HTMLEditor } from "../ide/styling/style-editor.js";
 import { Icon } from "../icons.js";
 import { StyleRules } from "../style-rules.js";
 
@@ -23,6 +24,8 @@ export function styleHaloFor(x, pointerId) {
        styleHaloClass = ImageStyleHalo;
     } else if (x instanceof Polygon || x instanceof Path) {
        styleHaloClass = SvgStyleHalo;
+    } else if (x instanceof HTMLMorph) {
+       styleHaloClass = HTMLStyleHalo;
     }
     return new styleHaloClass(x, pointerId).openInWorld().update();
 }
@@ -228,34 +231,49 @@ class StyleHalo extends Morph {
    selectBorder() {
       this.bodyStyler && this.bodyStyler.fadeOut(300);
       this.bodyStyler = null;
+      this.showBorderStyler();
+   }
+
+   showBorderStyler() {
       if (!this.borderStyler) {
           const visibleBounds = this.world().visibleBounds(),
                 globalBounds = this.target.globalBounds().insetByRect(rect(-100, -50, 100, 100)),
                 sideInWorld = ["topCenter", ...visibleBounds.sides, ...visibleBounds.corners].find(s => {
                                       return visibleBounds.containsPoint(globalBounds[s]())
                                 });
-          this.borderStyler = new BorderStyleEditor({
-               target: this.target,
-               title: "Change Border Style",
-          });
+          this.borderStyler = this.getBorderStyler();
           this.borderStyler.openInWorld();
           this.borderStyler.center = this.get("borderHalo").globalBounds().insetByRect(rect(-100, -50, 0, -50))[sideInWorld]();
           this.borderStyler.animate({opacity: 1, duration: 300});
       }
    }
 
+   getBorderStyler() {
+      return new BorderStyleEditor({
+               target: this.target,
+               title: "Change Border Style",
+          });
+   }
+
    selectBody() {
       this.borderStyler && this.borderStyler.fadeOut(300);
       this.borderStyler = null;
+      this.showBodyStyler()
+   }
+
+   showBodyStyler() {
       if (!this.bodyStyler) {
-          this.bodyStyler = new BodyStyleEditor({
-               target: this.target,
-               title: "Change Body Style",
-          });
+          this.bodyStyler = this.getBodyStyler();
           this.bodyStyler.openInWorld();
           this.bodyStyler.center = this.get("borderHalo").globalBounds().center();
           this.bodyStyler.animate({opacity: 1, duration: 300});
       }
+   }
+
+   getBodyStyler() { 
+     return new BodyStyleEditor({
+                 target: this.target,
+                 title: "Change Body Style"});
    }
 
    deselect() {
@@ -405,14 +423,20 @@ class SvgStyleHalo extends StyleHalo {
     }
 }
 
+class HTMLStyleHalo extends StyleHalo {
+
+   getBodyStyler() {
+      return new HTMLEditor({target: this.target});
+   }
+
+}
+
 class ImageStyleHalo extends StyleHalo {
 
-     // has no fill halo, but instead provides an image change interface
 
 }
 
 class TextStyleHalo extends StyleHalo {
 
-    // basically just displays the rich text styling mode all the time
 
 }
