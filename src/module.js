@@ -551,6 +551,7 @@ class ModuleInterface {
     if (options.excludedModules.some(ex => {
         if (typeof ex === "string") return ex === this.id;
         if (ex instanceof RegExp) return ex.test(this.id);
+        if (typeof ex === "function") return ex(this.id);
         return false;
       })) return [];
 

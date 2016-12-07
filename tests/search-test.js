@@ -32,7 +32,7 @@ describe("search", () => {
   after(() => removeDir(testProjectDir));
 
   describe("in modules", () => {
-  
+
     it("finds string constants", async () => {
       const res = await module1.search("hello");
       expect(res).to.containSubset([{
@@ -43,7 +43,7 @@ describe("search", () => {
         length: 5
       }]);
     });
-  
+
     it("finds comments", async () => {
       const res = await module2.search("comment");
       expect(res).to.containSubset([{
@@ -54,33 +54,32 @@ describe("search", () => {
         length: 7
       }]);
     });
-  
-    describe("by regex", () => {
-      it("finds comments", async () => {
-        const res = await module1.search(/(im|ex)port/);
-        expect(res).to.containSubset([{
-          moduleId: file1m,
-          line: 1,
-          column: 0,
-          length: 6
-        }, {
-          moduleId: file1m,
-          line: 2,
-          column: 0,
-          length: 6
-        }]);
-      });
+
+    it("by regex", async () => {
+      const res = await module1.search(/(im|ex)port/);
+      expect(res).to.containSubset([{
+        moduleId: file1m,
+        line: 1,
+        column: 0,
+        length: 6
+      }, {
+        moduleId: file1m,
+        line: 2,
+        column: 0,
+        length: 6
+      }]);
     });
+
   });
 
   describe("in all loaded modules", () => {
-  
+
     it("does not find unloaded string constants", async () => {
       module1.unload(); module2.unload();
       const res = await searchLoadedModules(S, "hello");
       expect(res).to.containSubset([]);
     });
-  
+
     it("finds string constants", async () => {
       await S.import(file1m);
       const res = await searchLoadedModules(S, "hello");
@@ -91,7 +90,7 @@ describe("search", () => {
         length: 5
       }]);
     });
-  
+
     it("finds comments", async () => {
       await S.import(file1m);
       const res = await searchLoadedModules(S, "comment");
@@ -102,7 +101,7 @@ describe("search", () => {
         length: 7
       }]);
     });
-  
+
     it("finds syntax", async () => {
       await S.import(file1m);
       await S.import(file2m);
@@ -119,37 +118,35 @@ describe("search", () => {
         length: 6
       }]);
     });
-  
-    describe("by regex", () => {
-      it("finds comments", async () => {
-        const res = await searchLoadedModules(S, /(im|ex)port/);
-        expect(res).to.containSubset([{
-          moduleId: file1m,
-          line: 1,
-          column: 0,
-          length: 6
-        }, {
-          moduleId: file1m,
-          line: 2,
-          column: 0,
-          length: 6
-        }, {
-          moduleId: file2m,
-          line: 1,
-          column: 0,
-          length: 6
-        }]);
-      });
+
+    it("by regex", async () => {
+      const res = await searchLoadedModules(S, /(im|ex)port/);
+      expect(res).to.containSubset([{
+        moduleId: file1m,
+        line: 1,
+        column: 0,
+        length: 6
+      }, {
+        moduleId: file1m,
+        line: 2,
+        column: 0,
+        length: 6
+      }, {
+        moduleId: file2m,
+        line: 1,
+        column: 0,
+        length: 6
+      }]);
     });
-  
-    describe("can exclude modules", () => {
-      it("finds comments", async () => {
-        const res = await searchLoadedModules(S, /(im|ex)port/, {excludedModules: [file1m]});
-        expect(res).to.have.length(1);
-        expect(res).to.containSubset([
-          {moduleId: file2m, line: 1, column: 0, length: 6}]);
-      });
+
+    it("can exclude modules", async () => {
+      const res = await searchLoadedModules(S,
+        /(im|ex)port/, {excludedModules: [ea => ea != file2m]});
+      expect(res).to.have.length(1);
+      expect(res).to.containSubset([
+        {moduleId: file2m, line: 1, column: 0, length: 6}]);
     });
+
   });
 
   describe("in packages", () => {
@@ -177,26 +174,24 @@ describe("search", () => {
       }]);
     });
 
-    describe("by regex", () => {
-      it("finds comments", async () => {
-        const res = await getPackage(S, testProjectDir).search(/(im|ex)port/);
-        expect(res).to.containSubset([{
-          moduleId: file1m,
-          line: 1,
-          column: 0,
-          length: 6
-        }, {
-          moduleId: file1m,
-          line: 2,
-          column: 0,
-          length: 6
-        }, {
-          moduleId: file2m,
-          line: 1,
-          column: 0,
-          length: 6
-        }]);
-      });
+    it("by regex", async () => {
+      const res = await getPackage(S, testProjectDir).search(/(im|ex)port/);
+      expect(res).to.containSubset([{
+        moduleId: file1m,
+        line: 1,
+        column: 0,
+        length: 6
+      }, {
+        moduleId: file1m,
+        line: 2,
+        column: 0,
+        length: 6
+      }, {
+        moduleId: file2m,
+        line: 1,
+        column: 0,
+        length: 6
+      }]);
     });
 
     it("can exclude modules", async () => {
