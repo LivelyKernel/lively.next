@@ -1,7 +1,7 @@
 import { Ellipse, Morph, Path, Text, 
          HorizontalLayout, GridLayout, 
          VerticalLayout, morph, Menu } from "../index.js";
-import { Color, pt, rect, Line, Rectangle } from "lively.graphics";
+import { Color, pt, rect, Line, Rectangle, LinearGradient } from "lively.graphics";
 import { string, obj, arr, num, grid, properties } from "lively.lang";
 import { connect, disconnect, disconnectAll, signal, once } from "lively.bindings";
 import { ColorPicker } from "../ide/styling/style-editor.js";
@@ -11,10 +11,11 @@ import { Icon } from '../icons.js';
 
 const itemExtent = pt(24,24);
 
-const guideGradient = [[0, Color.orange.withA(0)],
-                       [0.2, Color.orange],
-                       [0.8, Color.orange],
-                       [1.0, Color.orange.withA(0)]]
+const guideGradient = new LinearGradient({stops: 
+                       [{offset: 0, color: Color.orange.withA(0)},
+                        {offset: 0.2, color: Color.orange},
+                        {offset: 0.8, color: Color.orange},
+                        {offset: 1.0, color: Color.orange.withA(0)}]})
 
 class HaloItem extends Morph {
 
@@ -1043,14 +1044,11 @@ export class Halo extends Morph {
             },
             show() {
                mesh.animate({opacity: 1, duration: 300});
-            },
-            hide: () => {
-              mesh.animate({opacity: 0, duration: 700});
             }
           }));
         mesh.show();
     } else {
-      mesh && mesh.hide();
+      mesh && mesh.fadeOut(700);
     }
     this.focus();
   }
@@ -1077,7 +1075,7 @@ export class Halo extends Morph {
           borderStyle: "dotted",
           borderWidth: 5,
           bounds,
-          gradient: guideGradient,
+          borderColor: guideGradient,
           vertices: [v1, v2]}));
         diagonal.setBounds(bounds);
         diagonal.animate({opacity: 1, duration: 500});

@@ -1352,7 +1352,7 @@ export class Image extends Morph {
 export class Path extends Morph {
 
   constructor(props) {
-    super(props);
+    super({...props, fill: Color.transparent});
   }
 
   get isPath() { return true; }
@@ -1407,15 +1407,12 @@ export class Polygon extends Path {
   constructor(props) {
     if (props.vertices && props.vertices.length > 2) {
       super(props);
+      this.fill = props.fill;
     } else {
       throw new Error("A polygon requires 3 or more vertices!");
     }
   }
 
   get isPolygon() { return true; }
-
-  render(renderer) {
-    return renderer.renderPolygon(this);
-  }
 
 }

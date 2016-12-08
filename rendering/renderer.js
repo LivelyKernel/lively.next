@@ -1,7 +1,7 @@
 import { promise, num } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
 import { defaultStyle, defaultAttributes, render, 
-         pathAttributes, polygonAttributes, svgAttributes } from "./morphic-default.js";
+         pathAttributes, svgAttributes } from "./morphic-default.js";
 import { h } from "virtual-dom";
 import { pt } from "lively.graphics";
 
@@ -267,21 +267,14 @@ export class Renderer {
     return this.renderSvgMorph(path, vertices);
   }
 
-  renderPolygon(polygon) {
-    const vertices = h("polygon",
-                        {namespace: "http://www.w3.org/2000/svg",
-                         id: "svg" + polygon.id,
-                         ...polygonAttributes(polygon)});
-    return this.renderSvgMorph(polygon, vertices);
-  }
-
   renderSvgMorph(morph, svg) {
     const {position, filter,
            display, top, left, opacity, 
            transform, transformOrigin, cursor} = defaultStyle(morph),
           {width, height} = morph.innerBounds(),
           defs = h("defs", {namespace: "http://www.w3.org/2000/svg"}, 
-                    morph.gradient ? [renderGradient(morph)] : []);
+                    [(morph.fill && morph.fill.isGradient) ? [renderGradient(morph, "fill")] : null,
+                     (morph.borderColor && morph.borderColor.isGradient) ? [renderGradient(morph, "borderColor")] : null]);
     return h("div", {...defaultAttributes(morph, this),
                      style: {transform, transformOrigin, position, opacity, cursor,
                              width: width + 'px', height: height + 'px',
@@ -294,15 +287,16 @@ export class Renderer {
   }
 }
 
-function renderGradient(morph) {
-  return h("linearGradient", {namespace: "http://www.w3.org/2000/svg",
-                                     attributes: {id: "gradient-" + morph.id,
-                                                  gradientUnits: "userSpaceOnUse"}
-                                     },
-                    morph.gradient.map(([k, c]) =>
+function renderGradient(morph, prop) {
+  const gradient = morph[prop];
+  return h(gradient.type, {
+               namespace: "http://www.w3.org/2000/svg",
+               attributes: {id: "gradient-" + prop + morph.id,
+                            gradientUnits: "userSpaceOnUse"}},
+               gradient.stops.map(({offset, color}) =>
                         h("stop",
                             {namespace: "http://www.w3.org/2000/svg",
                               attributes:
-                                {offset: (k * 100) + "%",
-                                 "stop-color": c}})));
+                                {offset: (offset * 100) + "%",
+                                 "stop-color": color}})));
 }

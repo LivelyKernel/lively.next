@@ -76,7 +76,7 @@ class StyleMapper {
   }
 
   static getBorder({borderWidthLeft, borderColorLeft, borderStyleLeft,
-             borderWidthRight, borderColorRight, borderStyleRight,
+             borderWidthRight, borderColorRight, borderStyleRight, borderColor,
              borderWidthBottom, borderColorBottom, borderStyleBottom,
              borderWidthTop, borderColorTop, borderStyleTop}) {
     return {
@@ -91,7 +91,8 @@ class StyleMapper {
       "border-top-color": borderColorTop ? borderColorTop.toString() : "transparent",
       "border-right-color": borderColorRight ? borderColorRight.toString() : "transparent",
       "border-bottom-color": borderColorBottom ? borderColorBottom.toString() : "transparent",
-      "border-left-color": borderColorLeft ? borderColorLeft.toString() : "transparent"
+      "border-left-color": borderColorLeft ? borderColorLeft.toString() : "transparent",
+      ...borderColor.isGradient ? {"border-image": borderColor.toString()} : {}
     }
   }
 
@@ -116,14 +117,16 @@ class StyleMapper {
      return {width, height, "viewBox": [-borderWidth,-borderWidth, width ,height].join(" ")};
   }
 
-  static getPathAttributes(path) {
+  static getPathAttributes(path, fill=false) {
      var {x: startX, y: startY, controlPoints: {next: {x: startNextX, y: startNextY}}} = arr.first(path.vertices),
            startNext = pt(startX + startNextX, startY + startNextY),
           {x: endX, y: endY, controlPoints: {previous: {x: endPrevX, y: endPrevY}}} = arr.last(path.vertices),
            endPrev = pt(endX + endPrevX, endY + endPrevY),
            interVertices = path.vertices.slice(1, -1);
-     return {"stroke-width": path.borderWidth, ...this.getSvgBorderStyle(path), fill: "transparent",
-             "stroke": (path.gradient ? "url(#gradient-" + path.id + ")" : path.borderColor.toString()),
+     return {"stroke-width": path.borderWidth, ...this.getSvgBorderStyle(path), 
+             fill: path.fill ? ((path.fill.isGradient) ? "url(#gradient-fill" + path.id + ")" : path.fill.toString()) 
+                               : "transparent",
+             stroke: (path.borderColor.isGradient ? "url(#gradient-borderColor" + path.id + ")" : path.borderColor.toString()),
               d: "M" + `${startX}, ${startY} ` + "C " + `${startNext.x}, ${startNext.y} ` + 
                   interVertices.map(({x,y, controlPoints: {previous: p, next: n}}) => {
                     return `${x + p.x},${y + p.y} ${x},${y} C ${x + n.x},${y + n.y}`
@@ -138,14 +141,6 @@ class StyleMapper {
           dotted: {"stroke-dasharray": "1 " + svg.borderWidth * 2,"stroke-linecap": "round", "stroke-linejoin": "round",}
       }
       return style[svg.borderStyle];
-  }
-
-  static getPolygonAttributes(polygon) {
-     return {"stroke-width": polygon.borderWidth,
-             ...this.getSvgBorderStyle(polygon),
-             "stroke": polygon.borderColor.toString(),
-             "fill": (polygon.gradient ? "url(#gradient-" + polygon.id + ")" : polygon.fill.toString()),
-             points: polygon.vertices.map(({x,y}) => (x - polygon.borderWidth) + "," + (y - polygon.borderWidth)).join(" ")}
   }
 
   static getStyleProps(morph) {
@@ -286,7 +281,7 @@ export class PropertyAnimation {
      return {css: StyleMapper.getStyleProps(this.morph),
              svg: this.morph.isSvgMorph && StyleMapper.getSvgAttributes(this.morph),
              path: this.morph.isPath && StyleMapper.getPathAttributes(this.morph),
-             polygon: this.morph.isPolygon && StyleMapper.getPolygonAttributes(this.morph)}
+             polygon: this.morph.isPolygon && StyleMapper.getPathAttributes(this.morph)}
   }
 
   assignProps() {
@@ -433,13 +428,6 @@ export function pathAttributes(path) {
    return {animation: new SvgAnimation(path, "path"), 
            attributes: {...StyleMapper.getPathAttributes(path),
            ...path._animationQueue.maskedProps("path")}};
-}
-
-export function polygonAttributes(polygon) {
-   return {animation: new SvgAnimation(polygon, "polygon"), 
-           attributes: {
-           ...StyleMapper.getPolygonAttributes(polygon),
-           ...polygon._animationQueue.maskedProps("polygon")}};
 }
 
 function shadowCss(morph) {
