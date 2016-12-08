@@ -117,9 +117,18 @@ class StyleMapper {
   }
 
   static getPathAttributes(path) {
-     return {"stroke-width": path.borderWidth, ...this.getSvgBorderStyle(path),
+     var {x: startX, y: startY, controlPoints: {next: {x: startNextX, y: startNextY}}} = arr.first(path.vertices),
+           startNext = pt(startX + startNextX, startY + startNextY),
+          {x: endX, y: endY, controlPoints: {previous: {x: endPrevX, y: endPrevY}}} = arr.last(path.vertices),
+           endPrev = pt(endX + endPrevX, endY + endPrevY),
+           interVertices = path.vertices.slice(1, -1);
+     return {"stroke-width": path.borderWidth, ...this.getSvgBorderStyle(path), fill: "transparent",
              "stroke": (path.gradient ? "url(#gradient-" + path.id + ")" : path.borderColor.toString()),
-              d: "M" + path.vertices.map(({x, y}) => `${x},${y}`).join(" L")}
+              d: "M" + `${startX}, ${startY} ` + "C " + `${startNext.x}, ${startNext.y} ` + 
+                  interVertices.map(({x,y, controlPoints: {previous: p, next: n}}) => {
+                    return `${x + p.x},${y + p.y} ${x},${y} C ${x + n.x},${y + n.y}`
+                  }).join(" ") + ` ${endPrev.x},${endPrev.y} ${endX},${endY}`
+              }
   }
 
   static getSvgBorderStyle(svg) {

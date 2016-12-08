@@ -71,6 +71,16 @@ textarea.lively-text-input.debug {
 	 vertical-align: middle;
 }
 
+.halo-mesh {
+  background-color:transparent;
+  background-image: linear-gradient(rgba(0,0,0,.1) 2px, transparent 2px),
+  linear-gradient(90deg, rgba(0,0,0,.1) 2px, transparent 2px),
+  linear-gradient(rgba(0,0,0,.1) 1px, transparent 1px),
+  linear-gradient(90deg, rgba(0,0,0,.1) 1px, transparent 1px);
+  background-size:100px 100px, 100px 100px, 10px 10px, 10px 10px;
+  background-position:-2px -2px, -2px -2px, -1px -1px, -1px -1px;
+}
+
 /*-=- text -=-*/
 
 .center-text {
@@ -270,7 +280,8 @@ export class Renderer {
            display, top, left, opacity, 
            transform, transformOrigin, cursor} = defaultStyle(morph),
           {width, height} = morph.innerBounds(),
-          defs = morph.gradient && renderGradient(morph);
+          defs = h("defs", {namespace: "http://www.w3.org/2000/svg"}, 
+                    morph.gradient ? [renderGradient(morph)] : []);
     return h("div", {...defaultAttributes(morph, this),
                      style: {transform, transformOrigin, position, opacity, cursor,
                              width: width + 'px', height: height + 'px',
@@ -283,10 +294,8 @@ export class Renderer {
   }
 }
 
-
 function renderGradient(morph) {
-  return h("defs", {namespace: "http://www.w3.org/2000/svg"},
-                h("linearGradient", {namespace: "http://www.w3.org/2000/svg",
+  return h("linearGradient", {namespace: "http://www.w3.org/2000/svg",
                                      attributes: {id: "gradient-" + morph.id,
                                                   gradientUnits: "userSpaceOnUse"}
                                      },
@@ -295,5 +304,5 @@ function renderGradient(morph) {
                             {namespace: "http://www.w3.org/2000/svg",
                               attributes:
                                 {offset: (k * 100) + "%",
-                                 "stop-color": c}}))));
+                                 "stop-color": c}})));
 }

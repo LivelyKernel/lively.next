@@ -1375,12 +1375,17 @@ export class Path extends Morph {
   get isSvgMorph() { return true }
 
   get vertices() { return this.getProperty("vertices") || []}
-  set vertices(value) { this.addValueChange("vertices", value); }
+  set vertices(vs) { 
+     vs = vs.map(v => obj.deepMerge({controlPoints: {next: pt(0,0), previous: pt(0,0)}}, v));
+     this.addValueChange("vertices", vs); 
+  }
 
 
   adjustVertices(delta) {
      const vs = this.vertices;
-     this.vertices = vs && vs.map((v) => v.scaleByPt(delta));
+     this.vertices = vs && vs.map(({x,y, controlPoints}) => {
+        return {controlPoints, ...pt(x,y).scaleByPt(delta)}
+     });
   }
 
   addVertex(v, before=null) {
