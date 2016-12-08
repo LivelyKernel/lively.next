@@ -133,6 +133,15 @@ describe("halos", () => {
     expect(submorph1.extent).equals(pt(110, 105));
   });
 
+  it("resizes correctly if transformation present", () => {
+    submorph1.rotation = num.toRadians(-45);
+    var halo = world.showHaloFor(submorph1),
+        resizeHandle = halo.resizeHandles().find(h => h.corner == "bottomCenter");
+    resizeHandle.init(pt(0,0))
+    resizeHandle.update(pt(10,10));
+    expect(submorph1.extent).equals(pt(100, 100 + pt(10,10).r()));
+  });
+
   it("align to the morph extent while resizing", () => {
     submorph1.origin = pt(20,30);
     submorph1.position = pt(100,100);

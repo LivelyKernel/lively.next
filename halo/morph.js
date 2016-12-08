@@ -574,6 +574,7 @@ export class Halo extends Morph {
         delta = proportional ? this.proportionalDelta(corner, delta, bounds) : delta,
         offsetRect = rect(delta.x * x, delta.y * y, delta.x * width, delta.y * height),
         oldPosition = this.target.position;
+       console.log(corner); console.log(bounds); console.log(offsetRect);
        this.target.setBounds(bounds.insetByRect(offsetRect));
        this.target.origin = origin.addPt({x: -offsetRect.x, y: -offsetRect.y});
        this.target.position = oldPosition;
@@ -614,7 +615,8 @@ export class Halo extends Morph {
               this.focus();
            },
            init(startPos, proportional=false) {
-             this.startPos = startPos; this.startBounds = this.halo.target.bounds();
+             const {globalPosition, extent} = this.halo.target;
+             this.startPos = startPos; this.startBounds = globalPosition.extent(extent);
              this.startOrigin = this.halo.target.origin;
              this.savedLayout = this.halo.layout;
              this.halo.layout = null;
