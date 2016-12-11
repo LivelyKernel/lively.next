@@ -2,14 +2,16 @@ import { promise, arr, obj } from "lively.lang";
 import * as http from "http";
 
 // Array.from(LivelyServer.servers.keys())
-// var s = LivelyServer.ensure({hostname: "0.0.0.0", port: "9010"})
+// var s = LivelyServer.ensure({hostname: "0.0.0.0", port: "9011"})
 // var s = LivelyServer.ensure({hostname: "localhost", port: "9010"})
+// global.server = s
 // s.server.listeners("request")
 // s.findPlugin("l2l").l2lNamespace
 // s.findPlugin("socketio").io.path()
 
 
 import CorsPlugin from "./plugins/cors.js";
+import ProxyPlugin from "./plugins/proxy.js";
 import SocketioPlugin from "./plugins/socketio.js";
 import EvalPlugin from "./plugins/eval.js";
 import L2lPlugin from "./plugins/l2l.js";
@@ -27,6 +29,7 @@ export async function start(opts = {}) {
 
   server.addPlugins([
     new CorsPlugin(),
+    new ProxyPlugin(),
     new SocketioPlugin(opts),
     new L2lPlugin(),
     new ShellPlugin(opts),
