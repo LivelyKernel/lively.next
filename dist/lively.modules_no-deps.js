@@ -4575,6 +4575,7 @@ var ModuleInterface = function () {
                 if (!options.excludedModules.some(function (ex) {
                   if (typeof ex === "string") return ex === _this8.id;
                   if (ex instanceof RegExp) return ex.test(_this8.id);
+                  if (typeof ex === "function") return ex(_this8.id);
                   return false;
                 })) {
                   _context16.next = 3;
@@ -4740,14 +4741,91 @@ var ModuleInterface = function () {
   return ModuleInterface;
 }();
 
-function fetchResource(proceed, load) {
-  var System = this,
-      res = System.resource(load.name);
+var fetchResource = function () {
+  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(proceed, load) {
+    var System, res, result, error, isWebResource, isCrossDomain;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            System = this, res = System.resource(load.name);
 
-  if (load.name.match(/^lively:\/\//)) load.metadata.format = "esm";
 
-  return res ? res.read() : proceed(load);
-}
+            if (load.name.match(/^lively:\/\//)) load.metadata.format = "esm";
+
+            if (res) {
+              _context.next = 4;
+              break;
+            }
+
+            return _context.abrupt("return", proceed(load));
+
+          case 4:
+            _context.prev = 4;
+            _context.next = 7;
+            return res.read();
+
+          case 7:
+            result = _context.sent;
+            _context.next = 13;
+            break;
+
+          case 10:
+            _context.prev = 10;
+            _context.t0 = _context["catch"](4);
+            error = _context.t0;
+
+          case 13:
+            if (!(error && System.get("@system-env").browser)) {
+              _context.next = 25;
+              break;
+            }
+
+            isWebResource = res.url.startsWith("http"), isCrossDomain = !res.url.startsWith(document.location.origin);
+
+            if (!(isWebResource && isCrossDomain)) {
+              _context.next = 25;
+              break;
+            }
+
+            _context.prev = 16;
+            _context.next = 19;
+            return res.makeProxied().read();
+
+          case 19:
+            result = _context.sent;
+
+            error = null;
+            _context.next = 25;
+            break;
+
+          case 23:
+            _context.prev = 23;
+            _context.t1 = _context["catch"](16);
+
+          case 25:
+            if (!error) {
+              _context.next = 27;
+              break;
+            }
+
+            throw error;
+
+          case 27:
+            return _context.abrupt("return", result);
+
+          case 28:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, this, [[4, 10], [16, 23]]);
+  }));
+
+  return function fetchResource(_x, _x2) {
+    return _ref.apply(this, arguments);
+  };
+}();
 
 function livelyProtocol(proceed, url) {
   if (!url.match(/^lively:\/\//)) return proceed(url);

@@ -24330,118 +24330,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 
 
-var asyncGenerator = function () {
-  function AwaitValue(value) {
-    this.value = value;
-  }
 
-  function AsyncGenerator(gen) {
-    var front, back;
-
-    function send(key, arg) {
-      return new Promise(function (resolve, reject) {
-        var request = {
-          key: key,
-          arg: arg,
-          resolve: resolve,
-          reject: reject,
-          next: null
-        };
-
-        if (back) {
-          back = back.next = request;
-        } else {
-          front = back = request;
-          resume(key, arg);
-        }
-      });
-    }
-
-    function resume(key, arg) {
-      try {
-        var result = gen[key](arg);
-        var value = result.value;
-
-        if (value instanceof AwaitValue) {
-          Promise.resolve(value.value).then(function (arg) {
-            resume("next", arg);
-          }, function (arg) {
-            resume("throw", arg);
-          });
-        } else {
-          settle(result.done ? "return" : "normal", result.value);
-        }
-      } catch (err) {
-        settle("throw", err);
-      }
-    }
-
-    function settle(type, value) {
-      switch (type) {
-        case "return":
-          front.resolve({
-            value: value,
-            done: true
-          });
-          break;
-
-        case "throw":
-          front.reject(value);
-          break;
-
-        default:
-          front.resolve({
-            value: value,
-            done: false
-          });
-          break;
-      }
-
-      front = front.next;
-
-      if (front) {
-        resume(front.key, front.arg);
-      } else {
-        back = null;
-      }
-    }
-
-    this._invoke = send;
-
-    if (typeof gen.return !== "function") {
-      this.return = undefined;
-    }
-  }
-
-  if (typeof Symbol === "function" && Symbol.asyncIterator) {
-    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
-      return this;
-    };
-  }
-
-  AsyncGenerator.prototype.next = function (arg) {
-    return this._invoke("next", arg);
-  };
-
-  AsyncGenerator.prototype.throw = function (arg) {
-    return this._invoke("throw", arg);
-  };
-
-  AsyncGenerator.prototype.return = function (arg) {
-    return this._invoke("return", arg);
-  };
-
-  return {
-    wrap: function (fn) {
-      return function () {
-        return new AsyncGenerator(fn.apply(this, arguments));
-      };
-    },
-    await: function (value) {
-      return new AwaitValue(value);
-    }
-  };
-}();
 
 
 
@@ -24702,6 +24591,49 @@ var Resource = function () {
         common = myP;
       }
       return common;
+    }
+  }, {
+    key: "withRelativePartsResolved",
+    value: function withRelativePartsResolved() {
+      var path = this.path(),
+          result = path;
+      // /foo/../bar --> /bar
+      do {
+        path = result;
+        result = path.replace(/\/[^\/]+\/\.\./, '');
+      } while (result != path);
+
+      // foo//bar --> foo/bar
+      result = result.replace(/(^|[^:])[\/]+/g, '$1/');
+      // foo/./bar --> foo/bar
+      result = result.replace(/\/\.\//g, '/');
+      return result === this.path() ? this : this.root().join(result);
+    }
+  }, {
+    key: "relativePathFrom",
+    value: function relativePathFrom(fromResource) {
+      if (fromResource.root().url != this.root().url) throw new Error('hostname differs in relativePathFrom ' + fromResource + ' vs ' + this);
+
+      var myPath = this.withRelativePartsResolved().path(),
+          otherPath = fromResource.withRelativePartsResolved().path();
+      if (myPath == otherPath) return '';
+      var relPath = checkPathes(myPath, otherPath);
+      if (!relPath) throw new Error('pathname differs in relativePathFrom ' + fromResource + ' vs ' + this);
+      return relPath;
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+      function checkPathes(path1, path2) {
+        var paths1 = path1.split('/'),
+            paths2 = path2.split('/');
+        paths1.shift();
+        paths2.shift();
+        for (var i = 0; i < paths2.length; i++) {
+          if (!paths1[i] || paths1[i] != paths2[i]) break;
+        } // now that's some JavaScript FOO
+        var result = '../'.repeat(Math.max(0, paths2.length - i - 1)) + paths1.splice(i, paths1.length).join('/');
+        return result;
+      }
     }
   }, {
     key: "join",
@@ -24991,7 +24923,7 @@ applyExclude(["bar", "foo"], [
 
 */
 
-/*global fetch, Headers, DOMParser, XPathEvaluator, XPathResult, Namespace*/
+/*global fetch, DOMParser, XPathEvaluator, XPathResult, Namespace*/
 
 var XPathQuery = function () {
   function XPathQuery(expression) {
@@ -25111,15 +25043,61 @@ function readXMLPropfindResult(xmlString) {
   });
 }
 
+function defaultOrigin() {
+  // FIXME nodejs usage???
+  return document.location.origin;
+}
+
+function makeRequest(resource) {
+  var method = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "GET";
+  var body = arguments[2];
+  var headers = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+  var url = resource.url,
+      useCors = resource.useCors,
+      useProxy = resource.useProxy,
+      useCors = typeof useCors !== "undefined" ? useCors : true,
+      useProxy = typeof useProxy !== "undefined" ? useProxy : true,
+      fetchOpts = { method: method };
+
+
+  if (useProxy) {
+    Object.assign(headers, {
+      'pragma': 'no-cache',
+      'cache-control': 'no-cache',
+      "x-lively-proxy-request": url
+    });
+
+    url = defaultOrigin;
+  }
+
+  if (useCors) fetchOpts.mode = "cors";
+  if (body) fetchOpts.body = body;
+  fetchOpts.redirect = 'follow';
+  fetchOpts.headers = headers;
+
+  return fetch(url, fetchOpts);
+}
+
 var WebDAVResource = function (_Resource) {
   inherits(WebDAVResource, _Resource);
 
-  function WebDAVResource() {
+  function WebDAVResource(url) {
+    var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     classCallCheck(this, WebDAVResource);
-    return possibleConstructorReturn(this, (WebDAVResource.__proto__ || Object.getPrototypeOf(WebDAVResource)).apply(this, arguments));
+
+    var _this = possibleConstructorReturn(this, (WebDAVResource.__proto__ || Object.getPrototypeOf(WebDAVResource)).call(this, url, opts));
+
+    _this.useProxy = opts.hasOwnProperty("useProxy") ? opts.useProxy : false;
+    _this.useCors = opts.hasOwnProperty("useCors") ? opts.useCors : false;
+    return _this;
   }
 
   createClass(WebDAVResource, [{
+    key: "makeProxied",
+    value: function makeProxied() {
+      return this.useProxy ? this : new this.constructor(this.url, { useCors: this.useCors, useProxy: true });
+    }
+  }, {
     key: "read",
     value: function () {
       var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
@@ -25129,7 +25107,7 @@ var WebDAVResource = function (_Resource) {
             switch (_context.prev = _context.next) {
               case 0:
                 _context.next = 2;
-                return fetch(this.url, { mode: 'cors' });
+                return makeRequest(this);
 
               case 2:
                 res = _context.sent;
@@ -25176,7 +25154,7 @@ var WebDAVResource = function (_Resource) {
 
               case 2:
                 _context2.next = 4;
-                return fetch(this.url, { mode: 'cors', method: "PUT", body: content });
+                return makeRequest(this, "PUT", content);
 
               case 4:
                 res = _context2.sent;
@@ -25199,7 +25177,7 @@ var WebDAVResource = function (_Resource) {
         }, _callee2, this);
       }));
 
-      function write(_x2) {
+      function write(_x5) {
         return _ref2.apply(this, arguments);
       }
 
@@ -25223,7 +25201,7 @@ var WebDAVResource = function (_Resource) {
 
               case 2:
                 _context3.next = 4;
-                return fetch(this.url, { mode: 'cors', method: "MKCOL" });
+                return makeRequest(this, "MKCOL");
 
               case 4:
                 res = _context3.sent;
@@ -25271,7 +25249,7 @@ var WebDAVResource = function (_Resource) {
 
               case 4:
                 _context4.next = 6;
-                return fetch(this.url, { mode: 'cors', method: "HEAD" });
+                return makeRequest(this, "HEAD");
 
               case 6:
                 _context4.t0 = !!_context4.sent.ok;
@@ -25297,28 +25275,17 @@ var WebDAVResource = function (_Resource) {
     key: "remove",
     value: function () {
       var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
-        var res;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
                 _context5.next = 2;
-                return fetch(this.url, { mode: 'cors', method: "DELETE" });
+                return makeRequest(this, "DELETE");
 
               case 2:
-                res = _context5.sent;
-
-                if (res.ok) {
-                  _context5.next = 5;
-                  break;
-                }
-
-                throw new Error("Cannot delete " + this.url + ": " + res.statusText + " " + res.status);
-
-              case 5:
                 return _context5.abrupt("return", this);
 
-              case 6:
+              case 3:
               case "end":
                 return _context5.stop();
             }
@@ -25342,14 +25309,9 @@ var WebDAVResource = function (_Resource) {
             switch (_context6.prev = _context6.next) {
               case 0:
                 _context6.next = 2;
-                return fetch(this.url, {
-                  method: "PROPFIND",
-                  mode: 'cors',
-                  redirect: 'follow',
-                  // body: propfindRequestPayload(),
-                  headers: new Headers({
-                    'Content-Type': 'text/xml'
-                  })
+                return makeRequest(this, "PROPFIND", null, // propfindRequestPayload(),
+                {
+                  'Content-Type': 'text/xml'
                 });
 
               case 2:
@@ -25481,7 +25443,7 @@ var WebDAVResource = function (_Resource) {
         }, _callee8, this);
       }));
 
-      function dirList(_x3, _x4) {
+      function dirList(_x6, _x7) {
         return _ref7.apply(this, arguments);
       }
 
@@ -25511,7 +25473,7 @@ var WebDAVResource = function (_Resource) {
         }, _callee9, this);
       }));
 
-      function readProperties(_x7) {
+      function readProperties(_x10) {
         return _ref8.apply(this, arguments);
       }
 
@@ -30811,6 +30773,7 @@ var ModuleInterface = function () {
                 if (!options.excludedModules.some(function (ex) {
                   if (typeof ex === "string") return ex === _this8.id;
                   if (ex instanceof RegExp) return ex.test(_this8.id);
+                  if (typeof ex === "function") return ex(_this8.id);
                   return false;
                 })) {
                   _context16.next = 3;
@@ -30976,14 +30939,91 @@ var ModuleInterface = function () {
   return ModuleInterface;
 }();
 
-function fetchResource(proceed, load) {
-  var System = this,
-      res = System.resource(load.name);
+var fetchResource = function () {
+  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(proceed, load) {
+    var System, res, result, error, isWebResource, isCrossDomain;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            System = this, res = System.resource(load.name);
 
-  if (load.name.match(/^lively:\/\//)) load.metadata.format = "esm";
 
-  return res ? res.read() : proceed(load);
-}
+            if (load.name.match(/^lively:\/\//)) load.metadata.format = "esm";
+
+            if (res) {
+              _context.next = 4;
+              break;
+            }
+
+            return _context.abrupt("return", proceed(load));
+
+          case 4:
+            _context.prev = 4;
+            _context.next = 7;
+            return res.read();
+
+          case 7:
+            result = _context.sent;
+            _context.next = 13;
+            break;
+
+          case 10:
+            _context.prev = 10;
+            _context.t0 = _context["catch"](4);
+            error = _context.t0;
+
+          case 13:
+            if (!(error && System.get("@system-env").browser)) {
+              _context.next = 25;
+              break;
+            }
+
+            isWebResource = res.url.startsWith("http"), isCrossDomain = !res.url.startsWith(document.location.origin);
+
+            if (!(isWebResource && isCrossDomain)) {
+              _context.next = 25;
+              break;
+            }
+
+            _context.prev = 16;
+            _context.next = 19;
+            return res.makeProxied().read();
+
+          case 19:
+            result = _context.sent;
+
+            error = null;
+            _context.next = 25;
+            break;
+
+          case 23:
+            _context.prev = 23;
+            _context.t1 = _context["catch"](16);
+
+          case 25:
+            if (!error) {
+              _context.next = 27;
+              break;
+            }
+
+            throw error;
+
+          case 27:
+            return _context.abrupt("return", result);
+
+          case 28:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, this, [[4, 10], [16, 23]]);
+  }));
+
+  return function fetchResource(_x, _x2) {
+    return _ref.apply(this, arguments);
+  };
+}();
 
 function livelyProtocol(proceed, url) {
   if (!url.match(/^lively:\/\//)) return proceed(url);

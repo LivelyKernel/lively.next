@@ -1,14 +1,33 @@
 import { resource } from "lively.resources";
 import { install as installHook, remove as removeHook, isInstalled as isHookInstalled } from "./hooks.js";
 
-function fetchResource(proceed, load) {
+async function fetchResource(proceed, load) {
   const System = this,
         res = System.resource(load.name);
 
   if (load.name.match(/^lively:\/\//))
     load.metadata.format = "esm";
 
-  return res ? res.read() : proceed(load);
+  if (!res) return proceed(load);
+
+  var result, error;
+  try { result = await res.read(); } catch (e) { error = e }
+
+  // if we are in a browser we try to use the proxy when cors requests fail
+  if (error && System.get("@system-env").browser) {
+    var isWebResource = res.url.startsWith("http"),
+        isCrossDomain = !res.url.startsWith(document.location.origin)
+    if (isWebResource && isCrossDomain) {
+      try {
+        result = await res.makeProxied().read();
+        error = null;
+      } catch (e) {}
+    }
+  }
+
+  if (error) throw error;
+
+  return result;
 }
 
 function livelyProtocol(proceed, url) {
