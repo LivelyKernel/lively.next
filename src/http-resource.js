@@ -1,4 +1,4 @@
-/*global fetch, Headers, DOMParser, XPathEvaluator, XPathResult, Namespace*/
+/*global fetch, DOMParser, XPathEvaluator, XPathResult, Namespace*/
 
 import Resource from "./resource.js";
 import { applyExclude } from "./helpers.js";
@@ -121,10 +121,52 @@ function readXMLPropfindResult(xmlString) {
   });
 }
 
+
+function defaultOrigin() {
+  // FIXME nodejs usage???
+  return document.location.origin;
+}
+
+function makeRequest(resource, method = "GET", body, headers = {}) {
+  var url = resource.url,
+      {useCors, useProxy} = resource,
+      useCors = typeof useCors !== "undefined" ? useCors : true,
+      useProxy = typeof useProxy !== "undefined" ? useProxy : true,
+      fetchOpts = {method};
+
+  if (useProxy) {
+    Object.assign(headers, {
+      'pragma': 'no-cache',
+      'cache-control': 'no-cache',
+      "x-lively-proxy-request": url
+    });
+
+    url = defaultOrigin;
+  }
+
+  if (useCors) fetchOpts.mode = "cors"
+  if (body) fetchOpts.body = body;
+  fetchOpts.redirect = 'follow';
+  fetchOpts.headers = headers;
+
+  return fetch(url, fetchOpts);
+}
+
 export default class WebDAVResource extends Resource {
 
+  constructor(url, opts = {}) {
+    super(url, opts);
+    this.useProxy = opts.hasOwnProperty("useProxy") ? opts.useProxy : false;
+    this.useCors = opts.hasOwnProperty("useCors") ? opts.useCors : false;
+  }
+
+  makeProxied() {
+    return this.useProxy ? this :
+      new this.constructor(this.url, {useCors: this.useCors, useProxy: true})
+  }
+
   async read() {
-    var res = await fetch(this.url, {mode: 'cors'});
+    var res = await makeRequest(this);
     if (!res.ok)
       throw new Error(`Cannot read ${this.url}: ${res.statusText} ${res.status}`);
     return res.text();
@@ -132,7 +174,7 @@ export default class WebDAVResource extends Resource {
 
   async write(content) {
     if (!this.isFile()) throw new Error(`Cannot write a non-file: ${this.url}`);
-    var res = await fetch(this.url, {mode: 'cors', method: "PUT", body: content});
+    var res = await makeRequest(this, "PUT", content);
     if (!res.ok)
       throw new Error(`Cannot write ${this.url}: ${res.statusText} ${res.status}`);
     return this;
@@ -140,33 +182,29 @@ export default class WebDAVResource extends Resource {
 
   async mkdir() {
     if (this.isFile()) throw new Error(`Cannot mkdir on a file: ${this.url}`);
-    var res = await fetch(this.url, {mode: 'cors', method: "MKCOL"});
+    var res = await makeRequest(this, "MKCOL");
     if (!res.ok)
       throw new Error(`Cannot create directory ${this.url}: ${res.statusText} ${res.status}`);
     return this;
   }
 
   async exists() {
-    return this.isRoot() ? true : !!(await fetch(this.url, {mode: 'cors', method: "HEAD"})).ok;
+    return this.isRoot() ? true : !!(await makeRequest(this, "HEAD")).ok;
   }
 
   async remove() {
-    await fetch(this.url, {mode: 'cors', method: "DELETE"})
+    await makeRequest(this, "DELETE");
     return this;
   }
 
   async _propfind() {
-    var res = await fetch(this.url, {
-       method: "PROPFIND",
-       mode: 'cors',
-       redirect: 'follow',
-       // body: propfindRequestPayload(),
-       headers: new Headers({
-         'Content-Type': 'text/xml',
+    var res = await makeRequest(this, "PROPFIND",
+      null, // propfindRequestPayload(),
+      {
+       'Content-Type': 'text/xml',
         // rk 2016-06-24: jsDAV does not support PROPFIND via depth: 'infinity'
         // 'Depth': String(depth)
-      })
-    });
+      });
 
     if (!res.ok) throw new Error(`Error in dirList for ${this.url}: ${res.statusText}`);
     let xmlString = await res.text(),
