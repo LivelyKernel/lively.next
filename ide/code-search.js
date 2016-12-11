@@ -37,12 +37,14 @@ export async function doSearch(livelySystem, searchTerm, excludes = [/systemjs-p
 export class CodeSearcher extends FilterableList {
 
   static inWindow(props = {title: "code search", targetBrowser: null, backend: null}) {
-    var searcher = new this(props);
-    return new Window({
-      ...obj.dissoc(props, ["targetBrowser", "backend"]),
-      extent: searcher.extent.addXY(0, 25),
-      targetMorph: searcher
-    });
+    var searcher = new this(props),
+        win = new Window({
+          ...obj.dissoc(props, ["targetBrowser", "backend"]),
+          extent: searcher.extent.addXY(0, 25),
+          targetMorph: searcher
+        });
+    connect(win, 'windowActivated', searcher, 'onWindowActivated');
+    return win;
   }
 
   constructor(props = {}) {
@@ -144,4 +146,7 @@ export class CodeSearcher extends FilterableList {
     return browser.activate();
   }
 
+  onWindowActivated() {
+    this.get("input").selectAll();
+  }
 }
