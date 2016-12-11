@@ -35,7 +35,7 @@ export class DynamicJavaScriptCompleter {
 
   wrapInBrackets(completion) {
     var n = Number(completion);
-    if (!isNaN(n)) return `[${completion}]`;
+    if (!isNaN(n) || completion.startsWith("Symbol.")) return `[${completion}]`;
     var trailing = "";
     if (this.isMethodCallCompletion(completion)) {
       trailing = completion.slice(completion.indexOf("("));
@@ -69,20 +69,22 @@ export class DynamicJavaScriptCompleter {
 
     var count = completions.reduce((sum, [_, completions]) => sum+completions.length, 0),
         priority = 2000,
-        processed = completions.reduce((all, [protoName, completions], i) => {
-          return all.concat(completions.map(ea => ({
-            info: protoName,
-            completion: ea,
-            customInsertionFn: this.isValidIdentifier(ea) ? null :
-              (complString, prefix, textMorph, {start, end}) => {
-                var before = {row: start.row, column: start.column-1},
-                    range = textMorph.textInRange({start: before, end: start}) === "." ?
-                      {start: before, end} : {start, end};
-                textMorph.replace(range, this.wrapInBrackets(ea));
-              },
-            prefix: this.isValidIdentifier(ea) ? prefix : "." + prefix
-          })))
-        }, []);
+        processed = completions.reduce((all, [protoName, completions], i) =>
+          all.concat(completions.map(ea => {
+            var isValidIdentifier = this.isValidIdentifier(ea);
+            return {
+              info: protoName,
+              completion: ea,
+              prefix: isValidIdentifier ? prefix : "." + prefix,
+              customInsertionFn: isValidIdentifier ? null :
+                (complString, prefix, textMorph, {start, end}) => {
+                  var before = {row: start.row, column: start.column-1},
+                      range = textMorph.textInRange({start: before, end: start}) === "." ?
+                        {start: before, end} : {start, end};
+                  textMorph.replace(range, this.wrapInBrackets(ea));
+                },
+            }
+          })), []);
 
     // assign priority:
     processed.forEach((ea,i) => Object.assign(ea, {priority: priority+processed.length-i}));
