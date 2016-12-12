@@ -4,6 +4,7 @@ import { Morph, Button, List, Text, GridLayout, HorizontalLayout, Path } from ".
 import { Icon } from "./icons.js";
 import { signal, connect } from "lively.bindings";
 import { Tooltip } from "./tooltips.js";
+import { StyleRules } from "./style-rules.js";
 import config from "./config.js";
 import { Label } from "./text/label.js";
 
@@ -55,26 +56,20 @@ export class Slider extends Morph {
 export class PropertyInspector extends Morph {
 
    constructor(props) {
-       const btnStyle = {
-          type: "button", activeStyle: {fill: Color.transparent, borderWidth: 0, fontColor: Color.white.darker()}, 
-                          triggerStyle: {fill: Color.transparent, fontColor: Color.black}
-       }, {target, property, name} = props;
+       const {target, property, name, min, max} = props;
        super({
-           name,
-           extent:pt(55, 25), borderRadius: 5,
-           borderWidth: 1, borderColor: Color.gray, 
-           clipMode: "hidden",
+           name, morphClasses: ["root"],
+           styleRules: this.styler,
            submorphs: [new ValueScrubber({
-                        name: "value", fill: Color.white,
-                        padding: 4, fontSize: 15,
+                        name: "value",
                         value: target[property],
                         ...obj.dissoc(props, ["name"])}),
-                        {name: "down", ...btnStyle, label: Icon.makeLabel(
+                        {type: "button", name: "down", label: Icon.makeLabel(
                                   "sort-desc", {padding: rect(2,2,0,0), fontSize: 12})},
-                        {name: "up", ...btnStyle, label: Icon.makeLabel(
+                        {type: "button", name: "up", label: Icon.makeLabel(
                                   "sort-asc", {padding: rect(2,2,0,0), fontSize: 12})}]
        });
-       this.target = target;
+       this.target = target; this.min = min;
        this.property = property;
        this.initLayout();
        connect(this.get("value"), "scrub", this.target, this.property);
@@ -82,13 +77,43 @@ export class PropertyInspector extends Morph {
        connect(this.get("down"), "fire", this, "decrement");
    }
 
+   get styler() {
+       const buttonStyle = {
+            type: "button", 
+            clipMode: "hidden",
+            activeStyle: {
+                fill: Color.transparent, 
+                borderWidth: 0, fontColor: Color.white.darker()
+            }, 
+            triggerStyle: {fill: Color.transparent, fontColor: Color.black}
+         };
+       return new StyleRules({
+           root: {
+              extent:pt(55, 25), borderRadius: 5,
+              borderWidth: 1, borderColor: Color.gray, 
+              clipMode: "hidden"},
+           down: {padding: rect(0,-5,0,10), ...buttonStyle},
+           up: {padding: rect(0,0,0,-5), ...buttonStyle},
+           value: {fill: Color.white, padding: 4, fontSize: 15},
+           
+       })
+   }
+
    update() {
        this.get("value").value = this.target[this.property];
    }
 
-   increment() { this.target[this.property] += 1; this.update() }
+   increment() { 
+      if (this.max != undefined && this.target[this.property] >= this.max) return;
+      this.target[this.property] += 1; 
+      this.update() 
+   }
 
-   decrement() { this.target[this.property] -= 1; this.update() }
+   decrement() { 
+      if (this.min != undefined && this.target[this.property] <= this.min) return;
+      this.target[this.property] -= 1; 
+      this.update() 
+   }
 
    initLayout() {
       const l = this.layout = new GridLayout({
@@ -98,7 +123,7 @@ export class PropertyInspector extends Morph {
       l.col(1).paddingLeft = 5;
       l.col(1).paddingRight = 5;
       l.col(1).fixed = 25;
-      l.row(1).paddingTop = -10;
+      //l.row(1).paddingTop = -10;
       return l;
    }
 
