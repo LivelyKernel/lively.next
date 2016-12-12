@@ -62,7 +62,7 @@ if (path.length > 40) throw new Error("stop");
       return ref;
     }
 
-    // can realObj be serialized into an expression?
+    // can realObj be manually serialized, e.g. into an expression?
     if (typeof realObj.__serialize__ === "function") {
       var serialized = realObj.__serialize__(this, serializedObjMap, pool);
       if (serialized.hasOwnProperty("__expr__"))

@@ -104,4 +104,7 @@ describe('class serialization', function() {
     expect("Dummy_testDontRaiseErrorWhenClassNotFound").to.equal(result.className)
   });
 
+  it("serializes inline classes", () => {
+  
+  })
 });
