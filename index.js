@@ -1,6 +1,6 @@
 import "./object-extensions.js";
 
-import { string, arr, obj } from "lively.lang";
+import { arr, obj, num, string } from "lively.lang";
 import ClassHelper from "./class-helper.js";
 import ExpressionSerializer from "./plugins/expression-serializer.js";
 
@@ -73,8 +73,8 @@ if (path.length > 40) throw new Error("stop");
 
     // do the generic serialization, i.e. enumerate all properties and
     // serialize the referenced objects recursively
-    var {props} = snapshots[rev] = serializedObjMap[id] = {rev, props: {}};
-    var keys;
+    var snapshot = snapshots[rev] = serializedObjMap[id] = {rev, props: {}},
+        props = snapshot.props, keys;
 
     if (realObj.__dont_serialize__) {
       var exceptions = obj.mergePropertyInHierarchy(realObj, "__dont_serialize__");
@@ -119,7 +119,8 @@ if (path.length > 40) throw new Error("stop");
     }
 
     if (Array.isArray(value))
-      return value.map((ea, i) => this.snapshotProperty(ea, path.concat(i), serializedObjMap, pool));
+      return value.map((ea, i) =>
+        this.snapshotProperty(ea, path.concat(i), serializedObjMap, pool));
 
     let ref = pool.add(value);
 
@@ -184,20 +185,20 @@ console.log(`[deserialize] ${path.join(".")}`);
   }
 
   recreatePropertyAndSetProperty(newObj, props, key, serializedObjMap, pool, path) {
-    var {value} = props[key];
+    var {verbatim, value} = props[key];
     try {
-      newObj[key] = this.recreateProperty(key, value, serializedObjMap, pool, path.concat(key));
+      newObj[key] = verbatim ? value :
+        this.recreateProperty(key, value, serializedObjMap, pool, path.concat(key));
     } catch (e) {
       var objString;
       try { objString = String(newObj); }
       catch (e) { objString = `[some ${newObj.constructor.name}]` }
-        if (!e.__seen) {
-          console.error(`Error deserializing property ${key} of ${objString} (${JSON.stringify(value)})`);
-          e.__seen = true;
-        } else {
-          console.error(`Error deserializing property ${key} of ${objString}`);
-        }
-        throw e;
+      if (!e.__seen) {
+        var printedProp = `${key} of ${objString} (${JSON.stringify(value)})`;
+        console.error(`Error deserializing property ${printedProp}`);
+        e.__seen = true;
+      } else console.error(`Error deserializing property ${key} of ${objString}`);
+      throw e;
     }
   }
 
@@ -226,6 +227,10 @@ console.log(`[deserialize] ${path.join(".")}`);
 
 export class ObjectPool {
 
+  static requiredModulesOfSnapshot(snapshot, options) {
+    return new this(options).requiredModulesOfSnapshot(snapshot);
+  }
+
   static fromJSONSnapshot(jsonSnapshoted, options) {
     return this.fromSnapshot(JSON.parse(jsonSnapshoted), options);
   }
@@ -248,6 +253,7 @@ export class ObjectPool {
   ref(obj) { return this._obj_ref_map.get(obj); }
 
   objects() { return Array.from(this._obj_ref_map.keys()); }
+  objectRefs() { return Array.from(this._obj_ref_map.values()); }
 
   internalAddRef(ref) {
     if (ref.realObj)
