@@ -31,7 +31,7 @@ export class StyleRules {
 
    onMorphChange(morph, {selector, args, prop}) {
     if (selector == "addMorphAt") {
-        this.applyToAll(morph);
+        this.applyToAll(args[0]);
     } else if (prop == "name" || prop == "morphClasses") {
         this.enforceRulesOn(morph);
         this.applyLayout(morph);
