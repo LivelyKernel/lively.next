@@ -155,23 +155,28 @@ console.log(`[deserialize] ${path.join(".")}`);
       newObj = pool.classHelper.restoreIfClassInstance(this, snapshot) || {};
       if (!newObj._rev) newObj._rev = rev;
     }
+
     this.realObj = newObj;
 
     pool.internalAddRef(this); // for updating realObj
 
+    if (!newObj) return this;
+
+    if (typeof newObj.__deserialize__ === "function")
+      newObj.__deserialize__(snapshot, this);
+    
     if (props) {
 
-      var highPriorityKeys = ["submorphs", "list"];
+      var highPriorityKeys = ["submorphs"]; // FIXME!!!
       for (var i = 0; i < highPriorityKeys.length; i++) {
         var key = highPriorityKeys[i];
         if (key in props)
           this.recreatePropertyAndSetProperty(newObj, props, key, serializedObjMap, pool, path);
       }
 
-      for (var key in props) {
-        if (highPriorityKeys.includes(key)) continue;
-        this.recreatePropertyAndSetProperty(newObj, props, key, serializedObjMap, pool, path);
-      }
+      for (var key in props)
+        if (!highPriorityKeys.includes(key))
+          this.recreatePropertyAndSetProperty(newObj, props, key, serializedObjMap, pool, path);
 
     }
 
