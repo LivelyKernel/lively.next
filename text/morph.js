@@ -116,8 +116,8 @@ export class Text extends Morph {
     if (center !== undefined) this.center = center;
   }
 
-  __deserialize__(snapshot, meta, objRef) {
-    super.__deserialize__(snapshot, meta, objRef);
+  __deserialize__(snapshot, objRef) {
+    super.__deserialize__(snapshot, objRef);
 
     this.textLayout = new TextLayout(this.env.fontMetric);
     this.textRenderer = defaultRenderer;
@@ -128,6 +128,14 @@ export class Text extends Morph {
     this.setDefaultTextStyle(defaultTextStyle);
     // this.fit();
     // this._needsFit = false;
+  }
+
+  __additionally_serialize__(snapshot, objRef) {
+    snapshot.props.textAndAttributes = {
+      key: "textAndAttributes",
+      verbatim: true,
+      value: this.textAndAttributes.map(([text, attrs]) => [text, attrs.map(ea => ea.data)])
+    };
   }
 
   get isText() { return true }

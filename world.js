@@ -561,6 +561,11 @@ export class World extends Morph {
     this._tooltipViewer = new TooltipViewer(this);
   }
 
+  __deserialize__(snapshot, objRef) {
+    super.__deserialize__(snapshot, objRef);
+    this._tooltipViewer = new TooltipViewer(this);
+  }
+
   get isWorld() { return true }
 
   get draggable() { return true; }

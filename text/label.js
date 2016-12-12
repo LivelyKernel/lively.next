@@ -5,15 +5,6 @@ import { defaultStyle, defaultAttributes } from "../rendering/morphic-default.js
 import { h } from "virtual-dom";
 import { Icon } from "../icons.js";
 
-const defaultTextStyle = {
-  fontFamily: "Sans-Serif",
-  fontSize: 12,
-  fontColor: Color.black,
-  fontWeight: "normal",
-  fontStyle: "normal",
-  textDecoration: "none",
-  textStyleClasses: undefined,
-}
 
 export class Label extends Morph {
 
@@ -25,15 +16,7 @@ export class Label extends Morph {
     var { fontMetric, position, rightCenter, leftCenter, topCenter,
           bottom, top, right, left, bottomCenter, bottomLeft, bottomRight,
           topRight, topLeft, center } = props;
-    super({
-      fill: null,
-      draggable: false,
-      padding: 0,
-      nativeCursor: "default",
-      autofit: true,
-      ...defaultTextStyle,
-      ...obj.dissoc(props, ["fontMetric"])
-    });
+    super(obj.dissoc(props, ["fontMetric"]));
     if (fontMetric)
       this._fontMetric = fontMetric;
     this.fit();
@@ -52,6 +35,31 @@ export class Label extends Morph {
     if (topRight !== undefined) this.topRight = topRight;
     if (topLeft !== undefined) this.topLeft = topLeft;
     if (center !== undefined) this.center = center;
+  }
+
+  get defaultTextStyle() {
+    return {
+      fontFamily: "Sans-Serif",
+      fontSize: 12,
+      fontColor: Color.black,
+      fontWeight: "normal",
+      fontStyle: "normal",
+      textDecoration: "none",
+      textStyleClasses: undefined,
+    }
+  }
+
+  get defaultProperties() {
+    return {
+      ...super.defaultProperties,
+      fill: null,
+      draggable: false,
+      padding: Rectangle.inset(0),
+      nativeCursor: "default",
+      autofit: true,
+      ...this.defaultTextStyle,
+      savedMarks: [],
+    };
   }
 
   get isLabel() { return true }

@@ -13,8 +13,21 @@ export function deserializeMorph(idAndSnapshot) {
   return objPool.resolveToObj(id)
 }
 
+export async function loadWorldFromResource(fromResource) {
+  var data = JSON.parse(await fromResource.read());
+
+
+  // load required modules
+  await Promise.all(
+    ObjectPool.requiredModulesOfSnapshot(data.snapshot)
+      .map(modId => System.import(modId)
+        .catch(e => console.error(`Error loading ${modId}`, e))))
+
+  return deserializeMorph(data);
+}
+
 export function saveWorldToResource(world = World.defaultWorld(), toResource) {
-  
+
   if (!toResource) {
     var htmlResource = resource(document.location.href),
         name = htmlResource.name();
@@ -23,7 +36,9 @@ export function saveWorldToResource(world = World.defaultWorld(), toResource) {
       .withRelativePartsResolved()
   }
 
+  // pretty printing bloats 2x!
   return toResource.write(JSON.stringify(serializeMorph(world), null, 2));
+  // return toResource.write(JSON.stringify(serializeMorph(world)));
 }
 
 // await saveWorldToResource();

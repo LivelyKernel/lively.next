@@ -67,8 +67,8 @@ export class Morph {
     if (props.layout) this.layout = props.layout;
   }
 
-  __deserialize__(snapshot, meta, objRef) {
-    // inspect({snapshot, meta, objRef})
+  __deserialize__(snapshot, objRef) {
+    // inspect({snapshot, objRef})
     this._env = MorphicEnv.default(); // FIXME!
     this._rev = snapshot.rev;
     this._owner = null;
@@ -82,15 +82,18 @@ export class Morph {
     this.updateTransform();
   }
 
-  get __only_serialize__() { return Object.keys(this._currentState); }
+  get __only_serialize__() {
+    return Object.keys(this._currentState)
+      .filter(key => this[key] != this.defaultProperties[key]);
+  }
 
   get isMorph() { return true; }
   get id() { return this._id; }
 
   get env() { return this._env; }
 
-  get defaultProperties() { return defaultProperties }
-  defaultProperty(key) { return defaultProperties[key]; }
+  get defaultProperties() { return defaultProperties; }
+  defaultProperty(key) { return this.defaultProperties[key]; }
   getProperty(key) { return this._currentState[key]; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
