@@ -284,13 +284,21 @@ export class ObjectPool {
 
   requiredModulesOfSnapshot(snapshot) {
     var modules = [];
+
     for (var i = 0, ids = Object.keys(snapshot); i < ids.length; i++) {
       var ref = snapshot[ids[i]];
 
       if (ref.__expr__) {
         let exprModules = this.expressionSerializer.requiredModulesOf__expr__(ref.__expr__);
         if (exprModules) modules.push(...exprModules);
+        continue;
       }
+
+      var classModules = ClassHelper.sourceModulesInObjRef(ref);
+      if (classModules && classModules.length)
+        modules.push(...classModules.map(spec =>
+        console.log(spec)||
+          ((spec.package && spec.package.name) || "") + spec.pathInPackage.replace(/^\./, "")));
 
       if (ref.props) {
         for (var j = 0; j < ref.props.length; j++) {
@@ -303,6 +311,8 @@ export class ObjectPool {
       }
 
     }
+
+    modules = arr.uniq(modules);
 
     return modules;
   }

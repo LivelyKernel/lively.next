@@ -49,10 +49,7 @@ export default class ClassHelper {
       return {isClassPlaceHolder: true, className: meta.className};
     }
 
-    var instance = new klass(this);
-    if (typeof instance.__deserialize__ === "function")
-      instance.__deserialize__(snapshot, meta, objRef)
-    return instance;
+    return new klass(this);
   }
 
   locateClass(meta) {
@@ -74,17 +71,23 @@ export default class ClassHelper {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // searching
-  static sourceModulesIn(snapshots) {
-
+  static sourceModulesInObjRef(snapshotedObjRef) {
+    //                                  /--- that's the ref
+    // from snapshot = {[key]: {..., props: [...]}}
     var modules = [],
-        partsBinRequiredModulesProperty = 'requiredModules';
+        prop = snapshotedObjRef && snapshotedObjRef[classMetaForSerializationProp];
+    if (prop && prop.module) modules.push(prop.module);
+    return modules;
+  }
+  
+  static sourceModulesIn(snapshot) {
 
-    Object.keys(snapshots).forEach(id => {
-      var snapshot = snapshots[id];
+    var modules = [];
+
+    Object.keys(snapshot).forEach(id => {
+      var snapshot = snapshot[id];
       if (snapshot && snapshot[classMetaForSerializationProp])
         modules.push(snapshot[classMetaForSerializationProp]);
-      if (snapshot && snapshot[partsBinRequiredModulesProperty])
-        modules.pushAll(snapshot[partsBinRequiredModulesProperty]);
     });
 
     return arr.uniqBy(modules, (a, b) => {
