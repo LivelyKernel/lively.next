@@ -153,7 +153,7 @@ describe("marshalling", () => {
           {id} = objPool.add(obj),
           snapshot = objPool.snapshot();
       expect(snapshot).deep.equals(
-        {[id]: {rev: 0, props: [{key: "foo", value: "__lv_expr__:foo()"}]}});
+        {[id]: {rev: 0, props: {foo: {key: "foo", value: "__lv_expr__:foo()"}}}});
       try {
         window.foo = () => foo;
         var obj2 = ObjectPool.fromSnapshot(objPool.snapshot()).resolveToObj(id);
@@ -241,44 +241,84 @@ describe("marshalling", () => {
     });
 
   });
+  
+  describe("__additionally_serialize__ hook", () => {
+
+    it("gets called and has access to serialized obj", () => {
+      var obj = {
+        __additionally_serialize__: (snapshot, objRef) => snapshot.props.foo = 23
+      }, {id} = objPool.add(obj);
+      expect(objPool.snapshot()).containSubset({[id]: {"rev": 0, "props": {"foo": 23}}});
+    });
+    
+    it("can register new objects", () => {
+      var obj1 = {bar: 99}, obj2 = {
+        __additionally_serialize__: (snapshot, objRef, add) => add("other", [obj1])
+      }, {id} = objPool.add(obj2);
+
+      expect(obj.values(objPool.snapshot())).containSubset([
+        {props: {other: {key: "other",value: []}}},
+        {props: {bar: {key: "bar", value: 99}}}
+      ]);
+
+      expect(serializationRoundtrip(obj2))
+        .containSubset({other: [{bar: 99}]});
+    });
+
+    it("verbatim properties", () => {
+      var obj = {
+        __additionally_serialize__(snapshot, _, add) { add("foo", [{xxx: 23}], true); }
+      }, {id} = objPool.add(obj);
+
+      expect(objPool.snapshot())
+        .containSubset({[id]: {"rev": 0, "props": {foo: {value: [{xxx: 23}]}}}});
+
+      expect(ObjectPool.fromSnapshot(objPool.snapshot()).resolveToObj(id))
+        .containSubset({foo: [{xxx: 23}]});
+    
+    })
+  });
+
 });
-//
-// // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-//
-// function benchmarks() {
-//
-//   var n = 100;
-//   var objs = Array.range(1,n).map(i => ({n: i}))
-//   objs.slice(0, -1).forEach((obj, i) => obj.next = objs[i+1]);
-//   objs[objs.length-1].first = objs[0]
-//
-//   lively.lang.fun.timeToRunN(() => { new ObjectPool().add(objs[0]) }, 1000)
-//
-//   lively.lang.fun.timeToRunN(() => {
-//     var r = new ObjectPool();
-//     r.add(objs[0])
-//     objPool.snapshot()
-//   }, 1000);
-//
-//
-// console.profile("s")
-// // var uuids = Array.range(0,10000).map(ea => lively.lang.string.newUUID())
-//   lively.lang.fun.timeToRunN(() => {
-//     var r = new ObjectPool(() => uuids.pop() || lively.lang.string.newUUID());
-//     r.add(objs[0])
-//     // var r2 = ObjectPool.fromJSONSnapshot(r.jsonSnapshot())
-//     var r2 = ObjectPool.fromSnapshot(r.snapshot())
-//   }, 100);
-// console.profileEnd("s")
-//
-//   lively.lang.fun.timeToRunN(() => {
-//     lively.persistence.Serializer.copy(objs[0])
-//   }, 100);
-//
-//   var firstNewObj = objPool2.resolveToObj(objPool.ref(objs[0]).id)
-//   expect(objs[0]).not.equals(firstNewObj)
-//   expect(objs[0]).deep.equals(firstNewObj)
-//   expect(objs).deep.equals(objPool2.objects())
-//
-//
-// }
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function benchmarks() {
+
+  var n = 100;
+  var objs = Array.range(1,n).map(i => ({n: i}))
+  objs.slice(0, -1).forEach((obj, i) => obj.next = objs[i+1]);
+  objs[objs.length-1].first = objs[0]
+
+  lively.lang.fun.timeToRunN(() => { new ObjectPool().add(objs[0]) }, 1000)
+
+  lively.lang.fun.timeToRunN(() => {
+    var r = new ObjectPool();
+    r.add(objs[0])
+    objPool.snapshot()
+  }, 1000);
+
+
+  console.profile("s")
+
+  var uuids = Array.range(0,10000).map(ea => lively.lang.string.newUUID())
+  lively.lang.fun.timeToRunN(() => {
+    var r = new ObjectPool(() => uuids.pop() || lively.lang.string.newUUID());
+    r.add(objs[0])
+    // var r2 = ObjectPool.fromJSONSnapshot(r.jsonSnapshot())
+    var r2 = ObjectPool.fromSnapshot(r.snapshot())
+  }, 100);
+console.profileEnd("s")
+
+  lively.lang.fun.timeToRunN(() => {
+    lively.persistence.Serializer.copy(objs[0])
+  }, 100);
+
+  var firstNewObj = objPool2.resolveToObj(objPool.ref(objs[0]).id)
+  expect(objs[0]).not.equals(firstNewObj)
+  expect(objs[0]).deep.equals(firstNewObj)
+  expect(objs).deep.equals(objPool2.objects())
+
+
+}

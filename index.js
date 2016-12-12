@@ -95,6 +95,12 @@ if (path.length > 40) throw new Error("stop");
     }
     pool.classHelper.addClassInfo(this, realObj, snapshots[rev]);
 
+    if (typeof realObj.__additionally_serialize__ === "function")
+      realObj.__additionally_serialize__(snapshot,
+        this, (key, value, verbatim = false) =>
+          props[key] = verbatim ? {key, value, verbatim} :
+            {key, value: this.snapshotProperty(value, path.concat([key]), serializedObjMap, pool)});
+
     return ref;
   }
 
