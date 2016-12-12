@@ -300,17 +300,28 @@ var worldCommands = [
 
   {
     name: "diff and open in window",
-    exec: async (world, opts = {textA: "", textB: "", extent: pt(500,600)}) => {
-      var {textA, textB, extent} = opts;
+    exec: async (world, opts = {a: "", b: "", extent: pt(500,600)}) => {
+      // $$world.execCommand("diff and open in window", {a: {foo: 23}, b: {bax: 23, foo: 23}})
+      var {a, b, extent} = opts;
 
       // import * as diff from "https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js"
       var diff = await System.import("https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js"),
-          diffed = diffInWindow(textA, textB, {extent, fontFamily: "monospace"});
+          diffed = diffInWindow(a, b, {extent, fontFamily: "monospace"});
       return diffed;
 
-      function diffInWindow(textA, textB, opts) {
-        var diffed = diff.diffChars(textA, textB),
-            win = world.execCommand("open text window", opts),
+      function diffInWindow(a, b, opts) {
+        var diffed;
+        if (obj.isPrimitive(a) || a instanceof RegExp
+         || obj.isPrimitive(b) || b instanceof RegExp)
+           { a = String(a); b = String(b); }
+
+        try { JSON.stringify(a);  JSON.stringify(b); }
+        catch (e) { a = String(a); b = String(b); }
+
+        if (typeof a === "string" || typeof b === "string") diffed = diff.diffLines(a,b);
+        else diffed = diff.diffJson(a,b);
+
+        var win = world.execCommand("open text window", opts),
             textMorph = win.targetMorph;
         win.extent = pt(300, 200).maxPt(textMorph.textBounds().extent());
 

@@ -238,6 +238,7 @@ export default class Window extends Morph {
     this.focus();
 
     signal(this, "windowActivated", this);
+
     return this;
   }
 

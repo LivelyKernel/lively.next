@@ -10,6 +10,11 @@ import EvalBackendChooser from "./js/eval-backend-ui.js";
 
 import "mocha-es6";
 
+var jsDiff;
+(async function loadJsDiff() {
+  jsDiff = await System.import("https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js");
+})();
+
 function testsFromSource(source) {
   // Traverses the ast and constructs the nested mocha suites and tests as a list like
   // [{fullTitle: "completion", node: {/*...*/}, type: "suite"},
@@ -416,9 +421,9 @@ export default class TestRunner extends HTMLMorph {
         test = testsOfFile.tests.find(test => test.fullTitle === testTitle),
         printed = this.stringifyExpectedAndActualOfError(test.error);
 
-    if (printed && printed.actual && printed.expected) {
+    if (printed && test.error.actual && test.error.expected) {
       this.world().execCommand("diff and open in window",
-        {textA: printed.actual, textB: printed.expected, title: test.fullTitle})
+        {a: test.error.actual, b: test.error.expected, title: test.fullTitle})
     } else {
       var win = this.world().execCommand("open text window",
         {title: test.fullTitle, content: test.error + "\n" + test.error.stack});
@@ -579,14 +584,15 @@ export default class TestRunner extends HTMLMorph {
       return `${msg}<pre>${test.error.stack || test.error}</pre>`;
 
     var printed = this.stringifyExpectedAndActualOfError(test.error);
-    if (System.global.JsDiff && printed) {
+
+    if (jsDiff && printed) {
       return `${msg}<p>diff + = actual, - = expected:</p><pre>${diffIt(printed.expected, printed.actual)}</pre>`;
     } else {
       return `${msg}<p>expected:</p><pre>${String(test.error.expected)}</pre><p>actual:</p><pre>${String(test.error.actual)}</pre>`;
     }
 
     function diffIt(a, b) {
-      return JsDiff.diffLines(a, b).reduce((result, line) => {
+      return jsDiff.diffLines(a, b).reduce((result, line) => {
         if (!line.added && !line.removed)
           return arr.last(result) === "  ..." ? result : result.concat("  ...\n");
         if (line.added) return result.concat("+ " + line.value.replace(/\n?$/, "\n"));
