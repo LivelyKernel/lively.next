@@ -17,10 +17,20 @@ function createDummyWorld() {
   });
 }
 
+var env;
+async function setup() {
+  env = new MorphicEnv(await createDOMEnvironment());
+  MorphicEnv.pushDefault(env);
+  await env.setWorld(createDummyWorld());
+}
+
+function teardown() { MorphicEnv.popDefault().uninstall(); }
+
+
 describe("morph serialization", () => {
   
-  beforeEach(async () => MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
-  afterEach(() =>  MorphicEnv.popDefault().uninstall());
+  beforeEach(setup);
+  afterEach(teardown);
 
   it("serialize single morph", () => {
     var m = morph({fill: Color.red, position: pt(10,20)}),
