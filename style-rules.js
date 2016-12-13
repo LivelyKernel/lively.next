@@ -39,10 +39,10 @@ export class StyleRules {
   }
 
   getShadowedProps(morph) {
-     var props  = {};
-     while (morph && morph.styleRules != this) {
-         if (morph.styleRules) props = {...props, ...morph.styleRules.getStyleProps(morph)}
-         morph = morph.owner;
+     var props  = {}, curr = morph;
+     while (curr && curr.styleRules != this) {
+         if (curr.styleRules) props = {...props, ...curr.styleRules.getStyleProps(morph)}
+         curr = curr.owner;
      }
      return ["layout", ...Object.keys(props)];
   }
