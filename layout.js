@@ -54,6 +54,7 @@ class Layout {
   }
   
   attachAnimated(duration = 0, container, easing) {
+     if (this.active) return;
      this.container = container;
      this.apply({duration, easing});
      this.active = true;
