@@ -20,58 +20,127 @@ class StyleEditor extends Morph {
       const {title} = props;
       super({
         name: "BorderStyler",
-        dropShadow: true,
-        draggable: true,
-        borderColor: Color.gray,
-        borderWidth: 4,
-        fill: Color.black.withA(.7),
-        borderRadius: 15,
+        morphClasses: ['closed'],
+        styleRules: this.styler,
         layout: new VerticalLayout({spacing: 5}),
         ...props,
-        submorphs: [{
+        submorphs: [this.titleLabel(title)]});
+   }
+
+   get styler() {
+       return new StyleRules({
+          closeButton: {
+              fontSize: 22, 
+              fontColor: Color.gray.darker(),
+              nativeCursor: "pointer"
+          },
+          closed: {
+              dropShadow: true,
+              draggable: true,
+              borderColor: Color.gray,
+              borderWidth: 4,
+              fill: Color.black.withA(.7),
+              borderRadius: 15
+          },
+          opened: {
+              fill: new LinearGradient({stops: [
+                 {color: Color.rgb(242,243,244), offset: 0},
+                 {color: Color.rgb(229,231,233), offset: 1}]}),
+              borderWidth: 1, borderRadius: 7,
+              borderColor: Color.gray,
+          },
+          controlLabel: {
+              fontSize: 12, fontWeight: 'bold',
+              fontColor: Color.black, padding: rect(5,0,0,0),
+              fill: Color.transparent, readOnly: true,
+         },
+         controlWrapper: {
+              fill: Color.transparent,
+              draggable: true
+         }
+       })
+   }
+
+   titleLabel(title) {
+      return {
            fill: Color.transparent,
            layout: new HorizontalLayout(),
            onDrag: (evt) => this.onDrag(evt),
            submorphs: [{
-             type: "text", fontWeight: "bold", padding: 5,
+             type: "text",
+             fontWeight: "bold", padding: 5,
              fontColor: Color.gray, fontSize: 12, readOnly: true,
-             textString: title, fill: Color.transparent, draggable: true,
+             fill: Color.transparent, draggable: true,
+             textString: title,
              onDrag: (evt) => this.onDrag(evt)
         }]
-    }]});
+    }
    }
 
-   onMouseDown() { this.open() }
+   onMouseDown() { signal(this, "open"); this.open() }
+   
+   onHoverIn(evt) {
+      this.show()
+   }
+
+   onMouseMove(evt) {
+      this.show()
+   }
+
+   hide() {
+      if (this.opened) return;
+      this.animate({opacity: 0, visible: false, duration: 300});
+   }
+
+   blur() {
+      if (this.opened) return;
+      this.blurred = true;
+      this.animate({opacity: .7, duration: 300})
+   }
+
+   show() {
+      if (this.opened) return;
+      this.blurred = false;
+      this.animate({opacity: 1, visible: true, duration: 300});
+   }
 
    close() {
-      this.active = false;
+      this.opened = false;
+      this.layout = null;
+      this.submorphs = [this.titleLabel(this.title)];
+      this.animate({
+            morphClasses: ["closed"],
+            position: this.openPosition, 
+            layout: new VerticalLayout({spacing: 5}),
+            duration: 300})
       signal(this, "close", false);
-      this.remove()
    }
 
    async open() {
-      if (this.active) return;
+      if (this.opened) return;
       const [wrapper] = this.submorphs,
             {submorphs: [instruction]} = wrapper,
             duration = 200;
-      this.layout = null;
+
+      this.layout = null; 
+      this.opacity = 1;
+      this.nativeCursor = "auto";
+      this.openPosition = this.position;
+      
       wrapper.addMorphAt(Icon.makeLabel("times-circle-o", {
-           fontSize: 22, fontColor: Color.gray.darker(),
-           nativeCursor: "pointer", onMouseDown: () => this.close()}), 0);
+           name: "closeButton",  
+           onMouseDown: () => this.close()
+      }), 0);
       instruction.animate({fontColor: Color.gray.darker(), duration});
       this.controls(this.target).forEach(c => {
          c.opacity = 0;
          this.addMorph(c).animate({opacity: 1, duration});
       });
       this.animate({
-          fill: new LinearGradient({stops: [
-                 {color: Color.rgb(242,243,244), offset: 0},
-                 {color: Color.rgb(229,231,233), offset: 1}]}),
-          borderWidth: 1, borderRadius: 7,
-          borderColor: Color.gray,
+          morphClasses: ['opened'],
           duration, layout: new VerticalLayout({spacing: 5})
       });
-      this.active = true;
+      this.opened = true;
       return false;
    }
 
@@ -79,22 +148,23 @@ class StyleEditor extends Morph {
 
    createControl(name, controlElement) {
      return {
-      fill: Color.transparent,
-      draggable: true, onDrag: (evt) =>  this.onDrag(evt),
+      morphClasses: ['controlWrapper'],
+      onDrag: (evt) =>  this.onDrag(evt),
       layout: new VerticalLayout({spacing: 5}),
       submorphs: [
-        {type: "text", textString: name, fontSize: 12, fontWeight: 'bold',
-         fontColor: Color.black, padding: rect(5,0,0,0),
-         fill: Color.transparent},
+        {type: "text", morphClasses: ['controlLabel'], textString: name},
         controlElement
      ]}
   }
 
   createSelectableControl({controls, init}) {
-      const modeSelector = new ModeSelector({name: "modeSelector", items: controls, init, width: this.width}),
+      const modeSelector = new ModeSelector({
+                    name: "modeSelector", 
+                    items: controls, init, 
+                    width: this.width}),
             selectableControl = new Morph({
-              fill: Color.transparent,
-              draggable: true, onDrag: (evt) =>  this.onDrag(evt),
+              morphClasses: ['controlWrapper'],
+              onDrag: (evt) =>  this.onDrag(evt),
               layout: new VerticalLayout({spacing: 10}),
               select(control) {
                  // rms: animating submorphs currently starts animations "too early", meaning,
@@ -135,9 +205,7 @@ class StyleEditor extends Morph {
             submorphs: [
               {fill: Color.transparent, layout: new HorizontalLayout(),
                submorphs: [
-                {type: "text", textString: title, fontSize: 12, fontWeight: "bold",
-                 fontColor: Color.black, padding: rect(5,0,0,0),
-                 fill: Color.transparent},
+                {type: "text", textString: title, morphClasses: ['controlLabel']},
                 toggler]}
            ]});
 
@@ -240,6 +308,10 @@ export class BorderStyleEditor extends StyleEditor {
       ]
   }
 
+  onHoverOut() {
+     this.blur();
+  }
+
   clipControl(target) {
      return this.createControl("Clip Mode",
        {layout: new HorizontalLayout({spacing: 5}),
@@ -281,39 +353,48 @@ export class LayoutStyleEditor extends Morph {
        super.remove();
    }
 
-   async toggle() {
-       const layoutHaloToggler = this.getSubmorphNamed("layoutHaloToggler"),
+   open() {
+      const layoutHaloToggler = this.getSubmorphNamed("layoutHaloToggler"),
              layoutPicker = this.getSubmorphNamed('layoutPicker');
+      this.active = true;
+      this.layoutHalo = this.world().showLayoutHaloFor(this.target, this.pointerId);
+      layoutPicker.textString = "Configure Layout";
+      Icon.setIcon(layoutHaloToggler, "times-circle-o");
+      layoutHaloToggler.fontSize = 22; layoutHaloToggler.padding = 0;
+      layoutHaloToggler.tooltip = "Close layout halo";
+      this.animate({
+         layout: new VerticalLayout({spacing: 2}),
+         submorphs: [...this.submorphs, ...this.layoutHalo.optionControls()],
+         duration: 300
+      });
+      signal(this, "open");
+      this.update(true);
+   }
+
+   close() {
+      const layoutHaloToggler = this.getSubmorphNamed("layoutHaloToggler"),
+             layoutPicker = this.getSubmorphNamed('layoutPicker');
+      this.active = false;
+      this.layoutHalo.remove(); this.layoutHalo = null;
+      layoutPicker.textString = this.getCurrentLayoutName();
+      Icon.setIcon(layoutHaloToggler, "th");
+      layoutHaloToggler.fontSize = 14; layoutHaloToggler.padding = 3;
+      layoutHaloToggler.tooltip = "Show layout halo";
+      this.animate({
+            layout: new HorizontalLayout(),
+            submorphs: [this.getSubmorphNamed("layoutControlPickerWrapper")],
+            duration: 300
+      });
+      signal(this, "close");
+      this.update(true);
+   }
+
+   toggle() {
        if (this.layoutHalo) {
-          this.active = false;
-          this.halo.showStyleGuides(true);
-          this.layout = null;
-          this.submorphs = [this.getSubmorphNamed("layoutControlPickerWrapper")];
-          layoutPicker.textString = this.getCurrentLayoutName();
-          this.layoutHalo.remove(); this.layoutHalo = null;
-          Icon.setIcon(layoutHaloToggler, "th");
-          layoutHaloToggler.fontSize = 14; layoutHaloToggler.padding = 3;
-          layoutHaloToggler.tooltip = "Show layout halo";
-          await this.animate({
-                layout: new HorizontalLayout(),
-                duration: 300
-          });
+          this.close();
        } else {
-          this.active = true;
-          this.halo.showStyleGuides(false);
-          this.layoutHalo = this.world().showLayoutHaloFor(this.target, this.pointerId);
-          this.layout = null;
-          this.submorphs = [...this.submorphs, ...this.layoutHalo.optionControls()]
-          layoutPicker.textString = "Configure Layout";
-          Icon.setIcon(layoutHaloToggler, "times-circle-o");
-          layoutHaloToggler.fontSize = 22; layoutHaloToggler.padding = 0;
-          layoutHaloToggler.tooltip = "Close layout halo";
-          this.animate({
-             layout: new VerticalLayout({spacing: 0}),
-             duration: 300
-          });
+          this.open()
        }
-       this.update(true);
    }
 
    getCurrentLayoutName() {
@@ -331,7 +412,7 @@ export class LayoutStyleEditor extends Morph {
          () => {
              const p = this.getSubmorphNamed("layoutPicker");
              this.target.animate({layout: l,
-                                  easing: "easeOutQuint"});
+                                   easing: "easeOutQuint"});
              p.textString = this.getLayoutName(l);
              p.fitIfNeeded();
              this.update();
@@ -343,14 +424,15 @@ export class LayoutStyleEditor extends Morph {
    }
 
    update(animated) {
-      const topCenter = this.target
-                            .globalBounds()
+      const topCenter = this.halo.targetBounds
                             .withX(0).withY(0)
                             .bottomCenter().addXY(50, 70),
             inspectButton = this.getSubmorphNamed('layoutHaloToggler');
       if (animated) {
          this.animate({topCenter, duration: 300});
-      } else { this.topCenter = topCenter; }
+      } else { 
+         this.topCenter = topCenter;
+      }
       if (!this.target.layout) {
         inspectButton.opacity = .5;
         inspectButton.nativeCursor = null;
@@ -437,19 +519,7 @@ export class HTMLEditor extends Morph {
 export class ImageEditor extends StyleEditor {
 
     constructor(props) {
-       super({title: "Change Image URL", 
-              styleRules: new StyleRules({
-                 urlBar: {borderRadius: 5,
-                   padding: 4, fill: Color.white.withA(.8),
-                   fontColor: Color.gray.darker(), fontSize: 15
-                 },
-                  saveButton: {
-                     fontSize: 18, padding: 2,
-                     nativeCursor: "pointer",
-                     fontColor: Color.gray.darker(),
-                     tooltip: "Update the image URL"
-                  }
-              }),
+       super({title: "Change Image URL",
              ...props});
     }
 
@@ -461,6 +531,18 @@ export class ImageEditor extends StyleEditor {
        return {
           layout: new HorizontalLayout({spacing: 3}),
           fill: Color.transparent, 
+          styleRules: new StyleRules({
+                 urlBar: {borderRadius: 5,
+                   padding: 4, fill: Color.white.withA(.8),
+                   fontColor: Color.gray.darker(), fontSize: 15
+                 },
+                  saveButton: {
+                     fontSize: 18, padding: 2,
+                     nativeCursor: "pointer",
+                     fontColor: Color.gray.darker(),
+                     tooltip: "Update the image URL"
+                  }
+              }),
           submorphs: [{
            type: "text", name: "urlBar",
            textString: target.imageUrl,
