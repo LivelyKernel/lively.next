@@ -15,11 +15,13 @@ import { Tree, TreeData } from "lively.morphic/tree.js"
 
 import "mocha-es6/index.js";
 
+
 // -=-=-=-=-=-
 // Browser UI
 // -=-=-=-=-=-
 
 import { findDecls } from "lively.ast/lib/code-categorizer.js";
+import { testsFromSource } from "../../test-runner.js";
 
 class CodeDefTreeData extends TreeData {
 
@@ -100,7 +102,8 @@ export default class Browser extends Window {
       historyBackwardButton,
       historyForwardButton,
       removeModuleButton,
-      removePackageButton
+      removePackageButton,
+      runTestsButton
     } = this.ui;
 
     connect(searchButton,          'fire', this, 'execCommand', {converter: () => "open code search"});
@@ -112,6 +115,7 @@ export default class Browser extends Window {
     connect(removePackageButton,   'fire', this, 'execCommand', {converter: () => "remove package"});
     connect(addModuleButton,       'fire', this, 'execCommand', {converter: () => "load or add module"});
     connect(removeModuleButton,    'fire', this, 'execCommand', {converter: () => "remove module"});
+    connect(runTestsButton,        'fire', this, 'execCommand', {converter: () => "run all tests in module"});
 
     connect(packageList, "selection", this, "onPackageSelected");
     connect(moduleList, 'selection', this, 'onModuleSelected');
@@ -208,7 +212,9 @@ export default class Browser extends Window {
              layout: new HorizontalLayout({spacing: 2, autoResize: false}),
               submorphs: [
                {...btnStyle, name: "addModuleButton", label: Icon.makeLabel("plus"), tooltip: "add module"},
-               {...btnStyle, name: "removeModuleButton", label: Icon.makeLabel("minus"), tooltip: "remove package"}]},
+               {...btnStyle, name: "removeModuleButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
+               {...btnStyle, name: "runTestsButton", label: "run tests", tooltip: "run tests", visible: false}
+             ]},
 
             new HorizontalResizer({name: "hresizer", bounds: resizerBounds}),
 
@@ -318,6 +324,7 @@ export default class Browser extends Window {
       packageList:           this.getSubmorphNamed("packageList"),
       removeModuleButton:    this.getSubmorphNamed("removeModuleButton"),
       removePackageButton:   this.getSubmorphNamed("removePackageButton"),
+      runTestsButton:        this.getSubmorphNamed("runTestsButton"),
       searchButton:          this.getSubmorphNamed("searchButton"),
       sourceEditor:          this.getSubmorphNamed("sourceEditor"),
       evalBackendList:       this.getSubmorphNamed("eval backend list")
@@ -503,6 +510,7 @@ export default class Browser extends Window {
       this.historyRecord();
       
       await this.updateCodeEntities(m);
+      await this.updateTestUI(m);
 
     } finally {
       if (deferred) {
@@ -566,6 +574,18 @@ export default class Browser extends Window {
     var decls = findDecls(lively.ast.parse(this.get("sourceEditor").textString));
 
     codeEntityTree.treeData = new CodeDefTreeData(decls);
+  }
+
+  updateTestUI(mod) {  
+    var { runTestsButton, sourceEditor } = this.ui,
+        hasTests = false;
+    if (this.editorPlugin.isJSEditorPlugin) {
+      var ast = this.editorPlugin.getNavigator().ensureAST(sourceEditor),
+          tests = testsFromSource(ast || sourceEditor.textString);
+      hasTests = tests && tests.length;
+    }
+    
+    runTestsButton.visible = hasTests;
   }
 
   async save() {

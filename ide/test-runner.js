@@ -15,7 +15,7 @@ var jsDiff;
   jsDiff = await System.import("https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js");
 })();
 
-function testsFromSource(source) {
+export function testsFromSource(sourceOrAst) {
   // Traverses the ast and constructs the nested mocha suites and tests as a list like
   // [{fullTitle: "completion", node: {/*...*/}, type: "suite"},
   //  {fullTitle: "completion can compute properties and method completions of an object", node: {/*...*/}, type: "test"},
@@ -24,7 +24,7 @@ function testsFromSource(source) {
 
   var testStack = [], testsAndSuites = [],
       {parse} = System.get(System.decanonicalize("lively.ast")),
-      ast = parse(source);
+      ast = typeof sourceOrAst === "string" ? parse(sourceOrAst) : sourceOrAst;
 
   lively.ast.acorn.walk.recursive(ast, {}, {
     CallExpression: (node, state, c) => {
@@ -45,7 +45,7 @@ function testsFromSource(source) {
   return testsAndSuites;
 }
 
-function testsFromMocha(mocha) {
+export function testsFromMocha(mocha) {
 
   return _buildTestList(mocha.suite)
     .reduce((byFile, test) => {
