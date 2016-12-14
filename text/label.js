@@ -4,6 +4,7 @@ import { Morph, morph, show } from "../index.js";
 import { defaultStyle, defaultAttributes } from "../rendering/morphic-default.js";
 import { h } from "virtual-dom";
 import { Icon } from "../icons.js";
+import { signal } from "lively.bindings";
 
 
 export class Label extends Morph {
@@ -93,6 +94,7 @@ export class Label extends Morph {
     this._cachedTextBounds = null;
     this.addValueChange("textAndAttributes", value);
     if (this.autofit) this._needsFit = true;
+    signal(this, "value", value);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -352,8 +354,7 @@ export class Label extends Morph {
       attrs.className = (attrs.className || "") + " " + textStyleClasses.join(" ");
     attrs.style = {...defaultStyle(this), ...style};
 
-    return h("div", attrs,
-      renderedText.concat(renderer.renderSubmorphs(this)));
+    return h("div", attrs, [...renderedText, renderer.renderSubmorphs(this)]);
   }
 
   renderChunk(text, chunkStyle) {

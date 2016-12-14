@@ -16,7 +16,6 @@ export function deserializeMorph(idAndSnapshot) {
 export async function loadWorldFromResource(fromResource) {
   var data = JSON.parse(await fromResource.read());
 
-
   // load required modules
   await Promise.all(
     ObjectPool.requiredModulesOfSnapshot(data.snapshot)
@@ -35,6 +34,9 @@ export function saveWorldToResource(world = World.defaultWorld(), toResource) {
       .join("../" + name.replace(/\.[^\.]+/, "-world.json"))
       .withRelativePartsResolved()
   }
+  
+  if (typeof toResource === "string")
+    toResource = resource(toResource);
 
   // pretty printing bloats 2x!
   return toResource.write(JSON.stringify(serializeMorph(world), null, 2));
