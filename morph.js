@@ -78,13 +78,13 @@ export class Morph {
     this._currentState = {...this.defaultProperties};
     this._id = objRef.id;
     this._animationQueue = new AnimationQueue(this);
-    this.tickingScripts = [];
     this.updateTransform();
   }
 
   get __only_serialize__() {
     return Object.keys(this._currentState)
-      .filter(key => this[key] != this.defaultProperties[key]);
+      .filter(key => this[key] != this.defaultProperties[key])
+        .concat("tickingScripts");
   }
 
   get isMorph() { return true; }
@@ -530,7 +530,7 @@ export class Morph {
   // morphic relationship
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  get submorphs() { return this.getProperty("submorphs").slice(); }
+  get submorphs() { return (this.getProperty("submorphs") || []).slice(); }
   set submorphs(newSubmorphs) {
     this.layout && this.layout.disable();
     this.submorphs.forEach(m => newSubmorphs.includes(m) || m.remove());
@@ -571,7 +571,7 @@ export class Morph {
       }
     }, () => {
       var prevOwner = submorph.owner,
-          submorphs = this.getProperty("submorphs").slice(), tfm;
+          submorphs = this.submorphs, tfm;
 
       if (prevOwner && prevOwner !== this) {
       // since morph transforms are local to a morphs owner we need to
@@ -623,7 +623,7 @@ export class Morph {
     var index = this.submorphs.indexOf(morph);
     if (index === -1) return;
 
-    var submorphs = this.getProperty("submorphs");
+    var submorphs = this.getProperty("submorphs") || [];
     submorphs.splice(index, 1);
 
     this.addMethodCallChangeDoing({
