@@ -2,14 +2,20 @@ import { fun, arr, obj, promise, string } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { morph, Morph, Window, show } from "../index.js";
 import { FilterableList } from "../list.js";
+import { LabeledCheckBox } from "../widgets.js";
 import Browser from "./js/browser/index.js";
 import { connect, disconnectAll } from "lively.bindings"
 
 
-export async function doSearch(livelySystem, searchTerm, excludes = [/systemjs-plugin-babel/]) {
+export async function doSearch(
+  livelySystem, searchTerm,
+  excludedModules = [/systemjs-plugin-babel/],
+  includeUnloaded = true
+) {
   if (searchTerm.length <= 2) { return []; }
 
-  var searchResult = await livelySystem.searchInAllPackages(searchTerm, {excludedModules: excludes});
+  var searchResult = await livelySystem.searchInAllPackages(
+                        searchTerm, {excludedModules, includeUnloaded});
 
   var [errors, found] = arr.partition(searchResult, ({isError}) => isError)
 
@@ -49,17 +55,33 @@ export class CodeSearcher extends FilterableList {
 
   constructor(props = {}) {
     super({
+      fill: Color.white,
       extent: pt(800,500),
       fontFamily: "Inconsolata, monospace",
       fontSize: 14,
       historyId: "lively.morphic-code searcher",
       ...obj.dissoc(props, "targetBrowser", "backend")});
+    var cb = this.addMorph(new LabeledCheckBox({
+      checked: false,
+      name: "searchInUnloadedModulesCheckbox",
+      label: "search in unloaded modules"}));
+
     if (props.targetBrowser)
       this.state.targetBrowser = props.targetBrowser.id;
     this.state.currentSearchTerm = "";
     this.state.currentFilters = "";
     this.state.backend = props.backend || "local";
+
     connect(this, "accepted", this, "openBrowserForSelection");
+    connect(cb, "checked", this, "searchAgain");
+  }
+
+  relayout() {
+    super.relayout();
+    
+    var input = this.getSubmorphNamed("input"),
+        cb = this.getSubmorphNamed("searchInUnloadedModulesCheckbox");
+    cb && (cb.rightCenter = input.rightCenter);
   }
 
   get browser() {
@@ -109,6 +131,14 @@ export class CodeSearcher extends FilterableList {
     })(searchInput);
   }
 
+  searchAgain() {
+    var needle = this.state.currentSearchTerm;
+    if (needle <= 2) return;
+    this.getSubmorphNamed("list").items = [];
+    this.state.currentSearchTerm = "";
+    this.searchAndUpdate(needle);
+  }
+
   async searchAndUpdate(searchInput) {
     this.get("input").acceptInput(); // for history
     var filterTokens = searchInput.split(/\s+/).filter(ea => !!ea);
@@ -121,7 +151,8 @@ export class CodeSearcher extends FilterableList {
         newSearch = searchTerm != this.state.currentSearchTerm;
     if (newSearch) {
       this.state.currentSearchTerm = searchTerm;
-      this.items = await doSearch(await this.getLivelySystem(), searchTerm);
+      var includeUnloaded = this.getSubmorphNamed("searchInUnloadedModulesCheckbox").checked;
+      this.items = await doSearch(await this.getLivelySystem(), searchTerm, undefined, includeUnloaded);
     }
   
     filterTokens = filterTokens.map(ea => ea.toLowerCase());
@@ -149,4 +180,29 @@ export class CodeSearcher extends FilterableList {
   onWindowActivated() {
     this.get("input").selectAll();
   }
+  
+  get commands() {
+    return super.commands.concat([
+      {
+        name: "toggle search in unloaded modules",
+        exec: () => { this.get("searchInUnloadedModulesCheckbox").toggle(); return true; }
+      }
+    ]);
+  }
+
+  get commands() {
+    return super.commands.concat([
+      {
+        name: "toggle search in unloaded modules",
+        exec: () => { this.get("searchInUnloadedModulesCheckbox").trigger(); return true; }
+      }
+    ]);
+  }
+  
+  get keybindings() {
+    return [
+      {keys: "Alt-L", command: "toggle search in unloaded modules"}
+    ].concat(super.keybindings);
+  }
+
 }
