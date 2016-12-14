@@ -453,10 +453,12 @@ class SvgStyleHalo extends StyleHalo {
            ...super.borderHaloShape(props),
            type: "polygon",
            vertices: this.target.vertices,
+           position: halo.target.origin,
            alignWithTarget() {
               this.borderWidth = halo.target.borderWidth || 2;
               this.vertices = halo.target.vertices;
-              if (!halo.target.borderWidth) this.position = pt(-2, -2);
+              this.position = halo.target.origin;
+              if (!halo.target.borderWidth) this.moveBy(pt(-2, -2));
               // if (halo.vertexHandles) {
               //    halo.clearVertexHandles();
               //    halo.initVertexHandles();
