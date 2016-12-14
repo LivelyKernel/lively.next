@@ -46,6 +46,8 @@ function normalizePackageURL(System, packageURL) {
 // simply replacing the System instance
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+// System.get("@lively-env").packages["http://localhost:9011/lively-system-interface/node_modules/lively.vm"] = new Package(System, System.decanonicalize("lively.vm/"))
+
 function packageStore(System) {
   return System.get("@lively-env").packages;
 }
@@ -519,9 +521,12 @@ function getPackages(System) {
   // ```
   return Package.allPackages(System).map(p => {
     return {
-      ...obj.select(p, ["name", "main", "map", "meta", "referencedAs", "url", "address", "version"]),
-      names: p.referencedAs,
-      modules: p.modules().map(m => ({name: m.id, deps: m.directRequirements()}))
+      ...obj.select(p, [
+        "name", "main", "map", "meta",
+        "referencedAs", "url", "address", "version"
+      ]),
+      modules: p.modules().map(m =>
+        ({name: m.id, deps: m.directRequirements().map(ea => ea.id)}))
     }
   })
 }
