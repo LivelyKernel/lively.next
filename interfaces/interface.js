@@ -67,7 +67,10 @@ export class AbstractCoreInterface {
     return this.setConfig(jso);
   }
 
-  async resourcesOfPackage(packageOrAddress, exclude = [".git", "node_modules", ".optimized-loading-cache"]) {
+  async resourcesOfPackage(
+    packageOrAddress,
+    exclude = [".git", "node_modules", ".optimized-loading-cache"]
+  ) {
     var p = packageOrAddress.address ? packageOrAddress : await this.getPackage(packageOrAddress),
         resourceURLs = (await this.resourceDirList(p.address, 'infinity', {exclude})).map(ea => ea.url),
         loadedModules = arr.groupByKey(p.modules, "name");

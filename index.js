@@ -75,13 +75,16 @@ export class Interface {
   searchInPackage(packageURL, searchTerm, options) {
     return this.coreInterface.searchInPackage(packageURL, searchTerm, options);
   }
+
   async searchInAllPackages(searchTerm, options) {
     var packages = await this.coreInterface.getPackages(),
         results = [];
     for (let {url} of packages) {
-      if (!url) continue;
-      var packageResults = await this.coreInterface.searchInPackage(url, searchTerm, options)
-      results = results.concat(packageResults);
+      if (!url || url === "no group"/*FIXME*/) continue;
+      try {
+        var packageResults = await this.coreInterface.searchInPackage(url, searchTerm, options)
+        results = results.concat(packageResults);
+      } catch (e) { console.error(`Error searching in package ${url}:\n${e.stack}`); }
     }
     return results;
   }
