@@ -47,19 +47,22 @@ class CustomVNode {
 }
 
 // Usage:
-// var {state: {renderer, eventDispatcher, world}} = $world.get("lively.morphic world")
-// var h = world.addMorph(new HTMLMorph({position: pt(10,10), extent: pt(100,100)}));
+// var htmlMorph = $world.addMorph(new HTMLMorph({position: pt(10,10)}));
 // You can set either the html content directly
-// h.html = "<h1>a test</h1>"
+// htmlMorph.html
+// htmlMorph.html = "<h1>a test</h1>"
 // Or create a dom node
-// h.domNode = document.create("div");
-// h.domNode.textContent = "Hello world"
+// htmlMorph.domNode = document.createElement("div");
+// htmlMorph.domNode.textContent = "Hello world"
 
 export class HTMLMorph extends Morph {
 
-  constructor(props = {}) {
-     super({extent: pt(420, 330), ...props});
-     this.html = props.html || this.defaultHTML;
+  constructor(props) {
+    super({
+      extent: pt(420, 330),
+      html: this.defaultHTML,
+      ...props
+    });
   }
 
   get html() { return this.domNode.innerHTML; }
@@ -67,15 +70,12 @@ export class HTMLMorph extends Morph {
 
   get defaultHTML() {
      return `
-<div style="width: 100%; height: 100%; background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))">
- <p style="left: 30%;
-            top: 25%;
-            font-size: 40pt;
-            font-weight: bold;
-            position: absolute;
-            font-family: Inconsolata, monospace;
-            color: lightgray;">
-  &lt;HTML&gt;</p>
+<div style="display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))">
+  <p style="font: bold 40pt Inconsolata, monospace; color: lightgray;">&lt;HTML&#x2F;&gt;</p>
 </div>`
   }
 
