@@ -5,6 +5,7 @@ import { Icon } from "./icons.js";
 import { signal, connect } from "lively.bindings";
 import { Tooltip } from "./tooltips.js";
 import config from "./config.js";
+import { Label } from "./text/label.js";
 
 export class Slider extends Morph {
 
@@ -173,16 +174,17 @@ export class ValueScrubber extends Text {
 
 export class CheckBox extends Morph {
 
-  constructor(props) {
-    super({
+  get defaultProperties() {
+    return {
+      ...super.defaultProperties,
       draggable: false,
-      extent: pt(18, 18),
+      extent: pt(15,15),
       borderWidth: 0,
       active: true,
       checked: false,
       fill: Color.transparent,
-      ...props,
-    });
+      nativeCursor: "pointer"
+    }
   }
 
   get checked() { return this.getProperty("checked"); }
@@ -207,6 +209,69 @@ export class CheckBox extends Morph {
 
   render(renderer) {
     return renderer.renderCheckBox(this);
+  }
+
+}
+
+export class LabeledCheckBox extends Morph {
+
+  constructor(props) {
+    super({
+      name: "LabeledCheckBox",
+      ...props,
+      submorphs: [
+        new CheckBox({name: "checkbox"}),
+        new Label({
+          value: props.label, nativeCursor: "pointer",
+          name: "label", padding: Rectangle.inset(3, 0)
+        })]});
+    connect(this.labelMorph, 'value', this, 'relayout');
+    connect(this.checkboxMorph, 'checked', this, 'checked');
+    this.relayout();
+  }
+
+  relayout() {
+    var l = this.labelMorph, cb = this.checkboxMorph;
+    if (this.alignCheckBox === "left") {
+      cb.leftCenter = pt(0, l.height/2);
+      l.leftCenter = cb.rightCenter;
+    } else {
+      l.position = pt(0,0)
+      cb.leftCenter = pt(l.width, l.height/2);
+    }
+    this.extent = this.submorphBounds().extent();
+  }
+
+  get labelMorph() { return this.getSubmorphNamed("label"); }
+  get checkboxMorph() { return this.getSubmorphNamed("checkbox"); }
+
+  get defaultProperties() {
+    return {
+      ...super.defaultProperties,
+      alignCheckBox: "left",
+      label: "label"
+    }
+  }
+  
+  get alignCheckBox() { return this.getProperty("alignCheckBox"); }
+  set alignCheckBox(leftOrRight) {
+    this.addValueChange("alignCheckBox", leftOrRight);
+    this.relayout();
+  }
+
+  get label() { return this.labelMorph.value; }
+  set label(value) { this.labelMorph.value = value; }
+
+  get checked() { return this.checkboxMorph.checked; }
+  set checked(value) { this.checkboxMorph.checked; signal(this, "checked", value); }
+
+  get active() { return this.checkboxMorph.active; }
+  set active(value) { this.checkboxMorph.active; }
+  trigger() { this.checkboxMorph.trigger(); }
+
+  onMouseDown(evt) {
+    if (this.active) this.trigger();
+    evt.stop();
   }
 
 }
