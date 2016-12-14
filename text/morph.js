@@ -284,6 +284,7 @@ export class Text extends Morph {
     this.anchors.push(anchor);
     return anchor;
   }
+
   removeAnchor(anchor) {
     this._anchors = this.anchors.filter(
       typeof anchor === "string" ?
@@ -488,9 +489,13 @@ export class Text extends Morph {
             selections.slice(1).map(sel => () => {
               this._selection = sel;
               return Promise.resolve(this.execCommand(commandOrName, args, count, evt))
-                .then(result => results.push(result))
+                      .then(result => results.push(result));
             }))).then(() => results),
-            () => { this._selection = origSelection; this._multiSelection = null; this.selection.mergeSelections(); });
+            () => {
+              this._selection = origSelection;
+              this._multiSelection = null;
+              this.selection.mergeSelections();
+            });
 
       } else {
         try {
@@ -498,7 +503,11 @@ export class Text extends Morph {
             this._selection = sel;
             results.push(this.execCommand(commandOrName, args, count, evt))
           }
-        } finally { this._selection = origSelection; this._multiSelection = null; this.selection.mergeSelections(); }
+        } finally {
+          this._selection = origSelection;
+          this._multiSelection = null;
+          this.selection.mergeSelections();
+        }
         return results;
       }
     }
@@ -522,7 +531,8 @@ export class Text extends Morph {
       var scrollCursorIntoView = command.hasOwnProperty("scrollCursorIntoView") ?
         command.scrollCursorIntoView : true;
       if (scrollCursorIntoView)
-        fun.throttleNamed("execCommand-scrollCursorIntoView-" + morph.id, 100, () => morph.scrollCursorIntoView())();
+        fun.throttleNamed("execCommand-scrollCursorIntoView-" + morph.id,
+          100, () => morph.scrollCursorIntoView())();
     }
 
   }
@@ -1034,7 +1044,8 @@ export class Text extends Morph {
         // if no line wrapping is enabled we add a little horizontal offset so
         // that characters at line end are better visible
         charBounds =   this.lineWrapping ? charBounds : charBounds.insetByPt(pt(-20, 0)),
-        delta = charBounds.topLeft().subPt(paddedBounds.translateForInclusion(charBounds).topLeft());
+        delta = charBounds.topLeft()
+          .subPt(paddedBounds.translateForInclusion(charBounds).topLeft());
     this.scroll = this.scroll.addPt(delta).addPt(offset);
 
     if (this.isFocused()) this.ensureKeyInputHelperAtCursor();
@@ -1047,7 +1058,8 @@ export class Text extends Morph {
     var {scroll, selection: {lead: pos}} = this,
         offset = this.charBoundsFromTextPosition(pos).y - scroll.y,
         isPromise = false,
-        cleanup = () => this.scroll = this.scroll.withY(this.charBoundsFromTextPosition(pos).y - offset);
+        cleanup = () => this.scroll =
+          this.scroll.withY(this.charBoundsFromTextPosition(pos).y - offset);
 
     try {
       var result = doFn();

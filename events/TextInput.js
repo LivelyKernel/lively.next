@@ -256,8 +256,12 @@ export default class TextInput {
 
   ensureBeingAtCursorOfText(textMorph) {
     // move the textarea to the text cursor
+
+    if (!textMorph.world()) return;
+
     let localCursorPos = textMorph.textLayout.pixelPositionFor(textMorph, textMorph.cursorPosition),
-        globalCursorPos = textMorph.worldPoint(localCursorPos.subPt(textMorph.scroll));
+        posInClippedBounds = textMorph.innerBounds().constrainPt(localCursorPos),
+        globalCursorPos = textMorph.worldPoint(posInClippedBounds.subPt(textMorph.scroll));
     this.setPosition(globalCursorPos);
   }
 }
