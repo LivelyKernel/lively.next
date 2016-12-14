@@ -1,13 +1,13 @@
 import { Path } from "lively.lang";
 import { parse, query } from "lively.ast";
 
-export async function extractTestDescriptors(source, positionAsIndex) {
+export async function extractTestDescriptors(sourceOrAst, positionAsIndex) {
   // Expects mocha.js like test definitions: https://mochajs.org/#getting-started
   // Extracts nested "describe" and "it" suite and test definitions from the
   // source code and associates setup (before(Each)) and tear down (after(Each))
   // code with them. Handy to run tests at point etc.
 
-  var parsed = parse(source),
+  var parsed = typeof sourceOrAst === "string" ? parse(sourceOrAst) : sourceOrAst,
        nodes = query.nodesAt(positionAsIndex, parsed)
                  .filter(n => n.type === "CallExpression"
                            && n.callee.name
