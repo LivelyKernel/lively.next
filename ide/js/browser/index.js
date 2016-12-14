@@ -239,19 +239,21 @@ export default class Browser extends Window {
 
 
     var browserCommands = container.get("browserCommands"),
-        hresizer = container.get("hresizer"),
-        packageList = container.get("packageList"),
+        hresizer =        container.get("hresizer"),
+        packageList =     container.get("packageList"),
         packageCommands = container.get("packageCommands"),
-        moduleList = container.get("moduleList"),
-        moduleCommands = container.get("moduleCommands"),
-        sourceEditor = container.get("sourceEditor");
+        moduleList =      container.get("moduleList"),
+        moduleCommands =  container.get("moduleCommands"),
+        codeEntityTree =  container.get("codeEntityTree"),
+        sourceEditor =    container.get("sourceEditor");
 
     const l = browserCommands.layout;
     l.col(2).fixed = 100; l.row(0).paddingTop = 1; l.row(0).paddingBottom = 1;
-    
+
     hresizer.addScalingAbove(packageList);
-    hresizer.addFixed(packageCommands);
     hresizer.addScalingAbove(moduleList);
+    hresizer.addScalingAbove(codeEntityTree);
+    hresizer.addFixed(packageCommands);
     hresizer.addFixed(moduleCommands);
     hresizer.addScalingBelow(sourceEditor);
 
@@ -508,7 +510,7 @@ export default class Browser extends Window {
       await this.prepareCodeEditorForModule(m);
 
       this.historyRecord();
-      
+
       await this.updateCodeEntities(m);
       await this.updateTestUI(m);
 
@@ -568,7 +570,7 @@ export default class Browser extends Window {
 
   updateCodeEntities(mod) {
     var {codeEntityTree} = this.ui;
-    
+
     if (!mod) { codeEntityTree.treeData = new CodeDefTreeData([]); return; }
 
     var decls = findDecls(lively.ast.parse(this.get("sourceEditor").textString));
@@ -576,7 +578,7 @@ export default class Browser extends Window {
     codeEntityTree.treeData = new CodeDefTreeData(decls);
   }
 
-  updateTestUI(mod) {  
+  updateTestUI(mod) {
     var { runTestsButton, sourceEditor } = this.ui,
         hasTests = false;
     if (this.editorPlugin.isJSEditorPlugin) {
@@ -584,7 +586,7 @@ export default class Browser extends Window {
           tests = testsFromSource(ast || sourceEditor.textString);
       hasTests = tests && tests.length;
     }
-    
+
     runTestsButton.visible = hasTests;
   }
 
