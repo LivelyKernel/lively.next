@@ -148,7 +148,10 @@ export async function interactivelyInjectImportIntoText(textMorph, opts) {
 
   // 3. insert imported var names at cursor
   if (insertImportAtCursor) {
-    let source = importedVarNames.join("\n");
+    let source = importedVarNames.join("\n"),
+        pos = textMorph.cursorPosition,
+        before = textMorph.getLine(pos.row).slice(0, pos.col);
+    if (before.trim()) source = "\n" + source;
     textMorph.selection.text = source;
     if (!gotoImport) textMorph.scrollCursorIntoView();
   }
