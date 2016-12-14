@@ -271,6 +271,11 @@ class ModuleInterface {
             .map(mid => module(this.System, mid));
   }
 
+  directRequirements() {
+    var dependencies = (this.record() || {}).dependencies || [];
+    return arr.pluck(dependencies.filter(Boolean), "name").map(id => module(this.System, id));
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // module environment
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -587,6 +592,7 @@ class ModuleInterface {
         moduleId: this.id,
         packageName: p.name,
         pathInPackage: this.pathInPackage(),
+        isLoaded: this.isLoaded(),
         length,
         line, column: i - lineStart,
         lineString: src.slice(lineStart, lineEnd)

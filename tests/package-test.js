@@ -45,7 +45,7 @@ describe("package loading", function() {
   });
 
   afterEach(() => {
-    removeSystem("test")
+    removeSystem("test");
     return removeDir(testDir);
   });
 
@@ -111,6 +111,52 @@ describe("package loading", function() {
           name: `some-project`, referencedAs: [`some-project`]
         }])
     })
+  });
+
+  describe("nested packages", () => {
+
+    beforeEach(async () => {
+      await createFiles(project1aDir, {
+        "my-projects": {
+          "sub-project": {
+            "package.json": '{"name": "sub-project", "main": "index.js"}',
+            "index.js": "export var state = 99;",
+          }
+        }
+      })
+    });
+
+    it("finds loaded modules of registered package", async () => {
+      await getPackage(S, project2Dir).import();
+
+      var p = getPackage(S, project1aDir);
+      await p.register();
+      expect(arr.pluck(p.modules(), "id")).equals([project1aDir + "package.json"], "register")
+      await p.import();
+      expect(arr.pluck(p.modules(), "id"))
+        .equals(["package.json", "entry-a.js", "other.js"].map(ea => project1aDir + ea), "import")
+
+      var innerDir = project1aDir + "my-projects/sub-project/",
+          p2 = getPackage(S, innerDir);
+      await p2.import();
+      expect(arr.pluck(p2.modules(), "id"))
+        .equals(["package.json", "index.js"].map(ea => innerDir + ea), "import inner")
+      
+      expect(arr.pluck(p.modules(), "id"))
+        .equals(["package.json", "entry-a.js", "other.js"].map(ea => project1aDir + ea), "after sub-project loaded")
+    });
+
+    it("finds resources of registered package", async () => {
+      var innerDir = project1aDir + "my-projects/sub-project/",
+          p2 = getPackage(S, innerDir);
+      var p = getPackage(S, project1aDir);
+      p.register();
+      p2.register();
+
+      expect(arr.pluck(await p.resources(), "url"))
+        .equals(["entry-a.js", "other.js", "package.json"].map(ea => project1aDir + ea));
+    });
+
   });
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
