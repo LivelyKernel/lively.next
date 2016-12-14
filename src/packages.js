@@ -5,6 +5,7 @@ import module from "../src/module.js";
 import { computeRequireMap as requireMap } from './dependencies.js'
 import { knownModuleNames } from './system.js'
 import { isJsFile, asDir, isURL, urlResolve, join } from "./url-helpers.js";
+import { resource } from "lively.resources";
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -239,12 +240,13 @@ class PackageConfiguration {
 
 }
 
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // package object
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 class Package {
+
+  static allPackages(System) { return obj.values(packageStore(System)); }
 
   static forModule(System, module) {
     var id = module.id,
@@ -285,12 +287,65 @@ class Package {
     return this.url.indexOf(base) === 0 ? this.url.slice(base.length) : this.url;
   }
 
-  toString() { return `Package(${this._name} – ${this.path()}/)`; }
+  modules() {
+    return (moduleNamesByPackageNames(this.System)[this.url] || [])
+            .map(id => module(this.System, id));
+  }
+
+  async resources(
+    matches /*= url => url.match(/\.js$/)*/,
+    exclude = [".git", "node_modules", ".optimized-loading-cache"],
+  ) {
+    var dirList = await resource(this.address).dirList('infinity', {exclude}),
+        resourceURLs = dirList.map(ea => !ea.isDirectory() && ea.url),
+        loadedModules = arr.pluck(this.modules(), "id"),
+        packageNames = arr.without(allPackageNames(this.System), this.url);
+
+    
+    resourceURLs = resourceURLs.filter(url =>
+      url && !packageNames.some(purl => url.startsWith(purl)));
+    if (matches) resourceURLs = resourceURLs.filter(matches);
+    return resourceURLs.map(url => {
+      var nameInPackage = url.replace(this.address, "").replace(/‘\//, ""),
+          isLoaded = loadedModules.includes(url);
+      return {isLoaded, url, nameInPackage, package: this};
+    });
+  }
+
+  toString() { return `Package(${this.name} - ${this.path()}/)`; }
 
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // confiuration
+  // configuration
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  mergeWithConfig(config) {
+    config = {...config};
+    var {name, referencedAs, map} = config;
+
+    if (referencedAs) {
+      delete config.referencedAs
+      this.referencedAs = arr.uniq(this.referencedAs.concat(referencedAs))
+    }
+
+    if (name) {
+      delete config.name;
+      this._name = name;
+    }
+
+    if (map) {
+      delete config.map;
+      Object.assign(this.map, map);
+    }
+
+    Object.assign(this, config);
+    return this;
+  }
+
+  addMapping(name, url) {
+    this.map[name] = url;
+    this.System.config({packages: {[this.url]: {map: {[name]: url}}}})
+  }
 
   async tryToLoadPackageConfig() {
     var {System, url} = this,
@@ -365,9 +420,9 @@ class Package {
 
     url = url.replace(/\/$/, "");
     var conf = System.getConfig(),
-        packageConfigURL = url + "/package.json";
+        packageConfigURL = url + "/package.json",
+        p = getPackages(System).find(ea => ea.address === url);
 
-    var p = getPackages(System).find(ea => ea.address === url)
     if (p)
       p.modules.forEach(mod =>
         module(System, mod.name).unload({forgetEnv: true, forgetDeps: false}));
@@ -387,44 +442,23 @@ class Package {
 
   reload() { this.remove(); return this.import(); }
 
-  search(needle, options) {
-    var packageURL = this.url.replace(/\/$/, ""),
-        p = getPackages(this.System).find(p => p.address == packageURL);
-    return !p ? Promise.resolve([]) :
-      Promise.all(p.modules.map(m =>
-        module(this.System, m.name).search(needle, options)
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // searching
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  async search(needle, options = {}) {
+    var modules = options.includeUnloaded ?
+      (await this.resources(
+        url => url.endsWith(".js"),
+        [".git", "node_modules", "dist"]))
+          .map(({url}) => module(this.System, url)) :
+      this.modules().filter(ea => ea.isLoaded());
+    return Promise.all(
+        modules.map(m => m.search(needle, options)
           .catch(err => {
             console.error(`Error searching module ${m.name}:\n${err.stack}`);
             return [];
           }))).then(res => arr.flatten(res, 1));
-   }
-
-  mergeWithConfig(config) {
-    config = {...config};
-    var {name, referencedAs, map} = config;
-
-    if (referencedAs) {
-      delete config.referencedAs
-      this.referencedAs = arr.uniq(this.referencedAs.concat(referencedAs))
-    }
-
-    if (name) {
-      delete config.name;
-      this._name = name;
-    }
-
-    if (map) {
-      delete config.map;
-      Object.assign(this.map, map);
-    }
-
-    Object.assign(this, config);
-    return this;
-  }
-
-  addMapping(name, url) {
-    this.map[name] = url;
-    this.System.config({packages: {[this.url]: {map: {[name]: url}}}})
   }
 
 }
@@ -445,7 +479,7 @@ function allPackageNames(System) {
   return arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages)))
 }
 
-function moduleNamesByPackageNames(System) {
+export function moduleNamesByPackageNames(System) {
   var modules = knownModuleNames(System),
       packageNames = allPackageNames(System);
 
@@ -483,40 +517,13 @@ function getPackages(System) {
   //   version: semver version number
   // }, ... ]
   // ```
-
-  var map = requireMap(System),
-      modules = Object.keys(map),
-      sysPackages = System.packages,
-      livelyPackages = packageStore(System),
-      packageNames = arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages))),
-      result = [];
-
-  groupIntoPackages(System, modules, packageNames).mapGroups((packageAddress, moduleNames) => {
-    var systemP = sysPackages[packageAddress],
-        livelyP = livelyPackages[packageAddress],
-        p = livelyP && systemP ? livelyP.mergeWithConfig(systemP) : livelyP || systemP,
-        referencedAs = p ? p.referencedAs : [],
-        version = p ? p.version : undefined;
-
-    if (!referencedAs || !referencedAs.length)
-      referencedAs = [packageAddress.replace(/^(?:.+\/)?([^\/]+)$/, "$1")];
-
-    moduleNames = moduleNames.filter(name =>
-      name !== packageAddress && name !== packageAddress + "/");
-
-    result.push(Object.assign({}, p || {}, {
-      address: packageAddress,
-      name: referencedAs[0],
-      names: referencedAs,
-      version,
-      modules: moduleNames.map(name => ({
-        name: name,
-        deps: map[name]
-      }))
-    }));
-  });
-
-  return result;
+  return Package.allPackages(System).map(p => {
+    return {
+      ...obj.select(p, ["name", "main", "map", "meta", "referencedAs", "url", "address", "version"]),
+      names: p.referencedAs,
+      modules: p.modules().map(m => ({name: m.id, deps: m.directRequirements()}))
+    }
+  })
 }
 
 function applyConfig(System, packageConfig, packageURL) {

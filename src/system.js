@@ -340,18 +340,18 @@ export function whenLoaded(System, moduleName, callback) {
 
 function loadedModules(System) { return System.get("@lively-env").loadedModules; }
 
-function searchLoadedModules(System, searchStr, options) {
-  return Promise.all(
-    obj.values(loadedModules(System))
-      .map(m => m.search(searchStr, options)))
-        .then(res => arr.flatten(res, 1));
-}
-
 function knownModuleNames(System) {
   var fromSystem = System.loads ?
     Object.keys(System.loads) :
     Object.keys(System._loader.moduleRecords);
   return arr.uniq(fromSystem.concat(Object.keys(loadedModules(System))));
+}
+
+function searchLoadedModules(System, searchStr, options) {
+  return Promise.all(
+    obj.values(loadedModules(System))
+      .map(m => m.search(searchStr, options)))
+        .then(res => arr.flatten(res, 1));
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
