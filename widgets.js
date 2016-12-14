@@ -1,12 +1,85 @@
 import { obj, num, arr, properties } from "lively.lang";
 import { pt, Color, Rectangle, rect } from "lively.graphics";
-import { Morph, Button, List, Text, GridLayout, HorizontalLayout, Path } from "./index.js";
+import { Morph, Button, List, Text, GridLayout, HorizontalLayout, Path, Ellipse } from "./index.js";
 import { Icon } from "./icons.js";
 import { signal, connect } from "lively.bindings";
 import { Tooltip } from "./tooltips.js";
 import { StyleRules } from "./style-rules.js";
 import config from "./config.js";
 import { Label } from "./text/label.js";
+
+export class Leash extends Path {
+
+   constructor(props) {
+      const {start, end} = props;
+      super({
+         ...props, morphClasses: ['leash'],
+         styleRules: this.styler,
+         vertices: [start, end]
+      });
+      this.build()
+   }
+
+   get styler() {
+      return new StyleRules({
+          leash: {
+             borderWidth: 2, borderColor: Color.black,
+          },
+          endpoint: {
+             fill: Color.black, extent: pt(10,10), nativeCursor: "-webkit-grab"
+          }
+      })
+   }
+
+   endpoint(idx) {
+      const leash = this, {x,y} = leash.vertices[idx];
+      return new Ellipse({position: pt(x,y), morphClasses: ['endpoint'], 
+              onDrag(evt) {
+                 const {x,y} = leash.vertices[idx];
+                 leash.vertices[idx] = {...leash.vertices[idx], ...pt(x,y).addPt(evt.state.dragDelta)} 
+                 leash.vertices = leash.vertices;
+                 this.moveBy(evt.state.dragDelta);
+              },
+              relayout() {
+                 const globalPos = this.connectedMorph.globalBounds()[this.attachedSide](),
+                       pos = leash.localize(globalPos);
+                 this.position = pos;
+                 leash.vertices[idx] = {...leash.vertices[idx], ...leash.localize(globalPos)} 
+                 leash.vertices = leash.vertices;
+              },
+              attachTo(morph, side) {
+                  this.connectedMorph = morph;
+                  this.attachedSide = side;
+                  leash.vertices[idx] = {...leash.vertices[idx], 
+                                         controlPoints: leash.controlPointsFor(side)} 
+                  leash.vertices = leash.vertices;
+                  connect(morph, "position", this, "relayout")
+                  this.relayout();
+              }})
+   }
+
+   controlPointsFor(side) {
+      const next = {
+         topCenter: pt(0,-1), topLeft: pt(1,-1),
+         rightCenter: pt(1,0), bottomRight: pt(1,1),
+         bottomCenter: pt(0,1), bottomLeft: pt(-1,1),
+         leftCenter: pt(-1,0), topRight: pt(-1,-1),
+         center: pt(0,0)
+      }[side];
+      return {previous: next.negated().scaleBy(50), next: next.scaleBy(50)}
+   }
+
+   build() {
+       connect(this, "onChange", this, "relayout");
+       const leash = this;
+       this.submorphs = [this.startPoint = this.endpoint(0), this.endPoint = this.endpoint(1)]
+   }
+
+   relayout() {
+   
+   }
+
+}
 
 export class Slider extends Morph {
 
