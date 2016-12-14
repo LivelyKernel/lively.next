@@ -1352,7 +1352,9 @@ export class Image extends Morph {
 export class Path extends Morph {
 
   constructor(props) {
-    super({...props, fill: Color.transparent});
+    super({...obj.dissoc(props, "origin"), fill: Color.transparent});
+    this.adjustOrigin(props.origin || pt(0,0));
+    this.position = props.position;
   }
 
   get isPath() { return true; }
@@ -1363,7 +1365,7 @@ export class Path extends Morph {
         && change.prevValue
         && !this.adjustingVertices)
         this.adjustVertices(change.value.scaleByPt(change.prevValue.inverted()))
-    if (["vertices", "borderWidthLeft"].includes(change.prop)) {
+    if (!this.adjustingOrigin && ["vertices", "borderWidthLeft"].includes(change.prop)) {
        const bw = change.prop == "borderWidthLeft" ? change.value : this.borderWidth,
              vs = change.prop == "vertices" ? change.value : this.vertices,
              b = Rectangle.unionPts([pt(0,0), ...vs.map(({x,y}) => pt(x,y))]);
@@ -1387,8 +1389,17 @@ export class Path extends Morph {
   adjustVertices(delta) {
      const vs = this.vertices;
      this.vertices = vs && vs.map(({x,y, controlPoints}) => {
-        return {controlPoints, ...pt(x,y).scaleByPt(delta)}
+        return {controlPoints, ...pt(x,y).addPt(this.origin).scaleByPt(delta).subPt(this.origin)}
      });
+  }
+
+  adjustOrigin(newOrigin) {
+    this.adjustingOrigin = true;
+    this.vertices = this.vertices.map(v => {
+       return { ...v, ...this.origin.subPt(newOrigin).addXY(v.x, v.y)}
+    });
+    super.adjustOrigin(newOrigin);
+    this.adjustingOrigin = false;
   }
 
   addVertex(v, before=null) {
