@@ -10,6 +10,7 @@ import { ColorPicker, BorderStyleEditor, BodyStyleEditor,
          ImageEditor } from "../ide/styling/style-editor.js";
 import { Icon } from "../icons.js";
 import { StyleRules } from "../style-rules.js";
+import { Leash } from "../widgets.js";
 
 /* rms: I tried doing this via polymorphic dispatch
          on the different morphs directly, but
@@ -97,6 +98,7 @@ class StyleHalo extends Morph {
       this.borderStyler.remove();
       this.bodyStyler.remove();
       this.layoutStyleEditor.remove();
+      this.leash && this.leash.remove();
       disconnect(this.target, "onChange", this, "relayout");
       super.remove();
    }
@@ -107,6 +109,7 @@ class StyleHalo extends Morph {
       controls.setTransform(this.target.transformToMorph(this));
       controls.position = this.localizePointFrom(this.target.origin.negated(), this.target);
       controls.submorphs.forEach(s => s.update && s.update(evt));
+      this.layoutStyleEditor.update();
       return this;
    }
 
@@ -131,9 +134,9 @@ class StyleHalo extends Morph {
 
    isInMorphBody(evt) {
       if (!evt) return false;
-      const {x,y} = evt.positionIn(this.submorphs[0]),
+      var  {x,y} = evt.positionIn(this.submorphs[0]),
             pos = pt(num.roundTo(x,1),num.roundTo(y,1)),
-            {width, height} = this.target;
+            {width, height, origin} = this.target;
       if (!rect(0,0,width,height).containsPoint(pt(x,y))) return false;
       const v = Intersection.intersectShapes(  
               this.intersectionShape(),
@@ -149,15 +152,27 @@ class StyleHalo extends Morph {
    }
 
    openBorderStyler() {
-      this.borderStyler.open();
+      if (this.borderStyler.opened) return;
+      this.leash = this.world().addMorph(new Leash({start: pt(0,0), end: pt(10,10), opacity: 0}), this);
+      this.leash.startPoint.attachTo(this.borderHalo, this.getSideInWorld());
+      this.leash.endPoint.attachTo(this.borderStyler, "center");
+      this.leash.animate({opacity: .7, duration: 300});
+      this.borderStyler.open()
       this.bodyStyler.hide();
       connect(this.borderStyler, "close", this.bodyStyler, "show");
+      connect(this.borderStyler, "close", this.leash, "remove");
    }
 
    openBodyStyler() {
+      if (this.bodyStyler.opened) return;
+      this.leash = this.world().addMorph(new Leash({start: pt(0,0), end: pt(10,10), opacity: 0}).openInWorld(), this);
+      this.leash.startPoint.attachTo(this.borderHalo, "center");
+      this.leash.endPoint.attachTo(this.bodyStyler, "center");
+      this.leash.animate({opacity: .7, duration: 300});
       this.bodyStyler.open();
       this.borderStyler.hide();
       connect(this.bodyStyler, "close", this.borderStyler, "show");
+      connect(this.bodyStyler, "close", this.leash, "remove");
    }
 
    borderHaloShape(props) {
@@ -267,17 +282,20 @@ class StyleHalo extends Morph {
       this.showBorderStyler();
    }
 
-   showBorderStyler() {
+   getSideInWorld() {
       const visibleBounds = this.env.world.visibleBounds(),
-      globalBounds = this.targetBounds.insetByRect(rect(-100, -50, 100, 100)),
-      sideInWorld = ["topCenter", ...visibleBounds.sides, ...visibleBounds.corners].find(s => {
-                            return visibleBounds.containsPoint(globalBounds[s]())
-                      });
+      globalBounds = this.targetBounds.insetByRect(rect(-100, -50, 100, 100));
+      return ["topCenter", ...visibleBounds.sides, ...visibleBounds.corners].find(
+                      s => {
+                            return visibleBounds.containsPoint(globalBounds[s]())});
+   }
+
+   showBorderStyler() {
       if (!this.borderStyler) {
           this.borderStyler = this.getBorderStyler();
       }
       this.borderStyler.openInWorld();
-      this.borderStyler.center = this.targetBounds.insetByRect(rect(-100, -50, 0, -50))[sideInWorld]();
+      this.borderStyler.center = this.targetBounds.insetByRect(rect(-100, -50, 0, -50))[this.getSideInWorld()]();
       this.borderStyler.show();
    }
 
@@ -437,8 +455,8 @@ class SvgStyleHalo extends StyleHalo {
      }
 
    intersectionShape() {
-     const bw = this.target.borderWidth;
-     return IntersectionParams.newPolygon(this.target.vertices.map(v => new Point2D(v.x + bw, v.y + bw)))
+     const bw = this.target.borderWidth, o = this.target.origin;
+     return IntersectionParams.newPolygon(this.target.vertices.map(v => new Point2D(v.x + bw + o.x, v.y + bw + o.y)))
    }
 
    openBorderStyler() {
