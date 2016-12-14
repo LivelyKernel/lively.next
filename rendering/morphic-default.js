@@ -92,7 +92,7 @@ class StyleMapper {
       "border-right-color": borderColorRight ? borderColorRight.toString() : "transparent",
       "border-bottom-color": borderColorBottom ? borderColorBottom.toString() : "transparent",
       "border-left-color": borderColorLeft ? borderColorLeft.toString() : "transparent",
-      ...borderColor.isGradient ? {"border-image": borderColor.toString()} : {}
+      ...(borderColor && borderColor.isGradient) ? {"border-image": borderColor.toString()} : {}
     }
   }
 
@@ -114,15 +114,18 @@ class StyleMapper {
   }
 
   static getSvgAttributes({width, height, borderWidth}) {
-     return {width, height, "viewBox": [-borderWidth,-borderWidth, width ,height].join(" ")};
+     return {width, height, "viewBox": [-borderWidth, -borderWidth, width + borderWidth,height + borderWidth].join(" ")};
   }
 
   static getPathAttributes(path, fill=false) {
-     var {x: startX, y: startY, controlPoints: {next: {x: startNextX, y: startNextY}}} = arr.first(path.vertices),
+     var vertices = path.vertices.map(v => {
+              return {...v, ...path.origin.addXY(v.x, v.y)}
+         }),
+         {x: startX, y: startY, controlPoints: {next: {x: startNextX, y: startNextY}}} = arr.first(vertices),
            startNext = pt(startX + startNextX, startY + startNextY),
-          {x: endX, y: endY, controlPoints: {previous: {x: endPrevX, y: endPrevY}}} = arr.last(path.vertices),
+          {x: endX, y: endY, controlPoints: {previous: {x: endPrevX, y: endPrevY}}} = arr.last(vertices),
            endPrev = pt(endX + endPrevX, endY + endPrevY),
-           interVertices = path.vertices.slice(1, -1);
+           interVertices = vertices.slice(1, -1);
      return {"stroke-width": path.borderWidth, ...this.getSvgBorderStyle(path), 
              fill: path.fill ? ((path.fill.isGradient) ? "url(#gradient-fill" + path.id + ")" : path.fill.toString()) 
                                : "transparent",
