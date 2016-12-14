@@ -1156,13 +1156,18 @@ export class Text extends Morph {
     if (clickedOnMorph !== this) return;
     var maxClicks = 3, normedClickCount = ((clickCount - 1) % maxClicks) + 1;
 
+    var clickPos = this.textPositionFromPoint(this.scroll.addPt(this.localize(position)));
+
     if (evt.isShiftDown()) {
-      this.selection.lead = this.textPositionFromPoint(this.scroll.addPt(this.localize(position)));
+      this.selection.lead = clickPos;
     } else if (evt.isAltDown()) {
-      this.selection.addRange(Range.at(this.textPositionFromPoint(this.scroll.addPt(this.localize(position)))));
+      this.selection.addRange(Range.at(clickPos));
     } else {
       this.selection.disableMultiSelect();
-      if (normedClickCount === 1) this.onMouseMove(evt);
+      if (normedClickCount === 1) {
+        if (!evt.isShiftDown()) this.selection = {start: clickPos, end: clickPos};
+        else this.selection.lead = clickPos
+      }
       else if (normedClickCount === 2) this.execCommand("select word", null, 1, evt);
       else if (normedClickCount === 3) this.execCommand("select line", null, 1, evt);
     }
@@ -1171,18 +1176,9 @@ export class Text extends Morph {
   }
 
   onMouseMove(evt) {
-    if (!evt.leftMouseButtonPressed() || !this.selectable) return;
-    var {clickedOnMorph, clickedOnPosition} = evt.state;
-    if (clickedOnMorph !== this) return;
-
-    var textPosClicked = this.textPositionFromPoint(this.scroll.addPt(this.localize(evt.position)));
-
-    var selRange = {start: textPosClicked, end: textPosClicked};
-    if (!evt.isShiftDown()) {
-      var start = this.textPositionFromPoint(this.scroll.addPt(this.localize(clickedOnPosition)));
-      selRange.start = start;
-    }
-    this.selection = selRange
+    if (!evt.leftMouseButtonPressed() || !this.selectable
+     || evt.state.clickedOnMorph !== this) return;
+    this.selection.lead = this.textPositionFromPoint(this.scroll.addPt(this.localize(evt.position)))
   }
 
   onContextMenu(evt) {
