@@ -11,13 +11,6 @@ var _snippets = [
   ["typeu", 'typeof ${0:object} === "undefined"$1'],
   ["typenu", 'typeof ${0:object} !== "undefined"$1'],
 
-  // functions
-  ["fun", "function ${0:functionName}($1) {$2}"],
-  ["fn", "function($0) {$1}"],
-  ["f", "($0) => $1"],
-
-  ["aw", "await $0"],
-
 // ["afun", ],
 // async function ${1?:functionName}(${2}) {${0}}
 // ["afn", ],
@@ -128,7 +121,15 @@ var _snippets = [
   ["ce", "console.error($0)"],
   ["s", "show(`$0`);"],
 
-  ["l2lC", 'import L2LClient from "lively.2lively/client.js";\nvar l2lClient = L2LClient.default();$0']
+  ["l2lC", 'import L2LClient from "lively.2lively/client.js";\nvar l2lClient = L2LClient.default();$0'],
+  
+  // functions
+  ["fun", "function ${0:functionName}($1) {$2}"],
+  ["fn", "function($0) {$1}"],
+  ["f", "($0) => $1"],
+
+  ["aw", "await $0"],
+
 ]
 
 export var snippets = _snippets.map(([trigger, expansion]) => new Snippet({trigger, expansion}));
