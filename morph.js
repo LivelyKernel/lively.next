@@ -1353,8 +1353,8 @@ export class Path extends Morph {
 
   constructor(props) {
     super({...obj.dissoc(props, "origin"), fill: Color.transparent});
-    this.adjustOrigin(props.origin || pt(0,0));
-    this.position = props.position;
+    this.adjustOrigin(props.origin || this.origin);
+    this.position = props.position || this.position;
   }
 
   get isPath() { return true; }
@@ -1368,7 +1368,12 @@ export class Path extends Morph {
     if (!this.adjustingOrigin && ["vertices", "borderWidthLeft"].includes(change.prop)) {
        const bw = change.prop == "borderWidthLeft" ? change.value : this.borderWidth,
              vs = change.prop == "vertices" ? change.value : this.vertices,
-             b = Rectangle.unionPts([pt(0,0), ...vs.map(({x,y}) => pt(x,y))]);
+             b = Rectangle.unionPts([pt(0,0), ...arr.flatmap(vs, ({x,y, controlPoints}) => {
+                    var {next, previous} = controlPoints || {};
+                    if (next) next = pt(x,y).addPt(next);
+                    if (previous) previous = pt(x,y).addPt(previous);
+                    return arr.compact([next, pt(x,y), previous]);
+                 })]);
        this.adjustingVertices = true;
        this.extent = b.extent().addXY(2.2 * bw, 2.2 * bw);
        this.origin = b.topLeft().negated();
