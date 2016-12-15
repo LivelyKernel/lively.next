@@ -1,4 +1,5 @@
 
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -108,11 +109,12 @@
   }
 
 })();
-
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -1317,6 +1319,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
 semver = exports;
 })({}, {});
 
@@ -2859,7 +2862,7 @@ var PackageConfiguration = function () {
       if (!packageInSystem.map) packageInSystem.map = {};
 
       if (sysConfig) {
-        if (sysConfig.main) main = sysConfig.main;
+        if (livelyConfig && livelyConfig.main) main = livelyConfig.main;else if (sysConfig.main) main = sysConfig.main;
         this.applySystemJSConfig(sysConfig);
       }
 
@@ -3074,29 +3077,35 @@ var Package = function () {
         var _this5 = this;
 
         var exclude = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [".git", "node_modules", ".optimized-loading-cache"];
-        var dirList, resourceURLs, loadedModules$$1, packageNames;
+        var allPackages, packagesToIgnore, dirList, resourceURLs, loadedModules$$1;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                _context.next = 2;
+                allPackages = allPackageNames(this.System);
+                packagesToIgnore = allPackages.filter(function (purl) {
+                  return purl !== _this5.url && !_this5.url.startsWith(purl); /*parent packages*/
+                });
+                _context.next = 4;
                 return lively_resources.resource(this.address).dirList('infinity', { exclude: exclude });
 
-              case 2:
+              case 4:
                 dirList = _context.sent;
-                resourceURLs = dirList.map(function (ea) {
-                  return !ea.isDirectory() && ea.url;
+                resourceURLs = dirList.filter(function (ea) {
+                  return !ea.isDirectory() && !packagesToIgnore.some(function (purl) {
+                    return ea.url.startsWith(purl);
+                  });
+                }).map(function (ea) {
+                  return ea.url;
                 });
                 loadedModules$$1 = lively_lang.arr.pluck(this.modules(), "id");
-                packageNames = lively_lang.arr.without(allPackageNames(this.System), this.url);
 
 
-                resourceURLs = resourceURLs.filter(function (url) {
-                  return url && !packageNames.some(function (purl) {
-                    return url.startsWith(purl);
-                  });
-                });
+                // console.log(resourceURLs)
+                // console.log(packageNames)
+
                 if (matches) resourceURLs = resourceURLs.filter(matches);
+
                 return _context.abrupt("return", resourceURLs.map(function (url) {
                   var nameInPackage = url.replace(_this5.address, "").replace(/‘\//, ""),
                       isLoaded = loadedModules$$1.includes(url);

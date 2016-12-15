@@ -114,7 +114,8 @@ class PackageConfiguration {
     if (!packageInSystem.map) packageInSystem.map = {};
 
     if (sysConfig) {
-      if (sysConfig.main) main = sysConfig.main;
+      if (livelyConfig && livelyConfig.main) main = livelyConfig.main;
+      else if (sysConfig.main) main = sysConfig.main;
       this.applySystemJSConfig(sysConfig);
     }
 
@@ -298,15 +299,22 @@ class Package {
     matches /*= url => url.match(/\.js$/)*/,
     exclude = [".git", "node_modules", ".optimized-loading-cache"],
   ) {
-    var dirList = await resource(this.address).dirList('infinity', {exclude}),
-        resourceURLs = dirList.map(ea => !ea.isDirectory() && ea.url),
-        loadedModules = arr.pluck(this.modules(), "id"),
-        packageNames = arr.without(allPackageNames(this.System), this.url);
+    var allPackages = allPackageNames(this.System),
+        packagesToIgnore = allPackages.filter(purl => {
+          return purl !== this.url && !this.url.startsWith(purl)/*parent packages*/
+        }),
+        dirList = await resource(this.address).dirList('infinity', {exclude}),
+        resourceURLs = dirList
+          .filter(ea => !ea.isDirectory()
+                     && !packagesToIgnore.some(purl => ea.url.startsWith(purl)))
+          .map(ea => ea.url),
+        loadedModules = arr.pluck(this.modules(), "id");
 
-    
-    resourceURLs = resourceURLs.filter(url =>
-      url && !packageNames.some(purl => url.startsWith(purl)));
+// console.log(resourceURLs)
+// console.log(packageNames)
+
     if (matches) resourceURLs = resourceURLs.filter(matches);
+
     return resourceURLs.map(url => {
       var nameInPackage = url.replace(this.address, "").replace(/‘\//, ""),
           isLoaded = loadedModules.includes(url);

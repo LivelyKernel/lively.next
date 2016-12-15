@@ -1,10 +1,14 @@
 /*global System*/
 import { parse, nodes } from "lively.ast";
-var {funcCall, member, literal} = nodes;
+var { funcCall, member, literal } = nodes;
 import { evalCodeTransform, evalCodeTransformOfSystemRegisterSetters } from "lively.vm";
 import { arr, string, properties, classHelper } from "lively.lang";
 import module, { detectModuleFormat } from "./module.js";
-import { install as installHook, remove as removeHook, isInstalled as isHookInstalled } from "./hooks.js";
+import {
+  install as installHook,
+  remove as removeHook,
+  isInstalled as isHookInstalled
+} from "./hooks.js";
 
 var isNode = System.get("@system-env").node;
 
