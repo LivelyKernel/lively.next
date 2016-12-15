@@ -3,9 +3,8 @@
 import { expect } from "mocha-es6";
 
 import { string } from "lively.lang";
-import stringify from "../lib/stringify.js";
-import { parse } from "../lib/parser.js";
-import { rewriteToCaptureTopLevelVariables, rewriteToRegisterModuleToCaptureSetters } from "../lib/capturing.js";
+import { stringify, parse } from "lively.ast";
+import { rewriteToCaptureTopLevelVariables, rewriteToRegisterModuleToCaptureSetters } from "../capturing.js";
 
 
 function _testVarTfm(descr, options, code, expected, only) {

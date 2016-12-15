@@ -102,8 +102,7 @@ export function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) 
   // Example: "class Foo {}" -> "class Foo {}; Global.Foo = Foo;"
   // if declarationWrapper is requested:
   //   "class Foo {}" -> "Global.Foo = _define(class Foo {});"
-  // rewritten = replaceClassDecls(rewritten, options);
-  rewritten = classToFunctionTransform(parsed, options.classToFunction);
+  rewritten = replaceClassDecls(rewritten, options);
 
   rewritten = splitExportDeclarations(rewritten, options);
 
@@ -461,6 +460,23 @@ function shouldRefBeCaptured(ref, toplevel, options) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // capturing specific code
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function replaceClassDecls(parsed, options) {
+
+  if (options.classToFunction)
+    return classToFunctionTransform(parsed, options.classToFunction);
+
+  var topLevel = topLevelDeclsAndRefs(parsed);
+  if (!topLevel.classDecls.length) return parsed;
+
+  for (var i = parsed.body.length - 1; i >= 0; i--) {
+    var stmt = parsed.body[i];
+    if (topLevel.classDecls.includes(stmt))
+      parsed.body.splice(i+1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
+  }
+  return parsed;
+}
+
 
 function splitExportDeclarations(parsed, options) {
   var stmts = parsed.body, newNodes = parsed.body = [];
