@@ -229,7 +229,7 @@ describe("halos", () => {
     rh.update(num.toRadians(25));
     const ri = halo.getSubmorphNamed("rotationIndicator");
     expect(ri).to.not.be.undefined;
-    expect(ri.vertices.map((p) => ri.worldPoint(p)))
+    expect(ri.vertices.map(({x,y}) => ri.worldPoint(pt(x,y))))
       .equals([oh.globalBounds().center(), rh.globalBounds().center()]);
   });
 
@@ -255,8 +255,8 @@ describe("halos", () => {
     rh.updateScale(pt(20,20));
     const ri = halo.getSubmorphNamed("rotationIndicator");
     expect(ri).to.not.be.undefined;
-    expect(ri.vertices.map((p) =>
-            ri.worldPoint(p))).equals(
+    expect(ri.vertices.map(({x,y}) =>
+            ri.worldPoint(pt(x,y)))).equals(
               [oh.globalBounds().center(), rh.globalBounds().center()]);
   });
 
