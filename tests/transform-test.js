@@ -11,7 +11,6 @@ import {
   wrapInFunction,
   wrapInStartEndCall
 } from "../lib/transform.js";
-import { classToFunctionTransform } from "../lib/class-to-function-transform.js";
 import objectSpreadTransform from "../lib/object-spread-transform.js";
 import * as nodes from "../lib/nodes.js";
 import { parse } from "../lib/parser.js";
