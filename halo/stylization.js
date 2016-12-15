@@ -6,8 +6,8 @@ import { Intersection, IntersectionParams } from 'kld-intersections';
 import { arr, num } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
 import { ColorPicker, BorderStyleEditor, BodyStyleEditor, 
-         LayoutStyleEditor, HTMLEditor,
-         ImageEditor } from "../ide/styling/style-editor.js";
+         LayoutStyleEditor, HTMLEditor, PathEditor,
+         ImageEditor, NoEditor } from "../ide/styling/style-editor.js";
 import { Icon } from "../icons.js";
 import { StyleRules } from "../style-rules.js";
 import { Leash } from "../widgets.js";
@@ -24,10 +24,12 @@ export function styleHaloFor(x, pointerId) {
        styleHaloClass = EllipseStyleHalo;
     } else if (x instanceof Image) {
        styleHaloClass = ImageStyleHalo;
-    } else if (x instanceof Polygon || x instanceof Path) {
+    } else if (x instanceof Polygon) {
        styleHaloClass = SvgStyleHalo;
     } else if (x instanceof HTMLMorph) {
        styleHaloClass = HTMLStyleHalo;
+    } else if (x instanceof Path) {
+       styleHaloClass = PathStyleHalo;
     }
     return new styleHaloClass(x, pointerId).openInWorld().relayout();
 }
@@ -134,6 +136,7 @@ class StyleHalo extends Morph {
 
    isInMorphBody(evt) {
       if (!evt) return false;
+      if (this.isOnMorphBorder(evt)) return true;
       var  {x,y} = evt.positionIn(this.submorphs[0]),
             pos = pt(num.roundTo(x,1),num.roundTo(y,1)),
             {width, height, origin} = this.target;
@@ -207,8 +210,7 @@ class StyleHalo extends Morph {
              halo.bodyStyler.blur()
          },
          onHoverOut(evt) {
-            console.log(evt.state.hover)
-            !this.fullContainsPoint(evt.positionIn(this)) && this.deselect();
+            if (!this.fullContainsPoint(evt.positionIn(this))) this.deselect();
          },
          alignWithTarget() {
            const globalBounds = halo.targetBounds, 
@@ -242,7 +244,7 @@ class StyleHalo extends Morph {
                 halo.openBorderStyler();
             } else if (this.bodySelected) {
                 halo.openBodyStyler();
-            } else {
+            } else if (!halo.isInMorphBody(evt) && !halo.isOnMorphBorder(evt)) {
                halo.remove();
             }
             this.borderColor = Color.transparent;
@@ -477,13 +479,45 @@ class SvgStyleHalo extends StyleHalo {
               this.vertices = halo.target.vertices;
               this.position = halo.target.origin;
               if (!halo.target.borderWidth) this.moveBy(pt(-2, -2));
-              // if (halo.vertexHandles) {
-              //    halo.clearVertexHandles();
-              //    halo.initVertexHandles();
-              // }
            }  
         }
     }
+}
+
+class PathStyleHalo extends SvgStyleHalo {
+
+   getBodyStyler() {
+      return new NoEditor({target: this.target});
+   }
+
+   intersectionShape() {
+     const bw = this.target.borderWidth, o = this.target.origin;
+     return IntersectionParams.newPolyline(this.target.vertices.map(v => new Point2D(v.x + bw + o.x, v.y + bw + o.y)))
+   }
+
+   showBorderStyler() {
+      super.showBorderStyler();
+      this.borderStyler.center = this.target.center;
+   }
+
+   openBorderStyler() {
+      super.openBorderStyler();
+      this.leash.startPoint.attachTo(this, "center");
+   }
+
+   borderHaloShape(props) {
+        return {
+           ...super.borderHaloShape(props),
+           type: "path" 
+        }
+    }
+
+   getBorderStyler() {
+      const borderStyler = new PathEditor({target: this.target});
+      connect(borderStyler, "open", this, 'openBorderStyler');
+      return borderStyler;
+   }
+
 }
 
 class HTMLStyleHalo extends StyleHalo {

@@ -19,7 +19,6 @@ class StyleEditor extends Morph {
    constructor(props) {
       const {title} = props;
       super({
-        name: "BorderStyler",
         morphClasses: ['closed'],
         styleRules: this.styler,
         layout: new VerticalLayout({spacing: 5}),
@@ -116,8 +115,8 @@ class StyleEditor extends Morph {
       signal(this, "close", false);
    }
 
-   async open() {
-      if (this.opened) return;
+   open() {
+      if (this.opened) return this;
       const [wrapper] = this.submorphs,
             {submorphs: [instruction]} = wrapper,
             duration = 200;
@@ -141,7 +140,7 @@ class StyleEditor extends Morph {
           duration, layout: new VerticalLayout({spacing: 5})
       });
       this.opened = true;
-      return false;
+      return this;
    }
 
    get isHaloItem() { return true }
@@ -214,38 +213,14 @@ class StyleEditor extends Morph {
      return flap;
   }
 
-
-}
-
-export class BodyStyleEditor extends StyleEditor {
-
-   controls(target) {
-       return [
-           this.fillControl(target),
-           this.opacityControl(target),
-           this.shadowControl(target)
-       ]
-   }
-
-   opacityControl(target) {
+  opacityControl(target) {
       return this.createControl("Opacity", new Slider({
-             target, min: 0, max: 1,
+             target: this.target, min: 0, max: 1,
              property: "opacity", width: 150
       }));
-   }
-
-   fillControl(target) {
-      return this.createSelectableControl({controls: {
-                "Fill": () => new ColorPickerField({target, property: "fill"}),
-                "Gradient": () => new GradientEditor({target, property: "fill"})
-             }, init: target.fill && target.fill.isGradient ? "Gradient" : "Fill"})
-   }
-
-   gradientControl(target) {
-      return this.createControl("Gradient", new GradientEditor({target, property: "fill"}))
-   }
-
-   shadowControl() {
+  }
+  
+  shadowControl() {
      return this.createToggledControl({
           title: "Drop Shadow",
           target: this.target, property: "dropShadow",
@@ -296,6 +271,32 @@ export class BodyStyleEditor extends StyleEditor {
           }
           })
   }
+
+
+}
+
+export class BodyStyleEditor extends StyleEditor {
+
+   controls(target) {
+       return [
+           this.fillControl(target),
+           this.opacityControl(target),
+           this.shadowControl(target)
+       ]
+   }
+
+   fillControl(target) {
+      return this.createSelectableControl({controls: {
+                "Fill": () => new ColorPickerField({target, property: "fill"}),
+                "Gradient": () => new GradientEditor({target, property: "fill"})
+             }, init: target.fill && target.fill.isGradient ? "Gradient" : "Fill"})
+   }
+
+   gradientControl(target) {
+      return this.createControl("Gradient", new GradientEditor({target, property: "fill"}))
+   }
+
+   
 
 }
 
@@ -369,6 +370,7 @@ export class LayoutStyleEditor extends Morph {
       });
       signal(this, "open");
       this.update(true);
+      return this;
    }
 
    close() {
@@ -516,6 +518,21 @@ export class HTMLEditor extends Morph {
    
 }
 
+export class PathEditor extends BorderStyleEditor {
+
+    constructor(props) {
+       super({title: "Change Path",
+             ...props});
+    }
+
+    controls(target) {
+       return [this.borderControl(target), 
+               this.opacityControl(target), 
+               this.shadowControl(target)]
+    }
+
+}
+
 export class ImageEditor extends StyleEditor {
 
     constructor(props) {
@@ -558,6 +575,38 @@ export class ImageEditor extends StyleEditor {
              }})]}
     }
     
+}
+
+export class NoEditor {
+
+   constructor(props) {
+   
+   }
+
+   blur() {
+   
+   }
+
+   show() {
+   
+   }
+
+   hide() {
+   
+   }
+
+   openInWorld() {
+   
+   }
+
+   remove() {
+   
+   }
+
+   open() {
+      return this;
+   }
+
 }
 
 
