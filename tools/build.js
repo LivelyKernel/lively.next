@@ -5,12 +5,10 @@ var fs = require("fs"),
     rollup = require('rollup'),
     babel = require('rollup-plugin-babel');
 
-var targetFile1 = "dist/lively.ast.js";
-var targetFile2 = "dist/lively.ast_no-deps.js";
-var langBundle = path.join(path.dirname(require.resolve('lively.lang')), "dist/lively.lang.dev.js");
+var targetFile = "dist/lively.ast.js";
 var escodegenBundle = "dist/escodegen.js";
 var acornBundle = "dist/acorn.js";
-var langSource, escodegenSource, acornSource, astSource;
+var escodegenSource, acornSource, astSource;
 
 // output format - 'amd', 'cjs', 'es6', 'iife', 'umd'
 
@@ -19,7 +17,6 @@ module.exports = Promise.resolve()
   .then(() => require("./build-acorn.js"))
   .then(() => require("./build-escodegen.js"))
   .then(() => {
-    langSource = fs.readFileSync(langBundle);
     escodegenSource = fs.readFileSync(escodegenBundle);
     acornSource = fs.readFileSync(acornBundle);
   })
@@ -43,21 +40,20 @@ module.exports = Promise.resolve()
       globals: {
         "acorn": "acorn",
         "lively.lang": "lively.lang",
+        "lively.classes": "lively.classes",
         "escodegen": "GLOBAL.escodegen"
       }
     }))
 
   // 3. inject dependencies
   .then(bundled => astSource = bundled.code)
-  .then(() => fs.writeFileSync(targetFile1, combineSources(true)))
-  .then(() => fs.writeFileSync(targetFile2, combineSources(false)))
-  .then(() => console.log(`lively.ast bundled into ${process.cwd()}/${targetFile1} and ${process.cwd()}/${targetFile2}`))
+  .then(() => fs.writeFileSync(targetFile, combineSources()))
+  .then(() => console.log(`lively.ast bundled into ${process.cwd()}/${targetFile}`))
   .catch(err => { console.error(err.stack || err); throw err; })
 
 
-function combineSources(addLang) {
+function combineSources() {
   return `
-${addLang ? langSource : ""}
 ${acornSource};
 ${escodegenSource};
 (function() {
