@@ -2,7 +2,7 @@ import { obj, num, arr, properties } from "lively.lang";
 import { pt, Color, Rectangle, rect } from "lively.graphics";
 import { Morph, Button, List, Text, GridLayout, HorizontalLayout, Path, Ellipse } from "./index.js";
 import { Icon } from "./icons.js";
-import { signal, connect } from "lively.bindings";
+import { signal, connect, disconnect } from "lively.bindings";
 import { Tooltip } from "./tooltips.js";
 import { StyleRules } from "./style-rules.js";
 import config from "./config.js";
@@ -26,7 +26,7 @@ export class Leash extends Path {
              borderWidth: 2, borderColor: Color.black,
           },
           endpoint: {
-             fill: Color.black, extent: pt(10,10), nativeCursor: "-webkit-grab"
+             fill: Color.black, origin: pt(3.5,3.5), extent: pt(10,10), nativeCursor: "-webkit-grab"
           }
       })
    }
@@ -40,21 +40,28 @@ export class Leash extends Path {
                  leash.vertices = leash.vertices;
                  this.moveBy(evt.state.dragDelta);
               },
-              relayout() {
+              update() {
                  const globalPos = this.connectedMorph.globalBounds()[this.attachedSide](),
                        pos = leash.localize(globalPos);
-                 this.position = pos;
                  leash.vertices[idx] = {...leash.vertices[idx], ...leash.localize(globalPos)} 
                  leash.vertices = leash.vertices;
               },
+              clearPrevious() {
+                 this.connectedMorph && disconnect(this.connectedMorph, "onChange", this, "update");
+              },
+              relayout() {
+                const {x,y} = leash.vertices[idx];
+                this.position = pt(x,y);
+              },
               attachTo(morph, side) {
+                  this.clearPrevious()
                   this.connectedMorph = morph;
                   this.attachedSide = side;
                   leash.vertices[idx] = {...leash.vertices[idx], 
                                          controlPoints: leash.controlPointsFor(side)} 
                   leash.vertices = leash.vertices;
-                  connect(morph, "position", this, "relayout")
-                  this.relayout();
+                  connect(this.connectedMorph, "onChange", this, "update");
+                  this.update();
               }})
    }
 
@@ -66,7 +73,7 @@ export class Leash extends Path {
          leftCenter: pt(-1,0), topRight: pt(-1,-1),
          center: pt(0,0)
       }[side];
-      return {previous: next.negated().scaleBy(50), next: next.scaleBy(50)}
+      return {previous: next.negated().scaleBy(100), next: next.scaleBy(100)}
    }
 
    build() {
@@ -76,7 +83,8 @@ export class Leash extends Path {
    }
 
    relayout() {
-   
+      this.startPoint.relayout();
+      this.endPoint.relayout();
    }
 
 }
