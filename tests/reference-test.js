@@ -3,7 +3,6 @@
 import { expect } from "mocha-es6";
 
 import { scopes, resolveReferences, refWithDeclAt } from "../lib/query.js";
-import { rewriteToCaptureTopLevelVariables } from "../lib/capturing.js";
 import { parse } from "../lib/parser.js";
 
 function getRefs(pos, source) {
