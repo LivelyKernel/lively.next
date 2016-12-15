@@ -4,12 +4,13 @@ import { morph, Morph, Window, Polygon, show } from "./index.js";
 import { RichTextControl } from "lively.morphic/text/ui.js"
 import { Tree, TreeData } from "lively.morphic/tree.js"
 import { connect } from "lively.bindings"
+import { Leash } from "./widgets.js"
 
 
 export default class ObjectDrawer extends Morph {
 
   constructor(props) {
-    this.n = 7;
+    this.n = 8;
     super({
       name: "object-drawer",
       position: pt(20, 20),
@@ -189,6 +190,11 @@ export default class ObjectDrawer extends Morph {
       tree.nodeItemContainer.withAllSubmorphsDo(ea => ea.reactsToPointer = false)
     })();
 
+    // Leash
+
+    pos = pt(arr.last(this.submorphs).right, 0).addPt(pt(10,10));
+    
+    this.addMorph(new Leash({position: pos, start: pt(0,0), end: pt(100,100), onDrag: doCopy, init() { this.vertices = [pt(0,0), pt(100,100)] }}));
 
     function doCopy(evt) {
       evt.stop();
