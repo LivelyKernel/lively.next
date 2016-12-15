@@ -12,6 +12,14 @@
     "repoURL": "https://github.com/LivelyKernel/lively.ast"
   },
   {
+    "name": "lively.source-transform",
+    "repoURL": "https://github.com/LivelyKernel/lively.source-transform"
+  },
+  {
+    "name": "lively.classes",
+    "repoURL": "https://github.com/LivelyKernel/lively.classes"
+  },
+  {
     "name": "lively.vm",
     "repoURL": "https://github.com/LivelyKernel/lively.vm"
   },
