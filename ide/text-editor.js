@@ -261,6 +261,11 @@ export default class TextEditor extends Morph {
           editorPlugin = new MarkdownEditorPlugin(config.codeEditor.defaultTheme);
           break;
 
+        case 'sh':
+          var { ShellEditorPlugin } = await System.import("lively.morphic/ide/shell/editor-plugin.js");
+          editorPlugin = new ShellEditorPlugin(config.codeEditor.defaultTheme);
+          break;
+
         default:
           fileType = "plain text";
       }
