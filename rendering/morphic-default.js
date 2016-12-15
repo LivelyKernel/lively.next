@@ -114,7 +114,7 @@ class StyleMapper {
   }
 
   static getSvgAttributes({width, height, borderWidth}) {
-     return {width, height, "viewBox": [-borderWidth, -borderWidth, width + borderWidth,height + borderWidth].join(" ")};
+     return {width, height, "viewBox": [0, 0, width,height].join(" ")};
   }
 
   static getPathAttributes(path, fill=false) {
@@ -129,6 +129,7 @@ class StyleMapper {
      return {"stroke-width": path.borderWidth, ...this.getSvgBorderStyle(path), 
              fill: path.fill ? ((path.fill.isGradient) ? "url(#gradient-fill" + path.id + ")" : path.fill.toString()) 
                                : "transparent",
+             "paint-order": "stroke", 
              stroke: (path.borderColor.isGradient ? "url(#gradient-borderColor" + path.id + ")" : path.borderColor.toString()),
               d: "M" + `${startX}, ${startY} ` + "C " + `${startNext.x}, ${startNext.y} ` + 
                   interVertices.map(({x,y, controlPoints: {previous: p, next: n}}) => {
