@@ -1,7 +1,7 @@
 {
   "name": "mocha-es6",
   "main": "index.js",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "dependencies": {
     "glob": "^7.0.3",
     "lively.modules": "*",
