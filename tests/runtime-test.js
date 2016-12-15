@@ -2,7 +2,7 @@
 
 import { expect } from "mocha-es6";
 // import { classToFunctionTransform } from "node_modules/lively.ast/lib/class-to-function-transform.js"
-import { classToFunctionTransform } from "lively.ast/lib/class-to-function-transform.js"
+import { classToFunctionTransform } from "../class-to-function-transform.js"
 
 import {
   initializeClass,
