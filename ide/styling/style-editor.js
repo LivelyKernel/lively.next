@@ -515,6 +515,12 @@ export class HTMLEditor extends Morph {
           clipMode: "auto", doSave() { htmlMorph.html = this.textString }}
       ]
    }
+
+   onMouseMove() { this.show() }
+
+   blur() { this.animate({opacity: .5, duration: 300})}
+   show() { this.animate({opacity: 1, visible: true, duration: 300}) }
+   hide() { this.visible = false; }
    
 }
 
