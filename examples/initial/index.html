@@ -34,26 +34,36 @@
 
           .then(function() { console.log("2. preparing to bootstrap..."); })
 
-          .then(function () { return lively.modules.removePackage(origin + '/lively-modules/'); })
+          .then(function () { return lively.modules.removePackage('lively-modules'); })
 
           .then(function() {
             return lively.modules.importPackage(
-              origin + "/lively.lang",
+              "lively.lang",
               function(m) { delete m._prevLivelyGlobal; }); })
 
           .then(function() {
             return importPackageAndDo(
-              origin + "/lively.ast",
+              "lively.ast",
               function(m) { lively.ast = m; }); })
 
           .then(function() {
             return importPackageAndDo(
-              origin + "/lively.vm",
-              function(m) { lively.vm = m; lively.lang.VM = m; }); })
+              "lively.source-transform",
+              function(m) { lively.sourceTransform = m; }); })
 
           .then(function() {
             return importPackageAndDo(
-              origin + "/lively.modules",
+              "lively.classes",
+              function(m) { lively.classes = m; }); })
+
+          .then(function() {
+            return importPackageAndDo(
+              "lively.vm",
+              function(m) { lively.vm = m; }); })
+
+          .then(function() {
+            return importPackageAndDo(
+              "lively.modules",
               function(m) { lively.modules = m; lively.modules.unwrapModuleLoad(); lively.modules.wrapModuleLoad(); })})
 
           .then(function() { return importPackageAndDo(origin + "/lively.2lively"); })
