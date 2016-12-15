@@ -1,6 +1,6 @@
 {
   "name": "lively.vm",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "Controlled JavaScript code execution and instrumentation.",
   "main": "dist/lively.vm.js",
   "systemjs": {
@@ -12,6 +12,8 @@
       "lively.lang": "./node_modules/lively.lang",
       "lively.ast": "./node_modules/lively.ast",
       "lively.notifications": "./node_modules/lively.notifications",
+      "lively.source-transform": "./node_modules/lively.source-transform",
+      "lively.classes": "./node_modules/lively.classes",
       "mocha-es6": "./node_modules/mocha-es6"
     }
   },
@@ -34,9 +36,11 @@
   },
   "homepage": "https://github.com/LivelyKernel/lively.vm",
   "dependencies": {
-    "lively.ast": "^0.8.0",
+    "lively.ast": "^0.9.0",
     "lively.lang": "^0.7.0",
-    "lively.notifications": "^0.3.0"
+    "lively.notifications": "^0.4.0",
+    "lively.classes": "*",
+    "lively.source-transform": "*"
   },
   "devDependencies": {
     "babel-core": "^6.16.0",
