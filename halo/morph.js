@@ -575,7 +575,6 @@ export class Halo extends Morph {
         delta = proportional ? this.proportionalDelta(corner, delta, bounds) : delta,
         offsetRect = rect(delta.x * x, delta.y * y, delta.x * width, delta.y * height),
         oldPosition = this.target.position;
-       console.log(corner); console.log(bounds); console.log(offsetRect);
        this.target.setBounds(bounds.insetByRect(offsetRect));
        this.target.origin = origin.addPt({x: -offsetRect.x, y: -offsetRect.y});
        this.target.position = oldPosition;
@@ -590,7 +589,7 @@ export class Halo extends Morph {
        return new Morph({
            nativeCursor,
            halo: this,
-           corner,
+           corner, tooltip: "Resize " + corner,
            property: 'extent',
            valueForPropertyDisplay: () => {
               var {x: width, y: height} = this.target.extent;
@@ -630,9 +629,7 @@ export class Halo extends Morph {
              var target = this.halo.target,
                  oldPosition = target.position,
                  {x,y} = this.startPos.subPt(currentPos),
-                 delta = this.tfm.transformDirection(
-                           pt(x * Math.cos(this.offsetRotation),
-                              y * Math.cos(this.offsetRotation)));
+                 delta = this.tfm.transformDirection(pt(x,y));
               this.halo.updateBoundsFor(corner, shiftDown, delta, this.startBounds, this.startOrigin);
               this.halo.toggleDiagonal(shiftDown, corner);
            },
