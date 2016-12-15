@@ -82,7 +82,7 @@ ${semverSourcePatched}
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   ${source}
-  if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
+  if (typeof module !== "undefined" && typeof require === "function") module.exports = GLOBAL.lively.modules;
 })();`;
 
 var complete = [

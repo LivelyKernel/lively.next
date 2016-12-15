@@ -1,5 +1,5 @@
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -109,12 +109,12 @@
   }
 
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
-// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.modules/node_modules/semver/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -1319,7 +1319,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.modules/node_modules/semver/semver.js
 semver = exports;
 })({}, {});
 
@@ -3120,7 +3120,7 @@ var Package = function () {
         }, _callee, this);
       }));
 
-      function resources(_x2, _x3) {
+      function resources(_x2) {
         return _ref.apply(this, arguments);
       }
 
@@ -3401,7 +3401,7 @@ var Package = function () {
         }, _callee4, this, [[14, 30, 34, 42], [35,, 37, 41]]);
       }));
 
-      function register(_x5) {
+      function register() {
         return _ref4.apply(this, arguments);
       }
 
@@ -3503,7 +3503,7 @@ var Package = function () {
         }, _callee5, this);
       }));
 
-      function search(_x7, _x8) {
+      function search(_x5) {
         return _ref5.apply(this, arguments);
       }
 
@@ -3717,14 +3717,15 @@ var ModuleInterface = function () {
                 return _context.abrupt("return", this._ast);
 
               case 2:
-                _context.next = 4;
+                _context.t0 = lively_ast.parse;
+                _context.next = 5;
                 return this.source();
 
-              case 4:
-                _context.t0 = _context.sent;
-                return _context.abrupt("return", this._ast = lively_ast.parse(_context.t0));
+              case 5:
+                _context.t1 = _context.sent;
+                return _context.abrupt("return", this._ast = (0, _context.t0)(_context.t1));
 
-              case 6:
+              case 7:
               case "end":
                 return _context.stop();
             }
@@ -5467,7 +5468,7 @@ var buildPackageMap = function () {
     }, _callee, this, [[3, 15], [18, 24], [30, 43, 47, 55], [48,, 50, 54]]);
   }));
 
-  return function buildPackageMap(_x, _x2, _x3, _x4) {
+  return function buildPackageMap(_x) {
     return _ref.apply(this, arguments);
   };
 }();
@@ -5891,5 +5892,5 @@ exports.semver = semver;
 
 }((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.notifications,lively.vm,lively.resources,semver));
 
-  if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
+  if (typeof module !== "undefined" && typeof require === "function") module.exports = GLOBAL.lively.modules;
 })();
