@@ -454,6 +454,8 @@ export class RadialGradient extends Gradient {
     this.focus = focus || pt(0.5, 0.5);
     this.bounds = bounds || new Rectangle(0,0, 20, 20);
   }
+
+  get type() { return "radialGradient" }
   
   toString() { return this.toCSSString() }
   
@@ -462,21 +464,10 @@ export class RadialGradient extends Gradient {
   
   toCSSString() {
     const innerCircle = this.focus.scaleBy(100.0),
-          innerCircleRadius = 0.0,
-          outerCircle = pt(50.0, 50.0),
-          outerCircleRadius = this.bounds.width/2;
-    var str = `-webkit-gradient(radial,
-               ${innerCircle.x}\% 
-               ${innerCircle.y}\%, 
-               ${innerCircleRadius}, 
-               ${outerCircle.x}\% 
-               ${outerCircle.y}\%, 
-               ${outerCircleRadius}`;
+          ext = this.bounds.extent();
+    var str = `radial-gradient(${ext.x / 2}px ${ext.y / 2}px ellipse at ${innerCircle.x}\% ${innerCircle.y}\% `;
     for (var i = 0; i < this.stops.length; i++)
-        str += ` ,color-stop(
-          ${(this.stops[i].offset * 100).toFixed() + "%"}, 
-          ${this.stops[i].color.toRGBAString()}
-          )`;
+        str += `,${this.stops[i].color.toRGBAString()} ${(this.stops[i].offset * 100).toFixed() + "%"}`;
     str += ')';
     return str;
   }
