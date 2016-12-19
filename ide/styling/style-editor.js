@@ -17,7 +17,8 @@ import { StyleRules } from "../../style-rules.js";
 class StyleEditor extends Morph {
 
    constructor(props) {
-      const {title} = props;
+      const {title, target} = props;
+      if (!target) throw Error("No target provided!");
       super({
         morphClasses: ['closed'],
         styleRules: this.styler,
@@ -165,6 +166,7 @@ class StyleEditor extends Morph {
               morphClasses: ['controlWrapper'],
               onDrag: (evt) =>  this.onDrag(evt),
               layout: new VerticalLayout({spacing: 10}),
+              remove() { super.remove(); arr.invoke(this.submorphs, 'remove'); },
               select(control) {
                  // rms: animating submorphs currently starts animations "too early", meaning,
                  //      that animations are already triggering when the first morph is being removed
@@ -279,10 +281,15 @@ export class BodyStyleEditor extends StyleEditor {
 
    controls(target) {
        return [
-           this.fillControl(target),
+           this.selectedFillControl = this.fillControl(target),
            this.opacityControl(target),
            this.shadowControl(target)
        ]
+   }
+
+   remove() {
+      super.remove();
+      this.selectedFillControl && this.selectedFillControl.remove();
    }
 
    fillControl(target) {
@@ -291,13 +298,6 @@ export class BodyStyleEditor extends StyleEditor {
                 "Gradient": () => new GradientEditor({target, property: "fill"})
              }, init: target.fill && target.fill.isGradient ? "Gradient" : "Fill"})
    }
-
-   gradientControl(target) {
-      return this.createControl("Gradient", new GradientEditor({target, property: "fill"}))
-   }
-
-   
-
 }
 
 export class BorderStyleEditor extends StyleEditor {

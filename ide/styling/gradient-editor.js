@@ -1,10 +1,10 @@
-import { RadialGradient, Complementary, 
+import { RadialGradient, Complementary, Point,
          Triadic, Tetradic, Quadratic, pt, rect,
          Analogous, Neutral, Color, LinearGradient } from "lively.graphics";
 import {ColorPalette} from "./color-palette.js";
 import {ColorPicker} from "./color-picker.js";
 import {Morph, Image, VerticalLayout, GridLayout, 
-        Text, Path, HorizontalLayout} from "../../index.js";
+        Text, Path, HorizontalLayout, Ellipse} from "../../index.js";
 import {num, obj, arr} from "lively.lang";
 import {Icon} from "../../icons.js";
 import {StyleRules} from "../../style-rules.js";
@@ -15,12 +15,18 @@ const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-c
 export class GradientEditor extends Morph {
 
    constructor(props) {
+      if (!props.target) throw Error("No target provided!");
       super({
          morphClasses: ['body'],
          styleRules: this.getStyler(),
          ...props
       });
       this.build();
+   }
+
+   remove() {
+      super.remove();
+      this.gradientHandle && this.gradientHandle.remove();
    }
 
    getStyler() {
@@ -48,18 +54,20 @@ export class GradientEditor extends Morph {
    get targetProperty() { return this.target[this.property]; }
    set targetProperty(v) { this.target[this.property] = v; signal(this, "targetProperty", v); }
 
-   selectRadialGradient() {
+   async selectRadialGradient() {
       this.gradientClass = RadialGradient;
       this.get("linearMode").borderColor = Color.gray.darker();
       this.get("radialMode").borderColor = Color.orange;
       this.applyGradient(this.gradientClass);
+      this.updateGradientHandles();
    }
 
-   selectLinearGradient() {
+   async selectLinearGradient() {
       this.gradientClass = LinearGradient;
       this.get("radialMode").borderColor = Color.gray.darker();
       this.get("linearMode").borderColor = Color.orange;
       this.applyGradient(this.gradientClass);
+      this.updateGradientHandles();
    }
 
    applyGradient(gradientClass) {
@@ -80,10 +88,24 @@ export class GradientEditor extends Morph {
       this.update();
    }
 
-   update(v = this.targetProperty) {
-      if (v && v.isGradient) {
-        this.get("gradientEditor").update(v);
-        this.get("typeSelector").update(v);
+   async updateGradientHandles(g = this.targetProperty) {
+        const duration = 300;
+        this.gradientHandle && await this.gradientHandle.fadeOut(duration);
+        if (g instanceof RadialGradient) {
+           this.gradientHandle = new GradientFocusHandle({target: this.target, opacity: 0}).openInWorld();
+        } else if (g instanceof LinearGradient) {
+           this.gradientHandle = new GradientDirectionHandle({target: this.target, opacity: 0}).openInWorld();
+        }
+        if (this.gradientHandle) {
+           this.gradientHandle.animate({opacity: 1, duration});
+           this.gradientHandle.relayout()
+        }
+   }
+
+   update(g = this.targetProperty) {
+      if (g && g.isGradient) {
+        this.get("gradientEditor").update(g);
+        this.get("typeSelector").update(g);
       }
    }
    
@@ -92,6 +114,7 @@ export class GradientEditor extends Morph {
        connect(this, "targetProperty", this, "update");
        this.update();
        this.styleRules = this.styleRules;
+       this.updateGradientHandles();
    }
 
    typeSelector() {
@@ -360,3 +383,191 @@ export class GradientEditor extends Morph {
       }
    }
 }
+
+export class GradientFocusHandle extends Ellipse {
+
+   /* Used to configure the focal point of a radial gradient, i.e. its center and bounds */
+
+    constructor(props) {
+       if (!props.target || !props.target.fill instanceof RadialGradient) 
+          throw Error("Focus Handle only applicable to Morphs with radial gradient!")
+       super({
+          morphClasses: ['root'],
+          styleRules: this.styler,
+          ...props
+       })
+       this.build();
+    }
+
+    get isHaloItem() { return true }
+
+    get styler() {
+       return new StyleRules({
+          root: {fill: Color.transparent,
+                 borderColor: Color.orange,
+                 borderWidth: 2},
+          topCenter: {nativeCursor: "ns-resize"},
+          rightCenter: {nativeCursor: "ew-resize"},
+          bottomCenter: {nativeCursor: "ns-resize"},
+          leftCenter: {nativeCursor: "ew-resize"},
+          propertyView: {fill: Color.black.withA(.7), borderRadius: 5,
+                         padding: 5, fontColor: Color.white},
+          boundsHandle: {borderColor: Color.orange.darker(), fill: Color.orange.withA(.7),
+                         tooltip: "Resize bounds of radial gradient"},
+          crossBar: {borderWidth: 2, borderColor: Color.orange, center: pt(11,11), draggable: false},
+          focusHandle: {clipMode: "hidden", 
+                        fill: Color.transparent, borderColor: Color.orange,
+                        submorphs: [
+                           {type: 'path', vertices: [pt(0,0), pt(50,0)], morphClasses: ["crossBar"]},
+                           {type: 'path', vertices: [pt(0,0), pt(0,50)], morphClasses: ["crossBar"]},
+                           {type: "ellipse", fill: Color.transparent, extent: pt(20,20), 
+                            nativeCursor: '-webkit-grab', tooltip: "Shift focal center of radial gradient",
+                            // rms: there should be smarter ways to just pass events through to the owner
+                            onDragStart(evt) {this.owner.onDragStart(evt)}, 
+                            onDrag(evt) { this.owner.onDrag(evt)},
+                            onDragEnd(evt) { this.owner.onDragEnd(evt)}}
+                        ]}
+       })
+    }
+
+    build() {
+       this.initBoundsHandles();
+       this.initFocusHandle()
+       this.relayout();
+    }
+
+    relayout() {
+       const {bounds, focus} = this.target.fill; 
+       this.extent = bounds.extent();
+       this.submorphs.forEach(m => m.relayout());
+       this.center = this.target
+                         .globalBounds()
+                         .topLeft().addPt(this.target.extent.scaleByPt(focus));
+    }
+
+    initBoundsHandles() {
+       const self = this;
+       this.bounds().sides.forEach(side => {
+          this.addMorph({
+             type: "ellipse",
+             morphClasses: ['boundsHandle', side],
+             relayout() {
+                this.center = self.innerBounds().partNamed(side);
+             },
+             onDragStart(evt) {
+                this.boundsView = this.addMorph(new Text({
+                  type: 'text', morphClasses: ['propertyView']
+                })).openInWorld(evt.hand.position.addPt(pt(10,10)));
+             },
+             onDrag(evt) {
+                var g = self.target.fill,
+                    newSide = g.bounds.partNamed(side).addPt(evt.state.dragDelta.scaleBy(2));
+                g.bounds = g.bounds.withPartNamed(side, newSide);
+                this.boundsView.textString = `w: ${g.bounds.width.toFixed()}px h: ${g.bounds.height.toFixed()}px`             
+                this.boundsView.position = evt.hand.position.addPt(pt(10,10));
+                self.target.makeDirty()
+                self.relayout();
+             },
+             onDragEnd(evt) {
+                this.boundsView.remove()
+             }
+          })
+       });
+    }
+
+    initFocusHandle() {
+       const self = this;
+       this.addMorph({
+          type: "ellipse",
+          morphClasses: ['focusHandle'],
+          extent: pt(20,20),
+          relayout() {
+             this.center = self.innerBounds().center();
+          },
+          onDragStart(evt) {
+             this.focusView = this.addMorph(new Text({
+                  type: 'text', morphClasses: ['propertyView']
+             })).openInWorld(evt.hand.position.addPt(pt(10,10)));
+          },
+          onDrag(evt) {
+             const {x,y} = evt.state.dragDelta,
+                   g = self.target.fill;
+             g.focus = g.focus.addXY(x / self.target.width, y / self.target.height)
+             this.focusView.textString = `x: ${(g.focus.x * 100).toFixed()}%, y: ${(g.focus.y * 100).toFixed()}%)`;
+             this.focusView.position = evt.hand.position.addPt(pt(10,10));
+             self.target.makeDirty();
+             self.relayout();
+          },
+          onDragEnd(evt) {
+             this.focusView.remove();
+          }
+       })
+    }
+    
+}
+
+class GradientDirectionHandle extends Ellipse {
+
+   /* Used to configure the direction of a linear gradient (degrees) */
+
+  constructor(props) {
+     if (!props.target || !props.target.fill instanceof LinearGradient) 
+        throw Error("Focus Handle only applicable to Morphs with radial gradient!")
+     super({
+        morphClasses: ['root'],
+        styleRules: this.styler,
+        ...props
+     })
+     this.build();
+  }
+
+  get styler() {
+     return new StyleRules({
+        root: {borderColor: Color.orange, fill: Color.transparent, borderWidth: 1, 
+               origin: pt(25,25), extent: pt(50,50)},
+        rotationPoint: {fill: Color.orange, extent: pt(10,10), nativeCursor: '-webkit-grab', tooltipt: "Adjust direction of linear gradient"},
+        propertyView: {fill: Color.black.withA(.7), borderRadius: 5,
+                       padding: 5, fontColor: Color.white},
+     })
+  }
+
+  get isHaloItem() { return true }
+
+  relayout() {
+      this.position = this.target.globalBounds().center();
+      this.rotationPoint.relayout();
+  }
+
+  build() {
+      this.initRotationPoint();
+      this.relayout();
+  }
+
+  initRotationPoint() {
+     const self = this;
+     this.rotationPoint = this.addMorph({
+         type: "ellipse", morphClasses: ['rotationPoint'],
+         relayout() {
+            this.center = Point.polar(self.width / 2, self.target.fill.vectorAsAngle());
+         },
+         onDragStart(evt) {
+            this.angleView = this.addMorph(new Text({
+                  type: 'text', morphClasses: ['propertyView']
+             })).openInWorld(evt.hand.position.addPt(pt(10,10)));
+         },
+         onDrag(evt) {
+            self.target.fill.vector = evt.positionIn(self).theta();
+            self.target.makeDirty();
+            self.relayout();
+            this.angleView.textString = `${(num.toDegrees(self.target.fill.vectorAsAngle()) + 180).toFixed()}°`;
+            this.angleView.position = evt.hand.position.addPt(pt(10,10));
+         },
+         onDragEnd(evt) {
+            this.angleView.remove();
+         }
+     })
+  }
+
+} 
+
+
