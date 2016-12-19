@@ -1,6 +1,6 @@
 import { num, arr } from "lively.lang";
 import { parse } from "./color-parser.js";
-import { Rectangle, rect, pt } from "./geometry-2d.js";
+import { Rectangle, rect, pt, Point } from "./geometry-2d.js";
 
 function floor(x) { return Math.floor(x*255.99) };
 
@@ -400,17 +400,24 @@ export class LinearGradient extends Gradient {
     this.vector = vector;
   }
 
+  get type() { return "linearGradient" }
+
   get vectors() {
       return {
         northsouth: rect(pt(0, 0), pt(0, 1)),
-        southnorth: rect(pt(0, 1), pt(0, 0)),
-        eastwest:    rect(pt(0, 0), pt(1, 0)),
+        northeast:    rect(pt(1, 0), pt(0, 1)),
         westeast:    rect(pt(1, 0), pt(0, 0)),
-        southwest:    rect(pt(1, 0), pt(0, 1)),  // Down and to the left
-        southeast:    rect(pt(0, 0), pt(1, 1)),
-        northeast:    rect(pt(0, 1), pt(1, 0)),
-        northwest:    rect(pt(1, 1), pt(0, 0))
+        southeast:    rect(pt(1, 1), pt(0, 0)),
+        southnorth: rect(pt(0, 1), pt(0, 0)),
+        southwest:    rect(pt(0, 1), pt(1, 0)),  // Down and to the left
+        eastwest:    rect(pt(0, 0), pt(1, 0)),
+
+        northwest:    rect(pt(0, 0), pt(1, 1))
     }
+  }
+
+  degreesToRect(rad) {
+     return Point.polar(1, rad).extentAsRectangle().withCenter(pt(.5,.5))
   }
   
   toString() { return this.toCSSString(); }
@@ -419,6 +426,7 @@ export class LinearGradient extends Gradient {
   set vector(value) {
     if (!value) this._vector = this.vectors.northsouth;
     else if (typeof value === "string") this._vector = this.vectors[value.toLowerCase()]
+    else if (typeof value === "number") this._vector = this.degreesToRect(value); //radians
     else this._vector = value;
   }
   
