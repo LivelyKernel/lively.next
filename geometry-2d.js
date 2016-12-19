@@ -1077,7 +1077,7 @@ export class Line {
         yMin = Math.min(y1, y2),
         xMax = Math.max(x1, x2),
         yMax = Math.max(y1, y2);
-    return xMin <= x3 && x3 <= xMax && yMin < y3 && y3 <= yMax;
+    return xMin <= x3 && x3 <= xMax && yMin <= y3 && y3 <= yMax;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
