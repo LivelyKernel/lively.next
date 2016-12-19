@@ -288,11 +288,18 @@ export class Renderer {
 }
 
 function renderGradient(morph, prop) {
-  const gradient = morph[prop];
+  const gradient = morph[prop],
+        {bounds, focus, vector} = gradient;
   return h(gradient.type, {
                namespace: "http://www.w3.org/2000/svg",
                attributes: {id: "gradient-" + prop + morph.id,
-                            gradientUnits: "userSpaceOnUse"}},
+                            gradientUnits: "userSpaceOnUse",
+                            r: "50%",
+                            ...(vector && {gradientTransform: `rotate(${num.toDegrees(vector.extent().theta())}, ${morph.width / 2}, ${morph.height / 2})`}),
+                            ...(focus && bounds && {gradientTransform: `matrix(
+                                    ${bounds.width / morph.width}, 0, 0, ${bounds.height / morph.height}, 
+                                    ${((morph.width / 2) - (bounds.width / morph.width) * (morph.width / 2)) + (focus.x * morph.width) - (morph.width / 2)},
+                                    ${((morph.height / 2) - (bounds.height / morph.height) * (morph.height / 2)) + (focus.y * morph.height) - (morph.height / 2)})`})}},
                gradient.stops.map(({offset, color}) =>
                         h("stop",
                             {namespace: "http://www.w3.org/2000/svg",
