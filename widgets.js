@@ -40,18 +40,24 @@ export class Leash extends Path {
                  leash.vertices = leash.vertices;
                  this.moveBy(evt.state.dragDelta);
               },
-              update() {
+              update(change) {
                  const globalPos = this.connectedMorph.globalBounds()[this.attachedSide](),
                        pos = leash.localize(globalPos);
+                 var anim;
                  leash.vertices[idx] = {...leash.vertices[idx], ...leash.localize(globalPos)} 
-                 leash.vertices = leash.vertices;
+                 if (anim = change && change.meta.animation) {
+                    leash.animate({vertices: leash.vertices, duration: anim.duration})
+                 } else {
+                     leash.vertices = leash.vertices;
+                 }
               },
               clearPrevious() {
                  this.connectedMorph && disconnect(this.connectedMorph, "onChange", this, "update");
               },
               relayout() {
-                const {x,y} = leash.vertices[idx];
-                this.position = pt(x,y);
+                const {x,y} = leash.vertices[idx], bw = leash.borderWidth;
+                this.extent = pt(6 + (2*bw), 6 + (2 * bw));
+                this.center = pt(x + bw,y + bw);
               },
               attachTo(morph, side) {
                   this.clearPrevious()
