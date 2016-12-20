@@ -576,8 +576,13 @@ export class Halo extends Morph {
         offsetRect = rect(delta.x * x, delta.y * y, delta.x * width, delta.y * height),
         oldPosition = this.target.position;
        this.target.setBounds(bounds.insetByRect(offsetRect));
-       this.target.origin = origin.addPt({x: -offsetRect.x, y: -offsetRect.y});
-       this.target.position = oldPosition;
+       if (this.target.isPolygon || this.target.isPath) {
+          // refrain from adjusting origin
+          this.target.moveBy(this.target.origin.negated());
+       } else {
+          this.target.origin = origin.addPt({x: -offsetRect.x, y: -offsetRect.y});
+          this.target.position = oldPosition;
+       }
    }
 
    placeHandleFor([corner, deltaMask, originDelta], [nativeCursor, location]) {

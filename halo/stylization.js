@@ -11,6 +11,7 @@ import { ColorPicker, BorderStyleEditor, BodyStyleEditor,
 import { Icon } from "../icons.js";
 import { StyleRules } from "../style-rules.js";
 import { Leash } from "../widgets.js";
+import { Event } from "../events/Event.js";
 
 /* rms: I tried doing this via polymorphic dispatch
          on the different morphs directly, but
@@ -47,6 +48,12 @@ class StyleHalo extends Morph {
        this.build(); 
    }
 
+   onKeyDown(evt) {
+      if (evt.key == "Escape") {
+         this.remove();
+      }
+   }
+
    build() {
      this.submorphs = [{
          morphClasses: ['formatter'],
@@ -59,10 +66,14 @@ class StyleHalo extends Morph {
      this.focus();
      this.showBodyStyler();
      this.showBorderStyler();
-     connect(this.target, "onChange", this, "relayout");
+     connect(this.target, "onChange", this, "update");
      this.relayout();  
    }
 
+   update() {
+      this.relayout();
+   }
+   
    get isLayoutHalo() { return true; }
    get isHaloItem() { return true; }
 
@@ -101,7 +112,7 @@ class StyleHalo extends Morph {
       this.bodyStyler.remove();
       this.layoutStyleEditor.remove();
       this.leash && this.leash.remove();
-      disconnect(this.target, "onChange", this, "relayout");
+      disconnect(this.target, "onChange", this, "update");
       super.remove();
    }
 
@@ -168,7 +179,7 @@ class StyleHalo extends Morph {
 
    openBodyStyler() {
       if (this.bodyStyler.opened) return;
-      this.leash = this.world().addMorph(new Leash({start: pt(0,0), end: pt(10,10), opacity: 0}).openInWorld(), this);
+      this.leash = this.world().addMorph(new Leash({start: pt(0,0), end: pt(10,10), opacity: 0}), this.bodyStyler);
       this.leash.startPoint.attachTo(this.borderHalo, "center");
       this.leash.endPoint.attachTo(this.bodyStyler, "center");
       this.leash.animate({opacity: .7, duration: 300});
@@ -208,9 +219,6 @@ class StyleHalo extends Morph {
              this.borderSelected = this.bodySelected = false;
              halo.borderStyler.blur();
              halo.bodyStyler.blur()
-         },
-         onHoverOut(evt) {
-            if (!this.fullContainsPoint(evt.positionIn(this))) this.deselect();
          },
          alignWithTarget() {
            const globalBounds = halo.targetBounds, 
@@ -432,24 +440,36 @@ class SvgStyleHalo extends StyleHalo {
        this.vertexHandles = null;
     }
 
+    updateVertexHandles() {
+       if (!this.vertexHandles) return;
+       const bw = this.target.borderWidth || 3;
+       if (this.vertexHandles.length == this.target.vertices.length) {
+          arr.zip(this.vertexHandles, this.target.vertices).forEach(([v, {x,y}]) => {
+             v.center = pt(x + bw, y + bw);
+          });
+       } else {
+          this.initVertexHandles();
+       }
+    }
+
     initVertexHandles() {
         const halo = this,
-              bw = this.target.borderWidth || 1,
+              bw = this.target.borderWidth || 3,
               bh = this.get("borderHalo");
         bh.borderColor = Color.transparent;
         this.clearVertexHandles();
         this.vertexHandles = this.target.vertices.map(({x,y}, i) => {
             return bh.addMorph({
+                 type: "ellipse", nativeCursor: "-webkit-grab",
                  extent: pt(10,10), draggable: true,
-                 fill: Color.red.withA(.8),
-                 borderWidth: 1, borderColor: Color.black,
-                 center: pt(x + (2 * bw),y + (2 * bw)), 
+                 fill: Color.orange.withA(.8),
+                 borderWidth: 1, borderColor: Color.orange.darker(),
+                 center: pt(x + bw, y + bw), 
                  onDrag(evt) {
                     const vs = halo.target.vertices,
                           {x,y} = vs[i];
                     vs[i] = {...vs[i], ...pt(x,y).addPt(evt.state.dragDelta)}
                     halo.target.vertices = vs;
-                    this.moveBy(evt.state.dragDelta);
                     halo.relayout();
                  }
              })
@@ -462,6 +482,7 @@ class SvgStyleHalo extends StyleHalo {
    }
 
    openBorderStyler() {
+       if (this.borderStyler.opened) return;
        super.openBorderStyler();
        connect(this.borderStyler, "close", this, "clearVertexHandles");
        this.initVertexHandles();
@@ -478,7 +499,8 @@ class SvgStyleHalo extends StyleHalo {
               this.borderWidth = halo.target.borderWidth || 2;
               this.vertices = halo.target.vertices;
               this.position = halo.target.origin;
-              if (!halo.target.borderWidth) this.moveBy(pt(-2, -2));
+              if (!halo.target.borderWidth) this.moveBy(pt(-1,-1));
+              halo.updateVertexHandles()
            }  
         }
     }
@@ -501,6 +523,7 @@ class PathStyleHalo extends SvgStyleHalo {
    }
 
    openBorderStyler() {
+      if (this.borderStyler.opened) return;
       super.openBorderStyler();
       this.leash.startPoint.attachTo(this, "center");
    }
