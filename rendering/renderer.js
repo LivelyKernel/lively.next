@@ -280,7 +280,7 @@ export class Renderer {
                              width: width + 'px', height: height + 'px',
                              display, filter, "pointer-events": "auto"}},
               [h("svg", {namespace: "http://www.w3.org/2000/svg", version: "1.1",
-                        style: {position: "absolute", "pointer-events": "none"},
+                        style: {position: "absolute", "pointer-events": "none", overflow: "visible"},
                         ...svgAttributes(morph)},
                   [defs, svg]),
                 this.renderSubmorphs(morph)]);
@@ -305,5 +305,5 @@ function renderGradient(morph, prop) {
                             {namespace: "http://www.w3.org/2000/svg",
                               attributes:
                                 {offset: (offset * 100) + "%",
-                                 "stop-color": color}})));
+                                 "stop-color": color.toString()}})));
 }

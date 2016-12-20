@@ -114,7 +114,7 @@ class StyleMapper {
   }
 
   static getSvgAttributes({width, height, borderWidth}) {
-     return {width, height, "viewBox": [0, 0, width,height].join(" ")};
+     return {width, height, "viewBox": [0, 0, width, height].join(" ")};
   }
 
   static getPathAttributes(path, fill=false) {

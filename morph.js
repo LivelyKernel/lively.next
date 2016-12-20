@@ -1375,7 +1375,7 @@ export class Path extends Morph {
                     return arr.compact([next, pt(x,y), previous]);
                  })]);
        this.adjustingVertices = true;
-       this.extent = b.extent().addXY(2.2 * bw, 2.2 * bw);
+       this.extent = b.extent();
        this.origin = b.topLeft().negated();
        this.adjustingVertices = false;
     }
