@@ -118,6 +118,7 @@ class StyleEditor extends Morph {
 
    open() {
       if (this.opened) return this;
+      this.opened = true;
       const [wrapper] = this.submorphs,
             {submorphs: [instruction]} = wrapper,
             duration = 200;
@@ -140,7 +141,6 @@ class StyleEditor extends Morph {
           morphClasses: ['opened'],
           duration, layout: new VerticalLayout({spacing: 5})
       });
-      this.opened = true;
       return this;
    }
 

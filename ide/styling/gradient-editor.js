@@ -273,10 +273,11 @@ export class GradientEditor extends Morph {
                gradientEditor.updateStop(idx, {color});
            },
            openColorWidget(name, widget) {
-               this[widget] = this[widget] || widget;
+               this[name] = this[name] || widget;
                widget.position = pt(0,0);
                connect(widget, "color", this, "updateColor");
                connect(widget, "close", this, "onWidgetClosed");
+               connect(self, "remove", widget, "remove");
                widget.fadeIntoWorld(this.globalBounds().bottomCenter());
            },
            closeColorWidget(name, widget) {
@@ -290,7 +291,6 @@ export class GradientEditor extends Morph {
                   type: "ellipse", name: "paletteField", extent,
                   update(gradient) {
                      this.fill = stopControl.stopColor = gradient.stops[idx].color;
-                     
                   },
                   onMouseDown: () => {
                      this.openColorWidget("palette", new ColorPalette({color: this.stopColor}));
