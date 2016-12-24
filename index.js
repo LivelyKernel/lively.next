@@ -199,7 +199,7 @@ export function uninstallSystemInstantiateHook() {
   modules.removeHook("instantiate", "mochaEs6TestInstantiater");
 }
 
-async function isMochaTestLoad(load, executable) {
+export async function isMochaTestLoad(load, executable) {
   var deps = executable.deps || [];
   if (!deps.some(ea => ea.endsWith("mocha-es6") || ea.endsWith("mocha-es6/index.js")))
     return false;

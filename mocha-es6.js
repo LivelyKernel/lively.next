@@ -19696,56 +19696,6 @@ var runTestFiles = function () {
 // System loader extension
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-var isMochaTestLoad = function () {
-  var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(load, executable) {
-    var deps, moduleName, parsed, stop, isTest;
-    return regeneratorRuntime.wrap(function _callee5$(_context5) {
-      while (1) {
-        switch (_context5.prev = _context5.next) {
-          case 0:
-            deps = executable.deps || [];
-
-            if (deps.some(function (ea) {
-              return ea.endsWith("mocha-es6") || ea.endsWith("mocha-es6/index.js");
-            })) {
-              _context5.next = 3;
-              break;
-            }
-
-            return _context5.abrupt("return", false);
-
-          case 3:
-            moduleName = load.name;
-            _context5.next = 6;
-            return modules.module(moduleName).ast();
-
-          case 6:
-            parsed = _context5.sent;
-            stop = {};
-            isTest = false;
-
-
-            lively_ast.withMozillaAstDo(parsed, {}, function (next, node) {
-              if (node.type === "CallExpression" && node.callee.name && node.callee.name.match(/describe|it/) && node.arguments[0].type === "Literal") {
-                isTest = true;
-              } else next();
-            });
-
-            return _context5.abrupt("return", isTest);
-
-          case 11:
-          case "end":
-            return _context5.stop();
-        }
-      }
-    }, _callee5, this);
-  }));
-
-  return function isMochaTestLoad(_x10, _x11) {
-    return _ref5.apply(this, arguments);
-  };
-}();
-
 /*global System,global*/
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -19896,6 +19846,56 @@ function uninstallSystemInstantiateHook() {
   modules.removeHook("instantiate", "mochaEs6TestInstantiater");
 }
 
+var isMochaTestLoad = function () {
+  var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(load, executable) {
+    var deps, moduleName, parsed, stop, isTest;
+    return regeneratorRuntime.wrap(function _callee5$(_context5) {
+      while (1) {
+        switch (_context5.prev = _context5.next) {
+          case 0:
+            deps = executable.deps || [];
+
+            if (deps.some(function (ea) {
+              return ea.endsWith("mocha-es6") || ea.endsWith("mocha-es6/index.js");
+            })) {
+              _context5.next = 3;
+              break;
+            }
+
+            return _context5.abrupt("return", false);
+
+          case 3:
+            moduleName = load.name;
+            _context5.next = 6;
+            return modules.module(moduleName).ast();
+
+          case 6:
+            parsed = _context5.sent;
+            stop = {};
+            isTest = false;
+
+
+            lively_ast.withMozillaAstDo(parsed, {}, function (next, node) {
+              if (node.type === "CallExpression" && node.callee.name && node.callee.name.match(/describe|it/) && node.arguments[0].type === "Literal") {
+                isTest = true;
+              } else next();
+            });
+
+            return _context5.abrupt("return", isTest);
+
+          case 11:
+          case "end":
+            return _context5.stop();
+        }
+      }
+    }, _callee5, this);
+  }));
+
+  return function isMochaTestLoad(_x10, _x11) {
+    return _ref5.apply(this, arguments);
+  };
+}();
+
 function installMochaEs6ModuleExecute(load, executable) {
   var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
@@ -19960,6 +19960,7 @@ exports.mocha = mocha;
 exports.expect = chai.expect;
 exports.installSystemInstantiateHook = installSystemInstantiateHook;
 exports.uninstallSystemInstantiateHook = uninstallSystemInstantiateHook;
+exports.isMochaTestLoad = isMochaTestLoad;
 
 }((this.mochaEs6 = this.mochaEs6 || {}),lively.modules,mocha,chai,lively.ast));
 
