@@ -151,6 +151,13 @@ try {
       await livelySystem.localInterface.packageConfChange(${JSON.stringify(source)}, ${JSON.stringify(confFile)})`);
   }
 
+  async resourcesOfPackage(packageOrAddress, exclude = [".git", "node_modules"]) {
+    if (packageOrAddress.address) packageOrAddress = packageOrAddress.address;
+    return this.runEvalAndStringify(`
+      var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
+      await livelySystem.localInterface.resourcesOfPackage(${JSON.stringify(packageOrAddress)}, ${JSON.stringify(exclude)});`);
+  }
+
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // module related
