@@ -121,6 +121,7 @@ export async function interactivelyInjectImportIntoText(textMorph, opts) {
   if (!choices.length) return null;
 
   var moduleId = textMorph.evalEnvironment.targetModule,
+      intoPackage = await jsPlugin.systemInterface().getPackageForModule(moduleId),
       from, to, pos, importedVarNames = [], ranges = [];
 
   if (gotoImport)
@@ -134,7 +135,7 @@ export async function interactivelyInjectImportIntoText(textMorph, opts) {
         source = textMorph.textString;
 
     var {generated, from, to, standaloneImport, importedVarName} =
-      ImportInjector.run(System, moduleId, source, choice),
+      ImportInjector.run(System, moduleId, intoPackage, source, choice),
 
     pos = textMorph.indexToPosition(from);
 
@@ -237,13 +238,14 @@ class ExportPrompt {
 
 export class ImportInjector {
 
-  static run(System, intoModuleId, intoModuleSource, importData, optAst) {
-    return new this(System, intoModuleId, intoModuleSource, importData, optAst).run();
+  static run(System, intoModuleId, intoPackage, intoModuleSource, importData, optAst) {
+    return new this(System, intoModuleId, intoPackage, intoModuleSource, importData, optAst).run();
   }
 
-  constructor(System, intoModuleId, intoModuleSource, importData, optAst) {
+  constructor(System, intoModuleId, intoPackage, intoModuleSource, importData, optAst) {
     this.System = System
-    this.intoModuleId = intoModuleId
+    this.intoModuleId = intoModuleId;
+    this.intoPackage = intoPackage;
     this.intoModuleSource = intoModuleSource
     this.fromModuleId = importData.moduleId;
     this.importData = importData
@@ -251,8 +253,8 @@ export class ImportInjector {
   }
 
   run() {
-    var {standaloneImport, importedVarName} = this.generateImportStatement();
-    var {imports, importsOfFromModule, importsOfVar} = this.existingImportsOfFromModule();
+    var {standaloneImport, importedVarName} = this.generateImportStatement(),
+        {imports, importsOfFromModule, importsOfVar} = this.existingImportsOfFromModule();
 
     // already imported?
     if (importsOfVar.length) return {

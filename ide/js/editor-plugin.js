@@ -13,7 +13,8 @@ import {
   jsEditorCommands,
   astEditorCommands,
   insertStringWithBehaviorCommand,
-  deleteBackwardsWithBehavior } from "./commands.js";
+  deleteBackwardsWithBehavior
+} from "./commands.js";
 
 import EditorPlugin from "../editor-plugin.js";
 
@@ -52,7 +53,7 @@ export class JavaScriptEditorPlugin extends EditorPlugin {
         TextStyleAttribute.fromPositions(this.theme.styleCached(token), start, end))));
 
     if (this.checker)
-      this.checker.onDocumentChange({}, textMorph);
+      this.checker.onDocumentChange({}, textMorph, this);
   }
 
   tokenAt(pos) {

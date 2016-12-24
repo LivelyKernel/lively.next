@@ -104,7 +104,7 @@ describe("import helper - import injector", () => {
     m = "http://foo/a.js";
     src = "class Foo {}";
     ({generated, newSource, from, to, standaloneImport, importedVarName} =
-      ImportInjector.run(S, m, src, importData));
+      ImportInjector.run(S, m, {name: "test-package"}, src, importData));
     expect(generated).equals(`import { xxx } from "./src/b.js";\n`);
     expect(newSource).equals(`import { xxx } from "./src/b.js";\nclass Foo {}`);
     expect(from).equals(0);
@@ -115,13 +115,13 @@ describe("import helper - import injector", () => {
 
   it("leaves source with existing imported as is", () => {
     src = `class Foo {}\nimport {\n  xxx\n} from "./src/b.js";`;
-    ({newSource} = ImportInjector.run(S, m, src, importData));
+    ({newSource} = ImportInjector.run(S, m, null, src, importData));
     expect(newSource).equals(src);
   });
 
   it("modifies import from same module", () => {
     src = `class Foo {}\nimport {\n  yyy\n} from "./src/b.js";`;
-    ({newSource, from, to} = ImportInjector.run(S, m, src, importData));
+    ({newSource, from, to} = ImportInjector.run(S, m, null, src, importData));
     expect(newSource).equals(`class Foo {}\nimport {\n  yyy, xxx\n} from "./src/b.js";`);
     expect(from).equals(27);
     expect(to).equals(27+5);
@@ -129,7 +129,7 @@ describe("import helper - import injector", () => {
 
   it("modifies default import from same module 1", () => {
     src = `class Foo {}\nimport yyy from "./src/b.js";`;
-    ({newSource, from, to} = ImportInjector.run(S, m, src, importData));
+    ({newSource, from, to} = ImportInjector.run(S, m, null, src, importData));
     expect(newSource).equals(`class Foo {}\nimport yyy, { xxx } from "./src/b.js";`);
     expect(from).equals(23);
     expect(to).equals(23+9);
@@ -137,20 +137,20 @@ describe("import helper - import injector", () => {
 
   it("modifies default import from same module 2", () => {
     src = `class Foo {}\nimport yyy, { zzz } from "./src/b.js";`;
-    ({newSource, from, to, standaloneImport} = ImportInjector.run(S, m, src, importData));
+    ({newSource, from, to, standaloneImport} = ImportInjector.run(S, m, {name: "test-package"}, src, importData));
     expect(newSource).equals(`class Foo {}\nimport yyy, { zzz, xxx } from "./src/b.js";`);
     expect(standaloneImport).equals(`import { xxx } from "./src/b.js";`);
   });
 
   it("adds new import to default import of same module", () => {
     src = `class Foo {}\nimport yyy from "./src/b.js";`;
-    ({newSource} = ImportInjector.run(S, m, src, importData));
+    ({newSource} = ImportInjector.run(S, m, null, src, importData));
     expect(newSource).equals(`class Foo {}\nimport yyy, { xxx } from "./src/b.js";`);
   });
 
   it("adds new import below existing", () => {
     src = `class Foo {}\nimport yyy from "./src/c.js";`;
-    ({newSource} = ImportInjector.run(S, m, src, importData));
+    ({newSource} = ImportInjector.run(S, m, {name: "test-package"}, src, importData));
     expect(newSource).equals(`class Foo {}\nimport yyy from "./src/c.js";\nimport { xxx } from "./src/b.js";`);
   });
 
@@ -167,21 +167,21 @@ describe("import helper - import injector", () => {
     it("injects new import at top", () => {
       m = "http://foo/a.js";
       src = "class Foo {}";
-      ({newSource, importedVarName} = ImportInjector.run(S, m, src, importData));
+      ({newSource, importedVarName} = ImportInjector.run(S, m, {name: "test-package"}, src, importData));
       expect(newSource).equals(`import xxx from "./src/b.js";\nclass Foo {}`);
       expect(importedVarName).equals("xxx");
     });
 
     it("leaves source with existing imported as is", () => {
       src = `class Foo {}\nimport xxx\n from "./src/b.js";`;
-      ({newSource, standaloneImport} = ImportInjector.run(S, m, src, importData));
+      ({newSource, standaloneImport} = ImportInjector.run(S, m, {name: "test-package"}, src, importData));
       expect(newSource).equals(src);
       expect(standaloneImport).equals(`import xxx from "./src/b.js";`)
     });
 
     it("leaves source with existing imported as is 2", () => {
       src = `class Foo {}\nimport xxx, { yyy } from "./src/b.js";`;
-      ({newSource, to, from} = ImportInjector.run(S, m, src, importData));
+      ({newSource, to, from} = ImportInjector.run(S, m, null, src, importData));
       expect(newSource).equals(src);
       expect(from).equals(13);
       expect(to).equals(51);
@@ -189,7 +189,7 @@ describe("import helper - import injector", () => {
 
     it("adds new import to existing from same module", () => {
       src = `class Foo {}\nimport { yyy } from "./src/b.js";`;
-      ({newSource, to, from, generated, standaloneImport} = ImportInjector.run(S, m, src, importData));
+      ({newSource, to, from, generated, standaloneImport} = ImportInjector.run(S, m, {name: "test-package"}, src, importData));
       expect(generated).equals(` xxx,`);
       expect(newSource).equals(`class Foo {}\nimport xxx, { yyy } from "./src/b.js";`);
       expect(from).equals(19);
@@ -213,7 +213,7 @@ describe("import helper - import injector", () => {
     it("resolves to package name", () => {
       m = "http://foo/a.js";
       src = "class Foo {}";
-      ({newSource} = ImportInjector.run(S, m, src, importData));
+      ({newSource} = ImportInjector.run(S, m, null, src, importData));
       expect(newSource).equals(`import { xxx } from "test-package-2/src/b.js";\nclass Foo {}`);
     });
 
@@ -221,7 +221,7 @@ describe("import helper - import injector", () => {
       importData.packageName = "no group"
       m = "http://foo/a.js";
       src = "class Foo {}";
-      ({newSource} = ImportInjector.run(S, m, src, importData));
+      ({newSource} = ImportInjector.run(S, m, null, src, importData));
       expect(newSource).equals(`import { xxx } from "http://bar/src/b.js";\nclass Foo {}`);
     });
 
