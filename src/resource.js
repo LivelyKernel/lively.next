@@ -30,27 +30,22 @@ async function fetchResource(proceed, load) {
   return result;
 }
 
+const livelyURLRe = /^lively:\/\/([^\/]+)\/(.*)$/;
+
 function livelyProtocol(proceed, url) {
-  if (!url.match(/^lively:\/\//)) return proceed(url);
-  const match = url.match(/^lively:\/\/([^\/]+)\/(.*)$/),
-        worldId = match[1],
-        localObjectName = match[2];
+  const match = url.match(livelyURLRe);
+  if (!match) return proceed(url);
+  var [_, worldId, id] = match;
   return {
     read() {
-      return Promise.resolve((typeof $morph !== "undefined"
-           && $morph(localObjectName)
-           && $morph(localObjectName).textString)
-          || `/*Could not locate ${localObjectName}*/`);
+      var m = typeof $world !== "undefined" && $world.getMorphWithId(id);
+      return Promise.resolve(m ? m.textString : `/*Could not locate ${id}*/`);
     },
     write(source) {
-      if (typeof $morph !== "undefined"
-           && $morph(localObjectName)
-           && $morph(localObjectName).textString) {
-        $morph(localObjectName).textString = source;
-        return Promise.resolve(source);
-      } else {
-        return Promise.reject(`Could not save morph ${localObjectName}`);
-      }
+      var m = typeof $world !== "undefined" && $world.getMorphWithId(id);
+      if (!m) return Promise.reject(`Could not save morph ${id}`);
+      m.textString = source;
+      return Promise.resolve(this);
     }
   };
 }
