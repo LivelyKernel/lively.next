@@ -195,16 +195,16 @@ describe("create or extend classes", function() {
     });
 
     it("adds module meta data", async () => {
-      varRecorder.module = {package() { return {name: "foo"}; }, pathInPackage() { return "./bar"; }};
+      varRecorder.module = {package() { return {name: "foo"}; }, pathInPackage() { return "bar"; }};
       var Foo = await evalClass("class Foo {}");
-      expect(Foo[Symbol.for("lively-instance-module-meta")]).deep.equals(
-        {package: {name: "foo", version: undefined}, pathInPackage: "./bar"});
+      expect(Foo[Symbol.for("lively-module-meta")]).deep.equals(
+        {package: {name: "foo", version: undefined}, pathInPackage: "bar"});
     });
 
     it("adds observer for superclass", async () => {
       var callback = null;
       varRecorder.module = {
-        package() { return {name: "foo"}; }, pathInPackage() { return "./bar"; },
+        package() { return {name: "foo"}; }, pathInPackage() { return "bar"; },
         subscribeToToplevelDefinitionChanges: (func) => callback = func,
         unsubscribeFromToplevelDefinitionChanges: (func) => {}
       }

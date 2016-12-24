@@ -3,7 +3,8 @@ import { arr } from "lively.lang";
 export const initializeSymbol = Symbol.for("lively-instance-initialize"),
              instanceRestorerSymbol = Symbol.for("lively-instance-restorer"),
              superclassSymbol = Symbol.for("lively-instance-superclass"),
-             moduleMetaSymbol = Symbol.for("lively-instance-module-meta"),
+             moduleMetaSymbol = Symbol.for("lively-module-meta"),
+             sourceLocSymbol = Symbol.for("lively-source-location"),
              moduleSubscribeToToplevelChangesSym = Symbol.for("lively-klass-changes-subscriber");
 
 const constructorArgMatcher = /\([^\\)]*\)/;
@@ -120,7 +121,8 @@ export function initializeClass(
   instanceMethods = [],
   classMethods = [],
   classHolder = {},
-  currentModule) {
+  currentModule,
+  sourceLoc) {
   // Given a `classHolder` object as "environment", will try to find a "class"
   // (JS constructor function) inside it. If no class is found it will create a
   // new costructor function object and will attach the methods to it. If a class
@@ -147,6 +149,8 @@ export function initializeClass(
 
   // 3. Install methods
   installMethods(klass, instanceMethods, classMethods);
+
+  klass[sourceLocSymbol] = sourceLoc;
 
   // 4. If we have a `currentModule` instance (from lively.modules/src/module.js)
   // then we also store some meta data about the module. This allows us to

@@ -16,7 +16,8 @@
 var initializeSymbol = Symbol.for("lively-instance-initialize");
 var instanceRestorerSymbol = Symbol.for("lively-instance-restorer");
 var superclassSymbol = Symbol.for("lively-instance-superclass");
-var moduleMetaSymbol = Symbol.for("lively-instance-module-meta");
+var moduleMetaSymbol = Symbol.for("lively-module-meta");
+var sourceLocSymbol = Symbol.for("lively-source-location");
 var moduleSubscribeToToplevelChangesSym = Symbol.for("lively-klass-changes-subscriber");
 
 var constructorArgMatcher = /\([^\\)]*\)/;
@@ -131,6 +132,7 @@ function initializeClass(constructorFunc, superclassSpec) {
   var classMethods = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
   var classHolder = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
   var currentModule = arguments[5];
+  var sourceLoc = arguments[6];
 
   // Given a `classHolder` object as "environment", will try to find a "class"
   // (JS constructor function) inside it. If no class is found it will create a
@@ -157,6 +159,8 @@ function initializeClass(constructorFunc, superclassSpec) {
 
   // 3. Install methods
   installMethods(klass, instanceMethods, classMethods);
+
+  klass[sourceLocSymbol] = sourceLoc;
 
   // 4. If we have a `currentModule` instance (from lively.modules/src/module.js)
   // then we also store some meta data about the module. This allows us to
@@ -191,9 +195,9 @@ function initializeClass(constructorFunc, superclassSpec) {
   // 6. Add a toString method for the class to allows us to see its constructor arguments
   var init = klass.prototype[initializeSymbol],
       constructorArgs = String(klass.prototype[initializeSymbol]).match(constructorArgMatcher),
-      string = "class " + className + " " + (superclass ? "extends " + superclass.name : "") + " {\n" + ("  constructor" + (constructorArgs ? constructorArgs[0] : "()") + " { /*...*/ }") + "\n}";
+      string$$1 = "class " + className + " " + (superclass ? "extends " + superclass.name : "") + " {\n" + ("  constructor" + (constructorArgs ? constructorArgs[0] : "()") + " { /*...*/ }") + "\n}";
   klass.toString = function () {
-    return string;
+    return string$$1;
   };
 
   return klass;
@@ -243,9 +247,39 @@ var runtime = Object.freeze({
 	instanceRestorerSymbol: instanceRestorerSymbol,
 	superclassSymbol: superclassSymbol,
 	moduleMetaSymbol: moduleMetaSymbol,
+	sourceLocSymbol: sourceLocSymbol,
 	moduleSubscribeToToplevelChangesSym: moduleSubscribeToToplevelChangesSym,
 	initializeClass: initializeClass
 });
+
+var asyncToGenerator = function (fn) {
+  return function () {
+    var gen = fn.apply(this, arguments);
+    return new Promise(function (resolve, reject) {
+      function step(key, arg) {
+        try {
+          var info = gen[key](arg);
+          var value = info.value;
+        } catch (error) {
+          reject(error);
+          return;
+        }
+
+        if (info.done) {
+          resolve(value);
+        } else {
+          return Promise.resolve(value).then(function (value) {
+            step("next", value);
+          }, function (err) {
+            step("throw", err);
+          });
+        }
+      }
+
+      return step("next");
+    });
+  };
+};
 
 var classCallCheck = function (instance, Constructor) {
   if (!(instance instanceof Constructor)) {
@@ -304,7 +338,7 @@ var _extends = Object.assign || function (target) {
   return target;
 };
 
-var get = function get(object, property, receiver) {
+var get$1 = function get$1(object, property, receiver) {
   if (object === null) object = Function.prototype;
   var desc = Object.getOwnPropertyDescriptor(object, property);
 
@@ -314,7 +348,7 @@ var get = function get(object, property, receiver) {
     if (parent === null) {
       return undefined;
     } else {
-      return get(parent, property, receiver);
+      return get$1(parent, property, receiver);
     }
   } else if ("value" in desc) {
     return desc.value;
@@ -365,14 +399,14 @@ var possibleConstructorReturn = function (self, call) {
 
 
 
-var set = function set(object, property, value, receiver) {
+var set$1 = function set$1(object, property, value, receiver) {
   var desc = Object.getOwnPropertyDescriptor(object, property);
 
   if (desc === undefined) {
     var parent = Object.getPrototypeOf(object);
 
     if (parent !== null) {
-      set(parent, property, value, receiver);
+      set$1(parent, property, value, receiver);
     }
   } else if ("value" in desc && desc.writable) {
     desc.value = value;
@@ -519,7 +553,7 @@ var ClassReplaceVisitor = function (_Visitor) {
 
       if (node.type === "CallExpression" && node.callee.object && node.callee.object.type === "Super") node = replaceSuperMethodCall(node, state, path, state.options);
 
-      node = get(ClassReplaceVisitor.prototype.__proto__ || Object.getPrototypeOf(ClassReplaceVisitor.prototype), "accept", this).call(this, node, state, path);
+      node = get$1(ClassReplaceVisitor.prototype.__proto__ || Object.getPrototypeOf(ClassReplaceVisitor.prototype), "accept", this).call(this, node, state, path);
 
       if (node.type === "ExportDefaultDeclaration") return splitExportDefaultWithClass(node, state, path, state.options);
 
@@ -597,9 +631,12 @@ function replaceClass(node, state, path, options) {
       superClass = node.superClass,
       classId = node.id,
       type = node.type,
+      start = node.start,
+      end = node.end,
       instanceProps = id("undefined"),
       classProps = id("undefined"),
-      className = classId ? classId.name : "anonymous_class";
+      className = classId ? classId.name : "anonymous_class",
+      loc = node["x-lively-def-location"] || { start: start, end: end };
 
 
   if (body.length) {
@@ -669,6 +706,8 @@ function replaceClass(node, state, path, options) {
   // For persistent storage and retrieval of pre-existing classes in "classHolder" object
   var useClassHolder = classId && type === "ClassDeclaration";
 
+  var locNode = objectLiteral(["start", literal(loc.start), "end", literal(loc.end)]);
+
   var classCreator = funcCall(funcExpr({}, ["superclass"], varDecl(tempLivelyClassHolderVar, state.classHolder), varDecl(tempLivelyClassVar, useClassHolder ? {
     type: "ConditionalExpression",
     test: binaryExpr(funcCall(member(tempLivelyClassHolderVar, "hasOwnProperty"), literal(classId.name)), "&&", binaryExpr({
@@ -677,13 +716,13 @@ function replaceClass(node, state, path, options) {
     }, "===", literal("function"))),
     consequent: member(tempLivelyClassHolderVar, classId),
     alternate: assign(member(tempLivelyClassHolderVar, classId), constructorTemplate(classId.name))
-  } : classId ? constructorTemplate(classId.name) : constructorTemplate(null)), returnStmt(funcCall(options.functionNode, id(tempLivelyClassVar), id("superclass"), instanceProps, classProps, id(tempLivelyClassHolderVar), options.currentModuleAccessor || id("undefined")))), superClassSpec);
+  } : classId ? constructorTemplate(classId.name) : constructorTemplate(null)), returnStmt(funcCall(options.functionNode, id(tempLivelyClassVar), id("superclass"), instanceProps, classProps, id(tempLivelyClassHolderVar), options.currentModuleAccessor || id("undefined"), locNode))), superClassSpec);
 
   if (type === "ClassExpression") return classCreator;
 
   var result = classCreator;
 
-  if (options.declarationWrapper && state.classHolder === options.classHolder /*i.e. toplevel*/) result = funcCall(options.declarationWrapper, literal(classId.name), literal("class"), result, options.classHolder);
+  if (options.declarationWrapper && state.classHolder === options.classHolder /*i.e. toplevel*/) result = funcCall(options.declarationWrapper, literal(classId.name), literal("class"), result, options.classHolder, locNode);
 
   // since it is a declaration and we removed the class construct we need to add a var-decl
   result = varDecl(classId, result, "var");
@@ -716,6 +755,8 @@ function classToFunctionTransform(sourceOrAst, options) {
   //     }
   //   }])
 
+  // console.log(typeof sourceOrAst === "string" ? sourceOrAst : stringify(sourceOrAst))
+
   var parsed = typeof sourceOrAst === "string" ? lively_ast.parse(sourceOrAst) : sourceOrAst;
   options.scope = lively_ast.query.resolveReferences(lively_ast.query.scopes(parsed));
 
@@ -724,8 +765,144 @@ function classToFunctionTransform(sourceOrAst, options) {
   return replaced;
 }
 
+var srcLocSym = Symbol.for("lively-source-location");
+var moduleSym = Symbol.for("lively-module-meta");
+var descriptorCache = new WeakMap();
+
+var SourceDescriptor = function () {
+  createClass(SourceDescriptor, null, [{
+    key: "for",
+    value: function _for(obj, optSystem) {
+      var descr = descriptorCache.get(obj);
+      if (descr) return descr;
+      descr = new this(obj, optSystem);
+      descriptorCache.set(obj, descr);
+      return descr;
+    }
+  }]);
+
+  function SourceDescriptor(obj, System) {
+    classCallCheck(this, SourceDescriptor);
+
+    this.obj = obj;
+    this.System = System;
+  }
+
+  createClass(SourceDescriptor, [{
+    key: "read",
+    value: function () {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+        var _sourceLocation, start, end;
+
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                _sourceLocation = this.sourceLocation, start = _sourceLocation.start, end = _sourceLocation.end;
+                _context.next = 3;
+                return this.module.source();
+
+              case 3:
+                _context.t0 = start;
+                _context.t1 = end;
+                return _context.abrupt("return", _context.sent.slice(_context.t0, _context.t1));
+
+              case 6:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function read() {
+        return _ref.apply(this, arguments);
+      }
+
+      return read;
+    }()
+  }, {
+    key: "write",
+    value: function () {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(newSource) {
+        var module, _sourceLocation2, start, end;
+
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                module = this.module, _sourceLocation2 = this.sourceLocation, start = _sourceLocation2.start, end = _sourceLocation2.end;
+                _context2.next = 3;
+                return module.changeSourceAction(function (oldSource) {
+                  return oldSource.slice(0, start) + newSource + oldSource.slice(end);
+                });
+
+              case 3:
+                return _context2.abrupt("return", this);
+
+              case 4:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function write(_x) {
+        return _ref2.apply(this, arguments);
+      }
+
+      return write;
+    }()
+  }, {
+    key: "toString",
+    value: function toString() {
+      var objString = lively_lang.string.truncate(String(this.obj), 35).replace(/\n/g, ""),
+          modId;try {
+        modId = this.module.id;
+      } catch (e) {
+        modId = "NO MODULE!";
+      }
+      return this.constructor.name + "(" + objString + " in " + modId + ")";
+    }
+  }, {
+    key: "System",
+    get: function get() {
+      return this._System || System;
+    },
+    set: function set(S) {
+      this._System = S;
+    }
+  }, {
+    key: "module",
+    get: function get() {
+      var obj = this.obj,
+          System = this.System;
+
+      if (!obj[moduleSym]) throw new Error("runtime object of " + this + " has no module data");
+      var _obj$moduleSym = obj[moduleSym],
+          packageName = _obj$moduleSym.package.name,
+          pathInPackage = _obj$moduleSym.pathInPackage;
+      // FIXME
+
+      return lively.modules.moduleForSytem(System, packageName + "/" + pathInPackage);
+    }
+  }, {
+    key: "sourceLocation",
+    get: function get() {
+      var obj = this.obj,
+          System = this.System;
+
+      if (!obj[srcLocSym]) throw new Error("runtime object of " + this + " has no source location data");
+      return obj[srcLocSym];
+    }
+  }]);
+  return SourceDescriptor;
+}();
+
 exports.runtime = runtime;
 exports.classToFunctionTransform = classToFunctionTransform;
+exports.SourceDescriptor = SourceDescriptor;
 
 }((this.lively.classes = this.lively.classes || {}),lively.lang,lively.ast));
 

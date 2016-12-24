@@ -183,12 +183,13 @@ function replaceSuperSetter(node, state, path, options) {
 }
 
 function replaceClass(node, state, path, options) {
-  console.assert(node.type === "ClassDeclaration" || node.type === "ClassExpression");
+  console.assert(node.type === "ClassDeclaration" || node.type === "ClassExpression");  
 
-  var {body: {body}, superClass, id: classId, type} = node,
+  var {body: {body}, superClass, id: classId, type, start, end} = node,
       instanceProps = id("undefined"),
       classProps = id("undefined"),
-      className = classId ? classId.name : "anonymous_class";
+      className = classId ? classId.name : "anonymous_class",
+      loc = node["x-lively-def-location"] || {start, end};
 
   if (body.length) {
     var {inst, clazz} = body.reduce((props, propNode) => {
@@ -258,6 +259,8 @@ function replaceClass(node, state, path, options) {
   // For persistent storage and retrieval of pre-existing classes in "classHolder" object
   var useClassHolder = classId && type === "ClassDeclaration";
 
+  var locNode = objectLiteral(["start", literal(loc.start), "end", literal(loc.end)]);
+
   var classCreator =
     funcCall(
       funcExpr({}, ["superclass"],
@@ -285,7 +288,8 @@ function replaceClass(node, state, path, options) {
             id("superclass"),
             instanceProps, classProps,
             id(tempLivelyClassHolderVar),
-            options.currentModuleAccessor || id("undefined")
+            options.currentModuleAccessor || id("undefined"),
+            locNode
             ))),
       superClassSpec);
 
@@ -299,7 +303,8 @@ function replaceClass(node, state, path, options) {
       literal(classId.name),
       literal("class"),
       result,
-      options.classHolder);
+      options.classHolder,
+      locNode);
 
     // since it is a declaration and we removed the class construct we need to add a var-decl
     result = varDecl(classId, result, "var");
@@ -334,6 +339,8 @@ export function classToFunctionTransform(sourceOrAst, options) {
   //       return 2 + this.constructor[superclassSymbol].prototype.m.call(this);
   //     }
   //   }])
+
+// console.log(typeof sourceOrAst === "string" ? sourceOrAst : stringify(sourceOrAst))
 
   var parsed = typeof sourceOrAst === "string" ? parse(sourceOrAst) : sourceOrAst;
   options.scope = query.resolveReferences(query.scopes(parsed));
