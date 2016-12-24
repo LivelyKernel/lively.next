@@ -41,7 +41,7 @@ export class ExportLookup {
 
     await Promise.all(mods.map(async moduleId => {
       var mod = lively.modules.module(moduleId),
-          pathInPackage = mod.pathInPackage().replace(/^\.\//, ""),
+          pathInPackage = mod.pathInPackage(),
           p = mod.package(),
           isMain = p.main && pathInPackage === p.main,
           packageURL = p.url,
