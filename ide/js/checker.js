@@ -23,11 +23,11 @@ export default class JavaScriptChecker {
     return astModule.fuzzyParse(src, options);
   }
 
-  onDocumentChange(change, morph) {
-    this.updateAST(change, morph);
+  onDocumentChange(change, morph, jsPlugin) {
+    this.updateAST(change, morph, jsPlugin);
   }
 
-  updateAST(change, morph) {
+  updateAST(change, morph, jsPlugin) {
     var ast;
     
     // 1. parse
@@ -39,17 +39,24 @@ export default class JavaScriptChecker {
     // var morph = that
     // var ast = new JavaScriptChecker().parse(morph.textString)
 
-    var doc = morph.document;
+    var doc = morph.document,
+        knownGlobals = jsPlugin.evalEnvironment.knownGlobals || [];
 
     var query = System.get(System.decanonicalize("lively.ast")).query;
 
     // if (codeEditor.getShowWarnings()) {
       var prevMarkers = (morph.markers || []).filter(({id}) => id.startsWith("js-checker-")),
-          globals = query.findGlobalVarRefs(ast, {jslintGlobalComment: true}),
+          globals = query.findGlobalVarRefs(ast, {jslintGlobalComment: true})
+                      .filter(ea => !knownGlobals.includes(ea.name)),
           newMarkers = globals.map(({start, end, name, type}, i) => {
             start = doc.indexToPosition(start);
             end = doc.indexToPosition(end);
-            return morph.addMarker({id: "js-checker-" + i, style: warnStyle, range: {start, end}, type: "js-undeclared-var"})
+            return morph.addMarker({
+              id: "js-checker-" + i,
+              style: warnStyle,
+              range: {start,
+              end}, type: "js-undeclared-var"
+            })
           });
       prevMarkers.slice(newMarkers.length).forEach(ea => morph.removeMarker(ea))
     // }
