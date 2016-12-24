@@ -9,6 +9,7 @@ import {
   nodes,
   BaseVisitor as Visitor
 } from "lively.ast";
+
 var { member, prop, varDecl, assign, id, literal, exprStmt, funcCall } = nodes;
 var { topLevelDeclsAndRefs, helpers: queryHelpers } = query;
 var { transformSingleExpression, wrapInStartEndCall } = transform;
@@ -113,7 +114,8 @@ export function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) 
 
   // 7. es6 import declaration are left untouched but a capturing assignment
   // is added after the import so that we get the value:
-  // "import x from './some-es6-module.js';" => "import x from './some-es6-module.js';\n_rec.x = x;"
+  // "import x from './some-es6-module.js';" =>
+  //   "import x from './some-es6-module.js';\n_rec.x = x;"
   rewritten = insertCapturesForImportDeclarations(rewritten, options);
 
   // 8. Since variable declarations like "var x = 23" were transformed to sth
@@ -180,8 +182,9 @@ export function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, opt
 
       var id = stmt.expression.left,
           rhs = options.declarationWrapper ?
-            funcCall(
+            declarationWrapperCall(
               options.declarationWrapper,
+              null,
               literal(id.name),
               literal("var"),
               stmt.expression,
@@ -300,8 +303,9 @@ function replaceRefs(parsed, options) {
      && options.declarationWrapper)
        return {
          ...node,
-         right: funcCall(
+         right: declarationWrapperCall(
                   options.declarationWrapper,
+                  null,
                   literal(node.left.name),
                   literal("assignment"),
                   node.right,
@@ -347,8 +351,11 @@ function replaceVarDecls(parsed, options) {
       };
 
       var initWrapped = options.declarationWrapper && decl.id.name ?
-        funcCall(options.declarationWrapper,
-          literal(decl.id.name), literal(node.kind),
+        declarationWrapperCall(
+          options.declarationWrapper,
+          decl,
+          literal(decl.id.name),
+          literal(node.kind),
           init, options.captureObj) : init;
 
       // Here we create the object pattern / destructuring replacements
@@ -362,8 +369,9 @@ function replaceVarDecls(parsed, options) {
                   options.captureObj,
                   decl.declarations[0].id,
                   options.declarationWrapper ?
-                    funcCall(
+                    declarationWrapperCall(
                       options.declarationWrapper,
+                      null,
                       literal(decl.declarations[0].id.name),
                       literal(node.kind),
                       decl.declarations[0].init,
@@ -520,7 +528,9 @@ function insertCapturesForExportDeclarations(parsed, options) {
           var alreadyWrapped = decl.init.callee
                             && decl.init.callee.name === options.declarationWrapper.name
           if (!alreadyWrapped)
-            assignVal = funcCall(options.declarationWrapper,
+            assignVal = declarationWrapperCall(
+                          options.declarationWrapper,
+                          decl,
                           literal(decl.id.name),
                           literal("assignment"),
                           decl.id,
@@ -624,7 +634,12 @@ function es6ModuleTransforms(parsed, options) {
               assignExpr(
                 options.captureObj, decl.id,
                 options.declarationWrapper ?
-                  funcCall(options.declarationWrapper, literal(decl.id.name), literal(stmt.declaration.kind), decl, options.captureObj) :
+                  declarationWrapperCall(
+                    options.declarationWrapper,
+                    null,
+                    literal(decl.id.name),
+                    literal(stmt.declaration.kind),
+                    decl, options.captureObj) :
                   decl.init,
                 false),
               stmt.declaration.kind);
@@ -692,7 +707,12 @@ function putFunctionDeclsInFront(parsed, options) {
         funcId = {type: "Identifier", name: decl.id.name},
         // what we capture:
         init = options.declarationWrapper ?
-          funcCall(options.declarationWrapper, literal(funcId.name), literal("function"), funcId, options.captureObj) :
+          declarationWrapperCall(
+            options.declarationWrapper,
+            decl,
+            literal(funcId.name),
+            literal("function"),
+            funcId, options.captureObj) :
           funcId,
         declFront = {...decl};
 
@@ -883,4 +903,20 @@ function exportCall(exportFunc, local, exportedObj) {
 
 function exportCallStmt(exportFunc, local, exportedObj) {
   return exprStmt(exportCall(exportFunc, local, exportedObj));
+}
+
+function declarationWrapperCall(
+  declarationWrapperNode,
+  declNode,
+  varNameLiteral,
+  varKindLiteral,
+  valueNode,
+  recorder
+) {
+  if (declNode && declNode["x-lively-def-location"]) {
+		var {start, end} = declNode["x-lively-def-location"],
+				locNode = nodes.objectLiteral(["start", nodes.literal(start), "end", nodes.literal(end)]);
+  	return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder, locNode);
+  }
+  return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder);
 }
