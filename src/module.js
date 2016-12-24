@@ -73,8 +73,9 @@ class ModuleInterface {
   // returns Promise<string>
   fullName() { return this.id; }
 
-  // returns Promise<string>
   source() {
+    // returns Promise<string>
+
     // rk 2016-06-24:
     // We should consider using lively.resource here. Unfortunately
     // System.fetch (at least with the current systemjs release) will not work in
@@ -305,9 +306,11 @@ class ModuleInterface {
 
       System: {configurable: true, writable: true, value: S},
 
+      __currentLivelyModule: {value: self},
+
       [this.varDefinitionCallbackName]: {
-        value: (name, kind, value, recorder) =>
-          self.define(name, value, false/*signalChangeImmediately*/)
+        value: (name, kind, value, recorder, sourceLoc) =>
+          self.define(name, value, false/*signalChangeImmediately*/, sourceLoc)
       },
 
       _moduleExport: {
@@ -347,10 +350,38 @@ class ModuleInterface {
 
   get varDefinitionCallbackName() { return "defVar_" + this.id; }
 
-  define(varName, value, exportImmediately = true) {
-    this.recorder[varName] = value;
+  define(varName, value, exportImmediately = true, sourceLoc) {
+    // attaching source info to runtime objects
 
-    scheduleModuleExportsChange(this.System, this.id, varName, value, false/*force adding export*/);
+    var {System, id, recorder} = this;
+
+    System.debug && console.log(`[lively.modules] ${this.package().name}/${this.pathInPackage()} defines ${varName}`);
+
+    var srcLocSym = Symbol.for("lively-source-location"),
+        moduleSym = Symbol.for("lively-module-meta");
+
+    if (typeof value === "function" && sourceLoc
+     && !Object.getOwnPropertySymbols(value).includes(srcLocSym)) {
+      value[srcLocSym] = sourceLoc;
+    }
+
+    if (value && value[srcLocSym] && !value[moduleSym]) {
+      var pathInPackage = this.pathInPackage(),
+          p = this.package();
+      value[moduleSym] = {
+        package: p ? {name: p.name, version: p.version} : {},
+        pathInPackage
+      }
+    }
+
+    // storing local module state
+    recorder[varName] = value;
+
+    // exports update
+    scheduleModuleExportsChange(
+      System, id, varName, value, false/*force adding export*/);
+
+    // system event
     this.notifyTopLevelObservers(varName);
 
     // immediately update exports (recursivly) when flagged or when the module
@@ -361,7 +392,7 @@ class ModuleInterface {
     // I don't know...
     exportImmediately = exportImmediately || !this.isEvalutionInProgress();
     if (exportImmediately)
-      runScheduledExportChanges(this.System, this.id)
+      runScheduledExportChanges(System, id)
 
     return value;
   }
@@ -605,3 +636,14 @@ class ModuleInterface {
 
   toString() { return `module(${this.id})`; }
 }
+
+// update pre-bootstrap modules
+/*
+
+var mods = System.get("@lively-env").loadedModules;
+Object.keys(mods).forEach(id => {
+  if (mods[id].constructor === ModuleInterface) return;
+  mods[id] = Object.assign(new ModuleInterface(mods[id].System, mods[id].id), mods[id]);
+});
+
+*/

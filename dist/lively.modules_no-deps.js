@@ -1,5 +1,5 @@
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.modules/systemjs-init.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -109,12 +109,12 @@
   }
 
 })();
-// INLINED END /Users/robert/Lively/lively-dev3/lively.modules/systemjs-init.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
-// INLINED /Users/robert/Lively/lively-dev3/lively.modules/node_modules/semver/semver.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -1319,7 +1319,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-// INLINED END /Users/robert/Lively/lively-dev3/lively.modules/node_modules/semver/semver.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
 semver = exports;
 })({}, {});
 
@@ -2292,7 +2292,7 @@ function updateModuleExports(System, moduleId, keysAndValues) {
           if (found) {
             if (debug) {
               var mod = module$2(System, importerModule.name);
-              console.log("[lively.vm es6 updateModuleExports] calling setters of " + mod["package"]().name + mod.pathInPackage().replace(/^./, ""));
+              console.log("[lively.vm es6 updateModuleExports] calling setters of " + mod["package"]().name + "/" + mod.pathInPackage());
             }
 
             // We could run the entire module again with
@@ -3076,7 +3076,7 @@ var Package = function () {
       ) {
         var _this5 = this;
 
-        var exclude = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [".git", "node_modules", ".optimized-loading-cache"];
+        var exclude = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [".git", "node_modules"];
         var allPackages, packagesToIgnore, dirList, resourceURLs, loadedModules$$1;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -3101,13 +3101,10 @@ var Package = function () {
                 loadedModules$$1 = lively_lang.arr.pluck(this.modules(), "id");
 
 
-                // console.log(resourceURLs)
-                // console.log(packageNames)
-
                 if (matches) resourceURLs = resourceURLs.filter(matches);
 
                 return _context.abrupt("return", resourceURLs.map(function (url) {
-                  var nameInPackage = url.replace(_this5.address, "").replace(/‘\//, ""),
+                  var nameInPackage = url.replace(_this5.address, "").replace(/^\//, ""),
                       isLoaded = loadedModules$$1.includes(url);
                   return { isLoaded: isLoaded, url: url, nameInPackage: nameInPackage, package: _this5 };
                 }));
@@ -3120,7 +3117,7 @@ var Package = function () {
         }, _callee, this);
       }));
 
-      function resources(_x2) {
+      function resources(_x2, _x3) {
         return _ref.apply(this, arguments);
       }
 
@@ -3288,19 +3285,20 @@ var Package = function () {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
-                System = this.System, url = this.url;
-
                 if (!this.isRegistering()) {
-                  _context4.next = 3;
+                  _context4.next = 2;
                   break;
                 }
 
                 return _context4.abrupt("return", this.registerProcess.promise);
 
-              case 3:
+              case 2:
+                System = this.System, url = this.url;
+
                 this.registerProcess = lively_lang.promise.deferred();
 
                 System.debug && console.log("[lively.modules package register] %s", url);
+
                 _context4.next = 7;
                 return this.tryToLoadPackageConfig();
 
@@ -3401,7 +3399,7 @@ var Package = function () {
         }, _callee4, this, [[14, 30, 34, 42], [35,, 37, 41]]);
       }));
 
-      function register() {
+      function register(_x5) {
         return _ref4.apply(this, arguments);
       }
 
@@ -3503,7 +3501,7 @@ var Package = function () {
         }, _callee5, this);
       }));
 
-      function search(_x5) {
+      function search(_x7, _x8) {
         return _ref5.apply(this, arguments);
       }
 
@@ -3670,13 +3668,12 @@ var ModuleInterface = function () {
     value: function fullName() {
       return this.id;
     }
-
-    // returns Promise<string>
-
   }, {
     key: "source",
     value: function source() {
       var _this2 = this;
+
+      // returns Promise<string>
 
       // rk 2016-06-24:
       // We should consider using lively.resource here. Unfortunately
@@ -3717,15 +3714,14 @@ var ModuleInterface = function () {
                 return _context.abrupt("return", this._ast);
 
               case 2:
-                _context.t0 = lively_ast.parse;
-                _context.next = 5;
+                _context.next = 4;
                 return this.source();
 
-              case 5:
-                _context.t1 = _context.sent;
-                return _context.abrupt("return", this._ast = (0, _context.t0)(_context.t1));
+              case 4:
+                _context.t0 = _context.sent;
+                return _context.abrupt("return", this._ast = lively_ast.parse(_context.t0));
 
-              case 7:
+              case 6:
               case "end":
                 return _context.stop();
             }
@@ -4134,10 +4130,40 @@ var ModuleInterface = function () {
     key: "define",
     value: function define(varName, value) {
       var exportImmediately = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+      var sourceLoc = arguments[3];
 
-      this.recorder[varName] = value;
+      // attaching source info to runtime objects
 
-      scheduleModuleExportsChange(this.System, this.id, varName, value, false /*force adding export*/);
+      var System = this.System,
+          id = this.id,
+          recorder = this.recorder;
+
+
+      System.debug && console.log("[lively.modules] " + this.package().name + "/" + this.pathInPackage() + " defines " + varName);
+
+      var srcLocSym = Symbol.for("lively-source-location"),
+          moduleSym = Symbol.for("lively-module-meta");
+
+      if (typeof value === "function" && sourceLoc && !Object.getOwnPropertySymbols(value).includes(srcLocSym)) {
+        value[srcLocSym] = sourceLoc;
+      }
+
+      if (value && value[srcLocSym] && !value[moduleSym]) {
+        var pathInPackage = this.pathInPackage(),
+            p = this.package();
+        value[moduleSym] = {
+          package: p ? { name: p.name, version: p.version } : {},
+          pathInPackage: pathInPackage
+        };
+      }
+
+      // storing local module state
+      recorder[varName] = value;
+
+      // exports update
+      scheduleModuleExportsChange(System, id, varName, value, false /*force adding export*/);
+
+      // system event
       this.notifyTopLevelObservers(varName);
 
       // immediately update exports (recursivly) when flagged or when the module
@@ -4147,7 +4173,7 @@ var ModuleInterface = function () {
       // ...whether or not this is in accordance with an upcoming es6 module spec
       // I don't know...
       exportImmediately = exportImmediately || !this.isEvalutionInProgress();
-      if (exportImmediately) runScheduledExportChanges(this.System, this.id);
+      if (exportImmediately) runScheduledExportChanges(System, id);
 
       return value;
     }
@@ -4225,7 +4251,7 @@ var ModuleInterface = function () {
     key: "pathInPackage",
     value: function pathInPackage() {
       var p = this.package();
-      return p && this.id.indexOf(p.address) === 0 ? join("./", this.id.slice(p.address.length)) : this.id;
+      return p && this.id.indexOf(p.address) === 0 ? this.id.slice(p.address.length).replace(/^\//, "") : this.id;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -4795,11 +4821,13 @@ var ModuleInterface = function () {
 
       return this._recorder = Object.create(S.global, (_Object$create = {
 
-        System: { configurable: true, writable: true, value: S }
+        System: { configurable: true, writable: true, value: S },
+
+        __currentLivelyModule: { value: self }
 
       }, defineProperty(_Object$create, this.varDefinitionCallbackName, {
-        value: function value(name, kind, _value, recorder) {
-          return self.define(name, _value, false /*signalChangeImmediately*/);
+        value: function value(name, kind, _value, recorder, sourceLoc) {
+          return self.define(name, _value, false /*signalChangeImmediately*/, sourceLoc);
         }
       }), defineProperty(_Object$create, "_moduleExport", {
         value: function value(name, val) {
@@ -4839,6 +4867,17 @@ var ModuleInterface = function () {
   }]);
   return ModuleInterface;
 }();
+
+// update pre-bootstrap modules
+/*
+
+var mods = System.get("@lively-env").loadedModules;
+Object.keys(mods).forEach(id => {
+  if (mods[id].constructor === ModuleInterface) return;
+  mods[id] = Object.assign(new ModuleInterface(mods[id].System, mods[id].id), mods[id]);
+});
+
+*/
 
 var fetchResource = function () {
   var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(proceed, load) {
@@ -4926,22 +4965,27 @@ var fetchResource = function () {
   };
 }();
 
+var livelyURLRe = /^lively:\/\/([^\/]+)\/(.*)$/;
+
 function livelyProtocol(proceed, url) {
-  if (!url.match(/^lively:\/\//)) return proceed(url);
-  var match = url.match(/^lively:\/\/([^\/]+)\/(.*)$/),
-      worldId = match[1],
-      localObjectName = match[2];
+  var match = url.match(livelyURLRe);
+  if (!match) return proceed(url);
+
+  var _match = slicedToArray(match, 3),
+      _ = _match[0],
+      worldId = _match[1],
+      id = _match[2];
+
   return {
     read: function read() {
-      return Promise.resolve(typeof $morph !== "undefined" && $morph(localObjectName) && $morph(localObjectName).textString || "/*Could not locate " + localObjectName + "*/");
+      var m = typeof $world !== "undefined" && $world.getMorphWithId(id);
+      return Promise.resolve(m ? m.textString : "/*Could not locate " + id + "*/");
     },
     write: function write(source) {
-      if (typeof $morph !== "undefined" && $morph(localObjectName) && $morph(localObjectName).textString) {
-        $morph(localObjectName).textString = source;
-        return Promise.resolve(source);
-      } else {
-        return Promise.reject("Could not save morph " + localObjectName);
-      }
+      var m = typeof $world !== "undefined" && $world.getMorphWithId(id);
+      if (!m) return Promise.reject("Could not save morph " + id);
+      m.textString = source;
+      return Promise.resolve(this);
     }
   };
 }
@@ -5468,7 +5512,7 @@ var buildPackageMap = function () {
     }, _callee, this, [[3, 15], [18, 24], [30, 43, 47, 55], [48,, 50, 54]]);
   }));
 
-  return function buildPackageMap(_x) {
+  return function buildPackageMap(_x, _x2, _x3, _x4) {
     return _ref.apply(this, arguments);
   };
 }();

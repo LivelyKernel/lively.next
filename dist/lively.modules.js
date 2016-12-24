@@ -1,5 +1,5 @@
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -658,9 +658,9 @@
   typeof self === "object" ? self : this
 );
 
-// INLINED END /Users/robert/Lively/lively-dev3/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.lang/dist/lively.lang.dev.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.dev.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -6113,9 +6113,9 @@
     };
 }(typeof lively !== 'undefined' && lively.lang ? lively.lang : {}));
 })();
-// INLINED END /Users/robert/Lively/lively-dev3/lively.lang/dist/lively.lang.dev.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.dev.js
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.notifications/dist/lively.notifications.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -6274,9 +6274,9 @@ exports.stopLogging = stopLogging;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /Users/robert/Lively/lively-dev3/lively.notifications/dist/lively.notifications.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.ast/dist/lively.ast.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
 
 (function() {
   var module = undefined, require = undefined;
@@ -20961,9 +20961,9 @@ exports.fuzzyParse = fuzzyParse;
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.ast;
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev3/lively.ast/dist/lively.ast.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.classes/dist/lively.classes.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -20982,7 +20982,8 @@ exports.fuzzyParse = fuzzyParse;
 var initializeSymbol = Symbol.for("lively-instance-initialize");
 var instanceRestorerSymbol = Symbol.for("lively-instance-restorer");
 var superclassSymbol = Symbol.for("lively-instance-superclass");
-var moduleMetaSymbol = Symbol.for("lively-instance-module-meta");
+var moduleMetaSymbol = Symbol.for("lively-module-meta");
+var sourceLocSymbol = Symbol.for("lively-source-location");
 var moduleSubscribeToToplevelChangesSym = Symbol.for("lively-klass-changes-subscriber");
 
 var constructorArgMatcher = /\([^\\)]*\)/;
@@ -21097,6 +21098,7 @@ function initializeClass(constructorFunc, superclassSpec) {
   var classMethods = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
   var classHolder = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
   var currentModule = arguments[5];
+  var sourceLoc = arguments[6];
 
   // Given a `classHolder` object as "environment", will try to find a "class"
   // (JS constructor function) inside it. If no class is found it will create a
@@ -21123,6 +21125,8 @@ function initializeClass(constructorFunc, superclassSpec) {
 
   // 3. Install methods
   installMethods(klass, instanceMethods, classMethods);
+
+  klass[sourceLocSymbol] = sourceLoc;
 
   // 4. If we have a `currentModule` instance (from lively.modules/src/module.js)
   // then we also store some meta data about the module. This allows us to
@@ -21157,9 +21161,9 @@ function initializeClass(constructorFunc, superclassSpec) {
   // 6. Add a toString method for the class to allows us to see its constructor arguments
   var init = klass.prototype[initializeSymbol],
       constructorArgs = String(klass.prototype[initializeSymbol]).match(constructorArgMatcher),
-      string = "class " + className + " " + (superclass ? "extends " + superclass.name : "") + " {\n" + ("  constructor" + (constructorArgs ? constructorArgs[0] : "()") + " { /*...*/ }") + "\n}";
+      string$$1 = "class " + className + " " + (superclass ? "extends " + superclass.name : "") + " {\n" + ("  constructor" + (constructorArgs ? constructorArgs[0] : "()") + " { /*...*/ }") + "\n}";
   klass.toString = function () {
-    return string;
+    return string$$1;
   };
 
   return klass;
@@ -21209,9 +21213,39 @@ var runtime = Object.freeze({
 	instanceRestorerSymbol: instanceRestorerSymbol,
 	superclassSymbol: superclassSymbol,
 	moduleMetaSymbol: moduleMetaSymbol,
+	sourceLocSymbol: sourceLocSymbol,
 	moduleSubscribeToToplevelChangesSym: moduleSubscribeToToplevelChangesSym,
 	initializeClass: initializeClass
 });
+
+var asyncToGenerator = function (fn) {
+  return function () {
+    var gen = fn.apply(this, arguments);
+    return new Promise(function (resolve, reject) {
+      function step(key, arg) {
+        try {
+          var info = gen[key](arg);
+          var value = info.value;
+        } catch (error) {
+          reject(error);
+          return;
+        }
+
+        if (info.done) {
+          resolve(value);
+        } else {
+          return Promise.resolve(value).then(function (value) {
+            step("next", value);
+          }, function (err) {
+            step("throw", err);
+          });
+        }
+      }
+
+      return step("next");
+    });
+  };
+};
 
 var classCallCheck = function (instance, Constructor) {
   if (!(instance instanceof Constructor)) {
@@ -21270,7 +21304,7 @@ var _extends = Object.assign || function (target) {
   return target;
 };
 
-var get = function get(object, property, receiver) {
+var get$1 = function get$1(object, property, receiver) {
   if (object === null) object = Function.prototype;
   var desc = Object.getOwnPropertyDescriptor(object, property);
 
@@ -21280,7 +21314,7 @@ var get = function get(object, property, receiver) {
     if (parent === null) {
       return undefined;
     } else {
-      return get(parent, property, receiver);
+      return get$1(parent, property, receiver);
     }
   } else if ("value" in desc) {
     return desc.value;
@@ -21331,14 +21365,14 @@ var possibleConstructorReturn = function (self, call) {
 
 
 
-var set = function set(object, property, value, receiver) {
+var set$1 = function set$1(object, property, value, receiver) {
   var desc = Object.getOwnPropertyDescriptor(object, property);
 
   if (desc === undefined) {
     var parent = Object.getPrototypeOf(object);
 
     if (parent !== null) {
-      set(parent, property, value, receiver);
+      set$1(parent, property, value, receiver);
     }
   } else if ("value" in desc && desc.writable) {
     desc.value = value;
@@ -21485,7 +21519,7 @@ var ClassReplaceVisitor = function (_Visitor) {
 
       if (node.type === "CallExpression" && node.callee.object && node.callee.object.type === "Super") node = replaceSuperMethodCall(node, state, path, state.options);
 
-      node = get(ClassReplaceVisitor.prototype.__proto__ || Object.getPrototypeOf(ClassReplaceVisitor.prototype), "accept", this).call(this, node, state, path);
+      node = get$1(ClassReplaceVisitor.prototype.__proto__ || Object.getPrototypeOf(ClassReplaceVisitor.prototype), "accept", this).call(this, node, state, path);
 
       if (node.type === "ExportDefaultDeclaration") return splitExportDefaultWithClass(node, state, path, state.options);
 
@@ -21563,9 +21597,12 @@ function replaceClass(node, state, path, options) {
       superClass = node.superClass,
       classId = node.id,
       type = node.type,
+      start = node.start,
+      end = node.end,
       instanceProps = id("undefined"),
       classProps = id("undefined"),
-      className = classId ? classId.name : "anonymous_class";
+      className = classId ? classId.name : "anonymous_class",
+      loc = node["x-lively-def-location"] || { start: start, end: end };
 
 
   if (body.length) {
@@ -21635,6 +21672,8 @@ function replaceClass(node, state, path, options) {
   // For persistent storage and retrieval of pre-existing classes in "classHolder" object
   var useClassHolder = classId && type === "ClassDeclaration";
 
+  var locNode = objectLiteral(["start", literal(loc.start), "end", literal(loc.end)]);
+
   var classCreator = funcCall(funcExpr({}, ["superclass"], varDecl(tempLivelyClassHolderVar, state.classHolder), varDecl(tempLivelyClassVar, useClassHolder ? {
     type: "ConditionalExpression",
     test: binaryExpr(funcCall(member(tempLivelyClassHolderVar, "hasOwnProperty"), literal(classId.name)), "&&", binaryExpr({
@@ -21643,13 +21682,13 @@ function replaceClass(node, state, path, options) {
     }, "===", literal("function"))),
     consequent: member(tempLivelyClassHolderVar, classId),
     alternate: assign(member(tempLivelyClassHolderVar, classId), constructorTemplate(classId.name))
-  } : classId ? constructorTemplate(classId.name) : constructorTemplate(null)), returnStmt(funcCall(options.functionNode, id(tempLivelyClassVar), id("superclass"), instanceProps, classProps, id(tempLivelyClassHolderVar), options.currentModuleAccessor || id("undefined")))), superClassSpec);
+  } : classId ? constructorTemplate(classId.name) : constructorTemplate(null)), returnStmt(funcCall(options.functionNode, id(tempLivelyClassVar), id("superclass"), instanceProps, classProps, id(tempLivelyClassHolderVar), options.currentModuleAccessor || id("undefined"), locNode))), superClassSpec);
 
   if (type === "ClassExpression") return classCreator;
 
   var result = classCreator;
 
-  if (options.declarationWrapper && state.classHolder === options.classHolder /*i.e. toplevel*/) result = funcCall(options.declarationWrapper, literal(classId.name), literal("class"), result, options.classHolder);
+  if (options.declarationWrapper && state.classHolder === options.classHolder /*i.e. toplevel*/) result = funcCall(options.declarationWrapper, literal(classId.name), literal("class"), result, options.classHolder, locNode);
 
   // since it is a declaration and we removed the class construct we need to add a var-decl
   result = varDecl(classId, result, "var");
@@ -21682,6 +21721,8 @@ function classToFunctionTransform(sourceOrAst, options) {
   //     }
   //   }])
 
+  // console.log(typeof sourceOrAst === "string" ? sourceOrAst : stringify(sourceOrAst))
+
   var parsed = typeof sourceOrAst === "string" ? lively_ast.parse(sourceOrAst) : sourceOrAst;
   options.scope = lively_ast.query.resolveReferences(lively_ast.query.scopes(parsed));
 
@@ -21690,16 +21731,152 @@ function classToFunctionTransform(sourceOrAst, options) {
   return replaced;
 }
 
+var srcLocSym = Symbol.for("lively-source-location");
+var moduleSym = Symbol.for("lively-module-meta");
+var descriptorCache = new WeakMap();
+
+var SourceDescriptor = function () {
+  createClass(SourceDescriptor, null, [{
+    key: "for",
+    value: function _for(obj, optSystem) {
+      var descr = descriptorCache.get(obj);
+      if (descr) return descr;
+      descr = new this(obj, optSystem);
+      descriptorCache.set(obj, descr);
+      return descr;
+    }
+  }]);
+
+  function SourceDescriptor(obj, System) {
+    classCallCheck(this, SourceDescriptor);
+
+    this.obj = obj;
+    this.System = System;
+  }
+
+  createClass(SourceDescriptor, [{
+    key: "read",
+    value: function () {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+        var _sourceLocation, start, end;
+
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                _sourceLocation = this.sourceLocation, start = _sourceLocation.start, end = _sourceLocation.end;
+                _context.next = 3;
+                return this.module.source();
+
+              case 3:
+                _context.t0 = start;
+                _context.t1 = end;
+                return _context.abrupt("return", _context.sent.slice(_context.t0, _context.t1));
+
+              case 6:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function read() {
+        return _ref.apply(this, arguments);
+      }
+
+      return read;
+    }()
+  }, {
+    key: "write",
+    value: function () {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(newSource) {
+        var module, _sourceLocation2, start, end;
+
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                module = this.module, _sourceLocation2 = this.sourceLocation, start = _sourceLocation2.start, end = _sourceLocation2.end;
+                _context2.next = 3;
+                return module.changeSourceAction(function (oldSource) {
+                  return oldSource.slice(0, start) + newSource + oldSource.slice(end);
+                });
+
+              case 3:
+                return _context2.abrupt("return", this);
+
+              case 4:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function write(_x) {
+        return _ref2.apply(this, arguments);
+      }
+
+      return write;
+    }()
+  }, {
+    key: "toString",
+    value: function toString() {
+      var objString = lively_lang.string.truncate(String(this.obj), 35).replace(/\n/g, ""),
+          modId;try {
+        modId = this.module.id;
+      } catch (e) {
+        modId = "NO MODULE!";
+      }
+      return this.constructor.name + "(" + objString + " in " + modId + ")";
+    }
+  }, {
+    key: "System",
+    get: function get() {
+      return this._System || System;
+    },
+    set: function set(S) {
+      this._System = S;
+    }
+  }, {
+    key: "module",
+    get: function get() {
+      var obj = this.obj,
+          System = this.System;
+
+      if (!obj[moduleSym]) throw new Error("runtime object of " + this + " has no module data");
+      var _obj$moduleSym = obj[moduleSym],
+          packageName = _obj$moduleSym.package.name,
+          pathInPackage = _obj$moduleSym.pathInPackage;
+      // FIXME
+
+      return lively.modules.moduleForSytem(System, packageName + "/" + pathInPackage);
+    }
+  }, {
+    key: "sourceLocation",
+    get: function get() {
+      var obj = this.obj,
+          System = this.System;
+
+      if (!obj[srcLocSym]) throw new Error("runtime object of " + this + " has no source location data");
+      return obj[srcLocSym];
+    }
+  }]);
+  return SourceDescriptor;
+}();
+
 exports.runtime = runtime;
 exports.classToFunctionTransform = classToFunctionTransform;
+exports.SourceDescriptor = SourceDescriptor;
 
 }((this.lively.classes = this.lively.classes || {}),lively.lang,lively.ast));
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /Users/robert/Lively/lively-dev3/lively.classes/dist/lively.classes.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.source-transform/dist/lively.source-transform.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -21974,8 +22151,7 @@ function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) {
   // Example: "class Foo {}" -> "class Foo {}; Global.Foo = Foo;"
   // if declarationWrapper is requested:
   //   "class Foo {}" -> "Global.Foo = _define(class Foo {});"
-  // rewritten = replaceClassDecls(rewritten, options);
-  rewritten = lively_classes.classToFunctionTransform(parsed, options.classToFunction);
+  rewritten = replaceClassDecls(rewritten, options);
 
   rewritten = splitExportDeclarations(rewritten, options);
 
@@ -21986,7 +22162,8 @@ function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) {
 
   // 7. es6 import declaration are left untouched but a capturing assignment
   // is added after the import so that we get the value:
-  // "import x from './some-es6-module.js';" => "import x from './some-es6-module.js';\n_rec.x = x;"
+  // "import x from './some-es6-module.js';" =>
+  //   "import x from './some-es6-module.js';\n_rec.x = x;"
   rewritten = insertCapturesForImportDeclarations(rewritten, options);
 
   // 8. Since variable declarations like "var x = 23" were transformed to sth
@@ -22047,7 +22224,7 @@ function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, options) {
       if (stmt.type !== "ExpressionStatement" || stmt.expression.type !== "AssignmentExpression" || stmt.expression.left.type !== "Identifier" || lively_lang.arr.include(options.exclude, stmt.expression.left.name)) return stmt;
 
       var id = stmt.expression.left,
-          rhs = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(id.name), literal("var"), stmt.expression, options.captureObj) : stmt.expression;
+          rhs = options.declarationWrapper ? declarationWrapperCall(options.declarationWrapper, null, literal(id.name), literal("var"), stmt.expression, options.captureObj) : stmt.expression;
       return exprStmt(assign(member(options.captureObj, id), rhs));
     });
   });
@@ -22188,7 +22365,7 @@ function replaceRefs(parsed, options) {
     // declaration wrapper function for assignments
     // "a = 3" => "a = _define('a', 'assignment', 3, _rec)"
     if (node.type === "AssignmentExpression" && refsToReplace.includes(node.left) && options.declarationWrapper) return _extends({}, node, {
-      right: funcCall(options.declarationWrapper, literal(node.left.name), literal("assignment"), node.right, options.captureObj) });
+      right: declarationWrapperCall(options.declarationWrapper, null, literal(node.left.name), literal("assignment"), node.right, options.captureObj) });
 
     return node;
   });
@@ -22229,7 +22406,7 @@ function replaceVarDecls(parsed, options) {
         right: { name: "undefined", type: "Identifier" }
       };
 
-      var initWrapped = options.declarationWrapper && decl.id.name ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(node.kind), init, options.captureObj) : init;
+      var initWrapped = options.declarationWrapper && decl.id.name ? declarationWrapperCall(options.declarationWrapper, decl, literal(decl.id.name), literal(node.kind), init, options.captureObj) : init;
 
       // Here we create the object pattern / destructuring replacements
       if (decl.id.type.includes("Pattern")) {
@@ -22237,7 +22414,7 @@ function replaceVarDecls(parsed, options) {
             declRoot = { type: "Identifier", name: declRootName },
             state = { parent: declRoot, declaredNames: topLevel.declaredNames },
             extractions = transformPattern(decl.id, state).map(function (decl) {
-          return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.declarations[0].id.name), literal(node.kind), decl.declarations[0].init, options.captureObj) : decl.declarations[0].init, false) : decl;
+          return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, options.declarationWrapper ? declarationWrapperCall(options.declarationWrapper, null, literal(decl.declarations[0].id.name), literal(node.kind), decl.declarations[0].init, options.captureObj) : decl.declarations[0].init, false) : decl;
         });
         topLevel.declaredNames.push(declRootName);
         replaced.push.apply(replaced, toConsumableArray([varDecl(declRoot, initWrapped, node.kind)].concat(extractions)));
@@ -22330,6 +22507,20 @@ function shouldRefBeCaptured(ref, toplevel, options) {
 // capturing specific code
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+function replaceClassDecls(parsed, options) {
+
+  if (options.classToFunction) return lively_classes.classToFunctionTransform(parsed, options.classToFunction);
+
+  var topLevel = topLevelDeclsAndRefs(parsed);
+  if (!topLevel.classDecls.length) return parsed;
+
+  for (var i = parsed.body.length - 1; i >= 0; i--) {
+    var stmt = parsed.body[i];
+    if (topLevel.classDecls.includes(stmt)) parsed.body.splice(i + 1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
+  }
+  return parsed;
+}
+
 function splitExportDeclarations(parsed, options) {
   var stmts = parsed.body,
       newNodes = parsed.body = [];
@@ -22369,7 +22560,7 @@ function insertCapturesForExportDeclarations(parsed, options) {
         var assignVal = decl.id;
         if (options.declarationWrapper) {
           var alreadyWrapped = decl.init.callee && decl.init.callee.name === options.declarationWrapper.name;
-          if (!alreadyWrapped) assignVal = funcCall(options.declarationWrapper, literal(decl.id.name), literal("assignment"), decl.id, options.captureObj);
+          if (!alreadyWrapped) assignVal = declarationWrapperCall(options.declarationWrapper, decl, literal(decl.id.name), literal("assignment"), decl.id, options.captureObj);
         }
         return assignExpr(options.captureObj, decl.id, assignVal, false);
       })));
@@ -22457,7 +22648,7 @@ function es6ModuleTransforms(parsed, options) {
         } else {
           nodes$$1 = decls.map(function (decl) {
             options.excludeDecls.push(decl.id);
-            return varDecl(decl.id, assignExpr(options.captureObj, decl.id, options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(stmt.declaration.kind), decl, options.captureObj) : decl.init, false), stmt.declaration.kind);
+            return varDecl(decl.id, assignExpr(options.captureObj, decl.id, options.declarationWrapper ? declarationWrapperCall(options.declarationWrapper, null, literal(decl.id.name), literal(stmt.declaration.kind), decl, options.captureObj) : decl.init, false), stmt.declaration.kind);
           }).concat(decls.map(function (decl) {
             return exportCallStmt(options.moduleExportFunc, decl.id.name, decl.id);
           }));
@@ -22515,7 +22706,7 @@ function putFunctionDeclsInFront(parsed, options) {
         funcId = { type: "Identifier", name: decl.id.name },
 
     // what we capture:
-    init = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(funcId.name), literal("function"), funcId, options.captureObj) : funcId,
+    init = options.declarationWrapper ? declarationWrapperCall(options.declarationWrapper, decl, literal(funcId.name), literal("function"), funcId, options.captureObj) : funcId,
         declFront = _extends({}, decl);
 
     if (Array.isArray(parent)) {
@@ -22695,6 +22886,18 @@ function exportCallStmt(exportFunc, local, exportedObj) {
   return exprStmt(exportCall(exportFunc, local, exportedObj));
 }
 
+function declarationWrapperCall(declarationWrapperNode, declNode, varNameLiteral, varKindLiteral, valueNode, recorder) {
+  if (declNode && declNode["x-lively-def-location"]) {
+    var _declNode$xLivelyDe = declNode["x-lively-def-location"],
+        start = _declNode$xLivelyDe.start,
+        end = _declNode$xLivelyDe.end,
+        locNode = lively_ast.nodes.objectLiteral(["start", lively_ast.nodes.literal(start), "end", lively_ast.nodes.literal(end)]);
+
+    return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder, locNode);
+  }
+  return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder);
+}
+
 
 
 var capturing = Object.freeze({
@@ -22708,9 +22911,9 @@ exports.capturing = capturing;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.sourceTransform;
 })();
-// INLINED END /Users/robert/Lively/lively-dev3/lively.source-transform/dist/lively.source-transform.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.vm/dist/lively.vm.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -22902,6 +23105,30 @@ var set = function set(object, property, value, receiver) {
   return value;
 };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var toConsumableArray = function (arr$$1) {
+  if (Array.isArray(arr$$1)) {
+    for (var i = 0, arr2 = Array(arr$$1.length); i < arr$$1.length; i++) arr2[i] = arr$$1[i];
+
+    return arr2;
+  } else {
+    return Array.from(arr$$1);
+  }
+};
+
 /*global require, __dirname*/
 
 // helper
@@ -22956,6 +23183,18 @@ function printSymbolForCompletion(sym) {
   var matched = String(sym).match(symMatcher);
   return String(sym);
 }
+
+function safeToString(value) {
+  if (!value) return String(value);
+  if (Array.isArray(value)) return '[' + value.map(safeToString).join(",") + ']';
+  if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === "symbol") return printSymbolForCompletion(value);
+  try {
+    return String(value);
+  } catch (e) {
+    throw new Error('Cannot print object: ' + e.stack);
+  }
+}
+
 function propertyExtract(excludes, obj$$1, extractor) {
   return Object.getOwnPropertyNames(obj$$1).concat(Object.getOwnPropertySymbols(obj$$1).map(printSymbolForCompletion)).filter(function (key) {
     return excludes.indexOf(key) === -1;
@@ -22996,7 +23235,7 @@ function getDescriptorOf(originalObj, proto) {
   }
 
   if (originalObj === proto) {
-    if (typeof originalObj !== 'function') return shorten(originalObj.toString ? originalObj.toString() : "[some object]", 50);
+    if (typeof originalObj !== 'function') return shorten(safeToString(originalObj), 50);
     var funcString = originalObj.toString(),
         body = shorten(funcString.slice(funcString.indexOf('{') + 1, funcString.lastIndexOf('}')), 50);
     return signatureOf(originalObj.displayName || originalObj.name || 'function', originalObj) + ' {' + body + '}';
@@ -23078,10 +23317,27 @@ function evalCodeTransform(code, options) {
   code = lively_ast.transform.transformSingleExpression(code);
   var parsed = lively_ast.parse(code);
 
+  // 2. Annotate definitions with code location. This is being used by the
+  // function-wrapper-source transform.
+
+  var _query$topLevelDeclsA = lively_ast.query.topLevelDeclsAndRefs(parsed),
+      classDecls = _query$topLevelDeclsA.classDecls,
+      funcDecls = _query$topLevelDeclsA.funcDecls,
+      varDecls = _query$topLevelDeclsA.varDecls;
+
+  [].concat(toConsumableArray(classDecls), toConsumableArray(funcDecls)).forEach(function (node) {
+    return node["x-lively-def-location"] = { start: node.start, end: node.end };
+  });
+  varDecls.forEach(function (node) {
+    return node.declarations.forEach(function (decl) {
+      return decl["x-lively-def-location"] = { start: decl.start, end: decl.end };
+    });
+  });
+
   // transforming experimental ES features into accepted es6 form...
   parsed = lively_ast.transform.objectSpreadTransform(parsed);
 
-  // 2. capture top level vars into topLevelVarRecorder "environment"
+  // 3. capture top level vars into topLevelVarRecorder "environment"
 
   if (options.topLevelVarRecorder) {
 
@@ -23104,7 +23360,7 @@ function evalCodeTransform(code, options) {
       // return sth meaningful!
       var declarationWrapperName = options.declarationWrapperName || defaultDeclarationWrapperName;
 
-      options.declarationWrapper = member(id(options.varRecorderName), literal(declarationWrapperName), true);
+      options.declarationWrapper = member(id(options.varRecorderName || '__lvVarRecorder'), literal(declarationWrapperName), true);
 
       if (options.declarationCallback) options.topLevelVarRecorder[declarationWrapperName] = options.declarationCallback;
     }
@@ -23125,7 +23381,7 @@ function evalCodeTransform(code, options) {
       };
     }
 
-    // 2.2 Here we call out to the actual code transformation that installs the
+    // 3.2 Here we call out to the actual code transformation that installs the
     parsed = lively_sourceTransform.capturing.rewriteToCaptureTopLevelVariables(parsed, varRecorder, {
       es6ImportFuncId: options.es6ImportFuncId,
       es6ExportFuncId: options.es6ExportFuncId,
@@ -23464,42 +23720,6 @@ function printInspect$1(value, options) {
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// load support
-
-var ensureImportsAreLoaded = function () {
-  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
-    var body, imports;
-    return regeneratorRuntime.wrap(function _callee$(_context) {
-      while (1) {
-        switch (_context.prev = _context.next) {
-          case 0:
-            // FIXME do we have to do a reparse? We should be able to get the ast from
-            // the rewriter...
-            body = lively_ast.parse(code).body, imports = body.filter(function (node) {
-              return node.type === "ImportDeclaration";
-            });
-            return _context.abrupt("return", Promise.all(imports.map(function (node) {
-              return System.normalize(node.source.value, parentModule).then(function (fullName) {
-                return System.get(fullName) || System.import(fullName);
-              });
-            })).catch(function (err) {
-              console.error("Error ensuring imports: " + err.message);throw err;
-            }));
-
-          case 2:
-          case "end":
-            return _context.stop();
-        }
-      }
-    }, _callee, this);
-  }));
-
-  return function ensureImportsAreLoaded(_x, _x2, _x3) {
-    return _ref.apply(this, arguments);
-  };
-}();
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // transpiler to make es next work
 
 var getEs6Transpiler = function () {
@@ -23676,30 +23896,25 @@ var runEval$2 = function () {
               }
             }
 
-            _context3.next = 11;
-            return System.import(targetModule);
+            // await System.import(targetModule);
+            // await ensureImportsAreLoaded(System, code, targetModule);
 
-          case 11:
-            _context3.next = 13;
-            return ensureImportsAreLoaded(System, code, targetModule);
-
-          case 13:
             module = System.get("@lively-env").moduleEnv(targetModule);
             recorder = module.recorder;
             recorderName = module.recorderName;
             dontTransform = module.dontTransform;
-            _context3.next = 19;
+            _context3.next = 15;
             return getEs6Transpiler(System, options, module);
 
-          case 19:
+          case 15:
             transpiler = _context3.sent;
             header = "var _moduleExport = " + recorderName + "._moduleExport,\n" + ("    _moduleImport = " + recorderName + "._moduleImport;\n");
 
 
-            code = header + code;
             options = _extends({
               waitForPromise: true
             }, options, {
+              header: header,
               recordGlobals: true,
               dontTransform: dontTransform,
               varRecorderName: recorderName,
@@ -23723,10 +23938,10 @@ var runEval$2 = function () {
 
             System.get("@lively-env").evaluationStart(targetModule);
 
-            _context3.next = 28;
+            _context3.next = 23;
             return runEval$1(code, options);
 
-          case 28:
+          case 23:
             result = _context3.sent;
 
 
@@ -23740,7 +23955,7 @@ var runEval$2 = function () {
 
             return _context3.abrupt("return", result);
 
-          case 33:
+          case 28:
           case "end":
             return _context3.stop();
         }
@@ -24504,9 +24719,9 @@ exports.evalCodeTransformOfSystemRegisterSetters = evalCodeTransformOfSystemRegi
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
 })();
-// INLINED END /Users/robert/Lively/lively-dev3/lively.vm/dist/lively.vm.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.resources/dist/lively.resources_no-deps.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -25262,7 +25477,7 @@ function makeRequest(resource) {
       "x-lively-proxy-request": url
     });
 
-    url = defaultOrigin;
+    url = defaultOrigin();
   }
 
   if (useCors) fetchOpts.mode = "cors";
@@ -26391,9 +26606,9 @@ exports.unregisterExtension = unregisterExtension;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.resources;
 })();
-// INLINED END /Users/robert/Lively/lively-dev3/lively.resources/dist/lively.resources_no-deps.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.modules/systemjs-init.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -26503,12 +26718,12 @@ exports.unregisterExtension = unregisterExtension;
   }
 
 })();
-// INLINED END /Users/robert/Lively/lively-dev3/lively.modules/systemjs-init.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
-// INLINED /Users/robert/Lively/lively-dev3/lively.modules/node_modules/semver/semver.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -27713,7 +27928,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-// INLINED END /Users/robert/Lively/lively-dev3/lively.modules/node_modules/semver/semver.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
 semver = exports;
 })({}, {});
 
@@ -28686,7 +28901,7 @@ function updateModuleExports(System, moduleId, keysAndValues) {
           if (found) {
             if (debug) {
               var mod = module$2(System, importerModule.name);
-              console.log("[lively.vm es6 updateModuleExports] calling setters of " + mod["package"]().name + mod.pathInPackage().replace(/^./, ""));
+              console.log("[lively.vm es6 updateModuleExports] calling setters of " + mod["package"]().name + "/" + mod.pathInPackage());
             }
 
             // We could run the entire module again with
@@ -29470,7 +29685,7 @@ var Package = function () {
       ) {
         var _this5 = this;
 
-        var exclude = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [".git", "node_modules", ".optimized-loading-cache"];
+        var exclude = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [".git", "node_modules"];
         var allPackages, packagesToIgnore, dirList, resourceURLs, loadedModules$$1;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -29495,13 +29710,10 @@ var Package = function () {
                 loadedModules$$1 = lively_lang.arr.pluck(this.modules(), "id");
 
 
-                // console.log(resourceURLs)
-                // console.log(packageNames)
-
                 if (matches) resourceURLs = resourceURLs.filter(matches);
 
                 return _context.abrupt("return", resourceURLs.map(function (url) {
-                  var nameInPackage = url.replace(_this5.address, "").replace(/‘\//, ""),
+                  var nameInPackage = url.replace(_this5.address, "").replace(/^\//, ""),
                       isLoaded = loadedModules$$1.includes(url);
                   return { isLoaded: isLoaded, url: url, nameInPackage: nameInPackage, package: _this5 };
                 }));
@@ -29514,7 +29726,7 @@ var Package = function () {
         }, _callee, this);
       }));
 
-      function resources(_x2) {
+      function resources(_x2, _x3) {
         return _ref.apply(this, arguments);
       }
 
@@ -29682,19 +29894,20 @@ var Package = function () {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
-                System = this.System, url = this.url;
-
                 if (!this.isRegistering()) {
-                  _context4.next = 3;
+                  _context4.next = 2;
                   break;
                 }
 
                 return _context4.abrupt("return", this.registerProcess.promise);
 
-              case 3:
+              case 2:
+                System = this.System, url = this.url;
+
                 this.registerProcess = lively_lang.promise.deferred();
 
                 System.debug && console.log("[lively.modules package register] %s", url);
+
                 _context4.next = 7;
                 return this.tryToLoadPackageConfig();
 
@@ -29795,7 +30008,7 @@ var Package = function () {
         }, _callee4, this, [[14, 30, 34, 42], [35,, 37, 41]]);
       }));
 
-      function register() {
+      function register(_x5) {
         return _ref4.apply(this, arguments);
       }
 
@@ -29897,7 +30110,7 @@ var Package = function () {
         }, _callee5, this);
       }));
 
-      function search(_x5) {
+      function search(_x7, _x8) {
         return _ref5.apply(this, arguments);
       }
 
@@ -30064,13 +30277,12 @@ var ModuleInterface = function () {
     value: function fullName() {
       return this.id;
     }
-
-    // returns Promise<string>
-
   }, {
     key: "source",
     value: function source() {
       var _this2 = this;
+
+      // returns Promise<string>
 
       // rk 2016-06-24:
       // We should consider using lively.resource here. Unfortunately
@@ -30111,15 +30323,14 @@ var ModuleInterface = function () {
                 return _context.abrupt("return", this._ast);
 
               case 2:
-                _context.t0 = lively_ast.parse;
-                _context.next = 5;
+                _context.next = 4;
                 return this.source();
 
-              case 5:
-                _context.t1 = _context.sent;
-                return _context.abrupt("return", this._ast = (0, _context.t0)(_context.t1));
+              case 4:
+                _context.t0 = _context.sent;
+                return _context.abrupt("return", this._ast = lively_ast.parse(_context.t0));
 
-              case 7:
+              case 6:
               case "end":
                 return _context.stop();
             }
@@ -30528,10 +30739,40 @@ var ModuleInterface = function () {
     key: "define",
     value: function define(varName, value) {
       var exportImmediately = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+      var sourceLoc = arguments[3];
 
-      this.recorder[varName] = value;
+      // attaching source info to runtime objects
 
-      scheduleModuleExportsChange(this.System, this.id, varName, value, false /*force adding export*/);
+      var System = this.System,
+          id = this.id,
+          recorder = this.recorder;
+
+
+      System.debug && console.log("[lively.modules] " + this.package().name + "/" + this.pathInPackage() + " defines " + varName);
+
+      var srcLocSym = Symbol.for("lively-source-location"),
+          moduleSym = Symbol.for("lively-module-meta");
+
+      if (typeof value === "function" && sourceLoc && !Object.getOwnPropertySymbols(value).includes(srcLocSym)) {
+        value[srcLocSym] = sourceLoc;
+      }
+
+      if (value && value[srcLocSym] && !value[moduleSym]) {
+        var pathInPackage = this.pathInPackage(),
+            p = this.package();
+        value[moduleSym] = {
+          package: p ? { name: p.name, version: p.version } : {},
+          pathInPackage: pathInPackage
+        };
+      }
+
+      // storing local module state
+      recorder[varName] = value;
+
+      // exports update
+      scheduleModuleExportsChange(System, id, varName, value, false /*force adding export*/);
+
+      // system event
       this.notifyTopLevelObservers(varName);
 
       // immediately update exports (recursivly) when flagged or when the module
@@ -30541,7 +30782,7 @@ var ModuleInterface = function () {
       // ...whether or not this is in accordance with an upcoming es6 module spec
       // I don't know...
       exportImmediately = exportImmediately || !this.isEvalutionInProgress();
-      if (exportImmediately) runScheduledExportChanges(this.System, this.id);
+      if (exportImmediately) runScheduledExportChanges(System, id);
 
       return value;
     }
@@ -30619,7 +30860,7 @@ var ModuleInterface = function () {
     key: "pathInPackage",
     value: function pathInPackage() {
       var p = this.package();
-      return p && this.id.indexOf(p.address) === 0 ? join("./", this.id.slice(p.address.length)) : this.id;
+      return p && this.id.indexOf(p.address) === 0 ? this.id.slice(p.address.length).replace(/^\//, "") : this.id;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -31189,11 +31430,13 @@ var ModuleInterface = function () {
 
       return this._recorder = Object.create(S.global, (_Object$create = {
 
-        System: { configurable: true, writable: true, value: S }
+        System: { configurable: true, writable: true, value: S },
+
+        __currentLivelyModule: { value: self }
 
       }, defineProperty(_Object$create, this.varDefinitionCallbackName, {
-        value: function value(name, kind, _value, recorder) {
-          return self.define(name, _value, false /*signalChangeImmediately*/);
+        value: function value(name, kind, _value, recorder, sourceLoc) {
+          return self.define(name, _value, false /*signalChangeImmediately*/, sourceLoc);
         }
       }), defineProperty(_Object$create, "_moduleExport", {
         value: function value(name, val) {
@@ -31233,6 +31476,17 @@ var ModuleInterface = function () {
   }]);
   return ModuleInterface;
 }();
+
+// update pre-bootstrap modules
+/*
+
+var mods = System.get("@lively-env").loadedModules;
+Object.keys(mods).forEach(id => {
+  if (mods[id].constructor === ModuleInterface) return;
+  mods[id] = Object.assign(new ModuleInterface(mods[id].System, mods[id].id), mods[id]);
+});
+
+*/
 
 var fetchResource = function () {
   var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(proceed, load) {
@@ -31320,22 +31574,27 @@ var fetchResource = function () {
   };
 }();
 
+var livelyURLRe = /^lively:\/\/([^\/]+)\/(.*)$/;
+
 function livelyProtocol(proceed, url) {
-  if (!url.match(/^lively:\/\//)) return proceed(url);
-  var match = url.match(/^lively:\/\/([^\/]+)\/(.*)$/),
-      worldId = match[1],
-      localObjectName = match[2];
+  var match = url.match(livelyURLRe);
+  if (!match) return proceed(url);
+
+  var _match = slicedToArray(match, 3),
+      _ = _match[0],
+      worldId = _match[1],
+      id = _match[2];
+
   return {
     read: function read() {
-      return Promise.resolve(typeof $morph !== "undefined" && $morph(localObjectName) && $morph(localObjectName).textString || "/*Could not locate " + localObjectName + "*/");
+      var m = typeof $world !== "undefined" && $world.getMorphWithId(id);
+      return Promise.resolve(m ? m.textString : "/*Could not locate " + id + "*/");
     },
     write: function write(source) {
-      if (typeof $morph !== "undefined" && $morph(localObjectName) && $morph(localObjectName).textString) {
-        $morph(localObjectName).textString = source;
-        return Promise.resolve(source);
-      } else {
-        return Promise.reject("Could not save morph " + localObjectName);
-      }
+      var m = typeof $world !== "undefined" && $world.getMorphWithId(id);
+      if (!m) return Promise.reject("Could not save morph " + id);
+      m.textString = source;
+      return Promise.resolve(this);
     }
   };
 }
@@ -31862,7 +32121,7 @@ var buildPackageMap = function () {
     }, _callee, this, [[3, 15], [18, 24], [30, 43, 47, 55], [48,, 50, 54]]);
   }));
 
-  return function buildPackageMap(_x) {
+  return function buildPackageMap(_x, _x2, _x3, _x4) {
     return _ref.apply(this, arguments);
   };
 }();

@@ -297,7 +297,7 @@ class Package {
 
   async resources(
     matches /*= url => url.match(/\.js$/)*/,
-    exclude = [".git", "node_modules", ".optimized-loading-cache"],
+    exclude = [".git", "node_modules"],
   ) {
     var allPackages = allPackageNames(this.System),
         packagesToIgnore = allPackages.filter(purl => {
@@ -310,13 +310,10 @@ class Package {
           .map(ea => ea.url),
         loadedModules = arr.pluck(this.modules(), "id");
 
-// console.log(resourceURLs)
-// console.log(packageNames)
-
     if (matches) resourceURLs = resourceURLs.filter(matches);
 
     return resourceURLs.map(url => {
-      var nameInPackage = url.replace(this.address, "").replace(/‘\//, ""),
+      var nameInPackage = url.replace(this.address, "").replace(/^\//, ""),
           isLoaded = loadedModules.includes(url);
       return {isLoaded, url, nameInPackage, package: this};
     });
@@ -395,12 +392,13 @@ class Package {
 
   async register(packageLoadStack = [this.url]) {
 
-    var {System, url} = this;
-
     if (this.isRegistering()) return this.registerProcess.promise;
+
+    var {System, url} = this;
     this.registerProcess = promise.deferred();
 
     System.debug && console.log("[lively.modules package register] %s", url);
+
     var cfg = await this.tryToLoadPackageConfig(),
         packageConfigResult = await new PackageConfiguration(this).applyConfig(cfg);
 
