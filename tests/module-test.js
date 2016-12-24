@@ -49,7 +49,7 @@ describe("module loading", () => {
     expect(m.package()).containSubset({
       address: testDir.replace(/\/$/, "")
     });
-    expect(m.pathInPackage()).equals("./file1.js")
+    expect(m.pathInPackage()).equals("file1.js")
   });
 
   it("module scope does not resolve references by default", async () => {

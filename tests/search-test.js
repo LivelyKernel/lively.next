@@ -157,7 +157,7 @@ describe("search", () => {
     it("finds string constants", async () => {
       const res = await getPackage(S, testProjectDir).search("hello");
       expect(res).to.containSubset([{
-        pathInPackage: "./file1.js",
+        pathInPackage: "file1.js",
         packageName: "search-test-project",
         moduleId: file1m,
         line: 2, column: 16, length: 5
