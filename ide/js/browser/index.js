@@ -103,7 +103,8 @@ export default class Browser extends Window {
       historyForwardButton,
       removeModuleButton,
       removePackageButton,
-      runTestsButton
+      runTestsInModuleButton,
+      runTestsInPackageButton
     } = this.ui;
 
     connect(searchButton,          'fire', this, 'execCommand', {converter: () => "open code search"});
@@ -115,7 +116,8 @@ export default class Browser extends Window {
     connect(removePackageButton,   'fire', this, 'execCommand', {converter: () => "remove package"});
     connect(addModuleButton,       'fire', this, 'execCommand', {converter: () => "load or add module"});
     connect(removeModuleButton,    'fire', this, 'execCommand', {converter: () => "remove module"});
-    connect(runTestsButton,        'fire', this, 'execCommand', {converter: () => "run all tests in module"});
+    connect(runTestsInModuleButton,'fire', this, 'execCommand', {converter: () => "run all tests in module"});
+    connect(runTestsInPackageButton,'fire', this, 'execCommand', {converter: () => "run all tests in package"});
 
     connect(packageList, "selection", this, "onPackageSelected");
     connect(moduleList, 'selection', this, 'onModuleSelected');
@@ -170,13 +172,13 @@ export default class Browser extends Window {
           sourceEditorBounds
         ] = bounds.extent().extentAsRectangle().divide([
           new Rectangle(0,   0,    1,   0.04),
-          new Rectangle(0,   0.04, 0.3, 0.39),
-          new Rectangle(0.3, 0.04, 0.3, 0.39),
-          new Rectangle(0.6, 0.04, 0.4, 0.39),
-          new Rectangle(0,   0.43, 0.5, 0.04),
-          new Rectangle(0.5, 0.43, 0.5, 0.04),
-          new Rectangle(0,   0.47, 1,   0.01),
-          new Rectangle(0,   0.48, 1,   0.52)]),
+          new Rectangle(0,   0.04, 0.3, 0.33),
+          new Rectangle(0.3, 0.04, 0.3, 0.33),
+          new Rectangle(0.6, 0.04, 0.4, 0.33),
+          new Rectangle(0,   0.38, 0.5, 0.04),
+          new Rectangle(0.5, 0.38, 0.5, 0.04),
+          new Rectangle(0,   0.42, 1,   0.01),
+          new Rectangle(0,   0.43, 1,   0.57)]),
 
         container = morph({
           ...style,
@@ -206,14 +208,16 @@ export default class Browser extends Window {
              layout: new HorizontalLayout({spacing: 2, autoResize: false}),
              submorphs: [
               {...btnStyle, name: "addPackageButton", label: Icon.makeLabel("plus"), tooltip: "add package"},
-              {...btnStyle, name: "removePackageButton", label: Icon.makeLabel("minus"), tooltip: "remove package"}]},
+              {...btnStyle, name: "removePackageButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
+              {...btnStyle, name: "runTestsInPackageButton", label: "run tests", tooltip: "run tests"}
+             ]},
 
             {name: "moduleCommands", bounds: moduleCommandBoxBounds,
              layout: new HorizontalLayout({spacing: 2, autoResize: false}),
               submorphs: [
                {...btnStyle, name: "addModuleButton", label: Icon.makeLabel("plus"), tooltip: "add module"},
                {...btnStyle, name: "removeModuleButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
-               {...btnStyle, name: "runTestsButton", label: "run tests", tooltip: "run tests", visible: false}
+               {...btnStyle, name: "runTestsInModuleButton", label: "run tests", tooltip: "run tests", visible: false}
              ]},
 
             new HorizontalResizer({name: "hresizer", bounds: resizerBounds}),
@@ -245,9 +249,8 @@ export default class Browser extends Window {
         moduleList =      container.get("moduleList"),
         moduleCommands =  container.get("moduleCommands"),
         codeEntityTree =  container.get("codeEntityTree"),
-        sourceEditor =    container.get("sourceEditor");
-
-    const l = browserCommands.layout;
+        sourceEditor =    container.get("sourceEditor"),
+        l =               browserCommands.layout;
     l.col(2).fixed = 100; l.row(0).paddingTop = 1; l.row(0).paddingBottom = 1;
 
     hresizer.addScalingAbove(packageList);
@@ -326,7 +329,8 @@ export default class Browser extends Window {
       packageList:           this.getSubmorphNamed("packageList"),
       removeModuleButton:    this.getSubmorphNamed("removeModuleButton"),
       removePackageButton:   this.getSubmorphNamed("removePackageButton"),
-      runTestsButton:        this.getSubmorphNamed("runTestsButton"),
+      runTestsInPackageButton:this.getSubmorphNamed("runTestsInPackageButton"),
+      runTestsInModuleButton:this.getSubmorphNamed("runTestsInModuleButton"),
       searchButton:          this.getSubmorphNamed("searchButton"),
       sourceEditor:          this.getSubmorphNamed("sourceEditor"),
       evalBackendList:       this.getSubmorphNamed("eval backend list")
@@ -376,7 +380,8 @@ export default class Browser extends Window {
     // await this.packageResources(this.selectedPackage)
     try {
       return (await (await this.systemInterface()).resourcesOfPackage(p.address))
-        .filter(({name}) => name.endsWith(".js") || name.endsWith(".json"));
+        .filter(({url}) => url.endsWith(".js") || url.endsWith(".json"))
+        .map((ea) => { ea.name = ea.url; return ea; });
     } catch (e) { this.showError(e); return []; }
   }
 
@@ -579,7 +584,7 @@ export default class Browser extends Window {
   }
 
   updateTestUI(mod) {
-    var { runTestsButton, sourceEditor } = this.ui,
+    var { runTestsInModuleButton, sourceEditor } = this.ui,
         hasTests = false;
     if (this.editorPlugin.isJSEditorPlugin) {
       var ast = this.editorPlugin.getNavigator().ensureAST(sourceEditor),
@@ -587,7 +592,7 @@ export default class Browser extends Window {
       hasTests = tests && tests.length;
     }
 
-    runTestsButton.visible = hasTests;
+    runTestsInModuleButton.visible = hasTests;
   }
 
   async save() {

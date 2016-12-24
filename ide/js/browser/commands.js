@@ -1,5 +1,6 @@
 import { arr } from "lively.lang";
 import { extractTestDescriptors } from "mocha-es6/test-analysis.js";
+import { findTestModulesInPackage } from "../../test-runner.js";
 
 
 export default function browserCommands(browser) {
@@ -185,6 +186,17 @@ export default function browserCommands(browser) {
     },
 
     {
+      name: "run all tests in package",
+      exec: async browser => {
+         var p = browser.selectedPackage;
+         if (!p) return browser.world().inform("No package selected", {requester: browser});
+         var results = await runTestsInPackage(browser, p.name);
+         browser.focus();
+         return results;
+      }
+    },
+
+    {
       name: "run all tests in module",
       exec: async browser => {
          var m = browser.selectedModule;
@@ -296,4 +308,21 @@ export default function browserCommands(browser) {
       runner[spec.type === "suite" ? "runSuite" : "runTest"](spec.fullTitle):
       runner.runTestFile(moduleName);
   }
+
+  async function runTestsInPackage(browser, packageURL) {
+
+    var runner = browser.get("test runner window");
+    if (!runner)
+      runner = await world.execCommand("open test runner");
+    if (runner.minimized)
+      runner.toggleMinimize();
+
+    runner = runner.getWindow().targetMorph;
+
+    if (runner.backend != browser.backend)
+      runner.backend = browser.backend;
+
+    return runner.runTestsInPackage(packageURL);
+  }
+
 }
