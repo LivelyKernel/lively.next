@@ -52,9 +52,35 @@ function maybeSelectCommentOrLine(morph) {
 }
 
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// FIXME duplication with lively.vm completions and lively morphic completions!
+var symMatcher = /^Symbol\((.*)\)$/,
+    knownSymbols = (() =>
+      Object.getOwnPropertyNames(Symbol)
+        .filter(ea => typeof Symbol[ea] === "symbol")
+        .reduce((map, ea) => map.set(Symbol[ea], "Symbol." + ea), new Map()))();
+function printSymbol(sym) {
+  if (Symbol.keyFor(sym)) return `Symbol.for("${Symbol.keyFor(sym)}")`;
+  if (knownSymbols.get(sym)) return knownSymbols.get(sym)
+  var matched = String(sym).match(symMatcher);
+  return String(sym);
+}
+function safeToString(value) {
+  if (!value) return String(value);
+  if (Array.isArray(value)) return `[${value.map(safeToString).join(",")}]`;
+  if (typeof value === "symbol") return printSymbol(value);
+  try {
+    return String(value);
+  } catch (e) {
+    throw new Error(`Cannot print object: ${e.stack}`);
+  }
+}
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 var printEvalResult = (function() {
   var maxColLength = 300,
       itSym = typeof Symbol !== "undefined" && Symbol.iterator;
+
   return function(result, maxDepth) {
     var err = result instanceof Error ? result : result.isError ? result.value : null;
     return err ?
@@ -85,6 +111,7 @@ var printEvalResult = (function() {
 
   function inspectPrinter(val, ignore) {
     if (!val) return ignore;
+    if (typeof val === "symbol") return printSymbol(val);
     if (val.isMorph) return String(val);
     if (val instanceof Promise) return "Promise()";
     if (val instanceof Node) return String(val);
@@ -149,7 +176,7 @@ export var jsEditorCommands = [
       } catch (e) { err = e; }
       err ?
         morph.world().logError(err) :
-        morph.world().setStatusMessage(String(result.value));
+        morph.world().setStatusMessage(safeToString(result.value));
       return result;
     }
   },
@@ -167,7 +194,9 @@ export var jsEditorCommands = [
       } catch (e) { err = e; }
       morph.selection.collapseToEnd();
       // morph.insertTextAndSelect(err ? err.stack || String(err) : String(result.value));
-      morph.insertTextAndSelect(err ? String(err) + (err.stack ? "\n" + err.stack : "") : String(result.value));
+      morph.insertTextAndSelect(
+        err ? String(err) + (err.stack ? "\n" + err.stack : "") :
+        safeToString(result.value));
       return result;
     }
   },
