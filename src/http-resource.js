@@ -141,7 +141,7 @@ function makeRequest(resource, method = "GET", body, headers = {}) {
       "x-lively-proxy-request": url
     });
 
-    url = defaultOrigin;
+    url = defaultOrigin();
   }
 
   if (useCors) fetchOpts.mode = "cors"
