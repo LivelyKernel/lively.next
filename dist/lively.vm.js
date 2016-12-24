@@ -189,6 +189,30 @@ var set = function set(object, property, value, receiver) {
   return value;
 };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var toConsumableArray = function (arr$$1) {
+  if (Array.isArray(arr$$1)) {
+    for (var i = 0, arr2 = Array(arr$$1.length); i < arr$$1.length; i++) arr2[i] = arr$$1[i];
+
+    return arr2;
+  } else {
+    return Array.from(arr$$1);
+  }
+};
+
 /*global require, __dirname*/
 
 // helper
@@ -243,6 +267,18 @@ function printSymbolForCompletion(sym) {
   var matched = String(sym).match(symMatcher);
   return String(sym);
 }
+
+function safeToString(value) {
+  if (!value) return String(value);
+  if (Array.isArray(value)) return '[' + value.map(safeToString).join(",") + ']';
+  if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === "symbol") return printSymbolForCompletion(value);
+  try {
+    return String(value);
+  } catch (e) {
+    throw new Error('Cannot print object: ' + e.stack);
+  }
+}
+
 function propertyExtract(excludes, obj$$1, extractor) {
   return Object.getOwnPropertyNames(obj$$1).concat(Object.getOwnPropertySymbols(obj$$1).map(printSymbolForCompletion)).filter(function (key) {
     return excludes.indexOf(key) === -1;
@@ -283,7 +319,7 @@ function getDescriptorOf(originalObj, proto) {
   }
 
   if (originalObj === proto) {
-    if (typeof originalObj !== 'function') return shorten(originalObj.toString ? originalObj.toString() : "[some object]", 50);
+    if (typeof originalObj !== 'function') return shorten(safeToString(originalObj), 50);
     var funcString = originalObj.toString(),
         body = shorten(funcString.slice(funcString.indexOf('{') + 1, funcString.lastIndexOf('}')), 50);
     return signatureOf(originalObj.displayName || originalObj.name || 'function', originalObj) + ' {' + body + '}';
@@ -365,10 +401,27 @@ function evalCodeTransform(code, options) {
   code = lively_ast.transform.transformSingleExpression(code);
   var parsed = lively_ast.parse(code);
 
+  // 2. Annotate definitions with code location. This is being used by the
+  // function-wrapper-source transform.
+
+  var _query$topLevelDeclsA = lively_ast.query.topLevelDeclsAndRefs(parsed),
+      classDecls = _query$topLevelDeclsA.classDecls,
+      funcDecls = _query$topLevelDeclsA.funcDecls,
+      varDecls = _query$topLevelDeclsA.varDecls;
+
+  [].concat(toConsumableArray(classDecls), toConsumableArray(funcDecls)).forEach(function (node) {
+    return node["x-lively-def-location"] = { start: node.start, end: node.end };
+  });
+  varDecls.forEach(function (node) {
+    return node.declarations.forEach(function (decl) {
+      return decl["x-lively-def-location"] = { start: decl.start, end: decl.end };
+    });
+  });
+
   // transforming experimental ES features into accepted es6 form...
   parsed = lively_ast.transform.objectSpreadTransform(parsed);
 
-  // 2. capture top level vars into topLevelVarRecorder "environment"
+  // 3. capture top level vars into topLevelVarRecorder "environment"
 
   if (options.topLevelVarRecorder) {
 
@@ -391,7 +444,7 @@ function evalCodeTransform(code, options) {
       // return sth meaningful!
       var declarationWrapperName = options.declarationWrapperName || defaultDeclarationWrapperName;
 
-      options.declarationWrapper = member(id(options.varRecorderName), literal(declarationWrapperName), true);
+      options.declarationWrapper = member(id(options.varRecorderName || '__lvVarRecorder'), literal(declarationWrapperName), true);
 
       if (options.declarationCallback) options.topLevelVarRecorder[declarationWrapperName] = options.declarationCallback;
     }
@@ -412,7 +465,7 @@ function evalCodeTransform(code, options) {
       };
     }
 
-    // 2.2 Here we call out to the actual code transformation that installs the
+    // 3.2 Here we call out to the actual code transformation that installs the
     parsed = lively_sourceTransform.capturing.rewriteToCaptureTopLevelVariables(parsed, varRecorder, {
       es6ImportFuncId: options.es6ImportFuncId,
       es6ExportFuncId: options.es6ExportFuncId,
@@ -751,42 +804,6 @@ function printInspect$1(value, options) {
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// load support
-
-var ensureImportsAreLoaded = function () {
-  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
-    var body, imports;
-    return regeneratorRuntime.wrap(function _callee$(_context) {
-      while (1) {
-        switch (_context.prev = _context.next) {
-          case 0:
-            // FIXME do we have to do a reparse? We should be able to get the ast from
-            // the rewriter...
-            body = lively_ast.parse(code).body, imports = body.filter(function (node) {
-              return node.type === "ImportDeclaration";
-            });
-            return _context.abrupt("return", Promise.all(imports.map(function (node) {
-              return System.normalize(node.source.value, parentModule).then(function (fullName) {
-                return System.get(fullName) || System.import(fullName);
-              });
-            })).catch(function (err) {
-              console.error("Error ensuring imports: " + err.message);throw err;
-            }));
-
-          case 2:
-          case "end":
-            return _context.stop();
-        }
-      }
-    }, _callee, this);
-  }));
-
-  return function ensureImportsAreLoaded(_x, _x2, _x3) {
-    return _ref.apply(this, arguments);
-  };
-}();
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // transpiler to make es next work
 
 var getEs6Transpiler = function () {
@@ -963,30 +980,25 @@ var runEval$2 = function () {
               }
             }
 
-            _context3.next = 11;
-            return System.import(targetModule);
+            // await System.import(targetModule);
+            // await ensureImportsAreLoaded(System, code, targetModule);
 
-          case 11:
-            _context3.next = 13;
-            return ensureImportsAreLoaded(System, code, targetModule);
-
-          case 13:
             module = System.get("@lively-env").moduleEnv(targetModule);
             recorder = module.recorder;
             recorderName = module.recorderName;
             dontTransform = module.dontTransform;
-            _context3.next = 19;
+            _context3.next = 15;
             return getEs6Transpiler(System, options, module);
 
-          case 19:
+          case 15:
             transpiler = _context3.sent;
             header = "var _moduleExport = " + recorderName + "._moduleExport,\n" + ("    _moduleImport = " + recorderName + "._moduleImport;\n");
 
 
-            code = header + code;
             options = _extends({
               waitForPromise: true
             }, options, {
+              header: header,
               recordGlobals: true,
               dontTransform: dontTransform,
               varRecorderName: recorderName,
@@ -1010,10 +1022,10 @@ var runEval$2 = function () {
 
             System.get("@lively-env").evaluationStart(targetModule);
 
-            _context3.next = 28;
+            _context3.next = 23;
             return runEval$1(code, options);
 
-          case 28:
+          case 23:
             result = _context3.sent;
 
 
@@ -1027,7 +1039,7 @@ var runEval$2 = function () {
 
             return _context3.abrupt("return", result);
 
-          case 33:
+          case 28:
           case "end":
             return _context3.stop();
         }
