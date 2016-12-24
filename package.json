@@ -41,6 +41,6 @@
     "js-git-browser": "LivelyKernel/js-git-browser"
   },
   "devDependencies": {
-    "mocha-es6": "^0.3.9"
+    "mocha-es6": "^0.4"
   }
 }

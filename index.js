@@ -10,7 +10,7 @@ function resolve(path) { // Path -> [PackageAddress, RelPath]
   const mod = module(path),
         pkg = mod.package();
   if (!pkg) return ["no group", path];
-  return [pkg.address, mod.pathInPackage().replace(/^\.\//, '')];
+  return [pkg.address, mod.pathInPackage()];
 }
 
 function resourceFromChangeSet(proceed, url) {
