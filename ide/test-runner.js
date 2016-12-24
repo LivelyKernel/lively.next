@@ -610,6 +610,7 @@ export default class TestRunner extends HTMLMorph {
     }
 
     function tryPrint(o) {
+      if (typeof o === "function") return String(o);
       if (typeof o === "string") return o;
       try { return JSON.stringify(o, null, 2); } catch (e) {}
       try { return obj.inspect(o, {maxDepth: 3}); } catch (e) {}

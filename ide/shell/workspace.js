@@ -40,15 +40,14 @@ export default class Workspace extends Window {
     return btn;
   }
 
-  buttons() {
-    return super.buttons().concat(this.getSubmorphNamed("changeCwdButton") || []);
-  }
-
-  relayoutControls() {
-    super.relayoutControls();
+  relayoutWindowControls() {
+    super.relayoutWindowControls();
     var list = this.getSubmorphNamed("changeCwdButton");
-    if (list)
-      list.topRight = this.targetMorph.topRight.addXY(-5, 2);
+    if (list) {
+      var title = this.titleLabel();
+      list.topRight = this.innerBounds().topRight().addXY(-5, 2);
+      if (list.left < title.right + 3) list.left = title.right + 3;
+    }
   }
 
   get keybindings() {

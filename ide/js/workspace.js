@@ -31,15 +31,14 @@ export default class Workspace extends Window {
     this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(this, this.getEvalBackend()));
   }
 
-  buttons() {
-    return super.buttons().concat(this.getSubmorphNamed("eval backend list") || []);
-  }
-
-  relayoutControls() {
-    super.relayoutControls();
+  relayoutWindowControls() {
+    super.relayoutWindowControls();
     var list = this.getSubmorphNamed("eval backend list");
-    if (list)
+    if (list) {
+      var title = this.titleLabel();
       list.topRight = this.innerBounds().topRight().addXY(-5, 2);
+      if (list.left < title.right + 3) list.left = title.right + 3;
+    }
   }
 
   get jsPlugin() { return this.targetMorph.pluginFind(p => p.isEditorPlugin); }
