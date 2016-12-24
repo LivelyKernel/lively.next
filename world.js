@@ -377,7 +377,7 @@ var worldCommands = [
 
       for (let p of pkgs) {
         items.push(...(await livelySystem.resourcesOfPackage(p))
-          .filter(({name}) => !name.endsWith("/"))
+          .filter(({url}) => !url.endsWith("/"))
           .sort((a, b) => {
             if (a.isLoaded && !b.isLoaded) return -1;
             if (!a.isLoaded && b.isLoaded) return 1;
@@ -396,10 +396,15 @@ var worldCommands = [
           historyId: "lively.morphic-choose and browse package resources",
           requester: browser, width: 700, multiSelect: true})
 
+      var [jsModules, nonJsModules] = arr.partition(selected, ea => ea.url.match(/\.js(on)?/));
+
       var { default: Browser } = await System.import("lively.morphic/ide/js/browser/index.js");
-      Promise.all(selected.map(ea =>
+      await Promise.all(jsModules.map(ea =>
         Browser.browse(ea.package.address, ea.name, undefined, browser, backend)
           .then(browser => browser.activate())));
+
+      if (nonJsModules.length)
+        await Promise.all(nonJsModules.map(({url}) => world.execCommand("open file", {url})));
 
       return true;
     }
@@ -445,7 +450,8 @@ var worldCommands = [
       var {selected} = await world.filterableListPrompt(
             "Choose module to open", items, {
               historyId: "lively.morphic-choose and browse module",
-              requester: browser || focused, width: 700, multiSelect: true, listFontColor: "white"});
+              requester: browser || focused,
+              width: 700, multiSelect: true, listFontColor: "white"});
 
       for (var i = 0; i < selected.length; i++) {
         var {package: p, shortName} = selected[i],
@@ -593,7 +599,11 @@ export class World extends Morph {
   getPrompts() { return this.submorphs.filter(ea => ea.isPrompt); }
 
   openInWindow(morph, opts = {title: morph.name, name: "window for " + morph.name}) {
-    return new Window({...opts, extent: morph.extent.addXY(0, 25), targetMorph: morph}).openInWorld();
+    return new Window({
+      ...opts,
+      extent: morph.extent.addXY(0, 25),
+      targetMorph: morph
+    }).openInWorld();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
