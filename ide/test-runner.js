@@ -553,7 +553,7 @@ export default class TestRunner extends HTMLMorph {
         state = (myTests||[]).some(t => t.state === "failed") ?
           "failed" : (myTests.every(t => t.state === "succeeded") ? "succeeded" : ""),
         mod = lively.modules.module(id),
-        name = mod.package().name + mod.pathInPackage().replace(/^\./, ""),
+        name = mod.package().name + "/" + mod.pathInPackage(),
         classes = ["test-file", state],
         isCollapsed = collapsed.includes(id);
 

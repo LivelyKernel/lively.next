@@ -24,7 +24,7 @@ export async function doSearch(
   }
 
   return found.reduce((result, ea) => {
-    var nameAndLine = `${ea.packageName}${ea.pathInPackage.replace(/^\./, "")}:${ea.line}`;
+    var nameAndLine = `${ea.packageName}/${ea.pathInPackage}:${ea.line}`;
     result.maxModuleNameLength = Math.max(result.maxModuleNameLength, nameAndLine.length);
     result.items.push({
       isListItem: true,
@@ -170,7 +170,7 @@ export class CodeSearcher extends FilterableList {
         browserOrProps = browser,
         browser = await Browser.browse(
           packageName,
-          pathInPackage.replace(/^\.\//, ""),
+          pathInPackage,
           {column, row: line-1}, browserOrProps,
           browser? browser.backend : this.backend);
     browser.state.associatedSearchPanel = this;

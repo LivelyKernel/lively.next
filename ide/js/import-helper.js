@@ -277,21 +277,25 @@ export class ImportInjector {
   }
 
   generateImportStatement() {
-    var {intoModuleId, fromModuleId, importData} = this,
+    var {intoModuleId, fromModuleId, importData, intoPackage} = this,
         isDefault = importData.exported === "default",
         varName = isDefault ? importData.local : importData.exported,
+        intoPackageName = intoPackage && intoPackage.name,
         exportPath = fromModuleId;
 
     var {packageName, pathInPackage, isMain} = importData;
     if (isMain) exportPath = packageName;
-    else {
+    else if (intoPackageName === packageName) {
       try {
         exportPath = resource(fromModuleId).relativePathFrom(resource(intoModuleId));
         if (!exportPath.startsWith(".")) exportPath = "./" + exportPath;
       } catch (e) {
-        if (packageName && packageName !== "no group"  && pathInPackage)
+        if (packageName && packageName !== "no group" && pathInPackage)
           exportPath = packageName + "/" + pathInPackage;
       }
+    } else {
+      if (packageName && packageName !== "no group" && pathInPackage)
+        exportPath = packageName + "/" + pathInPackage;
     }
 
     return {
