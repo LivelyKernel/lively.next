@@ -1,5 +1,5 @@
 import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
-import { string, obj, arr, num, promise, tree, properties } from "lively.lang";
+import { string, obj, arr, num, promise, tree, properties, fun } from "lively.lang";
 import { signal } from "lively.bindings";
 import { renderRootMorph, AnimationQueue, ShadowObject } from "./rendering/morphic-default.js"
 import { morph, show } from "./index.js";
@@ -36,6 +36,7 @@ const defaultProperties = {
   styleClasses: ["morph"],
   nativeCursor: "auto",
   focusable: true,
+  epiMorph: false,
   submorphs:  []
 }
 
@@ -519,7 +520,8 @@ export class Morph {
   get rightCenter()   { return this.bounds().rightCenter(); }
   set rightCenter(v)  { return this.align(this.rightCenter, v); }
 
-  get isEpiMorph() { /*transient "meta" morph*/ return false; }
+  get isEpiMorph() { /*transient "meta" morph*/ return this.getProperty("epiMorph"); }
+
   isUsedAsEpiMorph() {
     var m = this;
     while (m) { if (m.isEpiMorph) return true; m = m.owner; }
@@ -1087,7 +1089,7 @@ export class Morph {
     if (!evt.state.scroll.interactiveScrollInProgress) {
       var {promise: p, resolve} = promise.deferred();
       evt.state.scroll.interactiveScrollInProgress = p;
-      p.debounce = lively.lang.fun.debounce(250, () => {
+      p.debounce = fun.debounce(250, () => {
         evt.state.scroll.interactiveScrollInProgress = null;
         resolve();
       });
