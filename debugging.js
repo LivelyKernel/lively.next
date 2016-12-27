@@ -1,4 +1,4 @@
-import { arr, num, string, graph } from "lively.lang";
+import { arr, num, string, graph, Path } from "lively.lang";
 
 import { ObjectPool } from "lively.serializer2";
 import ClassHelper from "./class-helper.js";
@@ -123,10 +123,10 @@ export class SnapshotInspector {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  findIdReferencePathFromToId(fromId, toId, options = {}) {
-    // findIdReferencePathFromToId(snapshot, id, "A9E157AB-E863-400C-A15C-677CE90098B0")
-    // findIdReferencePathFromToId(snapshot, id, "A9E157AB-E863-400C-A15C-677CE90098B0", {hideId: false, showClassNames: true})
-    return findIdReferencePathFromToId(this.snapshot, fromId, toId, options);
+  findPathFromToId(fromId, toId, options = {}) {
+    // findPathFromToId(snapshot, id, "A9E157AB-E863-400C-A15C-677CE90098B0")
+    // findPathFromToId(snapshot, id, "A9E157AB-E863-400C-A15C-677CE90098B0", {hideId: false, showClassNames: true})
+    return findPathFromToId(this.snapshot, fromId, toId, options);
   }
 
   referenceGraph() {
@@ -135,11 +135,47 @@ export class SnapshotInspector {
   }
 
   referenceCouncts() {
-    var invertedG = graph.invert(this.referenceGraph());
-    var counts = {};
+    var invertedG = graph.invert(this.referenceGraph()),
+        counts = {};
     Object.keys(invertedG).forEach(key => counts[key] = invertedG[key].length);
     return counts;
   }
+
+  lookupPath(fromId, path) {
+    // given a path like "submorphs.1.submorphs.0" and a starting id (root
+    // object), try to resolve the path, returning the serialized object of
+    // this.snapshot
+
+    path = path.replace(/^\./, "");
+    // foo[0].baz => foo.0.baz
+    path = path.replace(/\[([^\]])+\]/g, ".$1")
+  
+    var parts = Path(path).parts(),
+        current = this.snapshot[fromId],
+        counter = 0;
+  
+    while (true) {
+      if (counter++ > 1000) throw "stop";
+      var key = parts.shift();
+      if (!key) return current;
+  
+      if (!current.props || !current.props[key])
+        throw new Error(`Property ${key} not found for ref ${JSON.stringify(current)}`);
+  
+      var {value} = current.props[key];
+      if (!value)
+        throw new Error(`Property ${key} has no value`);
+  
+      while (Array.isArray(value))
+        value = value[parts.shift()];
+  
+      if (!value || !value.__ref__) return value;
+  
+      current = this.snapshot[value.id];
+    }
+    return current;
+  }
+
 }
 
 

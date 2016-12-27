@@ -80,12 +80,12 @@ export default class ClassHelper {
     return modules;
   }
   
-  static sourceModulesIn(snapshot) {
+  static sourceModulesIn(snapshots) {
 
     var modules = [];
 
-    Object.keys(snapshot).forEach(id => {
-      var snapshot = snapshot[id];
+    Object.keys(snapshots).forEach(id => {
+      var snapshot = snapshots[id];
       if (snapshot && snapshot[classMetaForSerializationProp])
         modules.push(snapshot[classMetaForSerializationProp]);
     });
