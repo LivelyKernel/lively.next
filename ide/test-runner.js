@@ -1,4 +1,5 @@
 import { arr, obj } from "lively.lang"
+import { query, parse } from "lively.ast";
 import { Color, Rectangle, pt } from "lively.graphics"
 import { addOrChangeCSSDeclaration } from "lively.morphic/rendering/dom-helper.js";
 import { show } from "lively.morphic"
@@ -14,6 +15,19 @@ var jsDiff;
 (async function loadJsDiff() {
   jsDiff = await System.import("https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js");
 })();
+
+async function findTestModulesInPackage(livelySystem, packageOrUrl) {
+  var resources = await livelySystem.resourcesOfPackage(packageOrUrl)
+  return Promise.all(
+    resources.map(async ({url}) => {
+      if (!url.endsWith(".js")) return null;
+      var source = await livelySystem.moduleRead(url),
+          hasMochaImports = query.imports(query.scopes(parse(source))).some(({fromModule}) =>
+            fromModule.includes("mocha-es6"));
+      if (!hasMochaImports) return null;
+      try { return testsFromSource(source).length ? url : null; } catch (e) { return null; }
+    })).then(tests => tests.filter(Boolean))
+}
 
 export function testsFromSource(sourceOrAst) {
   // Traverses the ast and constructs the nested mocha suites and tests as a list like
@@ -313,7 +327,7 @@ export default class TestRunner extends HTMLMorph {
         result = await this.runTestFiles([file], grep, options);
 
     this.state.loadedTests[recordIndex] = result.find(ea => ea.file === file);
-    
+
     this.update();
 
     return this.state.loadedTests[recordIndex];
@@ -325,11 +339,12 @@ export default class TestRunner extends HTMLMorph {
     grep = grep || this.state.grep || /.*/;
 
     try {
-      var livelySystem = await this.getLivelySystem();
-      var result = await livelySystem.runMochaTests(
-                                    grep, testRecords,
-                                    () => this.update(),
-                                    (err, when) => this.showError(`Error during ${when}: ${err}`));
+      var livelySystem = await this.getLivelySystem(),
+          result = await livelySystem.runMochaTests(
+                    grep, testRecords,
+                    () => this.update(),
+                    (err, when) => this.showError(`Error during ${when}: ${err}`));
+
       if (result && result.isError)
         throw new Error(result.value.stack || result.value)
 
@@ -342,6 +357,14 @@ export default class TestRunner extends HTMLMorph {
       await this.update();
       throw err;
     }
+  }
+
+  async runTestsInPackage(packageURL) {
+    var testModuleURLs = await findTestModulesInPackage(await this.getLivelySystem(), packageURL),
+        results = [];
+    for (let url of testModuleURLs)
+      results.push(await this.runTestFile(url))
+    return results;
   }
 
   // -=-=-=-=-
@@ -585,7 +608,7 @@ export default class TestRunner extends HTMLMorph {
 
     var printed = this.stringifyExpectedAndActualOfError(test.error);
 
-    if (jsDiff && printed) {
+    if (jsDiff && printed && printed.expected && printed.actual) {
       return `${msg}<p>diff + = actual, - = expected:</p><pre>${diffIt(printed.expected, printed.actual)}</pre>`;
     } else {
       return `${msg}<p>expected:</p><pre>${String(test.error.expected)}</pre><p>actual:</p><pre>${String(test.error.actual)}</pre>`;
