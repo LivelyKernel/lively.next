@@ -190,7 +190,7 @@ function decanonicalizeHook(proceed, name, parent, isPlugin) {
   if (name === "..") name = '../index.js'; // Fix ".."
 
   // systemjs' decanonicalize has by default not the fancy
-  // '{node: "events", "~node": "@mepty"}' mapping but we need it
+  // '{node: "events", "~node": "@empty"}' mapping but we need it
   var pkg = parent && normalize_packageOfURL(parent, System);
   if (pkg) {
     var mappedObject = (pkg.map && pkg.map[name]) || System.map[name];
@@ -199,7 +199,7 @@ function decanonicalizeHook(proceed, name, parent, isPlugin) {
     }
   }
 
-  var result =  proceed(name, parent, isPlugin)
+  var result = proceed(name, parent, isPlugin);
 
   // lookup package main
   var base = result.replace(/\.js$/, "");
@@ -260,7 +260,8 @@ function normalize_packageOfURL(url, System) {
             {url: pkgName, penalty: url.slice(pkgName.length).length} : null)
         .filter(ea => !!ea),
       pName = matchingPackages.length ?
-        matchingPackages.reduce((matchingPkg, ea) => matchingPkg.penalty > ea.penalty ? ea: matchingPkg).url :
+        matchingPackages.reduce((matchingPkg, ea) =>
+          matchingPkg.penalty > ea.penalty ? ea: matchingPkg).url :
         null;
   return pName ? System.packages[pName] : null;
 }
