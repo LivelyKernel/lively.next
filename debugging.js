@@ -228,7 +228,7 @@ function classNameOfId(snapshot, id) {
 
 
 
-function findIdReferencePathFromToId(snapshot, fromId, toId, options = {}) {
+function findPathFromToId(snapshot, fromId, toId, options = {}) {
   // prints path:
   //   findIdReferencePathFromToId(snapshot, 0, 10);
   // prints ids, classNames, property names:

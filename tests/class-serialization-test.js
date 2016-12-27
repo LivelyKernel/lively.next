@@ -68,7 +68,7 @@ describe('class serialization', function() {
       className: "TestDummy",
       module: {
         package: {name: "lively.serializer2", version: "0.1.0"},
-        pathInPackage: "./tests/class-serialization-test.js"
+        pathInPackage: "tests/class-serialization-test.js"
       }
     }]);
   });
@@ -82,7 +82,7 @@ describe('class serialization', function() {
     try {
       ObjectPool.fromJSONSnapshot(serialized, {ignoreClassNotFound: false})
     } catch(e) {
-      expect(String(e)).match(/Trying to deserialize instance of Dummy_testRaiseErrorWhenClassNotFound but this class cannot be found/i);
+      expect(String(e)).match(/Trying to deserialize instance of.*Dummy_testRaiseErrorWhenClassNotFound.*but this class cannot be found/i);
       return;
     }
     expect().assert(false, 'No error rasied when deserializing obj without class')
