@@ -57,7 +57,7 @@ export default class ClassHelper {
     var module = meta.module;
     if (module && module.package && module.package.name) {
       var packagePath = System.decanonicalize(module.package.name + "/"),
-          moduleId = lively.lang.string.joinPath(packagePath, module.pathInPackage.replace(/^\.\//, "")),
+          moduleId = lively.lang.string.joinPath(packagePath, module.pathInPackage),
           module = System.get("@lively-env").moduleEnv(moduleId);
       if (!module)
         console.warn(`Trying to deserialize instance of class ${meta.className} but the module ${moduleId} is not yet loaded`);

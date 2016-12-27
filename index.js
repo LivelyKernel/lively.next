@@ -309,7 +309,7 @@ export class ObjectPool {
       if (classModules && classModules.length)
         modules.push(...classModules.map(spec =>
         console.log(spec)||
-          ((spec.package && spec.package.name) || "") + spec.pathInPackage.replace(/^\./, "")));
+          ((spec.package && spec.package.name) || "") + "/" + spec.pathInPackage));
 
       if (ref.props) {
         for (var j = 0; j < ref.props.length; j++) {
