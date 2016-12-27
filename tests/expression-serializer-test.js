@@ -47,9 +47,9 @@ describe("expression serializer deserialize", () => {
 
   it("evals expression", () => {
     try {
-      window.foo = () => 23;
+      System.global.foo = () => 23;
       expect(sut.deserializeExpr("_prefix:foo()")).deep.equals(23);
-    } finally { delete window.foo; }
+    } finally { delete System.global.foo; }
   });
   
   it("throws on invalid expression", () => {
