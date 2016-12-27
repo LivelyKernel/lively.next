@@ -1,5 +1,3 @@
-import { obj, arr } from "lively.lang";
-
 /*
 
   ### `lively.modules.importPackage(packageName)`
@@ -243,6 +241,7 @@ import { obj, arr } from "lively.lang";
 
  */
 
+/*global global, self*/
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // System accessors
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -263,7 +262,7 @@ function changeSystem(newSystem, makeGlobal) {
   if (makeGlobal) GLOBAL.System = newSystem;
   return newSystem;
 }
-function loadedModules() { return Object.keys(lively.modules.requireMap()); }
+function loadedModules() { return Object.keys(requireMap()); }
 function module(id) { return _module(defaultSystem, id); }
 function printSystemConfig() { return _printSystemConfig(defaultSystem); }
 function whenLoaded(moduleName, callback) { return _whenLoaded(defaultSystem, moduleName, callback); }
@@ -276,7 +275,7 @@ export {
   whenLoaded,
   changeSystem,
   module
-}
+};
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // packages
@@ -289,7 +288,7 @@ import {
   applyConfig as _applyPackageConfig,
   getPackages as _getPackages,
   getPackage as _getPackage
-} from './src/packages.js';
+} from "./src/packages.js";
 
 function importPackage(packageURL) { return _importPackage(defaultSystem, packageURL); }
 function registerPackage(packageURL) { return _registerPackage(defaultSystem, packageURL); }
@@ -307,12 +306,12 @@ export {
   getPackages,
   getPackage,
   applyPackageConfig
-}
+};
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // changing modules
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-import { moduleSourceChange as _moduleSourceChange } from './src/change.js'
+import { moduleSourceChange as _moduleSourceChange } from "./src/change.js";
 function moduleSourceChange(moduleName, newSource, options) { return _moduleSourceChange(defaultSystem, moduleName, newSource, options); }
 export { moduleSourceChange };
 
@@ -321,18 +320,18 @@ export { moduleSourceChange };
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import {
   computeRequireMap
-} from './src/dependencies.js'
+} from "./src/dependencies.js";
 function requireMap() { return computeRequireMap(defaultSystem); }
-export { requireMap }
+export { requireMap };
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // hooks
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-import { isInstalled as _isHookInstalled, install as _installHook, remove as _removeHook } from './src/hooks.js';
+import { isInstalled as _isHookInstalled, install as _installHook, remove as _removeHook } from "./src/hooks.js";
 function isHookInstalled(methodName, hookOrName) { return _isHookInstalled(defaultSystem, methodName, hookOrName); }
 function installHook(hookName, hook) { return _installHook(defaultSystem, hookName, hook); }
 function removeHook(methodName, hookOrName) { return _removeHook(defaultSystem, methodName, hookOrName); }
-export { isHookInstalled, installHook, removeHook }
+export { isHookInstalled, installHook, removeHook };
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // instrumentation
@@ -340,7 +339,7 @@ export { isHookInstalled, installHook, removeHook }
 import { wrapModuleLoad as _wrapModuleLoad, unwrapModuleLoad as _unwrapModuleLoad } from "./src/instrumentation.js";
 function wrapModuleLoad() { _wrapModuleLoad(defaultSystem); }
 function unwrapModuleLoad() { _unwrapModuleLoad(defaultSystem); }
-export { wrapModuleLoad, unwrapModuleLoad }
+export { wrapModuleLoad, unwrapModuleLoad };
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // cjs
