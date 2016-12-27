@@ -5,6 +5,7 @@ import { FilterableList } from "../list.js";
 import { LabeledCheckBox } from "../widgets.js";
 import Browser from "./js/browser/index.js";
 import { connect, disconnectAll } from "lively.bindings"
+import LoadingIndicator from "../loading-indicator.js";
 
 
 export async function doSearch(
@@ -78,7 +79,7 @@ export class CodeSearcher extends FilterableList {
 
   relayout() {
     super.relayout();
-    
+
     var input = this.getSubmorphNamed("input"),
         cb = this.getSubmorphNamed("searchInUnloadedModulesCheckbox");
     cb && (cb.rightCenter = input.rightCenter);
@@ -110,19 +111,27 @@ export class CodeSearcher extends FilterableList {
       systemInterface.localInterface; // FIXME
   }
 
-  updateFilter() {
-    // debounce
+  ensureIndicator(label) {
+    if (!this.progressIndicator) {
+      this.progressIndicator = this.addMorph(LoadingIndicator.open());
+      this.progressIndicator.center = this.center;
+    }
+    this.progressIndicator.label = label;  
+  }
 
+  removeIndicator() {
+    if (this.progressIndicator) this.progressIndicator.remove();
+    this.progressIndicator = null;
+  }
+
+  updateFilter() {
     var searchInput = this.get('input').textString;
     if (searchInput.length <= 2) return;
-  
-    // if (!this.typingIndicator) {
-    //   this.typingIndicator = lively.ide.withLoadingIndicatorDo("input...");
-    // }
+
+    this.ensureIndicator("input...");
 
     fun.debounceNamed(this.id + "updateFilterDebounced", 1200, async (needle) => {
-      // if (this.typingIndicator) this.typingIndicator.then(i => i.remove());
-      // this.typingIndicator = null;
+      this.removeIndicator();
       try {
         await this.searchAndUpdate(needle);
       } catch(err) {
@@ -142,19 +151,23 @@ export class CodeSearcher extends FilterableList {
   async searchAndUpdate(searchInput) {
     this.get("input").acceptInput(); // for history
     var filterTokens = searchInput.split(/\s+/).filter(ea => !!ea);
-  
+
     var win = this.getWindow();
     if (win && win.targetMorph === this)
-      win.title = `${win.title.split("–")[0].trim()} – ${filterTokens.join(" + ")}`;
+      win.title = `${win.title.split("-")[0].trim()} - ${filterTokens.join(" + ")}`;
 
     var searchTerm = filterTokens.shift(),
         newSearch = searchTerm != this.state.currentSearchTerm;
     if (newSearch) {
       this.state.currentSearchTerm = searchTerm;
       var includeUnloaded = this.getSubmorphNamed("searchInUnloadedModulesCheckbox").checked;
-      this.items = await doSearch(await this.getLivelySystem(), searchTerm, undefined, includeUnloaded);
+      this.ensureIndicator("searching...")
+      this.items = await doSearch(
+        await this.getLivelySystem(), searchTerm, undefined, includeUnloaded);
+      this.removeIndicator();
+      this.progressIndicator = null;
     }
-  
+
     filterTokens = filterTokens.map(ea => ea.toLowerCase());
     if (newSearch || this.state.currentFilters !== filterTokens.join("+")) {
       this.state.currentFilters = filterTokens.join("+");
@@ -180,7 +193,7 @@ export class CodeSearcher extends FilterableList {
   onWindowActivated() {
     this.get("input").selectAll();
   }
-  
+
   get commands() {
     return super.commands.concat([
       {
@@ -198,7 +211,7 @@ export class CodeSearcher extends FilterableList {
       }
     ]);
   }
-  
+
   get keybindings() {
     return [
       {keys: "Alt-L", command: "toggle search in unloaded modules"}
