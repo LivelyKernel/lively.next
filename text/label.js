@@ -16,12 +16,13 @@ export class Label extends Morph {
   constructor(props = {}) {
     var { fontMetric, position, rightCenter, leftCenter, topCenter,
           bottom, top, right, left, bottomCenter, bottomLeft, bottomRight,
-          topRight, topLeft, center } = props;
+          topRight, topLeft, center, extent } = props;
     super(obj.dissoc(props, ["fontMetric"]));
     if (fontMetric)
       this._fontMetric = fontMetric;
     this.fit();
-    // Update position after fit
+    // Update position + extent after fit
+    if (extent !== undefined) this.extent = extent;
     if (position !== undefined) this.position = position;
     if (rightCenter !== undefined) this.rightCenter = rightCenter;
     if (leftCenter !== undefined) this.leftCenter = leftCenter;
