@@ -435,6 +435,7 @@ class Package {
       p.modules.forEach(mod =>
         module(System, mod.name).unload({forgetEnv: true, forgetDeps: false}));
 
+    removeFromPackageStore(System, this);
     System.delete(String(packageConfigURL));
     arr.remove(conf.packageConfigPaths || [], packageConfigURL);
 
