@@ -1,7 +1,7 @@
 import { arr } from "lively.lang";
 
 const classMetaForSerializationProp = "lively.serializer-class-info",
-      moduleMetaInClassProp = Symbol.for("lively-instance-module-meta");
+      moduleMetaInClassProp = Symbol.for("lively-module-meta");
 
 export default class ClassHelper {
 
