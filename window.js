@@ -1,6 +1,6 @@
 import { arr, obj, string } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
-import { show, morph, Morph, GridLayout } from "./index.js";
+import { show, Label, morph, Morph, GridLayout } from "./index.js";
 import { connect, signal } from "lively.bindings";
 
 export default class Window extends Morph {
@@ -20,18 +20,12 @@ export default class Window extends Morph {
     this.submorphs = this.controls(this.resizable);
     
     if (props.targetMorph) this.targetMorph = props.targetMorph;
-
-    this.layout = new GridLayout({grid: [[this.titleLabel()],
-                                         [this.targetMorph]],
-                              autoAssign: false,
-                              compensateOrigin: true}),
-    this.layout.row(0).col(0).group.align = "center";
-    this.layout.row(0).fixed = 25;
     
     this.title = props.title || this.name || "";
     this.resetPropertyCache();
-    this.relayoutControls();
-    connect(this, "extent", this, "relayoutControls");
+    this.relayoutWindowControls();
+    connect(this, "extent", this, "relayoutWindowControls");
+    connect(this.titleLabel(), "value", this, "relayoutWindowControls");
   }
 
   get isWindow() { return true }
@@ -44,6 +38,7 @@ export default class Window extends Morph {
     var ctrls = this.controls();
     arr.withoutAll(this.submorphs, ctrls).forEach(ea => ea.remove());
     if (morph) this.addMorph(morph, ctrls[0]);
+    this.relayoutWindowControls();
   }
 
   targetMorphBounds() {
@@ -55,22 +50,35 @@ export default class Window extends Morph {
     this.propertyCache = {nonMinizedBounds: null, nonMaximizedBounds: null, minimizedBounds: null};
   }
 
-  relayoutControls() {
-    this.resizer().bottomRight = this.innerBounds().bottomRight();
+  relayoutWindowControls() {
+    var innerB = this.innerBounds(),
+        title = this.titleLabel(),
+        labelBounds = innerB.withHeight(25),
+        buttonOffset = arr.last(this.buttons()).bounds().right() + 3,
+        minLabelBounds = labelBounds.withLeftCenter(pt(buttonOffset, labelBounds.height/2));
+
+    // resizer
+    this.resizer().bottomRight = innerB.bottomRight();
+
+    // targetMorph
+    if (this.targetMorph)
+      this.targetMorph.setBounds(this.targetMorphBounds());
+
+    // title
+    title.textBounds().width < labelBounds.width - 2*buttonOffset ?
+      title.center = labelBounds.center() :
+      title.leftCenter = minLabelBounds.leftCenter();
   }
 
   controls() {
-    return this.buttons()
-               .concat(this.titleLabel())
-               .concat(this.resizable ? this.resizer() : []);
+    return this.buttons().concat(this.titleLabel()).concat(this.resizable ? this.resizer() : []);
   }
 
   buttons() {
 
     let defaultStyle = {
       type: "ellipse",
-      extent: pt(13,13),
-      borderWith: 1,
+      extent: pt(14,14),
       onHoverIn() { this.submorphs[0].visible = true; },
       onHoverOut() { this.submorphs[0].visible = false; }
     }
@@ -84,11 +92,11 @@ export default class Window extends Morph {
         borderColor: Color.darkRed,
         fill: Color.rgb(255,96,82),
         onMouseDown: (evt) => { this.close(); },
-        submorphs: [{
-          fill: Color.black.withA(0), scale: 0.7, visible: false,
-          styleClasses: ["fa", "fa-times"],
-          center: pt(5.5, 5), opacity: 0.5
-        }]
+        submorphs: [
+          Label.icon("times", {
+            fill: null, visible: false,
+            center: defaultStyle.extent.scaleBy(.5), opacity: 0.5
+          })]
       },
 
       this.getSubmorphNamed("minimize") || {
@@ -98,10 +106,11 @@ export default class Window extends Morph {
         borderColor: Color.brown,
         fill: Color.rgb(255,190,6),
         onMouseDown: (evt) => { this.toggleMinimize(); },
-        submorphs: [{
-          fill: Color.black.withA(0), scale: 0.7, visible: false,
-          styleClasses: ["fa", "fa-minus"], center: pt(5.5,5), opacity: 0.5
-        }]
+        submorphs: [
+          Label.icon("minus", {
+            fill: null, visible: false,
+            center: defaultStyle.extent.scaleBy(.5), opacity: 0.5
+          })]
       },
 
       this.resizable ? (this.getSubmorphNamed("maximize") || {
@@ -111,19 +120,21 @@ export default class Window extends Morph {
         borderColor: Color.darkGreen,
         fill: Color.green,
         onMouseDown: (evt) => { this.toggleMaximize(); },
-        submorphs: [{
-          fill: Color.black.withA(0), scale: 0.7, visible: false,
-          styleClasses: ["fa", "fa-plus"], center: pt(5.5,5), opacity: 0.5
-        }]
+        submorphs: [
+          Label.icon("plus", {
+            fill: null, visible: false,
+            center: defaultStyle.extent.scaleBy(.5), opacity: 0.5
+          })]
       }) : undefined
-    ]
+    ];
   }
 
   titleLabel() {
     return this.getSubmorphNamed("titleLabel") || {
+      padding: Rectangle.inset(0, 2, 0, 0),
       type: "label",
       name: "titleLabel",
-      fill: Color.transparent,
+      fill: null,
       fontColor: Color.darkGray,
       reactsToPointer: false,
       value: ""
@@ -169,7 +180,12 @@ export default class Window extends Morph {
       this.animate({bounds: cache.nonMinizedBounds || bounds, duration, easing});
     } else {
       cache.nonMinizedBounds = bounds;
-      cache.minimizedBounds = cache.minimizedBounds || bounds.withExtent(pt(this.width, 25));
+      var minimizedBounds = cache.minimizedBounds || bounds.withExtent(pt(this.width, 25)),
+          labelBounds = this.titleLabel().textBounds(),
+          buttonOffset = arr.last(this.buttons()).bounds().right() + 3;
+      if (labelBounds.width + 2*buttonOffset < minimizedBounds.width)
+        minimizedBounds = minimizedBounds.withWidth(labelBounds.width + buttonOffset + 3);
+      cache.minimizedBounds = minimizedBounds;
       this.animate({bounds: cache.minimizedBounds, duration, easing});
     }
     this.minimized = !this.minimized;
@@ -186,8 +202,7 @@ export default class Window extends Morph {
       this.maximized = false;
     } else {
       cache.nonMaximizedBounds = this.bounds();
-      this.animate({bounds: this.world().visibleBounds().insetBy(5), 
-                    duration, easing});
+      this.animate({bounds: this.world().visibleBounds().insetBy(5), duration, easing});
       this.resizer().visible = true;
       this.maximized = true;
       this.minimized = false;
@@ -238,11 +253,15 @@ export default class Window extends Morph {
     this.focus();
 
     signal(this, "windowActivated", this);
+    setTimeout(() => {
+      this.relayoutWindowControls();
+    }, 0)
 
     return this;
   }
 
   deactivate() {
     this.titleLabel().fontWeight = "normal";
+    this.relayoutWindowControls();
   }
 }
