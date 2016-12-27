@@ -120,8 +120,32 @@ describe('string', function() {
     });
   });
 
-  it("indents", function() {
-    expect(string.indent("hello\n world", "  ", 2)).equal("    hello\n     world");
+  describe("indentation", () => {
+
+    it("indent", function() {
+      expect(string.indent("hello\n world", "  ", 2)).equal("    hello\n     world");
+    });
+
+    it("minIndent", function() {
+      expect(string.minIndent("hello\n world", "  ")).equal(0);
+      expect(string.minIndent(" hello\n world", "  ")).equal(0);
+      expect(string.minIndent("  hello\n world", "  ")).equal(0);
+      expect(string.minIndent("  hello\n  world", "  ")).equal(1);
+      expect(string.minIndent("   hello\n  world", "  ")).equal(1);
+      expect(string.minIndent("    hello\n  world", "  ")).equal(1);
+      expect(string.minIndent("    hello\n    world", "  ")).equal(2);
+      expect(string.minIndent("      hello\n      world", "  ")).equal(3);
+    });
+    
+    it("changeIndent", function() {
+      expect(string.changeIndent("hello\n world", "  ", 2)).equal("    hello\n     world");
+      expect(string.changeIndent("  hello\n world", "  ", 2)).equal("      hello\n     world");
+      expect(string.changeIndent("  hello\n  world", "  ", 2)).equal("    hello\n    world");
+      expect(string.changeIndent("  hello\n  world", "  ", 1)).equal("  hello\n  world");
+      expect(string.changeIndent("  hello\n  world", "  ", 0)).equal("hello\nworld");
+      expect(string.changeIndent("  hello\n world", "  ", 0)).equal("  hello\n world");
+    });
+
   });
 
   it("reMatches", function() {
