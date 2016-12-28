@@ -1353,6 +1353,85 @@ export class Image extends Morph {
   }
 }
 
+class PathPoint {
+
+    constructor(path, props = {}) {
+       this.path = path;
+       Object.assign(this, obj.dissoc(props, "path"));
+    }
+
+    get isSmooth() { return this._isSmooth; }
+    set isSmooth(smooth) {
+       this._isSmooth = smooth;
+       this.adaptControlPoints(smooth);
+    }
+
+    get position() { return pt(this.x, this.y)};
+    set position({x,y}) { this.x = x; this.y = y; }
+
+    moveBy(delta) {
+       this.position = this.position.addPt(delta);
+       this.path.onVertexChanged(this);
+    }
+
+    get controlPoints() { return this._controlPoints || {next: pt(0,0), previous: pt(0,0)}}
+    set controlPoints(cps) { this._controlPoints = cps; }
+
+    moveNextControlPoint(delta) {
+      this.moveControlPoint("next", delta);
+   }
+
+   movePreviousControlPoint(delta) {
+      this.moveControlPoint("previous", delta);
+   }
+
+   moveControlPoint(name, delta) {
+      var acp = this.controlPoints[name],
+          acp = acp ? acp.addPt(delta) : delta,
+          other = name == "next" ? "previous" : "next",
+          bcp = this.controlPoints[other];
+      if (this.isSmooth) {
+         bcp = acp.negated().normalized().scaleBy(bcp.r());
+      }
+      this.controlPoints = {[name]: acp, [other]: bcp};
+      this.path.onVertexChanged(this);
+   }
+
+   pointOnLine(a, b, pos, bw) {
+     var v0 = pt(a.x, a.y), v1 = pt(b.x, b.y), 
+         l = v1.subPt(v0), ln = l.scaleBy(1/l.r()),
+         dot = v1.subPt(pos).dotProduct(ln);
+     return v1.subPt(ln.scaleBy(Math.max(1,Math.min(dot, l.r())))).addXY(bw,bw);
+   }
+
+   get nextVertex() {
+      return this.path.vertexAfter(this);
+   }
+
+   get previousVertex() {
+      return this.path.vertexBefore(this);
+   }
+
+   adaptControlPoints(smooth) {
+      var nextPos = this.nextVertex.position,
+          previousPos = this.previousVertex.position;
+      if (smooth) {
+         const p = this.pointOnLine(previousPos, nextPos, this.position, this.borderWidth);
+         this.controlPoints = {
+              next: p.subPt(previousPos), 
+              previous: p.subPt(nextPos)
+         };
+      } else {
+         this.controlPoints = {
+              previous: previousPos.subPt(this.position).scaleBy(.5), 
+              next: nextPos.subPt(this.position).scaleBy(.5)
+         };
+      }
+      this.path.onVertexChanged(this);
+   }
+
+}
+
 export class Path extends Morph {
 
   constructor(props) {
@@ -1363,6 +1442,25 @@ export class Path extends Morph {
 
   get isPath() { return true; }
 
+  onVertexChanged(vertex) {
+     this.makeDirty();
+     this.updateBounds(this.vertices);
+  }
+
+  updateBounds(vertices) {
+     const b = Rectangle.unionPts([pt(0,0), ...arr.flatmap(vertices, 
+               ({position, controlPoints}) => {
+                  var {next, previous} = controlPoints || {};
+                  if (next) next = position.addPt(next);
+                  if (previous) previous = position.addPt(previous);
+                  return arr.compact([next, position, previous]);
+               })]);
+     this.adjustingVertices = true;
+     this.extent = b.extent();
+     this.origin = b.topLeft().negated();
+     this.adjustingVertices = false;
+  }
+
   onChange(change) {
     if (change.prop == "extent"
         && change.value
@@ -1370,18 +1468,7 @@ export class Path extends Morph {
         && !this.adjustingVertices)
         this.adjustVertices(change.value.scaleByPt(change.prevValue.inverted()))
     if (!this.adjustingOrigin && ["vertices", "borderWidthLeft"].includes(change.prop)) {
-       const bw = change.prop == "borderWidthLeft" ? change.value : this.borderWidth,
-             vs = change.prop == "vertices" ? change.value : this.vertices,
-             b = Rectangle.unionPts([pt(0,0), ...arr.flatmap(vs, ({x,y, controlPoints}) => {
-                    var {next, previous} = controlPoints || {};
-                    if (next) next = pt(x,y).addPt(next);
-                    if (previous) previous = pt(x,y).addPt(previous);
-                    return arr.compact([next, pt(x,y), previous]);
-                 })]);
-       this.adjustingVertices = true;
-       this.extent = b.extent();
-       this.origin = b.topLeft().negated();
-       this.adjustingVertices = false;
+       this.updateBounds(change.prop == "vertices" ? change.value : this.vertices);
     }
     super.onChange(change);
   }
@@ -1390,22 +1477,34 @@ export class Path extends Morph {
 
   get vertices() { return this.getProperty("vertices") || []}
   set vertices(vs) { 
-     vs = vs.map(v => obj.deepMerge({controlPoints: {next: pt(0,0), previous: pt(0,0)}}, v));
+     vs = vs.map(v => new PathPoint(this, { ...v, borderWidth: this.borderWidth}));
      this.setProperty("vertices", vs); 
   }
 
+  vertexBefore(v) {
+     const i = this.vertices.indexOf(v) - 1;
+     return this.vertices[i > 0 ? i : this.vertices.length - 1];
+  }
+
+  vertexAfter(v) {
+     const i = this.vertices.indexOf(v) + 1;
+     return this.vertices[i > this.vertices.length - 1 ? 0 : i];
+  }
 
   adjustVertices(delta) {
-     const vs = this.vertices;
-     this.vertices = vs && vs.map(({x,y, controlPoints}) => {
-        return {controlPoints, ...pt(x,y).addPt(this.origin).scaleByPt(delta).subPt(this.origin)}
+     this.vertices && this.vertices.forEach((v) => {
+        var {next, previous} = v.controlPoints;
+        next = next.scaleByPt(delta);
+        previous = previous.scaleByPt(delta);
+        v.position = v.position.addPt(this.origin).scaleByPt(delta).subPt(this.origin);
+        v.controlPoints = {next, previous};
      });
   }
 
   adjustOrigin(newOrigin) {
     this.adjustingOrigin = true;
-    this.vertices = this.vertices.map(v => {
-       return { ...v, ...this.origin.subPt(newOrigin).addXY(v.x, v.y)}
+    this.vertices.forEach(v => {
+       v.position = this.origin.subPt(newOrigin).addXY(v.x, v.y);
     });
     super.adjustOrigin(newOrigin);
     this.adjustingOrigin = false;

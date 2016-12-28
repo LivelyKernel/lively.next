@@ -114,12 +114,13 @@ class StyleMapper {
   }
 
   static getSvgAttributes({width, height, borderWidth}) {
-     return {width, height, "viewBox": [0, 0, width, height].join(" ")};
+     return {width: width || 1, height: height || 1, 
+             viewBox: [0, 0, width || 1, height || 1].join(" ")};
   }
 
   static getPathAttributes(path, fill=false) {
-     var vertices = path.vertices.map(v => {
-              return {...v, ...path.origin.addXY(v.x, v.y)}
+     var vertices = path.vertices.map(({x,y,controlPoints}) => {
+              return {controlPoints, ...path.origin.addXY(x, y)}
          }),
          {x: startX, y: startY, controlPoints: {next: {x: startNextX, y: startNextY}}} = arr.first(vertices),
            startNext = pt(startX + startNextX, startY + startNextY),
