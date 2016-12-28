@@ -29,10 +29,12 @@ export class StyleRules {
       
    }
 
-   onMorphChange(morph, {selector, args, prop}) {
+   onMorphChange(morph, change) {
+    const {selector, args, prop, prevValue, value} = change;
     if (selector == "addMorphAt") {
         this.applyToAll(args[0]);
     } else if (prop == "name" || prop == "morphClasses") {
+        if (prevValue == value) return;
         this.enforceRulesOn(morph);
         this.applyLayout(morph);
     }
