@@ -57,10 +57,16 @@ export function subscribe(type, handler, system) {
   return handler;
 }
 
+export function subscribeOnce(type, handler, system) {
+  // EventType, Handler, System? -> Handler
+  getEnv(system).emitter.once(type, handler);
+  return handler;
+}
+
 export function emit(type, data = {}, time = Date.now(), system) {
   // EventType, Notification?, EventTime?, System? -> Notification
-  const notification = Object.assign({type, time}, data);
-  const {emitter, notifications} = getEnv(system);
+  const notification = Object.assign({type, time}, data),
+        {emitter, notifications} = getEnv(system);
   emitter.emit(type, notification);
   if (emitter.isLogging) log(notification);
   if (emitter.isRecording) record(notifications, notification);
