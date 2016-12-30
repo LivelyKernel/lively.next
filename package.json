@@ -1,6 +1,6 @@
 {
   "name": "lively.notifications",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Shared event bus for subscribing to and emitting system-wide notifications",
   "author": "Christopher Schuster <cs@livoris.net>",
   "license": "MIT",
