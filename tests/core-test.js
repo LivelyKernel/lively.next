@@ -1,5 +1,5 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
-import { morph } from "../index.js";
+import { morph, Polygon } from "../index.js";
 import { expect } from "mocha-es6";
 import { pt, rect, Color, Rectangle, Transform } from "lively.graphics";
 import { num } from "lively.lang";
@@ -24,6 +24,12 @@ function createDummyWorld() {
   submorph2 = world.submorphs[0].submorphs[0];
   submorph3 = world.submorphs[1];
   return world;
+}
+
+function closeToPoint(p1,p2) {
+  var {x,y} = p1;
+  expect(x).closeTo(p2.x, 0.1, "x");
+  expect(y).closeTo(p2.y, 0.1, "y");
 }
 
 describe("copy", () => {
@@ -303,11 +309,21 @@ describe("geometric transformations", () => {
     world.addMorph(morph1);
     morph1.addMorph(morph2);
     morph1.rotation = num.toRadians(-45);
-    expect(pt(0,0)).equals(morph2.localize(pt(150,150)));
+    closeToPoint(morph2.localize(pt(150,150)), pt(0,0))
     expect(pt(150,150)).equals(morph2.worldPoint(pt(0,0)));
   });
 
 });
+
+
+describe("polygons and paths", () => {
+
+   it("adjusts extent to contain each vertex", () => {
+       const p = new Polygon({vertices: [pt(0,0), pt(100,0), pt(0,100)]});
+       expect(p.extent).equals(pt(100,100));
+   })
+   
+})
 
 
 describe("contains point", () => {
