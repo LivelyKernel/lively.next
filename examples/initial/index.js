@@ -37,27 +37,24 @@ import ObjectDrawer from "lively.morphic/object-drawer.js";
 import Workspace from "lively.morphic/ide/js/workspace.js";
 
 function createNewWorld() {
-  var world = new World({
+  var world = window.$world = window.$$world = new World({
     name: "world",
-    extent: pt(window.innerWidth, window.innerHeight),
-    submorphs: [
-      new ObjectDrawer(),
-      new Workspace({name: "workspace", extent: pt(500, 600), position: pt(200,200)})
-    ]
-  
+    extent: pt(window.innerWidth, window.innerHeight)  
   });
-  
+
+  MorphicEnv.default().setWorld(world);
+
+  new ObjectDrawer().openInWorld(pt(20,20));
+  new Workspace({name: "workspace", extent: pt(500, 600)}).openInWorld();
+
   world.get("workspace").targetMorph.doSave = function() {
     show("saved!");
     localStorage.setItem('lively workspace', this.textString)
   }
-  
   var code = localStorage.getItem('lively workspace');
   if (code) world.get("workspace").targetMorph.textString = code;
-  
-  MorphicEnv.default().setWorld(world);
-  
-  return window.$world = window.$$world = world;
+
+  return world
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
