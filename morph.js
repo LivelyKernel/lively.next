@@ -96,6 +96,7 @@ export class Morph {
   get defaultProperties() { return defaultProperties; }
   defaultProperty(key) { return this.defaultProperties[key]; }
   getProperty(key) { return this._currentState[key]; }
+  setProperty(key, value, meta) { return this.addValueChange(key, value, meta); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // debugging
@@ -205,43 +206,43 @@ export class Morph {
   }
 
   get morphClasses() { return this.getProperty("morphClasses"); }
-  set morphClasses(classes) { this.addValueChange("morphClasses", classes); }
+  set morphClasses(classes) { this.setProperty("morphClasses", classes); }
 
   get styleRules() { return this.getProperty("styleRules"); }
   set styleRules(rules) {
      if (rules) rules.applyToAll(this);
-     this.addValueChange("styleRules", rules);
+     this.setProperty("styleRules", rules);
   }
   
   get layout()         { return this.getProperty("layout") }
   set layout(value)    {
     if (value) value.container = this;
-    this.addValueChange("layout", value);
+    this.setProperty("layout", value);
   }
 
   get name()           { return this.getProperty("name"); }
-  set name(value)      { this.addValueChange("name", value); }
+  set name(value)      { this.setProperty("name", value); }
 
   get position()       { return this.getProperty("position"); }
-  set position(value)  { this.addValueChange("position", value); }
+  set position(value)  { this.setProperty("position", value); }
 
   get scale()          { return this.getProperty("scale"); }
-  set scale(value)     { this.addValueChange("scale", value); }
+  set scale(value)     { this.setProperty("scale", value); }
 
   get rotation()       { return this.getProperty("rotation"); }
-  set rotation(value)  { this.addValueChange("rotation", value); }
+  set rotation(value)  { this.setProperty("rotation", value); }
 
   get origin()         { return this.getProperty("origin"); }
-  set origin(value)    { return this.addValueChange("origin", value); }
+  set origin(value)    { return this.setProperty("origin", value); }
 
   get extent()         { return this.getProperty("extent"); }
-  set extent(value)    { this.addValueChange("extent", value); }
+  set extent(value)    { this.setProperty("extent", value); }
 
   get fill()           { return this.getProperty("fill"); }
-  set fill(value)      { this.addValueChange("fill", value); }
+  set fill(value)      { this.setProperty("fill", value); }
 
   get opacity()         { return this.getProperty("opacity"); }
-  set opacity(value)    { this.addValueChange("opacity", value); }
+  set opacity(value)    { this.setProperty("opacity", value); }
 
   get borderLeft()    { return {style: this.borderStyleLeft, width: this.borderWidthLeft, color: this.borderColorLeft} }
   set borderLeft(x)   { if ("style" in x) this.borderStyleLeft = x.style; if ("width" in x) this.borderWidthLeft = x.width; if ("color" in x) this.borderColorLeft = x.color; if ("radius" in x) this.borderRadiusLeft = x.radius; }
@@ -253,37 +254,37 @@ export class Morph {
   set borderTop(x)    { if ("style" in x) this.borderStyleTop = x.style; if ("width" in x) this.borderWidthTop = x.width; if ("color" in x) this.borderColorTop = x.color; if ("radius" in x) this.borderRadiusTop = x.radius; }
 
   get borderStyleLeft()        { return this.getProperty("borderStyleLeft"); }
-  set borderStyleLeft(value)   { this.addValueChange("borderStyleLeft", value); }
+  set borderStyleLeft(value)   { this.setProperty("borderStyleLeft", value); }
   get borderStyleRight()       { return this.getProperty("borderStyleRight"); }
-  set borderStyleRight(value)  { this.addValueChange("borderStyleRight", value); }
+  set borderStyleRight(value)  { this.setProperty("borderStyleRight", value); }
   get borderStyleBottom()      { return this.getProperty("borderStyleBottom"); }
-  set borderStyleBottom(value) { this.addValueChange("borderStyleBottom", value); }
+  set borderStyleBottom(value) { this.setProperty("borderStyleBottom", value); }
   get borderStyleTop()         { return this.getProperty("borderStyleTop"); }
-  set borderStyleTop(value)    { this.addValueChange("borderStyleTop", value); }
+  set borderStyleTop(value)    { this.setProperty("borderStyleTop", value); }
   get borderRadiusLeft()        { return this.getProperty("borderRadiusLeft"); }
-  set borderRadiusLeft(value)   { this.addValueChange("borderRadiusLeft", value); }
+  set borderRadiusLeft(value)   { this.setProperty("borderRadiusLeft", value); }
   get borderRadiusRight()       { return this.getProperty("borderRadiusRight"); }
-  set borderRadiusRight(value)  { this.addValueChange("borderRadiusRight", value); }
+  set borderRadiusRight(value)  { this.setProperty("borderRadiusRight", value); }
   get borderRadiusBottom()      { return this.getProperty("borderRadiusBottom"); }
-  set borderRadiusBottom(value) { this.addValueChange("borderRadiusBottom", value); }
+  set borderRadiusBottom(value) { this.setProperty("borderRadiusBottom", value); }
   get borderRadiusTop()         { return this.getProperty("borderRadiusTop"); }
-  set borderRadiusTop(value)    { this.addValueChange("borderRadiusTop", value); }
+  set borderRadiusTop(value)    { this.setProperty("borderRadiusTop", value); }
   get borderWidthLeft()        { return this.getProperty("borderWidthLeft"); }
-  set borderWidthLeft(value)   { this.addValueChange("borderWidthLeft", value); }
+  set borderWidthLeft(value)   { this.setProperty("borderWidthLeft", value); }
   get borderWidthRight()       { return this.getProperty("borderWidthRight"); }
-  set borderWidthRight(value)  { this.addValueChange("borderWidthRight", value); }
+  set borderWidthRight(value)  { this.setProperty("borderWidthRight", value); }
   get borderWidthBottom()      { return this.getProperty("borderWidthBottom"); }
-  set borderWidthBottom(value) { this.addValueChange("borderWidthBottom", value); }
+  set borderWidthBottom(value) { this.setProperty("borderWidthBottom", value); }
   get borderWidthTop()         { return this.getProperty("borderWidthTop"); }
-  set borderWidthTop(value)    { this.addValueChange("borderWidthTop", value); }
+  set borderWidthTop(value)    { this.setProperty("borderWidthTop", value); }
   get borderColorLeft()        { return this.getProperty("borderColorLeft"); }
-  set borderColorLeft(value)   { this.addValueChange("borderColorLeft", value); }
+  set borderColorLeft(value)   { this.setProperty("borderColorLeft", value); }
   get borderColorRight()       { return this.getProperty("borderColorRight"); }
-  set borderColorRight(value)  { this.addValueChange("borderColorRight", value); }
+  set borderColorRight(value)  { this.setProperty("borderColorRight", value); }
   get borderColorBottom()      { return this.getProperty("borderColorBottom"); }
-  set borderColorBottom(value) { this.addValueChange("borderColorBottom", value); }
+  set borderColorBottom(value) { this.setProperty("borderColorBottom", value); }
   get borderColorTop()         { return this.getProperty("borderColorTop"); }
-  set borderColorTop(value)    { this.addValueChange("borderColorTop", value); }
+  set borderColorTop(value)    { this.setProperty("borderColorTop", value); }
   get borderWidth()       { return this.borderWidthLeft; }
   set borderWidth(value)  { this.borderWidthLeft = this.borderWidthRight = this.borderWidthTop = this.borderWidthBottom = value; }
   get borderRadius()      { return this.borderRadiusLeft; }
@@ -315,7 +316,7 @@ export class Morph {
 
   get clipMode()       { return this.getProperty("clipMode"); }
   set clipMode(value)  {
-    this.addValueChange("clipMode", value);
+    this.setProperty("clipMode", value);
     if (!this.isClip()) this.scroll = pt(0,0);
   }
   isClip() { return this.clipMode !== "visible"; }
@@ -326,7 +327,7 @@ export class Morph {
     var {x: maxScrollX, y: maxScrollY} = this.scrollExtent.subPt(this.extent);
     x = Math.max(0, Math.min(maxScrollX, x));
     y = Math.max(0, Math.min(maxScrollY, y));
-    this.addValueChange("scroll", pt(x,y));
+    this.setProperty("scroll", pt(x,y));
     this.makeDirty();
   }
 
@@ -344,17 +345,17 @@ export class Morph {
   scrollPageUp(n) { this.scrollUp(this.height); }
 
   get draggable()       { return this.getProperty("draggable"); }
-  set draggable(value)  { this.addValueChange("draggable", value); }
+  set draggable(value)  { this.setProperty("draggable", value); }
 
   get grabbable()       { return this.getProperty("grabbable"); }
-  set grabbable(value)  { this.addValueChange("grabbable", value); }
+  set grabbable(value)  { this.setProperty("grabbable", value); }
 
   get halosEnabled()       { return this.getProperty("halosEnabled"); }
-  set halosEnabled(value)  { this.addValueChange("halosEnabled", value); }
+  set halosEnabled(value)  { this.setProperty("halosEnabled", value); }
 
   // does this morph react to pointer / mouse events
   get reactsToPointer()       { return this.getProperty("reactsToPointer"); }
-  set reactsToPointer(value)  { this.addValueChange("reactsToPointer", value); }
+  set reactsToPointer(value)  { this.setProperty("reactsToPointer", value); }
 
   // The shape of the OS mouse cursor. nativeCursor can be one of
   // auto, default, none, context-menu, help, pointer, progress, wait, cell,
@@ -363,14 +364,14 @@ export class Morph {
   // w-resize, ew-resize, ns-resize, nesw-resize, nwse-resize, col-resize,
   // row-resize, all-scroll, zoom-in, zoom-out, grab, grabbing
   get nativeCursor()       { return this.getProperty("nativeCursor"); }
-  set nativeCursor(value)  { this.addValueChange("nativeCursor", value); }
+  set nativeCursor(value)  { this.setProperty("nativeCursor", value); }
 
   // can this morph receive keyboard focus?
   get focusable()       { return this.getProperty("focusable"); }
-  set focusable(value)  { this.addValueChange("focusable", value); }
+  set focusable(value)  { this.setProperty("focusable", value); }
 
   get visible()       { return this.getProperty("visible"); }
-  set visible(value)  { this.addValueChange("visible", value); }
+  set visible(value)  { this.setProperty("visible", value); }
 
   get dropShadow()      { return this.getProperty("dropShadow"); }
   set dropShadow(value) {
@@ -378,7 +379,7 @@ export class Morph {
         if (!value.isShadowObject) value = new ShadowObject(value);
         value.morph = this;
       }
-      this.addValueChange("dropShadow", value);
+      this.setProperty("dropShadow", value);
   }
 
   static get styleClasses() {
@@ -402,7 +403,7 @@ export class Morph {
   get styleClasses() {
     return this.constructor.styleClasses.concat(this.getProperty("styleClasses"));
   }
-  set styleClasses(value)  { this.addValueChange("styleClasses", value); }
+  set styleClasses(value)  { this.setProperty("styleClasses", value); }
 
   addStyleClass(className)  { this.styleClasses = arr.uniq(this.styleClasses.concat(className)) }
   removeStyleClass(className)  { this.styleClasses = this.styleClasses.filter(ea => ea != className) }
@@ -1307,7 +1308,7 @@ export class Triangle extends Morph {
   }
 
   get direction() { return this.getProperty("direction"); }
-  set direction(col) { this.addValueChange("direction", col); }
+  set direction(col) { this.setProperty("direction", col); }
 
   update() {
     var {x: width, y: height} = this.extent;
@@ -1345,7 +1346,7 @@ export class Image extends Morph {
   get isImage() { return true }
 
   get imageUrl()       { return this.getProperty("imageUrl"); }
-  set imageUrl(value)  { this.addValueChange("imageUrl", value); }
+  set imageUrl(value)  { this.setProperty("imageUrl", value); }
 
   render(renderer) {
     return renderer.renderImage(this);
@@ -1390,7 +1391,7 @@ export class Path extends Morph {
   get vertices() { return this.getProperty("vertices") || []}
   set vertices(vs) { 
      vs = vs.map(v => obj.deepMerge({controlPoints: {next: pt(0,0), previous: pt(0,0)}}, v));
-     this.addValueChange("vertices", vs); 
+     this.setProperty("vertices", vs); 
   }
 
 
