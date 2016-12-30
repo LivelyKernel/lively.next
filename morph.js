@@ -1,5 +1,5 @@
 import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
-import { string, obj, arr, num, promise, tree, properties, fun } from "lively.lang";
+import { string, obj, arr, num, promise, tree, fun } from "lively.lang";
 import { signal } from "lively.bindings";
 import { renderRootMorph, AnimationQueue, ShadowObject } from "./rendering/morphic-default.js"
 import { morph, show } from "./index.js";
@@ -455,13 +455,13 @@ export class Morph {
   }
 
   relativeBounds(tfm) {
-    var tfm = tfm || this.getGlobalTransform(),
-        bounds = tfm.transformRectToRect(this.origin.negated().extent(this.extent));
+    tfm = tfm || this.getGlobalTransform();
+    var bounds = tfm.transformRectToRect(this.origin.negated().extent(this.extent));
 
     if (!this.isClip()) {
-       this.submorphs.forEach(submorph => {
-          bounds = bounds.union(submorph.relativeBounds(submorph.transformTillMorph(this).preConcatenate(tfm)));
-      });
+       this.submorphs.forEach(submorph =>
+         bounds = bounds.union(submorph.relativeBounds(
+            submorph.transformTillMorph(this).preConcatenate(tfm))));
     }
 
     return bounds;
@@ -869,13 +869,13 @@ export class Morph {
           || this.getOwnerOrOwnerSubmorphNamed(name);
     } catch(e) {
       if (e.constructor == RangeError && e.message == "Maximum call stack size exceeded") {
-        e = new Error("'get' failed due to a stack overflow. The most\n"
+        throw new Error("'get' failed due to a stack overflow. The most\n"
           + "likely source of the problem is using 'get' as part of\n"
           + "toString, because 'get' calls 'getOwnerOrOwnerSubmorphNamed', which\n"
           + "calls 'toString' on this. Try using 'getSubmorphNamed' instead,\n"
           + "which only searches in this' children.\nOriginal error:\n" + e.stack);
       }
-      throw e
+      throw e;
     }
   }
 
@@ -892,13 +892,13 @@ export class Morph {
   getSubmorphNamed(name) {
     if (!this._currentState /*pre-init when used in constructor*/
      || !this.submorphs.length) return null;
-    var isRe = obj.isRegExp(name);
-    for (var i = 0; i < this.submorphs.length; i++) {
-      var morph = this.submorphs[i];
-      if (this.getNameTest(morph, name)) return morph
+    let isRe = obj.isRegExp(name);
+    for (let i = 0; i < this.submorphs.length; i++) {
+      let morph = this.submorphs[i];
+      if (this.getNameTest(morph, name)) return morph;
     }
-    for (var i = 0; i < this.submorphs.length; i++)  {
-      var morph = this.submorphs[i].getSubmorphNamed(name);
+    for (let i = 0; i < this.submorphs.length; i++)  {
+      let morph = this.submorphs[i].getSubmorphNamed(name);
       if (morph) return morph;
     }
     return null;
@@ -1036,6 +1036,7 @@ export class Morph {
   onScroll(evt) {}
 
   onMouseWheel(evt) {
+
     var scrollTarget = evt.targetMorphs.find(ea => ea.isClip());
     if (this !== scrollTarget) return;
     var {deltaY, deltaX} = evt.domEvt,
@@ -1071,7 +1072,7 @@ export class Morph {
         this.scroll = pt(scrollX, newScrollY);
         evt.stop();
       }
-
+    
     } else if (kind === "horizontal" || kind === "both directions") {
       if (newScrollRight >= this.scrollExtent.x) newScrollX = this.scrollExtent.x-1;
       else if (newScrollLeft <= 0) newScrollX = 1;
