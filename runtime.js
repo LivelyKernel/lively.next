@@ -173,22 +173,23 @@ export function initializeClass(
         currentModule.unsubscribeFromToplevelDefinitionChanges(klass[moduleSubscribeToToplevelChangesSym])
       }
       klass[moduleSubscribeToToplevelChangesSym] = currentModule.subscribeToToplevelDefinitionChanges((name, val) => {
-        if (name === superclassSpec.referencedAs) {
-          // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''}was defined via module bindings`)
-          setSuperclass(klass, val);
-          installMethods(klass, instanceMethods, classMethods);
-        }
+        if (name !== superclassSpec.referencedAs) return;
+        // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''} was defined via module bindings`)
+        setSuperclass(klass, val);
+        installMethods(klass, instanceMethods, classMethods);
       });
     }
   }
 
   // 6. Add a toString method for the class to allows us to see its constructor arguments
-  var init = klass.prototype[initializeSymbol],
-      constructorArgs = String(klass.prototype[initializeSymbol]).match(constructorArgMatcher),
-      string = `class ${className} ${superclass ? `extends ${superclass.name}` : ""} {\n`
-             + `  constructor${constructorArgs ? constructorArgs[0] : "()"} { /*...*/ }`
-             + `\n}`;
-  klass.toString = () => string;
+  klass.toString = function() {
+    var constructorArgs = String(this.prototype[initializeSymbol]).match(constructorArgMatcher),
+        className = this.name,
+        superclass = this[superclassSymbol];
+    return `class ${className} ${superclass ? `extends ${superclass.name}` : ""} {\n`
+         + `  constructor${constructorArgs ? constructorArgs[0] : "()"} { /*...*/ }`
+         + `\n}`;
+  }
 
   return klass;
 }
@@ -199,20 +200,11 @@ initializeClass._get = function _get(object, property, receiver) {
   var desc = Object.getOwnPropertyDescriptor(object, property);
   if (desc === undefined) {
     var parent = Object.getPrototypeOf(object);
-    if (parent === null) {
-      return undefined;
-    } else {
-      return _get(parent, property, receiver);
-    }
-  } else if ("value" in desc) {
-    return desc.value;
-  } else {
-    var getter = desc.get;
-    if (getter === undefined) {
-      return undefined;
-    }
-    return getter.call(receiver);
+    return parent === null ? undefined : _get(parent, property, receiver);
   }
+  if ("value" in desc) return desc.value;
+  var getter = desc.get;
+  return getter === undefined ? undefined : getter.call(receiver);
 }
 
 
@@ -220,16 +212,12 @@ initializeClass._set = function _set(object, property, value, receiver) {
   var desc = Object.getOwnPropertyDescriptor(object, property);
   if (desc === undefined) {
     var parent = Object.getPrototypeOf(object);
-    if (parent !== null) {
-      _set(parent, property, value, receiver);
-    }
-  } else if ("value" in desc && desc.writable) {
-    desc.value = value;
-  } else {
+    if (parent !== null) _set(parent, property, value, receiver);
+  }
+  else if ("value" in desc && desc.writable) desc.value = value;
+  else {
     var setter = desc.set;
-    if (setter !== undefined) {
-      setter.call(receiver, value);
-    }
+    if (setter !== undefined) setter.call(receiver, value);
   }
   return value;
 }
