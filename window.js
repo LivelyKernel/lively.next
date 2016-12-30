@@ -97,7 +97,7 @@ export default class Window extends Morph {
       onHoverOut() { this.submorphs[0].visible = false; }
     };
 
-    return [
+    return arr.compact([
 
       this.getSubmorphNamed("close") || {
         ...defaultStyle,
@@ -140,7 +140,7 @@ export default class Window extends Morph {
             center: defaultStyle.extent.scaleBy(.5), opacity: 0.5
           })]
       }) : undefined
-    ];
+    ]);
   }
 
   titleLabel() {
