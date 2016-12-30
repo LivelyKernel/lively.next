@@ -1,4 +1,5 @@
 import { arr, obj } from "lively.lang";
+import { subscribe, unsubscribe } from "lively.notifications";
 
 // Computes exports of all modules
 // 
@@ -19,9 +20,38 @@ import { arr, obj } from "lively.lang";
 // Usage
 // var exports = await ExportLookup.run(System)
 
+// ExportLookup.unsubscribeFromSystemChanges()
+// ExportLookup.exportByModuleCache
+
 export class ExportLookup {
 
+  static get exportByModuleCache() {
+    return this._exportByModuleCache || (this._exportByModuleCache = {});
+  }
+
+  static clearCacheFor(moduleId) {
+    this.exportByModuleCache[moduleId] = null;
+  }
+
+  static subscribeToSystemChanges() {
+    if (this._notificationHandlers) return;
+    this._notificationHandlers = [
+      subscribe("lively.modules/moduleloaded", evt => this.clearCacheFor(evt.module)),
+      subscribe("lively.modules/modulechanged", evt => this.clearCacheFor(evt.module)),
+      subscribe("lively.vm/doitresult", evt => this.clearCacheFor(evt.targetModule))
+    ]
+  }
+
+  static unsubscribeFromSystemChanges() {
+    if (!this._notificationHandlers) return;
+    unsubscribe("lively.modules/moduleloaded", this._notificationHandlers[0]);
+    unsubscribe("lively.modules/modulechanged", this._notificationHandlers[1]);
+    unsubscribe("lively.vm/doitresult", this._notificationHandlers[2]);
+    this._notificationHandlers = null;
+  }
+
   static run(System) {
+    this.subscribeToSystemChanges();
     return new this().systemExports(System);
   }
 
@@ -37,9 +67,12 @@ export class ExportLookup {
   async rawExportsByModule(System) {
     var livelyEnv = System.get("@lively-env") || {},
         mods = Object.keys(livelyEnv.loadedModules || {}),
+        cache = ExportLookup.exportByModuleCache,
         exportsByModule = {}
 
-    await Promise.all(mods.map(async moduleId => {
+    await Promise.all(mods.map(moduleId => {
+      if (cache[moduleId]) return exportsByModule[moduleId] = cache[moduleId];
+
       var mod = lively.modules.module(moduleId),
           pathInPackage = mod.pathInPackage(),
           p = mod.package(),
@@ -52,8 +85,10 @@ export class ExportLookup {
             pathInPackage, packageName, packageURL, packageVersion,
             exports: []
           }
-      try { result.exports = await mod.exports(); } catch(e) { result.error = e;  }
-      exportsByModule[moduleId] = {rawExports: result};
+      return mod.exports()
+        .then(exports => result.exports = exports)
+        .catch(e => { result.error = e; return result; })
+        .then(() => cache[moduleId] = exportsByModule[moduleId] = {rawExports: result})
     }))
 
     return exportsByModule;
