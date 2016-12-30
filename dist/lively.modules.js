@@ -23193,7 +23193,7 @@ function evalCodeTransform(code, options) {
       // existing) constructor function in a way that allows us to redefine
       // methods and properties of the class while keeping the class object
       // identical
-      options.topLevelVarRecorder[defaultClassToFunctionConverterName] = lively_classes.runtime.initializeClass;
+      if (!(defaultClassToFunctionConverterName in options.topLevelVarRecorder)) options.topLevelVarRecorder[defaultClassToFunctionConverterName] = lively_classes.runtime.initializeClass;
       es6ClassToFunctionOptions = {
         currentModuleAccessor: options.currentModuleAccessor,
         classHolder: varRecorder,
@@ -23653,14 +23653,20 @@ function getEs6Transpiler(System, options, env) {
 
   if (System.transpiler === "babel") {
     var babel = System.global[System.transpiler] || System.get(System.decanonicalize(System.transpiler));
-    return babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env);
+
+    return babel ? babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env) : System.import(System.transpiler).then(function (babel) {
+      return babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env);
+    });
   }
 
   if (System.transpiler === "plugin-babel") {
     var babelPluginPath = System.decanonicalize("plugin-babel"),
         babelPath = babelPluginPath.split("/").slice(0, -1).concat("systemjs-babel-browser.js").join("/"),
         babelPlugin = System.get(babelPath);
-    return babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env);
+
+    return babelPlugin ? babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env) : System.import(babelPath).then(function (babelPlugin) {
+      return babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env);
+    });
   }
 
   throw new Error("Sorry, currently only babel is supported as es6 transpiler for runEval!");
@@ -23723,17 +23729,36 @@ function runEval$2(System, code, options) {
     currentModuleAccessor: funcCall(member$1(funcCall(member$1("System", "get"), literal$1("@lively-env")), "moduleEnv"), literal$1(options.targetModule))
   });
 
-  if (!options.sync && !options.importsEnsured && hasUnimportedImports(System, code, targetModule)) return ensureImportsAreImported(System, code, targetModule).then(function () {
-    return runEval$2(System, originalCode, _extends({}, options, { importsEnsured: true }));
-  });
+  // delay eval to ensure imports
+  if (!options.sync && !options.importsEnsured && hasUnimportedImports(System, code, targetModule)) {
+    return ensureImportsAreImported(System, code, targetModule).then(function () {
+      return runEval$2(System, originalCode, _extends({}, options, { importsEnsured: true }));
+    });
+  }
+
+  // delay eval to ensure SystemJS module record
   if (!module.record()) {
-    if (!options.sync && !options.moduleImported) return System.import(targetModule).catch(function (err) {
+    if (!options.sync && !options._moduleImported) return System.import(targetModule).catch(function (err) {
       return null;
     }).then(function () {
-      return runEval$2(System, originalCode, _extends({}, options, { moduleImported: true }));
+      return runEval$2(System, originalCode, _extends({}, options, { _moduleImported: true }));
     });
 
     module.ensureRecord(); // so we can record dependent modules
+  }
+
+  // delay eval to ensure transpiler is loaded
+  if (options.es6Transpile && options.transpiler instanceof Promise) {
+    if (!options.sync && !options._transpilerLoaded) {
+      return options.transpiler.catch(function (err) {
+        return console.error(err);
+      }).then(function (transpiler) {
+        return runEval$2(System, originalCode, _extends({}, options, { transpiler: transpiler, _transpilerLoaded: true }));
+      });
+    } else {
+      console.warn("[lively.vm] sync eval requested but transpiler is not yet loaded, will continue without transpilation!");
+      options.transpiler = null;
+    }
   }
 
   System.debug && console.log("[lively.module] runEval in module " + targetModule + " started");
@@ -24511,6 +24536,7 @@ exports.runEval = runEval$$1;
 exports.syncEval = syncEval$$1;
 exports.evalStrategies = evalStrategies;
 exports.defaultTopLevelVarRecorderName = defaultTopLevelVarRecorderName;
+exports.defaultClassToFunctionConverterName = defaultClassToFunctionConverterName;
 exports.evalCodeTransform = evalCodeTransform;
 exports.evalCodeTransformOfSystemRegisterSetters = evalCodeTransformOfSystemRegisterSetters;
 
@@ -28018,7 +28044,7 @@ semver = exports;
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   this.lively = this.lively || {};
-(function (exports,lively_lang,lively_ast,lively_notifications,lively_vm,lively_resources,semver) {
+(function (exports,lively_lang,lively_ast,lively_notifications,lively_vm,lively_resources,lively_classes,semver) {
 'use strict';
 
 semver = 'default' in semver ? semver['default'] : semver;
@@ -28756,13 +28782,11 @@ var exceptions = [
 // id => id.indexOf(resolve("node_modules/")) > -1,
 // id => canonicalURL(id).indexOf(node_modulesDir) > -1,
 function (id) {
-  return lively_lang.string.include(id, "acorn/src");
+  return !id.endsWith(".js");
 }, function (id) {
-  return lively_lang.string.include(id, "babel-core/browser.js") || lively_lang.string.include(id, "system.src.js") || lively_lang.string.include(id, "systemjs-plugin-babel");
-},
-// id => lang.string.include(id, "lively.ast.es6.bundle.js"),
-function (id) {
-  return id.slice(-3) !== ".js";
+  return id.endsWith("dist/acorn.js") || id.endsWith("dist/escodegen.browser.js") || id.endsWith("bowser.js");
+}, function (id) {
+  return id.endsWith("babel-core/browser.js") || id.endsWith("system.src.js") || id.includes("systemjs-plugin-babel");
 }];
 
 function prepareCodeForCustomCompile(System, source, moduleId, env, module, debug) {
@@ -28901,6 +28925,10 @@ function unwrapModuleLoad$1(System) {
   remove$1(System, "translate", "lively_modules_translate_hook");
 }
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// Changing exports of module
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
   var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
       rec = module$2(System, moduleId).record();
@@ -28999,6 +29027,266 @@ function updateModuleExports(System, moduleId, keysAndValues) {
     }
   });
 }
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// lookup exports of modules
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+// Computes exports of all modules
+// 
+// Returns a list of objects like
+// {
+//   exported: "Interface",
+//   fromModule: null, // if re-exported
+//   isMain: true,     // is the exporting module the main module of its package?
+//   local: "Interface",
+//   moduleId: "http://localhost:9001/node_modules/lively-system-interface/index.js",
+//   packageName: "lively-system-interface",
+//   packageURL: "http://localhost:9001/node_modules/lively-system-interface",
+//   packageVersion: "0.2.0",
+//   pathInPackage: "index.js",
+//   type: "class"
+// }
+// 
+// Usage
+// var exports = await ExportLookup.run(System)
+// ExportLookup._forSystemMap.has(System)
+
+var ExportLookup = function () {
+  createClass(ExportLookup, null, [{
+    key: "forSystem",
+    value: function forSystem(System) {
+      if (!this._forSystemMap) this._forSystemMap = new WeakMap();
+      var lookup = this._forSystemMap.get(System);
+      if (lookup) return lookup;
+      lookup = new this(System);
+      this._forSystemMap.set(System, lookup);
+      return lookup;
+    }
+  }, {
+    key: "run",
+    value: function run() {
+      var _System = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : System;
+
+      return this.forSystem(_System).systemExports();
+    }
+  }, {
+    key: "findExportOfValue",
+    value: function () {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(value) {
+        var _System = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : System;
+
+        var exports;
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                _context.next = 2;
+                return this.run(_System);
+
+              case 2:
+                exports = _context.sent;
+                return _context.abrupt("return", exports.find(function (_ref2) {
+                  var local = _ref2.local,
+                      moduleId = _ref2.moduleId;
+                  return module$2(_System, moduleId).recorder[local] === value;
+                }));
+
+              case 4:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function findExportOfValue(_x2, _x3) {
+        return _ref.apply(this, arguments);
+      }
+
+      return findExportOfValue;
+    }()
+  }]);
+
+  function ExportLookup(System) {
+    classCallCheck(this, ExportLookup);
+
+    this.System = System;
+    this.subscribeToSystemChanges();
+  }
+
+  createClass(ExportLookup, [{
+    key: "subscribeToSystemChanges",
+    value: function subscribeToSystemChanges() {
+      var _this = this;
+
+      if (this._notificationHandlers) return;
+      var S = this.System;
+      this._notificationHandlers = [lively_notifications.subscribe("lively.modules/moduleloaded", function (evt) {
+        return _this.clearCacheFor(evt.module);
+      }, S), lively_notifications.subscribe("lively.modules/modulechanged", function (evt) {
+        return _this.clearCacheFor(evt.module);
+      }, S), lively_notifications.subscribe("lively.vm/doitresult", function (evt) {
+        return _this.clearCacheFor(evt.targetModule);
+      }, S)];
+    }
+  }, {
+    key: "unsubscribeFromSystemChanges",
+    value: function unsubscribeFromSystemChanges() {
+      if (!this._notificationHandlers) return;
+      var S = this.System;
+      lively_notifications.unsubscribe("lively.modules/moduleloaded", this._notificationHandlers[0], S);
+      lively_notifications.unsubscribe("lively.modules/modulechanged", this._notificationHandlers[1], S);
+      lively_notifications.unsubscribe("lively.vm/doitresult", this._notificationHandlers[2], S);
+      this._notificationHandlers = null;
+    }
+  }, {
+    key: "clearCacheFor",
+    value: function clearCacheFor(moduleId) {
+      this.exportByModuleCache[moduleId] = null;
+    }
+  }, {
+    key: "systemExports",
+    value: function () {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+        var _this2 = this;
+
+        var exportsByModule;
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                _context2.next = 2;
+                return this.rawExportsByModule();
+
+              case 2:
+                exportsByModule = _context2.sent;
+
+                Object.keys(exportsByModule).forEach(function (id) {
+                  return _this2.resolveExportsOfModule(id, exportsByModule);
+                });
+
+                return _context2.abrupt("return", lively_lang.arr.flatmap(Object.keys(exportsByModule), function (id) {
+                  return exportsByModule[id].resolvedExports || exportsByModule[id].rawExports;
+                }));
+
+              case 5:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function systemExports() {
+        return _ref3.apply(this, arguments);
+      }
+
+      return systemExports;
+    }()
+  }, {
+    key: "rawExportsByModule",
+    value: function () {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+        var System, livelyEnv, mods, cache, exportsByModule;
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                System = this.System, livelyEnv = System.get("@lively-env") || {}, mods = Object.keys(livelyEnv.loadedModules || {}), cache = this.exportByModuleCache, exportsByModule = {};
+                _context3.next = 3;
+                return Promise.all(mods.map(function (moduleId) {
+                  if (cache[moduleId]) return exportsByModule[moduleId] = cache[moduleId];
+
+                  var mod = module$2(System, moduleId),
+                      pathInPackage = mod.pathInPackage(),
+                      p = mod.package(),
+                      isMain = p.main && pathInPackage === p.main,
+                      packageURL = p.url,
+                      packageName = p.name,
+                      packageVersion = p.version,
+                      result = {
+                    moduleId: moduleId, isMain: isMain,
+                    pathInPackage: pathInPackage, packageName: packageName, packageURL: packageURL, packageVersion: packageVersion,
+                    exports: []
+                  };
+                  return mod.exports().then(function (exports) {
+                    return result.exports = exports;
+                  }).catch(function (e) {
+                    result.error = e;return result;
+                  }).then(function () {
+                    return cache[moduleId] = exportsByModule[moduleId] = { rawExports: result };
+                  });
+                }));
+
+              case 3:
+                return _context3.abrupt("return", exportsByModule);
+
+              case 4:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function rawExportsByModule() {
+        return _ref4.apply(this, arguments);
+      }
+
+      return rawExportsByModule;
+    }()
+  }, {
+    key: "resolveExportsOfModule",
+    value: function resolveExportsOfModule(moduleId, exportsByModule) {
+      var _this3 = this;
+
+      var locked = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+      // takes the `rawExports` in `exportsByModule` that was produced by
+      // `rawExportsByModule` and resolves all "* from" exports. Extends the
+      // `rawExportsByModule` map woth a `resolvedExports` property
+
+      // prevent endless recursion
+      if (locked[moduleId]) return;
+      locked[moduleId] = true;
+
+      var data = exportsByModule[moduleId];
+      if (!data || data.resolvedExports) return;
+      var System = this.System;
+      var base = lively_lang.obj.select(data.rawExports, ["moduleId", "isMain", "packageName", "packageURL", "packageVersion", "pathInPackage"]);
+
+      data.resolvedExports = lively_lang.arr.flatmap(data.rawExports.exports, function (_ref5) {
+        var type = _ref5.type,
+            exported = _ref5.exported,
+            local = _ref5.local,
+            fromModule = _ref5.fromModule;
+
+        if (type !== "all") return [_extends({}, base, { type: type, exported: exported, local: local, fromModule: fromModule })];
+
+        // resolve "* from"
+        var fromId = System.decanonicalize(fromModule, moduleId);
+        _this3.resolveExportsOfModule(fromId, exportsByModule, locked);
+        return (exportsByModule[fromId].resolvedExports || []).map(function (resolvedExport) {
+          var type = resolvedExport.type,
+              exported = resolvedExport.exported,
+              local = resolvedExport.local,
+              resolvedFromModule = resolvedExport.fromModule;
+
+          return _extends({}, base, { type: type, exported: exported, local: local, fromModule: resolvedFromModule || fromModule });
+        });
+      });
+
+      locked[moduleId] = false;
+    }
+  }, {
+    key: "exportByModuleCache",
+    get: function get() {
+      return this._exportByModuleCache || (this._exportByModuleCache = {});
+    }
+  }]);
+  return ExportLookup;
+}();
 
 var moduleSourceChange$1 = function () {
   var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, moduleId, newSource, format, options) {
@@ -30404,6 +30692,8 @@ var ModuleInterface = function () {
   }, {
     key: "setSource",
     value: function setSource(source) {
+      if (this._source === source) return;
+      this.reset();
       this._source = source;
     }
   }, {
@@ -30679,7 +30969,7 @@ var ModuleInterface = function () {
     key: "changeSourceAction",
     value: function () {
       var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(changeFunc) {
-        var source, newSource;
+        var newSource;
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
@@ -30688,9 +30978,9 @@ var ModuleInterface = function () {
                 return this.source();
 
               case 2:
-                source = _context6.sent;
+                _context6.t0 = _context6.sent;
                 _context6.next = 5;
-                return changeFunc(source);
+                return changeFunc(_context6.t0);
 
               case 5:
                 newSource = _context6.sent;
@@ -30846,8 +31136,7 @@ var ModuleInterface = function () {
           id = this.id,
           recorder = this.recorder;
 
-
-      System.debug && console.log("[lively.modules] " + this.shortName() + " defines " + varName);
+      // System.debug && console.log(`[lively.modules] ${this.shortName()} defines ${varName}`);
 
       var srcLocSym = Symbol.for("lively-source-location"),
           moduleSym = Symbol.for("lively-module-meta");
@@ -31363,10 +31652,9 @@ var ModuleInterface = function () {
       if (records[this.id]) return records[this.id];
 
       // see SystemJS getOrCreateModuleRecord
-      var ModuleRecord = S._loader.moduleRecords[S.decanonicalize("lively.modules")].exports.constructor;
       return records[this.id] = {
         name: this.id,
-        exports: new ModuleRecord(),
+        exports: S.newModule({}),
         dependencies: [],
         importers: [],
         setters: []
@@ -31540,7 +31828,10 @@ var ModuleInterface = function () {
 
         __currentLivelyModule: { value: self }
 
-      }, defineProperty(_Object$create, this.varDefinitionCallbackName, {
+      }, defineProperty(_Object$create, lively_vm.defaultClassToFunctionConverterName, {
+        configurable: true, writable: true,
+        value: lively_classes.runtime.initializeClass
+      }), defineProperty(_Object$create, this.varDefinitionCallbackName, {
         value: function value(name, kind, _value, recorder, sourceLoc) {
           return self.define(name, _value, false /*signalChangeImmediately*/, sourceLoc);
         }
@@ -31863,6 +32154,11 @@ function urlQuery() {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // name resolution extensions
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+var dotSlashStartRe = /^\.?\//;
+var trailingSlashRe = /\/$/;
+var jsExtRe = /\.js$/;
+var jsonJsExtRe = /\.json\.js$/i;
+var doubleSlashRe = /.\/{2,}/g;
 
 function normalizeHook(proceed, name, parent, parentAddress) {
   var System = this;
@@ -31872,21 +32168,21 @@ function normalizeHook(proceed, name, parent, parentAddress) {
   // names with double slashes which causes module id issues later. This fixes
   // that...
   // name = name.replace(/([^:])\/\/+/g, "$1\/");
-  name = name.replace(/.\/{2,}/g, function (match) {
+  name = name.replace(doubleSlashRe, function (match) {
     return match[0] === ":" ? match : match[0] + "/";
   });
 
   return proceed(name, parent, parentAddress).then(function (result) {
 
     // lookup package main
-    var base = result.replace(/\.js$/, "");
+    var base = result.replace(jsExtRe, "");
     if (base in System.packages) {
       var main = System.packages[base].main;
-      if (main) return base.replace(/\/$/, "") + "/" + main.replace(/^\.?\//, "");
+      if (main) return base.replace(trailingSlashRe, "") + "/" + main.replace(dotSlashStartRe, "");
     }
 
     // Fix issue with accidentally adding .js
-    var m = result.match(/(.*\.json)\.js/i);
+    var m = result.match(jsonJsExtRe);
     if (m) return m[1];
 
     return result;
@@ -31910,14 +32206,14 @@ function decanonicalizeHook(proceed, name, parent, isPlugin) {
   var result = proceed(name, parent, isPlugin);
 
   // lookup package main
-  var base = result.replace(/\.js$/, "");
+  var base = result.replace(jsExtRe, "");
   if (base in System.packages) {
     var main = System.packages[base].main;
-    if (main) return base.replace(/\/$/, "") + "/" + main.replace(/^\.?\//, "");
+    if (main) return base.replace(trailingSlashRe, "") + "/" + main.replace(dotSlashStartRe, "");
   }
 
   // Fix issue with accidentally adding .js
-  var m = result.match(/(.*\.json)\.js/i);
+  var m = result.match(jsonJsExtRe);
   if (m) return m[1];
 
   return result;
@@ -32645,7 +32941,7 @@ exports.unwrapModuleLoad = unwrapModuleLoad$$1;
 exports.cjs = dependencies;
 exports.semver = semver;
 
-}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.notifications,lively.vm,lively.resources,semver));
+}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.notifications,lively.vm,lively.resources,lively.classes,semver));
 
   if (typeof module !== "undefined" && typeof require === "function") module.exports = GLOBAL.lively.modules;
 })();

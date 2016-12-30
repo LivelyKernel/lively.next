@@ -1,5 +1,5 @@
-import { parse, query } from "lively.ast";
 import { arr, obj, graph, properties } from "lively.lang";
+import { parse, query } from "lively.ast";
 import { computeRequireMap } from  "./dependencies.js";
 import { moduleSourceChange } from "./change.js";
 import { scheduleModuleExportsChange, runScheduledExportChanges } from "./import-export.js";
@@ -7,6 +7,8 @@ import { livelySystemEnv } from "./system.js";
 import { Package } from "./packages.js";
 import { isURL, join } from "./url-helpers.js";
 import { emit, subscribe } from "lively.notifications";
+import { defaultClassToFunctionConverterName } from "lively.vm";
+import { runtime as classRuntime } from "lively.classes";
 
 export var detectModuleFormat = (function() {
   const esmFormatCommentRegExp = /['"]format (esm|es6)['"];/,
