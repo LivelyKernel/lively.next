@@ -14532,8 +14532,8 @@ function es6ClassMethod(node, parent, i) {
   } : null;
 }
 
-function varDefs(node) {
-  if (node.type !== "VariableDeclaration") return null;
+function varDefs(varDeclNode) {
+  if (varDeclNode.type !== "VariableDeclaration") return null;
   var result = [];
 
   var _iteratorNormalCompletion3 = true;
@@ -14541,34 +14541,43 @@ function varDefs(node) {
   var _iteratorError3 = undefined;
 
   try {
-    for (var _iterator3 = withVarDeclIds(node)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-      var _ref2 = _step3.value;
-      var id = _ref2.id,
-          _node = _ref2.node;
+    var _loop = function _loop() {
+      var _ref = _step3.value;
+      var id = _ref.id,
+          node = _ref.node;
 
-      var def = { name: id.name, node: _node, type: "var-decl" };
+      var def = { name: id.name, node: node, type: "var-decl" };
       result.push(def);
-      if (!def.node.init) continue;
+      if (!def.node.init) return "continue";
 
-      var _node = def.node.init;
-      while (_node.type === "AssignmentExpression") {
-        _node = _node.right;
-      }if (_node.type === "ObjectExpression") {
+      var initNode = def.node.init;
+      while (initNode.type === "AssignmentExpression") {
+        initNode = initNode.right;
+      }if (initNode.type === "ObjectExpression") {
         def.type = "object-decl";
-        def.children = objectKeyValsAsDefs(_node).map(function (ea) {
+        def.children = objectKeyValsAsDefs(initNode).map(function (ea) {
           return _extends({}, ea, { type: "object-" + ea.type, parent: def });
         });
         result.push.apply(result, toConsumableArray(def.children));
-        continue;
+        return "continue";
       }
 
-      var objDefs = someObjectExpressionCall(_node, def);
+      objDefs = someObjectExpressionCall(initNode, def);
+
       if (objDefs) {
         def.children = objDefs.map(function (d) {
           return _extends({}, d, { parent: def });
         });
         result.push.apply(result, toConsumableArray(def.children));
       }
+    };
+
+    for (var _iterator3 = withVarDeclIds(varDeclNode)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+      var objDefs;
+
+      var _ret = _loop();
+
+      if (_ret === "continue") continue;
     }
   } catch (err) {
     _didIteratorError3 = true;
