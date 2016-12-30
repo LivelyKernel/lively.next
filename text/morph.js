@@ -795,6 +795,19 @@ export class Text extends Morph {
   }
 
 
+  flash(range = this.selection.range, options) {
+    options = {time: 1000, fill: Color.orange, ...options};
+    var id = options.id || "flash" + string.newUUID();
+    this.addMarker({
+      id, range: range,
+      style: {
+        "background-color": options.fill.toCSSString(),
+        "pointer-events": "none"
+      }
+    });
+    fun.debounceNamed("flash-" + id, options.time, () => this.removeMarker(id))();
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // TextAttributes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
