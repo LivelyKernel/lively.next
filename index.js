@@ -1,6 +1,6 @@
 /*global System*/
 
-import { events, obj } from 'lively.lang';
+import { events, obj } from "lively.lang";
 
 // type EventType = string
 // type EventTime = number
@@ -12,39 +12,35 @@ import { events, obj } from 'lively.lang';
 
 let env;
 
-function getEnv(system) { // System? -> Env
-  if (system === undefined) {
-    if (typeof System === 'undefined') {
+function getEnv(_System) { // System? -> Env
+  if (_System === undefined) {
+    if (typeof System === "undefined") {
       // fallback if not System is available
-      if (env !== undefined) {
-        return env;
-      }
-      return env = {
+      if (env !== undefined) return env;
+      return env || (env = {
         emitter: events.makeEmitter({}, {maxListenerLimit: 10000}),
         notifications: []
-      };
-    } else {
-      system = System;
+      });
     }
+
+    _System = System;
   }
 
-  const livelyEnv = system.get("@lively-env");
-  let options;
-  if (livelyEnv === undefined) {
-    options = {};
-    system.set("@lively-env", system.newModule({options}));
-  } else {
-    options = livelyEnv.options;
-  }
-  if (!options) {
+  const livelyEnv = _System.get("@lively-env");
+  if (!livelyEnv)
+    _System.set("@lively-env", _System.newModule({options: {}}));
+
+  let options = livelyEnv.options;
+
+  if (!options)
     throw new Error("@lively-env registered read-only");
-  }
+
   if (!options.emitter) {
     Object.assign(options, {
-      emitter: system["__lively.notifications_emitter"] ||
-              (system["__lively.notifications_emitter"] = events.makeEmitter({}, {maxListenerLimit: 10000})),
-      notifications: system["__lively.notifications_notifications"] ||
-                    (system["__lively.notifications_notifications"] = []),
+      emitter: _System["__lively.notifications_emitter"] ||
+              (_System["__lively.notifications_emitter"] = events.makeEmitter({}, {maxListenerLimit: 10000})),
+      notifications: _System["__lively.notifications_notifications"] ||
+                    (_System["__lively.notifications_notifications"] = []),
     });
   }
   const {emitter, notifications} = options;
@@ -111,7 +107,7 @@ export function getRecord(system) { // System? -> Notifications
 
 function log(notification) { // Notification -> ()
   const padded = notification.type + " ".repeat(Math.max(0, 32 - notification.type.length));
-  console.log(padded + ' ' + obj.inspect(notification, {maxDepth: 2}));
+  console.log(padded + " " + obj.inspect(notification, {maxDepth: 2}));
 }
 
 export function startLogging(system) { // System? -> ()
