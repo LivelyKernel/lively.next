@@ -1,15 +1,14 @@
 /*global System*/
-import { Rectangle, Color, pt, rect } from "lively.graphics";
+import { Rectangle, Color, pt } from 'lively.graphics';
 import { tree, arr, string, obj, promise } from "lively.lang";
 import { Halo } from "./halo/morph.js"
 import { Menu } from "./menus.js"
-import { show, StatusMessage } from "./markers.js";
+import { StatusMessage } from './markers.js';
 import { Morph, Text, Window, config, MorphicEnv } from "./index.js";
 import { TooltipViewer } from "./tooltips.js";
 import KeyHandler from "./events/KeyHandler.js";
 
 import {
-  AbstractPrompt,
   InformPrompt,
   ConfirmPrompt,
   MultipleChoicePrompt,
@@ -300,41 +299,101 @@ var worldCommands = [
 
   {
     name: "diff and open in window",
-    exec: async (world, opts = {a: "", b: "", extent: pt(500,600)}) => {
+    exec: async (world, opts = {a: "", b: "", format: null, extent: pt(500,600)}) => {
       // $$world.execCommand("diff and open in window", {a: {foo: 23}, b: {bax: 23, foo: 23}})
-      var {a, b, extent} = opts;
+      // $$world.execCommand("diff and open in window", {a: "Hello\nworld", b: "Helo\nworld"})
+      // $$world.execCommand("diff and open in window", {a: "Hello\nworld", b: "Helo\nworld", format: "diffChars"})
+      // $$world.execCommand("diff and open in window", {a: "Hello\nworld", b: "Helo\nworld", format: "diffSentences"})
+      // $$world.execCommand("diff and open in window", {a: "Hello\nworld", b: "Helo\nworld", format: "patch"})
 
+      var {a,b,format} = opts;
+      if (!format) var {a,b, format} = findFormat(a, b);
+      else { a = String(a);  b = String(b); }
+  
       // import * as diff from "https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js"
       var diff = await System.import("https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js"),
-          diffed = diffInWindow(a, b, {extent, fontFamily: "monospace"});
+          diffed = await diffInWindow(a, b, {fontFamily: "monospace", ...opts, format});
+  
       return diffed;
-
-      function diffInWindow(a, b, opts) {
-        var diffed;
+  
+      function findFormat(a, b) {
         if (obj.isPrimitive(a) || a instanceof RegExp
          || obj.isPrimitive(b) || b instanceof RegExp)
            { a = String(a); b = String(b); }
-
-        try { JSON.stringify(a);  JSON.stringify(b); }
-        catch (e) { a = String(a); b = String(b); }
-
-        if (typeof a === "string" || typeof b === "string") diffed = diff.diffLines(a,b);
-        else diffed = diff.diffJson(a,b);
-
+        if (typeof a !== "string" || typeof b !== "string")
+          try { JSON.stringify(a);  JSON.stringify(b); return {format: "diffJson", a, b}; }
+          catch (e) { a = String(a); b = String(b); }
+        return {format: "diffLines", a, b}
+      }
+  
+      async function diffInWindow(a, b, opts) {
+        var {format} = opts;
+        var plugin = null, content;
+  
+        if (format === "patch") {
+          var {headerA, headerB, filenameA, filenameB, context} = opts
+          var content = [[diff.createTwoFilesPatch(
+                          filenameA || "a", filenameB || "b", a, b,
+                          headerA, headerB, typeof context === "number" ? {context} : undefined), {}]];
+          var { DiffEditorPlugin } = await System.import("lively.morphic/ide/diff/editor-plugin.js");
+          plugin = new DiffEditorPlugin();
+  
+        } else {
+          diffed = diff[format](a,b, opts);
+          content = diffed.map(({count, value, added, removed}) => {
+            var attribute = removed ?
+                {fontWeight: "normal", textDecoration: "line-through", fontColor: Color.red} : added ?
+                {fontWeight: "bold", textDecoration: "", fontColor: Color.green} :
+                {fontWeight: "normal", textDecoration: "", fontColor: Color.darkGray};
+            return [value, attribute];
+          })        
+        }
+  
         var win = world.execCommand("open text window", opts),
             textMorph = win.targetMorph;
         win.extent = pt(300, 200).maxPt(textMorph.textBounds().extent());
-
-        textMorph.textAndAttributes = diffed.map(({count, value, added, removed}) => {
-          var attribute = removed ?
-              {fontWeight: "normal", textDecoration: "line-through", fontColor: Color.red} : added ?
-              {fontWeight: "bold", textDecoration: "", fontColor: Color.green} :
-              {fontWeight: "normal", textDecoration: "", fontColor: Color.darkGray};
-          return [value, attribute];
-        });
-
+  
+        textMorph.textAndAttributes = content;
+        if (plugin) textMorph.addPlugin(plugin);
+  
         return textMorph;
       }
+    }
+  },
+
+  {
+    name: 'diff workspaces',
+    exec: async function(world, opts = {}) {
+      var {editor1, editor2} = opts;
+
+      if (!editor1 || !editor2)
+        var editors = world.withAllSubmorphsSelect(ea =>
+          ea.isText && !ea.isInputLine && !ea.isUsedAsEpiMorph()).reverse();
+      if (!editor1) editor1 = await selectMorph(editors);
+      if (!editor1) return world.setStatusMessage("Canceled");
+      if (!editor2) editor2 = await selectMorph(arr.without(editors, editor1));
+      if (!editor2) return world.setStatusMessage("Canceled");
+  
+      return doDiff(editor1, editor2);
+  
+      function doDiff(ed1, ed2) {
+        var p1 = ed1.pluginFind(ea => ea.evalEnvironment);
+        var fn1 = (p1 && p1.evalEnvironment.targetModule) || 'no file';
+        var p2 = ed2.pluginFind(ea => ea.evalEnvironment);
+        var fn2 = (p2 && p2.evalEnvironment.targetModule) || 'no file';
+        return world.execCommand("diff and open in window", {
+          a: ed1.textString, b: ed2.textString,
+          filenameA: fn1, filenameB: fn2
+        })
+      }
+  
+      async function selectMorph(morphs, thenDo) {
+        var candidates = morphs.map(ea =>
+          ({isListItem: true, value: ea, string: ea.name || String(ea)}));
+        var {selected: [choice]} = await world.filterableListPrompt("choose text: ", candidates, {onSelection: m => m && m.show()});
+        return choice;
+      }
+      
     }
   },
 
