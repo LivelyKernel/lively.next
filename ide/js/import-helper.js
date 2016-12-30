@@ -2,6 +2,7 @@ import { arr, obj, Path } from "lively.lang";
 import { pt, Color } from "lively.graphics";
 import { fuzzyParse, query, stringify } from "lively.ast";
 import { resource } from "lively.resources";
+import LoadingIndicator from "../../loading-indicator.js";
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -114,10 +115,13 @@ export async function interactivelyInjectImportIntoText(textMorph, opts) {
   if (!jsPlugin)
      throw new Error(`cannot find js plugin of ${textMorph}`)
 
-  // 1. Ask what to import + generate insertions
-  var exports = await jsPlugin.systemInterface().exportsOfModules(),
-      choices = await ExportPrompt.run(textMorph.world(), exports);
+  // 1. gather all exorts
+  var exports = await LoadingIndicator.runFn(
+    () => jsPlugin.systemInterface().exportsOfModules(),
+    "computing imports...");
 
+  // 2. Ask what to import + generate insertions
+  var choices = await ExportPrompt.run(textMorph.world(), exports);
   if (!choices.length) return null;
 
   var moduleId = textMorph.evalEnvironment.targetModule,
@@ -129,7 +133,7 @@ export async function interactivelyInjectImportIntoText(textMorph, opts) {
 
   textMorph.undoManager.group();
 
-  // 2. Insert new import statements or extend existing
+  // 3. Insert new import statements or extend existing
   while (choices.length) {
     let choice = choices.shift(),
         source = textMorph.textString;
@@ -147,7 +151,7 @@ export async function interactivelyInjectImportIntoText(textMorph, opts) {
     }
   }
 
-  // 3. insert imported var names at cursor
+  // 4. insert imported var names at cursor
   if (insertImportAtCursor) {
     let source = importedVarNames.join("\n"),
         pos = textMorph.cursorPosition,
@@ -159,7 +163,7 @@ export async function interactivelyInjectImportIntoText(textMorph, opts) {
 
   textMorph.undoManager.group();
 
-  // 4. select changes in import statements
+  // 5. select changes in import statements
   if (gotoImport) {
     if (ranges.length) {
       textMorph.selection = arr.last(ranges);
