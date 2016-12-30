@@ -345,6 +345,7 @@ export var jsIdeCommands = [
   {
     name: "[javascript] inject import",
     exec: async (text, opts = {gotoImport: false, insertImportAtCursor: true}) => {
+      await lively.lang.promise.delay(0);
       var {interactivelyInjectImportIntoText} =
         await System.import("lively.morphic/ide/js/import-helper.js");
       var result = await interactivelyInjectImportIntoText(text, opts);
