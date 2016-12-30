@@ -1,12 +1,12 @@
-import { ExportLookup } from "../commands/imports-exports.js";
-import { loadMochaTestFile, runMochaTests } from "../commands/mocha-tests.js";
-import * as modules from "lively.modules";
-import * as ast from "lively.ast";
-import * as vm from "lively.vm";
-import { resource, createFiles } from "lively.resources";
-import { parseJsonLikeObj } from "../helpers.js";
 import { obj, string, arr } from "lively.lang";
+import { resource, createFiles } from "lively.resources";
+import * as ast from "lively.ast";
+import * as modules from "lively.modules";
+import { ExportLookup } from "lively.modules/src/import-export.js";
+import * as vm from "lively.vm";
 
+import { loadMochaTestFile, runMochaTests } from "../commands/mocha-tests.js";
+import { parseJsonLikeObj } from "../helpers.js";
 import { AbstractCoreInterface } from "./interface";
 
 export class LocalCoreInterface extends AbstractCoreInterface {
