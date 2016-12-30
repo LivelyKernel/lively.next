@@ -49,6 +49,8 @@ export default class Resource {
     return `${this.constructor.name}("${this.url}")`;
   }
 
+  newResource(url) { return resource(url); }
+
   path() {
     var path = this.url
       .replace(protocolRe, "")
@@ -60,6 +62,16 @@ export default class Resource {
     return this.path().replace(/\/$/, "").split("/").slice(-1)[0];
   }
 
+  scheme() { return this.url.split(":")[0]; }
+
+  host() {
+    var idx = this.url.indexOf("://");
+    if (idx === -1) return null;
+    var noScheme = this.url.slice(idx+3),
+        slashIdx = noScheme.indexOf("/");
+    return noScheme.slice(0, slashIdx > -1 ? slashIdx : noScheme.length);
+  }
+
   schemeAndHost() {
     if (this.isRoot()) return this.asFile().url;
     return this.url.slice(0, this.url.length - this.path().length);
@@ -67,7 +79,7 @@ export default class Resource {
 
   parent() {
     if (this.isRoot()) return null;
-    return resource(this.url.replace(slashEndRe, "").split("/").slice(0,-1).join("/") + "/");
+    return this.newResource(this.url.replace(slashEndRe, "").split("/").slice(0,-1).join("/") + "/");
   }
 
   parents() {
@@ -142,7 +154,12 @@ export default class Resource {
   }
 
   join(path) {
-    return resource(this.url.replace(slashEndRe, "") + "/" + path.replace(slashStartRe, ""));
+    return this.newResource(this.url.replace(slashEndRe, "") + "/" + path.replace(slashStartRe, ""));
+  }
+
+  withPath(path) {
+    var root = this.isRoot() ? this : this.root();
+    return root.join(path)
   }
 
   isRoot() { return this.path() === "/" }
@@ -153,18 +170,18 @@ export default class Resource {
 
   asDirectory() {
     if (this.url.endsWith("/")) return this;
-    return resource(this.url.replace(slashEndRe, "") + "/");
+    return this.newResource(this.url.replace(slashEndRe, "") + "/");
   }
 
   root() {
     if (this.isRoot()) return this;
     var toplevel = this.url.slice(0, -this.path().length);
-    return resource(toplevel + "/");
+    return this.newResource(toplevel + "/");
   }
 
   asFile() {
     if (!this.url.endsWith("/")) return this;
-    return resource(this.url.replace(slashEndRe, ""));
+    return this.newResource(this.url.replace(slashEndRe, ""));
   }
 
   assignProperties(props) {

@@ -91,8 +91,6 @@ export class LocalResourceInMemoryBackend {
 
 export default class LocalResource extends Resource {
 
-  get isSync() { return true; }
-
   get localBackend() {
     return LocalResourceInMemoryBackend.named(this.host());
   }
