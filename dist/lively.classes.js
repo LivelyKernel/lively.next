@@ -183,21 +183,20 @@ function initializeClass(constructorFunc, superclassSpec) {
         currentModule.unsubscribeFromToplevelDefinitionChanges(klass[moduleSubscribeToToplevelChangesSym]);
       }
       klass[moduleSubscribeToToplevelChangesSym] = currentModule.subscribeToToplevelDefinitionChanges(function (name, val) {
-        if (name === superclassSpec.referencedAs) {
-          // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''}was defined via module bindings`)
-          setSuperclass(klass, val);
-          installMethods(klass, instanceMethods, classMethods);
-        }
+        if (name !== superclassSpec.referencedAs) return;
+        // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''} was defined via module bindings`)
+        setSuperclass(klass, val);
+        installMethods(klass, instanceMethods, classMethods);
       });
     }
   }
 
   // 6. Add a toString method for the class to allows us to see its constructor arguments
-  var init = klass.prototype[initializeSymbol],
-      constructorArgs = String(klass.prototype[initializeSymbol]).match(constructorArgMatcher),
-      string$$1 = "class " + className + " " + (superclass ? "extends " + superclass.name : "") + " {\n" + ("  constructor" + (constructorArgs ? constructorArgs[0] : "()") + " { /*...*/ }") + "\n}";
   klass.toString = function () {
-    return string$$1;
+    var constructorArgs = String(this.prototype[initializeSymbol]).match(constructorArgMatcher),
+        className = this.name,
+        superclass = this[superclassSymbol];
+    return "class " + className + " " + (superclass ? "extends " + superclass.name : "") + " {\n" + ("  constructor" + (constructorArgs ? constructorArgs[0] : "()") + " { /*...*/ }") + "\n}";
   };
 
   return klass;
@@ -208,36 +207,21 @@ initializeClass._get = function _get(object, property, receiver) {
   var desc = Object.getOwnPropertyDescriptor(object, property);
   if (desc === undefined) {
     var parent = Object.getPrototypeOf(object);
-    if (parent === null) {
-      return undefined;
-    } else {
-      return _get(parent, property, receiver);
-    }
-  } else if ("value" in desc) {
-    return desc.value;
-  } else {
-    var getter = desc.get;
-    if (getter === undefined) {
-      return undefined;
-    }
-    return getter.call(receiver);
+    return parent === null ? undefined : _get(parent, property, receiver);
   }
+  if ("value" in desc) return desc.value;
+  var getter = desc.get;
+  return getter === undefined ? undefined : getter.call(receiver);
 };
 
 initializeClass._set = function _set(object, property, value, receiver) {
   var desc = Object.getOwnPropertyDescriptor(object, property);
   if (desc === undefined) {
     var parent = Object.getPrototypeOf(object);
-    if (parent !== null) {
-      _set(parent, property, value, receiver);
-    }
-  } else if ("value" in desc && desc.writable) {
-    desc.value = value;
-  } else {
+    if (parent !== null) _set(parent, property, value, receiver);
+  } else if ("value" in desc && desc.writable) desc.value = value;else {
     var setter = desc.set;
-    if (setter !== undefined) {
-      setter.call(receiver, value);
-    }
+    if (setter !== undefined) setter.call(receiver, value);
   }
   return value;
 };
@@ -251,35 +235,6 @@ var runtime = Object.freeze({
 	moduleSubscribeToToplevelChangesSym: moduleSubscribeToToplevelChangesSym,
 	initializeClass: initializeClass
 });
-
-var asyncToGenerator = function (fn) {
-  return function () {
-    var gen = fn.apply(this, arguments);
-    return new Promise(function (resolve, reject) {
-      function step(key, arg) {
-        try {
-          var info = gen[key](arg);
-          var value = info.value;
-        } catch (error) {
-          reject(error);
-          return;
-        }
-
-        if (info.done) {
-          resolve(value);
-        } else {
-          return Promise.resolve(value).then(function (value) {
-            step("next", value);
-          }, function (err) {
-            step("throw", err);
-          });
-        }
-      }
-
-      return step("next");
-    });
-  };
-};
 
 var classCallCheck = function (instance, Constructor) {
   if (!(instance instanceof Constructor)) {
@@ -338,7 +293,7 @@ var _extends = Object.assign || function (target) {
   return target;
 };
 
-var get$1 = function get$1(object, property, receiver) {
+var get = function get(object, property, receiver) {
   if (object === null) object = Function.prototype;
   var desc = Object.getOwnPropertyDescriptor(object, property);
 
@@ -348,7 +303,7 @@ var get$1 = function get$1(object, property, receiver) {
     if (parent === null) {
       return undefined;
     } else {
-      return get$1(parent, property, receiver);
+      return get(parent, property, receiver);
     }
   } else if ("value" in desc) {
     return desc.value;
@@ -399,14 +354,14 @@ var possibleConstructorReturn = function (self, call) {
 
 
 
-var set$1 = function set$1(object, property, value, receiver) {
+var set = function set(object, property, value, receiver) {
   var desc = Object.getOwnPropertyDescriptor(object, property);
 
   if (desc === undefined) {
     var parent = Object.getPrototypeOf(object);
 
     if (parent !== null) {
-      set$1(parent, property, value, receiver);
+      set(parent, property, value, receiver);
     }
   } else if ("value" in desc && desc.writable) {
     desc.value = value;
@@ -553,7 +508,7 @@ var ClassReplaceVisitor = function (_Visitor) {
 
       if (node.type === "CallExpression" && node.callee.object && node.callee.object.type === "Super") node = replaceSuperMethodCall(node, state, path, state.options);
 
-      node = get$1(ClassReplaceVisitor.prototype.__proto__ || Object.getPrototypeOf(ClassReplaceVisitor.prototype), "accept", this).call(this, node, state, path);
+      node = get(ClassReplaceVisitor.prototype.__proto__ || Object.getPrototypeOf(ClassReplaceVisitor.prototype), "accept", this).call(this, node, state, path);
 
       if (node.type === "ExportDefaultDeclaration") return splitExportDefaultWithClass(node, state, path, state.options);
 
@@ -765,144 +720,8 @@ function classToFunctionTransform(sourceOrAst, options) {
   return replaced;
 }
 
-var srcLocSym = Symbol.for("lively-source-location");
-var moduleSym = Symbol.for("lively-module-meta");
-var descriptorCache = new WeakMap();
-
-var SourceDescriptor = function () {
-  createClass(SourceDescriptor, null, [{
-    key: "for",
-    value: function _for(obj, optSystem) {
-      var descr = descriptorCache.get(obj);
-      if (descr) return descr;
-      descr = new this(obj, optSystem);
-      descriptorCache.set(obj, descr);
-      return descr;
-    }
-  }]);
-
-  function SourceDescriptor(obj, System) {
-    classCallCheck(this, SourceDescriptor);
-
-    this.obj = obj;
-    this.System = System;
-  }
-
-  createClass(SourceDescriptor, [{
-    key: "read",
-    value: function () {
-      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
-        var _sourceLocation, start, end;
-
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                _sourceLocation = this.sourceLocation, start = _sourceLocation.start, end = _sourceLocation.end;
-                _context.next = 3;
-                return this.module.source();
-
-              case 3:
-                _context.t0 = start;
-                _context.t1 = end;
-                return _context.abrupt("return", _context.sent.slice(_context.t0, _context.t1));
-
-              case 6:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, this);
-      }));
-
-      function read() {
-        return _ref.apply(this, arguments);
-      }
-
-      return read;
-    }()
-  }, {
-    key: "write",
-    value: function () {
-      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(newSource) {
-        var module, _sourceLocation2, start, end;
-
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                module = this.module, _sourceLocation2 = this.sourceLocation, start = _sourceLocation2.start, end = _sourceLocation2.end;
-                _context2.next = 3;
-                return module.changeSourceAction(function (oldSource) {
-                  return oldSource.slice(0, start) + newSource + oldSource.slice(end);
-                });
-
-              case 3:
-                return _context2.abrupt("return", this);
-
-              case 4:
-              case "end":
-                return _context2.stop();
-            }
-          }
-        }, _callee2, this);
-      }));
-
-      function write(_x) {
-        return _ref2.apply(this, arguments);
-      }
-
-      return write;
-    }()
-  }, {
-    key: "toString",
-    value: function toString() {
-      var objString = lively_lang.string.truncate(String(this.obj), 35).replace(/\n/g, ""),
-          modId;try {
-        modId = this.module.id;
-      } catch (e) {
-        modId = "NO MODULE!";
-      }
-      return this.constructor.name + "(" + objString + " in " + modId + ")";
-    }
-  }, {
-    key: "System",
-    get: function get() {
-      return this._System || System;
-    },
-    set: function set(S) {
-      this._System = S;
-    }
-  }, {
-    key: "module",
-    get: function get() {
-      var obj = this.obj,
-          System = this.System;
-
-      if (!obj[moduleSym]) throw new Error("runtime object of " + this + " has no module data");
-      var _obj$moduleSym = obj[moduleSym],
-          packageName = _obj$moduleSym.package.name,
-          pathInPackage = _obj$moduleSym.pathInPackage;
-      // FIXME
-
-      return lively.modules.moduleForSytem(System, packageName + "/" + pathInPackage);
-    }
-  }, {
-    key: "sourceLocation",
-    get: function get() {
-      var obj = this.obj,
-          System = this.System;
-
-      if (!obj[srcLocSym]) throw new Error("runtime object of " + this + " has no source location data");
-      return obj[srcLocSym];
-    }
-  }]);
-  return SourceDescriptor;
-}();
-
 exports.runtime = runtime;
 exports.classToFunctionTransform = classToFunctionTransform;
-exports.SourceDescriptor = SourceDescriptor;
 
 }((this.lively.classes = this.lively.classes || {}),lively.lang,lively.ast));
 
