@@ -61,7 +61,7 @@ export class CodeSearcher extends FilterableList {
       fontFamily: "Inconsolata, monospace",
       fontSize: 14,
       historyId: "lively.morphic-code searcher",
-      ...obj.dissoc(props, "targetBrowser", "backend")});
+      ...obj.dissoc(props, "targetBrowser", "backend", "input")});
     var cb = this.addMorph(new LabeledCheckBox({
       checked: false,
       name: "searchInUnloadedModulesCheckbox",
@@ -75,6 +75,9 @@ export class CodeSearcher extends FilterableList {
 
     connect(this, "accepted", this, "openBrowserForSelection");
     connect(cb, "checked", this, "searchAgain");
+
+    
+    if (props.input) this.input = props.input;
   }
 
   relayout() {
@@ -101,6 +104,9 @@ export class CodeSearcher extends FilterableList {
     if (browser) browser.backend = backend;
     else this.state.backend = backend;
   }
+
+  get input() { return this.getSubmorphNamed("input").input; }
+  set input(x) { this.getSubmorphNamed("input").input = x; }
 
   async getLivelySystem() {
     var backend = this.backend,
