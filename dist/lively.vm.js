@@ -803,54 +803,37 @@ function printInspect$1(value, options) {
   return lively_lang.obj.inspect(value, { maxDepth: printDepth, customPrinter: customPrinter });
 }
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// load support
-
-var ensureImportsAreImported = function () {
-  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
-    var body, imports;
-    return regeneratorRuntime.wrap(function _callee$(_context) {
-      while (1) {
-        switch (_context.prev = _context.next) {
-          case 0:
-            // FIXME do we have to do a reparse? We should be able to get the ast from
-            // the rewriter...
-            body = lively_ast.parse(code).body, imports = body.filter(function (node) {
-              return node.type === "ImportDeclaration";
-            });
-            return _context.abrupt("return", Promise.all(imports.map(function (node) {
-              return System.normalize(node.source.value, parentModule).then(function (fullName) {
-                return System.get(fullName) || System.import(fullName);
-              });
-            })).catch(function (err) {
-              console.error("Error ensuring imports: " + err.message);throw err;
-            }));
-
-          case 2:
-          case "end":
-            return _context.stop();
-        }
-      }
-    }, _callee, this);
-  }));
-
-  return function ensureImportsAreImported(_x, _x2, _x3) {
-    return _ref.apply(this, arguments);
-  };
-}();
-
 var funcCall = lively_ast.nodes.funcCall;
 var member$1 = lively_ast.nodes.member;
 var literal$1 = lively_ast.nodes.literal;
 
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// load support
+
+function ensureImportsAreImported(System, code, parentModule) {
+  // FIXME do we have to do a reparse? We should be able to get the ast from
+  // the rewriter...
+  var body = lively_ast.parse(code).body,
+      imports = body.filter(function (node) {
+    return node.type === "ImportDeclaration";
+  });
+  return Promise.all(imports.map(function (node) {
+    return System.normalize(node.source.value, parentModule).then(function (fullName) {
+      return System.get(fullName) || System.import(fullName);
+    });
+  })).catch(function (err) {
+    console.error("Error ensuring imports: " + err.message);throw err;
+  });
+}
 
 function hasUnimportedImports(System, code, parentModule) {
   var body = lively.ast.parse(code).body,
       imports = body.filter(function (node) {
     return node.type === "ImportDeclaration";
   }),
-      importedModules = lively.lang.arr.uniq(imports.map(function (_ref2) {
-    var value = _ref2.source.value;
+      importedModules = lively.lang.arr.uniq(imports.map(function (_ref) {
+    var value = _ref.source.value;
     return value;
   })),
       unloadedImports = importedModules.filter(function (ea) {
@@ -930,6 +913,14 @@ function getEs6Transpiler(System, options, env) {
     return babelPlugin ? babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env) : System.import(babelPath).then(function (babelPlugin) {
       return babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env);
     });
+  }
+
+  if (System.transpiler === "lively.transpiler") {
+    var Transpiler = System.get(System.decanonicalize("lively.transpiler")).default,
+        transpiler = new Transpiler(System, options.targetModule, env);
+    return function (source, options) {
+      return transpiler.transpileDoit(source, options);
+    };
   }
 
   throw new Error("Sorry, currently only babel is supported as es6 transpiler for runEval!");
