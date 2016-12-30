@@ -348,6 +348,7 @@ var worldCommands = [
 
   {
     name: "open browser",
+    progressIndicator: "opening browser...",
     exec: async (world, args = {packageName: "lively.morphic", moduleName: "morph.js"}) => {
       var { default: Browser } = await System.import("lively.morphic/ide/js/browser/index.js"),
           browser = await Browser.browse(args.packageName, args.moduleName, undefined, {extent: pt(700, 600)});
@@ -358,6 +359,7 @@ var worldCommands = [
 
   {
     name: "choose and browse package resources",
+    progressIndicator: "browsing resources...",
     exec: async (world, opts = {browser: null, backend: null}) => {
       var browser = opts.browser
            || (world.focusedMorph && world.focusedMorph.ownerChain().find(ea => ea.isBrowser));
@@ -412,6 +414,7 @@ var worldCommands = [
 
   {
     name: "choose and browse module",
+    progressIndicator: "browsing module...",
     handlesCount: true,
     exec: async (world, opts = {browser: undefined, backend: undefined}, count) => {
 
@@ -492,6 +495,7 @@ var worldCommands = [
 
   {
     name: "open test runner",
+    progressIndicator: "opening test runner...",
     exec: async world => {
       var {default: TestRunner} = await System.import("lively.morphic/ide/test-runner.js");
       return TestRunner.open();
@@ -500,6 +504,7 @@ var worldCommands = [
 
   {
     name: "open file browser",
+    progressIndicator: "opening file browser...",
     exec: async (world, opts = {}) => {
       var { default: HTTPFileBrowser } = await System.import("lively.morphic/ide/http-file-browser.js"),
           { location, file } = opts;
@@ -512,6 +517,7 @@ var worldCommands = [
 
   {
     name: "open file",
+    progressIndicator: "opening file...",
     exec: async (world, opts = {url: null, lineNumber: null}) => {
       var { default: TextEditor } = await System.import("lively.morphic/ide/text-editor.js"),
           { url, lineNumber } = opts;

@@ -17,6 +17,12 @@ export default class LoadingIndicator extends Morph {
     return i;
   }
 
+  static async runFn(fn, label, props) {
+    var i = this.open(label, props);
+    await i.whenRendered();
+    try { return await fn(); } finally { i.remove(); }
+  }
+
   constructor(props = {}) {
     super(props);
     this.build();
