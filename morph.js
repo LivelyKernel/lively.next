@@ -60,8 +60,10 @@ export class Morph {
     this._currentState = {...this.defaultProperties};
     this._id = newMorphId(this.constructor.name);
     this._animationQueue = new AnimationQueue(this);
+    this._cachedPaths = {};
+    this._pathDependants = [];
     this.tickingScripts = [];
-    this.updateTransform();
+    this.updateTransform(this);
     if (props.submorphs) this.submorphs = props.submorphs;
     if (props.bounds) this.setBounds(props.bounds);
     Object.assign(this, obj.dissoc(props, ["env", "type", "submorphs", "bounds", "layout"]));
@@ -79,7 +81,7 @@ export class Morph {
     this._currentState = {...this.defaultProperties};
     this._id = objRef.id;
     this._animationQueue = new AnimationQueue(this);
-    this.updateTransform();
+    this.updateTransform(this);
   }
 
   get __only_serialize__() {
@@ -125,13 +127,13 @@ export class Morph {
   onChange(change) {
     const anim = change.meta && change.meta.animation;
     if (['position', 'rotation', 'scale', 'origin', 'reactsToPointer'].includes(change.prop))
-        this.updateTransform();
+        this.updateTransform({[change.prop]: change.value});
     if (change.prop == "layout") {
-       if (anim) {
-          change.value && change.value.attachAnimated(anim.duration, this, anim.easing);
-       } else {
-          change.value && change.value.apply();
-       }
+      if (anim) {
+         change.value && change.value.attachAnimated(anim.duration, this, anim.easing);
+      } else {
+         change.value && change.value.apply();
+      }
     }
     this.layout && this.layout.onChange(change);
     this.styleRules && this.styleRules.onMorphChange(this, change);
@@ -515,11 +517,10 @@ export class Morph {
 
   get submorphs() { return (this.getProperty("submorphs") || []).slice(); }
   set submorphs(newSubmorphs) {
-    this.layout && this.layout.disable();
-    this.submorphs.forEach(m => newSubmorphs.includes(m) || m.remove());
-    newSubmorphs.forEach((m, i) =>
-      this.submorphs[i] !== m && this.addMorph(m, this.submorphs[i]));
-    this.layout && this.layout.enable();
+      this.layout && this.layout.disable();
+      this.submorphs.forEach(m => newSubmorphs.includes(m) || m.remove());
+      newSubmorphs.forEach((m, i) => this.submorphs[i] !== m && this.addMorph(m, this.submorphs[i]));
+      this.layout && this.layout.enable();
   }
 
   addMorphAt(submorph, index) {
@@ -626,6 +627,9 @@ export class Morph {
 
   remove() {
     if (this.owner) this.owner.removeMorph(this);
+    this._cachedPaths = {};
+    this._pathDependants.forEach(dep => dep._cachedPaths = {});
+    this._pathDependants = [];
     return this
   }
 
@@ -772,15 +776,15 @@ export class Morph {
     return tfm;
   }
 
-  localize({x,y}) {
+  localize(p) {
     // map world point to local coordinates
-    var world = this.world();
-    return world ? world.transformPointToMorph(this, pt(x,y)) : pt(x,y);
+    var world = this.world(), {x,y} = p;
+    return world ? world.transformPointToMorph(this, pt(x,y)) : p;
   }
 
-  worldPoint({x,y}) {
-    var world = this.world();
-    return world ? this.transformPointToMorph(world, pt(x,y)) : pt(x,y);
+  worldPoint(p) {
+    var world = this.world(), {x,y} = p
+    return world ? this.transformPointToMorph(world, pt(x,y)) : p;
   }
 
   transformToMorph(other) {
@@ -791,52 +795,59 @@ export class Morph {
   }
 
   transformPointToMorph(other, p) {
-     const chain = this.chainToMorph(other);
-     this.applyTransforms(p, chain.filter(([d, m]) => d == "up").map(t => t[1] ));
-     return this.applyTransformsInversely(p, chain.filter(([d, m]) => d == "down").map(t => t[1]))
+     for(var [d, m] of this.pathToMorph(other)) {
+        this.applyTransform(d, m, p);
+     }
+     return p;
   }
 
   transformRectToMorph(other, r) {
-     var tl, tr, br, bl, chain = this.chainToMorph(other);
+     var tl, tr, br, bl;
      [tl = r.topLeft(), tr = r.topRight(), 
       br = r.bottomRight(), bl = r.bottomLeft()].forEach(corner => {
-        this.applyTransforms(corner, chain.filter(([d, m]) => d == "up").map(t => t[1] ));
-        this.applyTransformsInversely(corner, chain.filter(([d, m]) => d == "down").map(t => t[1]))
+        for(var [d, m] of this.pathToMorph(other)) {
+           this.applyTransform(d, m, corner);
+        }
        });
      return Rectangle.unionPts([tl,tr,br,bl]);
   }
 
-  applyTransforms(p, morphs) {
-     morphs.forEach(m => {
-           p.x += m.origin.x;
-           p.y += m.origin.y;
-           p.matrixTransform(m.getTransform(), p);
-     });
-     return p;
+  applyTransform(d, m, p) {
+    if (d == "up") {
+      p.x += m.origin.x;
+      p.y += m.origin.y;
+      p.matrixTransform(m.getTransform(), p);
+    } else {
+      p.matrixTransform(m.getInverseTransform(), p);
+      p.x -= m.origin.x;
+      p.y -= m.origin.y;
+    }
   }
 
-  applyTransformsInversely(p, morphs) {
-      morphs.forEach(m => {
-         p.matrixTransform(m.getInverseTransform(), p);
-         p.x -= m.origin.x;
-         p.y -= m.origin.y;
-     });
-     return p;
-  } 
+  _addPathDependant(morph) {
+     if (!this._pathDependants.includes(morph)) 
+         this._pathDependants.push(morph);
+  }
 
-  chainToMorph(other) {
+  pathToMorph(other) {
+     var path;
+     if (path = this._cachedPaths[other.id]) return path;
      var commonRoot = this.closestCommonAncestor(other) || this,
-         morph = other, down = [], up = [];
-     while(morph && morph != commonRoot) {
-        down.push(["down", morph]);
-        morph = morph.owner;
-     }
-     morph = this;
+         morph = this, down = [], up = [];
+     commonRoot._addPathDependant(this);
      while(morph && morph != commonRoot) {
         up.push(["up", morph]);
+        morph._addPathDependant(this);
         morph = morph.owner;
      }
-     return [...up, ...down.reverse()];
+     morph = other;
+     while(morph && morph != commonRoot) {
+        down.push(['down', morph]);
+        morph._addPathDependant(this);
+        morph = morph.owner;
+     }
+     this._cachedPaths[other.id] = path = [...up, ...down.reverse()];
+     return path;
   }
 
   closestCommonAncestor(other) {
@@ -867,18 +878,40 @@ export class Morph {
   getTransform() { return this._transform }
   getInverseTransform() { return this._invTransform || this._transform.inverse() }
 
-  updateTransform() {
-    var scale = this.scale,
-        pos = this.position,
-        moveToOrigin = new Transform(this.origin),
-        tfm;
+  updateTransform({position, scale, origin, rotation} = {}) {
+    const tfm = this._transform || new Transform(),
+          tfm_inv = this._invTransform || new Transform();
+              
+    if (position || origin) {
+        position = position || this.position;
+        origin = origin || this.origin;
+        if (this.owner && this.owner.isClip()) position = position.subPt(this.owner.scroll);
+        tfm.e = position.x - origin.x;
+        tfm.f = position.y - origin.y;
+    }
+    
+    if (scale || rotation) {
+        scale = scale || this.scale;
+        rotation = rotation || this.rotation;
+        tfm.a = scale * Math.cos(rotation);
+        tfm.b = scale * Math.sin(rotation);
+        tfm.c = scale * - Math.sin(rotation);
+        tfm.d = scale * Math.cos(rotation);
+    }
 
-    if (typeof scale === "number") scale = pt(scale,scale);
-    if (this.owner && this.owner.isClip()) pos = pos.subPt(this.owner.scroll);
+    const {a,b,c,d,e,f} = tfm,
+          det = a * d - c * b,
+          invdet = 1/det;
 
-    tfm = new Transform(pos, this.rotation, scale)
-    this._transform = moveToOrigin.inverse().preConcatenate(tfm);
-    this._invTransform = this._transform.inverse();
+    tfm_inv.a =  d * invdet;
+    tfm_inv.b = -b * invdet;
+    tfm_inv.c = -c * invdet;
+    tfm_inv.d =  a * invdet;
+    tfm_inv.e =  (c * f - e * d) * invdet;
+    tfm_inv.f = -(a * f - b * e) * invdet;
+    
+    this._transform = tfm;
+    this._invTransform = tfm_inv;
   }
 
   setTransform(tfm) {
