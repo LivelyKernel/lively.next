@@ -96,6 +96,8 @@ class ModuleInterface {
   }
 
   setSource(source) {
+    if (this._source === source) return;
+    this.reset();
     this._source = source;
   }
 
