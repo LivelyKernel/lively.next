@@ -552,6 +552,22 @@ class ModuleInterface {
   // module records
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  ensureRecord() {
+    var S = this.System,
+        records = S._loader.moduleRecords;
+    if (records[this.id]) return records[this.id];
+    
+    // see SystemJS getOrCreateModuleRecord
+    var ModuleRecord = S._loader.moduleRecords[S.decanonicalize("lively.modules")].exports.constructor;
+    return records[this.id] = {
+      name: this.id,
+      exports: new ModuleRecord(),
+      dependencies: [],
+      importers: [],
+      setters: []
+    }
+  }
+
   record() {
     const rec = this.System._loader.moduleRecords[this.id];
     if (!rec) return null;
