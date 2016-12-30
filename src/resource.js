@@ -1,12 +1,13 @@
 import { resource } from "lively.resources";
-import { install as installHook, remove as removeHook, isInstalled as isHookInstalled } from "./hooks.js";
+import {
+  install as installHook,
+  remove as removeHook,
+  isInstalled as isHookInstalled
+} from "./hooks.js";
 
 async function fetchResource(proceed, load) {
   const System = this,
         res = System.resource(load.name);
-
-  if (load.name.match(/^lively:\/\//))
-    load.metadata.format = "esm";
 
   if (!res) return proceed(load);
 
@@ -30,8 +31,9 @@ async function fetchResource(proceed, load) {
   return result;
 }
 
-const livelyURLRe = /^lively:\/\/([^\/]+)\/(.*)$/;
 
+// FIXME!!!
+const livelyURLRe = /^lively:\/\/([^\/]+)\/(.*)$/;
 function livelyProtocol(proceed, url) {
   const match = url.match(livelyURLRe);
   if (!match) return proceed(url);
@@ -50,22 +52,19 @@ function livelyProtocol(proceed, url) {
   };
 }
 
-function wrapResource(System) {
-  if (!System.resource) {
-    System.resource = resource;
-  }
-  if (!isHookInstalled(System, "fetch", fetchResource)) {
-    installHook(System, "fetch", fetchResource);
-  }
-  if (!isHookInstalled(System, "resource", livelyProtocol)) {
-    installHook(System, "resource", livelyProtocol);
-  }
+
+export function wrapResource(System) {
+  System.resource = resource;
+  if (isHookInstalled(System, "fetch", fetchResource))
+    removeHook(System, "fetch", "fetchResource");
+  installHook(System, "fetch", fetchResource);
+  if (isHookInstalled(System, "resource", "livelyProtocol"))
+    removeHook(System, "fetch", "livelyProtocol");
+  installHook(System, "resource", livelyProtocol);
 }
 
-function unwrapResource(System) {
-  removeHook(System, "fetch", fetchResource);
-  removeHook(System, "resource", livelyProtocol);
-  removeHook(System, "resource", resource);
+export function unwrapResource(System) {
+  removeHook(System, "fetch", "fetchResource");
+  removeHook(System, "resource", "livelyProtocol");
+  delete System.resource;
 }
-
-export { wrapResource, unwrapResource };
