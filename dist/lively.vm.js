@@ -652,7 +652,7 @@ function runEval$1(code, options, thenDo) {
 
   // 3. Now really run eval!
   try {
-    typeof $morph !== "undefined" && $morph('log') && ($morph('log').textString = code);
+    typeof $world !== "undefined" && $world.get('log') && ($world.get('log').textString = code);
     returnedValue = _eval.call(options.context, code, options.topLevelVarRecorder);
   } catch (e) {
     returnedError = e;
@@ -804,85 +804,38 @@ function printInspect$1(value, options) {
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// transpiler to make es next work
+// load support
 
-var getEs6Transpiler = function () {
-  var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
-    var babel, babelPluginPath, babelPath, babelPlugin;
-    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+var ensureImportsAreImported = function () {
+  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
+    var body, imports;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
-        switch (_context2.prev = _context2.next) {
+        switch (_context.prev = _context.next) {
           case 0:
-            if (!options.transpiler) {
-              _context2.next = 2;
-              break;
-            }
-
-            return _context2.abrupt("return", Promise.resolve(options.transpiler));
+            // FIXME do we have to do a reparse? We should be able to get the ast from
+            // the rewriter...
+            body = lively_ast.parse(code).body, imports = body.filter(function (node) {
+              return node.type === "ImportDeclaration";
+            });
+            return _context.abrupt("return", Promise.all(imports.map(function (node) {
+              return System.normalize(node.source.value, parentModule).then(function (fullName) {
+                return System.get(fullName) || System.import(fullName);
+              });
+            })).catch(function (err) {
+              console.error("Error ensuring imports: " + err.message);throw err;
+            }));
 
           case 2:
-            if (options.es6Transpile) {
-              _context2.next = 4;
-              break;
-            }
-
-            return _context2.abrupt("return", Promise.resolve(null));
-
-          case 4:
-            if (!(System.transpiler === "babel")) {
-              _context2.next = 12;
-              break;
-            }
-
-            _context2.t0 = System.global[System.transpiler];
-
-            if (_context2.t0) {
-              _context2.next = 10;
-              break;
-            }
-
-            _context2.next = 9;
-            return System.import(System.transpiler);
-
-          case 9:
-            _context2.t0 = _context2.sent;
-
-          case 10:
-            babel = _context2.t0;
-            return _context2.abrupt("return", babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env));
-
-          case 12:
-            if (!(System.transpiler === "plugin-babel")) {
-              _context2.next = 21;
-              break;
-            }
-
-            _context2.next = 15;
-            return System.normalize("plugin-babel");
-
-          case 15:
-            babelPluginPath = _context2.sent;
-            babelPath = babelPluginPath.split("/").slice(0, -1).concat("systemjs-babel-browser.js").join("/");
-            _context2.next = 19;
-            return System.import(babelPath);
-
-          case 19:
-            babelPlugin = _context2.sent;
-            return _context2.abrupt("return", babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env));
-
-          case 21:
-            throw new Error("Sorry, currently only babel is supported as es6 transpiler for runEval!");
-
-          case 22:
           case "end":
-            return _context2.stop();
+            return _context.stop();
         }
       }
-    }, _callee2, this);
+    }, _callee, this);
   }));
 
-  return function getEs6Transpiler(_x4, _x5, _x6) {
-    return _ref2.apply(this, arguments);
+  return function ensureImportsAreImported(_x, _x2, _x3) {
+    return _ref.apply(this, arguments);
   };
 }();
 
@@ -890,6 +843,24 @@ var funcCall = lively_ast.nodes.funcCall;
 var member$1 = lively_ast.nodes.member;
 var literal$1 = lively_ast.nodes.literal;
 
+
+function hasUnimportedImports(System, code, parentModule) {
+  var body = lively.ast.parse(code).body,
+      imports = body.filter(function (node) {
+    return node.type === "ImportDeclaration";
+  }),
+      importedModules = lively.lang.arr.uniq(imports.map(function (_ref2) {
+    var value = _ref2.source.value;
+    return value;
+  })),
+      unloadedImports = importedModules.filter(function (ea) {
+    return !System.get(System.decanonicalize(ea, parentModule));
+  });
+  return unloadedImports.length > 0;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// transpiler to make es next work
 
 function babelTranspilerForAsyncAwaitCode(System, babel, filename, env) {
   // The function wrapper is needed b/c we need toplevel awaits and babel
@@ -939,118 +910,125 @@ function babelPluginTranspilerForAsyncAwaitCode(System, babelWrapper, filename, 
   };
 }
 
-var runEval$2 = function () {
-  var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
-    var originalCode, _options, format, targetModule, parentModule, parentAddress, meta, module, recorder, recorderName, dontTransform, transpiler, header, result;
+function getEs6Transpiler(System, options, env) {
+  if (options.transpiler) return options.transpiler;
+  if (!options.es6Transpile) return null;
 
-    return regeneratorRuntime.wrap(function _callee3$(_context3) {
-      while (1) {
-        switch (_context3.prev = _context3.next) {
-          case 0:
-            options = _extends({
-              targetModule: null, parentModule: null,
-              parentAddress: null,
-              es6Transpile: true,
-              transpiler: null, // function with params: source, options
-              transpilerOptions: null,
-              format: "esm"
-            }, options);
-            originalCode = code;
+  if (System.transpiler === "babel") {
+    var babel = System.global[System.transpiler] || System.get(System.decanonicalize(System.transpiler));
+    return babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env);
+  }
 
+  if (System.transpiler === "plugin-babel") {
+    var babelPluginPath = System.decanonicalize("plugin-babel"),
+        babelPath = babelPluginPath.split("/").slice(0, -1).concat("systemjs-babel-browser.js").join("/"),
+        babelPlugin = System.get(babelPath);
+    return babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env);
+  }
 
-            System.debug && console.log("[lively.module] runEval: " + code.slice(0, 100).replace(/\n/mg, " ") + "...");
+  throw new Error("Sorry, currently only babel is supported as es6 transpiler for runEval!");
+}
 
-            _options = options, format = _options.format, targetModule = _options.targetModule, parentModule = _options.parentModule, parentAddress = _options.parentAddress;
-            _context3.next = 6;
-            return System.normalize(targetModule || "*scratch*", parentModule, parentAddress);
+function runEval$2(System, code, options) {
+  options = _extends({
+    targetModule: null, parentModule: null,
+    es6Transpile: true,
+    transpiler: null, // function with params: source, options
+    transpilerOptions: null,
+    format: "esm"
+  }, options);
+  var originalCode = code;
 
-          case 6:
-            targetModule = _context3.sent;
+  System.debug && console.log("[lively.module] runEval: " + code.slice(0, 100).replace(/\n/mg, " ") + "...");
 
-            options.targetModule = targetModule;
+  var _options = options,
+      format = _options.format,
+      targetModule = _options.targetModule,
+      parentModule = _options.parentModule;
 
-            if (format) {
-              meta = System.getConfig().meta[targetModule];
+  targetModule = System.decanonicalize(targetModule || "*scratch*", parentModule);
+  options.targetModule = targetModule;
 
-              if (!meta) meta = {};
-              if (!meta[targetModule]) meta[targetModule] = {};
-              if (!meta[targetModule].format) {
-                meta[targetModule].format = format;
-                System.config(meta);
-              }
-            }
+  if (format) {
+    var meta = System.getConfig().meta[targetModule];
+    if (!meta) meta = {};
+    if (!meta[targetModule]) meta[targetModule] = {};
+    if (!meta[targetModule].format) {
+      meta[targetModule].format = format;
+      System.config(meta);
+    }
+  }
 
-            // await System.import(targetModule);
-            // await ensureImportsAreLoaded(System, code, targetModule);
-
-            module = System.get("@lively-env").moduleEnv(targetModule);
-            recorder = module.recorder;
-            recorderName = module.recorderName;
-            dontTransform = module.dontTransform;
-            _context3.next = 15;
-            return getEs6Transpiler(System, options, module);
-
-          case 15:
-            transpiler = _context3.sent;
-            header = "var _moduleExport = " + recorderName + "._moduleExport,\n" + ("    _moduleImport = " + recorderName + "._moduleImport;\n");
-
-
-            options = _extends({
-              waitForPromise: true
-            }, options, {
-              header: header,
-              recordGlobals: true,
-              dontTransform: dontTransform,
-              varRecorderName: recorderName,
-              topLevelVarRecorder: recorder,
-              sourceURL: options.sourceURL || options.targetModule,
-              context: options.context || recorder,
-              wrapInStartEndCall: true, // for async / await eval support
-              es6ExportFuncId: "_moduleExport",
-              es6ImportFuncId: "_moduleImport",
-              transpiler: transpiler,
-              declarationWrapperName: module.varDefinitionCallbackName,
-              currentModuleAccessor: funcCall(member$1(funcCall(member$1("System", "get"), literal$1("@lively-env")), "moduleEnv"), literal$1(options.targetModule))
-            });
-
-            System.debug && console.log("[lively.module] runEval in module " + targetModule + " started");
-
-            lively_notifications.emit("lively.vm/doitrequest", {
-              code: originalCode,
-              waitForPromise: options.waitForPromise,
-              targetModule: options.targetModule }, Date.now(), System);
-
-            System.get("@lively-env").evaluationStart(targetModule);
-
-            _context3.next = 23;
-            return runEval$1(code, options);
-
-          case 23:
-            result = _context3.sent;
+  var module = System.get("@lively-env").moduleEnv(targetModule),
+      recorder = module.recorder,
+      recorderName = module.recorderName,
+      dontTransform = module.dontTransform,
+      transpiler = getEs6Transpiler(System, options, module),
+      header = "var _moduleExport = " + recorderName + "._moduleExport,\n" + ("    _moduleImport = " + recorderName + "._moduleImport;\n");
 
 
-            System.get("@lively-env").evaluationEnd(targetModule);
-            System.debug && console.log("[lively.module] runEval in module " + targetModule + " done");
+  options = _extends({
+    waitForPromise: true,
+    sync: false
+  }, options, {
+    header: header,
+    recordGlobals: true,
+    dontTransform: dontTransform,
+    varRecorderName: recorderName,
+    topLevelVarRecorder: recorder,
+    sourceURL: options.sourceURL || options.targetModule,
+    context: options.context || recorder,
+    wrapInStartEndCall: true, // for async / await eval support
+    es6ExportFuncId: "_moduleExport",
+    es6ImportFuncId: "_moduleImport",
+    transpiler: transpiler,
+    declarationWrapperName: module.varDefinitionCallbackName,
+    currentModuleAccessor: funcCall(member$1(funcCall(member$1("System", "get"), literal$1("@lively-env")), "moduleEnv"), literal$1(options.targetModule))
+  });
 
-            lively_notifications.emit("lively.vm/doitresult", {
-              code: originalCode, result: result,
-              waitForPromise: options.waitForPromise,
-              targetModule: options.targetModule }, Date.now(), System);
+  if (!options.sync && !options.importsEnsured && hasUnimportedImports(System, code, targetModule)) return ensureImportsAreImported(System, code, targetModule).then(function () {
+    return runEval$2(System, originalCode, _extends({}, options, { importsEnsured: true }));
+  });
+  if (!module.record()) {
+    if (!options.sync && !options.moduleImported) return System.import(targetModule).catch(function (err) {
+      return null;
+    }).then(function () {
+      return runEval$2(System, originalCode, _extends({}, options, { moduleImported: true }));
+    });
 
-            return _context3.abrupt("return", result);
+    module.ensureRecord(); // so we can record dependent modules
+  }
 
-          case 28:
-          case "end":
-            return _context3.stop();
-        }
-      }
-    }, _callee3, this);
-  }));
+  System.debug && console.log("[lively.module] runEval in module " + targetModule + " started");
 
-  return function runEval$2(_x7, _x8, _x9) {
-    return _ref3.apply(this, arguments);
-  };
-}();
+  lively_notifications.emit("lively.vm/doitrequest", {
+    code: originalCode,
+    waitForPromise: options.waitForPromise,
+    targetModule: options.targetModule
+  }, Date.now(), System);
+
+  System.get("@lively-env").evaluationStart(targetModule);
+
+  var result = runEval$1(code, options);
+
+  return options.sync ? evalEnd(System, originalCode, options, result) : Promise.resolve(result).then(function (result) {
+    return evalEnd(System, originalCode, options, result);
+  });
+}
+
+function evalEnd(System, code, options, result) {
+
+  System.get("@lively-env").evaluationEnd(options.targetModule);
+  System.debug && console.log("[lively.module] runEval in module " + options.targetModule + " done");
+
+  lively_notifications.emit("lively.vm/doitresult", {
+    code: code, result: result,
+    waitForPromise: options.waitForPromise,
+    targetModule: options.targetModule
+  }, Date.now(), System);
+
+  return result;
+}
 
 var _EvalableTextMorphTra;
 
