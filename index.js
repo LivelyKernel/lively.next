@@ -4,7 +4,12 @@ export { completions }
 import * as globalEval from "./lib/eval.js";
 import * as esmEval from "./lib/esm-eval.js";
 export { defaultTopLevelVarRecorderName } from "./lib/eval.js";
-export { evalCodeTransform, evalCodeTransformOfSystemRegisterSetters } from "./lib/eval-support.js";
+export {
+  defaultClassToFunctionConverterName,
+  evalCodeTransform,
+  evalCodeTransformOfSystemRegisterSetters
+} from "./lib/eval-support.js";
+
 export { runEval, syncEval }
 
 function runEval(code, options) {
