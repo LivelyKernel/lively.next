@@ -202,8 +202,7 @@ class ModuleInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async changeSourceAction(changeFunc) {
-    const source = await this.source(),
-          newSource = await changeFunc(source);
+    var newSource = await changeFunc(await this.source());
     return this.changeSource(newSource, {doEval: true});
   }
 
@@ -309,6 +308,11 @@ class ModuleInterface {
 
       __currentLivelyModule: {value: self},
 
+      [defaultClassToFunctionConverterName]: {
+        configurable: true, writable: true,
+        value: classRuntime.initializeClass
+      },
+
       [this.varDefinitionCallbackName]: {
         value: (name, kind, value, recorder, sourceLoc) =>
           self.define(name, value, false/*signalChangeImmediately*/, sourceLoc)
@@ -356,7 +360,7 @@ class ModuleInterface {
 
     var {System, id, recorder} = this;
 
-    System.debug && console.log(`[lively.modules] ${this.shortName()} defines ${varName}`);
+    // System.debug && console.log(`[lively.modules] ${this.shortName()} defines ${varName}`);
 
     var srcLocSym = Symbol.for("lively-source-location"),
         moduleSym = Symbol.for("lively-module-meta");
@@ -558,10 +562,9 @@ class ModuleInterface {
     if (records[this.id]) return records[this.id];
     
     // see SystemJS getOrCreateModuleRecord
-    var ModuleRecord = S._loader.moduleRecords[S.decanonicalize("lively.modules")].exports.constructor;
     return records[this.id] = {
       name: this.id,
-      exports: new ModuleRecord(),
+      exports: S.newModule({}),
       dependencies: [],
       importers: [],
       setters: []
