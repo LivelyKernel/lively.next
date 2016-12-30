@@ -7,66 +7,108 @@ import { Tooltip } from "./tooltips.js";
 import { StyleRules } from "./style-rules.js";
 import config from "./config.js";
 import { Label } from "./text/label.js";
+import { Intersection, IntersectionParams } from 'kld-intersections';
 
 export class Leash extends Path {
 
    constructor(props) {
       const {start, end} = props;
       super({
-         ...props, morphClasses: ['leash'],
-         styleRules: this.styler,
+         borderWidth: 2, borderColor: Color.black,
+         ...props,
+         endpointStyle: {
+             fill: Color.black, origin: pt(3.5,3.5), 
+             extent: pt(10,10), nativeCursor: "-webkit-grab",
+             ...props.endpointStyle
+         },
          vertices: [start, end]
       });
       this.build()
+      connect(this, "extent", this, "relayout");
+      connect(this, "position", this, "relayout");
    }
 
-   get styler() {
-      return new StyleRules({
-          leash: {
-             borderWidth: 2, borderColor: Color.black,
-          },
-          endpoint: {
-             fill: Color.black, origin: pt(3.5,3.5), extent: pt(10,10), nativeCursor: "-webkit-grab"
-          }
-      })
+   get endpointStyle() { return this._endpointStyle }
+   set endpointStyle(style) { 
+       this._endpointStyle = style;
+       this.startPoint && Object.assign(this.startPoint, this.getEndpointStyle(0)); 
+       this.endPoint && Object.assign(this.endPoint, this.getEndpointStyle(1)); 
+   }
+
+   remove() {
+      super.remove();
+      this.startPoint.clearConnection();
+      this.endPoint.clearConnection()
+   }
+
+   onEndpointDrag(endpoint, evt) {
+      const v = endpoint.getVertex(),
+            {x,y} = v;
+      endpoint.setVertex({...v, ...pt(x,y).addPt(evt.state.dragDelta)})
+      this.relayout();
+   }
+
+   getEndpointStyle(idx) {
+      return {...this.endpointStyle, ...idx == 0 ? 
+                 this.endpointStyle.start : 
+                 this.endpointStyle.end}
    }
 
    endpoint(idx) {
       const leash = this, {x,y} = leash.vertices[idx];
-      return new Ellipse({position: pt(x,y), morphClasses: ['endpoint'], 
+      return new Ellipse({
+              position: pt(x,y), index: idx,
+              ...this.getEndpointStyle(idx),
               onDrag(evt) {
-                 const {x,y} = leash.vertices[idx];
-                 leash.vertices[idx] = {...leash.vertices[idx], ...pt(x,y).addPt(evt.state.dragDelta)} 
-                 leash.vertices = leash.vertices;
-                 this.moveBy(evt.state.dragDelta);
+                 leash.onEndpointDrag(this, evt);
+              },
+              getConnectionPoint() {
+                  const {isPath, isPolygon, vertices, origin} = this.connectedMorph,
+                        gb = this.connectedMorph.globalBounds();
+                  if ((isPath || isPolygon) && this.attachedSide != "center") {
+                     const vs = vertices.map(({x,y}) => pt(x,y).addPt(origin)),
+                           ib = Rectangle.unionPts(vs),
+                           side = ib[this.attachedSide](),
+                           center = ib.center().addPt(ib.center().subPt(side)),
+                           line = IntersectionParams.newLine(new Point2D(side.x, side.y), new Point2D(center.x,center.y)),
+                           path = IntersectionParams.newPolyline(vs.map(({x,y}) => new Point2D(x, y))),
+                           {x,y} = arr.min(Intersection.intersectShapes(path, line).points, ({x,y}) => pt(x,y).dist(side));
+                     return pt(x,y).addPt(gb.topLeft());
+                  } else {
+                     return gb[this.attachedSide]();
+                  }
               },
               update(change) {
-                 const globalPos = this.connectedMorph.globalBounds()[this.attachedSide](),
+                 const globalPos = this.getConnectionPoint(),
                        pos = leash.localize(globalPos);
-                 var anim;
-                 leash.vertices[idx] = {...leash.vertices[idx], ...leash.localize(globalPos)} 
-                 if (anim = change && change.meta.animation) {
-                    leash.animate({vertices: leash.vertices, duration: anim.duration})
-                 } else {
-                     leash.vertices = leash.vertices;
+                 this.setVertex({...this.vertex, ...leash.localize(globalPos)});
+              },
+              clearConnection() {
+                 if (this.connectedMorph) {
+                     disconnect(this.connectedMorph, "extent", this, "update");
+                     disconnect(this.connectedMorph, "position", this, "update");
                  }
               },
-              clearPrevious() {
-                 this.connectedMorph && disconnect(this.connectedMorph, "onChange", this, "update");
-              },
               relayout() {
-                const {x,y} = leash.vertices[idx], bw = leash.borderWidth;
-                this.extent = pt(6 + (2*bw), 6 + (2 * bw));
+                const {x,y} = this.getVertex(), bw = leash.borderWidth;
+                // this.extent = this.pt((2*bw), (2 * bw));
                 this.center = pt(x + bw,y + bw);
               },
+              getVertex() {
+                 return leash.vertices[idx];
+              },
+              setVertex(v) {
+                 leash.vertices[idx] = v;
+                 leash.vertices = leash.vertices;
+              },
               attachTo(morph, side) {
-                  this.clearPrevious()
+                  this.clearConnection()
                   this.connectedMorph = morph;
                   this.attachedSide = side;
-                  leash.vertices[idx] = {...leash.vertices[idx], 
-                                         controlPoints: leash.controlPointsFor(side)} 
-                  leash.vertices = leash.vertices;
-                  connect(this.connectedMorph, "onChange", this, "update");
+                  this.vertex = {...leash.vertices[idx], 
+                                 controlPoints: leash.controlPointsFor(side)} 
+                  connect(this.connectedMorph, "position", this, "update");
+                  connect(this.connectedMorph, "extent", this, "update");
                   this.update();
               }})
    }
@@ -83,8 +125,6 @@ export class Leash extends Path {
    }
 
    build() {
-       connect(this, "onChange", this, "relayout");
-       const leash = this;
        this.submorphs = [this.startPoint = this.endpoint(0), this.endPoint = this.endpoint(1)]
    }
 
@@ -210,7 +250,6 @@ export class PropertyInspector extends Morph {
       l.col(1).paddingLeft = 5;
       l.col(1).paddingRight = 5;
       l.col(1).fixed = 25;
-      //l.row(1).paddingTop = -10;
       return l;
    }
 
@@ -409,7 +448,8 @@ export class ModeSelector extends Morph {
       })
       this.build();
       this.update(init ? init : keys[0], 
-                   values[keys.includes(init) ? keys.indexOf(init) : 0]);
+                   values[keys.includes(init) ? keys.indexOf(init) : 0],
+                   true);
       connect(this, "extent", this, "relayout");
     }
 
@@ -456,18 +496,20 @@ export class ModeSelector extends Morph {
     }
 
     async relayout() { 
-        return this.currentLabel && this.get("typeMarker").animate({bounds: this.currentLabel.bounds(), duration: 200}); 
+        return this.currentLabel && this.get("typeMarker").animate({
+                       bounds: this.currentLabel.bounds(), 
+                       duration: 200}); 
     }
     
-    async update(label, value) {
-       const newLabel = this.get(label + "Label"), duration = 200;
+    async update(label, value, silent=false) {
+       const newLabel = this.get(label + "Label"), duration = 200
        if (newLabel == this.currentLabel) return;
        this.currentLabel && this.currentLabel.animate({fontColor: Color.black, duration});
        this.currentLabel = newLabel;
        newLabel.animate({fontColor: Color.white, duration});
-       await this.relayout();
-       signal(this, label, value)
-       signal(this, "switchLabel", value);
+       await this.relayout(duration);
+       !silent && signal(this, label, value)
+       !silent && signal(this, "switchLabel", value);
     }
 }
 
