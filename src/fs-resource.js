@@ -109,3 +109,9 @@ export default class NodeJSFileResource extends Resource {
     });
   }
 }
+
+export var resourceExtension = {
+  name: "nodejs-file-resource",
+  matches: (url) => url.startsWith("file:"),
+  resourceClass: NodeJSFileResource
+}

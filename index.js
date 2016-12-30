@@ -1,32 +1,33 @@
 /*global System*/
-import WebDAVResource from "./src/http-resource.js";
-import NodeJSFileResource from "./src/fs-resource.js";
+import { resourceExtension as httpResourceExtension } from "./src/http-resource.js";
+import { resourceExtension as fileResourceExtension } from "./src/fs-resource.js";
+import { resourceExtension as localResourceExtension } from "./src/local-resource.js";
 
+// var extensions = []
 var extensions = []; // [{name, matches, resourceClass}]
 
-export function resource(url) {
+export function resource(url, opts) {
   if (!url) throw new Error("lively.resource resource constructor: expects url but got " + url);
   if (url.isResource) return url;
   url = String(url);
   for (var i = 0; i < extensions.length; i++)
     if (extensions[i].matches(url))
-      return new extensions[i].resourceClass(url)
-  if (url.startsWith("http:") || url.startsWith("https:")) return new WebDAVResource(url);
-  if (url.startsWith("file:")) return new NodeJSFileResource(url);
+      return new extensions[i].resourceClass(url, opts);
   throw new Error(`Cannot find resource type for url ${url}`);
 }
 
-export async function createFiles(baseDir, fileSpec) {
-  var base = resource(baseDir).asDirectory();
+export async function createFiles(baseDir, fileSpec, opts) {
+  // creates resources as specified in fileSpec, e.g.
+  // {"foo.txt": "hello world", "sub-dir/bar.js": "23 + 19"}
+  // supports both sync and async resources
+  let base = resource(baseDir, opts).asDirectory();
   await base.ensureExistance();
-  for (var name in fileSpec) {
+  for (let name in fileSpec) {
     if (!fileSpec.hasOwnProperty(name)) continue;
-    let resource = base.join(name)
-    if (typeof fileSpec[name] === "object") {
-      await createFiles(resource, fileSpec[name])
-    } else {
+    let resource = base.join(name);
+    typeof fileSpec[name] === "object" ?
+      await createFiles(resource, fileSpec[name], opts) :
       await resource.write(fileSpec[name]);
-    }
   }
   return base;
 }
@@ -104,3 +105,7 @@ export function unregisterExtension(extension) {
   var name = typeof extension === "string" ? extension : extension.name;
   extensions = extensions.filter(ea => ea.name !== name);
 }
+
+registerExtension(localResourceExtension);
+registerExtension(httpResourceExtension);
+registerExtension(fileResourceExtension);

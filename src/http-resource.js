@@ -247,3 +247,10 @@ export default class WebDAVResource extends Resource {
   }
 
 }
+
+
+export var resourceExtension = {
+  name: "http-webdav-resource",
+  matches: (url) => url.startsWith("http:") || url.startsWith("https:"),
+  resourceClass: WebDAVResource
+}
