@@ -27,6 +27,7 @@ class CodeDefTreeData extends TreeData {
 
   constructor(defs) {
     // defs come from lively.ast.categorizer.findDecls()
+    this.defs = defs;
     defs.forEach(ea => ea.children && (ea.isCollapsed = true))
     super({
       name: "root",
@@ -104,7 +105,9 @@ export default class Browser extends Window {
       removeModuleButton,
       removePackageButton,
       runTestsInModuleButton,
-      runTestsInPackageButton
+      runTestsInPackageButton,
+      codeEntityJumpButton,
+      codeEntityTree
     } = this.ui;
 
     connect(searchButton,          'fire', this, 'execCommand', {converter: () => "open code search"});
@@ -118,9 +121,11 @@ export default class Browser extends Window {
     connect(removeModuleButton,    'fire', this, 'execCommand', {converter: () => "remove module"});
     connect(runTestsInModuleButton,'fire', this, 'execCommand', {converter: () => "run all tests in module"});
     connect(runTestsInPackageButton,'fire', this, 'execCommand', {converter: () => "run all tests in package"});
+    connect(codeEntityJumpButton,   'fire', this, 'execCommand', {converter: () => "jump to codeentity"});
 
     connect(packageList, "selection", this, "onPackageSelected");
     connect(moduleList, 'selection', this, 'onModuleSelected');
+    connect(codeEntityTree, 'selection', this, 'onCodeEntitySelected');
 
     moduleList.selection = null;
     packageList.selection = null;
@@ -168,6 +173,7 @@ export default class Browser extends Window {
           codeEntityTreeBounds,
           packageCommandBoxBounds,
           moduleCommandBoxBounds,
+          codeEntityCommandBoxBounds,
           resizerBounds,
           sourceEditorBounds
         ] = bounds.extent().extentAsRectangle().divide([
@@ -177,6 +183,7 @@ export default class Browser extends Window {
           new Rectangle(0.6, 0.04, 0.4, 0.33),
           new Rectangle(0,   0.38, 0.5, 0.04),
           new Rectangle(0.5, 0.38, 0.5, 0.04),
+          new Rectangle(0,   0.38, 1,   0.04),
           new Rectangle(0,   0.42, 1,   0.01),
           new Rectangle(0,   0.43, 1,   0.57)]),
 
@@ -211,13 +218,20 @@ export default class Browser extends Window {
               {...btnStyle, name: "removePackageButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
               {...btnStyle, name: "runTestsInPackageButton", label: "run tests", tooltip: "run tests"}
              ]},
-
+             
             {name: "moduleCommands", bounds: moduleCommandBoxBounds,
              layout: new HorizontalLayout({spacing: 2, autoResize: false}),
+             borderRight: {color: Color.gray, width: 1},
               submorphs: [
                {...btnStyle, name: "addModuleButton", label: Icon.makeLabel("plus"), tooltip: "add module"},
                {...btnStyle, name: "removeModuleButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
                {...btnStyle, name: "runTestsInModuleButton", label: "run tests", tooltip: "run tests", visible: false}
+             ]},
+             
+             {name: "codeEntityCommands", bounds: codeEntityCommandBoxBounds,
+             layout: new HorizontalLayout({spacing: 2, autoResize: false}),
+              submorphs: [
+               {...btnStyle, name: "codeEntityJumpButton", label: Icon.makeLabel("search"), tooltip: "search for code entity"},
              ]},
 
             new HorizontalResizer({name: "hresizer", bounds: resizerBounds}),
@@ -248,6 +262,7 @@ export default class Browser extends Window {
         packageCommands = container.get("packageCommands"),
         moduleList =      container.get("moduleList"),
         moduleCommands =  container.get("moduleCommands"),
+        codeEntityCommands = container.get("codeEntityCommands"),
         codeEntityTree =  container.get("codeEntityTree"),
         sourceEditor =    container.get("sourceEditor"),
         l =               browserCommands.layout;
@@ -258,6 +273,7 @@ export default class Browser extends Window {
     hresizer.addScalingAbove(codeEntityTree);
     hresizer.addFixed(packageCommands);
     hresizer.addFixed(moduleCommands);
+    hresizer.addFixed(codeEntityCommands);
     hresizer.addScalingBelow(sourceEditor);
 
     return container;
@@ -281,6 +297,7 @@ export default class Browser extends Window {
       browserCommands,
       packageCommands,
       moduleCommands,
+      codeEntityCommands,
       sourceEditor,
       hresizer
     } = this.ui;
@@ -290,13 +307,13 @@ export default class Browser extends Window {
     try {
       container.setBounds(this.targetMorphBounds());
 
-      [packageList, packageCommands, moduleList, moduleCommands, codeEntityTree]
+      [packageList, packageCommands, moduleList, moduleCommands, codeEntityTree, codeEntityCommands]
         .forEach(ea => ea.width = container.width/3);
-      [packageCommands, moduleCommands]
+      [packageCommands, moduleCommands, codeEntityCommands]
         .forEach(ea => ea.height = hresizer.top-packageList.bottom);
 
       moduleCommands.left = moduleList.left = packageList.right;
-      codeEntityTree.left = moduleList.right;
+      codeEntityCommands.left = codeEntityTree.left = moduleList.right;
       sourceEditor.height = container.height - hresizer.bottom;
       browserCommands.width = sourceEditor.width = hresizer.width = container.width;
     } finally { this._inLayout = false; }
@@ -324,6 +341,7 @@ export default class Browser extends Window {
       historyForwardButton:  this.getSubmorphNamed("historyForwardButton"),
       hresizer:              this.getSubmorphNamed("hresizer"),
       moduleCommands:        this.getSubmorphNamed("moduleCommands"),
+      codeEntityCommands:    this.getSubmorphNamed("codeEntityCommands"),
       moduleList:            this.getSubmorphNamed("moduleList"),
       packageCommands:       this.getSubmorphNamed("packageCommands"),
       packageList:           this.getSubmorphNamed("packageList"),
@@ -331,6 +349,7 @@ export default class Browser extends Window {
       removePackageButton:   this.getSubmorphNamed("removePackageButton"),
       runTestsInPackageButton:this.getSubmorphNamed("runTestsInPackageButton"),
       runTestsInModuleButton:this.getSubmorphNamed("runTestsInModuleButton"),
+      codeEntityJumpButton:  this.getSubmorphNamed("codeEntityJumpButton"),
       searchButton:          this.getSubmorphNamed("searchButton"),
       sourceEditor:          this.getSubmorphNamed("sourceEditor"),
       evalBackendList:       this.getSubmorphNamed("eval backend list")
@@ -556,6 +575,42 @@ export default class Browser extends Window {
 
   }
 
+  onCodeEntitySelected(entity) {
+    if (!entity) return;
+    var { sourceEditor } = this.ui,
+        start = sourceEditor.indexToPosition(entity.node.start),
+        end = sourceEditor.indexToPosition(entity.node.end)
+    sourceEditor.cursorPosition = start;
+    sourceEditor.flash({start, end}, {id: 'codeentity', time: 1000, fill: Color.rgb(200,235,255)});
+    sourceEditor.centerRow();
+  }
+
+  findCodeEntity({name, type, parent}) {
+    var parentDef = parent ? this.findCodeEntity(parent) : null;
+    var defs = this.ui.codeEntityTree.treeData.defs;
+    if (!defs) return null;
+    return defs.find(def => {
+      if (parentDef && def.parent !== parentDef) return false;
+      if (def.name !== name) return false;
+      if (!type || def.type === type) return true;
+      if (type === "method" && def.type.includes("method")) return true;
+      return false;
+    });
+  }
+
+  selectCodeEntity(spec) {
+    var {codeEntityTree} = this.ui, td = codeEntityTree.treeData,
+        def = this.findCodeEntity(spec),
+        path = []; while (def) { path.unshift(def); def = def.parent; };
+    path.unshift(td.root)
+    td.followPath(path);
+    codeEntityTree.selection = arr.last(path);
+    codeEntityTree.centerSelection();
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  
+
   async updateModuleList(p = this.selectedPackage) {
     if (!p) return;
     var mods = await this.packageResources(p);
@@ -776,13 +831,32 @@ export default class Browser extends Window {
       {keys: "Alt-P", command: "browser history backward"},
       {keys: "Alt-N", command: "browser history forward"},
       {keys: "Alt-H", command: "browser history browse"},
-      {keys: "Meta-Shift-L b a c k e n d", command: "activate eval backend dropdown list"}
+      {keys: "Meta-Shift-L b a c k e n d", command: "activate eval backend dropdown list"},
+      {keys: "Alt-J", command: "jump to codeentity"}
     ].concat(super.keybindings);
   }
 
   get commands() {
     return browserCommands(this)
       .concat(EvalBackendChooser.default.activateEvalBackendCommand(this));
+  }
+
+  onContextMenu(evt) {
+    evt.stop();
+
+    var target = evt.targetMorph;
+    var {
+      sourceEditor,
+      packageList,
+      moduleList,
+      codeEntityTree
+    } = this.ui;
+
+    var items = [];
+    if ([sourceEditor, packageList, moduleList, codeEntityTree].includes(target))
+      items.push(...target.menuItems());
+
+    this.openMenu([...items, ...this.menuItems()], evt);
   }
 
   menuItems() {

@@ -23,6 +23,33 @@ export default function browserCommands(browser) {
     {name: "browser history forward", exec: browser => { browser.historyForward(); return true; }},
 
     {
+      name: "jump to codeentity",
+      exec: async browser => {
+        var codeEntities = browser.ui.codeEntityTree.treeData.defs,
+            currentIdx = codeEntities.indexOf(browser.ui.codeEntityTree.selection),
+            items = codeEntities.map(def => {
+              var {name, type, parent} = def;
+              return {
+                isListItem: true,
+                label: [
+                  [`${parent ? parent.name + ">>" : ""}${name}`, {}],
+                  [`${type}`, {fontSize: "70%", textStyleClasses: ["annotation"]}]
+                ],
+                value: def
+              }
+            }),
+            {selected: [choice]} = await browser.world().filterableListPrompt(
+                                    "Select item", items,
+                                    {
+                                      preselect: currentIdx,
+                                      historyId: "js-browser-codeentity-jumo-hist"
+                                    });
+        if (choice) browser.selectCodeEntity(choice);
+        return true;
+      }
+    },
+
+    {
       name: "browser history browse",
       async exec: browser => {
         var {left, right} = browser.state.history,
