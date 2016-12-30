@@ -5,6 +5,7 @@
   </head>
   <body style="margin: 0;">
     <div id="lively-world"></div>
+    <script src="/lively.modules/node_modules/babel-standalone/babel.js"></script>
     <script src="/lively.modules/node_modules/systemjs/dist/system.src.js"></script>
     <script src="/lively.modules/dist/lively.modules.js"></script>
 
@@ -34,7 +35,11 @@
 
           .then(function() { console.log("2. preparing to bootstrap..."); })
 
-          .then(function () { return lively.modules.changeSystem(lively.modules.getSystem("bootstrapped"), true); })
+          .then(function () {
+            var System = lively.modules.getSystem("bootstrapped");
+            // System.debug = true;
+            return lively.modules.changeSystem(System, true);
+          })
 
           .then(function() {
             return importPackageAndDo(
@@ -67,8 +72,6 @@
               function(m) { lively.modules = m; lively.modules.unwrapModuleLoad(); lively.modules.wrapModuleLoad(); })})
 
           .then(function() { return importPackageAndDo(origin + "/lively.2lively"); })
-
-          .then(function () { return importPackageAndDo(origin + '/lively-system-interface'); })
 
           .then(function() { console.log("...lively.system bootstrapped!"); })
       }
