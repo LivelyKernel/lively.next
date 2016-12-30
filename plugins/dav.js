@@ -56,7 +56,19 @@ export default class LivelyDAVPlugin {
     }
     this.server.baseUri = path + '/';
     req.url = path + req.url;
-    new DavHandler(this.server, req, res);
+    this.callDAV(req, res);
+  }
+
+  callDAV(req, res) {
+    var handler = new DavHandler(this.server, req, res);
+    if (handler.plugins.browser) {
+      var origGetAssetUrl = handler.plugins.browser.getAssetUrl;
+      handler.plugins.browser.getAssetUrl = function (assetName) {
+        if (assetName === "favicon.ico")
+          return this.handler.server.getBaseUri() + assetName;
+        return origGetAssetUrl.call(this, assetName)
+      }
+    }
   }
 
   close() {
