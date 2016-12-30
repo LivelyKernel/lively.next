@@ -1,7 +1,7 @@
 import Resource from "./resource.js";
 import { createFiles } from '../index.js';
 
-var debug = true;
+var debug = false;
 const slashRe = /\//g;
 
 function applyExclude(resource, exclude) {

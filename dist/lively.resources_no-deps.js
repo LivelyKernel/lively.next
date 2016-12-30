@@ -1722,7 +1722,7 @@ var resourceExtension$1 = {
   resourceClass: NodeJSFileResource
 };
 
-var debug = true;
+var debug = false;
 var slashRe = /\//g;
 
 function applyExclude$1(resource$$1, exclude) {
