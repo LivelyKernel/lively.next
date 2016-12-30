@@ -140,14 +140,14 @@ var possibleConstructorReturn = function (self, call) {
 
 
 
-var set = function set(object, property, value, receiver) {
+var set$1 = function set$1(object, property, value, receiver) {
   var desc = Object.getOwnPropertyDescriptor(object, property);
 
   if (desc === undefined) {
     var parent = Object.getPrototypeOf(object);
 
     if (parent !== null) {
-      set(parent, property, value, receiver);
+      set$1(parent, property, value, receiver);
     }
   } else if ("value" in desc && desc.writable) {
     desc.value = value;
@@ -219,6 +219,11 @@ var Resource = function () {
       return this.constructor.name + "(\"" + this.url + "\")";
     }
   }, {
+    key: "newResource",
+    value: function newResource(url) {
+      return resource(url);
+    }
+  }, {
     key: "path",
     value: function path() {
       var path = this.url.replace(protocolRe, "").replace(slashslashRe, "");
@@ -230,6 +235,20 @@ var Resource = function () {
       return this.path().replace(/\/$/, "").split("/").slice(-1)[0];
     }
   }, {
+    key: "scheme",
+    value: function scheme() {
+      return this.url.split(":")[0];
+    }
+  }, {
+    key: "host",
+    value: function host() {
+      var idx = this.url.indexOf("://");
+      if (idx === -1) return null;
+      var noScheme = this.url.slice(idx + 3),
+          slashIdx = noScheme.indexOf("/");
+      return noScheme.slice(0, slashIdx > -1 ? slashIdx : noScheme.length);
+    }
+  }, {
     key: "schemeAndHost",
     value: function schemeAndHost() {
       if (this.isRoot()) return this.asFile().url;
@@ -239,7 +258,7 @@ var Resource = function () {
     key: "parent",
     value: function parent() {
       if (this.isRoot()) return null;
-      return resource(this.url.replace(slashEndRe, "").split("/").slice(0, -1).join("/") + "/");
+      return this.newResource(this.url.replace(slashEndRe, "").split("/").slice(0, -1).join("/") + "/");
     }
   }, {
     key: "parents",
@@ -324,7 +343,13 @@ var Resource = function () {
   }, {
     key: "join",
     value: function join(path) {
-      return resource(this.url.replace(slashEndRe, "") + "/" + path.replace(slashStartRe, ""));
+      return this.newResource(this.url.replace(slashEndRe, "") + "/" + path.replace(slashStartRe, ""));
+    }
+  }, {
+    key: "withPath",
+    value: function withPath(path) {
+      var root = this.isRoot() ? this : this.root();
+      return root.join(path);
     }
   }, {
     key: "isRoot",
@@ -345,20 +370,20 @@ var Resource = function () {
     key: "asDirectory",
     value: function asDirectory() {
       if (this.url.endsWith("/")) return this;
-      return resource(this.url.replace(slashEndRe, "") + "/");
+      return this.newResource(this.url.replace(slashEndRe, "") + "/");
     }
   }, {
     key: "root",
     value: function root() {
       if (this.isRoot()) return this;
       var toplevel = this.url.slice(0, -this.path().length);
-      return resource(toplevel + "/");
+      return this.newResource(toplevel + "/");
     }
   }, {
     key: "asFile",
     value: function asFile() {
       if (!this.url.endsWith("/")) return this;
-      return resource(this.url.replace(slashEndRe, ""));
+      return this.newResource(this.url.replace(slashEndRe, ""));
     }
   }, {
     key: "assignProperties",
@@ -493,11 +518,11 @@ var Resource = function () {
         }, _callee4, this);
       }));
 
-      function exists$$1() {
+      function exists() {
         return _ref4.apply(this, arguments);
       }
 
-      return exists$$1;
+      return exists;
     }()
   }, {
     key: "remove",
@@ -910,11 +935,11 @@ var WebDAVResource = function (_Resource) {
         }, _callee3, this);
       }));
 
-      function mkdir$$1() {
+      function mkdir() {
         return _ref3.apply(this, arguments);
       }
 
-      return mkdir$$1;
+      return mkdir;
     }()
   }, {
     key: "exists",
@@ -951,11 +976,11 @@ var WebDAVResource = function (_Resource) {
         }, _callee4, this);
       }));
 
-      function exists$$1() {
+      function exists() {
         return _ref4.apply(this, arguments);
       }
 
-      return exists$$1;
+      return exists;
     }()
   }, {
     key: "remove",
@@ -1169,6 +1194,14 @@ var WebDAVResource = function (_Resource) {
   return WebDAVResource;
 }(Resource);
 
+var resourceExtension = {
+  name: "http-webdav-resource",
+  matches: function matches(url) {
+    return url.startsWith("http:") || url.startsWith("https:");
+  },
+  resourceClass: WebDAVResource
+};
+
 function wrapInPromise(func) {
   return function () {
     for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
@@ -1187,8 +1220,8 @@ var readFileP = wrapInPromise(fs.readFile);
 var writeFileP = wrapInPromise(fs.writeFile);
 var existsP = function existsP(path) {
   return new Promise(function (resolve, reject) {
-    return fs.exists(path, function (exists$$1) {
-      return resolve(!!exists$$1);
+    return fs.exists(path, function (exists) {
+      return resolve(!!exists);
     });
   });
 };
@@ -1325,11 +1358,11 @@ var NodeJSFileResource = function (_Resource) {
         }, _callee4, this);
       }));
 
-      function mkdir$$1(_x2) {
+      function mkdir(_x2) {
         return _ref4.apply(this, arguments);
       }
 
-      return mkdir$$1;
+      return mkdir;
     }()
   }, {
     key: "exists",
@@ -1349,11 +1382,11 @@ var NodeJSFileResource = function (_Resource) {
         }, _callee5, this);
       }));
 
-      function exists$$1() {
+      function exists() {
         return _ref5.apply(this, arguments);
       }
 
-      return exists$$1;
+      return exists;
     }()
   }, {
     key: "dirList",
@@ -1681,29 +1714,275 @@ var NodeJSFileResource = function (_Resource) {
   return NodeJSFileResource;
 }(Resource);
 
+var resourceExtension$1 = {
+  name: "nodejs-file-resource",
+  matches: function matches(url) {
+    return url.startsWith("file:");
+  },
+  resourceClass: NodeJSFileResource
+};
+
+var debug = true;
+var slashRe = /\//g;
+
+function applyExclude$1(resource$$1, exclude) {
+  if (!exclude) return true;
+  if (typeof exclude === "string") return !resource$$1.url.includes(exclude);
+  if (typeof exclude === "function") return !exclude(resource$$1);
+  if (exclude instanceof RegExp) return !exclude.test(resource$$1.url);
+  return true;
+}
+
+var LocalResourceInMemoryBackend = function () {
+  createClass(LocalResourceInMemoryBackend, null, [{
+    key: "removeHost",
+    value: function removeHost(name) {
+      delete this.hosts[name];
+    }
+  }, {
+    key: "ensure",
+    value: function ensure(filespec) {
+      var _this = this;
+
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+      var host = this.named(options.host);
+      return Promise.resolve().then(function () {
+        return filespec ? createFiles("local://" + host.name, filespec) : null;
+      }).then(function () {
+        return _this;
+      });
+    }
+  }, {
+    key: "named",
+    value: function named(name) {
+      if (!name) name = "default";
+      return this.hosts[name] || (this.hosts[name] = new this(name));
+    }
+  }, {
+    key: "hosts",
+    get: function get() {
+      return this._hosts || (this._hosts = {});
+    }
+  }]);
+
+  function LocalResourceInMemoryBackend(name) {
+    var filespec = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    classCallCheck(this, LocalResourceInMemoryBackend);
+
+    if (!name || typeof name !== "string") throw new Error("LocalResourceInMemoryBackend needs name!");
+    this.name = name;
+    this._filespec = filespec;
+  }
+
+  createClass(LocalResourceInMemoryBackend, [{
+    key: "get",
+    value: function get(path) {
+      return this._filespec[path];
+    }
+  }, {
+    key: "set",
+    value: function set(path, spec) {
+      this._filespec[path] = spec;
+    }
+  }, {
+    key: "write",
+    value: function write(path, content) {
+      var spec = this._filespec[path];
+      if (!spec) spec = this._filespec[path] = { created: new Date() };
+      spec.content = content;
+      spec.isDirectory = false;
+      spec.lastModified = new Date();
+    }
+  }, {
+    key: "read",
+    value: function read(path) {
+      var spec = this._filespec[path];
+      return !spec || !spec.content ? "" : spec.content;
+    }
+  }, {
+    key: "mkdir",
+    value: function mkdir(path) {
+      var spec = this._filespec[path];
+      if (spec && spec.isDirectory) return;
+      if (!spec) spec = this._filespec[path] = { created: new Date() };
+      if (spec.content) delete spec.content;
+      spec.isDirectory = true;
+      spec.lastModified = new Date();
+    }
+  }, {
+    key: "partialFilespec",
+    value: function partialFilespec() {
+      var path = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "/";
+      var depth = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : Infinity;
+
+      var result = {},
+          filespec = this.filespec,
+          paths = Object.keys(filespec);
+
+      for (var i = 0; i < paths.length; i++) {
+        var childPath = paths[i];
+        if (!childPath.startsWith(path) || path === childPath) continue;
+        var trailing = childPath.slice(path.length),
+            childDepth = trailing.includes("/") ? trailing.match(slashRe).length + 1 : 1;
+        if (childDepth > depth) continue;
+        result[childPath] = filespec[childPath];
+      }
+      return result;
+    }
+  }, {
+    key: "filespec",
+    get: function get() {
+      return this._filespec;
+    },
+    set: function set(filespec) {
+      this._filespec = filespec;
+    }
+  }]);
+  return LocalResourceInMemoryBackend;
+}();
+
+var LocalResource = function (_Resource) {
+  inherits(LocalResource, _Resource);
+
+  function LocalResource() {
+    classCallCheck(this, LocalResource);
+    return possibleConstructorReturn(this, (LocalResource.__proto__ || Object.getPrototypeOf(LocalResource)).apply(this, arguments));
+  }
+
+  createClass(LocalResource, [{
+    key: "read",
+    value: function read() {
+      return Promise.resolve(this.localBackend.read(this.path()));
+    }
+  }, {
+    key: "write",
+    value: function write(content) {
+      debug && console.log("[" + this + "] write");
+      if (this.isDirectory()) throw new Error("Cannot write into a directory! (" + this.url + ")");
+      var spec = this.localBackend.get(this.path());
+      if (spec && spec.isDirectory) throw new Error(this.url + " already exists and is a directory (cannot write into it!)");
+      this.localBackend.write(this.path(), content);
+      return Promise.resolve(this);
+    }
+  }, {
+    key: "mkdir",
+    value: function mkdir() {
+      debug && console.log("[" + this + "] mkdir");
+      if (!this.isDirectory()) throw new Error("Cannot mkdir a file! (" + this.url + ")");
+      var spec = this.localBackend.get(this.path());
+      if (spec && spec.isDirectory) return Promise.resolve(this);
+      if (spec && !spec.isDirectory) throw new Error(this.url + " already exists and is a file (cannot mkdir it!)");
+      this.localBackend.mkdir(this.path());
+      return Promise.resolve(this);
+    }
+  }, {
+    key: "exists",
+    value: function exists() {
+      debug && console.log("[" + this + "] exists");
+      return Promise.resolve(this.isRoot() || this.path() in this.localBackend.filespec);
+    }
+  }, {
+    key: "remove",
+    value: function remove() {
+      var _this3 = this;
+
+      debug && console.log("[" + this + "] remove");
+      var thisPath = this.path();
+      Object.keys(this.localBackend.filespec).forEach(function (path) {
+        return path.startsWith(thisPath) && delete _this3.localBackend.filespec[path];
+      });
+      return Promise.resolve(this);
+    }
+  }, {
+    key: "readProperties",
+    value: function readProperties() {
+      debug && console.log("[" + this + "] readProperties");
+      throw new Error("not yet implemented");
+    }
+  }, {
+    key: "dirList",
+    value: function dirList() {
+      var _this4 = this;
+
+      var depth = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+      var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+      debug && console.log("[" + this + "] dirList");
+      if (!this.isDirectory()) return this.asDirectory().dirList(depth, opts);
+
+      var exclude = opts.exclude,
+          prefix = this.path(),
+          children = [],
+          paths = Object.keys(this.localBackend.filespec);
+
+
+      if (depth === "infinity") depth = Infinity;
+
+      for (var i = 0; i < paths.length; i++) {
+        var childPath = paths[i];
+        if (!childPath.startsWith(prefix) || prefix === childPath) continue;
+        var trailing = childPath.slice(prefix.length),
+            childDepth = trailing.includes("/") ? trailing.match(slashRe).length + 1 : 1;
+        if (childDepth > depth) {
+          var _ret = function () {
+            // add the dir pointing to child
+            var dirToChild = _this4.join(trailing.split("/").slice(0, depth).join("/") + "/");
+            if (!children.some(function (ea) {
+              return ea.equals(dirToChild);
+            })) children.push(dirToChild);
+            return "continue";
+          }();
+
+          if (_ret === "continue") continue;
+        }
+        var child = this.join(trailing);
+        if (!exclude || applyExclude$1(child, exclude)) children.push(child);
+      }
+      return Promise.resolve(children);
+    }
+  }, {
+    key: "localBackend",
+    get: function get() {
+      return LocalResourceInMemoryBackend.named(this.host());
+    }
+  }]);
+  return LocalResource;
+}(Resource);
+
+var resourceExtension$2 = {
+  name: "local-resource",
+  matches: function matches(url) {
+    return url.startsWith("local:");
+  },
+  resourceClass: LocalResource
+};
+
 /*global System*/
+// var extensions = []
 var extensions = []; // [{name, matches, resourceClass}]
 
-function resource(url) {
+function resource(url, opts) {
   if (!url) throw new Error("lively.resource resource constructor: expects url but got " + url);
   if (url.isResource) return url;
   url = String(url);
   for (var i = 0; i < extensions.length; i++) {
-    if (extensions[i].matches(url)) return new extensions[i].resourceClass(url);
-  }if (url.startsWith("http:") || url.startsWith("https:")) return new WebDAVResource(url);
-  if (url.startsWith("file:")) return new NodeJSFileResource(url);
-  throw new Error("Cannot find resource type for url " + url);
+    if (extensions[i].matches(url)) return new extensions[i].resourceClass(url, opts);
+  }throw new Error("Cannot find resource type for url " + url);
 }
 
 var createFiles = function () {
-  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(baseDir, fileSpec) {
+  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(baseDir, fileSpec, opts) {
     var base, name, _resource;
 
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
-            base = resource(baseDir).asDirectory();
+            // creates resources as specified in fileSpec, e.g.
+            // {"foo.txt": "hello world", "sub-dir/bar.js": "23 + 19"}
+            // supports both sync and async resources
+            base = resource(baseDir, opts).asDirectory();
             _context.next = 3;
             return base.ensureExistance();
 
@@ -1734,7 +2013,7 @@ var createFiles = function () {
             }
 
             _context.next = 12;
-            return createFiles(_resource, fileSpec[name]);
+            return createFiles(_resource, fileSpec[name], opts);
 
           case 12:
             _context.next = 16;
@@ -1759,7 +2038,7 @@ var createFiles = function () {
     }, _callee, this);
   }));
 
-  return function createFiles(_x, _x2) {
+  return function createFiles(_x, _x2, _x3) {
     return _ref.apply(this, arguments);
   };
 }();
@@ -1870,6 +2149,10 @@ function unregisterExtension(extension) {
     return ea.name !== name;
   });
 }
+
+registerExtension(resourceExtension$2);
+registerExtension(resourceExtension);
+registerExtension(resourceExtension$1);
 
 exports.resource = resource;
 exports.createFiles = createFiles;
