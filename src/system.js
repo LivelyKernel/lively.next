@@ -156,6 +156,11 @@ function urlQuery() {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // name resolution extensions
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+const dotSlashStartRe = /^\.?\//,
+      trailingSlashRe = /\/$/,
+      jsExtRe = /\.js$/,
+      jsonJsExtRe = /\.json\.js$/i,
+      doubleSlashRe = /.\/{2,}/g;
 
 function normalizeHook(proceed, name, parent, parentAddress) {
   var System = this;
@@ -165,20 +170,20 @@ function normalizeHook(proceed, name, parent, parentAddress) {
   // names with double slashes which causes module id issues later. This fixes
   // that...
   // name = name.replace(/([^:])\/\/+/g, "$1\/");
-  name = name.replace(/.\/{2,}/g, (match) => match[0] === ":" ? match : match[0]+"/");
+  name = name.replace(doubleSlashRe, (match) => match[0] === ":" ? match : match[0]+"/");
 
   return proceed(name, parent, parentAddress)
     .then(result => {
 
       // lookup package main
-      var base = result.replace(/\.js$/, "");
+      var base = result.replace(jsExtRe, "");
       if (base in System.packages) {
         var main = System.packages[base].main;
-        if (main) return base.replace(/\/$/, "") + "/" + main.replace(/^\.?\//, "");
+        if (main) return base.replace(trailingSlashRe, "") + "/" + main.replace(dotSlashStartRe, "");
       }
 
       // Fix issue with accidentally adding .js
-      var m = result.match(/(.*\.json)\.js/i);
+      var m = result.match(jsonJsExtRe);
       if (m) return m[1];
 
       return result;
@@ -202,14 +207,14 @@ function decanonicalizeHook(proceed, name, parent, isPlugin) {
   var result = proceed(name, parent, isPlugin);
 
   // lookup package main
-  var base = result.replace(/\.js$/, "");
+  var base = result.replace(jsExtRe, "");
   if (base in System.packages) {
     var main = System.packages[base].main;
-    if (main) return base.replace(/\/$/, "") + "/" + main.replace(/^\.?\//, "");
+    if (main) return base.replace(trailingSlashRe, "") + "/" + main.replace(dotSlashStartRe, "");
   }
 
   // Fix issue with accidentally adding .js
-  var m = result.match(/(.*\.json)\.js/i);
+  var m = result.match(jsonJsExtRe);
   if (m) return m[1];
 
   return result;

@@ -36,7 +36,7 @@ describe("lively.modules aware eval", () => {
     // 3. re-import in virtual module
     // 4. real module source change => should update virtual module, no error
     await module1.load();
-    var virtualModule = module(S, "lively://foo/mod1");
+    var virtualModule = module(S, "local://foo/mod1");
     await runEval(`import { x } from '${module1.id}';`, {targetModule: virtualModule.id, System: S});
     expect(virtualModule).to.have.deep.property("recorder.x", 23);
     await module1.reload();
@@ -47,8 +47,8 @@ describe("lively.modules aware eval", () => {
 
 
   it("exports and imports are updated on eval", async () => {
-    var m1 = S.get("@lively-env").moduleEnv("lively://foo/mod1"),
-        m2 = S.get("@lively-env").moduleEnv("lively://foo/mod2");
+    var m1 = S.get("@lively-env").moduleEnv("local://foo/mod1"),
+        m2 = S.get("@lively-env").moduleEnv("local://foo/mod2");
     await runEval("export var z = 23;", {targetModule: m1.id, System: S});
     await runEval(`import { z } from '${m1.id}';`, {targetModule: m2.id, System: S});
     expect(m2).to.have.deep.property("recorder.z", 23);
