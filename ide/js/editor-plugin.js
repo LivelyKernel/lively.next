@@ -128,6 +128,11 @@ export class JavaScriptEditorPlugin extends EditorPlugin {
       {System, targetModule, format, context, sourceURL}
   }
 
+  backend(envMixin) {
+    var env = this.sanatizedJsEnv(envMixin);
+    return env.remote ? env.remote : "local";
+  }
+
   systemInterface(envMixin) {
     var {serverInterfaceFor, localInterface} = System.get(System.decanonicalize("lively-system-interface"))
     if (!serverInterfaceFor || !localInterface)
