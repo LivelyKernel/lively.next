@@ -229,6 +229,9 @@ var config = {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // ide related
       {keys: "Ctrl-C E", command: "[javascript] list errors and warnings"},
+      {keys: {mac: "Meta-Shift-L L I N T R", win: "Ctrl-Shift-L L I N T R"}, command: "[javascript] eslint report"},
+      {keys: {mac: "Meta-Shift-L L I N T P", win: "Ctrl-Shift-L L I N T P"}, command: "[javascript] eslint preview fixes"},
+      {keys: {mac: "Meta-Shift-L L I N T F", win: "Ctrl-Shift-L L I N T F"}, command: "[javascript] eslint fix"},
       {keys: "Ctrl-C I", command: "[javascript] inject import"},
 
       {keys: {win: 'Shift-Ctrl-S|Ctrl-Alt-Space', mac: 'Ctrl-Command-space|Ctrl-Alt-Space'},      command: 'contractRegion'},

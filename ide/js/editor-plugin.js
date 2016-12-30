@@ -13,7 +13,8 @@ import {
   jsEditorCommands,
   astEditorCommands,
   insertStringWithBehaviorCommand,
-  deleteBackwardsWithBehavior
+  deleteBackwardsWithBehavior,
+  tabBehavior
 } from "./commands.js";
 
 import EditorPlugin from "../editor-plugin.js";
@@ -68,7 +69,7 @@ export class JavaScriptEditorPlugin extends EditorPlugin {
   getCommands(otherCommands) {
     var idx = otherCommands.findIndex(({name}) => name === "insertstring");
     otherCommands.splice(idx, 1, {...otherCommands[idx], name: "insertstring_default"});
-    return [insertStringWithBehaviorCommand, deleteBackwardsWithBehavior]
+    return [insertStringWithBehaviorCommand, deleteBackwardsWithBehavior, tabBehavior]
       .concat(otherCommands)
       .concat(jsIdeCommands)
       .concat(jsEditorCommands)

@@ -362,6 +362,34 @@ export var jsIdeCommands = [
       text.setStatusMessage(status);
       return true
     }
+  },
+  
+  {
+    name: "[javascript] eslint report",
+    exec: async text => {
+      var { default: ESLinter } = await System.import("lively.morphic/ide/js/eslint.js")
+      try { return ESLinter.reportOnMorph(text); } catch(e) { text.showError(e); }
+    }
+  },
+
+  {
+    name: "[javascript] eslint preview fixes",
+    exec: async text => {
+      var { default: ESLinter } = await System.import("lively.morphic/ide/js/eslint.js")
+      try { return ESLinter.previewFixesOnMorph(text); } catch(e) { text.showError(e); }
+    }
+  },
+
+  {
+    name: "[javascript] eslint fix",
+    exec: async text => {
+      var { default: ESLinter } = await System.import("lively.morphic/ide/js/eslint.js");
+      var range = text.selection.isEmpty() ? null : text.selection.range;
+      try {
+        var {replacedRange} = await ESLinter.fixMorph(text, range);
+      } catch(e) { text.showError(e); return; }
+      if (range && replacedRange) text.selection = replacedRange;
+    }
   }
 
 ];
@@ -456,6 +484,22 @@ export var deleteBackwardsWithBehavior = {
     sel.collapse();
     if (morph.activeMark) morph.activeMark = null;
     return true;
+  }
+}
+export var tabBehavior = {
+  name: "tab - snippet expand or indent",
+  scrollCursorIntoView: true,
+  exec: function(morph) {
+    if (!morph.selection.isEmpty()) {
+      return morph.execCommand("[javascript] eslint fix");
+    }
+
+    var snippet = morph.snippets.find(snippet => snippet.canExpand(morph));
+    if (snippet) {
+      snippet.expandAtCursor(morph);
+      return true;
+    }
+    return morph.execCommand("insertstring", {string: morph.tab});
   }
 }
 
