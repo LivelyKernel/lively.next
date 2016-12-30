@@ -8,6 +8,7 @@ import { Morph, Text, World, config } from "lively.morphic";
 import { ShellEditorPlugin} from "./editor-plugin.js";
 
 import { DiffEditorPlugin } from "lively.morphic/ide/diff/editor-plugin.js";
+import { guessTextModeName } from "lively.morphic/ide/editor-plugin.js";
 
 // var t = Terminal.runCommand("ls")
 // var t = Terminal.open()
@@ -17,39 +18,6 @@ import { DiffEditorPlugin } from "lively.morphic/ide/diff/editor-plugin.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // 2016-11-21 FIXME, move this to a common location
-
-function guessTextModeName(editor, filename = "", hint) {
-  var mode = hint || "text",
-      start = editor.textString.slice(0, 2000);
-  // content tests
-  if (start.match(/^diff --.* a\//m)) mode = "diff";
-  else if (start.match(/#!\/bin\//m)) mode = "sh";
-  else {
-    // file-based tests
-    var ext = filename && arr.last(filename.split(".")).toLowerCase();
-    switch(ext) {
-      case "r": mode = "r"; break;
-      case "css": mode = "css"; break;
-      case "h": case "c": case "cc": case "cpp": case "hpp": mode = "c_cpp"; break;
-      case "diff": mode = "diff"; break;
-      case "xhtml": case "html": mode = "html"; break;
-      case "js": mode = "javascript"; break;
-      case "json": mode = "json"; break;
-      case "jade": mode = "jade"; break;
-      case "ejs": mode = "ejs"; break;
-      case "markdown": case "md": mode = "markdown"; break;
-      case "sh": case "bashrc": case "bash_profile": case "profile": mode = "sh"; break;
-      case "dockerfile": mode = "dockerfile"; break;
-      case "xml": mode = "xml"; break;
-      case "svg": mode = "svg"; break;
-      case "lisp": case "el": mode = "lisp"; break;
-      case "clj": case "cljs": case "cljx": case "cljc": mode = "clojure"; break;
-      case "cabal": case "hs": mode = "haskell"; break;
-      case "py": mode = "python"; break;
-    }
-  }
-  return mode;
-}
 
 export default class Terminal extends Morph {
 

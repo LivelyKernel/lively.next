@@ -4,7 +4,7 @@
 // by the text morph if the aditor plugin is added to the plugin list.
 // The abstract class implements the interface that can be used.
 
-import { fun } from "lively.lang";
+import { fun, arr } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
 
 import ChromeTheme from "./themes/chrome.js";
@@ -17,6 +17,39 @@ const themes = {
   "github" : GithubTheme
 };
 
+
+export function guessTextModeName(editor, filename = "", hint) {
+  var mode = hint || "text",
+      start = editor.textString.slice(0, 2000);
+  // content tests
+  if (start.match(/^diff --.* a\//m)) mode = "diff";
+  else if (start.match(/#!\/bin\//m)) mode = "sh";
+  else {
+    // file-based tests
+    var ext = filename && arr.last(filename.split(".")).toLowerCase();
+    switch(ext) {
+      case "r": mode = "r"; break;
+      case "css": mode = "css"; break;
+      case "h": case "c": case "cc": case "cpp": case "hpp": mode = "c_cpp"; break;
+      case "diff": mode = "diff"; break;
+      case "xhtml": case "html": mode = "html"; break;
+      case "js": mode = "javascript"; break;
+      case "json": mode = "json"; break;
+      case "jade": mode = "jade"; break;
+      case "ejs": mode = "ejs"; break;
+      case "markdown": case "md": mode = "markdown"; break;
+      case "sh": case "bashrc": case "bash_profile": case "profile": mode = "sh"; break;
+      case "dockerfile": mode = "dockerfile"; break;
+      case "xml": mode = "xml"; break;
+      case "svg": mode = "svg"; break;
+      case "lisp": case "el": mode = "lisp"; break;
+      case "clj": case "cljs": case "cljx": case "cljc": mode = "clojure"; break;
+      case "cabal": case "hs": mode = "haskell"; break;
+      case "py": mode = "python"; break;
+    }
+  }
+  return mode;
+}
 
 export default class EditorPlugin {
 
