@@ -67,6 +67,8 @@ export async function install(baseDir, toURL) {
     var baseDirForExec = baseDir.replace(/^file:\/\//, ""),
         {code, output} = await exec(`cp ${baseDirForExec}/lively.morphic/examples/initial/* ${baseDirForExec}`);
     if (code) console.error("workspace setup failed", output);
+    var {code, output} = await exec(`cp ${baseDirForExec}/lively.morphic/assets/favicon.ico ${baseDirForExec}`);
+    if (code) console.error("asset setup failed", output);
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
