@@ -101,8 +101,8 @@ export class FillLayout extends Layout {
   
   apply(animate = false) {
     /* FIXME: Add support for destructuring default values */
-    super.apply(animate);
     if (this.active || !this.container) return;
+    super.apply(animate);
     const {fixedWidth, fixedHeight} = this,
           {top, bottom, left, right} = this.spacing,
           height = !fixedHeight  && this.container.height - top - bottom,
@@ -139,8 +139,8 @@ export class VerticalLayout extends Layout {
   set spacing(offset) { this._spacing = offset; this.apply(); }
 
   apply(animate = false) {
-    super.apply(animate);
     if (this.active || !this.container) return;
+    super.apply(animate);
     var pos = pt(this.spacing, this.spacing),
         submorphs = this.container.submorphs.filter(m => !this.ignore.includes(m.name)),
         maxWidth = 0;
@@ -186,8 +186,8 @@ export class HorizontalLayout extends Layout {
   set spacing(offset) { this._spacing = offset; this.apply(); }
 
   apply(animate = false) {
-    super.apply(animate);
     if (this.active || !this.container) return;
+    super.apply(animate);
     var pos = pt(this.spacing, this.spacing),
         submorphs = this.container.submorphs.filter(m => !this.ignore.includes(m.name)),
         maxHeight = 0;
@@ -228,6 +228,8 @@ export class TilingLayout extends Layout {
   }
 
   apply(animate = false) {
+    if (this.active) return;
+    this.active = true;
     super.apply(animate);
     var width = this.getOptimalWidth(),
         currentRowHeight = 0,
@@ -235,9 +237,6 @@ export class TilingLayout extends Layout {
         spacing = this.spacing,
         previousRowHeight = spacing,
         i = 0, rowSwitch = true;
-
-    if (this.active) return;
-    this.active = true;
 
     while (i < this.container.submorphs.length) {
         var submorphExtent = this.container.submorphs[i].extent, newPos;
@@ -892,9 +891,9 @@ export class GridLayout extends Layout {
   }
 
   apply(animate = false) {
-    super.apply(animate);
     if (this.active) return;
     this.active = true;
+    super.apply(animate);
     if (!this.grid) this.initGrid();
     this.container.submorphs.forEach(m => {
          const g = this.getCellGroupFor(m);
