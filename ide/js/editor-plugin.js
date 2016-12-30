@@ -1,4 +1,5 @@
 import { string } from "lively.lang";
+import { serverInterfaceFor, localInterface } from "lively-system-interface";
 import { TextStyleAttribute } from "../../text/attribute.js";
 import { lessEqPosition } from "../../text/position.js";
 
@@ -134,9 +135,6 @@ export class JavaScriptEditorPlugin extends EditorPlugin {
   }
 
   systemInterface(envMixin) {
-    var {serverInterfaceFor, localInterface} = System.get(System.decanonicalize("lively-system-interface"))
-    if (!serverInterfaceFor || !localInterface)
-      throw new Error("doit not possible: lively-system-interface not available!")
     var env = this.sanatizedJsEnv(envMixin);
     return env.remote ? serverInterfaceFor(env.remote) : localInterface;
   }
