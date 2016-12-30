@@ -872,27 +872,27 @@ var commands = [
   },
 
   {
-      name: "lowercase",
-      exec: (morph) => {
-        morph.undoManager.group();
-        if (morph.selection.isEmpty()) morph.selection = morph.wordAt().range;
-        morph.selection.text = morph.selection.text.toLowerCase();
-        morph.undoManager.group();
-        return true;
-      }
+    name: "lowercase",
+    exec: (morph) => {
+      morph.undoManager.group();
+      if (morph.selection.isEmpty()) morph.selection = morph.wordAt().range;
+      morph.selection.text = morph.selection.text.toLowerCase();
+      morph.undoManager.group();
+      return true;
+    }
   },
 
   {
-      name: "remove trailing whitespace",
-      exec: (morph) => {
-        morph.undoManager.group();
-        var i = 0;
-        morph.withLinesDo(0, morph.documentEndPosition.row, (line, range) =>
+    name: "remove trailing whitespace",
+    exec: (morph) => {
+      morph.undoManager.group();
+      var i = 0;
+      morph.withLinesDo(0, morph.documentEndPosition.row, (line, range) =>
           line.match(/\s+$/) && ++i && morph.replace(range, line.trimRight()));
-        morph.world().setStatusMessage(`${i} lines cleaned up`);
-        morph.undoManager.group();
-        return true;
-      }
+      morph.world().setStatusMessage(`${i} lines cleaned up`);
+      morph.undoManager.group();
+      return true;
+    }
   },
 
   {
