@@ -576,6 +576,7 @@ export class Morph {
 
       // set new owner
       submorph._owner = this;
+      submorph._cachedPaths = {};
       if (tfm) submorph.setTransform(tfm);
       this._currentState["submorphs"] = submorphs;
 
@@ -876,28 +877,22 @@ export class Morph {
   set globalPosition(p) { return this.position = (this.owner ? this.owner.localize(p) : p); }
 
   getTransform() { return this._transform }
-  getInverseTransform() { return this._invTransform || this._transform.inverse() }
+  getInverseTransform() { return this._invTransform }
 
   updateTransform({position, scale, origin, rotation} = {}) {
     const tfm = this._transform || new Transform(),
           tfm_inv = this._invTransform || new Transform();
-              
-    if (position || origin) {
-        position = position || this.position;
-        origin = origin || this.origin;
-        if (this.owner && this.owner.isClip()) position = position.subPt(this.owner.scroll);
-        tfm.e = position.x - origin.x;
-        tfm.f = position.y - origin.y;
-    }
     
-    if (scale || rotation) {
-        scale = scale || this.scale;
-        rotation = rotation || this.rotation;
-        tfm.a = scale * Math.cos(rotation);
-        tfm.b = scale * Math.sin(rotation);
-        tfm.c = scale * - Math.sin(rotation);
-        tfm.d = scale * Math.cos(rotation);
-    }
+    position = position || this.position;
+    origin = origin || this.origin;
+    scale = scale || this.scale;
+    rotation = rotation || this.rotation;
+    tfm.a = scale * Math.cos(rotation);
+    tfm.b = scale * Math.sin(rotation);
+    tfm.c = scale * - Math.sin(rotation);
+    tfm.d = scale * Math.cos(rotation);
+    tfm.e = tfm.a * -origin.x + tfm.c * -origin.y + this.position.x;
+    tfm.f = tfm.b * -origin.x + tfm.d * -origin.y + this.position.y;
 
     const {a,b,c,d,e,f} = tfm,
           det = a * d - c * b,
@@ -915,11 +910,10 @@ export class Morph {
   }
 
   setTransform(tfm) {
-    this.position = tfm.getTranslation();
+    this.position = tfm.getTranslation()
     this.rotation = num.toRadians(tfm.getRotation());
     this.scale = tfm.getScalePoint().x;
-    this._transform = tfm;
-    this._invTransform = tfm.inverse();
+    this.updateTransform(this);
   }
 
   fullContainsWorldPoint(p) { // p is in world coordinates
