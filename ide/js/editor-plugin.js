@@ -1,8 +1,6 @@
 import { string } from "lively.lang";
-import { serverInterfaceFor, localInterface } from "lively-system-interface";
 import { TextStyleAttribute } from "../../text/attribute.js";
 import { lessEqPosition } from "../../text/position.js";
-
 import JavaScriptTokenizer from "./highlighter.js";
 import JavaScriptChecker from "./checker.js";
 import JavaScriptNavigator from "./navigator.js";
@@ -20,6 +18,14 @@ import {
 } from "./commands.js";
 
 import EditorPlugin from "../editor-plugin.js";
+
+
+// FIXME! We don't want to create a dependency from lively.morphic to
+// lively-system-interface so this get's "side-loaded". We need to split various
+// ide parts into own packages that then can have the proper dependencies
+var serverInterfaceFor, localInterface;
+System.import("lively-system-interface").then(system => {
+  serverInterfaceFor = system.serverInterfaceFor; localInterface = system.localInterface; })
 
 
 export class JavaScriptEditorPlugin extends EditorPlugin {
