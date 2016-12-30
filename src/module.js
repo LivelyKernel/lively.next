@@ -72,6 +72,7 @@ class ModuleInterface {
 
   // returns Promise<string>
   fullName() { return this.id; }
+  shortName() { return `${this.package().name}/${this.pathInPackage()}`; }
 
   source() {
     // returns Promise<string>
@@ -355,7 +356,7 @@ class ModuleInterface {
 
     var {System, id, recorder} = this;
 
-    System.debug && console.log(`[lively.modules] ${this.package().name}/${this.pathInPackage()} defines ${varName}`);
+    System.debug && console.log(`[lively.modules] ${this.shortName()} defines ${varName}`);
 
     var srcLocSym = Symbol.for("lively-source-location"),
         moduleSym = Symbol.for("lively-module-meta");
@@ -458,17 +459,8 @@ class ModuleInterface {
   // imports and exports
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  async imports() {
-    const parsed = await this.ast(),
-          scope = await this.scope();
-    return query.imports(scope);
-  }
-
-  async exports() {
-    const parsed = await this.ast(),
-          scope = await this.scope();
-    return query.exports(scope);
-  }
+  async imports() { return query.imports(await this.scope()); }
+  async exports() { return query.exports(await this.scope()); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // bindings
