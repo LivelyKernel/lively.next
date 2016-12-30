@@ -429,51 +429,31 @@ export class Morph {
     return rect(0,0,w,h);
   }
 
-  transformTillMorph(other) {
-     // faster version of transform to, that benefits from
-     // having the other morph in the current morph's owner chain
-    var tfm = new Transform();
-    for (var morph = this; (morph != other) && (morph != undefined); morph = morph.owner) {
-      tfm.preConcatenate(new Transform(morph.origin))
-         .preConcatenate(morph.getTransform())
+  relativeBounds(other) {
+    var other = other || this.world(),
+        bounds = this.origin.negated().extent(this.extent);
+        
+    if (other) {
+       bounds = this.transformRectToMorph(other, bounds);
+    } else {
+       bounds = this.getGlobalTransform().transformRectToRect(bounds);
     }
-    return tfm;
-  }
-
-  immediateTransformTillMorph(other, r) {
-    var topLeft = r.topLeft(), topRight =  r.topRight(),
-        bottomRight =  r.bottomRight(),  bottomLeft = r.bottomLeft(),
-        transformPoint = (p, morph) => p.addPt(morph.origin).matrixTransform(morph.getTransform());
-
-    for (var morph = this; (morph != other) && (morph != undefined); morph = morph.owner) {
-         topLeft = transformPoint(topLeft, morph);
-         topRight = transformPoint(topRight, morph);
-         bottomLeft = transformPoint(bottomLeft, morph);
-         bottomRight = transformPoint(bottomRight, morph);
-
-    }
-    return Rectangle.unionPts([topLeft, topRight, bottomLeft, bottomRight])
-  }
-
-  relativeBounds(tfm) {
-    tfm = tfm || this.getGlobalTransform();
-    var bounds = tfm.transformRectToRect(this.origin.negated().extent(this.extent));
-
+  
     if (!this.isClip()) {
-       this.submorphs.forEach(submorph =>
-         bounds = bounds.union(submorph.relativeBounds(
-            submorph.transformTillMorph(this).preConcatenate(tfm))));
+       this.submorphs.forEach(submorph => {
+          bounds = bounds.union(submorph.relativeBounds(other));
+      });
     }
-
+  
     return bounds;
   }
 
   bounds() {
-    return this.relativeBounds(this.transformTillMorph(this.owner));
+    return this.relativeBounds(this.owner);
   }
 
   globalBounds() {
-    return this.relativeBounds(this.transformTillMorph(this.world()));
+    return this.relativeBounds(this.world());
   }
 
   submorphBounds() {
@@ -780,15 +760,27 @@ export class Morph {
   // transforms
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  localize(point) {
-    // map world point to local coordinates
-    var world = this.world();
-    return world ? point.matrixTransform(world.transformToMorph(this)) : point;
+  transformTillMorph(other, direction = "up") {
+     // faster version of transform to, that benefits from
+     // having the other morph in the current morph's owner chain
+    if (direction == "down") return other.transformTillMorph(this, "up").inverse();
+    var tfm = new Transform();
+    for (var morph = this; (morph != other) && (morph != undefined); morph = morph.owner) {
+       tfm.preConcatenate(new Transform(morph.origin))
+          .preConcatenate(morph.getTransform());
+    }
+    return tfm;
   }
 
-  worldPoint(p) {
+  localize({x,y}) {
+    // map world point to local coordinates
     var world = this.world();
-    return world ? p.matrixTransform(this.transformToMorph(world)) : p;
+    return world ? world.transformPointToMorph(this, pt(x,y)) : pt(x,y);
+  }
+
+  worldPoint({x,y}) {
+    var world = this.world();
+    return world ? this.transformPointToMorph(world, pt(x,y)) : pt(x,y);
   }
 
   transformToMorph(other) {
@@ -796,6 +788,59 @@ export class Morph {
         inv = other.getGlobalTransform().inverse();
     tfm.preConcatenate(inv);
     return tfm;
+  }
+
+  transformPointToMorph(other, p) {
+     const chain = this.chainToMorph(other);
+     this.applyTransforms(p, chain.filter(([d, m]) => d == "up").map(t => t[1] ));
+     return this.applyTransformsInversely(p, chain.filter(([d, m]) => d == "down").map(t => t[1]))
+  }
+
+  transformRectToMorph(other, r) {
+     var tl, tr, br, bl, chain = this.chainToMorph(other);
+     [tl = r.topLeft(), tr = r.topRight(), 
+      br = r.bottomRight(), bl = r.bottomLeft()].forEach(corner => {
+        this.applyTransforms(corner, chain.filter(([d, m]) => d == "up").map(t => t[1] ));
+        this.applyTransformsInversely(corner, chain.filter(([d, m]) => d == "down").map(t => t[1]))
+       });
+     return Rectangle.unionPts([tl,tr,br,bl]);
+  }
+
+  applyTransforms(p, morphs) {
+     morphs.forEach(m => {
+           p.x += m.origin.x;
+           p.y += m.origin.y;
+           p.matrixTransform(m.getTransform(), p);
+     });
+     return p;
+  }
+
+  applyTransformsInversely(p, morphs) {
+      morphs.forEach(m => {
+         p.matrixTransform(m.getInverseTransform(), p);
+         p.x -= m.origin.x;
+         p.y -= m.origin.y;
+     });
+     return p;
+  } 
+
+  chainToMorph(other) {
+     var commonRoot = this.closestCommonAncestor(other) || this,
+         morph = other, down = [], up = [];
+     while(morph && morph != commonRoot) {
+        down.push(["down", morph]);
+        morph = morph.owner;
+     }
+     morph = this;
+     while(morph && morph != commonRoot) {
+        up.push(["up", morph]);
+        morph = morph.owner;
+     }
+     return [...up, ...down.reverse()];
+  }
+
+  closestCommonAncestor(other) {
+     return arr.intersect([this, ...this.ownerChain()], [other, ...other.ownerChain()])[0];
   }
 
   transformForNewOwner(newOwner) {
@@ -820,6 +865,7 @@ export class Morph {
   set globalPosition(p) { return this.position = (this.owner ? this.owner.localize(p) : p); }
 
   getTransform() { return this._transform }
+  getInverseTransform() { return this._invTransform || this._transform.inverse() }
 
   updateTransform() {
     var scale = this.scale,
@@ -832,6 +878,7 @@ export class Morph {
 
     tfm = new Transform(pos, this.rotation, scale)
     this._transform = moveToOrigin.inverse().preConcatenate(tfm);
+    this._invTransform = this._transform.inverse();
   }
 
   setTransform(tfm) {
@@ -839,6 +886,7 @@ export class Morph {
     this.rotation = num.toRadians(tfm.getRotation());
     this.scale = tfm.getScalePoint().x;
     this._transform = tfm;
+    this._invTransform = tfm.inverse();
   }
 
   fullContainsWorldPoint(p) { // p is in world coordinates
