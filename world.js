@@ -466,15 +466,14 @@ var worldCommands = [
       }
 
       var {selected} = await world.filterableListPrompt(
-        "Choose module to open", items, {
-          historyId: "lively.morphic-choose and browse package resources",
-          requester: browser, width: 700, multiSelect: true})
+                        "Choose module to open", items, {
+                          historyId: "lively.morphic-choose and browse package resources",
+                          requester: browser, width: 700, multiSelect: true}),
+          [jsModules, nonJsModules] = arr.partition(selected, ea => ea.url.match(/\.js(on)?/)),
+          { default: Browser } = await System.import("lively.morphic/ide/js/browser/index.js");
 
-      var [jsModules, nonJsModules] = arr.partition(selected, ea => ea.url.match(/\.js(on)?/));
-
-      var { default: Browser } = await System.import("lively.morphic/ide/js/browser/index.js");
       await Promise.all(jsModules.map(ea =>
-        Browser.browse(ea.package.address, ea.name, undefined, browser, backend)
+        Browser.browse(ea.package, ea.url, undefined, browser, backend)
           .then(browser => browser.activate())));
 
       if (nonJsModules.length)
@@ -544,7 +543,8 @@ var worldCommands = [
 
   {
     name: "open code search",
-    exec: async (world, opts = {browser: null, backend: null}) => {
+    progressIndicator: "opening code search...",
+    exec: async (world, opts = {browser: null, backend: null, input: null}) => {
       var browser = opts.browser
                  || (world.focusedMorph && world.focusedMorph.ownerChain().find(ea => ea.isBrowser)),
           { CodeSearcher } = await System.import("lively.morphic/ide/code-search.js");
@@ -558,6 +558,7 @@ var worldCommands = [
           searcher = CodeSearcher.inWindow({
             title: "code search", extent: pt(800, 500),
             targetBrowser: browser,
+            input: opts.input,
             backend
           }).activate();
       if (browser) browser.state.associatedSearchPanel = searcher;
