@@ -26,12 +26,19 @@ export async function interactivelyCreatePackage(system, requester) {
 
   if (!name) throw "Canceled";
 
-  var baseURL = (await system.getConfig()).baseURL,
-      maybePackageDir = resource(baseURL).join(name).asDirectory().url,
-      guessedAddress = (await system.normalize(maybePackageDir)).replace(/\/\.js$/, "/");
+  var guessedAddress;
+  try {
+    var res = resource(name);
+    name = res.name();
+    guessedAddress = res.url;
+  } catch (e) {
+    var baseURL = (await system.getConfig()).baseURL,
+        maybePackageDir = resource(baseURL).join(name).asDirectory().url;
+    guessedAddress = (await system.normalize(maybePackageDir)).replace(/\/\.js$/, "/");
+  }
 
   var loc = await world.prompt("Confirm or change package location", {
-    input: guessedAddress, historyId: "lively.vm-editor-add-package-address"});
+              input: guessedAddress, historyId: "lively.vm-editor-add-package-address"});
 
   if (!loc) throw "Canceled";
 
