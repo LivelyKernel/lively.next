@@ -916,14 +916,20 @@ function getEs6Transpiler(System, options, env) {
 
   if (System.transpiler === "babel") {
     var babel = System.global[System.transpiler] || System.get(System.decanonicalize(System.transpiler));
-    return babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env);
+
+    return babel ? babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env) : System.import(System.transpiler).then(function (babel) {
+      return babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env);
+    });
   }
 
   if (System.transpiler === "plugin-babel") {
     var babelPluginPath = System.decanonicalize("plugin-babel"),
         babelPath = babelPluginPath.split("/").slice(0, -1).concat("systemjs-babel-browser.js").join("/"),
         babelPlugin = System.get(babelPath);
-    return babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env);
+
+    return babelPlugin ? babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env) : System.import(babelPath).then(function (babelPlugin) {
+      return babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env);
+    });
   }
 
   throw new Error("Sorry, currently only babel is supported as es6 transpiler for runEval!");
@@ -986,17 +992,36 @@ function runEval$2(System, code, options) {
     currentModuleAccessor: funcCall(member$1(funcCall(member$1("System", "get"), literal$1("@lively-env")), "moduleEnv"), literal$1(options.targetModule))
   });
 
-  if (!options.sync && !options.importsEnsured && hasUnimportedImports(System, code, targetModule)) return ensureImportsAreImported(System, code, targetModule).then(function () {
-    return runEval$2(System, originalCode, _extends({}, options, { importsEnsured: true }));
-  });
+  // delay eval to ensure imports
+  if (!options.sync && !options.importsEnsured && hasUnimportedImports(System, code, targetModule)) {
+    return ensureImportsAreImported(System, code, targetModule).then(function () {
+      return runEval$2(System, originalCode, _extends({}, options, { importsEnsured: true }));
+    });
+  }
+
+  // delay eval to ensure SystemJS module record
   if (!module.record()) {
-    if (!options.sync && !options.moduleImported) return System.import(targetModule).catch(function (err) {
+    if (!options.sync && !options._moduleImported) return System.import(targetModule).catch(function (err) {
       return null;
     }).then(function () {
-      return runEval$2(System, originalCode, _extends({}, options, { moduleImported: true }));
+      return runEval$2(System, originalCode, _extends({}, options, { _moduleImported: true }));
     });
 
     module.ensureRecord(); // so we can record dependent modules
+  }
+
+  // delay eval to ensure transpiler is loaded
+  if (options.es6Transpile && options.transpiler instanceof Promise) {
+    if (!options.sync && !options._transpilerLoaded) {
+      return options.transpiler.catch(function (err) {
+        return console.error(err);
+      }).then(function (transpiler) {
+        return runEval$2(System, originalCode, _extends({}, options, { transpiler: transpiler, _transpilerLoaded: true }));
+      });
+    } else {
+      console.warn("[lively.vm] sync eval requested but transpiler is not yet loaded, will continue without transpilation!");
+      options.transpiler = null;
+    }
   }
 
   System.debug && console.log("[lively.module] runEval in module " + targetModule + " started");
