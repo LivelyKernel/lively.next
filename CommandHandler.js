@@ -1,4 +1,5 @@
-import { obj, arr } from "lively.lang";
+import { obj, arr, promise } from "lively.lang";
+import LoadingIndicator from "./loading-indicator.js";
 
 function printArg(x) {
   return obj.inspect(x, {maxDepth: 1}).replace(/\n/g, "").replace(/\s+/g, " ");
@@ -55,7 +56,10 @@ export default class CommandHandler {
 
     name && this.addToHistory({name, target: {string: String(morph), id: morph.id}, args, count, time: Date.now()});
 
-    var world = morph.world(), result;
+    var world = morph.world(), progressIndicator, result;
+
+    if (typeof command.progressIndicator === "string")
+      progressIndicator = LoadingIndicator.open(command.progressIndicator);
 
     if (typeof command.exec === "function") {
         try {
@@ -76,6 +80,10 @@ export default class CommandHandler {
         world ? world.logError(msg) : console.error(msg);
         throw err;
       });
+
+      progressIndicator && promise.finally(result, () => progressIndicator.remove());
+    } else {
+      progressIndicator && progressIndicator.remove();
     }
 
     // handle count by repeating command
