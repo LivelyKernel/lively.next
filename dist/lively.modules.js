@@ -32218,15 +32218,26 @@ function prepareSystem(System, config) {
   }
 
   config.packageConfigPaths = config.packageConfigPaths || ['./node_modules/*/package.json'];
+
   if (!config.transpiler && System.transpiler === "traceur") {
-    System.config({
-      map: {
-        'plugin-babel': initialSystem.map["plugin-babel"],
-        'systemjs-babel-build': initialSystem.map["systemjs-babel-build"]
-      },
-      transpiler: initialSystem.transpiler,
-      babelOptions: Object.assign(initialSystem.babelOptions || {}, config.babelOptions)
-    });
+
+    if (initialSystem.transpiler === "lively.transpiler") {
+      System.set("lively.transpiler", initialSystem.get("lively.transpiler"));
+      System._loader.transpilerPromise = initialSystem._loader.transpilerPromise;
+      System.config({
+        transpiler: 'lively.transpiler',
+        babelOptions: Object.assign(initialSystem.babelOptions || {}, config.babelOptions)
+      });
+    } else {
+      System.config({
+        map: {
+          'plugin-babel': initialSystem.map["plugin-babel"],
+          'systemjs-babel-build': initialSystem.map["systemjs-babel-build"]
+        },
+        transpiler: initialSystem.transpiler,
+        babelOptions: Object.assign(initialSystem.babelOptions || {}, config.babelOptions)
+      });
+    }
   }
 
   // if (!cfg.hasOwnProperty("defaultJSExtensions")) cfg.defaultJSExtensions = true;
