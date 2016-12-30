@@ -1,6 +1,6 @@
 {
   "name": "lively.modules",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "main": "dist/lively.modules.js",
   "repository": "https://github.com/LivelyKernel/lively.modules",
   "author": "Robert Krahn <robert.krahn@gmail.com>",
@@ -32,6 +32,9 @@
     }
   },
   "dependencies": {
+    "babel-core": "^6.21.0",
+    "babel-plugin-transform-es2015-modules-systemjs": "^6.19.0",
+    "babel-standalone": "^6.21.1-0",
     "lively.ast": "^0.9.0",
     "lively.lang": "^0.7.0",
     "lively.notifications": "^0.4.0",
@@ -42,7 +45,6 @@
     "systemjs-plugin-babel": "0.0.13"
   },
   "devDependencies": {
-    "babel-core": "^6.16.0",
     "babel-plugin-external-helpers": "^6.8.0",
     "babel-plugin-syntax-object-rest-spread": "^6.13.0",
     "babel-plugin-transform-async-to-generator": "^6.16.0",
@@ -51,9 +53,9 @@
     "babel-preset-es2015-rollup": "^1.1.1",
     "babel-regenerator-runtime": "^6.5.0",
     "doc-comments": "^0.1.4",
-    "mocha-es6": "^0.4",
     "lively.classes": "*",
     "lively.source-transform": "*",
+    "mocha-es6": "^0.4",
     "rollup": "^0.36.1",
     "rollup-plugin-babel": "^2.6.1"
   }

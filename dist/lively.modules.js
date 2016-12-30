@@ -20813,8 +20813,8 @@ function es6ClassMethod(node, parent, i) {
   } : null;
 }
 
-function varDefs(node) {
-  if (node.type !== "VariableDeclaration") return null;
+function varDefs(varDeclNode) {
+  if (varDeclNode.type !== "VariableDeclaration") return null;
   var result = [];
 
   var _iteratorNormalCompletion3 = true;
@@ -20822,34 +20822,43 @@ function varDefs(node) {
   var _iteratorError3 = undefined;
 
   try {
-    for (var _iterator3 = withVarDeclIds(node)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-      var _ref2 = _step3.value;
-      var id = _ref2.id,
-          _node = _ref2.node;
+    var _loop = function _loop() {
+      var _ref = _step3.value;
+      var id = _ref.id,
+          node = _ref.node;
 
-      var def = { name: id.name, node: _node, type: "var-decl" };
+      var def = { name: id.name, node: node, type: "var-decl" };
       result.push(def);
-      if (!def.node.init) continue;
+      if (!def.node.init) return "continue";
 
-      var _node = def.node.init;
-      while (_node.type === "AssignmentExpression") {
-        _node = _node.right;
-      }if (_node.type === "ObjectExpression") {
+      var initNode = def.node.init;
+      while (initNode.type === "AssignmentExpression") {
+        initNode = initNode.right;
+      }if (initNode.type === "ObjectExpression") {
         def.type = "object-decl";
-        def.children = objectKeyValsAsDefs(_node).map(function (ea) {
+        def.children = objectKeyValsAsDefs(initNode).map(function (ea) {
           return _extends({}, ea, { type: "object-" + ea.type, parent: def });
         });
         result.push.apply(result, toConsumableArray(def.children));
-        continue;
+        return "continue";
       }
 
-      var objDefs = someObjectExpressionCall(_node, def);
+      objDefs = someObjectExpressionCall(initNode, def);
+
       if (objDefs) {
         def.children = objDefs.map(function (d) {
           return _extends({}, d, { parent: def });
         });
         result.push.apply(result, toConsumableArray(def.children));
       }
+    };
+
+    for (var _iterator3 = withVarDeclIds(varDeclNode)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+      var objDefs;
+
+      var _ret = _loop();
+
+      if (_ret === "continue") continue;
     }
   } catch (err) {
     _didIteratorError3 = true;
@@ -22052,6 +22061,9 @@ function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, options) {
 
   var captureInitialize = execute.value.body.body.find(function (stmt) {
     return stmt.type === "ExpressionStatement" && stmt.expression.type == "AssignmentExpression" && stmt.expression.left.name === options.captureObj.name;
+  });
+  if (!captureInitialize) captureInitialize = execute.value.body.body.find(function (stmt) {
+    return stmt.type === "VariableDeclaration" && stmt.declarations[0].id && stmt.declarations[0].id.name === options.captureObj.name;
   });
   if (captureInitialize) {
     lively_lang.arr.pushAt(registerBody, captureInitialize, registerBody.length - 1);
@@ -23540,54 +23552,37 @@ function printInspect$1(value, options) {
   return lively_lang.obj.inspect(value, { maxDepth: printDepth, customPrinter: customPrinter });
 }
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// load support
-
-var ensureImportsAreImported = function () {
-  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
-    var body, imports;
-    return regeneratorRuntime.wrap(function _callee$(_context) {
-      while (1) {
-        switch (_context.prev = _context.next) {
-          case 0:
-            // FIXME do we have to do a reparse? We should be able to get the ast from
-            // the rewriter...
-            body = lively_ast.parse(code).body, imports = body.filter(function (node) {
-              return node.type === "ImportDeclaration";
-            });
-            return _context.abrupt("return", Promise.all(imports.map(function (node) {
-              return System.normalize(node.source.value, parentModule).then(function (fullName) {
-                return System.get(fullName) || System.import(fullName);
-              });
-            })).catch(function (err) {
-              console.error("Error ensuring imports: " + err.message);throw err;
-            }));
-
-          case 2:
-          case "end":
-            return _context.stop();
-        }
-      }
-    }, _callee, this);
-  }));
-
-  return function ensureImportsAreImported(_x, _x2, _x3) {
-    return _ref.apply(this, arguments);
-  };
-}();
-
 var funcCall = lively_ast.nodes.funcCall;
 var member$1 = lively_ast.nodes.member;
 var literal$1 = lively_ast.nodes.literal;
 
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// load support
+
+function ensureImportsAreImported(System, code, parentModule) {
+  // FIXME do we have to do a reparse? We should be able to get the ast from
+  // the rewriter...
+  var body = lively_ast.parse(code).body,
+      imports = body.filter(function (node) {
+    return node.type === "ImportDeclaration";
+  });
+  return Promise.all(imports.map(function (node) {
+    return System.normalize(node.source.value, parentModule).then(function (fullName) {
+      return System.get(fullName) || System.import(fullName);
+    });
+  })).catch(function (err) {
+    console.error("Error ensuring imports: " + err.message);throw err;
+  });
+}
 
 function hasUnimportedImports(System, code, parentModule) {
   var body = lively.ast.parse(code).body,
       imports = body.filter(function (node) {
     return node.type === "ImportDeclaration";
   }),
-      importedModules = lively.lang.arr.uniq(imports.map(function (_ref2) {
-    var value = _ref2.source.value;
+      importedModules = lively.lang.arr.uniq(imports.map(function (_ref) {
+    var value = _ref.source.value;
     return value;
   })),
       unloadedImports = importedModules.filter(function (ea) {
@@ -23667,6 +23662,14 @@ function getEs6Transpiler(System, options, env) {
     return babelPlugin ? babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env) : System.import(babelPath).then(function (babelPlugin) {
       return babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env);
     });
+  }
+
+  if (System.transpiler === "lively.transpiler") {
+    var Transpiler = System.get(System.decanonicalize("lively.transpiler")).default,
+        transpiler = new Transpiler(System, options.targetModule, env);
+    return function (source, options) {
+      return transpiler.transpileDoit(source, options);
+    };
   }
 
   throw new Error("Sorry, currently only babel is supported as es6 transpiler for runEval!");
@@ -26271,7 +26274,7 @@ var resourceExtension$1 = {
   resourceClass: NodeJSFileResource
 };
 
-var debug = true;
+var debug = false;
 var slashRe = /\//g;
 
 function applyExclude$1(resource$$1, exclude) {
@@ -26722,41 +26725,150 @@ exports.unregisterExtension = unregisterExtension;
 
   System.useModuleTranslationCache = !urlQuery().noModuleCache;
 
-  if (System.map['plugin-babel'] && System.map['systemjs-plugin-babel']) {
+  if (System.get("lively.transpiler")
+   || (System.map['plugin-babel'] && System.map['systemjs-plugin-babel'])) {
     console.log("[lively.modules] System seems already to be configured");
     return;
   }
 
-  var pluginBabelPath = System.get("@system-env").browser ?
-    findSystemJSPluginBabel_browser() : findSystemJSPluginBabel_node();
+  var features = featureTest();
+  var transpiler = decideAboutTranspiler(features);
 
-  var babel = System.global.babel;
+  if (transpiler === "lively.transpiler") setupLivelyTranspiler(features);
+  else if (transpiler === "plugin-babel") setupPluginBabelTranspiler(features);
+  else console.error(`[lively.modules] could not find System transpiler for platform!`);
 
-  if (!pluginBabelPath && !babel) {
-    console.error("[lively.modules] Could not find path to systemjs-plugin-babel nor a babel global! This will likely break lively.modules!");
-    return;
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function decideAboutTranspiler(features) {
+    if (features.supportsAsyncAwait && features.isBrowser) return "lively.transpiler";
+    return "plugin-babel";
   }
 
-  if (!pluginBabelPath) {
-    console.warn("[lively.modules] Could not find path to systemjs-plugin-babel but babel! Will fallback but there might be features in lively.modules that won't work!");
-    System.config({transpiler: 'babel'});
+  function setupLivelyTranspiler(features) {
+    if (features.isBrowser) {
+      if (typeof Babel !== "undefined") {
+        System.global.babel = Babel
+        delete System.global.Babel;
+      }
+      if (!System.global.babel) {
+        console.error("[lively.modules] in browser environments babel is required to be loaded before lively.modules!");
+        return;
+      }
+    } else {
+      System.global.babel = loadBabel_node();
+    }
 
-  } else {
+    console.log("[lively.modules] SystemJS configured with lively.transpiler & babel");
 
-    console.log("[lively.modules] SystemJS configured with systemjs-plugin-babel transpiler");
+    function Transpiler(System, moduleId, env) {
+      this.System = System;
+      this.moduleId = moduleId;
+      this.env = env;
+    }
+    Transpiler.prototype.transpileDoit = function transpileDoit(source, options) {
+      // wrap in async function so we can use await top-level
+      var System = this.System,
+          source = `(async function(__rec) {\n${source}\n}).call(this);`,
+          opts = System.babelOptions,
+          needsBabel = (opts.plugins && opts.plugins.length) || (opts.presets && opts.presets.length);
+      return needsBabel ?
+        System.global.babel.transform(source, opts).code :
+        source;
+    }
+    Transpiler.prototype.transpileModule = function transpileModule(source, options) {
+      var System = this.System,
+          opts = Object.assign({}, System.babelOptions);
+      opts.plugins = opts.plugins ? opts.plugins.slice() : [];
+      opts.plugins.push("transform-es2015-modules-systemjs");
+      return System.global.babel.transform(source, opts).code;
+    }
+
+    function translate(load, traceOpts) {
+      return new Transpiler(this, load.name, {}).transpileModule(load.source, {})
+    }
+    System.set("lively.transpiler", System.newModule({default: Transpiler}));
+    System._loader.transpilerPromise = Promise.resolve({translate})
+
     System.config({
-      map: {
-        'plugin-babel': pluginBabelPath + '/plugin-babel.js',
-        'systemjs-babel-build': pluginBabelPath + '/systemjs-babel-browser.js'
-      },
-      transpiler: 'plugin-babel',
-      babelOptions: Object.assign({
-        sourceMaps: "inline",
-        stage3: true,
-        es2015: true,
-        modularRuntime: true
-      }, System.babelOptions)
+      transpiler: 'lively.transpiler',
+      babelOptions: {
+        sourceMaps: false,
+        compact: "auto",
+        comments: "true",
+        presets: features.supportsAsyncAwait ? [] : ["es2015"]
+      }
     });
+  }
+
+  function setupPluginBabelTranspiler(features) {
+    var pluginBabelPath = System.get("@system-env").browser ?
+      findSystemJSPluginBabel_browser() : findSystemJSPluginBabel_node();
+
+    var babel = System.global.babel;
+
+    if (!pluginBabelPath && !babel) {
+      console.error("[lively.modules] Could not find path to systemjs-plugin-babel nor a babel global! This will likely break lively.modules!");
+      return;
+    }
+
+    if (!pluginBabelPath) {
+      console.warn("[lively.modules] Could not find path to systemjs-plugin-babel but babel! Will fallback but there might be features in lively.modules that won't work!");
+      System.config({transpiler: 'babel'});
+
+    } else {
+
+      console.log("[lively.modules] SystemJS configured with systemjs-plugin-babel transpiler");
+      System.config({
+        map: {
+          'plugin-babel': pluginBabelPath + '/plugin-babel.js',
+          'systemjs-babel-build': pluginBabelPath + '/systemjs-babel-browser.js'
+        },
+        transpiler: 'plugin-babel',
+        babelOptions: Object.assign({
+          sourceMaps: "inline",
+          stage3: true,
+          es2015: true,
+          modularRuntime: true
+        }, System.babelOptions)
+      });
+    }
+  }
+
+
+  function featureTest() {
+    var isBrowser = System.get("@system-env").browser;
+
+    // "feature test": we assume if the browser supports async/await it will also
+    // support other es6/7/8 features we care about. In this case only use the
+    // system-register transform. Otherwise use full transpilation.
+    var supportsAsyncAwait = false;
+    try { eval("async function foo() {}"); supportsAsyncAwait = true; } catch (e) {}
+
+    return {supportsAsyncAwait, isBrowser};
+  }
+
+  function loadBabel_node() {
+    var parent = require.cache[require.resolve("lively.modules")],
+        babelPath = require("module").Module._resolveFilename("babel-standalone", parent);
+    global.window = global;
+    global.navigator = {};
+    var babel = require(babelPath);
+    delete global.navigator;
+    delete global.window;
+    return babel
+  }
+
+  function urlQuery() {
+    if (typeof document === "undefined" || !document.location) return {};
+    return (document.location.search || "").replace(/^\?/, "").split("&")
+      .reduce(function(query, ea) {
+        var split = ea.split("="), key = split[0], value = split[1];
+        if (value === "true" || value === "false") value = eval(value);
+        else if (!isNaN(Number(value))) value = Number(value);
+        query[key] = value;
+        return query;
+      }, {});
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -26811,18 +26923,6 @@ exports.unregisterExtension = unregisterExtension;
     } catch (e) {}
 
     return null;
-  }
-
-  function urlQuery() {
-    if (typeof document === "undefined" || !document.location) return {};
-    return (document.location.search || "").replace(/^\?/, "").split("&")
-      .reduce(function(query, ea) {
-        var split = ea.split("="), key = split[0], value = split[1];
-        if (value === "true" || value === "false") value = eval(value);
-        else if (!isNaN(Number(value))) value = Number(value);
-        query[key] = value;
-        return query;
-      }, {});
   }
 
 })();
