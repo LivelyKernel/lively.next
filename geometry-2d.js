@@ -150,19 +150,17 @@ export class Point {
   }
 
   matrixTransform(mx, acc) {
+    const x = mx.a * this.x + mx.c * this.y + mx.e,
+          y = mx.b * this.x + mx.d * this.y + mx.f;
     // if no accumulator passed, allocate a fresh one
-    if (!acc) acc = pt(0, 0);
-    acc.x = mx.a * this.x + mx.c * this.y + mx.e;
-    acc.y = mx.b * this.x + mx.d * this.y + mx.f;
-    return acc;
+    return  !acc ? pt(x, y) : Object.assign(acc, {x,y})
   }
 
   matrixTransformDirection(mx, acc) {
+    const x = mx.a * this.x + mx.c * this.y,
+          y = mx.b * this.x + mx.d * this.y;
     // if no accumulator passed, allocate a fresh one
-    if (!acc) acc = pt(0, 0);
-    acc.x = mx.a * this.x + mx.c * this.y;
-    acc.y = mx.b * this.x + mx.d * this.y;
-    return acc;
+    return  !acc ? pt(x, y) : Object.assign(acc, {x,y})
   }
 
   griddedBy(grid) {
@@ -373,7 +371,6 @@ export class Rectangle {
   }
 
   withTopRight(p) {
-    //return rect(p.addXY(-this.width,0), p.addXY(0, this.height));
     return Rectangle.fromAny(this.bottomLeft(), p);
   }
 
@@ -936,7 +933,7 @@ export class Transform {
 
   matrixTransformForMinMax(pt, minPt, maxPt) {
     var x = this.a * pt.x + this.c * pt.y + this.e,
-      y = this.b * pt.x + this.d * pt.y + this.f;
+        y = this.b * pt.x + this.d * pt.y + this.f;
     if (x > maxPt.x) maxPt.x = x;
     if (y > maxPt.y) maxPt.y = y;
     if (x < minPt.x) minPt.x = x;
@@ -944,15 +941,15 @@ export class Transform {
   }
 
   transformRectToRect(r) {
-    var minPt = pt(Infinity, Infinity),
-      maxPt = pt(-Infinity, -Infinity);
-    this.matrixTransformForMinMax(r.topLeft(), minPt, maxPt);
-    this.matrixTransformForMinMax(r.bottomRight(), minPt, maxPt);
-    if (this.isTranslation()) return rect(minPt, maxPt);
-
-    this.matrixTransformForMinMax(r.topRight(), minPt, maxPt);
-    this.matrixTransformForMinMax(r.bottomLeft(), minPt, maxPt);
-    return rect(minPt, maxPt);
+     var minPt = pt(Infinity, Infinity),
+         maxPt = pt(-Infinity, -Infinity);
+     this.matrixTransformForMinMax(r.topLeft(), minPt, maxPt);
+     this.matrixTransformForMinMax(r.bottomRight(), minPt, maxPt);
+     if (!this.isTranslation()) {
+        this.matrixTransformForMinMax(r.topRight(), minPt, maxPt);
+        this.matrixTransformForMinMax(r.bottomLeft(), minPt, maxPt);
+     }
+     return rect(minPt, maxPt);
   }
 
 

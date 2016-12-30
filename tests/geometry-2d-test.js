@@ -45,8 +45,8 @@ describe("rectangles", () => {
 
   it("testWithTopRight", function() {
     var result = rect(10,10,10,10).withTopRight(pt(5,5));
-    expect(pt(5,5)).to.equal(result.topRight());
-    expect(rect(-5,5,10,10)).to.equal(result);
+    expect(pt(10,5)).to.equal(result.topRight());
+    expect(rect(5,5,5,15)).to.equal(result);
   });
 
   it("testDivideRelatively", function() {
