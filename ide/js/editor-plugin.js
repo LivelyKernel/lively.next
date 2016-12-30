@@ -1,3 +1,4 @@
+import { string } from "lively.lang";
 import { TextStyleAttribute } from "../../text/attribute.js";
 import { lessEqPosition } from "../../text/position.js";
 
@@ -94,6 +95,16 @@ export class JavaScriptEditorPlugin extends EditorPlugin {
       items.push(
         {command: "selectDefinition", alias: `jump to definition of "${ref.name}"`, target: editor},
         {command: "selectSymbolReferenceOrDeclaration", alias: `select all occurrences of "${ref.name}"`, target: editor});
+    }
+    
+    var text = editor.selection.text.trim();
+    if (text) {
+      items.push({
+        command: "open code search",
+        alias: `code search for "${string.truncate(text, 30)}"`,
+        target: editor.world(),
+        args: {input: text, backend: this.backend()}
+      })
     }
     return items;
   }
