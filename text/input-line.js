@@ -96,6 +96,8 @@ export default class InputLine extends Text {
     connect(this, 'selectionChange', this, 'fixCursor');
   }
 
+  get isInputLine() { return true; }
+
   get label() { return this.getProperty("label") || ""; }
   set label(value) {
     disconnect(this, 'textChange', this, 'onInputChanged');
