@@ -354,8 +354,6 @@ class SelectionTarget extends Morph {
 
 export class Halo extends Morph {
 
-  get isEpiMorph() { return true; }
-
   constructor(pointerId, target) {
     super({
       fill: Color.transparent,
@@ -374,14 +372,16 @@ export class Halo extends Morph {
     connect(this.target, "onChange", this, "alignWithTarget")
   }
 
+  get isEpiMorph() { return true; }
+
   get isHaloItem() { return true }
 
   addMorphToSelection(morph) {
-      const world = this.world(), 
-            currentTargets = this.target.isMorphSelection ? 
-                                  this.target.selectedMorphs : [this.target];
-      this.remove();
-      return world.showHaloForSelection([...currentTargets, morph], this.state.pointerId);
+    const world = this.world(), 
+          currentTargets = this.target.isMorphSelection ? 
+                                this.target.selectedMorphs : [this.target];
+    this.remove();
+    return world.showHaloForSelection([...currentTargets, morph], this.state.pointerId);
   }
 
   removeMorphFromSelection(morph) {
@@ -780,7 +780,7 @@ export class Halo extends Morph {
       halo: this,
       tooltip: "Edit the morph's definition",
       onMouseDown: (evt) => {
-        this.target.edit();
+        this.world().execCommand("open object editor", {target: this.target});
       }
     }));
   }

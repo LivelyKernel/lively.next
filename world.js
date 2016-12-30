@@ -347,6 +347,19 @@ var worldCommands = [
   },
 
   {
+    name: "open object editor",
+    exec: async (world, args = {target: null}) => {
+      if (!args.target) {
+        world.setStatusMessage("no target for ObjectEditor");
+        return null;
+      }
+      var { ObjectEditor } = await System.import("lively.morphic/ide/js/objecteditor/index.js"),
+          editor = await ObjectEditor.open({target: args.target});
+      return editor;
+    }
+  },
+
+  {
     name: "open browser",
     progressIndicator: "opening browser...",
     exec: async (world, args = {packageName: "lively.morphic", moduleName: "morph.js"}) => {
