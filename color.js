@@ -416,8 +416,12 @@ export class LinearGradient extends Gradient {
     }
   }
 
-  degreesToRect(rad) {
+  angleToRect(rad) {
      return Point.polar(1, rad).extentAsRectangle().withCenter(pt(.5,.5))
+  }
+  
+  vectorAsAngle() {
+     return this.vector.extent().theta();
   }
   
   toString() { return this.toCSSString(); }
@@ -426,7 +430,7 @@ export class LinearGradient extends Gradient {
   set vector(value) {
     if (!value) this._vector = this.vectors.northsouth;
     else if (typeof value === "string") this._vector = this.vectors[value.toLowerCase()]
-    else if (typeof value === "number") this._vector = this.degreesToRect(value); //radians
+    else if (typeof value === "number") this._vector = this.angleToRect(value); //radians
     else this._vector = value;
   }
   
