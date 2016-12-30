@@ -1,7 +1,7 @@
 import { string, arr, obj } from "lively.lang";
 import { lessPosition, lessEqPosition, eqPosition, maxPosition, minPosition } from "./position.js";
 import { Range } from "./range.js";
-import { TextAttribute, TextStyleAttribute } from "./attribute.js";
+import { TextStyleAttribute } from "./attribute.js";
 
 export default class TextDocument {
 
@@ -31,7 +31,7 @@ export default class TextDocument {
     return length ? {
       row: lines.length-1,
       column: lines[lines.length-1].length
-    } : {row: 0, column: 0}
+    } : {row: 0, column: 0};
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -44,12 +44,10 @@ export default class TextDocument {
   get textAttributesByLine() { return this._textAttributesByLine; }
 
   textAttributesChunkedByLine(
-      startRow = {row: 0, column: 0},
-      endRow = this.endPosition,
-      withLineEnding = false) {
-  }
-
-  textAttributesChunkedByLine(startRow, endRow, withLineEnding) {
+    startRow = {row: 0, column: 0},
+    endRow = this.endPosition,
+    withLineEnding = false
+  ) {
 
     // returns an array chunked with chunked.length === lines.length
     // chunked[n] is an array that looks like
@@ -124,7 +122,7 @@ export default class TextDocument {
           prevCol = column;
           if (ending.length)
             for (let i = 0; i < ending.length; i++)
-              currentAttributes.splice(currentAttributes.indexOf(ending[i]), 1)
+              currentAttributes.splice(currentAttributes.indexOf(ending[i]), 1);
 
           if (starting.length)
             currentAttributes.push(...starting);
@@ -139,21 +137,21 @@ export default class TextDocument {
           if (!change) continue;
           let {ending, starting} = change;
           if (ending.length)
-            for (let i = 0; i < ending.length; i++)
-              currentAttributes.splice(currentAttributes.indexOf(ending[i]), 1)
+            for (let j = 0; j < ending.length; j++)
+              currentAttributes.splice(currentAttributes.indexOf(ending[j]), 1);
           if (starting.length)
             currentAttributes.push(...starting);
         }
       }
     }
 
-    return lines
+    return lines;
   }
 
   textAttributesChunked(
     from = {row: 0, column: 0},
     to = this.endPosition,
-    filterFn = (attr) => true)
+    filterFn)
   {
     // similar to textAttributesChunkedByLine but does not regard lines, i.e. a
     // list of start-end-positions ans attributes is returned
@@ -168,6 +166,8 @@ export default class TextDocument {
     //    [1/0, 1/1, [TextAttribute(0/1 -> 1/1), TextAttribute(1/0 -> 1/1)]]]
 
     // doc.textAttributesChunked().map(([start, end, attrs]) => `${start.row}/${start.column} - ${end.row}/${end.column}\n  ${attrs.join("\n  ")}`).join("\n");
+
+    if (!filterFn) filterFn = (/*attr*/) => true;
 
     // index attributes by start and end in two two-dim lists
     var starts = [], ends = [];
@@ -194,13 +194,12 @@ export default class TextDocument {
     }
 
     // find active attributes before start position
-    var stopped = false;
     for (let row = 0; row <= from.row; row++) {
       let startsOfRow = starts[row] || [],
           endsOfRow = ends[row] || [];
       if (!startsOfRow.length && !endsOfRow.length) continue;
 
-      let nCols = Math.max(endsOfRow.length, startsOfRow.length)
+      let nCols = Math.max(endsOfRow.length, startsOfRow.length);
 
       for (let column = 0; column <= nCols; column++) {
         let startsOfColumn = startsOfRow[column] || [],
@@ -215,14 +214,14 @@ export default class TextDocument {
 
     // record attributes by positions
     var result = [],
-        lastStart = {row: from.row, column: from.column}
+        lastStart = {row: from.row, column: from.column};
 
     for (let row = from.row; row <= to.row; row++) {
       let startsOfRow = starts[row] || [],
           endsOfRow = ends[row] || [];
       if (!startsOfRow.length && !endsOfRow.length) continue;
 
-      let nCols = Math.max(endsOfRow.length, startsOfRow.length)
+      let nCols = Math.max(endsOfRow.length, startsOfRow.length);
 
       for (let column = 0; column <= nCols; column++) {
         let pos = {row, column};
@@ -251,14 +250,14 @@ export default class TextDocument {
         });
 
         if (zeroLengthAttrs.length)
-          result.push([pos, pos, zeroLengthAttrs])
+          result.push([pos, pos, zeroLengthAttrs]);
       }
     }
 
     if (!eqPosition(lastStart, to))
       result.push([lastStart, to, currentAttributes.slice()]);
 
-    return result
+    return result;
   }
 
   get textAndAttributes() {
@@ -381,7 +380,7 @@ export default class TextDocument {
     // this is why we need to leave them in the index
     var endRow = arr.max(newAttributes, (ea) => ea.end.row).end.row;
     for (let row = first.start.row; row <= endRow; row++) {
-      var byLine = this._textAttributesByLine[row] || (this._textAttributesByLine[row] = []),
+      let byLine = this._textAttributesByLine[row] || (this._textAttributesByLine[row] = []),
           i = 0;
       while (i < byLine.length
           && (byLine[i].start.row < first.start.row
@@ -395,7 +394,7 @@ export default class TextDocument {
     // Now that only attributes that start before of the inserted attributes
     // are in the line index we can simply append the new attributes. Since they
     // are already sorted, the correct order is maintained
-    for (var i = 0; i < newAttributes.length; i++) {
+    for (let i = 0; i < newAttributes.length; i++) {
       let attr = newAttributes[i], {start, end} = attr;
       for (let row = start.row; row <= end.row; row++)
         (this._textAttributesByLine[row] || (this._textAttributesByLine[row] = []))
@@ -475,7 +474,7 @@ export default class TextDocument {
           // (start<>end) and the default style
           if (rest.length) { toRemove.push(...rest); toRemove = arr.uniq(toRemove); }
 
-          var localStyle = {...defaultStyle, ...(localStyleAttr ? localStyleAttr.data : null)}
+          var localStyle = {...defaultStyle, ...(localStyleAttr ? localStyleAttr.data : null)};
 
           var propsToChange = styleProps.filter(key =>
             newStyle[key] && typeof newStyle[key].equals === "function" ?
@@ -504,7 +503,7 @@ export default class TextDocument {
             if (!attributesSeen.includes(localStyleAttr)) {
               attributesSeen.push(localStyleAttr);
               if (lessPosition(localStyleAttr.start, from))
-                toAdd.push(localStyleAttr.splitAt(from)[0])
+                toAdd.push(localStyleAttr.splitAt(from)[0]);
               if (lessPosition(to, localStyleAttr.end))
                 toAdd.push(localStyleAttr.splitAt(to)[1]);
             }
@@ -568,7 +567,7 @@ export default class TextDocument {
     if (column < 0) column = 0;
     else if (column > lines[row].length) column = lines[row].length;
 
-    return {row, column}
+    return {row, column};
   }
 
   textInRange({start, end}) {
@@ -592,9 +591,8 @@ export default class TextDocument {
   }
 
   setTextInRange(string, range) {
-    var {start, end} = range;
     this.remove(range);
-    return this.insert(string, start);
+    return this.insert(string, range.start);
   }
 
   insert(string, pos) {
@@ -606,7 +604,7 @@ export default class TextDocument {
     if (!line) line = lines[row] = "";
 
     if (column > line.length)
-        line += " ".repeat(column - line.length);
+      line += " ".repeat(column - line.length);
 
     let end = {row, column},
         before = line.slice(0, column),
@@ -616,7 +614,7 @@ export default class TextDocument {
     end.column += firstLine.length;
     lines[row] = before + firstLine;
 
-    for (var i = 0; i < insertionLines.length; i++) {
+    for (let i = 0; i < insertionLines.length; i++) {
       end.row++;
       end.column = insertionLines[i].length;
       lines.splice(row+1+i, 0, insertionLines[i]);
@@ -644,8 +642,8 @@ export default class TextDocument {
       if (attrsSeen.includes(attr)) return;
       attrsSeen.push(attr);
       if (!attr.onInsert(insertionRange)) return;
-      for (let i = 0; i < insertionLines.length; i++) {
-        let newRow = row+1+i,
+      for (let j = 0; j < insertionLines.length; j++) {
+        let newRow = row+1+j,
             attrsInNewRow = this._textAttributesByLine[newRow];
         // need to maintain the sort order! ....
         if (attr.end.row >= newRow) attrsInNewRow.push(attr);
@@ -708,7 +706,7 @@ export default class TextDocument {
 
     // build new textAttributes array
     rangesToRemove.reverse().forEach(([i,j]) =>
-      textAttributes = textAttributes.slice(0,i).concat(textAttributes.slice(j)))
+      textAttributes = textAttributes.slice(0,i).concat(textAttributes.slice(j)));
     // set it, new _textAttributesByLine index will be build there
     this.setSortedTextAttributes(textAttributes);
   }
@@ -783,11 +781,8 @@ export default class TextDocument {
 
 
   scanForward(startPos, matchFn) {
-    var {
-          endPosition: {row: endRow, column: endColumn},
-          lines
-        } = this,
-        {row, column} = startPos
+    var {lines} = this,
+        {row, column} = startPos;
 
     // first line
     for (let col = column, line = lines[row]; col < line.length; col++) {
@@ -811,7 +806,7 @@ export default class TextDocument {
 
   scanBackward(startPos, matchFn) {
     var lines = this.lines,
-        {row, column} = startPos
+        {row, column} = startPos;
 
     // first line
     for (let col = column-1, line = lines[row]; col >= 0; col--) {
