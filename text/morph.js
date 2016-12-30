@@ -1160,7 +1160,7 @@ export class Text extends Morph {
   // mouse events
 
   onMouseDown(evt) {
-    if (!this.selectable) return;
+    if (!this.selectable || evt.rightMouseButtonPressed()) return;
 
     this.activeMark && (this.activeMark = null);
     var {position, state: {clickedOnMorph, clickedOnPosition, clickCount}} = evt;
