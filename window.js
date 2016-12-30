@@ -7,26 +7,36 @@ export default class Window extends Morph {
 
   constructor(props = {}) {
     super({
-      fill: Color.lightGray,
-      borderRadius: 7,
-      dropShadow: true,
-      borderColor: Color.gray,
-      borderWidth: 1,
-      clipMode: "hidden",
-      resizable: true,
+      dropShadow: true, // FIXME!
       ...obj.dissoc(props, ["title", "targetMorph"]),
     });
 
-    this.submorphs = this.controls(this.resizable);
-    
+    this.submorphs = this.controls();
+
     if (props.targetMorph) this.targetMorph = props.targetMorph;
-    
+
     this.title = props.title || this.name || "";
     this.resetPropertyCache();
     this.relayoutWindowControls();
     connect(this, "extent", this, "relayoutWindowControls");
     connect(this.titleLabel(), "value", this, "relayoutWindowControls");
   }
+
+  get defaultProperties() {
+    return {
+      ...super.defaultProperties,
+      fill: Color.lightGray,
+      borderRadius: 7,
+      dropShadow: true,
+      borderColor: Color.gray,
+      borderWidth: 1,
+      clipMode: "hidden",
+      resizable: true
+    }
+  }
+
+  get resizable() { return this.getProperty("resizable"); }
+  set resizable(val) { return this.setProperty("resizable", val); }
 
   get isWindow() { return true }
 
@@ -38,7 +48,7 @@ export default class Window extends Morph {
     var ctrls = this.controls();
     arr.withoutAll(this.submorphs, ctrls).forEach(ea => ea.remove());
     if (morph) this.addMorph(morph, ctrls[0]);
-    this.relayoutWindowControls();
+    this.whenRendered().then(() => this.relayoutWindowControls());
   }
 
   targetMorphBounds() {
@@ -47,7 +57,11 @@ export default class Window extends Morph {
 
   resetPropertyCache() {
     // For remembering the position and extents of the window states
-    this.propertyCache = {nonMinizedBounds: null, nonMaximizedBounds: null, minimizedBounds: null};
+    this.propertyCache = {
+      nonMinizedBounds: null,
+      nonMaximizedBounds: null,
+      minimizedBounds: null
+    };
   }
 
   relayoutWindowControls() {
@@ -81,7 +95,7 @@ export default class Window extends Morph {
       extent: pt(14,14),
       onHoverIn() { this.submorphs[0].visible = true; },
       onHoverOut() { this.submorphs[0].visible = false; }
-    }
+    };
 
     return [
 
@@ -193,8 +207,8 @@ export default class Window extends Morph {
   }
 
   toggleMaximize() {
-    var cache = this.propertyCache, 
-        easing = "easeOutQuint", 
+    var cache = this.propertyCache,
+        easing = "easeOutQuint",
         duration = 200;
     if (this.maximized) {
       this.animate({bounds: cache.nonMaximizedBounds, duration, easing});
@@ -216,7 +230,7 @@ export default class Window extends Morph {
 
     var next = world.activeWindow() || arr.last(world.getWindows());
     next && next.activate();
-    
+
     signal(this, "windowClosed", this);
     if (this.targetMorph && typeof this.targetMorph.onWindowClose === "function")
       this.targetMorph.onWindowClose();
