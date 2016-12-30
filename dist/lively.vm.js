@@ -456,7 +456,7 @@ function evalCodeTransform(code, options) {
       // existing) constructor function in a way that allows us to redefine
       // methods and properties of the class while keeping the class object
       // identical
-      options.topLevelVarRecorder[defaultClassToFunctionConverterName] = lively_classes.runtime.initializeClass;
+      if (!(defaultClassToFunctionConverterName in options.topLevelVarRecorder)) options.topLevelVarRecorder[defaultClassToFunctionConverterName] = lively_classes.runtime.initializeClass;
       es6ClassToFunctionOptions = {
         currentModuleAccessor: options.currentModuleAccessor,
         classHolder: varRecorder,
@@ -1774,6 +1774,7 @@ exports.runEval = runEval$$1;
 exports.syncEval = syncEval$$1;
 exports.evalStrategies = evalStrategies;
 exports.defaultTopLevelVarRecorderName = defaultTopLevelVarRecorderName;
+exports.defaultClassToFunctionConverterName = defaultClassToFunctionConverterName;
 exports.evalCodeTransform = evalCodeTransform;
 exports.evalCodeTransformOfSystemRegisterSetters = evalCodeTransformOfSystemRegisterSetters;
 
