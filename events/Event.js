@@ -195,7 +195,7 @@ export class SimulatedDOMEvent {
       pageX: undefined,
       pageY: undefined,
       pointerId: undefined,
-      buttons: -1,
+      buttons: 0,
       keyCode: undefined,
       keyString: "",
       keyIdentifier: undefined,

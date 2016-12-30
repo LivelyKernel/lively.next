@@ -396,10 +396,10 @@ describe("text mouse events", () => {
     expect(sut.selection).selectionEquals("Selection(0/0 -> 0/0)");
 
     env.eventDispatcher.simulateDOMEvents(
-      {type: "pointerdown", target: sut, position: dragStartPos},
-      {type: "pointermove", target: sut, position: dragOvershotPos}, // simulate overshoot
-      {type: "pointermove", target: sut, position: dragEndPos},
-      {type: "pointerup", target: sut, position: dragEndPos}
+      {type: "pointerdown", buttons: 1, target: sut, position: dragStartPos},
+      {type: "pointermove", buttons: 1, target: sut, position: dragOvershotPos}, // simulate overshoot
+      {type: "pointermove", buttons: 1, target: sut, position: dragEndPos},
+      {type: "pointerup", buttons: 1, target: sut, position: dragEndPos}
     );
 
     var dragEndIndex = sut.document.positionToIndex({row: 1, column: 1});
