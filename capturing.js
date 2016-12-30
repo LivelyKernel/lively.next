@@ -197,6 +197,11 @@ export function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, opt
                             stmt.type === "ExpressionStatement"
                          && stmt.expression.type == "AssignmentExpression"
                          && stmt.expression.left.name === options.captureObj.name);
+  if (!captureInitialize)
+    captureInitialize = execute.value.body.body.find(stmt =>
+                            stmt.type === "VariableDeclaration"
+                         && stmt.declarations[0].id
+                         && stmt.declarations[0].id.name === options.captureObj.name);
   if (captureInitialize) {
     arr.pushAt(registerBody, captureInitialize, registerBody.length-1);
   }
