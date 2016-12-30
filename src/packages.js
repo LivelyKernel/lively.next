@@ -390,7 +390,7 @@ class Package {
 
   isRegistering() { return !!this.registerProcess; }
 
-  async register(packageLoadStack = [this.url]) {
+  async register(optPkgConfig, packageLoadStack = [this.url]) {
 
     if (this.isRegistering()) return this.registerProcess.promise;
 
@@ -399,19 +399,24 @@ class Package {
 
     System.debug && console.log("[lively.modules package register] %s", url);
 
-    var cfg = await this.tryToLoadPackageConfig(),
-        packageConfigResult = await new PackageConfiguration(this).applyConfig(cfg);
+    var cfg = optPkgConfig || await this.tryToLoadPackageConfig(),
+        packageConfigResult = new PackageConfiguration(this).applyConfig(cfg);
 
     for (let supPkg of packageConfigResult.subPackages) {
       // stop here to support circular deps
-      if (arr.include(packageLoadStack, supPkg.url)) {
+      if (packageLoadStack.includes(supPkg.url)) {
         if (System.debug || true) {
-          var shortStack = packageLoadStack && packageLoadStack.map(ea => ea.indexOf(System.baseURL) === 0 ? ea.slice(System.baseURL.length) : ea)
-          System.debug && console.log(`[lively.modules package register] ${url} is a circular dependency, stopping registering subpackages, stack: ${shortStack}`);
+          var shortStack = packageLoadStack
+                        && packageLoadStack.map(ea =>
+                            ea.indexOf(System.baseURL) === 0 ?
+                              ea.slice(System.baseURL.length) : ea)
+          System.debug && console.log(`[lively.modules package register]`
+                                    + ` ${url} is a circular dependency, stopping registering `
+                                    +  `subpackages, stack: ${shortStack}`);
         }
       } else {
         packageLoadStack.push(supPkg.url);
-        await supPkg.register(packageLoadStack);
+        await supPkg.register(null, packageLoadStack);
       }
     }
 
@@ -478,7 +483,7 @@ class Package {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function importPackage(System, packageURL) { return getPackage(System, packageURL).import(); }
-function registerPackage(System, packageURL, packageLoadStack) { return getPackage(System, packageURL).register(packageLoadStack); }
+function registerPackage(System, packageURL, optPkgConfig) { return getPackage(System, packageURL).register(optPkgConfig); }
 function removePackage(System, packageURL) { return getPackage(System, packageURL).remove(); }
 function reloadPackage(System, packageURL) { return getPackage(System, packageURL).reload(); }
 
