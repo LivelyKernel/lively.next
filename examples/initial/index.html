@@ -5,12 +5,13 @@
   </head>
   <body style="margin: 0;">
     <div id="lively-world"></div>
-    <script src="/lively.morphic/node_modules/pepjs/dist/pep.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/fetch/1.0.0/fetch.js"></script>
     <script src="/lively.modules/node_modules/systemjs/dist/system.src.js"></script>
     <script src="/lively.modules/dist/lively.modules.js"></script>
+
     <script>
+      var origin = document.location.origin;
       Promise.resolve()
+        .then(polyfills)
         .then(bootstrapLivelySystem)
         .then(function() { console.log("3. loading lively.morphic"); })
         .then(function () { return lively.modules.importPackage('.'); })
@@ -24,7 +25,6 @@
       })
 
       function bootstrapLivelySystem() {
-        var origin = document.location.origin;
 
         // for loading an instrumented version of the packages comprising the lively.system
         return Promise.resolve()
@@ -34,10 +34,10 @@
 
           .then(function() { console.log("2. preparing to bootstrap..."); })
 
-          .then(function () { return lively.modules.removePackage('lively-modules'); })
+          .then(function () { return lively.modules.changeSystem(lively.modules.getSystem("bootstrapped"), true); })
 
           .then(function() {
-            return lively.modules.importPackage(
+            return importPackageAndDo(
               "lively.lang",
               function(m) { delete m._prevLivelyGlobal; }); })
 
@@ -68,6 +68,8 @@
 
           .then(function() { return importPackageAndDo(origin + "/lively.2lively"); })
 
+          .then(function () { return importPackageAndDo(origin + '/lively-system-interface'); })
+
           .then(function() { console.log("...lively.system bootstrapped!"); })
       }
 
@@ -76,6 +78,15 @@
         return lively.modules.importPackage(packageURL)
           .then(doFunc || function() {})
           .then(function() { console.log("...%s loaded...", name); })
+      }
+      
+      function polyfills() {
+        return Promise.all([
+          "PointerEvent" in window ?
+            null : lively.resources.loadViaScript(`${origin}/lively.morphic/node_modules/pepjs/dist/pep.js`),
+          "fetch" in window ?
+            null : lively.resources.loadViaScript(`//cdnjs.cloudflare.com/ajax/libs/fetch/1.0.0/fetch.js`)
+        ]);
       }
     </script>
   </body>
