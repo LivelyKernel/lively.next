@@ -25,7 +25,7 @@
 
     {action: "installObject", target: "Numbers",                source: "num",        methods: ["average","between","convertLength","humanReadableByteSize","median","normalRandom","parseLength","random","sort"]},
     {action: "installObject", target: "Properties",             source: "properties", methods: ["all","allOwnPropertiesOrFunctions","allProperties","any","forEachOwn","hash","nameFor","own","ownValues","values"]},
-    {action: "installObject", target: "Strings",                source: "string",     methods: ["camelCaseString","createDataURI","diff","format","formatFromArray","indent","lineIndexComputer","lines","md5","newUUID","nonEmptyLines","pad","paragraphs","peekLeft","peekRight","print","printNested","printTable","printTree","quote","reMatches","removeSurroundingWhitespaces","stringMatch","tableize","tokens","unescapeCharacterEntities","withDecimalPrecision"]},
+    {action: "installObject", target: "Strings",                source: "string",     methods: ["camelCaseString","createDataURI","diff","format","formatFromArray","indent","lineIndexComputer","lines","md5","newUUID","nonEmptyLines","pad","paragraphs","peekLeft","peekRight","print","printNested","printTable","printTree","quote","reMatches","stringMatch","tableize","tokens","unescapeCharacterEntities","withDecimalPrecision"]},
     {action: "installObject", target: "Objects",                source: "obj",        methods: ["asObject", "equals","inspect","isMutableType","safeToString","shortPrintStringOf","typeStringOf"]},
     {action: "installObject", target: "Functions",              source: "fun",        methods: ["all","compose","composeAsync","createQueue","debounce","debounceNamed","either","extractBody","flip","notYetImplemented","once","own","throttle","throttleNamed","timeToRun","timeToRunN","waitFor","workerWithCallbackQueue","wrapperChain"]},
     {action: "installObject", target: "Grid",                   source: "grid"},
@@ -3275,10 +3275,7 @@
         var parameterString = regexResult[1];
         if (parameterString.length == 0)
             return [];
-        var parameters = parameterString.split(',').map(function (str) {
-            return exports.string.removeSurroundingWhitespaces(str);
-        }, this);
-        return parameters;
+        return exports.arr.invoke(parameterString.split(','), 'trim');
     };
     Closure.prototype.firstParameter = function (src) {
         return this.parameterNames(src)[0] || null;
@@ -3443,16 +3440,28 @@
                 return indent + line;
             }).join('\n');
         },
-        removeSurroundingWhitespaces: function (str) {
-            function removeTrailingWhitespace(s) {
-                while (s.length > 0 && /\s|\n|\r/.test(s[s.length - 1]))
-                    s = s.substring(0, s.length - 1);
-                return s;
-            }
-            function removeLeadingWhitespace(string) {
-                return string.replace(/^[\n\s]*(.*)/, '$1');
-            }
-            return removeLeadingWhitespace(removeTrailingWhitespace(str));
+        minIndent: function (str, indentString) {
+            if (!indentString)
+                indentString = '  ';
+            var indentRe = new RegExp('^(' + indentString + ')*', 'gm');
+            return exports.arr.min(str.match(indentRe).map(function (ea) {
+                return Math.floor(ea.length / indentString.length);
+            }));
+        },
+        changeIndent: function (str, indentString, depth) {
+            if (!indentString)
+                indentString = '  ';
+            if (!depth)
+                depth = 0;
+            var existingIndent = string.minIndent(str, indentString);
+            if (existingIndent === depth)
+                return str;
+            if (existingIndent < depth)
+                return string.indent(str, indentString, depth - existingIndent);
+            var prefixToRemove = indentString.repeat(existingIndent - depth);
+            return string.lines(str).map(function (line) {
+                return line.slice(prefixToRemove.length);
+            }).join('\n');
         },
         quote: function (str) {
             return '"' + str.replace(/"/g, '\\"') + '"';
@@ -3470,15 +3479,9 @@
         },
         printNested: function (list, depth) {
             depth = depth || 0;
-            var s = '';
-            list.forEach(function (ea) {
-                if (ea instanceof Array) {
-                    s += string.printNested(ea, depth + 1);
-                } else {
-                    s += string.indent(ea + '\n', '  ', depth);
-                }
-            });
-            return s;
+            return list.reduce(function (s, ea) {
+                return s += Array.isArray(ea) ? string.printNested(ea, depth + 1) : string.indent(ea + '\n', '  ', depth);
+            }, '');
         },
         pad: function (string, n, left) {
             return left ? ' '.repeat(n) + string : string + ' '.repeat(n);
