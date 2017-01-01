@@ -3,9 +3,10 @@ import module from "lively.modules/src/module.js";
 import { parse, query } from "lively.ast";
 import { runEval } from "lively.vm";
 
-const srcLocSym = Symbol.for("lively-source-location"),
+const objMetaSym = Symbol.for("lively-object-meta"),
       moduleSym = Symbol.for("lively-module-meta"),
-      descriptorCache = new WeakMap();
+      // descriptorCache = new WeakMap();
+      descriptorCache = new Map();
 
 // SourceDescriptor: Represents a code object specified by a {start, end}
 // sourceLocation inside source code (moduleSource).
@@ -30,7 +31,7 @@ export class SourceDescriptor {
   }
 
   update(moduleSource, sourceLocation) {
-    if (this._moduleSource === moduleSource && 
+    if (this._moduleSource === moduleSource &&
         sourceLocation && this._sourceLocation &&
         sourceLocation.start === this._sourceLocation.start &&
         sourceLocation.end === this._sourceLocation.end
@@ -103,7 +104,7 @@ export class SourceDescriptor {
 // class or function and it's source code representation. The runtime object is
 // expected to have two property symbols:
 // - Symbol.for("lively-module-meta"): {package: {name, version}, pathInPackage}
-// - Symbol.for("lively-source-location"): value {start, end} indexes into code
+// - Symbol.for("lively-object-meta"): value {start, end} indexes into code
 // Via those the RuntimeSourceDescriptor can retrieve code and other
 // code-related things of a runtime object and change its definition
 
@@ -111,7 +112,7 @@ export class RuntimeSourceDescriptor {
 
   static forObjectWithModuleSource(obj, moduleSource, optSystem) {
     var descr = this.for(obj, optSystem);
-    descr.ensureSourceDescriptor(descr.sourceLocation, moduleSource);;
+    descr.ensureSourceDescriptor(descr.sourceLocation, moduleSource);
     return descr;
   }
 
@@ -130,78 +131,159 @@ export class RuntimeSourceDescriptor {
     this.reset();
   }
 
+  reset() {
+    this._source = "";
+    this._sourceLocation = null;
+    this._ast = null;
+    this._moduleSource = "";
+    this._moduleAst = null;
+    this._moduleScope = null;
+    this._moduleImports = null;
+    this._declaredAndUndeclaredNames = null;
+  }
+
+  resetIfChanged() {
+    var {moduleSource} = this.meta;
+    if (this._moduleSource && moduleSource && this._moduleSource !== moduleSource)
+      this.reset();
+  }
   get System() { return this._System || System; }
   set System(S) { this._System = S; }
 
   get module() {
     var {obj, System} = this;
     if (!obj[moduleSym])
-      throw new Error(`runtime object of ${this} has no module data`)
-    var {package: {name: packageName}, pathInPackage} = obj[moduleSym];
-    // FIXME
-    return module(System, packageName + "/" + pathInPackage);
+      throw new Error(`runtime object of source descriptor has no module data`)
+
+    var {package: {name: pName}, pathInPackage: mName} = obj[moduleSym],
+        mId = mName.includes("://") ? mName : pName + "/" + mName,
+        m = module(System, mId);
+
+    if (!m._source && this.moduleSource)
+      m.setSource(this.moduleSource);
+    return m;
+  }
+
+  get meta() {
+    var {obj} = this;
+    if (!obj[objMetaSym])
+      throw new Error(`runtime object of source descriptor has no lively meta data`)
+    return obj[objMetaSym];
+  }
+
+  set meta(meta) {
+    this.obj[objMetaSym] = meta;
+    if (meta.hasOwnProperty("start") && meta.hasOwnProperty("end"))
+      this._sourceLocation = {start: meta.start, end: meta.end};
+    if (meta.hasOwnProperty("moduleSource"))
+    this._moduleSource = meta.moduleSource;
   }
 
   get sourceLocation() {
-    var {obj, System} = this;
-    if (!obj[srcLocSym])
-      throw new Error(`runtime object of ${this} has no source location data`)
-    return obj[srcLocSym];
+    this.resetIfChanged();
+    if (this._sourceLocation) return this._sourceLocation;
+    var {meta: {start, end}} = this;
+    if (start === undefined || end === undefined)
+      throw new Error(`lively meta data has no start/end`)
+    return this._sourceLocation = {start, end};
   }
 
-  reset() { this._sourceDescriptor = null; }
-
-  ensureSourceDescriptor(loc, source) {
-    if (!this._sourceDescriptor)
-      this._sourceDescriptor = new SourceDescriptor(loc, source);
-    else
-      this._sourceDescriptor.update(source, loc);
-    return this._sourceDescriptor;
+  get moduleSource() {
+    this.resetIfChanged();
+    if (this._moduleSource) return this._moduleSource;
+    var {meta: {moduleSource}} = this;
+    if (moduleSource === undefined)
+      throw new Error(`lively meta data has no moduleSource`)
+    return this._moduleSource = moduleSource;
   }
 
-  get sourceDescriptor() {
-    return this._sourceDescriptor
-        || this.module.source().then(source =>
-            this.ensureSourceDescriptor(this.sourceLocation, source));
+  get moduleAst() {
+    this.resetIfChanged();
+    return this._moduleAst || (this._moduleAst = parse(this.moduleSource));
+  }
+  get moduleScope() {
+    this.resetIfChanged();
+    return this._moduleScope || (this._moduleScope = query.topLevelDeclsAndRefs(this.ast).scope);
+  }
+  get moduleImports() {
+    this.resetIfChanged();
+    return this._moduleImports || (this._moduleImports = query.imports(this.moduleScope));
   }
 
-  async descriptorProp(name) { return (await this.sourceDescriptor)[name]; }
-  get moduleSource() { return this.descriptorProp("moduleSource"); }
-  get ast() { return this.descriptorProp("ast"); }
-  get source() { return this.descriptorProp("source"); }
-  get declaredAndUndeclaredNames() { return this.descriptorProp("declaredAndUndeclaredNames"); }
+  get declaredAndUndeclaredNames() {
+    this.resetIfChanged();
+    if (this._declaredAndUndeclaredNames)
+      return this._declaredAndUndeclaredNames;
 
-  get sourceSync() { return this._sourceDescriptor ? this._sourceDescriptor.source : ""; }
-  get astSync() { return this._sourceDescriptor ? this._sourceDescriptor.ast : ""; }
+    var parsed = this.ast,
+        declaredNames = query.topLevelDeclsAndRefs(this.moduleAst).declaredNames,
+        declaredImports = arr.uniq(this.moduleImports.map(({local}) => local)),
+        localDeclaredNames = arr.withoutAll(declaredNames, declaredImports),
+        undeclaredNames = arr.withoutAll(query.findGlobalVarRefs(parsed).map(ea => ea.name), declaredNames);
+
+    return this._declaredAndUndeclaredNames = {
+      declaredNames,
+      declaredImports,
+      localDeclaredNames,
+      undeclaredNames
+    }
+  }
+
+  get source() {
+    this.resetIfChanged();
+    if (this._source) return this._source;
+    var {sourceLocation: {start, end}, moduleSource} = this;
+    return this._source = moduleSource.slice(start, end);
+  }
+
+  get ast() {
+    this.resetIfChanged();
+    if (this._ast) return this._ast;
+    // be as concrete as possible
+    var parsed = parse(this.source), node = parsed.body[0];
+    if (node.type === "ExpressionStatement") node = node.expression;
+    return this._ast = node;
+  }
+
+  get type() { return this.ast.type; }
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   changeSourceSync(newSource) {
-    var {module, _sourceDescriptor: d} = this;
-    if (d && !d.moduleSource) d = null;
-    if (!d && module._source) d = this.ensureSourceDescriptor(this.sourceLocation, module._source);
-    if (!d) throw new Error(`Cannot changeSourceSync b/c ${this} does not have module source`);
-    var source = this.updateSource(d.moduleSource, newSource);
-    this.module.changeSource(source, {doEval: false});
-    runEval(source, {sync: true, targetModule: this.module.id});
+    var {module, System} = this;
+    this._basicChangeSource(newSource);
+    this.module.changeSource(this.moduleSource, {doSave: true});
+    var result = runEval(newSource, {sync: true, targetModule: this.module.id, System});
+    if (result.isError) throw result.value;
     return this;
   }
 
   async changeSource(newSource) {
-    await module.changeSourceAction(oldSource =>
-      this.updateSource(oldSource, newSource));
+    var {module} = this;
+    await module.changeSourceAction(oldSource => {
+      if (oldSource !== this.moduleSource)
+        throw new Error(`source of module ${module.id} and source of ${this} don't match`);
+      this._basicChangeSource(newSource);
+      return this.moduleSource;
+    });
     return this;
   }
 
-  updateSource(oldModuleSource, newDescriptorSource) {
-    var {module, _sourceDescriptor: d} = this;
-    if (d && d.moduleSource !== oldModuleSource) this._sourceDescriptor = d = null;
-    if (!d) d = this.ensureSourceDescriptor(this.sourceLocation, oldModuleSource);
-    d.changeSource(newDescriptorSource)
-    Object.assign(this.sourceLocation, d.sourceLocation);
-    return d.moduleSource;
+  _basicChangeSource(newSource) {
+    var {meta, moduleSource, sourceLocation: {start, end}} = this,
+        newModuleSource = moduleSource.slice(0, start) + newSource + moduleSource.slice(end),
+        newSourceLocation = {start, end: start + newSource.length}
+
+    this.reset();
+    this.meta = {...meta, moduleSource: newModuleSource, ...newSourceLocation};
+    this._sourceLocation = newSourceLocation;
+    this._moduleSource = newModuleSource;
+    this._source = newSource;
+    return this;
   }
 
   toString() {
-    var source = this._sourceDescriptor ? this._sourceDescriptor.source : String(this.obj),
+    var source = this.source || String(this.obj),
         objString = string.truncate(source, 35).replace(/\n/g, ""),
         modName; try { modName = this.module.shortName() } catch (e) { modName = "NO MODULE!" };
     return `${this.constructor.name}(${objString} in ${modName})`;

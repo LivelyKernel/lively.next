@@ -11,7 +11,7 @@ var testDir = "local://source-descriptor-test/";
 
 var project1Dir = testDir + "project1/",
     project1 = {
-      "index.js": "'format esm';\nfunction a() { return b() + 3; };\nfunction b() { return 1; }",
+      "index.js": "'format esm';\nfunction a() { return b() + 3; };\nfunction b() { return 1; }; class A {}",
       "file1.js": "",
       "package.json": '{"name": "project1", "main": "index.js"}'
     },
@@ -59,16 +59,14 @@ describe("source descriptors", function() {
       expect(445).equals(m.recorder.a(), "module runtime not updated");
       expect(descr.sourceLocation).deep.equals({start: 14, end: 48});
     });
-    
-    // 2016-12-18 currently descriptors won't update
-    xit("descriptors are updated", async () => {
+
+    it("descriptors are updated", async () => {
       var m = module(S, "project1/index.js"),
-          descr1 = RuntimeSourceDescriptor.for(m.recorder.a, S),
-          descr2 = RuntimeSourceDescriptor.for(m.recorder.b, S);
-      await descr1.write("function a() {\n  return b() + 4;\n}");
-      expect(descr1.obj).equals(m.recorder.a, "obj of descr1 not updated");
-      // expect(descr2.obj).equals(m.recorder.b, "obj of descr2 not updated");
-      // expect(await descr2.read()).equals("function b() { return 1; }", "source of descr2 not updated");
+          descr = RuntimeSourceDescriptor.for(m.recorder.A, S);
+      expect(descr.source).equals("class A {}");
+      await m.changeSourceAction(oldSource => 
+        oldSource.replace("class A {}", "class A { m() {}}"));
+      expect(descr.source).equals("class A { m() {}}");
     });
 
   });
