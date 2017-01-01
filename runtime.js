@@ -4,7 +4,7 @@ export const initializeSymbol = Symbol.for("lively-instance-initialize"),
              instanceRestorerSymbol = Symbol.for("lively-instance-restorer"),
              superclassSymbol = Symbol.for("lively-instance-superclass"),
              moduleMetaSymbol = Symbol.for("lively-module-meta"),
-             sourceLocSymbol = Symbol.for("lively-source-location"),
+             objMetaSymbol = Symbol.for("lively-object-meta"),
              moduleSubscribeToToplevelChangesSym = Symbol.for("lively-klass-changes-subscriber");
 
 const constructorArgMatcher = /\([^\\)]*\)/;
@@ -150,7 +150,7 @@ export function initializeClass(
   // 3. Install methods
   installMethods(klass, instanceMethods, classMethods);
 
-  klass[sourceLocSymbol] = sourceLoc;
+  klass[objMetaSymbol] = sourceLoc;
 
   // 4. If we have a `currentModule` instance (from lively.modules/src/module.js)
   // then we also store some meta data about the module. This allows us to

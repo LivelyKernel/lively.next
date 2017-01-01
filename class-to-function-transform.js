@@ -189,7 +189,9 @@ function replaceClass(node, state, path, options) {
       instanceProps = id("undefined"),
       classProps = id("undefined"),
       className = classId ? classId.name : "anonymous_class",
-      loc = node["x-lively-def-location"] || {start, end};
+      evalId = options.evalId,
+      sourceAccessorName = options.sourceAccessorName,
+      loc = node["x-lively-object-meta"] || {start, end};
 
   if (body.length) {
     var {inst, clazz} = body.reduce((props, propNode) => {
@@ -259,7 +261,10 @@ function replaceClass(node, state, path, options) {
   // For persistent storage and retrieval of pre-existing classes in "classHolder" object
   var useClassHolder = classId && type === "ClassDeclaration";
 
-  var locNode = objectLiteral(["start", literal(loc.start), "end", literal(loc.end)]);
+  var locKeyVals = ["start", literal(loc.start), "end", literal(loc.end)];
+  if (typeof evalId !== "undefined") locKeyVals.push("evalId", literal(evalId));
+  if (sourceAccessorName) locKeyVals.push("moduleSource", nodes.id(sourceAccessorName));
+  var locNode = objectLiteral(locKeyVals);
 
   var classCreator =
     funcCall(
