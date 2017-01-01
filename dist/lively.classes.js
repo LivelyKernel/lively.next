@@ -17,7 +17,7 @@ var initializeSymbol = Symbol.for("lively-instance-initialize");
 var instanceRestorerSymbol = Symbol.for("lively-instance-restorer");
 var superclassSymbol = Symbol.for("lively-instance-superclass");
 var moduleMetaSymbol = Symbol.for("lively-module-meta");
-var sourceLocSymbol = Symbol.for("lively-source-location");
+var objMetaSymbol = Symbol.for("lively-object-meta");
 var moduleSubscribeToToplevelChangesSym = Symbol.for("lively-klass-changes-subscriber");
 
 var constructorArgMatcher = /\([^\\)]*\)/;
@@ -160,7 +160,7 @@ function initializeClass(constructorFunc, superclassSpec) {
   // 3. Install methods
   installMethods(klass, instanceMethods, classMethods);
 
-  klass[sourceLocSymbol] = sourceLoc;
+  klass[objMetaSymbol] = sourceLoc;
 
   // 4. If we have a `currentModule` instance (from lively.modules/src/module.js)
   // then we also store some meta data about the module. This allows us to
@@ -231,7 +231,7 @@ var runtime = Object.freeze({
 	instanceRestorerSymbol: instanceRestorerSymbol,
 	superclassSymbol: superclassSymbol,
 	moduleMetaSymbol: moduleMetaSymbol,
-	sourceLocSymbol: sourceLocSymbol,
+	objMetaSymbol: objMetaSymbol,
 	moduleSubscribeToToplevelChangesSym: moduleSubscribeToToplevelChangesSym,
 	initializeClass: initializeClass
 });
@@ -591,7 +591,9 @@ function replaceClass(node, state, path, options) {
       instanceProps = id("undefined"),
       classProps = id("undefined"),
       className = classId ? classId.name : "anonymous_class",
-      loc = node["x-lively-def-location"] || { start: start, end: end };
+      evalId = options.evalId,
+      sourceAccessorName = options.sourceAccessorName,
+      loc = node["x-lively-object-meta"] || { start: start, end: end };
 
 
   if (body.length) {
@@ -661,7 +663,10 @@ function replaceClass(node, state, path, options) {
   // For persistent storage and retrieval of pre-existing classes in "classHolder" object
   var useClassHolder = classId && type === "ClassDeclaration";
 
-  var locNode = objectLiteral(["start", literal(loc.start), "end", literal(loc.end)]);
+  var locKeyVals = ["start", literal(loc.start), "end", literal(loc.end)];
+  if (typeof evalId !== "undefined") locKeyVals.push("evalId", literal(evalId));
+  if (sourceAccessorName) locKeyVals.push("moduleSource", lively_ast.nodes.id(sourceAccessorName));
+  var locNode = objectLiteral(locKeyVals);
 
   var classCreator = funcCall(funcExpr({}, ["superclass"], varDecl(tempLivelyClassHolderVar, state.classHolder), varDecl(tempLivelyClassVar, useClassHolder ? {
     type: "ConditionalExpression",
