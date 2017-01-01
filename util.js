@@ -1,5 +1,6 @@
 import { arr } from "lively.lang";
 import { superclassSymbol } from "./runtime.js";
+import { RuntimeSourceDescriptor } from "./source-descriptors.js";
 
 export function superclasses(klass) {
   return withSuperclasses(klass).slice(1)
@@ -26,7 +27,25 @@ export function isClass(klass) {
   return klass && typeof klass === "function";
 }
 
-export function instanceFields(klass) {
+export async function classMembersFromSource(klass) {
+  var descr = RuntimeSourceDescriptor.for(klass);
+  var parsed = await descr.ast;
+  Path("body.0.body.body").get(parsed)
+}
+
+
+export function runtimeClassMembers(klass) {
+  return runtimeNonStaticMembers(klass).concat(runtimeNonStaticMembers(klass));
+}
+
+function runtimeClassMembersInProtoChain(klass) {
+  return arr.uniq(
+          arr.flatmap(
+            arr.without(withSuperclasses(klass), Object),
+            ea => runtimeClassMembers(ea)));
+}
+
+function runtimeNonStaticMembers(klass) {
   var owner = klass.prototype,
       descriptors = Object.getOwnPropertyDescriptors(owner);
   return arr.withoutAll(
@@ -34,26 +53,26 @@ export function instanceFields(klass) {
     ["constructor"])
       .map(key => {
         var descr = descriptors[key],
-            type = typeof descr.value === "function" ? "method" :
-                    "get" in descr ? "getter" : 
-                      "set" in descr ? "setter" :
+            kind = typeof descr.value === "function" ? "method" :
+                    "get" in descr ? "get" : 
+                      "set" in descr ? "set" :
                         "unknown",
-            value = type === "method" ? descr.value :
-                      type === "getter" ? descr.get :
-                        type === "setter" ? descr.set : null
-        return {name: key, value, type, owner};
+            value = kind === "method" ? descr.value :
+                      kind === "get" ? descr.get :
+                        kind === "set" ? descr.set : null
+        return {static: false, name: key, value, kind, owner};
       });
 
 }
 
-export function allInstanceFields(klass) {
+function runtimeNonstaticClassMembersInProtoChain(klass) {
   return arr.uniq(
           arr.flatmap(
             arr.without(withSuperclasses(klass), Object),
-            ea => instanceFields(ea)));
+            ea => runtimeNonStaticMembers(ea)));
 }
 
-export function classFields(klass) {
+export function runtimeStaticClassMembers(klass) {
   var owner = klass,
       descriptors = Object.getOwnPropertyDescriptors(owner);
   return arr.withoutAll(
@@ -61,25 +80,28 @@ export function classFields(klass) {
     ["prototype", "name", "length", "toString"])
       .map(key => {
         var descr = descriptors[key],
-            type = typeof descr.value === "function" ? "method" :
-                    "get" in descr ? "getter" : 
-                      "set" in descr ? "setter" :
+            kind = typeof descr.value === "function" ? "method" :
+                    "get" in descr ? "get" : 
+                      "set" in descr ? "set" :
                         "unknown",
-            value = type === "method" ? descr.value :
-                      type === "getter" ? descr.get :
-                        type === "setter" ? descr.set : null;
-        return {name: key, value, type, owner};
+            value = kind === "method" ? descr.value :
+                      kind === "get" ? descr.get :
+                        kind === "set" ? descr.set : null;
+        return {static: true, name: key, value, kind, owner};
       });
 }
 
-export function allClassFields(klass) {
+export function runtimeStaticClassMembersInProtoChain(klass) {
   return arr.uniq(
           arr.flatmap(
             arr.without(withSuperclasses(klass), Object),
-            ea => classFields(ea)));
+            ea => runtimeStaticClassMembers(ea)));
 }
 
+
+
 /*
+
 class Foo {
   static foooo() {}
   x() { return 23; }
@@ -93,11 +115,75 @@ class Bar extends Foo {
   set xxxx(f) { ; }
 }
 
-Object.getOwnPropertyDescriptors(Bar.prototype).constructor
-Object.getOwnPropertyDescriptors(Bar.prototype).xxxx.
-instanceFields(Bar)
-allInstanceFields(Bar)
+runtimeClassMembers(Bar)[0]
+runtimeClassMembersInProtoChain(Bar)
 
-classFields(Bar)
-allClassFields(Bar)
 */
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+export var toJsIdentifier = (function() {
+
+  var keywords = ["break", "case", "catch", "class", "const", "continue", "debugger", "default", "delete", "do", "else", "enum", "export", "extends", "false", "finally", "for", "function", "if", "implements", "import", "in", "instanceof", "interface", "let", "new", "null", "package", "private", "protected", "public", "return", "static", "switch", "super", "this", "throw", "true", "try", "typeof", "undefined", "var", "void", "while", "with", "yield"];
+
+  var illegalChars = {
+    "~":  "_tilde_",
+    "`":  "_backtick_",
+    "!":  "_exclamationmark_",
+    "@":  "_at_",
+    "#":  "_pound_",
+    "%":  "_percent_",
+    "^":  "_carat_",
+    "&":  "_amperstand_",
+    "*":  "_asterisk_",
+    "(":  "_leftparen_",
+    ")":  "_rightparen_",
+    "-":  "_dash_",
+    "+":  "_plus_",
+    "=":  "_equals_",
+    "{":  "_leftcurly_",
+    "}":  "_rightcurly_",
+    "[":  "_leftsquare_",
+    "]":  "_rightsquare_",
+    "|":  "_pipe_",
+    "\\": "_backslash_",
+    "\"": "_doublequote_",
+    "'":  "_singlequote_",
+    ":":  "_colon_",
+    ";":  "_semicolon_",
+    "<":  "_leftangle_",
+    ">":  "_rightangle_",
+    ",":  "_comma_",
+    ".":  "_period_",
+    "?":  "_questionmark_",
+    "/":  "_forwardslash_",
+    " ":  "_",
+    "\t": "_tab_",
+    "\n": "_newline_",
+    "\r": "_carriagereturn_"
+  };
+
+  var nums = {
+    "0": "_zero_",
+    "1": "_one_",
+    "2": "_two_",
+    "3": "_three_",
+    "4": "_four_",
+    "5": "_five_",
+    "6": "_siz_",
+    "7": "_seven_",
+    "8": "_eight_",
+    "9": "_nine_",
+  }
+
+  var wrapper = text => text,
+      charWrapper = char => wrapper(illegalChars[char] || "ASCII_" + (char.charCodeAt(0)))
+
+  return function toJsIdentifier(text) {
+    if ((keywords.indexOf(text)) >= 0) return wrapper(text);
+    if (text.length === 0) return wrapper("_null_");
+    return text.replace(/^\d/, n => wrapper(nums[n]))
+               .replace(/[^\w\$_]/g, charWrapper);
+  }
+
+})();
