@@ -1,11 +1,11 @@
 import { string, Path, arr, obj } from "lively.lang";
 import { parse, stringify, parseFunction } from "lively.ast";
-import { registerPackage } from "lively.modules/src/packages.js";
 import { resource } from "lively.resources";
 import { runEval } from "lively.vm";
-import { module } from "lively.modules";
-import { SourceDescriptor, RuntimeSourceDescriptor } from "./source-descriptors.js";
-import { getPackage } from "lively.web/lively.modules/src/packages.js";
+import { RuntimeSourceDescriptor } from "./source-descriptors.js";
+import { registerPackage, getPackage } from "lively.modules/src/packages.js";
+import module from "lively.modules/src/module.js";
+import { toJsIdentifier } from "./util.js";
 
 const objectPackageSym = Symbol.for("lively-object-package-data"),
       defaultBaseURL = "local://lively-object-modules";
@@ -38,7 +38,6 @@ export async function ensureLocalPackage(packageId, options) {
   options = normalizeOptions(options);
 
   let r = resource(options.baseURL),
-      backend = r.localBackend,
       config = {name: packageId, version: "0.1.0"},
       dirs = [{path: `/${packageId}/`}],
       files = [
@@ -46,49 +45,27 @@ export async function ensureLocalPackage(packageId, options) {
         {path: `/${packageId}/package.json`,
          content: JSON.stringify(config, null, 2)}];
 
-  dirs.forEach(dir => backend.mkdir(dir.path));
-  files.forEach(({path, content}) => !backend.get(path) && backend.write(path, content));
+  await Promise.all(dirs.map(({path}) => r.join(path).mkdir()));
+  await Promise.all(files.map(async ({path, content}) => {
+    var file = r.join(path);
+    if (!(await file.exists())) await file.write(content)
+  }));
 
   var packageURL = r.join(`/${packageId}/`).url;
-  registerPackage(options.System, packageURL, config);
+  await registerPackage(options.System, packageURL, config);
+
   return packageURL;
 }
 
-function packageIndexResource(packageId, options) {
-  options = normalizeOptions(options);
-  return resource(options.baseURL).join(`/${packageId}/index.js`);
-}
-
-function readPackageIndex(packageId, options) {
-  let r = packageIndexResource(packageId, options),
-      backend = r.localBackend;
-  return backend.read(r.path());
-}
-
-function writePackageIndex(packageId, content, options) {
-  let r = packageIndexResource(packageId, options),
-      backend = r.localBackend;
-  return backend.write(r.path(), content);
-}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // object class
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function createDefaultClassDeclarationForObject(obj, packageId, options = {}) {
-  // ensure that there exist a local package definition with an object class
-  let className = obj.name ? string.capitalize(obj.name) : "ObjectClass",
-      superClassName = obj.constructor.name || "Object",
-      classSource = superClassName === "Object" ?
-        `class ${className} {}\n` :
-        `class ${className} extends ${superClassName} {}\n`,
-      source = `export default ${classSource}\n`
-             + `${className}.isLivelyObjectClass = true;`;
-
-  writePackageIndex(packageId, source, options);
-  var moduleId = packageIndexResource(packageId, options).url;
-  return {source, className, moduleId};
-}
+var globalClasses = Object.keys(System.global).map(ea => {
+  var val = System.global[ea];
+  return typeof val === "function" && val.name && val;
+}).filter(Boolean);
 
 
 function findDefaultClass(moduleSource) {
@@ -106,65 +83,71 @@ function findDefaultClass(moduleSource) {
     null
 }
 
-
-function sourceDescriptorOfObjectClass(klass, packageId, options) {
-  if (!klass.isLivelyObjectClass)
-    throw new Error("Not an object class: " + klass)
-
-  options = normalizeOptions(options)
-
-  let classModuleResource = resource(options.baseURL).join(`/${packageId}/index.js`),
-      modMeta = klass[Symbol.for("lively-module-meta")],
-      {package: {name: pName}, pathInPackage: mName} = modMeta, mId;
-
-  if (mName.includes("://")) mId = mName
-  else mId = resource(getPackage(options.System, pName).url).join(mName).url;
-
-  if (mId !== classModuleResource.url)
-    throw new Error(`lively object class "${klass.name}" is not in expected module ${classModuleResource.url} but in ${mId}`);
-
-  let source = readPackageIndex(packageId, options);
-  if (!source)
-    throw new Error(`lively object class "${klass.name}" is defined but cannot find its source code (tried ${classModuleResource})`);
-
-  return RuntimeSourceDescriptor.forObjectWithModuleSource(klass, source, options.System);
-}
-
-function ensureObjectClassSource(obj, options = {}) {
-  options = normalizeOptions(options);
-
+async function ensureObjectClassSource(obj, options) {
   let packageId = packageIdOfObject(obj);
 
   // If object is instance of a lively object class already then we just
   // need to access its module via a source descriptor
   let klass = obj.constructor;
   if (klass.isLivelyObjectClass) {
-    var descr = sourceDescriptorOfObjectClass(klass, packageId, options);
+    var descr = RuntimeSourceDescriptor.for(klass, options.System);
     return {
-      source: descr.sourceSync,
+      source: descr.source,
       className: klass.name,
-      moduleId: descr.module.id
+      moduleId: descr.module.id,
+      bindings: null
     };
   }
 
-  ensureLocalPackage(packageId, options);
+  await ensureLocalPackage(packageId, options);
+
   return createDefaultClassDeclarationForObject(obj, packageId, options);
 }
 
-export function ensureObjectClass(obj, opts) {
+async function createDefaultClassDeclarationForObject(obj, packageId, options = {}) {
+  // ensure that there exist a local package definition with an object class
+
+  let className = obj.name ? string.capitalize(toJsIdentifier(obj.name)) : "ObjectClass",
+      superClass = obj.constructor,
+      superClassName = superClass.name,
+      isAnonymousSuperclass = !superClassName,
+      globalSuperClass = globalClasses.includes(superClass),
+      bindings = null;
+
+  if (isAnonymousSuperclass) {
+    superClassName = "__anonymous_superclass__";
+    bindings = {[superClassName]: superClass};
+
+  } else if (!globalSuperClass) {
+    bindings = {[superClassName]: superClass};
+  }
+
+  var classSource = superClassName === "Object" ?
+        `class ${className} {}\n` :
+        `class ${className} extends ${superClassName} {}\n`,
+      source = `export default ${classSource}\n`
+             + `${className}.isLivelyObjectClass = true;`;
+
+  var defaultResource = resource(options.baseURL).join(`/${packageId}/index.js`);
+  await defaultResource.write(source);
+  return {source, className, moduleId: defaultResource.url, bindings};
+}
+
+export async function ensureObjectClass(obj, opts) {
   if (obj.constructor.isLivelyObjectClass)
     return obj.constructor;
 
-  var {source, moduleId, className} = ensureObjectClassSource(obj, opts);
-  debugger;
+  opts = normalizeOptions(opts);
 
-  runEval(source, {
-    sync: true, waitForPromise: false,
-    targetModule: moduleId
-  });
+  var {source, moduleId, className, bindings} = await ensureObjectClassSource(obj, opts),
+      mod = module(opts.System, moduleId);  
 
-  // 4. load the class and change the objects inheritance
-  let klass = module(moduleId).recorder[className];
+  if (bindings) for (var key in bindings) mod.define(key, bindings[key]);
+
+  runEval(source, {sync: true, targetModule: moduleId, System: opts.System});
+
+  // load the class and change the objects inheritance
+  let klass = mod.recorder[className];
 
   if (!klass)
     throw new Error(`Failed to define class ${className} in ${moduleId}`)
@@ -177,10 +160,12 @@ export function ensureObjectClass(obj, opts) {
   return klass;
 }
 
-export function addScript(obj, funcSource, name, options) {
-  let klass = ensureObjectClass(obj, options),
+async function addScriptToClass(obj, klass, funcSource, name, options) {
+  options = normalizeOptions(options);
+
+  let methodName = toJsIdentifier(name),
       packageId = packageIdOfObject(obj),
-      descr = sourceDescriptorOfObjectClass(klass, packageId, options);
+      descr = RuntimeSourceDescriptor.for(klass, options.System);
 
   let parsedFunction = parseFunction(funcSource);
   console.assert(
@@ -188,38 +173,37 @@ export function addScript(obj, funcSource, name, options) {
     "not a function expression but: " + parsedFunction.type);
 
   // we manually rewrite the source to maintain whitespace as much as possible
-  funcSource = funcSource.replace(/.*function\s*([^\(]+)?/, name);
+  funcSource = funcSource.replace(/.*function\s*([^\(]+)?/, methodName);
 
-  let source = descr.sourceSync,
-      classDecl = descr.astSync;
+  let source = descr.source,
+      classDecl = descr.ast;
   if (!classDecl)
     throw new Error("cannot find class decl of " + descr.module.id);
 
   let existing = classDecl.body.body.find(method =>
-                  method.key.name === name && !method.static);
+                  method.key.name === methodName && !method.static);
 
   if (existing) {
     source = source.slice(0, existing.start)
                  + funcSource
                  + source.slice(existing.end);
   } else {
-    let insertAt = source.lastIndexOf("}");
-    source = source.slice(0, insertAt)
-                    + funcSource
-                    + source.slice(insertAt);
+    let insertAt = source.lastIndexOf("}"),
+        before = source.slice(0, insertAt),
+        after = source.slice(insertAt);
+    if (!/\n\s*$/m.test(before)) before += "\n";
+    funcSource = string.changeIndent(funcSource, "  ", 1);
+    if (!/^[ ]*\n/m.test(after)) after = "\n" + after;
+    source = before + funcSource + after;
   }
 
-  if (false) {
-    // descr.changeSource(source);
-  } else {
-  debugger;
-    descr.changeSourceSync(source);
-    // descr.changeSource(source);
-    // runEval(descr.sourceDescriptor.moduleSource, {
-    //   sync: true, waitForPromise: false,
-    //   targetModule: descr.module.id
-    // });
-  }
+  await descr.changeSource(source);
 
-  return obj[name];
+  return {script: obj[methodName], klass, obj, module: descr.module.id, methodName};
+}
+
+export async function addScript(obj, funcSource, name, options) {
+  options = normalizeOptions(options);
+  let klass = options.targetClass || await ensureObjectClass(obj, options);
+  return await addScriptToClass(obj, klass, funcSource, name, options);
 }
