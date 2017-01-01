@@ -407,14 +407,17 @@ function evalCodeTransform(code, options) {
   var _query$topLevelDeclsA = lively_ast.query.topLevelDeclsAndRefs(parsed),
       classDecls = _query$topLevelDeclsA.classDecls,
       funcDecls = _query$topLevelDeclsA.funcDecls,
-      varDecls = _query$topLevelDeclsA.varDecls;
+      varDecls = _query$topLevelDeclsA.varDecls,
+      annotation = {};
 
+  if (options.hasOwnProperty("evalId")) annotation.evalId = options.evalId;
+  if (options.sourceAccessorName) annotation.sourceAccessorName = options.sourceAccessorName;
   [].concat(toConsumableArray(classDecls), toConsumableArray(funcDecls)).forEach(function (node) {
-    return node["x-lively-def-location"] = { start: node.start, end: node.end };
+    return node["x-lively-def-location"] = _extends({}, annotation, { start: node.start, end: node.end });
   });
   varDecls.forEach(function (node) {
     return node.declarations.forEach(function (decl) {
-      return decl["x-lively-def-location"] = { start: decl.start, end: decl.end };
+      return decl["x-lively-def-location"] = _extends({}, annotation, { start: decl.start, end: decl.end });
     });
   });
 
@@ -461,7 +464,9 @@ function evalCodeTransform(code, options) {
         currentModuleAccessor: options.currentModuleAccessor,
         classHolder: varRecorder,
         functionNode: member(varRecorder, defaultClassToFunctionConverterName),
-        declarationWrapper: options.declarationWrapper
+        declarationWrapper: options.declarationWrapper,
+        evalId: options.evalId,
+        sourceAccessorName: options.sourceAccessorName
       };
     }
 
@@ -472,7 +477,9 @@ function evalCodeTransform(code, options) {
       ignoreUndeclaredExcept: undeclaredToTransform,
       exclude: blacklist,
       declarationWrapper: options.declarationWrapper || undefined,
-      classToFunction: es6ClassToFunctionOptions
+      classToFunction: es6ClassToFunctionOptions,
+      evalId: options.evalId,
+      sourceAccessorName: options.sourceAccessorName
     });
   }
 
@@ -574,7 +581,7 @@ function getGlobal() {
   }();
 }
 
-function _eval(__lvEvalStatement, __lvVarRecorder /*needed as arg for capturing*/) {
+function _eval(__lvEvalStatement, __lvVarRecorder /*needed as arg for capturing*/, __lvOriginalCode) {
   return eval(__lvEvalStatement);
 }
 
@@ -615,7 +622,8 @@ function runEval$1(code, options, thenDo) {
   // the code is evaluated
 
   var evalDone = lively_lang.promise.deferred(),
-      recorder = options.topLevelVarRecorder || getGlobal();
+      recorder = options.topLevelVarRecorder || getGlobal(),
+      originalSource = code;
 
   if (options.wrapInStartEndCall) {
     if (recorder[startEvalFunctionName]) console.warn(result.addWarning("startEvalFunctionName " + startEvalFunctionName + " already exists in recorder!"));
@@ -653,7 +661,7 @@ function runEval$1(code, options, thenDo) {
   // 3. Now really run eval!
   try {
     typeof $world !== "undefined" && $world.get('log') && ($world.get('log').textString = code);
-    returnedValue = _eval.call(options.context, code, options.topLevelVarRecorder);
+    returnedValue = _eval.call(options.context, code, options.topLevelVarRecorder, options.originalSource || originalSource);
   } catch (e) {
     returnedError = e;
   }
@@ -934,7 +942,8 @@ function runEval$2(System, code, options) {
     transpilerOptions: null,
     format: "esm"
   }, options);
-  var originalCode = code;
+  var defaultSourceAccessorName = "__lvOriginalCode";
+  var originalSource = code;
 
   System.debug && console.log("[lively.module] runEval: " + code.slice(0, 100).replace(/\n/mg, " ") + "...");
 
@@ -966,7 +975,10 @@ function runEval$2(System, code, options) {
 
   options = _extends({
     waitForPromise: true,
-    sync: false
+    sync: false,
+    evalId: options.evalId || module.nextEvalId(),
+    sourceAccessorName: (options.hasOwnProperty("embedOriginalCode") ? options.embedOriginalCode : true) ? defaultSourceAccessorName : undefined,
+    originalSource: originalSource
   }, options, {
     header: header,
     recordGlobals: true,
@@ -986,7 +998,7 @@ function runEval$2(System, code, options) {
   // delay eval to ensure imports
   if (!options.sync && !options.importsEnsured && hasUnimportedImports(System, code, targetModule)) {
     return ensureImportsAreImported(System, code, targetModule).then(function () {
-      return runEval$2(System, originalCode, _extends({}, options, { importsEnsured: true }));
+      return runEval$2(System, originalSource, _extends({}, options, { importsEnsured: true }));
     });
   }
 
@@ -995,7 +1007,7 @@ function runEval$2(System, code, options) {
     if (!options.sync && !options._moduleImported) return System.import(targetModule).catch(function (err) {
       return null;
     }).then(function () {
-      return runEval$2(System, originalCode, _extends({}, options, { _moduleImported: true }));
+      return runEval$2(System, originalSource, _extends({}, options, { _moduleImported: true }));
     });
 
     module.ensureRecord(); // so we can record dependent modules
@@ -1007,7 +1019,7 @@ function runEval$2(System, code, options) {
       return options.transpiler.catch(function (err) {
         return console.error(err);
       }).then(function (transpiler) {
-        return runEval$2(System, originalCode, _extends({}, options, { transpiler: transpiler, _transpilerLoaded: true }));
+        return runEval$2(System, originalSource, _extends({}, options, { transpiler: transpiler, _transpilerLoaded: true }));
       });
     } else {
       console.warn("[lively.vm] sync eval requested but transpiler is not yet loaded, will continue without transpilation!");
@@ -1018,7 +1030,7 @@ function runEval$2(System, code, options) {
   System.debug && console.log("[lively.module] runEval in module " + targetModule + " started");
 
   lively_notifications.emit("lively.vm/doitrequest", {
-    code: originalCode,
+    code: originalSource,
     waitForPromise: options.waitForPromise,
     targetModule: options.targetModule
   }, Date.now(), System);
@@ -1027,8 +1039,8 @@ function runEval$2(System, code, options) {
 
   var result = runEval$1(code, options);
 
-  return options.sync ? evalEnd(System, originalCode, options, result) : Promise.resolve(result).then(function (result) {
-    return evalEnd(System, originalCode, options, result);
+  return options.sync ? evalEnd(System, originalSource, options, result) : Promise.resolve(result).then(function (result) {
+    return evalEnd(System, originalSource, options, result);
   });
 }
 

@@ -38,5 +38,19 @@ describe("eval code transform", function() {
             + "} catch (err) {\n"
             + "    __end_execution(err, undefined);\n"
             + "}"));
+            
+  it("source code and evalId passed into define", () =>
+    expect(evalCodeTransform("var x = 23;", {
+      evalId: "testEval",
+      sourceAccessorName: "__source",
+      declarationWrapper: {type: "Identifier", name: "__define"},
+      topLevelVarRecorder: {}
+    })).equals(`__lvVarRecorder.x = __define('x', 'var', 23, __lvVarRecorder, {\n`
+             + `    start: 4,\n`
+             + `    end: 10,\n`
+             + `    evalId: 'testEval',\n`
+             + `    moduleSource: __source\n`
+             + `});`));
 
+  
 });
