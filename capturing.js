@@ -45,7 +45,9 @@ export function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) 
       options.classToFunction : {
         classHolder: assignToObj,
         functionNode: {type: "Identifier", name: "_createOrExtendClass"},
-        declarationWrapper: options && options.declarationWrapper
+        declarationWrapper: options && options.declarationWrapper,
+        evalId: options && options.evalId,
+        sourceAccessorName: options && options.sourceAccessorName
       },
     ...options
   }
@@ -188,7 +190,8 @@ export function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, opt
               literal(id.name),
               literal("var"),
               stmt.expression,
-              options.captureObj) :
+              options.captureObj,
+              options) :
             stmt.expression;
       return exprStmt(assign(member(options.captureObj, id), rhs))
     }));
@@ -203,7 +206,24 @@ export function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, opt
                          && stmt.declarations[0].id
                          && stmt.declarations[0].id.name === options.captureObj.name);
   if (captureInitialize) {
+    arr.remove(execute.value.body.body, captureInitialize);
     arr.pushAt(registerBody, captureInitialize, registerBody.length-1);
+  }
+
+  if (options.sourceAccessorName) {
+    var origSourceInitialize = execute.value.body.body.find(stmt =>
+                              stmt.type === "ExpressionStatement"
+                           && stmt.expression.type == "AssignmentExpression"
+                           && stmt.expression.left.name === options.sourceAccessorName);
+    if (!origSourceInitialize)
+      origSourceInitialize = execute.value.body.body.find(stmt =>
+                              stmt.type === "VariableDeclaration"
+                           && stmt.declarations[0].id
+                           && stmt.declarations[0].id.name === options.sourceAccessorName);
+    if (origSourceInitialize) {
+      arr.remove(execute.value.body.body, origSourceInitialize);
+      arr.pushAt(registerBody, origSourceInitialize, registerBody.length-1);
+    }
   }
 
   return parsed;
@@ -314,7 +334,8 @@ function replaceRefs(parsed, options) {
                   literal(node.left.name),
                   literal("assignment"),
                   node.right,
-                  options.captureObj)};
+                  options.captureObj,
+                  options)};
 
      return node
   });
@@ -361,7 +382,8 @@ function replaceVarDecls(parsed, options) {
           decl,
           literal(decl.id.name),
           literal(node.kind),
-          init, options.captureObj) : init;
+          init, options.captureObj,
+          options) : init;
 
       // Here we create the object pattern / destructuring replacements
       if (decl.id.type.includes("Pattern")) {
@@ -380,7 +402,8 @@ function replaceVarDecls(parsed, options) {
                       literal(decl.declarations[0].id.name),
                       literal(node.kind),
                       decl.declarations[0].init,
-                      options.captureObj) : decl.declarations[0].init,
+                      options.captureObj,
+                      options) : decl.declarations[0].init,
                   false) : decl);
         topLevel.declaredNames.push(declRootName);
         replaced.push(...[varDecl(declRoot, initWrapped, node.kind)].concat(extractions));
@@ -539,7 +562,8 @@ function insertCapturesForExportDeclarations(parsed, options) {
                           literal(decl.id.name),
                           literal("assignment"),
                           decl.id,
-                          options.captureObj);
+                          options.captureObj,
+                          options);
         }
         return assignExpr(options.captureObj, decl.id, assignVal, false);
       }));
@@ -644,7 +668,8 @@ function es6ModuleTransforms(parsed, options) {
                     null,
                     literal(decl.id.name),
                     literal(stmt.declaration.kind),
-                    decl, options.captureObj) :
+                    decl, options.captureObj,
+                    options) :
                   decl.init,
                 false),
               stmt.declaration.kind);
@@ -717,7 +742,8 @@ function putFunctionDeclsInFront(parsed, options) {
             decl,
             literal(funcId.name),
             literal("function"),
-            funcId, options.captureObj) :
+            funcId, options.captureObj,
+            options) :
           funcId,
         declFront = {...decl};
 
@@ -916,12 +942,34 @@ function declarationWrapperCall(
   varNameLiteral,
   varKindLiteral,
   valueNode,
-  recorder
+  recorder,
+  options
 ) {
-  if (declNode && declNode["x-lively-def-location"]) {
-		var {start, end} = declNode["x-lively-def-location"],
-				locNode = nodes.objectLiteral(["start", nodes.literal(start), "end", nodes.literal(end)]);
-  	return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder, locNode);
+  if (declNode) {
+    // here we pass compile-time meta data into the runtime
+    var keyVals = [];
+    var addMeta = false;
+    if (declNode["x-lively-object-meta"]) {
+      var {start, end, evalId, sourceAccessorName} = declNode["x-lively-object-meta"];
+      addMeta = true;
+      keyVals.push("start", nodes.literal(start), "end", nodes.literal(end))
+    }
+    if (evalId === undefined && options.hasOwnProperty("evalId")) {
+      evalId = options.evalId;
+      addMeta = true;
+    }
+    if (sourceAccessorName === undefined && options.hasOwnProperty("sourceAccessorName")) {
+      sourceAccessorName = options.sourceAccessorName;
+      addMeta = true;
+    }
+    if (evalId !== undefined) keyVals.push("evalId", nodes.literal(evalId));
+    if (sourceAccessorName) keyVals.push("moduleSource", nodes.id(sourceAccessorName));
+    if (addMeta) {
+    	 return funcCall(
+        declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder,
+        nodes.objectLiteral(keyVals)/*meta node*/);
+    }
   }
+
   return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder);
 }

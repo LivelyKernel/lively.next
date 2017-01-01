@@ -215,7 +215,9 @@ function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) {
     classToFunction: options && options.hasOwnProperty("classToFunction") ? options.classToFunction : {
       classHolder: assignToObj,
       functionNode: { type: "Identifier", name: "_createOrExtendClass" },
-      declarationWrapper: options && options.declarationWrapper
+      declarationWrapper: options && options.declarationWrapper,
+      evalId: options && options.evalId,
+      sourceAccessorName: options && options.sourceAccessorName
     }
   }, options);
 
@@ -345,7 +347,7 @@ function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, options) {
       if (stmt.type !== "ExpressionStatement" || stmt.expression.type !== "AssignmentExpression" || stmt.expression.left.type !== "Identifier" || lively_lang.arr.include(options.exclude, stmt.expression.left.name)) return stmt;
 
       var id = stmt.expression.left,
-          rhs = options.declarationWrapper ? declarationWrapperCall(options.declarationWrapper, null, literal(id.name), literal("var"), stmt.expression, options.captureObj) : stmt.expression;
+          rhs = options.declarationWrapper ? declarationWrapperCall(options.declarationWrapper, null, literal(id.name), literal("var"), stmt.expression, options.captureObj, options) : stmt.expression;
       return exprStmt(assign(member(options.captureObj, id), rhs));
     });
   });
@@ -357,7 +359,21 @@ function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, options) {
     return stmt.type === "VariableDeclaration" && stmt.declarations[0].id && stmt.declarations[0].id.name === options.captureObj.name;
   });
   if (captureInitialize) {
+    lively_lang.arr.remove(execute.value.body.body, captureInitialize);
     lively_lang.arr.pushAt(registerBody, captureInitialize, registerBody.length - 1);
+  }
+
+  if (options.sourceAccessorName) {
+    var origSourceInitialize = execute.value.body.body.find(function (stmt) {
+      return stmt.type === "ExpressionStatement" && stmt.expression.type == "AssignmentExpression" && stmt.expression.left.name === options.sourceAccessorName;
+    });
+    if (!origSourceInitialize) origSourceInitialize = execute.value.body.body.find(function (stmt) {
+      return stmt.type === "VariableDeclaration" && stmt.declarations[0].id && stmt.declarations[0].id.name === options.sourceAccessorName;
+    });
+    if (origSourceInitialize) {
+      lively_lang.arr.remove(execute.value.body.body, origSourceInitialize);
+      lively_lang.arr.pushAt(registerBody, origSourceInitialize, registerBody.length - 1);
+    }
   }
 
   return parsed;
@@ -489,7 +505,7 @@ function replaceRefs(parsed, options) {
     // declaration wrapper function for assignments
     // "a = 3" => "a = _define('a', 'assignment', 3, _rec)"
     if (node.type === "AssignmentExpression" && refsToReplace.includes(node.left) && options.declarationWrapper) return _extends({}, node, {
-      right: declarationWrapperCall(options.declarationWrapper, null, literal(node.left.name), literal("assignment"), node.right, options.captureObj) });
+      right: declarationWrapperCall(options.declarationWrapper, null, literal(node.left.name), literal("assignment"), node.right, options.captureObj, options) });
 
     return node;
   });
@@ -530,7 +546,7 @@ function replaceVarDecls(parsed, options) {
         right: { name: "undefined", type: "Identifier" }
       };
 
-      var initWrapped = options.declarationWrapper && decl.id.name ? declarationWrapperCall(options.declarationWrapper, decl, literal(decl.id.name), literal(node.kind), init, options.captureObj) : init;
+      var initWrapped = options.declarationWrapper && decl.id.name ? declarationWrapperCall(options.declarationWrapper, decl, literal(decl.id.name), literal(node.kind), init, options.captureObj, options) : init;
 
       // Here we create the object pattern / destructuring replacements
       if (decl.id.type.includes("Pattern")) {
@@ -538,7 +554,7 @@ function replaceVarDecls(parsed, options) {
             declRoot = { type: "Identifier", name: declRootName },
             state = { parent: declRoot, declaredNames: topLevel.declaredNames },
             extractions = transformPattern(decl.id, state).map(function (decl) {
-          return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, options.declarationWrapper ? declarationWrapperCall(options.declarationWrapper, null, literal(decl.declarations[0].id.name), literal(node.kind), decl.declarations[0].init, options.captureObj) : decl.declarations[0].init, false) : decl;
+          return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, options.declarationWrapper ? declarationWrapperCall(options.declarationWrapper, null, literal(decl.declarations[0].id.name), literal(node.kind), decl.declarations[0].init, options.captureObj, options) : decl.declarations[0].init, false) : decl;
         });
         topLevel.declaredNames.push(declRootName);
         replaced.push.apply(replaced, toConsumableArray([varDecl(declRoot, initWrapped, node.kind)].concat(extractions)));
@@ -684,7 +700,7 @@ function insertCapturesForExportDeclarations(parsed, options) {
         var assignVal = decl.id;
         if (options.declarationWrapper) {
           var alreadyWrapped = decl.init.callee && decl.init.callee.name === options.declarationWrapper.name;
-          if (!alreadyWrapped) assignVal = declarationWrapperCall(options.declarationWrapper, decl, literal(decl.id.name), literal("assignment"), decl.id, options.captureObj);
+          if (!alreadyWrapped) assignVal = declarationWrapperCall(options.declarationWrapper, decl, literal(decl.id.name), literal("assignment"), decl.id, options.captureObj, options);
         }
         return assignExpr(options.captureObj, decl.id, assignVal, false);
       })));
@@ -772,7 +788,7 @@ function es6ModuleTransforms(parsed, options) {
         } else {
           nodes$$1 = decls.map(function (decl) {
             options.excludeDecls.push(decl.id);
-            return varDecl(decl.id, assignExpr(options.captureObj, decl.id, options.declarationWrapper ? declarationWrapperCall(options.declarationWrapper, null, literal(decl.id.name), literal(stmt.declaration.kind), decl, options.captureObj) : decl.init, false), stmt.declaration.kind);
+            return varDecl(decl.id, assignExpr(options.captureObj, decl.id, options.declarationWrapper ? declarationWrapperCall(options.declarationWrapper, null, literal(decl.id.name), literal(stmt.declaration.kind), decl, options.captureObj, options) : decl.init, false), stmt.declaration.kind);
           }).concat(decls.map(function (decl) {
             return exportCallStmt(options.moduleExportFunc, decl.id.name, decl.id);
           }));
@@ -830,7 +846,7 @@ function putFunctionDeclsInFront(parsed, options) {
         funcId = { type: "Identifier", name: decl.id.name },
 
     // what we capture:
-    init = options.declarationWrapper ? declarationWrapperCall(options.declarationWrapper, decl, literal(funcId.name), literal("function"), funcId, options.captureObj) : funcId,
+    init = options.declarationWrapper ? declarationWrapperCall(options.declarationWrapper, decl, literal(funcId.name), literal("function"), funcId, options.captureObj, options) : funcId,
         declFront = _extends({}, decl);
 
     if (Array.isArray(parent)) {
@@ -1010,15 +1026,36 @@ function exportCallStmt(exportFunc, local, exportedObj) {
   return exprStmt(exportCall(exportFunc, local, exportedObj));
 }
 
-function declarationWrapperCall(declarationWrapperNode, declNode, varNameLiteral, varKindLiteral, valueNode, recorder) {
-  if (declNode && declNode["x-lively-def-location"]) {
-    var _declNode$xLivelyDe = declNode["x-lively-def-location"],
-        start = _declNode$xLivelyDe.start,
-        end = _declNode$xLivelyDe.end,
-        locNode = lively_ast.nodes.objectLiteral(["start", lively_ast.nodes.literal(start), "end", lively_ast.nodes.literal(end)]);
+function declarationWrapperCall(declarationWrapperNode, declNode, varNameLiteral, varKindLiteral, valueNode, recorder, options) {
+  if (declNode) {
+    // here we pass compile-time meta data into the runtime
+    var keyVals = [];
+    var addMeta = false;
+    if (declNode["x-lively-object-meta"]) {
+      var _declNode$xLivelyOb = declNode["x-lively-object-meta"],
+          start = _declNode$xLivelyOb.start,
+          end = _declNode$xLivelyOb.end,
+          evalId = _declNode$xLivelyOb.evalId,
+          sourceAccessorName = _declNode$xLivelyOb.sourceAccessorName;
 
-    return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder, locNode);
+      addMeta = true;
+      keyVals.push("start", lively_ast.nodes.literal(start), "end", lively_ast.nodes.literal(end));
+    }
+    if (evalId === undefined && options.hasOwnProperty("evalId")) {
+      evalId = options.evalId;
+      addMeta = true;
+    }
+    if (sourceAccessorName === undefined && options.hasOwnProperty("sourceAccessorName")) {
+      sourceAccessorName = options.sourceAccessorName;
+      addMeta = true;
+    }
+    if (evalId !== undefined) keyVals.push("evalId", lively_ast.nodes.literal(evalId));
+    if (sourceAccessorName) keyVals.push("moduleSource", lively_ast.nodes.id(sourceAccessorName));
+    if (addMeta) {
+      return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder, lively_ast.nodes.objectLiteral(keyVals) /*meta node*/);
+    }
   }
+
   return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder);
 }
 

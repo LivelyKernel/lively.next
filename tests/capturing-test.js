@@ -26,7 +26,7 @@ function testVarTfm(descr, options, code, expected) { return _testVarTfm(descr, 
 function only_testVarTfm(descr, options, code, expected) { return _testVarTfm(descr, options, code, expected, true); }
 
 
-function classTemplate(className, superClassName, methodString, classMethodString, classHolder, moduleMeta, useClassHolder = true, start, end) {
+function classTemplate(className, superClassName, methodString, classMethodString, classHolder, moduleMeta, useClassHolder = true, start, end, evalId) {
   if (methodString.includes("\n")) methodString = string.indent(methodString, "    ", 2).replace(/^\s+/, "");
   if (classMethodString.includes("\n")) classMethodString = string.indent(classMethodString, "    ", 2).replace(/^\s+/, "");
 
@@ -40,7 +40,7 @@ function classTemplate(className, superClassName, methodString, classMethodStrin
   if (start !== undefined && end !== undefined) {
     pos = `, {
         start: ${start},
-        end: ${end}
+        end: ${end}${evalId ? `,\n        evalId: ${evalId}` : ""}
     }`
   }
   return `function (superclass) {
@@ -55,8 +55,8 @@ function classTemplate(className, superClassName, methodString, classMethodStrin
 }(${superClassName})`
 }
 
-function classTemplateDecl(className, superClassName, methodString, classMethodString, classHolder, moduleMeta, start, end) {
-  return `var ${className} = ${classTemplate(className, superClassName, methodString, classMethodString, classHolder, moduleMeta, true, start, end)};`
+function classTemplateDecl(className, superClassName, methodString, classMethodString, classHolder, moduleMeta, start, end, evalId) {
+  return `var ${className} = ${classTemplate(className, superClassName, methodString, classMethodString, classHolder, moduleMeta, true, start, end, evalId)};`
 }
 
 
@@ -184,23 +184,23 @@ describe("ast.capturing", function() {
                                                        + "    value: function Foo_a_() {\n"
                                                        + "        return 23;\n"
                                                        + "    }\n"
-                                                       + "}]", 'undefined', "_rec", 'undefined', 0, 40));
+                                                       + "}]", 'undefined', "_rec", 'undefined', 0, 40, "null"));
 
         testVarTfm("exported def",
                    "export class Foo {}",
-                   `export ${classTemplateDecl('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined', 7, 19)}\n_rec.Foo = Foo;`);
+                   `export ${classTemplateDecl('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined', 7, 19, "null")}\n_rec.Foo = Foo;`);
 
         testVarTfm("exported default def",
                    "export default class Foo {}",
-                   `${classTemplateDecl('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined', 15, 27)}\nFoo = _rec.Foo;\nexport default Foo;`);
+                   `${classTemplateDecl('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined', 15, 27, "null")}\nFoo = _rec.Foo;\nexport default Foo;`);
 
         testVarTfm("does not capture class expr",
                    "var bar = class Foo {}",
-                   `_rec.bar = ${classTemplate('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined', false, 10, 22)};`);
+                   `_rec.bar = ${classTemplate('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined', false, 10, 22, "null")};`);
 
         testVarTfm("captures var that has same name as class expr",
                    "var Foo = class Foo {}; new Foo();",
-                   `_rec.Foo = ${classTemplate('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined', false, 10, 22)};\nnew _rec.Foo();`);
+                   `_rec.Foo = ${classTemplate('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined', false, 10, 22, "null")};\nnew _rec.Foo();`);
 
       });
 
@@ -458,11 +458,11 @@ describe("ast.capturing", function() {
 
       testVarTfm("class decl",
                  "export class Foo {};",
-                 `export ${classTemplateDecl('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined', 7, 19)}\n_rec.Foo = Foo;\n;`);
+                 `export ${classTemplateDecl('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined', 7, 19, "null")}\n_rec.Foo = Foo;\n;`);
 
       testVarTfm("default class decl",
                  "export default class Foo {};",
-                 `${classTemplateDecl('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined', 15, 27)}\nFoo = _rec.Foo;\nexport default Foo;\n;`);
+                 `${classTemplateDecl('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined', 15, 27, "null")}\nFoo = _rec.Foo;\nexport default Foo;\n;`);
 
       testVarTfm("class decl without classToFunction",
                  {classToFunction: null},
@@ -536,7 +536,7 @@ describe("ast.capturing", function() {
                 "async function foo() {\n}\n_rec.foo = foo;\nfoo;\n_moduleExport('default', _rec.foo);\n;");
 
       testVarTfm("default class decl",
-                opts,
+                {...opts},
                 "export default class Foo {a() { return 23; }};",
                 classTemplateDecl('Foo', 'undefined', "[{\n"
                                                     + "    key: 'a',\n"
@@ -547,7 +547,7 @@ describe("ast.capturing", function() {
               + "\n_moduleExport('default', _rec.Foo);\n;");
 
       testVarTfm("class decl, declarationWrapper",
-                Object.assign({}, opts, {declarationWrapper: {name: "_define", type: "Identifier"}}),
+                {...opts, declarationWrapper: {name: "_define", type: "Identifier"}},
                 "export class Foo {a() { return 23; }};",
                 "var Foo = _define('Foo', 'class', "
                 + classTemplate('Foo', 'undefined', "[{\n"
@@ -615,11 +615,11 @@ describe("ast.capturing", function() {
 
 describe("declarations", () => {
 
-  function rewriteWithWrapper(code) {
+  function rewriteWithWrapper(code, opts) {
     return stringify(
             rewriteToCaptureTopLevelVariables(
               parse(code), {name: "_rec", type: "Identifier"},
-              {declarationWrapper: {name: "_define", type: "Identifier"}}));
+              {declarationWrapper: {name: "_define", type: "Identifier"}, ...opts}));
   }
 
   it("can be wrapped in define call", () => {
@@ -657,6 +657,18 @@ describe("declarations", () => {
 _rec.destructured_1$0 = _define('destructured_1$0', 'var', destructured_1[0], _rec);
 _rec.x = _define('x', 'var', destructured_1$0.x, _rec);
 _rec.y = _define('y', 'var', destructured_1[1], _rec);`);
+  });
+
+  it("evalId and sourceAccessorName", () => {
+    expect(
+      rewriteWithWrapper("function foo() {}", {evalId: 1, sourceAccessorName: "__source"}))
+        .equals(`function foo() {\n`
+              + `}\n`
+              + `_rec.foo = _define('foo', 'function', foo, _rec, {\n`
+              + `    evalId: 1,\n`
+              + `    moduleSource: __source\n`
+              + `});\n`
+              + `foo;`);
   });
 
 });
@@ -704,7 +716,6 @@ return {
             }
         ],
         execute: function () {
-            _rec = System.get('@lively-env').moduleEnv('c.js').recorder;
             _rec.x = 23;
         }
     };
@@ -735,7 +746,6 @@ return {
             }
         ],
         execute: function () {
-            _rec = System.get('@lively-env').moduleEnv('c.js').recorder;
             _rec.x = 23;
         }
     };
