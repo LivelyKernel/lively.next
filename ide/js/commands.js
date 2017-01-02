@@ -71,9 +71,7 @@ function safeToString(value) {
   if (typeof value === "symbol") return printSymbol(value);
   try {
     return String(value);
-  } catch (e) {
-    throw new Error(`Cannot print object: ${e.stack}`);
-  }
+  } catch (e) { return `Cannot print object: ${e}`; }
 }
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -112,14 +110,14 @@ var printEvalResult = (function() {
   function inspectPrinter(val, ignore) {
     if (!val) return ignore;
     if (typeof val === "symbol") return printSymbol(val);
-    if (val.isMorph) return String(val);
+    if (val.isMorph) return safeToString(val);
     if (val instanceof Promise) return "Promise()";
-    if (val instanceof Node) return String(val);
-    if (typeof ImageData !== "undefined" && val instanceof ImageData) return String(val);
+    if (val instanceof Node) return safeToString(val);
+    if (typeof ImageData !== "undefined" && val instanceof ImageData) return safeToString(val);
     var length = val.length || val.byteLength;
     if (length !== undefined && length > maxColLength && val.slice) {
       var printed = typeof val === "string" || val.byteLength ?
-                      String(val.slice(0, maxColLength)) :
+                      safeToString(val.slice(0, maxColLength)) :
                       val.slice(0,maxColLength).map(string.print);
       return "[" + printed + ",...]";
     }
@@ -133,12 +131,17 @@ var printEvalResult = (function() {
       maxDepth = maxDepth.maxDepth || 2;
 
     if (!object) return String(object);
-    if (typeof object === "string") return '"' + (object.length > maxColLength ? (object.slice(0,maxColLength) + "...") : String(object)) + '"';
-    if (object instanceof Error) return object.stack || String(object);
-    if (!obj.isObject(object)) return String(object);
-    var inspected = obj.inspect(object, {customPrinter: inspectPrinter, maxDepth, printFunctionSource: true});
+    if (typeof object === "string") return '"' + (object.length > maxColLength ? (object.slice(0,maxColLength) + "...") : safeToString(object)) + '"';
+    if (object instanceof Error) return object.stack || safeToString(object);
+    if (!obj.isObject(object)) return safeToString(object);
+    try {
+      var inspected = obj.inspect(object, {
+        customPrinter: inspectPrinter,
+        maxDepth, printFunctionSource: true
+      });
+    } catch (e) {}
     // return inspected;
-    return inspected === "{}" ? String(object) : inspected;
+    return inspected === "{}" ? safeToString(object) : inspected;
   }
 
 })();
