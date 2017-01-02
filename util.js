@@ -1,4 +1,4 @@
-import { arr } from "lively.lang";
+import { arr, Path } from "lively.lang";
 import { superclassSymbol } from "./runtime.js";
 import { RuntimeSourceDescriptor } from "./source-descriptors.js";
 
@@ -27,10 +27,22 @@ export function isClass(klass) {
   return klass && typeof klass === "function";
 }
 
-export async function classMembersFromSource(klass) {
-  var descr = RuntimeSourceDescriptor.for(klass);
-  var parsed = await descr.ast;
-  Path("body.0.body.body").get(parsed)
+export function lexicalClassMembers(klass) {
+  var {ast: parsed, type} = RuntimeSourceDescriptor.for(klass);
+  if (type !== "ClassDeclaration")
+    throw new Error(`Expected class but got ${type}`);
+
+  var members = Path("body.body").get(parsed);
+
+  return members.map(node => {
+    var {static: isStatic, kind, key: {type: keyType, name: id, value: literalId}} = node,
+        name = id || literalId,
+        base = isStatic ? klass : klass.prototype,
+        value = kind === "get" ? base.__lookupGetter__(name) :
+                  kind === "set" ? base.__lookupSetter__(name) :
+                    base[name];
+    return {static: isStatic, name, value, kind, owner: klass}
+  });
 }
 
 

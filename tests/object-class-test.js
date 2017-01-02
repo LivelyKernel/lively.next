@@ -49,17 +49,9 @@ describe("object package", function() {
     expect(obj.constructor.name).equals("TestObject");
     var {packageId} = obj[Symbol.for("lively-object-package-data")];
     expect(await resource(`${testBaseURL}/${packageId}/index.js`).read())
-      .matches(/export default class TestObject/)
+      .matches(/export default class TestObject/);
   });
 
-  xit("imports object class", async () => {
-    var obj = {name: "testObject"};
-    await ensureObjectClass(obj, {baseURL: testBaseURL, System: S});
-    expect(obj.constructor.name).equals("TestObject");
-    var {packageId} = obj[Symbol.for("lively-object-package-data")];
-    expect(await resource(`${testBaseURL}/${packageId}/index.js`).read())
-      .matches(/export default class TestObject/)
-  });
 
   describe("addScript", () => {
 
@@ -74,8 +66,7 @@ describe("object package", function() {
     });
 
     it("into normal class", async () => {
-      var { TestClass } = await S.import("project1/file1.js");
-      var obj = new TestClass();
+      var { TestClass } = await S.import("project1/file1.js"), obj = new TestClass();
 
       await addScript(obj, "function(a) { return a + 1; }", "foo",
         {targetClass: obj.constructor, baseURL: testBaseURL, System: S});
@@ -98,6 +89,6 @@ describe("object package", function() {
       expect(obj.x()).equals(23, "2");
     });
 
-  })
+  });
 
 });
