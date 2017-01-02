@@ -598,14 +598,13 @@ export default class Browser extends Window {
     });
   }
 
-  selectCodeEntity(spec) {
+  async selectCodeEntity(spec) {
     var {codeEntityTree} = this.ui, td = codeEntityTree.treeData,
         def = this.findCodeEntity(spec),
         path = []; while (def) { path.unshift(def); def = def.parent; };
-    path.unshift(td.root)
-    td.followPath(path);
-    codeEntityTree.selection = arr.last(path);
+    await codeEntityTree.selectPath(path);
     codeEntityTree.centerSelection();
+    return def
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

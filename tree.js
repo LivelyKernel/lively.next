@@ -489,6 +489,7 @@ export class Tree extends Morph {
     this.selectedIndex = newSelIndex;
     this.scroll = scroll;
     this.scrollSelectionIntoView();
+    return this.whenRendered();
   }
 
   async maintainViewStateWhile(whileFn, nodeIdFn) {
@@ -509,6 +510,22 @@ export class Tree extends Morph {
       this.update();
     } catch (e) { this.showError(e); }
   }
+
+  async uncollapse(node = this.selection) {
+    if (!node || !this.treeData.isCollapsed(node)) return;
+    await this.onNodeCollapseChanged({node, isCollapsed: false});
+    return node;
+  }
+
+  async collapse(node = this.selection) {
+    if (!node || this.treeData.isCollapsed(node)) return;
+    await this.onNodeCollapseChanged({node, isCollapsed: true});
+    return node;
+  }
+
+  selectedPath() { return this.treeData.pathOf(this.selection); }
+
+  async selectPath(path) { return this.selection = await this.treeData.followPath(path); }
 
   gotoIndex(i) {
     this.selection = this.nodes[i];
@@ -636,6 +653,12 @@ export class TreeData {
       (node, i, depth) => nodesWithIndex.push({node, depth, i}),
       (node) => this.getChildren(node));
     return nodesWithIndex;
+  }
+
+  pathOf(node) {
+    var path = [];
+    while (node) { path.unshift(node); node = this.parentNode(node); };
+    return path;
   }
 
   async followPath(path, eqFn, startNode = this.root) {
