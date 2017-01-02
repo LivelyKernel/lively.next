@@ -1,13 +1,12 @@
 /*global System, beforeEach, afterEach, describe, it*/
 
 import { expect } from "mocha-es6";
-import { resource } from "lively.resources";
-import { removeDir, createFiles } from "./helpers.js";
+import { createFiles, resource } from "lively.resources";
 
 import { getSystem, removeSystem } from "../src/system.js";
 import module from "../src/module.js";
 
-const dir = System.decanonicalize("lively.modules/tests/"),
+const dir = "local://lively.modules-changes-test/",
       testProjectDir = dir + "test-project-1-dir/",
       testProjectSpec = {
         "file1.js": "import { y, someFn } from './file2.js'; import { z } from './sub-dir/file3.js'; export var x = y + z; export { y }; export function someOtherFn(x) { return someFn() + x; }",
@@ -42,7 +41,7 @@ describe("code changes of esm format module", function() {
     await createFiles(testProjectDir, testProjectSpec);
   });
 
-  afterEach(async () => { removeSystem("test"); await removeDir(testProjectDir); });
+  afterEach(async () => { removeSystem("test"); await resource(testProjectDir).remove(); });
 
   it("modifies module and its exports", async () => {
     const m1 = await S.import(file1m),
@@ -188,7 +187,7 @@ describe("code changes of global format module", () => {
     try { delete S.global.zzz; } catch (e) {}
   });
 
-  afterEach(async () => { removeSystem("test"); await removeDir(testProjectDir); });
+  afterEach(async () => { removeSystem("test"); await resource(testProjectDir).remove(); });
 
   it("modifies module and its exports", async () => {
     var m = await S.import(file1m);
@@ -229,7 +228,7 @@ describe("persistent definitions", () => {
 
   afterEach(async () => {
     removeSystem("test");
-    await removeDir(testProjectDir);
+    await resource(testProjectDir).remove();
   });
 
   it("keep identity of class", async () => {
@@ -266,7 +265,7 @@ describe("notifications of toplevel changes", () => {
     await createFiles(testProjectDir, testProjectSpec);
   });
 
-  afterEach(async () => { removeSystem("test"); await removeDir(testProjectDir); });
+  afterEach(async () => { removeSystem("test"); await resource(testProjectDir).remove(); });
   
   it("triggers notification on change", async () => {
     var seen = {};

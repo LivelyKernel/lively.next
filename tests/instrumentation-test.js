@@ -83,7 +83,7 @@ describe("instrumentation", () => {
       expect(recorded).deep.equals({
         varName: "foo",
         value: module1.recorder.foo,
-        meta: {"end": 17,"evalId": 1,"moduleSource": "function foo() {}","start": 0}
+        meta: {"end": 17,"evalId": 1,"moduleSource": "function foo() {}","start": 0, kind: "function",}
       })
     });
     
@@ -92,7 +92,7 @@ describe("instrumentation", () => {
       expect(recorded).deep.equals({
         varName: "Foo",
         value: module1.recorder.Foo,
-        meta: {"end": 12,"evalId": 2,"moduleSource": "class Foo {}","start": 0}
+        meta: {"end": 12,"evalId": 2,"moduleSource": "class Foo {}","start": 0, kind: "class",}
       })
     });
 
