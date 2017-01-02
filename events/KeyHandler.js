@@ -108,6 +108,7 @@ function simulateKey(morph, keyComboString, keyInputState) {
 }
 
 function bowserOS() {
+  // if (bowser.mac)          return "windows";
   if (bowser.mac)          return "mac";
   if (bowser.windows)      return "windows";;
   if (bowser.windowsphone) return "windowsphone";
@@ -121,8 +122,8 @@ function bowserOS() {
   if (bowser.bada)         return "bada";
   if (bowser.tizen)        return "tizen";
   if (bowser.sailfish)     return "sailfish";
-  console.error(`bowserOS detection, unknown OS!`, bowser);
-  return "";
+  // console.error(`bowserOS detection, unknown OS!`, bowser);
+  return "unknown";
 }
 
 export function findKeysForPlatform(binding, platform/*bowser OS flag*/) {
