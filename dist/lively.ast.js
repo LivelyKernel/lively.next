@@ -11675,8 +11675,8 @@ var ScopeVisitor = function (_Visitor3) {
         classExprPaths: [],
         methodDecls: [],
         methodDeclPaths: [],
-        importDecls: [],
-        importDeclPaths: [],
+        importSpecifiers: [],
+        importSpecifierPaths: [],
         exportDecls: [],
         exportDeclPaths: [],
         refs: [],
@@ -11956,8 +11956,8 @@ var ScopeVisitor = function (_Visitor3) {
   }, {
     key: "visitImportSpecifier",
     value: function visitImportSpecifier(node, scope, path) {
-      scope.importDecls.push(node.local);
-      scope.importDeclPaths.push(path);
+      scope.importSpecifiers.push(node.local);
+      scope.importSpecifierPaths.push(path);
 
       var visitor = this;
       // // imported is of types Identifier
@@ -11969,8 +11969,8 @@ var ScopeVisitor = function (_Visitor3) {
   }, {
     key: "visitImportDefaultSpecifier",
     value: function visitImportDefaultSpecifier(node, scope, path) {
-      scope.importDecls.push(node.local);
-      scope.importDeclPaths.push(path);
+      scope.importSpecifiers.push(node.local);
+      scope.importSpecifierPaths.push(path);
       var visitor = this;
       // // local is of types Identifier
       // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
@@ -11979,8 +11979,8 @@ var ScopeVisitor = function (_Visitor3) {
   }, {
     key: "visitImportNamespaceSpecifier",
     value: function visitImportNamespaceSpecifier(node, scope, path) {
-      scope.importDecls.push(node.local);
-      scope.importDeclPaths.push(path);
+      scope.importSpecifiers.push(node.local);
+      scope.importSpecifierPaths.push(path);
       var visitor = this;
       // // local is of types Identifier
       // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
@@ -13277,7 +13277,7 @@ var helpers = {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "lively"];
+var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "lively"];
 
 function scopes(parsed) {
   var vis = new ScopeVisitor(),
@@ -13341,7 +13341,7 @@ function declarationsOfScope(scope, includeOuter) {
     return ea.id;
   })).concat(helpers.varDeclIds(scope)).concat(scope.catches).concat(scope.classDecls.map(function (ea) {
     return ea.id;
-  })).concat(scope.importDecls);
+  })).concat(scope.importSpecifiers);
 }
 
 function declarationsWithIdsOfScope(scope) {
@@ -13352,7 +13352,7 @@ function declarationsWithIdsOfScope(scope) {
     return [ea, ea];
   }).concat(declNodes.map(function (ea) {
     return [ea, ea.id];
-  })).concat(helpers.varDecls(scope)).concat(scope.importDecls.map(function (im) {
+  })).concat(helpers.varDecls(scope)).concat(scope.importSpecifiers.map(function (im) {
     return [statementOf(scope.node, im), im];
   }));
 }
@@ -13575,7 +13575,7 @@ function statementOf(parsed, node, options) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function imports(scope) {
-  var imports = scope.importDecls.reduce(function (imports, node) {
+  var imports = scope.importSpecifiers.reduce(function (imports, node) {
     var nodes = nodesAtIndex(scope.node, node.start),
         importStmt = lively_lang.arr.without(nodes, scope.node)[0];
     if (!importStmt) return imports;
