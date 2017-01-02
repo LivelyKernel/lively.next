@@ -1,12 +1,13 @@
 import { arr, obj, Path } from "lively.lang";
-import { Morph, GridLayout, config } from "lively.morphic";
+import { Morph, HorizontalLayout, GridLayout, config } from "lively.morphic";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { JavaScriptEditorPlugin } from "../editor-plugin.js";
-import { withSuperclasses, lexicalClassMembers, instanceFields, classFields, isClass } from "lively.classes/util.js";
+import { withSuperclasses, lexicalClassMembers, isClass } from "lively.classes/util.js";
 import { TreeData, Tree } from "lively.morphic/tree.js";
 import { connect } from "lively.bindings";
 import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
 import { addScript } from "lively.classes/object-classes.js";
+import { Icon } from "../../../icons.js";
 
 
 // var oe = ObjectEditor.open({target: this})
@@ -137,34 +138,28 @@ export class ObjectEditor extends Morph {
             border: {color: Color.lightGray, style: "solid", radius: 5},
             nativeCursor: "pointer"
           },
-          extent: pt(20,18),
-        },
-
-        bounds = this.innerBounds(),
-
-        [
-          classTreeBounds,
-          sourceEditorBounds
-        ] = bounds.extent().extentAsRectangle().divide([
-          new Rectangle(0,   0,    0.5,   1),
-          new Rectangle(0.5,   0,    0.5,   1)
-        ]);
+          extent: pt(26,24),
+        };
 
     this.submorphs = [
-      {name: "sourceEditor", bounds: sourceEditorBounds, ...textStyle, doSave: () => this.save()},
+      {name: "sourceEditor", ...textStyle, doSave: () => this.save()},
 
-      {type: Tree, name: "classTree", bounds: classTreeBounds, treeData: new ClassTreeData(null)},
-      {type: "button", name: "addMethodButton", label: "+"},
+      {type: Tree, name: "classTree", treeData: new ClassTreeData(null)},
+      {name: "controls",
+        layout: new HorizontalLayout({direction: "centered", spacing: 2}), submorphs: [
+          {...btnStyle, name: "addMethodButton", label: Icon.makeLabel("plus")},
+          {...btnStyle, name: "removeMethodButton", label: Icon.makeLabel("minus")}]
+          
+      }
     ];
 
     var l = this.layout = new GridLayout({
       grid: [
-        ["classTree", "classTree", "sourceEditor"],
-        [null, "addMethodButton", "sourceEditor"],
+        ["classTree", "sourceEditor"],
+        ["controls", "sourceEditor"],
       ]});
-    l.col(0).fixed = 100;
-    l.col(1).fixed = 100;
-    l.row(1).fixed = 20;
+    l.col(0).fixed = 200;
+    l.row(1).fixed = 30;
     // var oe = ObjectEditor.open({target: this})
 
     // l.col(2).fixed = 100; l.row(0).paddingTop = 1; l.row(0).paddingBottom = 1;
