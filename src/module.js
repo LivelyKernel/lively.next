@@ -53,6 +53,7 @@ class ModuleInterface {
     // Under what variable name the recorder becomes available during module
     // execution and eval
     this.recorderName = "__lvVarRecorder";
+    this.sourceAccessorName = "__lvOriginalCode";
     this._recorder = null;
 
     // cached values
@@ -62,6 +63,7 @@ class ModuleInterface {
     this._observersOfTopLevelState = [];
 
     this._evaluationsInProgress = 0;
+    this._evalId = 1;
 
     subscribe("lively.modules/modulechanged", data => {
       if (data.module === this.id) this.reset();
@@ -205,17 +207,22 @@ class ModuleInterface {
   // change
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  async changeSourceAction(changeFunc) {
-    var newSource = await changeFunc(await this.source());
-    return this.changeSource(newSource, {doEval: true});
+  changeSourceAction(changeFunc) {
+    return Promise.resolve(this.source())
+      .then(oldSource => changeFunc(oldSource))
+      .then(newSource => this.changeSource(newSource));
   }
 
-  async changeSource(newSource, options) {
-    if (!options || options.doSave !== false) {
-      await this.System.resource(this.id).write(newSource);
-    }
-    this.setSource(newSource);
-    return moduleSourceChange(this.System, this.id, newSource, this.format(), options);
+  changeSource(newSource, options) {
+    options = {doSave: true, doEval: true, ...options};
+    var {System, id} = this, format = this.format(), result;
+    this.reset();
+    return Promise.all([
+      options.doSave && this.System.resource(id).write(newSource),
+      options.doEval && moduleSourceChange(
+                          System, id, newSource, format, options)
+                            .then(_result => result = _result)
+    ]).then(() => result);
   }
 
   addDependencyToModuleRecord(dependency, setter = function() {}) {
@@ -289,7 +296,8 @@ class ModuleInterface {
   // should not be accessed as properties of recorder
   get dontTransform() {
     return [
-      "__lvVarRecorder",
+      this.recorderName,
+      this.sourceAccessorName,
       "global", "self",
       "_moduleExport", "_moduleImport",
       "localStorage", // for Firefox, see fetch
@@ -318,8 +326,12 @@ class ModuleInterface {
       },
 
       [this.varDefinitionCallbackName]: {
-        value: (name, kind, value, recorder, sourceLoc) =>
-          self.define(name, value, false/*signalChangeImmediately*/, sourceLoc)
+        value: (name, kind, value, recorder, meta) => {
+          meta = meta || {};
+          meta.kind = kind;
+          return self.define(name, value, false/*signalChangeImmediately*/, meta);
+        }
+          
       },
 
       _moduleExport: {
@@ -359,22 +371,22 @@ class ModuleInterface {
 
   get varDefinitionCallbackName() { return "defVar_" + this.id; }
 
-  define(varName, value, exportImmediately = true, sourceLoc) {
+  define(varName, value, exportImmediately = true, meta) {
     // attaching source info to runtime objects
 
     var {System, id, recorder} = this;
 
     // System.debug && console.log(`[lively.modules] ${this.shortName()} defines ${varName}`);
 
-    var srcLocSym = Symbol.for("lively-source-location"),
+    var metaSym = Symbol.for("lively-object-meta"),
         moduleSym = Symbol.for("lively-module-meta");
 
-    if (typeof value === "function" && sourceLoc
-     && !Object.getOwnPropertySymbols(value).includes(srcLocSym)) {
-      value[srcLocSym] = sourceLoc;
+    if (typeof value === "function" && meta
+     && (meta.kind === "function" || meta.kind === "class")) {
+      value[metaSym] = meta;
     }
 
-    if (value && value[srcLocSym] && !value[moduleSym]) {
+    if (value && value[metaSym] && !value[moduleSym]) {
       var pathInPackage = this.pathInPackage(),
           p = this.package();
       value[moduleSym] = {
@@ -441,6 +453,8 @@ class ModuleInterface {
     this._evaluationsInProgress--;
     runScheduledExportChanges(this.System, this.id);
   }
+
+  nextEvalId() { return this._evalId++; }
 
   isEvalutionInProgress() {
     return this._evaluationsInProgress > 0;

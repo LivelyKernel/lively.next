@@ -129,13 +129,19 @@ function setExceptions(v) { return exceptions = v; }
 
 function prepareCodeForCustomCompile(System, source, moduleId, env, module, debug) {
   source = String(source);
-  var tfmOptions = {
+
+  var embedOriginalCode = true,
+      sourceAccessorName = embedOriginalCode ? env.sourceAccessorName : undefined;
+
+  var options = {
         topLevelVarRecorder: env.recorder,
         varRecorderName: env.recorderName,
+        sourceAccessorName: env.sourceAccessorName,
         dontTransform: env.dontTransform,
         recordGlobals: true,
         keepPreviouslyDeclaredValues: true,
         declarationWrapperName: module.varDefinitionCallbackName,
+        evalId: module.nextEvalId(),
         currentModuleAccessor: funcCall(
                                 member(
                                   funcCall(member("System", "get"), literal("@lively-env")),
@@ -149,25 +155,28 @@ function prepareCodeForCustomCompile(System, source, moduleId, env, module, debu
 
   if (isGlobal) {
     // FIXME how to update exports in that case?
-    delete tfmOptions.declarationWrapperName;
+    delete options.declarationWrapperName;
   } else {
-    header += `System.get("@lively-env").evaluationStart("${moduleId}");\nvar ${env.recorderName} = System.get("@lively-env").moduleEnv("${moduleId}").recorder;`;
+    header += `System.get("@lively-env").evaluationStart("${moduleId}");\n`
+            + `var ${env.recorderName} = System.get("@lively-env").moduleEnv("${moduleId}").recorder;\n`
+            + (embedOriginalCode ? `\nvar ${sourceAccessorName} = ${JSON.stringify(source)};\n` : "");
     footer += `\nSystem.get("@lively-env").evaluationEnd("${moduleId}");`
   }
 
   try {
-    var rewrittenSource = header + evalCodeTransform(source, tfmOptions) + footer;
+    var rewrittenSource = header + evalCodeTransform(source, options) + footer;
     if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = rewrittenSource;
-    return rewrittenSource;
+    return {source: rewrittenSource, options};
   } catch (e) {
     console.error(`Error in prepareCodeForCustomCompile of ${moduleId} ${e.stack}`);
-    return source;
+    return {source, options};
   }
 }
 
-function prepareTranslatedCodeForSetterCapture(System, source, moduleId, env, module, debug) {
+function prepareTranslatedCodeForSetterCapture(System, source, moduleId, env, module, options, debug) {
   source = String(source);
   var tfmOptions = {
+        ...options,
         topLevelVarRecorder: env.recorder,
         varRecorderName: env.recorderName,
         dontTransform: env.dontTransform,
@@ -284,9 +293,12 @@ async function customTranslate(proceed, load) {
   }
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  var options = {};
+
   if (isEsm) {
     load.metadata.format = "esm";
-    load.source = prepareCodeForCustomCompile(System, load.source, load.name, env, mod, debug);
+    var {options, source} = prepareCodeForCustomCompile(System, load.source, load.name, env, mod, debug);
+    load.source = source;
     load.metadata["lively.modules instrumented"] = true;
     instrumented = true;
     debug && console.log("[lively.modules] loaded %s as es6 module", load.name)
@@ -296,7 +308,8 @@ async function customTranslate(proceed, load) {
     env.recorderName = "System.global";
     env.recorder = System.global;
     load.metadata.format = "global";
-    load.source = prepareCodeForCustomCompile(System, load.source, load.name, env, mod, debug);
+    var {options, source} = prepareCodeForCustomCompile(System, load.source, load.name, env, mod, debug);
+    load.source = source
     load.metadata["lively.modules instrumented"] = true;
     instrumented = true;
     debug && console.log("[lively.modules] loaded %s as instrumented global module", load.name)
@@ -320,7 +333,7 @@ async function customTranslate(proceed, load) {
   return proceed(load).then(async translated => {
     if (translated.indexOf("System.register(") === 0) {
       debug && console.log("[lively.modules customTranslate] Installing System.register setter captures for %s", load.name);
-      translated = prepareTranslatedCodeForSetterCapture(System, translated, load.name, env, mod, debug);
+      translated = prepareTranslatedCodeForSetterCapture(System, translated, load.name, env, mod, options, debug);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

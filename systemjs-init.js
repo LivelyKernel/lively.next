@@ -47,7 +47,7 @@
     Transpiler.prototype.transpileDoit = function transpileDoit(source, options) {
       // wrap in async function so we can use await top-level
       var System = this.System,
-          source = `(async function(__rec) {\n${source}\n}).call(this);`,
+          source = "(async function(__rec) {\n" + source.replace(/(\/\/# sourceURL=.+)$|$/, "\n}).call(this);\n$1"),
           opts = System.babelOptions,
           needsBabel = (opts.plugins && opts.plugins.length) || (opts.presets && opts.presets.length);
       return needsBabel ?
