@@ -1,22 +1,23 @@
-import { fun, arr, obj, promise, string } from "lively.lang";
+import { fun, arr, obj, string } from 'lively.lang';
 import { pt, Color, Rectangle } from "lively.graphics";
-import { morph, Morph, Window, show } from "../index.js";
+import { config, Window, show } from '../index.js';
 import { FilterableList } from "../list.js";
 import { LabeledCheckBox } from "../widgets.js";
 import Browser from "./js/browser/index.js";
-import { connect, disconnectAll } from "lively.bindings"
+import { connect } from 'lively.bindings';
 import LoadingIndicator from "../loading-indicator.js";
 
 
 export async function doSearch(
   livelySystem, searchTerm,
   excludedModules = [/systemjs-plugin-babel/],
+  excludedPackages = [],
   includeUnloaded = true
 ) {
   if (searchTerm.length <= 2) { return []; }
 
   var searchResult = await livelySystem.searchInAllPackages(
-                        searchTerm, {excludedModules, includeUnloaded});
+                        searchTerm, {excludedModules, excludedPackages, includeUnloaded});
 
   var [errors, found] = arr.partition(searchResult, ({isError}) => isError)
 
@@ -169,7 +170,11 @@ export class CodeSearcher extends FilterableList {
       var includeUnloaded = this.getSubmorphNamed("searchInUnloadedModulesCheckbox").checked;
       this.ensureIndicator("searching...")
       this.items = await doSearch(
-        await this.getLivelySystem(), searchTerm, undefined, includeUnloaded);
+        await this.getLivelySystem(),
+        searchTerm,
+        undefined, /*excluded modules*/
+        config.ide.js.ignoredPackages,
+        includeUnloaded);
       this.removeIndicator();
       this.progressIndicator = null;
     }

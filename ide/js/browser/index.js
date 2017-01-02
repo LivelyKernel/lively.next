@@ -412,8 +412,10 @@ export default class Browser extends Window {
   whenModuleUpdated() { return this.state.moduleUpdateInProgress || Promise.resolve(); }
 
   async reloadPackages() {
-    var packages = await (await this.systemInterface()).getPackages();
-    this.get("packageList").items = packages.map(p => ({isListItem: true, string: p.name, value: p}));
+    var system = await this.systemInterface(),
+        packages = await system.getPackages({excluded: config.ide.js.ignoredPackages});
+    this.get("packageList").items = packages.map(p =>
+      ({isListItem: true, string: p.name, value: p}));
   }
 
   async selectPackageNamed(pName) {

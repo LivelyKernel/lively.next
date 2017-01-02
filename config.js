@@ -10,6 +10,12 @@ var config = {
   repeatClickInterval: 250, // max time between clicks for double-, triple-click
   showTooltipsAfter: 2,
 
+  ide: {
+    js: {
+      ignoredPackages: ["lively.web", "no group"]
+    }
+  },
+
   globalKeyBindings: [
 
     {keys: {mac: 'Meta-Z', win: 'Ctrl-Z'},             command: "undo"},

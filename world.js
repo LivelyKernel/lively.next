@@ -454,8 +454,7 @@ var worldCommands = [
           livelySystem = backend && backend !== "local" ?
             systemInterface.serverInterfaceFor(backend) :
             systemInterface.localInterface, // FIXME
-          pkgs = await livelySystem.getPackages(),
-          pkgs = pkgs.filter(({address}) => "no group" !== address),
+          pkgs = await livelySystem.getPackages({excluded: config.ide.js.ignoredPackages}),
           items = [];
 
       for (let p of pkgs) {
