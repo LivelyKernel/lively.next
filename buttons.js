@@ -15,7 +15,7 @@ export class Button extends Morph {
 
   constructor(props) {
     var {label, fontFamily, fontSize, fontColor} = props;
-    if (!label) label = "";
+    if (!label) label = "no label";
     if (label.isMorph) {
       label.name = "label";
     } else {
@@ -44,8 +44,10 @@ export class Button extends Morph {
     if (fontSize !== undefined) this.fontSize = fontSize;
     if (fontColor !== undefined) this.fontColor = fontColor;
 
-    connect(this, "change", this, "relayout", {updater: ($upd, {prop}) => ["extent", "padding"].includes(prop) && $upd()})
-    connect(this.submorphs[0], "change", this, "relayout", {updater: ($upd, {prop}) => ["extent"].includes(prop) && $upd()})
+    connect(this, "change", this, "relayout",
+      {updater: ($upd, {prop}) => ["extent", "padding"].includes(prop) && $upd()})
+    connect(this.submorphs[0], "change", this, "relayout",
+      {updater: ($upd, {prop}) => ["extent"].includes(prop) && $upd()})
   }
 
   get isButton() { return true }

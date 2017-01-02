@@ -14,7 +14,7 @@ const defaultCommandHandler = new CommandHandler();
 
 const defaultProperties = {
   visible: true,
-  name: "a morph",
+  name: "aMorph",
   position:  pt(0,0),
   rotation:  0,
   scale:  1,
@@ -1420,12 +1420,10 @@ export class Image extends Morph {
 
   get isImage() { return true }
 
-  get imageUrl()       { return this.getProperty("imageUrl"); }
-  set imageUrl(value)  { this.setProperty("imageUrl", value); }
+  get imageUrl()      { return this.getProperty("imageUrl"); }
+  set imageUrl(value) { this.setProperty("imageUrl", value); }
 
-  render(renderer) {
-    return renderer.renderImage(this);
-  }
+  render(renderer) { return renderer.renderImage(this); }
 }
 
 class PathPoint {
