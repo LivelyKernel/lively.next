@@ -2,10 +2,11 @@ import { arr, obj, Path } from "lively.lang";
 import { Morph, GridLayout, config } from "lively.morphic";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { JavaScriptEditorPlugin } from "../editor-plugin.js";
-import { withSuperclasses, instanceFields, classFields, isClass } from "lively.classes/util.js";
+import { withSuperclasses, lexicalClassMembers, instanceFields, classFields, isClass } from "lively.classes/util.js";
 import { TreeData, Tree } from "lively.morphic/tree.js";
 import { connect } from "lively.bindings";
 import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
+import { addScript } from "lively.classes/object-classes.js";
 
 
 // var oe = ObjectEditor.open({target: this})
@@ -61,17 +62,18 @@ class ClassTreeData extends TreeData {
     if (node.isRoot) {
       if (node.children) return node.children;
       var classes = arr.without(withSuperclasses(node.target), Object).reverse();
-      return node.children = classes.map(klass => {
-        return {
-          target: klass,
-          isCollapsed: true,
-        }
-      })
+      return node.children = classes.map(klass => ({target: klass, isCollapsed: true}))
     }
 
-    if (isClass(node.target))
-      return node.children || (node.children = classFields(node.target).map(ea => ({name: "static " + ea.name, target: ea}))
-              .concat(instanceFields(node.target).map(ea => ({name: ea.name, target: ea}))));
+    if (isClass(node.target)) {
+      try {
+        return node.children
+          || (node.children = lexicalClassMembers(node.target).map(ea => {
+            var {static: _static, name} = ea;
+            return {name: (_static ? "static " : "") + name, target: ea};
+          }));
+      } catch (e) { $world.showError(e); return node.children = []; }
+    }
 
     return [];
   }
@@ -152,13 +154,13 @@ export class ObjectEditor extends Morph {
       {name: "sourceEditor", bounds: sourceEditorBounds, ...textStyle, doSave: () => this.save()},
 
       {type: Tree, name: "classTree", bounds: classTreeBounds, treeData: new ClassTreeData(null)},
-      {type: "button", name: "addClassButton", label: "+"},
+      {type: "button", name: "addMethodButton", label: "+"},
     ];
 
     var l = this.layout = new GridLayout({
       grid: [
         ["classTree", "classTree", "sourceEditor"],
-        [null, "addClassButton", "sourceEditor"],
+        [null, "addMethodButton", "sourceEditor"],
       ]});
     l.col(0).fixed = 100;
     l.col(1).fixed = 100;
@@ -168,6 +170,7 @@ export class ObjectEditor extends Morph {
     // l.col(2).fixed = 100; l.row(0).paddingTop = 1; l.row(0).paddingBottom = 1;
 
     connect(this.get("classTree"), "selection", this, "onClassTreeSelection");
+    connect(this.get("addMethodButton"), "fire", this, "interactivelyAddMethod");
   }
 
   async systemInterface() {
@@ -198,7 +201,9 @@ export class ObjectEditor extends Morph {
 
     var tree = this.get("classTree"),
         parentNode = tree.treeData.parentNode(node);
-    this.selectMethod(parentNode.target, node.target);
+
+    var isClick = !!this.env.eventDispatcher.eventState.clickedOnMorph;
+    this.selectMethod(parentNode.target, node.target, isClick);
   }
 
   sourceDescriptorFor(klass) {
@@ -206,6 +211,12 @@ export class ObjectEditor extends Morph {
   }
 
   async selectClass(klass) {
+    var tree = this.get("classTree");
+    if (!tree.selection || tree.selection.target !== klass) {
+      var node = tree.nodes.find(ea => !ea.isRoot && ea.target === klass);
+      tree.selection = node;
+    }
+
     var ed = this.get("sourceEditor"),
         descr = this.sourceDescriptorFor(klass),
         {declaredNames} = await descr.declaredAndUndeclaredNames,
@@ -213,7 +224,7 @@ export class ObjectEditor extends Morph {
         system = await this.systemInterface(),
         format = (await system.moduleFormat(descr.module.id)) || "esm",
         [_, ext] = descr.module.id.match(/\.([^\.]+)$/) || [];
-
+ 
     ed.textString = source;
 
     Object.assign(this.editorPlugin.evalEnvironment, {
@@ -223,12 +234,20 @@ export class ObjectEditor extends Morph {
       format
     });
 
+    this.state.selectedMethod = null;
     this.state.selectedClass = klass;
   }
 
-  async selectMethod(klass, methodSpec) {
+  async selectMethod(klass, methodSpec, highlight = true) {
     if (this.state.selectedClass !== klass)
       await this.selectClass(klass);
+
+    var tree = this.get("classTree");
+    tree.uncollapse(tree.selection);
+    if (tree.selection.target !== methodSpec) {
+      var node = tree.nodes.find(ea => ea.target.owner === klass && ea.target.name === methodSpec.name);
+      tree.selection = node;
+    }
 
     var ed = this.get("sourceEditor"),
         descr = RuntimeSourceDescriptor.for(klass),
@@ -236,23 +255,78 @@ export class ObjectEditor extends Morph {
         methods = Path("body.body").get(parsed),
         method = methods.find(({key: {name}}) => name === methodSpec.name);
 
+    this.state.selectedMethod = methodSpec;
+
     if (!method) {
       this.setStatusMessage(`Cannot find method ${methodSpec.name}`);
       return;
     }
 
-    ed.cursorPosition = ed.indexToPosition(method.key.start);
-    var methodRange = {
-      start: ed.indexToPosition(method.start),
-      end: ed.indexToPosition(method.end)
+    if (highlight) {
+      ed.cursorPosition = ed.indexToPosition(method.key.start);
+      var methodRange = {
+        start: ed.indexToPosition(method.start),
+        end: ed.indexToPosition(method.end)
+      }
+      ed.flash(methodRange, {id: 'method', time: 1000, fill: Color.rgb(200,235,255)});
+      ed.centerRow();
     }
-    ed.flash(methodRange, {id: 'method', time: 1000, fill: Color.rgb(200,235,255)});
-    ed.centerRow();
+  }
+
+  async interactivelyAddMethod() {
+    try {      
+      let input = await this.world().prompt("Enter method name",
+                        {historyId: "object-editor-method-name-hist"});
+      if (!input) return;
+      let {methodName} = await addScript(this.target, "function() {}", input);
+      await this.refresh();
+      await this.selectMethod(this.target.constructor, {name: methodName});
+      this.focus();
+    } catch (e) {
+      this.showError(e);
+    }
+  }
+
+  async refresh() {
+    var {selectedClass, selectedMethod} = this.state,
+        tree = this.get("classTree");
+
+    await tree.maintainViewStateWhile(async () => {
+      this.target = this.target;
+
+    }, node => node.target ?
+                  node.target.name
+                    + node.target.kind
+                    + (node.target.owner ? "." + node.target.owner.name : "") :
+                  node.name);
   }
 
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  async doSave() {
+    var {selectedClass, selectedMethod} = this.state;
 
+    if (!selectedClass) throw new Error("No class selected");
+
+    var editor = this.get("sourceEditor"),
+        descr = RuntimeSourceDescriptor.for(selectedClass);
+
+var store = JSON.parse(localStorage["oe helper"] || '{"saves": []}')
+store.saves.push(editor.textString);
+if (store.saves.length > 300) store.saves = store.saves.slice(-300)
+localStorage["oe helper"] = JSON.stringify(store);
+
+    await descr.changeSource(editor.textString)
+
+    await editor.saveExcursion(async () => {
+      await this.refresh();
+      // if (selectedMethod) await this.selectMethod(selectedClass, selectedMethod, false);
+      // else await this.selectClass(selectedClass);
+    });
+
+
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   focus() { this.get("sourceEditor").focus(); }
 
@@ -260,6 +334,7 @@ export class ObjectEditor extends Morph {
     return [
       {keys: "F1", command: "focus class tree"},
       {keys: "F2", command: "focus code editor"},
+      {keys: {mac: "Command-S", win: "Ctrl-S"}, command: "save source"},
     ].concat(super.keybindings);
   }
 
@@ -271,6 +346,25 @@ export class ObjectEditor extends Morph {
 
 
 var commands = [
-  {name: "focus class tree", exec: ed => { var m = ed.get("classTree"); m.show(); m.focus(); return true; }},
-  {name: "focus code editor", exec: ed => { var m = ed.get("sourceEditor"); m.show(); m.focus(); return true; }},
-]
+
+  {
+    name: "focus class tree",
+    exec: ed => { var m = ed.get("classTree"); m.show(); m.focus(); return true; }
+  },
+
+  {
+    name: "focus code editor",
+    exec: ed => { var m = ed.get("sourceEditor"); m.show(); m.focus(); return true; }
+  },
+  
+  {
+    name: "save source",
+    exec: async ed => {
+      try {
+        await ed.doSave();
+        ed.setStatusMessage("saved", Color.green);
+      } catch (e) { ed.showError(e); }
+      return true;
+    }
+  }
+];
