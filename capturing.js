@@ -481,7 +481,7 @@ function shouldDeclBeCaptured(decl, options) {
 }
 
 function shouldRefBeCaptured(ref, toplevel, options) {
-  if (toplevel.scope.importDecls.includes(ref)) return false;
+  if (toplevel.scope.importSpecifiers.includes(ref)) return false;
   for (var i = 0; i < toplevel.scope.exportDecls.length; i++) {
     var ea = toplevel.scope.exportDecls[i];
     if (ea.declarations && ea.declarations.includes(ref)) return false;
