@@ -1,14 +1,14 @@
 /*global System, beforeEach, afterEach, describe, it*/
 
 import { expect } from "mocha-es6";
-import { removeDir, createFiles, inspect as i } from "./helpers.js";
 
 import { getSystem, removeSystem } from "../src/system.js";
 import module from "../src/module.js";
 import { registerPackage } from "../src/packages.js";
 import { runEval } from "lively.vm";
+import { createFiles, resource } from "lively.resources";
 
-var dir = System.decanonicalize("lively.modules/tests/"),
+var dir = "local://lively.modules-instrumentation-test/",
     testProjectDir = dir + "test-project-dir/",
     testProjectSpec = {
       "file1.js": "import { y } from './file2.js'; export var x = y + 2;",
@@ -41,7 +41,7 @@ async function setup() {
 
 function teardown() {
   removeSystem("test");
-  return removeDir(testProjectDir);
+  return resource(testProjectDir).remove();
 }
 
 describe("instrumentation", () => {
@@ -65,6 +65,37 @@ describe("instrumentation", () => {
     module1.undefine("y");
     expect(module1.recorder).to.not.have.property("y");
     expect(module1.recorder).to.have.property("x", 3);
+  });
+
+  describe("definition callback", () => {
+  
+    var recorded;
+    beforeEach(() => {
+      var origDefine = module1.define;
+      module1.define = (varName, value, exportImmediately = true, meta) => {
+        recorded = {varName, value, meta};
+        return origDefine.call(module1, varName, value, exportImmediately, meta)
+      }    
+    })
+  
+    it("with function", async () => {
+      await module1.changeSource("function foo() {}");
+      expect(recorded).deep.equals({
+        varName: "foo",
+        value: module1.recorder.foo,
+        meta: {"end": 17,"evalId": 1,"moduleSource": "function foo() {}","start": 0}
+      })
+    });
+    
+    it("with class", async () => {
+      await module1.changeSource("class Foo {}");
+      expect(recorded).deep.equals({
+        varName: "Foo",
+        value: module1.recorder.Foo,
+        meta: {"end": 12,"evalId": 2,"moduleSource": "class Foo {}","start": 0}
+      })
+    });
+
   });
 
   describe("of global modules", () => {
