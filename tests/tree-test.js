@@ -109,8 +109,12 @@ describe("tree", function() {
   describe("view state", () => {
   
     it("can be externalized and applied", async () => {
+      // createTree({});
       var tree1 = tree,
-          tree2 = createTree();
+          tree2 = createTree({env, position: pt(200,0)});
+
+      // tree1.openInWorld()
+      // tree2.openInWorld()
       // env.world.addMorph(tree1); // env.world.addMorph(tree2);
       // tree2.moveBy(pt(300,0))
       // tree1.remove(); tree2.remove();

@@ -1,8 +1,8 @@
-import { arr, obj, fun, tree, string } from "lively.lang"
-import { pt, Rectangle, rect, Color } from "lively.graphics"
+import { arr, obj, tree, string, promise } from 'lively.lang';
+import { pt, Rectangle, Color } from 'lively.graphics';
 import { Label } from "lively.morphic/text/label.js";
-import { Morph, show } from "lively.morphic"
-import { connect, disconnect, signal } from "lively.bindings"
+import { Morph } from 'lively.morphic';
+import { connect, signal } from 'lively.bindings';
 
 /*
 
@@ -489,7 +489,7 @@ export class Tree extends Morph {
     this.selectedIndex = newSelIndex;
     this.scroll = scroll;
     this.scrollSelectionIntoView();
-    return this.whenRendered();
+    await promise.delay(0);
   }
 
   async maintainViewStateWhile(whileFn, nodeIdFn) {
