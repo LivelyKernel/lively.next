@@ -154,7 +154,7 @@ export class LocalCoreInterface extends AbstractCoreInterface {
 
         toplevel = ast.query.topLevelDeclsAndRefs(parsed),
         decls = arr.sortByKey(ast.query.declarationsOfScope(toplevel.scope, true), "start"),
-        imports = arr.pluck(toplevel.scope.importDecls, "name"),
+        imports = arr.pluck(toplevel.scope.importSpecifiers, "name"),
 
         col1Width = 0;
 
