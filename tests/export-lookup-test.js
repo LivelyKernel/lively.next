@@ -4,10 +4,9 @@ import { expect } from "mocha-es6";
 import { createFiles, resource } from "lively.resources";
 import { getSystem, removeSystem } from "../src/system.js";
 import module from "../src/module.js";
-import { ExportLookup } from "../src/import-export.js";
-import { importPackage, getPackage, getPackages } from "../src/packages.js";
-import { moduleSourceChange } from "../src/change.js";
-import { runEval } from "lively.vm";
+import ExportLookup from "../src/export-lookup.js";
+import { importPackage } from '../src/packages.js';
+
 
 var dir = "local://lively.modules.export-lookup-test/",
     testProjectDir = dir + "project/",
@@ -26,7 +25,16 @@ var dir = "local://lively.modules.export-lookup-test/",
     },
     file1m = testProjectDir + "file1.js",
     file2m = testProjectDir + "file2.js",
-    file3m = testProjectDir + "sub-dir/file3.js";
+    file3m = testProjectDir + "sub-dir/file3.js",
+
+    testProject2Dir = dir + "project2/",
+    testProject2Spec = {
+      "index.js": "export var hello = 'world';",
+      "package.json": `{`
+                    + `"name": "test-project-2", `
+                    + `"version": "0.1.1"`
+                    + `}`
+    };
 
 let S, module1, module2, module3;
 
@@ -111,6 +119,34 @@ describe("export lookup", () => {
   it("find export of value", async () => {
     var exported = await ExportLookup.findExportOfValue(module(S, file1m).recorder.x, S);
     expect(exported).containSubset({local: "x", moduleId: file1m})
+  });
+
+  describe("excludes", () => {
+
+    beforeEach(async () => {
+      await createFiles(testProject2Dir, testProject2Spec);
+      await importPackage(S, testProject2Dir);
+    });
+
+    it("doesn't exclude by default", async () => {
+      var exports = await ExportLookup.run(S);
+      expect(exports).containSubset([
+        {local: "x",moduleId: file1m},
+        {local: "y",moduleId: file2m},
+        {local: "z",moduleId: file3m},
+        {local: "hello",moduleId: testProject2Dir + "index.js"},
+      ]);
+    });
+
+    it("resolves and excludes packages", async () => {
+      var exports = await ExportLookup.run(S, {excludedPackages: ["test-project-2"]});
+      expect(exports).containSubset([
+        {local: "x",moduleId: file1m},
+        {local: "y",moduleId: file2m},
+        {local: "z",moduleId: file3m},
+      ]);
+    });
+
   });
 
 });

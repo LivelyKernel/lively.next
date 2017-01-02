@@ -2,9 +2,8 @@ import { arr, promise, obj } from "lively.lang";
 import { emit } from "lively.notifications";
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 import module from "../src/module.js";
-import { computeRequireMap as requireMap } from './dependencies.js'
 import { knownModuleNames } from './system.js'
-import { isJsFile, asDir, isURL, urlResolve, join } from "./url-helpers.js";
+import { isURL, urlResolve, join } from './url-helpers.js';
 import { resource } from "lively.resources";
 
 

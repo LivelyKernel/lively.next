@@ -1,4 +1,4 @@
-import { arr, obj, properties, promise } from "lively.lang";
+import { arr, obj, promise } from 'lively.lang';
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 import module from "./module.js";
 
