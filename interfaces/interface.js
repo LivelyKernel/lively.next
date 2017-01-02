@@ -37,7 +37,7 @@ export class AbstractCoreInterface {
   printSystemConfig()                       { todo("printSystemConfig") }
   getConfig()                               { todo("getConfig") }
   setConfig(conf)                           { todo("setConfig") }
-  getPackages()                             { todo("getPackages") }
+  getPackages(options)                      { todo("getPackages") }
   
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   
@@ -67,7 +67,7 @@ export class AbstractCoreInterface {
     return this.setConfig(jso);
   }
 
-  async resourcesOfPackage(packageOrAddress, exclude) { todo("resourcesOfPackage"); }
+  async resourcesOfPackage(packageOrAddress, {exclude, ignoredPackages}) { todo("resourcesOfPackage"); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-  
   // package related

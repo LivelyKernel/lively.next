@@ -121,8 +121,11 @@ try {
     return this.runEvalAndStringify(`lively.modules.System.config(${JSON.stringify(conf)})`);
   }
 
-  getPackages() {
-    return this.runEvalAndStringify(`lively.lang.obj.values(lively.lang.obj.values(lively.modules.getPackages()).map(ea => Object.assign({}, ea, {System: null})))`);
+  getPackages(options) {
+    return this.runEvalAndStringify(`
+      var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
+      await livelySystem.localInterface.getPackages(${JSON.stringify(options)})
+        .map(ea => Object.assign({}, ea, {System: null}));`);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -208,10 +211,10 @@ try {
       exports: await lively.modules.module(${JSON.stringify(modId)}).exports()})`);
   }
 
-  exportsOfModules() {
+  exportsOfModules(options) {
     return this.runEvalAndStringify(`
       var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
-      await livelySystem.localInterface.exportsOfModules()`);
+      await livelySystem.localInterface.exportsOfModules(${JSON.stringify(options)})`);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

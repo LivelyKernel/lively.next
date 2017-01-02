@@ -30,7 +30,7 @@ export class Interface {
   runEval(source, options)                       { return this.coreInterface.runEval(source, options); }
   printSystemConfig(a, b, c)                     { return this.coreInterface.printSystemConfig(a, b, c); }
   getConfig(a, b, c)                             { return this.coreInterface.getConfig(a, b, c); }
-  getPackages()                                  { return this.coreInterface.getPackages(); }
+  getPackages(options)                           { return this.coreInterface.getPackages(options); }
   getModules(a, b, c)                            { return this.coreInterface.getModules(a, b, c); }
   getModule(a, b, c)                             { return this.coreInterface.getModule(a, b, c); }
   getPackage(a, b, c)                            { return this.coreInterface.getPackage(a, b, c); }
@@ -67,7 +67,7 @@ export class Interface {
   interactivelyAddModule(requester, relatedPackageOrModule)           { return interactivelyAddModule(this.coreInterface, requester, relatedPackageOrModule); }
 
   showExportsAndImportsOf(packageAddress, world) { return showExportsAndImportsOf(this.coreInterface, packageAddress, world); }
-  exportsOfModules()                             { return this.coreInterface.exportsOfModules(); }
+  exportsOfModules(options) { return this.coreInterface.exportsOfModules(options); }
 
   // -=-=-=-
   // search
@@ -76,8 +76,8 @@ export class Interface {
     return this.coreInterface.searchInPackage(packageURL, searchTerm, options);
   }
 
-  async searchInAllPackages(searchTerm, options) {
-    var packages = await this.coreInterface.getPackages(),
+  async searchInAllPackages(searchTerm, options = {}) {
+    var packages = await this.coreInterface.getPackages({excluded: options.excludedPackages}),
         results = [];
     for (let {url} of packages) {
       if (!url || url === "no group"/*FIXME*/) continue;

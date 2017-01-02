@@ -2,7 +2,7 @@ import { obj, string, arr } from "lively.lang";
 import { resource, createFiles } from "lively.resources";
 import * as ast from "lively.ast";
 import * as modules from "lively.modules";
-import { ExportLookup } from "lively.modules/src/import-export.js";
+import ExportLookup from "lively.modules/src/export-lookup.js";
 import * as vm from "lively.vm";
 
 import { loadMochaTestFile, runMochaTests } from "../commands/mocha-tests.js";
@@ -66,8 +66,12 @@ export class LocalCoreInterface extends AbstractCoreInterface {
     modules.System.config(conf);
   }
 
-  getPackages() {
-    return obj.values(modules.getPackages());
+  getPackages(options) {
+    options = {excluded: [], ...options};
+    var excluded = options.excluded,
+        excludedURLs = options.excluded.concat(options.excluded.map(url =>
+          System.decanonicalize(url.replace(/\/?$/, "/")).replace(/\/$/, "")));
+    return modules.getPackages().filter(({url}) => !excludedURLs.includes(url));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -190,8 +194,8 @@ export class LocalCoreInterface extends AbstractCoreInterface {
     }
   }
 
-  exportsOfModules() {
-    return ExportLookup.run(modules.System);
+  exportsOfModules(options) {
+    return ExportLookup.run(modules.System, options);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
