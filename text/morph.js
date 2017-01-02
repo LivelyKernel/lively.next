@@ -1078,7 +1078,7 @@ export class Text extends Morph {
       var result = doFn();
       isPromise = result && result instanceof Promise;
     } finally { !isPromise && cleanup(); }
-    if (isPromise) result.then(cleanup).catch(cleanup);
+    if (isPromise) promise.finally(result, cleanup);
     return result;
   }
 
@@ -1092,7 +1092,7 @@ export class Text extends Morph {
       var result = this.keepPosAtSameScrollOffsetWhile(doFn);
       isPromise = result && result instanceof Promise;
     } finally { !isPromise && cleanup(); };
-    if (isPromise) result.then(cleanup).catch(cleanup);
+    if (isPromise) promise.finally(result, cleanup);
     return result;
   }
 
