@@ -1,10 +1,9 @@
 /*global System*/
 
-import { chain, arr, obj, string, date } from "lively.lang";
-import { pt, Rectangle } from "lively.graphics"
+import { chain, arr, string, date } from "lively.lang";
+import { pt } from "lively.graphics";
 import { Range } from "./range.js"
-import { show } from "../index.js"
-import { eqPosition, lessPosition } from "./position.js"
+import { eqPosition } from "./position.js";
 
 
 var commands = [

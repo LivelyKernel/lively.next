@@ -1,9 +1,8 @@
 import {diff, patch, create} from "virtual-dom";
 import "gsap";
-import bowser from "bowser";
 import { num, obj, arr, properties, promise } from "lively.lang";
-import { Transform, Color, pt, Point } from "lively.graphics";
-import { Morph, config } from '../index.js';
+import { Color, pt, Point } from "lively.graphics";
+import { config } from "../index.js";
 
 export class ShadowObject {
 

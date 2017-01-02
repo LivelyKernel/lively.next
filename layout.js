@@ -1,8 +1,11 @@
-import { pt, Color, rect } from "lively.graphics";
-import { arr, grid, properties, num, obj } from "lively.lang";
-import { GridLayoutHalo, FlexLayoutHalo, 
-         TilingLayoutHalo, FillLayoutHalo } from "./halo/layout.js";
-import { Morph } from "./index.js";
+import { pt, rect } from "lively.graphics";
+import { arr, grid, obj } from "lively.lang";
+import {
+  GridLayoutHalo,
+  FlexLayoutHalo,
+  TilingLayoutHalo
+} from "./halo/layout.js";
+
 
 class Layout {
   

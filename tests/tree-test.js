@@ -2,7 +2,7 @@
 import { morph,  World, MorphicEnv } from "../index.js";
 import { Tree, TreeData } from "../tree.js";
 import { expect } from "mocha-es6";
-import { pt, rect, Color, Rectangle, Transform } from "lively.graphics";
+import { pt, Color, Rectangle } from "lively.graphics";
 import { arr } from "lively.lang";
 import { dummyFontMetric as fontMetric } from "./test-helpers.js";
 import { createDOMEnvironment } from "../rendering/dom-helper.js";

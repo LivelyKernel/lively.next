@@ -1,8 +1,8 @@
-import { arr, obj, tree, string, promise } from 'lively.lang';
-import { pt, Rectangle, Color } from 'lively.graphics';
+import { arr, obj, tree, string, promise } from "lively.lang";
+import { pt, Rectangle, Color } from "lively.graphics";
 import { Label } from "lively.morphic/text/label.js";
-import { Morph } from 'lively.morphic';
-import { connect, signal } from 'lively.bindings';
+import { Morph } from "lively.morphic";
+import { connect, signal } from "lively.bindings";
 
 /*
 

@@ -1,5 +1,5 @@
 import { arr } from "lively.lang";
-import { pt, Rectangle, Color } from "lively.graphics";
+import { pt, Color } from "lively.graphics";
 import { Morph } from "./index.js";
 
 export class VerticalResizer extends Morph {

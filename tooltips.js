@@ -1,4 +1,4 @@
-import { pt, Color, Rectangle } from "lively.graphics";
+import { Color } from "lively.graphics";
 import { Morph, Label, HorizontalLayout } from "./index.js";
 import config from "./config.js";
 

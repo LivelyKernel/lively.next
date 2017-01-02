@@ -1,7 +1,7 @@
 import { obj, arr } from "lively.lang";
 import { Range } from "./range.js";
 import { Anchor } from "./anchors.js";
-import { lessPosition, lessEqPosition, eqPosition } from "./position.js";
+import { lessEqPosition, eqPosition } from "./position.js";
 
 
 export class TextAttribute {

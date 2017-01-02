@@ -1,4 +1,4 @@
-import {arr, obj, properties} from "lively.lang";
+import { arr, obj } from "lively.lang";
 
 export class StyleRules {
 

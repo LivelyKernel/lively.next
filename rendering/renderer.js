@@ -1,9 +1,13 @@
 import { promise, num } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
-import { defaultStyle, defaultAttributes, render, 
-         pathAttributes, svgAttributes } from "./morphic-default.js";
+import {
+  defaultStyle,
+  defaultAttributes,
+  pathAttributes,
+  svgAttributes
+} from "./morphic-default.js";
 import { h } from "virtual-dom";
-import { pt } from "lively.graphics";
+
 
 const defaultCSS = `
 

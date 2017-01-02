@@ -1,6 +1,6 @@
-import { arr, obj, promise } from "lively.lang";
+import { arr } from "lively.lang";
 import { pt, Point, Color, Rectangle } from "lively.graphics";
-import { morph, Morph, Window, Polygon, show } from "./index.js";
+import { Morph, Polygon } from "./index.js";
 import { RichTextControl } from "lively.morphic/text/ui.js"
 import { Tree, TreeData } from "lively.morphic/tree.js"
 import { connect } from "lively.bindings"

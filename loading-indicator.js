@@ -1,5 +1,5 @@
 import { promise } from "lively.lang";
-import { Morph, Label } from "lively.morphic";
+import { Morph } from "lively.morphic";
 import { Icon } from "./icons.js";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { connect } from "lively.bindings";

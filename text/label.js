@@ -1,6 +1,6 @@
 import { obj, arr, string } from "lively.lang";
-import { rect, Rectangle, Color, pt } from "lively.graphics";
-import { Morph, morph, show } from "../index.js";
+import { Rectangle, Color } from "lively.graphics";
+import { Morph } from "../index.js";
 import { defaultStyle, defaultAttributes } from "../rendering/morphic-default.js";
 import { h } from "virtual-dom";
 import { Icon } from "../icons.js";

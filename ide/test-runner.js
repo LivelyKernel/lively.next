@@ -1,12 +1,10 @@
 import { arr, obj } from "lively.lang"
 import { query, parse } from "lively.ast";
-import { Color, Rectangle, pt } from "lively.graphics"
+import { pt } from "lively.graphics";
 import { addOrChangeCSSDeclaration } from "lively.morphic/rendering/dom-helper.js";
 import { show } from "lively.morphic"
 import { HTMLMorph } from "lively.morphic/html-morph.js"
-import InputLine from "lively.morphic/text/input-line.js"
-import { DropDownList } from "lively.morphic/list.js"
-import { connect, noUpdate } from "lively.bindings"
+import { connect } from "lively.bindings";
 import EvalBackendChooser from "./js/eval-backend-ui.js";
 
 import "mocha-es6";

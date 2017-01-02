@@ -1,8 +1,8 @@
-import { Color, pt, Rectangle } from "lively.graphics"
-import { morph, List, show, Text } from "lively.morphic"
-import { connect, disconnect, signal } from "lively.bindings"
+import { Color, pt } from "lively.graphics";
+import { morph } from "lively.morphic";
+import { connect } from "lively.bindings";
 import { FilterableList } from "lively.morphic/list.js";
-import { arr, string, obj } from "lively.lang";
+import { arr, string } from "lively.lang";
 
 
 export class Completer {

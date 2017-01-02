@@ -1,8 +1,8 @@
-import { Morph, Text, show, Button } from "./index.js"
+import { Morph, Text, Button } from "./index.js";
 import { Label } from "./text/label.js"
 import { Icon } from "./icons.js"
 import { pt, Color, Rectangle, rect } from "lively.graphics";
-import { arr, fun, obj } from "lively.lang";
+import { arr, obj } from "lively.lang";
 import { signal } from "lively.bindings";
 
 function asItem(obj) {

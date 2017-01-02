@@ -1,7 +1,7 @@
 /*global System*/
 // import config from "../config.js";
 import { obj, arr, num } from "lively.lang";
-import { rect, Rectangle, Color, pt } from "lively.graphics";
+import { Rectangle, Color, pt } from "lively.graphics";
 import { connect, signal, disconnect } from "lively.bindings"; // for makeInputLine
 import { Text } from "./morph.js"
 

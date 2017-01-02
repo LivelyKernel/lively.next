@@ -1,6 +1,5 @@
 import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree, fun } from "lively.lang";
-import { signal } from "lively.bindings";
 import { renderRootMorph, AnimationQueue, ShadowObject } from "./rendering/morphic-default.js"
 import { morph, show } from "./index.js";
 import { MorphicEnv } from "./env.js";
@@ -8,7 +7,6 @@ import config from "./config.js";
 import CommandHandler from "./CommandHandler.js";
 import KeyHandler, { findKeysForPlatform } from "./events/KeyHandler.js";
 import { TargetScript } from "./ticking.js";
-import { connect } from "lively.bindings";
 
 const defaultCommandHandler = new CommandHandler();
 

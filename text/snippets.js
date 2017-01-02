@@ -1,7 +1,5 @@
 import { connect, disconnect } from "lively.bindings";
 import { string } from "lively.lang";
-import { show } from "lively.morphic";
-
 import KeyHandler from "../events/KeyHandler.js";
 import { Range } from "../text/range.js";
 

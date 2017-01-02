@@ -1,8 +1,7 @@
 import { fun, arr } from "lively.lang"
-import { show, morph, Label, Morph } from "../index.js"
-import { pt, Rectangle, rect, Color } from "lively.graphics"
+import { show, morph, Morph } from "../index.js";
+import { pt, Rectangle, Color } from "lively.graphics";
 import { connect } from "lively.bindings"
-import { TextAttribute, TextStyleAttribute } from "./attribute.js";
 import { Icon } from "../icons.js";
 import { ColorPicker } from "../ide/styling/color-picker.js";
 

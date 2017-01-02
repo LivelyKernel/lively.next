@@ -1,5 +1,4 @@
-import { pt, rect } from "lively.graphics";
-import { arr, string, obj } from "lively.lang";
+import { string, obj } from "lively.lang";
 
 
 export default class FontMetric {
