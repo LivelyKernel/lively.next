@@ -80,19 +80,20 @@ describe("instrumentation", () => {
   
     it("with function", async () => {
       await module1.changeSource("function foo() {}");
-      expect(recorded).deep.equals({
+      expect(recorded.meta.evalId).match(/\d+/);
+      expect(recorded).containSubset({
         varName: "foo",
         value: module1.recorder.foo,
-        meta: {"end": 17,"evalId": 1,"moduleSource": "function foo() {}","start": 0, kind: "function",}
+        meta: {"end": 17, "moduleSource": "function foo() {}","start": 0, kind: "function",}
       })
     });
-    
+
     it("with class", async () => {
       await module1.changeSource("class Foo {}");
-      expect(recorded).deep.equals({
+      expect(recorded).containSubset({
         varName: "Foo",
         value: module1.recorder.Foo,
-        meta: {"end": 12,"evalId": 2,"moduleSource": "class Foo {}","start": 0, kind: "class",}
+        meta: {"end": 12,"moduleSource": "class Foo {}","start": 0, kind: "class",}
       })
     });
 
