@@ -1,5 +1,5 @@
 /*global System*/
-import { Rectangle, Color, pt } from 'lively.graphics';
+import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, arr, string, obj, promise } from "lively.lang";
 import { Halo } from "./halo/morph.js"
 import { Menu } from "./menus.js"
@@ -191,64 +191,73 @@ var worldCommands = [
 
   {
     name: "resize active window",
-    exec: function(world, opts = {how: null, window: null}) {
+    exec: async function(world, opts = {how: null, window: null}) {
 
-        var {window, how} = opts,
-            win = window || world.activeWindow();
+      var {window, how} = opts,
+          win = window || world.activeWindow();
 
-        if (!win) return;
+      if (!win) return;
 
-        var worldB = world.visibleBounds().insetBy(20),
-            winB = win.bounds(),
-            bounds = worldB;
-
+      var worldB = world.visibleBounds().insetBy(20),
+          winB = win.bounds();
         // FIXME!
-        if (!win._normalBounds) win._normalBounds = winB;
+      if (!win._normalBounds) win._normalBounds = winB;
 
-        var thirdWMin = 700,
-            thirdW = Math.min(thirdWMin, Math.max(1000, bounds.width/3)),
-            thirdColBounds = bounds.withWidth(thirdW);
+      var thirdWMin = 700,
+          thirdW = Math.min(thirdWMin, Math.max(1000, worldB.width/3)),
+          thirdColBounds = worldB.withWidth(thirdW);
+      
+      if (!how) how = await askForHow();
+      if (!how) return;
 
-        if (!how) askForHow(); else doResize(how);
+      if (how === "reset") delete win.normalBounds;
+      win.setBounds(resizeBounds(how, how.startsWith("half") ? winB : worldB));
 
-        return true;
+      return true;
 
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 
-        async function askForHow() {
-          var {selected: [how]} = await world.filterableListPrompt("How to resize the window?", [
-            'full', 'fullscreen','center','right','left','bottom',
-            'top',"shrinkWidth", "growWidth","shrinkHeight",
-            "growHeight", 'col1','col2', 'col3', 'col4', 'col5',
-            'reset']);
-          how && doResize(how);
+      async function askForHow() {
+        var {selected: [how]} = await world.filterableListPrompt("How to resize the window?", [
+          "full", "fullscreen","center","right","left","bottom",
+          "top","shrinkWidth", "growWidth","shrinkHeight",
+          "growHeight", "col1","col2", "col3", "col4", "col5",
+          "reset"]);
+        return how
+      }
+
+      function resizeBounds(how, bounds) {
+        switch(how) {
+          case "full": case "fullscreen": return worldB;
+          case "col1":
+          case "left": return thirdColBounds.withTopLeft(worldB.topLeft());
+          case "col2": return thirdColBounds.withTopLeft(worldB.topCenter().scaleByPt(pt(.333,1))).withWidth(thirdW);
+          case "col3":
+          case "center": return thirdColBounds.withCenter(worldB.center());
+          case "col4": return thirdColBounds.translatedBy(worldB.topCenter().withY(0));
+          case "col5":
+          case "right": return thirdColBounds.translatedBy(pt(worldB.width - thirdW, 0));
+          case "top": return worldB.divide([rect(0, 0, 1, .5)])[0];
+          case "bottom": return worldB.divide([rect(0, .5, 1, .5)])[0];
+          case "halftop": return bounds.withY(worldB.top()).withHeight(bounds.height/2);
+          case "halfbottom": return bounds.withHeight(worldB.height/2).withY(worldB.top() + worldB.height/2);
+          case "reset": return win.normalBounds || pt(500,400).extentAsRectangle().withCenter(bounds.center());
+  
+          case "quadrant1": return resizeBounds("halftop", resizeBounds("col1", bounds));
+          case "quadrant2": return resizeBounds("halftop", resizeBounds("col2", bounds));
+          case "quadrant3": return resizeBounds("halftop", resizeBounds("col3", bounds));
+          case "quadrant4": return resizeBounds("halftop", resizeBounds("col4", bounds));
+          case "quadrant5": return resizeBounds("halftop", resizeBounds("col5", bounds));
+          case "quadrant6": return resizeBounds("halfbottom", resizeBounds("col1", bounds));
+          case "quadrant7": return resizeBounds("halfbottom", resizeBounds("col2", bounds));
+          case "quadrant8": return resizeBounds("halfbottom", resizeBounds("col3", bounds));
+          case "quadrant9": return resizeBounds("halfbottom", resizeBounds("col4", bounds));
+          case "quadrant0": return resizeBounds("halfbottom", resizeBounds("col5", bounds));
+          default: return bounds;
         }
+      }
 
-        function doResize(how) {
-
-            switch(how) {
-                case 'full': case 'fullscreen': break;
-                case 'left': bounds = thirdColBounds; break;
-                case 'col3': case 'center': bounds = thirdColBounds.withCenter(worldB.center()); break;
-                case 'col5': case 'right': bounds = thirdColBounds.translatedBy(pt(worldB.width - thirdW, 0)); break;
-                case 'col1': case 'left': bounds = thirdColBounds.withTopLeft(bounds.topLeft()); break;
-                case 'bottom': bounds = bounds.withY(bounds.y + bounds.height/2);
-                case 'top': bounds = bounds.withHeight(bounds.height/2); break;
-                case 'col2': bounds = thirdColBounds.withTopLeft(worldB.topCenter().scaleByPt(pt(.333,1))).withWidth(thirdW); break;
-                case 'col4': bounds = thirdColBounds.translatedBy(worldB.topCenter().withY(0)); break;
-                case 'halftop': bounds = winB.withY(bounds.top()).withHeight(bounds.height/2); break;
-                case 'halfbottom': bounds = winB.withY(bounds.center().y).withHeight(bounds.height/2); break;
-                case 'reset': bounds = win.normalBounds || pt(500,400).extentAsRectangle().withCenter(bounds.center()); break;
-                default: return;
-            }
-
-            if (how === 'reset') delete win.normalBounds;
-
-            win.setBounds(bounds);
-        }
-
-        return true;
     }
   },
 
