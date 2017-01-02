@@ -1,37 +1,29 @@
-import { arr, obj, Path } from "lively.lang";
-import { pt, Color } from "lively.graphics";
-import { fuzzyParse, query, stringify } from "lively.ast";
-import { resource } from "lively.resources";
+import { arr } from 'lively.lang';
+import { pt } from 'lively.graphics';
 import LoadingIndicator from "../../loading-indicator.js";
+import { config } from "lively.morphic";
+import { ImportInjector, ImportRemover } from "lively.modules/src/import-modification.js";
 
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// interface
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-// await cleanupUnusedImports(that)
 
 export async function cleanupUnusedImports(textMorph, opts = {query: true}) {
+  var source = textMorph.textString,
+      unused = ImportRemover.findUnusedImports(source);
+  if (!unused || !unused.length) return "nothing to remove";
 
-  var source = textMorph.textString;
+  var items = unused.map(ea => {
+    var {local, from} = ea;
+    var label = [
+       [`${local}`, {fontWeight: "bold"}], [" from ", {}],
+       [`${from}\n`, {fontStyle: "italic"}]]
+     return {isListItem: true, label, value: ea};
+  });
 
-  var modifications = modificationsToRemoveUnusedImports(source);
-  if (!modifications || !modifications.changes.length) return "nothing to remove";
+  var {list: importsToRemove} = await textMorph.world().editListPrompt(
+    'Which imports should be removed?', items, {multiSelect: true});
 
-  var removed = arr.flatten(
-          modifications.removedImports
-                .map(({name, from}) => [
-                     [`${name}`, {fontWeight: "bold"}], [" from ", {}],
-                     [`${from}\n`, {fontStyle: "italic"}]]), 1);
+  if (!importsToRemove.length) return "canceled";
 
-  var instructions = [[`Really remove these imports?\n\n`, {fontWeight: "bold", fontSize: 15}], 
-                      ...removed]
-
-  var really = opts.query ?
-    await textMorph.world().confirm(instructions) :
-    true;
-  if (!really) return "canceled";
-
+  var modifications = ImportRemover.removeImports(source, importsToRemove);
   textMorph.undoManager.group();
   for (let {replacement, start, end} of modifications.changes) {
     var range = {
@@ -44,62 +36,6 @@ export async function cleanupUnusedImports(textMorph, opts = {query: true}) {
 
   return "imports removed";
 }
-
-
-function modificationsToRemoveUnusedImports(source) {
-  // returns {
-  //   source: STRING,
-  //   modifications: [{start: NUMBER, end: NUMBER, replacement: STRING}]
-  //   removedImports: [{name: STRING, from: STRING}]
-  // }
-
-  var parsed = fuzzyParse(source);
-
-  // 1.get imports with specifiers
-  var imports = arr.flatmap(parsed.body, ea => {
-        if (ea.type !== "ImportDeclaration" || !ea.specifiers.length) return [];
-        return ea.specifiers.map(spec => ({local: spec.local, importStmt: ea}));
-      }),
-      importIdentifiers = imports.map(ea => ea.local)
-
-  // 2. get all var references of source without those included in the import
-  // statments
-  var scope = query.resolveReferences(query.scopes(parsed)),
-      refsWithoutImports = Array.from(scope.resolvedRefMap.keys()).filter(ea =>
-                              !importIdentifiers.includes(ea)),
-      realRefs = arr.uniq(refsWithoutImports.map(ea => ea.name));
-
-  // 3. figure out what imports need to be removed or changed
-  var importsToChange = imports.filter(ea => !realRefs.includes(ea.local.name)),
-      removedImports = importsToChange.map(ea =>
-        ({name: ea.local.name, from: ea.importStmt.source.value})),
-      affectedStmts = arr.uniq(importsToChange.map(ea => {
-        var specToRemove = ea.importStmt.specifiers.find(spec => ea.local === spec.local);
-        arr.remove(ea.importStmt.specifiers, specToRemove);
-        return ea.importStmt;
-      }));
-
-  // 4. Compute the actual modifications to transform source and also new source itself
-  var modifications = affectedStmts.slice().reverse().reduce((state, importStmt) => {
-    var {source, changes} = state,
-        {start, end, specifiers} = importStmt,
-        pre = source.slice(0, start), post = source.slice(end),
-        removed = source.slice(start, end),
-        replacement = !specifiers.length ? "" : stringify(importStmt);
-
-    if (replacement && replacement.includes("\n") && !removed.includes("\n"))
-      replacement = replacement.replace(/\s+/g, " ");
-
-    source = pre + replacement + post;
-    changes = changes.concat({replacement, start, end});
-   return {source, changes};
-  }, {source, changes: []})
-
-  return {...modifications, removedImports};
-}
-
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 
 export async function interactivelyInjectImportIntoText(textMorph, opts) {
@@ -117,8 +53,8 @@ export async function interactivelyInjectImportIntoText(textMorph, opts) {
 
   // 1. gather all exorts
   var exports = await LoadingIndicator.runFn(
-    () => jsPlugin.systemInterface().exportsOfModules(),
-    "computing imports...");
+    () => jsPlugin.systemInterface().exportsOfModules(
+      {excludedPackages: config.ide.js.ignoredPackages}), "computing imports...");
 
   // 2. Ask what to import + generate insertions
   var choices = await ExportPrompt.run(textMorph.world(), exports);
@@ -228,193 +164,7 @@ class ExportPrompt {
       }]
     ]
 
-    // var annotation =
-
     return {label}
   }
 
 }
-
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// injecting the import into a module
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-export class ImportInjector {
-
-  static run(System, intoModuleId, intoPackage, intoModuleSource, importData, optAst) {
-    return new this(System, intoModuleId, intoPackage, intoModuleSource, importData, optAst).run();
-  }
-
-  constructor(System, intoModuleId, intoPackage, intoModuleSource, importData, optAst) {
-    this.System = System
-    this.intoModuleId = intoModuleId;
-    this.intoPackage = intoPackage;
-    this.intoModuleSource = intoModuleSource
-    this.fromModuleId = importData.moduleId;
-    this.importData = importData
-    this.parsed = optAst || fuzzyParse(intoModuleSource);
-  }
-
-  run() {
-    var {standaloneImport, importedVarName} = this.generateImportStatement(),
-        {imports, importsOfFromModule, importsOfVar} = this.existingImportsOfFromModule();
-
-    // already imported?
-    if (importsOfVar.length) return {
-      status: "not modified",
-      newSource: this.intoModuleSource,
-      generated: "",
-      importedVarName: "",
-      standaloneImport,
-      from: importsOfVar[0].start, to: importsOfVar[0].end
-    };
-
-    // modify an existing import?
-    if (importsOfFromModule.length) {
-      var modified = this.modifyExistingImport(importsOfFromModule, standaloneImport);
-      if (modified) return modified;
-    }
-
-    // prepend new import
-    var lastImport = arr.last(imports),
-        insertPos = lastImport ? lastImport.end : 0;
-    return this.insertNewImport(importsOfFromModule, standaloneImport, importedVarName, insertPos);
-  }
-
-  generateImportStatement() {
-    var {intoModuleId, fromModuleId, importData, intoPackage} = this,
-        isDefault = importData.exported === "default",
-        varName = isDefault ? importData.local : importData.exported,
-        intoPackageName = intoPackage && intoPackage.name,
-        exportPath = fromModuleId;
-
-    var {packageName, pathInPackage, isMain} = importData;
-    if (isMain) exportPath = packageName;
-    else if (intoPackageName === packageName) {
-      try {
-        exportPath = resource(fromModuleId).relativePathFrom(resource(intoModuleId));
-        if (!exportPath.startsWith(".")) exportPath = "./" + exportPath;
-      } catch (e) {
-        if (packageName && packageName !== "no group" && pathInPackage)
-          exportPath = packageName + "/" + pathInPackage;
-      }
-    } else {
-      if (packageName && packageName !== "no group" && pathInPackage)
-        exportPath = packageName + "/" + pathInPackage;
-    }
-
-    return {
-      standaloneImport: isDefault ?
-        `import ${varName} from "${exportPath}";` :
-        `import { ${varName} } from "${exportPath}";`,
-      importedVarName: varName
-    }
-  }
-
-  existingImportsOfFromModule() {
-    var {System, fromModuleId, intoModuleId, importData: {exported: impName}, parsed} = this,
-        isDefault = impName === "default",
-        imports = parsed.body.filter(({type}) => type === "ImportDeclaration")
-
-    var importsOfFromModule = imports.filter(ea => {
-      if (!ea.source || typeof ea.source.value !== "string") return null;
-      var sourceId = System.decanonicalize(ea.source.value, intoModuleId)
-      return fromModuleId === sourceId;
-    });
-
-    var importsOfImportedVar = importsOfFromModule.filter(ea =>
-        (ea.specifiers || []).some(iSpec =>
-          isDefault ?
-            iSpec.type === "ImportDefaultSpecifier" :
-            Path("imported.name").get(iSpec) === impName));
-
-    return {
-      imports, importsOfFromModule,
-      importsOfVar: importsOfImportedVar
-    }
-  }
-
-  modifyExistingImport(imports, standaloneImport) {
-    var specifiers = arr.flatmap(imports, ({specifiers}) => specifiers || [])
-    if (!specifiers.length) return null;
-
-    var [[defaultSpecifier], [normalSpecifier]] =
-      arr.partition(specifiers, ({type}) => type === "ImportDefaultSpecifier");
-
-      // defaultSpecifier = arr.partition(imports, ({type}) => type === "ImportDefaultSpecifier")[0][0]
-      // normalSpecifier = arr.partition(imports, ({type}) => type === "ImportDefaultSpecifier")[1][0]
-
-    var {intoModuleSource: src, importData: {exported: impName, local: defaultImpName}} = this,
-        isDefault = impName === "default";
-
-    // Since this method is only called with imports this should never happen:
-    if (isDefault) console.assert(!!normalSpecifier, "no ImportSpecifier found")
-    else console.assert(normalSpecifier || defaultSpecifier, "at least one kine of specifier is expected");
-
-    if (isDefault) {
-      var pos = src.slice(0, normalSpecifier.start).lastIndexOf("{")-1;
-      if (pos < 0) return null;
-
-      var generated = defaultImpName + ",",
-          pre = src.slice(0, pos),
-          post = src.slice(pos);
-
-      if (!pre.endsWith(" ") || !pre.endsWith("\n")) generated = " " + generated;
-      if (!post.startsWith(" ")) generated += " ";
-
-      return {
-        status: "modified",
-        newSource: `${pre}${generated}${post}`,
-        generated,
-        standaloneImport,
-        importedVarName: defaultImpName,
-        from: pos, to: pos + generated.length
-      }
-    }
-
-    var pos = normalSpecifier ? normalSpecifier.end : defaultSpecifier.end,
-        generated = normalSpecifier ? `, ${impName}` : `, { ${impName} }`;
-
-    return {
-      status: "modified",
-      newSource: `${src.slice(0, pos)}${generated}${src.slice(pos)}`,
-      generated,
-      standaloneImport,
-      importedVarName: impName,
-      from: pos, to: pos + generated.length
-    };
-
-  }
-
-  insertNewImport(importsOfFromModule, standaloneImport, importedVarName, insertPos = 0) {
-    if (importsOfFromModule && importsOfFromModule.length)
-      insertPos = arr.last(importsOfFromModule).end;
-
-    var src = this.intoModuleSource,
-        pre = src.slice(0, insertPos),
-        post = src.slice(insertPos),
-        generated = standaloneImport;
-
-    if (pre.length && !pre.endsWith("\n")) generated = "\n" + generated;
-    if (post.length && !post.startsWith("\n")) generated += "\n";
-
-    return {
-      status: "modified",
-      newSource: pre + generated + post,
-      generated,
-      standaloneImport,
-      importedVarName,
-      from: insertPos, to: insertPos + generated.length
-    };
-  }
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-// var exports = await ExportLookup.run(System)
-// arr.uniq(exports.map(ea => ea.packageName)).join("")
-// var choice = await ExportPrompt.run(this.world(), exports);
-// choice
-//
-// ImportInjector.run(System, "http://foo/a.js", "class Foo {}", choice);
