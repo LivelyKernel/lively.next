@@ -203,7 +203,7 @@ export class RuntimeSourceDescriptor {
   }
   get moduleScope() {
     this.resetIfChanged();
-    return this._moduleScope || (this._moduleScope = query.topLevelDeclsAndRefs(this.ast).scope);
+    return this._moduleScope || (this._moduleScope = query.topLevelDeclsAndRefs(this.moduleAst).scope);
   }
   get moduleImports() {
     this.resetIfChanged();
