@@ -59,7 +59,7 @@ class StyleMapper {
 
   static getTransform({position, origin, scale, rotation}) {
     return {
-       transform: `translateX(${(position.x - origin.x).toFixed(2)}px) translateY(${(position.y - origin.y).toFixed(2)}px) rotate(${num.toDegrees(rotation).toFixed(2)}deg) scale(${scale.toFixed(2)},${scale.toFixed(2)})`}
+       transform: `translate3d(${(position.x - origin.x).toFixed(2)}px, ${(position.y - origin.y).toFixed(2)}px, 0px) rotate(${num.toDegrees(rotation).toFixed(2)}deg) scale(${scale.toFixed(2)},${scale.toFixed(2)})`}
   }
 
   static getTransformOrigin({origin}) {
@@ -320,7 +320,6 @@ export class PropertyAnimation {
                         {...after,
                          ease: this.easing,
                          overwrite: false,
-                         force3D: true,
                          onComplete: () => {
                            this.finish();
                            this.morph.makeDirty();
