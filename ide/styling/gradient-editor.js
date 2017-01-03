@@ -4,7 +4,7 @@ import { RadialGradient, Complementary, Point,
 import {ColorPalette} from "./color-palette.js";
 import {ColorPicker} from "./color-picker.js";
 import {Morph, Image, VerticalLayout, GridLayout, 
-        Text, Path, HorizontalLayout, Ellipse} from "../../index.js";
+        Text, Path, HorizontalLayout, Ellipse, morph} from "../../index.js";
 import {num, obj, arr} from "lively.lang";
 import {Icon} from "../../icons.js";
 import {StyleRules} from "../../style-rules.js";
@@ -160,6 +160,7 @@ export class GradientEditor extends Morph {
    gradientStopControl(gradientEditor, idx) {
        const head = this.stopControlHead(gradientEditor, idx),
              stopControl = new Morph({
+          head,
           morphClasses: ['stopControlLine'],
           nativeCursor: '-webkit-grab',
           update(gradient) {
@@ -195,7 +196,7 @@ export class GradientEditor extends Morph {
 
    stopControlHead(gradientEditor, idx) {
         const self = this;
-        return {
+        return morph({
            queue: [],
            isHaloItem: true,
            morphClasses: ['stopControlHead'],
@@ -273,17 +274,21 @@ export class GradientEditor extends Morph {
                gradientEditor.updateStop(idx, {color});
            },
            openColorWidget(name, widget) {
-               this[name] = this[name] || widget;
-               widget.position = pt(0,0);
-               connect(widget, "color", this, "updateColor");
-               connect(widget, "close", this, "onWidgetClosed");
-               connect(self, "remove", widget, "remove");
-               widget.fadeIntoWorld(this.globalBounds().bottomCenter());
+               gradientEditor.stopControls.forEach(c => c.head.closeAllWidgets());
+               this[name] = this[name] || new widget({color: this.stopColor});
+               this[name].position = pt(0,0);
+               connect(this[name], "color", this, "updateColor");
+               connect(this[name], "close", this, "onWidgetClosed");
+               connect(self, "remove", this[name], "remove");
+               connect(self.owner, "onMouseDown", this[name], "remove");
+               this[name].fadeIntoWorld(this.globalBounds().bottomCenter());
            },
-           closeColorWidget(name, widget) {
-              if (!this[name]) return;
-              this[name].remove();
-              this[name] = null;
+           closeColorWidget(name) {
+              this[name] && this[name].remove();
+           },
+           closeAllWidgets() {
+              this.closeColorWidget('palette');
+              this.closeColorWidget('picker');
            },
            paletteField(extent) {
                const stopControl = this;
@@ -293,7 +298,7 @@ export class GradientEditor extends Morph {
                      this.fill = stopControl.stopColor = gradient.stops[idx].color;
                   },
                   onMouseDown: () => {
-                     this.openColorWidget("palette", new ColorPalette({color: this.stopColor}));
+                     this.openColorWidget("palette", ColorPalette);
                      this.closeColorWidget("picker");
                   }
                }
@@ -305,12 +310,12 @@ export class GradientEditor extends Morph {
                      this.stopColor = gradient.stops[idx].color
                   },
                   onMouseDown: () => {
-                     this.openColorWidget("picker", new ColorPicker({color: this.stopColor}));
+                     this.openColorWidget("picker", ColorPicker);
                      this.closeColorWidget("palette");
                   }
                });
            }
-        }
+        })
    }
 
    gradientEditor() {
@@ -415,17 +420,14 @@ export class GradientFocusHandle extends Ellipse {
           boundsHandle: {borderColor: Color.orange.darker(), fill: Color.orange.withA(.7),
                          tooltip: "Resize bounds of radial gradient"},
           crossBar: {borderWidth: 2, borderColor: Color.orange, center: pt(11,11), draggable: false},
-          focusHandle: {clipMode: "hidden", 
+          focusHandle: {clipMode: "hidden", nativeCursor: '-webkit-grab',
                         fill: Color.transparent, borderColor: Color.orange,
                         submorphs: [
                            {type: 'path', vertices: [pt(0,0), pt(50,0)], morphClasses: ["crossBar"]},
                            {type: 'path', vertices: [pt(0,0), pt(0,50)], morphClasses: ["crossBar"]},
                            {type: "ellipse", fill: Color.transparent, extent: pt(20,20), 
-                            nativeCursor: '-webkit-grab', tooltip: "Shift focal center of radial gradient",
-                            // rms: there should be smarter ways to just pass events through to the owner
-                            onDragStart(evt) {this.owner.onDragStart(evt)}, 
-                            onDrag(evt) { this.owner.onDrag(evt)},
-                            onDragEnd(evt) { this.owner.onDragEnd(evt)}}
+                            tooltip: "Shift focal center of radial gradient",
+                            reactsToPointer: false}
                         ]}
        })
     }
@@ -440,9 +442,7 @@ export class GradientFocusHandle extends Ellipse {
        const {bounds, focus} = this.target.fill; 
        this.extent = bounds.extent();
        this.submorphs.forEach(m => m.relayout());
-       this.center = this.target
-                         .globalBounds()
-                         .topLeft().addPt(this.target.extent.scaleByPt(focus));
+       this.center = this.target.worldPoint(this.target.extent.scaleByPt(focus).subPt(this.target.origin));
     }
 
     initBoundsHandles() {
@@ -485,15 +485,16 @@ export class GradientFocusHandle extends Ellipse {
              this.center = self.innerBounds().center();
           },
           onDragStart(evt) {
+             this.tfm = self.target.getGlobalTransform().inverse();
              this.focusView = this.addMorph(new Text({
                   type: 'text', morphClasses: ['propertyView']
              })).openInWorld(evt.hand.position.addPt(pt(10,10)));
           },
           onDrag(evt) {
-             const {x,y} = evt.state.dragDelta,
+             const {x,y} = this.tfm.transformDirection(evt.state.dragDelta),
                    g = self.target.fill;
              g.focus = g.focus.addXY(x / self.target.width, y / self.target.height)
-             this.focusView.textString = `x: ${(g.focus.x * 100).toFixed()}%, y: ${(g.focus.y * 100).toFixed()}%)`;
+             this.focusView.textString = `x: ${(g.focus.x * 100).toFixed()}%, y: ${(g.focus.y * 100).toFixed()}%`;
              this.focusView.position = evt.hand.position.addPt(pt(10,10));
              self.target.makeDirty();
              self.relayout();
