@@ -1421,6 +1421,19 @@ export class Image extends Morph {
   get imageUrl()      { return this.getProperty("imageUrl"); }
   set imageUrl(value) { this.setProperty("imageUrl", value); }
 
+  async naturalExtent() {
+     var image = document.createElement('img')
+     var width, height;
+     return new Promise((resolve) => {
+        image.onload = function() {
+            width = this.width;
+            height = this.height;
+            resolve(pt(width, height));
+        };
+        image.src = this.imageUrl;
+     })
+  }
+
   render(renderer) { return renderer.renderImage(this); }
 }
 
