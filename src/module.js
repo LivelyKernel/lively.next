@@ -133,6 +133,13 @@ class ModuleInterface {
     return "global";
   }
 
+  setFormat(f) {
+    // assume esm by default
+    var meta = this.metadata();
+    if (!meta) throw new Error("No meta data")
+    return meta.format = f;
+  }
+
   reset() {
     this._source = null;
     this._ast = null;

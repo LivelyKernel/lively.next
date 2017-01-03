@@ -25,7 +25,7 @@ var m = "http://foo/a.js", src = "import { yyy } from './src/b.js'; class Foo {}
 
 // run
 var {generated, newSource, from, to, standaloneImport, importedVarName} =
-  ImportInjector.run(System, m, {name: "test-package"}, src, importData);
+  ImportInjector.run(System, m, {name: "test-package"}, src, importData, "zzz");
 
 generated // => ", xxx"
 from, to // => 12, 17 , indexes to inject generated
@@ -37,23 +37,32 @@ importedVarName // => "xxx"
 
 export class ImportInjector {
 
-  static run(System, intoModuleId, intoPackage, intoModuleSource, importData, optAst) {
-    return new this(System, intoModuleId, intoPackage, intoModuleSource, importData, optAst).run();
+  static run(
+    System,
+    intoModuleId, intoPackage, intoModuleSource,
+    importData, alias = undefined,
+    optAst = undefined
+  ) {
+    return new this(System, intoModuleId, intoPackage, intoModuleSource, importData, alias, optAst).run();
   }
 
-  constructor(System, intoModuleId, intoPackage, intoModuleSource, importData, optAst) {
+  constructor(System, intoModuleId, intoPackage, intoModuleSource, importData, alias, optAst) {
     this.System = System
     this.intoModuleId = intoModuleId;
     this.intoPackage = intoPackage;
     this.intoModuleSource = intoModuleSource
     this.fromModuleId = importData.moduleId;
     this.importData = importData
+    this.alias = alias;
     this.parsed = optAst || fuzzyParse(intoModuleSource);
   }
 
   run() {
-    var {standaloneImport, importedVarName} = this.generateImportStatement(),
+    var newImport = this.generateImportStatement(),
+        {standaloneImport, importedVarName} = newImport,
         {imports, importsOfFromModule, importsOfVar} = this.existingImportsOfFromModule();
+
+    importsOfFromModule = this.importsToBeReused(importsOfFromModule, importsOfVar, newImport);
 
     // already imported?
     if (importsOfVar.length) return {
@@ -77,10 +86,19 @@ export class ImportInjector {
     return this.insertNewImport(importsOfFromModule, standaloneImport, importedVarName, insertPos);
   }
 
+  importsToBeReused(importsOfFromModule, importsOfVar, newImport) {
+    if (newImport.isDefault) {
+      importsOfFromModule = importsOfFromModule.filter(ea =>
+        !ea.specifiers.some(spec => spec.type == "ImportDefaultSpecifier"))
+    }
+    return importsOfFromModule;
+  }
+
   generateImportStatement() {
-    var {intoModuleId, fromModuleId, importData, intoPackage} = this,
+    var {intoModuleId, fromModuleId, importData, intoPackage, alias} = this,
         isDefault = importData.exported === "default",
-        varName = isDefault ? importData.local : importData.exported,
+        varName = alias ? alias : isDefault ? importData.local : importData.exported,
+        aliased = !isDefault && importData.exported !== varName,
         intoPackageName = intoPackage && intoPackage.name,
         exportPath = fromModuleId;
 
@@ -100,17 +118,19 @@ export class ImportInjector {
     }
 
     return {
+      isDefault,
       standaloneImport: isDefault ?
         `import ${varName} from "${exportPath}";` :
-        `import { ${varName} } from "${exportPath}";`,
+        `import { ${importData.exported}${aliased ? ` as ${varName}` : ""} } from "${exportPath}";`,
       importedVarName: varName
     }
   }
 
   existingImportsOfFromModule() {
-    var {System, fromModuleId, intoModuleId, importData: {exported: impName}, parsed} = this,
-        isDefault = impName === "default",
-        imports = parsed.body.filter(({type}) => type === "ImportDeclaration")
+    var {System, fromModuleId, intoModuleId, importData: {exported, local}, parsed, alias} = this,
+        isDefault = exported === "default",
+        imports = parsed.body.filter(({type}) => type === "ImportDeclaration"),
+        varName = isDefault ? (alias || local) : (alias || exported);
 
     var importsOfFromModule = imports.filter(ea => {
       if (!ea.source || typeof ea.source.value !== "string") return null;
@@ -121,8 +141,9 @@ export class ImportInjector {
     var importsOfImportedVar = importsOfFromModule.filter(ea =>
         (ea.specifiers || []).some(iSpec =>
           isDefault ?
-            iSpec.type === "ImportDefaultSpecifier" :
-            Path("imported.name").get(iSpec) === impName));
+            iSpec.type === "ImportDefaultSpecifier" && iSpec.local.name === varName:
+            Path("imported.name").get(iSpec) === exported
+         && Path("local.name").get(iSpec) === varName));
 
     return {
       imports, importsOfFromModule,
@@ -140,7 +161,7 @@ export class ImportInjector {
       // defaultSpecifier = arr.partition(imports, ({type}) => type === "ImportDefaultSpecifier")[0][0]
       // normalSpecifier = arr.partition(imports, ({type}) => type === "ImportDefaultSpecifier")[1][0]
 
-    var {intoModuleSource: src, importData: {exported: impName, local: defaultImpName}} = this,
+    var {alias, intoModuleSource: src, importData: {exported: impName, local: defaultImpName}} = this,
         isDefault = impName === "default";
 
     // Since this method is only called with imports this should never happen:
@@ -151,7 +172,7 @@ export class ImportInjector {
       var pos = src.slice(0, normalSpecifier.start).lastIndexOf("{")-1;
       if (pos < 0) return null;
 
-      var generated = defaultImpName + ",",
+      var generated = (alias || defaultImpName) + ",",
           pre = src.slice(0, pos),
           post = src.slice(pos);
 
@@ -163,20 +184,22 @@ export class ImportInjector {
         newSource: `${pre}${generated}${post}`,
         generated,
         standaloneImport,
-        importedVarName: defaultImpName,
+        importedVarName: alias || defaultImpName,
         from: pos, to: pos + generated.length
       }
     }
 
     var pos = normalSpecifier ? normalSpecifier.end : defaultSpecifier.end,
-        generated = normalSpecifier ? `, ${impName}` : `, { ${impName} }`;
+        aliased = alias && alias !== impName,
+        namePart = aliased ? `${impName} as ${alias}` : impName
+        generated = normalSpecifier ? `, ${namePart}` : `, { ${namePart} }`;
 
     return {
       status: "modified",
       newSource: `${src.slice(0, pos)}${generated}${src.slice(pos)}`,
       generated,
       standaloneImport,
-      importedVarName: impName,
+      importedVarName: aliased ? alias : impName,
       from: pos, to: pos + generated.length
     };
 

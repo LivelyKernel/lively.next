@@ -10,6 +10,7 @@ describe("import injector", () => {
   var m, src, newSource, generated, from, to, standaloneImport, importedVarName;
 
   beforeEach(() => {
+    m = "http://foo/a.js";
     importData = {
       exported: "xxx",
       moduleId: "http://foo/src/b.js",
@@ -20,7 +21,6 @@ describe("import injector", () => {
   });
 
   it("injects new import at top", () => {
-    m = "http://foo/a.js";
     src = "class Foo {}";
     ({generated, newSource, from, to, standaloneImport, importedVarName} =
       ImportInjector.run(S, m, {name: "test-package"}, src, importData));
@@ -34,7 +34,7 @@ describe("import injector", () => {
 
   it("leaves source with existing imported as is", () => {
     src = `class Foo {}\nimport {\n  xxx\n} from "./src/b.js";`;
-    ({newSource} = ImportInjector.run(S, m, null, src, importData));
+    ({newSource} = ImportInjector.run(S, m, {name: "test-package"}, src, importData));
     expect(newSource).equals(src);
   });
 
@@ -73,9 +73,44 @@ describe("import injector", () => {
     expect(newSource).equals(`class Foo {}\nimport yyy from "./src/c.js";\nimport { xxx } from "./src/b.js";`);
   });
 
+
+  describe("aliased", () => {
+  
+    it("adds aliased import", () => {
+      src = `class Foo {}\nimport yyy from "./src/c.js";`;
+      ({newSource} = ImportInjector.run(S, m, {name: "test-package"}, src, importData, "renamedXxx"));
+      expect(newSource).equals(`class Foo {}\nimport yyy from "./src/c.js";\nimport { xxx as renamedXxx } from "./src/b.js";`);
+    });
+
+
+    it("modifies import from same module", () => {
+      src = `class Foo {}\nimport {\n  yyy\n} from "./src/b.js";`;
+      ({newSource, from, to} = ImportInjector.run(S, m, null, src, importData, "zzz"));
+      expect(newSource).equals(`class Foo {}\nimport {\n  yyy, xxx as zzz\n} from "./src/b.js";`);
+      expect(from).equals(27);
+      expect(to).equals(27+12);
+    });
+
+    it("import same export again with different name", () => {
+      importData = {
+        exported: "yyy",
+        moduleId: "http://foo/src/b.js",
+        packageName: "test-package",
+        packageURL: "http://foo/",
+        pathInPackage: "src/b.js"
+      }
+      src = `class Foo {}\nimport {\n  yyy\n} from "./src/b.js";`;
+      ({newSource} = ImportInjector.run(S, m, {name: "test-package"}, src, importData, "zzz"));
+      expect(newSource).equals(`class Foo {}\nimport {\n  yyy, yyy as zzz\n} from "./src/b.js";`);
+    });
+
+  });
+
+
   describe("default imports", () => {
 
     beforeEach(() => {
+      m = "http://foo/a.js";
       importData = {
         ...importData,
         exported: "default",
@@ -84,7 +119,6 @@ describe("import injector", () => {
     });
 
     it("injects new import at top", () => {
-      m = "http://foo/a.js";
       src = "class Foo {}";
       ({newSource, importedVarName} = ImportInjector.run(S, m, {name: "test-package"}, src, importData));
       expect(newSource).equals(`import xxx from "./src/b.js";\nclass Foo {}`);
@@ -114,6 +148,23 @@ describe("import injector", () => {
       expect(from).equals(19);
       expect(to).equals(19+5);
       expect(standaloneImport).equals(`import xxx from "./src/b.js";`)
+    });
+
+    describe("aliased", () => {
+
+      it("uses alias for default", () => {
+        src = `class Foo {}\nimport { yyy } from "./src/b.js";`;
+        ({newSource, to, from, generated, standaloneImport} = ImportInjector.run(S, m, {name: "test-package"}, src, importData, "zzz"));
+        expect(generated).equals(` zzz,`);
+        expect(newSource).equals(`class Foo {}\nimport zzz, { yyy } from "./src/b.js";`);
+      });
+
+      it("adds alias to existing import", () => {
+        src = `class Foo {}\nimport xxx, { yyy } from "./src/b.js";`;
+        ({newSource, to, from} = ImportInjector.run(S, m, {name: "test-package"}, src, importData, "zzz"));
+        expect(newSource).equals(`class Foo {}\nimport xxx, { yyy } from "./src/b.js";\nimport zzz from "./src/b.js";`);
+      });
+
     });
 
   });
@@ -156,11 +207,11 @@ describe("import remover", () => {
   });
 
   it("creates removal changes for imports to be removed", () => {
-    var src = "import { xxx, yyy } from './src/b.js'; class Foo { m() { return yyy + 1 } }";
+    var src = `import { xxx, yyy } from "./src/b.js"; class Foo { m() { return yyy + 1 } }`;
     var toRemove = [{local: "xxx"}];
     var {changes, removedImports, source} = ImportRemover.removeImports(src, toRemove);
-    expect(changes).deep.equals([{start: 0, end: 38, replacement: "import { yyy } from './src/b.js';"}])
+    expect(changes).deep.equals([{start: 0, end: 38, replacement: `import { yyy } from "./src/b.js";`}])
     expect(removedImports).deep.equals([{from: "./src/b.js", local: "xxx"}])
-    expect(source).equals("import { yyy } from './src/b.js'; class Foo { m() { return yyy + 1 } }")
+    expect(source).equals(`import { yyy } from "./src/b.js"; class Foo { m() { return yyy + 1 } }`)
   });
 });
