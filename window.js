@@ -8,6 +8,7 @@ export default class Window extends Morph {
   constructor(props = {}) {
     super({
       dropShadow: true, // FIXME!
+      ...this.defaultProperties,
       ...obj.dissoc(props, ["title", "targetMorph"]),
     });
 
@@ -188,7 +189,8 @@ export default class Window extends Morph {
   toggleMinimize() {
     var cache = this.propertyCache,
         bounds = this.bounds(),
-        duration = 200, easing = "easeOutQuint";
+        duration = 200, 
+        easing = Expo.easeOut;
     if (this.minimized) {
       cache.minimizedBounds = bounds;
       this.animate({bounds: cache.nonMinizedBounds || bounds, duration, easing});
@@ -208,7 +210,7 @@ export default class Window extends Morph {
 
   toggleMaximize() {
     var cache = this.propertyCache,
-        easing = "easeOutQuint",
+        easing = Expo.easeOut,
         duration = 200;
     if (this.maximized) {
       this.animate({bounds: cache.nonMaximizedBounds, duration, easing});
