@@ -32,8 +32,8 @@ describe('ast.transform', function() {
 
       var expected = {
         changes: [{type: 'del', pos: 8, length: 1},
-             {type: 'add', pos: 8, string: "'foo'"}],
-        source: source.replace('3', "'foo'")
+             {type: 'add', pos: 8, string: '"foo"'}],
+        source: source.replace('3', '"foo"')
       }
 
       expect(hist).deep.equals(expected);
@@ -90,15 +90,15 @@ describe('ast.transform', function() {
 
       var expected = {
         changes: [{type: 'del', pos: 23, length: 1},
-             {type: 'add', pos: 23, string: "'bar'"},
+             {type: 'add', pos: 23, string: '"bar"'},
              {type: 'del', pos: 0, length: 29},
-             {type: 'add', pos: 0, string: "'foo'"}],
-        source: "'foo'\ny + 2;\n"
+             {type: 'add', pos: 0, string: '"foo"'}],
+        source: '"foo"\ny + 2;\n'
       }
 
       expect(hist).deep.equals(expected);
 
-      expect(replaceSource1).equals(source.split(";")[0].replace('x + x', 'x + \'bar\'') + ';');
+      expect(replaceSource1).equals(source.split(";")[0].replace('x + x', 'x + "bar"') + ';');
       expect(replaceSource2).equals("x");
 
     });
@@ -115,10 +115,10 @@ describe('ast.transform', function() {
 
       var expected = {
         changes: [{type: 'del', pos: 23, length: 1},
-                  {type: 'add', pos: 23, string: "'bar'"},
+                  {type: 'add', pos: 23, string: "\"bar\""},
                   {type: 'del', pos: 0, length: 29},
-                  {type: 'add', pos: 0, string: "'foo'"}],
-        source: "'foo'\ny + 2;\n"
+                  {type: 'add', pos: 0, string: "\"foo\""}],
+        source: "\"foo\"\ny + 2;\n"
       }
 
       expect(hist).deep.equals(expected);
@@ -140,11 +140,11 @@ describe('ast.transform', function() {
             replacement       = function() { return {type: "Literal", value: "baz"}; },
             result            = replace(parsed, toReplace, replacement),
             transformedString = result.source,
-            expected          = 'var x = \'baz\' + foo();'
+            expected          = 'var x = "baz" + foo();'
 
         expect(transformedString).equals(expected);
 
-        expect(result.changes).deep.equals([{length: 1, pos: 8, type: "del"},{pos: 8, string: "'baz'", type: "add"}]);
+        expect(result.changes).deep.equals([{length: 1, pos: 8, type: "del"},{pos: 8, string: '"baz"', type: "add"}]);
       });
 
       it("replaceNodeKeepsSourceFormatting", function() {
@@ -153,7 +153,7 @@ describe('ast.transform', function() {
             toReplace         = parsed.body[0].declarations[0].init.left,
             replacement       = function() { return {type: "Literal", value: "baz"}; },
             result            = replace(parsed, toReplace, replacement),
-            expected          = 'var x = \'baz\'\n+ foo();';
+            expected          = 'var x = "baz"\n+ foo();';
 
         expect(result.source).equals(expected);
       });
@@ -225,7 +225,7 @@ describe('ast.transform', function() {
 
     it("returns ast", () =>
       expect(stringify(wrapInFunction("3 + 4;", {asAST: true, id: "foo"})))
-        .equals("function foo() {\n    return 3 + 4;\n}"));
+        .equals("function foo() {\n  return 3 + 4;\n}"));
 
   });
 
@@ -234,11 +234,11 @@ describe('ast.transform', function() {
     it("calls with last expression", () =>
       expect(stringify(wrapInStartEndCall("var y = x + 23; y"))).to.equal(
         "try {\n"
-      + "    __start_execution();\n"
-      + "    var y = x + 23;\n"
-      + "    __end_execution(null, y);\n"
+      + "  __start_execution();\n"
+      + "  var y = x + 23;\n"
+      + "  __end_execution(null, y);\n"
       + "} catch (err) {\n"
-      + "    __end_execution(err, undefined);\n"
+      + "  __end_execution(err, undefined);\n"
       + "}"));
 
     it("allows customization of calls", () =>
@@ -247,11 +247,11 @@ describe('ast.transform', function() {
         endFuncNode: nodes.member("foo", "end")
       }))).to.equal(
         "try {\n"
-      + "    foo.start();\n"
-      + "    var y = x + 23;\n"
-      + "    foo.end(null, y);\n"
+      + "  foo.start();\n"
+      + "  var y = x + 23;\n"
+      + "  foo.end(null, y);\n"
       + "} catch (err) {\n"
-      + "    foo.end(err, undefined);\n"
+      + "  foo.end(err, undefined);\n"
       + "}"));
 
     it("passes last var decl into function", () =>
@@ -260,11 +260,11 @@ describe('ast.transform', function() {
         endFuncNode: nodes.member("foo", "end")
       }))).to.equal(
         "try {\n"
-      + "    foo.start();\n"
-      + "    var x = 2, y = x + 23;\n"
-      + "    foo.end(null, y);\n"
+      + "  foo.start();\n"
+      + "  var x = 2, y = x + 23;\n"
+      + "  foo.end(null, y);\n"
       + "} catch (err) {\n"
-      + "    foo.end(err, undefined);\n"
+      + "  foo.end(err, undefined);\n"
       + "}"));
 
     it("passes function statement into call", () =>
@@ -274,10 +274,10 @@ describe('ast.transform', function() {
       }))).to.equal(
         "function x() {\n}\n"
       + "try {\n"
-      + "    foo.start();\n"
-      + "    foo.end(null, x);\n"
+      + "  foo.start();\n"
+      + "  foo.end(null, x);\n"
       + "} catch (err) {\n"
-      + "    foo.end(err, undefined);\n"
+      + "  foo.end(err, undefined);\n"
       + "}"));
 
   });
@@ -290,5 +290,5 @@ describe("object spread transform", () => {
 
   it("transforms into assign nested", () =>
     expect(stringify(objectSpreadTransform(parse("var x = {y, a: {...z}}")))).to.equal(
-      "var x = {\n    y,\n    a: Object.assign({}, z)\n};"));
+      "var x = {\n  y,\n  a: Object.assign({}, z)\n};"));
 });

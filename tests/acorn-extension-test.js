@@ -81,7 +81,7 @@ describe('walk extension', function() {
 
   it("updateSourceCodePositions", function() {
     var src = 'var x = { z: 3 }; function foo() { var y = 3; return y; } x.z + foo();',
-        prettySrc = 'var x = { z: 3 };\nfunction foo() {\n    var y = 3;\n    return y;\n}\nx.z + foo();',
+        prettySrc = 'var x = { z: 3 };\nfunction foo() {\n  var y = 3;\n  return y;\n}\nx.z + foo();',
         parsed = parse(src),
         genSrc = stringify(parsed),
         genAst = parse(genSrc);
@@ -105,7 +105,7 @@ describe('walk extension', function() {
 
   it("updateSourceCodeLocations", function() {
     var src = 'var x = { z: 3 }; function foo() { var y = 3; return y; } x.z + foo();',
-        prettySrc = 'var x = { z: 3 };\nfunction foo() {\n    var y = 3;\n    return y;\n}\nx.z + foo();',
+        prettySrc = 'var x = { z: 3 };\nfunction foo() {\n  var y = 3;\n  return y;\n}\nx.z + foo();',
         parsed = parse(src),
         genSrc = stringify(parsed),
         genAst = parse(genSrc);
@@ -121,10 +121,10 @@ describe('walk extension', function() {
       expected: { start: { line: 2, column: 0 }, end: { line: 5, column: 1 } },
       subject: parsed.body[1].loc
     }, { // var y = 3;
-      expected: { start: { line: 3, column: 4 }, end: { line: 3, column: 14 } },
+      expected: { start: { line: 3, column: 2 }, end: { line: 3, column: 12 } },
       subject: parsed.body[1].body.body[0].loc
     }, { // y  in  return y;
-      expected: { start: { line: 4, column: 11 }, end: { line: 4, column: 12 } },
+      expected: { start: { line: 4, column: 9 }, end: { line: 4, column: 10 } },
       subject: parsed.body[1].body.body[1].argument.loc
     }, { // x.z + foo();
       expected: { start: { line: 6, column: 0 }, end: { line: 6, column: 12 } },

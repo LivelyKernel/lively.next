@@ -21,11 +21,11 @@ function itStringifiesTo(expected, func, ...args) {
 describe('nodes', () => {
 
   itStringifiesTo("foo.bar", member, "foo", "bar");
-  itStringifiesTo("foo['b-a-r']", member, "foo", "b-a-r");
-  itStringifiesTo("foo['zork']", member, "foo", "zork", true);
+  itStringifiesTo('foo["b-a-r"]', member, "foo", "b-a-r");
+  itStringifiesTo('foo["zork"]', member, "foo", "zork", true);
   itStringifiesTo("foo[0]", member, "foo", 0);
 
-  itStringifiesTo("foo[0].bar['zo-rk']", memberChain, "foo", 0, "bar", "zo-rk");
+  itStringifiesTo('foo[0].bar["zo-rk"]', memberChain, "foo", 0, "bar", "zo-rk");
   
   itStringifiesTo(
     "function foo(a) { 3; }",

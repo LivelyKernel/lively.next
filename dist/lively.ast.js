@@ -5364,7 +5364,7 @@ module.exports = function(acorn) {
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v4.4.7',
+        version: 'v4.4.5',
         browser: true,
         env: {},
         argv: [],
@@ -12025,7 +12025,28 @@ var ScopeVisitor = function (_Visitor3) {
 
 var es = escodegen.escodegen || escodegen;
 
-function stringify(node, opts) {
+function stringify(node) {
+  var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+  var optsIndent = opts && opts.format && opts.format.indent || {};
+  var indent = {
+    style: "  ",
+    base: 0,
+    adjustMultilineComment: false,
+    optsIndent: optsIndent
+  };
+
+  var optsFormat = opts && opts.format || {};
+  var format = _extends({
+    indent: indent,
+    quotes: "double"
+  }, lively_lang.obj.dissoc(optsFormat, ["indent"]));
+
+  opts = _extends({
+    format: format,
+    comment: false
+  }, lively_lang.obj.dissoc(opts, ["format"]));
+
   return es.generate(node, opts);
 }
 
@@ -13575,6 +13596,15 @@ function statementOf(parsed, node, options) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function imports(scope) {
+
+  // like import "fooo";
+  var importStatementsWithoutSpecifiers = (scope.node.body || []).filter(function (node) {
+    return node.type === "ImportDeclaration" && node.specifiers.length === 0;
+  }).map(function (node) {
+    return { local: null, imported: null, fromModule: node.source.value, node: node };
+  });
+
+  // like import { x as y } from "fooo"; import * as x from "fooo"; import x from "fooo";
   var imports = scope.importSpecifiers.reduce(function (imports, node) {
     var nodes = nodesAtIndex(scope.node, node.start),
         importStmt = lively_lang.arr.without(nodes, scope.node)[0];
@@ -13599,7 +13629,7 @@ function imports(scope) {
         node: node
       };
     }));
-  }, []);
+  }, importStatementsWithoutSpecifiers);
 
   return lively_lang.arr.uniqBy(imports, function (a, b) {
     return a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule;
