@@ -185,8 +185,7 @@ function morphicDefaultTransform(op1, op2, syncer) {
      && type1 === "setter" && type2 === "setter"
     // && owner1.id === owner2.id
      ) {
-       op1.change = op2.change = Object.assign({}, c1, {
-         value: value1.addPt(value2.subPt(value1).scaleBy(.5))});
+       op1.change = op2.change = {...c1, value: value1.addPt(value2.subPt(value1).scaleBy(.5))}
        return {op1, op2, handled: true}
     }
 
@@ -200,29 +199,26 @@ function morphicDefaultTransform(op1, op2, syncer) {
     if (target1 === target2 && args1[0].spec._id !== args2[0].spec._id) {
        var newArgs1 = [args1[0], op1.creator < op2.creator ? args1[1] : args2[1]+1],
            newArgs2 = [args2[0], op1.creator < op2.creator ? args1[1]+1 : args2[1]];
-       op1.change = Object.assign({}, c1, {args: newArgs1});
-       op2.change = Object.assign({}, c2, {args: newArgs2});
-       return {op1, op2, handled: true}
+       op1.change = {...c1, args: newArgs1};
+       op2.change = {...c2, args: newArgs2};
+       return {op1, op2, handled: true};
     }
 
     // ...same morph, different owners => one wins
     else if (args1[0].spec._id === args2[0].spec._id) {
-      if (op1.creator < op2.creator) op2.change = Object.assign({}, c1);
-      else op1.change = Object.assign({}, c2);
-      return {op1, op2, handled: true}
+      if (op1.creator < op2.creator) op2.change = {...c1};
+      else op1.change = {...c2};
+      return {op1, op2, handled: true};
     }
 
     // inverse addMorph
     else if (target1 === args2[0].spec._id && target2 === args1[0].spec._id) {
-      if (op1.creator < op2.creator) op2.change = Object.assign({}, c1);
-      else op1.change = Object.assign({}, c2);
-      // console.log(op1)
-      // console.log(op2)
-      return {op1, op2, handled: true}
+      if (op1.creator < op2.creator) op2.change = {...c1};
+      else op1.change = {...c2};
+      return {op1, op2, handled: true};
     }
 
   }
-
 
   return {op1, op2, handled: false};
 }
