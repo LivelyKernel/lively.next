@@ -59,7 +59,7 @@ class StyleMapper {
 
   static getTransform({position, origin, scale, rotation}) {
     return {
-       transform: `translateX(${position.x - origin.x}px) translateY(${position.y - origin.y}px) rotate(${num.toDegrees(rotation)}deg) scale(${scale},${scale})`}
+       transform: `translateX(${(position.x - origin.x).toFixed(2)}px) translateY(${(position.y - origin.y).toFixed(2)}px) rotate(${num.toDegrees(rotation).toFixed(2)}deg) scale(${scale.toFixed(2)},${scale.toFixed(2)})`}
   }
 
   static getTransformOrigin({origin}) {
@@ -278,7 +278,7 @@ export class PropertyAnimation {
         // var before_points = before.points.splitBy(" "), after_points = after.points.splitBy(" ");
         // repeat last element until points are of equal number
     }
-     return [before, after]
+     return [obj.isEmpty(before) ? false : before, obj.isEmpty(after) ? false : after]
   }
 
   gatherAnimationProps() {
@@ -313,13 +313,14 @@ export class PropertyAnimation {
   start(node) {
     if (TweenMax && !this.active) {
       this.active = true;
-      let animationProps = this.getAnimationProps("css");
-      if (animationProps) {
+      let [before, after] = this.getAnimationProps("css");
+      if (before && after) {
          TweenMax.fromTo(node, this.duration / 1000, 
-                         animationProps[0],
-                        {...animationProps[1],
+                         before,
+                        {...after,
                          ease: this.easing,
                          overwrite: false,
+                         force3D: true,
                          onComplete: () => {
                            this.finish();
                            this.morph.makeDirty();
