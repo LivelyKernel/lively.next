@@ -10,6 +10,7 @@ export * from "./html-morph.js";
 export * from "./list.js";
 export * from "./env.js";
 export * from "./layout.js";
+export { StyleRules } from "./style-rules.js";
 export { show } from "./markers.js"
 export { default as Window } from "./window.js";
 
@@ -22,6 +23,7 @@ import { Text } from "./text/morph.js";
 import { Label } from "./text/label.js";
 import { Button } from "./buttons.js";
 import { CheckBox } from "./widgets.js";
+import { HTMLMorph } from './html-morph.js';
 
 export function morph(props = {}, opts = {restore: false}) {
   var klass = Morph;
@@ -41,6 +43,7 @@ export function morph(props = {}, opts = {restore: false}) {
         case 'button':   klass = Button; break;
         case 'checkbox': klass = CheckBox; break;
         case 'polygon': klass = Polygon; break;
+        case 'html': klass = HTMLMorph; break;
       }
   }
 
