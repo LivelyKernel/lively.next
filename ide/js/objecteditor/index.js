@@ -288,12 +288,16 @@ export class ObjectEditor extends Morph {
 
     await tree.maintainViewStateWhile(async () => {
       this.target = this.target;
-
     }, node => node.target ?
                   node.target.name
                     + node.target.kind
                     + (node.target.owner ? "." + node.target.owner.name : "") :
                   node.name);
+                  
+    if (selectedClass && selectedMethod && !tree.selection) {
+      // method rename, old selectedMethod does no longer exist
+      await this.selectClass(selectedClass);
+    }
   }
 
 
