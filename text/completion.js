@@ -77,8 +77,8 @@ export class CompletionController {
     var items = arr.sortByKey(withHighestPriority, "priority")
       .reverse()
       .map(ea => {
-        var string = ea.completion,
-            annotation = String(ea.info || "");
+        var string = ea.completion.replace(/\n/g, ""),
+            annotation = String((ea.info || "").replace(/\n/g, ""));
         maxCol = Math.max(maxCol, string.length + annotation.length)
         return {isListItem: true, string, annotation, value: ea};
       });
