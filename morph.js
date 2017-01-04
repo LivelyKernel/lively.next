@@ -55,12 +55,12 @@ export class Morph {
     this._dirty = true; // for renderer, signals need  to re-render
     this._rendering = false; // for knowing when rendering is done
     this._submorphOrderChanged = false; // extra info for renderer
-    this._currentState = {...this.defaultProperties};
     this._id = newMorphId(this.constructor.name);
     this._animationQueue = new AnimationQueue(this);
     this._cachedPaths = {};
     this._pathDependants = [];
     this.tickingScripts = [];
+    this.loadDefaultProperties();
     this.updateTransform(this);
     if (props.submorphs) this.submorphs = props.submorphs;
     if (props.bounds) this.setBounds(props.bounds);
@@ -76,9 +76,9 @@ export class Morph {
     this._dirty = true; // for renderer, signals need  to re-render
     this._rendering = false; // for knowing when rendering is done
     this._submorphOrderChanged = false; // extra info for renderer
-    this._currentState = {...this.defaultProperties};
     this._id = objRef.id;
     this._animationQueue = new AnimationQueue(this);
+    this.loadDefaultProperties();
     this.updateTransform(this);
   }
 
@@ -93,6 +93,26 @@ export class Morph {
 
   get env() { return this._env; }
 
+  loadDefaultProperties() {
+    this._currentState = {...this.defaultProperties};
+    // => FIXME some properties need their setter to be properly initialized,
+    // once we have declarative properties this should go into a converter!
+    if ("dropShadow" in this._currentState)   this.dropShadow = this._currentState.dropShadow;
+    if ("borderLeft" in this._currentState)   this.borderLeft = this._currentState.borderLeft;
+    if ("borderRight" in this._currentState)  this.borderRight = this._currentState.borderRight;
+    if ("borderBottom" in this._currentState) this.borderBottom = this._currentState.borderBottom;
+    if ("borderTop" in this._currentState)    this.borderTop = this._currentState.borderTop;
+    if ("borderWidth" in this._currentState)  this.borderWidth = this._currentState.borderWidth;
+    if ("borderRadius" in this._currentState) this.borderRadius = this._currentState.borderRadius;
+    if ("borderStyle" in this._currentState)  this.borderStyle = this._currentState.borderStyle;
+    if ("borderColor" in this._currentState)  this.borderColor = this._currentState.borderColor;
+    if ("border" in this._currentState)       this.border = this._currentState.border;
+    if (this._currentState.submorphs.length) {
+      var submorphs = this._currentState.submorphs;
+      this._currentState.submorphs = [];
+      this.submorphs = submorphs;
+    }
+  }
   get defaultProperties() { return defaultProperties; }
   defaultProperty(key) { return this.defaultProperties[key]; }
   getProperty(key) { return this._currentState[key]; }
@@ -214,7 +234,7 @@ export class Morph {
      if (rules) rules.applyToAll(this);
      this.setProperty("styleRules", rules);
   }
-  
+
   get layout()         { return this.getProperty("layout") }
   set layout(value)    {
     if (value) value.container = this;
@@ -376,11 +396,12 @@ export class Morph {
 
   get dropShadow()      { return this.getProperty("dropShadow"); }
   set dropShadow(value) {
-      if (value && !value.isShadowObject) {
-        if (!value.isShadowObject) value = new ShadowObject(value);
-        value.morph = this;
-      }
+    if (value && !value.isShadowObject) {
+      if (!value.isShadowObject) value = new ShadowObject(value);
+      value.morph = this;
       this.setProperty("dropShadow", value);
+    }
+    this.setProperty("dropShadow", value);
   }
 
   static get styleClasses() {
@@ -433,19 +454,19 @@ export class Morph {
   relativeBounds(other) {
     var other = other || this.world(),
         bounds = this.origin.negated().extent(this.extent);
-        
+
     if (other) {
        bounds = this.transformRectToMorph(other, bounds);
     } else {
        bounds = this.getGlobalTransform().transformRectToRect(bounds);
     }
-  
+
     if (!this.isClip()) {
        this.submorphs.forEach(submorph => {
           bounds = bounds.union(submorph.relativeBounds(other));
       });
     }
-  
+
     return bounds;
   }
 
@@ -646,7 +667,7 @@ export class Morph {
   }
 
   async fadeIntoWorld(pos, duration=300, origin=this.innerBounds().topCenter()) {
-      const w = new Morph({extent: this.extent, opacity: 0, scale: 0, 
+      const w = new Morph({extent: this.extent, opacity: 0, scale: 0,
                            fill: Color.transparent, submorphs: [this]}),
             world = this.env.world;
       w.openInWorldNearHand();
@@ -803,7 +824,7 @@ export class Morph {
 
   transformRectToMorph(other, r) {
      var tl, tr, br, bl;
-     [tl = r.topLeft(), tr = r.topRight(), 
+     [tl = r.topLeft(), tr = r.topRight(),
       br = r.bottomRight(), bl = r.bottomLeft()].forEach(corner => {
         for(var [d, m] of this.pathToMorph(other)) {
            this.applyTransform(d, m, corner);
@@ -825,7 +846,7 @@ export class Morph {
   }
 
   _addPathDependant(morph) {
-     if (!this._pathDependants.includes(morph)) 
+     if (!this._pathDependants.includes(morph))
          this._pathDependants.push(morph);
   }
 
@@ -881,7 +902,7 @@ export class Morph {
   updateTransform({position, scale, origin, rotation} = {}) {
     const tfm = this._transform || new Transform(),
           tfm_inv = this._invTransform || new Transform();
-    
+
     position = position || this.position;
     origin = origin || this.origin;
     scale = scale || this.scale;
@@ -903,7 +924,7 @@ export class Morph {
     tfm_inv.d =  a * invdet;
     tfm_inv.e =  (c * f - e * d) * invdet;
     tfm_inv.f = -(a * f - b * e) * invdet;
-    
+
     this._transform = tfm;
     this._invTransform = tfm_inv;
   }
@@ -1147,7 +1168,7 @@ export class Morph {
         this.scroll = pt(scrollX, newScrollY);
         evt.stop();
       }
-    
+
     } else if (kind === "horizontal" || kind === "both directions") {
       if (newScrollRight >= this.scrollExtent.x) newScrollX = this.scrollExtent.x-1;
       else if (newScrollLeft <= 0) newScrollX = 1;
@@ -1483,7 +1504,7 @@ class PathPoint {
    }
 
    pointOnLine(a, b, pos, bw) {
-     var v0 = pt(a.x, a.y), v1 = pt(b.x, b.y), 
+     var v0 = pt(a.x, a.y), v1 = pt(b.x, b.y),
          l = v1.subPt(v0), ln = l.scaleBy(1/l.r()),
          dot = v1.subPt(pos).dotProduct(ln);
      return v1.subPt(ln.scaleBy(Math.max(1,Math.min(dot, l.r())))).addXY(bw,bw);
@@ -1503,12 +1524,12 @@ class PathPoint {
       if (smooth) {
          const p = this.pointOnLine(previousPos, nextPos, this.position, this.borderWidth);
          this.controlPoints = {
-              next: p.subPt(previousPos), 
+              next: p.subPt(previousPos),
               previous: p.subPt(nextPos)
          };
       } else {
          this.controlPoints = {
-              previous: previousPos.subPt(this.position).scaleBy(.5), 
+              previous: previousPos.subPt(this.position).scaleBy(.5),
               next: nextPos.subPt(this.position).scaleBy(.5)
          };
       }
@@ -1533,7 +1554,7 @@ export class Path extends Morph {
   }
 
   updateBounds(vertices) {
-     const b = Rectangle.unionPts([pt(0,0), ...arr.flatmap(vertices, 
+     const b = Rectangle.unionPts([pt(0,0), ...arr.flatmap(vertices,
                ({position, controlPoints}) => {
                   var {next, previous} = controlPoints || {};
                   if (next) next = position.addPt(next);
@@ -1561,9 +1582,9 @@ export class Path extends Morph {
   get isSvgMorph() { return true }
 
   get vertices() { return this.getProperty("vertices") || []}
-  set vertices(vs) { 
+  set vertices(vs) {
      vs = vs.map(v => new PathPoint(this, { ...v, borderWidth: this.borderWidth}));
-     this.setProperty("vertices", vs); 
+     this.setProperty("vertices", vs);
   }
 
   vertexBefore(v) {
