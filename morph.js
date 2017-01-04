@@ -108,14 +108,15 @@ export class Morph {
 
   show() { return show(this); }
 
-  setStatusMessage(msg, color) {
+  setStatusMessage(msg, color, delay) {
     var w = this.world();
-    return w ? w.setStatusMessage(msg, color) : console.log(msg)
+    opts = {maxLines: 7, ...opts}
+    return w ? w.setStatusMessageFor(this, msg, color, delay, opts) : console.log(msg)
   }
 
   showError(err) {
     var w = this.world();
-    return w ? w.showError(err) : console.error(err)
+    return w ? w.showErrorFor(this, err) : console.error(err)
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

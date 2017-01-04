@@ -1,6 +1,8 @@
 import { obj, string } from "lively.lang";
 import { pt, Color, Point, Rectangle, rect } from "lively.graphics";
 import { morph, Morph, MorphicEnv } from "./index.js";
+import { Icon } from "./icons.js";
+import { connect } from "lively.bindings";
 
 
 export function show(target) {
@@ -128,72 +130,94 @@ class BoundsMarker extends Morph {
 
 export class StatusMessage extends Morph {
 
-  constructor(msg, color = Color.gray, props = {}) {
+  constructor(props) {
+    super(obj.dissoc(props, ["message", "color"]));
+    if ("message" in props) this.message = props.message;
+    if ("color" in props) this.color = props.color;
+    this.relayout();
+    connect(this.getSubmorphNamed("closeButton"), "fire", this, "remove");
+  }
 
-    super({
-
-      name: 'messageMorph',
+  get defaultProperties() {
+    return {
+      ...super.defaultProperties,
+      stayOpen: false,
+      slidable: true, // auto slide up on new message
+      isMaximized: false,
+      expandable: true,
+      maxLines: Infinity,
+      name: "messageMorph",
       extent: pt(240, 65),
-      clipMode: 'hidden',
+      clipMode: "hidden",
       grabbing: false, dragging: true,
       borderRadius: 20, borderWidth: 5,
       fill: Color.white,
-      stayOpen: false,
-      isMaximized: false,
       dropShadow: true,
-      ...props,
-
-
       submorphs: [
-      {
-        name: 'messageText',
-        type: "text",
-        draggable: false,
-        fixedWidth: false, fixedHeight: false, clipMode: 'visible',
-        fontSize: 14, fontFamily: "Inconsolata, 'DejaVu Sans Mono', monospace"
-      },
+        {
+          name: "messageText",
+          type: "text",
+          draggable: false, readOnly: true, selectable: true,
+          fixedWidth: false, fixedHeight: false, clipMode: "visible",
+          fontSize: 14, fontFamily: "Inconsolata, 'DejaVu Sans Mono', monospace"
+        },
 
-      {
-        name: 'closeButton',
-        extent: pt(20,20),
-        fill: null,
-        styleClasses: ["center-text", "fa", "fa-close"],
-        nativeCursor: "pointer",
-        onMouseUp(evt) { this.owner.remove(); evt.stop(); }
-      }]
-
-    });
-
-    this.setMessage(msg, color);
-    this.relayout();
+        {
+          name: "closeButton", type: "button",
+          extent: pt(22,22), activeStyle: {fill: Color.white},
+          label: Icon.makeLabel("close")
+        }]
+    };
   }
 
   relayout() {
-    this.get("messageText").setBounds(this.innerBounds().insetBy(10));
-    this.get("closeButton").topRight = this.innerBounds().topRight().addXY(-10,10);
+    this.getSubmorphNamed("messageText").setBounds(this.innerBounds().insetBy(10));
+    this.getSubmorphNamed("closeButton").topRight = this.innerBounds().topRight().addXY(-6,6);
   }
 
   isEpiMorph() { return true }
   isStatusMessage() { return true }
 
+  get message()         { return this.getProperty("message"); }
+  set message(value)    {
+    var text = this.getSubmorphNamed('messageText');
+    if (!text) return; // FIXME not yet initialized
+    text.value = value;
+    var textEnd = text.documentEndPosition;
+    if (textEnd.row > this.maxLines) {
+      text.replace({start: {row: this.maxLines, column: 0}, end: textEnd}, "...\n");
+      if (!this.expandedContent) this.expandedContent = value;
+    }
+  }
+  get color()            { /*just an alias for now*/return this.borderColor; }
+  set color(value)       { this.borderColor = value; }
   get stayOpen()         { return this.getProperty("stayOpen"); }
-  set stayOpen(value)    { this.addValueChange("stayOpen", value); }
+  set stayOpen(value)    { this.setProperty("stayOpen", value); }
+  get slidable()         { return this.getProperty("slidable"); }
+  set slidable(value)    { this.setProperty("slidable", value); }
+  get expandable()       { return this.getProperty("expandable"); }
+  set expandable(value)  { this.setProperty("expandable", value); }
   get isMaximized()      { return this.getProperty("isMaximized"); }
-  set isMaximized(value) { this.addValueChange("isMaximized", value); }
+  set isMaximized(value) { this.setProperty("isMaximized", value); }
+  get expandedContent()      { return this.getProperty("expandedContent"); }
+  set expandedContent(value) { this.setProperty("expandedContent", value); }
+  get maxLines()      { return this.getProperty("maxLines"); }
+  set maxLines(value) { this.setProperty("maxLines", value); }
 
   setMessage(msg, color) {
-    var textMsg = this.get('messageText');
-    textMsg.textString = msg;
-    this.borderColor = color;
+    this.message = msg;
+    this.color = color;
   }
 
   expand() {
+    if (!this.expandable) return;
     var world = this.world();
     if (!world || this.isMaximized) return;
     this.isMaximized = true;
     this.stayOpen = true;
-    var text = this.get('messageText');
+    var text = this.getSubmorphNamed('messageText');
     Object.assign(text, {readOnly: false, fixedWidth: false, selectable: true})
+    if (this.expandedContent) text.value = this.expandedContent;
     text.fit();
     var ext = text.extent.addXY(20,20),
         visibleBounds = world.visibleBounds();
@@ -202,9 +226,100 @@ export class StatusMessage extends Morph {
     ext = this.extent.maxPt(ext);
     this.animate({extent: ext, center: visibleBounds.center(), duration: 200})
     this.relayout();
+    this.focus();
   }
+
+  fit() {
+    var text = this.getSubmorphNamed("messageText");
+    if (!text) return;
+    var minHeight = 40, minWidth = 100;
+    this.extent = pt(minWidth, minHeight).maxPt(text.textBounds().extent());
+    this.relayout();
+  }
+
+  focus() { var text = this.getSubmorphNamed("messageText"); text && text.focus(); }
 
   onMouseUp(evt) {
     this.expand();
   }
+}
+
+
+// var m = new StatusMessageForMorph({message: "test"})
+// var m = that.setStatusMessage(lively.lang.arr.range(0,100).join("\n"), undefined, null, {maxLines: 4})
+// m.en
+// m.maxLines
+// m.message = "test"
+// m.remove()
+
+
+
+export class StatusMessageForMorph extends StatusMessage {
+
+  constructor(props) {
+    super(props);
+    if (this.expandable) {
+      var btn = this.addMorph({
+        name: "expandButton", type: "button",
+        extent: pt(22,22), activeStyle: {fill: Color.white},
+        label: Icon.makeLabel("expand")
+      });
+      connect(btn, "fire", this, "expand");
+      this.relayout();
+    }
+  }
+
+  get defaultProperties() {
+    return {
+      ...super.defaultProperties,
+      slidable: false,
+      removeOnTargetMorphChange: true,
+      targetMorph: null // id!
+    };
+  }
+
+  relayout() {
+    super.relayout();
+    var expandBtn = this.getSubmorphNamed("expandButton");
+    if (expandBtn) {
+      expandBtn.topRight = this.getSubmorphNamed("closeButton").topLeft.addXY(-3, 0);
+    }
+  }
+
+  // should "internal" changes in the morph we are showing the message for
+  // (like cursor changes in a text morph) make this message morph disappear?
+  get removeOnTargetMorphChange()      { return this.getProperty("removeOnTargetMorphChange"); }
+  set removeOnTargetMorphChange(value) { this.setProperty("removeOnTargetMorphChange", value); }
+
+  get targetMorph()      {
+    var id = this.getProperty("targetMorph");
+    return id && $world.getMorphWithId(id);
+  }
+  set targetMorph(morph) {
+    this.setProperty("targetMorph", morph ? morph.id : null);
+    this.alignAtBottomOf(morph);
+  }
+
+  alignAtBottomOf(forMorph) {
+    var world = this.world();
+    if (!world) return;
+
+    this.bringToFront();
+
+    this.fit();
+
+    this.width = forMorph.width;
+    this.relayout();
+
+    if (forMorph.world())
+      this.position = forMorph.owner.worldPoint(forMorph.bounds().bottomLeft());
+
+    var visibleBounds = world.visibleBounds(),
+        bounds = this.bounds(),
+        overlapY = bounds.top() + this.height - visibleBounds.bottom();
+
+    if (overlapY > 0) this.moveBy(pt(0, -overlapY));
+  }
+
+  onMouseUp(evt) {}
 }

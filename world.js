@@ -3,7 +3,7 @@ import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, arr, string, obj, promise } from "lively.lang";
 import { Halo } from "./halo/morph.js"
 import { Menu } from "./menus.js"
-import { StatusMessage } from './markers.js';
+import { StatusMessage, StatusMessageForMorph } from './markers.js';
 import { Morph, Text, Window, config, MorphicEnv } from "./index.js";
 import { TooltipViewer } from "./tooltips.js";
 import KeyHandler from "./events/KeyHandler.js";
@@ -17,6 +17,7 @@ import {
   ListPrompt,
   EditListPrompt
 } from "./prompts.js";
+import { once } from "lively.bindings";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--
 
@@ -167,15 +168,19 @@ var worldCommands = [
   },
 
   {
-    name: "close active window",
+    name: "close active window or morph",
     exec: world => {
-      var focused = world.focusedMorph,
-          win = focused && focused.getWindow();
-      if (win) {
-        world.undoStart("window close");
-        win.close();
-        world.undoStop("window close");
+      var focused = world.focusedMorph;
+      if (!focused) return true;
+      var win = focused.getWindow();
+      world.undoStart("window close");
+      if (win) win.close();
+      else {
+        arr.last(arr.without(focused.ownerChain(), world)).remove();
+        var win = world.activeWindow();
+        win && win.activate();
       }
+      world.undoStop("window close");
       return true;
     }
   },
@@ -186,6 +191,16 @@ var worldCommands = [
       var win = world.activeWindow();
       win && win.toggleMinimize();
       return true;
+    }
+  },
+  
+  {
+    name: "open status message of focused morph",
+    exec: world => {
+      var focused = world.focusedMorph;
+      var [msg] = focused ? world.visibleStatusMessagesFor(focused) : [];
+      if (msg) { msg.expand(); msg.focus(); }
+      return msg || true;
     }
   },
 
@@ -909,7 +924,11 @@ export class World extends Morph {
     return this.submorphs.filter(ea => ea.isStatusMessage)
   }
 
-  logError(err) {
+  visibleStatusMessagesFor(morph) {
+    return this.submorphs.filter(ea => ea.isStatusMessage && ea.targetMorph === morph)
+  }
+
+  logErrorPreperation(err) {
     var stringified = String(err),
         stack = err.stack || "";
     if (stack) {
@@ -919,47 +938,68 @@ export class World extends Morph {
         stack = stack.slice(stringified.length);
       stringified += "\n" + stack;
     }
-    this.setStatusMessage(stringified, Color.red);
+    return stringified;
+  }
+
+  logError(err) {
+    this.setStatusMessage(this.logErrorPreperation(err), Color.red);
   }
 
   showError(err) { return this.logError(err); }
 
-  setStatusMessage(msg, color, delay = 5000, optStyle = {}) {
+  showErrorFor(morph, err) {
+    return this.setStatusMessageFor(morph, this.logErrorPreperation(err), Color.red);
+  }
+
+  setStatusMessageFor(morph, message, color, delay = 5000, props) {
+    this.visibleStatusMessagesFor(morph).forEach(ea => ea.remove());
+    var msgMorph = new StatusMessageForMorph({message, color, ...props});
+    this.openStatusMessage(msgMorph, delay);
+    msgMorph.targetMorph = morph;
+    msgMorph.fadeIn(300);
+    if (msgMorph.removeOnTargetMorphChange && morph.isText) {
+      once(morph, "selectionChange", msgMorph, "fadeOut", {converter: () => 200});
+    }
+    return msgMorph;
+  }
+
+  setStatusMessage(message, color, delay = 5000, optStyle = {}) {
+    // $world.setStatusMessage("test", Color.green)
+    console[color == Color.red ? "error" : "log"](message);
+    return config.verboseLogging ?
+      this.openStatusMessage(new StatusMessage({message, color, ...optStyle}), delay) :
+      null;
+  }
+
+  openStatusMessage(statusMessage, delay) {
     // world.setStatusMessage("test", Color.green)
-    msg = String(msg);
 
-    console[color == Color.red ? "error" : "log"](msg);
+    this.addMorph(statusMessage);
 
-    if (!config.verboseLogging) return null;
+    if (statusMessage.slidable) {
+      var messages = this.visibleStatusMessages();
+      for (let m of messages) {
+        if (messages.length <= (config.maxStatusMessages || 0)) break;
+        if (m.stayOpen || !m.slidable) continue;
+        m.remove();
+        arr.remove(messages, m);
+      }
+  
+      messages.forEach(msg => !msg.isMaximized && msg.slidable && msg.animate({
+        position: msg.position.addPt(pt(0, -statusMessage.extent.y - 10)),
+        duration: 500
+      }));
 
-    var msgMorph = new StatusMessage(msg, color, optStyle);
-
-    var messages = this.visibleStatusMessages();
-    for (let m of messages) {
-      if (messages.length <= (config.maxStatusMessages || 0)) break;
-      if (m.stayOpen) continue;
-      m.remove();
-      arr.remove(messages, m);
+      const msgPos = this.visibleBounds().bottomRight().addXY(-20, -20);
+      statusMessage.align(statusMessage.bounds().bottomRight(), msgPos);
+      statusMessage.topRight = msgPos.addPt(pt(0,40));
+      statusMessage.animate({bottomRight: msgPos, duration: 500});
     }
 
-    messages.forEach(msg => !msg.isMaximized && msg.animate({
-        position: msg.position.addPt(pt(0, -msgMorph.extent.y - 10)),
-        duration: 500
-    }));
+    if (typeof delay === "number")
+      setTimeout(() => statusMessage.stayOpen || statusMessage.fadeOut(), delay);
 
-    const msgPos = this.visibleBounds().bottomRight().addXY(-20, -20);
-    msgMorph.align(msgMorph.bounds().bottomRight(), msgPos);
-    msgMorph.topRight = msgPos.addPt(pt(0,40));
-    this.addMorph(msgMorph);
-    msgMorph.animate({
-       bottomRight: msgPos,
-       duration: 500
-    });
-
-    if (typeof delay !== "undefined")
-      setTimeout(() => msgMorph.stayOpen || msgMorph.fadeOut(), delay);
-
-    return msgMorph;
+    return statusMessage;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

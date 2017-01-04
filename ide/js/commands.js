@@ -76,8 +76,8 @@ function safeToString(value) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 var printEvalResult = (function() {
-  var maxColLength = 300,
-      itSym = typeof Symbol !== "undefined" && Symbol.iterator;
+  var itSym = typeof Symbol !== "undefined" && Symbol.iterator,
+      maxIterLength = 10;
 
   return function(result, maxDepth) {
     var err = result instanceof Error ? result : result.isError ? result.value : null;
@@ -96,7 +96,7 @@ var printEvalResult = (function() {
         values = [],
         open = hasEntries ? "{" : "[", close = hasEntries ? "}" : "]",
         name = val.constructor && val.constructor.name || "Iterable";
-    for (var i = 0, next; i < maxColLength; i++) {
+    for (var i = 0, next; i < maxIterLength; i++) {
       next = it.next();
       if (next.done) break;
       values.push(next.value);
@@ -115,10 +115,10 @@ var printEvalResult = (function() {
     if (val instanceof Node) return safeToString(val);
     if (typeof ImageData !== "undefined" && val instanceof ImageData) return safeToString(val);
     var length = val.length || val.byteLength;
-    if (length !== undefined && length > maxColLength && val.slice) {
+    if (length !== undefined && length > maxIterLength && val.slice) {
       var printed = typeof val === "string" || val.byteLength ?
-                      safeToString(val.slice(0, maxColLength)) :
-                      val.slice(0,maxColLength).map(string.print);
+                      safeToString(val.slice(0, maxIterLength)) :
+                      val.slice(0,maxIterLength).map(string.print);
       return "[" + printed + ",...]";
     }
     var iterablePrinted = printIterable(val, ignore);
@@ -131,7 +131,10 @@ var printEvalResult = (function() {
       maxDepth = maxDepth.maxDepth || 2;
 
     if (!object) return String(object);
-    if (typeof object === "string") return '"' + (object.length > maxColLength ? (object.slice(0,maxColLength) + "...") : safeToString(object)) + '"';
+    if (typeof object === "string") {
+      var mark = object.includes("\n") ? "`" : '"'
+      return mark + object + mark;
+    }
     if (object instanceof Error) return object.stack || safeToString(object);
     if (!obj.isObject(object)) return safeToString(object);
     try {
@@ -160,8 +163,8 @@ export var jsEditorCommands = [
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
       err ?
-        morph.world().logError(err) :
-        morph.world().setStatusMessage(printEvalResult(result, count));
+        morph.showError(err) :
+        morph.setStatusMessage(printEvalResult(result, count));
       return result;
     }
   },
@@ -178,8 +181,8 @@ export var jsEditorCommands = [
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
       err ?
-        morph.world().logError(err) :
-        morph.world().setStatusMessage(safeToString(result.value));
+        morph.showError(err) :
+        morph.setStatusMessage(safeToString(result.value));
       return result;
     }
   },
@@ -371,7 +374,7 @@ export var jsIdeCommands = [
   {
     name: "[javascript] eslint report",
     exec: async text => {
-      var { default: ESLinter } = await System.import("lively.morphic/ide/js/eslint.js")
+      var { default: ESLinter } = await System.import("lively.morphic/ide/js/eslint/lively-interface.js")
       try { return ESLinter.reportOnMorph(text); } catch(e) { text.showError(e); }
     }
   },
@@ -379,7 +382,7 @@ export var jsIdeCommands = [
   {
     name: "[javascript] eslint preview fixes",
     exec: async text => {
-      var { default: ESLinter } = await System.import("lively.morphic/ide/js/eslint.js")
+      var { default: ESLinter } = await System.import("lively.morphic/ide/js/eslint/lively-interface.js")
       try { return ESLinter.previewFixesOnMorph(text); } catch(e) { text.showError(e); }
     }
   },
@@ -387,7 +390,7 @@ export var jsIdeCommands = [
   {
     name: "[javascript] eslint fix",
     exec: async text => {
-      var { default: ESLinter } = await System.import("lively.morphic/ide/js/eslint.js");
+      var { default: ESLinter } = await System.import("lively.morphic/ide/js/eslint/lively-interface.js");
       var range = text.selection.isEmpty() ? null : text.selection.range;
       try {
         var {replacedRange} = await ESLinter.fixMorph(text, range);

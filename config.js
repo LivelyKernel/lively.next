@@ -25,8 +25,9 @@ var config = {
     {keys: "Meta-H", command: "show halo for focused morph"},
     {keys: "Alt-M", command: "select morph"},
     {keys: "Escape", command: "escape"},
-    {keys: {win: "Ctrl-Escape", mac: "Meta-Escape"}, command: "close active window"},
+    {keys: {win: "Ctrl-Escape", mac: "Meta-Escape"}, command: "close active window or morph"},
     {keys: "Alt-Shift-C", command: "toggle minimize active window"},
+    {keys: {mac: "Meta-O", win: "Ctrl-O"}, command: "open status message of focused morph"},
 
     {keys: {win: "Ctrl-K", mac: "Meta-K"}, command: {command: "open workspace", onlyWhenFocused: false}},
     {keys: "Alt-Shift-1", command: {command: "open shell terminal", onlyWhenFocused: false}},

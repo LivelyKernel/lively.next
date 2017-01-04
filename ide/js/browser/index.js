@@ -61,7 +61,7 @@ export default class Browser extends Window {
     if (packageName) await browser.selectPackageNamed(packageName);
     if (packageName && moduleName) await browser.selectModuleNamed(moduleName);
     if (textPosition) {
-      var text = browser.get("sourceEditor");
+      var text = browser.getSubmorphNamed("sourceEditor");
       text.cursorPosition = textPosition;
       text.centerRow(textPosition.row);
     }
@@ -653,7 +653,7 @@ export default class Browser extends Window {
 
   async save() {
     var module = this.get("moduleList").selection;
-    if (!module) return show("Cannot save, no module selected");
+    if (!module) return this.setStatusMessage("Cannot save, no module selected", Color.red);
 
     var content = this.get("sourceEditor").textString,
         system = await this.systemInterface();
@@ -814,7 +814,12 @@ export default class Browser extends Window {
   // events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  focus() { this.get("sourceEditor").focus(); }
+  setStatusMessage() {
+    var ed = this.getSubmorphNamed("sourceEditor");
+    return ed.setStatusMessage.apply(ed, arguments);
+  }
+
+  focus() { this.getSubmorphNamed("sourceEditor").focus(); }
 
   get keybindings() {
     return [
