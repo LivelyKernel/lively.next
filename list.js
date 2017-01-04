@@ -22,7 +22,7 @@ class ListItemMorph extends Label {
 
   constructor(props) {
     super({
-      halosEnabled: false, autofit: false, fill: null,
+      autofit: false, fill: null,
       textString: "", itemIndex: undefined,
       selectionFontColor: Color.white,
       selectionColor: Color.blue,
@@ -419,7 +419,7 @@ export class List extends Morph {
 
   get listItemContainer() {
     return this.getSubmorphNamed("listItemContainer") || this.addMorph({
-      name: "listItemContainer", fill: null, clipMode: "visible"
+      name: "listItemContainer", fill: null, clipMode: "visible", halosEnabled: false
     });
   }
 
