@@ -23,24 +23,27 @@ class Layout {
   name() { return "Name presented to the user."; }
 
   disable() { this.active = true; }
-  enable() { this.active = false; this.apply(); }
+  enable(animation) { this.active = false; this.apply(animation); }
 
   get boundsChanged() { return !this.container.bounds().equals(this.lastBounds); }
 
-  onSubmorphResized(submorph, change) { (this.container.submorphs.includes(submorph) ||
-                                         this.boundsChanged) && this.apply(change.meta.animation); }
-  onSubmorphAdded(submorph) { this.apply(); }
-  onSubmorphRemoved(submorph) { this.apply(); }
+  onSubmorphResized(submorph, change) { 
+       if (this.container.submorphs.includes(submorph) || this.boundsChanged) {
+           this.apply(change.meta.animation);
+       } 
+  }
+  onSubmorphAdded(submorph, anim) { this.apply(anim); }
+  onSubmorphRemoved(submorph, anim) { this.apply(anim); }
 
   onChange({selector, args, prop, value, prevValue, meta}) {
     const anim = meta && meta.animation;
     switch (selector) {
-    case "removeMorph":
-      this.onSubmorphRemoved(args[0]);
-      break;
-    case "addMorphAt":
-      this.onSubmorphAdded(args[0]);
-      break;
+      case "removeMorph":
+        this.onSubmorphRemoved(args[0], anim);
+        break;
+      case "addMorphAt":
+        this.onSubmorphAdded(args[0], anim);
+        break;
     }
     if (prop == "extent" && !(value && value.equals(prevValue))) this.apply(anim);
   }
@@ -53,7 +56,7 @@ class Layout {
 
   onSubmorphChange(submorph, change) {
     if ("extent" == change.prop && !change.value.equals(change.prevValue)) this.onSubmorphResized(submorph, change);
-    if (this.affectsLayout(submorph, change)) this.apply();
+    if (this.affectsLayout(submorph, change)) this.apply(change.meta.animation);
   }
 
   changePropertyAnimated(target, propName, value, animate) {

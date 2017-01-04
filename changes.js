@@ -1,5 +1,5 @@
 /*global WeakMap*/
-import { arr, string } from "lively.lang";
+import { arr, string, obj } from "lively.lang";
 
 function newKeyIn(obj, base = "_") {
   var i = 1, key;
@@ -107,12 +107,13 @@ export class MethodCallChange extends GroupChange {
 
   get type() { return "method-call" }
 
-  constructor(target, selector, args, undo) {
+  constructor(target, selector, args, undo, meta) {
     this.changes = [];
     this.target = target;
     this.selector = selector;
     this.args = args;
     this.undo = undo;
+    this.meta = meta;
   }
 
   apply() {
@@ -148,6 +149,7 @@ export class ChangeManager {
 
     this.changeGroupStack = [];
     this.defaultMeta = {};
+    this.metaStack = [];
   }
 
   changesFor(morph) { return this.changes.filter(c => c.target === morph); }
@@ -159,8 +161,10 @@ export class ChangeManager {
 
   doWithValueChangeMeta(meta, morph, doFn) {
      this.defaultMeta = meta;
+     this.metaStack.push(meta);
      const res = doFn(morph);
-     this.defaultMeta = {};
+     this.metaStack.pop();
+     this.defaultMeta = arr.last(this.metaStack) || {};
      return res;
   }
 
@@ -172,7 +176,7 @@ export class ChangeManager {
   addMethodCallChangeDoing(spec, morph, doFn) {
     var {target, selector, args, undo} = spec;
     if (!undo) undo = () => console.warn(`No undo recorded for ${target}.${selector}`);
-    var change = new MethodCallChange(target, selector, args, undo);
+    var change = new MethodCallChange(target, selector, args, undo, this.defaultMeta);
     morph.groupChangesWhile(change, doFn);
     return change;
   }
