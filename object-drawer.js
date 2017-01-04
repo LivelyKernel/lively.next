@@ -24,6 +24,10 @@ export default class ObjectDrawer extends Morph {
   }
 
   setup() {
+    // this.setup();
+
+    this.removeAllMorphs()
+
     var n = this.n,
         margin = pt(5,5),
         objExt = pt(((this.width - margin.x) / n) - margin.x, this.height - margin.y*2),
@@ -119,6 +123,25 @@ export default class ObjectDrawer extends Morph {
       }
     });
 
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // button
+
+    pos = arr.last(this.submorphs).rightCenter.addXY(margin.x, 0);
+
+    this.addMorph({
+      type: "button",
+      label: "a button",
+      leftCenter: pos, extent: pt(120, 30),
+      active: false,
+      onDrag: doCopy,
+      draggable: true,
+      init() {
+        this.draggable = false;
+        this.grabbable = false;
+        this.active = true;
+      }
+    });
+
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // List
@@ -190,6 +213,7 @@ export default class ObjectDrawer extends Morph {
       tree.nodeItemContainer.withAllSubmorphsDo(ea => ea.reactsToPointer = false)
     })();
 
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // Leash
 
     pos = pt(arr.last(this.submorphs).right, 0).addPt(pt(10,10));
@@ -207,5 +231,7 @@ export default class ObjectDrawer extends Morph {
       delete copy.onDrag;
       copy.init && copy.init();
     }
+    
+    this.width = arr.last(this.submorphs).right + 10;
   }
 }
