@@ -555,6 +555,19 @@ export class Text extends Morph {
     this.deleteText({start: {column: 0, row: 0}, end: this.document.endPosition});
     this.insertText(value, {column: 0, row: 0});
   }
+  get value() {
+    var {textAndAttributes} = this;
+    if (textAndAttributes.length === 1) {
+      var [text, style] = textAndAttributes[0];
+      if (!Object.keys(style || {}).length) return text;
+    }
+    return textAndAttributes;
+  }
+  set value(value) {
+    typeof value === "string" ?
+      this.textString = value :
+      this.textAndAttributes = value;
+  }
 
   textInRange(range) { return this.document.textInRange(range); }
   charRight({row, column} = this.cursorPosition) { return this.getLine(row).slice(column, column+1); }
@@ -1173,31 +1186,64 @@ export class Text extends Morph {
   // mouse events
 
   onMouseDown(evt) {
-    if (!this.selectable || evt.rightMouseButtonPressed()) return;
+    if (evt.rightMouseButtonPressed()) return;
 
     this.activeMark && (this.activeMark = null);
+
     var {position, state: {clickedOnMorph, clickedOnPosition, clickCount}} = evt;
-
     if (clickedOnMorph !== this) return;
-    var maxClicks = 3, normedClickCount = ((clickCount - 1) % maxClicks) + 1;
 
-    var clickPos = this.textPositionFromPoint(this.scroll.addPt(this.localize(position)));
+    var maxClicks = 3, normedClickCount = ((clickCount - 1) % maxClicks) + 1,
+        clickPos = this.scroll.addPt(this.localize(position)),
+        clickTextPos = this.textPositionFromPoint(clickPos);
+
+    if (evt.leftMouseButtonPressed() && !evt.isShiftDown() && !evt.isAltDown()
+     && this.callTextAttributeDoitFromMouseEvent(evt, clickPos)) {
+      // evt.stop();
+      // return;
+    }
+
+    if (!this.selectable) return;
 
     if (evt.isShiftDown()) {
-      this.selection.lead = clickPos;
+      this.selection.lead = clickTextPos;
     } else if (evt.isAltDown()) {
-      this.selection.addRange(Range.at(clickPos));
+      this.selection.addRange(Range.at(clickTextPos));
     } else {
       this.selection.disableMultiSelect();
       if (normedClickCount === 1) {
-        if (!evt.isShiftDown()) this.selection = {start: clickPos, end: clickPos};
-        else this.selection.lead = clickPos
+        if (!evt.isShiftDown()) this.selection = {start: clickTextPos, end: clickTextPos};
+        else this.selection.lead = clickTextPos
       }
       else if (normedClickCount === 2) this.execCommand("select word", null, 1, evt);
       else if (normedClickCount === 3) this.execCommand("select line", null, 1, evt);
     }
 
     if (this.isFocused()) this.ensureKeyInputHelperAtCursor();
+  }
+
+  callTextAttributeDoitFromMouseEvent(evt, clickPos) {
+    var attributes = this.textAttributesAt(clickPos) || [], doit;
+    // if (this === that) inspect([evt.positionIn(this), clickPos])
+    for (var i = attributes.length; i--; ) {
+      var ea = attributes[i];
+      if (ea.data && ea.data.doit) { doit = ea.data.doit; break; }
+    }
+    if (!doit || !doit.code) return false;
+
+  // FIXME move this to somewhere else?
+    var moduleId = `lively://text-doit/${this.id}`,
+        mod = lively.modules.module(moduleId);
+    mod.recorder.evt = evt;
+    lively.vm.runEval(doit.code, {
+      context: doit.context || this,
+      format: "esm",
+      targetModule: moduleId
+    })
+    .catch(err => this.world().logError(new Error(`Error in text doit: ${err.stack}`)));
+    // .then(() => mod.recorder.evt = null)
+
+    return true;
   }
 
   onMouseMove(evt) {

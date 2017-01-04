@@ -286,11 +286,13 @@ export var defaultRenderer = {
         {
           fontSize, fontFamily, fontColor, backgroundColor,
           fontWeight, fontStyle, textDecoration,
-          fixedCharacterSpacing, nativeCursor: cursor,
+          fixedCharacterSpacing, nativeCursor,
           textStyleClasses, link
         } = style;
 
+    // FIXME!
     if (text.length > 1000) text = text.slice(0,1000);
+    // FIXME**2!!
     text = text.replace(/\t/g, " ");
 
     var tagname = link ? "a" : "span",
@@ -305,13 +307,16 @@ export var defaultRenderer = {
             textDecoration,
             color: fontColor ? String(fontColor) : "",
             backgroundColor: backgroundColor ? String(backgroundColor) : "",
-            cursor
           }
         };
 
     if (link) {
       attrs.href = link;
       attrs.target = "_blank";
+    }
+
+    if (nativeCursor) {
+     attrs.style.cursor = nativeCursor; 
     }
 
     if (textStyleClasses && textStyleClasses.length)

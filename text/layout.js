@@ -87,9 +87,10 @@ function styleFromTextAttributes(textAttributes) {
     if ("fontStyle" in d)             s.fontStyle = d.fontStyle;
     if ("textDecoration" in d)        s.textDecoration = d.textDecoration;
     if ("fixedCharacterSpacing" in d) s.fixedCharacterSpacing = d.fixedCharacterSpacing;
-    if (d.textStyleClasses)      s.textStyleClasses = (s.textStyleClasses || []).concat(d.textStyleClasses);
-    if (d.nativeCursor)          s.nativeCursor = d.nativeCursor;
-    if (d.link)                  { s.link = d.link; s.nativeCursor = "auto"; delete s.textDecoration; delete s.fontColor; }
+    if (d.textStyleClasses)           s.textStyleClasses = (s.textStyleClasses || []).concat(d.textStyleClasses);
+    if (d.nativeCursor)               s.nativeCursor = d.nativeCursor;
+    if (d.link)                       { s.link = d.link; s.nativeCursor = "auto"; delete s.textDecoration; delete s.fontColor; }
+    if (d.doit)                       { s.doit = d.doit; }
   }
   return s;
 }

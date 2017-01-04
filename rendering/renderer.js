@@ -98,7 +98,6 @@ textarea.lively-text-input.debug {
 }
 
 div.text-layer span {
-  pointer-events: none;
   line-height: normal;
 }
 
