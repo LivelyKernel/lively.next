@@ -13,6 +13,9 @@ import { ColorPickerField } from "./color-picker.js";
 import { GradientEditor } from "./gradient-editor.js";
 import { Icon } from "../../icons.js";
 import { StyleRules } from "../../style-rules.js";
+import KeyHandler from "../../events/KeyHandler.js";
+
+const duration = 200;
 
 class StyleEditor extends Morph {
 
@@ -21,10 +24,21 @@ class StyleEditor extends Morph {
       if (!target) throw Error("No target provided!");
       super({
         morphClasses: ['closed'],
-        styleRules: this.styler,
+        styleRules: this.styler, clipMode: "hidden",
         layout: new VerticalLayout({spacing: 5}),
         ...props,
         submorphs: [this.titleLabel(title)]});
+   }
+
+   getColorField({target, property}) {
+       const colorField = new ColorPickerField({
+                         target: target || this.target,
+                         name: "colorPicker",
+                         property
+                    });
+       connect(this, "remove", colorField, "removeWidgets");
+       connect(this, "onMouseDown", colorField, "removeWidgets");
+       return colorField;
    }
 
    get styler() {
@@ -55,6 +69,7 @@ class StyleEditor extends Morph {
               fill: Color.transparent, readOnly: true,
          },
          controlWrapper: {
+              clipMode: 'hidden',
               fill: Color.transparent,
               draggable: true
          }
@@ -70,7 +85,7 @@ class StyleEditor extends Morph {
              type: "text",
              fontWeight: "bold", padding: 5,
              fontColor: Color.gray, fontSize: 12, readOnly: true,
-             fill: Color.transparent, draggable: true,
+             fill: Color.transparent, draggable: true, nativeCursor: 'pointer',
              textString: title,
              onDrag: (evt) => this.onDrag(evt)
         }]
@@ -78,30 +93,25 @@ class StyleEditor extends Morph {
    }
 
    onMouseDown() { signal(this, "open"); this.open() }
-   
-   onHoverIn(evt) {
-      this.show()
-   }
-
-   onMouseMove(evt) {
-      this.show()
-   }
+   onMouseMove() { this.show() }
 
    hide() {
       if (this.opened) return;
-      this.animate({opacity: 0, visible: false, duration: 300});
+      this.animate({opacity: 0, visible: false, duration});
    }
 
    blur() {
       if (this.opened) return;
       this.blurred = true;
-      this.animate({opacity: .7, duration: 300})
+      this.animate({opacity: .7, duration})
    }
 
    show() {
+      var world;
       if (this.opened) return;
+      this.openInWorld(this.position)
       this.blurred = false;
-      this.animate({opacity: 1, visible: true, duration: 300});
+      this.animate({opacity: 1, visible: true, duration});
    }
 
    close() {
@@ -112,7 +122,7 @@ class StyleEditor extends Morph {
             morphClasses: ["closed"],
             position: this.openPosition, 
             layout: new VerticalLayout({spacing: 5}),
-            duration: 300})
+            duration})
       signal(this, "close", false);
    }
 
@@ -120,8 +130,7 @@ class StyleEditor extends Morph {
       if (this.opened) return this;
       this.opened = true;
       const [wrapper] = this.submorphs,
-            {submorphs: [instruction]} = wrapper,
-            duration = 200;
+            {submorphs: [instruction]} = wrapper
 
       this.layout = null; 
       this.opacity = 1;
@@ -132,7 +141,7 @@ class StyleEditor extends Morph {
            name: "closeButton",  
            onMouseDown: () => this.close()
       }), 0);
-      instruction.animate({fontColor: Color.gray.darker(), duration});
+      instruction.animate({nativeCursor: "auto", fontColor: Color.gray.darker(), duration});
       this.controls(this.target).forEach(c => {
          c.opacity = 0;
          this.addMorph(c).animate({opacity: 1, duration});
@@ -160,7 +169,7 @@ class StyleEditor extends Morph {
   createSelectableControl({controls, init}) {
       const modeSelector = new ModeSelector({
                     name: "modeSelector", 
-                    items: controls, init, 
+                    items: controls, init,
                     width: this.width}),
             selectableControl = new Morph({
               morphClasses: ['controlWrapper'],
@@ -168,17 +177,12 @@ class StyleEditor extends Morph {
               layout: new VerticalLayout({spacing: 10}),
               remove() { super.remove(); arr.invoke(this.submorphs, 'remove'); },
               select(control) {
-                 // rms: animating submorphs currently starts animations "too early", meaning,
-                 //      that animations are already triggering when the first morph is being removed
-                 //      instead of waiting until all submorph changes have been applied.
-                 //      this is a hack that prevents this bug from affecting the animations.
                  const c = control();
-                 this.layout.autoResize = false;
-                 c.opacity = 0; c.animate({opacity: 1, duration: 300})
-                 this.submorphs = [this.get("modeSelector"), c];
-                 this.animate({layout: new VerticalLayout({spacing: 10}), duration: 300});
+                 c.opacity = 0; 
+                 this.animate({submorphs: [modeSelector, c], duration});
+                 c.animate({opacity: 1, duration})
               },
-              submorphs: [modeSelector]});
+              submorphs: [modeSelector, controls[init]()]});
       connect(modeSelector, "switchLabel", selectableControl, "select");
       modeSelector.layout.col(0).remove();
       return selectableControl;
@@ -200,11 +204,14 @@ class StyleEditor extends Morph {
                 }
                 target[property] = value;
                 const [title] = this.submorphs,
-                      controls =  render(target[property]);
-                this.animate({submorphs: [title, ...controls ? [controls] : []], duration: 300});
+                      controls =  render(target[property]),
+                      submorphs = [title, ...controls ? [controls] : []];
+                if (controls) controls.opacity = 0;
+                this.animate({submorphs, duration});
+                if (controls) controls.animate({opacity: 1, duration})
             },
             submorphs: [
-              {fill: Color.transparent, layout: new HorizontalLayout(),
+              {fill: Color.transparent, layout: new HorizontalLayout({autoResize: false}), height: 25,
                submorphs: [
                 {type: "text", textString: title, morphClasses: ['controlLabel']},
                 toggler]}
@@ -223,6 +230,7 @@ class StyleEditor extends Morph {
   }
   
   shadowControl() {
+     
      return this.createToggledControl({
           title: "Drop Shadow",
           target: this.target, property: "dropShadow",
@@ -259,13 +267,9 @@ class StyleEditor extends Morph {
                     {type: "label", value: "Blur: ", padding: 4, name: "blurLabel"}, blurInspector,
                     {type: "label", value: "Angle: ", padding: 4, name: "angleLabel"}, angleSlider,
                     {type: "label", value: "Color: ", padding: 4, name: "colorLabel"},
-                    new ColorPickerField({
-                         target: value,
-                         name: "colorPicker",
-                         property: "color"
-                    })]
+                    this.getColorField({target: value, property: 'color'})]
                });
-             control.layout.col(0).paddingLeft = 5;
+             control.layout.col(0).paddingLeft = 1;
              control.layout.row(0).paddingBottom = 5;
              control.layout.row(1).paddingBottom = 5;
              control.layout.row(2).paddingBottom = 5;
@@ -294,7 +298,7 @@ export class BodyStyleEditor extends StyleEditor {
 
    fillControl(target) {
       return this.createSelectableControl({controls: {
-                "Fill": () => new ColorPickerField({target, property: "fill"}),
+                "Fill": () => this.getColorField({property: "fill"}),
                 "Gradient": () => new GradientEditor({target, property: "fill"})
              }, init: target.fill && target.fill.isGradient ? "Gradient" : "Fill"})
    }
@@ -331,7 +335,7 @@ export class BorderStyleEditor extends StyleEditor {
              layout: new HorizontalLayout({spacing: 5, compensateOrigin: true}),
              fill: Color.transparent,
              submorphs: [new DropDownSelector({target, isHaloItem: true, property: "borderStyle", values: ["solid", "dashed", "dotted"]}),
-                         new ColorPickerField({target, property: "borderColor"}),
+                         this.getColorField({property: 'borderColor'}),
                          new PropertyInspector({min: 0, target, unit: "pt", property: "borderWidth"})]
               })
   }
@@ -366,7 +370,7 @@ export class LayoutStyleEditor extends Morph {
       this.animate({
          layout: new VerticalLayout({spacing: 2}),
          submorphs: [...this.submorphs, ...this.layoutHalo.optionControls()],
-         duration: 300
+         duration
       });
       signal(this, "open");
       this.update(true);
@@ -385,7 +389,7 @@ export class LayoutStyleEditor extends Morph {
       this.animate({
             layout: new HorizontalLayout(),
             submorphs: [this.getSubmorphNamed("layoutControlPickerWrapper")],
-            duration: 300
+            duration
       });
       signal(this, "close");
       this.update(true);
@@ -431,7 +435,7 @@ export class LayoutStyleEditor extends Morph {
                             .bottomCenter().addXY(50, 70),
             inspectButton = this.getSubmorphNamed('layoutHaloToggler');
       if (animated) {
-         this.animate({topCenter, duration: 300});
+         this.animate({topCenter, duration});
       } else { 
          this.topCenter = topCenter;
       }
@@ -518,8 +522,8 @@ export class HTMLEditor extends Morph {
 
    onMouseMove() { this.show() }
 
-   blur() { this.animate({opacity: .5, duration: 300})}
-   show() { this.animate({opacity: 1, visible: true, duration: 300}) }
+   blur() { this.animate({opacity: .5, duration})}
+   show() { this.animate({opacity: 1, visible: true, duration}) }
    hide() { this.visible = false; }
    
 }
