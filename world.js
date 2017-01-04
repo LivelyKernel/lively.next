@@ -723,40 +723,29 @@ export class World extends Morph {
   }
 
   onMouseDown(evt) {
-    var target = evt.state.clickedOnMorph;
+    var target = evt.state.clickedOnMorph,
+        isCommandKey = evt.isCommandKey(),
+        isShiftKey = evt.isShiftDown();
 
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // halo activation + removal
+    // note that the logic for cycling halos from morph to underlying morph is
+    // implemented in Halo>>onMouseDown
     if (!target.isHaloItem &&
          evt.halo && evt.halo.borderBox != target &&
-         evt.isCommandKey() && evt.isShiftDown()) {
+         isCommandKey && isShiftKey) {
        evt.halo.addMorphToSelection(target);
        return;
     }
+    var removeHalo = evt.halo && !evt.targetMorphs.find(morph => morph.isHaloItem),
+        removeLayoutHalo = evt.layoutHalo && !evt.targetMorphs.find(morph => morph.isHaloItem),
+        addHalo = (!evt.halo || removeHalo) && target.halosEnabled && isCommandKey;
+    if (removeLayoutHalo) evt.layoutHalo.remove();
+    if (removeHalo) evt.halo.remove();
+    if (addHalo) { this.showHaloFor(target, evt.domEvt.pointerId); return; }
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    var addHalo = target.halosEnabled && !evt.halo && evt.isCommandKey();
-    if (addHalo) {
-      this.showHaloFor(target, evt.domEvt.pointerId);
-      return;
-    }
-
-    var removeHalo = evt.halo && !evt.targetMorphs.find(morph => morph.isHaloItem);
-    if (removeHalo) {
-      evt.halo.remove();
-      // switch immediately to a different morph
-      addHalo = !target.isHalo && target.halosEnabled && evt.isCommandKey();
-      if (addHalo) {
-        this.showHaloFor(target, evt.domEvt.pointerId);
-        return;
-      }
-    }
-
-    removeHalo = evt.layoutHalo && !evt.targetMorphs.find(morph => morph.isHaloItem);
-    if (removeHalo) {
-      evt.layoutHalo.remove();
-    }
-
-    if (evt.state.menu) {
-      evt.state.menu.remove();
-    }
+    if (evt.state.menu) evt.state.menu.remove();
 
     this._tooltipViewer.mouseDown(evt);
   }

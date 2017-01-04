@@ -400,8 +400,9 @@ export class Halo extends Morph {
 
   onMouseDown(evt) {
      const target = evt.state.clickedOnMorph;
-     if (!evt.isCommandKey() && 
-         target == this.borderBox) return this.remove();
+
+     if (!evt.isCommandKey() && target == this.borderBox) return this.remove();
+
      if (evt.isShiftDown() && evt.isCommandKey()) {
          const actualMorph = this.target.isMorphSelection ? 
            this.target.morphBeneath(evt.position) : this.morphBeneath(evt.position);
@@ -410,13 +411,19 @@ export class Halo extends Morph {
              this.addMorphToSelection(actualMorph);
          return;
      }
+
      if (target == this.borderBox && evt.isCommandKey()) {
-        this.target.owner && this.world().showHaloFor(this.target.owner, evt.domEvt.pointerId);
-        this.remove();
+       // cycle to the next morph below at the point we clicked
+       var morphsBelow = evt.world.morphsContainingPoint(evt.position).filter(ea => ea.halosEnabled),
+           morphsBelowHaloMorph = morphsBelow.slice(morphsBelow.indexOf(this.target) + 1),
+           newTarget = morphsBelowHaloMorph[0] || morphsBelow[0] || evt.world;
+       newTarget && evt.world.showHaloFor(newTarget, evt.domEvt.pointerId);
+
+       this.remove();
      }
 
      if (target == this) this.remove();
-  } 
+  }
 
   prepareTarget(target) {
      if (obj.isArray(target)) {
