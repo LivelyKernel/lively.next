@@ -342,6 +342,104 @@ export class BorderStyleEditor extends StyleEditor {
 
 }
 
+export class PolygonEditor extends BorderStyleEditor {
+
+    constructor(props) {
+       super(props);
+       signal(this, 'add vertices');
+    }
+
+    controls(target) {
+       return [...super.controls(target), 
+               this.vertexEditModes(target)
+               ]
+    }
+
+    get keybindings() { return super.keybindings.concat([
+        {keys: "Alt-A", command: "add vertices"},
+        {keys: "Alt-D", command: "delete vertices"},
+        {keys: "Alt-S", command: "transform vertices"}]); 
+    }
+
+    get commands() {
+       return [
+          {
+             name: "add vertices",
+             doc: 'Add Anchor Points',
+             exec: () => signal(this, "add vertices")
+          },
+          {
+             name: "delete vertices",
+             doc: 'Remove Anchor Points',
+             exec: () => signal(this, "delete vertices")
+          },
+          {
+             name: "transform vertices",
+             doc: 'Transform Control Points',
+             exec: () => signal(this, "transform vertices")
+          }
+       ]
+    }
+
+    get vertexModeStyles() {
+       return new StyleRules({
+          modeLabel: {
+             fontColor: Color.white, fontWeight: 'bold', fill: Color.transparent, 
+          },
+          modeBox: {borderRadius: 5, nativeCursor: 'pointer'},
+          addMode: {fill: Color.rgb(39,174,96)},
+          deleteMode: {fill: Color.rgb(231,76,60)},
+          transformMode: {fill: Color.rgb(52,152,219)}
+       })
+    }
+
+    vertexEditModes(target) {
+       return this.createControl("Edit Modes", {
+           morphClasses: ['controlWrapper'],
+           layout: new VerticalLayout({spacing: 5}),
+           styleRules: this.vertexModeStyles,
+           submorphs: KeyHandler.generateCommandToKeybindingMap(this).map(ea => {
+                return this.newVertexMode(ea)
+           })
+       })
+    }
+
+    newVertexMode(cmd) {
+        const self = this,
+              {prettyKeys, command: {doc, name}} = cmd,
+              m = new Morph({
+            morphClasses: this.commandToMorphClasses(cmd.command),
+            layout: new HorizontalLayout({spacing: 5}),
+            onMouseDown: () => {
+               this.execCommand(cmd.command);
+            },
+            activate() {
+               signal(self, "reset modes");
+               this.opacity = 1;
+            },
+            deactivate() {
+               this.opacity = .5;
+            },
+            submorphs: [{
+                 type: 'label', value: doc, 
+                 morphClasses: ['modeLabel']
+            }, {type: 'label', value: prettyKeys.join(" "), morphClasses: ['modeLabel']}]
+        });
+        connect(this, name, m, "activate");
+        connect(this, 'reset modes', m, "deactivate");
+        return m;
+    }
+
+    commandToMorphClasses(cmd) {
+        return {
+           'add vertices': ['modeBox', 'addMode'],
+           'delete vertices': ['modeBox', 'deleteMode'],
+           'transform vertices': ['modeBox', 'transformMode']
+        }[cmd.name]
+    }
+
+}
+
 export class LayoutStyleEditor extends Morph {
 
     getLayoutObjects() {

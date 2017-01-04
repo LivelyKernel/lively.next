@@ -402,7 +402,7 @@ export class Halo extends Morph {
      const target = evt.state.clickedOnMorph;
      if (!evt.isCommandKey() && 
          target == this.borderBox) return this.remove();
-     if (evt.isShiftDown()) {
+     if (evt.isShiftDown() && evt.isCommandKey()) {
          const actualMorph = this.target.isMorphSelection ? 
            this.target.morphBeneath(evt.position) : this.morphBeneath(evt.position);
          this.isAlreadySelected(actualMorph) ?
@@ -969,7 +969,9 @@ export class Halo extends Morph {
       halo: this,
       tooltip: "Open stylize editor",
       onMouseDown: (evt) => {
-        this.world().addMorph(styleHaloFor(this.target, this.state.pointerId));
+        const styleHalo = styleHaloFor(this.target, this.state.pointerId);
+        this.world().addMorph(styleHalo);
+        // connect(this.world(), 'onMouseDown', styleHalo, 'remove');
         this.remove();
       }
     }));
