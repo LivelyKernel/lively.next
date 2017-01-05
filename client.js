@@ -4,13 +4,15 @@ import { resource } from "lively.resources";
 import ioClient from "socket.io-client";
 import L2LConnection from "./interface.js";
 import { defaultActions, defaultClientActions } from "./default-actions.js";
+// import L2LTracker from "lively.2lively/tracker.js";
+// import LivelyServer from "lively.server";
 
 export default class L2LClient extends L2LConnection {
 
   static clientKey(origin, path, namespace) {
     origin = origin.replace(/\/$/, "");
-    path = path.replace(/^\//, "");
-    namespace = namespace.replace(/^\//, "");
+    path = path.replace(/^\//, "");    
+    namespace = namespace.replace(/^\//, "");    
     return `${origin}-${path}-${namespace}`
   }
 

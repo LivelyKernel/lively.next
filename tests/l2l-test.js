@@ -125,10 +125,19 @@ describe('l2l', function() {
 
   describe("client-to-client", () => {
 
-    var client2;
-    beforeEach(async () => {
-      client2 = await L2LClient.ensure({url, namespace});
-      await client2.whenRegistered(300);
+    var client2;       
+
+    beforeEach(async () => { 
+    await testServer.whenStarted();
+    var io = testServer.findPlugin("socketio").io;    
+    var origin = `http://${hostname}:${port}`,
+        path = io.path()
+        // namespace = '/l2l-test'    
+    
+      client2 = new L2LClient(origin,path,namespace);
+      client2.open();
+      client2.register();
+      await client2.whenRegistered();      
     });
     afterEach(async () => client2 && await client2.remove());
 
