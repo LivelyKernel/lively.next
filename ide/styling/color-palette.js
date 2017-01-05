@@ -27,6 +27,13 @@ export class ColorPalette extends Morph {
       this.active = true;
    }
 
+   fadeIntoWorld(pos) {
+      super.fadeIntoWorld(pos);
+      this.initPosition = pos;
+      this.relayout();
+      return this;
+   }
+
    get styler() {
       const fill = Color.gray;
       return new StyleRules({
@@ -129,12 +136,33 @@ export class ColorPalette extends Morph {
       const arrow = this.get('arrow'),
             harmonyPalette = this.get('harmonyPalette'),
             fillTypeSelector = this.get("fillTypeSelector"),
-            paletteView = this.get("paletteView");
+            paletteView = this.get("paletteView"),
+            world = this.world(),
+            buttonSize = this.width/15;
       paletteView.relayout();
-      fillTypeSelector.animate({width: this.get("paletteView").bounds().width, duration: 200});
+      fillTypeSelector.animate({width: paletteView.bounds().width, duration: 200});
       harmonyPalette.relayout();
-      arrow.extent = pt(this.width/15, this.width/15);
+      arrow.extent = pt(buttonSize, buttonSize);
       arrow.bottomCenter = pt(this.width/2, 1);
+      if (world) {
+          const heightInWorld = world.visibleBounds().height - this.initPosition.y;
+          this.globalPosition = world.visibleBounds()
+                                     .translateForInclusion(this.globalBounds())
+                                     .topLeft().addXY(0, buttonSize);
+          if (this.initPosition) {
+              if (heightInWorld < this.height) {
+                 world.logError('move up')
+                 this.bottomCenter = this.owner
+                                         .localize(this.initPosition)
+                                         .addXY(0,-buttonSize)
+                                         .withX(this.bottomCenter.x);
+                 arrow.rotation = Math.PI;
+              } else {
+                 arrow.rotation = 0;
+              }
+              arrow.bottomCenter = this.localize(this.initPosition);
+          }
+      }
    }
 
    paletteView() {
@@ -171,7 +199,7 @@ export class ColorPalette extends Morph {
                                items: ["Color Palette", "Color Harmonies"],
                                tooltips: {"Color Harmonies": this.getPaletteDescription("harmony")}
                            });
-      selector.width = 300;
+      selector.width = this.width;
       connect(selector, "Color Palette", this, "selectSolidMode");
       connect(selector, "Color Harmonies", this, "selectHarmonyMode");
       return selector;
