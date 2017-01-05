@@ -188,6 +188,8 @@ export class StatusMessage extends Morph {
       text.replace({start: {row: this.maxLines, column: 0}, end: textEnd}, "...\n");
       if (!this.expandedContent) this.expandedContent = value;
     }
+    textEnd = text.documentEndPosition;
+    if (textEnd.column !== 0) text.insertText("\n", textEnd);
   }
   get color()            { /*just an alias for now*/return this.borderColor; }
   set color(value)       { this.borderColor = value; }
