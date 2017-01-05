@@ -77,21 +77,4 @@ describe("object package", function() {
 
   });
 
-  describe("object module", () => {
-
-    it("adds import", async () => {
-      var obj = {name: "testObject"};
-      var p = ObjectPackage.forObject(obj, opts);
-      await p.ensureObjectClass();
-      await p.objectModule.addImport({local: "x", from: `${project1Dir}index.js`});
-      expect(p.objectModule.systemModule.recorder.x).equals(23)
-      expect(await p.objectModule.read()).equals(
-          `import { x } from "project1/index.js";\n`
-        + `export default class TestObject {}\n`
-        + `\n`
-        + `TestObject.isLivelyObjectClass = true;`
-      )
-    })
-  
-  })
 });

@@ -260,30 +260,4 @@ class ObjectModule {
 
   }
 
-  async addImport(spec) {
-    var fromModule = module(this.System, spec.from, this.url),
-        fromPackage = fromModule.package(),
-        importData = {
-          exported: spec.exported || spec.local,
-          moduleId: fromModule.id,
-          packageName: fromPackage.name,
-          packageURL: fromPackage.url,
-          pathInPackage: fromModule.pathInPackage()
-        },
-        {
-          url: intoModuleId,
-          objectPackage: { System, name: intoPackage }
-        } = this,
-        intoModuleSource = await this.read(),
-        {
-          newSource, standAloneImport
-        } = await ImportInjector.run(
-            System, intoModuleId, intoPackage, intoModuleSource, importData);
-
-// this.systemModule.setFormat("esm");
-// __lvVarRecorder.__currentLivelyModule.
-// var m = __lvVarRecorder.__currentLivelyModule
-debugger;
-    await this.systemModule.changeSource(newSource);
-  }
 }
