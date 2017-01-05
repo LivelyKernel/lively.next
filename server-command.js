@@ -112,6 +112,8 @@ export default class ServerCommand extends CommandInterface {
     var env = {...opts.env};
     if (env["ASKPASS_SESSIONID"] && askPassScript)
       env['SUDO_ASKPASS'] = env['SSH_ASKPASS'] = env['GIT_ASKPASS'] = askPassScript;
+    env['EDITOR'] = editorScript;
+    env['GIT_EDITOR'] = editorScript;
     return env
   }
 
