@@ -1,14 +1,14 @@
 /*global System, beforeEach, afterEach, describe, it*/
 
 import { expect } from "mocha-es6";
-import { removeDir, createFiles } from "./helpers.js";
 import { promise } from "lively.lang";
 
 import module from "../src/module.js";
 import { getSystem, removeSystem, loadedModules, whenLoaded } from "../src/system.js";
-import { registerPackage } from "../src/packages.js";
+import { registerPackage, importPackage } from "../src/packages.js";
+import { createFiles, resource } from "lively.resources";
 
-var dir = System.decanonicalize("lively.modules/tests/"),
+var dir = "local://lively.modules-module-test/",
     testDir = dir + "test-project/",
     module1 = `${testDir}file1.js`;
 
@@ -26,7 +26,7 @@ describe("module loading", () => {
 
   afterEach(async() => {
     removeSystem("test");
-    await removeDir(testDir);
+    await resource(testDir).remove();
   });
 
   it("loads files", async () => {
@@ -68,6 +68,28 @@ describe("module loading", () => {
     const scope = await loadedModules(System)[module1].resolvedScope();
     expect(scope.resolvedRefMap.get(scope.refs[0])).containSubset({decl: {type: "ImportDeclaration"}});
     expect(scope).to.not.property('_referencesResolved');
+  });
+
+  describe("imports", () => {
+
+    it("adds import", async () => {
+      await importPackage(System, testDir);
+      var m = await module(System, testDir + "file1.js");
+      await m.addImports([{exported: "z", from: testDir + "file3.js"}]);
+      expect(await m.source()).equals("import { y } from './file2.js';\n"
+                                    + "import { z } from \"./file3.js\";\n"
+                                    + " export var x = y + 1;");
+      expect(m.recorder.z).equals(1);
+    });
+
+    it("removes import", async () => {
+      await importPackage(System, testDir);
+      var m = await module(System, testDir + "file1.js");
+      await m.removeImports([{local: "y"}]);
+      expect(await m.source()).equals(" export var x = y + 1;");
+      expect(m.recorder.y).equals(undefined);
+    });
+
   });
 
   describe("onLoad callbacks", () => {

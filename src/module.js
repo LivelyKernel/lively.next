@@ -9,6 +9,7 @@ import { isURL } from './url-helpers.js';
 import { emit, subscribe } from "lively.notifications";
 import { defaultClassToFunctionConverterName } from "lively.vm";
 import { runtime as classRuntime } from "lively.classes";
+import { ImportInjector, ImportRemover } from "./import-modification.js";
 
 export var detectModuleFormat = (function() {
   const esmFormatCommentRegExp = /['"]format (esm|es6)['"];/,
@@ -338,7 +339,7 @@ class ModuleInterface {
           meta.kind = kind;
           return self.define(name, value, false/*signalChangeImmediately*/, meta);
         }
-          
+
       },
 
       _moduleExport: {
@@ -491,6 +492,35 @@ class ModuleInterface {
   async imports() { return query.imports(await this.scope()); }
   async exports() { return query.exports(await this.scope()); }
 
+  async addImports(specs) {
+    var source = await this.source();
+
+    for (let spec of specs) {
+      var fromModule = module(this.System, spec.from || spec.moduleId),
+          fromPackage = fromModule.package(),
+          importData = {
+            exported: spec.exported || spec.local,
+            moduleId: fromModule.id,
+            packageName: fromPackage.name,
+            packageURL: fromPackage.url,
+            pathInPackage: fromModule.pathInPackage()
+          },
+          alias = spec.local,
+          { newSource: source, standAloneImport } = ImportInjector.run(
+            this.System, this.id, this.package(), source, importData, alias);
+    }
+
+    await this.changeSource(source);
+  }
+
+  async removeImports(specs) {
+    if (!specs.length) return;
+    var source = await this.source(),
+        { source, removedImports } = await ImportRemover.removeImports(source, specs);
+    await this.changeSource(source);
+    removedImports.forEach(ea => delete this.recorder[ea.local]);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // bindings
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -585,7 +615,7 @@ class ModuleInterface {
     var S = this.System,
         records = S._loader.moduleRecords;
     if (records[this.id]) return records[this.id];
-    
+
     // see SystemJS getOrCreateModuleRecord
     return records[this.id] = {
       name: this.id,
