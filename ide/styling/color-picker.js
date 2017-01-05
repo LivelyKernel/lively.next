@@ -6,6 +6,7 @@ import {Slider} from "../../widgets.js";
 import {obj, num} from "lively.lang";
 import {ColorPalette} from "./color-palette.js";
 import {Icon} from "../../icons.js";
+import { StyleRules } from '../../style-rules.js';
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
 
@@ -135,6 +136,7 @@ export class ColorPicker extends Window {
       name: "Color Picker",
       extent: pt(400, 320),
       fill: Color.black.withA(.7),
+      styleRules: this.styler,
       borderWidth: 0,
       resizable: false,
       targetMorph: this.colorPalette(),
@@ -144,6 +146,13 @@ export class ColorPicker extends Window {
     this.titleLabel().fontColor = Color.gray;
     this.update();
     this.focus();
+  }
+
+  get styler() {
+     return new StyleRules({
+        key: {fill: Color.transparent, fontColor: Color.gray, fontWeight: 'bold'},
+        value: {fill: Color.transparent, fontColor: Color.gray.lighter()}
+     })
   }
 
   onKeyDown(evt) {
@@ -359,15 +368,8 @@ export class ColorPicker extends Window {
         this.submorphs[1].textString = obj.safeToString(value);
       },
       submorphs: [
-        new Text({
-          fill: Color.transparent,
-          textString: key,
-          fontColor: Color.gray,
-          fontWeight: "bold"}),
-        new Text({
-          fill: Color.transparent,
-          fontColor: Color.gray.lighter(),
-          textString: obj.safeToString(value)})]
+        {type: 'label', morphClasses: ['key'], value: key},
+        {type: 'label', morphClasses: ['value'], value: obj.safeToString(value)}]
     })
   }
 
