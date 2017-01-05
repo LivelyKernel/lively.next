@@ -213,6 +213,33 @@ export default function browserCommands(browser) {
     },
 
     {
+      name: "show imports and exports of package",
+      exec: async browser => {
+        var system = await browser.systemInterface()
+        var packages = await system.getPackages();
+
+        var items = packages.map(ea => {
+          return {
+                isListItem: true,
+                label: [
+                  [`${ea.name}`, {}],
+                  [`${ea.url}`, {fontSize: "70%", textStyleClasses: ["annotation"]}]
+                ],
+                value: ea
+              }
+        });
+
+        var {selected} = await browser.world().filterableListPrompt("Choose package(s)", items, {
+          multiselect: true,
+          historyId: "lively.ide.js-browser-choose-package-for-showing-export-imports-hist"
+        })
+
+        await Promise.all(selected.map(ea => system.showExportsAndImportsOf(ea.url)))
+        return true
+      }
+    },
+
+    {
       name: "run all tests in package",
       exec: async browser => {
          var p = browser.selectedPackage;
