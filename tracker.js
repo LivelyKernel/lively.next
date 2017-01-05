@@ -67,6 +67,10 @@ export default class L2LTracker extends L2LConnection {
 
     this._open = true;
     this.ioNamespace.on("connection", this._connectionHandler = this.onConnection.bind(this));
+    this.ioNamespace.on("connection",function joinRoom(socket){
+      socket.join('defaultRoom')
+      if(this.debug) console.log(`[${socket.id}] joined defaultRoom`)
+    }.bind(this))
     return Promise.resolve(this);
   }
 

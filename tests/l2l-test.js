@@ -120,6 +120,14 @@ describe('l2l', function() {
       expect(answers.map(ea => ea.data)).deep.equals([1,2,3]);
     });
 
+    it('can connect to default room', async () => {
+      var io = testServer.findPlugin("socketio").io;
+      var namespace = '/l2l-test'
+      var id = client1.socketId
+      var contents = io.nsps[namespace].adapter.rooms['defaultRoom']
+      expect(contents.sockets.hasOwnProperty(id)).equals(true)
+    })
+
   });
 
 
