@@ -19,10 +19,13 @@ export class StyleRules {
       this.rules = rules;
    }
 
-   applyToAll(root) {
+   applyToAll(root, morph) {
       const removedLayouts = {};
-      root.withAllSubmorphsDo(m => { removedLayouts[m.id] = m.layout; m.layout = null });
-      root.withAllSubmorphsDo(m => this.enforceRulesOn(m));
+      root.withAllSubmorphsDo(m => { 
+           removedLayouts[m.id] = m.layout; 
+           m.layout = null;
+       });
+      (morph || root).withAllSubmorphsDo(m => this.enforceRulesOn(m));
       root.withAllSubmorphsDo(m => {
          (m.layout = removedLayouts[m.id]) || this.applyLayout(m);
       });
@@ -32,7 +35,7 @@ export class StyleRules {
    onMorphChange(morph, change) {
     const {selector, args, prop, prevValue, value} = change;
     if (selector == "addMorphAt") {
-        this.applyToAll(args[0]);
+        this.applyToAll(morph, args[0]);
     } else if (prop == "name" || prop == "morphClasses") {
         if (prevValue == value) return;
         this.enforceRulesOn(morph);
