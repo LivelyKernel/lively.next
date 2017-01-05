@@ -768,7 +768,7 @@ export class Halo extends Morph {
   inspectHalo() {
     return this.getSubmorphNamed("inspect") || this.addMorph(new HaloItem({
       name: "inspect",
-      styleClasses: ["fa", "fa-eye"],
+      styleClasses: ["fa", "fa-gears"],
       draggable: false,
       halo: this,
       tooltip: "Inspect the morph's local state",
@@ -782,7 +782,7 @@ export class Halo extends Morph {
   editHalo() {
     return this.getSubmorphNamed("edit") || this.addMorph(new HaloItem({
       name: "edit",
-      styleClasses: ["fa", "fa-pencil"],
+      styleClasses: ["fa", "fa-wrench"],
       draggable: false,
       halo: this,
       tooltip: "Edit the morph's definition",
