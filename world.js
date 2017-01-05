@@ -689,7 +689,7 @@ export class World extends Morph {
   world() { return this }
 
   get hands() {
-    return this.submorphs.filter(ea => ea.isHand);
+    return arr.sortBy(this.submorphs.filter(ea => ea.isHand), ea => ea.pointerId);
   }
 
   get firstHand() { return this.hands[0]; }
@@ -1097,13 +1097,16 @@ export class Hand extends Morph {
     super({
       fill: Color.orange,
       extent: pt(4,4),
-      reactsToPointer: false
+      reactsToPointer: false,
+      pointerId
     });
     this.prevMorphProps = {};
-    this.pointerId = pointerId;
   }
 
   get isHand() { return true }
+
+  get pointerId() { return this.getProperty("pointerId"); }
+  set pointerId(id) { this.setProperty("pointerId", id); }
 
   get draggable() { return false; }
   set draggable(_) {}
@@ -1140,4 +1143,6 @@ export class Hand extends Morph {
       morph.animate({dropShadow: this.prevMorphProps.dropShadow, duration: 200});
     });
   }
+
 }
+
