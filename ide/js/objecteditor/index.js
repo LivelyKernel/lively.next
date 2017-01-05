@@ -8,6 +8,8 @@ import { connect } from "lively.bindings";
 import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
 import { addScript } from "lively.classes/object-classes.js";
 import { Icon } from "../../../icons.js";
+import { interactivelyInjectImportIntoModule, interactivelyChooseImports } from "../import-helper.js";
+import { module } from "lively.modules";
 
 
 // var oe = ObjectEditor.open({target: this})
@@ -94,7 +96,7 @@ export class ObjectEditor extends Morph {
 
   constructor(props = {}) {
     super({
-      extent: pt(700, 400),
+      extent: pt(800, 500),
       ...obj.dissoc(props, ["target"])
     });
     this.state = {target: null, selectedClass: null, selectedMethod: null};
@@ -142,23 +144,24 @@ export class ObjectEditor extends Morph {
         };
 
     this.submorphs = [
-      {name: "sourceEditor", ...textStyle, doSave: () => this.save()},
-
       {type: Tree, name: "classTree", treeData: new ClassTreeData(null)},
       {name: "controls",
         layout: new HorizontalLayout({direction: "centered", spacing: 2}), submorphs: [
           {...btnStyle, name: "addMethodButton", label: Icon.makeLabel("plus")},
-          {...btnStyle, name: "removeMethodButton", label: Icon.makeLabel("minus")}]
-          
-      }
+          {...btnStyle, name: "removeMethodButton", label: Icon.makeLabel("minus")}]},
+
+      {name: "sourceEditor", ...textStyle, doSave: () => this.save()},
+
+      new ImportController({name: "importController"})
     ];
 
     var l = this.layout = new GridLayout({
       grid: [
-        ["classTree", "sourceEditor"],
-        ["controls", "sourceEditor"],
+        ["classTree", "sourceEditor", "importController"],
+        ["controls", "sourceEditor", "importController"],
       ]});
-    l.col(0).fixed = 200;
+    l.col(0).fixed = 180;
+    l.col(2).fixed = 180;
     l.row(1).fixed = 30;
     // var oe = ObjectEditor.open({target: this})
 
@@ -166,6 +169,10 @@ export class ObjectEditor extends Morph {
 
     connect(this.get("classTree"), "selection", this, "onClassTreeSelection");
     connect(this.get("addMethodButton"), "fire", this, "interactivelyAddMethod");
+    connect(this.get("removeMethodButton"), "fire", this, "interactivelyRemoveMethod");
+
+    connect(this.get("addImportButton"), "fire", this, "interactivelyAddImport");
+    connect(this.get("removeImportButton"), "fire", this, "interactivelyRemoveImport");
   }
 
   async systemInterface() {
@@ -214,23 +221,25 @@ export class ObjectEditor extends Morph {
 
     var ed = this.get("sourceEditor"),
         descr = this.sourceDescriptorFor(klass),
-        {declaredNames} = await descr.declaredAndUndeclaredNames,
         source = await descr.source,
         system = await this.systemInterface(),
         format = (await system.moduleFormat(descr.module.id)) || "esm",
         [_, ext] = descr.module.id.match(/\.([^\.]+)$/) || [];
- 
+
     ed.textString = source;
 
     Object.assign(this.editorPlugin.evalEnvironment, {
       targetModule: descr.module.id,
       context: this.target,
-      knownGlobals: declaredNames,
       format
     });
+    await this.updateKnownGlobals();
 
     this.state.selectedMethod = null;
     this.state.selectedClass = klass;
+
+    this.get("importController").module = descr.module;
+
   }
 
   async selectMethod(klass, methodSpec, highlight = true) {
@@ -268,8 +277,20 @@ export class ObjectEditor extends Morph {
     }
   }
 
+  async updateKnownGlobals() {
+    var declaredNames = [], klass = this.state.selectedClass;
+    if (klass) {
+      var descr = this.sourceDescriptorFor(klass);
+      ({declaredNames} = await descr.declaredAndUndeclaredNames);
+    }
+    Object.assign(this.editorPlugin.evalEnvironment, {
+      knownGlobals: declaredNames,
+    });
+    this.editorPlugin.highlight();
+  }
+
   async interactivelyAddMethod() {
-    try {      
+    try {
       let input = await this.world().prompt("Enter method name",
                         {historyId: "object-editor-method-name-hist"});
       if (!input) return;
@@ -280,6 +301,48 @@ export class ObjectEditor extends Morph {
     } catch (e) {
       this.showError(e);
     }
+  }
+
+  async interactivelyRemoveMethod() {
+    this.setStatusMessage("Not yet implemented")
+  }
+
+  async interactivelyAddImport() {
+    try {
+      var {selectedClass, selectedMethod} = this.state;
+      if (!selectedClass) {
+        this.showError(new Error("No class selected"));
+        return;
+      }
+
+      var system = await this.editorPlugin.systemInterface(),
+          choices = await interactivelyChooseImports(system);
+      if (!choices) return null;
+
+      // FIXME move this into system interface!
+      var m = module(this.editorPlugin.evalEnvironment.targetModule);
+      await m.addImports(choices);
+
+      await this.get("importController").updateImports();
+      await this.updateKnownGlobals();
+      this.get("sourceEditor").focus();
+    } catch (e) { this.showError(e); }
+  }
+
+  async interactivelyRemoveImport() {
+    try {
+      var sels = this.get("importsList").selections;
+      if (!sels || !sels.length) return;
+      var really = await this.world().confirm(
+        "Really remove imports \n" + arr.pluck(sels, "local").join("\n") + "?")
+      if (!really) return;
+      var m = module(this.editorPlugin.evalEnvironment.targetModule);
+      await m.removeImports(sels);
+      this.get("importsList").selection = null;
+      await this.get("importController").updateImports();
+      await this.updateKnownGlobals();
+      this.get("sourceEditor").focus();
+    } catch (e) { this.showError(e); }
   }
 
   async refresh() {
@@ -293,7 +356,7 @@ export class ObjectEditor extends Morph {
                     + node.target.kind
                     + (node.target.owner ? "." + node.target.owner.name : "") :
                   node.name);
-                  
+
     if (selectedClass && selectedMethod && !tree.selection) {
       // method rename, old selectedMethod does no longer exist
       await this.selectClass(selectedClass);
@@ -344,6 +407,87 @@ localStorage["oe helper"] = JSON.stringify(store);
 }
 
 
+// new ImportController().openInWorld()
+class ImportController extends Morph {
+
+  constructor(props) {
+    super({
+      extent: pt(300,600),
+      ...props
+    });
+    this.build();
+    connect(this, "module", this, "updateImports");
+  }
+
+  build() {
+
+    var listStyle = {
+          // borderWidth: 1, borderColor: Color.gray,
+          fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif",
+          type: "list"
+        },
+
+        btnStyle = {
+          type: "button",
+          fontSize: 10,
+          activeStyle: {
+            fill: Color.white,
+            border: {color: Color.lightGray, style: "solid", radius: 5},
+            nativeCursor: "pointer"
+          },
+          extent: pt(26,24),
+        };
+
+    this.submorphs = [
+      {...listStyle, name: "importsList", multiSelect: true},
+      {name: "buttons", layout: new HorizontalLayout({direction: "centered", spacing: 2}),
+        submorphs: [
+        {...btnStyle, name: "addImportButton", label: Icon.makeLabel("plus")},
+        {...btnStyle, name: "removeImportButton", label: Icon.makeLabel("minus")},
+        {...btnStyle, name: "cleanupButton", label: "cleanup"},
+      ]},
+    ]
+
+    this.layout = new GridLayout({
+      grid: [
+        ["importsList"],
+        ["buttons"]
+      ]});
+    this.layout.row(1).fixed = 30;
+  }
+
+  async updateImports() {
+    if (!this.module) return;
+    var m = lively.modules.module(this.module);
+    var imports = await m.imports()
+    imports[0]
+
+    var items = imports.map(ea => {
+      var label = [];
+      var alias = ea.local !== ea.imported && ea.imported !== "default" ? ea.local : null;
+      if (alias) label.push([`${ea.imported} as `, {}])
+      label.push([alias || ea.local, {fontWeight: "bold"}])
+      label.push([` from ${ea.fromModule}`]);
+      return {isListItem: true, value: ea, label}
+    });
+
+    this.get("importsList").items = items;
+  }
+
+  get module() { return this.getProperty("module"); }
+  set module(moduleOrId) {
+    var id = !moduleOrId ? null : typeof moduleOrId === "string" ? moduleOrId : moduleOrId.id;
+    this.setProperty("module", id);
+  }
+
+  save() {
+    // import { serializeMorph } from "lively.morphic/serialization.js";
+    window.snapshot = serializeMorph(this).snapshot;
+  }
+
+
+}
+
 var commands = [
 
   {
@@ -355,7 +499,7 @@ var commands = [
     name: "focus code editor",
     exec: ed => { var m = ed.get("sourceEditor"); m.show(); m.focus(); return true; }
   },
-  
+
   {
     name: "save source",
     exec: async ed => {

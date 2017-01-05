@@ -5,6 +5,7 @@ import { config } from "lively.morphic";
 import { ImportInjector, ImportRemover } from "lively.modules/src/import-modification.js";
 
 
+
 export async function cleanupUnusedImports(textMorph, opts = {query: true}) {
   var source = textMorph.textString,
       unused = ImportRemover.findUnusedImports(source);
@@ -38,6 +39,19 @@ export async function cleanupUnusedImports(textMorph, opts = {query: true}) {
 }
 
 
+export async function interactivelyChooseImports(livelySystem, opts) {
+
+  // 1. gather all exorts
+  var exports = await LoadingIndicator.runFn(
+    () => livelySystem.exportsOfModules(
+      {excludedPackages: config.ide.js.ignoredPackages}), "computing imports...");
+
+  // 2. Ask what to import + generate insertions
+  var choices = await ExportPrompt.run($world, exports);
+  return !choices.length ? null : choices;
+}
+
+
 export async function interactivelyInjectImportIntoText(textMorph, opts) {
 // textMorph = that
 
@@ -51,14 +65,8 @@ export async function interactivelyInjectImportIntoText(textMorph, opts) {
   if (!jsPlugin)
      throw new Error(`cannot find js plugin of ${textMorph}`)
 
-  // 1. gather all exorts
-  var exports = await LoadingIndicator.runFn(
-    () => jsPlugin.systemInterface().exportsOfModules(
-      {excludedPackages: config.ide.js.ignoredPackages}), "computing imports...");
-
-  // 2. Ask what to import + generate insertions
-  var choices = await ExportPrompt.run(textMorph.world(), exports);
-  if (!choices.length) return null;
+  var choices = await interactivelyChooseImports(await jsPlugin.systemInterface());
+  if (!choices) return null;
 
   var moduleId = textMorph.evalEnvironment.targetModule,
       intoPackage = await jsPlugin.systemInterface().getPackageForModule(moduleId),
@@ -92,7 +100,6 @@ export async function interactivelyInjectImportIntoText(textMorph, opts) {
     let source = importedVarNames.join("\n"),
         pos = textMorph.cursorPosition,
         before = textMorph.getLine(pos.row).slice(0, pos.col);
-    if (before.trim()) source = "\n" + source;
     textMorph.selection.text = source;
     if (!gotoImport) textMorph.scrollCursorIntoView();
   }
