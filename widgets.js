@@ -81,7 +81,7 @@ export class Leash extends Path {
               update(change) {
                  const globalPos = this.getConnectionPoint(),
                        pos = leash.localize(globalPos);
-                 this.setVertex({...this.vertex, ...leash.localize(globalPos)});
+                 this.setVertex({...this.vertex, ...pos});
               },
               clearConnection() {
                  if (this.connectedMorph) {
@@ -91,7 +91,7 @@ export class Leash extends Path {
               },
               relayout() {
                 const {x,y} = this.getVertex(), bw = leash.borderWidth;
-                // this.extent = this.pt((2*bw), (2 * bw));
+                //this.extent = this.pt((2*bw), (2 * bw));
                 this.center = pt(x + bw,y + bw);
               },
               getVertex() {
@@ -441,8 +441,8 @@ export class ModeSelector extends Morph {
          keys, values, tooltips,
          morphClasses: ['root'],
          layout: new GridLayout({
-             grid: [[null, ...arr.interpose(keys.map(k => k + "Label"), null), null]],
-             autoAssign: false, fitToCell: false, 
+             grid: [[...arr.interpose(keys.map(k => k + "Label"), null)]],
+             autoAssign: false, fitToCell: true, 
          }),
          ...props
       })
@@ -458,6 +458,8 @@ export class ModeSelector extends Morph {
             {name: "typeMarker"},
             ...this.createLabels(this.keys, this.values, this.tooltips)
          ]
+       this.layout.col(0).row(0).group.align = "topCenter";
+       this.layout.col(2).row(0).group.align = "topCenter";
        this.applyStyler();
     }
 
@@ -475,7 +477,7 @@ export class ModeSelector extends Morph {
 
     get styler() {
        return {
-          root: {fill: Color.transparent, 
+          root: {fill: Color.transparent,
                  height: 30, origin: pt(0,5)},
           typeMarker: {fill: Color.gray.darker(), borderRadius: 3},
           label: {fontWeight: 'bold', nativeCursor: "pointer", padding: 4}
@@ -489,6 +491,7 @@ export class ModeSelector extends Morph {
                    return {
                       name: name + "Label", morphClasses: ['label'],
                       type: "label", value: name, 
+                      ...this.labelStyle,
                       ...tooltip && {tooltip},
                       onMouseDown: () => {
                          this.update(name, value);
@@ -504,9 +507,9 @@ export class ModeSelector extends Morph {
     async update(label, value, silent=false) {
        const newLabel = this.get(label + "Label"), duration = 200
        if (newLabel == this.currentLabel) return;
-       this.currentLabel && this.currentLabel.animate({fontColor: Color.black, duration});
+       if (this.currentLabel) this.currentLabel.fontColor = Color.black;
        this.currentLabel = newLabel;
-       newLabel.animate({fontColor: Color.white, duration});
+       newLabel.fontColor = Color.white;
        await this.relayout(duration);
        !silent && signal(this, label, value)
        !silent && signal(this, "switchLabel", value);
@@ -537,9 +540,10 @@ export class DropDownSelector extends Morph {
    }
 
    getMenuEntries() {
-      return this.commands.map(c => { 
-          return {command: c.name, target: this}
-         });
+      const currentValue = this.getNameFor(this.target[this.property]);
+      return [{command: currentValue, target: this}, ...arr.compact(this.commands.map(c => { 
+          return c.name != currentValue && {command: c.name, target: this}
+         }))];
    }
 
    get commands() {
