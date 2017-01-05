@@ -456,15 +456,79 @@ var Resource = function () {
       return ensureExistance;
     }()
   }, {
-    key: "read",
+    key: "copyTo",
     value: function () {
-      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(otherResource) {
+        var _this2 = this;
+
+        var toFile, fromResources, toResources;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                nyi(this, "read");
-              case 1:
+                if (!this.isFile()) {
+                  _context2.next = 10;
+                  break;
+                }
+
+                toFile = otherResource.isFile() ? otherResource : otherResource.join(this.name());
+                _context2.t0 = toFile;
+                _context2.next = 5;
+                return this.read();
+
+              case 5:
+                _context2.t1 = _context2.sent;
+                _context2.next = 8;
+                return _context2.t0.write.call(_context2.t0, _context2.t1);
+
+              case 8:
+                _context2.next = 22;
+                break;
+
+              case 10:
+                if (otherResource.isDirectory()) {
+                  _context2.next = 12;
+                  break;
+                }
+
+                throw new Error("Cannot copy a directory to a file!");
+
+              case 12:
+                _context2.next = 14;
+                return this.dirList('infinity');
+
+              case 14:
+                fromResources = _context2.sent;
+                toResources = fromResources.map(function (ea) {
+                  return otherResource.join(ea.relativePathFrom(_this2));
+                });
+                _context2.next = 18;
+                return otherResource.ensureExistance();
+
+              case 18:
+                _context2.next = 20;
+                return fromResources.reduceRight(function (next, ea, i) {
+                  return function () {
+                    return Promise.resolve(ea.isDirectory() && toResources[i].ensureExistance()).then(next);
+                  };
+                }, function () {
+                  return Promise.resolve();
+                })();
+
+              case 20:
+                _context2.next = 22;
+                return fromResources.reduceRight(function (next, ea, i) {
+                  return function () {
+                    return Promise.resolve(ea.isFile() && ea.copyTo(toResources[i])).then(next);
+                  };
+                }, function () {
+                  return Promise.resolve();
+                })();
+
+              case 22:
+                return _context2.abrupt("return", this);
+
+              case 23:
               case "end":
                 return _context2.stop();
             }
@@ -472,21 +536,21 @@ var Resource = function () {
         }, _callee2, this);
       }));
 
-      function read() {
+      function copyTo(_x4) {
         return _ref2.apply(this, arguments);
       }
 
-      return read;
+      return copyTo;
     }()
   }, {
-    key: "write",
+    key: "read",
     value: function () {
       var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                nyi(this, "write");
+                nyi(this, "read");
               case 1:
               case "end":
                 return _context3.stop();
@@ -495,21 +559,21 @@ var Resource = function () {
         }, _callee3, this);
       }));
 
-      function write() {
+      function read() {
         return _ref3.apply(this, arguments);
       }
 
-      return write;
+      return read;
     }()
   }, {
-    key: "exists",
+    key: "write",
     value: function () {
       var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
-                nyi(this, "exists");
+                nyi(this, "write");
               case 1:
               case "end":
                 return _context4.stop();
@@ -518,21 +582,21 @@ var Resource = function () {
         }, _callee4, this);
       }));
 
-      function exists() {
+      function write() {
         return _ref4.apply(this, arguments);
       }
 
-      return exists;
+      return write;
     }()
   }, {
-    key: "remove",
+    key: "exists",
     value: function () {
       var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
-                nyi(this, "remove");
+                nyi(this, "exists");
               case 1:
               case "end":
                 return _context5.stop();
@@ -541,21 +605,21 @@ var Resource = function () {
         }, _callee5, this);
       }));
 
-      function remove() {
+      function exists() {
         return _ref5.apply(this, arguments);
       }
 
-      return remove;
+      return exists;
     }()
   }, {
-    key: "dirList",
+    key: "remove",
     value: function () {
-      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(depth, opts) {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
               case 0:
-                nyi(this, "dirList");
+                nyi(this, "remove");
               case 1:
               case "end":
                 return _context6.stop();
@@ -564,21 +628,21 @@ var Resource = function () {
         }, _callee6, this);
       }));
 
-      function dirList(_x4, _x5) {
+      function remove() {
         return _ref6.apply(this, arguments);
       }
 
-      return dirList;
+      return remove;
     }()
   }, {
-    key: "readProperties",
+    key: "dirList",
     value: function () {
-      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(opts) {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(depth, opts) {
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
               case 0:
-                nyi(this, "readProperties");
+                nyi(this, "dirList");
               case 1:
               case "end":
                 return _context7.stop();
@@ -587,8 +651,31 @@ var Resource = function () {
         }, _callee7, this);
       }));
 
-      function readProperties(_x6) {
+      function dirList(_x5, _x6) {
         return _ref7.apply(this, arguments);
+      }
+
+      return dirList;
+    }()
+  }, {
+    key: "readProperties",
+    value: function () {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(opts) {
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+          while (1) {
+            switch (_context8.prev = _context8.next) {
+              case 0:
+                nyi(this, "readProperties");
+              case 1:
+              case "end":
+                return _context8.stop();
+            }
+          }
+        }, _callee8, this);
+      }));
+
+      function readProperties(_x7) {
+        return _ref8.apply(this, arguments);
       }
 
       return readProperties;

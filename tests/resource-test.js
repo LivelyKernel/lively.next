@@ -176,7 +176,48 @@ describe('http', function() {
       ]);
     });
 
-  })
+  });
+  
+  describe("copying", () => {
+
+    it("file to non-existing file", async () => {
+      var r = resource(testProjectDir);
+      await r.join("file1.js").copyTo(r.join("sub-dir/file3.js"));
+      expect(await r.join("sub-dir/file3.js").read()).equals("foo bar");
+    });
+
+    it("file to existing file", async () => {
+      var r = resource(testProjectDir);
+      await r.join("file1.js").copyTo(r.join("sub-dir/file2.js"));
+      expect(await r.join("sub-dir/file2.js").read()).equals("foo bar");
+    });
+
+    it("file to dir", async () => {
+      var r = resource(testProjectDir);
+      await r.join("file1.js").copyTo(r.join("sub-dir/"));
+      expect(await r.join("sub-dir/file1.js").read()).equals("foo bar");
+    });
+
+    it("dir to dir", async () => {
+      var r = resource(testProjectDir);
+      await r.join("new-dir/").ensureExistance()
+      await r.join("new-dir/sub-dir/").ensureExistance()
+      await r.join("new-dir/foo.txt").ensureExistance("hello")
+      await r.join("new-dir/sub-dir/bar.txt").ensureExistance("world")
+
+      await r.join("new-dir/").copyTo(r.join("new-dir-2/"));
+
+      expect((await r.join("new-dir-2/").dirList('infinity')).map(ea => ea.url)).deep.equals([
+        r.join("new-dir-2/foo.txt").url,
+        r.join("new-dir-2/sub-dir/").url,
+        r.join("new-dir-2/sub-dir/bar.txt").url
+      ]);
+      expect(await r.join("new-dir-2/foo.txt").read()).equals("hello");
+      expect(await r.join("new-dir-2/sub-dir/bar.txt").read()).equals("world");
+    });
+
+  });
+
 });
 
 
