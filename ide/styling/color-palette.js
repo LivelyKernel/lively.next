@@ -10,6 +10,8 @@ import { StyleRules } from "../../style-rules.js";
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
 
+const duration = 200;
+
 export class ColorPalette extends Morph {
 
    constructor(props) {
@@ -17,7 +19,7 @@ export class ColorPalette extends Morph {
       this.color = props.color || Color.blue,
       this.colorFieldWidth = 20,
       super({
-         morphClasses: ['body'],
+         morphClasses: ['back'],
          styleRules: this.styler,
          ...props,
       });
@@ -25,6 +27,13 @@ export class ColorPalette extends Morph {
       this.pivotColor = Color.hsb(h,s,1);
       this.build();
       this.active = true;
+   }
+
+   onDrag(evt) {
+      const a = this.get('arrow'),
+            dt = a.getTransform().transformDirection(evt.state.dragDelta.negated());
+      this.moveBy(evt.state.dragDelta);
+      a.vertices[1].moveBy(dt);
    }
 
    fadeIntoWorld(pos) {
@@ -39,10 +48,14 @@ export class ColorPalette extends Morph {
       return new StyleRules({
          body:{
            fill,
-           dropShadow: true,
            extent: pt(200,300),
-           borderRadius: 5,
-           layout: new VerticalLayout({ignore: ["arrow"]})},
+           borderRadius: 5, reactsToPointer: false,
+           layout: new VerticalLayout()},
+         back: {
+           fill: Color.transparent, dropShadow: true, borderRadius: 5,
+           extent: pt(200,300),
+           layout: new VerticalLayout({ignore: ["arrow"]})
+         },
          arrow: { fill, grabbable: false, draggable: false },
          paletteFormatter: {layout: new HorizontalLayout({spacing: 5}),
                             fill: Color.transparent},
@@ -50,7 +63,7 @@ export class ColorPalette extends Morph {
                             fill: Color.transparent},
          paletteView: {clipMode: "hidden", fill: Color.transparent},
          solidColorPalette: {fill: Color.transparent, layout: new VerticalLayout()},
-         paletteContainer: {fill: Color.transparent, layout: new TilingLayout(),
+         paletteContainer: {fill: Color.transparent,
                             rotation: num.toRadians(90)},
          vacantColorField: {
              extent: pt(this.colorFieldWidth, this.colorFieldWidth),
@@ -126,9 +139,14 @@ export class ColorPalette extends Morph {
 
    build() {
      this.cachedPalette = {};
-     this.submorphs = [{type: "triangle", name: "arrow"},
-                       this.fillTypeSelector(),
-                       this.paletteView()];
+     this.submorphs = [{type: "polygon", name: "arrow", 
+                        vertices: [pt(-1,0),pt(0,-.5), pt(1,0)],
+                        bottomCenter: pt(this.width/2, 0)},
+                       {name: 'body',
+                        submorphs: [
+                           this.fillTypeSelector(),
+                           this.paletteView()]
+                        }];
      this.selectSolidMode();
    }
 
@@ -140,27 +158,41 @@ export class ColorPalette extends Morph {
             world = this.world(),
             buttonSize = this.width/15;
       paletteView.relayout();
-      fillTypeSelector.animate({width: paletteView.bounds().width, duration: 200});
+      fillTypeSelector.animate({width: paletteView.bounds().width, duration});
       harmonyPalette.relayout();
+      arrow.vertices = [pt(-1,1), pt(0,.5), pt(1,1)];
       arrow.extent = pt(buttonSize, buttonSize);
-      arrow.bottomCenter = pt(this.width/2, 1);
       if (world) {
+          arrow.remove();
           const heightInWorld = world.visibleBounds().height - this.initPosition.y;
           this.globalPosition = world.visibleBounds()
                                      .translateForInclusion(this.globalBounds())
-                                     .topLeft().addXY(0, buttonSize);
+                                     .topLeft();
           if (this.initPosition) {
               if (heightInWorld < this.height) {
-                 world.logError('move up')
-                 this.bottomCenter = this.owner
+                 this.animate({bottomCenter: this.owner
                                          .localize(this.initPosition)
-                                         .addXY(0,-buttonSize)
-                                         .withX(this.bottomCenter.x);
+                                         .addXY(0,1 - buttonSize)
+                                         .withX(this.bottomCenter.x), duration});
                  arrow.rotation = Math.PI;
               } else {
+                this.animate({topCenter: this.owner
+                       .localize(this.initPosition)
+                       .addXY(0, -1)
+                       .withX(this.topCenter.x), duration});
                  arrow.rotation = 0;
               }
-              arrow.bottomCenter = this.localize(this.initPosition);
+              this.addMorph(arrow, this.get('body'));
+              arrow.animate({bottomCenter: this.localize(this.initPosition), duration});
+          }
+          this.addMorph(arrow, this.get('body'))
+          if (arrow.bottomLeft.x < 0) {
+             this.animate({position: this.position.addXY(arrow.bottomLeft.x, 0), duration});
+             arrow.animate({bottomLeft: arrow.bottomLeft.withX(0), duration});
+          }
+          if (arrow.bottomRight.x > this.width) {
+             this.animate({position: this.position.addXY(arrow.bottomRight.x - this.width, 0), duration})
+             arrow.animate({bottomRight: arrow.bottomRight.withX(this.width), duration});
           }
       }
    }
@@ -169,7 +201,7 @@ export class ColorPalette extends Morph {
       return {
         name: "paletteView",
         relayout() {
-           this.animate({extent: this.submorphs.find(p => p.visible).extent, duration: 300});
+           this.animate({extent: this.submorphs.find(p => p.visible).extent, duration});
         },
         submorphs: [this.solidColorPalette(), this.harmonyPalette()]
       }
@@ -195,6 +227,7 @@ export class ColorPalette extends Morph {
 
    fillTypeSelector() {
       const selector = new ModeSelector({
+                               reactsToPointer: false,
                                name: "fillTypeSelector",
                                items: ["Color Palette", "Color Harmonies"],
                                tooltips: {"Color Harmonies": this.getPaletteDescription("harmony")}
@@ -227,6 +260,7 @@ export class ColorPalette extends Morph {
              width =  mod * this.colorFieldWidth,
              paddedColors = [...colors, ...arr.withN((cols * mod) - colors.length, null)];
        return {width, height, name: "paletteContainer",
+               layout: new TilingLayout(),
                submorphs: paddedColors.map(c => {
                   const  fill = c && Color.rgbHex(c)
                   return c ? {
@@ -435,7 +469,7 @@ export class ColorPalette extends Morph {
                          h = h < 0 ? h + 360 : h,
                          s = Math.min(newPos.r()/50, 1);
                    colorPalette.pivotColor = Color.hsb(h, s, b);
-                   colorPalette.relayout();
+                   this.get("harmonyPalette").relayout();
                 },
               }]
           }]

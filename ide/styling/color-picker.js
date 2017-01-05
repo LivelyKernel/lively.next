@@ -58,9 +58,7 @@ export class ColorPickerField extends Morph {
 
    onHoverIn() {
       if (!this.palette) 
-          this.palette = new ColorPalette({
-                    extent: pt(400,310),
-                    color: this.targetProperty});
+           this.palette = new ColorPalette({color: this.targetProperty});
    }
 
    onKeyDown(evt) {
@@ -99,9 +97,7 @@ export class ColorPickerField extends Morph {
    }
 
    async openPalette(evt) {
-      const p = this.palette || new ColorPalette({
-                    extent: pt(400,310),
-                    color: this.targetProperty});
+      const p = this.palette || new ColorPalette({color: this.targetProperty});
       p.position = pt(0,0);
       connect(p, "color", this.target, this.property);
       connect(p, "color", this, "update");

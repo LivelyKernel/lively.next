@@ -212,6 +212,10 @@ export class GradientEditor extends Morph {
               
            },
            onHoverIn() {
+              const color = self.targetProperty.stops[idx].color;
+              this.palette = this.palette || new ColorPalette({color}),
+              this.picker = this.picker || new ColorPicker({color}),
+              this.picker.color = color;
               this.scheduleExpand();
            },
            onHoverOut() {
@@ -273,10 +277,9 @@ export class GradientEditor extends Morph {
            updateColor(color) {
                gradientEditor.updateStop(idx, {color});
            },
-           openColorWidget(name, widget) {
+           openColorWidget(name) {
                gradientEditor.stopControls.forEach(c => c.head.closeAllWidgets());
-               this[name] = this[name] || new widget({color: this.stopColor});
-               this[name].position = pt(0,0);
+               this[name].position = pt(0,0); 
                connect(this[name], "color", this, "updateColor");
                connect(this[name], "close", this, "onWidgetClosed");
                connect(self, "remove", this[name], "remove");
@@ -298,7 +301,7 @@ export class GradientEditor extends Morph {
                      this.fill = stopControl.stopColor = gradient.stops[idx].color;
                   },
                   onMouseDown: () => {
-                     this.openColorWidget("palette", ColorPalette);
+                     this.openColorWidget("palette");
                      this.closeColorWidget("picker");
                   }
                }
@@ -310,7 +313,7 @@ export class GradientEditor extends Morph {
                      this.stopColor = gradient.stops[idx].color
                   },
                   onMouseDown: () => {
-                     this.openColorWidget("picker", ColorPicker);
+                     this.openColorWidget("picker");
                      this.closeColorWidget("palette");
                   }
                });
