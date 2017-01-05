@@ -97,8 +97,16 @@ export default class LivelyServer {
     return promise.waitFor(timeout, () => this.isListening()).then(() => this);
   }
 
-  whenClosed(timeout = 1000) {
-    return promise.waitFor(timeout, () => this.isClosed()).then(() => this);
+  whenClosed(timeout = 1000, callback) { 
+    if (!callback && typeof timeout === "function") {
+      callback = timeout;
+      timeout = 1000;
+    }
+    return promise.waitFor(timeout, () => this.isClosed()).then(() => {
+      if (typeof callback === "function") callback();
+      return true;
+    });
+    
   }
 
   start() {
@@ -135,20 +143,27 @@ export default class LivelyServer {
 
     debug && console.log(`[lively.server] initialize shutdown of ${this}`)
 
+    
+
     var {debug, server} = this;
-
-    server.removeListener("request", this._requestFn);
-
-    this.whenClosed(() => this.constructor._unregister(this));
-
-    server.close();
-
+     server.close();
+    // console.log(server)     
+          server.removeListener("request", this._requestFn);                  
+          
+          this.whenClosed(() => {            
+            this.constructor._unregister(this)
+              
+          })   
+   
+    
     for (let p of this.plugins) {
       try { typeof p.close === "function" && await p.close(); } catch (e) {
         console.error(`[ ${this}] Error in shutdown of plugin ${p.pluginId}:\n${e.stack}`);
       }
     }
 
+   
+    
     return this;
   }
 
