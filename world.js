@@ -731,18 +731,25 @@ export class World extends Morph {
     // halo activation + removal
     // note that the logic for cycling halos from morph to underlying morph is
     // implemented in Halo>>onMouseDown
-    if (!target.isHaloItem &&
-         evt.halo && evt.halo.borderBox != target &&
-         isCommandKey && isShiftKey) {
-       evt.halo.addMorphToSelection(target);
+    var haloTarget;
+    if (isCommandKey) {
+      var morphsBelow = evt.world.morphsContainingPoint(evt.position),
+          morphsBelowTarget = morphsBelow.slice(morphsBelow.indexOf(target));
+      morphsBelow = morphsBelow.filter(ea => ea.halosEnabled);
+      morphsBelowTarget = morphsBelowTarget.filter(ea => ea.halosEnabled);
+      haloTarget = morphsBelowTarget[0] || morphsBelow[0];
+    }
+    if (isShiftKey && !target.isHaloItem && haloTarget &&
+         evt.halo && evt.halo.borderBox != haloTarget) {
+       evt.halo.addMorphToSelection(haloTarget);
        return;
     }
     var removeHalo = evt.halo && !evt.targetMorphs.find(morph => morph.isHaloItem),
         removeLayoutHalo = evt.layoutHalo && !evt.targetMorphs.find(morph => morph.isHaloItem),
-        addHalo = (!evt.halo || removeHalo) && target.halosEnabled && isCommandKey;
+        addHalo = (!evt.halo || removeHalo) && haloTarget;
     if (removeLayoutHalo) evt.layoutHalo.remove();
     if (removeHalo) evt.halo.remove();
-    if (addHalo) { this.showHaloFor(target, evt.domEvt.pointerId); return; }
+    if (addHalo) { this.showHaloFor(haloTarget, evt.domEvt.pointerId); return; }
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     if (evt.state.menu) evt.state.menu.remove();
