@@ -1,6 +1,6 @@
 /*global Map*/
 import L2LConnection from "./interface.js";
-import { defaultActions } from "./default-actions.js";
+import { defaultActions, defaultTrackerActions } from "./default-actions.js";
 
 // Array.from(L2LTracker._trackers.keys());
 // Array.from(L2LTracker._trackers.values())[1].remove()
@@ -44,9 +44,18 @@ export default class L2LTracker extends L2LConnection {
       
     Object.keys(defaultActions).forEach(name =>
       this.addService(name, defaultActions[name]));
+    Object.keys(defaultTrackerActions).forEach(name =>
+      this.addService(name, defaultTrackerActions[name]));
+      
   }
 
   get ioNamespace() { return this.io.of(this.namespace); }
+
+  getTrackerList() {
+    return Array.from(this.constructor._trackers).map(function(ea){
+      return ea[1]
+    }
+  )}
 
   isOnline() { return this._open; }
 

@@ -20,8 +20,68 @@ export var defaultActions = {
 }
 
 
-export var defaultClientActions = {
+export var defaultTrackerActions = {
 
+  async "broadcast": (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) => { 
+    socket.broadcast.to(roomName).emit(broadcastMessage)
+    ackFn ? ackFn({status: 'Message delivered to ' + roomName}) : {}
+  },
+  async "systemBroadcast": (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) => {
+     var io = tracker.io;     
+    io.nsps["/" + tracker.namespace].to(roomName).emit(broadcastMessage)
+    ackFn ? ackFn({status: 'System Broadcast Message delivered to ' + roomName}) : {}   
+  },
+  async "multiServerBroadcast": (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) =>{
+      
+      var id = tracker.id
+      var trackers = tracker.getTrackerList()
+      trackers.forEach(function(tracker){
+        var io = tracker.io;
+        if (tracker.id != id){
+            io.nsps["/" + tracker.namespace].to(roomName).emit(broadcastMessage)
+        } else {
+            socket.broadcast.to(roomName).emit(broadcastMessage)
+        }
+        
+        ackFn ? ackFn({status: 'System Broadcast Message delivered to ' + roomName}) : {}
+      })
+  
+  },  
+   async "joinRoom": (tracker, {sender, data: {roomName}}, ackFn, socket) => {
+      await socket.join(roomName)
+      ackFn ? ackFn({status: 'Joined ' + roomName}) : {}   
+  },
+  async "leaveRoom": (tracker, {sender, data: {roomName}}, ackFn, socket) => {
+      socket.leave(roomName)
+      ackFn ? ackFn({status: 'Left ' + roomName}) : {}   
+  },
+  async "listRoom": (tracker, {sender, data: {roomName}}, ackFn, socket) => {
+      var io = tracker.io
+      var contents
+      if (roomName){
+        contents = io.nsps["/" + tracker.namespace].adapter.rooms[roomName]
+        ackFn ? ackFn({roomName: roomName, sockets: contents.sockets,length: contents.length}) : {}
+        
+      } else {
+        contents = io.nsps["/" + tracker.namespace].adapter.rooms        
+        ackFn ? ackFn({roomList: contents}) : {}
+      }
+               
+      
+  }
+}
+
+
+export var defaultClientActions = {
+  async "getServers": (ackFn) => {
+    if (!(ackFn && typeof ackFn =='function')){
+      console.log('Bad or Missing Ack Function')
+    }
+    var response = Array.from(LivelyServer.servers).map(function(ea){
+                      return ea[1]
+                   })
+    typeof ackFn === "function" && ackFn(response);
+  },  
   async "ask for": (tracker, {sender, data: {query}}, ackFn, socket) => {
     var promptMethod = query.match(/password|sudo/i) ? 'passwordPrompt' : 'prompt',
         answer = await $$world[promptMethod](query);
