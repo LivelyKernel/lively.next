@@ -86,7 +86,11 @@ function dragStartEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layo
 function dragEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layoutHalo) {
   var evt = new Event("drag", domEvt, dispatcher, [state.draggedMorph], hand, halo, layoutHalo)
     .onDispatch(() => {
-      state.dragDelta = evt.position.subPt(state.lastDragPosition);
+      state.dragDelta = (state.draggedMorph.owner || dispatcher.world)
+                             .getInverseTransform()
+                             .transformDirection(
+                                   evt.position.subPt(
+                                        state.lastDragPosition));
     })
     .onAfterDispatch(() => state.lastDragPosition = evt.position)
     .onStop(() => {
@@ -97,8 +101,13 @@ function dragEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layoutHal
 }
 
 function dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layoutHalo) {
-  var evt = new Event("dragend", domEvt, dispatcher, [state.draggedMorph || targetMorph], hand, halo, layoutHalo)
-    .onDispatch(() => state.dragDelta = evt.position.subPt(state.lastDragPosition))
+  var ctx = state.draggedMorph || targetMorph,
+      evt = new Event("dragend", domEvt, dispatcher, [ctx], hand, halo, layoutHalo)
+    .onDispatch(() => state.dragDelta = (ctx.owner || dispatcher.world)
+                                             .getInverseTransform()
+                                             .transformDirection(
+                                                   evt.position.subPt(
+                                                        state.lastDragPosition)))
     .onAfterDispatch(() => {
       state.draggedMorph = null;
       state.lastDragPosition = null;
