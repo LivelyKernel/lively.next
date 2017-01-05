@@ -173,20 +173,22 @@ class StyleHalo extends Morph {
    }
 
    openBorderStyler() {
-      this.borderColor = Color.transparent;
+      this.bodyStyler.hide();
+      this.borderHalo.deactivate();
       if (this.borderStyler.opened) return;
-      this.leash = this.world().addMorph(new Leash({start: pt(0,0), end: pt(10,10), opacity: 0}), this);
+      this.leash = this.world().addMorph(new Leash({start: pt(0,0), end: pt(10,10), opacity: 0}), this.borderStyler);
       this.leash.startPoint.attachTo(this.borderHalo, this.getSideInWorld());
       this.leash.endPoint.attachTo(this.borderStyler, "center");
       this.leash.animate({opacity: .7, duration: 300});
-      this.bodyStyler.hide();
       this.borderStyler.open()
       connect(this.borderStyler, "close", this.bodyStyler, "show");
       connect(this.borderStyler, "close", this.leash, "remove");
+      connect(this.borderStyler, "close", this.borderHalo, "activate");
    }
 
    openBodyStyler() {
       this.borderStyler.hide();
+      this.borderHalo.deactivate();
       if (this.bodyStyler.opened) return;
       this.leash = this.world().addMorph(new Leash({start: pt(0,0), end: pt(10,10), opacity: 0}), this.bodyStyler);
       this.leash.startPoint.attachTo(this.borderHalo, "center");
@@ -195,14 +197,24 @@ class StyleHalo extends Morph {
       this.bodyStyler.open();
       connect(this.bodyStyler, "close", this.borderStyler, "show");
       connect(this.bodyStyler, "close", this.leash, "remove");
+      connect(this.bodyStyler, "close", this.borderHalo, "activate");
    }
 
    borderHaloShape(props) {
       const halo = this, target = this.target;
       return {
          borderRadius: this.target.borderRadius,
-         isHaloItem: true,
+         isHaloItem: true, active: true,
+         deactivate() {
+            this.active = false;
+            this.borderColor = Color.transparent;
+         },
+         activate() {
+            this.active = true;
+            this.borderColor = Color.orange.withA(.4);
+         },
          selectBorder() {
+            if (!this.active) return; 
             this.borderColor = Color.orange;
             halo.nativeCursor = this.nativeCursor = "pointer";
             this.borderSelected = true;
@@ -210,6 +222,7 @@ class StyleHalo extends Morph {
             halo.selectBorder();
          },
          deselectBorder(evt) {
+            if (!this.active) return;
             this.borderColor = Color.orange.withA(.4);
             halo.nativeCursor = this.nativeCursor = null;
             this.borderSelected = false;
@@ -229,32 +242,13 @@ class StyleHalo extends Morph {
              halo.bodyStyler.blur()
          },
          alignWithTarget() {
-           const globalBounds = halo.targetBounds, 
-                 visibleBounds = this.env.world.visibleBounds(),
-                 {x, y, width, height} = globalBounds.intersection(visibleBounds),
-                 cornersInWorld = ["topLeft", "topRight", "bottomRight", "bottomLeft"].filter(s => 
-                      visibleBounds.containsPoint(globalBounds[s]())),
-                 b = this.owner.localize(pt(x,y)).extent(pt(width,height));
+           const {width, height} = halo.targetBounds, 
+                 b = pt(0,0).extent(pt(width,height));
            this.setBounds(b);
            this.borderWidth = Math.max(3, target.borderWidth);
-           this.borderRadius = 0;
-           cornersInWorld.forEach(s => {
-              switch (s) {
-                 case "topLeft":
-                    this.borderRadiusTop = this.borderRadiusLeft = target.borderRadius;
-                    break;
-                 case "topRight":
-                    this.borderRadiusTop = this.borderRadiusRight = target.borderRadius;
-                    break;
-                 case "bottomRight":
-                    this.borderRadiusBottom = this.borderRadiusRight = target.borderRadius;
-                    break;
-                 case "bottomLeft":
-                    this.borderRadiusBottom = this.borderRadiusLeft = target.borderRadius;
-              }
-           })
          },
          onMouseDown(evt) {
+            if (!this.active) return;
             if (evt.state.clickedOnMorph != this) return;
             if (this.borderSelected) {
                 halo.openBorderStyler();
@@ -269,13 +263,6 @@ class StyleHalo extends Morph {
       }
    }
 
-   get stylizing() { 
-      return (this.borderStyler.opened) || 
-             (this.bodyStyler.opened) ||
-             (this.layoutStyleEditor.opened) ||
-             (this.get("borderRadiusHalo") && this.get("borderRadiusHalo").active) 
-   }
-
    getBorderHalo() {
       const target = this.target, 
             halo = this;
@@ -283,9 +270,7 @@ class StyleHalo extends Morph {
          name: "borderHalo",
          update(evt) {
            this.alignWithTarget()
-           if (halo.stylizing) return;
-           if (halo.isOnMorphBorder(evt) || 
-               (evt && halo.borderStyler.fullContainsPoint(evt.position))) {
+           if (halo.isOnMorphBorder(evt)) {
               this.selectBorder();
            } else {
               this.deselectBorder(evt);
@@ -313,7 +298,9 @@ class StyleHalo extends Morph {
           this.borderStyler = this.getBorderStyler();
       }
       this.borderStyler.show();
-      this.borderStyler.center = this.targetBounds.insetByRect(rect(-100, -50, 0, -50))[this.getSideInWorld()]();
+      this.borderStyler.center = this.env.world.visibleBounds()
+                                     .intersection(this.target.globalBounds())
+                                     .insetByRect(rect(-100, -50, 0, -50))[this.getSideInWorld()]();
    }
 
    getBorderStyler() {
@@ -323,6 +310,8 @@ class StyleHalo extends Morph {
                title: "Change Border Style",
        });
        connect(borderStyler, "open", this, "openBorderStyler");
+       connect(borderStyler, "show", this.borderHalo, "selectBorder")
+       connect(borderStyler, "blur", this.borderHalo, "deselectBorder")
        return borderStyler;
    }
 
@@ -336,7 +325,8 @@ class StyleHalo extends Morph {
           this.bodyStyler = this.getBodyStyler();
       }
       this.bodyStyler.openInWorld();
-      this.bodyStyler.center = this.targetBounds.center();
+      this.bodyStyler.center = this.env.world.visibleBounds()
+                                   .intersection(this.target.globalBounds()).center();
       this.bodyStyler.show();
    }
 
