@@ -128,7 +128,7 @@ export class ColorPalette extends Morph {
    set pivotBrightness(b) {
       const [h,s] = (this.pivotColor || this.color).toHSB();
       this.pivotColor = Color.hsb(h,s,b);
-      this.relayout();
+      this.get('harmonyPalette').relayout();
    }
 
    get harmony() { return this._harmony }
