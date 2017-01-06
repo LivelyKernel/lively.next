@@ -1095,12 +1095,26 @@ export class Text extends Morph {
     return result;
   }
 
-  saveExcursion(doFn) {
+  saveExcursion(doFn, opts) {
+    // run doFn that can change the morph arbitrarily and keep selection /
+    // scroll as it was before doFn.
+    // if opts = {useAnchors: true} is used then use anchors to mark selection.
+    // subsequent text modifications will move anchors around. useful for
+    // insertText / deleteText but not helpful when entire textString changes.
+    opts = {useAnchors: false, ...opts};
     var sels = this.selection.isMultiSelection ?
                 this.selection.selections.map(ea => ea.directedRange) :
                 [this.selection],
+        anchors = opts.useAnchors ? sels.map(({start, end}) => [
+          this.addAnchor({...start, id: "save-excursion-" + string.newUUID()}),
+          this.addAnchor({...end, id: "save-excursion-" + string.newUUID()}),
+        ]) : null,
         isPromise = false,
-        cleanup = () => this.selections = sels;
+        cleanup = opts.useAnchors ? () => {
+          var sels = anchors.map(([{position: start}, {position: end}]) => ({start, end}));
+          this.selections = sels;
+          anchors.forEach(([a, b]) => { this.removeAnchor(a); this.removeAnchor(b); });
+        } : () => this.selections = sels;
     try {
       var result = this.keepPosAtSameScrollOffsetWhile(doFn);
       isPromise = result && result instanceof Promise;

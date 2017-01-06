@@ -497,6 +497,33 @@ describe("text movement and selection commands", () => {
     expect(t.selection.text).equals("ll");
   });
 
+  describe("saveExcursion", () => {
+  
+    it("insert moves saved selections using anchors", async () => {
+      var t = text("hello\n world", {});
+      t.selection = range(0,2,0,4);
+      var nAnchors = t.anchors.length;
+      await t.saveExcursion(() => {
+        t.insertText("foo", {row: 0, column: 1});
+        t.selectAll();
+      }, {useAnchors: true});
+      expect(t.textString).equals("hfooello\n world");
+      expect(t.selection.text).equals("ll");
+      expect(nAnchors).equals(t.anchors.length, "anchor cleanup failed");
+    });
+
+    it("textString change", async () => {
+      var t = text("hello\n world", {});
+      t.selection = range(0,2,0,4);
+      await t.saveExcursion(() => {
+        t.textString = "hello\n world";
+      });
+      expect(t.textString).equals("hello\n world");
+      expect(t.selection.text).equals("ll");
+    });
+  
+  })
+
   describe("paragraphs", () => {
 
     var t;
