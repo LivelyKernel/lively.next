@@ -359,12 +359,11 @@ MorphAfterRenderHook.prototype.hook = function(node, propertyName, previousValue
   promise.waitFor(400, () => !!node.parentNode).catch(err => false).then(isInDOM => {
     if (isInDOM) {
       // 2. update scroll of morph itself
-      if (this.morph.isClip()) this.updateScroll(this.morph, node);
       // 3. Update scroll of DOM nodes of submorphs
       if (this.morph._submorphOrderChanged && this.morph.submorphs.length) {
         this.morph._submorphOrderChanged = false;
         this.updateScrollOfSubmorphs(this.morph, this.renderer);
-      }
+      } else if (this.morph.isClip()) this.updateScroll(this.morph, node);
     }
     this.morph._rendering = false; // see morph.makeDirty();
   });
@@ -373,8 +372,7 @@ MorphAfterRenderHook.prototype.updateScroll = function(morph, node) {
   // interactiveScrollInProgress: see morph.onMouseWheel
   var { interactiveScrollInProgress } = morph.env.eventDispatcher.eventState.scroll;
   if (interactiveScrollInProgress)
-    return interactiveScrollInProgress.then(() =>
-      this.updateScroll(morph,node));
+    return interactiveScrollInProgress.then(() => this.updateScroll(morph,node));
 
   if (node) {
     const {x, y} = morph.scroll;
