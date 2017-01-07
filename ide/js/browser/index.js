@@ -58,8 +58,19 @@ export default class Browser extends Window {
     if (!browser.world())
       browser.openInWorldNearHand();
     await browser.whenRendered();
-    if (packageName) await browser.selectPackageNamed(packageName);
-    if (packageName && moduleName) await browser.selectModuleNamed(moduleName);
+    if (packageName) {
+      await browser.selectPackageNamed(packageName)
+      if (moduleName) await browser.selectModuleNamed(moduleName);
+    } else if (moduleName) {
+      var system = await browser.systemInterface();
+      var m = await system.getModule(moduleName);
+      if (m) {
+        moduleName = m.id;
+        var p = await system.getPackageForModule(m.id);
+        await browser.selectPackageNamed(p.url);
+        await browser.selectModuleNamed(moduleName);
+      }
+    }
     if (textPosition) {
       var text = browser.getSubmorphNamed("sourceEditor");
       text.cursorPosition = textPosition;
