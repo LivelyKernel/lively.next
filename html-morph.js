@@ -86,7 +86,12 @@ export class HTMLMorph extends Morph {
     }
     return this._domNode
   }
-  set domNode(node) { return this._domNode = node; }
+  set domNode(node) {
+    if (this.domNode.parentNode) {
+      this.domNode.parentNode.replaceChild(node, this.domNode);
+    }
+    return this._domNode = node;
+  }
 
   get document() { return this.env.renderer.domEnvironment.document; }
 
