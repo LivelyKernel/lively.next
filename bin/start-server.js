@@ -33,7 +33,19 @@ lively.modules.registerPackage(".")
   // 2. this loads and starts the server
   .then(() => console.log(`[lively.server] ${step++}. starting server...`))
   .then(() => System.import("./server.js"))
-  .then(serverMod => serverMod.start({port, hostname, jsdav: {rootDirectory}}))
+  .then(serverMod => {
+    var opts = {port, hostname, plugins: [], jsdav: {rootDirectory}};
+    return Promise.all([
+        "./plugins/cors.js",
+        "./plugins/proxy.js",
+        "./plugins/socketio.js",
+        "./plugins/eval.js",
+        "./plugins/l2l.js",
+        "./plugins/remote-shell.js",
+        "./plugins/dav.js"
+      ].map(path => System.import(path).then(mod => opts.plugins.push(new mod.default(opts))))
+    ).then(() => serverMod.start(opts));
+  })
   .then((server) => console.log(`[lively.server] ${step++}. ${server} running`))
 
   .catch(err => {

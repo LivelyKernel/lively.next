@@ -9,34 +9,11 @@ import * as http from "http";
 // s.findPlugin("l2l").l2lNamespace
 // s.findPlugin("socketio").io.path()
 
-
-import CorsPlugin from "./plugins/cors.js";
-import ProxyPlugin from "./plugins/proxy.js";
-import SocketioPlugin from "./plugins/socketio.js";
-import EvalPlugin from "./plugins/eval.js";
-import L2lPlugin from "./plugins/l2l.js";
-import ShellPlugin from "./plugins/remote-shell.js";
-import LivelyDAVPlugin from "./plugins/dav.js";
-
-
 export async function start(opts = {}) {
   // opts = {port, hostname, ...}
-
   opts = {plugins: [], ...opts};
-
   var server = LivelyServer.ensure(opts);
   await server.whenStarted();
-
-  server.addPlugins([
-    new CorsPlugin(),
-    new ProxyPlugin(),
-    new SocketioPlugin(opts),
-    new L2lPlugin(),
-    new ShellPlugin(opts),
-    new EvalPlugin(),
-    new LivelyDAVPlugin()
-  ]);
-
   return server;
 }
 
@@ -77,12 +54,14 @@ export default class LivelyServer {
     this.hostname = opts.hostname;
     this.port = opts.port;
     this.debug = opts.debug;
-    this.plugins = opts.plugins || [];
     this.options = opts;
 
     // state = "not started", "listening", "starting", "closed"
     this._state = "not started";
     this._requestFn = null;
+
+    this.plugins = [];
+    if (opts.plugins) this.addPlugins(opts.plugins);
   }
 
   isListening() { return this._state === "listening"; }
@@ -97,7 +76,7 @@ export default class LivelyServer {
     return promise.waitFor(timeout, () => this.isListening()).then(() => this);
   }
 
-  whenClosed(timeout = 1000, callback) { 
+  whenClosed(timeout = 1000, callback) {
     if (!callback && typeof timeout === "function") {
       callback = timeout;
       timeout = 1000;
@@ -106,7 +85,7 @@ export default class LivelyServer {
       if (typeof callback === "function") callback();
       return true;
     });
-    
+
   }
 
   start() {
@@ -141,29 +120,20 @@ export default class LivelyServer {
   async close(serverState = {}) {
     if (this.isClosed()) return this;
 
-    debug && console.log(`[lively.server] initialize shutdown of ${this}`)
-
-    
+    debug && console.log(`[lively.server] initialize shutdown of ${this}`);
 
     var {debug, server} = this;
-     server.close();
-    // console.log(server)     
-          server.removeListener("request", this._requestFn);                  
-          
-          this.whenClosed(() => {            
-            this.constructor._unregister(this)
-              
-          })   
-   
-    
+    server.close();
+    server.removeListener("request", this._requestFn);
+
+    this.whenClosed(() => this.constructor._unregister(this));
+
     for (let p of this.plugins) {
       try { typeof p.close === "function" && await p.close(); } catch (e) {
         console.error(`[ ${this}] Error in shutdown of plugin ${p.pluginId}:\n${e.stack}`);
       }
     }
 
-   
-    
     return this;
   }
 
@@ -176,14 +146,14 @@ export default class LivelyServer {
     var handlers = this.plugins.filter(ea => typeof ea.handleRequest === "function");
     handlers.reduceRight(
       (next, plugin) => () => {
-	try {
-	  plugin.handleRequest(req, res, next);
-	} catch (e) {
-	  var msg = `Error in handleRequest of ${plugin.pluginId}:\n${e.stack}`;
-	  console.error(msg);
-	  res.writeHead(500);
-	  res.end(msg);
-	}
+        try {
+      	   plugin.handleRequest(req, res, next);
+        } catch (e) {
+      	   var msg = `Error in handleRequest of ${plugin.pluginId}:\n${e.stack}`;
+      	   console.error(msg);
+      	   res.writeHead(500);
+      	   res.end(msg);
+        }
       }, () => this.defaultHandleRequest(req, res))();
   }
 
@@ -310,8 +280,8 @@ export default class LivelyServer {
     function isSubset(list1, list2) {
       // are all elements in list1 in list2?
       for (var i = 0; i < list1.length; i++)
-	if (!list2.includes(list1[i]))
-	  return false;
+        if (!list2.includes(list1[i]))
+        	  return false;
       return true;
     }
   }
