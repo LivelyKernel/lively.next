@@ -103,14 +103,14 @@ export class AbstractPrompt extends Morph {
 
 }
 
+// $world.inform(lively.lang.arr.range(0,40).join("\n"))
 export class InformPrompt extends AbstractPrompt {
 
   build(props = {}) {
     var {label} = props;
     this.addMorph({
-      name: "label", type: "label", value: label,
-      padding: Rectangle.inset(5), fontColor: Color.gray,
-      fontSize: 14, fill: null, ...props
+      name: "label", type: "label", value: props.label,
+      fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray
     });
     this.addMorph({
       name: "ok button", type: "button", label: "OK",
@@ -121,8 +121,10 @@ export class InformPrompt extends AbstractPrompt {
   }
 
   initLayout() {
-     this.get("label").fit()
-     this.width = Math.max(this.get("label").width + 10, 120);
+     const label = this.get("label");
+     label.fit();
+     this.width = label.width + 10;
+     this.height = label.height + 30;
      const l = this.layout = new GridLayout({
         grid: [["label", "label", "label"],
                [null, "ok button", null]]
