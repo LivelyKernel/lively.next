@@ -255,7 +255,9 @@ export default class EventDispatcher {
     var type         = domEvt.type,
         state        = this.eventState,
         eventTargets = [targetMorph].concat(targetMorph.ownerChain()),
-        hand         = domEvt.pointerId ? this.world.handForPointerId(domEvt.pointerId) : null,
+        hand         = (domEvt.pointerType == "mouse" && domEvt.pointerId) ? 
+                            this.world.handForPointerId(domEvt.pointerId) : 
+                            this.world.firstHand,
         halo         = domEvt.pointerId ? this.world.haloForPointerId(domEvt.pointerId) : null,
         layoutHalo   = domEvt.pointerId ? this.world.layoutHaloForPointerId(domEvt.pointerId) : null,
         klass        = keyLikeEvents.includes(type) ? KeyEvent : Event,
