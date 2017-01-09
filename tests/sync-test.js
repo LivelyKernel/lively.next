@@ -337,6 +337,7 @@ describe("syncing master with two clients", function() {
 // client2.goOnline();
 
         world1.getSubmorphNamed("m1").addMorph(world1.getSubmorphNamed("m2"));
+
         world2.getSubmorphNamed("m2").addMorph(world2.getSubmorphNamed("m1"));
 
         await client1.synced() && client2.synced();

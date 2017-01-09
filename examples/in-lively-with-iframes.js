@@ -3,6 +3,7 @@ import { pt, Color, Point } from "lively.graphics";
 import { morph, EventDispatcher } from "lively.morphic";
 import { Client, Master } from "lively.sync";
 import { destroyTestWorld, buildTestWorld } from "../tests/helper.js";
+import { disconnectAll, connect, disconnect } from "lively.bindings";
 
 export async function buildWorlds() {
   var nClients = 2;
@@ -17,7 +18,7 @@ export async function buildWorlds() {
         client = state[`client${i+1}`] = new Client(env.world, `client${i+1}`);
     client.connectToMaster(master);
     state[`world${i+1}`] = env.world;
-    env.world.signalMorphChange = function(change, morph) { client.newChange(change) }
+    connect(env.changeManager, 'changeRecorded', client, 'newChange');
   }
   state.running = true;
 
@@ -35,7 +36,7 @@ export async function cleanup(state) {
   Object.keys(state).forEach(name => {
     if (name.match(/^env/)) {
       var env = state[name];
-      env.world.signalMorphChange = function() {}
+      disconnectAll(env.changeManager)
       try {
         destroyTestWorld(env);
       } catch (e) { console.error(e); }
@@ -48,11 +49,7 @@ export async function cleanup(state) {
 }
 
 // var state = await buildWorlds()
+// state.world1.addMorph({extent: pt(100,100), fill: Color.random(), grabbable: false})
+// state.client2.goOffline()
+// state.client2.goOnline()
 // await cleanup(state)
-// state.env1.uninstall()
-// state.env2.uninstall()
-// state.masterEnv.uninstall()
-
-// state.masterEnv.domEnv.iframe.parentNode
-// state.env2.domEnv.iframe.parentNode
-// state.env1.domEnv.iframe.parentNode

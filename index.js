@@ -4,7 +4,7 @@ import { ValueChange, MethodCallChange } from "lively.morphic/changes.js";
 
 var i = val => obj.inspect(val, {maxDepth: 2}),
     assert = (bool, msgFn) => { if (!bool) throw new Error(msgFn()); },
-    debug = true;
+    debug = false;
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
