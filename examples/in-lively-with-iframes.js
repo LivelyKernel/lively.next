@@ -1,9 +1,10 @@
 import { obj, num, arr, string } from "lively.lang";
 import { pt, Color, Point } from "lively.graphics";
 import { morph, EventDispatcher } from "lively.morphic";
-import { Client, Master } from "lively.sync";
 import { destroyTestWorld, buildTestWorld } from "../tests/helper.js";
 import { disconnectAll, connect, disconnect } from "lively.bindings";
+import { Client } from "../client.js";
+import { Master } from "../master.js";
 
 export async function buildWorlds() {
   var nClients = 2;

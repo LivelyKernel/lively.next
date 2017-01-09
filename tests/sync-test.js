@@ -4,9 +4,11 @@ import { expect } from "mocha-es6";
 import { morph } from "lively.morphic";
 import { promise, tree } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
-import { Client, Master } from "../index.js";
-import { buildTestWorld, destroyTestWorld } from "./helper.js";
 import { disconnect, disconnectAll, connect } from "lively.bindings";
+import { buildTestWorld, destroyTestWorld } from "./helper.js";
+import { Client } from "../client.js";
+import { Master } from "../master.js";
+
 
 // System.decanonicalize("mocha-es6", "http://localhost:9011/lively.sync/tests/sync-test.js")
 // var env1, env2, env3,
