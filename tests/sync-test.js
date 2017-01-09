@@ -6,7 +6,9 @@ import { promise, tree } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { Client, Master } from "../index.js";
 import { buildTestWorld, destroyTestWorld } from "./helper.js";
+import { disconnect, disconnectAll, connect } from "lively.bindings";
 
+// System.decanonicalize("mocha-es6", "http://localhost:9011/lively.sync/tests/sync-test.js")
 // var env1, env2, env3,
 //     client1, client2, master;
 
@@ -25,7 +27,7 @@ async function setup(nClients) {
         client = state[`client${i+1}`] = new Client(env.world, `client${i+1}`);
     client.connectToMaster(master);
     state[`world${i+1}`] = env.world;
-    env.world.signalMorphChange = function(change, morph) { client.newChange(change) }
+    connect(env.changeManager, 'changeRecorded', client, 'newChange');
   }
   state.running = true;
 }
@@ -40,7 +42,7 @@ function teardown() {
   Object.keys(s).forEach(name => {
     if (name.match(/^env/)) {
       var env = s[name];
-      env.world.signalMorphChange = function() {}
+      disconnectAll(env.changeManager)
       try {
         destroyTestWorld(env);
       } catch (e) { console.error(e); }
@@ -83,7 +85,8 @@ describe("messaging between master and client", () => {
 
 describe("syncing master with two clients", function() {
 
-  this.timeout(5*1000);
+  // this.timeout(5*1000);
+  this.timeout(1*1000);
 
   beforeEach(async () => setup(2));
   afterEach(async () => teardown());
@@ -106,24 +109,23 @@ describe("syncing master with two clients", function() {
     expect(world2.exportToJSON()).deep.equals(world1.exportToJSON(), "world2");
 
     // has morph an owner?
-    expect(masterWorld.get("m1").owner).equals(masterWorld);
-    expect(world2.get("m1").owner).equals(world2);
+    expect(masterWorld.getSubmorphNamed("m1").owner).equals(masterWorld);
+    expect(world2.getSubmorphNamed("m1").owner).equals(world2);
 
     // is history consistent?
     expect(client1.history).to.have.length(1);
     var expectedChange = {
-      prop: "submorphs",
       target: {type: "lively-sync-morph-ref", id: world1.id},
       type: "method-call",
       selector: "addMorphAt",
-      receiver: {type: "lively-sync-morph-ref", id: world1.id},
       args: [{type: "lively-sync-morph-spec", spec: {name: "m1", position: pt(10,10), extent: pt(50,50)}}, 0]
     }
+
     expect(client1.history[0].change).containSubset(expectedChange);
     expect(client2.history).to.have.length(1);
     expect(master.history[0].change).containSubset(expectedChange);
     expect(master.history).to.have.length(1);
-
+    
     // are there different morphs in each world?
     var world1Morphs = world1.withAllSubmorphsDo(ea => ea),
         world2Morphs = world2.withAllSubmorphsDo(ea => ea),
@@ -142,6 +144,7 @@ describe("syncing master with two clients", function() {
   it("if possible, changes are compacted", async () => {
     var {world1, world2, masterWorld, client1, master} = state;
     var m = world1.addMorph({position: pt(10,10), extent: pt(50,50), fill: Color.red});
+    expect().assert(m.env === world1.env, "m has not the env of its world");
     m.moveBy(pt(1,1)); m.moveBy(pt(1,1)); m.moveBy(pt(2,2));
     await client1.synced();
     expect(client1.history).to.have.length(2);
@@ -151,11 +154,11 @@ describe("syncing master with two clients", function() {
   });
 
   it("sync image", async () => {
-    var {world1, client1, env2} = state;
-    var m = world1.addMorph({type: "image", extent: pt(50,50)});
+    var {world1, client1, env2} = state,
+        m = world1.addMorph({type: "image", extent: pt(50,50)});
     await client1.synced();
     // make sure it is rendered correctly
-    expect(env2.renderer.getNodeForMorph(env2.world.submorphs[0])).property("tagName", "IMG");
+    expect(env2.renderer.getNodeForMorph(env2.world.submorphs[0])).deep.property("childNodes[0].tagName", "IMG");
   });
 
   it("take client offline then online", async () => {
@@ -272,12 +275,12 @@ describe("syncing master with two clients", function() {
         var {world1, world2, masterWorld, client1, client2, master} = state;
         var m = world1.addMorph({name: "m1", position: pt(10,10), extent: pt(50,50), fill: Color.red});
         await client1.synced();
-        world1.get("m1").position = pt(100,100);
-        world2.get("m1").position = pt(20,20);
-        world2.get("m1").position = pt(30,30);
+        world1.getSubmorphNamed("m1").position = pt(100,100);
+        world2.getSubmorphNamed("m1").position = pt(20,20);
+        world2.getSubmorphNamed("m1").position = pt(30,30);
         await client1.synced() && client2.synced();
-        expect(world2.get("m1").position).equals(world1.get("m1").position);
-        expect(world2.get("m1").position).equals(pt(45,45));
+        expect(world2.getSubmorphNamed("m1").position).equals(world1.getSubmorphNamed("m1").position);
+        expect(world2.getSubmorphNamed("m1").position).equals(pt(45,45));
 
         function posTransform(op1, op2) {
           var c1 = op1.change, c2 = op2.change;
@@ -315,8 +318,8 @@ describe("syncing master with two clients", function() {
             m2 = world1.addMorph({name: "m2", position: pt(20,20), extent: pt(50,50), fill: Color.green}),
             m3 = world1.addMorph({name: "m3", position: pt(30,30), extent: pt(50,50), fill: Color.blue});
         await client1.synced();
-        world1.get("m2").addMorph(world1.get("m1"));
-        world2.get("m3").addMorph(world2.get("m1"));
+        world1.getSubmorphNamed("m2").addMorph(world1.getSubmorphNamed("m1"));
+        world2.getSubmorphNamed("m3").addMorph(world2.getSubmorphNamed("m1"));
         await client1.synced() && client2.synced();
         var tree1 = tree.mapTree(world1, (morph, names) => [morph.name, ...names], morph => morph.submorphs),
             tree2 = tree.mapTree(world2, (morph, names) => [morph.name, ...names], morph => morph.submorphs);
@@ -329,8 +332,13 @@ describe("syncing master with two clients", function() {
             m1 = world1.addMorph({name: "m1", position: pt(10,10), extent: pt(50,50), fill: Color.red}),
             m2 = world1.addMorph({name: "m2", position: pt(20,20), extent: pt(50,50), fill: Color.green});
         await client1.synced();
-        world1.get("m1").addMorph(world1.get("m2"));
-        world2.get("m2").addMorph(world2.get("m1"));
+
+// client2.goOffline();
+// client2.goOnline();
+
+        world1.getSubmorphNamed("m1").addMorph(world1.getSubmorphNamed("m2"));
+        world2.getSubmorphNamed("m2").addMorph(world2.getSubmorphNamed("m1"));
+
         await client1.synced() && client2.synced();
         var tree1 = tree.mapTree(world1, (morph, names) => [morph.name, ...names], morph => morph.submorphs),
             tree2 = tree.mapTree(world2, (morph, names) => [morph.name, ...names], morph => morph.submorphs);

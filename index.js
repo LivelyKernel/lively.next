@@ -1,15 +1,17 @@
 import { num, arr, string, obj, promise, fun } from "lively.lang";
 import { morph } from "lively.morphic";
+import { ValueChange, MethodCallChange } from "lively.morphic/changes.js";
 
 var i = val => obj.inspect(val, {maxDepth: 2}),
-    assert = (bool, msgFn) => { if (!bool) throw new Error(msgFn()); }
+    assert = (bool, msgFn) => { if (!bool) throw new Error(msgFn()); },
+    debug = true;
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // change (de)serialization
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function deserializeChangeProp(change, name, val, objectMap) {
+function deserializeChangeProp(change, name, val, objectMap, syncController) {
   if (!val || val.isMorph) return val;
 
   if (typeof val === "string" && objectMap.has(val)) {
@@ -26,7 +28,7 @@ function deserializeChangeProp(change, name, val, objectMap) {
   if (val.type === "lively-sync-morph-spec") {
     var resolved = objectMap.get(val.spec._id)
     if (!resolved) {
-      resolved = morph(val.spec, {restore: true});
+      resolved = morph({_env: syncController.morphicEnv, ...val.spec}, {restore: true});
       objectMap.set(val.spec._id, resolved);
     }
     assert(resolved, () => `Cannot deserialize change ${i(change)}[${name}], cannot create morph from spec ${val.spec}`);
@@ -36,18 +38,18 @@ function deserializeChangeProp(change, name, val, objectMap) {
   return val;
 }
 
-function deserializeChange(change, objectMap) {
-  var deserializedChange = obj.clone(change);
-
-  if (change.target)
-    deserializedChange.target = deserializeChangeProp(change, "target", change.target, objectMap);
+function deserializeChange(change, objectMap, syncController) {
+  var deserializedChange,
+      target = change.target ?
+        deserializeChangeProp(change, "target", change.target, objectMap, syncController) : null;
 
   if (change.type === "setter") {
-    deserializedChange.value = deserializeChangeProp(change, "value", change.value, objectMap);
+    var value = deserializeChangeProp(change, "value", change.value, objectMap, syncController);
+    deserializedChange = new ValueChange(target, change.prop, value, change.meta);
 
   } else if (change.type === "method-call") {
-    deserializedChange.receiver = deserializeChangeProp(change, "receiver", change.receiver, objectMap);
-    deserializedChange.args = change.args.map((arg, i) => deserializeChangeProp(change, `args[${i}]`, arg, objectMap))
+    var args = change.args.map((arg, i) => deserializeChangeProp(change, `args[${i}]`, arg, objectMap, syncController));
+    deserializedChange = new MethodCallChange(target, change.selector, args, null, change.meta);
 
   } else {
     assert(false, () => `Unknown change type ${change.type}, ${i(change)}`);
@@ -73,6 +75,7 @@ function serializeChangeProp(change, name, val, objectMap, opts = {forceMorphId:
 
 function serializeChange(change, objectMap) {
   var serializedChange = obj.clone(change);
+  serializedChange.type = change.type; // FIXME since change.type is a getter...
 
   if (change.target)
     serializedChange.target = serializeChangeProp(change, "target", change.target, objectMap, {forceMorphId: true});
@@ -83,7 +86,6 @@ function serializeChange(change, objectMap) {
   if (change.type === "setter") {
     serializedChange.value = serializeChangeProp(change, "value", change.value, objectMap);
   } else if (change.type === "method-call") {
-    serializedChange.receiver = serializeChangeProp(change, "receiver", change.receiver, objectMap, {forceMorphId: true});
     serializedChange.args = change.args.map((arg,i) => serializeChangeProp(change, `arg[${i}]`, arg, objectMap));
   } else {
     assert(false, () => `Unknown change type ${change.type}, ${i(change)}`);
@@ -94,8 +96,8 @@ function serializeChange(change, objectMap) {
 
 function applyChange(change, syncController) {
   var {world, objects} = syncController.state,
-      deserializedChange = deserializeChange(change, objects),
-      {type, receiver, args} = deserializedChange;
+      deserializedChange = deserializeChange(change, objects, syncController),
+      {type, args} = deserializedChange;
 
   // FIXME...! Adding unknown morphs to local registry...
   if (type === "method-call") {
@@ -141,10 +143,10 @@ function printObj(obj) {
 }
 
 function printChange(change) {
-  var {type, target, value, prop, receiver, selector, args} = change;
+  var {type, target, value, prop, selector, args} = change;
   switch (type) {
     case 'method-call':
-      return `${printUUID(receiver.id)}.${selector}(${args.map(printObj).join(",")})`;
+      return `${printUUID(target.id)}.${selector}(${args.map(printObj).join(",")})`;
     case 'setter':
       return `${printUUID(target.id)}.${prop} = ${printObj(value)}`;
     default:
@@ -154,7 +156,7 @@ function printChange(change) {
 
 function printOp(op) {
   var {id, parent, change, creator, version} = op;
-  return `${printUUID(id)} < ${printUUID(parent)} | ${printUUID(version)} | ${printChange(change)} | ${creator}`
+  return `${printUUID(id)} < ${printUUID(parent)} | ${version} | ${printChange(change)} | ${creator}`
 }
 
 function printOps(ops) { return ops.map(printOp).join("\n"); }
@@ -194,7 +196,7 @@ function morphicDefaultTransform(op1, op2, syncer) {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // addMorph...
   if (selector1 === "addMorphAt" && selector2 === "addMorphAt") {
-    
+
     // ...same owner, different morphs => transform order
     if (target1 === target2 && args1[0].spec._id !== args2[0].spec._id) {
        var newArgs1 = [args1[0], op1.creator < op2.creator ? args1[1] : args2[1]+1],
@@ -211,7 +213,7 @@ function morphicDefaultTransform(op1, op2, syncer) {
       return {op1, op2, handled: true};
     }
 
-    // inverse addMorph
+    // inverse addMorph, m1 added to m2 vs. m2 added to m1
     else if (target1 === args2[0].spec._id && target2 === args1[0].spec._id) {
       if (op1.creator < op2.creator) op2.change = {...c1};
       else op1.change = {...c2};
@@ -229,11 +231,14 @@ function runTransforms(op1, op2, tfmFns, syncer) {
   for (let tfmFn of tfmFns) {
     try {
       var {op1, op2, handled} = tfmFn(op1, op2, syncer);
-
-if (handled && op1.change.selector === "addMorphAt" && op2.change.selector === "addMorphAt") {
-  console.log(`${syncer}:\n  ${op1}\n  ${op2}`)
-  console.log(`${syncer.state.objects.get(op1.change.target.id)}\n${syncer.state.objects.get(op1.change.args[0].spec._id)}`)
-}
+      if (debug && handled && op1.change.selector === "addMorphAt" && op2.change.selector === "addMorphAt") {
+        var sel1 = op1.change.selector,
+            sel2 = op2.change.selector
+        console.log(`[${syncer}] xform ${sel1} x ${sel2}\n`
+                  + `${op1}\n${op2}\n`
+                  + `${syncer.state.objects.get(op1.change.target.id)}\n`
+                  + `${syncer.state.objects.get(op1.change.args[0].spec._id)}`);
+      }
 
       if (handled) break;
     } catch (e) {
@@ -258,7 +263,7 @@ function transformOp_1_to_n(op, againstOps, transformFns = [], syncer) {
 
   var op2 = op, transformedAgainstOps = [];
   for (let op1 of againstOps) {
-    var {op1, op2} = runTransforms(op1, op2, transformFns, syncer);
+    ({op1, op2} = runTransforms(op1, op2, transformFns, syncer));
     transformedAgainstOps.push(op1);
   }
 
@@ -313,7 +318,6 @@ class Channel {
     this.delayAtoB = 0;
     this.delayBtoA = 0;
     this.online = false;
-    this.debug = false;
     this.lifetime = 100;
     this._watchdogProcess = null
     this.goOnline();
@@ -363,13 +367,12 @@ class Channel {
   send(content, sender) {
     var { recvr, queue, delay, method, descr, } = this.componentsForSender(sender);
 
-    if (this.debug) {
+    if (debug) {
       var msgs = (Array.isArray(content) ? content : [content]);
-      let string = `${sender} -> ${recvr}:`;
+      let string = `[lively.sync] sending ${sender} -> ${recvr}: `;
       if (!msgs.length) string += " no messages"
       // else if (msgs.length === 1) string += msgs[0];
-      else if (msgs.length === 1) string += i(msgs[0]);
-      else string += "\n  " + msgs.join("\n  ");
+      string += msgs.map(ea => ea.change.prop || ea.change.selector).join(",")
       console.log(string);
     }
 
@@ -446,6 +449,8 @@ export class Client {
   get buffer() { return this.state.buffer; }
   printHist() { return printOps(this.history); }
   printBuffer() { return printOps(this.buffer); }
+
+  get morphicEnv() { return this.state.world.env; }
 
   get master() {
     var opChannel = this.state.connection.opChannel;
@@ -538,6 +543,8 @@ export class Client {
     var {opChannel} = this.state.connection;
     return opChannel ? opChannel.delayAtoB : 0
   }
+
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // "locking" – meta operation sent to everyone to prevent
   // changes while some other operation happens
@@ -831,6 +838,7 @@ export class Master {
   get history() { return this.state.history; }
   printHist() { return printOps(this.state.history); }
 
+  get morphicEnv() { return this.state.world.env; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // connections
