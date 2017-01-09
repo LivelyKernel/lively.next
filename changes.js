@@ -1,5 +1,6 @@
 /*global WeakMap*/
 import { arr, string, obj } from "lively.lang";
+import { connect, disconnect } from "lively.bindings";
 
 function newKeyIn(obj, base = "_") {
   var i = 1, key;
@@ -9,9 +10,9 @@ function newKeyIn(obj, base = "_") {
   return key;
 }
 
-function signalBindings(morph, name, change) {
+function signalBindings(obj, name, change) {
   // optimized lively.bindings.signal
-  var conns = morph.attributeConnections;
+  var conns = obj.attributeConnections;
   if (!conns) return
   conns = conns.slice();
   for (var i = 0; i < conns.length; i++) {
@@ -33,15 +34,6 @@ function informMorph(changeManager, change, morph) {
     }
   } catch (err) {
     console.error(`Error in informMorph: ${err.stack}`)
-  }
-}
-
-function informListeners(changeManager, change) {
-  try {
-    if (changeManager.changeListeners.length)
-      changeManager.changeListeners.forEach(listener => listener(change));
-  } catch (err) {
-    console.error(`Error in informListeners: ${err.stack}`)
   }
 }
 
@@ -143,7 +135,6 @@ export class ChangeManager {
     this.changes = [];
     this.revision = 0;
 
-    this.changeListeners = [];
     this.changeRecordersPerMorph = new WeakMap();
     this.changeRecorders = {};
 
@@ -154,7 +145,7 @@ export class ChangeManager {
 
   changesFor(morph) { return this.changes.filter(c => c.target === morph); }
 
-  apply(change) { change.apply(); }
+  apply(target, change) { change.apply(); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // interface for adding changes, used by morphs
@@ -196,7 +187,7 @@ export class ChangeManager {
     } else {
       this.changes.push(change);
       morph._rev = ++this.revision;
-      informListeners(this, change)
+      this.informChangeListeners(change)
     }
     informMorph(this, change, morph);
 
@@ -233,8 +224,26 @@ export class ChangeManager {
     return optFilter ? changes.filter(optFilter) : changes;
   }
 
-  addChangeListener(listenFn) { arr.pushIfNotIncluded(this.changeListeners, listenFn); }
-  removeChangeListener(listenFn) { arr.remove(this.changeListeners, listenFn); }
+  addChangeListener(listenFn) {
+    connect(this, 'changeRecorded', listenFn, 'call', {
+      updater: ($upd, change) => $upd(null, change)});
+  }
+
+  removeChangeListener(listenFn) {
+    disconnect(this, 'changeRecorded', listenFn, 'call');
+  }
+
+  informChangeListeners(change) {
+    // optimized version if lively.binings.signal
+    var conns = this.attributeConnections;
+    if (!conns) return;
+    conns = conns.slice();
+    for (var i = 0; i < conns.length; i++) {
+      var c = conns[i];
+      if (c.sourceAttrName === "changeRecorded")
+        c.update(change);
+    }
+  }
 
   recordChangesStart(optFilter, optName = "") {
     // change recorder is a change listener that is identified by id

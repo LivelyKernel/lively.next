@@ -114,7 +114,7 @@ describe("changes", function () {
         var changes = m.recordChangesStop();
         m.rotation += .1;
         expect(changes).containSubset([{prop: "fill"}, {prop: "rotation"}]);
-        expect(env.changeManager.changeListeners).equals([]);
+        expect(env.changeManager).not.haveOwnProperty("attributeConnections");
         expect(env.changeManager.changeRecorders).deep.equals({});
       });
 
@@ -130,7 +130,7 @@ describe("changes", function () {
 
         expect(changes1).containSubset([{prop: "rotation"}]);
         expect(changes2).containSubset([{prop: "fill"}, {prop: "rotation"}, {prop: "rotation"}]);
-        expect(env.changeManager.changeListeners).equals([]);
+        expect(env.changeManager).not.haveOwnProperty("attributeConnections");
         expect(env.changeManager.changeRecorders).deep.equals({});
       });
 
@@ -147,7 +147,7 @@ describe("changes", function () {
 
         expect(changes1).containSubset([{prop: "fill"}, {prop: "rotation"}]);
         expect(changes2).containSubset([{prop: "rotation"}]);
-        expect(env.changeManager.changeListeners).equals([]);
+        expect(env.changeManager).not.haveOwnProperty("attributeConnections");
         expect(env.changeManager.changeRecorders).deep.equals({});
       });
 
@@ -169,7 +169,7 @@ describe("changes", function () {
 
         expect(changes2).containSubset([{prop: "rotation"}]);
 
-        expect(env.changeManager.changeListeners).equals([]);
+        expect(env.changeManager).not.haveOwnProperty("attributeConnections");
         expect(env.changeManager.changeRecorders).deep.equals({});
       });
 

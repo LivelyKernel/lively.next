@@ -66,6 +66,7 @@ export class MorphicEnv {
   }
 
   uninstall() {
+    this.deleteHistory();
     this.uninstallWorldRelated();
     if (this.fontMetric) {
       this.fontMetric.uninstall();
