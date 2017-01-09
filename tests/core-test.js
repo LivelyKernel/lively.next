@@ -110,6 +110,40 @@ describe("relationship", () => {
       expect(world.submorphs[world.submorphs.length-1]).equals(newMorph3);
     });
 
+    it("replace with", () => {
+      var submorph4 = submorph2.addMorph({name: "submorph4", position: pt(1,1)});
+      var submorph5 = submorph3.addMorph({name: "submorph5", position: pt(2,2)});
+
+      submorph2.replaceWith(submorph3)
+
+      // transforms
+      expect(submorph2.position).equals(pt(200,20), "pos submorph2");
+      expect(submorph3.position).equals(pt(5,10), "pos submorph3");
+      
+      // owner/submorphs
+      expect(submorph2.owner).equals(world, "owner submorph2");
+      expect(submorph3.owner).equals(submorph1, "owner submorph3");
+      expect(submorph2.submorphs).equals([submorph5], "submorphs 2");
+      expect(submorph3.submorphs).equals([submorph4], "submorphs 3");
+      expect(submorph5.position).equals(pt(2,2), "submorphs 5 transform");
+      expect(submorph4.position).equals(pt(1,1), "submorphs 4 transform");
+
+      // own position in submorphs
+      expect(world.submorphs.indexOf(submorph2)).equals(1, "subm index submorph2");
+      expect(submorph1.submorphs.indexOf(submorph3)).equals(0, "subm index submorph3");
+    });
+    
+    it("replace with - parent with submorph", () => {
+      submorph1.addMorphAt({name: "submorphxxx", position: pt(4,7)}, 0);
+      submorph1.replaceWith(submorph2);
+      expect(submorph1.position).equals(pt(5, 10), "pos submorph1");
+      expect(submorph2.position).equals(pt(10, 10), "pos submorph2");
+      expect(submorph1.owner).equals(submorph2, "owner submorph1");
+      expect(submorph2.owner).equals(world, "owner submorph2");
+      expect(submorph2.submorphs.indexOf(submorph1)).equals(1, "subm index submorph1");
+      expect(world.submorphs.indexOf(submorph2)).equals(0, "subm index submorph2");
+    });
+
   });
 
   describe("morph lookup", () => {

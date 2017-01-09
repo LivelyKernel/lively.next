@@ -548,6 +548,53 @@ export class Morph {
       this.layout && this.layout.enable();
   }
 
+  replaceWith(other, indexForOtherMorph) {
+    // this method switches the scene graph location of two morphs (this and
+    // other). Morphs can be unrelated or in child/owner relationship.
+    // Transforms / submorphs of this and other are also replaced so that the
+    // replace operation seems to not have any other effects on the scene graph
+
+    if (this === other || !other) return this;
+
+    if (this === other.owner) {
+      other.replaceWith(this);
+      return this
+    }
+
+    var myOwner = this.owner,
+        mySubmorphs = this.submorphs,
+        myTfm = this.getTransform().copy(),
+        myIndex = typeof indexForOtherMorph === "number" ? indexForOtherMorph :
+                    myOwner ? myOwner.submorphs.indexOf(this) : -1,
+        otherOwner = other.owner,
+        otherSubmorphs = arr.without(other.submorphs, this),
+        otherTfm = other.getTransform().copy(),
+        otherIndex = otherOwner ? otherOwner.submorphs.indexOf(other) : -1;
+ 
+    myOwner && this.remove();
+    otherOwner && other.remove();
+    this.submorphs = [];
+    other.submorphs = [];
+
+    if (myOwner === other) {
+      otherOwner && otherOwner.addMorphAt(this, otherIndex);
+      this.submorphs = otherSubmorphs.slice(0, myIndex)
+                        .concat(other)
+                        .concat(otherSubmorphs.slice(myIndex))
+      other.submorphs = mySubmorphs;
+    } else {
+      myOwner && myOwner.addMorphAt(other, myIndex);
+      otherOwner && otherOwner.addMorphAt(this, otherIndex);
+      other.submorphs = mySubmorphs;
+      this.submorphs = otherSubmorphs;
+    }
+
+    other.setTransform(myTfm);
+    this.setTransform(otherTfm);
+
+    return this;
+   }
+
   addMorphAt(submorph, index) {
     // ensure it's a morph or a spec
     if (!submorph || typeof submorph !== "object")
