@@ -44,14 +44,7 @@ function requestAnimationFramePolyfill(window) {
 }
 
 async function createDOMEnvironment_browser() {
-  var iframe = await createIFrame(document.body)
-  return new DomEnvironment(
-    iframe.contentWindow,
-    iframe.contentWindow.document,
-    () => {
-      iframe.contentWindow && iframe.contentWindow.close();
-      iframe.parentNode && iframe.parentNode.removeChild(iframe);
-    });
+  return new IFramedDomEnvironment(await createIFrame(document.body));
 }
 
 function createDOMEnvironment_node() {
@@ -89,6 +82,22 @@ class DomEnvironment {
     if (typeof this.destroyFn === "function")
       this.destroyFn();
   }
+}
+
+class IFramedDomEnvironment extends DomEnvironment {
+
+  constructor(iframe) {
+    super(
+      iframe.contentWindow,
+      iframe.contentWindow.document,
+      () => {
+        iframe.contentWindow && iframe.contentWindow.close();
+        iframe.parentNode && iframe.parentNode.removeChild(iframe);
+      }
+    )
+    this.iframe = iframe;
+  }
+
 }
 
 var _defaultEnv;
