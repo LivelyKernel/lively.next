@@ -78,6 +78,9 @@ export class Morph {
     this._submorphOrderChanged = false; // extra info for renderer
     this._id = objRef.id;
     this._animationQueue = new AnimationQueue(this);
+    this._cachedPaths = {};
+    this._pathDependants = [];
+    this.tickingScripts = [];
     this.loadDefaultProperties();
     this.updateTransform(this);
   }
@@ -425,7 +428,9 @@ export class Morph {
   get styleClasses() {
     return this.constructor.styleClasses.concat(this.getProperty("styleClasses"));
   }
-  set styleClasses(value)  { this.setProperty("styleClasses", value); }
+  set styleClasses(value)  {
+   this.setProperty("styleClasses", arr.withoutAll(value, this.constructor.styleClasses));
+  }
 
   addStyleClass(className)  { this.styleClasses = arr.uniq(this.styleClasses.concat(className)) }
   removeStyleClass(className)  { this.styleClasses = this.styleClasses.filter(ea => ea != className) }
@@ -584,6 +589,8 @@ export class Morph {
         tfm = submorph.transformForNewOwner(this);
         submorph.remove();
       }
+
+      if (submorph._env !== this._env) submorph._env = this._env;
 
       // modify the submorphs array
       index = Math.min(submorphs.length, Math.max(0, index));
@@ -1229,11 +1236,20 @@ export class Morph {
   }
 
   initFromJSON(spec) {
-    Object.assign(this, {
-      _owner: null,
-      _dirty: true,
-      _id: newMorphId(this.constructor.name)
-    }, spec);
+    this._env = MorphicEnv.default();
+    this._rev = 0;
+    this._owner = null;
+    this._dirty = true;
+    this._rendering = false;
+    this._submorphOrderChanged = false;
+    this._id =  newMorphId(this.constructor.name);
+    this._animationQueue = new AnimationQueue(this);
+    this._cachedPaths = {};
+    this._pathDependants = [];
+    this.tickingScripts = [];
+    this.loadDefaultProperties();
+    Object.assign(this, spec)
+    this.updateTransform(this);
     return this;
   }
 
@@ -1243,6 +1259,8 @@ export class Morph {
     exported.name = exported.name.replace(
         /copy( [0-9]+)?$/,
         (_, num) => `copy ${num && num.trim() ? Number(num)+1 : "1"}`);
+    // rk 2017-01-08: attributeConnections hard reset...! and only of root
+    // morph? this seems really wrong!
     return morph({attributeConnections: [], ...exported});
   }
 
