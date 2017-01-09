@@ -6,7 +6,7 @@
   "author": "Robert Krahn <robert.krahn@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "test": "node_modules/mocha-es6/bin/mocha-es6.js tests/*-test.js",
+    "test": "mocha-es6 tests/*-test.js",
     "build": "node tools/build.js"
   },
   "systemjs": {
