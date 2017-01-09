@@ -927,7 +927,7 @@ export class World extends Morph {
   logErrorPreperation(err) {
     var stringified = String(err),
         stack = err.stack || "";
-    if (stack) {
+    if (stack && err.message !== err.stack) {
       stack = String(stack);
       var errInStackIdx = stack.indexOf(stringified);
       if (errInStackIdx === 0)
