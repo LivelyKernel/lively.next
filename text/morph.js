@@ -1057,9 +1057,13 @@ export class Text extends Morph {
   }
 
   centerRow(row = this.cursorPosition.row, offset = pt(0,0)) {
+    return this.alignRowAtTop(row, offset.addXY(0, -this.height/2));
+  }
+
+  alignRowAtTop(row = this.cursorPosition.row, offset = pt(0,0)) {
     var charBounds = this.charBoundsFromTextPosition({row, column: 0}),
-        pos = charBounds.leftCenter().addXY(-this.padding.left(), 0);
-    this.scroll = pos.addXY(0, -this.height/2).addPt(offset);
+        pos = charBounds.topLeft().addXY(-this.padding.left(), 0);
+    this.scroll = pos.addPt(offset);
   }
 
   scrollPositionIntoView(pos, offset = pt(0,0)) {
