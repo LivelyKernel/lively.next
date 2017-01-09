@@ -412,7 +412,7 @@ export class GradientFocusHandle extends Ellipse {
     get styler() {
        return new StyleRules({
           root: {fill: Color.transparent,
-                 borderColor: Color.orange,
+                 borderColor: Color.orange, draggable: false,
                  borderWidth: 2},
           topCenter: {nativeCursor: "ns-resize"},
           rightCenter: {nativeCursor: "ew-resize"},
