@@ -595,7 +595,7 @@ export default class Browser extends Window {
         end = sourceEditor.indexToPosition(entity.node.end)
     sourceEditor.cursorPosition = start;
     sourceEditor.flash({start, end}, {id: 'codeentity', time: 1000, fill: Color.rgb(200,235,255)});
-    sourceEditor.centerRow();
+    sourceEditor.alignRowAtTop(start.row, pt(0, -10));
   }
 
   findCodeEntity({name, type, parent}) {
@@ -694,6 +694,9 @@ export default class Browser extends Window {
       }
 
     } catch(err) { return this.showError(err); }
+
+    await this.updateCodeEntities(module);
+    await this.updateTestUI(module);
 
     this.setStatusMessage("saved " + module.nameInPackage, Color.green);
   }
