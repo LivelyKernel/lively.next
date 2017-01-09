@@ -1,20 +1,15 @@
-import { createDOMEnvironment } from "lively.morphic/dom-helper.js";
-import { morph, Renderer, EventDispatcher } from "lively.morphic";
+import { morph, MorphicEnv } from "lively.morphic";
+import { createDOMEnvironment } from "lively.morphic/rendering/dom-helper.js";
 import { pt } from "lively.graphics";
 
 export async function buildTestWorld(spec = {type: "world", name: "world", extent: pt(300,300)}, pos = pt(0,0)) {
-  var world = morph(spec),
-      domEnv = await createDOMEnvironment(),
-      renderer = new Renderer(world, domEnv.document.body, domEnv);
-  domEnv.iframe.style = `position: absolute; top: ${pos.y}px; left: ${pos.x}px; width: 300px; height: 300px;`
-  renderer.startRenderWorldLoop();
-  var eventDispatcher = new EventDispatcher(domEnv.window, world).install();
-  return {renderer, eventDispatcher, domEnv, world}
+  var morphicEnv = new MorphicEnv(await createDOMEnvironment()),
+      world = morph({...spec, env: morphicEnv});
+  morphicEnv.domEnv.iframe.style = `position: absolute; top: ${pos.y}px; left: ${pos.x}px; width: 300px; height: 300px;`
+  morphicEnv.setWorld(world);
+  return morphicEnv;
 }
 
-export function destroyTestWorld(worldState) {
-  var {renderer, eventDispatcher, domEnv, world} = worldState;
-  eventDispatcher && eventDispatcher.uninstall();
-  renderer && renderer.clear();
-  domEnv.destroy();
+export function destroyTestWorld(morphicEnv) {
+  morphicEnv.uninstall();
 }
