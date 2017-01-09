@@ -44,7 +44,10 @@ export default function browserCommands(browser) {
                                       preselect: currentIdx,
                                       historyId: "js-browser-codeentity-jumo-hist"
                                     });
-        if (choice) browser.selectCodeEntity(choice);
+        if (choice) {
+          browser.getSubmorphNamed("sourceEditor").saveMark();
+          browser.selectCodeEntity(choice);
+        }
         return true;
       }
     },
