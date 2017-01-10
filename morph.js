@@ -131,7 +131,7 @@ export class Morph {
 
   show() { return show(this); }
 
-  setStatusMessage(msg, color, delay) {
+  setStatusMessage(msg, color, delay, opts) {
     var w = this.world();
     opts = {maxLines: 7, ...opts}
     return w ? w.setStatusMessageFor(this, msg, color, delay, opts) : console.log(msg)
