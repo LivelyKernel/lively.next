@@ -94,37 +94,27 @@ export class ObjectEditor extends Morph {
     return win;
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // initializing
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   constructor(props = {}) {
     super({
       extent: pt(800, 500),
       ...obj.dissoc(props, ["target"])
     });
-    this.state = {target: null, selectedClass: null, selectedMethod: null};
-    this.build(props);
+    this.reset();
     if (props.target) this.target = props.target;
   }
 
-  get target() { return this.state.target; }
-  set target(obj) {
-    this.state.target = obj;
-    this.state.selectedClass = null;
-    this.state.selectedMethod = null;
-    var tree = this.get("classTree");
-    tree.treeData = new ClassTreeData(obj.constructor);
-
-    Object.assign(this.editorPlugin.evalEnvironment, {
-      targetModule: "lively://object-editor/" + this.id,
-      context: this.target,
-      format: "esm"
-    });
+  reset() {
+    this.state = {target: null, selectedClass: null, selectedMethod: null};
+    this.build();
   }
 
-  get selectedModule() {
-    var mid = this.editorPlugin.evalEnvironment.targetModule;
-    return mid ? module(mid) : null;
-  }
+  build() {
+    this.removeAllMorphs();
 
-  build(props) {
     var listStyle = {
           // borderWidth: 1, borderColor: Color.gray,
           fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"
@@ -194,6 +184,31 @@ export class ObjectEditor extends Morph {
     connect(this.get("cleanupButton"), "fire", this, "execCommand", {converter: () => "[javascript] removed unused imports"});
   }
 
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // accessing
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  get target() { return this.state.target; }
+  set target(obj) {
+    this.state.target = obj;
+    this.state.selectedClass = null;
+    this.state.selectedMethod = null;
+    var tree = this.get("classTree");
+    tree.treeData = new ClassTreeData(obj.constructor);
+
+    Object.assign(this.editorPlugin.evalEnvironment, {
+      targetModule: "lively://object-editor/" + this.id,
+      context: this.target,
+      format: "esm"
+    });
+  }
+
+  get selectedModule() {
+    var mid = this.editorPlugin.evalEnvironment.targetModule;
+    return mid ? module(mid) : null;
+  }
+
   async systemInterface() {
     var livelySystem = await System.import("lively-system-interface"),
         remote = this.backend;
@@ -208,6 +223,46 @@ export class ObjectEditor extends Morph {
   }
 
   get editorPlugin() { return this.get("sourceEditor").pluginFind(p => p.isEditorPlugin); }
+
+  sourceDescriptorFor(klass) { return RuntimeSourceDescriptor.for(klass); }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // update
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  async refresh() {
+    var {selectedClass, selectedMethod} = this.state,
+        tree = this.get("classTree");
+
+    await tree.maintainViewStateWhile(async () => {
+      this.target = this.target;
+    }, node => node.target ?
+                  node.target.name
+                    + node.target.kind
+                    + (node.target.owner ? "." + node.target.owner.name : "") :
+                  node.name);
+
+    if (selectedClass && selectedMethod && !tree.selection) {
+      // method rename, old selectedMethod does no longer exist
+      await this.selectClass(selectedClass);
+    }
+  }
+
+  async updateKnownGlobals() {
+    var declaredNames = [], klass = this.state.selectedClass;
+    if (klass) {
+      var descr = this.sourceDescriptorFor(klass);
+      ({declaredNames} = await descr.declaredAndUndeclaredNames);
+    }
+    Object.assign(this.editorPlugin.evalEnvironment, {
+      knownGlobals: declaredNames,
+    });
+    this.editorPlugin.highlight();
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // classes and method ui
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   onClassTreeSelection(node) {
     if (!node) {
@@ -225,10 +280,6 @@ export class ObjectEditor extends Morph {
 
     var isClick = !!this.env.eventDispatcher.eventState.clickedOnMorph;
     this.selectMethod(parentNode.target, node.target, isClick);
-  }
-
-  sourceDescriptorFor(klass) {
-    return RuntimeSourceDescriptor.for(klass);
   }
 
   async selectClass(klass) {
@@ -304,16 +355,30 @@ export class ObjectEditor extends Morph {
     }
   }
 
-  async updateKnownGlobals() {
-    var declaredNames = [], klass = this.state.selectedClass;
-    if (klass) {
-      var descr = this.sourceDescriptorFor(klass);
-      ({declaredNames} = await descr.declaredAndUndeclaredNames);
-    }
-    Object.assign(this.editorPlugin.evalEnvironment, {
-      knownGlobals: declaredNames,
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // command support
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  async doSave() {
+    var {selectedClass, selectedMethod} = this.state;
+
+    if (!selectedClass) throw new Error("No class selected");
+
+    var editor = this.get("sourceEditor"),
+        descr = RuntimeSourceDescriptor.for(selectedClass);
+
+var store = JSON.parse(localStorage["oe helper"] || '{"saves": []}')
+store.saves.push(editor.textString);
+if (store.saves.length > 300) store.saves = store.saves.slice(-300)
+localStorage["oe helper"] = JSON.stringify(store);
+
+    await descr.changeSource(editor.textString)
+
+    await editor.saveExcursion(async () => {
+      await this.refresh();
+      // if (selectedMethod) await this.selectMethod(selectedClass, selectedMethod, false);
+      // else await this.selectClass(selectedClass);
     });
-    this.editorPlugin.highlight();
   }
 
   async interactivelyAddMethod() {
@@ -348,20 +413,18 @@ export class ObjectEditor extends Morph {
       if (!choices) return null;
 
       // FIXME move this into system interface!
-      var m = this.selectedModule;
-      var origSource = await m.source();
+      var m = this.selectedModule,
+          origSource = await m.source();
       await m.addImports(choices);
 
     } catch (e) {
       origSource && await m.changeSource(origSource);
       this.showError(e);
-    }
-    finally {
+    } finally {
       await this.get("importController").updateImports();
       await this.updateKnownGlobals();
       this.get("sourceEditor").focus();
     }
-
   }
 
   async interactivelyRemoveImport() {
@@ -388,18 +451,12 @@ export class ObjectEditor extends Morph {
   }
 
   async interactivelyRemoveUnusedImports() {
-
     try {
-      var m = this.selectedModule;
-      var origSource = await m.source();
-      var toRemove = await chooseUnusedImports(await m.source());
+      var m = this.selectedModule,
+          origSource = await m.source(),
+          toRemove = await chooseUnusedImports(await m.source());
 
-      if (!toRemove) {
-        this.setStatusMessage("Canceled");
-        return;
-      }
-
-      if (!toRemove.changes || !toRemove.changes.length) {
+      if (!toRemove || !toRemove.changes || !toRemove.changes.length) {
         this.setStatusMessage("Nothing to remove");
         return;
       }
@@ -417,49 +474,9 @@ export class ObjectEditor extends Morph {
     }
   }
 
-  async refresh() {
-    var {selectedClass, selectedMethod} = this.state,
-        tree = this.get("classTree");
 
-    await tree.maintainViewStateWhile(async () => {
-      this.target = this.target;
-    }, node => node.target ?
-                  node.target.name
-                    + node.target.kind
-                    + (node.target.owner ? "." + node.target.owner.name : "") :
-                  node.name);
-
-    if (selectedClass && selectedMethod && !tree.selection) {
-      // method rename, old selectedMethod does no longer exist
-      await this.selectClass(selectedClass);
-    }
-  }
-
-
-  async doSave() {
-    var {selectedClass, selectedMethod} = this.state;
-
-    if (!selectedClass) throw new Error("No class selected");
-
-    var editor = this.get("sourceEditor"),
-        descr = RuntimeSourceDescriptor.for(selectedClass);
-
-var store = JSON.parse(localStorage["oe helper"] || '{"saves": []}')
-store.saves.push(editor.textString);
-if (store.saves.length > 300) store.saves = store.saves.slice(-300)
-localStorage["oe helper"] = JSON.stringify(store);
-
-    await descr.changeSource(editor.textString)
-
-    await editor.saveExcursion(async () => {
-      await this.refresh();
-      // if (selectedMethod) await this.selectMethod(selectedClass, selectedMethod, false);
-      // else await this.selectClass(selectedClass);
-    });
-
-
-  }
-
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   focus() { this.get("sourceEditor").focus(); }
@@ -475,6 +492,10 @@ localStorage["oe helper"] = JSON.stringify(store);
       {keys: "Ctrl-C I", command: "[javascript] inject import"},
     ].concat(super.keybindings);
   }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // interactive commands
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   get commands() {
     return [
