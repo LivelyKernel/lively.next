@@ -1,8 +1,8 @@
 import { exec } from "./shell-exec.js";
 import { join, getPackageSpec, readPackageSpec } from "./helpers.js";
 import { Package } from "./package.js";
-import { resource } from "lively.resources";
 import { tmpDir } from "os";
+var resource = lively.resources.resource;
 
 var packageSpecFile = getPackageSpec();
 
@@ -27,7 +27,7 @@ export async function install(baseDir, toURL) {
     console.log("=> Initializing ensuring existance of " + baseDir);
 
     if (baseDir.startsWith("/")) baseDir = "file://" + baseDir;
-    await lively.resources.resource(baseDir).asDirectory().ensureExistance();
+    await resource(baseDir).asDirectory().ensureExistance();
     console.log("=> Reading package specs from " + packageSpecFile);
     var knownProjects = await readPackageSpec(packageSpecFile),
         packages = await Promise.all(knownProjects.map(spec =>
@@ -89,7 +89,7 @@ export async function install(baseDir, toURL) {
     throw e;
 
   } finally {
-    lively.resources.resource(join(baseDir, "lively.installer.log")).write(log.join(""));
+    resource(join(baseDir, "lively.installer.log")).write(log.join(""));
     pBar && pBar.remove();
     indicator && indicator.remove();
   }
