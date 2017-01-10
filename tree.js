@@ -459,7 +459,7 @@ export class Tree extends Morph {
 
     lively.lang.tree.prewalk(this.treeData.root,
       node => collapsedMap.set(nodeIdFn(node), this.treeData.isCollapsed(node)),
-      node => this.treeData.getChildren(node));
+      node => this.treeData.getChildrenIfUncollapsed(node));
 
     return {
       selectionId: selId,
@@ -619,6 +619,10 @@ export class TreeData {
   getChildren(node) { throw new Error("Not yet implemented"); }
   isLeaf(node) { throw new Error("Not yet implemented"); }
 
+  getChildrenIfUncollapsed(node) {
+    return this.isCollapsed(node) ? [] : this.getChildren(node);
+  }
+
   safeDisplay(node) {
     try { return this.display(node); }
     catch (e) { return `[TreeData] Error when trying to display node: ${e}`}
@@ -634,13 +638,13 @@ export class TreeData {
 
   parentNode(childNode) {
     return this.parentMap.get(childNode) || tree.detect(this.root,
-      node => !this.isLeaf(node) && this.getChildren(node).includes(childNode),
-      node => this.getChildren(node));
+      node => !this.isLeaf(node) && this.getChildrenIfUncollapsed(node).includes(childNode),
+      node => this.getChildrenIfUncollapsed(node));
   }
 
   nodeWithSiblings(node) {
     var parent = this.parentNode(node);
-    return parent ? this.getChildren(parent) : [];
+    return parent ? this.getChildrenIfUncollapsed(parent) : [];
   }
 
   asList() {
@@ -651,7 +655,7 @@ export class TreeData {
     var nodesWithIndex = []
     tree.prewalk(this.root,
       (node, i, depth) => nodesWithIndex.push({node, depth, i}),
-      (node) => this.getChildren(node));
+      (node) => this.getChildrenIfUncollapsed(node));
     return nodesWithIndex;
   }
 
@@ -693,7 +697,7 @@ export class TreeData {
         await this.collapse(currentNode, false);
 
       var nextPathPart = path.shift(),
-          nextNode = this.getChildren(currentNode).find(ea => eqFn(nextPathPart, ea));
+          nextNode = this.getChildrenIfUncollapsed(currentNode).find(ea => eqFn(nextPathPart, ea));
 
       if (!nextNode)
         throw new Error(`Cannot descend into tree, next node of ${path.join(".")} not found at ${this.safeDisplay(currentNode)}`);
@@ -716,7 +720,7 @@ var treeCommands = [
           data = td.asListWithIndexAndDepth().map(ea =>
             Object.assign(ea, {string: td.nodeToString(ea.node)})),
           lines = string.lines(
-            string.printTree(td.root, td.nodeToString.bind(td), td.getChildren.bind(td))),
+            string.printTree(td.root, td.nodeToString.bind(td), td.getChildrenIfUncollapsed.bind(td))),
           items = td.asList().map((ea, i) => ({isListItem: true, string: lines[i], value: ea})),
           {selected: [node]} = await tree.world().filterableListPrompt("Select item", items);
       if (node) {
@@ -851,7 +855,7 @@ var treeCommands = [
             if (depth === maxDepth)
               arr.pushIfNotIncluded(nodesToChange, td.parentNode(node));
           },
-          td.getChildren.bind(td))
+          td.getChildrenIfUncollapsed.bind(td))
 
       } else {
         // find the non-leaf nodes below the selection that are at the same
@@ -874,7 +878,7 @@ var treeCommands = [
       return true;
 
       function allNonLeafChildren(parent) {
-        return td.getChildren(parent).filter(n => !td.isLeaf(n));
+        return td.getChildrenIfUncollapsed(parent).filter(n => !td.isLeaf(n));
       }
 
       function collapseOrUncollapse(nodes, doCollapse) {
@@ -933,7 +937,7 @@ var treeCommands = [
     name: "print contents in text window",
     exec: treeMorph => {
       var td = treeMorph.treeData,
-          content = string.printTree(td.root, td.nodeToString.bind(td), td.getChildren.bind(td)),
+          content = string.printTree(td.root, td.nodeToString.bind(td), td.getChildrenIfUncollapsed.bind(td)),
           title = treeMorph.getWindow() ?
             "printed " + treeMorph.getWindow().title :
             treeMorph.name;
