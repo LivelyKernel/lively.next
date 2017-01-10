@@ -36,7 +36,12 @@ class CodeDefTreeData extends TreeData {
     });
   }
 
-  display(node) { return String(node.name) }
+  display(node) {
+    var string = String(node.name);
+    if (node.type === "class-instance-getter") string = "get " + string;
+    if (node.type === "class-instance-setter") string = "set " + string;
+    return string;
+  }
   isLeaf(node) { return !node.children }
   isCollapsed(node) { return node.isCollapsed; }
   collapse(node, bool) { node.isCollapsed = bool; }
@@ -595,7 +600,7 @@ export default class Browser extends Window {
         end = sourceEditor.indexToPosition(entity.node.end)
     sourceEditor.cursorPosition = start;
     sourceEditor.flash({start, end}, {id: 'codeentity', time: 1000, fill: Color.rgb(200,235,255)});
-    sourceEditor.alignRowAtTop(start.row, pt(0, -10));
+    sourceEditor.centerRange({start, end});
   }
 
   findCodeEntity({name, type, parent}) {
