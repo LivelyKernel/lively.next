@@ -788,6 +788,7 @@ export class Halo extends Morph {
       tooltip: "Edit the morph's definition",
       onMouseDown: (evt) => {
         this.world().execCommand("open object editor", {target: this.target});
+        this.remove();
       }
     }));
   }
