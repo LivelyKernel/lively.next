@@ -1100,7 +1100,17 @@ export class Hand extends Morph {
       reactsToPointer: false,
       pointerId
     });
-    this.prevMorphProps = {};
+    this.reset();
+  }
+
+  __deserialize__(snapshot, objRef) {
+    super.__deserialize__(snapshot, objRef);
+    this.reset();
+  }
+
+  reset() {
+    // stores properties of morphs while those are being carried
+    this.prevMorphProps = new WeakMap();
   }
 
   get isHand() { return true }
@@ -1126,21 +1136,21 @@ export class Hand extends Morph {
 
   grab(morph) {
     if (obj.isArray(morph)) return morph.forEach(m => this.grab(m));
-    this.prevMorphProps = {
-      dropShadow: morph.dropShadow,
-      reactsToPointer: morph.reactsToPointer
-    }
+    morph.withAllSubmorphsDo(ea => {
+      this.prevMorphProps.set(ea, obj.select(ea, ["dropShadow", "reactsToPointer"]))
+      // So that the morphs doesn't steal events
+      ea.reactsToPointer = false;
+      ea.dropShadow = true;
+    });
     this.addMorph(morph);
-    // So that the morph doesn't steal events
-    morph.reactsToPointer = false;
-    morph.animate({dropShadow: true, duration: 500});
   }
 
   dropMorphsOn(dropTarget) {
     this.grabbedMorphs.forEach(morph => {
       dropTarget.addMorph(morph)
-      morph.reactsToPointer = this.prevMorphProps.reactsToPointer;
-      morph.animate({dropShadow: this.prevMorphProps.dropShadow, duration: 200});
+      morph.withAllSubmorphsDo(ea => {
+        Object.assign(ea, this.prevMorphProps.get(ea))
+      });
     });
   }
 
