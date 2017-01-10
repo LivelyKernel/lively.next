@@ -5364,7 +5364,7 @@ module.exports = function(acorn) {
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v4.4.5',
+        version: 'v4.4.7',
         browser: true,
         env: {},
         argv: [],
@@ -13598,42 +13598,33 @@ function statementOf(parsed, node, options) {
 function imports(scope) {
 
   // like import "fooo";
-  var importStatementsWithoutSpecifiers = (scope.node.body || []).filter(function (node) {
-    return node.type === "ImportDeclaration" && node.specifiers.length === 0;
-  }).map(function (node) {
-    return { local: null, imported: null, fromModule: node.source.value, node: node };
-  });
+  var imports = [],
+      stmts = scope.node.body || [];
 
-  // like import { x as y } from "fooo"; import * as x from "fooo"; import x from "fooo";
-  var imports = scope.importSpecifiers.reduce(function (imports, node) {
-    var nodes = nodesAtIndex(scope.node, node.start),
-        importStmt = lively_lang.arr.without(nodes, scope.node)[0];
-    if (!importStmt) return imports;
+  for (var i = 0; i < stmts.length; i++) {
+    var stmt = stmts[i];
+    if (stmt.type !== "ImportDeclaration") continue;
+    if (stmt.specifiers.length === 0) {
+      imports.push({ local: null, imported: null, fromModule: stmt.source.value, node: stmt });
+      continue;
+    }
 
-    var from = importStmt.source ? importStmt.source.value : "unknown module";
-    if (!importStmt.specifiers.length) // no imported vars
-      return imports.concat([{
-        local: null,
-        imported: null,
-        fromModule: from,
-        node: node
-      }]);
+    // like import { x as y } from "fooo"; import * as x from "fooo"; import x from "fooo";
+    var from = stmt.source ? stmt.source.value : "unknown module";
 
-    return imports.concat(importStmt.specifiers.map(function (importSpec) {
+    imports.push.apply(imports, toConsumableArray(stmt.specifiers.map(function (importSpec) {
       var imported;
-      if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";else if (importSpec.type === "ImportSpecifier") imported = importSpec.imported.name;else if (importStmt.source) imported = importStmt.source.name;else imported = null;
+      if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";else if (importSpec.type === "ImportSpecifier") imported = importSpec.imported.name;else imported = null;
       return {
         local: importSpec.local ? importSpec.local.name : null,
         imported: imported,
         fromModule: from,
-        node: node
+        node: stmt
       };
-    }));
-  }, importStatementsWithoutSpecifiers);
+    })));
+  }
 
-  return lively_lang.arr.uniqBy(imports, function (a, b) {
-    return a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule;
-  });
+  return imports;
 }
 
 function exports$1(scope) {
