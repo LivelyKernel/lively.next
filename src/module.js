@@ -564,9 +564,7 @@ class ModuleInterface {
     if (!decl) return [];
     const {start, name, type} = decl.id,
           imports = await this.imports(),
-          im = imports.find(i => i.node.start == start && // can't rely on
-                                 i.node.name == name &&   // object identity
-                                 i.node.type == type);
+          im = imports.find(i => i.local == name);
     if (im) {
       const imM = module(this.System, im.fromModule, this.id);
       return [decl].concat(await imM.bindingPathForExport(im.imported));

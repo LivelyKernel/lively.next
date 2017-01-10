@@ -1715,14 +1715,14 @@ var slicedToArray = function () {
 }();
 
 var customTranslate = function () {
-  var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(proceed, load) {
+  var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(proceed, load) {
     var _this6 = this;
 
     var System, debug, start, format, mod, env, instrumented, isEsm, isCjs, isGlobal, useCache, indexdb, hashForCache, cache, stored, options, _prepareCodeForCustom, source, _prepareCodeForCustom2;
 
-    return regeneratorRuntime.wrap(function _callee6$(_context6) {
+    return regeneratorRuntime.wrap(function _callee9$(_context9) {
       while (1) {
-        switch (_context6.prev = _context6.next) {
+        switch (_context9.prev = _context9.next) {
           case 0:
             // load like
             // {
@@ -1737,21 +1737,21 @@ var customTranslate = function () {
             if (!exceptions.some(function (exc) {
               return exc(load.name);
             })) {
-              _context6.next = 4;
+              _context9.next = 4;
               break;
             }
 
             debug && console.log("[lively.modules customTranslate ignoring] %s", load.name);
-            return _context6.abrupt("return", proceed(load));
+            return _context9.abrupt("return", proceed(load));
 
           case 4:
             if (!(isNode$1 && addNodejsWrapperSource(System, load))) {
-              _context6.next = 7;
+              _context9.next = 7;
               break;
             }
 
             debug && console.log("[lively.modules] loaded %s from nodejs cache", load.name);
-            return _context6.abrupt("return", proceed(load));
+            return _context9.abrupt("return", proceed(load));
 
           case 7:
             start = Date.now();
@@ -1762,28 +1762,28 @@ var customTranslate = function () {
 
             // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
             // cache experiment part 1
-            _context6.prev = 10;
+            _context9.prev = 10;
             useCache = System.useModuleTranslationCache, indexdb = System.global.indexedDB, hashForCache = useCache && String(lively_lang.string.hashCode(load.source));
 
             if (!(useCache && indexdb && isEsm)) {
-              _context6.next = 23;
+              _context9.next = 25;
               break;
             }
 
             cache = System._livelyModulesTranslationCache || (System._livelyModulesTranslationCache = new BrowserModuleTranslationCache());
-            _context6.next = 16;
+            _context9.next = 16;
             return cache.fetchStoredModuleSource(load.name);
 
           case 16:
-            stored = _context6.sent;
+            stored = _context9.sent;
 
             if (!(stored && stored.hash == hashForCache && stored.timestamp >= BrowserModuleTranslationCache.earliestDate)) {
-              _context6.next = 23;
+              _context9.next = 23;
               break;
             }
 
             if (!stored.source) {
-              _context6.next = 23;
+              _context9.next = 23;
               break;
             }
 
@@ -1793,20 +1793,56 @@ var customTranslate = function () {
             // to define it here to avoid an
             // undefined entry later!
 
-            console.log("[lively.modules customTranslate] loaded %s from cache after %sms", load.name, Date.now() - start);
-            return _context6.abrupt("return", Promise.resolve(stored.source));
+            console.log("[lively.modules customTranslate] loaded %s from browser cache after %sms", load.name, Date.now() - start);
+            return _context9.abrupt("return", Promise.resolve(stored.source));
 
           case 23:
-            _context6.next = 28;
+            _context9.next = 36;
             break;
 
           case 25:
-            _context6.prev = 25;
-            _context6.t0 = _context6["catch"](10);
+            if (!(isNode$1 && useCache && isEsm)) {
+              _context9.next = 36;
+              break;
+            }
 
-            console.error("[lively.modules customTranslate] error reading module translation cache: " + _context6.t0.stack);
+            cache = System._livelyModulesTranslationCache || (System._livelyModulesTranslationCache = new NodeModuleTranslationCache());
+            _context9.next = 29;
+            return cache.fetchStoredModuleSource(load.name);
 
-          case 28:
+          case 29:
+            stored = _context9.sent;
+
+            if (!(stored && stored.hash == hashForCache && stored.timestamp >= NodeModuleTranslationCache.earliestDate)) {
+              _context9.next = 36;
+              break;
+            }
+
+            if (!stored.source) {
+              _context9.next = 36;
+              break;
+            }
+
+            load.metadata.format = "register";
+            load.metadata.deps = []; // the real deps will be populated when the
+            // system register code is run, still need
+            // to define it here to avoid an
+            // undefined entry later!
+
+            console.log("[lively.modules customTranslate] loaded %s from filesystem cache after %sms", load.name, Date.now() - start);
+            return _context9.abrupt("return", Promise.resolve(stored.source));
+
+          case 36:
+            _context9.next = 41;
+            break;
+
+          case 38:
+            _context9.prev = 38;
+            _context9.t0 = _context9["catch"](10);
+
+            console.error("[lively.modules customTranslate] error reading module translation cache: " + _context9.t0.stack);
+
+          case 41:
             // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
             options = {};
@@ -1848,12 +1884,12 @@ var customTranslate = function () {
               debug && console.log("[lively.modules] customTranslate ignoring %s b/c don't know how to handle format %s", load.name, load.metadata.format);
             }
 
-            return _context6.abrupt("return", proceed(load).then(function () {
-              var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(translated) {
+            return _context9.abrupt("return", proceed(load).then(function () {
+              var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(translated) {
                 var cache;
-                return regeneratorRuntime.wrap(function _callee5$(_context5) {
+                return regeneratorRuntime.wrap(function _callee8$(_context8) {
                   while (1) {
-                    switch (_context5.prev = _context5.next) {
+                    switch (_context8.prev = _context8.next) {
                       case 0:
                         if (translated.indexOf("System.register(") === 0) {
                           debug && console.log("[lively.modules customTranslate] Installing System.register setter captures for %s", load.name);
@@ -1863,56 +1899,82 @@ var customTranslate = function () {
                         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
                         // cache experiment part 2
 
+                        if (!(isNode$1 && useCache && isEsm)) {
+                          _context8.next = 14;
+                          break;
+                        }
+
+                        cache = System._livelyModulesTranslationCache || (System._livelyModulesTranslationCache = new NodeModuleTranslationCache());
+                        _context8.prev = 3;
+                        _context8.next = 6;
+                        return cache.cacheModuleSource(load.name, hashForCache, translated);
+
+                      case 6:
+                        console.log("[lively.modules customTranslate] stored cached version in filesystem for %s", load.name);
+                        _context8.next = 12;
+                        break;
+
+                      case 9:
+                        _context8.prev = 9;
+                        _context8.t0 = _context8["catch"](3);
+
+                        console.error("[lively.modules customTranslate] failed storing module cache: " + _context8.t0.stack);
+
+                      case 12:
+                        _context8.next = 25;
+                        break;
+
+                      case 14:
                         if (!(useCache && indexdb && isEsm)) {
-                          _context5.next = 12;
+                          _context8.next = 25;
                           break;
                         }
 
                         cache = System._livelyModulesTranslationCache || (System._livelyModulesTranslationCache = new BrowserModuleTranslationCache());
-                        _context5.prev = 3;
-                        _context5.next = 6;
+                        _context8.prev = 16;
+                        _context8.next = 19;
                         return cache.cacheModuleSource(load.name, hashForCache, translated);
 
-                      case 6:
+                      case 19:
                         console.log("[lively.modules customTranslate] stored cached version for %s", load.name);
-                        _context5.next = 12;
+                        _context8.next = 25;
                         break;
 
-                      case 9:
-                        _context5.prev = 9;
-                        _context5.t0 = _context5["catch"](3);
+                      case 22:
+                        _context8.prev = 22;
+                        _context8.t1 = _context8["catch"](16);
 
-                        console.error("[lively.modules customTranslate] failed storing module cache: " + _context5.t0.stack);
+                        console.error("[lively.modules customTranslate] failed storing module cache: " + _context8.t1.stack);
 
-                      case 12:
+                      case 25:
                         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
                         debug && console.log("[lively.modules customTranslate] done %s after %sms", load.name, Date.now() - start);
-                        return _context5.abrupt("return", translated);
+                        return _context8.abrupt("return", translated);
 
-                      case 14:
+                      case 27:
                       case "end":
-                        return _context5.stop();
+                        return _context8.stop();
                     }
                   }
-                }, _callee5, _this6, [[3, 9]]);
+                }, _callee8, _this6, [[3, 9], [16, 22]]);
               }));
 
-              return function (_x9) {
-                return _ref6.apply(this, arguments);
+              return function (_x13) {
+                return _ref10.apply(this, arguments);
               };
             }()));
 
-          case 32:
+          case 45:
           case "end":
-            return _context6.stop();
+            return _context9.stop();
         }
       }
-    }, _callee6, this, [[10, 25]]);
+    }, _callee9, this, [[10, 38]]);
   }));
 
-  return function customTranslate(_x7, _x8) {
-    return _ref5.apply(this, arguments);
+  return function customTranslate(_x11, _x12) {
+    return _ref9.apply(this, arguments);
   };
 }();
 
@@ -1968,25 +2030,290 @@ var NodeModuleTranslationCache = function (_ModuleTranslationCac) {
   }
 
   createClass(NodeModuleTranslationCache, [{
-    key: "fetchStoredModuleSource",
+    key: "ensurePath",
     value: function () {
-      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(moduleId) {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(path) {
+        var url, r, packageInfo, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, dir;
+
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
+                _context.next = 2;
+                return lively_resources.resource("file://" + process.env.PWD + "/module_cache" + path).exists();
+
+              case 2:
+                if (!_context.sent) {
+                  _context.next = 4;
+                  break;
+                }
+
+                return _context.abrupt("return");
+
+              case 4:
+                url = '';
+                _iteratorNormalCompletion = true;
+                _didIteratorError = false;
+                _iteratorError = undefined;
+                _context.prev = 8;
+                _iterator = path.split("/")[Symbol.iterator]();
+
+              case 10:
+                if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+                  _context.next = 38;
+                  break;
+                }
+
+                dir = _step.value;
+
+                url += dir + "/";
+                r = lively_resources.resource("file://" + process.env.PWD + "/module_cache" + url);
+                _context.next = 16;
+                return r.exists();
+
+              case 16:
+                if (_context.sent) {
+                  _context.next = 26;
+                  break;
+                }
+
+                _context.prev = 17;
+                _context.next = 20;
+                return r.mkdir();
+
+              case 20:
+                _context.next = 26;
+                break;
+
+              case 22:
+                _context.prev = 22;
+                _context.t0 = _context["catch"](17);
+
+                if (!(_context.t0.code != "EEXIST")) {
+                  _context.next = 26;
+                  break;
+                }
+
+                throw _context.t0;
+
+              case 26:
+                r = lively_resources.resource("file://" + url + '/package.json');
+                _context.next = 29;
+                return r.exists();
+
+              case 29:
+                if (!_context.sent) {
+                  _context.next = 35;
+                  break;
+                }
+
+                _context.next = 32;
+                return r.read();
+
+              case 32:
+                packageInfo = _context.sent;
+                _context.next = 35;
+                return lively_resources.resource("file://" + process.env.PWD + "/module_cache" + url + '/package.json').write(packageInfo);
+
+              case 35:
+                _iteratorNormalCompletion = true;
+                _context.next = 10;
+                break;
+
+              case 38:
+                _context.next = 44;
+                break;
+
+              case 40:
+                _context.prev = 40;
+                _context.t1 = _context["catch"](8);
+                _didIteratorError = true;
+                _iteratorError = _context.t1;
+
+              case 44:
+                _context.prev = 44;
+                _context.prev = 45;
+
+                if (!_iteratorNormalCompletion && _iterator.return) {
+                  _iterator.return();
+                }
+
+              case 47:
+                _context.prev = 47;
+
+                if (!_didIteratorError) {
+                  _context.next = 50;
+                  break;
+                }
+
+                throw _iteratorError;
+
+              case 50:
+                return _context.finish(47);
+
+              case 51:
+                return _context.finish(44);
+
+              case 52:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, this);
+        }, _callee, this, [[8, 40, 44, 52], [17, 22], [45,, 47, 51]]);
       }));
 
-      function fetchStoredModuleSource(_x) {
+      function ensurePath(_x) {
         return _ref.apply(this, arguments);
       }
 
+      return ensurePath;
+    }()
+  }, {
+    key: "dumpModuleCache",
+    value: function () {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+        var r, path;
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                _context2.t0 = regeneratorRuntime.keys(System._nodeRequire("module").Module._cache);
+
+              case 1:
+                if ((_context2.t1 = _context2.t0()).done) {
+                  _context2.next = 16;
+                  break;
+                }
+
+                path = _context2.t1.value;
+
+                r = lively_resources.resource("file://" + path);
+                _context2.next = 6;
+                return r.exists();
+
+              case 6:
+                if (!_context2.sent) {
+                  _context2.next = 14;
+                  break;
+                }
+
+                _context2.t2 = this;
+                _context2.t3 = path;
+                _context2.next = 11;
+                return r.read();
+
+              case 11:
+                _context2.t4 = _context2.sent;
+                _context2.next = 14;
+                return _context2.t2.cacheModuleSource.call(_context2.t2, _context2.t3, "NO_HASH", _context2.t4);
+
+              case 14:
+                _context2.next = 1;
+                break;
+
+              case 16:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function dumpModuleCache() {
+        return _ref2.apply(this, arguments);
+      }
+
+      return dumpModuleCache;
+    }()
+  }, {
+    key: "fetchStoredModuleSource",
+    value: function () {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(moduleId) {
+        var fname, fpath, r, _ref4, timestamp, source, hash;
+
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                moduleId = moduleId.replace('file://', ''), fname = moduleId.match(/([^\/]*.)\.js/)[0], fpath = moduleId.replace(fname, ''), r = lively_resources.resource("file://" + process.env.PWD + "/module_cache" + moduleId);
+                _context3.next = 3;
+                return r.exists();
+
+              case 3:
+                if (!_context3.sent) {
+                  _context3.next = 17;
+                  break;
+                }
+
+                _context3.next = 6;
+                return r.stat();
+
+              case 6:
+                _ref4 = _context3.sent;
+                timestamp = _ref4.birthtime;
+                _context3.next = 10;
+                return r.read();
+
+              case 10:
+                source = _context3.sent;
+                _context3.next = 13;
+                return lively_resources.resource("file://" + process.env.PWD + "/module_cache" + fpath + "/.hash_" + fname).read();
+
+              case 13:
+                hash = _context3.sent;
+                return _context3.abrupt("return", { source: source, timestamp: timestamp, hash: hash });
+
+              case 17:
+                return _context3.abrupt("return", false);
+
+              case 18:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function fetchStoredModuleSource(_x2) {
+        return _ref3.apply(this, arguments);
+      }
+
       return fetchStoredModuleSource;
+    }()
+  }, {
+    key: "cacheModuleSource",
+    value: function () {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(moduleId, hash, source) {
+        var fname, fpath;
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                moduleId = moduleId.replace('file://', ''), fname = moduleId.match(/([^\/]*.)\.js/)[0], fpath = moduleId.replace(fname, '');
+                _context4.next = 3;
+                return this.ensurePath(fpath);
+
+              case 3:
+                _context4.next = 5;
+                return lively_resources.resource("file://" + process.env.PWD + "/module_cache" + moduleId).write(source);
+
+              case 5:
+                _context4.next = 7;
+                return lively_resources.resource("file://" + process.env.PWD + "/module_cache" + fpath + "/.hash_" + fname).write(hash);
+
+              case 7:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+
+      function cacheModuleSource(_x3, _x4, _x5) {
+        return _ref5.apply(this, arguments);
+      }
+
+      return cacheModuleSource;
     }()
   }]);
   return NodeModuleTranslationCache;
@@ -2042,19 +2369,19 @@ var BrowserModuleTranslationCache = function (_ModuleTranslationCac2) {
   }, {
     key: "closeDb",
     value: function () {
-      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
         var db, req;
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
-            switch (_context2.prev = _context2.next) {
+            switch (_context5.prev = _context5.next) {
               case 0:
-                _context2.next = 2;
+                _context5.next = 2;
                 return this.db;
 
               case 2:
-                db = _context2.sent;
+                db = _context5.sent;
                 req = db.close();
-                return _context2.abrupt("return", new Promise(function (resolve, reject) {
+                return _context5.abrupt("return", new Promise(function (resolve, reject) {
                   req.onsuccess = function (evt) {
                     resolve(this.result);
                   };
@@ -2065,14 +2392,14 @@ var BrowserModuleTranslationCache = function (_ModuleTranslationCac2) {
 
               case 5:
               case "end":
-                return _context2.stop();
+                return _context5.stop();
             }
           }
-        }, _callee2, this);
+        }, _callee5, this);
       }));
 
       function closeDb() {
-        return _ref2.apply(this, arguments);
+        return _ref6.apply(this, arguments);
       }
 
       return closeDb;
@@ -2080,20 +2407,20 @@ var BrowserModuleTranslationCache = function (_ModuleTranslationCac2) {
   }, {
     key: "cacheModuleSource",
     value: function () {
-      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(moduleId, hash, source) {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(moduleId, hash, source) {
         var _this4 = this;
 
         var db;
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
-            switch (_context3.prev = _context3.next) {
+            switch (_context6.prev = _context6.next) {
               case 0:
-                _context3.next = 2;
+                _context6.next = 2;
                 return this.db;
 
               case 2:
-                db = _context3.sent;
-                return _context3.abrupt("return", new Promise(function (resolve, reject) {
+                db = _context6.sent;
+                return _context6.abrupt("return", new Promise(function (resolve, reject) {
                   var transaction = db.transaction([_this4.sourceCodeCacheStoreName], "readwrite"),
                       store = transaction.objectStore(_this4.sourceCodeCacheStoreName),
                       timestamp = Date.now();
@@ -2104,14 +2431,14 @@ var BrowserModuleTranslationCache = function (_ModuleTranslationCac2) {
 
               case 4:
               case "end":
-                return _context3.stop();
+                return _context6.stop();
             }
           }
-        }, _callee3, this);
+        }, _callee6, this);
       }));
 
-      function cacheModuleSource(_x3, _x4, _x5) {
-        return _ref3.apply(this, arguments);
+      function cacheModuleSource(_x7, _x8, _x9) {
+        return _ref7.apply(this, arguments);
       }
 
       return cacheModuleSource;
@@ -2119,20 +2446,20 @@ var BrowserModuleTranslationCache = function (_ModuleTranslationCac2) {
   }, {
     key: "fetchStoredModuleSource",
     value: function () {
-      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(moduleId) {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(moduleId) {
         var _this5 = this;
 
         var db;
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
-            switch (_context4.prev = _context4.next) {
+            switch (_context7.prev = _context7.next) {
               case 0:
-                _context4.next = 2;
+                _context7.next = 2;
                 return this.db;
 
               case 2:
-                db = _context4.sent;
-                return _context4.abrupt("return", new Promise(function (resolve, reject) {
+                db = _context7.sent;
+                return _context7.abrupt("return", new Promise(function (resolve, reject) {
                   var transaction = db.transaction([_this5.sourceCodeCacheStoreName]),
                       objectStore = transaction.objectStore(_this5.sourceCodeCacheStoreName),
                       req = objectStore.get(moduleId);
@@ -2144,14 +2471,14 @@ var BrowserModuleTranslationCache = function (_ModuleTranslationCac2) {
 
               case 4:
               case "end":
-                return _context4.stop();
+                return _context7.stop();
             }
           }
-        }, _callee4, this);
+        }, _callee7, this);
       }));
 
-      function fetchStoredModuleSource(_x6) {
-        return _ref4.apply(this, arguments);
+      function fetchStoredModuleSource(_x10) {
+        return _ref8.apply(this, arguments);
       }
 
       return fetchStoredModuleSource;
@@ -5086,9 +5413,7 @@ var ModuleInterface = function () {
               case 8:
                 imports = _context12.sent;
                 im = imports.find(function (i) {
-                  return i.node.start == start && // can't rely on
-                  i.node.name == name && // object identity
-                  i.node.type == type;
+                  return i.local == name;
                 });
 
                 if (!im) {

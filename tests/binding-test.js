@@ -73,6 +73,7 @@ describe("binding", () => {
   });
   
   it("to named declaration", async () => {
+debugger;
     const decls = await modules[3].bindingPathForRefAt(41);
     expect(decls).to.containSubset([{
       declModule: {id: testProjectDir + "file3.js"},
