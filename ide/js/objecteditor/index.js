@@ -1,4 +1,4 @@
-import { arr, obj, Path } from "lively.lang";
+import { arr, obj, Path, string, fun } from "lively.lang";
 import { Morph, HorizontalLayout, GridLayout, config } from "lively.morphic";
 import { pt, Color } from "lively.graphics";
 import { JavaScriptEditorPlugin } from "../editor-plugin.js";
@@ -48,9 +48,12 @@ class ClassTreeData extends TreeData {
     if (node.isRoot)
       return node.target.name || node.target.id || "root object"
 
+    // class
     if (isClass(node.target))
       return node.target.name;
 
+    // method
+    
     return node.name || "no name";
   }
 
@@ -72,8 +75,12 @@ class ClassTreeData extends TreeData {
       try {
         return node.children
           || (node.children = lexicalClassMembers(node.target).map(ea => {
-            var {static: _static, name} = ea;
-            return {name: (_static ? "static " : "") + name, target: ea};
+            var {static: _static, name, kind} = ea;
+            var prefix = "";
+            if (_static) prefix += "static ";
+            if (kind === "get") prefix += "get ";
+            if (kind === "set") prefix += "set ";
+            return {name: prefix + name, target: ea};
           }));
       } catch (e) { $world.showError(e); return node.children = []; }
     }
@@ -156,9 +163,11 @@ export class ObjectEditor extends Morph {
        borderRight: {width: 1, color: Color.gray},
        layout: new HorizontalLayout({direction: "centered", spacing: 2}), submorphs: [
           {...btnStyle, name: "saveButton", fontSize: 18, label: Icon.makeLabel("save"), tooltip: "save"},
-          {...btnStyle, name: "playButton", fontSize: 18, label: Icon.makeLabel("play-circle-o"), tooltip: "execute selected method"}]},
+          {...btnStyle, name: "runMethodButton", fontSize: 18, label: Icon.makeLabel("play-circle-o"), tooltip: "execute selected method"}]},
 
-      new ImportController({name: "importController"})
+      new ImportController({name: "importController"}),
+
+      {name: "unsavedChangesIndicator", extent: pt(7,7), isLayoutable: false}
     ];
 
     var l = this.layout = new GridLayout({
@@ -181,7 +190,18 @@ export class ObjectEditor extends Morph {
     connect(this.get("removeImportButton"), "fire", this, "interactivelyRemoveImport");
 
     connect(this.get("saveButton"), "fire", this, "execCommand", {converter: () => "save source"});
+    connect(this.get("runMethodButton"), "fire", this, "execCommand", {converter: () => "run selected method"});
+
     connect(this.get("cleanupButton"), "fire", this, "execCommand", {converter: () => "[javascript] removed unused imports"});
+
+    connect(this.get("sourceEditor"), "extent", this.get("unsavedChangesIndicator"), "topRight", {converter: function() { return this.sourceObj.bounds().topRight().addXY(-1,0); }});
+    this.get("sourceEditor").extent = this.get("sourceEditor").extent;
+
+    connect(this.get("sourceEditor"), "textChange", this, "updateUnsavedChangeIndicatorDebounced");
+
+    // this.build()
+    // this.refresh()
+    // this.get("unsavedChangesIndicator").show()
   }
 
 
@@ -198,7 +218,6 @@ export class ObjectEditor extends Morph {
     tree.treeData = new ClassTreeData(obj.constructor);
 
     Object.assign(this.editorPlugin.evalEnvironment, {
-      targetModule: "lively://object-editor/" + this.id,
       context: this.target,
       format: "esm"
     });
@@ -230,9 +249,11 @@ export class ObjectEditor extends Morph {
   // update
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  async refresh() {
+  async refresh(keepCursor = false) {
     var {selectedClass, selectedMethod} = this.state,
-        tree = this.get("classTree");
+        tree = this.get("classTree"),
+        ed = this.get("sourceEditor"),
+        oldPos = ed.cursorPosition;
 
     await tree.maintainViewStateWhile(async () => {
       this.target = this.target;
@@ -246,6 +267,8 @@ export class ObjectEditor extends Morph {
       // method rename, old selectedMethod does no longer exist
       await this.selectClass(selectedClass);
     }
+
+    if (keepCursor) ed.cursorPosition = oldPos;
   }
 
   async updateKnownGlobals() {
@@ -260,15 +283,39 @@ export class ObjectEditor extends Morph {
     this.editorPlugin.highlight();
   }
 
+  async updateSource(source, targetModule = "lively://object-editor/" + this.id) {
+    let ed = this.get("sourceEditor"),
+        system = await this.systemInterface(),
+        format = (await system.moduleFormat(targetModule)) || "esm";
+        // [_, ext] = moduleId.match(/\.([^\.]+)$/) || [];
+
+    ed.textString = source;
+    Object.assign(this.editorPlugin.evalEnvironment, {targetModule, format});
+    this.state.sourceHash = string.hashCode(source);
+    
+  }
+
+  indicateUnsavedChanges() { this.get("unsavedChangesIndicator").fill = Color.red; }
+  indicateNoUnsavedChanges() { this.get("unsavedChangesIndicator").fill = Color.green; }
+  hasUnsavedChanges() {
+    return this.state.sourceHash !== string.hashCode(this.get("sourceEditor").textString);
+  }
+
+  updateUnsavedChangeIndicatorDebounced() {
+    fun.debounceNamed(this.id + "-updateUnsavedChangeIndicatorDebounced", 20,
+      () => this.updateUnsavedChangeIndicator())();
+  }
+
+  updateUnsavedChangeIndicator() {
+    this[this.hasUnsavedChanges() ? "indicateUnsavedChanges" : "indicateNoUnsavedChanges"]();
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // classes and method ui
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   onClassTreeSelection(node) {
-    if (!node) {
-      this.get("sourceEditor").textString = "";
-      return;
-    }
+    if (!node) { this.updateSource(""); return; }
 
     if (isClass(node.target)) {
       this.selectClass(node.target);
@@ -283,32 +330,19 @@ export class ObjectEditor extends Morph {
   }
 
   async selectClass(klass) {
-    var tree = this.get("classTree");
+    let tree = this.get("classTree");
     if (!tree.selection || tree.selection.target !== klass) {
       var node = tree.nodes.find(ea => !ea.isRoot && ea.target === klass);
       tree.selection = node;
     }
 
-    var ed = this.get("sourceEditor"),
-        descr = this.sourceDescriptorFor(klass),
-        source = await descr.source,
-        system = await this.systemInterface(),
-        format = (await system.moduleFormat(descr.module.id)) || "esm",
-        [_, ext] = descr.module.id.match(/\.([^\.]+)$/) || [];
-
-    ed.textString = source;
-
-    Object.assign(this.editorPlugin.evalEnvironment, {
-      targetModule: descr.module.id,
-      context: this.target,
-      format
-    });
+    let descr = this.sourceDescriptorFor(klass);
+    await this.updateSource(await descr.source, descr.module.id);
 
     this.state.selectedMethod = null;
     this.state.selectedClass = klass;
 
     this.get("importController").module = descr.module;
-
     await this.updateKnownGlobals();
   }
 
@@ -322,17 +356,22 @@ export class ObjectEditor extends Morph {
       await this.selectClass(klass);
 
     var tree = this.get("classTree");
-    tree.uncollapse(tree.selection);
+    await tree.uncollapse(tree.selection);
     if (tree.selection.target !== methodSpec) {
       var node = tree.nodes.find(ea => ea.target.owner === klass && ea.target.name === methodSpec.name);
       tree.selection = node;
     }
 
-    var ed = this.get("sourceEditor"),
-        descr = RuntimeSourceDescriptor.for(klass),
+
+    let descr = RuntimeSourceDescriptor.for(klass),
         parsed = await descr.ast,
         methods = Path("body.body").get(parsed),
-        method = methods.find(({key: {name}}) => name === methodSpec.name);
+        method = methods.find(({kind, key: {name}}) => {
+          if (name !== methodSpec.name) return false;
+          if (!methodSpec.kind || (methodSpec.kind !== "get" && methodSpec.kind !== "set"))
+            return true;
+          return methodSpec.kind === kind;
+        });
 
     this.state.selectedMethod = methodSpec;
 
@@ -341,7 +380,8 @@ export class ObjectEditor extends Morph {
       return;
     }
 
-    var cursorPos = ed.indexToPosition(putCursorInBody ?
+    var ed = this.get("sourceEditor"),
+        cursorPos = ed.indexToPosition(putCursorInBody ?
       method.value.body.start+1 : method.key.start)
     ed.cursorPosition = cursorPos;
 
@@ -351,7 +391,8 @@ export class ObjectEditor extends Morph {
         end: ed.indexToPosition(method.end)
       }
       ed.flash(methodRange, {id: 'method', time: 1000, fill: Color.rgb(200,235,255)});
-      ed.alignRowAtTop(undefined, pt(0, -20))
+      ed.centerRange(methodRange);
+      // ed.alignRowAtTop(undefined, pt(0, -20))
     }
   }
 
@@ -376,9 +417,11 @@ localStorage["oe helper"] = JSON.stringify(store);
 
     await editor.saveExcursion(async () => {
       await this.refresh();
+      await this.updateSource(editor.textString, this.selectedModule.id);
       // if (selectedMethod) await this.selectMethod(selectedClass, selectedMethod, false);
       // else await this.selectClass(selectedClass);
     });
+    
   }
 
   async interactivelyAddMethod() {
@@ -474,6 +517,28 @@ localStorage["oe helper"] = JSON.stringify(store);
     }
   }
 
+  async interactivelyRunSelectedMethod() {
+    var { selectedMethod } = this.state;
+    if (!selectedMethod) {
+      this.setStatusMessage("no message selected");
+      return;
+    }
+    
+    if (typeof this.target[selectedMethod.name] !== "function") {
+      this.setStatusMessage(`${selectedMethod.name} is not a method of ${this.target}`);
+      return;
+    }
+
+    try {
+      var result = await this.target[selectedMethod.name]();
+      var msg = `Running ${selectedMethod.name}`;
+      if (typeof result !== "undefined") msg += `, returns ${result}`;
+      this.setStatusMessage(msg);
+    } catch (e) {
+      this.showError(e);
+    }
+  }
+
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // events
@@ -488,6 +553,7 @@ localStorage["oe helper"] = JSON.stringify(store);
       {keys: {mac: "Command-S", win: "Ctrl-S"}, command: "save source"},
       {keys: {mac: "Command-Shift-=", win: "Ctrl-Shift-="}, command: "add method"},
       {keys: {mac: "Command-Shift--", win: "Ctrl-Shift--"}, command: "remove method"},
+      {keys: "Alt-R", command: "refresh"},
       {keys: "Alt-J", command: "jump to definition"},
       {keys: "Ctrl-C I", command: "[javascript] inject import"},
     ].concat(super.keybindings);
@@ -511,6 +577,15 @@ localStorage["oe helper"] = JSON.stringify(store);
       },
 
       {
+        name: "refresh",
+        exec: async ed => {
+          await ed.refresh(true);
+          ed.setStatusMessage("reloaded");
+          return true;
+        }
+      },
+
+      {
         name: "[javascript] inject import",
         exec: async ed => { await ed.interactivelyAddImport(); return true; }
       },
@@ -528,6 +603,11 @@ localStorage["oe helper"] = JSON.stringify(store);
       {
         name: "remove method",
         exec: async ed => { await ed.interactivelyRemoveMethod(); return true; }
+      },
+
+      {
+        name: "run selected method",
+        exec: async ed => { await ed.interactivelyRunSelectedMethod(); return true; }
       },
 
       {
@@ -559,7 +639,9 @@ localStorage["oe helper"] = JSON.stringify(store);
                 );
               });
 
-          var {selected: [choice]} = await ed.world().filterableListPrompt("select class or method", items);
+          var {selected: [choice]} = await ed.world().filterableListPrompt(
+                                      "select class or method", items,
+                                      {historyId: "lively.morphic-object-editor-jump-def-hist"});
 
           if (choice) {
             await ed[choice.selector](choice.node.target);
