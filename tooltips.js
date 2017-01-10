@@ -52,8 +52,8 @@ export class TooltipViewer {
 
   scheduleTooltipFor(morph) {
     this.timer = setTimeout(() => {
-        this.showTooltipFor(morph);
-      }, config.showTooltipsAfter * 1000);
+      this.showTooltipFor(morph);
+    }, config.showTooltipsAfter * 1000);
   }
 
   clearScheduledTooltip() {
