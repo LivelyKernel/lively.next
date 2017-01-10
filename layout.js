@@ -333,15 +333,16 @@ export class TilingLayout extends Layout {
 export class CellGroup {
 
   constructor({cell, morph, layout, align}) {
-    this.state = {cells: [cell], layout: layout, align, resize: true};
+    this.state = {cells: [cell], layout, align, resize: true};
     layout && layout.addGroup(this);
     this.morph = morph;
   }
 
   get morph() {
-    if (this.state.morph) {
-       if (this.state.morph.isMorph) return this.state.morph;
-       return this.layoutableSubmorphs.find(m => m.name == this.state.morph);
+    var {morph, layout} = this.state;
+    if (morph) {
+      if (morph.isMorph) return morph;
+      return layout.layoutableSubmorphs.find(m => m.name == morph);
     }
     return null;
   }
@@ -947,8 +948,8 @@ export class GridLayout extends Layout {
     super.apply(animate);
     if (!this.grid) this.initGrid();
     this.layoutableSubmorphs.forEach(m => {
-         const g = this.getCellGroupFor(m);
-         g && g.apply(animate);
+      const g = this.getCellGroupFor(m);
+      g && g.apply(animate);
     });
     this.container.extent = pt(Math.max(this.grid.totalStaticWidth, this.container.width),
                                Math.max(this.grid.totalStaticHeight, this.container.height));

@@ -15,10 +15,11 @@ function createDummyWorld() {
       layout: new VerticalLayout(),
       center: pt(150,150),
       extent: pt(200, 400),
+      fill: Color.random(),
       submorphs: [
-        new Morph({name: "m1", extent: pt(100,75)}),
-        new Morph({name: "m2", extent: pt(50,50)}),
-        new Morph({name: "m3", extent: pt(100, 50)})
+        new Morph({name: "m1", fill: Color.random(), extent: pt(100,75)}),
+        new Morph({name: "m2", fill: Color.random(), extent: pt(50,50)}),
+        new Morph({name: "m3", fill: Color.random(), extent: pt(100, 50)})
     ]})]
   });
   m = world.submorphs[0];
