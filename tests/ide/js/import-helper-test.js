@@ -23,7 +23,7 @@ describe("import helper - cleanup unused imports", () => {
 
   it("runs command on text", async () => {
     var ed = new Text({plugins: [new JavaScriptEditorPlugin()]}),
-        dummyWorld = {confirm: () => true};
+        dummyWorld = {editListPrompt: (label, items) => ({list: items.map(ea => ea.value)})};
 
     ed.world = () => dummyWorld;
     ed.textString = `import { Text } from "lively.morphic";\nfooo;`;
@@ -33,7 +33,7 @@ describe("import helper - cleanup unused imports", () => {
 
     ed.textString = `import Text, { Text, Morph } from "lively.morphic";\nMorph;`;
     await cleanupUnusedImports(ed);
-    expect(ed.textString).equals(`import { Morph } from 'lively.morphic';\nMorph;`, "1");
+    expect(ed.textString).equals(`import { Morph } from "lively.morphic";\nMorph;`, "1");
   });
 
 });
@@ -47,7 +47,7 @@ describe("import helper - injection command", () => {
     ed = new Text({plugins: [new JavaScriptEditorPlugin()]});
     var targetModule = `lively://import-helper-test/${Date.now()}`,
         dummyWorld = {
-          filterableListPrompt: (_, items) =>
+          filterableListPrompt: (label, items) =>
             ({selected: items
                         .filter(item => queryMatcher(listItem(item).string))
                         .map(ea => ea.value)})
@@ -75,7 +75,7 @@ describe("import helper - injection command", () => {
     ed.gotoDocumentEnd()
     await interactivelyInjectImportIntoText(ed, {gotoImport: false, insertImportAtCursor: true});
     expect(ed.textString)
-      .equals(`import { Text, HTMLMorph, Morph } from "lively.morphic";\nMorph\nHTMLMorph`, "transformed code");
+      .equals(`import { Text, HTMLMorph, Morph } from "lively.morphic";Morph\nHTMLMorph`, "transformed code");
     expect(ed.cursorPosition).deep.equals(ed.documentEndPosition);
   });
 

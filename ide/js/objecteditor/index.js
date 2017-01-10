@@ -1,6 +1,6 @@
 import { arr, obj, Path } from "lively.lang";
 import { Morph, HorizontalLayout, GridLayout, config } from "lively.morphic";
-import { pt, Color, Rectangle } from "lively.graphics";
+import { pt, Color } from "lively.graphics";
 import { JavaScriptEditorPlugin } from "../editor-plugin.js";
 import { withSuperclasses, lexicalClassMembers, isClass } from "lively.classes/util.js";
 import { TreeData, Tree } from "lively.morphic/tree.js";
@@ -8,7 +8,7 @@ import { connect } from "lively.bindings";
 import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
 import { addScript } from "lively.classes/object-classes.js";
 import { Icon } from "../../../icons.js";
-import { interactivelyInjectImportIntoModule, interactivelyChooseImports } from "../import-helper.js";
+import { chooseUnusedImports, interactivelyChooseImports } from "../import-helper.js";
 import { module } from "lively.modules";
 
 
@@ -60,7 +60,7 @@ class ClassTreeData extends TreeData {
 
   getChildren(node) {
     if (!node) return [];
-    if (node.isCollapsed) return [];
+    // if (node.isCollapsed) return [];
 
     if (node.isRoot) {
       if (node.children) return node.children;
@@ -119,6 +119,11 @@ export class ObjectEditor extends Morph {
     });
   }
 
+  get selectedModule() {
+    var mid = this.editorPlugin.evalEnvironment.targetModule;
+    return mid ? module(mid) : null;
+  }
+
   build(props) {
     var listStyle = {
           // borderWidth: 1, borderColor: Color.gray,
@@ -126,7 +131,9 @@ export class ObjectEditor extends Morph {
         },
 
         textStyle = {
-          borderWidth: 1, borderColor: Color.gray,
+          borderLeft: {width: 1, color: Color.gray},
+          borderRight: {width: 1, color: Color.gray},
+          borderBottom: {width: 1, color: Color.gray},
           type: "text",
           ...config.codeEditor.defaultStyle,
           plugins: [new JavaScriptEditorPlugin(config.codeEditor.defaultTheme)]
@@ -144,13 +151,22 @@ export class ObjectEditor extends Morph {
         };
 
     this.submorphs = [
-      {type: Tree, name: "classTree", treeData: new ClassTreeData(null)},
-      {name: "controls",
-        layout: new HorizontalLayout({direction: "centered", spacing: 2}), submorphs: [
-          {...btnStyle, name: "addMethodButton", label: Icon.makeLabel("plus")},
-          {...btnStyle, name: "removeMethodButton", label: Icon.makeLabel("minus")}]},
+      {type: Tree, name: "classTree", treeData: new ClassTreeData(null),
+       borderBottom: {width: 1, color: Color.gray}},
 
-      {name: "sourceEditor", ...textStyle, doSave: () => this.save()},
+      {name: "classAndMethodControls",
+       layout: new HorizontalLayout({direction: "centered", spacing: 2}), submorphs: [
+         {...btnStyle, name: "addMethodButton", label: Icon.makeLabel("plus"), tooltip: "add a new method"},
+         {...btnStyle, name: "removeMethodButton", label: Icon.makeLabel("minus"), tooltip: "remove selected method"}]},
+
+      {name: "sourceEditor", ...textStyle},
+
+      {name: "sourceEditorControls",
+       borderLeft: {width: 1, color: Color.gray},
+       borderRight: {width: 1, color: Color.gray},
+       layout: new HorizontalLayout({direction: "centered", spacing: 2}), submorphs: [
+          {...btnStyle, name: "saveButton", fontSize: 18, label: Icon.makeLabel("save"), tooltip: "save"},
+          {...btnStyle, name: "playButton", fontSize: 18, label: Icon.makeLabel("play-circle-o"), tooltip: "execute selected method"}]},
 
       new ImportController({name: "importController"})
     ];
@@ -158,7 +174,7 @@ export class ObjectEditor extends Morph {
     var l = this.layout = new GridLayout({
       grid: [
         ["classTree", "sourceEditor", "importController"],
-        ["controls", "sourceEditor", "importController"],
+        ["classAndMethodControls", "sourceEditorControls", "importController"],
       ]});
     l.col(0).fixed = 180;
     l.col(2).fixed = 180;
@@ -173,6 +189,9 @@ export class ObjectEditor extends Morph {
 
     connect(this.get("addImportButton"), "fire", this, "interactivelyAddImport");
     connect(this.get("removeImportButton"), "fire", this, "interactivelyRemoveImport");
+
+    connect(this.get("saveButton"), "fire", this, "execCommand", {converter: () => "save source"});
+    connect(this.get("cleanupButton"), "fire", this, "execCommand", {converter: () => "[javascript] removed unused imports"});
   }
 
   async systemInterface() {
@@ -233,16 +252,21 @@ export class ObjectEditor extends Morph {
       context: this.target,
       format
     });
-    await this.updateKnownGlobals();
 
     this.state.selectedMethod = null;
     this.state.selectedClass = klass;
 
     this.get("importController").module = descr.module;
 
+    await this.updateKnownGlobals();
   }
 
-  async selectMethod(klass, methodSpec, highlight = true) {
+  async selectMethod(klass, methodSpec, highlight = true, putCursorInBody = false) {
+    if (klass && !methodSpec && isClass(klass.owner)) {
+      methodSpec = klass;
+      klass = klass.owner
+    }
+
     if (this.state.selectedClass !== klass)
       await this.selectClass(klass);
 
@@ -266,14 +290,17 @@ export class ObjectEditor extends Morph {
       return;
     }
 
+    var cursorPos = ed.indexToPosition(putCursorInBody ?
+      method.value.body.start+1 : method.key.start)
+    ed.cursorPosition = cursorPos;
+
     if (highlight) {
-      ed.cursorPosition = ed.indexToPosition(method.key.start);
       var methodRange = {
         start: ed.indexToPosition(method.start),
         end: ed.indexToPosition(method.end)
       }
       ed.flash(methodRange, {id: 'method', time: 1000, fill: Color.rgb(200,235,255)});
-      ed.centerRow();
+      ed.alignRowAtTop(undefined, pt(0, -20))
     }
   }
 
@@ -291,12 +318,13 @@ export class ObjectEditor extends Morph {
 
   async interactivelyAddMethod() {
     try {
-      let input = await this.world().prompt("Enter method name",
-                        {historyId: "object-editor-method-name-hist"});
-      if (!input) return;
+      // let input = await this.world().prompt("Enter method name",
+      //                   {historyId: "object-editor-method-name-hist"});
+      // if (!input) return;
+      var input = "newMethod";
       let {methodName} = await addScript(this.target, "function() {}", input);
       await this.refresh();
-      await this.selectMethod(this.target.constructor, {name: methodName});
+      await this.selectMethod(this.target.constructor, {name: methodName}, true, true);
       this.focus();
     } catch (e) {
       this.showError(e);
@@ -320,13 +348,20 @@ export class ObjectEditor extends Morph {
       if (!choices) return null;
 
       // FIXME move this into system interface!
-      var m = module(this.editorPlugin.evalEnvironment.targetModule);
+      var m = this.selectedModule;
+      var origSource = await m.source();
       await m.addImports(choices);
 
+    } catch (e) {
+      origSource && await m.changeSource(origSource);
+      this.showError(e);
+    }
+    finally {
       await this.get("importController").updateImports();
       await this.updateKnownGlobals();
       this.get("sourceEditor").focus();
-    } catch (e) { this.showError(e); }
+    }
+
   }
 
   async interactivelyRemoveImport() {
@@ -336,13 +371,50 @@ export class ObjectEditor extends Morph {
       var really = await this.world().confirm(
         "Really remove imports \n" + arr.pluck(sels, "local").join("\n") + "?")
       if (!really) return;
-      var m = module(this.editorPlugin.evalEnvironment.targetModule);
+      var m = this.selectedModule;
+      var origSource = await m.source()
       await m.removeImports(sels);
       this.get("importsList").selection = null;
+    }
+    catch (e) {
+      origSource && await m.changeSource(origSource);
+      this.showError(e);
+    }
+    finally {
       await this.get("importController").updateImports();
       await this.updateKnownGlobals();
       this.get("sourceEditor").focus();
-    } catch (e) { this.showError(e); }
+    }
+  }
+
+  async interactivelyRemoveUnusedImports() {
+
+    try {
+      var m = this.selectedModule;
+      var origSource = await m.source();
+      var toRemove = await chooseUnusedImports(await m.source());
+
+      if (!toRemove) {
+        this.setStatusMessage("Canceled");
+        return;
+      }
+
+      if (!toRemove.changes || !toRemove.changes.length) {
+        this.setStatusMessage("Nothing to remove");
+        return;
+      }
+
+      await m.removeImports(toRemove.removedImports);
+      this.setStatusMessage("Imports removed");
+    } catch (e) {
+      origSource && await m.changeSource(origSource);
+      this.showError(e);
+    }
+    finally {
+      await this.get("importController").updateImports();
+      await this.updateKnownGlobals();
+      this.get("sourceEditor").focus();
+    }
   }
 
   async refresh() {
@@ -397,11 +469,97 @@ localStorage["oe helper"] = JSON.stringify(store);
       {keys: "F1", command: "focus class tree"},
       {keys: "F2", command: "focus code editor"},
       {keys: {mac: "Command-S", win: "Ctrl-S"}, command: "save source"},
+      {keys: {mac: "Command-Shift-=", win: "Ctrl-Shift-="}, command: "add method"},
+      {keys: {mac: "Command-Shift--", win: "Ctrl-Shift--"}, command: "remove method"},
+      {keys: "Alt-J", command: "jump to definition"},
+      {keys: "Ctrl-C I", command: "[javascript] inject import"},
     ].concat(super.keybindings);
   }
 
   get commands() {
-    return commands;
+    return [
+
+      {
+        name: "focus class tree",
+        exec: ed => { var m = ed.get("classTree"); m.show(); m.focus(); return true; }
+      },
+
+      {
+        name: "focus code editor",
+        exec: ed => { var m = ed.get("sourceEditor"); m.show(); m.focus(); return true; }
+      },
+
+      {
+        name: "[javascript] inject import",
+        exec: async ed => { await ed.interactivelyAddImport(); return true; }
+      },
+
+      {
+        name: "[javascript] removed unused imports",
+        exec: async ed => { await ed.interactivelyRemoveUnusedImports(); return true; }
+      },
+
+      {
+        name: "add method",
+        exec: async ed => { await ed.interactivelyAddMethod(); return true; }
+      },
+
+      {
+        name: "remove method",
+        exec: async ed => { await ed.interactivelyRemoveMethod(); return true; }
+      },
+
+      {
+        name: "jump to definition",
+        exec: async ed => {
+
+          var tree = ed.getSubmorphNamed("classTree"),
+              td = tree.treeData,
+              classNodes = td.getChildren(td.root).slice(),
+              items = lively.lang.arr.flatmap(classNodes.reverse(), node => {
+                var klass = node.target,
+                    methods = td.getChildren(node);
+
+                return [{
+                  isListItem: true,
+                  string: klass.name,
+                  value: {node, selector: "selectClass"}
+                }].concat(
+                  methods.map(ea => {
+                    return {
+                      isListItem: true,
+                      label: [
+                        [`${klass.name} `, {fontSize: 10}],
+                        [`${ea.name}`]
+                      ],
+                      value: {node: ea, selector: "selectMethod"}
+                    };
+                  })
+                );
+              });
+
+          var {selected: [choice]} = await ed.world().filterableListPrompt("select class or method", items);
+
+          if (choice) {
+            await ed[choice.selector](choice.node.target);
+            ed.getSubmorphNamed("sourceEditor").focus();
+            tree.scrollSelectionIntoView();
+          }
+          return true;
+        }
+      },
+
+      {
+        name: "save source",
+        exec: async ed => {
+          try {
+            await ed.doSave();
+            ed.setStatusMessage("saved", Color.green);
+          } catch (e) { ed.showError(e); }
+          return true;
+        }
+      }
+    ];
   }
 
 }
@@ -439,12 +597,12 @@ class ImportController extends Morph {
         };
 
     this.submorphs = [
-      {...listStyle, name: "importsList", multiSelect: true},
+      {...listStyle, name: "importsList", multiSelect: true, borderBottom: {width: 1, color: Color.gray}},
       {name: "buttons", layout: new HorizontalLayout({direction: "centered", spacing: 2}),
         submorphs: [
-        {...btnStyle, name: "addImportButton", label: Icon.makeLabel("plus")},
-        {...btnStyle, name: "removeImportButton", label: Icon.makeLabel("minus")},
-        {...btnStyle, name: "cleanupButton", label: "cleanup"},
+        {...btnStyle, name: "addImportButton", label: Icon.makeLabel("plus"), tooltip: "add new import"},
+        {...btnStyle, name: "removeImportButton", label: Icon.makeLabel("minus"), tooltip: "remove selected import(s)"},
+        {...btnStyle, name: "cleanupButton", label: "cleanup", tooltip: "remove unused imports"}
       ]},
     ]
 
@@ -458,18 +616,16 @@ class ImportController extends Morph {
 
   async updateImports() {
     if (!this.module) return;
-    var m = lively.modules.module(this.module);
-    var imports = await m.imports()
-    imports[0]
-
-    var items = imports.map(ea => {
-      var label = [];
-      var alias = ea.local !== ea.imported && ea.imported !== "default" ? ea.local : null;
-      if (alias) label.push([`${ea.imported} as `, {}])
-      label.push([alias || ea.local, {fontWeight: "bold"}])
-      label.push([` from ${ea.fromModule}`]);
-      return {isListItem: true, value: ea, label}
-    });
+    var m = lively.modules.module(this.module),
+        imports = await m.imports(),
+        items = imports.map(ea => {
+          var label = [];
+          var alias = ea.local !== ea.imported && ea.imported !== "default" ? ea.local : null;
+          if (alias) label.push([`${ea.imported} as `, {}])
+          label.push([alias || ea.local, {fontWeight: "bold"}])
+          label.push([` from ${ea.fromModule}`]);
+          return {isListItem: true, value: ea, label}
+        });
 
     this.get("importsList").items = items;
   }
@@ -487,27 +643,3 @@ class ImportController extends Morph {
 
 
 }
-
-var commands = [
-
-  {
-    name: "focus class tree",
-    exec: ed => { var m = ed.get("classTree"); m.show(); m.focus(); return true; }
-  },
-
-  {
-    name: "focus code editor",
-    exec: ed => { var m = ed.get("sourceEditor"); m.show(); m.focus(); return true; }
-  },
-
-  {
-    name: "save source",
-    exec: async ed => {
-      try {
-        await ed.doSave();
-        ed.setStatusMessage("saved", Color.green);
-      } catch (e) { ed.showError(e); }
-      return true;
-    }
-  }
-];

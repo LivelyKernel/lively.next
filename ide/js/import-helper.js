@@ -3,30 +3,21 @@ import { pt } from 'lively.graphics';
 import LoadingIndicator from "../../loading-indicator.js";
 import { config } from "lively.morphic";
 import { ImportInjector, ImportRemover } from "lively.modules/src/import-modification.js";
+import module from "lively.modules/src/module.js";
 
 
 
-export async function cleanupUnusedImports(textMorph, opts = {query: true}) {
+export async function cleanupUnusedImports(textMorph, opts) {
+  opts = {world: textMorph.world(), ...opts}
+
   var source = textMorph.textString,
-      unused = ImportRemover.findUnusedImports(source);
-  if (!unused || !unused.length) return "nothing to remove";
+      toRemove = await chooseUnusedImports(source, opts)
 
-  var items = unused.map(ea => {
-    var {local, from} = ea;
-    var label = [
-       [`${local}`, {fontWeight: "bold"}], [" from ", {}],
-       [`${from}\n`, {fontStyle: "italic"}]]
-     return {isListItem: true, label, value: ea};
-  });
+  if (!toRemove) return "canceled";
+  if (!toRemove.changes || !toRemove.changes.length) return "nothing to remove"
 
-  var {list: importsToRemove} = await textMorph.world().editListPrompt(
-    'Which imports should be removed?', items, {multiSelect: true});
-
-  if (!importsToRemove.length) return "canceled";
-
-  var modifications = ImportRemover.removeImports(source, importsToRemove);
   textMorph.undoManager.group();
-  for (let {replacement, start, end} of modifications.changes) {
+  for (let {replacement, start, end} of toRemove.changes) {
     var range = {
       start: textMorph.indexToPosition(start),
       end: textMorph.indexToPosition(end)
@@ -39,7 +30,34 @@ export async function cleanupUnusedImports(textMorph, opts = {query: true}) {
 }
 
 
+export async function chooseUnusedImports(source, opts) {
+  opts = {world: $world, ...opts}
+
+  var unused = ImportRemover.findUnusedImports(source);
+  if (!unused || !unused.length) return null;
+
+  var items = unused.map(ea => {
+    var {local, from} = ea;
+    var label = [
+       [`${local}`, {fontWeight: "bold"}], [" from ", {}],
+       [`${from}\n`, {fontStyle: "italic"}]]
+     return {isListItem: true, label, value: ea};
+  });
+
+  var {list: importsToRemove} = await opts.world.editListPrompt(
+    'Which imports should be removed?', items, {multiSelect: true});
+
+  if (!importsToRemove || !importsToRemove.length) return [];
+
+  return ImportRemover.removeImports(source, importsToRemove);
+}
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+
 export async function interactivelyChooseImports(livelySystem, opts) {
+  opts = { System: System, world: $world, ...opts }
 
   // 1. gather all exorts
   var exports = await LoadingIndicator.runFn(
@@ -47,7 +65,7 @@ export async function interactivelyChooseImports(livelySystem, opts) {
       {excludedPackages: config.ide.js.ignoredPackages}), "computing imports...");
 
   // 2. Ask what to import + generate insertions
-  var choices = await ExportPrompt.run($world, exports);
+  var choices = await ExportPrompt.run(opts.world, exports);
   return !choices.length ? null : choices;
 }
 
@@ -65,7 +83,8 @@ export async function interactivelyInjectImportIntoText(textMorph, opts) {
   if (!jsPlugin)
      throw new Error(`cannot find js plugin of ${textMorph}`)
 
-  var choices = await interactivelyChooseImports(await jsPlugin.systemInterface());
+  var choices = await interactivelyChooseImports(
+    await jsPlugin.systemInterface(), {world: textMorph.world()});
   if (!choices) return null;
 
   var moduleId = textMorph.evalEnvironment.targetModule,
