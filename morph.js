@@ -35,6 +35,7 @@ const defaultProperties = {
   nativeCursor: "auto",
   focusable: true,
   epiMorph: false,
+  isLayoutable: true,
   submorphs:  []
 }
 
@@ -535,6 +536,9 @@ export class Morph {
     while (m) { if (m.isEpiMorph) return true; m = m.owner; }
     return false;
   }
+
+  get isLayoutable() { return this.getProperty("isLayoutable"); }
+  set isLayoutable(bool) { this.setProperty("isLayoutable", bool); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // morphic relationship
