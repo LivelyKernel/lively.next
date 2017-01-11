@@ -194,7 +194,9 @@ function prepareCodeForCustomCompile(System, source, moduleId, env, module, debu
         evalId: module.nextEvalId(),
         currentModuleAccessor: funcCall(
                                 member(
-                                  funcCall(member("System", "get"), literal("@lively-env")),
+                                  funcCall(
+                                    member(member("__lvVarRecorder", "System"), "get"),
+                                    literal("@lively-env")),
                                   "moduleEnv"),
                                 literal(moduleId))
 
@@ -234,7 +236,9 @@ function prepareTranslatedCodeForSetterCapture(System, source, moduleId, env, mo
         declarationWrapperName: module.varDefinitionCallbackName,
         currentModuleAccessor: funcCall(
                                 member(
-                                  funcCall(member("System", "get"), literal("@lively-env")),
+                                  funcCall(
+                                    member(member("__lvVarRecorder", "System"), "get"),
+                                    literal("@lively-env")),
                                   "moduleEnv"),
                                 literal(moduleId))
       },

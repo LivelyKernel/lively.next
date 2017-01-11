@@ -2519,7 +2519,7 @@ function prepareCodeForCustomCompile(System, source, moduleId, env, module, debu
     keepPreviouslyDeclaredValues: true,
     declarationWrapperName: module.varDefinitionCallbackName,
     evalId: module.nextEvalId(),
-    currentModuleAccessor: funcCall(member(funcCall(member("System", "get"), literal("@lively-env")), "moduleEnv"), literal(moduleId))
+    currentModuleAccessor: funcCall(member(funcCall(member(member("__lvVarRecorder", "System"), "get"), literal("@lively-env")), "moduleEnv"), literal(moduleId))
 
   },
       isGlobal = env.recorderName === "System.global",
@@ -2552,7 +2552,7 @@ function prepareTranslatedCodeForSetterCapture(System, source, moduleId, env, mo
     dontTransform: env.dontTransform,
     recordGlobals: true,
     declarationWrapperName: module.varDefinitionCallbackName,
-    currentModuleAccessor: funcCall(member(funcCall(member("System", "get"), literal("@lively-env")), "moduleEnv"), literal(moduleId))
+    currentModuleAccessor: funcCall(member(funcCall(member(member("__lvVarRecorder", "System"), "get"), literal("@lively-env")), "moduleEnv"), literal(moduleId))
   }),
       isGlobal = env.recorderName === "System.global";
 
