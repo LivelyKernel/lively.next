@@ -413,11 +413,11 @@ function evalCodeTransform(code, options) {
   if (options.hasOwnProperty("evalId")) annotation.evalId = options.evalId;
   if (options.sourceAccessorName) annotation.sourceAccessorName = options.sourceAccessorName;
   [].concat(toConsumableArray(classDecls), toConsumableArray(funcDecls)).forEach(function (node) {
-    return node["x-lively-def-location"] = _extends({}, annotation, { start: node.start, end: node.end });
+    return node["x-lively-object-meta"] = _extends({}, annotation, { start: node.start, end: node.end });
   });
   varDecls.forEach(function (node) {
     return node.declarations.forEach(function (decl) {
-      return decl["x-lively-def-location"] = _extends({}, annotation, { start: decl.start, end: decl.end });
+      return decl["x-lively-object-meta"] = _extends({}, annotation, { start: decl.start, end: decl.end });
     });
   });
 
@@ -992,7 +992,7 @@ function runEval$2(System, code, options) {
     es6ImportFuncId: "_moduleImport",
     transpiler: transpiler,
     declarationWrapperName: module.varDefinitionCallbackName,
-    currentModuleAccessor: funcCall(member$1(funcCall(member$1("System", "get"), literal$1("@lively-env")), "moduleEnv"), literal$1(options.targetModule))
+    currentModuleAccessor: funcCall(member$1(funcCall(member$1(member$1("__lvVarRecorder", "System"), "get"), literal$1("@lively-env")), "moduleEnv"), literal$1(options.targetModule))
   });
 
   // delay eval to ensure imports
