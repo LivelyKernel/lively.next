@@ -23,20 +23,20 @@ describe("eval code transform", function() {
   it("wraps in start end call", () =>
     expect(evalCodeTransform("var x = 23;", {wrapInStartEndCall: true}))
       .equals("try {\n"
-            + "    __start_execution();\n"
-            + "    var x = 23;\n"
-            + "    __end_execution(null, x);\n"
+            + "  __start_execution();\n"
+            + "  var x = 23;\n"
+            + "  __end_execution(null, x);\n"
             + "} catch (err) {\n"
-            + "    __end_execution(err, undefined);\n"
+            + "  __end_execution(err, undefined);\n"
             + "}"));
 
   it("start / end + capturing", () =>
     expect(evalCodeTransform("var x = 23;", {topLevelVarRecorder: {}, wrapInStartEndCall: true}))
       .equals("try {\n"
-            + "    __start_execution();\n"
-            + "    __end_execution(null, __lvVarRecorder.x = 23);\n"
+            + "  __start_execution();\n"
+            + "  __end_execution(null, __lvVarRecorder.x = 23);\n"
             + "} catch (err) {\n"
-            + "    __end_execution(err, undefined);\n"
+            + "  __end_execution(err, undefined);\n"
             + "}"));
             
   it("source code and evalId passed into define", () =>
@@ -45,11 +45,11 @@ describe("eval code transform", function() {
       sourceAccessorName: "__source",
       declarationWrapper: {type: "Identifier", name: "__define"},
       topLevelVarRecorder: {}
-    })).equals(`__lvVarRecorder.x = __define('x', 'var', 23, __lvVarRecorder, {\n`
-             + `    start: 4,\n`
-             + `    end: 10,\n`
-             + `    evalId: 'testEval',\n`
-             + `    moduleSource: __source\n`
+    })).equals(`__lvVarRecorder.x = __define("x", "var", 23, __lvVarRecorder, {\n`
+             + `  start: 4,\n`
+             + `  end: 10,\n`
+             + `  evalId: "testEval",\n`
+             + `  moduleSource: __source\n`
              + `});`));
 
   
