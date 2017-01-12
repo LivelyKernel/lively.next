@@ -263,31 +263,66 @@ export class Renderer {
   // FIXME: The gradient handling is inconsistent to the way its handled in "vanilla" morphs
 
   renderPath(path) {
-    const vertices = h("path",
-                    {namespace: "http://www.w3.org/2000/svg",
-                     id : "svg" + path.id,
-                     ...pathAttributes(path)});
+    const vertices = h("path", {
+      namespace: "http://www.w3.org/2000/svg",
+      id: "svg" + path.id,
+      ...pathAttributes(path)
+    });
     return this.renderSvgMorph(path, vertices);
   }
 
   renderSvgMorph(morph, svg) {
-    const {position, filter,
-           display, top, left, opacity, 
-           transform, transformOrigin, cursor} = defaultStyle(morph),
+    const {
+            position,
+            filter,
+            display,
+            opacity,
+            transform,
+            transformOrigin,
+            cursor
+          } = defaultStyle(morph),
           {width, height} = morph.innerBounds(),
-          defs = h("defs", {namespace: "http://www.w3.org/2000/svg"}, 
-                    [(morph.fill && morph.fill.isGradient) ? [renderGradient(morph, "fill")] : null,
-                     (morph.borderColor && morph.borderColor.isGradient) ? [renderGradient(morph, "borderColor")] : null]);
-    return h("div", {...defaultAttributes(morph, this),
-                     style: {transform, transformOrigin, position, opacity, cursor,
-                             width: width + 'px', height: height + 'px',
-                             display, filter, "pointer-events": "auto"}},
-              [h("svg", {namespace: "http://www.w3.org/2000/svg", version: "1.1",
-                        style: {position: "absolute", "pointer-events": "none", overflow: "visible"},
-                        ...svgAttributes(morph)},
-                  [defs, svg]),
-                this.renderSubmorphs(morph)]);
+          defs = h("defs", {namespace: "http://www.w3.org/2000/svg"}, [
+            morph.fill && morph.fill.isGradient ?
+              [renderGradient(morph, "fill")] : null,
+            morph.borderColor && morph.borderColor.isGradient ?
+              [renderGradient(morph, "borderColor")] : null
+          ]);
+
+    return h("div",
+      {
+        ...defaultAttributes(morph, this),
+        style: {
+          transform,
+          transformOrigin,
+          position,
+          opacity,
+          cursor,
+          width: width + "px",
+          height: height + "px",
+          display,
+          filter,
+          "pointer-events": morph.reactsToPointer ? "auto" : "none",
+        }
+      },
+      [
+        h("svg",
+          {
+            namespace: "http://www.w3.org/2000/svg",
+            version: "1.1",
+            style: {
+              position: "absolute",
+              "pointer-events": "none",
+              overflow: "visible"
+            },
+            ...svgAttributes(morph)
+          },
+          [defs, svg]
+        ),
+        this.renderSubmorphs(morph)
+      ]);
   }
+
 }
 
 function renderGradient(morph, prop) {
