@@ -25,7 +25,7 @@
     "map": {
       "virtual-dom": "./node_modules/virtual-dom/dist/virtual-dom.js",
       "bowser": "./node_modules/bowser/bowser.js",
-      "kld-intersections": "./node_modules/kld-intersections",
+      "kld-intersections": "./dist/kld-intersections.js",
       "gsap": {
         "~node": "./node_modules/gsap/src/minified/TweenMax.min.js",
         "node": "@empty"
@@ -36,6 +36,9 @@
       }
     },
     "meta": {
+     "dist/kld-intersections.js": {
+         "format": "cjs"
+     },
       "node_modules/virtual-dom/dist/virtual-dom.js": {
         "format": "amd"
       },
@@ -45,26 +48,6 @@
       },
       "node_modules/gsap/src/minified/*": {
         "format": "global"
-      }
-    },
-    "packages": {
-      "lively.morphic/node_modules/kld-intersections": {
-        "main": "index.js",
-        "meta": {
-          "lib/Intersection.js": {
-            "format": "cjs"
-          },
-          "lib/IntersectionParams.js": {
-            "format": "cjs"
-          },
-          "node_modules/kld-affine/lib/Point2D.js": {
-            "format": "global"
-          }
-        },
-        "map": {
-          "kld-affine": "./node_modules/kld-affine/index.js",
-          "kld-polynomial": "./node_modules/kld-polynomial/index.js"
-        }
       }
     }
   },
