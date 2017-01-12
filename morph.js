@@ -7,6 +7,7 @@ import config from "./config.js";
 import CommandHandler from "./CommandHandler.js";
 import KeyHandler, { findKeysForPlatform } from "./events/KeyHandler.js";
 import { TargetScript } from "./ticking.js";
+import { copyMorph } from "./serialization.js";
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -39,7 +40,7 @@ const defaultProperties = {
   submorphs:  []
 }
 
-function newMorphId(classOrClassName) {
+export function newMorphId(classOrClassName) {
   var prefix = typeof classOrClassName === "function" ?
     classOrClassName.name : typeof classOrClassName === "string" ?
       classOrClassName.toLowerCase() : "";
@@ -1304,7 +1305,7 @@ export class Morph {
     return this;
   }
 
-  copy() {
+  copyViaJSON() {
     var exported = this.exportToJSON();
     tree.prewalk(exported, spec => spec._id = newMorphId(spec.type), ({submorphs}) => submorphs);
     exported.name = exported.name.replace(
@@ -1314,6 +1315,8 @@ export class Morph {
     // morph? this seems really wrong!
     return morph({attributeConnections: [], ...exported});
   }
+
+  copy() { return copyMorph(this); }
 
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

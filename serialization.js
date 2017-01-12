@@ -1,10 +1,18 @@
 import { ObjectPool } from "lively.serializer2";
 import { World } from "./index.js";
 import { resource } from "lively.resources";
+import { newMorphId } from "./morph.js";
 
-export function serializeMorph(m, objPool = new ObjectPool()) {
-  var {id} = objPool.add(m);
-  return {id, snapshot: objPool.snapshot()};
+export function serializeMorph(m, options) {
+  options = {replaceIds: false, ...options}
+  var poolOptions = {};
+  if (options.replaceIds) {
+    poolOptions.replaceIds = (id, ref) =>
+      ref.realObj.isMorph ? newMorphId(ref.realObj.constructor) : null
+  }
+  var objPool = options.objPool || new ObjectPool(poolOptions),
+      ref = objPool.add(m);
+  return {id: objPool.idForSnapshot(ref), snapshot: objPool.snapshot()};
 }
 
 export function deserializeMorph(idAndSnapshot) {
@@ -44,3 +52,8 @@ export function saveWorldToResource(world = World.defaultWorld(), toResource) {
 }
 
 // await saveWorldToResource();
+
+
+export function copyMorph(morph) {
+  return deserializeMorph(serializeMorph(morph, {replaceIds: true}))
+}

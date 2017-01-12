@@ -23,6 +23,28 @@ export default class ObjectDrawer extends Morph {
     this.setup();
   }
 
+  onDrag(evt) {
+    var target = lively.lang.arr.intersect(this.submorphs, this.world().morphsContainingPoint(evt.position))[0];
+    if (!target) return super.onDrag(evt);
+
+    evt.stop();
+    var copy = this.copyPart(target);
+    copy.position = evt.positionIn(target).negated();
+    evt.hand.grab(copy);
+  }
+
+  copyPart(part) {
+    var copy = part.copy();
+    var name = copy.constructor.name.toLowerCase();
+    name = (name[0].match(/[aeiou]/) ? "an " : "a ") + name;
+    var i = 1; while (this.world().get(name + " " + i)) i++;
+    copy.name = name + " " + i;
+    copy.reactsToPointer = true;
+    part.init && part.init.call(copy);
+    return copy;
+  }
+
+
   setup() {
     // this.setup();
 
@@ -41,7 +63,6 @@ export default class ObjectDrawer extends Morph {
       type: "ellipse",
       position: pos, extent: objExt,
       fill: Color.random(), grabbable: false,
-      onDrag: doCopy,
       init() { this.fill = Color.random(); }
     });
 
@@ -54,7 +75,6 @@ export default class ObjectDrawer extends Morph {
     this.addMorph({
       position: pos, extent: objExt,
       fill: Color.random(), grabbable: false,
-      onDrag: doCopy,
       init() { this.fill = Color.random(); }
     });
 
@@ -67,8 +87,7 @@ export default class ObjectDrawer extends Morph {
     this.addMorph({
       type: "image",
       position: pos, extent: objExt,
-      fill: null, grabbable: false,
-      onDrag: doCopy
+      fill: null, grabbable: false
     });
 
 
@@ -93,8 +112,7 @@ export default class ObjectDrawer extends Morph {
       position: pos.addPt(pt(r,r)),
       origin: pt(r,r),
       fill: Color.yellow,
-      grabbable: false,
-      onDrag: doCopy
+      grabbable: false
     }));
 
 
@@ -113,10 +131,7 @@ export default class ObjectDrawer extends Morph {
       readOnly: true,
       fontSize: 20,
       fontFamily: "Helvetica Neue, Arial, sans-serif",
-      onDrag: doCopy,
-      draggable: true,
       init() {
-        this.draggable = false;
         this.grabbable = false;
         this.readOnly = false;
         connect(this, "selectionChange", RichTextControl, "openDebouncedFor", {converter: sel => sel.textMorph})
@@ -133,10 +148,7 @@ export default class ObjectDrawer extends Morph {
       label: "a button",
       leftCenter: pos, extent: pt(120, 30),
       active: false,
-      onDrag: doCopy,
-      draggable: true,
       init() {
-        this.draggable = false;
         this.grabbable = false;
         this.active = true;
       }
@@ -152,9 +164,7 @@ export default class ObjectDrawer extends Morph {
       type: "list", items: arr.range(0,2000).map(n => "item " + n),
       position: pos, extent: objExt, //pt(110, objExt.y),
       borderWidth: 1, borderColor: Color.gray,
-      onDrag: doCopy, draggable: true,
       init() {
-        this.draggable = false;
         this.grabbable = false;
         this.listItemContainer.withAllSubmorphsDo(ea => ea.reactsToPointer = true);
       }
@@ -199,11 +209,11 @@ export default class ObjectDrawer extends Morph {
       fontSize: 18,
       fill: Color.white, border: {color: Color.gray, width: 1},
       treeData: root,
-      onDrag: doCopy, draggable: true,
       init() {
-        this.draggable = false;
         this.grabbable = false;
-        this.submorphs = [{name: "nodeItemContainer", extent: this.extent, fill: null, draggable: false, grabbable: false, clipMode: "visible"}]
+        this.submorphs = [
+          {name: "nodeItemContainer", extent: this.extent,
+           fill: null, grabbable: false, clipMode: "visible"}]
         this.update()
       }
     }));
@@ -217,21 +227,18 @@ export default class ObjectDrawer extends Morph {
     // Leash
 
     pos = pt(arr.last(this.submorphs).right, 0).addPt(pt(10,10));
-    
-    this.addMorph(new Leash({position: pos, start: pt(0,0), end: pt(100,100), onDrag: doCopy, init() { this.vertices = [pt(0,0), pt(100,100)] }}));
 
-    function doCopy(evt) {
-      evt.stop();
-      var copy = Object.assign(this.copy(), {position: evt.positionIn(this).negated()});
-      var name = copy.constructor.name.toLowerCase();
-      name = (name[0].match(/[aeiou]/) ? "an " : "a ") + name;
-      var i = 1; while (this.world().get(name + " " + i)) i++
-      copy.name = name + " " + i;
-      evt.hand.grab(copy);
-      delete copy.onDrag;
-      copy.init && copy.init();
-    }
-    
+    this.addMorph(new Leash({
+      position: pos, start: pt(0,0), end: pt(100,100),
+      init() { this.vertices = [pt(0,0), pt(100,100)] }
+    }));
+
     this.width = arr.last(this.submorphs).right + 10;
+
+
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    this.submorphs.forEach(ea => ea.reactsToPointer = false)
   }
 }
