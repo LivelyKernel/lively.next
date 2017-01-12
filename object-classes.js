@@ -1,4 +1,4 @@
-import { string, Path, arr, obj } from "lively.lang";
+import { string, Path, arr } from "lively.lang";
 import { parse, stringify, parseFunction } from "lively.ast";
 import { resource } from "lively.resources";
 import { runEval } from "lively.vm";
@@ -7,6 +7,7 @@ import { registerPackage, importPackage, getPackage } from "lively.modules/src/p
 import module from "lively.modules/src/module.js";
 import { toJsIdentifier } from "./util.js";
 import { ImportInjector } from "lively.modules/src/import-modification.js";
+import ExportLookup from "lively.modules/src/export-lookup.js";
 
 const objectPackageSym = Symbol.for("lively-object-package-data"),
       defaultBaseURL = "local://lively-object-modules",
@@ -185,30 +186,37 @@ class ObjectModule {
   async createDefaultClassDeclarationForObject() {
     // ensure that there exist a local package definition with an object class
 
-    let { object } = this,
+    let { System, object, systemModule: module } = this,
         className = object.name ? string.capitalize(toJsIdentifier(object.name)) : "ObjectClass",
         superClass = object.constructor,
         superClassName = superClass.name,
         isAnonymousSuperclass = !superClassName,
         globalSuperClass = globalClasses.includes(superClass),
+        source = "",
         bindings = null;
+
 
     if (isAnonymousSuperclass) {
       superClassName = "__anonymous_superclass__";
       bindings = {[superClassName]: superClass};
 
     } else if (!globalSuperClass) {
-      bindings = {[superClassName]: superClass};
+      var exportForClass = await ExportLookup.findExportOfValue(superClass, System);
+      if (exportForClass) {
+        var {standaloneImport} = ImportInjector.run(System, module.id, module.package(), "", exportForClass);
+        source += standaloneImport + '\n\n';
+      } else {
+        bindings = {[superClassName]: superClass};
+      }
     }
 
     var classSource = superClassName === "Object" ?
           `class ${className} {}\n` :
-          `class ${className} extends ${superClassName} {}\n`,
-        source = `export default ${classSource}\n`
-               + `${className}.isLivelyObjectClass = true;`;
+          `class ${className} extends ${superClassName} {}\n`;
+    source += `export default ${classSource}\n`;
 
-    await this.resource.write(source);
-    await this.systemModule.load();
+    await module.changeSource(source);
+    await module.load();
 
     return {source, className, moduleId: this.url, bindings};
   }
@@ -256,7 +264,7 @@ class ObjectModule {
 
     await descr.changeSource(source);
 
-    return {script: obj[methodName], klass, obj, module: descr.module.id, methodName};
+    return {script: klass.prototype[methodName], klass, module: descr.module.id, methodName};
 
   }
 
