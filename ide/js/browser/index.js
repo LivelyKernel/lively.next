@@ -52,6 +52,7 @@ class CodeDefTreeData extends TreeData {
   }
 }
 
+// Browser.browse();
 export default class Browser extends Window {
 
   static async browse(
@@ -101,6 +102,7 @@ export default class Browser extends Window {
     this.state = {
       packageUpdateInProgress: null,
       moduleUpdateInProgress: null,
+      selectedPackage: null,
       history: {left: [], right: [], navigationInProgress: null}
     };
     this.onLoad();
@@ -110,7 +112,7 @@ export default class Browser extends Window {
     connect(this, 'extent', this, 'relayout');
 
     var {
-      moduleList, packageList, sourceEditor,
+      moduleList, sourceEditor,
       searchButton,
       addModuleButton,
       addPackageButton,
@@ -139,13 +141,10 @@ export default class Browser extends Window {
     connect(runTestsInPackageButton,'fire', this, 'execCommand', {converter: () => "run all tests in package"});
     connect(codeEntityJumpButton,   'fire', this, 'execCommand', {converter: () => "jump to codeentity"});
 
-    connect(packageList, "selection", this, "onPackageSelected");
     connect(moduleList, 'selection', this, 'onModuleSelected');
     connect(codeEntityTree, 'selection', this, 'onCodeEntitySelected');
 
     moduleList.selection = null;
-    packageList.selection = null;
-    packageList.items = [];
     moduleList.items = [];
     sourceEditor.textString = "";
 
@@ -154,10 +153,14 @@ export default class Browser extends Window {
 
   async onLoad() {
     this.reset();
-    this.reloadPackages();
   }
 
   build() {
+    // this.targetMorph = this.build();
+    // this.relayout();
+
+    this.targetMorph && this.targetMorph.remove();
+
     var style = {
           // borderWidth: 1, borderColor: Color.gray,
           fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"
@@ -184,68 +187,44 @@ export default class Browser extends Window {
 
         [
           browserCommandsBounds,
-          packageListBounds,
           moduleListBounds,
           codeEntityTreeBounds,
-          packageCommandBoxBounds,
           moduleCommandBoxBounds,
           codeEntityCommandBoxBounds,
           resizerBounds,
           sourceEditorBounds
         ] = bounds.extent().extentAsRectangle().divide([
           new Rectangle(0,   0,    1,   0.04),
-          new Rectangle(0,   0.04, 0.3, 0.33),
-          new Rectangle(0.3, 0.04, 0.3, 0.33),
-          new Rectangle(0.6, 0.04, 0.4, 0.33),
-          new Rectangle(0,   0.38, 0.5, 0.04),
-          new Rectangle(0.5, 0.38, 0.5, 0.04),
-          new Rectangle(0,   0.38, 1,   0.04),
-          new Rectangle(0,   0.42, 1,   0.01),
-          new Rectangle(0,   0.43, 1,   0.57)]),
+          new Rectangle(0,   0.04, 0.5, 0.33),
+          new Rectangle(0.5, 0.04, 0.5, 0.33),
+          new Rectangle(0,   0.37, 0.5, 0.04),
+          new Rectangle(0.5, 0.37, 0.5, 0.04),
+          new Rectangle(0,   0.41,  1,   0.01),
+          new Rectangle(0,   0.42, 1,   0.57)]),
 
         container = morph({
           ...style,
           bounds,
           submorphs: [
 
-            {name: "packageList", bounds: packageListBounds, type: "list", ...style,
-             borderRight: {color: Color.gray, width: 1},
-             borderBottom: {color: Color.gray, width: 1},
-             borderTop: {color: Color.gray, width: 1}},
-
             {name: "moduleList", bounds: moduleListBounds, type: "list", ...style,
-             borderRight: {color: Color.gray, width: 1},
-             borderBottom: {color: Color.gray, width: 1},
-             borderTop: {color: Color.gray, width: 1}},
+             borderRight: {color: Color.gray, width: 1}},
 
             new Tree({name: "codeEntityTree", treeData: new CodeDefTreeData([]),
-             bounds: codeEntityTreeBounds, ...style,
-             borderBottom: {color: Color.gray, width: 1},
-             borderTop: {color: Color.gray, width: 1}}),
-            // {name: "codeEntityList", bounds: codeEntityListBounds, type: "list", ...style,
-            //  borderBottom: {color: Color.gray, width: 1},
-            //  borderTop: {color: Color.gray, width: 1}},
+             bounds: codeEntityTreeBounds, ...style}),
 
-            {name: "packageCommands", bounds: packageCommandBoxBounds,
-             borderRight: {color: Color.gray, width: 1},
-             layout: new HorizontalLayout({spacing: 2, autoResize: false}),
-             submorphs: [
-              {...btnStyle, name: "addPackageButton", label: Icon.makeLabel("plus"), tooltip: "add package"},
-              {...btnStyle, name: "removePackageButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
-              {...btnStyle, name: "runTestsInPackageButton", label: "run tests", tooltip: "run tests"}
-             ]},
-             
             {name: "moduleCommands", bounds: moduleCommandBoxBounds,
              layout: new HorizontalLayout({spacing: 2, autoResize: false}),
-             borderRight: {color: Color.gray, width: 1},
+             borderRight: {color: Color.gray, width: 1}, borderTop: {color: Color.gray, width: 1},
               submorphs: [
                {...btnStyle, name: "addModuleButton", label: Icon.makeLabel("plus"), tooltip: "add module"},
                {...btnStyle, name: "removeModuleButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
                {...btnStyle, name: "runTestsInModuleButton", label: "run tests", tooltip: "run tests", visible: false}
              ]},
-             
+
              {name: "codeEntityCommands", bounds: codeEntityCommandBoxBounds,
-             layout: new HorizontalLayout({spacing: 2, autoResize: false}),
+              layout: new HorizontalLayout({spacing: 2, autoResize: false}),
+              borderTop: {color: Color.gray, width: 1},
               submorphs: [
                {...btnStyle, name: "codeEntityJumpButton", label: Icon.makeLabel("search"), tooltip: "search for code entity"},
              ]},
@@ -256,16 +235,27 @@ export default class Browser extends Window {
 
             {name: "browserCommands", bounds: browserCommandsBounds,
              layout: new GridLayout({grid:[["commands", null, "eval backend list"]]}),
-             fill: Color.white, borderTop: {color: Color.gray, width: 1}, draggable: false,
+             draggable: false, fill: Color.white,
+             borderTop: {color: Color.gray, width: 1}, borderBottom: {color: Color.gray, width: 1},
              submorphs: [
                {name: "commands", layout: new HorizontalLayout({spacing: 2, autoResize: false}),
                 fill: Color.transparent,
                 submorphs: [
-                 {...btnStyle, name: "searchButton", label: Icon.makeLabel("search"), tooltip: "code search"},
-                 {...btnStyle, name: "browseModulesButton", label: Icon.makeLabel("navicon"), tooltip: "list all modules"},
                  {...btnStyle, name: "historyBackwardButton", label: Icon.makeLabel("step-backward"), tooltip: "back in browse history"},
                  {...btnStyle, name: "browseHistoryButton", label: Icon.makeLabel("history"), tooltip: "show browse history"},
                  {...btnStyle, name: "historyForwardButton", label: Icon.makeLabel("step-forward"), tooltip: "forward in browse history"},
+                 
+                 {extent: pt(10,18), fill: Color.white},
+
+                 {...btnStyle, name: "searchButton", label: Icon.makeLabel("search"), tooltip: "code search"},
+                 {...btnStyle, name: "browseModulesButton", label: Icon.makeLabel("navicon"), tooltip: "list all modules"},
+
+                 {extent: pt(10,18), fill: Color.white},
+
+                 {...btnStyle, name: "addPackageButton", label: Icon.makeLabel("plus"), tooltip: "add package"},
+                 {...btnStyle, name: "removePackageButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
+                 {...btnStyle, name: "runTestsInPackageButton", label: "run tests", tooltip: "run tests"}
+
                  ]},
                 EvalBackendChooser.default.ensureEvalBackendDropdown(this, "local")]}
           ]
@@ -274,8 +264,6 @@ export default class Browser extends Window {
 
     var browserCommands = container.get("browserCommands"),
         hresizer =        container.get("hresizer"),
-        packageList =     container.get("packageList"),
-        packageCommands = container.get("packageCommands"),
         moduleList =      container.get("moduleList"),
         moduleCommands =  container.get("moduleCommands"),
         codeEntityCommands = container.get("codeEntityCommands"),
@@ -284,10 +272,8 @@ export default class Browser extends Window {
         l =               browserCommands.layout;
     l.col(2).fixed = 100; l.row(0).paddingTop = 1; l.row(0).paddingBottom = 1;
 
-    hresizer.addScalingAbove(packageList);
     hresizer.addScalingAbove(moduleList);
     hresizer.addScalingAbove(codeEntityTree);
-    hresizer.addFixed(packageCommands);
     hresizer.addFixed(moduleCommands);
     hresizer.addFixed(codeEntityCommands);
     hresizer.addScalingBelow(sourceEditor);
@@ -307,28 +293,25 @@ export default class Browser extends Window {
 
     var {
       container,
-      packageList,
       moduleList,
       codeEntityTree,
       browserCommands,
-      packageCommands,
       moduleCommands,
       codeEntityCommands,
       sourceEditor,
       hresizer
     } = this.ui;
 
-    var listEditorRatio = packageList.height / (container.height - hresizer.height);
+    var listEditorRatio = moduleList.height / (container.height - hresizer.height);
 
     try {
       container.setBounds(this.targetMorphBounds());
 
-      [packageList, packageCommands, moduleList, moduleCommands, codeEntityTree, codeEntityCommands]
-        .forEach(ea => ea.width = container.width/3);
-      [packageCommands, moduleCommands, codeEntityCommands]
-        .forEach(ea => ea.height = hresizer.top-packageList.bottom);
+      [moduleList, moduleCommands, codeEntityTree, codeEntityCommands]
+        .forEach(ea => ea.width = container.width/2);
+      [moduleCommands, codeEntityCommands]
+        .forEach(ea => ea.height = hresizer.top-moduleList.bottom);
 
-      moduleCommands.left = moduleList.left = packageList.right;
       codeEntityCommands.left = codeEntityTree.left = moduleList.right;
       sourceEditor.height = container.height - hresizer.bottom;
       browserCommands.width = sourceEditor.width = hresizer.width = container.width;
@@ -359,8 +342,6 @@ export default class Browser extends Window {
       moduleCommands:        this.getSubmorphNamed("moduleCommands"),
       codeEntityCommands:    this.getSubmorphNamed("codeEntityCommands"),
       moduleList:            this.getSubmorphNamed("moduleList"),
-      packageCommands:       this.getSubmorphNamed("packageCommands"),
-      packageList:           this.getSubmorphNamed("packageList"),
       removeModuleButton:    this.getSubmorphNamed("removeModuleButton"),
       removePackageButton:   this.getSubmorphNamed("removePackageButton"),
       runTestsInPackageButton:this.getSubmorphNamed("runTestsInPackageButton"),
@@ -379,10 +360,9 @@ export default class Browser extends Window {
     else this.selectModuleNamed(typeof m === "string" ? m : m.name || m.id);
   }
 
-  get selectedPackage() { return this.get("packageList").selection; }
+  get selectedPackage() { return this.state.selectedPackage; }
   set selectedPackage(p) {
-    if (!p) this.get("packageList").selection = null;
-    else this.selectPackageNamed(typeof p === "string" ? p : p.url || p.address);
+    this.selectPackageNamed(!p ? null : typeof p === "string" ? p : p.url || p.address);
   }
 
 
@@ -399,7 +379,6 @@ export default class Browser extends Window {
     if (newRemote !== oldRemote) {
       this.backend = newRemote;
       this.reset();
-      this.reloadPackages();
     }
   }
 
@@ -427,22 +406,16 @@ export default class Browser extends Window {
   whenPackageUpdated() { return this.state.packageUpdateInProgress || Promise.resolve(); }
   whenModuleUpdated() { return this.state.moduleUpdateInProgress || Promise.resolve(); }
 
-  async reloadPackages() {
-    var system = await this.systemInterface(),
-        packages = await system.getPackages({excluded: config.ide.js.ignoredPackages});
-    this.get("packageList").items = packages.map(p =>
-      ({isListItem: true, string: p.name, value: p}));
-  }
-
   async selectPackageNamed(pName) {
-    var list = this.get("packageList"),
-        p = list.selection = list.values.find(({address, name}) =>
-          address === pName || name === pName);
+    var system = await this.systemInterface(),
+        p = await system.getPackage(pName);
+    this.onPackageSelected(p);
     await this.whenPackageUpdated();
     return p;
   }
 
   async onPackageSelected(p) {
+    this.state.selectedPackage = p;
     if (!this.state.packageUpdateInProgress) {
       var deferred = promise.deferred();
       this.state.packageUpdateInProgress = deferred.promise;
@@ -455,7 +428,6 @@ export default class Browser extends Window {
         this.title = "browser";
       } else {
         this.title = "browser - " + p.name;
-        this.get("packageList").scrollSelectionIntoView();
         this.get("moduleList").selection = null;
         await this.updateModuleList(p);
       }
@@ -497,7 +469,7 @@ export default class Browser extends Window {
 
   async onModuleSelected(m) {
 
-    var pack = this.get("packageList").selection;
+    var pack = this.state.selectedPackage;
 
     if (!m) {
       this.get("sourceEditor").textString = "";
@@ -626,7 +598,7 @@ export default class Browser extends Window {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
+
 
   async updateModuleList(p = this.selectedPackage) {
     if (!p) return;
@@ -843,10 +815,9 @@ export default class Browser extends Window {
   get keybindings() {
     return [
       {keys: "Alt-Up", command: "focus list with selection"},
-      {keys: "F1", command: "focus package list"},
-      {keys: "F2", command: "focus module list"},
-      {keys: "F3", command: "focus code entities"},
-      {keys: "F4|Alt-Down", command: "focus source editor"},
+      {keys: "F1", command: "focus module list"},
+      {keys: "F2", command: "focus code entities"},
+      {keys: "F3|Alt-Down", command: "focus source editor"},
       {keys: "Alt-R", command: "reload module"},
       {keys: "Alt-L", command: "load or add module"},
       {keys: "Ctrl-C Ctrl-T", command: "run all tests in module"},
@@ -872,13 +843,12 @@ export default class Browser extends Window {
     var target = evt.targetMorph;
     var {
       sourceEditor,
-      packageList,
       moduleList,
       codeEntityTree
     } = this.ui;
 
     var items = [];
-    if ([sourceEditor, packageList, moduleList, codeEntityTree].includes(target))
+    if ([sourceEditor, moduleList, codeEntityTree].includes(target))
       items.push(...target.menuItems());
 
     this.openMenu([...items, ...this.menuItems()], evt);
