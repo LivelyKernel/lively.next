@@ -17,13 +17,17 @@ const objectPackageSym = Symbol.for("lively-object-package-data"),
       }).filter(Boolean);
 
 
-function ensureObjectPackageId(obj) {
-  let packageId = obj[objectPackageSym] && obj[objectPackageSym].packageId;
-  if (!packageId) {
-    packageId = string.newUUID();
-    if (!obj[objectPackageSym]) obj[objectPackageSym] = {};
-    obj[objectPackageSym].packageId = packageId;
-  }
+function getObjectPackageId(obj) {
+  return obj[objectPackageSym] ? obj[objectPackageSym].packageId : null;
+}
+
+function addNewPackageIdTo(obj) {
+  let packageId = string.newUUID(),
+      parentPackageId = null,
+      meta = obj[objectPackageSym];
+  if (!meta) meta = obj[objectPackageSym] = {};
+  else parentPackageId = meta.packageId;
+  Object.assign(meta, {packageId, parentPackageId});
   return packageId;
 }
 
@@ -31,6 +35,13 @@ export function addScript(object, funcSource, name, options = {}) {
   return ObjectPackage.forObject(object, options).addScript(funcSource, name);
 }
 
+function isObjectClassFor(klass, obj) {
+  let packageId = getObjectPackageId(obj);
+  if (!packageId) return false;
+  var modMeta = klass[Symbol.for("lively-module-meta")];
+  var packageName = modMeta && modMeta.package && modMeta.package.name || null;
+  return packageName === packageId;
+}
 
 export default class ObjectPackage {
 
@@ -39,7 +50,12 @@ export default class ObjectPackage {
   }
 
   static forObject(object, options) {
-    var id = ensureObjectPackageId(object);
+    var id = getObjectPackageId(object) || addNewPackageIdTo(object);
+    return this.withIdAndObject(id, object, options);
+  }
+
+  static fork(object, options) {
+    var id = addNewPackageIdTo(object);
     return this.withIdAndObject(id, object, options);
   }
 
@@ -95,6 +111,8 @@ export default class ObjectPackage {
     await this.objectModule.ensureExistance();
 
     await registerPackage(this.System, this.packageURL, this.config);
+    
+    console.log(`${this.packageURL} REGISTERED`)
 
     return this;
   }
@@ -104,7 +122,10 @@ export default class ObjectPackage {
     return this.objectModule.ensureObjectClass();
   }
 
-  addScript(funcSource, name) { return this.objectModule.addScript(funcSource, name); }
+  async addScript(funcSource, name) {
+    await this.ensureObjectClass();
+    return this.objectModule.addScript(funcSource, name);
+  }
 
 }
 
@@ -143,15 +164,20 @@ class ObjectModule {
   async ensureObjectClass() {
     var { object, System } = this;
 
-    if (object.constructor.isLivelyObjectClass)
+    if (isObjectClassFor(object.constructor, object))
       return object.constructor;
 
     var {source, moduleId, className, bindings} = await this.ensureObjectClassSource(),
         mod = module(System, moduleId);
 
+    if (className === object.constructor.name)
+      throw new Error(`Name of new object class equals name of existing class: ${className}`);
+
     if (bindings) for (var key in bindings) mod.define(key, bindings[key]);
 
-    runEval(source, {sync: true, targetModule: moduleId, System});
+    var evalResult = runEval(source, {sync: true, targetModule: moduleId, System});
+    if (evalResult.isError)
+      throw evalResult.value;
 
   // load the class and change the objects inheritance
     let klass = mod.recorder[className];
@@ -171,7 +197,7 @@ class ObjectModule {
     // If object is instance of a lively object class already then we just
     // need to access its module via a source descriptor
     let klass = this.object.constructor;
-    if (!klass.isLivelyObjectClass)
+    if (!isObjectClassFor(klass, this.object))
       return this.createDefaultClassDeclarationForObject();
 
     var descr = RuntimeSourceDescriptor.for(klass, this.System);

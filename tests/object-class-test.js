@@ -13,6 +13,8 @@ var testBaseURL = "local://object-scripting-test",
     project1Dir = testBaseURL + "/project1/",
     project1 = {
       "index.js": "export var x = 23;",
+      "file1.js": "export class Foo {}",
+      "file2.js": "export default class Bar {}",
       "package.json": '{"name": "project1", "main": "index.js"}'
     },
     testResources = {
@@ -35,7 +37,7 @@ describe("object package", function() {
     return resource(testBaseURL).remove();
   });
 
-  it.only("ensure object package", async () => {
+  it("ensure object package", async () => {
     var p = ObjectPackage.withIdAndObject("test-obj-package-" + string.newUUID(), null, opts);
     await p.ensureExistance();
     await p.objectModule.read()
@@ -51,6 +53,21 @@ describe("object package", function() {
 
     expect(obj.constructor.name).equals("TestObject");
     var {packageId} = obj[Symbol.for("lively-object-package-data")];
+    expect(await resource(`${testBaseURL}/${packageId}/index.js`).read())
+      .matches(/export default class TestObject/);
+  });
+  
+  it("imports superclass of object class", async () => {  
+    var m = await module(S, project1Dir + "file1.js").load()
+    var obj = Object.assign(new m.Foo(), {name: "testObject"});
+    var p = ObjectPackage.forObject(obj, opts);
+    await p.ensureObjectClass();
+
+    expect(obj.constructor.name).equals("TestObject");
+    var {packageId} = obj[Symbol.for("lively-object-package-data")];
+
+    expect(await resource(`${testBaseURL}/${packageId}/index.js`).read())
+      .matches(/import \{ Foo \} from/);
     expect(await resource(`${testBaseURL}/${packageId}/index.js`).read())
       .matches(/export default class TestObject/);
   });
@@ -77,4 +94,22 @@ describe("object package", function() {
 
   });
 
+
+  describe("forking", () => {
+    
+    it("forks from package", async () => {
+      var obj = {name: "testObject"};
+      var p = ObjectPackage.forObject(obj, opts);
+      expect(p).equals(ObjectPackage.forObject(obj, opts));
+      await addScript(obj, "function() { return 1; }", "foo", {baseURL: testBaseURL, System: S});
+      expect(obj.foo()).equals(1, "foo 1");
+      
+      var p2 = ObjectPackage.fork(obj, opts);
+      expect(p).not.equals(p2);
+      await addScript(obj, "function() { return 2; }", "foo", {baseURL: testBaseURL, System: S});
+
+      expect(obj.foo()).equals(2, "foo 2");
+    });
+
+  })
 });
