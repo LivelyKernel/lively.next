@@ -758,8 +758,8 @@ export class World extends Morph {
   }
 
   onMouseUp(evt) {
-    var target = evt.state.clickedOnMorph;
     if (evt.isAltDown() && config.altClickDefinesThat) {
+      var target = this.morphsContainingPoint(evt.position)[0];
       // FIXME currently delayed to overwrite that in old morphic
       setTimeout(() => System.global.that = target, 100);
       target.show();
