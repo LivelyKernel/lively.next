@@ -15,17 +15,30 @@ const duration = 200;
 export class ColorPalette extends Morph {
 
    constructor(props) {
-      this.harmony = Complementary;
-      this.color = props.color || Color.blue,
-      this.colorFieldWidth = 20,
       super({
          morphClasses: ['back'],
-         styleRules: this.styler,
+         color: Color.blue,
          ...props,
       });
+      this.initialize();
+   }
+
+   initialize() {
       const [h,s,b] = this.color.toHSB();
       this.pivotColor = Color.hsb(h,s,1);
-      this.build();
+      this.harmony = Complementary;
+      this.colorFieldWidth = 20,
+      this.cachedPalette = {};
+      this.submorphs = [{type: "polygon", name: "arrow", 
+                        vertices: [pt(-1,0),pt(0,-.5), pt(1,0)],
+                        bottomCenter: pt(this.width/2, 0)},
+                       {name: 'body',
+                        submorphs: [
+                           this.fillTypeSelector(),
+                           this.paletteView()]
+                        }];
+     this.selectSolidMode();
+      this.styleRules = this.styler,
       this.active = true;
    }
 
@@ -135,19 +148,6 @@ export class ColorPalette extends Morph {
    set harmony(h) {
       this._harmony = h;
       this.active && this.relayout();
-   }
-
-   build() {
-     this.cachedPalette = {};
-     this.submorphs = [{type: "polygon", name: "arrow", 
-                        vertices: [pt(-1,0),pt(0,-.5), pt(1,0)],
-                        bottomCenter: pt(this.width/2, 0)},
-                       {name: 'body',
-                        submorphs: [
-                           this.fillTypeSelector(),
-                           this.paletteView()]
-                        }];
-     this.selectSolidMode();
    }
 
    relayout() {

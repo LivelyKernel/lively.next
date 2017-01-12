@@ -1,4 +1,4 @@
-import { Window, GridLayout, FillLayout, Ellipse, Text,
+import { Window, Leash, GridLayout, FillLayout, Ellipse, Text,
          VerticalLayout, HorizontalLayout, Image, Triangle,
          TilingLayout, Morph, morph, Menu, Path } from "../../index.js";
 import { Rectangle, Color, LinearGradient, pt, Point, rect,
@@ -24,10 +24,16 @@ class StyleEditor extends Morph {
       if (!target) throw Error("No target provided!");
       super({
         morphClasses: ['closed'],
-        styleRules: this.styler, clipMode: "hidden",
+        clipMode: "hidden",
         layout: new VerticalLayout({spacing: 5}),
         ...props,
-        submorphs: [this.titleLabel(title)]});
+        });
+      this.build();
+   }
+
+   build() {
+      this.submorphs = [this.titleLabel(this.title)];
+      this.styleRules = this.styler;
    }
 
    getColorField({target, property}) {

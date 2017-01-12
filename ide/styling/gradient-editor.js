@@ -18,7 +18,6 @@ export class GradientEditor extends Morph {
       if (!props.target) throw Error("No target provided!");
       super({
          morphClasses: ['body'],
-         styleRules: this.getStyler(),
          ...props
       });
       this.build();
@@ -113,7 +112,7 @@ export class GradientEditor extends Morph {
        this.submorphs = [this.typeSelector(), this.gradientEditor()];
        connect(this, "targetProperty", this, "update");
        this.update();
-       this.styleRules = this.styleRules;
+       this.styleRules = this.getStyler();
        this.updateGradientHandles();
    }
 
@@ -401,7 +400,6 @@ export class GradientFocusHandle extends Ellipse {
           throw Error("Focus Handle only applicable to Morphs with radial gradient!")
        super({
           morphClasses: ['root'],
-          styleRules: this.styler,
           ...props
        })
        this.build();
@@ -437,7 +435,8 @@ export class GradientFocusHandle extends Ellipse {
 
     build() {
        this.initBoundsHandles();
-       this.initFocusHandle()
+       this.initFocusHandle();
+       this.styleRules = this.styler;
        this.relayout();
     }
 
@@ -519,7 +518,6 @@ class GradientDirectionHandle extends Ellipse {
         throw Error("Focus Handle only applicable to Morphs with radial gradient!")
      super({
         morphClasses: ['root'],
-        styleRules: this.styler,
         ...props
      })
      this.build();
@@ -544,6 +542,7 @@ class GradientDirectionHandle extends Ellipse {
 
   build() {
       this.initRotationPoint();
+      this.styleRules = this.styler;
       this.relayout();
   }
 

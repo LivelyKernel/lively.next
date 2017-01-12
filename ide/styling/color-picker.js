@@ -15,12 +15,15 @@ export class ColorPickerField extends Morph {
    constructor(props) {
       const {property, target} = props;
       super({
-         property, target,
          extent: pt(70,30), layout: new HorizontalLayout(),
          borderRadius: 5, fill: Color.gray, clipMode: "hidden",
          borderWidth: 1, borderColor: Color.gray.darker(),
          ...props
       })
+      this.build();
+   }
+
+   build() {
       const topRight = this.innerBounds().topRight(),
             bottomLeft = this.innerBounds().bottomLeft();
 
@@ -126,19 +129,19 @@ export class ColorPickerField extends Morph {
 export class ColorPicker extends Window {
 
   constructor(props) {
-    this.color = props.color || Color.blue;
     super({
       title: "Color Picker",
       name: "Color Picker",
       extent: pt(400, 320),
       fill: Color.black.withA(.7),
-      styleRules: this.styler,
       borderWidth: 0,
       resizable: false,
-      targetMorph: this.colorPalette(),
       isHaloItem: true,
       ...props
     });
+    this.color = props.color || Color.blue;
+    this.styleRules = this.styler,
+    this.targetMorph = this.colorPalette(),
     this.titleLabel().fontColor = Color.gray;
     this.update();
     this.focus();
@@ -224,10 +227,10 @@ export class ColorPicker extends Window {
       name: "colorPalette",
       fill: Color.transparent,
       draggable: false,
-      layout: new GridLayout({grid: [["field", "scale", "details"],
-                                     ["toggleHarmonies", "toggleHarmonies", "toggleHarmonies"],
-                                     ["harmonies", "harmonies", "harmonies"]]}),
-      submorphs: [this.fieldPicker(), this.scalePicker(), this.colorDetails(), this.alphaSlider()]
+      layout: new GridLayout({autoAssign: false,
+                              grid: [["field", "scale", "details"],
+                                     ["alphaSlider", "alphaSlider", "alphaSlider"]]}),
+      submorphs: [...this.fieldPicker(), this.scalePicker(), this.colorDetails(), this.alphaSlider()]
     })
     colorPalette.layout.col(0).paddingLeft = 10;
     colorPalette.layout.col(1).fixed = 55;
@@ -239,7 +242,7 @@ export class ColorPicker extends Window {
   
   alphaSlider() {
     return {
-       name: "alphaSlide",
+       name: "alphaSlider",
        fill: Color.transparent, layout: new HorizontalLayout({spacing: 3}),
        update(colorPicker) {
           this.get("alphaDisplay").value = (colorPicker.color.a * 100).toFixed();
@@ -255,7 +258,7 @@ export class ColorPicker extends Window {
   }
 
   fieldPicker() {
-    return this.getSubmorphNamed("field") || new Morph({
+    return [{
       layout: new FillLayout({morphs: ["hue", "shade", "light"], spacing: {top: 10, bottom: 10}}),
       name: "field",
       fill: Color.transparent,
@@ -283,33 +286,30 @@ export class ColorPicker extends Window {
           this.pickerPosition = evt.positionIn(this.getSubmorphNamed("light"));
         },
         onDrag: (evt) => {
-          this.pickerPosition = this.pickerPosition.addPt(evt.state.dragDelta)
+          this.pickerPosition = evt.positionIn(this.get('field'));
+        }
+     }]
+    },{
+        name: "picker",
+        type: "ellipse",
+        reactsToPointer: false,
+        fill: Color.transparent,
+        borderColor: Color.black,
+        borderWidth: 3,
+        extent: pt(18,18),
+        update(colorPicker) {
+          this.position = colorPicker.pickerPosition;
         },
         submorphs: [{
-          name: "picker",
           type: "ellipse",
-          draggable: false,
           fill: Color.transparent,
-          borderColor: Color.black,
+          borderColor: Color.white,
+          reactsToPointer: false,
           borderWidth: 3,
-          extent: pt(18,18),
-          update(colorPicker) {
-            this.center = colorPicker.pickerPosition;
-          },
-          submorphs: [{
-            type: "ellipse",
-            fill: Color.transparent,
-            borderColor: Color.white,
-            onDrag: (evt) => {
-              this.pickerPosition = this.pickerPosition.addPt(evt.state.dragDelta)
-            },
-            borderWidth: 3,
-            center: pt(8,8),
-            extent: pt(12,12)
-          }]
-      }]
-     }]
-    });
+          center: pt(8,8),
+          extent: pt(12,12)
+        }]
+      }];
   }
 
   scalePicker() {
