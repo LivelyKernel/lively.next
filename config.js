@@ -1,6 +1,7 @@
 import { Rectangle } from "lively.graphics";
 
 var config = {
+
   defaultShadow: {distance: 2, blur: 6},
   undoLevels: 20,
   halosEnabled: true,
@@ -282,7 +283,13 @@ var config = {
       fontSize: 14,
       clipMode: "auto",
     }
+  },
+
+  remotes: {
+    server: System.get("@system-env").browser ? `${document.location.origin}/eval` : null
   }
+  
 }
+    
 
 export default config;
