@@ -58,6 +58,48 @@ describe("snapshots", () => {
     expect(objPool2.objects()).containSubset(objPool.objects(), "object list diverged");
   });
 
+
+  it("snapshots and replaces ids", () => {
+    var o1 = {id: "o1"}, o2 = {id: "o2"}
+
+    o1.bar = [o2];
+    o2.o1 = o1;    
+
+    objPool.add(o1);
+    objPool.setOptions({
+      replaceIds: (id, ref) => {
+        if (id === "o1") return "new_o1"
+        if (id === "o2") return "new_o2"
+        return null
+      }
+    })
+
+    var snap = objPool.snapshot();
+
+    var expected = {
+      new_o1: {
+        rev: 0,
+        props: {
+          bar: {key: "bar",value: [{__ref__: true,id: "new_o2",rev: 0}]},
+          id: {key: "id",value: "new_o1"}
+        }
+      },
+      new_o2: {
+        props: {
+          id: {key: "id",value: "new_o2"},
+          o1: {key: "o1",value: {__ref__: true,id: "new_o1",rev: 0}}
+        },
+        rev: 0
+      }
+    }
+
+    expect(snap).deep.equals(expected);
+
+    var newO1 = ObjectPool.fromSnapshot(snap).resolveToObj("new_o1")
+    expect(newO1).containSubset({id: "new_o1", bar: [{id: "new_o2", o1: {}}]});
+  });
+
+
 });
 
 
@@ -111,7 +153,7 @@ describe("marshalling", () => {
   describe("serialized expressions", () => {
 
     it("simple", () => {
-      var exprObj = {n: 1, __serialize__() { return {__expr__: `({n: ${this.n + 1}, __serialize__: ${this.__serialize__}})` }}},
+      var exprObj = {n: 1, __serialize__() { return {__expr__: `({n: ${this.n + 1}, __serialize__: function ${this.__serialize__}})` }}},
           obj = {foo: exprObj},
           {id} = objPool.add(obj),
           objPool2 = ObjectPool.fromSnapshot(objPool.snapshot()),

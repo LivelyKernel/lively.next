@@ -18,8 +18,14 @@ function isPrimitive(obj) {
 
 export class ObjectRef {
 
-  constructor(id, realObj, snapshot) {
+  static fromSnapshot(id, snapshot, pool, path = [], idPropertyName) {
+    var ref = new this(id, undefined, undefined, idPropertyName);
+    return pool.internalAddRef(ref).recreateObjFromSnapshot(snapshot, pool, path);
+  }
+
+  constructor(id, realObj, snapshot, idPropertyName = "id") {
     this.id = id;
+    this.idPropertyName = idPropertyName;
     this.realObj = realObj;
     this.snapshotVersions = [];
     this.snapshots = {};
@@ -34,8 +40,8 @@ export class ObjectRef {
 
   get currentSnapshot() { return this.snapshots[arr.last(this.snapshotVersions)]}
 
-  asRefForSerializedObjMap(rev = "????") {
-    return {__ref__: true, id: this.id, rev}
+  asRefForSerializedObjMap(rev = "????", snapshotId) {
+    return {__ref__: true, id: snapshotId, rev}
   }
 
   snapshotObject(serializedObjMap, pool, path = []) {
@@ -45,20 +51,21 @@ console.log(`[serialize] ${path.join(".")}`);
 if (path.length > 40) throw new Error("stop");
 
     var {id, realObj, snapshots} = this;
+    var snapshotId = pool.idForSnapshot(this);
 
     if (!realObj) {
       console.error(`Cannot marshall object ref ${id}, no real object!`);
-      return {...this.asRefForSerializedObjMap(), isMissing: true};
+      return {...this.asRefForSerializedObjMap(undefined, snapshotId), isMissing: true};
     }
 
     var rev = realObj._rev || 0,
-        ref = this.asRefForSerializedObjMap(rev);
+        ref = this.asRefForSerializedObjMap(rev, snapshotId);
     arr.pushIfNotIncluded(this.snapshotVersions, rev);
 
     // do we already have serialized a current version of realObj?
     if (snapshots[rev]) {
-      if (!serializedObjMap[id])
-        serializedObjMap[id] = snapshots[rev];
+      if (!serializedObjMap[snapshotId])
+        serializedObjMap[snapshotId] = snapshots[rev];
       return ref;
     }
 
@@ -67,13 +74,13 @@ if (path.length > 40) throw new Error("stop");
       var serialized = realObj.__serialize__(this, serializedObjMap, pool);
       if (serialized.hasOwnProperty("__expr__"))
         serialized = {__expr__: pool.expressionSerializer.exprStringEncode(serialized)};
-      snapshots[rev] = serializedObjMap[id] = serialized;
+      snapshots[rev] = serializedObjMap[snapshotId] = serialized;
       return ref;
     }
 
     // do the generic serialization, i.e. enumerate all properties and
     // serialize the referenced objects recursively
-    var snapshot = snapshots[rev] = serializedObjMap[id] = {rev, props: {}},
+    var snapshot = snapshots[rev] = serializedObjMap[snapshotId] = {rev, props: {}},
         props = snapshot.props, keys;
 
     if (realObj.__dont_serialize__) {
@@ -88,18 +95,23 @@ if (path.length > 40) throw new Error("stop");
 
     for (let i = 0; i < keys.length; i++) {
       let key = keys[i];
+      if (key === this.idPropertyName) { props[key] = {key, value: snapshotId}; continue; }
       props[key] = {
         key,
-        value: this.snapshotProperty(realObj[key], path.concat([key]), serializedObjMap, pool)
+        value: this.snapshotProperty(
+                  realObj[key], path.concat([key]),
+                  serializedObjMap, pool)
       };
     }
     pool.classHelper.addClassInfo(this, realObj, snapshots[rev]);
 
     if (typeof realObj.__additionally_serialize__ === "function")
-      realObj.__additionally_serialize__(snapshot,
-        this, (key, value, verbatim = false) =>
+      realObj.__additionally_serialize__(
+        snapshot, this,
+        (key, value, verbatim = false) =>
           props[key] = verbatim ? {key, value, verbatim} :
-            {key, value: this.snapshotProperty(value, path.concat([key]), serializedObjMap, pool)});
+            {key, value: this.snapshotProperty(
+              value, path.concat([key]), serializedObjMap, pool)});
 
     return ref;
   }
@@ -124,7 +136,8 @@ if (path.length > 40) throw new Error("stop");
 
     let ref = pool.add(value);
 
-    return ref && ref.isObjectRef ? ref.snapshotObject(serializedObjMap, pool, path) : ref;
+    return ref && ref.isObjectRef ?
+      ref.snapshotObject(serializedObjMap, pool, path) : ref;
   }
 
 
@@ -140,7 +153,8 @@ console.log(`[deserialize] ${path.join(".")}`);
 
     var snapshot = serializedObjMap[this.id];
     if (!snapshot) {
-      console.error(`Cannot recreateObjFromSnapshot ObjectRef ${this.id} b/c of missing snapshot in snapshot map!`);
+      console.error(`Cannot recreateObjFromSnapshot ObjectRef `
+                  + `${this.id} b/c of missing snapshot in snapshot map!`);
       return this;
     }
 
@@ -211,14 +225,12 @@ console.log(`[deserialize] ${path.join(".")}`);
     if (Array.isArray(value)) return value.map((ea, i) =>
       this.recreateProperty(i, ea, serializedObjMap, pool, path.concat(i)));
 
-    var valueRef = pool.refForId(value.id)
-                || ObjectRef.fromSnapshot(value.id, serializedObjMap, pool, path);
+    var valueRef = pool.refForId(value[this.idPropertyName])
+                || ObjectRef.fromSnapshot(value[this.idPropertyName],
+                                            serializedObjMap, pool, path, this.idPropertyName);
     return valueRef.realObj;
   }
 
-  static fromSnapshot(id, snapshot, pool, path = []) {
-    return pool.internalAddRef(new this(id)).recreateObjFromSnapshot(snapshot, pool, path);
-  }
 }
 
 
@@ -239,12 +251,27 @@ export class ObjectPool {
     return new this(options).readSnapshot(snapshoted);
   }
 
-  constructor(options = {ignoreClassNotFound: true, uuidGen: null}) {
+  constructor(options) {
+    this.uuidGen = string.newUUID;
     this._obj_ref_map = new Map();
     this._id_ref_map = {};
+
+    options = {ignoreClassNotFound: true, idPropertyName: "id", ...options};
     this.classHelper = new ClassHelper(options);
-    this.uuidGen = options.uuidGen || string.newUUID;
     this.expressionSerializer = new ExpressionSerializer();
+    this.replacedIds = {};
+    this.setOptions(options);
+  }
+
+  setOptions(options = {}) {
+    if (options.idPropertyName) this.idPropertyName = options.idPropertyName;
+    if (options.uuidGen) this.uuidGen = options.uuidGen;;
+    if (options.replaceIds) {
+      this.replaceIds = options.replaceIds;
+      this.replacedIds = {};
+    }
+    if (options.hasOwnProperty("ignoreClassNotFound"))
+      this.classHelper.options.ignoreClassNotFound = options.ignoreClassNotFound;
   }
 
   knowsId(id) { return !!this._id_ref_map[id]; }
@@ -254,6 +281,13 @@ export class ObjectPool {
 
   objects() { return Array.from(this._obj_ref_map.keys()); }
   objectRefs() { return Array.from(this._obj_ref_map.values()); }
+
+  idForSnapshot(ofRef) {
+    var id = ofRef.id;
+    if (!this.replaceIds) return id;
+    var replaced = this.replaceIds[id];
+    return replaced || (this.replaceIds[id] = this.replaceIds(id, ofRef) || id);
+  }
 
   internalAddRef(ref) {
     if (ref.realObj)
@@ -272,7 +306,9 @@ export class ObjectPool {
 
     if (Array.isArray(obj)) return obj.map(element => this.add(element));
 
-    return this.ref(obj) || this.internalAddRef(new ObjectRef(obj.id || this.uuidGen(), obj));
+    var id = this.idPropertyName;
+    return this.ref(obj)
+        || this.internalAddRef(new ObjectRef(obj[id] || this.uuidGen(), obj, undefined, id));
   }
 
   snapshot() {
@@ -287,7 +323,7 @@ export class ObjectPool {
   readSnapshot(snapshot) {
     for (var i = 0, ids = Object.keys(snapshot); i < ids.length; i++)
       if (!this.resolveToObj(ids[i]))
-        ObjectRef.fromSnapshot(ids[i], snapshot, this);
+        ObjectRef.fromSnapshot(ids[i], snapshot, this, [], this.idPropertyName);
     return this;
   }
 
@@ -329,8 +365,8 @@ export class ObjectPool {
   }
 }
 
-export function serialize(obj) {
-  var objPool = new ObjectPool();
+export function serialize(obj, idPropertyName = "id") {
+  var objPool = new ObjectPool({idPropertyName});
   objPool.add(obj);
   return objPool.snapshot();
 }
