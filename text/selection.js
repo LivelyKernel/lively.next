@@ -8,12 +8,16 @@ export class Selection {
 
   constructor(textMorph, range) {
     this.textMorph = textMorph;
+    this.initialize(range)
+  }
+
+  initialize(range) { 
     this._goalColumn = undefined;
     this._isReverse = false;
 
     var id = string.newUUID();
-    this.startAnchor = textMorph.addAnchor("selection-start-" + id);
-    this.endAnchor = textMorph.addAnchor("selection-end-" + id);
+    this.startAnchor = this.textMorph.addAnchor("selection-start-" + id);
+    this.endAnchor = this.textMorph.addAnchor("selection-end-" + id);
 
     this.range = Range.isValidLiteral(range) ? range : defaultRange;
     this._cursorVisible = true;
@@ -237,9 +241,8 @@ export class Selection {
 
 export class MultiSelection extends Selection {
 
-  constructor(textMorph, range) {
-    this.textMorph = textMorph;
-    this.selections = [new Selection(textMorph, range)];
+  initialize(range) {
+    this.selections = [new Selection(this.textMorph, range)];
   }
 
   get isMultiSelection() { return true; }

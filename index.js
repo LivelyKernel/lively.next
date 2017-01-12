@@ -16,8 +16,8 @@ export { default as Window } from "./window.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-import { World } from "./world.js";
-import { Morph, Hand, Image, Ellipse, Triangle, Path, Polygon } from "./morph.js";
+import { World, Hand } from "./world.js";
+import { Morph, Image, Ellipse, Triangle, Path, Polygon } from "./morph.js";
 import { List } from "./list.js";
 import { Text } from "./text/morph.js";
 import { Label } from "./text/label.js";

@@ -8,12 +8,10 @@ export default class Window extends Morph {
   constructor(props = {}) {
     super({
       dropShadow: true, // FIXME!
-      ...this.defaultProperties,
-      ...obj.dissoc(props, ["title", "targetMorph"]),
+      ...obj.dissoc(props, ["title", "targetMorph"])
     });
-
+    
     this.submorphs = this.controls();
-
     if (props.targetMorph) this.targetMorph = props.targetMorph;
 
     this.title = props.title || this.name || "";

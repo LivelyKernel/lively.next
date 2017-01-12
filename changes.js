@@ -50,7 +50,7 @@ class Change {
 
 export class GroupChange extends Change {
   constructor(target) {
-    this.target = target;
+    super(target);
     this.changes = [];
   }
 
@@ -77,7 +77,7 @@ export class ValueChange extends Change {
   get type() { return "setter" }
 
   constructor(target, prop, value, meta) {
-    this.target = target;
+    super(target);
     this.prop = prop;
     this.value = value;
     this.prevValue = null;
@@ -100,8 +100,7 @@ export class MethodCallChange extends GroupChange {
   get type() { return "method-call" }
 
   constructor(target, selector, args, undo, meta) {
-    this.changes = [];
-    this.target = target;
+    super(target);
     this.selector = selector;
     this.args = args;
     this.undo = undo;

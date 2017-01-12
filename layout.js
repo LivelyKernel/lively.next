@@ -455,6 +455,10 @@ export class CellGroup {
 
 class LayoutAxis {
 
+  constructor(cell) {
+      this.origin = cell;
+  }
+
   get otherAxis() {
     return [...this.axisBefore, ...this.axisAfter]
   }
@@ -533,7 +537,7 @@ class LayoutAxis {
 export class LayoutColumn extends LayoutAxis {
 
   constructor(cell) {
-    this.origin = cell;
+    super(cell);
     this.items = [...cell.above, cell, ...cell.below];
   }
 
@@ -644,7 +648,7 @@ export class LayoutColumn extends LayoutAxis {
 export class LayoutRow extends LayoutAxis {
 
   constructor(cell) {
-    this.origin = cell;
+    super(cell);
     this.items = [...cell.before, cell, ...cell.after];
   }
 

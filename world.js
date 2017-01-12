@@ -720,7 +720,7 @@ export class World extends Morph {
   }
 
   onMouseMove(evt) {
-    evt.hand.update(evt);
+    evt.hand && evt.hand.update(evt);
     this._tooltipViewer.mouseMove(evt);
   }
 

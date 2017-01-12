@@ -1,4 +1,4 @@
-import { Morph, Text, Button } from "./index.js";
+import { Morph, Text, Button, StyleRules } from "./index.js";
 import { Label } from "./text/label.js"
 import { Icon } from "./icons.js"
 import { pt, Color, Rectangle, rect } from "lively.graphics";
@@ -231,6 +231,7 @@ export class List extends Morph {
   constructor(props = {}) {
     if (!props.bounds && !props.extent) props.extent = pt(400, 360);
     super({
+      morphClasses: ['list'],
       fill: Color.white,
       fontFamily: "Helvetica Neue, Arial, sans-serif",
       fontSize: 12,
@@ -240,26 +241,29 @@ export class List extends Morph {
       padding: props.padding || Rectangle.inset(3),
       itemPadding: props.itemPadding || Rectangle.inset(1),
       multiSelect: false,
-      ...this.listStyle(props.theme),
       ...props
     });
+    this.styleRules = this.listStyle(props.theme),
     this.update();
   }
 
   listStyle(theme) {
     if (theme == "dark") {
-      return {
+      return new StyleRules({
+      list: {
         fill: Color.transparent,
         hideScrollbars: true,
         nonSelectionFontColor: Color.gray,
         selectionFontColor: Color.black,
         selectionColor: Color.gray.lighter(),
         padding: Rectangle.inset(2, 0)
-      }
+      }})
      } else {
-        return {
-          padding: Rectangle.inset(2, 0)
-        }
+        return new StyleRules({
+          list: {
+            padding: Rectangle.inset(2, 0)
+          }
+        })
      }
   }
 
@@ -625,26 +629,30 @@ export class FilterableList extends Morph {
   relayout() {
     var input = this.get("input"), list = this.get("list");
     list.width = input.width = this.width;
-    list.setBounds(this.innerBounds().withTopLeft(input.bottomLeft));
+    list.setBounds(this.innerBounds().withTopLeft(input.bottomLeft.addXY(0,5)));
   }
 
   get isList() { return true; }
 
   inputStyle(theme) {
    if (theme == "dark") {
-      return {
-        borderWidth: 0,
-        borderRadius: 20,
-        fill: Color.gray.withA(0.8),
-        fontColor: Color.gray.darker(),
-        padding: rect(10,2,0,-2)
-      }
+      return new StyleRules({
+        input: {
+          borderWidth: 0,
+          borderRadius: 20,
+          fill: Color.gray.withA(0.8),
+          fontColor: Color.gray.darker(),
+          padding: rect(10,2,0,-2)
+        }
+      })
     } else {
-      return {
-        borderWidth: 1,
-        borderColor: Color.gray,
-        padding: Rectangle.inset(2)
-      }
+      return new StyleRules({
+        input: {
+          borderWidth: 1,
+          borderColor: Color.gray,
+          padding: Rectangle.inset(2)
+        }
+      })
     }
   }
 
