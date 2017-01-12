@@ -407,7 +407,9 @@ export function defaultAttributes(morph, renderer) {
     animation: new Animation(morph),
     key: morph.id,
     id: morph.id,
-    className: morph.styleClasses.concat([morph.hideScrollbars ? "hiddenScrollbar" : null]).join(" "),
+    className: (morph.hideScrollbars ?
+                morph.styleClasses.concat("hiddenScrollbar") :
+                morph.styleClasses).join(" "),
     draggable: false,
 
     // rk 2016-09-13: scroll issues: just setting the scroll on the DOM node
@@ -420,16 +422,23 @@ export function defaultAttributes(morph, renderer) {
 }
 
 export function svgAttributes(svg) {
-   return {animation: new SvgAnimation(svg, "svg"),
-           attributes: {
-             ...StyleMapper.getSvgAttributes(svg),
-             ...svg._animationQueue.maskedProps("svg")}}
+  return {
+    animation: new SvgAnimation(svg, "svg"),
+    attributes: {
+      ...StyleMapper.getSvgAttributes(svg),
+      ...svg._animationQueue.maskedProps("svg")
+    }
+  };
 }
 
 export function pathAttributes(path) {
-   return {animation: new SvgAnimation(path, "path"), 
-           attributes: {...StyleMapper.getPathAttributes(path),
-           ...path._animationQueue.maskedProps("path")}};
+  return {
+    animation: new SvgAnimation(path, "path"),
+    attributes: {
+      ...StyleMapper.getPathAttributes(path),
+      ...path._animationQueue.maskedProps("path")
+    }
+  };
 }
 
 function shadowCss(morph) {
