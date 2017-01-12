@@ -1,6 +1,6 @@
 import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree, fun } from "lively.lang";
-import { renderRootMorph, AnimationQueue, ShadowObject } from "./rendering/morphic-default.js"
+import { renderRootMorph, renderMorph, AnimationQueue, ShadowObject } from "./rendering/morphic-default.js"
 import { morph, show } from "./index.js";
 import { MorphicEnv } from "./env.js";
 import config from "./config.js";
@@ -1342,7 +1342,47 @@ export class Morph {
   whenRendered() { return promise.waitFor(() => !this._dirty && !this._rendering).then(() => this); }
   render(renderer) { return renderer.renderMorph(this); }
   renderAsRoot(renderer) { return renderRootMorph(this, renderer); }
+  renderPreview(opts) {
+    // Creates a DOM node that is a "preview" of he morph, i.e. a
+    // representation that looks like the morph but doesn't morphic behavior
+    // attached
 
+    // FIXME doesn't work with scale yet...!
+
+    opts = {width: 100, height: 100, center: true, opts};
+
+    var goalWidth = opts.width,
+        goalHeight = opts.height,
+        { scale, position, origin, rotation } = this,
+        invTfm = new Transform(
+                position.negated(),
+                0, pt(1/this.scale,1/scale)),
+        bbox = invTfm.transformRectToRect(this.bounds()),
+        w = bbox.width, h = bbox.height,
+        ratio = Math.min(goalWidth/w, goalHeight/h),
+        node = renderMorph(this),
+        tfm = new Transform(
+          bbox.topLeft().negated().scaleBy(ratio).subPt(origin),
+          rotation, pt(ratio, ratio));
+
+    if (opts.center) {
+      var previewBounds = tfm.transformRectToRect(
+            this.extent.extentAsRectangle()),
+          offsetX = previewBounds.width < goalWidth ?
+            (goalWidth-previewBounds.width) / 2 : 0,
+          offsetY = previewBounds.height < goalHeight ?
+            (goalHeight-previewBounds.height) / 2 : 0;
+      tfm = tfm.preConcatenate(new Transform(pt(offsetX, offsetY)))
+    }
+
+    node.style.transform = tfm.toCSSTransformString();
+
+    var html = node.outerHTML;
+    
+    html = html.replace(/(id|class)=\"[^\"]+\"/g, "");
+
+    return html;
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // ticking
