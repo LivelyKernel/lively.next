@@ -54,6 +54,7 @@ class ListItemMorph extends Label {
     else if (typeof label === "string") this.textString = label
     else this.value = label
 
+    this.tooltip = this.textString;
     this.itemIndex = itemIndex;    
     this.position = pos;
     // if its wider, its wider...

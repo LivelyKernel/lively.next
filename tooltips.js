@@ -10,64 +10,57 @@ export class TooltipViewer {
   }
 
   notPartOfCurrentTooltip(newTarget) {
-     return !newTarget.ownerChain().includes(this.currentMorph);
+    return !newTarget.ownerChain().includes(this.currentMorph);
   }
 
   invalidatesCurrentTooltip(newTarget) {
-     return newTarget.tooltip || this.notPartOfCurrentTooltip(newTarget);
+    return newTarget.tooltip || this.notPartOfCurrentTooltip(newTarget);
   }
 
-  mouseMove({targetMorph}) {
-    if(this.currentMorph != targetMorph) {
-      if (this.invalidatesCurrentTooltip(targetMorph)) {
-         this.hoverOutOfMorph(this.currentMorph);
-         this.hoverIntoMorph(targetMorph);
-         this.currentMorph = targetMorph;
-      }
-    }
+  mouseMove({targetMorph, hand}) {
+    if (this.currentMorph === targetMorph
+     || !this.invalidatesCurrentTooltip(targetMorph)) return;
+    this.hoverOutOfMorph(this.currentMorph);
+    this.hoverIntoMorph(targetMorph, hand);
+    this.currentMorph = targetMorph;
   }
 
   mouseDown({targetMorph}) {
-    this.currentTooltip && this.currentTooltip.remove()
+    this.currentTooltip && this.currentTooltip.remove();
     this.currentTooltip = null;
   }
 
-  hoverIntoMorph(morph) {
+  hoverIntoMorph(morph, hand) {
     this.clearScheduledTooltip();
     if (this.currentTooltip) {
-      this.showTooltipFor(morph);
+      this.showTooltipFor(morph, hand);
     } else {
-      this.scheduleTooltipFor(morph);
+      this.scheduleTooltipFor(morph, hand);
     }
   }
 
   hoverOutOfMorph(morph) {
     const current = this.currentTooltip;
-    this.currentTooltip && this.currentTooltip.softRemove((tooltip) => {
-      if (this.currentTooltip == tooltip) {
-          this.currentTooltip = null;
-      }
-    });
+    this.currentTooltip && this.currentTooltip.softRemove((tooltip) =>
+      this.currentTooltip == tooltip && (this.currentTooltip = null));
   }
 
-  scheduleTooltipFor(morph) {
-    this.timer = setTimeout(() => {
-      this.showTooltipFor(morph);
-    }, config.showTooltipsAfter * 1000);
+  scheduleTooltipFor(morph, hand) {
+    this.timer = setTimeout(
+      () => this.showTooltipFor(morph, hand),
+      config.showTooltipsAfter * 1000);
   }
 
   clearScheduledTooltip() {
     clearTimeout(this.timer);
   }
 
-  showTooltipFor(morph) {
-    if (morph.tooltip) {
-      this.currentTooltip && this.currentTooltip.remove();
-      this.currentTooltip = new Tooltip({
-        position: morph.globalBounds().bottomRight(),
-        description: morph.tooltip});
-      morph.world().addMorph(this.currentTooltip);
-    }
+  showTooltipFor(morph, hand) {
+    if (!morph.tooltip) return;
+    this.currentTooltip && this.currentTooltip.remove();
+    var position = hand ? hand.position.addXY(10,7) : morph.globalBounds().bottomRight();
+    this.currentTooltip = new Tooltip({position, description: morph.tooltip});
+    morph.world().addMorph(this.currentTooltip);
   }
 
 }
@@ -99,7 +92,7 @@ export class Tooltip extends Morph {
   async softRemove(cb) {
     await this.animate({opacity: 0});
     cb && cb(this);
-    this.remove()
+    this.remove();
   }
 
 }
