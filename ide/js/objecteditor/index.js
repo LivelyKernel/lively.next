@@ -567,6 +567,7 @@ localStorage["oe helper"] = JSON.stringify(store);
       {keys: {mac: "Command-S", win: "Ctrl-S"}, command: "save source"},
       {keys: {mac: "Command-Shift-=", win: "Ctrl-Shift-="}, command: "add method"},
       {keys: {mac: "Command-Shift--", win: "Ctrl-Shift--"}, command: "remove method"},
+      {keys: "Ctrl-Shift-R", command: "run selected method"},
       {keys: "Alt-R", command: "refresh"},
       {keys: "Alt-J", command: "jump to definition"},
       {keys: "Ctrl-C I", command: "[javascript] inject import"},
