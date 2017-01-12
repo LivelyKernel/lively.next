@@ -163,11 +163,11 @@ export class ObjectEditor extends Morph {
        borderRight: {width: 1, color: Color.gray},
        layout: new HorizontalLayout({direction: "centered", spacing: 2}), submorphs: [
           {...btnStyle, name: "saveButton", fontSize: 18, label: Icon.makeLabel("save"), tooltip: "save"},
-          {...btnStyle, name: "runMethodButton", fontSize: 18, label: Icon.makeLabel("play-circle-o"), tooltip: "execute selected method"}]},
+          {...btnStyle, name: "runMethodButton", fontSize: 18, label: Icon.makeLabel("play-circle-o"), tooltip: "execute selected method"},
+          {...btnStyle, name: "toggleImportsButton", label: "imports", tooltip: "toggle showing imports", isLayoutable: false}
+        ]},
 
-      new ImportController({name: "importController"}),
-
-      {name: "unsavedChangesIndicator", extent: pt(7,7), isLayoutable: false}
+      new ImportController({name: "importController"})
     ];
 
     var l = this.layout = new GridLayout({
@@ -176,7 +176,7 @@ export class ObjectEditor extends Morph {
         ["classAndMethodControls", "sourceEditorControls", "importController"],
       ]});
     l.col(0).fixed = 180;
-    l.col(2).fixed = 180;
+    l.col(2).fixed = 1;
     l.row(1).fixed = 30;
     // var oe = ObjectEditor.open({target: this})
 
@@ -192,18 +192,29 @@ export class ObjectEditor extends Morph {
     connect(this.get("saveButton"), "fire", this, "execCommand", {converter: () => "save source"});
     connect(this.get("runMethodButton"), "fire", this, "execCommand", {converter: () => "run selected method"});
 
-    connect(this.get("cleanupButton"), "fire", this, "execCommand", {converter: () => "[javascript] removed unused imports"});
 
-    connect(this.get("sourceEditor"), "extent", this.get("unsavedChangesIndicator"), "topRight", {converter: function() { return this.sourceObj.bounds().topRight().addXY(-1,0); }});
-    this.get("sourceEditor").extent = this.get("sourceEditor").extent;
+    connect(this.get("sourceEditorControls"), "extent", this.get("toggleImportsButton"), "rightCenter",
+      {converter: function() { return this.sourceObj.innerBounds().rightCenter().addXY(-3, 0); }});
 
+    connect(this.get("toggleImportsButton"), "fire", this, "toggleShowingImports");
     connect(this.get("sourceEditor"), "textChange", this, "updateUnsavedChangeIndicatorDebounced");
 
+    connect(this.get("classTree"), "contextMenuRequested", this, "contextMenuForClassTree");
+    
     // this.build()
     // this.refresh()
-    // this.get("unsavedChangesIndicator").show()
   }
 
+  isShowingImports() { return this.get("importsList").width > 10; }
+
+  toggleShowingImports(timeout = 300/*ms*/) {
+    var expandedWidth = Math.min(300, Math.max(150, this.get("importsList").listItemContainer.width)),
+        newWidth = this.isShowingImports() ? 1 : expandedWidth,
+        column = this.layout.grid.col(2)
+    column.items.forEach(ea => ea.fixed.width = newWidth);
+    this.layout.apply(timeout ? {duration: timeout} : null);
+    return lively.lang.promise.delay(timeout);
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // accessing
@@ -444,6 +455,8 @@ localStorage["oe helper"] = JSON.stringify(store);
   }
 
   async interactivelyAddImport() {
+    if (!this.isShowingImports()) await this.toggleShowingImports();
+
     try {
       var {selectedClass, selectedMethod} = this.state;
       if (!selectedClass) {
@@ -550,6 +563,7 @@ localStorage["oe helper"] = JSON.stringify(store);
     return [
       {keys: "F1", command: "focus class tree"},
       {keys: "F2", command: "focus code editor"},
+      {keys: "F3", command: "toggle showing imports"},
       {keys: {mac: "Command-S", win: "Ctrl-S"}, command: "save source"},
       {keys: {mac: "Command-Shift-=", win: "Ctrl-Shift-="}, command: "add method"},
       {keys: {mac: "Command-Shift--", win: "Ctrl-Shift--"}, command: "remove method"},
@@ -593,6 +607,11 @@ localStorage["oe helper"] = JSON.stringify(store);
       {
         name: "[javascript] removed unused imports",
         exec: async ed => { await ed.interactivelyRemoveUnusedImports(); return true; }
+      },
+
+      {
+        name: "toggle showing imports",
+        exec: async ed => { await ed.toggleShowingImports(); return true; }
       },
 
       {
