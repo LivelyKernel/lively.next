@@ -210,7 +210,13 @@ export class TreeNode extends Morph {
     this.relayout();
   }
 
+  onContextMenu(evt) {
+    this.owner.owner.contextMenuForNode(this, evt)
+  }
+
   onMouseDown(evt) {
+    if (!evt.leftMouseButtonPressed() || evt.isCtrlDown()) return;
+
     if (this.toggle && evt.state.clickedOnMorph === this.toggle) {
       this.toggleCollapse();
     } else {
@@ -572,6 +578,11 @@ export class Tree extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // event handling
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  
+  contextMenuForNode(nodeMorph, evt) {
+    signal(this, "contextMenuRequested", {nodeMorph, evt});
+  }
+
   get keybindings() {
     return [
       {keys: "Up|Ctrl-P", command: "select node above"},
