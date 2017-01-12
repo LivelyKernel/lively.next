@@ -43,8 +43,11 @@ export default class ExportLookup {
 
   static async findExportOfValue(value, _System = System) {
     var exports = await this.run(_System);
-    return exports.find(({local, moduleId}) =>
-      module(_System, moduleId).recorder[local] === value);
+    return exports.find(({local, moduleId}) => {
+      var m = module(_System, moduleId),
+          values = m.recorder || _System.get(m.id) || {};
+      try { return values[local] === value; } catch (e) { return false; }
+    });
   }
 
   constructor(System) {
@@ -121,10 +124,25 @@ export default class ExportLookup {
 
       if (excludedPackageURLs.includes(packageURL)) return;
 
-      return mod.exports()
-        .then(exports => result.exports = exports)
+      var format = mod.format();
+      if (["register", "es6", "esm"].includes(format)) {
+        return mod.exports()
+          .then(exports => result.exports = exports)
+          .catch(e => { result.error = e; return result; })
+          .then(() => cache[moduleId] = exportsByModule[moduleId] = {rawExports: result})
+      }
+
+      return mod.load()
+        .then(values => {
+          result.exports = [];
+          for (var key in values) {
+            if (key === "__useDefault" || key === "default") continue;
+            result.exports.push({exported: key, local: key, type: "id"})
+          }
+        })
         .catch(e => { result.error = e; return result; })
         .then(() => cache[moduleId] = exportsByModule[moduleId] = {rawExports: result})
+
     }))
 
     return exportsByModule;
