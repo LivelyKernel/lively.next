@@ -9,19 +9,19 @@ import { connect } from "lively.bindings";
 class AxisHalo extends Morph {
   
   constructor({halo, targetAxis}) {
-    this.targetAxis = targetAxis;
-    this.container = halo.container;
-    this.halo = halo;
-    
-    super({fill: Color.transparent,
-           bounds: this.fetchBounds()});
-           
+    super({fill: Color.transparent, 
+           halo, targetAxis, 
+           container: halo.container});
+    this.initialize();
+  }
+
+  initialize() {
+    this.setBounds(this.fetchBounds())
     this.minSlider = this.minSlider(),
     this.axisMenu = this.axisMenu(),
     this.proportionSlider = this.proportionSlider();
     this.proportionSlider.addMorph(this.minSlider);
     this.submorphs = [this.proportionSlider, this.axisMenu];
-    
     this.halo.addGuide(this);
   }
   
@@ -361,13 +361,16 @@ export class GridLayoutHalo extends Morph {
       borderWidth: 2,
       borderRadius: container.borderRadius,
       extent: container.extent,
-      fill: Color.transparent
+      fill: Color.transparent,
+      state: {container, pointerId, target: container.layout}
     });
-    this.state = {container, pointerId, target: container.layout}
-    this.initGuides();
-    this.alignWithTarget();
-    
-    this.focus();
+    this.initialize();
+  }
+
+  initialize() {
+      this.initGuides();
+      this.alignWithTarget();
+      this.focus();
   }
 
   optionControls() {

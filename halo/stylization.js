@@ -2,10 +2,10 @@ import { Morph, Text, Ellipse, Polygon, Image, Path, HTMLMorph, morph} from "../
 import { VerticalLayout, HorizontalLayout, FillLayout,
          TilingLayout, GridLayout} from '../layout.js';
 import { Color, pt, rect, Line, Rectangle} from "lively.graphics";
-import { Intersection, IntersectionParams } from 'kld-intersections';
+import { Intersection, IntersectionParams, Point2D } from 'kld-intersections';
 import { arr, num } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
-import { ColorPicker, BorderStyleEditor, BodyStyleEditor, 
+import { BorderStyleEditor, BodyStyleEditor, 
          LayoutStyleEditor, HTMLEditor, PathEditor, PolygonEditor,
          ImageEditor, NoEditor } from "../ide/styling/style-editor.js";
 import { Icon } from "../icons.js";
@@ -45,14 +45,13 @@ export function styleHaloFor(x, pointerId) {
 class StyleHalo extends Morph {
 
    constructor(target, pointerId) {
-       this.target = target;
        super({
           morphClasses: ['formatter'],
           bounds: target.globalBounds().insetBy(-10),
-          styleRules: this.styler,
+          target
        });
        this.state = {pointerId};
-       this.build(); 
+       this.initialize(); 
    }
 
    onKeyDown(evt) {
@@ -61,7 +60,8 @@ class StyleHalo extends Morph {
       }
    }
 
-   build() {
+   initialize() {
+     this.styleRules = this.styler;
      this.submorphs = [{
          morphClasses: ['formatter'],
          position: pt(10,10),
@@ -456,14 +456,14 @@ class VertexHandle extends Morph {
          halo, index, 
          morphClasses: ['vertexHandles', 'sharp'], 
          center: position.addXY(bw, bw),
-         styleRules: this.styler
       });
-      this.build()
+      this.initialize()
       this.update();
    }
 
-   build() {
+   initialize() {
       this.submorphs = this.controlPoints();
+      this.styleRules = this.styler;
    }
 
    update() {
