@@ -37,6 +37,7 @@ const defaultProperties = {
   focusable: true,
   epiMorph: false,
   isLayoutable: true,
+  tooltip: null,
   submorphs:  []
 }
 
@@ -540,6 +541,9 @@ export class Morph {
 
   get isLayoutable() { return this.getProperty("isLayoutable"); }
   set isLayoutable(bool) { this.setProperty("isLayoutable", bool); }
+
+  get tooltip() { return this.getProperty("tooltip"); }
+  set tooltip(bool) { this.setProperty("tooltip", bool); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // morphic relationship
