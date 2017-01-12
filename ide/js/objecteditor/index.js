@@ -306,8 +306,22 @@ export class ObjectEditor extends Morph {
     
   }
 
-  indicateUnsavedChanges() { this.get("unsavedChangesIndicator").fill = Color.red; }
-  indicateNoUnsavedChanges() { this.get("unsavedChangesIndicator").fill = Color.green; }
+  indicateUnsavedChanges() {
+    Object.assign(this.get("sourceEditor"), {
+      borderLeft: {width: 1, color: Color.red},
+      borderRight: {width: 1, color: Color.red},
+      borderBottom: {width: 1, color: Color.red},
+    })
+  }
+
+  indicateNoUnsavedChanges() {
+    Object.assign(this.get("sourceEditor"), {
+      borderLeft: {width: 1, color: Color.gray},
+      borderRight: {width: 1, color: Color.gray},
+      borderBottom: {width: 1, color: Color.gray},
+    });
+  }
+
   hasUnsavedChanges() {
     return this.state.sourceHash !== string.hashCode(this.get("sourceEditor").textString);
   }
@@ -371,8 +385,8 @@ export class ObjectEditor extends Morph {
     if (tree.selection.target !== methodSpec) {
       var node = tree.nodes.find(ea => ea.target.owner === klass && ea.target.name === methodSpec.name);
       tree.selection = node;
+      tree.scrollSelectionIntoView();
     }
-
 
     let descr = RuntimeSourceDescriptor.for(klass),
         parsed = await descr.ast,
@@ -594,6 +608,12 @@ localStorage["oe helper"] = JSON.stringify(store);
       {
         name: "refresh",
         exec: async ed => {
+          var klass = ed.state.selectedClass;
+          if (klass) {
+            var descr = ed.sourceDescriptorFor(klass);
+            descr.module.reset();
+            descr.reset();
+          }
           await ed.refresh(true);
           ed.setStatusMessage("reloaded");
           return true;
