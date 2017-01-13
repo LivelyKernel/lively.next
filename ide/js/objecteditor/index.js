@@ -310,10 +310,15 @@ export class ObjectEditor extends Morph {
   }
 
   async updateSource(source, targetModule = "lively://object-editor/" + this.id) {
+    // targetModule = ed.evalEnvironment.targetModule
+
     let ed = this.get("sourceEditor"),
         system = await this.systemInterface(),
         format = (await system.moduleFormat(targetModule)) || "esm";
         // [_, ext] = moduleId.match(/\.([^\.]+)$/) || [];
+// await lively.modules.module(targetModule).reset()
+// await lively.modules.module(targetModule).source()
+// await system.moduleRead(targetModule)
 
     if (ed.textString != source)
       ed.textString = source;

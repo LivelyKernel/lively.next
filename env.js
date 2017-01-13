@@ -4,6 +4,7 @@ import FontMetric from "./rendering/font-metric.js";
 import { ChangeManager } from "./changes.js";
 import { UndoManager } from "./undo.js";
 import EventDispatcher from "./events/EventDispatcher.js";
+import { subscribe, unsubscribe } from "lively.notifications";
 
 
 // MorphicEnv.reset();
@@ -40,6 +41,7 @@ export class MorphicEnv {
     this.renderer = null;
     this.eventDispatcher = null;
     this.world = null;
+    this.systemChangeHandlers = null;
 
     this.objPool = null;
     this.synchronizer = null;
@@ -53,6 +55,8 @@ export class MorphicEnv {
 
     this.changeManager = new ChangeManager();
     this.undoManager = new UndoManager();
+
+    this.installSystemChangeHandlers();
   }
 
   initWithDOMEnv(domEnv) {
@@ -94,6 +98,37 @@ export class MorphicEnv {
     world.makeDirty();
 
     return world.whenRendered().then(() => this);
+  }
+
+  installSystemChangeHandlers() {
+    if (this.systemChangeHandlers) return;
+    var handlers = this.systemChangeHandlers = {};
+    handlers["lively.modules/moduleloaded"] = [
+      subscribe("lively.modules/moduleloaded", (evt) =>
+        this.getSystemChangeTargets().forEach(ea => ea.onModuleLoaded(evt)))];
+    handlers["lively.modules/modulechanged"] = [
+      subscribe("lively.modules/modulechanged", (evt) =>
+        this.getSystemChangeTargets().forEach(ea => ea.onModuleChanged(evt)))];
+  }
+  
+  uninstallSystemChangeHandlers() {
+    if (!this.systemChangeHandlers) return;
+    var handlers = this.systemChangeHandlers;
+    this.systemChangeHandlers = null;
+    Object.keys(handlers).forEach(name =>
+      handlers[name].forEach(handler =>
+        unsubscribe(name, handler)))
+  }
+
+  getSystemChangeTargets() {    
+    var world = this.world, targets = [];
+    if (!world) return targets;
+    for (let win of world.getWindows()) {
+      win.isBrowser && targets.push(win);
+      win.targetMorph && win.targetMorph.isObjectEditor &&
+        targets.push(win.targetMorph);
+    }
+    return targets;
   }
 
   deleteHistory() {
