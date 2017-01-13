@@ -1,4 +1,3 @@
-
 (async function setup() {
 
   var l2lClient = await setupLively2Lively();
@@ -25,6 +24,7 @@ async function loadWorld(from) {
   var fromLocation = resource(document.location.origin).join(from),
       world = await loadWorldFromResource(fromLocation);
   MorphicEnv.default().setWorld(world);
+  installSystemChangeHandlers(world);
   return window.$$world = world;
 }
 
@@ -54,6 +54,7 @@ function createNewWorld() {
   var code = localStorage.getItem('lively workspace');
   if (code) world.get("workspace").targetMorph.textString = code;
 
+  installSystemChangeHandlers(world);
   return world
 }
 
@@ -77,6 +78,32 @@ async function setupLivelyShell(opts) {
   ClientCommand.installLively2LivelyServices(l2lClient);
   shellResourceExtension.resourceClass.defaultL2lClient = l2lClient;
   registerExtension(shellResourceExtension);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+import { subscribe } from "lively.notifications";
+function installSystemChangeHandlers(world) {
+  var systemChangeHandlers = [
+    subscribe("lively.modules/moduleloaded", function(evt) {
+      getSystemChangeTargets(world).forEach(ea => ea.onModuleLoaded(evt));
+    }),
+    subscribe("lively.modules/modulechanged", function(evt) {
+      getSystemChangeTargets(world).forEach(ea => ea.onModuleChanged(evt));
+    }),
+    // subscribe("lively.modules/moduleunloaded", function(evt) { inspect(evt); }),
+    // subscribe("lively.modules/packageregistered", function(evt) { inspect(evt); }),
+    // subscribe("lively.modules/packageremoved", function(evt) { inspect(evt); }),
+  ]
+}
+function getSystemChangeTargets(world) {
+  var targets = [];
+  for (let win of world.getWindows()) {
+    win.isBrowser && targets.push(win);
+    win.targetMorph && win.targetMorph.isObjectEditor &&
+      targets.push(win.targetMorph);
+  }
+  return targets;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

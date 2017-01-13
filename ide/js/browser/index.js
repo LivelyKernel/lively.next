@@ -144,6 +144,8 @@ export default class Browser extends Window {
     connect(moduleList, 'selection', this, 'onModuleSelected');
     connect(codeEntityTree, 'selection', this, 'onCodeEntitySelected');
 
+    connect(sourceEditor, "textChange", this, "updateUnsavedChangeIndicatorDebounced");
+
     moduleList.selection = null;
     moduleList.items = [];
     sourceEditor.textString = "";
@@ -313,8 +315,11 @@ export default class Browser extends Window {
         .forEach(ea => ea.height = hresizer.top-moduleList.bottom);
 
       codeEntityCommands.left = codeEntityTree.left = moduleList.right;
-      sourceEditor.height = container.height - hresizer.bottom;
-      browserCommands.width = sourceEditor.width = hresizer.width = container.width;
+      sourceEditor.top = hresizer.bottom + 1;
+      sourceEditor.left = 1;
+      sourceEditor.height = container.height - hresizer.bottom - 2;
+      browserCommands.width = hresizer.width = container.width;
+      sourceEditor.width = browserCommands.width - 2
     } finally { this._inLayout = false; }
   }
 
@@ -365,6 +370,41 @@ export default class Browser extends Window {
     this.selectPackageNamed(!p ? null : typeof p === "string" ? p : p.url || p.address);
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // source changes
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  updateSource(source, cursorPos) {
+    var ed = this.get("sourceEditor")
+    if (ed.textString != source) ed.textString = source;
+    this.state.sourceHash = string.hashCode(source);
+    this.indicateNoUnsavedChanges();
+    this.state.moduleChangeWarning = null;
+    if (cursorPos) ed.cursorPosition = cursorPos;
+  }
+
+  indicateUnsavedChanges() {
+    Object.assign(this.get("sourceEditor"),
+      {border: {width: 2, color: Color.red}});
+  }
+
+  indicateNoUnsavedChanges() {
+    Object.assign(this.get("sourceEditor"),
+      {border: {width: 2, color: Color.gray}});
+  }
+
+  hasUnsavedChanges() {
+    return this.state.sourceHash !== string.hashCode(this.get("sourceEditor").textString);
+  }
+
+  updateUnsavedChangeIndicatorDebounced() {
+    fun.debounceNamed(this.id + "-updateUnsavedChangeIndicatorDebounced", 20,
+      () => this.updateUnsavedChangeIndicator())();
+  }
+
+  updateUnsavedChangeIndicator() {
+    this[this.hasUnsavedChanges() ? "indicateUnsavedChanges" : "indicateNoUnsavedChanges"]();
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // system interface
@@ -424,7 +464,7 @@ export default class Browser extends Window {
     try {
       if (!p) {
         this.get("moduleList").items = [];
-        this.get("sourceEditor").textString = "";
+        this.updateSource("");
         this.title = "browser";
       } else {
         this.title = "browser - " + p.name;
@@ -470,9 +510,10 @@ export default class Browser extends Window {
   async onModuleSelected(m) {
 
     var pack = this.state.selectedPackage;
+    this.state.moduleChangeWarning = null;
 
     if (!m) {
-      this.get("sourceEditor").textString = "";
+      this.updateSource("");
       this.title = "browser - " + (pack && pack.name || "");
       this.updateCodeEntities(null);
       return;
@@ -518,8 +559,7 @@ export default class Browser extends Window {
       this.get("moduleList").scrollSelectionIntoView();
       this.title = "browser - " + pack.name + "/" + m.nameInPackage;
       var source = await system.moduleRead(m.name);
-      this.get("sourceEditor").textString = source;
-      this.get("sourceEditor").cursorPosition = {row: 0, column: 0}
+      this.updateSource(source, {row: 0, column: 0});
 
       await this.prepareCodeEditorForModule(m);
 
@@ -672,6 +712,7 @@ export default class Browser extends Window {
 
     } catch(err) { return this.showError(err); }
 
+    this.updateSource(content);
     await this.updateCodeEntities(module);
     await this.updateTestUI(module);
 
