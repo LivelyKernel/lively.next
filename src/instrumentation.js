@@ -44,57 +44,56 @@ export class ModuleTranslationCache {
 
 export class NodeModuleTranslationCache extends ModuleTranslationCache {
 
+  get moduleCacheDir() { return resource(`file://${process.env.PWD}/.module_cache/`); }
+
   async ensurePath(path) {
-      if (await resource(`file://${process.env.PWD}/module_cache` + path).exists()) return;
-      var url = '', r, packageInfo;
-      for (var dir of path.split("/")) {
-         url += dir + "/"; 
-         r = resource(`file://${process.env.PWD}/module_cache` + url);
-         if (!(await r.exists())) {
-             try {
-                await r.mkdir();
-             } catch (e) {
-                if (e.code != "EEXIST") throw e;
-             }
-          }
-         r = resource(`file://` + url + '/package.json');
-         if (await r.exists()) {
-             packageInfo = await r.read();
-             await resource(`file://${process.env.PWD}/module_cache` + url + '/package.json').write(packageInfo);
-         }
+    if (await this.moduleCacheDir.join(path).exists()) return;
+    var url = "", r, packageInfo;
+    for (var dir of path.split("/")) {
+      url += dir + "/";
+
+      r = this.moduleCacheDir.join(url);
+      // why not use r.ensureExistance() ??
+      if (!await r.exists()) {
+        try { await r.mkdir(); }
+        catch (e) { if (e.code != "EEXIST") throw e; }
       }
+
+      r = resource(`file://` + url + "/package.json");
+      if (await r.exists()) {
+        packageInfo = await r.read();
+        await this.moduleCacheDir.join(url + "/package.json").write(packageInfo);
+      }
+    }
   }
-  
+
   async dumpModuleCache() {
-      var r;
-      for (var path in System._nodeRequire("module").Module._cache) {
-         r = resource("file://" + path);
-         if (await r.exists()) await this.cacheModuleSource(path, "NO_HASH", await r.read());
-      }
+    for (var path in System._nodeRequire("module").Module._cache) {
+      var r = resource("file://" + path);
+      if (await r.exists())
+        await this.cacheModuleSource(path, "NO_HASH", await r.read());
+    }
   }
 
   async fetchStoredModuleSource(moduleId) {
-     var moduleId = moduleId.replace('file://', ''),
-         fname = moduleId.match(/([^\/]*.)\.js/)[0],
-         fpath = moduleId.replace(fname, ''),
-         r = resource(`file://${process.env.PWD}/module_cache` + moduleId);
-     if (await r.exists()) {
-        const {birthtime: timestamp} = await r.stat(),
-              source = await r.read(),
-              hash = await resource(`file://${process.env.PWD}/module_cache` + fpath + "/.hash_" + fname).read();
-        return {source, timestamp, hash}
-     } else {
-        return false;
-     }
+    var moduleId = moduleId.replace("file://", ""),
+        fname = moduleId.match(/([^\/]*.)\.js/)[0],
+        fpath = moduleId.replace(fname, ""),
+        r = this.moduleCacheDir.join(moduleId);
+    if (!await r.exists()) return null;
+    const {birthtime: timestamp} = await r.stat(),
+      source = await r.read(),
+      hash = await this.moduleCacheDir.join(fpath + "/.hash_" + fname).read();
+    return {source, timestamp, hash};
   }
 
   async cacheModuleSource(moduleId, hash, source) {
-      var moduleId = moduleId.replace('file://', ''),
-          fname = moduleId.match(/([^\/]*.)\.js/)[0],
-          fpath = moduleId.replace(fname, '');
-      await this.ensurePath(fpath); 
-      await resource(`file://${process.env.PWD}/module_cache` + moduleId ).write(source);
-      await resource(`file://${process.env.PWD}/module_cache` + fpath + "/.hash_" + fname).write(hash);
+    var moduleId = moduleId.replace("file://", ""),
+        fname = moduleId.match(/([^\/]*.)\.js/)[0],
+        fpath = moduleId.replace(fname, "");
+    await this.ensurePath(fpath);
+    await this.moduleCacheDir.join(moduleId).write(source);
+    await this.moduleCacheDir.join(fpath + "/.hash_" + fname).write(hash);
   }
 }
 
