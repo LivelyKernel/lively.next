@@ -106,7 +106,7 @@ export class LocalCoreInterface extends AbstractCoreInterface {
     if (p) modules.applyPackageConfig(config, p.address);
   }
 
-  async resourcesOfPackage(packageOrAddress, exclude = [".git", "node_modules"]) {
+  async resourcesOfPackage(packageOrAddress, exclude = [".git", "node_modules", ".module_cache"]) {
     var url = packageOrAddress.address ? packageOrAddress.address : packageOrAddress,
         p = modules.getPackage(url);
     return (await p.resources(undefined, exclude))

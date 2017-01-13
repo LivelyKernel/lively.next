@@ -117,7 +117,7 @@ async function _searchForExistingFilesManually(requester, rootURL, p) {
 async function _searchForExistingFilesWeb(requester, rootURL, p) {
   function exclude(resource) {
     var name = resource.name();
-    if ([".git", "node_modules", ".optimized-loading-cache"].includes(resource.name()))
+    if ([".git", "node_modules", ".optimized-loading-cache", ".module_cache"].includes(resource.name()))
       return true;
     if (p) {
       var modules = arr.pluck(p.modules, "name");
@@ -180,7 +180,7 @@ export async function modulesInPackage(system, packageName) {
     throw new Error(`Cannot load package ${packageName}`);
   }
   function exclude(res) {
-    if ([".git", "node_modules", ".optimized-loading-cache"].includes(res.name())) {
+    if ([".git", "node_modules", ".optimized-loading-cache", ".module_cache"].includes(res.name())) {
       return true;
     }
     return false;

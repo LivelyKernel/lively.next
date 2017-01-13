@@ -154,7 +154,7 @@ try {
       await livelySystem.localInterface.packageConfChange(${JSON.stringify(source)}, ${JSON.stringify(confFile)})`);
   }
 
-  async resourcesOfPackage(packageOrAddress, exclude = [".git", "node_modules"]) {
+  async resourcesOfPackage(packageOrAddress, exclude = [".git", "node_modules", ".module_cache"]) {
     if (packageOrAddress.address) packageOrAddress = packageOrAddress.address;
     return this.runEvalAndStringify(`
       var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
