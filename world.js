@@ -447,7 +447,8 @@ var worldCommands = [
     progressIndicator: "opening browser...",
     exec: async (world, args = {packageName: "lively.morphic", moduleName: "morph.js"}) => {
       var { default: Browser } = await System.import("lively.morphic/ide/js/browser/index.js"),
-          browser = await Browser.browse(args.packageName, args.moduleName, undefined, {extent: pt(700, 600)});
+          loc = obj.select(args, ["packageName", "moduleName", "textPosition", "codeEntity"]),
+          browser = await Browser.browse(loc, {extent: pt(700, 600)});
       browser.getWindow().activate();
       return browser;
     }
@@ -495,9 +496,11 @@ var worldCommands = [
           [jsModules, nonJsModules] = arr.partition(selected, ea => ea.url.match(/\.js(on)?/)),
           { default: Browser } = await System.import("lively.morphic/ide/js/browser/index.js");
 
-      await Promise.all(jsModules.map(ea =>
-        Browser.browse(ea.package, ea.url, undefined, browser, backend)
-          .then(browser => browser.activate())));
+      await Promise.all(jsModules.map(ea => {
+        var loc = {packageName: ea.package, moduleName: ea.url}
+        return Browser.browse(loc, browser, backend)
+                .then(browser => browser.activate())
+      }));
 
       if (nonJsModules.length)
         await Promise.all(nonJsModules.map(({url}) => world.execCommand("open file", {url})));
@@ -552,10 +555,9 @@ var worldCommands = [
 
       for (var i = 0; i < selected.length; i++) {
         var {package: p, shortName} = selected[i],
+            loc = {packageName: p.name, moduleName: shortName},
             b = await Browser.browse(
-              p.name, shortName, undefined,
-              i === 0 ? browser : undefined,
-              backend);
+              loc, i === 0 ? browser : undefined, backend);
         b.moveBy(pt(i*20, i*20));
         b.activate();
       }
