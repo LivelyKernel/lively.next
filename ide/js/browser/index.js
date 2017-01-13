@@ -116,6 +116,8 @@ export default class Browser extends Window {
       packageUpdateInProgress: null,
       moduleUpdateInProgress: null,
       selectedPackage: null,
+      sourceHash: null,
+      moduleChangeWarning: null,
       history: {left: [], right: [], navigationInProgress: null}
     };
     this.onLoad();
