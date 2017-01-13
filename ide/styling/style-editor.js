@@ -302,10 +302,20 @@ export class BodyStyleEditor extends StyleEditor {
       this.selectedFillControl && this.selectedFillControl.remove();
    }
 
+   placeBehindMe(handle) {
+      handle.remove();
+      this.world().addMorph(handle, this);
+   }
+
    fillControl(target) {
       return this.createSelectableControl({controls: {
                 "Fill": () => this.getColorField({property: "fill"}),
-                "Gradient": () => new GradientEditor({target, property: "fill"})
+               "Gradient": () => {
+                   const g = new GradientEditor({target, property: "fill"});
+                   g.gradientHandle && this.placeBehindMe(g.gradientHandle)
+                   connect(g, "openHandle", this, "placeBehindMe");
+                   return g
+                }
              }, init: target.fill && target.fill.isGradient ? "Gradient" : "Fill"})
    }
 }

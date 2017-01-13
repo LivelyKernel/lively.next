@@ -91,13 +91,14 @@ export class GradientEditor extends Morph {
         const duration = 300;
         this.gradientHandle && await this.gradientHandle.fadeOut(duration);
         if (g instanceof RadialGradient) {
-           this.gradientHandle = new GradientFocusHandle({target: this.target, opacity: 0}).openInWorld();
+           this.gradientHandle = new GradientFocusHandle({target: this.target, opacity: 0}).openInWorld()
         } else if (g instanceof LinearGradient) {
-           this.gradientHandle = new GradientDirectionHandle({target: this.target, opacity: 0}).openInWorld();
+           this.gradientHandle = new GradientDirectionHandle({target: this.target, opacity: 0}).openInWorld()
         }
         if (this.gradientHandle) {
            this.gradientHandle.animate({opacity: 1, duration});
            this.gradientHandle.relayout()
+           signal(this, "openHandle", this.gradientHandle);
         }
    }
 
