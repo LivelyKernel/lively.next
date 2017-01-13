@@ -259,7 +259,7 @@ export class MultipleChoicePrompt extends AbstractPrompt {
 
 export class TextPrompt extends AbstractPrompt {
 
-  get maxWidth() { return 800; }
+  get maxWidth() { return this.env.world.visibleBounds().width - 20; }
 
   build({label, input, historyId, useLastInput}) {
     this.addMorph({
@@ -299,6 +299,10 @@ export class TextPrompt extends AbstractPrompt {
   resolve() { super.resolve(this.get("input").acceptInput()); }
 
   initLayout() {
+     const label = this.get("label");
+     label.fit();
+     this.width = Math.min(this.maxWidth, label.width + 10);
+
      const l = this.layout = new GridLayout({
         grid: [["label", "label", "label"],
                ["input", "input", "input"],
