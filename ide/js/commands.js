@@ -370,7 +370,7 @@ export var jsIdeCommands = [
       return true
     }
   },
-  
+
   {
     name: "[javascript] eslint report",
     exec: async text => {
@@ -387,15 +387,82 @@ export var jsIdeCommands = [
     }
   },
 
+  // {
+  //   name: "[javascript] eslint fix",
+  //   exec: async text => {
+  //     var { default: ESLinter } = await System.import("lively.morphic/ide/js/eslint/lively-interface.js"),
+  //         range = text.selection.isEmpty() ? null : text.selection.range,
+  //         replacedRange;
+  //     try {
+  //       ({replacedRange} = await ESLinter.fixMorph(text, range));
+  //     } catch(e) { text.showError(e); return; }
+  //     if (range && replacedRange) text.selection = replacedRange;
+  //   }
+  // },
+
   {
     name: "[javascript] eslint fix",
-    exec: async text => {
-      var { default: ESLinter } = await System.import("lively.morphic/ide/js/eslint/lively-interface.js");
-      var range = text.selection.isEmpty() ? null : text.selection.range;
-      try {
-        var {replacedRange} = await ESLinter.fixMorph(text, range);
-      } catch(e) { text.showError(e); return; }
-      if (range && replacedRange) text.selection = replacedRange;
+    exec: async (text, opts) => {
+      // var { default: ESLinter } = await System.import("lively.morphic/ide/js/eslint/lively-interface.js");
+  
+      opts = {
+        printWidth: 80,
+        tabWidth: 2,
+        bracketSpacing: false,
+        ...opts
+      }
+  
+      var {format} = await System.import("http://localhost:9011/lively.morphic/node_modules/prettier/prettier-browserified.js"),
+        {findNodeByAstIndex} = await System.import("lively.ast/lib/acorn-extension.js"),
+        {parse, printAst} = await System.import("lively.ast"),
+        {nodesAt} = await System.import("lively.ast/lib/query.js");
+  
+          prettifyRange(text);
+      // text.saveExcursion(() => prettifyRange(text), {useAnchors: false});
+      
+  
+      return true;
+  
+  
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  
+      function prettifyRange(textMorph, range = textMorph.selection.range) {
+        var {start, end} = range,
+            source = textMorph.textString,
+            parsed = parse(source, {addAstIndex: true}),
+  
+            // find the ast nodes that are at start / end of the range
+            startI = textMorph.positionToIndex(start),
+            endI = textMorph.positionToIndex(end),
+            startNode = arr.last(nodesAt(startI, parsed)),
+            endNode = arr.last(nodesAt(endI, parsed)),
+  
+            prettySource = format(source, opts),
+            prettyParsed = parse(prettySource, {addAstIndex: true}),
+  
+            // ...find the same ast nodes in the prettified source...
+            prettyStartNode = findNodeByAstIndex(prettyParsed, startNode.astIndex),
+            prettyEndNode = findNodeByAstIndex(prettyParsed, endNode.astIndex),
+  
+            // ...and go from those nodes to the start and and row in the orig source
+            // text and prettified source text
+            origStartRow = textMorph.indexToPosition(startNode.start).row,
+            origEndRow = textMorph.indexToPosition(endNode.end).row,
+            prettyLines = string.lines(prettySource),
+            lineIndexComputer = string.lineIndexComputer(prettySource),
+            prettyStartRow = lineIndexComputer(prettyStartNode.start),
+            prettyEndRow = lineIndexComputer(prettyEndNode.end),
+  
+            // Now replace the lines designated by the selection range
+            replacementLines = prettyLines.slice(prettyStartRow, prettyEndRow+1),
+            replacementRange = {start: {column: 0, row: origStartRow}, end: {column: 0, row: origEndRow+1}};
+  
+        textMorph.undoManager.group()
+        textMorph.replace(replacementRange, replacementLines.join("\n") + "\n")
+        textMorph.undoManager.group()
+        textMorph.selection = replacementRange;
+      }
+  
     }
   }
 
