@@ -176,7 +176,7 @@ export async function findFiles(pattern, options) {
   return promiseState.promise;
 }
 
-var defaultExcludes = [".svn", ".git", "node_modules"];
+var defaultExcludes = [".svn", ".git", "node_modules", ".module_cache"];
 
 function findFilesCommandString(pattern, options = {}) {
   var {rootDirectory, exclude, depth, platform} = options;
