@@ -35,7 +35,7 @@ export function addScript(object, funcSource, name, options = {}) {
   return ObjectPackage.forObject(object, options).addScript(funcSource, name);
 }
 
-function isObjectClassFor(klass, obj) {
+export function isObjectClassFor(klass, obj) {
   let packageId = getObjectPackageId(obj);
   if (!packageId) return false;
   var modMeta = klass[Symbol.for("lively-module-meta")];
