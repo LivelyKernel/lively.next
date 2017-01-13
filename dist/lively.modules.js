@@ -28922,7 +28922,7 @@ var NodeModuleTranslationCache = function (_ModuleTranslationCac) {
             switch (_context.prev = _context.next) {
               case 0:
                 _context.next = 2;
-                return lively_resources.resource("file://" + process.env.PWD + "/module_cache" + path).exists();
+                return this.moduleCacheDir.join(path).exists();
 
               case 2:
                 if (!_context.sent) {
@@ -28933,7 +28933,7 @@ var NodeModuleTranslationCache = function (_ModuleTranslationCac) {
                 return _context.abrupt("return");
 
               case 4:
-                url = '';
+                url = "";
                 _iteratorNormalCompletion = true;
                 _didIteratorError = false;
                 _iteratorError = undefined;
@@ -28949,7 +28949,9 @@ var NodeModuleTranslationCache = function (_ModuleTranslationCac) {
                 dir = _step.value;
 
                 url += dir + "/";
-                r = lively_resources.resource("file://" + process.env.PWD + "/module_cache" + url);
+
+                r = this.moduleCacheDir.join(url);
+                // why not use r.ensureExistance() ??
                 _context.next = 16;
                 return r.exists();
 
@@ -28979,7 +28981,8 @@ var NodeModuleTranslationCache = function (_ModuleTranslationCac) {
                 throw _context.t0;
 
               case 26:
-                r = lively_resources.resource("file://" + url + '/package.json');
+
+                r = lively_resources.resource("file://" + url + "/package.json");
                 _context.next = 29;
                 return r.exists();
 
@@ -28995,7 +28998,7 @@ var NodeModuleTranslationCache = function (_ModuleTranslationCac) {
               case 32:
                 packageInfo = _context.sent;
                 _context.next = 35;
-                return lively_resources.resource("file://" + process.env.PWD + "/module_cache" + url + '/package.json').write(packageInfo);
+                return this.moduleCacheDir.join(url + "/package.json").write(packageInfo);
 
               case 35:
                 _iteratorNormalCompletion = true;
@@ -29054,7 +29057,7 @@ var NodeModuleTranslationCache = function (_ModuleTranslationCac) {
     key: "dumpModuleCache",
     value: function () {
       var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
-        var r, path;
+        var path, r;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
@@ -29068,7 +29071,6 @@ var NodeModuleTranslationCache = function (_ModuleTranslationCac) {
                 }
 
                 path = _context2.t1.value;
-
                 r = lively_resources.resource("file://" + path);
                 _context2.next = 6;
                 return r.exists();
@@ -29117,38 +29119,38 @@ var NodeModuleTranslationCache = function (_ModuleTranslationCac) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                moduleId = moduleId.replace('file://', ''), fname = moduleId.match(/([^\/]*.)\.js/)[0], fpath = moduleId.replace(fname, ''), r = lively_resources.resource("file://" + process.env.PWD + "/module_cache" + moduleId);
+                moduleId = moduleId.replace("file://", ""), fname = moduleId.match(/([^\/]*.)\.js/)[0], fpath = moduleId.replace(fname, ""), r = this.moduleCacheDir.join(moduleId);
                 _context3.next = 3;
                 return r.exists();
 
               case 3:
-                if (!_context3.sent) {
-                  _context3.next = 17;
+                if (_context3.sent) {
+                  _context3.next = 5;
                   break;
                 }
 
-                _context3.next = 6;
+                return _context3.abrupt("return", null);
+
+              case 5:
+                _context3.next = 7;
                 return r.stat();
 
-              case 6:
+              case 7:
                 _ref4 = _context3.sent;
                 timestamp = _ref4.birthtime;
-                _context3.next = 10;
+                _context3.next = 11;
                 return r.read();
 
-              case 10:
+              case 11:
                 source = _context3.sent;
-                _context3.next = 13;
-                return lively_resources.resource("file://" + process.env.PWD + "/module_cache" + fpath + "/.hash_" + fname).read();
+                _context3.next = 14;
+                return this.moduleCacheDir.join(fpath + "/.hash_" + fname).read();
 
-              case 13:
+              case 14:
                 hash = _context3.sent;
                 return _context3.abrupt("return", { source: source, timestamp: timestamp, hash: hash });
 
-              case 17:
-                return _context3.abrupt("return", false);
-
-              case 18:
+              case 16:
               case "end":
                 return _context3.stop();
             }
@@ -29171,17 +29173,17 @@ var NodeModuleTranslationCache = function (_ModuleTranslationCac) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
-                moduleId = moduleId.replace('file://', ''), fname = moduleId.match(/([^\/]*.)\.js/)[0], fpath = moduleId.replace(fname, '');
+                moduleId = moduleId.replace("file://", ""), fname = moduleId.match(/([^\/]*.)\.js/)[0], fpath = moduleId.replace(fname, "");
                 _context4.next = 3;
                 return this.ensurePath(fpath);
 
               case 3:
                 _context4.next = 5;
-                return lively_resources.resource("file://" + process.env.PWD + "/module_cache" + moduleId).write(source);
+                return this.moduleCacheDir.join(moduleId).write(source);
 
               case 5:
                 _context4.next = 7;
-                return lively_resources.resource("file://" + process.env.PWD + "/module_cache" + fpath + "/.hash_" + fname).write(hash);
+                return this.moduleCacheDir.join(fpath + "/.hash_" + fname).write(hash);
 
               case 7:
               case "end":
@@ -29197,6 +29199,11 @@ var NodeModuleTranslationCache = function (_ModuleTranslationCac) {
 
       return cacheModuleSource;
     }()
+  }, {
+    key: "moduleCacheDir",
+    get: function get() {
+      return lively_resources.resource("file://" + process.env.PWD + "/.module_cache/");
+    }
   }]);
   return NodeModuleTranslationCache;
 }(ModuleTranslationCache);
@@ -30403,7 +30410,7 @@ var Package = function () {
       ) {
         var _this5 = this;
 
-        var exclude = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [".git", "node_modules"];
+        var exclude = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [".git", "node_modules", ".module_cache"];
         var allPackages, packagesToIgnore, dirList, resourceURLs, loadedModules$$1;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -30799,7 +30806,7 @@ var Package = function () {
                 _context5.next = 3;
                 return this.resources(function (url) {
                   return url.endsWith(".js");
-                }, [".git", "node_modules", "dist"]);
+                }, [".git", "node_modules", "dist", ".module_cache"]);
 
               case 3:
                 _context5.t1 = function (_ref6) {
@@ -31583,28 +31590,27 @@ var ModuleInterface = function () {
     key: "load",
     value: function () {
       var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
-        var m;
+        var id, System;
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
-                m = this.System.get(this.id);
+                id = this.id, System = this.System;
+                _context4.t0 = System.get(id);
 
-                if (m) {
+                if (_context4.t0) {
                   _context4.next = 6;
                   break;
                 }
 
-                _context4.next = 4;
-                return this.System.import(this.id);
+                _context4.next = 5;
+                return System.import(id);
 
-              case 4:
-                m = _context4.sent;
-
-                lively_notifications.emit("lively.modules/moduleloaded", { module: this.id }, Date.now(), this.System);
+              case 5:
+                _context4.t0 = _context4.sent;
 
               case 6:
-                return _context4.abrupt("return", m);
+                return _context4.abrupt("return", _context4.t0);
 
               case 7:
               case "end":
@@ -33194,6 +33200,8 @@ function instantiate_triggerOnLoadCallbacks(proceed, load) {
           console.error(e);
         }
       }
+
+      lively_notifications.emit("lively.modules/moduleloaded", { module: load.name }, Date.now(), System);
     });
 
     return result;
