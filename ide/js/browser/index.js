@@ -1,5 +1,5 @@
 import { Color, pt, Rectangle } from "lively.graphics";
-import { arr, promise, string } from "lively.lang";
+import { arr, fun, promise, string } from "lively.lang";
 import { connect, disconnect, noUpdate } from "lively.bindings";
 import { Window, morph, show, Label, HorizontalLayout, GridLayout, config } from "lively.morphic";
 import { DropDownList } from "lively.morphic/list.js";
@@ -22,6 +22,7 @@ import "mocha-es6/index.js";
 
 import { findDecls } from "lively.ast/lib/code-categorizer.js";
 import { testsFromSource } from "../../test-runner.js";
+import { module } from "lively.modules/index.js";
 
 class CodeDefTreeData extends TreeData {
 
@@ -52,24 +53,31 @@ class CodeDefTreeData extends TreeData {
   }
 }
 
-// Browser.browse();
+// Browser.browse({moduleName: "lively.morphic/morph.js", codeEntity: {name: "Morph"}});
 export default class Browser extends Window {
 
   static async browse(
-    packageName, moduleName,
-    textPosition = {row: 0, column: 0},
+    browseSpec = {},
     browserOrProps = {}, optBackend
   ) {
-    var browser = browserOrProps instanceof Browser ? browserOrProps : new this(browserOrProps);
+    // browse spec:
+    // packageName, moduleName, textPosition like {row: 0, column: 0}
+    var {packageName, moduleName, textPosition, codeEntity} = browseSpec;
+  
+    var browser = browserOrProps instanceof Browser ?
+      browserOrProps : new this(browserOrProps);
+
     if (!browser.world())
       browser.openInWorldNearHand();
     await browser.whenRendered();
+
     if (packageName) {
       await browser.selectPackageNamed(packageName)
       if (moduleName) await browser.selectModuleNamed(moduleName);
+
     } else if (moduleName) {
-      var system = await browser.systemInterface();
-      var m = await system.getModule(moduleName);
+      var system = await browser.systemInterface(),
+          m = await system.getModule(moduleName);
       if (m) {
         moduleName = m.id;
         var p = await system.getPackageForModule(m.id);
@@ -77,11 +85,16 @@ export default class Browser extends Window {
         await browser.selectModuleNamed(moduleName);
       }
     }
+
     if (textPosition) {
       var text = browser.getSubmorphNamed("sourceEditor");
       text.cursorPosition = textPosition;
       text.centerRow(textPosition.row);
+
+    } else if (codeEntity) {
+      await browser.selectCodeEntity(codeEntity);
     }
+
     if (optBackend) browser.backend = optBackend;
     return browser;
   }

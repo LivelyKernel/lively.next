@@ -192,10 +192,12 @@ export class CodeSearcher extends FilterableList {
     if (!this.selection) return;
     var {browser, selection: {column, line, packageName, pathInPackage}} = this,
         browserOrProps = browser,
+        browseSpec = {
+          packageName, moduleName: pathInPackage,
+          textPosition: {column, row: line-1}
+        },
         browser = await Browser.browse(
-          packageName,
-          pathInPackage,
-          {column, row: line-1}, browserOrProps,
+          browseSpec, browserOrProps,
           browser? browser.backend : this.backend);
     browser.state.associatedSearchPanel = this;
     return browser.activate();
