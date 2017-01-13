@@ -10,8 +10,45 @@ function buildEvalOpts(morph, additionalOpts) {
       format = format || "esm";
   if (remote === "local") remote = null;
   return remote ?
-    {targetModule, format, sourceURL, remote} : 
+    {targetModule, format, sourceURL, remote} :
     {System, targetModule, format, context, sourceURL}
+}
+
+export class ModuleTopLevelVarCompleter {
+
+  async compute(textMorph, prefix) {
+
+    var {serverInterfaceFor, localInterface} = System.get(
+      System.decanonicalize("lively-system-interface"))
+
+    if (!serverInterfaceFor || !localInterface) return [];
+
+    var opts = buildEvalOpts(textMorph),
+        endpoint = opts.remote ? serverInterfaceFor(opts.remote) : localInterface,
+        m = opts.targetModule, names
+
+    if (opts.remote) {
+      var result = await endpoint.runEval(
+        `var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
+         JSON.stringify(
+          Object.getOwnPropertyNames(livelySystem.localInterface.getModule("${m}").recorder))`,
+        {targetModule: "lively://module-recorder-completer"})
+      if (result.isError) return [];
+      names = JSON.parse(result.value);
+
+    } else {
+      names = Object.getOwnPropertyNames(endpoint.getModule(m).recorder);
+    }
+
+    names = names.filter(
+      ea => !ea.startsWith("defVar_") &&
+        !["System", "__currentLivelyModule", "initializeES6ClassForLively",
+          "_moduleExport", "_moduleImport"].includes(ea));
+
+    var basePriority = 1100;
+    return names.map(ea => ({priority: basePriority, completion: ea}));
+  }
+
 }
 
 export class DynamicJavaScriptCompleter {
@@ -46,21 +83,26 @@ export class DynamicJavaScriptCompleter {
 
   async compute(textMorph) {
     let sel = textMorph.selection,
-        roughPrefix = sel.isEmpty() ? textMorph.getLine(sel.lead.row).slice(0, sel.lead.column) : sel.text;
+        roughPrefix = sel.isEmpty() ?
+          textMorph.getLine(sel.lead.row).slice(0, sel.lead.column) : sel.text;
 
     if (!this.isValidPrefix(roughPrefix)) return [];
 
     // FIXME this should got into a seperate JavaScript support module where
     // the dependency can be properly declared
     var {serverInterfaceFor, localInterface} = System.get(
-      System.decanonicalize("lively-system-interface"))
+      System.decanonicalize("lively-system-interface"));
 
     if (!serverInterfaceFor || !localInterface) return [];
 
     var opts = buildEvalOpts(textMorph),
-        endpoint = opts.remote ? serverInterfaceFor(opts.remote) : localInterface,
-        {isError, value: err, completions, prefix} = await endpoint.dynamicCompletionsForPrefix(
-                                                      opts.targetModule, roughPrefix, opts);
+      endpoint = opts.remote ? serverInterfaceFor(opts.remote) : localInterface,
+      {
+        isError,
+        value: err,
+        completions,
+        prefix
+      } = await endpoint.dynamicCompletionsForPrefix(opts.targetModule, roughPrefix, opts);
 
     if (isError) {
       console.warn(`javascript completer encountered error: ${err.stack || err}`)
@@ -179,5 +221,6 @@ export class JavaScriptKeywordCompleter {
 
 export var completers = [
   new DynamicJavaScriptCompleter(),
-  new JavaScriptKeywordCompleter()
+  new JavaScriptKeywordCompleter(),
+  new ModuleTopLevelVarCompleter()
 ]
