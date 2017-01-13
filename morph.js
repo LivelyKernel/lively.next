@@ -1349,7 +1349,7 @@ export class Morph {
 
     // FIXME doesn't work with scale yet...!
 
-    opts = {width: 100, height: 100, center: true, opts};
+    opts = {width: 100, height: 100, center: true, ...opts};
 
     var goalWidth = opts.width,
         goalHeight = opts.height,
@@ -1376,10 +1376,12 @@ export class Morph {
     }
 
     node.style.transform = tfm.toCSSTransformString();
+    node.style.pointerEvents = "";
 
     var html = node.outerHTML;
     
-    html = html.replace(/(id|class)=\"[^\"]+\"/g, "");
+    html = html.replace(/(id|class)=\"[^\"]+\"/g, "")
+               .replace(/pointer-events: [^;]+;/g, "");
 
     return html;
   }
