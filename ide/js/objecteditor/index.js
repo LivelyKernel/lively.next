@@ -6,7 +6,7 @@ import { withSuperclasses, lexicalClassMembers, isClass } from "lively.classes/u
 import { TreeData, Tree } from "lively.morphic/tree.js";
 import { connect } from "lively.bindings";
 import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
-import { addScript } from "lively.classes/object-classes.js";
+import { addScript, isObjectClassFor } from "lively.classes/object-classes.js";
 import { Icon } from "../../../icons.js";
 import { chooseUnusedImports, interactivelyChooseImports } from "../import-helper.js";
 import { module } from "lively.modules";
@@ -389,6 +389,24 @@ export class ObjectEditor extends Morph {
     this.selectMethod(parentNode.target, node.target, isClick);
   }
 
+  contextMenuForClassTree({nodeMorph, evt}) {
+    evt.stop();
+    var node = nodeMorph && nodeMorph.state.node;
+    if (!node || !node.target) return;
+    var klass = isClass(node.target) ? node.target :
+      node.target.owner && isClass(node.target.owner) ? node.target.owner :
+        null;
+
+    var items = [];
+    if (klass) {
+      items.push([`open ${klass.name} in system browser`, () => {
+        this.execCommand("open class in system browser", {klass});
+      }]);
+    }
+
+    return this.world().openWorldMenu(evt, items);
+  }
+
   async selectClass(klass) {
     let tree = this.get("classTree");
     if (!tree.selection || tree.selection.target !== klass) {
@@ -412,12 +430,12 @@ export class ObjectEditor extends Morph {
       klass = klass.owner
     }
 
-    if (this.state.selectedClass !== klass)
+    var tree = this.get("classTree");
+    if (this.state.selectedClass !== klass || !tree.selection)
       await this.selectClass(klass);
 
-    var tree = this.get("classTree");
     await tree.uncollapse(tree.selection);
-    if (tree.selection.target !== methodSpec) {
+    if (!tree.selection || tree.selection.target !== methodSpec) {
       var node = tree.nodes.find(ea => ea.target.owner === klass && ea.target.name === methodSpec.name);
       tree.selection = node;
       tree.scrollSelectionIntoView();
@@ -461,7 +479,20 @@ export class ObjectEditor extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async doSave() {
-    var {selectedClass, selectedMethod} = this.state;
+    var {selectedModule, selectedClass, selectedMethod} = this;
+
+    // moduleChangeWarning is set when this browser gets notified that the
+    // current module was changed elsewhere (onModuleChanged) and it also has
+    // unsaved changes
+    if (this.state.moduleChangeWarning && this.state.moduleChangeWarning === selectedModule.id) {
+      var really = await this.world().confirm(
+        `The module ${selectedModule.id} you are trying to save changed elsewhere!\nOverwrite those changes?`);
+      if (!really) {
+        this.setStatusMessage("Save canceled");
+        return;
+      }
+      this.state.moduleChangeWarning = null;
+    }
 
     if (!selectedClass) throw new Error("No class selected");
 
@@ -736,6 +767,17 @@ localStorage["oe helper"] = JSON.stringify(store);
           } catch (e) { ed.showError(e); }
           return true;
         }
+      },
+
+      {
+        name: "open class in system browser",
+        exec: async (ed, opts = {klass: null}) => {
+          var klass = opts.klass || this.state.selectedClass;
+          if (!klass) { ed.setStatusMessage("No class specified"); return true; }
+          var descr = ed.sourceDescriptorFor(klass);
+          return ed.world().execCommand("open browser",
+            {moduleName: descr.module.id, codeEntity: {name: klass.name}});
+        }
       }
     ];
   }
@@ -800,7 +842,7 @@ class ImportController extends Morph {
           var label = [];
           var alias = ea.local !== ea.imported && ea.imported !== "default" ? ea.local : null;
           if (alias) label.push([`${ea.imported} as `, {}])
-          label.push([alias || ea.local, {fontWeight: "bold"}])
+          label.push([alias || ea.local || "??????", {fontWeight: "bold"}])
           label.push([` from ${ea.fromModule}`]);
           return {isListItem: true, value: ea, label}
         });
