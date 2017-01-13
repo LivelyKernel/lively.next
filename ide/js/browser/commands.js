@@ -188,7 +188,6 @@ export default function browserCommands(browser) {
           return true;
         }
 
-        await browser.reloadPackages();
         await browser.selectPackageNamed(pkg.name);
         return true;
       }
@@ -208,7 +207,6 @@ export default function browserCommands(browser) {
           return true;
         }
 
-        await browser.reloadPackages();
         await browser.selectPackageNamed(null);
 
         return true;

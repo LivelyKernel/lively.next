@@ -294,6 +294,7 @@ export default class EventDispatcher {
           this.focusMorph(targetMorph);
           // We remember the morph that we clicked on until we get an up event.
           // This allows us to act on this info later
+
           state.clickedOnMorph = targetMorph;
           state.clickedOnPosition = defaultEvent.position;
 
