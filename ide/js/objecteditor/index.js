@@ -108,6 +108,7 @@ export class ObjectEditor extends Morph {
   constructor(props = {}) {
     super({
       extent: pt(800, 500),
+      name: "object-editor",
       ...obj.dissoc(props, ["target"])
     });
     this.reset();
@@ -149,7 +150,8 @@ export class ObjectEditor extends Morph {
 
     this.submorphs = [
       {type: Tree, name: "classTree", treeData: new ClassTreeData(null),
-       borderBottom: {width: 1, color: Color.gray}},
+       borderBottom: {width: 1, color: Color.gray},
+       borderTop: {width: 1, color: Color.gray}},
 
       {name: "classAndMethodControls",
        layout: new HorizontalLayout({direction: "centered", spacing: 2}), submorphs: [
@@ -220,6 +222,8 @@ export class ObjectEditor extends Morph {
   // accessing
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  get isObjectEditor() { return true }
+
   get target() { return this.state.target; }
   set target(obj) {
     this.state.target = obj;
@@ -232,12 +236,23 @@ export class ObjectEditor extends Morph {
       context: this.target,
       format: "esm"
     });
+
+    if (isObjectClassFor(obj.constructor, obj)) {
+      this.selectClass(obj.constructor);
+    } else {
+      this.updateSource(
+          `// No object-specific behavior exists yet for ${obj}\n`
+        + `// Use the "+" button to add new behaviors\n`);
+    }
   }
 
   get selectedModule() {
     var mid = this.editorPlugin.evalEnvironment.targetModule;
     return mid ? module(mid) : null;
   }
+
+  get selectedClass() { return this.state.selectedClass; }
+  get selectedMethod() { return this.state.selectedMethod; }
 
   async systemInterface() {
     var livelySystem = await System.import("lively-system-interface"),
@@ -300,25 +315,22 @@ export class ObjectEditor extends Morph {
         format = (await system.moduleFormat(targetModule)) || "esm";
         // [_, ext] = moduleId.match(/\.([^\.]+)$/) || [];
 
-    ed.textString = source;
+    if (ed.textString != source)
+      ed.textString = source;
     Object.assign(this.editorPlugin.evalEnvironment, {targetModule, format});
     this.state.sourceHash = string.hashCode(source);
-    
+    this.state.moduleChangeWarning = null;
   }
 
   indicateUnsavedChanges() {
     Object.assign(this.get("sourceEditor"), {
-      borderLeft: {width: 1, color: Color.red},
-      borderRight: {width: 1, color: Color.red},
-      borderBottom: {width: 1, color: Color.red},
+      border: {width: 1, color: Color.red}
     })
   }
 
   indicateNoUnsavedChanges() {
     Object.assign(this.get("sourceEditor"), {
-      borderLeft: {width: 1, color: Color.gray},
-      borderRight: {width: 1, color: Color.gray},
-      borderBottom: {width: 1, color: Color.gray},
+      border: {width: 1, color: Color.gray},
     });
   }
 
@@ -335,12 +347,35 @@ export class ObjectEditor extends Morph {
     this[this.hasUnsavedChanges() ? "indicateUnsavedChanges" : "indicateNoUnsavedChanges"]();
   }
 
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // system events
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  async onModuleChanged(evt) {
+    var m = module(evt.module),
+        {selectedModule} = this;
+
+    if (!selectedModule || selectedModule.id !== m.id)
+      return;
+
+    if (this.hasUnsavedChanges()) this.addModuleChangeWarning(m.id);
+    else await await this.refresh(true);
+  }
+
+  onModuleLoaded(evt) {
+    this.onModuleChanged(evt);
+  }
+
+  addModuleChangeWarning(mid) {
+    this.state.moduleChangeWarning = mid;
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // classes and method ui
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   onClassTreeSelection(node) {
-    if (!node) { this.updateSource(""); return; }
+    if (!node) { return; }
 
     if (isClass(node.target)) {
       this.selectClass(node.target);

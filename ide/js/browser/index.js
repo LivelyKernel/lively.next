@@ -696,6 +696,19 @@ export default class Browser extends Window {
     var module = this.get("moduleList").selection;
     if (!module) return this.setStatusMessage("Cannot save, no module selected", Color.red);
 
+    // moduleChangeWarning is set when this browser gets notified that the
+    // current module was changed elsewhere (onModuleChanged) and it also has
+    // unsaved changes
+    if (this.state.moduleChangeWarning && this.state.moduleChangeWarning === module.name) {
+      var really = await this.world().confirm(
+        `The module ${module.name} you are trying to save changed elsewhere!\nOverwrite those changes?`);
+      if (!really) {
+        this.setStatusMessage("Save canceled");
+        return;
+      }
+      this.state.moduleChangeWarning = null;
+    }
+
     var content = this.get("sourceEditor").textString,
         system = await this.systemInterface();
 
@@ -853,6 +866,48 @@ export default class Browser extends Window {
       hstate.navigationInProgress = null;
       resolve();
     }
+  }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // system events
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  async onModuleChanged(evt) {
+    var m = module(evt.module),
+        {selectedModule, selectedPackage} = this;
+
+    if (!selectedPackage || m.package().address !== selectedPackage.address)
+      return;
+
+    var mInList = this.get("moduleList").values.find(ea => ea.url === m.id);
+    if (selectedModule && selectedModule.url === m.id && mInList) {
+      if (this.hasUnsavedChanges()) this.addModuleChangeWarning(m.id);
+      else await this.onModuleSelected(mInList);
+    }
+  }
+
+  async onModuleLoaded(evt) {
+    var m = module(evt.module),
+        {selectedModule, selectedPackage} = this;
+
+    if (!selectedPackage || m.package().address !== selectedPackage.address)
+      return;
+
+    // add new module to list
+    var mInList = this.get("moduleList").values.find(ea => ea.url === m.id);
+    if (!mInList) {
+      await this.updateModuleList();
+      mInList = this.get("moduleList").values.find(ea => ea.url === m.id);
+    }
+
+    if (selectedModule && selectedModule.url === m.id && mInList) {
+      if (this.hasUnsavedChanges()) this.addModuleChangeWarning(m.id);
+      else await this.onModuleSelected(mInList);
+    }
+  }
+
+  addModuleChangeWarning(mid) {
+    this.state.moduleChangeWarning = mid;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
