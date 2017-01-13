@@ -116,7 +116,12 @@ export class ObjectEditor extends Morph {
   }
 
   reset() {
-    this.state = {target: null, selectedClass: null, selectedMethod: null};
+    this.state = {
+      isSaving: false,
+      target: null,
+      selectedClass: null,
+      selectedMethod: null
+    };
     this.build();
   }
 
@@ -324,6 +329,7 @@ export class ObjectEditor extends Morph {
       ed.textString = source;
     Object.assign(this.editorPlugin.evalEnvironment, {targetModule, format});
     this.state.sourceHash = string.hashCode(source);
+    this.indicateNoUnsavedChanges();
     this.state.moduleChangeWarning = null;
   }
 
@@ -357,14 +363,18 @@ export class ObjectEditor extends Morph {
   // system events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   async onModuleChanged(evt) {
+    if (this.state.isSaving) return;
+
     var m = module(evt.module),
         {selectedModule} = this;
 
     if (!selectedModule || selectedModule.id !== m.id)
       return;
 
-    if (this.hasUnsavedChanges()) this.addModuleChangeWarning(m.id);
-    else await await this.refresh(true);
+    if (this.hasUnsavedChanges()) {
+      this.addModuleChangeWarning(m.id);
+      this.state.sourceHash = string.hashCode(await m.source());
+    } else await this.refresh(true);
   }
 
   onModuleLoaded(evt) {
@@ -486,10 +496,17 @@ export class ObjectEditor extends Morph {
   async doSave() {
     var {selectedModule, selectedClass, selectedMethod} = this;
 
+    if (!selectedClass) throw new Error("No class selected");
+
+    var editor = this.get("sourceEditor"),
+        descr = RuntimeSourceDescriptor.for(selectedClass),
+        content = editor.textString;
+
     // moduleChangeWarning is set when this browser gets notified that the
     // current module was changed elsewhere (onModuleChanged) and it also has
     // unsaved changes
-    if (this.state.moduleChangeWarning && this.state.moduleChangeWarning === selectedModule.id) {
+    if (this.state.sourceHash !== string.hashCode(content)
+     && this.state.moduleChangeWarning && this.state.moduleChangeWarning === selectedModule.id) {
       var really = await this.world().confirm(
         `The module ${selectedModule.id} you are trying to save changed elsewhere!\nOverwrite those changes?`);
       if (!really) {
@@ -499,25 +516,22 @@ export class ObjectEditor extends Morph {
       this.state.moduleChangeWarning = null;
     }
 
-    if (!selectedClass) throw new Error("No class selected");
-
-    var editor = this.get("sourceEditor"),
-        descr = RuntimeSourceDescriptor.for(selectedClass);
 
 var store = JSON.parse(localStorage["oe helper"] || '{"saves": []}')
 store.saves.push(editor.textString);
 if (store.saves.length > 300) store.saves = store.saves.slice(-300)
 localStorage["oe helper"] = JSON.stringify(store);
 
-    await descr.changeSource(editor.textString)
-
-    await editor.saveExcursion(async () => {
-      await this.refresh();
-      await this.updateSource(editor.textString, this.selectedModule.id);
-      // if (selectedMethod) await this.selectMethod(selectedClass, selectedMethod, false);
-      // else await this.selectClass(selectedClass);
-    });
-    
+    this.state.isSaving = true;
+    try {
+      await descr.changeSource(content)
+      await editor.saveExcursion(async () => {
+        await this.refresh();
+        await this.updateSource(editor.textString, this.selectedModule.id);
+        // if (selectedMethod) await this.selectMethod(selectedClass, selectedMethod, false);
+        // else await this.selectClass(selectedClass);
+      });
+    } finally { this.state.isSaving = false; }
   }
 
   async interactivelyAddMethod() {

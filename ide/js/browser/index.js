@@ -118,6 +118,7 @@ export default class Browser extends Window {
       selectedPackage: null,
       sourceHash: null,
       moduleChangeWarning: null,
+      isSaving: false,
       history: {left: [], right: [], navigationInProgress: null}
     };
     this.onLoad();
@@ -698,10 +699,14 @@ export default class Browser extends Window {
     var module = this.get("moduleList").selection;
     if (!module) return this.setStatusMessage("Cannot save, no module selected", Color.red);
 
+    var content = this.get("sourceEditor").textString,
+        system = await this.systemInterface();
+
     // moduleChangeWarning is set when this browser gets notified that the
     // current module was changed elsewhere (onModuleChanged) and it also has
     // unsaved changes
-    if (this.state.moduleChangeWarning && this.state.moduleChangeWarning === module.name) {
+    if (this.state.sourceHash !== string.hashCode(content)
+     && this.state.moduleChangeWarning && this.state.moduleChangeWarning === module.name) {
       var really = await this.world().confirm(
         `The module ${module.name} you are trying to save changed elsewhere!\nOverwrite those changes?`);
       if (!really) {
@@ -711,16 +716,13 @@ export default class Browser extends Window {
       this.state.moduleChangeWarning = null;
     }
 
-    var content = this.get("sourceEditor").textString,
-        system = await this.systemInterface();
-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // FIXME!!!!!! redundant with module load / prepare "mode" code!
     var format = (await system.moduleFormat(module.name)) || "esm",
         [_, ext] = module.name.match(/\.([^\.]+)$/) || [];
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-
+    this.state.isSaving = true;
     try {
       // deal with non-js code, this needs to be cleaned up as well!
       if (ext !== "js") {
@@ -737,12 +739,14 @@ export default class Browser extends Window {
             module.name, content, {targetModule: module.name, doEval: true});
         } else await system.coreInterface.resourceWrite(module.name, content);
       }
+  
+      this.updateSource(content);
+      await this.updateCodeEntities(module);
+      await this.updateTestUI(module);
 
-    } catch(err) { return this.showError(err); }
-
-    this.updateSource(content);
-    await this.updateCodeEntities(module);
-    await this.updateTestUI(module);
+    }
+    catch(err) { return this.showError(err); }
+    finally { this.state.isSaving = false; }
 
     this.setStatusMessage("saved " + module.nameInPackage, Color.green);
   }
@@ -875,6 +879,8 @@ export default class Browser extends Window {
   // system events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   async onModuleChanged(evt) {
+    if (this.state.isSaving) return;
+
     var m = module(evt.module),
         {selectedModule, selectedPackage} = this;
 
@@ -883,12 +889,17 @@ export default class Browser extends Window {
 
     var mInList = this.get("moduleList").values.find(ea => ea.url === m.id);
     if (selectedModule && selectedModule.url === m.id && mInList) {
-      if (this.hasUnsavedChanges()) this.addModuleChangeWarning(m.id);
-      else await this.onModuleSelected(mInList);
+      if (this.hasUnsavedChanges()) {
+        this.addModuleChangeWarning(m.id);
+        this.state.sourceHash = string.hashCode(await m.source());
+      } else await this.get("sourceEditor").saveExcursion(() => this.onModuleSelected(mInList));
+      
     }
   }
 
   async onModuleLoaded(evt) {
+    if (this.state.isSaving) return;
+
     var m = module(evt.module),
         {selectedModule, selectedPackage} = this;
 
@@ -903,8 +914,10 @@ export default class Browser extends Window {
     }
 
     if (selectedModule && selectedModule.url === m.id && mInList) {
-      if (this.hasUnsavedChanges()) this.addModuleChangeWarning(m.id);
-      else await this.onModuleSelected(mInList);
+      if (this.hasUnsavedChanges()) {
+        this.addModuleChangeWarning(m.id);
+        this.state.sourceHash = string.hashCode(await m.source());
+      } else await this.get("sourceEditor").saveExcursion(() => this.onModuleSelected(mInList));
     }
   }
 
