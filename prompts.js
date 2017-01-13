@@ -299,21 +299,24 @@ export class TextPrompt extends AbstractPrompt {
   resolve() { super.resolve(this.get("input").acceptInput()); }
 
   initLayout() {
-     const label = this.get("label");
-     label.fit();
-     this.width = Math.min(this.maxWidth, label.width + 10);
+    const label = this.get("label"), input = this.get("input");
+    label.fit();
+    var goalWidth = Math.max(input.textBounds().width+20, label.width);
+    this.width = Math.min(this.maxWidth, goalWidth + 10);
 
-     const l = this.layout = new GridLayout({
-        grid: [["label", "label", "label"],
-               ["input", "input", "input"],
-               [null,    "ok button", "cancel button"]]
-     });
-     l.col(0).paddingLeft = 2.5;
-     l.col(2).paddingRight = 2.5;
-     l.col(2).fixed = 100;
-     l.col(1).fixed = 100;
-     l.row(2).paddingTop = 2.5;
-     l.row(2).paddingBottom = 2.5;
+    const l = this.layout = new GridLayout({
+      grid: [
+        ["label", "label", "label"],
+        ["input", "input", "input"],
+        [null, "ok button", "cancel button"]
+      ]
+    });
+    l.col(0).paddingLeft = 2.5;
+    l.col(2).paddingRight = 2.5;
+    l.col(2).fixed = 100;
+    l.col(1).fixed = 100;
+    l.row(2).paddingTop = 2.5;
+    l.row(2).paddingBottom = 2.5;
   }
 
   focus() { this.get("input").focus(); }
