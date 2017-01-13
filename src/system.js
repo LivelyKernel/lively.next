@@ -78,6 +78,7 @@ function removeSystem(nameOrSystem) {
 
 import { wrapModuleLoad } from "./instrumentation.js"
 import { wrapResource } from "./resource.js"
+import { emit } from "lively.notifications";
 
 function makeSystem(cfg) { return prepareSystem(new SystemClass(), cfg); }
 
@@ -124,7 +125,7 @@ function prepareSystem(System, config) {
 
     if (initialSystem.transpiler === "lively.transpiler") {
       System.set("lively.transpiler", initialSystem.get("lively.transpiler"));
-      System._loader.transpilerPromise = initialSystem._loader.transpilerPromise;  
+      System._loader.transpilerPromise = initialSystem._loader.transpilerPromise;
       System.config({
         transpiler: 'lively.transpiler',
         babelOptions: Object.assign(initialSystem.babelOptions || {}, config.babelOptions)
@@ -336,6 +337,8 @@ function instantiate_triggerOnLoadCallbacks(proceed, load) {
         callbacks.splice(i, 1);
         try { callback(mod) } catch (e) { console.error(e); }
       }
+
+      emit("lively.modules/moduleloaded", {module: load.name}, Date.now(), System);
     });
 
     return result;

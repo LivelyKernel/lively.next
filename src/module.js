@@ -152,12 +152,8 @@ class ModuleInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async load() {
-    let m = this.System.get(this.id);
-    if (!m) {
-      m = await this.System.import(this.id);
-      emit("lively.modules/moduleloaded", {module: this.id}, Date.now(), this.System);
-    }
-    return m;
+    var {id, System} = this;
+    return System.get(id) || await System.import(id);
   }
 
   isLoaded() { return !!this.System.get(this.id); }
