@@ -22,6 +22,9 @@ if (isMain) {
   if ("root-directory" in args) rootDirectory = args["root-directory"];
 }
 
+var System = lively.modules.getSystem("lively", {baseURL: `file://${rootDirectory}`});
+lively.modules.changeSystem(System, true);
+
 lively.modules.registerPackage(".")
   .then(() => console.log(`[lively.server] ${step++}. preparing system...`))
   

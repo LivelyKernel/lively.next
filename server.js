@@ -184,7 +184,7 @@ export default class LivelyServer {
 
     // 2. if plugins with same id are isntalled, remove those
     var ids = toInstall.map(ea => ea.pluginId),
-	toRemove = this.plugins.filter(ea => ids.includes(ea.pluginId));
+       	toRemove = this.plugins.filter(ea => ids.includes(ea.pluginId));
 
     this.removePlugins(toRemove);
 
