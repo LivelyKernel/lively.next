@@ -7,6 +7,7 @@ import { removeDir, createFiles } from "./helpers.js";
 import { getSystem, removeSystem } from "../src/system.js";
 import module from "../src/module.js";
 import { getPackage } from "../src/packages.js";
+import { promise } from "lively.lang";
 
 var dir = System.decanonicalize("lively.modules/tests/"),
     testProjectDir = dir + "test-project-dir",
@@ -74,6 +75,7 @@ describe("notify", () => {
   it("when module gets loaded", async () => {
     expect(moduleloaded).to.deep.equal([]);
     await module(system, module1).load();
+    await promise.delay(20);
     expect(moduleloaded).to.containSubset([{
       type: "lively.modules/moduleloaded",
       module: module1
