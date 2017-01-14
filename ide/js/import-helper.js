@@ -1,4 +1,4 @@
-import { arr } from 'lively.lang';
+import { arr, string } from 'lively.lang';
 import { pt } from 'lively.graphics';
 import LoadingIndicator from "../../loading-indicator.js";
 import { config } from "lively.morphic";
@@ -149,11 +149,27 @@ class ExportPrompt {
   static run(world, exportData) { return new this().run(world, exportData); }
 
   async run(world, exportData) {
+
     var {selected: choices}  = await world.filterableListPrompt(
       "Select import", this.buildItems(exportData), {
         multiSelect: true,
         historyId: "lively.morphic/ide/js-interactively-import",
-        extent: pt(800, 500)
+        extent: pt(800, 500),
+        fuzzy: "value.exported",
+
+        sortFunction: (parsedInput, item) => {
+          // preioritize those completions that are close to the input
+          var {exported, isMain} = item.value;
+          var exported = (exported || "").toLowerCase();
+          var base = isMain ? -1 : 0;
+          parsedInput.lowercasedTokens.forEach(t => {
+            if (exported.startsWith(t)) base -= 10;
+            else if (exported.includes(t)) base -= 5;
+          });
+          return arr.sum(parsedInput.lowercasedTokens.map(token =>
+            string.levenshtein(exported.toLowerCase(), token))) + base
+        }
+
       });
     return choices;
   }

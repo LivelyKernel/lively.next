@@ -24,7 +24,7 @@ export class WordCompleter {
         words.push(word);
         completions.push({priority: basePriority-(row-i), completion: word})
       }
-    
+
     for (var i = row+1; i < lines.length; i++)
       for (var word of lines[i].split(/[^0-9a-z_@]+/i)) {
         if (!word || words.includes(word) || word === prefix) continue;
@@ -85,7 +85,7 @@ export class CompletionController {
     return {items, maxCol}
   }
 
-  prefix() {    
+  prefix() {
     let m = this.textMorph,
         sel = m.selection,
         roughPrefix = sel.isEmpty() ? m.getLine(sel.lead.row).slice(0, sel.lead.column) : sel.text;
@@ -134,7 +134,28 @@ export class CompletionController {
       items, input: prefix,
       name: "text completion menu",
       borderColor: Color.gray, borderWidth: 1,
-      historyId: "lively.morphic-text completion"
+      historyId: "lively.morphic-text completion",
+
+      filterFunction: (parsedInput, item) => {
+        var tokens = parsedInput.lowercasedTokens;
+        if (tokens.every(token => item.string.toLowerCase().includes(token))) return true;
+        // "fuzzy" match
+        var completion = item.value.completion.replace(/\([^\)]*\)$/, "").toLowerCase();
+        return arr.sum(parsedInput.lowercasedTokens.map(token =>
+                string.levenshtein(completion, token))) <= 3;
+      },
+
+      sortFunction: (parsedInput, item) => {
+        // preioritize those completions that are close to the input
+        var completion = item.value.completion.replace(/\([^\)]*\)$/, "").toLowerCase();
+        var base = 0;
+        parsedInput.lowercasedTokens.forEach(t => {
+          if (completion.startsWith(t)) base -= 10;
+          else if (completion.includes(t)) base -= 5;
+        });
+        return arr.sum(parsedInput.lowercasedTokens.map(token =>
+          string.levenshtein(completion.toLowerCase(), token))) + base
+      }
     }
   }
 

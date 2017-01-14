@@ -2,7 +2,7 @@ import { Morph, Text, Button } from "./index.js";
 import { Label } from "./text/label.js"
 import { Icon } from "./icons.js"
 import { pt, Color, Rectangle, rect } from "lively.graphics";
-import { arr, obj } from "lively.lang";
+import { arr, Path, string, obj } from "lively.lang";
 import { signal } from "lively.bindings";
 
 function asItem(obj) {
@@ -585,8 +585,7 @@ export class FilterableList extends Morph {
           name: "input",
           textString: input,
           fontSize, fontFamily,
-          historyId,
-          ...this.inputStyle(props.theme)
+          historyId
         }),
         list = new List({
           name: "list", items: [],
@@ -598,14 +597,23 @@ export class FilterableList extends Morph {
           theme: props.theme
         });
 
-    super({borderWidth: 1, fill: Color.transparent, borderColor: Color.gray, submorphs: [inputText, list]});
+    super({
+      borderWidth: 1,
+      fill: Color.transparent,
+      borderColor: Color.gray,
+      submorphs: [inputText, list],
+      updateSelectionsAfterFilter: false,
+    });
+
+    this.state = {
+      allItems: null,
+      sortFunction: props.sortFunction || null, // (parsedInput, item) => ...
+      filterFunction: props.filterFunction || this.defaultFilterFunction
+    };
+    Object.assign(inputText, this.inputStyle(props.theme))
 
     props = obj.dissoc(props, ["fontFamily", "fontSize", "input"]);
-
-    this.state = {allItems: null};
-
     if (!props.bounds && !props.extent) props.extent = pt(400, 360);
-
     Object.assign(this, {items: []}, props);
 
     connect(this.get("input"), "inputChanged", this, "updateFilter");
@@ -642,6 +650,9 @@ export class FilterableList extends Morph {
 
   focus() { this.get("input").focus(); }
 
+  get updateSelectionsAfterFilter() { return this.getProperty("updateSelectionsAfterFilter"); }
+  set updateSelectionsAfterFilter(bool) { this.setProperty("updateSelectionsAfterFilter", bool); }
+
   get multiSelect() { return this.get("list").multiSelect; }
   set multiSelect(multiSelect) { this.get("list").multiSelect = multiSelect; }
 
@@ -662,7 +673,7 @@ export class FilterableList extends Morph {
 
   scrollSelectionIntoView() { return this.get("list").scrollSelectionIntoView(); }
 
-  updateFilter() {
+  parseInput() {
     var filterText = this.get("input").textString,
 
         // parser that allows escapes
@@ -685,13 +696,82 @@ export class FilterableList extends Morph {
           }
           state.escaped = false;
           return state;
-        }), {tokens: [], current: "", escaped: false, spaceSeen: false}),
-        _ = parsed.current && parsed.tokens.push(parsed.current),
-        filterTokens = parsed.tokens.map(ea => ea.toLowerCase()),
+        }), {tokens: [], current: "", escaped: false, spaceSeen: false});
+    parsed.current && parsed.tokens.push(parsed.current)
+    var lowercasedTokens = parsed.tokens.map(ea => ea.toLowerCase());
+    return {tokens: parsed.tokens, lowercasedTokens};
+  }
 
-        filteredItems = this.state.allItems.filter(item => filterTokens.every(token => item.string.toLowerCase().includes(token))),
-        list = this.get("list"),
-        newSelectedIndexes = list.selectedIndexes.map(i => filteredItems.indexOf(list.items[i])).filter(i => i !== -1)
+  get defaultFilterFunction() {
+    return this._defaultFilterFunction
+        || (this._defaultFilterFunction = (parsedInput, item) =>
+              parsedInput.lowercasedTokens.every(token =>
+                item.string.toLowerCase().includes(token)));
+  }
+
+  get fuzzySortFunction() {
+    return this._fuzzySortFunction
+        || (this._fuzzySortFunction = (parsedInput, item) => {
+          var prop = typeof this.fuzzy === "string" ? this.fuzzy : "string";
+          // preioritize those completions that are close to the input
+          var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
+          var base = 0;
+          parsedInput.lowercasedTokens.forEach(t => {
+            if (fuzzyValue.startsWith(t)) base -= 10;
+            else if (fuzzyValue.includes(t)) base -= 5;
+          });
+          return arr.sum(parsedInput.lowercasedTokens.map(token =>
+            string.levenshtein(fuzzyValue.toLowerCase(), token))) + base
+        })
+  }
+
+  get fuzzyFilterFunction() {
+    return this._fuzzyFilterFunction
+        || (this._fuzzyFilterFunction = (parsedInput, item) => {
+      var prop = typeof this.fuzzy === "string" ? this.fuzzy : "string";
+      var tokens = parsedInput.lowercasedTokens;
+      if (tokens.every(token => item.string.toLowerCase().includes(token))) return true;
+      // "fuzzy" match against item.string or another prop of item
+      var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
+      return arr.sum(parsedInput.lowercasedTokens.map(token =>
+              string.levenshtein(fuzzyValue, token))) <= 3;
+    });
+  }
+  
+  get fuzzy() { return this.getProperty("fuzzy"); }
+  set fuzzy(fuzzy) {
+    // fuzzy => bool or prop;
+    this.setProperty("fuzzy", fuzzy);
+    if (!fuzzy) {
+      if (this.sortFunction === this.fuzzySortFunction)
+        this.sortFunction = null;
+      if (this.filterFunction === this.fuzzyFilterFunction)
+        this.filterFunction = this.defaultFilterFunction;
+    } else  {
+      if (!this.sortFunction) this.sortFunction = this.fuzzySortFunction
+      if (this.filterFunction == this.defaultFilterFunction)
+        this.filterFunction = this.fuzzyFilterFunction;
+    }
+  }
+  get filterFunction() { return this.state.filterFunction; }
+  set filterFunction(fn) { this.state.filterFunction = fn; }
+  get sortFunction() { return this.state.sortFunction; }
+  set sortFunction(fn) { this.state.sortFunction = fn; }
+
+  updateFilter() {
+    var parsedInput = this.parseInput(),
+        filterFunction = this.filterFunction,
+        sortFunction = this.sortFunction,
+        filteredItems = this.state.allItems.filter(item => filterFunction(parsedInput, item));
+
+    if (sortFunction)
+      filteredItems = arr.sortBy(filteredItems, ea => sortFunction(parsedInput, ea));
+
+    var list = this.get("list"),
+        newSelectedIndexes = this.updateSelectionsAfterFilter ?
+          list.selectedIndexes.map(i => filteredItems.indexOf(list.items[i])).filter(i => i !== -1) :
+          list.selectedIndexes;
+
     list.items = filteredItems;
     list.selectedIndexes = newSelectedIndexes.length ? newSelectedIndexes : filteredItems.length ? [0] : [];
     this.scrollSelectionIntoView();

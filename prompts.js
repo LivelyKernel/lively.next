@@ -4,7 +4,7 @@ import { arr, obj, promise } from "lively.lang";
 import { List, FilterableList } from "./list.js"
 import { PasswordInputLine } from "./text/input-line.js"
 import { Icon } from "./icons.js"
-import { Morph, Text, GridLayout } from './index.js';
+import { Morph, morph, Text, GridLayout } from './index.js';
 import { connect } from 'lively.bindings';
 
 
@@ -391,28 +391,38 @@ export class ListPrompt extends AbstractPrompt {
          extent,
          multiSelect,
          historyId,
-         useLastInput}) {
+         useLastInput,
+         fuzzy, filterFunction, sortFunction
+   }) {
 
     this.extent = extent || pt(500,400);
-    var ListClass = filterable ? FilterableList : List;
     labelFontFamily = labelFontFamily || "Helvetica Neue, Arial, sans-serif";
     labelFontSize = labelFontSize || 15;
     listFontFamily = listFontFamily || "Inconsolata, monospace";
     listFontSize = listFontSize || labelFontSize;
 
-    this.addMorph({
+    var labelProps = {
       name: "label", type: "label", value: label,
       fill: null, padding: Rectangle.inset(3),
       fontSize: labelFontSize, fontFamily: labelFontFamily, fontColor: Color.gray
-    });
+    }
 
-    this.addMorph(new ListClass({
-      name: "list", multiSelect,
+    this.addMorph(labelProps);
+
+    var listProps = {
+      name: "list", type: filterable ? FilterableList : List,
+      multiSelect,
       historyId, useLastInput,
       borderWidth: 0, borderColor: Color.gray,
       fontSize: listFontSize, fontFamily: listFontFamily,
       padding, itemPadding, theme: "dark"
-    }));
+    }
+    if (filterable && fuzzy) listProps.fuzzy = fuzzy;
+    if (filterable && typeof filterFunction === "function")
+      listProps.filterFunction = filterFunction;
+    if (filterable && typeof sortFunction === "function")
+      listProps.sortFunction = sortFunction;
+    this.addMorph(morph(listProps));
 
     this.addMorph({
       name: "ok button", type: "button", label: "Select",

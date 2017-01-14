@@ -492,7 +492,7 @@ var worldCommands = [
       var {selected} = await world.filterableListPrompt(
                         "Choose module to open", items, {
                           historyId: "lively.morphic-choose and browse package resources",
-                          requester: browser, width: 700, multiSelect: true}),
+                          requester: browser, width: 700, multiSelect: true, fuzzy: "value.shortName"}),
           [jsModules, nonJsModules] = arr.partition(selected, ea => ea.url.match(/\.js(on)?/)),
           { default: Browser } = await System.import("lively.morphic/ide/js/browser/index.js");
 
@@ -551,7 +551,7 @@ var worldCommands = [
             "Choose module to open", items, {
               historyId: "lively.morphic-choose and browse module",
               requester: browser || focused,
-              width: 700, multiSelect: true, listFontColor: "white"});
+              width: 700, multiSelect: true, listFontColor: "white", fuzzy: "value.shortName"});
 
       for (var i = 0; i < selected.length; i++) {
         var {package: p, shortName} = selected[i],
@@ -1072,7 +1072,10 @@ export class World extends Morph {
     opts = {
       requester: null, onSelection: null,
       preselect: 0, multiSelect: false,
-      historyId: null
+      historyId: null,
+      fuzzy: false
+      // sortFunction: (parsedInput, item) => ...
+      // filterFunction: (parsedInput, item) => ...
     }) {
 
     if (opts.prompt) {
