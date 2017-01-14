@@ -3,21 +3,29 @@ import { World } from "./index.js";
 import { resource } from "lively.resources";
 import { newMorphId } from "./morph.js";
 
-export function serializeMorph(m, options) {
-  options = {replaceIds: false, ...options}
-  var poolOptions = {};
-  if (options.replaceIds) {
-    poolOptions.replaceIds = (id, ref) =>
-      ref.realObj.isMorph ? newMorphId(ref.realObj.constructor) : null
-  }
-  var objPool = options.objPool || new ObjectPool(poolOptions),
-      ref = objPool.add(m);
-  return {id: objPool.idForSnapshot(ref), snapshot: objPool.snapshot()};
+function normalizeOptions(options) {
+  options = {reinitializeIds: false, ...options}
+
+  if (options.reinitializeIds)
+    options.reinitializeIds = typeof options.reinitializeIds === "function" ?
+      options.reinitializeIds :
+      (id, ref) => ref.realObj.isMorph ? newMorphId(ref.realObj.constructor) : null;
+
+  return options;
 }
 
-export function deserializeMorph(idAndSnapshot) {
+export function serializeMorph(m, options) {
+  options = normalizeOptions(options);
+  var objPool = options.objPool || new ObjectPool(options),
+      ref = objPool.add(m);
+  return {id: ref.id, snapshot: objPool.snapshot()};
+}
+
+export function deserializeMorph(idAndSnapshot, options) {
+  options = normalizeOptions(options);
   var {id, snapshot} = idAndSnapshot,
-      objPool = ObjectPool.fromSnapshot(snapshot);
+      objPool = options.objPool || new ObjectPool(options);
+  objPool.readSnapshot(snapshot);
   return objPool.resolveToObj(id)
 }
 
@@ -55,5 +63,5 @@ export function saveWorldToResource(world = World.defaultWorld(), toResource) {
 
 
 export function copyMorph(morph) {
-  return deserializeMorph(serializeMorph(morph, {replaceIds: true}))
+  return deserializeMorph(serializeMorph(morph), {reinitializeIds: true});
 }

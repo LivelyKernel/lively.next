@@ -71,6 +71,8 @@ export class Morph {
     if (props.layout) this.layout = props.layout;
   }
 
+  get __serialization_id_property__() { return "_id"; }
+
   __deserialize__(snapshot, objRef) {
     // inspect({snapshot, objRef})
     this._env = MorphicEnv.default(); // FIXME!
