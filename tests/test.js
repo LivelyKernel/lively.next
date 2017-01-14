@@ -66,36 +66,16 @@ describe("snapshots", () => {
     o2.o1 = o1;    
 
     objPool.add(o1);
-    objPool.setOptions({
-      replaceIds: (id, ref) => {
-        if (id === "o1") return "new_o1"
-        if (id === "o2") return "new_o2"
-        return null
-      }
-    })
 
-    var snap = objPool.snapshot();
-
-    var expected = {
-      new_o1: {
-        rev: 0,
-        props: {
-          bar: {key: "bar",value: [{__ref__: true,id: "new_o2",rev: 0}]},
-          id: {key: "id",value: "new_o1"}
-        }
-      },
-      new_o2: {
-        props: {
-          id: {key: "id",value: "new_o2"},
-          o1: {key: "o1",value: {__ref__: true,id: "new_o1",rev: 0}}
-        },
-        rev: 0
+    var opts = {
+      reinitializeIds(id, ref) {
+        if (id === "o1") return "new_o1";
+        if (id === "o2") return "new_o2";
+        return null;
       }
     }
 
-    expect(snap).deep.equals(expected);
-
-    var newO1 = ObjectPool.fromSnapshot(snap).resolveToObj("new_o1")
+    var newO1 = ObjectPool.fromSnapshot(objPool.snapshot(), opts).resolveToObj("o1");
     expect(newO1).containSubset({id: "new_o1", bar: [{id: "new_o2", o1: {}}]});
   });
 
@@ -158,25 +138,6 @@ describe("marshalling", () => {
           {id} = objPool.add(obj),
           objPool2 = ObjectPool.fromSnapshot(objPool.snapshot()),
           obj2 = objPool2.resolveToObj(id);
-      expect(obj2).deep.property("foo.n", 2);
-      expect(obj2.foo).property("__serialize__").to.be.a("function");
-    });
-
-    xit("with expression evaluator", () => {
-      var proto = {n: 1, __serialize__() { return {__expr__: `foo(${this.n+1})`}; }},
-          obj = {foo: Object.create(proto)},
-          {id} = objPool.add(obj),
-          objPool2 = new ObjectPool();
-
-      objPool2.expressionEvaluator = exprObj => {
-        var e = exprObj.__expr__;
-        if (e.startsWith("foo")) return Object.create(proto, {n: {value: Number(e.match(/[0-9]+/)[0])}})
-        return undefined;
-      };
-
-      objPool2.readSnapshot(objPool.snapshot());
-
-      var obj2 = objPool2.resolveToObj(id);
       expect(obj2).deep.property("foo.n", 2);
       expect(obj2.foo).property("__serialize__").to.be.a("function");
     });
