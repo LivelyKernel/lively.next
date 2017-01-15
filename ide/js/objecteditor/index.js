@@ -371,15 +371,21 @@ export class ObjectEditor extends Morph {
     if (this.state.isSaving) return;
 
     var m = module(evt.module),
-        {selectedModule} = this;
+        {selectedModule, selectedClass} = this;
 
     if (!selectedModule || selectedModule.id !== m.id)
       return;
 
     if (this.hasUnsavedChanges()) {
-      this.addModuleChangeWarning(m.id);
-      this.state.sourceHash = string.hashCode(await m.source());
-    } else await this.refresh(true);
+      var newClassSource = await this.sourceDescriptorFor(selectedClass).source;
+      if (this.state.sourceHash !== string.hashCode(newClassSource)) {
+        this.addModuleChangeWarning(m.id);
+        this.state.sourceHash = string.hashCode(newClassSource);
+        return;
+      }
+    }
+    
+    await this.refresh(true);
   }
 
   onModuleLoaded(evt) {
