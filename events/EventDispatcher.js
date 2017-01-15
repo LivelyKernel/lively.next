@@ -255,8 +255,8 @@ export default class EventDispatcher {
     var type         = domEvt.type,
         state        = this.eventState,
         eventTargets = [targetMorph].concat(targetMorph.ownerChain()),
-        hand         = (domEvt.pointerType == "mouse" && domEvt.pointerId) ?
-                            this.world.handForPointerId(domEvt.pointerId) :
+        hand         = (domEvt.pointerType == "mouse" && domEvt.pointerId) ? 
+                            this.world.handForPointerId(domEvt.pointerId) : 
                             this.world.firstHand,
         halo         = domEvt.pointerId ? this.world.haloForPointerId(domEvt.pointerId) : null,
         layoutHalo   = domEvt.pointerId ? this.world.layoutHaloForPointerId(domEvt.pointerId) : null,
@@ -320,8 +320,13 @@ export default class EventDispatcher {
           state.clickCount = 0;
         });
 
+        // drag release
+        if (state.draggedMorph) {
+          events.push(dragEndEvent(domEvt, this, targetMorph, state, hand, halo, layoutHalo));
+          defaultEvent.targetMorphs = [this.world];
+
         // grab release
-        if (hand.carriesMorphs()) {
+        } else if (hand.carriesMorphs()) {
           // make sure that the morph receiving the grabbed morphs is not a
           // grabbed morph itself, i.e. the drop target must not be a child morph
           // of the hand
@@ -331,14 +336,9 @@ export default class EventDispatcher {
           }
           events.push(new Event("drop", domEvt, this, [targetMorph], hand, halo, layoutHalo));
           defaultEvent.targetMorphs = [this.world];
-
-       // drag release
-        } else if (state.draggedMorph) {
-          events.push(dragEndEvent(domEvt, this, targetMorph, state, hand, halo, layoutHalo));
-          defaultEvent.targetMorphs = [this.world];
         }
-
         break;
+
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       case "pointermove":
