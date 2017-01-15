@@ -161,7 +161,9 @@ export class ObjectEditor extends Morph {
       {name: "classAndMethodControls",
        layout: new HorizontalLayout({direction: "centered", spacing: 2}), submorphs: [
          {...btnStyle, name: "addMethodButton", label: Icon.makeLabel("plus"), tooltip: "add a new method"},
-         {...btnStyle, name: "removeMethodButton", label: Icon.makeLabel("minus"), tooltip: "remove selected method"}]},
+         {...btnStyle, name: "removeMethodButton", label: Icon.makeLabel("minus"), tooltip: "remove selected method"},
+         {...btnStyle, name: "openInBrowserButton", fontSize: 14, label: Icon.makeLabel("external-link"), tooltip: "open selected class in system browser"},
+       ]},
 
       {name: "sourceEditor", ...textStyle},
 
@@ -192,9 +194,12 @@ export class ObjectEditor extends Morph {
     connect(this.get("classTree"), "selection", this, "onClassTreeSelection");
     connect(this.get("addMethodButton"), "fire", this, "interactivelyAddMethod");
     connect(this.get("removeMethodButton"), "fire", this, "interactivelyRemoveMethod");
+    connect(this.get("openInBrowserButton"), "fire", this, "execCommand",
+      {updater: function($upd) { $upd("open class in system browser", {klass: this.targetObj.selectedClass}); }});
 
     connect(this.get("addImportButton"), "fire", this, "interactivelyAddImport");
     connect(this.get("removeImportButton"), "fire", this, "interactivelyRemoveImport");
+    connect(this.get("cleanupButton"), "fire", this, "execCommand", {converter: () => "[javascript] removed unused imports"});
 
     connect(this.get("saveButton"), "fire", this, "execCommand", {converter: () => "save source"});
     connect(this.get("runMethodButton"), "fire", this, "execCommand", {converter: () => "run selected method"});
