@@ -487,7 +487,9 @@ export default class EventDispatcher {
       // event handlers might be rendered by morphs, e.g. in case of HTML morphs
       var targetNode = domEvt.target;
       while (true) {
-        var cssClasses = targetNode.className;
+        var cssClasses = targetNode.className || "";
+        if (typeof cssClasses !== "string" && "baseVal" in cssClasses/*svg*/)
+          cssClasses = cssClasses.baseVal;
         // Maybe better "is-morph-node" test?
         if (cssClasses && cssClasses.includes("Morph")) break;
         if (!(targetNode = targetNode.parentNode)) return;
