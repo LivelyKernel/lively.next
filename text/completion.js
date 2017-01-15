@@ -73,15 +73,16 @@ export class CompletionController {
     for (let val of groups.values())
       withHighestPriority.push(arr.last(arr.sortByKey(val, "priority")))
 
-    var maxCol = 0;
-    var items = arr.sortByKey(withHighestPriority, "priority")
-      .reverse()
-      .map(ea => {
-        var string = ea.completion.replace(/\n/g, ""),
-            annotation = String((ea.info || "").replace(/\n/g, ""));
-        maxCol = Math.max(maxCol, string.length + annotation.length)
-        return {isListItem: true, string, annotation, value: ea};
-      });
+    var maxCol = 0,
+        sorted = arr.sortByKey(withHighestPriority, "priority").reverse(),
+        highestPriority = sorted[0].priority || 0,
+        items = sorted.map(ea => {
+          ea.highestPriority = highestPriority;
+          var string = ea.completion.replace(/\n/g, ""),
+              annotation = String((ea.info || "").replace(/\n/g, ""));
+          maxCol = Math.max(maxCol, string.length + annotation.length)
+          return {isListItem: true, string, annotation, value: ea};
+        });
     return {items, maxCol}
   }
 
@@ -146,11 +147,16 @@ export class CompletionController {
       },
 
       sortFunction: (parsedInput, item) => {
-        // preioritize those completions that are close to the input
-        var completion = item.value.completion.replace(/\([^\)]*\)$/, "").toLowerCase();
-        var base = 0;
+        // Preioritize those completions that are close to the input. We also
+        // want to consider the static priority of the item itself but adjust it
+        // across the priority of all items
+        var {highestPriority, completion, priority} = item.value,
+            completion = completion.replace(/\([^\)]*\)$/, "").toLowerCase(),
+            n = String(highestPriority).length-2,
+            adjustedPriority = priority / 10**n,
+            base = -adjustedPriority;
         parsedInput.lowercasedTokens.forEach(t => {
-          if (completion.startsWith(t)) base -= 10;
+          if (completion.startsWith(t)) base -= 12;
           else if (completion.includes(t)) base -= 5;
         });
         return arr.sum(parsedInput.lowercasedTokens.map(token =>
