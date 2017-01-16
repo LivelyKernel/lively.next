@@ -250,21 +250,32 @@ class ObjectModule {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // object scripting
 
-  async addScript(funcSource, name) {
-    let klass = await this.ensureObjectClass(),
-        descr = RuntimeSourceDescriptor.for(klass, this.System),
-        parsedFunction = parseFunction(funcSource);
+  async addScript(functionOrSource, name) {
+    let funcSource = typeof functionOrSource === "function" ?
+          String(functionOrSource) : functionOrSource,
+        parsedFunction = parseFunction(funcSource),
+        klass = await this.ensureObjectClass(),
+        descr = RuntimeSourceDescriptor.for(klass, this.System);
 
     if (!name) name = Path("id.name").get(parsedFunction);
     if (!name) throw new Error(`No name, cannot add ${string.truncate(funcSource, 30).replace(/\n/g, "")}!`);
     let methodName = toJsIdentifier(name);
 
+
     console.assert(
-      parsedFunction.type === "FunctionExpression",
+      parsedFunction.type === "FunctionExpression"
+   || parsedFunction.type === "ArrowFunctionExpression",
       "not a function expression but: " + parsedFunction.type);
 
     // we manually rewrite the source to maintain whitespace as much as possible
-    funcSource = funcSource.replace(/.*function\s*([^\(]+)?/, methodName);
+    var args = parsedFunction.params.map(({start,end}) => funcSource.slice(start, end)),
+        body = parsedFunction.body.type === "BlockStatement" ?
+          funcSource.slice(parsedFunction.body.start, parsedFunction.body.end) :
+            `{ return ${funcSource.slice(parsedFunction.body.start, parsedFunction.body.end)} }`,
+        methodSource = `${methodName}(${args.join(",")}) ${body}`;
+    if (parsedFunction.type === "ArrowFunctionExpression")
+      parsedFunction.type = "FunctionExpression";
+
 
     let source = descr.source,
         classDecl = descr.ast;
@@ -276,16 +287,16 @@ class ObjectModule {
 
     if (existing) {
       source = source.slice(0, existing.start)
-                 + funcSource
+                 + methodSource
                  + source.slice(existing.end);
     } else {
       let insertAt = source.lastIndexOf("}"),
           before = source.slice(0, insertAt),
           after = source.slice(insertAt);
       if (!/\n\s*$/m.test(before)) before += "\n";
-      funcSource = string.changeIndent(funcSource, "  ", 1);
+      methodSource = string.changeIndent(methodSource, "  ", 1);
       if (!/^[ ]*\n/m.test(after)) after = "\n" + after;
-      source = before + funcSource + after;
+      source = before + methodSource + after;
     }
 
     await descr.changeSource(source);
