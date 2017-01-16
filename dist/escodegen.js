@@ -36,7 +36,7 @@
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v4.4.7',
+        version: 'v4.4.5',
         browser: true,
         env: {},
         argv: [],
@@ -2247,7 +2247,7 @@
   });
   require.define('/node_modules/source-map/lib/source-map/source-node.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var SourceMapGenerator = require('/node_modules/source-map/lib/source-map/source-map-generator.js', module).SourceMapGenerator;
@@ -2504,7 +2504,7 @@
   });
   require.define('/node_modules/source-map/lib/source-map/util.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       function getArg(aArgs, aName, aDefaultValue) {
@@ -2704,7 +2704,7 @@
       exports.compareByGeneratedPositions = compareByGeneratedPositions;
     });
   });
-  require.define('/node_modules/source-map/node_modules/amdefine/amdefine.js', function (module, exports, __dirname, __filename) {
+  require.define('/node_modules/amdefine/amdefine.js', function (module, exports, __dirname, __filename) {
     'use strict';
     function amdefine(module, requireFn) {
       'use strict';
@@ -2901,7 +2901,7 @@
   });
   require.define('/node_modules/source-map/lib/source-map/source-map-generator.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var base64VLQ = require('/node_modules/source-map/lib/source-map/base64-vlq.js', module);
@@ -3151,7 +3151,7 @@
   });
   require.define('/node_modules/source-map/lib/source-map/mapping-list.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var util = require('/node_modules/source-map/lib/source-map/util.js', module);
@@ -3195,7 +3195,7 @@
   });
   require.define('/node_modules/source-map/lib/source-map/array-set.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var util = require('/node_modules/source-map/lib/source-map/util.js', module);
@@ -3243,7 +3243,7 @@
   });
   require.define('/node_modules/source-map/lib/source-map/base64-vlq.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var base64 = require('/node_modules/source-map/lib/source-map/base64.js', module);
@@ -3296,7 +3296,7 @@
   });
   require.define('/node_modules/source-map/lib/source-map/base64.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var charToIntMap = {};
@@ -3321,7 +3321,7 @@
   });
   require.define('/node_modules/source-map/lib/source-map/source-map-consumer.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var util = require('/node_modules/source-map/lib/source-map/util.js', module);
@@ -3433,7 +3433,7 @@
   });
   require.define('/node_modules/source-map/lib/source-map/basic-source-map-consumer.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var util = require('/node_modules/source-map/lib/source-map/util.js', module);
@@ -3650,7 +3650,7 @@
   });
   require.define('/node_modules/source-map/lib/source-map/binary-search.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       function recursiveSearch(aLow, aHigh, aNeedle, aHaystack, aCompare) {
@@ -3680,7 +3680,7 @@
   });
   require.define('/node_modules/source-map/lib/source-map/indexed-source-map-consumer.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var util = require('/node_modules/source-map/lib/source-map/util.js', module);

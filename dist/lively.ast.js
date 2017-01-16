@@ -5364,7 +5364,7 @@ module.exports = function(acorn) {
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v4.4.7',
+        version: 'v4.4.5',
         browser: true,
         env: {},
         argv: [],
@@ -7575,7 +7575,7 @@ module.exports = function(acorn) {
   });
   require.define('/node_modules/source-map/lib/source-map/source-node.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var SourceMapGenerator = require('/node_modules/source-map/lib/source-map/source-map-generator.js', module).SourceMapGenerator;
@@ -7832,7 +7832,7 @@ module.exports = function(acorn) {
   });
   require.define('/node_modules/source-map/lib/source-map/util.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       function getArg(aArgs, aName, aDefaultValue) {
@@ -8032,7 +8032,7 @@ module.exports = function(acorn) {
       exports.compareByGeneratedPositions = compareByGeneratedPositions;
     });
   });
-  require.define('/node_modules/source-map/node_modules/amdefine/amdefine.js', function (module, exports, __dirname, __filename) {
+  require.define('/node_modules/amdefine/amdefine.js', function (module, exports, __dirname, __filename) {
     'use strict';
     function amdefine(module, requireFn) {
       'use strict';
@@ -8229,7 +8229,7 @@ module.exports = function(acorn) {
   });
   require.define('/node_modules/source-map/lib/source-map/source-map-generator.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var base64VLQ = require('/node_modules/source-map/lib/source-map/base64-vlq.js', module);
@@ -8479,7 +8479,7 @@ module.exports = function(acorn) {
   });
   require.define('/node_modules/source-map/lib/source-map/mapping-list.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var util = require('/node_modules/source-map/lib/source-map/util.js', module);
@@ -8523,7 +8523,7 @@ module.exports = function(acorn) {
   });
   require.define('/node_modules/source-map/lib/source-map/array-set.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var util = require('/node_modules/source-map/lib/source-map/util.js', module);
@@ -8571,7 +8571,7 @@ module.exports = function(acorn) {
   });
   require.define('/node_modules/source-map/lib/source-map/base64-vlq.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var base64 = require('/node_modules/source-map/lib/source-map/base64.js', module);
@@ -8624,7 +8624,7 @@ module.exports = function(acorn) {
   });
   require.define('/node_modules/source-map/lib/source-map/base64.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var charToIntMap = {};
@@ -8649,7 +8649,7 @@ module.exports = function(acorn) {
   });
   require.define('/node_modules/source-map/lib/source-map/source-map-consumer.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var util = require('/node_modules/source-map/lib/source-map/util.js', module);
@@ -8761,7 +8761,7 @@ module.exports = function(acorn) {
   });
   require.define('/node_modules/source-map/lib/source-map/basic-source-map-consumer.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var util = require('/node_modules/source-map/lib/source-map/util.js', module);
@@ -8978,7 +8978,7 @@ module.exports = function(acorn) {
   });
   require.define('/node_modules/source-map/lib/source-map/binary-search.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       function recursiveSearch(aLow, aHigh, aNeedle, aHaystack, aCompare) {
@@ -9008,7 +9008,7 @@ module.exports = function(acorn) {
   });
   require.define('/node_modules/source-map/lib/source-map/indexed-source-map-consumer.js', function (module, exports, __dirname, __filename) {
     if (typeof define !== 'function') {
-      var define = require('/node_modules/source-map/node_modules/amdefine/amdefine.js', module)(module, require);
+      var define = require('/node_modules/amdefine/amdefine.js', module)(module, require);
     }
     define(function (require, exports, module) {
       var util = require('/node_modules/source-map/lib/source-map/util.js', module);
@@ -12676,9 +12676,22 @@ function parseFunction(source) {
   var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
   var src = '(' + source + ')',
-      ast = parse(src, options);
-  if (options.addSource) addSource(ast, src);
-  return ast.body[0].expression;
+      offset = -1,
+      parsed = parse(src, options);
+
+  AllNodesVisitor.run(parsed, function (node, state, path) {
+    if (node._positionFixed) return;
+    node._positionFixed = true;
+    if (node.start || node.start === 0) {
+      node.start += offset;
+      node.end += offset;
+    }
+    if (options.addSource && !node.source) {
+      node.source = source.slice(node.start, node.end);
+    }
+  });
+
+  return parsed.body[0].expression;
 }
 
 function fuzzyParse(source, options) {
