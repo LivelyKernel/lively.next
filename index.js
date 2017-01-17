@@ -1,4 +1,5 @@
-import { string, arr, Closure } from "lively.lang";
+import { string, arr } from "lively.lang";
+import Closure from "./closure.js";
 
 export { connect, disconnect, disconnectAll, once, signal, noUpdate }
 
