@@ -72,6 +72,7 @@ class StyleHalo extends Morph {
      }, this.getLayoutControl()];
      this.focus();
      this.showBodyStyler();
+     this.layoutStyleEditor.show()
      this.showBorderStyler();
      connect(this.target, "onChange", this, "update");
      this.relayout();  
@@ -174,33 +175,22 @@ class StyleHalo extends Morph {
 
    openBorderStyler() {
       this.bodyStyler.hide();
+      this.layoutStyleEditor.hide();
       this.borderHalo.deactivate();
       if (this.borderStyler.opened) return;
-      this.leash = this.world().addMorph(new Leash({start: pt(0,0), end: pt(10,10), opacity: 0}), this);
-      this.leash.startPoint.attachTo(this.borderHalo, this.getSideInWorld());
-      this.leash.endPoint.attachTo(this.borderStyler, "center");
-      this.leash.animate({opacity: .7, duration: 300});
+      this.leash = this.borderStyler.createLeashFor(this.borderHalo, this.getSideInWorld());
+      this.world().addMorph(this.leash, this);
       this.borderStyler.open()
-      connect(this.borderStyler, "close", this.bodyStyler, "show");
-      connect(this.borderStyler, "close", this.leash, "remove");
-      connect(this.borderStyler, "close", this.borderHalo, "activate");
+
    }
 
    openBodyStyler() {
       this.borderStyler.hide();
+      this.layoutStyleEditor.hide();
       this.borderHalo.deactivate();
       if (this.bodyStyler.opened) return;
-      this.leash = this.world().addMorph(new Leash({
-                                start: pt(0,0), end: pt(10,10), 
-                                opacity: 0}),
-                        this.bodyStyler);
-      this.leash.startPoint.attachTo(this.borderHalo, "center");
-      this.leash.endPoint.attachTo(this.bodyStyler, "center");
-      this.leash.animate({opacity: .7, duration: 300});
+      this.world().addMorph(this.bodyStyler.createLeashFor(this, "center"), this.bodyStyler);
       this.bodyStyler.open();
-      connect(this.bodyStyler, "close", this.borderStyler, "show");
-      connect(this.bodyStyler, "close", this.leash, "remove");
-      connect(this.bodyStyler, "close", this.borderHalo, "activate");
    }
 
    borderHaloShape(props) {
@@ -274,13 +264,15 @@ class StyleHalo extends Morph {
       this.borderHalo = morph(this.borderHaloShape({
          name: "borderHalo",
          update(evt) {
+           const br = this.get('borderRadiusHalo');
            this.alignWithTarget()
-           if (this.get('borderRadiusHalo').active) return;
+           if (br && br.active) return;
            if (halo.isOnMorphBorder(evt)) {
               this.selectBorder();
            } else {
               this.deselectBorder(evt);
            }
+           halo.alignLayoutEditor()
          },
       }));
       return this.borderHalo;
@@ -323,6 +315,7 @@ class StyleHalo extends Morph {
        connect(borderStyler, "open", this, "openBorderStyler");
        connect(borderStyler, "show", this.borderHalo, "selectBorder")
        connect(borderStyler, "blur", this.borderHalo, "deselectBorder")
+       connect(borderStyler, "close", this, "showStyleEditors");
        return borderStyler;
    }
 
@@ -354,6 +347,7 @@ class StyleHalo extends Morph {
                  title: "Change Body Style"});
      connect(bodyStyler, "open", this, "openBodyStyler");
      connect(bodyStyler, "show", this.borderHalo, "selectBody");
+     connect(bodyStyler, "close", this, "showStyleEditors");
      return bodyStyler;
    }
 
@@ -409,18 +403,29 @@ class StyleHalo extends Morph {
 
    showStyleEditors() {
       this.bodyStyler.show();
+      this.layoutStyleEditor.show();
       this.borderStyler.show();
       this.borderHalo.visible = true;
+      this.borderHalo.activate();
+   }
+   
+   alignLayoutEditor() {
+      const topCenter = this.targetBounds
+                      .bottomCenter().addXY(0, 50);
+      this.layoutStyleEditor.topCenter = topCenter;
    }
 
    getLayoutControl() {
       this.layoutStyleEditor = new LayoutStyleEditor({
           name: "layoutStyleEditor",
-          halo: this, target: this.target, 
-          pointerId: this.state.pointerId
+          title: "Configure Layout",
+          pointerId: this.state.pointerId,
+          target: this.target, halo: this
       });
+      this.layoutStyleEditor.blur();
       connect(this.layoutStyleEditor, "open", this, "hideStyleEditors");
       connect(this.layoutStyleEditor, "close", this, "showStyleEditors");
+      connect(this.layoutStyleEditor, "extent", this, "alignLayoutEditor");
       return this.layoutStyleEditor;
    }
    
@@ -768,7 +773,7 @@ class PathStyleHalo extends SvgStyleHalo {
       this.borderColor = Color.transparent;
       if (this.borderStyler.opened) return;
       super.openBorderStyler();
-      this.leash.startPoint.attachTo(this.target, "topCenter");
+      // this.leash.startPoint.attachTo(this.target, "topCenter");
    }
 
    borderHaloShape(props) {

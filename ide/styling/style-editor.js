@@ -77,7 +77,7 @@ class StyleEditor extends Morph {
          controlWrapper: {
               clipMode: 'hidden',
               fill: Color.transparent,
-              draggable: true
+              reactsToPointer: false
          }
        })
    }
@@ -135,15 +135,15 @@ class StyleEditor extends Morph {
    open() {
       if (this.opened) return this;
       this.opened = true;
-      const [wrapper] = this.submorphs,
-            {submorphs: [instruction]} = wrapper
+      const [titleLabel] = this.submorphs,
+            {submorphs: [instruction]} = titleLabel
 
       this.layout = null; 
       this.opacity = 1;
       this.nativeCursor = "auto";
       this.openPosition = this.position;
       
-      wrapper.addMorphAt(Icon.makeLabel("times-circle-o", {
+      titleLabel.addMorphAt(Icon.makeLabel("times-circle-o", {
            name: "closeButton",  
            onMouseDown: () => this.close()
       }), 0);
@@ -161,10 +161,25 @@ class StyleEditor extends Morph {
 
    get isHaloItem() { return true }
 
+   createLeashFor(target, side) {
+      const leash = new Leash({draggable: false, start: pt(0,0), end: pt(10,10), opacity: 0});
+      leash.startPoint.attachTo(target, side);
+      leash.endPoint.attachTo(this, "center");
+      leash.animate({opacity: .7, duration: 300});
+      connect(this, "close", leash, "remove");
+      connect(this, "remove", leash, "remove");
+      return leash;
+   }
+
+   updateControls(newControls) {
+      const [titleLabel, _] = this.submorphs;
+      this.animate({submorphs: [titleLabel, ...newControls], duration});
+   }
+
    createControl(name, controlElement) {
      return {
+      name,
       morphClasses: ['controlWrapper'],
-      onDrag: (evt) =>  this.onDrag(evt),
       layout: new VerticalLayout({spacing: 5}),
       submorphs: [
         {type: "text", morphClasses: ['controlLabel'], textString: name},
@@ -176,10 +191,9 @@ class StyleEditor extends Morph {
       const modeSelector = new ModeSelector({
                     name: "modeSelector", 
                     items: controls, init,
-                    width: this.width}),
+                    width: this.width - 20}),
             selectableControl = new Morph({
               morphClasses: ['controlWrapper'],
-              onDrag: (evt) =>  this.onDrag(evt),
               layout: new VerticalLayout({spacing: 10}),
               remove() { super.remove(); arr.invoke(this.submorphs, 'remove'); },
               select(control) {
@@ -235,8 +249,7 @@ class StyleEditor extends Morph {
       }));
   }
   
-  shadowControl() {
-     
+  shadowControl() {   
      return this.createToggledControl({
           title: "Drop Shadow",
           target: this.target, property: "dropShadow",
@@ -456,65 +469,46 @@ export class PolygonEditor extends BorderStyleEditor {
 
 }
 
-export class LayoutStyleEditor extends Morph {
+export class LayoutStyleEditor extends StyleEditor {
 
     getLayoutObjects() {
        return [null,
                new HorizontalLayout({autoResize: false}),
                new VerticalLayout({autoResize: false}),
-               new FillLayout(),
+               // new FillLayout(),
                new TilingLayout(),
                new GridLayout({grid: [[null], [null], [null]]})];
    }
 
    remove() {
-       this.layoutHalo && this.layoutHalo.remove();
+       this.clearLayoutHalo()
        super.remove();
    }
 
+   controls(target) {
+      return [this.layoutPicker(),
+              ...this.layoutHalo ? [this.layoutControls()] : []]
+   }
+
    open() {
-      const layoutHaloToggler = this.getSubmorphNamed("layoutHaloToggler"),
-             layoutPicker = this.getSubmorphNamed('layoutPicker');
-      this.active = true;
-      this.layoutHalo = this.world().showLayoutHaloFor(this.target, this.pointerId);
-      layoutPicker.textString = "Configure Layout";
-      Icon.setIcon(layoutHaloToggler, "times-circle-o");
-      layoutHaloToggler.fontSize = 22; layoutHaloToggler.padding = 0;
-      layoutHaloToggler.tooltip = "Close layout halo";
-      this.animate({
-         layout: new VerticalLayout({spacing: 2}),
-         submorphs: [...this.submorphs, ...this.layoutHalo.optionControls()],
-         duration
-      });
-      signal(this, "open");
-      this.update(true);
-      return this;
+      if (this.opened) return;
+      super.open();
+      this.clearLayoutHalo();
+      if (this.target.layout) {
+          this.layoutHalo = this.world().showLayoutHaloFor(this.target, this.pointerId);
+      }
+      this.updateControls(this.controls());
+   }
+
+   clearLayoutHalo() {
+      if (this.layoutHalo) {
+          this.layoutHalo.remove(); this.layoutHalo = null;
+      }
    }
 
    close() {
-      const layoutHaloToggler = this.getSubmorphNamed("layoutHaloToggler"),
-             layoutPicker = this.getSubmorphNamed('layoutPicker');
-      this.active = false;
-      this.layoutHalo.remove(); this.layoutHalo = null;
-      layoutPicker.textString = this.getCurrentLayoutName();
-      Icon.setIcon(layoutHaloToggler, "th");
-      layoutHaloToggler.fontSize = 14; layoutHaloToggler.padding = 3;
-      layoutHaloToggler.tooltip = "Show layout halo";
-      this.animate({
-            layout: new HorizontalLayout(),
-            submorphs: [this.getSubmorphNamed("layoutControlPickerWrapper")],
-            duration
-      });
-      signal(this, "close");
-      this.update(true);
-   }
-
-   toggle() {
-       if (this.layoutHalo) {
-          this.close();
-       } else {
-          this.open()
-       }
+      this.clearLayoutHalo();
+      super.close();
    }
 
    getCurrentLayoutName() {
@@ -525,87 +519,42 @@ export class LayoutStyleEditor extends Morph {
       return l ? l.name() + " Layout" : "No Layout";
    }
 
-   openLayoutMenu(evt) {
-     if (this.layoutHalo) return;
-     var items = this.getLayoutObjects().map(l => {
-       return [this.getLayoutName(l),
-         () => {
-             const p = this.getSubmorphNamed("layoutPicker");
-             this.target.animate({layout: l,
-                                   easing: "easeOutQuint"});
-             p.textString = this.getLayoutName(l);
-             p.fitIfNeeded();
-             this.update();
-         }]
-       });
-     var menu = this.world().openWorldMenu(evt, items);
-     menu.globalPosition = this.getSubmorphNamed("layoutPicker").globalPosition;
-     menu.isHaloItem = true;
-   }
-
-   update(animated) {
-      const topCenter = this.halo.targetBounds
-                            .withX(0).withY(0)
-                            .bottomCenter().addXY(50, 70),
-            inspectButton = this.getSubmorphNamed('layoutHaloToggler');
-      if (animated) {
-         this.animate({topCenter, duration});
-      } else { 
-         this.topCenter = topCenter;
-      }
-      if (!this.target.layout) {
-        inspectButton.opacity = .5;
-        inspectButton.nativeCursor = null;
-      } else {
-        inspectButton.opacity = 1;
-        inspectButton.nativeCursor = "pointer";
-      }
-   }
-
-   constructor(props) {
-       const {target} = props;
-       super({
-           name: "layoutControl",
-           border: {radius: 15, color: Color.gray, width: 1},
-           clipMode: "hidden", dropShadow: true,
-           extent: pt(120, 75),
-           fill: Color.gray.lighter(),
-           layout: new VerticalLayout(),
-           isHaloItem: true,
-           ...props,
-       });
-       this.submorphs = [{
-            name: "layoutControlPickerWrapper",
-            fill: Color.transparent,
-            layout: new HorizontalLayout({spacing: 5}),
-            submorphs: [
-               this.layoutHaloToggler(),
-               this.layoutPicker()
-           ]}];
-       this.update(false);
-   }
+   update() {}
 
    layoutPicker() {
-      return {
-          type: 'text', fill: Color.transparent, name: "layoutPicker",
-          padding: 2, readOnly: true,  fontColor: Color.black.lighter(),
-          fontWeight: 'bold', nativeCursor: "pointer", padding: 3,
-          fontStyle: 'bold', textString: this.getCurrentLayoutName(),
-          onMouseDown: (evt) => this.openLayoutMenu(evt)
-      }
+      const items = this.getLayoutObjects().map(l => {
+         return {
+             [this.getLayoutName(l)]:
+             () => {
+                 this.target.animate({layout: l});
+                 this.clearLayoutHalo();
+                 if (this.target.layout) {
+                     this.layoutHalo = this.world().showLayoutHaloFor(this.target, this.pointerId);
+                 }
+                 this.updateControls(this.controls());
+             }
+           }
+         });
+      return this.get("Layout Type") || this.createControl(
+          "Layout Type",
+           {name: "layoutPicker",
+            morphClasses: ["controlWrapper"],
+            layout: new HorizontalLayout({spacing: 5}),
+            submorphs: [new DropDownSelector({
+               isHaloItem: true,
+               target: this.target,
+               property: "layout",
+               getCurrentValue: () => this.getCurrentLayoutName(),
+               values: obj.merge(items)
+          })]}
+        );
    }
 
-   layoutHaloToggler() {
-      return Icon.makeLabel("th", {
-                  name: "layoutHaloToggler",
-                  nativeCursor: "pointer",
-                  fontSize: 15, fontColor: Color.black.lighter(),
-                  padding: 3,
-                  tooltip: "Toggle layout halo",
-                  onMouseDown: (evt) => {
-                     this.target.layout && this.toggle();
-                  }
-               })
+   layoutControls() {
+      return this.createControl("Layout Options", {
+           fill: Color.transparent,
+           layout: new VerticalLayout(),
+           submorphs: this.layoutHalo.optionControls()})
    }
 }
 

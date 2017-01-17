@@ -622,7 +622,7 @@ export class TilingLayoutHalo extends Morph {
                               min: 0, target: layout, 
                               unit: "px", property: "spacing"});
       return [[{type: "text", textString: "Submorph Spacing", 
-               padding: rect(5,0,10,10), fill: Color.transparent,
+               padding: 5, fill: Color.transparent,
                fontColor: Color.gray.darker(),
                readOnly: true}, spacing]]
               .map(x => { return {submorphs: x, fill: Color.transparent, 
@@ -707,7 +707,7 @@ export class FlexLayoutHalo extends Morph {
                fontColor: Color.gray.darker(),
                readOnly: true}, autoResize],
                [{type: "text", textString: "Submorph Spacing", 
-               padding: rect(5,0,10,10), fill: Color.transparent,
+               padding: 5, fill: Color.transparent,
                fontColor: Color.gray.darker(),
                readOnly: true}, spacing]]
               .map(x => { return {submorphs: x, fill: Color.transparent, 

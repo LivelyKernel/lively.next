@@ -7,7 +7,7 @@ import { Tooltip } from "./tooltips.js";
 import { StyleRules } from "./style-rules.js";
 import config from "./config.js";
 import { Label } from "./text/label.js";
-import { Intersection, IntersectionParams } from 'kld-intersections';
+import { Intersection, IntersectionParams, Point2D} from 'kld-intersections';
 
 export class Leash extends Path {
 
@@ -138,12 +138,12 @@ export class Leash extends Path {
 export class Slider extends Morph {
 
     constructor(props) {
-        const slider = this;
         super({
            height: 20,
            fill: Color.transparent,
            ...props
         });
+        const slider = this;
         this.submorphs = [
            new Path({
                 borderColor: Color.gray.darker(),
@@ -183,10 +183,10 @@ export class Slider extends Morph {
 export class PropertyInspector extends Morph {
 
    constructor(props) {
-       const {target, property, name, min, max} = props;
+       const {target, property} = props;
        super({
-           name, morphClasses: ["root"],
-           styleRules: this.styler,
+           ...props, 
+           morphClasses: ["root"],
            submorphs: [new ValueScrubber({
                         name: "value",
                         value: target[property],
@@ -196,8 +196,11 @@ export class PropertyInspector extends Morph {
                         {type: "button", name: "up", label: Icon.makeLabel(
                                   "sort-asc", {padding: rect(2,2,0,0), fontSize: 12})}]
        });
-       this.target = target; this.min = min;
-       this.property = property;
+       this.build();
+   }
+
+   build() {
+       this.styleRules = this.styler;
        this.initLayout();
        connect(this.get("value"), "scrub", this.target, this.property);
        connect(this.get("up"), "fire", this, "increment");
@@ -260,7 +263,6 @@ export class ValueScrubber extends Text {
   constructor(props) {
       super({
         fill: Color.transparent, draggable: true,
-        textString: obj.safeToString(this.scrubbedValue),
         min: -Infinity,
         max: Infinity,
         ...obj.dissoc(props, ["value"])
@@ -520,23 +522,26 @@ export class DropDownSelector extends Morph {
 
    constructor(props) {
       const {target, property, values} = props;
-      this.values = values;
-      this.dropDownLabel = Icon.makeLabel("chevron-circle-down", {
-                                   opacity: 0, fontSize: 16, 
-                                   fontColor: Color.gray.darker()
-                            });
       super({border: {
                 radius: 3, 
                 color: Color.gray.darker(), 
                 style: "solid"},
               layout: new HorizontalLayout({spacing: 4}),
-              ...props,
-              submorphs: [{
-                  type: "text", name: "currentValue", 
-                  textString: this.getNameFor(target[property]), 
-                  padding: 0, readOnly: true,
-                }, this.dropDownLabel]
+              ...props
              });
+      this.build();
+   }
+
+   build() {
+      this.dropDownLabel = Icon.makeLabel("chevron-circle-down", {
+                                   opacity: 0, fontSize: 16, 
+                                   fontColor: Color.gray.darker()
+                            });
+      this.submorphs = [{
+                  type: "text", name: "currentValue", 
+                  textString: this.getNameFor(this.target[this.property]), 
+                  padding: 0, readOnly: true,
+                }, this.dropDownLabel];
    }
 
    getMenuEntries() {
@@ -553,13 +558,17 @@ export class DropDownSelector extends Morph {
          });
       } else {
          return properties.forEachOwn(this.values, (name, v) => {
-             return {name, exec: () => { this.value = v }}
+             return {
+               name, 
+               exec: () => { this.value = v }
+            }
          });
       }
       
    }
 
    getNameFor(value) {
+      if (this.getCurrentValue) return this.getCurrentValue();
       if (obj.isArray(this.values)) {
          return obj.safeToString(value);
       } else {
@@ -568,7 +577,11 @@ export class DropDownSelector extends Morph {
    }
 
    set value(v) {
-      this.target[this.property] = v;
+      if (obj.isFunction(v)) {
+          v();
+       } else {
+          this.target[this.property] = v;
+       } 
       this.get("currentValue").textString = this.getNameFor(v);
    }
 
