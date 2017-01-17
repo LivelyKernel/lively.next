@@ -4,36 +4,45 @@ export { connect, disconnect, disconnectAll, once, signal, noUpdate }
 
 class AttributeConnection {
 
-  // doNotSerialize: ['isActive', 'converter', 'updater'],
-  // garbageCollect: true,
-  // signalOnAssignment: true
-
   constructor(source, sourceProp, target, targetProp, spec) {
     this.init(source, sourceProp, target, targetProp, spec);
   }
 
   init(source, sourceProp, target, targetProp, spec) {
+    this.doNotSerialize = ['isActive', 'converter', 'updater'];
     this.sourceObj = source;
     this.sourceAttrName = sourceProp;
     this.targetObj = target;
     this.targetMethodName = targetProp;
-    this.varMapping = {source: source, target: target};
-    if (spec) {
-      if (spec.removeAfterUpdate) this.removeAfterUpdate = true;
-      if (spec.forceAttributeConnection) this.forceAttributeConnection = true;
-      if (spec.hasOwnProperty("garbageCollect") && typeof spec.garbageCollect === "boolean")
-        this.garbageCollect = spec.garbageCollect;
-      if (spec.hasOwnProperty("signalOnAssignment") && typeof spec.signalOnAssignment === "boolean")
-        this.signalOnAssignment = spec.signalOnAssignment;
-      // when converter function references objects from its environment
-      // we can't serialize it. To fail as early as possible we will
-      // serialize the converter / updater already in the setters
-      if (spec.converter) this.setConverter(spec.converter);
-      if (spec.updater) this.setUpdater(spec.updater);
-      if (spec.varMapping) {
-        this.varMapping = Object.assign(spec.varMapping, this.varMapping);
-      }
-    }
+    this.varMapping = {source, target};
+
+    spec = {
+      removeAfterUpdate: false,
+      forceAttributeConnection: false,
+      garbageCollect: true,
+      signalOnAssignment: true,
+      ...spec
+    };
+
+    if (spec.removeAfterUpdate)
+      this.removeAfterUpdate = true;
+    if (spec.forceAttributeConnection)
+      this.forceAttributeConnection = true;
+    if (typeof spec.garbageCollect === "boolean")
+      this.garbageCollect = spec.garbageCollect;
+    if (typeof spec.signalOnAssignment === "boolean")
+      this.signalOnAssignment = spec.signalOnAssignment
+
+    // when converter function references objects from its environment
+    // we can't serialize it. To fail as early as possible we will
+    // serialize the converter / updater already in the setters
+    if (spec.converter)
+      this.setConverter(spec.converter);
+    if (spec.updater)
+      this.setUpdater(spec.updater);
+    if (spec.varMapping)
+      this.varMapping = Object.assign(spec.varMapping, this.varMapping);
+
     return this;
   }
 
@@ -561,7 +570,7 @@ function signal(sourceObj, attrName, newVal) {
   }
 }
 
-function callWhenNotNull(sourceObj, sourceProp, targetObj, targetSelector) {
+export function callWhenNotNull(sourceObj, sourceProp, targetObj, targetSelector) {
   // ensure that sourceObj[sourceProp] is not null, then run targetObj[targetProp]()
   if (sourceObj[sourceProp] != null) {
     targetObj[targetSelector](sourceObj[sourceProp]);
@@ -572,7 +581,7 @@ function callWhenNotNull(sourceObj, sourceProp, targetObj, targetSelector) {
   }
 }
 
-function callWhenPathNotNull(source, path, target, targetProp) {
+export function callWhenPathNotNull(source, path, target, targetProp) {
   var helper = {
     key: path.pop(),
     whenDefined(context) {
