@@ -270,14 +270,15 @@ export class PropertyAnimation {
 
   getAnimationProps(type) {
     const [before, after] = this.getChangedProps(this.beforeProps[type], this.afterProps[type]);
-    if (before.d) {
-        // var before_d = before.d.splitBy(" "), after_d = after.d.splitBy(" ");
-        // repeat last element until points are of equal number
-    }
-    if (before.points) {
-        // var before_points = before.points.splitBy(" "), after_points = after.points.splitBy(" ");
-        // repeat last element until points are of equal number
-    }
+    // FIXME: properly interpolate vertices if there are control points added removed....
+    // if (before.d) {
+    //     // var before_d = before.d.splitBy(" "), after_d = after.d.splitBy(" ");
+    //     // repeat last element until points are of equal number
+    // }
+    // if (before.points) {
+    //     // var before_points = before.points.splitBy(" "), after_points = after.points.splitBy(" ");
+    //     // repeat last element until points are of equal number
+    // }
      return [obj.isEmpty(before) ? false : before, obj.isEmpty(after) ? false : after]
   }
 
@@ -295,39 +296,36 @@ export class PropertyAnimation {
   }
 
   startSvg(svgNode, type) {
-     if (TweenMax && this.needsAnimation[type]) {
+     if (this.needsAnimation[type]) {
        this.needsAnimation[type] = false;
        const [before, after] = this.getAnimationProps(type);
-       TweenMax.fromTo(svgNode, 
-                       this.duration / 1000, 
-                       {attr: before}, 
-                       {attr: after, ease: this.easing,
-                        overwrite: false,
-                        onComplete: () => {
-                           this.finish();
-                           this.morph.makeDirty();
-                       }});
+       this.tween(svgNode, {attr: before}, {attr: after});
      }
   }
 
   start(node) {
-    if (TweenMax && !this.active) {
+    if (!this.active) {
       this.active = true;
       let [before, after] = this.getAnimationProps("css");
-      if (before && after) {
-         TweenMax.fromTo(node, this.duration / 1000, 
-                         before,
-                        {...after,
-                         ease: this.easing,
-                         overwrite: false,
-                         onComplete: () => {
-                           this.finish();
-                           this.morph.makeDirty();
-                       }});
-      }
-    } else if (!this.active) {
-      this.onFinish();
+      this.tween(node, before, after);
     }
+  }
+
+  tween(node, before, after) {
+      const onComplete = () => {
+         this.finish();
+         this.morph.makeDirty();
+      };
+      if (TweenMax && before && after) {
+        TweenMax.fromTo(node, this.duration / 1000, 
+                   before,
+                  {...after,
+                   ease: this.easing,
+                   overwrite: false,
+                   onComplete});
+      } else {
+         onComplete();
+      }
   }
 }
 
