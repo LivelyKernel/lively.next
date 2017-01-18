@@ -71,7 +71,12 @@ export class MenuItem extends Label {
   }
 
   onHoverOut(evt) {
-    this.selected = false;
+    var {hand} = evt;
+    setTimeout(() => {
+      // only deselect if hand is not over a submenu
+      if (!this.submenus.some(ea => ea.fullContainsWorldPoint(hand.position)))
+        this.selected = false;
+    }, 20);
     this.owner.maybeRemoveSubmenu();
   }
 
@@ -151,6 +156,11 @@ export class Menu extends Morph {
 
   get submenu() { return this.state.submenu; }
   set submenu(value) { this.state.submenu = value; }
+
+  get submenus() {
+    return this.submenu ?
+      [this.submenu].concat(this.submenu.submenus) : []
+  }
 
   get ownerItemMorph() { return this.state.ownerItemMorph; }
   set ownerItemMorph(value) { this.state.ownerItemMorph = value; }
@@ -287,7 +297,7 @@ export class Menu extends Morph {
 
   openSubMenu(evt, itemMorph, items) {
     if (!itemMorph.selected) return;
-    var existingSubMenu = this.subMenu;
+    var existingSubMenu = this.submenu;
 
     if (existingSubMenu) {
       if (existingSubMenu.ownerItemMorph === itemMorph) return;
@@ -295,7 +305,7 @@ export class Menu extends Morph {
       this.removeSubMenu();
     }
 
-    var m = this.subMenu = this.addMorph(
+    var m = this.submenu = this.addMorph(
       new Menu({items, ownerItemMorph: itemMorph, ownerMenu: this}));
     m.updateMorphs();
     m.offsetForOwnerMenu();
@@ -305,20 +315,20 @@ export class Menu extends Morph {
     fun.debounceNamed(this.id + "-maybeRemoveSubmenu", 300, () => {
       var w = this.world();
       if (!w) return;
-      var handOverSubmenu = w && this.subMenu
-                         && this.subMenu.fullContainsWorldPoint(w.firstHand.position);
+      var {submenu, selectedItemMorph} = this,
+          handOverSubmenu = w && submenu && submenu.fullContainsWorldPoint(w.firstHand.position);
 
-      if (this.subMenu && this.subMenu.ownerItemMorph !== this.selectedItemMorph
-       && !this.subMenu.ownerItemMorph.selected) {
+      if (submenu && submenu.ownerItemMorph !== selectedItemMorph
+       && !submenu.ownerItemMorph.selected) {
         // this logic is to ensure that if this is an owner menu and the selected
         // item morph that generated a submenu has changed but the user is
         // still hovering over the submenu then the item morph will be
         // re-selected
         // (deselecting my item morph can happen when quickly swooping over menus)
         if (handOverSubmenu) {
-          this.selectedItemMorph && (this.selectedItemMorph.selected = false);
-          this.subMenu.ownerItemMorph.selected = true;
-        } else this.removeSubMenu()
+          selectedItemMorph && (selectedItemMorph.selected = false);
+          submenu.ownerItemMorph.selected = true;
+        } else this.removeSubMenu();
       }
     })();
 
@@ -326,10 +336,10 @@ export class Menu extends Morph {
   }
 
   removeSubMenu() {
-    if (!this.subMenu) return;
-    var m = this.subMenu;
+    if (!this.submenu) return;
+    var m = this.submenu;
     m.ownerMenu = null;
-    this.subMenu = null;
+    this.submenu = null;
     m.remove();
   }
 
