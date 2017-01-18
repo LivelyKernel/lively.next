@@ -13,49 +13,6 @@
 (function (exports,lively_lang,lively_classes,lively_ast) {
 'use strict';
 
-var classCallCheck = function (instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
-};
-
-var createClass = function () {
-  function defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ("value" in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, descriptor.key, descriptor);
-    }
-  }
-
-  return function (Constructor, protoProps, staticProps) {
-    if (protoProps) defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) defineProperties(Constructor, staticProps);
-    return Constructor;
-  };
-}();
-
-
-
-
-
-var defineProperty = function (obj$$1, key, value) {
-  if (key in obj$$1) {
-    Object.defineProperty(obj$$1, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj$$1[key] = value;
-  }
-
-  return obj$$1;
-};
-
 var _extends = Object.assign || function (target) {
   for (var i = 1; i < arguments.length; i++) {
     var source = arguments[i];
@@ -95,21 +52,6 @@ var get = function get(object, property, receiver) {
   }
 };
 
-var inherits = function (subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
-  }
-
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-};
 
 
 
@@ -121,13 +63,8 @@ var inherits = function (subClass, superClass) {
 
 
 
-var possibleConstructorReturn = function (self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
 
-  return call && (typeof call === "object" || typeof call === "function") ? call : self;
-};
+
 
 
 
@@ -380,95 +317,7 @@ function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, options) {
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// replacing helpers
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-// TODO move this stuff over into transform? Or separate replace.js?
-
-var ReplaceVisitor = function (_Visitor) {
-  inherits(ReplaceVisitor, _Visitor);
-
-  function ReplaceVisitor() {
-    classCallCheck(this, ReplaceVisitor);
-    return possibleConstructorReturn(this, (ReplaceVisitor.__proto__ || Object.getPrototypeOf(ReplaceVisitor)).apply(this, arguments));
-  }
-
-  createClass(ReplaceVisitor, [{
-    key: "accept",
-    value: function accept(node, state, path) {
-      return this.replacer(get(ReplaceVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceVisitor.prototype), "accept", this).call(this, node, state, path), path);
-    }
-  }], [{
-    key: "run",
-    value: function run(parsed, replacer) {
-      var v = new this();
-      v.replacer = replacer;
-      return v.accept(parsed, null, []);
-    }
-  }]);
-  return ReplaceVisitor;
-}(lively_ast.BaseVisitor);
-
-function replace(parsed, replacer) {
-  return ReplaceVisitor.run(parsed, replacer);
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-var canBeInlinedSym = Symbol("canBeInlined");
-
-function blockInliner(node) {
-  // FIXME what about () => x kind of functions?
-  if (Array.isArray(node.body)) {
-    for (var i = node.body.length - 1; i >= 0; i--) {
-      var stmt = node.body[i];
-      if (stmt.type === "BlockStatement" && stmt[canBeInlinedSym]) {
-        node.body.splice.apply(node.body, [i, 1].concat(stmt.body));
-      }
-    }
-  }
-  return node;
-}
-
-var ReplaceManyVisitor = function (_Visitor2) {
-  inherits(ReplaceManyVisitor, _Visitor2);
-
-  function ReplaceManyVisitor() {
-    classCallCheck(this, ReplaceManyVisitor);
-    return possibleConstructorReturn(this, (ReplaceManyVisitor.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor)).apply(this, arguments));
-  }
-
-  createClass(ReplaceManyVisitor, [{
-    key: "accept",
-    value: function accept(node, state, path) {
-      return this.replacer(get(ReplaceManyVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor.prototype), "accept", this).call(this, node, state, path));
-      var replaced = this.replacer(get(ReplaceManyVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor.prototype), "accept", this).call(this, node, state, path), path);
-      return !Array.isArray(replaced) ? replaced : replaced.length === 1 ? replaced[0] : Object.assign(block(replaced), defineProperty({}, canBeInlinedSym, true));
-    }
-  }, {
-    key: "visitBlockStatement",
-    value: function visitBlockStatement(node, state, path) {
-      return blockInliner(get(ReplaceManyVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor.prototype), "visitBlockStatement", this).call(this, node, state, path));
-    }
-  }, {
-    key: "visitProgram",
-    value: function visitProgram(node, state, path) {
-      return blockInliner(get(ReplaceManyVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor.prototype), "visitProgram", this).call(this, node, state, path));
-    }
-  }], [{
-    key: "run",
-    value: function run(parsed, replacer) {
-      var v = new this();
-      v.replacer = replacer;
-      return v.accept(parsed, null, []);
-    }
-  }]);
-  return ReplaceManyVisitor;
-}(lively_ast.BaseVisitor);
-
-function replaceWithMany(parsed, replacer) {
-  return ReplaceManyVisitor.run(parsed, replacer);
-}
+// replacement helpers
 
 function replaceRefs(parsed, options) {
   var topLevel = topLevelDeclsAndRefs(parsed),
@@ -477,7 +326,7 @@ function replaceRefs(parsed, options) {
   }),
       locallyIgnored = [];
 
-  var replaced = replace(parsed, function (node, path) {
+  var replaced = lively_ast.ReplaceVisitor.run(parsed, function (node, path) {
 
     // cs 2016/06/27, 1a4661
     // ensure keys of shorthand properties are not renamed while capturing
@@ -510,7 +359,7 @@ function replaceRefs(parsed, options) {
     return node;
   });
 
-  return replace(replaced, function (node, path, parent) {
+  return lively_ast.ReplaceVisitor.run(replaced, function (node, path, parent) {
     return refsToReplace.includes(node) && !locallyIgnored.includes(node) ? member(options.captureObj, node) : node;
   });
 }
@@ -525,7 +374,7 @@ function replaceVarDecls(parsed, options) {
   //   "var {x: [y]} = foo" => "var _1 = foo; var _1$x = _1.x; __rec.y = _1$x[0];"
 
   var topLevel = topLevelDeclsAndRefs(parsed);
-  return replaceWithMany(parsed, function (node) {
+  return lively_ast.ReplaceManyVisitor.run(parsed, function (node) {
     if (!topLevel.varDecls.includes(node) || node.declarations.every(function (decl) {
       return !shouldDeclBeCaptured(decl, options);
     })) return node;
@@ -971,10 +820,6 @@ function transformObjectPattern(pattern, transformState) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // code generation helpers
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-function block(nodes$$1) {
-  return { type: "BlockStatement", body: nodes$$1 };
-}
 
 function varDeclOrAssignment(parsed, declarator, kind) {
   var topLevel = topLevelDeclsAndRefs(parsed),

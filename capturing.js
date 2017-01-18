@@ -1,19 +1,18 @@
 import { obj, chain, arr, fun, Path } from "lively.lang";
 import { classToFunctionTransform } from "lively.classes";
-
 import {
   parse,
   stringify,
   query,
   transform,
   nodes,
-  BaseVisitor as Visitor
+  BaseVisitor as Visitor,
+   ReplaceManyVisitor, ReplaceVisitor 
 } from "lively.ast";
 
 var { member, prop, varDecl, assign, id, literal, exprStmt, funcCall } = nodes;
 var { topLevelDeclsAndRefs, helpers: queryHelpers } = query;
 var { transformSingleExpression, wrapInStartEndCall } = transform;
-
 
 
 export function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) {
@@ -231,75 +230,14 @@ export function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, opt
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// replacing helpers
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-// TODO move this stuff over into transform? Or separate replace.js?
-
-class ReplaceVisitor extends Visitor {
-  accept(node, state, path) {
-    return this.replacer(super.accept(node, state, path), path);
-  }
-
-  static run(parsed, replacer) {
-    var v = new this();
-    v.replacer = replacer;
-    return v.accept(parsed, null, []);
-  }
-}
-
-function replace(parsed, replacer) { return ReplaceVisitor.run(parsed, replacer); }
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-const canBeInlinedSym = Symbol("canBeInlined");
-
-function blockInliner(node) {
-  // FIXME what about () => x kind of functions?
-  if (Array.isArray(node.body)) {
-    for (var i = node.body.length - 1; i >= 0; i--) {
-      var stmt = node.body[i];
-      if (stmt.type === "BlockStatement" && stmt[canBeInlinedSym]) {
-        node.body.splice.apply(node.body, [i, 1].concat(stmt.body));
-      }
-    }
-  }
-  return node;
-}
-
-class ReplaceManyVisitor extends Visitor {
-  accept(node, state, path) {
-    return this.replacer(super.accept(node, state, path));
-    var replaced = this.replacer(super.accept(node, state, path), path);
-    return !Array.isArray(replaced) ?
-      replaced : replaced.length === 1 ?
-        replaced[0] : Object.assign(block(replaced), {[canBeInlinedSym]: true});
-
-  }
-
-  visitBlockStatement(node, state, path) {
-    return blockInliner(super.visitBlockStatement(node, state, path));
-  }
-
-  visitProgram(node, state, path) {
-    return blockInliner(super.visitProgram(node, state, path));
-  }
-
-  static run(parsed, replacer) {
-    var v = new this();
-    v.replacer = replacer;
-    return v.accept(parsed, null, []);
-  }
-}
-
-function replaceWithMany(parsed, replacer) { return ReplaceManyVisitor.run(parsed, replacer); }
+// replacement helpers
 
 function replaceRefs(parsed, options) {
   var topLevel = topLevelDeclsAndRefs(parsed),
       refsToReplace = topLevel.refs.filter(ref => shouldRefBeCaptured(ref, topLevel, options)),
       locallyIgnored = [];
 
-  const replaced = replace(parsed, (node, path) => {
+  const replaced = ReplaceVisitor.run(parsed, (node, path) => {
 
     // cs 2016/06/27, 1a4661
     // ensure keys of shorthand properties are not renamed while capturing
@@ -340,7 +278,7 @@ function replaceRefs(parsed, options) {
      return node
   });
 
-  return replace(replaced, (node, path, parent) =>
+  return ReplaceVisitor.run(replaced, (node, path, parent) =>
     refsToReplace.includes(node) && !locallyIgnored.includes(node) ?
       member(options.captureObj, node) : node);
 }
@@ -355,7 +293,7 @@ function replaceVarDecls(parsed, options) {
   //   "var {x: [y]} = foo" => "var _1 = foo; var _1$x = _1.x; __rec.y = _1$x[0];"
 
   var topLevel = topLevelDeclsAndRefs(parsed);
-  return replaceWithMany(parsed, node => {
+  return ReplaceManyVisitor.run(parsed, node => {
     if (!topLevel.varDecls.includes(node)
      || node.declarations.every(decl => !shouldDeclBeCaptured(decl, options))
     ) return node;
@@ -877,10 +815,6 @@ function transformObjectPattern(pattern, transformState) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // code generation helpers
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-function block(nodes) {
-  return {type: "BlockStatement", body: nodes}
-}
 
 function varDeclOrAssignment(parsed, declarator, kind) {
   var topLevel = topLevelDeclsAndRefs(parsed),
