@@ -150,12 +150,12 @@ export default class ClientCommand extends CommandInterface {
 
   onOutput({stdout, stderr}) {
     if (stdout) {
-      this.stdout += stdout;
+      this._stdout += stdout;
       signal(this, "stdout", stdout);
       this.emit("stdout", stdout);
     }
     if (stderr) {
-      this.stderr += stderr;
+      this._stderr += stderr;
       signal(this, "stderr", stderr);
       this.emit("stderr", stderr);
     }
@@ -171,7 +171,7 @@ export default class ClientCommand extends CommandInterface {
 
   onError(err) {
     arr.remove(this.constructor.commands, this);
-    this.stderr += err.stack;
+    this._stderr += err.stack;
     this.exitCode = 1;
     this.emit('error', err.stack);
     signal(this, 'error', err.stack);

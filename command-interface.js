@@ -11,11 +11,11 @@ export default class CommandInterface {
   }
 
   constructor() {
+    this._stdout = "";
+    this._stderr = "";
+    this.exitCode = undefined;
     this.commandString = "";
     this.process = null;
-    this.stdout = "";
-    this.stderr = "";
-    this.exitCode = undefined;
     this._whenDone = promise.deferred();
     this._whenStarted = promise.deferred();
     this.startTime = 0;
@@ -37,6 +37,9 @@ export default class CommandInterface {
   get output() {
     return this.stdout + (this.stderr ? "\n" + this.stderr : "");
   }
+
+  get stdout() { return this._stdout; }
+  get stderr() { return this._stderr; }
 
   isRunning() {
     return this.process && this.exitCode === undefined;

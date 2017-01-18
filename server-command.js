@@ -176,7 +176,7 @@ export default class ServerCommand extends CommandInterface {
       this.debug && console.log('STDOUT: ' + data);
       var arg = String(data);
       if (options.stripAnsiAttributes) arg = stripAnsiAttributes(arg);
-      this.stdout += arg;
+      this._stdout += arg;
       this.emit('stdout', arg);
       signal(this, 'stdout', arg);
     });
@@ -185,7 +185,7 @@ export default class ServerCommand extends CommandInterface {
       this.debug && console.log('STDERR: ' + data);
       var arg = String(data);
       if (options.stripAnsiAttributes) arg = stripAnsiAttributes(arg);
-      this.stderr += arg;
+      this._stderr += arg;
       this.emit('stderr', arg);
       signal(this, 'stderr', arg);
     });
@@ -202,7 +202,7 @@ export default class ServerCommand extends CommandInterface {
     proc.on('error', (err) => {
       this.debug && console.log('shell command errored ' + err);
       arr.remove(this.constructor.commands, this);
-      this.stderr += err.stack;
+      this._stderr += err.stack;
       this.emit('error', err.stack);
       signal(this, 'error', err.stack);
       this.exitCode = 1;
