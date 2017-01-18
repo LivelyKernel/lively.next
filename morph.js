@@ -93,7 +93,7 @@ export class Morph {
   get __only_serialize__() {
     return Object.keys(this._currentState)
       .filter(key => this[key] != this.defaultProperties[key])
-        .concat("tickingScripts");
+        .concat("tickingScripts", "attributeConnections");
   }
 
   get isMorph() { return true; }
