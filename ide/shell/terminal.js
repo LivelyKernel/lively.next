@@ -74,13 +74,14 @@ export default class Terminal extends Morph {
     });
 
     var input = this.addMorph(Text.makeInputLine({
+      ...this.defaultStyle,
       name: "input",
       textString: input,
       clearOnInput: true,
       historyId: "lively.shell-terminal-input-history",
       border: {width: 1, color: Color.gray},
       plugins: [new ShellEditorPlugin()],
-      ...this.defaultStyle,
+      clipMode: "hidden",
       ...props
     }));
     connect(input, "input", this, "execCommand",
