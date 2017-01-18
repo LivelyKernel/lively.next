@@ -36,6 +36,7 @@ describe("morph serialization", () => {
     var m = morph({fill: Color.red, position: pt(10,20)}),
         copy = deserializeMorph(serializeMorph(m));
     expect(copy).instanceOf(m.constructor);
+    expect(copy.id).equals(m.id);
     expect(copy).not.equal(m);
     expect(copy.position).equals(m.position);
     expect(copy.fill).equals(m.fill);

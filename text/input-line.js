@@ -39,8 +39,8 @@ export default class InputLine extends Text {
       width: 300
     }).openInWorld();
 
-    connect(input, 'input', input, 'remove');
-    connect(input, 'input', input.world(), 'setStatusMessage');
+    connect(input, 'inputAccepted', input, 'remove');
+    connect(input, 'inputAccepted', input.world(), 'setStatusMessage');
     input.focus()
 
 */
@@ -193,7 +193,7 @@ export default class InputLine extends Text {
   onInput(input) {
     if (this.input.length > 0) this.addInputToHistory(this.input);
     this.clearOnInput && this.clear();
-    signal(this, "input", input);
+    signal(this, "inputAccepted", input);
   }
   onInputChanged(change) { signal(this, "inputChanged", change); }
 
@@ -329,7 +329,7 @@ export class PasswordInputLine extends HTMLMorph {
 
   focus() { this.ensureInputNode().then(n => n.focus()); }
 
-  acceptInput() { var i = this.input; signal(this, "input", i);; return i; }
+  acceptInput() { var i = this.input; signal(this, "inputAccepted", i);; return i; }
   onInputChanged(change) { signal(this, "inputChanged", change); }
 
   get commands() {
