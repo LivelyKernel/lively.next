@@ -84,7 +84,7 @@ export default class Terminal extends Morph {
       clipMode: "hidden",
       ...props
     }));
-    connect(input, "input", this, "execCommand",
+    connect(input, "inputAccepted", this, "execCommand",
       {updater: ($upd, command) => $upd("[shell terminal] run command or send input", {command})});
 
 
