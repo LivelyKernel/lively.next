@@ -9,6 +9,7 @@ var fs          = require("fs");
 var exec        = require("child_process").exec;
 var fun         = require("./index").fun;
 var arr         = require("./index").arr;
+var lang        = require("./dist/lively.lang.dev.js");
 var ast         = require("lively.ast");
 var target      = "./dist/lively.lang.dev.js";
 var targetMin   = target.replace(/\.dev\.js$/,".min.js");
