@@ -1,5 +1,5 @@
 import { string, arr } from "lively.lang";
-import Closure from "./closure.js";
+var Closure = lively.lang.Closure;
 
 export { connect, disconnect, disconnectAll, once, signal, noUpdate }
 
@@ -232,9 +232,6 @@ class AttributeConnection {
         updater.call(this, callOrSetTarget, newValue, oldValue) :
         callOrSetTarget(newValue, oldValue);
     } catch(e) {
-      // FIXME: checks should not be scatter all over the code
-      // if (lively.Config.get('loadRewrittenCode') && e.unwindException)
-      //   throw e.unwindException;
       var world = (this.sourceObj && typeof this.sourceObj.world === "function" && this.sourceObj.world())
                || (this.targetObj && typeof this.targetObj.world === "function" && this.targetObj.world());
       if (world) {

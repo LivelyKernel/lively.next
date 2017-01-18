@@ -359,11 +359,11 @@ describe("updater", () => {
     c.disconnect();
   });
 
-  it("updater", function () {
-    var obj1 = {x: 42};
-    var obj2 = {m: function(a, b) { obj2.a = a; obj2.b = b }};
-    var c = connect(obj1, 'x', obj2, 'm',
-      {updater: function($proceed, newValue, oldValue) { $proceed(newValue, oldValue) }});
+  it("updater 2", function () {
+    var obj1 = {x: 42},
+        obj2 = {m(a, b) { obj2.a = a; obj2.b = b }},
+        c = connect(obj1, 'x', obj2, 'm', {
+          updater: ($upd, newValue, oldValue) => $upd(newValue, oldValue)});
     obj1.x = 15;
     expect(obj2.a).equals(15);
     expect(obj2.b).equals(42);
