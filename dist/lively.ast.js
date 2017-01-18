@@ -11249,7 +11249,20 @@ var createClass = function () {
 
 
 
+var defineProperty = function (obj$$1, key, value) {
+  if (key in obj$$1) {
+    Object.defineProperty(obj$$1, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj$$1[key] = value;
+  }
 
+  return obj$$1;
+};
 
 var _extends = Object.assign || function (target) {
   for (var i = 1; i < arguments.length; i++) {
@@ -12595,8 +12608,42 @@ function addAstIndex(parsed) {
   return parsed;
 }
 
-var FindToplevelFuncDeclVisitor = function (_Visitor) {
-  inherits(FindToplevelFuncDeclVisitor, _Visitor);
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// simple ast traversing
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var AllNodesVisitor = function (_Visitor) {
+  inherits(AllNodesVisitor, _Visitor);
+
+  function AllNodesVisitor() {
+    classCallCheck(this, AllNodesVisitor);
+    return possibleConstructorReturn(this, (AllNodesVisitor.__proto__ || Object.getPrototypeOf(AllNodesVisitor)).apply(this, arguments));
+  }
+
+  createClass(AllNodesVisitor, [{
+    key: "accept",
+    value: function accept(node, state, path) {
+      this.doFunc(node, state, path);
+      return get(AllNodesVisitor.prototype.__proto__ || Object.getPrototypeOf(AllNodesVisitor.prototype), "accept", this).call(this, node, state, path);
+    }
+  }], [{
+    key: "run",
+    value: function run(parsed, doFunc, state) {
+      var v = new this();
+      v.doFunc = doFunc;
+      v.accept(parsed, state, []);
+      return state;
+    }
+  }]);
+  return AllNodesVisitor;
+}(Visitor);
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// scoping
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var FindToplevelFuncDeclVisitor = function (_Visitor2) {
+  inherits(FindToplevelFuncDeclVisitor, _Visitor2);
 
   function FindToplevelFuncDeclVisitor() {
     classCallCheck(this, FindToplevelFuncDeclVisitor);
@@ -12628,30 +12675,87 @@ var FindToplevelFuncDeclVisitor = function (_Visitor) {
   return FindToplevelFuncDeclVisitor;
 }(Visitor);
 
-var AllNodesVisitor = function (_Visitor2) {
-  inherits(AllNodesVisitor, _Visitor2);
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// replacement
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function AllNodesVisitor() {
-    classCallCheck(this, AllNodesVisitor);
-    return possibleConstructorReturn(this, (AllNodesVisitor.__proto__ || Object.getPrototypeOf(AllNodesVisitor)).apply(this, arguments));
+var canBeInlinedSym = Symbol("canBeInlined");
+
+function blockInliner(node) {
+  // FIXME what about () => x kind of functions?
+  if (Array.isArray(node.body)) {
+    for (var i = node.body.length - 1; i >= 0; i--) {
+      var stmt = node.body[i];
+      if (stmt.type === "BlockStatement" && stmt[canBeInlinedSym]) {
+        node.body.splice.apply(node.body, [i, 1].concat(stmt.body));
+      }
+    }
+  }
+  return node;
+}
+
+function block(nodes) {
+  return { type: "BlockStatement", body: nodes };
+}
+
+var ReplaceManyVisitor = function (_Visitor3) {
+  inherits(ReplaceManyVisitor, _Visitor3);
+
+  function ReplaceManyVisitor() {
+    classCallCheck(this, ReplaceManyVisitor);
+    return possibleConstructorReturn(this, (ReplaceManyVisitor.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor)).apply(this, arguments));
   }
 
-  createClass(AllNodesVisitor, [{
+  createClass(ReplaceManyVisitor, [{
     key: "accept",
     value: function accept(node, state, path) {
-      this.doFunc(node, state, path);
-      return get(AllNodesVisitor.prototype.__proto__ || Object.getPrototypeOf(AllNodesVisitor.prototype), "accept", this).call(this, node, state, path);
+      return this.replacer(get(ReplaceManyVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor.prototype), "accept", this).call(this, node, state, path));
+      var replaced = this.replacer(get(ReplaceManyVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor.prototype), "accept", this).call(this, node, state, path), path);
+      return !Array.isArray(replaced) ? replaced : replaced.length === 1 ? replaced[0] : Object.assign(block(replaced), defineProperty({}, canBeInlinedSym, true));
+    }
+  }, {
+    key: "visitBlockStatement",
+    value: function visitBlockStatement(node, state, path) {
+      return blockInliner(get(ReplaceManyVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor.prototype), "visitBlockStatement", this).call(this, node, state, path));
+    }
+  }, {
+    key: "visitProgram",
+    value: function visitProgram(node, state, path) {
+      return blockInliner(get(ReplaceManyVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor.prototype), "visitProgram", this).call(this, node, state, path));
     }
   }], [{
     key: "run",
-    value: function run(parsed, doFunc, state) {
+    value: function run(parsed, replacer) {
       var v = new this();
-      v.doFunc = doFunc;
-      v.accept(parsed, state, []);
-      return state;
+      v.replacer = replacer;
+      return v.accept(parsed, null, []);
     }
   }]);
-  return AllNodesVisitor;
+  return ReplaceManyVisitor;
+}(Visitor);
+
+var ReplaceVisitor = function (_Visitor4) {
+  inherits(ReplaceVisitor, _Visitor4);
+
+  function ReplaceVisitor() {
+    classCallCheck(this, ReplaceVisitor);
+    return possibleConstructorReturn(this, (ReplaceVisitor.__proto__ || Object.getPrototypeOf(ReplaceVisitor)).apply(this, arguments));
+  }
+
+  createClass(ReplaceVisitor, [{
+    key: "accept",
+    value: function accept(node, state, path) {
+      return this.replacer(get(ReplaceVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceVisitor.prototype), "accept", this).call(this, node, state, path), path);
+    }
+  }], [{
+    key: "run",
+    value: function run(parsed, replacer) {
+      var v = new this();
+      v.replacer = replacer;
+      return v.accept(parsed, null, []);
+    }
+  }]);
+  return ReplaceVisitor;
 }(Visitor);
 
 acorn.walk.addSource = addSource;
@@ -13142,7 +13246,7 @@ function assign(left, right) {
   };
 }
 
-function block() {
+function block$1() {
   for (var _len4 = arguments.length, body = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
     body[_key4] = arguments[_key4];
   }
@@ -13151,7 +13255,7 @@ function block() {
 }
 
 function program() {
-  return Object.assign(block.apply(undefined, arguments), { sourceType: "module", type: "Program" });
+  return Object.assign(block$1.apply(undefined, arguments), { sourceType: "module", type: "Program" });
 }
 
 function tryStmt(exName, handlerBody, finalizerBody) {
@@ -13168,10 +13272,10 @@ function tryStmt(exName, handlerBody, finalizerBody) {
     finalizerBody = null;
   }
   return {
-    block: block(body),
-    finalizer: finalizerBody ? block(finalizerBody) : null,
+    block: block$1(body),
+    finalizer: finalizerBody ? block$1(finalizerBody) : null,
     handler: {
-      body: block(handlerBody),
+      body: block$1(handlerBody),
       param: id(exName),
       type: "CatchClause"
     },
@@ -13203,8 +13307,8 @@ function objectLiteral(keysAndValues) {
 }
 
 function ifStmt(test) {
-  var consequent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : block();
-  var alternate = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : block();
+  var consequent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : block$1();
+  var alternate = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : block$1();
 
   return {
     consequent: consequent, alternate: alternate, test: test,
@@ -13237,7 +13341,7 @@ var nodes = Object.freeze({
 	member: member,
 	memberChain: memberChain,
 	assign: assign,
-	block: block,
+	block: block$1,
 	program: program,
 	tryStmt: tryStmt,
 	ifStmt: ifStmt,
@@ -13840,101 +13944,105 @@ function objectSpreadTransform(parsed) {
 
 /*global process, global, exports*/
 
-var helper = {
-  // currently this is used by the replacement functions below but
-  // I don't wan't to make it part of our AST API
+function _node2string(node) {
+  return node.source || stringify(node);
+}
 
-  _node2string: function _node2string(node) {
-    return node.source || stringify(node);
-  },
+function _findIndentAt(s, pos) {
+  var bol = lively_lang.string.peekLeft(s, pos, /\s+$/),
+      indent = typeof bol === 'number' ? s.slice(bol, pos) : '';
+  if (indent[0] === '\n') indent = indent.slice(1);
+  return indent;
+}
 
-  _findIndentAt: function _findIndentAt(s, pos) {
-    var bol = lively_lang.string.peekLeft(s, pos, /\s+$/),
-        indent = typeof bol === 'number' ? s.slice(bol, pos) : '';
-    if (indent[0] === '\n') indent = indent.slice(1);
-    return indent;
-  },
-
-  _applyChanges: function _applyChanges(changes, source) {
-    return changes.reduce(function (source, change) {
-      if (change.type === 'del') {
-        return source.slice(0, change.pos) + source.slice(change.pos + change.length);
-      } else if (change.type === 'add') {
-        return source.slice(0, change.pos) + change.string + source.slice(change.pos);
-      }
-      throw new Error('Uexpected change ' + Objects.inspect(change));
-    }, source);
-  },
-
-  _compareNodesForReplacement: function _compareNodesForReplacement(nodeA, nodeB) {
-    // equals
-    if (nodeA.start === nodeB.start && nodeA.end === nodeB.end) return 0;
-    // a "left" of b
-    if (nodeA.end <= nodeB.start) return -1;
-    // a "right" of b
-    if (nodeA.start >= nodeB.end) return 1;
-    // a contains b
-    if (nodeA.start <= nodeB.start && nodeA.end >= nodeB.end) return 1;
-    // b contains a
-    if (nodeB.start <= nodeA.start && nodeB.end >= nodeA.end) return -1;
-    throw new Error('Comparing nodes');
-  },
-
-  replaceNode: function replaceNode(target, replacementFunc, sourceOrChanges) {
-    // parameters:
-    //   - target: ast node
-    //   - replacementFunc that gets this node and its source snippet
-    //     handed and should produce a new ast node.
-    //   - sourceOrChanges: If its a string -- the source code to rewrite
-    //                      If its and object -- {changes: ARRAY, source: STRING}
-
-    var sourceChanges = (typeof sourceOrChanges === "undefined" ? "undefined" : _typeof(sourceOrChanges)) === 'object' ? sourceOrChanges : { changes: [], source: sourceOrChanges },
-        insideChangedBefore = false,
-        pos = sourceChanges.changes.reduce(function (pos, change) {
-      // fixup the start and end indices of target using the del/add
-      // changes already applied
-      if (pos.end < change.pos) return pos;
-
-      var isInFront = change.pos < pos.start;
-      insideChangedBefore = insideChangedBefore || change.pos >= pos.start && change.pos <= pos.end;
-
-      if (change.type === 'add') return {
-        start: isInFront ? pos.start + change.string.length : pos.start,
-        end: pos.end + change.string.length
-      };
-
-      if (change.type === 'del') return {
-        start: isInFront ? pos.start - change.length : pos.start,
-        end: pos.end - change.length
-      };
-
-      throw new Error('Cannot deal with change ' + Objects.inspect(change));
-    }, { start: target.start, end: target.end });
-
-    var source = sourceChanges.source,
-        replacement = replacementFunc(target, source.slice(pos.start, pos.end), insideChangedBefore),
-        replacementSource = Array.isArray(replacement) ? replacement.map(helper._node2string).join('\n' + helper._findIndentAt(source, pos.start)) : replacementSource = helper._node2string(replacement);
-
-    var changes = [{ type: 'del', pos: pos.start, length: pos.end - pos.start }, { type: 'add', pos: pos.start, string: replacementSource }];
-
-    return {
-      changes: sourceChanges.changes.concat(changes),
-      source: this._applyChanges(changes, source)
-    };
-  },
-
-  replaceNodes: function replaceNodes(targetAndReplacementFuncs, sourceOrChanges) {
-    // replace multiple AST nodes, order rewriting from inside out and
-    // top to bottom so that nodes to rewrite can overlap or be contained
-    // in each other
-    return targetAndReplacementFuncs.sort(function (a, b) {
-      return helper._compareNodesForReplacement(a.target, b.target);
-    }).reduce(function (sourceChanges, ea) {
-      return helper.replaceNode(ea.target, ea.replacementFunc, sourceChanges);
-    }, (typeof sourceOrChanges === "undefined" ? "undefined" : _typeof(sourceOrChanges)) === 'object' ? sourceOrChanges : { changes: [], source: sourceOrChanges });
+function _applyChanges(changes, source) {
+  for (var i = 0; i < changes.length; i++) {
+    var change = changes[i];
+    if (change.type === 'del') {
+      source = source.slice(0, change.pos) + source.slice(change.pos + change.length);
+    } else if (change.type === 'add') {
+      source = source.slice(0, change.pos) + change.string + source.slice(change.pos);
+    } else {
+      throw new Error('Unexpected change ' + lively_lang.obj.inspect(change));
+    }
   }
+  return source;
+}
 
-};
+function _compareNodesForReplacement(nodeA, nodeB) {
+  // equals
+  if (nodeA.start === nodeB.start && nodeA.end === nodeB.end) return 0;
+  // a "left" of b
+  if (nodeA.end <= nodeB.start) return -1;
+  // a "right" of b
+  if (nodeA.start >= nodeB.end) return 1;
+  // a contains b
+  if (nodeA.start <= nodeB.start && nodeA.end >= nodeB.end) return 1;
+  // b contains a
+  if (nodeB.start <= nodeA.start && nodeB.end >= nodeA.end) return -1;
+  throw new Error('Comparing nodes');
+}
+
+function replaceNode(target, replacementFunc, sourceOrChanges) {
+  // parameters:
+  //   - target: ast node
+  //   - replacementFunc that gets this node and its source snippet
+  //     handed and should produce a new ast node.
+  //   - sourceOrChanges: If its a string -- the source code to rewrite
+  //                      If its and object -- {changes: ARRAY, source: STRING}
+
+  var sourceChanges = (typeof sourceOrChanges === "undefined" ? "undefined" : _typeof(sourceOrChanges)) === 'object' ? sourceOrChanges : { changes: [], source: sourceOrChanges },
+      insideChangedBefore = false,
+      pos = sourceChanges.changes.reduce(function (pos, change) {
+    // fixup the start and end indices of target using the del/add
+    // changes already applied
+    if (pos.end < change.pos) return pos;
+
+    var isInFront = change.pos < pos.start;
+    insideChangedBefore = insideChangedBefore || change.pos >= pos.start && change.pos <= pos.end;
+
+    if (change.type === 'add') return {
+      start: isInFront ? pos.start + change.string.length : pos.start,
+      end: pos.end + change.string.length
+    };
+
+    if (change.type === 'del') return {
+      start: isInFront ? pos.start - change.length : pos.start,
+      end: pos.end - change.length
+    };
+
+    throw new Error('Cannot deal with change ' + lively_lang.obj.inspect(change));
+  }, { start: target.start, end: target.end });
+
+  var source = sourceChanges.source,
+      replacement = replacementFunc(target, source.slice(pos.start, pos.end), insideChangedBefore),
+      replacementSource = Array.isArray(replacement) ? replacement.map(_node2string).join('\n' + _findIndentAt(source, pos.start)) : replacementSource = _node2string(replacement);
+
+  var changes = [{ type: 'del', pos: pos.start, length: pos.end - pos.start }, { type: 'add', pos: pos.start, string: replacementSource }];
+
+  return {
+    changes: sourceChanges.changes.concat(changes),
+    source: _applyChanges(changes, source)
+  };
+}
+
+function replaceNodes(targetAndReplacementFuncs, sourceOrChanges) {
+  // replace multiple AST nodes, order rewriting from inside out and
+  // top to bottom so that nodes to rewrite can overlap or be contained
+  // in each other
+  var sorted = targetAndReplacementFuncs.sort(function (a, b) {
+    return _compareNodesForReplacement(a.target, b.target);
+  }),
+      sourceChanges = (typeof sourceOrChanges === "undefined" ? "undefined" : _typeof(sourceOrChanges)) === 'object' ? sourceOrChanges : { changes: [], source: sourceOrChanges };
+  for (var i = 0; i < sorted.length; i++) {
+    var _sorted$i = sorted[i],
+        target = _sorted$i.target,
+        replacementFunc = _sorted$i.replacementFunc;
+
+    sourceChanges = replaceNode(target, replacementFunc, sourceChanges);
+  }
+  return sourceChanges;
+}
 
 function replace(astOrSource, targetNode, replacementFunc, options) {
   // replaces targetNode in astOrSource with what replacementFunc returns
@@ -13955,10 +14063,8 @@ function replace(astOrSource, targetNode, replacementFunc, options) {
   //    }
 
   var parsed = (typeof astOrSource === "undefined" ? "undefined" : _typeof(astOrSource)) === 'object' ? astOrSource : null,
-      source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
-      result = helper.replaceNode(targetNode, replacementFunc, source);
-
-  return result;
+      source = typeof astOrSource === 'string' ? astOrSource : parsed.source || _node2string(parsed);
+  return replaceNode(targetNode, replacementFunc, source);
 }
 
 function oneDeclaratorPerVarDecl(astOrSource) {
@@ -13966,7 +14072,7 @@ function oneDeclaratorPerVarDecl(astOrSource) {
   //    "var x = 3, y = (function() { var y = 3, x = 2; })(); ").source
 
   var parsed = (typeof astOrSource === "undefined" ? "undefined" : _typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
-      source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
+      source = typeof astOrSource === 'string' ? astOrSource : parsed.source || _node2string(parsed),
       scope = scopes(parsed),
       varDecls = function findVarDecls(scope) {
     return lively_lang.arr.flatten(scope.varDecls.concat(scope.subScopes.map(findVarDecls)));
@@ -13992,12 +14098,12 @@ function oneDeclaratorPerVarDecl(astOrSource) {
     };
   });
 
-  return helper.replaceNodes(targetsAndReplacements, source);
+  return replaceNodes(targetsAndReplacements, source);
 }
 
 function oneDeclaratorForVarsInDestructoring(astOrSource) {
   var parsed = (typeof astOrSource === "undefined" ? "undefined" : _typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
-      source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
+      source = typeof astOrSource === 'string' ? astOrSource : parsed.source || _node2string(parsed),
       scope = scopes(parsed),
       varDecls = function findVarDecls(scope) {
     return lively_lang.arr.flatten(scope.varDecls.concat(scope.subScopes.map(findVarDecls)));
@@ -14032,7 +14138,7 @@ function oneDeclaratorForVarsInDestructoring(astOrSource) {
     };
   });
 
-  return helper.replaceNodes(targetsAndReplacements, source);
+  return replaceNodes(targetsAndReplacements, source);
 }
 
 function returnLastStatement(source, opts) {
@@ -14113,7 +14219,7 @@ function wrapInStartEndCall(parsed, options) {
   // 4. Wrap that stuff in a try stmt
   outerBody.push(tryStmt.apply(undefined, ["err", [exprStmt(funcCall(endFuncNode, id("err"), id("undefined")))]].concat(toConsumableArray(innerBody))));
 
-  return isProgram ? program.apply(undefined, outerBody) : block.apply(undefined, outerBody);
+  return isProgram ? program.apply(undefined, outerBody) : block$1.apply(undefined, outerBody);
 }
 
 var isProbablySingleExpressionRe = /^\s*(\{|function\s*\()/;
@@ -14134,7 +14240,7 @@ function transformSingleExpression(code) {
       code = '(' + code.replace(/;\s*$/, '') + ')';
     }
   } catch (e) {
-    if ((typeof lively === "undefined" ? "undefined" : _typeof(lively)) && lively.Config && lively.Config.showImprovedJavaScriptEvalErrors) $world.logError(e);else console.error("Eval preprocess error: %s", e.stack || e);
+    if (typeof $world !== "undefined") $world.logError(e);else console.error("Eval preprocess error: %s", e.stack || e);
   }
   return code;
 }
@@ -14142,8 +14248,10 @@ function transformSingleExpression(code) {
 
 
 var transform = Object.freeze({
-	helper: helper,
+	replaceNode: replaceNode,
+	replaceNodes: replaceNodes,
 	replace: replace,
+	_compareNodesForReplacement: _compareNodesForReplacement,
 	oneDeclaratorPerVarDecl: oneDeclaratorPerVarDecl,
 	oneDeclaratorForVarsInDestructoring: oneDeclaratorForVarsInDestructoring,
 	returnLastStatement: returnLastStatement,
@@ -14715,6 +14823,8 @@ exports.printAst = printAst;
 exports.compareAst = compareAst;
 exports.pathToNode = pathToNode;
 exports.rematchAstWithSource = rematchAstWithSource;
+exports.ReplaceManyVisitor = ReplaceManyVisitor;
+exports.ReplaceVisitor = ReplaceVisitor;
 exports.parse = parse;
 exports.parseFunction = parseFunction;
 exports.fuzzyParse = fuzzyParse;

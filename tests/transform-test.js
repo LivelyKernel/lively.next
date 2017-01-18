@@ -4,8 +4,7 @@ import { expect } from "mocha-es6";
 
 import { arr, string } from "lively.lang";
 import {
-  helper,
-  replace,
+  replace, _compareNodesForReplacement, replaceNodes, replaceNode,
   oneDeclaratorPerVarDecl,
   returnLastStatement,
   wrapInFunction,
@@ -22,33 +21,29 @@ describe('ast.transform', function() {
 
     it("replaceNode", function() {
       var source = "var x = 3,\n"
-                   + "    y = x + x;\n"
-                   + "y + 2;\n";
-      var parsed = parse(source);
-      var target = parsed.body[0].declarations[0].init;
-      var hist = helper.replaceNode(target,
-                   function() { return {type: "Literal", value: "foo"}; },
-                   {changes: [], source: source});
-
-      var expected = {
-        changes: [{type: 'del', pos: 8, length: 1},
-             {type: 'add', pos: 8, string: '"foo"'}],
-        source: source.replace('3', '"foo"')
-      }
-
+                 + "    y = x + x;\n"
+                 + "y + 2;\n",
+           parsed = parse(source),
+           target = parsed.body[0].declarations[0].init,
+           hist = replaceNode(target,
+                   () => ({type: "Literal", value: "foo"}),
+                   {changes: [], source: source}),
+           expected = {
+              changes: [{type: 'del', pos: 8, length: 1},
+                   {type: 'add', pos: 8, string: '"foo"'}],
+              source: source.replace('3', '"foo"')
+            }
       expect(hist).deep.equals(expected);
-
     });
 
     it("replaceNodesInformsAboutChangedNodes", function() {
-      var source = "var x = 3;\n"
-      var parsed = parse(source);
+      var source = "var x = 3;\n", parsed = parse(source);
 
       var replacement1 = {type: "Literal", value: 23},
         replacement2 = {type: "VariableDeclarator", id: {type: "Identifier", name: "zzz"}, init: {type: "Literal", value: 24}},
         wasChanged1, wasChanged2;
 
-      var hist = helper.replaceNodes([
+      var hist = replaceNodes([
         {target: parsed.body[0].declarations[0].init, replacementFunc: function(node, source, wasChanged) { wasChanged1 = wasChanged; return replacement1; }},
         {target: parsed.body[0].declarations[0], replacementFunc: function(node, source, wasChanged) { wasChanged2 = wasChanged; return replacement2; }}],
         {changes: [], source: source});
@@ -68,7 +63,7 @@ describe('ast.transform', function() {
         parsed.body[0],
         parsed.body[0].declarations[1].init.right,
         parsed.body[0].declarations[1].init.left,
-        parsed.body[1]].sort(helper._compareNodesForReplacement);
+        parsed.body[1]].sort(_compareNodesForReplacement);
       var expected = [
         parsed.body[0].declarations[1].init.left,
         parsed.body[0].declarations[1].init.right,
@@ -83,7 +78,7 @@ describe('ast.transform', function() {
            + "y + 2;\n";
       var parsed = parse(source);
       var replaceSource1, replaceSource2;
-      var hist = helper.replaceNodes([
+      var hist = replaceNodes([
         {target: parsed.body[0], replacementFunc: function(n, source) { replaceSource1 = source; return {type: "Literal", value: "foo"}; }},
         {target: parsed.body[0].declarations[1].init.right, replacementFunc: function(n, source) { replaceSource2 = source; return {type: "Literal", value: "bar"}; }}],
         {changes: [], source: source});
@@ -108,7 +103,7 @@ describe('ast.transform', function() {
            + "    y = x + x;\n"
            + "y + 2;\n";
       var parsed = parse(source),
-          hist = helper.replaceNodes([
+          hist = replaceNodes([
             {target: parsed.body[0], replacementFunc: function(node, source) { return {type: "Literal", value: "foo"}; }},
             {target: parsed.body[0].declarations[1].init.right, replacementFunc: function() { return {type: "Literal", value: "bar"}; }}],
             {changes: [], source: source});

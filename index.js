@@ -6,6 +6,7 @@ export {
   pathToNode,
   rematchAstWithSource
 } from "./lib/mozilla-ast-visitor-interface.js";
+export { ReplaceManyVisitor, ReplaceVisitor } from "./lib/visitors.js";
 
 export { parse, parseFunction, fuzzyParse } from "./lib/parser.js";
 
