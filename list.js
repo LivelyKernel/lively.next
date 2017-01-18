@@ -614,7 +614,8 @@ export class FilterableList extends Morph {
       sortFunction: props.sortFunction || null, // (parsedInput, item) => ...
       filterFunction: props.filterFunction || this.defaultFilterFunction
     };
-    Object.assign(inputText, this.inputStyle(props.theme))
+
+    inputText.styleRules = this.inputStyle(props.theme);
 
     props = obj.dissoc(props, ["fontFamily", "fontSize", "input"]);
     if (!props.bounds && !props.extent) props.extent = pt(400, 360);
