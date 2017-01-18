@@ -834,6 +834,12 @@ export class World extends Morph {
       {command: "resize to fit window",     target: this},
       {command: "window switcher",          target: this},
       {isDivider: true},
+      ["Debugging", [
+        ["fix font metric", () => {
+          this.env.fontMetric.reset();
+          this.withAllSubmorphsDo(ea => ea.isText && ea.textLayout && ea.textLayout.reset());
+        }]
+      ]],
       ["Tools", [
         {command: "open object drawer",       target: this},
         {command: "open workspace",           target: this},
