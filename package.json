@@ -1,6 +1,6 @@
 {
   "name": "lively.modules",
-  "version": "0.7.14",
+  "version": "0.7.15",
   "main": "dist/lively.modules.js",
   "repository": "https://github.com/LivelyKernel/lively.modules",
   "author": "Robert Krahn <robert.krahn@gmail.com>",
@@ -36,7 +36,7 @@
     "babel-plugin-transform-es2015-modules-systemjs": "^6.19.0",
     "babel-standalone": "^6.21.1-0",
     "lively.ast": "^0.9.0",
-    "lively.lang": "^0.7.0",
+    "lively.lang": "^1.0.0",
     "lively.notifications": "^0.4.0",
     "lively.resources": "^0.1.2",
     "lively.vm": "^0.9.0",

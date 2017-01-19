@@ -15,7 +15,7 @@ var parts = {
   "lively.notifications":    {source: placeholderSrc, path: require.resolve("lively.notifications/dist/lively.notifications.js")},
   "lively.ast":              {source: placeholderSrc, path: require.resolve("lively.ast/dist/lively.ast.js")},
   "lively.classes":          {source: placeholderSrc, path: require.resolve("lively.classes/dist/lively.classes.js")},
-  "lively.lang":             {source: placeholderSrc, path: require.resolve("lively.lang/dist/lively.lang.dev.js")},
+  "lively.lang":             {source: placeholderSrc, path: require.resolve("lively.lang/dist/lively.lang.js")},
   "lively.vm":               {source: placeholderSrc, path: require.resolve("lively.vm/dist/lively.vm.js")},
   "lively.source-transform": {source: placeholderSrc, path: require.resolve("lively.source-transform/dist/lively.source-transform.js")},
   "lively.resources":        {source: placeholderSrc, path: require.resolve("lively.resources/dist/lively.resources_no-deps.js")},
