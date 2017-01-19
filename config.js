@@ -100,7 +100,7 @@ var config = {
     tabWidth: 2,
     markStackSize: 16,
     undoLevels: 50,
-    clipboardBufferLength: 15,
+    clipboardBufferLength: 100,
     useMultiSelect: true,
     undoGroupDelay: 600/*ms, idle time after typing that groups the previous ungrouped edits into one*/,
 
