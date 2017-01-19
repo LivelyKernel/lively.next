@@ -9,21 +9,18 @@
 // can be used for debugging by providing a hook that allows users to find out
 // when get/set operations happen.
 
-export default class Path {
+import { inspect } from "./object.js";
 
-  constructor(p, splitter) {
-    this.splitter =  '.';
-    if (p instanceof Path) {
-      this._parts = p._parts.slice();
-      this.path = p.path;
-      this.splitter = p.splitter;
-    } else {
-      if (splitter) this.setSplitter(splitter);
-      this.fromPath(p);    
-    }
-  }
+export default function Path(p, splitter) {
+  if (p instanceof Path) return p;
+  if (!(this instanceof Path)) return new Path(p, splitter);
+  this.setSplitter(splitter || '.');
+  this.fromPath(p);
+}
 
-  get isPathAccessor() { return true }
+Object.assign(Path.prototype, {
+
+  get isPathAccessor() { return true },
 
   fromPath(path) {
     // ignore-in-doc
@@ -38,34 +35,34 @@ export default class Path {
       this._path = '';
     }
     return this;
-  }
+  },
 
   setSplitter(splitter) {
     // ignore-in-doc
     if (splitter) this.splitter = splitter;
     return this;
-  }
+  },
 
-  parts() { /*key names as array*/ return this._parts; }
+  parts() { /*key names as array*/ return this._parts; },
 
-  size() { /*show-in-doc*/ return this._parts.length; }
+  size() { /*show-in-doc*/ return this._parts.length; },
 
-  slice(n, m) { /*show-in-doc*/ return Path(this.parts().slice(n, m)); }
+  slice(n, m) { /*show-in-doc*/ return Path(this.parts().slice(n, m)); },
 
   normalizePath() {
     // ignore-in-doc
     // FIXME: define normalization
     return this._path;
-  }
+  },
 
-  isRoot(obj) { return this._parts.length === 0; }
+  isRoot(obj) { return this._parts.length === 0; },
 
   isIn(obj) {
     // Does the Path resolve to a value when applied to `obj`?
     if (this.isRoot()) return true;
     var parent = this.get(obj, -1);
     return parent && parent.hasOwnProperty(this._parts[this._parts.length-1]);
-  }
+  },
 
   equals(obj) {
     // Example:
@@ -73,7 +70,7 @@ export default class Path {
     // // Path's can be both created via strings or pre-parsed with keys in a list.
     // p1.equals(p2) // => true
     return obj && obj.isPathAccessor && this.parts().equals(obj.parts());
-  }
+  },
 
   isParentPathOf(otherPath) {
     // Example:
@@ -88,7 +85,7 @@ export default class Path {
       if (parts[i] != otherParts[i]) return false
     }
     return true
-  }
+  },
 
   relativePathTo(otherPath) {
     // Example:
@@ -98,7 +95,7 @@ export default class Path {
     otherPath = Path(otherPath);
     return this.isParentPathOf(otherPath) ?
       otherPath.slice(this.size(), otherPath.size()) : undefined;
-  }
+  },
 
   del(obj) {
     if (this.isRoot()) return false;
@@ -110,7 +107,7 @@ export default class Path {
       } else return false;
     }
     return delete parent[this._parts[this._parts.length-1]];
-  }
+  },
 
   withParentAndKeyDo(obj, ensure, doFunc) {
     // Deeply resolve path in `obj`, not fully, however, only to the parent
@@ -130,7 +127,7 @@ export default class Path {
       }
     }
     return doFunc(parent, this._parts[this._parts.length-1]);
-  }
+  },
 
   set(obj, val, ensure) {
     // Deeply resolve path in `obj` and set the resulting property to `val`. If
@@ -145,7 +142,7 @@ export default class Path {
     // o2 // => {foo: {bar: {baz: 43}}}
     return this.withParentAndKeyDo(obj, ensure,
       function(parent, key) { return parent ? parent[key] = val : undefined; });
-  }
+  },
 
   defineProperty(obj, propertySpec, ensure) {
     // like `Path>>set`, however uses Objeect.defineProperty
@@ -155,26 +152,26 @@ export default class Path {
           Object.defineProperty(parent, key, propertySpec) :
           undefined;
       });
-  }
+  },
 
   get(obj, n) {
     // show-in-doc
     var parts = n ? this._parts.slice(0, n) : this._parts;
     return parts.reduce(function(current, pathPart) {
       return current ? current[pathPart] : current; }, obj);
-  }
+  },
 
   concat(p, splitter) {
     // show-in-doc
     return Path(this.parts().concat(Path(p, splitter).parts()));
-  }
+  },
 
-  toString() { return this.normalizePath(); }
+  toString() { return this.normalizePath(); },
 
-  // serializeExpr() {
-  //   // ignore-in-doc
-  //   return 'Path(' + obj.inspect(this.parts()) + ')';
-  // }
+  serializeExpr() {
+    // ignore-in-doc
+    return 'lively.lang.Path(' + inspect(this.parts()) + ')';
+  },
 
   watch(options) {
     // React or be notified on reads or writes to a path in a `target`. Options:
@@ -247,7 +244,7 @@ export default class Path {
     var msg = 'Watcher for ' + parent + '.' + propName + ' installed';
     console.log(msg);
     if (typeof show !== 'undefined') show(msg);
-  }
+  },
 
   debugFunctionWrapper(options) {
     // ignore-in-doc
@@ -290,4 +287,4 @@ export default class Path {
     if (typeof show !== 'undefined') show(msg);
   }
 
-}
+});
