@@ -327,6 +327,7 @@ export class BodyStyleEditor extends StyleEditor {
                    const g = new GradientEditor({target, property: "fill"});
                    g.gradientHandle && this.placeBehindMe(g.gradientHandle)
                    connect(g, "openHandle", this, "placeBehindMe");
+                   g.update();
                    return g
                 }
              }, init: target.fill && target.fill.isGradient ? "Gradient" : "Fill"})
