@@ -164,7 +164,7 @@ var Closure = function () {
     // accessing
     value: function setFuncSource(src) {
       /*show-in-doc*/
-      if (typeof lively !== "undefined" && lively.sourceTransform) src = lively.sourceTransform.stringifyFunctionWithoutToplevelRecorder(src);else src = String(src);
+      src = typeof lively !== "undefined" && lively.sourceTransform && typeof lively.sourceTransform.stringifyFunctionWithoutToplevelRecorder === "function" ? lively.sourceTransform.stringifyFunctionWithoutToplevelRecorder(src) : String(src);
       return this.source = src;
     }
   }, {
@@ -3217,7 +3217,7 @@ function mergePropertyInHierarchy(obj, propName) {
   // o2.__proto__ = o1; o3.__proto__ = o2;
   // obj.mergePropertyInHierarchy(o3, "x");
   // // => {bar: 15, baz: "zork",foo: 24}
-  return this.merge(this.valuesInPropertyHierarchy(obj, propName));
+  return merge(valuesInPropertyHierarchy(obj, propName));
 }
 
 function deepCopy(object) {
@@ -3243,7 +3243,7 @@ function typeStringOf(obj) {
 function shortPrintStringOf(obj) {
   // ignore-in-doc
   // primitive values
-  if (!this.isMutableType(obj)) return this.safeToString(obj);
+  if (!isMutableType(obj)) return safeToString(obj);
 
   // constructed objects
   if (obj.constructor.name !== 'Object' && !Array.isArray(obj)) {
@@ -3268,7 +3268,7 @@ function shortPrintStringOf(obj) {
 function isMutableType(obj) {
   // Is `obj` a value or mutable type?
   var immutableTypes = ["null", "undefined", "Boolean", "Number", "String"];
-  return immutableTypes.indexOf(this.typeStringOf(obj)) === -1;
+  return immutableTypes.indexOf(typeStringOf(obj)) === -1;
 }
 
 function safeToString(obj) {
@@ -6167,8 +6167,8 @@ var isNode$1 = typeof process !== 'undefined' && process.versions && process.ver
 
 var makeEmitter = isNode$1 ? function (obj, options) {
   if (obj.on && obj.removeListener) return obj;
-  var events = require("events");
-  require("util")._extend(obj, events.EventEmitter.prototype);
+  var events = System._nodeRequire("events");
+  System._nodeRequire("util")._extend(obj, events.EventEmitter.prototype);
   events.EventEmitter.call(obj);
   if (options && options.maxListenerLimit) obj.setMaxListeners(options.maxListenerLimit);
 
