@@ -1,13 +1,11 @@
-/*global beforeEach, afterEach, describe, it, setTimeout*/
+/*global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout*/
 
-var Global = typeof window !== 'undefined' ? window : global;
-var expect = Global.expect || require('expect.js');
-var lively = Global.lively || {}; lively.lang = lively.lang || require('../index');
+import { expect } from "mocha-es6";
+import { remove, pluck } from "../array.js";
+import { waitForAll, composeAsync } from "../function.js";
+import { create } from "../messenger.js";
+import { makeEmitter } from "../events.js";
 
-var m = lively.lang.messenger;
-var fun = lively.lang.fun;
-var arr = lively.lang.arr;
-var events = lively.lang.events;
 
 // -=-=-=-=-=-=-
 // some helper
@@ -47,7 +45,7 @@ function createMessenger(messengers, options) {
   if (!spec.close) {
     spec.close = function(thenDo) {
       function doClose() {
-        arr.remove(messengers, messenger);
+        remove(messengers, messenger);
         listening = false; thenDo(null); }
       if (typeof options.closeDelay === 'number') setTimeout(doClose, options.closeDelay);
       else doClose();
@@ -56,11 +54,11 @@ function createMessenger(messengers, options) {
 
   if (!spec.isOnline) spec.isOnline = function() { return !!listening; };
 
-  var messenger = m.create(spec);
+  var messenger = create(spec);
   return messenger;
 }
 
-var messageDispatcher = events.makeEmitter({
+var messageDispatcher = makeEmitter({
   dispatch: function(messengers, msg, thenDo) {
     var messenger = findMessengerForMsg(msg);
     if (!messenger) thenDo(new Error("Target " + msg.target + " not found"));
@@ -68,7 +66,7 @@ var messageDispatcher = events.makeEmitter({
 
     function findMessengerForMsg(msg) {
       if (!msg || !msg.target) throw new Error("findMessengerForMsg: msg is strange: " + lively.lang.obj.inspect(msg));
-      return arr.detect(messengers, function(ea) { return ea.id() === msg.target; });
+      return messengers.find(ea => ea.id() === msg.target);
     }
   }
 });
@@ -95,13 +93,13 @@ describe('messengers', function() {
   });
 
   afterEach(function(done) {
-    fun.waitForAll(arr.pluck(messengers, 'close'), done);
+    waitForAll(pluck(messengers, 'close'), done);
   });
 
   describe("messenger attributes", function() {
 
     it("have ids", function() {
-      expect(messenger.id()).to.be("messengerA");
+      expect(messenger.id()).to.equal("messengerA");
       expect(createMessenger(messengers, {}).id()).to.match(/^[a-z0-9-]+$/i);
     });
 
@@ -113,14 +111,14 @@ describe('messengers', function() {
       var msg1 = {target: "foo", action: "test", data: "some data"},
           msg2 = {target: "foo", action: "test2", data: "some more data"};
 
-      fun.composeAsync(
+      composeAsync(
         function(next) { messenger.send(msg1); messenger.send(msg2); next(); },
         function(next) {
-          fun.waitForAll({timeout: 200}, [messenger.whenOnline], next)
+          waitForAll({timeout: 200}, [messenger.whenOnline], next)
           messenger.listen();
         },
         function(_, next) {
-          expect(sendData).to.be.empty();
+          expect(sendData).to.have.length(0);
           expect(messenger.outgoingMessages()).to.eql([msg1, msg2]);
           next();
         },
@@ -137,7 +135,7 @@ describe('messengers', function() {
           expect(messenger.outgoingMessages()).to.have.length(0);
           next();
         }
-      )(function(err) { expect(err).to.be(null); done(); })
+      )(function(err) { expect(err).to.equal(null); done(); })
 
     });
 
@@ -153,14 +151,14 @@ describe('messengers', function() {
         sendData: sendData
       });
 
-      fun.composeAsync(
+      composeAsync(
         function(next) {
-          fun.waitForAll({timeout: 200}, [messengerB.whenOnline], next)
+          waitForAll({timeout: 200}, [messengerB.whenOnline], next)
           messengerB.listen();
         },
         function(_, next) { messengerB.send(msg1); messengerB.send(msg2); next(); },
         function(next) {
-          expect(sendData).to.be.empty();
+          expect(sendData).to.have.length(0);
           expect(messengerB.outgoingMessages()).to.eql([msg1, msg2]);
           next();
         },
@@ -170,7 +168,7 @@ describe('messengers', function() {
           expect(messengerB.outgoingMessages()).to.have.length(0);
           next();
         }
-      )(function(err) { expect(err).to.be(null); done(); })
+      )(function(err) { expect(err).to.equal(null); done(); })
 
     });
 
@@ -185,9 +183,9 @@ describe('messengers', function() {
         sendData: sendData
       });
 
-      fun.composeAsync(
+      composeAsync(
         function(next) {
-          fun.waitForAll({timeout: 200}, [messengerB.whenOnline], next)
+          waitForAll({timeout: 200}, [messengerB.whenOnline], next)
           messengerB.listen();
         },
         function(_, next) {
@@ -197,11 +195,11 @@ describe('messengers', function() {
         lively.lang.chain(setTimeout).flip().curry(300).value(),
         function(next) {
           expect(sendData).to.eql([msg]);
-          expect(messengerB.outgoingMessages()).to.be.empty();
+          expect(messengerB.outgoingMessages()).to.have.length(0);
           next();
         }
       )(function(err) {
-        expect(err).to.be(null);
+        expect(err).to.equal(null);
         expect(String(sendErr)).to.match(/Timeout sending message/)
         done();
       });
@@ -218,7 +216,7 @@ describe('messengers', function() {
         sendData: sendData
       });
 
-      fun.composeAsync(
+      composeAsync(
         function(next) { messengerB.listen(); next(); },
         function(next) {
           messengerB.send(msg, function(err) { sendErr = err; });
@@ -226,12 +224,12 @@ describe('messengers', function() {
         },
         function(next) { setTimeout(next, 25); },
         function(next) {
-          expect(sendData).to.be.empty();
-          expect(messengerB.outgoingMessages()).to.be.empty();
+          expect(sendData).to.have.length(0);
+          expect(messengerB.outgoingMessages()).to.have.length(0);
           next();
         }
       )(function(err) {
-        expect(err).to.be(null);
+        expect(err).to.equal(null);
         expect(String(sendErr)).to.match(/Timeout sending message/)
         done();
       });
@@ -252,17 +250,17 @@ describe('messengers', function() {
         }
       });
 
-      fun.composeAsync(
+      composeAsync(
         function(next) {
-          fun.waitForAll({timeout: 200}, [messengerB.whenOnline], next)
+          waitForAll({timeout: 200}, [messengerB.whenOnline], next)
           messengerB.listen();
         },
         function(_, next) { setTimeout(next, 70); },
         function(next) {
-          expect(sendData).to.be.eql(heartbeats);
+          expect(sendData).to.eql(heartbeats);
           next();
         }
-      )(function(err) { expect(err).to.be(null); done(); });
+      )(function(err) { expect(err).to.equal(null); done(); });
 
     });
 
@@ -277,22 +275,22 @@ describe('messengers', function() {
         sendData: sendData,
         isOnline: function() { return isOnline; },
         listen: function(thenDo) { messengers.push(this); isOnline = true; thenDo(null); },
-        close: function(thenDo) { arr.remove(messengers, this); isOnline = false; thenDo(null); },
+        close: function(thenDo) { remove(messengers, this); isOnline = false; thenDo(null); },
         autoReconnect: true
       });
 
-      fun.composeAsync(
+      composeAsync(
         function(next) {
-          fun.waitForAll({timeout: 200}, [messengerB.whenOnline], next)
+          waitForAll({timeout: 200}, [messengerB.whenOnline], next)
           messengerB.listen();
         },
-        function(_, next) { expect(isOnline).to.be(true); next(); },
+        function(_, next) { expect(isOnline).to.equal(true); next(); },
         function(next) { isOnline = false; next(); },
         function(next) { setTimeout(next, 70); },
-        function(next) { expect(isOnline).to.be(true); messengerB.close(next); },
+        function(next) { expect(isOnline).to.equal(true); messengerB.close(next); },
         function(next) { setTimeout(next, 70); },
-        function(next) { expect(isOnline).to.be(false); next(); }
-      )(function(err) { expect(err).to.be(null); done(); });
+        function(next) { expect(isOnline).to.equal(false); next(); }
+      )(function(err) { expect(err).to.equal(null); done(); });
 
     });
 
@@ -322,9 +320,9 @@ describe('messengers', function() {
     });
 
     it('sends messages between messengers', function(done) {
-      fun.composeAsync(
+      composeAsync(
         function(next) {
-          fun.waitForAll({timeout: 200}, [messengerB.whenOnline, messengerC.whenOnline], next)
+          waitForAll({timeout: 200}, [messengerB.whenOnline, messengerC.whenOnline], next)
           messengerB.listen(); messengerC.listen();
         },
         function(_, next) {
@@ -332,39 +330,39 @@ describe('messengers', function() {
           next();
         },
         function(next) {
-          expect(receivedB).to.be.empty();
+          expect(receivedB).to.have.length(0);
           expect(receivedC).to.have.length(1);
-          expect(receivedC[0].data).to.be("foo");
+          expect(receivedC[0].data).to.equal("foo");
           messengerC.answer(receivedC[0], 'baz');
           expect(receivedB).to.have.length(1);
-          expect(receivedB[0].data).to.be("baz");
+          expect(receivedB[0].data).to.equal("baz");
           next();
         }
-      )(function(err) { expect(err).to.be(null); done(); });
+      )(function(err) { expect(err).to.equal(null); done(); });
 
     });
 
     it('send callback gets triggered on answer', function(done) {
-      fun.composeAsync(
+      composeAsync(
         function(next) {
-          fun.waitForAll({timeout: 200}, [messengerB.whenOnline, messengerC.whenOnline], next)
+          waitForAll({timeout: 200}, [messengerB.whenOnline, messengerC.whenOnline], next)
           messengerB.listen(); messengerC.listen();
         },
         function(_, next) {
           var msg = messengerB.send({target: "messengerC", action: "test", data: 'foo'}, function(err, answer) {
-            expect(err).to.be(null);
-            expect(answer.data).to.be('baz');
+            expect(err).to.equal(null);
+            expect(answer.data).to.equal('baz');
             next();
           });
           messengerC.answer(msg, 'baz');
         }
-      )(function(err) { expect(err).to.be(null); done(); });
+      )(function(err) { expect(err).to.equal(null); done(); });
     });
 
     it('ignores multiple answers send without expect more flag', function(done) {
-      fun.composeAsync(
+      composeAsync(
         function(next) {
-          fun.waitForAll({timeout: 200}, [messengerB.whenOnline, messengerC.whenOnline], next)
+          waitForAll({timeout: 200}, [messengerB.whenOnline, messengerC.whenOnline], next)
           messengerB.listen(); messengerC.listen();
         },
         function(_, next) {
@@ -374,16 +372,16 @@ describe('messengers', function() {
           });
           messengerC.answer(msg, 'baz1');
           messengerC.answer(msg, 'baz2');
-          expect(answerCallbackCalled).to.be(1);
+          expect(answerCallbackCalled).to.equal(1);
           next();
         }
-      )(function(err) { expect(err).to.be(null); done(); });
+      )(function(err) { expect(err).to.equal(null); done(); });
     });
 
     it('invokes answer callback multiple times when send with expect more flag', function(done) {
-      fun.composeAsync(
+      composeAsync(
         function(next) {
-          fun.waitForAll({timeout: 200}, [messengerB.whenOnline, messengerC.whenOnline], next)
+          waitForAll({timeout: 200}, [messengerB.whenOnline, messengerC.whenOnline], next)
           messengerB.listen(); messengerC.listen();
         },
         function(_, next) {
@@ -393,10 +391,10 @@ describe('messengers', function() {
           });
           messengerC.answer(msg, 'baz1', true);
           messengerC.answer(msg, 'baz2', false);
-          expect(answerCallbackCalled).to.be(2);
+          expect(answerCallbackCalled).to.equal(2);
           next();
         }
-      )(function(err) { expect(err).to.be(null); done(); });
+      )(function(err) { expect(err).to.equal(null); done(); });
     });
 
   });
@@ -421,7 +419,7 @@ describe('messengers', function() {
     });
 
     it('can add services', function(done) {
-      fun.composeAsync(
+      composeAsync(
         function(next) {
           messengerC.addServices({
             test: function(msg, messenger) {
@@ -433,15 +431,15 @@ describe('messengers', function() {
         function(next) { messengerB.listen(); messengerC.listen(); next(); },
         function(next) {
           messengerB.send({target: "messengerC", action: "test", data: 'foo'}, function(err, answer) {
-            expect(answer.data).to.be("foobar");
+            expect(answer.data).to.equal("foobar");
             next();
           });
         }
-      )(function(err) { expect(err).to.be(null); done(); });
+      )(function(err) { expect(err).to.equal(null); done(); });
     });
 
     it('services can error', function(done) {
-      fun.composeAsync(
+      composeAsync(
         function(next) {
           messengerC.addServices({
             test: function(msg, messenger) { throw new Error("foo bar"); }
@@ -457,18 +455,18 @@ describe('messengers', function() {
               next();
             });
         }
-      )(function(err) { expect(err).to.be(null); done(); });
+      )(function(err) { expect(err).to.equal(null); done(); });
     });
 
     it('non existing service results in messageNotUnderstood error', function(done) {
-      fun.composeAsync(
+      composeAsync(
         function(next) { messengerB.listen(); messengerC.listen(); next(); },
         function(next) {
           messengerB.send({target: "messengerC", action: "test", data: 'foo'}, function(err, answer) {
-            expect(answer.data.error).to.be("Error: messageNotUnderstood: test"); next();
+            expect(answer.data.error).to.equal("Error: messageNotUnderstood: test"); next();
           });
         }
-      )(function(err) { expect(err).to.be(null); done(); });
+      )(function(err) { expect(err).to.equal(null); done(); });
 
     });
 

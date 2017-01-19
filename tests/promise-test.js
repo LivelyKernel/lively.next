@@ -1,46 +1,53 @@
-/*global beforeEach, afterEach, describe, it*/
+/*global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout*/
 
-var Global = typeof window !== 'undefined' ? window : global,
-    expect = Global.expect ||  require('expect.js'),
-    lively = Global.lively || {}; lively.lang = lively.lang || require('../index');
+import { expect } from "mocha-es6";
+import {
+  convertCallbackFunWithManyArgs,
+  timeout,
+  delay,
+  deferred,
+  waitFor,
+  delayReject,
+  convertCallbackFun
+} from "../promise.js";
+
+
 
 describe('promise', () => {
-
-  var p = lively.lang.promise;
 
   describe("cb convertions", () => {
 
     it("resolves", () =>
-      p.convertCallbackFun(function(a, b, thenDo) { thenDo(null, a + b); })(2,3)
+      convertCallbackFun(function(a, b, thenDo) { thenDo(null, a + b); })(2,3)
         .then(result => expect(result).to.equal(5)));
 
     it("rejects", () =>
-      p.convertCallbackFun(function(a, b, thenDo) { thenDo(new Error("Foo"), a + b); })(2,3)
+      convertCallbackFun(function(a, b, thenDo) { thenDo(new Error("Foo"), a + b); })(2,3)
         .then(result => expect().fail("should end in catch"))
         .catch(err => expect(err).to.match(/error.*foo/i)));
 
     it("rejects when cb throws", () =>
-      p.convertCallbackFun(function(a, b, thenDo) { throw(new Error("Foo")); })(2,3)
+      convertCallbackFun(function(a, b, thenDo) { throw(new Error("Foo")); })(2,3)
         .then(result => expect().fail("should end in catch"))
         .catch(err => expect(err).to.match(/error.*foo/i)));
 
     it("deals with n args", () =>
-      p.convertCallbackFunWithManyArgs(function(a, b, thenDo) { thenDo(null, b, a); })(2,3)
+      convertCallbackFunWithManyArgs(function(a, b, thenDo) { thenDo(null, b, a); })(2,3)
         .then(result => expect(result).to.eql([3, 2])));
 
   });
 
   describe("promise creation", () => {
     it("creates promise and resolve function", () => {
-      var deferred = p.deferred();
-      setTimeout(deferred.resolve, 100, 23);
-      return deferred.promise.then(val => expect(val).to.equal(23));
+      var defed = deferred();
+      setTimeout(defed.resolve, 100, 23);
+      return defed.promise.then(val => expect(val).to.equal(23));
     });
 
     it("creates promise and reject function", () => {
-      var deferred = p.deferred();
-      setTimeout(deferred.reject, 100, new Error("Foo"));
-      return deferred.promise.catch(err => expect(err).to.match(/Foo/i));
+      var defed = deferred();
+      setTimeout(defed.reject, 100, new Error("Foo"));
+      return defed.promise.catch(err => expect(err).to.match(/Foo/i));
     });
   });
 
@@ -81,17 +88,17 @@ describe('promise', () => {
 
     it("resolves later", () => {
       var start = new Date();
-      return p.delay(300, 3).then(val => {
+      return delay(300, 3).then(val => {
         expect(val).to.equal(3);
-        expect(Date.now()-start).to.be.above(200);
+        expect(Date.now()-start).above(200);
       });
     });
 
     it("rejects later", () => {
       var start = new Date();
-      return p.delayReject(300, new Error("Foo")).catch(err => {
+      return delayReject(300, new Error("Foo")).catch(err => {
         expect(err).to.match(/foo/i);
-        expect(Date.now()-start).to.be.above(200);
+        expect(Date.now()-start).above(200);
       });
     });
 
@@ -100,15 +107,15 @@ describe('promise', () => {
   describe("timeout", () => {
 
     it("takes a promise and let's it resolve when it's fast enough", () =>
-      p.timeout(300, p.delay(100, 3))
+      timeout(300, delay(100, 3))
         .then(val => expect(val).to.equal(3)));
 
     it("takes a promise and makes it timeout when it's not fast enough", () =>
-      p.timeout(100, p.delay(300, 3))
+      timeout(100, delay(300, 3))
         .catch(err => expect(err).to.match(/timed out/i)));
 
     it("with error", () =>
-      p.timeout(100, new Promise((resolve, reject) => reject(new Error("foo"))))
+      timeout(100, new Promise((resolve, reject) => reject(new Error("foo"))))
         .catch(err => expect(err).to.match(/foo/i)));
   });
 
@@ -117,22 +124,23 @@ describe('promise', () => {
     it("resolves with condition", () => {
       var startTime = Date.now(), condition = false;
       setTimeout(() => condition = {}, 100);
-      return p.waitFor(() => condition).then((val) => {
+      return waitFor(() => condition).then((val) => {
         expect(val).equal(condition);
-        expect(Date.now() - startTime).to.be.above(80);
+        expect(Date.now() - startTime).above(80);
       });
     });
 
     it("timesout", () => {
       var startTime = Date.now(), condition = false;
       setTimeout(() => condition = {}, 100);
-      return p.waitFor(50, () => condition)
+      return waitFor(50, () => condition)
       .then(() => { throw new Error("then called"); })
       .catch((err) => {
         expect(err).to.match(/timeout/);
-        expect(Date.now() - startTime).to.be.below(70);
+        expect(Date.now() - startTime).below(70);
       });
     });
 
   });
+
 });

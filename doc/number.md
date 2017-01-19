@@ -1,32 +1,16 @@
-## lib/number.js
-
-Utility functions for JS Numbers.
+## number.js
 
 
-- [num](#num)
-  - [random](#num-random)
-  - [normalRandom](#num-normalRandom)
-  - [humanReadableByteSize](#num-humanReadableByteSize)
-  - [average](#num-average)
-  - [median](#num-median)
-  - [between](#num-between)
-  - [sort](#num-sort)
-  - [parseLength](#num-parseLength)
-  - [roundTo](#num-roundTo)
-  - [detent](#num-detent)
-  - [toDegrees](#num-toDegrees)
-  - [toRadians](#num-toRadians)
+* Utility functions for JS Numbers.
 
-#### <a name="num-random"></a>num.random(min, max)
+
+<!--*no toc!*-->
+
+#### <a name="random"></a>random(min, max)
 
  random number between (and including) `min` and `max`
 
-#### <a name="num-normalRandom"></a>num.normalRandom(mean, stdDev)
-
- returns randomized numbers in a normal distribution that can be
- controlled ising the `mean` and `stdDev` parameters
-
-#### <a name="num-humanReadableByteSize"></a>num.humanReadableByteSize(n)
+#### <a name="humanReadableByteSize"></a>humanReadableByteSize(n)
 
  interpret `n` as byte size and print a more readable version
  
@@ -35,23 +19,23 @@ Utility functions for JS Numbers.
 num.humanReadableByteSize(Math.pow(2,32)) // => "4096MB"
 ```
 
-#### <a name="num-average"></a>num.average(numbers)
+#### <a name="average"></a>average(numbers)
 
 
 
-#### <a name="num-median"></a>num.median(numbers)
+#### <a name="median"></a>median(numbers)
 
 
 
-#### <a name="num-between"></a>num.between(x, a, b, eps)
+#### <a name="between"></a>between(x, a, b, eps)
 
  is `a` <= `x` <= `y`?
 
-#### <a name="num-sort"></a>num.sort(arr)
+#### <a name="sort"></a>sort(arr)
 
  numerical sort, JavaScript native `sort` function is lexical by default.
 
-#### <a name="num-parseLength"></a>num.parseLength(string, toUnit)
+#### <a name="parseLength"></a>parseLength(string, toUnit)
 
  This converts the length value to pixels or the specified `toUnit`.
  length converstion, supported units are: mm, cm, in, px, pt, pc
@@ -66,11 +50,15 @@ num.parseLength('3cm', "in") // => 1.1811023622047243
 
  as defined in http://www.w3.org/TR/css3-values/#absolute-lengths
 
-#### <a name="num-roundTo"></a>num.roundTo(n, quantum)
+#### <a name="roundTo"></a>roundTo(n, quantum)
 
  `quantum` is something like 0.01,
 
-#### <a name="num-detent"></a>num.detent(n, detent, grid, snap)
+#### <a name="roundTo"></a>roundTo(n, quantum)
+
+ for JS rounding to work we need the reciprocal
+
+#### <a name="detent"></a>detent(n, detent, grid, snap)
 
  This function is useful to implement smooth transitions and snapping.
  Map all values that are within detent/2 of any multiple of grid to
@@ -96,7 +84,24 @@ num.detent(0.4,  0.2, 0.5) // => 0.5
 num.detent(0.6,  0.2, 0.5) // => 0.5
 ```
 
-#### <a name="num-toDegrees"></a>num.toDegrees(n)
+#### <a name="detent"></a>detent(n, detent, grid, snap)
+
+ Nearest multiple of grid
+
+#### <a name="detent"></a>detent(n, detent, grid, snap)
+
+ Snap to that multiple...
+
+#### <a name="detent"></a>detent(n, detent, grid, snap)
+
+ ...and return n
+ or compute nearest end of dead zone
+
+#### <a name="detent"></a>detent(n, detent, grid, snap)
+
+ and scale values between dead zones to fill range between multiples
+
+#### <a name="toDegrees"></a>toDegrees(n)
 
  
 
@@ -104,7 +109,7 @@ num.detent(0.6,  0.2, 0.5) // => 0.5
 num.toDegrees(Math.PI/2) // => 90
 ```
 
-#### <a name="num-toRadians"></a>num.toRadians(n)
+#### <a name="toRadians"></a>toRadians(n)
 
  
 

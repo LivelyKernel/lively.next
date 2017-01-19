@@ -1,56 +1,10 @@
-## lib/string.js
+## string.js
 
 String utility methods for printing, parsing, and converting strings.
 
-- [string](#string)
-  - [format](#string-format)
-  - [indent](#string-indent)
-  - [removeSurroundingWhitespaces](#string-removeSurroundingWhitespaces)
-  - [quote](#string-quote)
-  - [print](#string-print)
-  - [printNested](#string-printNested)
-  - [pad](#string-pad)
-  - [printTable](#string-printTable)
-  - [printTree](#string-printTree)
-  - [toArray](#string-toArray)
-  - [lines](#string-lines)
-  - [paragraphs](#string-paragraphs)
-  - [nonEmptyLines](#string-nonEmptyLines)
-  - [tokens](#string-tokens)
-  - [tableize](#string-tableize)
-  - [unescapeCharacterEntities](#string-unescapeCharacterEntities)
-  - [toQueryParams](#string-toQueryParams)
-  - [joinPath](#string-joinPath)
-  - [newUUID](#string-newUUID)
-  - [createDataURI](#string-createDataURI)
-  - [hashCode](#string-hashCode)
-  - [md5](#string-md5)
-  - [reMatches](#string-reMatches)
-  - [stringMatch](#string-stringMatch)
-  - [peekRight](#string-peekRight)
-  - [peekLeft](#string-peekLeft)
-  - [lineIndexComputer](#string-lineIndexComputer)
-  - [lineNumberToIndexesComputer](#string-lineNumberToIndexesComputer)
-  - [empty](#string-empty)
-  - [include](#string-include)
-  - [startsWith](#string-startsWith)
-  - [startsWithVowel](#string-startsWithVowel)
-  - [endsWith](#string-endsWith)
-  - [withDecimalPrecision](#string-withDecimalPrecision)
-  - [capitalize](#string-capitalize)
-  - [camelCaseString](#string-camelCaseString)
-  - [camelize](#string-camelize)
-  - [truncate](#string-truncate)
-  - [regExpEscape](#string-regExpEscape)
-  - [succ](#string-succ)
-  - [times](#string-times)
-  - [applyChange](#string-applyChange)
+- [d](#d)
 
-### <a name="string"></a>string
-
-
-
-#### <a name="string-format"></a>string.format()
+#### <a name="format"></a>format()
 
 
  Takes a variable number of arguments. The first argument is the format
@@ -61,7 +15,7 @@ String utility methods for printing, parsing, and converting strings.
 lively.lang.string.format("Hello %s!", "Lively User"); // => "Hello Lively User!"
 ```
 
-#### <a name="string-indent"></a>string.indent(str, indentString, depth)
+#### <a name="indent"></a>indent(str, indentString, depth)
 
 
  
@@ -70,15 +24,25 @@ lively.lang.string.format("Hello %s!", "Lively User"); // => "Hello Lively User!
 string.indent("Hello", "  ", 2) // => "    Hello"
 ```
 
-#### <a name="string-removeSurroundingWhitespaces"></a>string.removeSurroundingWhitespaces(str)
+#### <a name="minIndent"></a>minIndent(str, indentString)
 
+ Find out what the minum indentation of the text in str is
  
 
 ```js
-string.removeSurroundingWhitespaces("  hello\n  world  ") // => "hello\nworld"
+minIndent("    Hello", "  ") // => 2
 ```
 
-#### <a name="string-quote"></a>string.quote(str)
+#### <a name="changeIndent"></a>changeIndent(str, indentString, depth)
+
+ Add or remove indent from lines in str to match depth
+ 
+
+```js
+string.changeIndent("    Hello", "  ", 1) // => "  Hello"
+```
+
+#### <a name="quote"></a>quote(str)
 
  
 
@@ -86,7 +50,7 @@ string.removeSurroundingWhitespaces("  hello\n  world  ") // => "hello\nworld"
 string.print("fo\"o") // => "\"fo\\\"o\""
 ```
 
-#### <a name="string-print"></a>string.print(obj)
+#### <a name="print"></a>print(obj)
 
  Prints Arrays and escapes quotations. See `obj.inspect` for how to
  completely print / inspect JavaScript data strcutures
@@ -97,7 +61,7 @@ string.print([[1,2,3], "string", {foo: 23}])
      // => [[1,2,3],"string",[object Object]]
 ```
 
-#### <a name="string-printNested"></a>string.printNested(list, depth)
+#### <a name="printNested"></a>printNested(list, depth)
 
  
 
@@ -105,20 +69,20 @@ string.print([[1,2,3], "string", {foo: 23}])
 string.printNested([1,2,[3,4,5]]) // => "1\n2\n  3\n  4\n  5\n"
 ```
 
-#### <a name="string-pad"></a>string.pad(string, n, left)
+#### <a name="pad"></a>pad(string, n, left)
 
  
 
 ```js
-string.pad("Foo", 2) // => "Foo  "
-string.pad("Foo", 2, true) // => "  Foo"
+pad("Foo", 2) // => "Foo  "
+pad("Foo", 2, true) // => "  Foo"
 ```
 
-#### <a name="string-printTable"></a>string.printTable(tableArray, options)
+#### <a name="printTable"></a>printTable(tableArray, options)
 
 
  Takes a 2D Array and prints a table string. Kind of the reverse
- operation to `strings.tableize`
+ operation to `tableize`
  
 
 ```js
@@ -128,7 +92,7 @@ string.printTable([["aaa", "b", "c"], ["d", "e","f"]])
    // d   e f
 ```
 
-#### <a name="string-printTree"></a>string.printTree(rootNode, nodePrinter, childGetter, indent)
+#### <a name="printTree"></a>printTree(rootNode, nodePrinter, childGetter, indent)
 
 
  A generic function to print a tree representation from a nested data structure.
@@ -148,7 +112,7 @@ string.printTree(root, function(n) { return n.name; }, function(n) { return n.su
 // \-d
 ```
 
-#### <a name="string-toArray"></a>string.toArray(s)
+#### <a name="toArray"></a>toArray(s)
 
  
 
@@ -156,7 +120,7 @@ string.printTree(root, function(n) { return n.name; }, function(n) { return n.su
 string.toArray("fooo") // => ["f","o","o","o"]
 ```
 
-#### <a name="string-lines"></a>string.lines(str)
+#### <a name="lines"></a>lines(str)
 
  
 
@@ -164,7 +128,7 @@ string.toArray("fooo") // => ["f","o","o","o"]
 string.lines("foo\nbar\n\rbaz") // => ["foo","bar","baz"]
 ```
 
-#### <a name="string-paragraphs"></a>string.paragraphs(string, options)
+#### <a name="paragraphs"></a>paragraphs(string, options)
 
  
 
@@ -180,7 +144,7 @@ string.paragraphs(text, {keepEmptyLines: true}) // => [
   // "This is a sentence in  a new paragraph."]
 ```
 
-#### <a name="string-nonEmptyLines"></a>string.nonEmptyLines(str)
+#### <a name="nonEmptyLines"></a>nonEmptyLines(str)
 
  
 
@@ -188,7 +152,7 @@ string.paragraphs(text, {keepEmptyLines: true}) // => [
 string.nonEmptyLines("foo\n\nbar\n") // => ["foo","bar"]
 ```
 
-#### <a name="string-tokens"></a>string.tokens(str, regex)
+#### <a name="tokens"></a>tokens(str, regex)
 
  
 
@@ -196,7 +160,7 @@ string.nonEmptyLines("foo\n\nbar\n") // => ["foo","bar"]
 string.tokens(' a b c') => ['a', 'b', 'c']
 ```
 
-#### <a name="string-tableize"></a>string.tableize(s, options)
+#### <a name="tableize"></a>tableize(s, options)
 
 
  Takes a String representing a "table" and parses it into a 2D-Array (as
@@ -222,7 +186,7 @@ string.tableize(csv, {cellSplitter: /^\s*"|","|",?\s*$/g})
 //     ["FCTY","1st Century Bancshares, Inc",5.65]]
 ```
 
-#### <a name="string-unescapeCharacterEntities"></a>string.unescapeCharacterEntities(s)
+#### <a name="unescapeCharacterEntities"></a>unescapeCharacterEntities(s)
 
  Converts [character entities](http://dev.w3.org/html5/html-author/charref)
  into utf-8 strings
@@ -232,7 +196,7 @@ string.tableize(csv, {cellSplitter: /^\s*"|","|",?\s*$/g})
 string.unescapeCharacterEntities("foo &amp;&amp; bar") // => "foo && bar"
 ```
 
-#### <a name="string-toQueryParams"></a>string.toQueryParams(s, separator)
+#### <a name="toQueryParams"></a>toQueryParams(s, separator)
 
  
 
@@ -241,7 +205,7 @@ string.toQueryParams("http://example.com?foo=23&bar=test")
   // => {bar: "test", foo: "23"}
 ```
 
-#### <a name="string-joinPath"></a>string.joinPath()
+#### <a name="joinPath"></a>joinPath()
 
  Joins the strings passed as paramters together so that ea string is
  connected via a single "/".
@@ -251,7 +215,7 @@ string.toQueryParams("http://example.com?foo=23&bar=test")
 string.joinPath("foo", "bar") // => "foo/bar";
 ```
 
-#### <a name="string-newUUID"></a>string.newUUID()
+#### <a name="newUUID"></a>newUUID()
 
  
 
@@ -259,7 +223,7 @@ string.joinPath("foo", "bar") // => "foo/bar";
 string.newUUID() // => "3B3E74D0-85EA-45F2-901C-23ECF3EAB9FB"
 ```
 
-#### <a name="string-createDataURI"></a>string.createDataURI(content, mimeType)
+#### <a name="createDataURI"></a>createDataURI(content, mimeType)
 
 
  Takes some string representing content and a mime type.
@@ -271,7 +235,7 @@ string.newUUID() // => "3B3E74D0-85EA-45F2-901C-23ECF3EAB9FB"
 window.open(string.createDataURI('<h1>test</h1>', 'text/html'));
 ```
 
-#### <a name="string-hashCode"></a>string.hashCode(s)
+#### <a name="hashCode"></a>hashCode(s)
 
  [http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/]()
  
@@ -280,7 +244,7 @@ window.open(string.createDataURI('<h1>test</h1>', 'text/html'));
 string.hashCode("foo") // => 101574
 ```
 
-#### <a name="string-md5"></a>string.md5(string)
+#### <a name="md5"></a>md5(string)
 
  © Joseph Myers [http://www.myersdaily.org/joseph/javascript/md5-text.html]()
  
@@ -289,7 +253,7 @@ string.hashCode("foo") // => 101574
 string.md5("foo") // => "acbd18db4cc2f85cedef654fccc4a4d8"
 ```
 
-#### <a name="string-reMatches"></a>string.reMatches(string, re)
+#### <a name="reMatches"></a>reMatches(string, re)
 
  Different to the native `match` function this method returns an object
  with `start`, `end`, and `match` fields
@@ -300,7 +264,7 @@ string.reMatches("Hello World", /o/g)
   // => [{start: 4, end: 5, match: "o"},{start: 7, end: 8, match: "o"}]
 ```
 
-#### <a name="string-stringMatch"></a>string.stringMatch(s, patternString, options)
+#### <a name="stringMatch"></a>stringMatch(s, patternString, options)
 
  returns `{matched: true}` if success otherwise
  `{matched: false, error: EXPLANATION, pattern: STRING|RE, pos: NUMBER}`
@@ -317,22 +281,22 @@ string.stringMatch("foo 123 bar", "foo __/[0-9]+/__ bar") // => {matched: true}
     // }
 ```
 
-#### <a name="string-peekRight"></a>string.peekRight(s, start, needle)
+#### <a name="peekRight"></a>peekRight(s, start, needle)
 
  Finds the next occurence of `needle` (String or RegExp). Returns delta
  index.
  
 
 ```js
-string.peekRight("Hello World", 0, /o/g) // => 4
-string.peekRight("Hello World", 5, /o/) // => 2
+peekRight("Hello World", 0, /o/g) // => 4
+peekRight("Hello World", 5, /o/) // => 2
 ```
 
-#### <a name="string-peekLeft"></a>string.peekLeft(s, start, needle)
+#### <a name="peekLeft"></a>peekLeft(s, start, needle)
 
  Similar to `peekRight`
 
-#### <a name="string-lineIndexComputer"></a>string.lineIndexComputer(s)
+#### <a name="lineIndexComputer"></a>lineIndexComputer(s)
 
 
  For converting character positions to line numbers.
@@ -341,130 +305,133 @@ string.peekRight("Hello World", 5, /o/) // => 2
  
 
 ```js
-var idxComp = string.lineIndexComputer("Hello\nWorld\n\nfoo");
+var idxComp = lineIndexComputer("Hello\nWorld\n\nfoo");
 idxComp(3) // => 0 (index 3 is "l")
 idxComp(6) // => 1 (index 6 is "W")
 idxComp(12) // => 2 (index 12 is "\n")
 ```
 
-#### <a name="string-lineNumberToIndexesComputer"></a>string.lineNumberToIndexesComputer(s)
+#### <a name="lineNumberToIndexesComputer"></a>lineNumberToIndexesComputer(s)
 
 
  For converting line numbers to [startIndex, endIndex]
  
 
 ```js
-var idxComp = string.lineNumberToIndexesComputer("Hello\nWorld\n\nfoo");
+var idxComp = lineNumberToIndexesComputer("Hello\nWorld\n\nfoo");
 idxComp(1) // => [6,12]
 ```
 
-#### <a name="string-empty"></a>string.empty(s)
+#### <a name="empty"></a>empty(s)
 
 
 
-#### <a name="string-include"></a>string.include(s, pattern)
+#### <a name="startsWithVowel"></a>startsWithVowel(s)
 
- 
 
-```js
-string.include("fooo!", "oo") // => true
-```
 
-#### <a name="string-startsWith"></a>string.startsWith(s, pattern)
+### <a name="d"></a>d
 
  
 
 ```js
-string.startsWith("fooo!", "foo") // => true
+endsWith("fooo!", "o!") // => true
 ```
 
-#### <a name="string-startsWithVowel"></a>string.startsWithVowel(s)
-
-
-
-#### <a name="string-endsWith"></a>string.endsWith(s, pattern)
-
- 
-
-```js
-string.endsWith("fooo!", "o!") // => true
-```
-
-#### <a name="string-withDecimalPrecision"></a>string.withDecimalPrecision(str, precision)
+#### <a name="withDecimalPrecision"></a>withDecimalPrecision(str, precision)
 
 
  
 
 ```js
-string.withDecimalPrecision("1.12345678", 3) // => "1.123"
+withDecimalPrecision("1.12345678", 3) // => "1.123"
 ```
 
-#### <a name="string-capitalize"></a>string.capitalize(s)
+#### <a name="capitalize"></a>capitalize(s)
 
  
 
 ```js
-string.capitalize("foo bar") // => "Foo bar"
+capitalize("foo bar") // => "Foo bar"
 ```
 
-#### <a name="string-camelCaseString"></a>string.camelCaseString(s)
+#### <a name="camelCaseString"></a>camelCaseString(s)
 
  Spaces to camels, including first char
  
 
 ```js
-string.camelCaseString("foo bar baz") // => "FooBarBaz"
+camelCaseString("foo bar baz") // => "FooBarBaz"
 ```
 
-#### <a name="string-camelize"></a>string.camelize(s)
+#### <a name="camelize"></a>camelize(s)
 
  Dashes to camels, excluding first char
  
 
 ```js
-string.camelize("foo-bar-baz") // => "fooBarBaz"
+camelize("foo-bar-baz") // => "fooBarBaz"
 ```
 
-#### <a name="string-truncate"></a>string.truncate(s, length, truncation)
+#### <a name="truncate"></a>truncate(s, length, truncation)
 
  Enforces that s is not more then `length` characters long.
  
 
 ```js
-string.truncate("123456789", 5) // => "12..."
+truncate("123456789", 5) // => "12..."
 ```
 
-#### <a name="string-regExpEscape"></a>string.regExpEscape(s)
+#### <a name="truncateLeft"></a>truncateLeft(s, length, truncation)
+
+ Enforces that s is not more then `length` characters long.
+ 
+
+```js
+truncate("123456789", 5) // => "12..."
+```
+
+#### <a name="regExpEscape"></a>regExpEscape(s)
 
  For creating RegExps from strings and not worrying about proper escaping
  of RegExp special characters to literally match those.
  
 
 ```js
-var re = new RegExp(string.regExpEscape("fooo{20}"));
+var re = new RegExp(regExpEscape("fooo{20}"));
 re.test("fooo") // => false
 re.test("fooo{20}") // => true
 ```
 
-#### <a name="string-succ"></a>string.succ(s)
+#### <a name="succ"></a>succ(s)
 
  Uses char code.
  
 
 ```js
-string.succ("a") // => "b"
-string.succ("Z") // => "["
+succ("a") // => "b"
+succ("Z") // => "["
 ```
 
-#### <a name="string-times"></a>string.times(s, count)
-
- 
-
-```js
-string.times("test", 3) // => "testtesttest"
-```
-
-#### <a name="string-applyChange"></a>string.applyChange(string, change)
+#### <a name="applyChange"></a>applyChange(string, change)
 
  change is of the form
  `{start: Number, end: Number, lines: [String], action: "insert"|"remove"}`
+
+#### <a name="levenshtein"></a>levenshtein(a, b)
+
+ How many edit operations separate string a from b?
+ MIT licensed, https://gist.github.com/andrei-
+ Copyright (c) 2011 Andrei Mackenzie and https://github.com/kigiri
+
+#### <a name="levenshtein"></a>levenshtein(a, b)
+
+ swap to save some memory O(min(a,b)) instead of O(a)
+
+#### <a name="levenshtein"></a>levenshtein(a, b)
+
+ init the row
+
+#### <a name="levenshtein"></a>levenshtein(a, b)
+
+ fill in the rest

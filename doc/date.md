@@ -1,14 +1,18 @@
-## lib/date.js
-
-Util functions to print and work with JS date objects.
+## date.js
 
 
-- [exports.date](#exports.date)
-  - [format](#exports.date-format)
-  - [equals](#exports.date-equals)
-  - [relativeTo](#exports.date-relativeTo)
+* Util functions to print and work with JS date objects.
 
-#### <a name="exports.date-format"></a>exports.date.format(date, mask, utc)
+
+- [dateFormat](#dateFormat)
+
+### <a name="dateFormat"></a>dateFormat
+
+
+ * Util functions to print and work with JS date objects.
+ 
+
+#### <a name="format"></a>format(date, mask, utc)
 
  Custom date / time stringifier. Provides default masks:
 
@@ -36,11 +40,11 @@ date.format(new Date(), date.format.masks.longTime) // => "7:13:31 PM PDT"
   date.format(new Date(), "yyyy/mm/dd") // => "2014/10/09"
 ```
 
-#### <a name="exports.date-equals"></a>exports.date.equals(date, otherDate)
+#### <a name="equals"></a>equals(date, otherDate)
 
 
 
-#### <a name="exports.date-relativeTo"></a>exports.date.relativeTo(date, otherDate)
+#### <a name="relativeTo"></a>relativeTo(date, otherDate)
 
  Prints a human readable difference of two Date objects. The older date
  goes first.

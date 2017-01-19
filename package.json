@@ -1,14 +1,10 @@
 {
   "name": "lively.lang",
-  "version": "0.8.0",
+  "version": "1.0.0",
   "description": "JavaScript utils providing useful abstractions for working with collections, functions, objects.",
-  "main": "index.js",
+  "main": "dist/lively.lang.js",
   "systemjs": {
     "main": "index.js",
-    "meta": {
-      "format": "cjs",
-      "defaultJSExtensions": true
-    },
     "map": {
       "path": {
         "node": "@node/path",
@@ -36,36 +32,47 @@
       }
     }
   },
-  "libFiles": [
-    "lib/base.js",
-    "lib/object.js",
-    "lib/class.js",
-    "lib/collection.js",
-    "lib/sequence.js",
-    "lib/tree.js",
-    "lib/function.js",
-    "lib/string.js",
-    "lib/number.js",
-    "lib/date.js",
-    "lib/promise.js",
-    "lib/events.js",
-    "lib/graph.js",
-    "lib/messenger.js",
-    "lib/worker.js"
-  ],
   "dependencies": {},
   "devDependencies": {
+    "babel-core": "^6.16.0",
+    "babel-plugin-external-helpers": "^6.8.0",
+    "babel-plugin-syntax-object-rest-spread": "^6.13.0",
+    "babel-plugin-transform-async-to-generator": "^6.16.0",
+    "babel-plugin-transform-object-rest-spread": "^6.16.0",
+    "babel-preset-es2015": "^6.16.0",
     "doc-comments": "*",
     "lively.ast": "*",
-    "uglify-js": "^2.6.1",
-    "expect.js": "*",
-    "mocha": "*"
+    "mocha-es6": "*",
+    "rollup": "^0.36.1",
+    "rollup-plugin-babel": "^2.6.1",
+    "uglify-js": "^2.7.5"
   },
   "scripts": {
-    "test": "node_modules/mocha/bin/mocha tests/*-test.js",
-    "doc": "node -e \"require('doc-comments')({intoFiles: true, files: JSON.parse(require('fs').readFileSync('./package.json')).libFiles.filter(ea => ea !== 'lib/base.js')})\"",
-    "build": "node build.js"
+    "test": "mocha-es6 tests/*-test.js",
+    "doc": "node -e \"require('doc-comments')({intoFiles: true, files: require('./package.json').libFiles})\"",
+    "build": "node tools/build.js"
   },
+  "libFiles": [
+    "string.js",
+    "number.js",
+    "object.js",
+    "properties.js",
+    "Path.js",
+    "array.js",
+    "array-projection.js",
+    "Group.js",
+    "graph.js",
+    "grid.js",
+    "interval.js",
+    "tree.js",
+    "function.js",
+    "closure.js",
+    "promise.js",
+    "date.js",
+    "messenger.js",
+    "events.js",
+    "worker.js"
+  ],
   "author": "Robert Krahn",
   "license": "MIT",
   "repository": {
