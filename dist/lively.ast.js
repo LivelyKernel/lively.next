@@ -11558,7 +11558,7 @@ var ComparisonVisitor = function (_Visitor2) {
   }, {
     key: "compareField",
     value: function compareField(field, node1, node2, state) {
-      node2 = lively.PropertyPath(state.completePath.join('.')).get(node2);
+      node2 = lively.lang.Path(state.completePath.join('.')).get(node2);
       if (node1 && node2 && node1[field] === node2[field]) return true;
       if (node1 && node1[field] === '*' || node2 && node2[field] === '*') return true;
       var fullPath = state.completePath.join('.') + '.' + field,
@@ -11570,7 +11570,7 @@ var ComparisonVisitor = function (_Visitor2) {
   }, {
     key: "accept",
     value: function accept(node1, node2, state, path) {
-      var patternNode = lively.PropertyPath(path.join('.')).get(node2);
+      var patternNode = lively.lang.Path(path.join('.')).get(node2);
       if (node1 === '*' || patternNode === '*') return;
       var nextState = {
         completePath: path,
@@ -13162,7 +13162,6 @@ var methods = {
     var parsed2 = parse(source, addLocations ? { locations: true } : undefined),
         visitor = new Visitor();
     if (subTreePath) parsed2 = lively_lang.Path(subTreePath).get(parsed2);
-
     visitor.accept = function (node, state, path) {
       path = path || [];
       var node2 = path.reduce(function (node, pathElem) {
