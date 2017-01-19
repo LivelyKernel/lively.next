@@ -72,7 +72,7 @@ function cacheMocha(mochaDirURL) {
   if (typeof System !== "undefined" && !System.get(mochaDirURL + "/mocha-es6.js")) {
     System.config({
       map: {
-        "mocha-es6": mochaDirURL,
+        "mocha-es6": mochaDirURL + "/index.js",
         "mocha": mochaDirURL + "/dist/mocha.js",
         "chai": mochaDirURL + "/dist/chai.js"
       }
