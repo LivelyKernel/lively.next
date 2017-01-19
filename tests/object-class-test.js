@@ -97,7 +97,7 @@ describe("object package", function() {
 
   describe("forking", () => {
     
-    it("forks from package", async () => {
+    xit("forks from package", async () => {
       var obj = {name: "testObject"};
       var p = ObjectPackage.forObject(obj, opts);
       expect(p).equals(ObjectPackage.forObject(obj, opts));
