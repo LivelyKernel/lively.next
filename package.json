@@ -49,9 +49,30 @@
   },
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
-    "doc": "node -e \"require('doc-comments')({intoFiles: true, files: JSON.parse(require('fs').readFileSync('./package.json')).libFiles.filter(ea => ea !== 'lib/base.js')})\"",
+    "doc": "node -e \"require('doc-comments')({intoFiles: true, files: require('./package.json').libFiles})\"",
     "build": "node tools/build.js"
   },
+  "libFiles": [
+    "string.js",
+    "number.js",
+    "object.js",
+    "properties.js",
+    "Path.js",
+    "array.js",
+    "array-projection.js",
+    "Group.js",
+    "graph.js",
+    "grid.js",
+    "interval.js",
+    "tree.js",
+    "function.js",
+    "closure.js",
+    "promise.js",
+    "date.js",
+    "messenger.js",
+    "events.js",
+    "worker.js"
+  ],
   "author": "Robert Krahn",
   "license": "MIT",
   "repository": {

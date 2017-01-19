@@ -1,14 +1,13 @@
-## lib/worker.js
-
-A platform-independent worker interface that will spawn new processes per
-worker (if the platform you use it on supports it).
+## worker.js
 
 
-- [worker](#worker)
-  - [fork](#worker-fork)
-  - [create](#worker-create)
+* A platform-independent worker interface that will spawn new processes per
+* worker (if the platform you use it on supports it).
 
-#### <a name="worker-fork"></a>worker.fork(options, workerFunc, thenDo)
+
+<!--*no toc!*-->
+
+#### <a name="fork"></a>fork(options, workerFunc, thenDo)
 
  Fork automatically starts a worker and calls `workerFunc`. `workerFunc`
  gets as a last paramter a callback, that, when invoked with an error and
@@ -33,7 +32,7 @@ worker.fork({args: [40]},
   function(err, result) { show(err ? err.stack : result); })
 ```
 
-#### <a name="worker-create"></a>worker.create(options)
+#### <a name="create"></a>create(options)
 
  Explicitly creates a first-class worker. Options:
  ```js
@@ -72,3 +71,16 @@ worker.sendTo("worker", "foo", {}, resultHandler);
 // 5. afterwards: shut it down
 worker.close(function(err) { err && show(String(err)); alertOK("worker shutdown"); })
 ```
+
+#### <a name="create"></a>create(options)
+
+ if (!exports.messenger)
+   throw new Error("worker.create requires messenger.js to be loaded!")
+ if (!exports.events)
+   throw new Error("worker.create requires events.js to be loaded!")
+ if (!exports.obj)
+   throw new Error("worker.create requires object.js to be loaded!")
+
+#### <a name="create"></a>create(options)
+
+runFunc, arg1, ... argN, thenDo

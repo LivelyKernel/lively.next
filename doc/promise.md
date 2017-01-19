@@ -1,20 +1,12 @@
-## lib/promise.js
-
-Methods helping with promises (Promise/A+ model). Not a promise shim.
+## promise.js
 
 
-- [exports](#exports)
-  - [promise](#exports-promise)
-- [exports.promise](#exports.promise)
-  - [delay](#exports.promise-delay)
-  - [delayReject](#exports.promise-delayReject)
-  - [timeout](#exports.promise-timeout)
-  - [deferred](#exports.promise-deferred)
-  - [convertCallbackFun](#exports.promise-convertCallbackFun)
-  - [convertCallbackFunWithManyArgs](#exports.promise-convertCallbackFunWithManyArgs)
-  - [chain](#exports.promise-chain)
+* Methods helping with promises (Promise/A+ model). Not a promise shim.
 
-#### <a name="exports-promise"></a>exports.promise(obj)
+
+<!--*no toc!*-->
+
+#### <a name="promise"></a>promise(obj)
 
  Promise object / function converter
  
@@ -28,29 +20,35 @@ lively.lang.promise(function(val, thenDo) { thenDo(null, val + 1) })(3)
   // => Promise({state: "fullfilled", value: 4})
 ```
 
-#### <a name="exports.promise-delay"></a>exports.promise.delay(ms, resolveVal)
+#### <a name="delay"></a>delay(ms, resolveVal)
 
  Like `Promise.resolve(resolveVal)` but waits for `ms` milliseconds
  before resolving
 
-#### <a name="exports.promise-delayReject"></a>exports.promise.delayReject(ms, rejectVal)
+#### <a name="delayReject"></a>delayReject(ms, rejectVal)
 
  like `promise.delay` but rejects
 
-#### <a name="exports.promise-timeout"></a>exports.promise.timeout(ms, promise)
+#### <a name="timeout"></a>timeout(ms, promise)
 
  Takes a promise and either resolves to the value of the original promise
  when it succeeds before `ms` milliseconds passed or fails with a timeout
  error
 
-#### <a name="exports.promise-deferred"></a>exports.promise.deferred()
+#### <a name="waitFor"></a>waitFor(ms, tester)
+
+ Tests for a condition calling function `tester` until the result is
+ truthy. Resolves with last return value of `tester`. If `ms` is defined
+ and `ms` milliseconds passed, reject with timeout error
+
+#### <a name="deferred"></a>deferred()
 
  returns an object
  `{resolve: FUNCTION, reject: FUNCTION, promise: PROMISE}`
  that separates the resolve/reject handling from the promise itself
  Similar to the deprecated `Promise.defer()`
 
-#### <a name="exports.promise-convertCallbackFun"></a>exports.promise.convertCallbackFun(func)
+#### <a name="convertCallbackFun"></a>convertCallbackFun(func)
 
  Takes a function that accepts a nodejs-style callback function as a last
  parameter and converts it to a function *not* taking the callback but
@@ -68,12 +66,20 @@ readFile("./some-file.txt")
   .catch(err => console.error("Could not read file!", err));
 ```
 
-#### <a name="exports.promise-convertCallbackFunWithManyArgs"></a>exports.promise.convertCallbackFunWithManyArgs(func)
+#### <a name="convertCallbackFun"></a>convertCallbackFun(func)
+
+args
+
+#### <a name="convertCallbackFunWithManyArgs"></a>convertCallbackFunWithManyArgs(func)
 
  like convertCallbackFun but the promise will be resolved with the
  all non-error arguments wrapped in an array.
 
-#### <a name="exports.promise-chain"></a>exports.promise.chain(promiseFuncs)
+#### <a name="convertCallbackFunWithManyArgs"></a>convertCallbackFunWithManyArgs(func)
+
+args
+
+#### <a name="chain"></a>chain(promiseFuncs)
 
  Similar to Promise.all but takes a list of promise-producing functions
  (instead of Promises directly) that are run sequentially. Each function
