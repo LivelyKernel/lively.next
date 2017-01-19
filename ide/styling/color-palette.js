@@ -481,12 +481,12 @@ export class ColorPalette extends Morph {
      return this.getSubmorphNamed("harmonySelector") || new DropDownSelector({
          name: "harmonySelector", target: this, 
          property: "harmony", isHaloItem: true,
-         values: {Complement: Complementary,
-                  Triadic: Triadic,
-                  Tetradic: Tetradic,
-                  Quadratic: Quadratic,
-                  Analogous: Analogous,
-                  Neutral: Neutral}
+         values: {Complement: () => Complementary,
+                  Triadic: () => Triadic,
+                  Tetradic: () => Tetradic,
+                  Quadratic: () => Quadratic,
+                  Analogous: () => Analogous,
+                  Neutral: () => Neutral}
      });
   }
 

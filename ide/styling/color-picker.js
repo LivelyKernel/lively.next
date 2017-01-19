@@ -237,6 +237,7 @@ export class ColorPicker extends Window {
     colorPalette.layout.col(2).fixed = 100;
     colorPalette.layout.row(0).fixed = this.colorDetails().height;
     colorPalette.layout.row(1).fixed = 20;
+    connect(colorPalette.get('field'), 'extent', colorPalette.get('field'), 'relayout');
     return colorPalette;
   }
   
@@ -259,9 +260,14 @@ export class ColorPicker extends Window {
 
   fieldPicker() {
     return [{
-      layout: new FillLayout({morphs: ["hue", "shade", "light"], spacing: {top: 10, bottom: 10}}),
       name: "field",
       fill: Color.transparent,
+      relayout() {
+        const bounds = this.innerBounds().insetBy(5);
+        this.getSubmorphNamed('hue').setBounds(bounds);
+        this.getSubmorphNamed('shade').setBounds(bounds);
+        this.getSubmorphNamed('light').setBounds(bounds);
+      },
       update(colorPicker) {
         this.getSubmorphNamed("hue").fill = Color.hsb(colorPicker.hue, 1, 1);
       },
@@ -298,7 +304,7 @@ export class ColorPicker extends Window {
         borderWidth: 3,
         extent: pt(18,18),
         update(colorPicker) {
-          this.position = colorPicker.pickerPosition;
+          this.position = colorPicker.pickerPosition.addXY(5,-5);
         },
         submorphs: [{
           type: "ellipse",
@@ -314,9 +320,11 @@ export class ColorPicker extends Window {
 
   scalePicker() {
     return this.getSubmorphNamed("scale") || new Morph({
-      layout: new FillLayout({morphs: ["hueGradient"], spacing: 9}),
       name: "scale",
       fill: Color.transparent,
+      update() {
+         this.getSubmorphNamed('hueGradient').setBounds(this.innerBounds().insetBy(5)); 
+      },
       submorphs: [{
         name: "hueGradient",
         borderRadius: 3,
