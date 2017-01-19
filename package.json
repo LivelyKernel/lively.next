@@ -1,6 +1,6 @@
 {
   "name": "lively.changesets",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Lively ChangeSets based on in-browser git branches",
   "author": "Christopher Schuster <cs@livoris.net>",
   "license": "MIT",
@@ -36,7 +36,7 @@
   "dependencies": {
     "lively.modules": "0.5.25",
     "lively.notifications": "^0.3.2",
-    "lively.lang": "^0.6.0",
+    "lively.lang": "^1.0.0",
     "lively-system-interface": "LivelyKernel/lively-system-interface",
     "js-git-browser": "LivelyKernel/js-git-browser"
   },
