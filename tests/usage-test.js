@@ -5,7 +5,7 @@ import { expect } from "mocha-es6";
 var isNodejs = System.get("@system-env").node;
 var GLOBAL = System.global
 
-import { chain } from "../index2.js";
+import { chain } from "../index.js";
 
 describe("usage", function() {
 
