@@ -1,11 +1,15 @@
 /*global require, Worker, URL, webkitURL, Blob, BlobBuilder, process, require*/
 
+
 /*
  * A platform-independent worker interface that will spawn new processes per
  * worker (if the platform you use it on supports it).
  */
-;(function(exports) {
-"use strict";
+
+import { makeEmitter } from "./events.js";
+import { newUUID } from "./string.js";
+import { waitFor } from "./function.js";
+import { create as messengerCreate } from "./messenger.js";
 
 var isNodejs = typeof require !== 'undefined' && typeof process !== 'undefined';
 
@@ -205,7 +209,7 @@ var BrowserWorker = {
     // creation of the worker and sends the setup message to the worker
     // for initializing it.
     function init(options, worker) {
-      exports.events.makeEmitter(worker);
+      makeEmitter(worker);
 
       if (!options.scriptsToLoad) {
         options.scriptsToLoad = [
@@ -303,7 +307,7 @@ var NodejsWorker = {
     // }
 
     var workerProc;
-    var worker = exports.events.makeEmitter({
+    var worker = makeEmitter({
       ready: false,
       errors: [],
 
@@ -455,154 +459,149 @@ Worker objects allow to fork processes in both Web and node.js JavaScript
 environments. They provide this mechanism using web workers in the browser and
 node.js child processes in node.js. The interface is unified for all platforms.
  */
-var worker = exports.worker = {
 
-  fork: function(options, workerFunc, thenDo) {
-    // Fork automatically starts a worker and calls `workerFunc`. `workerFunc`
-    // gets as a last paramter a callback, that, when invoked with an error and
-    // result object, ends the worker execution.
-    //
-    // Options are the same as in `create` except for an `args` property that
-    // can be an array of objects. These objects will be passed to `workerFunc`
-    // as arguments.
-    //
-    // Note: `workerFunc` will not be able to capture outside variables (create a
-    // closure).
-    //
-    // Example:
-    // // When running this inside a browser: Note how the UI does not block.
-    // worker.fork({args: [40]},
-    //   function(n, thenDo) {
-    //     function fib(n) { return n <= 1 ? n : fib(n-1) + fib(n-2); }
-    //     thenDo(null, fib(n));
-    //   },
-    //   function(err, result) { show(err ? err.stack : result); })
+function fork(options, workerFunc, thenDo) {
+  // Fork automatically starts a worker and calls `workerFunc`. `workerFunc`
+  // gets as a last paramter a callback, that, when invoked with an error and
+  // result object, ends the worker execution.
+  //
+  // Options are the same as in `create` except for an `args` property that
+  // can be an array of objects. These objects will be passed to `workerFunc`
+  // as arguments.
+  //
+  // Note: `workerFunc` will not be able to capture outside variables (create a
+  // closure).
+  //
+  // Example:
+  // // When running this inside a browser: Note how the UI does not block.
+  // worker.fork({args: [40]},
+  //   function(n, thenDo) {
+  //     function fib(n) { return n <= 1 ? n : fib(n-1) + fib(n-2); }
+  //     thenDo(null, fib(n));
+  //   },
+  //   function(err, result) { show(err ? err.stack : result); })
 
-    if (!thenDo) { thenDo = workerFunc; workerFunc = options; options = null; }
-    options = options || {};
-    var args = options.args || [];
-    var w = worker.create(options);
-    w.run.apply(w, [workerFunc].concat(args).concat(thenDo));
-    return w;
-  },
-
-  create: function(options) {
-    // Explicitly creates a first-class worker. Options:
-    // ```js
-    // {
-    //   workerId: STRING, // optional, id for worker, will be auto assigned if not provided
-    //   libLocation: STRING, // optional, path to where the lively.lang lib is located. Worker will try to find it automatically if not provided.
-    //   scriptsToLoad: ARRAY // optional, list of path/urls to load. Overwrites `libLocation`
-    // }
-    // ```
-    //
-    // Example:
-    // // this is just a helper function
-    // function resultHandler(err, result) { alert(err ? String(err) : result); }
-    //
-    // // 1. Create the worker
-    // var worker = lively.lang.worker.create({libLocation: baseURL});
-    //
-    // // 2. You can evaluate arbitrary JS code
-    // worker.eval("1+2", function(err, result) { show(err ? String(err) : result); });
-    //
-    // // 3. Arbitrary functions can be called inside the worker context.
-    // //    Note: functions shouldn't be closures / capture local state!) and passing
-    // //    in arguments!
-    // worker.run(
-    //   function(a, b, thenDo) { setTimeout(function() { thenDo(null, a+b); }, 300); },
-    //   19, 4, resultHandler);
-    //
-    // // 4. You can also install your own messenger services...
-    // worker.run(
-    //   function(thenDo) {
-    //     self.messenger.addServices({
-    //       foo: function(msg, messenger) { messenger.answer(msg, "bar!"); }
-    //     });
-    //     thenDo(null, "Service installed!");
-    //   }, resultHandler);
-    //
-    // // ... and call them via the messenger interface
-    // worker.sendTo("worker", "foo", {}, resultHandler);
-    //
-    // // 5. afterwards: shut it down
-    // worker.close(function(err) { err && show(String(err)); alertOK("worker shutdown"); })
-
-    options = options || {};
-    options.useMessenger = true;
-
-    if (!exports.messenger)
-      throw new Error("worker.create requires messenger.js to be loaded!")
-    if (!exports.events)
-      throw new Error("worker.create requires events.js to be loaded!")
-    if (!exports.obj)
-      throw new Error("worker.create requires object.js to be loaded!")
-
-    var workerId = options.workerId || exports.string.newUUID();
-
-    var messenger = exports.messenger.create({
-      sendTimeout: 5000,
-
-      send: function(msg, whenSend) {
-        messenger.worker.postMessage(msg);
-        whenSend();
-      },
-
-      listen: function(whenListening) {
-        var w = messenger.worker = isNodejs ? NodejsWorker.create(options) : BrowserWorker.create(options);
-        w.on("message", function(msg) { messenger.onMessage(msg); });
-        w.on('ready', function() { NodejsWorker.debug && console.log("WORKER READY!!!"); });
-        w.on('close', function() { NodejsWorker.debug && console.log("WORKER CLOSED...!!!") ;});
-        w.once('ready', whenListening);
-      },
-
-      close: function(whenClosed) {
-        if (!messenger.worker.ready) return whenClosed(null);
-        return messenger.sendTo(workerId, 'close', {}, function(err, answer) {
-          err = err || answer.data.error;
-          err && console.error("Error in worker messenger close: " + err.stack || err);
-          if (err) whenClosed(err);
-          else {
-            var closed = false;
-            messenger.worker.once('close', function() { closed = true; });
-            exports.fun.waitFor(1000, function() { return !!closed; }, whenClosed);
-          }
-        });
-      },
-
-      isOnline: function() { return messenger.worker && messenger.worker.ready; }
-
-    });
-
-    exports.obj.extend(messenger, {
-
-      eval: function(code, thenDo) {
-        messenger.sendTo(workerId, "remoteEval", {expr: code}, function(err, answer) {
-          thenDo(err, answer ? answer.data.result : null);
-        });
-      },
-
-      run: function(/*runFunc, arg1, ... argN, thenDo*/) {
-        var args = Array.prototype.slice.call(arguments),
-            workerFunc = args.shift(),
-            thenDo = args.pop();
-        if (typeof workerFunc !== "function") throw new Error("run: no function that should run in worker passed");
-        if (typeof thenDo !== "function") throw new Error("run: no callback passed");
-
-        return messenger.sendTo(workerId, 'run',  {func: String(workerFunc), args: args}, function(err, answer) {
-          thenDo(err || answer.data.error, answer ? answer.data.result : null);
-        });
-      }
-
-    });
-
-    messenger.listen();
-
-    return messenger;
-  }
+  if (!thenDo) { thenDo = workerFunc; workerFunc = options; options = null; }
+  options = options || {};
+  var args = options.args || [];
+  var w = create(options);
+  w.run.apply(w, [workerFunc].concat(args).concat(thenDo));
+  return w;
 }
 
-})(typeof require !== "undefined" && typeof exports !== "undefined" ?
-  require('./base') :
-  (typeof lively !== "undefined" && lively.lang ?
-     lively.lang : {}));
+function create(options) {
+  // Explicitly creates a first-class worker. Options:
+  // ```js
+  // {
+  //   workerId: STRING, // optional, id for worker, will be auto assigned if not provided
+  //   libLocation: STRING, // optional, path to where the lively.lang lib is located. Worker will try to find it automatically if not provided.
+  //   scriptsToLoad: ARRAY // optional, list of path/urls to load. Overwrites `libLocation`
+  // }
+  // ```
+  //
+  // Example:
+  // // this is just a helper function
+  // function resultHandler(err, result) { alert(err ? String(err) : result); }
+  //
+  // // 1. Create the worker
+  // var worker = lively.lang.worker.create({libLocation: baseURL});
+  //
+  // // 2. You can evaluate arbitrary JS code
+  // worker.eval("1+2", function(err, result) { show(err ? String(err) : result); });
+  //
+  // // 3. Arbitrary functions can be called inside the worker context.
+  // //    Note: functions shouldn't be closures / capture local state!) and passing
+  // //    in arguments!
+  // worker.run(
+  //   function(a, b, thenDo) { setTimeout(function() { thenDo(null, a+b); }, 300); },
+  //   19, 4, resultHandler);
+  //
+  // // 4. You can also install your own messenger services...
+  // worker.run(
+  //   function(thenDo) {
+  //     self.messenger.addServices({
+  //       foo: function(msg, messenger) { messenger.answer(msg, "bar!"); }
+  //     });
+  //     thenDo(null, "Service installed!");
+  //   }, resultHandler);
+  //
+  // // ... and call them via the messenger interface
+  // worker.sendTo("worker", "foo", {}, resultHandler);
+  //
+  // // 5. afterwards: shut it down
+  // worker.close(function(err) { err && show(String(err)); alertOK("worker shutdown"); })
+
+  options = options || {};
+  options.useMessenger = true;
+
+  // if (!exports.messenger)
+  //   throw new Error("worker.create requires messenger.js to be loaded!")
+  // if (!exports.events)
+  //   throw new Error("worker.create requires events.js to be loaded!")
+  // if (!exports.obj)
+  //   throw new Error("worker.create requires object.js to be loaded!")
+
+  var workerId = options.workerId || newUUID();
+
+  var messenger = messengerCreate({
+    sendTimeout: 5000,
+
+    send: function(msg, whenSend) {
+      messenger.worker.postMessage(msg);
+      whenSend();
+    },
+
+    listen: function(whenListening) {
+      var w = messenger.worker = isNodejs ? NodejsWorker.create(options) : BrowserWorker.create(options);
+      w.on("message", function(msg) { messenger.onMessage(msg); });
+      w.on('ready', function() { NodejsWorker.debug && console.log("WORKER READY!!!"); });
+      w.on('close', function() { NodejsWorker.debug && console.log("WORKER CLOSED...!!!") ;});
+      w.once('ready', whenListening);
+    },
+
+    close: function(whenClosed) {
+      if (!messenger.worker.ready) return whenClosed(null);
+      return messenger.sendTo(workerId, 'close', {}, function(err, answer) {
+        err = err || answer.data.error;
+        err && console.error("Error in worker messenger close: " + err.stack || err);
+        if (err) whenClosed(err);
+        else {
+          var closed = false;
+          messenger.worker.once('close', function() { closed = true; });
+          waitFor(1000, function() { return !!closed; }, whenClosed);
+        }
+      });
+    },
+
+    isOnline: function() { return messenger.worker && messenger.worker.ready; }
+
+  });
+
+  Object.assign(messenger, {
+
+    eval(code, thenDo) {
+      messenger.sendTo(workerId, "remoteEval", {expr: code}, function(err, answer) {
+        thenDo(err, answer ? answer.data.result : null);
+      });
+    },
+
+    run(/*runFunc, arg1, ... argN, thenDo*/) {
+      var args = Array.prototype.slice.call(arguments),
+          workerFunc = args.shift(),
+          thenDo = args.pop();
+      if (typeof workerFunc !== "function") throw new Error("run: no function that should run in worker passed");
+      if (typeof thenDo !== "function") throw new Error("run: no callback passed");
+
+      return messenger.sendTo(workerId, 'run',  {func: String(workerFunc), args: args}, function(err, answer) {
+        thenDo(err || answer.data.error, answer ? answer.data.result : null);
+      });
+    }
+
+  });
+
+  messenger.listen();
+
+  return messenger;
+}
+
+export { fork, create }

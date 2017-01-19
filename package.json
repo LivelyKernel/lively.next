@@ -1,14 +1,10 @@
 {
   "name": "lively.lang",
-  "version": "0.8.0",
+  "version": "1.0.0",
   "description": "JavaScript utils providing useful abstractions for working with collections, functions, objects.",
-  "main": "index.js",
+  "main": "dist/lively.lang.js",
   "systemjs": {
     "main": "index.js",
-    "meta": {
-      "format": "cjs",
-      "defaultJSExtensions": true
-    },
     "map": {
       "path": {
         "node": "@node/path",
@@ -36,35 +32,24 @@
       }
     }
   },
-  "libFiles": [
-    "lib/base.js",
-    "lib/object.js",
-    "lib/class.js",
-    "lib/collection.js",
-    "lib/sequence.js",
-    "lib/tree.js",
-    "lib/function.js",
-    "lib/string.js",
-    "lib/number.js",
-    "lib/date.js",
-    "lib/promise.js",
-    "lib/events.js",
-    "lib/graph.js",
-    "lib/messenger.js",
-    "lib/worker.js"
-  ],
   "dependencies": {},
   "devDependencies": {
     "doc-comments": "*",
     "lively.ast": "*",
-    "uglify-js": "^2.6.1",
-    "expect.js": "*",
-    "mocha": "*"
+    "mocha-es6": "*",
+    "babel-core": "^6.16.0",
+    "babel-plugin-external-helpers": "^6.8.0",
+    "babel-plugin-syntax-object-rest-spread": "^6.13.0",
+    "babel-plugin-transform-async-to-generator": "^6.16.0",
+    "babel-plugin-transform-object-rest-spread": "^6.16.0",
+    "babel-preset-es2015": "^6.16.0",
+    "rollup": "^0.36.1",
+    "rollup-plugin-babel": "^2.6.1"
   },
   "scripts": {
-    "test": "node_modules/mocha/bin/mocha tests/*-test.js",
+    "test": "mocha-es6 tests/*-test.js",
     "doc": "node -e \"require('doc-comments')({intoFiles: true, files: JSON.parse(require('fs').readFileSync('./package.json')).libFiles.filter(ea => ea !== 'lib/base.js')})\"",
-    "build": "node build.js"
+    "build": "node tools/build.js"
   },
   "author": "Robert Krahn",
   "license": "MIT",

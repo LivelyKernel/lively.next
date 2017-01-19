@@ -1,13 +1,8 @@
-/*global beforeEach, afterEach, describe, it*/
+/*global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout*/
 
-var isNodejs = typeof module !== 'undefined' && typeof require !== 'undefined';
-var Global = typeof window !== 'undefined' ? window : global;
-var Global = isNodejs ? global : window;
-var expect = Global.expect || require('expect.js');
-var mocha = Global.mocha || require('mocha');
-var lively = Global.lively || {}; lively.lang = lively.lang || require('../index');
+import { expect } from "mocha-es6";
+import { sortByReference, hull, reduce, invert, subgraphReachableBy } from "../graph.js";
 
-var graph = lively.lang.graph;
 
 describe('graph', function() {
 
@@ -22,18 +17,18 @@ describe('graph', function() {
   describe('hull', function() {
 
     it("can be computed", function() {
-      expect(graph.hull(testGraph, "d")).to.eql(["c", "f"]);
-      expect(graph.hull(testGraph, "e")).to.eql(['a', 'f', 'b', 'c', 'd', 'e']);
-      expect(graph.hull(testGraph, "e", ["b"])).to.eql(["a", "f", "c"]);
-      expect(graph.hull(testGraph, "e", [], 2)).to.eql(['a', 'f', 'b', 'c']);
+      expect(hull(testGraph, "d")).to.eql(["c", "f"]);
+      expect(hull(testGraph, "e")).to.eql(['a', 'f', 'b', 'c', 'd', 'e']);
+      expect(hull(testGraph, "e", ["b"])).to.eql(["a", "f", "c"]);
+      expect(hull(testGraph, "e", [], 2)).to.eql(['a', 'f', 'b', 'c']);
     });
 
     it("reachable subgraph", function() {
-      expect(graph.subgraphReachableBy(testGraph, "d", []))
+      expect(subgraphReachableBy(testGraph, "d", []))
         .to.eql({"d": ["c", "f"], "c": [], "f": []});
-      expect(graph.subgraphReachableBy(testGraph, "e", [], 2))
+      expect(subgraphReachableBy(testGraph, "e", [], 2))
         .to.eql({e: [ 'a', 'f' ], a: [ 'b', 'c' ], f: []});
-      expect(graph.subgraphReachableBy(testGraph, "e", ["a"], 2))
+      expect(subgraphReachableBy(testGraph, "e", ["a"], 2))
         .to.eql({e: ['f' ], f: []});
     });
 
@@ -43,7 +38,7 @@ describe('graph', function() {
     it("inverts references", () => {
       var g = {"a": ["b", "c"], "b": ["c"], "c": ["a"]},
           expected = {"a": ["c"], "b": ["a"], "c": ["a", "b"]};
-      expect(graph.invert(g)).to.eql(expected);
+      expect(invert(g)).to.eql(expected);
     });
   });
 
@@ -51,7 +46,7 @@ describe('graph', function() {
 
     it("works", () => {
       var depGraph = {a: ["b", "c"],b: ["c"]},
-          result = graph.reduce((akk, ea, i) => akk + ` ${ea} ${i}`, depGraph, "a", "");
+          result = reduce((akk, ea, i) => akk + ` ${ea} ${i}`, depGraph, "a", "");
       expect(result).to.equal(" a 0 b 1 c 2");
     });
 
@@ -61,7 +56,7 @@ describe('graph', function() {
 
     it("sorts into groups", () => {
       var depGraph = {a: ["b", "c"], b: ["c"], c: ["b"]};
-      expect(graph.sortByReference(depGraph, "a")).to.eql([["c"], ["b"], ["a"]]);
+      expect(sortByReference(depGraph, "a")).to.eql([["c"], ["b"], ["a"]]);
     });
 
   });
