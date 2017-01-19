@@ -136,7 +136,7 @@ export default class TextEditor extends Morph {
 
     var [input, loadButton, saveButton, removeButton, contentText] = this.submorphs;
     connect(this, 'extent', this, 'relayout');
-    connect(input, 'input', this, 'location');
+    connect(input, 'inputAccepted', this, 'location');
     connect(loadButton, 'fire', this, 'execCommand', {converter: () => "load file"});
     connect(saveButton, 'fire', this, 'execCommand', {converter: () => "save file"});
     connect(removeButton, 'fire', this, 'execCommand', {converter: () => "remove file"});

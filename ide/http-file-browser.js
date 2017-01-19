@@ -400,7 +400,7 @@ export default class HTTPFileBrowser extends Morph {
         deleteFileButton =   this.addMorph({name: "deleteFileButton",   ...btnStyle, label: Label.icon("trash-o"), tooltip: "delete selected file"});
 
     connect(this, 'extent', this, 'relayout');
-    connect(locationInput, 'input', this, 'onLocationChanged');
+    connect(locationInput, 'inputAccepted', this, 'onLocationChanged');
     connect(fileTree, 'selection', this, 'showSelectedFile');
 
     connect(searchButton,       'fire', this, 'execCommand', {converter: () => "find file and select"});
