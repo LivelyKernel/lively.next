@@ -96,7 +96,7 @@ xdescribe('connection json serialization test', function() {
     objs[0].foo = 15;
     var serializer = lively.persistence.Serializer.createObjectGraphLinearizerForCopy();
     var copied = serializer.copy(objs[0]);
-    this.assert(!!lively.PropertyPath("attributeConnections.0.targetObj").get(copied), "obj 2 is gone!");
+    this.assert(!!lively.lang.Path("attributeConnections.0.targetObj").get(copied), "obj 2 is gone!");
   });
 // 
 });

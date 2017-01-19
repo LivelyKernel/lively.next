@@ -1,5 +1,4 @@
-import { string, arr } from "lively.lang";
-var Closure = lively.lang.Closure;
+import { string, arr, Closure } from "lively.lang";
 
 export { connect, disconnect, disconnectAll, once, signal, noUpdate }
 
