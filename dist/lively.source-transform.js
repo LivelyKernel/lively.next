@@ -911,7 +911,24 @@ var capturing = Object.freeze({
 	rewriteToRegisterModuleToCaptureSetters: rewriteToRegisterModuleToCaptureSetters
 });
 
+function stringifyFunctionWithoutToplevelRecorder(funcOrSourceOrAst) {
+  var varRecorderName = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "__lvVarRecorder";
+
+  // stringifyFunctionWithoutToplevelRecorder((x) => hello + x)
+  // => x => hello + x
+  // instead of String((x) => hello + x) // => x => __lvVarRecorder.hello + x
+  // when run in toplevel scope
+  if (typeof funcOrSourceOrAst === "function") funcOrSourceOrAst = String(funcOrSourceOrAst);
+  var parsed = typeof funcOrSourceOrAst === "string" ? lively_ast.parseFunction(funcOrSourceOrAst) : funcOrSourceOrAst,
+      replaced = lively_ast.ReplaceVisitor.run(parsed, function (node) {
+    var isVarRecorderMember = node.type === "MemberExpression" && node.object.type === "Identifier" && node.object.name === varRecorderName;
+    return isVarRecorderMember ? node.property : node;
+  });
+  return lively_ast.stringify(replaced);
+}
+
 exports.capturing = capturing;
+exports.stringifyFunctionWithoutToplevelRecorder = stringifyFunctionWithoutToplevelRecorder;
 
 }((this.lively.sourceTransform = this.lively.sourceTransform || {}),lively.lang,lively.classes,lively.ast));
 
