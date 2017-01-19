@@ -53,7 +53,7 @@ export function reloadLivelySystem() {
   
     var libs = [
       "node_modules/lively.modules/node_modules/systemjs/dist/system.src.js", 
-      "node_modules/lively.lang/dist/lively.lang.dev.js", 
+      "node_modules/lively.lang/dist/lively.lang.js", 
       "node_modules/lively.ast/dist/lively.ast_no-deps.js", 
       "node_modules/lively.vm/dist/lively.vm_no-deps.js",
       "node_modules/lively.modules/dist/lively.modules_no-deps.js", 
