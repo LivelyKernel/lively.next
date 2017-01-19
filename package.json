@@ -8,7 +8,7 @@
   "dependencies": {
     "bowser": "^1.4.1",
     "lively.graphics": "https://github.com/LivelyKernel/lively.graphics",
-    "lively.lang": "^0.7.0",
+    "lively.lang": "^1.0.0",
     "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2",
     "lively.bindings": "https://github.com/LivelyKernel/lively.bindings",
     "pepjs": "^0.4.1",
