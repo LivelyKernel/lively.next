@@ -98,7 +98,7 @@
 
     } else {
 
-      console.log("[lively.modules] SystemJS configured with systemjs-plugin-babel transpiler");
+      console.log("[lively.modules] SystemJS configured with systemjs-plugin-babel transpiler from " + pluginBabelPath);
       System.config({
         map: {
           'plugin-babel': pluginBabelPath + '/plugin-babel.js',
@@ -2543,7 +2543,7 @@ function prepareCodeForCustomCompile(System, source, moduleId, env, module, debu
 
   try {
     var rewrittenSource = header + lively_vm.evalCodeTransform(source, options) + footer;
-    if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = rewrittenSource;
+    if (debug && typeof $world !== "undefined" && $world.get("log") && $world.get("log").isText) $world.get("log").textString = rewrittenSource;
     return { source: rewrittenSource, options: options };
   } catch (e) {
     console.error("Error in prepareCodeForCustomCompile of " + moduleId + " " + e.stack);
@@ -2565,7 +2565,7 @@ function prepareTranslatedCodeForSetterCapture(System, source, moduleId, env, mo
 
   try {
     var rewrittenSource = lively_vm.evalCodeTransformOfSystemRegisterSetters(source, tfmOptions);
-    if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString += rewrittenSource;
+    if (debug && typeof $world !== "undefined" && $world.get("log") && $world.get("log").isText) $world.get("log").textString += rewrittenSource;
     return rewrittenSource;
   } catch (e) {
     console.error("Error in prepareTranslatedCodeForSetterCapture", e.stack);
@@ -2594,7 +2594,7 @@ function addNodejsWrapperSource(System, load) {
   if (m) {
     load.metadata.format = 'esm';
     load.source = "var exports = System._nodeRequire('" + m.id + "'); export default exports;\n" + lively_lang.properties.allOwnPropertiesOrFunctions(m.exports).map(function (k) {
-      return lively_lang.classHelper.isValidIdentifier(k) ? "export var " + k + " = exports['" + k + "'];" : "/*ignoring export \"" + k + "\" b/c it is not a valid identifier*/";
+      return lively_ast.isValidIdentifier(k) ? "export var " + k + " = exports['" + k + "'];" : "/*ignoring export \"" + k + "\" b/c it is not a valid identifier*/";
     }).join("\n");
     System.debug && console.log("[lively.modules customTranslate] loading %s from nodejs module cache", load.name);
     return true;
@@ -2629,7 +2629,7 @@ function instrumentSourceOfEsmModuleLoad(System, load) {
         declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end),
         declare = eval("var __moduleName = \"" + load.name + "\";(" + declareFuncSource + ");\n//# sourceURL=" + load.name + "\n");
 
-    if (System.debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = declare;
+    if (System.debug && $world !== "undefined" && $world.get("log") && $world.get("log").isText) $world.get("log").textString = declare;
 
     return { localDeps: depNames, declare: declare };
   });

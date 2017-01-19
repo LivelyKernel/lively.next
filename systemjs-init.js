@@ -96,7 +96,7 @@
 
     } else {
 
-      console.log("[lively.modules] SystemJS configured with systemjs-plugin-babel transpiler");
+      console.log("[lively.modules] SystemJS configured with systemjs-plugin-babel transpiler from " + pluginBabelPath);
       System.config({
         map: {
           'plugin-babel': pluginBabelPath + '/plugin-babel.js',
