@@ -56,7 +56,12 @@ export var defaultTrackerActions = {
   },
   async "leaveRoom": (tracker, {sender, data: {roomName}}, ackFn, socket) => {
       socket.leave(roomName)
-      ackFn ? ackFn({status: 'Left ' + roomName}) : {}   
+      ackFn ? ackFn({status: 'Left ' + roomName}) : {}
+      console.log(sender + ' left room ' + roomName)
+  },
+  async "clientRoomList": (tracker, {}, ackFn, socket) => {    
+   (ackFn && (typeof ackFn == 'function')) ? ackFn(socket.rooms) : console.log('Error: missing or invalid ack function')
+    
   },
   async "listRoom": (tracker, {sender, data: {roomName}}, ackFn, socket) => {
       var io = tracker.io
@@ -84,7 +89,8 @@ export var defaultClientActions = {
                       return ea[1]
                    })
     typeof ackFn === "function" && ackFn(response);
-  },  
+  },
+
   async "getRoomList": ({client,ackFn}) =>{
     var result = client._socketioClient.rooms
     ackFn(result)
