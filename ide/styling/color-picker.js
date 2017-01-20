@@ -1,6 +1,6 @@
 import {Window, Morph, Text, VerticalLayout, 
         GridLayout, HorizontalLayout, FillLayout} from "../../index.js";
-import {pt, Color, LinearGradient} from "lively.graphics";
+import {pt, Color, LinearGradient, rect} from "lively.graphics";
 import {signal, connect, disconnect} from "lively.bindings";
 import {Slider} from "../../widgets.js";
 import {obj, num} from "lively.lang";
@@ -150,7 +150,10 @@ export class ColorPicker extends Window {
   get styler() {
      return new StyleRules({
         key: {fill: Color.transparent, fontColor: Color.gray, fontWeight: 'bold'},
-        value: {fill: Color.transparent, fontColor: Color.gray.lighter()}
+        large: {fontSize: 20}, 
+        active: {fontColor: Color.orange, borderColor: Color.orange},
+        value: {fill: Color.transparent, fontColor: Color.gray.lighter()},
+        editable: {borderRadius: 4, borderWidth: 1, padding: rect(2,2,2,2), borderColor: Color.gray.lighter()}
      })
   }
 
@@ -362,7 +365,7 @@ export class ColorPicker extends Window {
     });
   }
 
-  keyValue({name, key, value, update}) {
+  keyValue({name, key, value, update, editable, setValue}) {
     return new Morph({
       update,
       name: name || key,
@@ -372,8 +375,22 @@ export class ColorPicker extends Window {
         this.submorphs[1].textString = obj.safeToString(value);
       },
       submorphs: [
-        {type: 'label', morphClasses: ['key'], value: key},
-        {type: 'label', morphClasses: ['value'], value: obj.safeToString(value)}]
+        {type: 'label', morphClasses: [editable && 'large', 'key'], value: key},
+        {type: editable ? 'text' : 'label', morphClasses: [editable && 'editable', 'value'], 
+         readOnly: !editable,
+         onFocus() {
+            this.morphClasses = [editable && 'editable', 'value', 'active'];
+         },
+         onBlur() {
+            this.morphClasses = [editable && 'editable', 'value'];
+         },
+         onKeyDown(evt) {
+            if ("Enter" == evt.keyCombo && editable && setValue) {
+               setValue(this.textString); this.owner.focus(); evt.stop();
+            } else {
+               super.onKeyDown(evt); 
+            }
+         }, textString: obj.safeToString(value)}]
     })
   }
 
@@ -384,6 +401,8 @@ export class ColorPicker extends Window {
       update(colorPicker) {
         this.setValue(colorPicker.color.toHexString());
       },
+      editable: true,
+      setValue: (v) => { this.color = Color.rgbHex(v) || this.color; this.update()},
       value: this.color.toHexString()})
   }
 
