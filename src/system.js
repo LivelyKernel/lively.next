@@ -4,6 +4,8 @@ import module from "./module.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+const packageCache = (System.get("@lively-env") && System.get("@lively-env").packageCache) || {packageToCache: {}};
+
 var isNode = System.get("@system-env").node;
 var initialSystem = initialSystem || System;
 
@@ -42,8 +44,8 @@ function livelySystemEnv(System) {
         packageConfigPaths: System.packageConfigPaths
       }, null, 2);
     },
-
     // this is where the canonical state of the module system is held...
+    packageCache,
     packages: System["__lively.modules__packages"]                               || (System["__lively.modules__packages"] = {}),
     loadedModules: System["__lively.modules__loadedModules"]                     || (System["__lively.modules__loadedModules"] = {}),
     pendingExportChanges: System["__lively.modules__pendingExportChanges"]       || (System["__lively.modules__pendingExportChanges"] = {}),

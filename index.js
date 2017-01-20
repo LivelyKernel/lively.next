@@ -336,10 +336,11 @@ export { isHookInstalled, installHook, removeHook };
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // instrumentation
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-import { wrapModuleLoad as _wrapModuleLoad, unwrapModuleLoad as _unwrapModuleLoad } from "./src/instrumentation.js";
+import { wrapModuleLoad as _wrapModuleLoad, unwrapModuleLoad as _unwrapModuleLoad,
+         enableCachedFetch, disableCachedFetch } from "./src/instrumentation.js";
 function wrapModuleLoad() { _wrapModuleLoad(defaultSystem); }
 function unwrapModuleLoad() { _unwrapModuleLoad(defaultSystem); }
-export { wrapModuleLoad, unwrapModuleLoad };
+export { wrapModuleLoad, unwrapModuleLoad, enableCachedFetch, disableCachedFetch };
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // cjs
