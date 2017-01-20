@@ -47,6 +47,9 @@ export var defaultTrackerActions = {
       })
   
   },  
+  async "getClients": (tracker, {trackerId},ackFn) => {    
+    ackFn(Array.from(tracker.clients))
+  },
    async "joinRoom": (tracker, {sender, data: {roomName}}, ackFn, socket) => {
       await socket.join(roomName)
       ackFn ? ackFn({status: 'Joined ' + roomName}) : {}   
