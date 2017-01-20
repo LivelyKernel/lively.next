@@ -85,6 +85,10 @@ export var defaultClientActions = {
                    })
     typeof ackFn === "function" && ackFn(response);
   },  
+  async "getRoomList": ({client,ackFn}) =>{
+    var result = client._socketioClient.rooms
+    ackFn(result)
+  },
   async "ask for": (tracker, {sender, data: {query}}, ackFn, socket) => {
     var promptMethod = query.match(/password|sudo/i) ? 'passwordPrompt' : 'prompt',
         answer = await $$world[promptMethod](query);
