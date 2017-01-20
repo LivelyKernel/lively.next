@@ -45,9 +45,12 @@ lively.modules.registerPackage(".")
         "./plugins/eval.js",
         "./plugins/l2l.js",
         "./plugins/remote-shell.js",
-        "./plugins/dav.js"
+        "./plugins/dav.js",
+        "./plugins/moduleBundler.js"
       ].map(path => System.import(path).then(mod => opts.plugins.push(new mod.default(opts))))
-    ).then(() => serverMod.start(opts));
+    ).then(() => {
+        serverMod.start(opts);
+     })
   })
   .then((server) => console.log(`[lively.server] ${step++}. ${server} running`))
 
