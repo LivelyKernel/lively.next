@@ -384,12 +384,14 @@ export class Halo extends Morph {
   }
 
   removeMorphFromSelection(morph) {
-     const world = this.world();
-     this.remove();
-     if (this.target.isMorphSelection) {
-        arr.remove(this.target.selectedMorphs, morph);
-        return world.showHaloForSelection(this.target.selectedMorphs, this.state.pointerId);
-     }
+    const world = this.world();
+    this.remove();
+    if (this.target.isMorphSelection) {
+      arr.remove(this.target.selectedMorphs, morph);
+      return world.showHaloForSelection(
+        this.target.selectedMorphs,
+        this.state.pointerId);
+    }
   }
 
   isAlreadySelected(morph) {
@@ -900,19 +902,25 @@ export class Halo extends Morph {
   }
 
   copyHalo() {
+
     return this.getSubmorphNamed("copy") || this.addMorph(new HaloItem({
       name: "copy",
       styleClasses: ["fa", "fa-clone"],
       halo: this,
       tooltip: "Copy morph",
+
       init: (hand) => {
-        var pos = this.target.globalPosition,
-            copy = this.target.copy().openInWorld();
+        var {target} = this, world = this.world();
+        this.remove();
+        var pos = target.globalPosition,
+            copy = world.addMorph(target.copy());
         copy.undoStart("copy-halo");
         hand.grab(copy);
         copy.globalPosition = pos;
+        world.addMorph(this);
         this.refocus(copy);
       },
+
       stop(hand) {
         var dropTarget = this.morphBeneath(hand.position),
             undo = this.halo.target.undoInProgress;
