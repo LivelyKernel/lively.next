@@ -56,7 +56,7 @@ export class TooltipViewer {
   }
 
   showTooltipFor(morph, hand) {
-    if (!morph.tooltip) return;
+    if (!morph.tooltip || !morph.world()) return;
     this.currentTooltip && this.currentTooltip.remove();
     var position = hand ? hand.position.addXY(10,7) : morph.globalBounds().bottomRight();
     this.currentTooltip = new Tooltip({position, description: morph.tooltip});
