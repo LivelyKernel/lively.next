@@ -1,15 +1,16 @@
 import {
-  Morph,
+  Morph, HorizontalLayout,
   Path,
   Text,
   GridLayout,
   morph
 } from "../index.js";
 import { Color, pt, rect, Rectangle, LinearGradient } from "lively.graphics";
-import { obj, arr, properties } from "lively.lang";
-import { connect, disconnect, disconnectAll, once } from "lively.bindings";
-
-import { inspectHalo, CloseHalo, GrabHalo, StyleHalo, NameHalo, morphHighlighter, resizeHandle, editHalo, copyHalo, dragHalo, rotateHalo, originHalo } from "./items.js";
+import { obj, properties, num, arr } from "lively.lang";
+import { connect, signal, disconnect, disconnectAll, once } from "lively.bindings";
+import { Icon } from "../icons.js";
+import Inspector from "../ide/js/inspector.js";
+import { styleHaloFor } from "./stylization.js";
 
 
 
@@ -32,7 +33,7 @@ export class Halo extends Morph {
 
   initButtons() {
     this.submorphs = this.submorphs.concat([
-      ...this.resizeHalos(),
+      ...this.createResizeHandles(),
       this.closeHalo(),
       this.dragHalo(),
       this.grabHalo(),
@@ -142,10 +143,10 @@ export class Halo extends Morph {
           {x, y, width, height} = targetBounds.intersection(worldBounds);
     this.setBounds(targetBounds.insetBy(-36).intersection(worldBounds));
     this.borderBox.setBounds(this.localize(pt(x,y)).extent(pt(width,height)));
-    if (this.activeButton) {
+    if (this.state.activeButton) {
       this.buttonControls.forEach(ea => ea.visible = false);
-      this.activeButton.visible = true;
-      this.updatePropertyDisplay(this.activeButton);
+      this.state.activeButton.visible = true;
+      this.updatePropertyDisplay(this.state.activeButton);
     } else {
       if (this.changingName) this.nameHalo().toggleActive([false]);
       this.buttonControls.forEach(b => { b.visible = true;});
@@ -204,33 +205,14 @@ export class Halo extends Morph {
     return this.getSubmorphNamed("grab") || this.addMorph(new GrabHalo({halo: this}));
   }
 
-  dragHalo() {
-    return this.getSubmorphNamed("drag") || this.addMorph(dragHalo(this));
-  }
+  dragHalo() { return DragHalo.for(this); }
+  inspectHalo() { return InspectHalo.for(this); }
+  editHalo() { return EditHalo.for(this); }
+  rotateHalo() { return RotateHalo.for(this); }
 
-  inspectHalo() {
-    return this.getSubmorphNamed("inspect") || this.addMorph(inspectHalo(this));
-  }
-
-  editHalo() {
-    return this.getSubmorphNamed("edit") || this.addMorph(editHalo(this));
-  }
-
-  rotateHalo() {
-    return this.getSubmorphNamed("rotate") || this.addMorph(rotateHalo(this));
-  }
-
-  copyHalo() {
-    return this.getSubmorphNamed("copy") || this.addMorph(copyHalo(this));
-  }
-
-  originHalo() {
-    return this.getSubmorphNamed("origin") || this.addMorph(originHalo(this));
-  }
-
-  styleHalo() {
-    return this.getSubmorphNamed("style") || this.addMorph(new StyleHalo({halo: this}));
-  }
+  copyHalo() { return CopyHalo.for(this); }
+  originHalo() { return OriginHalo.for(this); }
+  styleHalo() { return StyleHalo.for(this); }
 
   get buttonControls() { return this.submorphs.filter(m => m.isHaloItem); }
 
@@ -325,66 +307,19 @@ export class Halo extends Morph {
     return gradient.scaleBy(diagonal.dotProduct(delta) / diagonal.dotProduct(diagonal));
   }
 
-  getGlobalRotation() { return this.target.getGlobalTransform().getRotation(); }
+  resizeHandles() { return this.submorphs.filter(h => h.isResizeHandle); }
 
-  getGlobalScale() { return this.target.getGlobalTransform().getScale(); }
-
-  getResizeParts(rotation) {
-    if (rotation > 0) rotation = rotation - 360;
-    var offset = -8 - (rotation / 45).toFixed();
-    if (offset == 0) offset = 8;
-
-    return arr.zip(
-      arr.rotate(
-        [
-          ["topLeft", delta => delta.negated()],
-          ["topCenter", delta => delta.withX(0).negated()],
-          ["topRight", delta => delta.withX(0).negated()],
-          ["rightCenter", delta => pt(0, 0)],
-          ["bottomRight", delta => pt(0, 0)],
-          ["bottomCenter", delta => pt(0, 0)],
-          ["bottomLeft", delta => delta.withY(0).negated()],
-          ["leftCenter", delta => delta.withY(0).negated()]
-        ],
-        offset
-      ),
-      [
-        ["nwse-resize", "topLeft"],
-        ["ns-resize", "topCenter"],
-        ["nesw-resize", "topRight"],
-        ["ew-resize", "rightCenter"],
-        ["nwse-resize", "bottomRight"],
-        ["ns-resize", "bottomCenter"],
-        ["nesw-resize", "bottomLeft"],
-        ["ew-resize", "leftCenter"]
-      ]
-    );
-  }
-
-  resizeHandles() { return this.submorphs.filter(h => h.isHandle); }
+  createResizeHandles() { return ResizeHandle.resizersFor(this); }
 
   updateResizeHandles() {
     this.borderBox.remove();
     this.resizeHandles().forEach(h => h.remove());
-    this.submorphs = [this.borderBox, ...this.resizeHalos(), ...this.submorphs];
+    this.submorphs = [this.borderBox, ...this.createResizeHandles(), ...this.submorphs];
   }
 
-  resizeHalos() {
-    return this
-      .getResizeParts(this.getGlobalRotation())
-      .map(([c, l]) => this.placeHandleFor(c, l));
-  }
 
-  placeHandleFor([corner, deltaMask, originDelta], [nativeCursor, location]) {
-    return resizeHandle(
-      this,
-      corner,
-      deltaMask,
-      originDelta,
-      nativeCursor,
-      location
-    );
-  }
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // updating
 
   updatePropertyDisplay(haloItem) {
     var val = haloItem.valueForPropertyDisplay();
@@ -452,25 +387,10 @@ export class Halo extends Morph {
     rotationIndicator.vertices = [localize(originPos), localize(haloItem.center)];
   }
 
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // indicator - morph highlighter
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  clearMorphHighlighters() {
-    for (var id in this.morphHighlighters) {
-      this.morphHighlighters[id].remove();
-      delete this.morphHighlighters[id];
-    }
-  }
-
   toggleMorphHighlighter(active, target, showLayout = false) {
-    const h = morphHighlighter(this, target, showLayout);
-    if (active && target && target != this.world()) {
-      h && h.show(target);
-    } else {
-      h && h.deactivate(target);
-    }
+    const h = MorphHighlighter.for(this, target, showLayout);
+    if (active && target && target != this.world()) h && h.show(target);
+    else h && h.deactivate(target)
   }
 
 
@@ -539,7 +459,7 @@ class HaloPropertyDisplay extends Text {
   displayedValue() { return this.textString; }
 
   displayProperty(val) {
-    var activeButton = this.halo.activeButton;
+    var activeButton = this.halo.state.activeButton;
     val = String(val);
     this.visible = true;
     this.textString = val;
@@ -642,3 +562,819 @@ class MultiSelectionTarget extends Morph {
 
 }
 
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+
+// Abstract halo item, subclasses are specific ui elements that control /
+// display morph properties
+export class HaloItem extends Morph {
+
+  static for(halo) {
+    return halo.getSubmorphNamed(this.name) || halo.addMorph(new this({halo}));
+  }
+
+  get defaultProperties() {
+    return {
+      ...super.defaultProperties,
+      borderRadius: 15,
+      fill: Color.gray.withA(.7),
+      grabbable: false,
+      extent: pt(24,24),
+      name: this.constructor.name || "unnamed halo item"
+    }
+  }
+
+  get isEpiMorph() { return true; }
+  get isHaloItem() { return true };
+
+  get halo() { return this.getProperty("halo"); }
+  set halo(h) { return this.setProperty("halo", h); }
+
+  init() {}
+  update() {}
+  stop() {}
+  valueForPropertyDisplay() { return undefined; }
+
+}
+
+
+
+// name label + input of a morph
+class NameHolder extends Morph {
+
+  constructor(props) {
+    super({
+      tooltip: "Click to edit the morph's name",
+      draggable: false,
+      fill: Color.transparent,
+      layout: new HorizontalLayout({spacing: 7}),
+      ...props
+    });
+    this.nameHolder = new Text({
+      fill: Color.transparent,
+      fontColor: Color.darkgray,
+      active: true
+    });
+    this.submorphs = [this.nameHolder];
+  }
+
+  onHoverIn(evt) {
+    if (this.highlightOnHover && this.nameHolder.active) {
+      this.halo.toggleMorphHighlighter(true, this.target);
+      this.nameHolder.fontColor = Color.orange;
+    }
+  }
+
+  onHoverOut(evt) {
+    if (this.highlightOnHover) {
+      this.halo.toggleMorphHighlighter(false, this.target);
+      this.nameHolder.fontColor = Color.darkgray;
+    }
+  }
+
+  onKeyDown(evt) {
+    if ("Enter" == evt.keyCombo) {
+      this.updateName(this.nameHolder.textString);
+      evt.stop();
+    } else {
+      super.onKeyDown(evt);
+    }
+  }
+
+  onMouseUp() {
+    signal(this, "active", [true, this]);
+  }
+
+  onMouseDown(evt) {
+    this.nameHolder.fontColor = Color.darkgray;
+    this.halo.toggleMorphHighlighter(false, this.target);
+  }
+
+  onKeyUp(evt) {
+    const newName = this.nameHolder.textString, owner = this.target.owner;
+    this.validName = !owner || !owner.getSubmorphNamed(newName) ||
+      this.target.name == newName;
+    signal(this, "valid", [this.validName, newName]);
+  }
+
+  update() {
+    this.nameHolder.textString = this.target.name;
+    this.nameHolder.fit();
+  }
+
+  activate() {
+    this.nameHolder.readOnly = false;
+    this.nameHolder.active = true;
+    this.nameHolder.animate({opacity: 1});
+  }
+
+  deactivate() {
+    this.nameHolder.readOnly = true;
+    this.nameHolder.active = false;
+    this.nameHolder.animate({opacity: 0.3});
+  }
+
+  updateName(newName) {
+    if (this.validName) {
+      this.target.name = newName;
+      signal(this, "active", [false, this]);
+    }
+  }
+
+}
+
+export class NameHalo extends HaloItem {
+
+  constructor(props) {
+    super({
+      name: "name",
+      borderRadius: 15,
+      fill: Color.gray.withA(0.7),
+      borderColor: Color.green,
+      layout: new HorizontalLayout({spacing: 0}),
+      ...props
+    });
+
+    this.initNameHolders();
+
+    this.validityIndicator = Icon.makeLabel("check", {
+      fontColor: Color.green,
+      fontSize: 15,
+      padding: rect(4, 2, 4, 0)
+    });
+
+    this.alignInHalo();
+  }
+
+  targets() {
+    return this.halo.target.isMorphSelection
+      ? this.halo.target.selectedMorphs.map(target => {
+        return {target, highlightOnHover: true};
+      }) : [{target: this.halo.target, highlightOnHover: false}];
+  }
+
+  initNameHolders() {
+    this.nameHolders = this.targets().map(({target, highlightOnHover}) => {
+      const nh = new NameHolder({halo: this.halo, highlightOnHover, target});
+      connect(nh, "active", this, "toggleActive");
+      connect(nh, "valid", this, "toggleNameValid");
+      return nh;
+    });
+    this.submorphs = arr.interpose(this.nameHolders, {
+      extent: pt(1, 28),
+      fill: Color.black.withA(0.4)
+    });
+  }
+
+  toggleActive([active, nameHolder]) {
+    if (this.halo.changingName === active)
+      return;
+    this.halo.changingName = active;
+    if (active) {
+      this.nameHolders.forEach(nh => nh != nameHolder && nh.deactivate())
+      this.borderWidth = 3;
+      this.addMorph(this.validityIndicator);
+      setTimeout(() => nameHolder.nameHolder.selectAll());
+    } else {
+      this.nameHolders.forEach(nh => nh != nameHolder && nh.activate());
+      this.borderWidth = 0;
+      this.validityIndicator.remove();
+      this.halo.focus();
+    }
+    this.alignInHalo();
+  }
+
+  toggleNameValid([valid, name]) {
+    this.validName = valid;
+    if (valid) {
+      this.conflictingMorph = null;
+      this.borderColor = Color.green;
+      this.validityIndicator.nativeCursor = "auto";
+      this.validityIndicator.fontColor = Color.green;
+      Icon.setIcon(this.validityIndicator, "check");
+    } else {
+      this.conflictingMorph = this.get(name);
+      this.borderColor = Color.red;
+      this.validityIndicator.fontColor = Color.red;
+      this.validityIndicator.nativeCursor = "pointer";
+      Icon.setIcon(this.validityIndicator, "exclamation-circle");
+    }
+  }
+
+  alignInHalo() {
+    this.nameHolders.forEach(nh => nh.update())
+    var {x, y} = this.halo.innerBounds().bottomCenter().addPt(pt(0, 2));
+    this.topCenter = pt(Math.max(x, 30), Math.max(y, 80));
+  }
+
+  onMouseDown(evt) {
+    const m = this.conflictingMorph;
+    if (m) {
+      this.halo.toggleMorphHighlighter(true, m);
+      setTimeout(() => this.halo.toggleMorphHighlighter(false, m), 1000);
+    }
+  }
+
+}
+
+
+export class CloseHalo extends HaloItem {
+
+  static get name() { return "close"; }
+
+  get defaultProperties() {
+    return {
+      ...super.defaultProperties,
+      styleClasses: ["fa", "fa-close"],
+      draggable: false,
+      tooltip: "Remove this morph from the world"
+    };
+  }
+
+  update() {
+    var {halo} = this, o = halo.target.owner;
+    o.undoStart("close-halo");
+    halo.target.selectedMorphs ?
+      halo.target.selectedMorphs.forEach(m => m.remove()) :
+      halo.target.remove();
+    o.undoStop("close-halo");
+    halo.remove();
+  }
+
+  onMouseDown(evt) { this.update(); }
+}
+
+
+export class GrabHalo extends HaloItem {
+
+  static get name() { return "grab"; }
+
+  get defaultProperties() {
+    return {
+      ...super.defaultProperties,
+      name: "grab",
+      styleClasses: ["fa", "fa-hand-rock-o"],
+      tooltip: "Grab the morph"
+    }
+  }
+
+  valueForPropertyDisplay() {
+    var dropTarget = this.morphBeneath(this.hand.position),
+        belongsToHalo = dropTarget.isHaloItem || dropTarget.ownerChain().find(m => m.isHaloItem);
+    if (!belongsToHalo) {
+      this.halo.toggleMorphHighlighter(
+        dropTarget && dropTarget != this.world(),
+        dropTarget, true);
+      this.prevDropTarget && this.prevDropTarget != dropTarget &&
+        this.halo.toggleMorphHighlighter(false, this.prevDropTarget);
+        this.prevDropTarget = dropTarget;
+    }
+    return dropTarget && dropTarget.name;
+  }
+
+  init(hand) {
+    var undo = this.halo.target.undoStart("grab-halo");
+    undo.addTarget(this.halo.target.owner);
+    this.hand = hand;
+    this.halo.target.onGrab({hand});
+    this.halo.state.activeButton = this;
+  }
+
+  update() {
+    this.halo.alignWithTarget();
+  }
+
+  stop(hand) {
+    var undo = this.halo.target.undoInProgress,
+        dropTarget = this.morphBeneath(hand.position);
+    undo.addTarget(dropTarget);
+    dropTarget.onDrop({hand});
+    this.halo.state.activeButton = null;
+    this.halo.alignWithTarget();
+    this.halo.toggleMorphHighlighter(false, this.prevDropTarget);
+    MorphHighlighter.removeHighlightersFromHalo(this.halo);
+    this.halo.target.undoStop("grab-halo");
+  }
+
+  onDragStart(evt) {
+    this.init(evt.hand)
+  }
+
+  onDragEnd(evt) {
+    this.stop(evt.hand)
+  }
+
+}
+
+
+export class DragHalo extends HaloItem {
+
+  static get name() { return "drag"; }
+  get tooltip() { return "Change the morph's position. Press (alt) while dragging to align the morph's position along a grid."; }
+  get styleClasses() { return [...super.styleClasses, "fa", "fa-arrows"]; }
+
+  valueForPropertyDisplay() { return this.halo.target.position; }
+
+  updateAlignmentGuide(active) {
+    var mesh = this.halo.getSubmorphNamed("mesh");
+
+    if (!active) { mesh && mesh.remove(); return; }
+
+    var {height, width} = this.world().visibleBounds();
+
+    if (!mesh) {
+      var defaultGuideProps = {
+        borderStyle: "dotted",
+        borderWidth: 2,
+        borderColor: Color.orange
+      }
+      mesh = this.halo.addMorph(new Morph({
+        name: "mesh",
+        styleClasses: ["halo-mesh"],
+        extent: pt(width, height),
+        fill: null,
+        submorphs: [
+          new Path({name: "vertical", ...defaultGuideProps}),
+          new Path({name: "horizontal", ...defaultGuideProps})
+        ]
+      }));
+    }
+    mesh.moveBy(mesh.globalPosition.negated())
+    var {x, y} = this.halo.target.worldPoint(pt(0,0));
+    mesh.getSubmorphNamed("vertical").vertices = [pt(x,0), pt(x, height)];
+    mesh.getSubmorphNamed("horizontal").vertices = [pt(0,y), pt(width, y)];
+
+    this.focus();
+    return mesh;
+  }
+
+  init() {
+    const target = this.halo.target;
+    target.undoStart("drag-halo");
+    this.halo.state.activeButton = this;
+    this.actualPos = target.position;
+    this.targetTransform = target.owner.getGlobalTransform().inverse();
+  }
+
+  stop() {
+    this.halo.target.undoStop("drag-halo");
+    this.halo.state.activeButton = null;
+    this.halo.alignWithTarget();
+    this.updateAlignmentGuide(false);
+  }
+
+  update(delta, grid = false) {
+    var newPos = this.actualPos.addPt(this.targetTransform.transformDirection(delta));
+    this.actualPos = newPos;
+    if (grid) {
+      newPos = newPos.griddedBy(pt(10,10));
+    }
+    this.halo.target.position = newPos;
+    this.updateAlignmentGuide(grid);
+  }
+
+  onDragStart(evt) { this.init() }
+  onDrag(evt) { this.update(evt.state.dragDelta, evt.isAltDown()); }
+  onDragEnd(evt) { this.stop() }
+  onKeyUp(evt) { this.updateAlignmentGuide(false); }
+}
+
+
+export class InspectHalo extends HaloItem {
+
+  static get name() { return "inspect"; }
+  get styleClasses() { return [...super.styleClasses, "fa", "fa-gears"]; }
+  get draggable() { return false; }
+  get tooltip() { return "Inspect the morph's local state"; }
+
+  onMouseDown(evt) {
+    this.halo.remove();
+    Inspector.openInWindow({targetObject: this.halo.target});
+  }
+
+}
+
+
+export class EditHalo extends HaloItem {
+
+  static get name() { return "edit"; }
+  get styleClasses() { return [...super.styleClasses, "fa", "fa-wrench"]; }
+  get draggable() { return false; }
+  get tooltip() { return "Edit the morph's definition"; }
+
+  onMouseDown(evt) {
+    this.halo.world().execCommand("open object editor", {target: this.halo.target});
+    this.halo.remove();
+  }
+}
+
+export class RotateHalo extends HaloItem {
+
+  static get name() { return "rotate"; }
+
+  constructor(props) { super(props); this.adaptAppearance(false); }
+
+  get angle() { return this.getProperty("angle") || 0; }
+  set angle(val) { this.setProperty("angle", val); }
+  get scaleGauge() { return this.getProperty("scaleGauge") || null; }
+  set scaleGauge(val) { this.setProperty("scaleGauge", val); }
+  get initRotation() { return this.getProperty("initRotation") || 0; }
+  set initRotation(val) { this.setProperty("initRotation", val); }
+
+  valueForPropertyDisplay() {
+    var {scaleGauge, halo: {target: t}} = this;
+    return scaleGauge ?
+      t.scale.toFixed(4).toString() :
+      num.toDegrees(t.rotation).toFixed(1) + "°";
+  }
+
+  init(angleToTarget) {
+    this.detachFromLayout();
+    this.halo.target.undoStart("rotate-halo");
+    this.halo.state.activeButton = this;
+    this.angle = angleToTarget;
+    this.initRotation = this.halo.target.rotation;
+    this.halo.toggleRotationIndicator(true, this);
+  }
+
+  initScale(gauge) {
+    this.detachFromLayout();
+    this.halo.state.activeButton = this;
+    this.scaleGauge = gauge.scaleBy(1 / this.halo.target.scale);
+    this.halo.toggleRotationIndicator(true, this);
+  }
+
+  update(angleToTarget) {
+    this.scaleGauge = null;
+    var newRotation = this.initRotation + (angleToTarget - this.angle);
+    newRotation = num.toRadians(num.detent(num.toDegrees(newRotation), 10, 45))
+    this.halo.target.rotation = newRotation;
+    this.halo.toggleRotationIndicator(true, this);
+  }
+
+  updateScale(gauge) {
+    var {scaleGauge: scaleG, halo} = this;
+    if (!scaleG) scaleG = this.scaleGauge = gauge.scaleBy(1 / halo.target.scale);
+    this.angle = gauge.theta();
+    this.initRotation = halo.target.rotation;
+    halo.target.scale = num.detent(gauge.dist(pt(0,0)) / scaleG.dist(pt(0,0)), 0.1, 0.5);
+    halo.toggleRotationIndicator(true, this);
+  }
+
+  stop() {
+    this.attachToLayout();
+    this.scaleGauge = null;
+    this.halo.state.activeButton = null;
+    this.halo.alignWithTarget();
+    this.halo.toggleRotationIndicator(false, this);
+    this.halo.target.undoStop("rotate-halo");
+    this.halo.updateResizeHandles();
+  }
+
+  adaptAppearance(scaling) {
+    this.styleClasses = ["fa", scaling ? "fa-search-plus" : "fa-repeat"];
+    this.tooltip = scaling ? "Scale morph" : "Rotate morph";
+  }
+
+  detachFromLayout() {
+    this.savedLayout = this.halo.layout;
+    this.halo.layout = null;
+  }
+
+  attachToLayout() {
+    this.halo.layout = this.savedLayout;
+  }
+
+  // events
+  onDragStart(evt) {
+    this.adaptAppearance(evt.isShiftDown());
+    if (evt.isShiftDown()) {
+      this.initScale(evt.position.subPt(this.halo.target.globalPosition));
+    } else {
+      this.init(evt.position.subPt(this.halo.target.globalPosition).theta());
+    }
+  }
+
+  onDrag(evt) {
+    this.globalPosition = evt.position.addPt(pt(-10,-10));
+    this.adaptAppearance(evt.isShiftDown());
+    if (evt.isShiftDown()) {
+      this.updateScale(evt.position.subPt(this.halo.target.globalPosition));
+    } else {
+      this.update(evt.position.subPt(this.halo.target.globalPosition).theta());
+    }
+  }
+
+  onDragEnd(evt) {
+    this.adaptAppearance(evt.isShiftDown());
+    this.stop();
+  }
+
+  onKeyDown(evt) {
+    this.adaptAppearance(evt.isShiftDown());
+  }
+
+  onKeyUp(evt) {
+    this.adaptAppearance(evt.isShiftDown());
+  }
+}
+
+
+export class CopyHalo extends HaloItem {
+
+  static get name() { return "copy"; }
+  get tooltip() { return "Copy morph"; }
+  get styleClasses() { return [...super.styleClasses, "fa", "fa-clone"]; }
+
+  init(hand) {
+    var {halo} = this, {target} = halo, world = halo.world();
+    halo.remove();
+    var pos = target.globalPosition, copy = world.addMorph(target.copy());
+    copy.undoStart("copy-halo");
+    hand.grab(copy);
+    copy.globalPosition = pos;
+    world.addMorph(halo);
+    halo.refocus(copy);
+  }
+
+  stop(hand) {
+    var dropTarget = this.morphBeneath(hand.position),
+        undo = this.halo.target.undoInProgress;
+    undo.addTarget(dropTarget);
+    hand.dropMorphsOn(dropTarget);
+    this.halo.target.undoStop("copy-halo");
+    this.halo.alignWithTarget();
+  }
+
+  onDragStart(evt) { this.init(evt.hand) }
+  onDragEnd(evt) { this.stop(evt.hand); }
+}
+
+
+export class OriginHalo extends HaloItem {
+
+  static get name() { return "origin"; }
+
+  get fill() { return Color.red; }
+  get extent() { return pt(15, 15); }
+  get tooltip() { return "Change the morph's origin"; }
+
+  get defaultProperties() {
+    return {
+      ...super.defaultProperties,
+      borderColor: Color.black,
+      borderWidth: 2
+    };
+  }
+
+  computePositionAtTarget() {
+    return this.halo
+      .localizePointFrom(pt(0, 0), this.halo.target)
+      .subPt(pt(7.5, 7.5));
+  }
+
+  alignInHalo() {
+    this.position = this.computePositionAtTarget();
+  }
+
+  valueForPropertyDisplay() { return this.halo.target.origin; }
+
+  init() {
+    this.halo.target.undoStart("origin-halo");
+    this.halo.state.activeButton = this;
+  }
+
+  stop() {
+    this.halo.target.undoStop("origin-halo");
+    this.halo.state.activeButton = null;
+    this.halo.alignWithTarget();
+  }
+
+  update(delta) {
+    var {halo} = this,
+        oldOrigin = halo.target.origin,
+        globalOrigin = halo.target.worldPoint(oldOrigin),
+        newOrigin = halo.target.localize(globalOrigin.addPt(delta));
+    delta = newOrigin.subPt(oldOrigin);
+    halo.target.adjustOrigin(halo.target.origin.addPt(delta));
+  }
+
+  onDragStart(evt) { this.init(); }
+  onDragEnd(evt) { this.stop(); }
+  onDrag(evt) { this.update(evt.state.dragDelta); }
+
+}
+
+
+export class StyleHalo extends HaloItem {
+
+  static get name() { return "style"; }
+  get styleClasses() { return [...super.styleClasses, "fa", "fa-picture-o"]; }
+  get tooltip() { return "Open stylize editor"; }
+
+  onMouseDown(evt) {
+    var {halo} = this;
+    const styleHalo = styleHaloFor(halo.target, halo.state.pointerId);
+    halo.world().addMorph(styleHalo);
+    // connect(halo.world(), 'onMouseDown', styleHalo, 'remove');
+    halo.remove();
+  }
+
+}
+
+
+// The white thingies at the corner and edges of a morph
+export class ResizeHandle extends HaloItem {
+
+  static getResizeParts(rotation) {
+    if (rotation > 0) rotation = rotation - 360;
+    var offset = -8 - (rotation / 45).toFixed();
+    if (offset == 0) offset = 8;
+  
+    return arr.zip(
+      arr.rotate(
+        [
+          ["topLeft", delta => delta.negated()],
+          ["topCenter", delta => delta.withX(0).negated()],
+          ["topRight", delta => delta.withX(0).negated()],
+          ["rightCenter", delta => pt(0, 0)],
+          ["bottomRight", delta => pt(0, 0)],
+          ["bottomCenter", delta => pt(0, 0)],
+          ["bottomLeft", delta => delta.withY(0).negated()],
+          ["leftCenter", delta => delta.withY(0).negated()]
+        ],
+        offset
+      ),
+      [
+        ["nwse-resize", "topLeft"],
+        ["ns-resize", "topCenter"],
+        ["nesw-resize", "topRight"],
+        ["ew-resize", "rightCenter"],
+        ["nwse-resize", "bottomRight"],
+        ["ns-resize", "bottomCenter"],
+        ["nesw-resize", "bottomLeft"],
+        ["ew-resize", "leftCenter"]
+      ]
+    );
+  }
+
+  static resizersFor(halo) {
+    var globalRot =  halo.target.getGlobalTransform().getRotation();
+    return this.getResizeParts(globalRot)
+      .map(([[corner, deltaMask, originDelta], [nativeCursor, location]]) =>
+        this.for(halo, corner, location, nativeCursor));
+  }
+
+  static for(halo, corner, location, nativeCursor) {
+    return new this({
+      nativeCursor, halo,
+      corner, location,
+      tooltip: "Resize " + corner,
+      extent: pt(10, 10),
+      borderWidth: 1,
+      borderColor: Color.black,
+      fill: Color.white
+    });
+  }
+
+  get isResizeHandle() { return true; }
+
+  get corner() { return this.getProperty("corner"); }
+  set corner(val) { this.setProperty("corner", val); }
+  get location() { return this.getProperty("location"); }
+  set location(val) { this.setProperty("location", val); }
+
+  valueForPropertyDisplay() {
+    var {x: width, y: height} = this.halo.target.extent;
+    return `${width.toFixed(1)}x${height.toFixed(1)}`;
+  }
+
+  positionInHalo() { return this.halo.borderBox.bounds().partNamed(this.location); }
+
+  alignInHalo() { this.center = this.positionInHalo(); return this; }
+
+  onKeyUp(evt) {
+    if (this.halo.state.activeButton == this)
+      this.halo.toggleDiagonal(evt.isShiftDown(), this.corner);
+  }
+
+  onKeyDown(evt) {
+    if (this.halo.state.activeButton == this)
+      this.halo.toggleDiagonal(evt.isShiftDown(), this.corner);
+  }
+
+  onDragStart(evt) {
+    this.init(evt.position, evt.isShiftDown());
+  }
+
+  onDragEnd(evt) {
+    this.stop(evt.isShiftDown());
+  }
+
+  onDrag(evt) {
+    this.update(evt.position, evt.isShiftDown());
+    this.focus();
+  }
+
+  init(startPos, proportional = false) {
+    const {position, extent} = this.halo.target;
+    this.startPos = startPos;
+    this.startBounds = position.extent(extent);
+    this.startOrigin = this.halo.target.origin;
+    this.savedLayout = this.halo.layout;
+    this.halo.layout = null;
+    this.halo.state.activeButton = this;
+    this.tfm = this.halo.target.getGlobalTransform().inverse();
+    var globalRot = this.halo.target.getGlobalTransform().getRotation();
+    this.offsetRotation = num.toRadians(globalRot % 45);
+    // add up rotations
+    this.halo.toggleDiagonal(proportional, this.corner);
+  }
+
+  update(currentPos, shiftDown = false) {
+    var target = this.halo.target,
+      oldPosition = target.position,
+      {x, y} = this.startPos.subPt(currentPos),
+      delta = this.tfm.transformDirection(pt(x, y));
+    this.halo.updateBoundsFor(
+      this.corner,
+      shiftDown,
+      delta,
+      this.startBounds,
+      this.startOrigin
+    );
+    this.halo.toggleDiagonal(shiftDown, this.corner);
+  }
+
+  stop(proportional) {
+    this.halo.layout = this.savedLayout;
+    this.halo.state.activeButton = null;
+    this.halo.alignWithTarget();
+    this.halo.toggleDiagonal(false);
+  }
+}
+
+
+// The orange thing that indicates a drop target when a grabbed morph is
+// hovered over another morph. For some reason it doubles as the container for
+// the "layout halo" items
+
+export class MorphHighlighter extends Morph {
+
+  static removeHighlightersFromHalo(halo) {
+    var store = halo.state.morphHighlighters;
+    for (var id in store) { store[id].remove(); delete store[id]; }
+  }
+
+  static for(halo, morph, showLayout) {
+    var store = halo.state.morphHighlighters = halo.state.morphHighlighters || {};
+    properties.forEachOwn(store, (_, h) => h.alignWithHalo());
+    if (!morph || morph.ownerChain().find(owner => owner.isHaloItem)) return null;
+    store[morph.id] = store[morph.id] || halo.addMorphBack(new this({opacity: 0, targetId: morph.id, halo, showLayout}));
+    return store[morph.id];
+  }
+
+  get halo() { return this.getProperty("halo"); }
+  set halo(val) { this.setProperty("halo", val); }
+
+  get showLayout() { return this.getProperty("showLayout"); }
+  set showLayout(val) { this.setProperty("showLayout", val); }
+
+  get targetId() { return this.getProperty("targetId"); }
+  set targetId(val) { this.setProperty("targetId", val); }
+  get target() {
+    var w = this.world() || this.halo.world();
+    return w ? w.getMorphWithId(this.targetId) : null;
+  }
+
+  get fill() { return Color.orange.withA(0.5); }
+  get name() { return "morphHighlighter"; }
+
+  alignWithHalo() {
+    if (this.target) {
+      this.position = this.halo.localize(this.target.globalBounds().topLeft());
+      this.extent = this.target.globalBounds().extent();
+    }
+  }
+
+  show() {
+    if (this.halo.target.layout && this.showLayout) {
+      this.layoutHalo = this.layoutHalo ||
+        this.world().showLayoutHaloFor(this.halo.target, this.pointerId);
+    } else {
+      this.animate({opacity: 1, duration: 500});
+      this.alignWithHalo();
+    }
+  }
+
+  deactivate() {
+    if (this.layoutHalo) {
+      this.layoutHalo.remove();
+      this.layoutHalo = null;
+    }
+    this.animate({opacity: 0, duration: 500});
+    this.alignWithHalo();
+  }
+
+}
