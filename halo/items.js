@@ -637,8 +637,8 @@ function resizeHandle(halo, corner, deltaMask, originDelta, nativeCursor, locati
         this.focus();
      },
      init(startPos, proportional=false) {
-       const {globalPosition, extent} = this.halo.target;
-       this.startPos = startPos; this.startBounds = globalPosition.extent(extent);
+       const {position, extent} = this.halo.target;
+       this.startPos = startPos; this.startBounds = position.extent(extent);
        this.startOrigin = this.halo.target.origin;
        this.savedLayout = this.halo.layout;
        this.halo.layout = null;

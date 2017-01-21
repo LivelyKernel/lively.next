@@ -195,7 +195,6 @@ export class Halo extends Morph {
         || this.addMorph(nameHalo(this));
   }
 
-
   closeHalo() {
     return this.getSubmorphNamed("close") || this.addMorph(closeHalo(this));
   }
