@@ -141,7 +141,7 @@ describe("halos", () => {
 
   it("resize resizes", async () => {
     var halo = world.showHaloFor(submorph1),
-        resizeHandle = halo.resizeHandles().find(h => h.corner == "bottomRight");
+        resizeHandle = halo.ensureResizeHandles().find(h => h.corner == "bottomRight");
     resizeHandle.init(pt(0,0))
     resizeHandle.update(pt(10,5));
     expect(submorph1.extent).equals(pt(110, 105));
@@ -150,7 +150,7 @@ describe("halos", () => {
   it("resizes correctly if transformation present", async () => {
     submorph1.rotation = num.toRadians(-45);
     var halo = world.showHaloFor(submorph1),
-        resizeHandle = halo.resizeHandles().find(h => h.corner == "bottomCenter");
+        resizeHandle = halo.ensureResizeHandles().find(h => h.corner == "bottomCenter");
     resizeHandle.init(pt(0,0))
     resizeHandle.update(pt(10,10));
     expect(submorph1.extent).equals(pt(100, 100 + pt(10,10).r()));
@@ -160,7 +160,7 @@ describe("halos", () => {
     submorph1.origin = pt(20,30);
     submorph1.position = pt(100,100);
     var halo = world.showHaloFor(submorph1, "test-pointer-1"),
-        resizeButton = halo.resizeHandles().find(h => h.corner == "bottomRight"),
+        resizeButton = halo.ensureResizeHandles().find(h => h.corner == "bottomRight"),
         resizeButtonCenter = resizeButton.globalBounds().center();
     resizeButton.init(pt(0,0));
     resizeButton.update(pt(42,42));
@@ -169,7 +169,7 @@ describe("halos", () => {
 
   it("active resize hides other halos and displays extent", async () => {
     var halo = world.showHaloFor(submorph1),
-        resizeHalo = halo.resizeHandles().find(h => h.corner == "bottomRight"),
+        resizeHalo = halo.ensureResizeHandles().find(h => h.corner == "bottomRight"),
         otherHalos = halo.buttonControls.filter((b) => 
             b != resizeHalo && !b.isHandle 
             && b != halo.propetyDisplay);
@@ -182,14 +182,14 @@ describe("halos", () => {
 
   it("resizes proportionally", () => {
     var halo = world.showHaloFor(submorph1),
-        resizeHandle = halo.resizeHandles().find(h => h.corner == "bottomRight");
+        resizeHandle = halo.ensureResizeHandles().find(h => h.corner == "bottomRight");
     resizeHandle.init(pt(0,0), true);
     expect(submorph1.extent.x).equals(submorph1.extent.y);
     resizeHandle.update(pt(10,5), true);
     expect(submorph1.extent.x).equals(submorph1.extent.y);
     resizeHandle.update(pt(1000,500), true);
     expect(submorph1.extent.x).equals(submorph1.extent.y);
-    resizeHandle = halo.resizeHandles().find(h => h.corner == "rightCenter");
+    resizeHandle = halo.ensureResizeHandles().find(h => h.corner == "rightCenter");
     resizeHandle.init(pt(0,0), true);
     expect(submorph1.extent.x).equals(submorph1.extent.y);
     resizeHandle.update(pt(10,5), true);
@@ -200,7 +200,7 @@ describe("halos", () => {
 
   it("shows a visual guide when resizing proportionally", () => {
     var halo = world.showHaloFor(submorph1),
-        resizeHandle = halo.resizeHandles().find(h => h.corner == "bottomRight");
+        resizeHandle = halo.ensureResizeHandles().find(h => h.corner == "bottomRight");
     resizeHandle.init(pt(0,0), true);
     resizeHandle.update(pt(10,5), true);
     var d = halo.getSubmorphNamed("diagonal");
