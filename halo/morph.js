@@ -101,12 +101,7 @@ export class Halo extends Morph {
 
   get target() { return this.state ? this.state.target : null; }
   set target(t) {
-    this.target && disconnect(this.target, "onChange", this, "alignWithTarget");
-    if (this.targetProxy) {
-      this.targetProxy.modifiesSelectedMorphs = false;
-      this.targetProxy.remove();
-      this.targetProxy = null;
-    }
+    this.detachFromTarget();
 
     if (!this.state) this.state = {};
     t = this.prepareTarget(t);
@@ -121,11 +116,11 @@ export class Halo extends Morph {
 
     // create a SelectionTarget morph that is a placeholder for all selected
     // morphs and that the current halo will operate on
-    this.targetProxy = target[0].world().addMorph(
+    target = target[0].world().addMorph(
       new MultiSelectionTarget({selectedMorphs: target}));
-    this.targetProxy.alignWithSelection();
-    this.targetProxy.modifiesSelectedMorphs = true;
-    return this.targetProxy;
+    target.alignWithSelection();
+    target.modifiesSelectedMorphs = true;
+    return target;
   }
 
   refocus(newTarget) {
@@ -160,17 +155,22 @@ export class Halo extends Morph {
     return this;
   }
 
+  detachFromTarget() {
+    var {target} = this;
+    if (!target) return
+    disconnect(target, "onChange", this, "alignWithTarget");
+    if (target instanceof MultiSelectionTarget) {
+      target.modifiesSelectedMorphs = false;
+      target.remove();
+    }
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // morphic bheavior
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   remove() {
-    disconnect(this.target, "onChange", this, "alignWithTarget");
-    if (this.targetProxy) {
-      this.targetProxy.modifiesSelectedMorphs = false;
-      this.targetProxy.remove();
-      this.targetProxy = null;
-    }
+    this.detachFromTarget();
     super.remove();
   }
 
