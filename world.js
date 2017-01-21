@@ -870,7 +870,6 @@ export class World extends Morph {
     this.execCommand("resize to fit window");
   }
 
-
   get commands() { return worldCommands.concat(super.commands); }
   get keybindings() { return super.keybindings.concat(config.globalKeyBindings); }
   set keybindings(x) { super.keybindings = x }
@@ -885,12 +884,12 @@ export class World extends Morph {
     return this.submorphs.find(m => m.isHalo && m.state.pointerId === pointerId);
   }
 
-  showHaloFor(morph, pointerId = this.firstHand && this.firstHand.pointerId) {
-    return this.addMorph(new Halo(pointerId, morph)).alignWithTarget();
+  showHaloFor(target, pointerId = this.firstHand && this.firstHand.pointerId) {
+    return this.addMorph(new Halo({pointerId, target}));
   }
 
-  showHaloForSelection(selection, pointerId = this.firstHand && this.firstHand.pointerId) {
-     return selection.length > 0 && this.addMorph(new Halo(pointerId, selection)).alignWithTarget();
+  showHaloForSelection(selection, pointerId) {
+    return selection.length > 0 && this.showHaloFor(selection, pointerId);
   }
 
   layoutHaloForPointerId(pointerId = this.firstHand && this.firstHand.pointerId) {
