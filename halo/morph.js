@@ -17,7 +17,7 @@ import { styleHaloFor } from "./stylization.js";
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // The halo morph controls a group of halo items, each of which can control or
 // inspect properties of a target morph in some way
-export class Halo extends Morph {
+export default class Halo extends Morph {
 
   constructor(props = {}) {
     var target = props.target;
@@ -188,16 +188,16 @@ export class Halo extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   get propertyDisplay() { return HaloPropertyDisplay.for(this); }
-  nameHalo() { return NameHalo.for(this); }
-  closeHalo() { return CloseHalo.for(this); }
-  grabHalo() { return GrabHalo.for(this); }
-  dragHalo() { return DragHalo.for(this); }
-  inspectHalo() { return InspectHalo.for(this); }
-  editHalo() { return EditHalo.for(this); }
-  rotateHalo() { return RotateHalo.for(this); }
-  copyHalo() { return CopyHalo.for(this); }
-  originHalo() { return OriginHalo.for(this); }
-  styleHalo() { return StyleHalo.for(this); }
+  nameHalo() { return NameHaloItem.for(this); }
+  closeHalo() { return CloseHaloItem.for(this); }
+  grabHalo() { return GrabHaloItem.for(this); }
+  dragHalo() { return DragHaloItem.for(this); }
+  inspectHalo() { return InspectHaloItem.for(this); }
+  editHalo() { return EditHaloItem.for(this); }
+  rotateHalo() { return RotateHaloItem.for(this); }
+  copyHalo() { return CopyHaloItem.for(this); }
+  originHalo() { return OriginHaloItem.for(this); }
+  styleHalo() { return StyleHaloItem.for(this); }
 
   get buttonControls() { return this.submorphs.filter(m => m.isHaloItem && !m.isResizeHandle); }
 
@@ -364,7 +364,7 @@ export class Halo extends Morph {
   }
 
   toggleMorphHighlighter(active, target, showLayout = false) {
-    const h = MorphHighlighter.for(this, target, showLayout);
+    const h = MorphHighlighterForHalo.for(this, target, showLayout);
     if (active && target && target != this.world()) h && h.show(target);
     else h && h.deactivate(target)
   }
@@ -550,7 +550,7 @@ class MultiSelectionTarget extends Morph {
 
 // Abstract halo item, subclasses are specific ui elements that control /
 // display morph properties
-export class HaloItem extends Morph {
+class HaloItem extends Morph {
 
   static for(halo) {
     return halo.getSubmorphNamed(this.name) || halo.addMorph(new this({halo}));
@@ -666,7 +666,7 @@ class NameHolder extends Morph {
 
 }
 
-export class NameHalo extends HaloItem {
+class NameHaloItem extends HaloItem {
 
   static get name() { return "name"; }
 
@@ -762,7 +762,7 @@ export class NameHalo extends HaloItem {
 }
 
 
-export class CloseHalo extends HaloItem {
+class CloseHaloItem extends HaloItem {
 
   static get name() { return "close"; }
 
@@ -789,7 +789,7 @@ export class CloseHalo extends HaloItem {
 }
 
 
-export class GrabHalo extends HaloItem {
+class GrabHaloItem extends HaloItem {
 
   static get name() { return "grab"; }
 
@@ -836,7 +836,7 @@ export class GrabHalo extends HaloItem {
     this.halo.state.activeButton = null;
     this.halo.alignWithTarget();
     this.halo.toggleMorphHighlighter(false, this.prevDropTarget);
-    MorphHighlighter.removeHighlightersFromHalo(this.halo);
+    MorphHighlighterForHalo.removeHighlightersFromHalo(this.halo);
     this.halo.target.undoStop("grab-halo");
   }
 
@@ -851,7 +851,7 @@ export class GrabHalo extends HaloItem {
 }
 
 
-export class DragHalo extends HaloItem {
+class DragHaloItem extends HaloItem {
 
   static get name() { return "drag"; }
   get tooltip() { return "Change the morph's position. Press (alt) while dragging to align the morph's position along a grid."; }
@@ -924,7 +924,7 @@ export class DragHalo extends HaloItem {
 }
 
 
-export class InspectHalo extends HaloItem {
+class InspectHaloItem extends HaloItem {
 
   static get name() { return "inspect"; }
   get styleClasses() { return [...super.styleClasses, "fa", "fa-gears"]; }
@@ -939,7 +939,7 @@ export class InspectHalo extends HaloItem {
 }
 
 
-export class EditHalo extends HaloItem {
+class EditHaloItem extends HaloItem {
 
   static get name() { return "edit"; }
   get styleClasses() { return [...super.styleClasses, "fa", "fa-wrench"]; }
@@ -952,7 +952,7 @@ export class EditHalo extends HaloItem {
   }
 }
 
-export class RotateHalo extends HaloItem {
+class RotateHaloItem extends HaloItem {
 
   static get name() { return "rotate"; }
 
@@ -1059,7 +1059,7 @@ export class RotateHalo extends HaloItem {
 }
 
 
-export class CopyHalo extends HaloItem {
+class CopyHaloItem extends HaloItem {
 
   static get name() { return "copy"; }
   get tooltip() { return "Copy morph"; }
@@ -1090,7 +1090,7 @@ export class CopyHalo extends HaloItem {
 }
 
 
-export class OriginHalo extends HaloItem {
+class OriginHaloItem extends HaloItem {
 
   static get name() { return "origin"; }
 
@@ -1145,7 +1145,7 @@ export class OriginHalo extends HaloItem {
 }
 
 
-export class StyleHalo extends HaloItem {
+class StyleHaloItem extends HaloItem {
 
   static get name() { return "style"; }
   get styleClasses() { return [...super.styleClasses, "fa", "fa-picture-o"]; }
@@ -1163,7 +1163,7 @@ export class StyleHalo extends HaloItem {
 
 
 // The white thingies at the corner and edges of a morph
-export class ResizeHandle extends HaloItem {
+class ResizeHandle extends HaloItem {
 
   static getResizeParts(rotation) {
     if (rotation > 0) rotation = rotation - 360;
@@ -1299,7 +1299,7 @@ export class ResizeHandle extends HaloItem {
 // hovered over another morph. For some reason it doubles as the container for
 // the "layout halo" items
 
-export class MorphHighlighter extends Morph {
+class MorphHighlighterForHalo extends Morph {
 
   static removeHighlightersFromHalo(halo) {
     var store = halo.state.morphHighlighters;

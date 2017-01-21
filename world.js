@@ -1,7 +1,7 @@
 /*global System*/
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, arr, string, obj, promise } from "lively.lang";
-import { Halo } from "./halo/morph.js"
+import Halo from "./halo/morph.js"
 import { Menu } from "./menus.js"
 import { StatusMessage, StatusMessageForMorph } from './markers.js';
 import { Morph, Text, Window, config, MorphicEnv } from "./index.js";
