@@ -74,7 +74,8 @@ export class MenuItem extends Label {
     var {hand} = evt;
     setTimeout(() => {
       // only deselect if hand is not over a submenu
-      if (!this.submenus.some(ea => ea.fullContainsWorldPoint(hand.position)))
+      var submenus = this.owner ? this.owner.submenus : [];
+      if (!submenus.some(ea => ea.fullContainsWorldPoint(hand.position)))
         this.selected = false;
     }, 20);
     this.owner.maybeRemoveSubmenu();
