@@ -32,8 +32,9 @@ export class Halo extends Morph {
   }
 
   initButtons() {
-    this.submorphs = this.submorphs.concat([
-      ...this.createResizeHandles(),
+    this.submorphs = [
+      ...this.submorphs,
+      ...this.ensureResizeHandles(),
       this.closeHalo(),
       this.dragHalo(),
       this.grabHalo(),
@@ -43,8 +44,7 @@ export class Halo extends Morph {
       this.rotateHalo(),
       this.styleHalo(),
       this.nameHalo(),
-      this.originHalo()
-    ]);
+      this.originHalo()]
   }
 
   initLayout() {
@@ -152,7 +152,7 @@ export class Halo extends Morph {
       this.buttonControls.forEach(b => { b.visible = true;});
       this.propertyDisplay.disable();
     }
-    this.resizeHandles().forEach(h => h.alignInHalo());
+    this.ensureResizeHandles().forEach(h => h.alignInHalo());
     this.originHalo().alignInHalo();
     return this;
   }
@@ -187,29 +187,14 @@ export class Halo extends Morph {
   // accessing
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  get propertyDisplay() {
-    return this.getSubmorphNamed("propertyDisplay")
-        || this.addMorph(new HaloPropertyDisplay());
-  }
-
-  nameHalo() {
-    return this.getSubmorphNamed("name")
-        || this.addMorph(new NameHalo({halo: this}));
-  }
-
-  closeHalo() {
-    return this.getSubmorphNamed("close") || this.addMorph(new CloseHalo({halo: this}));
-  }
-
-  grabHalo() {
-    return this.getSubmorphNamed("grab") || this.addMorph(new GrabHalo({halo: this}));
-  }
-
+  get propertyDisplay() { return HaloPropertyDisplay.for(this); }
+  nameHalo() { return NameHalo.for(this); }
+  closeHalo() { return CloseHalo.for(this); }
+  grabHalo() { return GrabHalo.for(this); }
   dragHalo() { return DragHalo.for(this); }
   inspectHalo() { return InspectHalo.for(this); }
   editHalo() { return EditHalo.for(this); }
   rotateHalo() { return RotateHalo.for(this); }
-
   copyHalo() { return CopyHalo.for(this); }
   originHalo() { return OriginHalo.for(this); }
   styleHalo() { return StyleHalo.for(this); }
@@ -307,16 +292,7 @@ export class Halo extends Morph {
     return gradient.scaleBy(diagonal.dotProduct(delta) / diagonal.dotProduct(diagonal));
   }
 
-  resizeHandles() { return this.submorphs.filter(h => h.isResizeHandle); }
-
-  createResizeHandles() { return ResizeHandle.resizersFor(this); }
-
-  updateResizeHandles() {
-    this.borderBox.remove();
-    this.resizeHandles().forEach(h => h.remove());
-    this.submorphs = [this.borderBox, ...this.createResizeHandles(), ...this.submorphs];
-  }
-
+  ensureResizeHandles() { return ResizeHandle.resizersFor(this); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // updating
@@ -435,6 +411,12 @@ export class Halo extends Morph {
 // properties such as the position of the halo target
 class HaloPropertyDisplay extends Text {
 
+  static get name() { return "propertyDisplay"; }
+
+  static for(halo) {
+    return halo.getSubmorphNamed(this.name) || halo.addMorph(new this());
+  }
+
   get isHaloItem() { return false; }
 
   get halo() { return this.owner; }
@@ -444,7 +426,7 @@ class HaloPropertyDisplay extends Text {
   get defaultProperties() {
     return {
       ...super.defaultProperties,
-      name: "propertyDisplay",
+      name: this.constructor.name,
       fill: Color.gray.withA(.7),
       borderRadius: 15,
       padding: Rectangle.inset(5),
@@ -686,9 +668,10 @@ class NameHolder extends Morph {
 
 export class NameHalo extends HaloItem {
 
+  static get name() { return "name"; }
+
   constructor(props) {
     super({
-      name: "name",
       borderRadius: 15,
       fill: Color.gray.withA(0.7),
       borderColor: Color.green,
@@ -1029,7 +1012,7 @@ export class RotateHalo extends HaloItem {
     this.halo.alignWithTarget();
     this.halo.toggleRotationIndicator(false, this);
     this.halo.target.undoStop("rotate-halo");
-    this.halo.updateResizeHandles();
+    this.halo.ensureResizeHandles();
   }
 
   adaptAppearance(scaling) {
@@ -1071,13 +1054,8 @@ export class RotateHalo extends HaloItem {
     this.stop();
   }
 
-  onKeyDown(evt) {
-    this.adaptAppearance(evt.isShiftDown());
-  }
-
-  onKeyUp(evt) {
-    this.adaptAppearance(evt.isShiftDown());
-  }
+  onKeyDown(evt) { this.adaptAppearance(evt.isShiftDown()); }
+  onKeyUp(evt) { this.adaptAppearance(evt.isShiftDown()); }
 }
 
 
@@ -1223,19 +1201,20 @@ export class ResizeHandle extends HaloItem {
     var globalRot =  halo.target.getGlobalTransform().getRotation();
     return this.getResizeParts(globalRot)
       .map(([[corner, deltaMask, originDelta], [nativeCursor, location]]) =>
-        this.for(halo, corner, location, nativeCursor));
+        this.for(halo, corner, location, nativeCursor).alignInHalo());
   }
 
   static for(halo, corner, location, nativeCursor) {
-    return new this({
-      nativeCursor, halo,
-      corner, location,
-      tooltip: "Resize " + corner,
-      extent: pt(10, 10),
-      borderWidth: 1,
-      borderColor: Color.black,
-      fill: Color.white
-    });
+    var name = "Resize " + corner,
+        resizer = halo.getSubmorphNamed(name) || new this({
+          name, halo, corner,
+          tooltip: "Resize " + corner,
+          extent: pt(10, 10),
+          borderWidth: 1,
+          borderColor: Color.black,
+          fill: Color.white
+        });
+    return Object.assign(resizer, {nativeCursor, location});
   }
 
   get isResizeHandle() { return true; }
