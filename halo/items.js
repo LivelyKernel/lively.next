@@ -13,69 +13,42 @@ import { Icon } from '../icons.js';
 
 const itemExtent = pt(24,24);
 
-export class HaloItem extends Morph {
 
-  get isEpiMorph() { return true; }
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// name input of a morph
+class NameHolder extends Morph {
 
   constructor(props) {
     super({
-      borderRadius: 15,
-      fill: Color.gray.withA(.7),
-      grabbable: false,
-      property: null, // what property of target to represent + modify
-      extent: itemExtent,
+      tooltip: "Click to edit the morph's name",
+      draggable: false,
+      fill: Color.transparent,
+      layout: new HorizontalLayout({spacing: 7}),
       ...props
     });
-
+    this.nameHolder = new Text({
+      fill: Color.transparent,
+      fontColor: Color.darkgray,
+      active: true
+    });
+    this.submorphs = [this.nameHolder];
   }
 
-  get isHaloItem() { return true };
+  onHoverIn(evt) {
+    if (this.highlightOnHover && this.nameHolder.active) {
+      this.halo.toggleMorphHighlighter(true, this.target);
+      this.nameHolder.fontColor = Color.orange;
+    }
+  }
 
-  init() {}
-  update() {}
-  stop() {}
-  valueForPropertyDisplay() { return undefined; }
+  onHoverOut(evt) {
+    if (this.highlightOnHover) {
+      this.halo.toggleMorphHighlighter(false, this.target);
+      this.nameHolder.fontColor = Color.darkgray;
+    }
+  }
 
-}
-
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// name halo item
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-
-class NameHolder extends Morph {
-
-   constructor(props) {
-      super({
-        tooltip: "Click to edit the morph's name",
-        draggable: false,
-        fill: Color.transparent,
-        layout: new HorizontalLayout({spacing: 7}),
-        ...props
-       });
-       this.nameHolder = new Text({
-            fill:Color.transparent,
-            fontColor: Color.darkgray,
-            active: true})
-       this.submorphs = [this.nameHolder];
-   }
-
-   onHoverIn(evt) {
-     if (this.highlightOnHover && this.nameHolder.active) {
-           this.halo.toggleMorphHighlighter(true, this.target);
-           this.nameHolder.fontColor = Color.orange;
-        }
-   }
-
-   onHoverOut(evt) {
-      if (this.highlightOnHover) {
-         this.halo.toggleMorphHighlighter(false, this.target);
-         this.nameHolder.fontColor = Color.darkgray;
-      }
-   }
-
-   onKeyDown(evt) {
+  onKeyDown(evt) {
     if ("Enter" == evt.keyCombo) {
       this.updateName(this.nameHolder.textString);
       evt.stop();
@@ -94,28 +67,27 @@ class NameHolder extends Morph {
   }
 
   onKeyUp(evt) {
-    const newName = this.nameHolder.textString,
-          owner = this.target.owner;
-    this.validName = (!owner || !owner.getSubmorphNamed(newName) ||
-                          this.target.name == newName);
+    const newName = this.nameHolder.textString, owner = this.target.owner;
+    this.validName = !owner || !owner.getSubmorphNamed(newName) ||
+      this.target.name == newName;
     signal(this, "valid", [this.validName, newName]);
   }
 
   update() {
-     this.nameHolder.textString = this.target.name;
-     this.nameHolder.fit();
+    this.nameHolder.textString = this.target.name;
+    this.nameHolder.fit();
   }
 
   activate() {
-     this.nameHolder.readOnly = false;
-     this.nameHolder.active = true;
-     this.nameHolder.animate({opacity: 1});
+    this.nameHolder.readOnly = false;
+    this.nameHolder.active = true;
+    this.nameHolder.animate({opacity: 1});
   }
 
   deactivate() {
-     this.nameHolder.readOnly = true;
-     this.nameHolder.active = false;
-     this.nameHolder.animate({opacity: .3});
+    this.nameHolder.readOnly = true;
+    this.nameHolder.active = false;
+    this.nameHolder.animate({opacity: 0.3});
   }
 
   updateName(newName) {
@@ -127,70 +99,88 @@ class NameHolder extends Morph {
 
 }
 
-class NameHalo extends HaloItem {
+
+export class HaloItem extends Morph {
+
+  constructor(props = {}) {
+    super({
+      borderRadius: 15,
+      fill: Color.gray.withA(.7),
+      grabbable: false,
+      property: null, // what property of target to represent + modify
+      extent: itemExtent,
+      ...props
+    });
+  }
+
+  get isEpiMorph() { return true; }
+  get isHaloItem() { return true };
+
+  get halo() { return this.getProperty("halo"); }
+  set halo(h) { return this.setProperty("halo", h); }
+
+  init() {}
+  update() {}
+  stop() {}
+  valueForPropertyDisplay() { return undefined; }
+
+}
+
+
+export class NameHalo extends HaloItem {
 
   constructor(props) {
-
     super({
-        borderRadius: 15,
-        fill: Color.gray.withA(.7),
-        borderColor: Color.green,
-        layout: new HorizontalLayout({spacing: 0}),
-        ...props
-      });
+      name: "name",
+      borderRadius: 15,
+      fill: Color.gray.withA(0.7),
+      borderColor: Color.green,
+      layout: new HorizontalLayout({spacing: 0}),
+      ...props
+    });
 
     this.initNameHolders();
 
     this.validityIndicator = Icon.makeLabel("check", {
       fontColor: Color.green,
       fontSize: 15,
-      padding: rect(4,2,4,0),
-      onMouseDown: (evt) => {
-        const m = this.conflictingMorph;
-        if (this.conflictingMorph) {
-          this.halo.toggleMorphHighlighter(true, m);
-          setTimeout(() => this.halo.toggleMorphHighlighter(false, m), 1000);
-        }
-      }
-      });
+      padding: rect(4, 2, 4, 0)
+    });
 
     this.alignInHalo();
   }
 
   targets() {
-     return this.halo.target.isMorphSelection ? this.halo.target.selectedMorphs.map(target => {
-           return {target, highlightOnHover: true}
-         }) : [{target: this.halo.target, highlightOnHover: false}];
+    return this.halo.target.isMorphSelection
+      ? this.halo.target.selectedMorphs.map(target => {
+        return {target, highlightOnHover: true};
+      }) : [{target: this.halo.target, highlightOnHover: false}];
   }
 
   initNameHolders() {
-    this.nameHolders = this.targets().map(
-          ({target, highlightOnHover}) => {
-               const nh = new NameHolder({halo: this.halo, highlightOnHover, target});
-               connect(nh, "active", this, "toggleActive");
-               connect(nh, "valid", this, "toggleNameValid");
-               return nh;
-            });
+    this.nameHolders = this.targets().map(({target, highlightOnHover}) => {
+      const nh = new NameHolder({halo: this.halo, highlightOnHover, target});
+      connect(nh, "active", this, "toggleActive");
+      connect(nh, "valid", this, "toggleNameValid");
+      return nh;
+    });
     this.submorphs = arr.interpose(this.nameHolders, {
-          extent: pt(1,28), fill: Color.black.withA(.4)
-      });
+      extent: pt(1, 28),
+      fill: Color.black.withA(0.4)
+    });
   }
 
   toggleActive([active, nameHolder]) {
-    if (this.halo.changingName === active) return;
+    if (this.halo.changingName === active)
+      return;
     this.halo.changingName = active;
     if (active) {
-      this.nameHolders.forEach(nh => {
-         if (nh != nameHolder) nh.deactivate();
-      });
+      this.nameHolders.forEach(nh => nh != nameHolder && nh.deactivate())
       this.borderWidth = 3;
       this.addMorph(this.validityIndicator);
-      setTimeout(() => this.nameHolder.selectAll());
-
+      setTimeout(() => nameHolder.nameHolder.selectAll());
     } else {
-      this.nameHolders.forEach(nh => {
-         if (nh != nameHolder) nh.activate();
-      });
+      this.nameHolders.forEach(nh => nh != nameHolder && nh.activate());
       this.borderWidth = 0;
       this.validityIndicator.remove();
     }
@@ -204,13 +194,13 @@ class NameHalo extends HaloItem {
       this.borderColor = Color.green;
       this.validityIndicator.nativeCursor = "auto";
       this.validityIndicator.fontColor = Color.green;
-      Icon.setIcon(this.validityIndicator, "check")
+      Icon.setIcon(this.validityIndicator, "check");
     } else {
       this.conflictingMorph = this.get(name);
       this.borderColor = Color.red;
       this.validityIndicator.fontColor = Color.red;
       this.validityIndicator.nativeCursor = "pointer";
-      Icon.setIcon(this.validityIndicator, "exclamation-circle")
+      Icon.setIcon(this.validityIndicator, "exclamation-circle");
     }
   }
 
@@ -219,85 +209,100 @@ class NameHalo extends HaloItem {
     var {x, y} = this.halo.innerBounds().bottomCenter().addPt(pt(0, 2));
     this.topCenter = pt(Math.max(x, 30), Math.max(y, 80));
   }
-}
-
-
-function nameHalo(halo) {
-  return new NameHalo({halo, name: "name"});
-}
-
-function closeHalo(halo) {
-  return new HaloItem({
-    name: "close",
-    styleClasses: ["fa", "fa-close"],
-    draggable: false,
-    halo: halo,
-    tooltip: "Remove this morph from the world",
-    update: () => {
-      var o = halo.target.owner
-      o.undoStart("close-halo");
-      halo.target.selectedMorphs ?
-                   halo.target.selectedMorphs.forEach(m => m.remove()) :
-                   halo.target.remove();
-      o.undoStop("close-halo");
-      halo.remove();
-    },
-    onMouseDown(evt) { this.update(); }
-  })
-}
-
-function grabHalo(halo) {
-
-  return new HaloItem({
-    name: "grab",
-    styleClasses: ["fa", "fa-hand-rock-o"],
-    halo,
-    tooltip: "Grab the morph",
-    valueForPropertyDisplay() {
-      var dropTarget = this.morphBeneath(this.hand.position),
-          belongsToHalo = dropTarget.isHaloItem || dropTarget.ownerChain().find(m => m.isHaloItem);
-      if (!belongsToHalo) {
-          this.halo.toggleMorphHighlighter(dropTarget && dropTarget != this.world(), dropTarget, true);
-          this.prevDropTarget
-              && this.prevDropTarget != dropTarget
-              && this.halo.toggleMorphHighlighter(false, this.prevDropTarget);
-          this.prevDropTarget = dropTarget;
-      }
-      return dropTarget && dropTarget.name;
-    },
-
-    init(hand) {
-      var undo = this.halo.target.undoStart("grab-halo");
-      undo.addTarget(this.halo.target.owner);
-      this.hand = hand;
-      this.halo.target.onGrab({hand});
-      this.halo.activeButton = this;
-    },
-
-    update() {
-      this.halo.alignWithTarget();
-    },
-
-    stop(hand) {
-      var undo = this.halo.target.undoInProgress,
-          dropTarget = this.morphBeneath(hand.position);
-      undo.addTarget(dropTarget);
-      dropTarget.onDrop({hand});
-      this.halo.activeButton = null;
-      this.halo.alignWithTarget();
-      this.halo.toggleMorphHighlighter(false, this.prevDropTarget);
-      this.halo.clearMorphHighlighters();
-      this.halo.target.undoStop("grab-halo");
-    },
-
-    onDragStart(evt) {
-      this.init(evt.hand)
-    },
-
-    onDragEnd(evt) {
-      this.stop(evt.hand)
+  
+  onMouseDown(evt) {
+    const m = this.conflictingMorph;
+    if (m) {
+      this.halo.toggleMorphHighlighter(true, m);
+      setTimeout(() => this.halo.toggleMorphHighlighter(false, m), 1000);
     }
-  })
+  }
+
+}
+
+
+export class CloseHalo extends HaloItem {
+
+  get defaultProperties() {  
+    return {
+      ...super.defaultProperties,
+      name: "close",
+      styleClasses: ["fa", "fa-close"],
+      draggable: false,
+      tooltip: "Remove this morph from the world"
+    };
+  }
+
+  update() {
+    var {halo} = this, o = halo.target.owner;
+    o.undoStart("close-halo");
+    halo.target.selectedMorphs ?
+      halo.target.selectedMorphs.forEach(m => m.remove()) :
+      halo.target.remove();
+    o.undoStop("close-halo");
+    halo.remove();
+  }
+
+  onMouseDown(evt) { this.update(); }
+}
+
+export class GrabHalo extends HaloItem {
+
+  get defaultProperties() {  
+    return {
+      ...super.defaultProperties,
+      name: "grab",
+      styleClasses: ["fa", "fa-hand-rock-o"],
+      tooltip: "Grab the morph"
+    }
+  }
+
+  valueForPropertyDisplay() {
+    var dropTarget = this.morphBeneath(this.hand.position),
+        belongsToHalo = dropTarget.isHaloItem || dropTarget.ownerChain().find(m => m.isHaloItem);
+    if (!belongsToHalo) {
+      this.halo.toggleMorphHighlighter(
+        dropTarget && dropTarget != this.world(),
+        dropTarget, true);
+      this.prevDropTarget && this.prevDropTarget != dropTarget &&
+        this.halo.toggleMorphHighlighter(false, this.prevDropTarget);
+        this.prevDropTarget = dropTarget;
+    }
+    return dropTarget && dropTarget.name;
+  }
+
+  init(hand) {
+    var undo = this.halo.target.undoStart("grab-halo");
+    undo.addTarget(this.halo.target.owner);
+    this.hand = hand;
+    this.halo.target.onGrab({hand});
+    this.halo.activeButton = this;
+  }
+
+  update() {
+    this.halo.alignWithTarget();
+  }
+
+  stop(hand) {
+    var undo = this.halo.target.undoInProgress,
+        dropTarget = this.morphBeneath(hand.position);
+    undo.addTarget(dropTarget);
+    dropTarget.onDrop({hand});
+    this.halo.activeButton = null;
+    this.halo.alignWithTarget();
+    this.halo.toggleMorphHighlighter(false, this.prevDropTarget);
+    this.halo.clearMorphHighlighters();
+    this.halo.target.undoStop("grab-halo");
+  }
+
+  onDragStart(evt) {
+    this.init(evt.hand)
+  }
+
+  onDragEnd(evt) {
+    this.stop(evt.hand)
+  }
+
 }
 
 function dragHalo(halo) {
@@ -588,19 +593,25 @@ function originHalo(halo) {
   });
 }
 
-function stylizeHalo(halo) {
-  return new HaloItem({
-    name: "style",
-    styleClasses: ["fa", "fa-picture-o"],
-    halo: halo,
-    tooltip: "Open stylize editor",
-    onMouseDown: (evt) => {
-      const styleHalo = styleHaloFor(halo.target, halo.state.pointerId);
-      halo.world().addMorph(styleHalo);
-      // connect(halo.world(), 'onMouseDown', styleHalo, 'remove');
-      halo.remove();
+export class StyleHalo extends HaloItem {
+
+  get defaultProperties() {
+    return {
+      ...super.defaultProperties,
+      name: "style",
+      styleClasses: ["fa", "fa-picture-o"],
+      tooltip: "Open stylize editor",
     }
-  })
+  }
+
+  onMouseDown(evt) {
+    var {halo} = this;
+    const styleHalo = styleHaloFor(halo.target, halo.state.pointerId);
+    halo.world().addMorph(styleHalo);
+    // connect(halo.world(), 'onMouseDown', styleHalo, 'remove');
+    halo.remove();
+  }
+
 }
 
 
@@ -700,16 +711,12 @@ function morphHighlighter(halo, morph, showLayout) {
 }
 
 export {
-  nameHalo,
-  stylizeHalo,
   originHalo,
   copyHalo,
   rotateHalo,
   editHalo,
   inspectHalo,
   dragHalo,
-  grabHalo,
-  closeHalo,
   resizeHandle,
   morphHighlighter
 }

@@ -9,12 +9,13 @@ import { Color, pt, rect, Rectangle, LinearGradient } from "lively.graphics";
 import { obj, arr, properties } from "lively.lang";
 import { connect, disconnect, disconnectAll, once } from "lively.bindings";
 
-import { inspectHalo, morphHighlighter, resizeHandle, nameHalo, editHalo, copyHalo, dragHalo, grabHalo, closeHalo, rotateHalo, originHalo, stylizeHalo } from "./items.js";
+import { inspectHalo, CloseHalo, GrabHalo, StyleHalo, NameHalo, morphHighlighter, resizeHandle, editHalo, copyHalo, dragHalo, rotateHalo, originHalo } from "./items.js";
 
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// 
+// The halo morph controls a group of halo items, each of which can control or
+// inspect properties of a target morph in some way
 export class Halo extends Morph {
 
   constructor(props = {}) {
@@ -39,7 +40,7 @@ export class Halo extends Morph {
       this.editHalo(),
       this.copyHalo(),
       this.rotateHalo(),
-      this.stylizeHalo(),
+      this.styleHalo(),
       this.nameHalo(),
       this.originHalo()
     ]);
@@ -192,16 +193,15 @@ export class Halo extends Morph {
 
   nameHalo() {
     return this.getSubmorphNamed("name")
-        || this.addMorph(nameHalo(this));
+        || this.addMorph(new NameHalo({halo: this}));
   }
 
   closeHalo() {
-    return this.getSubmorphNamed("close") || this.addMorph(closeHalo(this));
+    return this.getSubmorphNamed("close") || this.addMorph(new CloseHalo({halo: this}));
   }
 
   grabHalo() {
-    var dropTarget;
-    return this.getSubmorphNamed("grab") || this.addMorph(grabHalo(this));
+    return this.getSubmorphNamed("grab") || this.addMorph(new GrabHalo({halo: this}));
   }
 
   dragHalo() {
@@ -228,8 +228,8 @@ export class Halo extends Morph {
     return this.getSubmorphNamed("origin") || this.addMorph(originHalo(this));
   }
 
-  stylizeHalo() {
-    return this.getSubmorphNamed("style") || this.addMorph(stylizeHalo(this));
+  styleHalo() {
+    return this.getSubmorphNamed("style") || this.addMorph(new StyleHalo({halo: this}));
   }
 
   get buttonControls() { return this.submorphs.filter(m => m.isHaloItem); }
@@ -325,13 +325,9 @@ export class Halo extends Morph {
     return gradient.scaleBy(diagonal.dotProduct(delta) / diagonal.dotProduct(diagonal));
   }
 
-  getGlobalRotation() {
-    return this.target.getGlobalTransform().getRotation();
-  }
+  getGlobalRotation() { return this.target.getGlobalTransform().getRotation(); }
 
-  getGlobalScale() {
-    return this.target.getGlobalTransform().getScale();
-  }
+  getGlobalScale() { return this.target.getGlobalTransform().getScale(); }
 
   getResizeParts(rotation) {
     if (rotation > 0) rotation = rotation - 360;
@@ -579,9 +575,7 @@ class MultiSelectionTarget extends Morph {
   set modifiesSelectedMorphs(bool) { return this.setProperty("modifiesSelectedMorphs", bool); }
   get modifiesSelectedMorphs() { return this.getProperty("modifiesSelectedMorphs"); }
 
-  selectsMorph(morph) {
-    return this.selectedMorphs.includes(morph);
-  }
+  selectsMorph(morph) { return this.selectedMorphs.includes(morph); }
 
   alignWithSelection() {
     const bounds = this.selectedMorphs
