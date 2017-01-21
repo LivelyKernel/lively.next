@@ -2,7 +2,7 @@ import { Morph, Text, Ellipse, Polygon, Image, Path, HTMLMorph, morph} from "../
 import { VerticalLayout, HorizontalLayout, FillLayout,
          TilingLayout, GridLayout} from '../layout.js';
 import { Color, pt, rect, Line, Rectangle} from "lively.graphics";
-import { Intersection, IntersectionParams, Point2D } from 'kld-intersections';
+import { intersect, shape, bezier } from 'svg-intersections';
 import { arr, num } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
 import { BorderStyleEditor, BodyStyleEditor, 
@@ -12,12 +12,15 @@ import { Icon } from "../icons.js";
 import { StyleRules } from "../style-rules.js";
 import { Leash } from "../widgets.js";
 import { Event } from "../events/Event.js";
+import { pathAttributes } from "../rendering/morphic-default.js";
 
 /* rms: I tried doing this via polymorphic dispatch
          on the different morphs directly, but
          this causes weird problems with our module system,
          probably due to the circular dependency between morph
          and the style halos themselves. */
+
+intersect.plugin(bezier);
 
 function pointOnLine(a, b, pos, bw) {
    var v0 = pt(a.x, a.y), v1 = pt(b.x, b.y), 
@@ -137,9 +140,9 @@ class StyleHalo extends Morph {
    // FIXME: Move this logic to lively.graphics
 
    intersectionShape() {
-      const br = this.target.borderRadius,
+      const rx = this.target.borderRadius,
             {width, height} = this.target;
-      return IntersectionParams.newRoundRect(0, 0, width, height, br, br)
+      return shape("rect", {x: 0, y: 0, width, height, rx, ry: rx})
    }
 
    isOnMorphBorder(evt) {
@@ -148,9 +151,9 @@ class StyleHalo extends Morph {
             brHalo = this.getSubmorphNamed("borderRadiusHalo") || {active: false},
             bw = this.target.borderWidth || 1;
             
-      return !brHalo.active && Intersection.intersectShapes(  
+      return !brHalo.active && intersect(  
               this.intersectionShape(),
-              IntersectionParams.newRect(x - bw, y - bw, bw * 2, bw * 2)).points.length > 0;
+              shape("rect", {x: x - bw, y: y - bw, width: bw * 2, height: bw * 2})).points.length > 0;
    }
 
    isInMorphBody(evt) {
@@ -160,14 +163,14 @@ class StyleHalo extends Morph {
             pos = pt(num.roundTo(x,1),num.roundTo(y,1)),
             {width, height, origin} = this.target;
       if (!rect(0,0,width,height).containsPoint(pt(x,y))) return false;
-      const v = Intersection.intersectShapes(  
+      const v = intersect(  
               this.intersectionShape(),
-              IntersectionParams.newLine(new Point2D(x,0), new Point2D(x,height))),
+              shape("line", {x1: x, y1: 0, x2: x, y2: height})),
             vs = v.points.length > 0 && v.points.map(({x,y}) => pt(num.roundTo(x,1), num.roundTo(y,1))),
             lv = vs && Rectangle.unionPts(vs).rightEdge(),
-            h = Intersection.intersectShapes(  
+            h = intersect(  
               this.intersectionShape(), 
-              IntersectionParams.newLine(new Point2D(0,y), new Point2D(width,y))),
+              shape("line", {x1: 0, y1: y, x2: width, y2: y})),
             hs = h.points.length > 0 && h.points.map(({x,y}) => pt(num.roundTo(x,1), num.roundTo(y,1))),
             lh = hs && Rectangle.unionPts(hs).topEdge();
       return lh && lv && lh.includesPoint(pos) && lv.includesPoint(pos) 
@@ -448,7 +451,7 @@ export class EllipseStyleHalo extends StyleHalo {
 
     intersectionShape() {
         const {width, height} = this.target;
-        return IntersectionParams.newEllipse(new Point2D(width / 2, height / 2), width / 2, height / 2)
+        return shape("ellipse", {cx: width / 2, cy: height / 2, rx: width / 2, ry: height / 2})
     }
 
 }
@@ -692,17 +695,7 @@ class SvgStyleHalo extends StyleHalo {
 
    intersectionShape() {
      const bw = this.target.borderWidth, o = this.target.origin;
-     return IntersectionParams.newPath(this.target.vertices.map(v => {
-          const np = v.controlPoints.next,
-                nv = this.target.vertexAfter(v),
-                pp = nv.controlPoints.previous;
-          return IntersectionParams.newBezier3(
-                new Point2D(v.x + o.x, v.y + o.y),
-                new Point2D(np.x + v.x + o.x, np.y + v.y + o.y),
-                new Point2D(pp.x + nv.x + o.x, pp.y + nv.y + o.y),
-                new Point2D(nv.x + o.x, nv.y + o.y)
-          )
-     }));
+     return shape("path", {d: pathAttributes(this.target).attributes.d});
    }
 
    openBorderStyler() {

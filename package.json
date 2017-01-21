@@ -13,7 +13,7 @@
     "lively.bindings": "https://github.com/LivelyKernel/lively.bindings",
     "pepjs": "^0.4.1",
     "virtual-dom": "^2.1.1",
-    "kld-intersections": "git://github.com/thelonious/kld-intersections#development",
+    "svg-intersections": "0.2.5",
     "gsap": "^1.19.0"
   },
   "devDependencies": {
@@ -23,9 +23,9 @@
   "systemjs": {
     "main": "index.js",
     "map": {
+      "svg-intersections": "./dist/svg-intersections.js",
       "virtual-dom": "./node_modules/virtual-dom/dist/virtual-dom.js",
       "bowser": "./node_modules/bowser/bowser.js",
-      "kld-intersections": "./dist/kld-intersections.js",
       "gsap": {
         "~node": "./node_modules/gsap/src/minified/TweenMax.min.js",
         "node": "@empty"
@@ -36,9 +36,6 @@
       }
     },
     "meta": {
-     "dist/kld-intersections.js": {
-         "format": "cjs"
-     },
       "node_modules/virtual-dom/dist/virtual-dom.js": {
         "format": "amd"
       },

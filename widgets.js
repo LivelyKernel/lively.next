@@ -7,7 +7,7 @@ import { Tooltip } from "./tooltips.js";
 import { StyleRules } from "./style-rules.js";
 import config from "./config.js";
 import { Label } from "./text/label.js";
-import { Intersection, IntersectionParams, Point2D} from 'kld-intersections';
+import { intersect, shape } from 'svg-intersections';
 
 export class Leash extends Path {
 
@@ -70,9 +70,9 @@ export class Leash extends Path {
                            ib = Rectangle.unionPts(vs),
                            side = ib[this.attachedSide](),
                            center = ib.center().addPt(ib.center().subPt(side)),
-                           line = IntersectionParams.newLine(new Point2D(side.x, side.y), new Point2D(center.x,center.y)),
-                           path = IntersectionParams.newPolyline(vs.map(({x,y}) => new Point2D(x, y))),
-                           {x,y} = arr.min(Intersection.intersectShapes(path, line).points, ({x,y}) => pt(x,y).dist(side));
+                           line = shape("line", {x1: side.x, y1: side.y, x2: center.x, y2: center.y}),
+                           path = shape("polyline", {points: vs.map(({x,y}) => `${x},${y}`).join(" ")}),
+                           {x,y} = arr.min(intersect(path, line).points, ({x,y}) => pt(x,y).dist(side));
                      return pt(x,y).addPt(gb.topLeft());
                   } else {
                      return gb[this.attachedSide]();
