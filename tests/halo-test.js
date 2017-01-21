@@ -1,10 +1,10 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
-import { MorphicEnv } from "../index.js";
+import { MorphicEnv, show } from "../index.js";
 import { expect } from "mocha-es6";
 import { morph } from "../index.js";
 import { pt, Color, Rectangle } from "lively.graphics";
-import { num } from "lively.lang";
+import { num, promise, fun } from "lively.lang";
 
 var world, submorph1, submorph2, submorph3, eventDispatcher;
 function createDummyWorld() {
@@ -32,25 +32,33 @@ function closeToPoint(p1,p2) {
 
 describe("halos", () => {
 
-  beforeEach(async () => MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
+  beforeEach(async () =>
+    MorphicEnv.pushDefault(
+      new MorphicEnv(await createDOMEnvironment()))
+        .setWorld(createDummyWorld()));
+
   afterEach(() =>  MorphicEnv.popDefault().uninstall());
 
 
-  it("halo items are placed correctly", () => {
+  it("halo items are placed correctly", async () => {
     submorph1.origin = pt(20,30);
     submorph1.position = pt(100,100);
     var halo = world.showHaloFor(submorph1),
-        innerButton = halo.buttonControls.find(item =>
-          submorph1.globalBounds().containsPoint(item.globalBounds().center())
-          && item != halo.originHalo() && !item.isHandle && item != halo.borderBox);
+        _ = await halo.whenRendered(),
+        _ = await promise.delay(),
+        innerButton = halo.buttonControls
+          .filter(item => item != halo.originHalo() && !item.isResizeHandle && item != halo.borderBox)
+          .find(item => submorph1.globalBounds().containsPoint(item.globalBounds().center()));
     expect(innerButton).equals(undefined, `halo item ${innerButton && innerButton.name} is inside the bounds of its target`);
     expect(halo.originHalo().globalBounds().center()).equals(submorph1.worldPoint(pt(0,0)));
   });
   
-  it("halo items never overlap each other", () => {
+  it("halo items never overlap each other", async () => {
     submorph1.origin = pt(20,30);
     submorph1.extent = pt(20,20);
     var halo = world.showHaloFor(submorph1),
+        _ = await halo.whenRendered(),
+        _ = await promise.delay(),
         innerButton = halo.buttonControls.find(item =>
           halo.buttonControls.find(otherItem => 
             otherItem != item && !otherItem.isHandle && otherItem != halo.borderBox &&
@@ -59,40 +67,46 @@ describe("halos", () => {
     expect(innerButton).equals(undefined, `halo item ${innerButton} is inside the bounds of its target`);
   });
 
-  it("can select multiple morphs", () => {
+  it("can select multiple morphs", async () => {
      var halo = world.showHaloForSelection([submorph1, submorph2]);
+     await halo.whenRendered(); await promise.delay();
      expect(halo.target.selectedMorphs).equals([submorph1, submorph2]);
      expect(halo.borderBox.globalBounds()).equals(submorph1.globalBounds().union(submorph2.globalBounds()));
   });
 
-  it("can select and deselect morphs from selection",() => {
+  it("can select and deselect morphs from selection", async () => {
     var halo = world.showHaloForSelection([submorph1, submorph2]);
     halo = halo.addMorphToSelection(submorph3);
+    await halo.whenRendered(); await promise.delay();
     expect(halo.target.selectedMorphs).equals([submorph1, submorph2, submorph3]);
     expect(halo.borderBox.globalBounds()).equals(submorph1.globalBounds()
                                  .union(submorph2.globalBounds())
                                  .union(submorph3.globalBounds()));
     halo = halo.removeMorphFromSelection(submorph2);
+    await halo.whenRendered(); await promise.delay();
     expect(halo.target.selectedMorphs).equals([submorph1, submorph3]);
     expect(halo.borderBox.globalBounds()).equals(
                                   submorph1.globalBounds()
                                  .union(submorph3.globalBounds()));
   })
 
-  it("name shows name", () => {
+  it("name shows name", async () => {
     var halo = world.showHaloFor(submorph1);
+    await halo.whenRendered(); await promise.delay();
     expect(halo.nameHalo().nameHolders[0].submorphs[0].textString).equals(submorph1.name);
   })
 
-  it("drag drags", () => {
+  it("drag drags", async () => {
     var halo = world.showHaloFor(submorph1);
+    await halo.whenRendered(); await promise.delay();
     halo.dragHalo().init();
     halo.dragHalo().update(pt(10,5));
     expect(submorph1.position).equals(pt(20, 15));
   });
 
-  it("drags correctly of owner is transformed", () => {
+  it("drags correctly of owner is transformed", async () => {
     var halo = world.showHaloFor(submorph2);
+    await halo.whenRendered(); await promise.delay();
     submorph2.owner.rotateBy(45);
     const prevGlobalPos = submorph2.globalPosition;
     halo.dragHalo().init();
@@ -100,32 +114,32 @@ describe("halos", () => {
     expect(submorph2.globalPosition).equals(prevGlobalPos.addXY(10,5));
   })
   
-  it("drags gridded and shows guides", () => {
+  it("drags gridded and shows guides", async () => {
     var halo = world.showHaloFor(submorph1);
     halo.dragHalo().init();
     halo.dragHalo().update(pt(10,11), true);
+    await halo.whenRendered(); await promise.delay();
     expect(submorph1.position).equals(pt(20, 20));
-    expect(halo.getSubmorphNamed("mesh")).not.to.be.null;
-    expect(halo.getSubmorphNamed("vertical")).not.to.be.null;
-    expect(halo.getSubmorphNamed("horizontal")).not.to.be.null;
+    var mesh = halo.getSubmorphNamed("mesh");
+    expect(mesh).not.to.be.null;
+    expect(mesh.vertical).not.to.be.null;
+    expect(mesh.horizontal).not.to.be.null;
     halo.dragHalo().stop();
-    expect(halo.getSubmorphNamed("mesh").opacity).equals(0);
+    expect(mesh.owner).to.be.null;
   });
 
-  it("active drag hides other halos and displays position", () => {
+  it("active drag hides other halos and displays position", async () => {
     var halo = world.showHaloFor(submorph1),
         dragHalo = halo.dragHalo(),
         otherHalos = halo.buttonControls.filter((b) => b != dragHalo && !b.isHandle)
     dragHalo.init();
     halo.alignWithTarget();
-    expect(halo.activeButton).equals(dragHalo);
+    expect(halo.state.activeButton).equals(dragHalo);
     expect(halo.propertyDisplay.displayedValue()).equals(submorph1.position.toString());
-    otherHalos.forEach((h) => {
-      expect(h).to.have.property("visible", false);
-    });
+    otherHalos.forEach((h) => expect(h).to.have.property("visible", false));
   })
 
-  it("resize resizes", () => {
+  it("resize resizes", async () => {
     var halo = world.showHaloFor(submorph1),
         resizeHandle = halo.resizeHandles().find(h => h.corner == "bottomRight");
     resizeHandle.init(pt(0,0))
@@ -133,7 +147,7 @@ describe("halos", () => {
     expect(submorph1.extent).equals(pt(110, 105));
   });
 
-  it("resizes correctly if transformation present", () => {
+  it("resizes correctly if transformation present", async () => {
     submorph1.rotation = num.toRadians(-45);
     var halo = world.showHaloFor(submorph1),
         resizeHandle = halo.resizeHandles().find(h => h.corner == "bottomCenter");
@@ -142,7 +156,7 @@ describe("halos", () => {
     expect(submorph1.extent).equals(pt(100, 100 + pt(10,10).r()));
   });
 
-  it("align to the morph extent while resizing", () => {
+  it("align to the morph extent while resizing", async () => {
     submorph1.origin = pt(20,30);
     submorph1.position = pt(100,100);
     var halo = world.showHaloFor(submorph1, "test-pointer-1"),
@@ -153,7 +167,7 @@ describe("halos", () => {
     expect(halo.borderBox.extent).equals(submorph1.extent);
   });
 
-  it("active resize hides other halos and displays extent", () => {
+  it("active resize hides other halos and displays extent", async () => {
     var halo = world.showHaloFor(submorph1),
         resizeHalo = halo.resizeHandles().find(h => h.corner == "bottomRight"),
         otherHalos = halo.buttonControls.filter((b) => 
@@ -161,8 +175,8 @@ describe("halos", () => {
             && b != halo.propetyDisplay);
     resizeHalo.init();
     halo.alignWithTarget();
-    expect(halo.activeButton).equals(resizeHalo);
-    expect(halo.propertyDisplay.displayedValue()).equals("100.0w 100.0h");
+    expect(halo.state.activeButton).equals(resizeHalo);
+    expect(halo.propertyDisplay.displayedValue()).equals("100.0x100.0");
     otherHalos.forEach((h) => expect(h).to.have.property("visible", false));
   });
 
@@ -266,7 +280,7 @@ describe("halos", () => {
         otherHalos = halo.buttonControls.filter((b) => b != rotateHalo);
     rotateHalo.init();
     halo.alignWithTarget();
-    expect(halo.activeButton).equals(rotateHalo);
+    expect(halo.state.activeButton).equals(rotateHalo);
     expect(halo.propertyDisplay.displayedValue()).equals("0.0°");
     otherHalos.forEach((h) => {
       expect(h).to.have.property("visible", false);

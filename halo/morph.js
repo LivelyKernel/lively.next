@@ -214,7 +214,7 @@ export class Halo extends Morph {
   originHalo() { return OriginHalo.for(this); }
   styleHalo() { return StyleHalo.for(this); }
 
-  get buttonControls() { return this.submorphs.filter(m => m.isHaloItem); }
+  get buttonControls() { return this.submorphs.filter(m => m.isHaloItem && !m.isResizeHandle); }
 
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
