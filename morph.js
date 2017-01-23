@@ -302,10 +302,14 @@ export class Morph {
       this.submorphs = submorphs;
     }
   }
+
   get defaultProperties() {
     if (!this.constructor._morphicDefaultPropertyValues) {
       var defaults = this.constructor._morphicDefaultPropertyValues = {},
-          propDescriptors = obj.mergePropertyInHierarchy(this.constructor, "properties");
+        propsAndSettings = this.constructor[Symbol.for("lively.classes-properties-and-settings")],
+          propDescriptors = propsAndSettings ?
+            propsAndSettings.properties :
+            obj.mergePropertyInHierarchy(this.constructor, "properties");
       for (var key in propDescriptors) {
         var descr = propDescriptors[key];
         if (descr.hasOwnProperty("defaultValue"))
@@ -314,6 +318,7 @@ export class Morph {
     }
     return this.constructor._morphicDefaultPropertyValues;
   }
+
   defaultProperty(key) { return this.defaultProperties[key]; }
   getProperty(key) { return this._morphicState[key]; }
   setProperty(key, value, meta) { return this.addValueChange(key, value, meta); }
