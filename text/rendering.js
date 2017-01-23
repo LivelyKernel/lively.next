@@ -170,6 +170,7 @@ export var defaultRenderer = {
       style: {
         whiteSpace: "pre",
         width: "100%",
+        zIndex: 3, position: "absolute",
         // width: textWidth+"px",
         height: textHeight+"px",
         padding: `${padding.top()}px ${padding.right()}px ${padding.bottom()}px ${padding.left()}px`
@@ -203,7 +204,7 @@ export var defaultRenderer = {
             height: height+"px",
             outline: "1px solid orange",
             pointerEvents: "none",
-            zIndex: -2
+            zIndex: 3
           }
         }))
       }
@@ -222,7 +223,7 @@ export var defaultRenderer = {
         height: textHeight+"px",
         outline: "1px solid red",
         pointerEvents: "none",
-        zIndex: -2
+        zIndex: 3
       }
     }));
 
@@ -236,7 +237,8 @@ export var defaultRenderer = {
         pointerEvents: "none", position: "absolute",
         left: startPos.x + "px", top: startPos.y + "px",
         width: (endPos.x-startPos.x) + "px", height: (endPos.y-startPos.y)+"px",
-        backgroundColor: "#bed8f7", zIndex: -3
+        backgroundColor: "#bed8f7",
+        zIndex: 1
       }
     })
   },
@@ -248,7 +250,7 @@ export var defaultRenderer = {
         left: pos.x-Math.ceil(width/2) + "px", top: pos.y + "px",
         width: width + "px", height: height + "px",
         backgroundColor: diminished ? "gray" : "black",
-        zIndex: 1,
+        zIndex: 5,
         display: visible ? "" : "none"
       }
     });
@@ -259,7 +261,7 @@ export var defaultRenderer = {
         {height, x: endX} = textLayouter.boundsFor(morph, end);
     return h("div.marker-layer-part", {
       style: {
-        zIndex: -4,
+        zIndex: 3,
         ...style,
         position: "absolute",
         left: x + "px", top: y + "px",
