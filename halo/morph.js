@@ -31,7 +31,6 @@ export default class Halo extends Morph {
     super(props);
     this.initLayout();
     this.initButtons();
-    this.focus();
   }
 
   initLayout() {
@@ -418,7 +417,7 @@ class HaloPropertyDisplay extends Text {
   static get defaultPosition() { return pt(25,0); }
 
   static for(halo) {
-    return halo.getSubmorphNamed(this.name) || halo.addMorph(new this({name: this.morphName}));
+    return halo.getSubmorphNamed(this.morphName) || halo.addMorph(new this({name: this.morphName}));
   }
 
   static get properties() {
@@ -560,13 +559,12 @@ class HaloItem extends Morph {
       fill:         {defaultValue: Color.gray.withA(.7)},
       grabbable:    {defaultValue: false},
       extent:       {defaultValue: pt(24,24)},
-      name:         {defaultValue: this.name || "unnamed halo item"},
       halo:         {},
     }
   }
 
   static for(halo) {
-    return halo.getSubmorphNamed(this.name) || halo.addMorph(new this({halo, name: this.morphName}));
+    return halo.getSubmorphNamed(this.morphName) || halo.addMorph(new this({halo, name: this.morphName}));
   }
 
   get isEpiMorph() { return true; }
@@ -590,12 +588,12 @@ class NameHolder extends Morph {
       fill:      {defaultValue: Color.transparent},
       layout:    {
         after: ["nameHolder"],
-        initialize() { return new HorizontalLayout({container: this, spacing: 7}); }
+        initialize() { this.layout = new HorizontalLayout({spacing: 7}); }
       },
       nameHolder: {
         after: ["submorphs"],
         initialize() {
-          return this.addMorph(new Text({
+          this.nameHolder = this.addMorph(new Text({
             fill: Color.transparent,
             fontColor: Color.darkgray,
             active: true
