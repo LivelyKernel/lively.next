@@ -472,12 +472,6 @@ class MultiSelectionTarget extends Morph {
   get isHaloItem() { return true }
   get isMorphSelection() { return true; }
 
-  get defaultProperties() {
-    return {
-      ...super.defaultProperties,
-    }
-  }
-
   selectsMorph(morph) { return this.selectedMorphs.includes(morph); }
 
   alignWithSelection() {
@@ -768,12 +762,11 @@ class CloseHaloItem extends HaloItem {
 
   static get morphName() { return "close"; }
 
-  get defaultProperties() {
+  static get properties() {
     return {
-      ...super.defaultProperties,
-      styleClasses: ["fa", "fa-close"],
-      draggable: false,
-      tooltip: "Remove this morph from the world"
+      styleClasses: {defaultValue: ["fa", "fa-close"]},
+      draggable: {defaultValue: false},
+      tooltip: {defaultValue: "Remove this morph from the world"}
     };
   }
 
@@ -795,12 +788,11 @@ class GrabHaloItem extends HaloItem {
 
   static get morphName() { return "grab"; }
 
-  get defaultProperties() {
+  static get properties() {
     return {
-      ...super.defaultProperties,
-      name: "grab",
-      styleClasses: ["fa", "fa-hand-rock-o"],
-      tooltip: "Grab the morph"
+      name: {defaultValue: "grab"},
+      styleClasses: {defaultValue: ["fa", "fa-hand-rock-o"]},
+      tooltip: {defaultValue: "Grab the morph"}
     }
   }
 
@@ -1096,17 +1088,16 @@ class OriginHaloItem extends HaloItem {
 
   static get morphName() { return "origin"; }
 
+  static get properties() {
+    return {
+      borderColor: {defaultValue: Color.black},
+      borderWidth: {defaultValue: 2},
+    };
+  }
+
   get fill() { return Color.red; }
   get extent() { return pt(15, 15); }
   get tooltip() { return "Change the morph's origin"; }
-
-  get defaultProperties() {
-    return {
-      ...super.defaultProperties,
-      borderColor: Color.black,
-      borderWidth: 2
-    };
-  }
 
   computePositionAtTarget() {
     return this.halo
