@@ -29,10 +29,28 @@ export class Morph {
   }
 
   static get properties() {
-    return {      
-      clipMode:           {defaultValue: "visible"},
+    return {
+
+      clipMode: {
+        defaultValue: "visible",
+        set(value) {
+          this.setProperty("clipMode", value);
+          if (!this.isClip()) this.scroll = pt(0, 0);
+        }
+      },
+
       draggable:          {defaultValue: true},
-      dropShadow:         {defaultValue: false},
+      dropShadow: {
+        defaultValue: false,
+        set(value) {
+          if (value && !value.isShadowObject) {
+            value = new ShadowObject(value);
+            value.morph = this;
+          }
+          this.setProperty("dropShadow", value);
+        }
+      },
+
       epiMorph:           {defaultValue: false},
       extent:             {defaultValue: pt(10, 10)},
       fill:               {defaultValue: Color.white},
@@ -48,12 +66,49 @@ export class Morph {
       reactsToPointer:    {defaultValue: true},
       rotation:           {defaultValue:  0},
       scale:              {defaultValue:  1},
-      scroll:             {defaultValue: pt(0,0)},
-      styleClasses:       {defaultValue: ["morph"]},
+      scroll: {
+        defaultValue: pt(0, 0),
+        set({x, y}) {
+          if (!this.isClip()) return;
+          var {x: maxScrollX, y: maxScrollY} = this.scrollExtent.subPt(this.extent);
+          x = Math.max(0, Math.min(maxScrollX, x));
+          y = Math.max(0, Math.min(maxScrollY, y));
+          this.setProperty("scroll", pt(x, y));
+          this.makeDirty();
+        }
+      },
+      styleClasses: {
+        defaultValue: ["morph"],
+        get() {
+          return this.constructor.styleClasses.concat(this.getProperty("styleClasses"));
+        },
+        set(value) {
+          this.setProperty("styleClasses", arr.withoutAll(value, this.constructor.styleClasses));
+        }
+      },
       tooltip:            {defaultValue: null},
       visible:            {defaultValue: true},
-      submorphs:          {defaultValue:  [], after: ["isLayoutable", "origin", "position", "rotation", "scale"]},
-      layout:             {after: ["submorphs"]},
+      layout: {
+        after: ["submorphs"],
+        set(value) {
+          if (value) value.container = this;
+          this.setProperty("layout", value);
+        }
+      },
+
+      submorphs: {
+        defaultValue: [],
+        after: ["isLayoutable", "origin", "position", "rotation", "scale"],
+        get() { return (this.getProperty("submorphs") || []).slice(); },
+        set(newSubmorphs) {
+          this.layout && this.layout.disable();
+          this.submorphs.forEach(m => newSubmorphs.includes(m) || m.remove());
+          newSubmorphs.forEach(
+            (m, i) => this.submorphs[i] !== m &&
+              this.addMorph(m, this.submorphs[i]));
+          this.layout && this.layout.enable();
+        }
+      },
 
       borderColorBottom:  {defaultValue: Color.white},
       borderColorLeft:    {defaultValue: Color.white},
@@ -71,40 +126,46 @@ export class Morph {
       borderWidthLeft:    {defaultValue: 0},
       borderWidthRight:   {defaultValue: 0},
       borderWidthTop:     {defaultValue: 0},
-      
-    
+
+
       borderLeft: {
+        derived: true,
         after:   ["borderStyleLeft", "borderWidthLeft", "borderColorLeft"],
         get()    { return {style: this.borderStyleLeft, width: this.borderWidthLeft, color: this.borderColorLeft} },
         set(x)   { if ("style" in x) this.borderStyleLeft = x.style; if ("width" in x) this.borderWidthLeft = x.width; if ("color" in x) this.borderColorLeft = x.color; if ("radius" in x) this.borderRadiusLeft = x.radius; }
       },
 
       borderRight: {
+        derived: true,
         after:  ["borderStyleRight", "borderWidthRight", "borderColorRight"],
         get()   { return {style: this.borderStyleRight, width: this.borderWidthRight, color: this.borderColorRight} },
         set(x)  { if ("style" in x) this.borderStyleRight = x.style; if ("width" in x) this.borderWidthRight = x.width; if ("color" in x) this.borderColorRight = x.color; if ("radius" in x) this.borderRadiusRight = x.radius; }
       },
 
       borderBottom: {
+        derived: true,
         after: ["borderStyleBottom", "borderWidthBottom", "borderColorBottom"],
         get()  { return {style: this.borderStyleBottom, width: this.borderWidthBottom, color: this.borderColorBottom} },
         set(x) { if ("style" in x) this.borderStyleBottom = x.style; if ("width" in x) this.borderWidthBottom = x.width; if ("color" in x) this.borderColorBottom = x.color; if ("radius" in x) this.borderRadiusBottom = x.radius; }
       },
 
       borderTop: {
+        derived: true,
         after: ["borderStyleTop", "borderWidthTop", "borderColorTop"],
         get()     { return {style: this.borderStyleTop, width: this.borderWidthTop, color: this.borderColorTop} },
         set(x)    { if ("style" in x) this.borderStyleTop = x.style; if ("width" in x) this.borderWidthTop = x.width; if ("color" in x) this.borderColorTop = x.color; if ("radius" in x) this.borderRadiusTop = x.radius; }
       },
 
-    
+
       borderWidth: {
+        derived: true,
         after:      ["borderWidthLeft", "borderWidthRight", "borderWidthTop", "borderWidthBottom"],
         get()       { return this.borderWidthLeft; },
         set(value)  { this.borderWidthLeft = this.borderWidthRight = this.borderWidthTop = this.borderWidthBottom = value; }
       },
 
       borderRadius: {
+        derived: true,
         after: ["borderRadiusLeft","borderRadiusRight","borderRadiusTop","borderRadiusBottom"],
         get()      { return this.borderRadiusLeft; },
         set(value) {
@@ -124,16 +185,19 @@ export class Morph {
       },
 
       borderStyle: {
+        derived: true,
         after:      ["borderStyleLeft", "borderStyleRight", "borderStyleTop", "borderStyleBottom"],
         get()       { return this.borderStyleLeft; },
         set(value)  { this.borderStyleLeft = this.borderStyleRight = this.borderStyleTop = this.borderStyleBottom = value; }
       },
       borderColor: {
+        derived: true,
         after:      ["borderColorLeft", "borderColorRight", "borderColorTop", "borderColorBottom"],
         get()       { return this.borderColorLeft; },
         set(value)  { this.borderColorLeft = this.borderColorRight = this.borderColorTop = this.borderColorBottom = value; }
       },
       border: {
+        derived: true,
         after: ["borderStyle", "borderWidth", "borderColor"],
         get()    { return {style: this.borderStyle, width: this.borderWidth, color: this.borderColor} },
         set(x)   {
@@ -395,29 +459,7 @@ export class Morph {
      this.setProperty("styleRules", rules);
   }
 
-  get layout()         { return this.getProperty("layout") }
-  set layout(value)    {
-    if (value) value.container = this;
-    this.setProperty("layout", value);
-  }
-
-  get clipMode()       { return this.getProperty("clipMode"); }
-  set clipMode(value)  {
-    this.setProperty("clipMode", value);
-    if (!this.isClip()) this.scroll = pt(0,0);
-  }
   isClip() { return this.clipMode !== "visible"; }
-
-  get scroll()       { return this.getProperty("scroll"); }
-  set scroll({x,y})  {
-    if (!this.isClip()) return;
-    var {x: maxScrollX, y: maxScrollY} = this.scrollExtent.subPt(this.extent);
-    x = Math.max(0, Math.min(maxScrollX, x));
-    y = Math.max(0, Math.min(maxScrollY, y));
-    this.setProperty("scroll", pt(x,y));
-    this.makeDirty();
-  }
-
   get scrollExtent() {
     return (this.submorphs.length ?
       this.innerBounds().union(this.submorphBounds()) :
@@ -430,15 +472,6 @@ export class Morph {
   scrollRight(n) { this.scrollLeft(-n); }
   scrollPageDown(n) { this.scrollDown(this.height); }
   scrollPageUp(n) { this.scrollUp(this.height); }
-
-  get dropShadow()      { return this.getProperty("dropShadow"); }
-  set dropShadow(value) {
-    if (value && !value.isShadowObject) {
-      value = new ShadowObject(value);
-      value.morph = this;
-    }
-    this.setProperty("dropShadow", value);
-  }
 
   static get styleClasses() {
     // we statically determine default style classes based on the Morph
@@ -456,13 +489,6 @@ export class Morph {
       klass = klass[Symbol.for("lively-instance-superclass")];
     }
     return this._styleClasses = classNames;
-  }
-
-  get styleClasses() {
-    return this.constructor.styleClasses.concat(this.getProperty("styleClasses"));
-  }
-  set styleClasses(value)  {
-   this.setProperty("styleClasses", arr.withoutAll(value, this.constructor.styleClasses));
   }
 
   addStyleClass(className)  { this.styleClasses = arr.uniq(this.styleClasses.concat(className)) }
@@ -573,14 +599,6 @@ export class Morph {
   // morphic relationship
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  get submorphs() { return (this.getProperty("submorphs") || []).slice(); }
-  set submorphs(newSubmorphs) {
-      this.layout && this.layout.disable();
-      this.submorphs.forEach(m => newSubmorphs.includes(m) || m.remove());
-      newSubmorphs.forEach((m, i) => this.submorphs[i] !== m && this.addMorph(m, this.submorphs[i]));
-      this.layout && this.layout.enable();
-  }
-
   replaceWith(other, indexForOtherMorph) {
     // this method switches the scene graph location of two morphs (this and
     // other). Morphs can be unrelated or in child/owner relationship.
@@ -603,7 +621,7 @@ export class Morph {
         otherSubmorphs = arr.without(other.submorphs, this),
         otherTfm = other.getTransform().copy(),
         otherIndex = otherOwner ? otherOwner.submorphs.indexOf(other) : -1;
- 
+
     myOwner && this.remove();
     otherOwner && other.remove();
     this.submorphs = [];
@@ -1409,7 +1427,7 @@ export class Morph {
     node.style.pointerEvents = "";
 
     var html = node.outerHTML;
-    
+
     html = html.replace(/(id|class)=\"[^\"]+\"/g, "")
                .replace(/pointer-events: [^;]+;/g, "");
 
@@ -1541,7 +1559,7 @@ export class Triangle extends Morph {
   static get properties() {
     return {
       direction: {defaultValue: "up"},
-      triangleFill: {after: ["fill"], initialize() { return this.fill; }}
+      triangleFill: {after: ["fill"], initialize() { this.triangleFill = this.fill; }}
     }
   }
 
@@ -1693,13 +1711,18 @@ export class Path extends Morph {
 
   static get properties() {
     return {
-      vertices: {defaultValue: []},
+      vertices: {
+        defaultValue: [],
+        set(vs) {
+          vs = vs.map(v => new PathPoint(this, {...v, borderWidth: this.borderWidth}));
+          this.setProperty("vertices", vs);
+        }
+      }
     }
   }
 
   constructor(props = {}) {
-    super({...obj.dissoc(props, "origin"), fill: Color.transparent});
-    this.fill = props.fill;
+    super({...obj.dissoc(props, "origin")});
     this.adjustOrigin(props.origin || this.origin);
     this.position = props.position || this.position;
   }
@@ -1734,12 +1757,6 @@ export class Path extends Morph {
     if (!this.adjustingOrigin && ["vertices", "borderWidthLeft"].includes(change.prop))
       this.updateBounds(change.prop == "vertices" ? change.value : this.vertices);
     super.onChange(change);
-  }
-
-  get vertices() { return this.getProperty("vertices"); }
-  set vertices(vs) {
-    vs = vs.map(v => new PathPoint(this, {...v, borderWidth: this.borderWidth}));
-    this.setProperty("vertices", vs);
   }
 
   vertexBefore(v) {
