@@ -1,7 +1,7 @@
 import { obj } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
-import { Morph } from "./index.js";
-import { signal, connect } from "lively.bindings";
+import { Morph, morph } from "./index.js";
+import { signal, disconnect, connect } from "lively.bindings";
 
 // var b = new Button({label: "test", extent: pt(22,18)}).openInWorld()
 // b.scale = 10
@@ -13,41 +13,39 @@ import { signal, connect } from "lively.bindings";
 
 export class Button extends Morph {
 
-  constructor(props) {
-    var {label, fontFamily, fontSize, fontColor} = props;
-    if (!label) label = "no label";
-    if (label.isMorph) {
-      label.name = "label";
-    } else {
-      label = {
-        type: "label", name: "label",
-        value: label, fill: Color.white.withA(0),
-        padding: Rectangle.inset(0),
-      }
+  static get properties() {
+    return {
+      padding:      {defaultValue: Rectangle.inset(0)},
+      active:       {defaultValue: true},
+      borderWidth:  {defaultValue: 1},
+      extent:       {defaultValue: pt(100,24)},
+      borderRadius: {defaultValue: 15},
+      draggable:    {defaultValue: false},
+      labelMorph:   {
+        after: ["submorphs"],
+        initialize() {
+          return this.addMorph({
+            type: "label", name: "label",
+            value: "no label yet", fill: Color.white.withA(0),
+            padding: Rectangle.inset(0)
+          });
+        }
+      },
+      label:        {after: ["labelMorph"]},
+      fontFamily:   {after: ["labelMorph"]},
+      fontSize:     {after: ["labelMorph"]},
+      fontColor:    {after: ["labelMorph"]}
     }
+  }
 
-    super({
-      draggable: false,
-      borderRadius: 15,
-      extent: pt(100,24),
-      borderWidth: 1,
-      active: true,
-      padding: Rectangle.inset(0),
-      submorphs: [label],
-      ...obj.dissoc(props, ["label", "fontFamily", "fontSize", "fontColor"])
-    });
+  constructor(props) {
+    super(props);
 
     this.active = this.active; // style
     this.relayout();
 
-    if (fontFamily !== undefined) this.fontFamily = fontFamily;
-    if (fontSize !== undefined) this.fontSize = fontSize;
-    if (fontColor !== undefined) this.fontColor = fontColor;
-
     connect(this, "change", this, "relayout",
       {updater: ($upd, {prop}) => ["extent", "padding"].includes(prop) && $upd()})
-    connect(this.submorphs[0], "change", this, "relayout",
-      {updater: ($upd, {prop}) => ["extent"].includes(prop) && $upd()})
   }
 
   get isButton() { return true }
@@ -91,8 +89,9 @@ export class Button extends Morph {
   }
 
   relayout() {
+    var label = this.labelMorph;
+    if (!label) return;
     var padding = this.padding,
-        label = this.submorphs[0],
         padT = padding.top(),
         padB = padding.bottom(),
         padL = padding.left(),
@@ -106,42 +105,52 @@ export class Button extends Morph {
     return this;
   }
 
-  get label() { return this.get("label").textString; }
+  get label() { return this.labelMorph.textString; }
   set label(stringOrAttributesOrMorph) {
     if (stringOrAttributesOrMorph.isMorph) {
-      this.get("label").remove();
-      stringOrAttributesOrMorph.name = "label";
-      this.addMorph(stringOrAttributesOrMorph);
+      this.labelMorph = stringOrAttributesOrMorph;
     } else {
-      this.get("label").value = stringOrAttributesOrMorph;
+      this.labelMorph.value = stringOrAttributesOrMorph;
+      this.relayout();
     }
-    this.relayout();
   }
 
-  get labelWithTextAttributes() { return this.get("label").textAndAttributes; }
-  set labelWithTextAttributes(textAndAttributes) { this.get("label").textAndAttributes = textAndAttributes; this.relayout(); }
+  get labelMorph() { return this.getSubmorphNamed("label"); }
+  set labelMorph(labelMorph) {
+    var existing = this.labelMorph;
+    if (existing) {
+      disconnect(this.labelMorph, "change", this, "relayout");
+      existing.remove();
+    }
 
-  get fontFamily() { return this.submorphs[0].fontFamily; }
-  set fontFamily(fontFamily) { this.submorphs[0].fontFamily = fontFamily; this.relayout(); }
-  get fontSize() { return this.submorphs[0].fontSize; }
-  set fontSize(fontSize) { this.submorphs[0].fontSize = fontSize; this.relayout(); }
-  get fontColor() { return this.submorphs[0].fontColor; }
-  set fontColor(color) { this.submorphs[0].fontColor = color; }
+    labelMorph.name = "label";
+    this.addMorphAt(labelMorph, 0);
+    this.relayout();
+    connect(labelMorph, "change", this, "relayout",
+      {updater: ($upd, {prop}) => ["extent"].includes(prop) && $upd()});
+  }
+
+  get labelWithTextAttributes() { return this.labelMorph.textAndAttributes; }
+  set labelWithTextAttributes(textAndAttributes) { this.labelMorph.textAndAttributes = textAndAttributes; this.relayout(); }
+
+  get fontFamily() { return this.labelMorph.fontFamily; }
+  set fontFamily(fontFamily) { this.labelMorph.fontFamily = fontFamily; this.relayout(); }
+  get fontSize() { return this.labelMorph.fontSize; }
+  set fontSize(fontSize) { this.labelMorph.fontSize = fontSize; this.relayout(); }
+  get fontColor() { return this.labelMorph.fontColor; }
+  set fontColor(color) { this.labelMorph.fontColor = color; }
   set padding(value) { this.addValueChange("padding", value); this.relayout(); }
   get padding() { return this.getProperty("padding"); }
 
-  get action() { return this.getProperty("action"); }
-  set action(value) { this.addValueChange("action", value); }
   get active() { return this.getProperty("active"); }
   set active(value) {
     Object.assign(this, value ? this.activeStyle : this.inactiveStyle);
-    this.submorphs[0].nativeCursor = this.nativeCursor;
+    this.labelMorph.nativeCursor = this.nativeCursor;
     this.addValueChange("active", value);
   }
 
   fit() {
-    var padding = this.padding,
-        label = this.submorphs[0];
+    var padding = this.padding, label = this.labelMorph;
     label.fit();
     this.extent = padding.bottomLeft().addPt(padding.bottomRight()).addPt(label.extent);
     return this.relayout();

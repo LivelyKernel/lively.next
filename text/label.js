@@ -9,6 +9,25 @@ import { signal } from "lively.bindings";
 
 export class Label extends Morph {
 
+  static get properties() {
+    return {
+      fill:             {defaultValue: null},
+      draggable:        {defaultValue: false},
+      padding:          {defaultValue: Rectangle.inset(0)},
+      nativeCursor:     {defaultValue: "default"},
+      autofit:          {defaultValue: true},
+
+      // default text style
+      fontFamily:       {defaultValue: "Sans-Serif"},
+      fontSize:         {defaultValue: 12},
+      fontColor:        {defaultValue: Color.black},
+      fontWeight:       {defaultValue: "normal"},
+      fontStyle:        {defaultValue: "normal"},
+      textDecoration:   {defaultValue: "none"},
+      textStyleClasses: {defaultValue: undefined},
+    }
+  }
+
   static icon(iconName, props = {prefix: "", suffix: ""}) {
     return Icon.makeLabel(iconName, props);
   }

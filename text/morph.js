@@ -19,6 +19,7 @@ import InputLine from "./input-line.js";
 import { Label } from "./label.js";
 import { Snippet } from "./snippets.js";
 
+
 const defaultTextStyle = {
   fontFamily: "Sans-Serif",
   fontSize: 12,
@@ -47,6 +48,19 @@ export class Text extends Morph {
   }
 
   static makeInputLine(props) { return new InputLine(props); }
+
+  static get properties() {
+    return {
+      readOnly:    {defaultValue: false},
+      draggable:   {defaultValue: false},
+      fixedWidth:  {defaultValue: false},
+      fixedHeight: {defaultValue: false},
+      padding:     {defaultValue: Rectangle.inset(0)},
+      useSoftTabs: {defaultValue: config.text.useSoftTabs !== undefined ? config.text.useSoftTabs : true},
+      tabWidth:    {defaultValue: config.text.tabWidth || 2},
+      savedMarks:  {defaultValue: []}
+    }
+  }
 
   constructor(props = {}) {
     var {
