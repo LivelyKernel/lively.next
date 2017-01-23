@@ -132,28 +132,48 @@ export class Morph {
         derived: true,
         after:   ["borderStyleLeft", "borderWidthLeft", "borderColorLeft"],
         get()    { return {style: this.borderStyleLeft, width: this.borderWidthLeft, color: this.borderColorLeft} },
-        set(x)   { if ("style" in x) this.borderStyleLeft = x.style; if ("width" in x) this.borderWidthLeft = x.width; if ("color" in x) this.borderColorLeft = x.color; if ("radius" in x) this.borderRadiusLeft = x.radius; }
+        set(x) {
+          if ("style" in x) this.borderStyleLeft = x.style;
+          if ("width" in x) this.borderWidthLeft = x.width;
+          if ("color" in x) this.borderColorLeft = x.color;
+          if ("radius" in x) this.borderRadiusLeft = x.radius;
+        }
       },
 
       borderRight: {
         derived: true,
         after:  ["borderStyleRight", "borderWidthRight", "borderColorRight"],
         get()   { return {style: this.borderStyleRight, width: this.borderWidthRight, color: this.borderColorRight} },
-        set(x)  { if ("style" in x) this.borderStyleRight = x.style; if ("width" in x) this.borderWidthRight = x.width; if ("color" in x) this.borderColorRight = x.color; if ("radius" in x) this.borderRadiusRight = x.radius; }
+        set(x) {
+          if ("style" in x) this.borderStyleRight = x.style;
+          if ("width" in x) this.borderWidthRight = x.width;
+          if ("color" in x) this.borderColorRight = x.color;
+          if ("radius" in x) this.borderRadiusRight = x.radius;
+        }
       },
 
       borderBottom: {
         derived: true,
         after: ["borderStyleBottom", "borderWidthBottom", "borderColorBottom"],
         get()  { return {style: this.borderStyleBottom, width: this.borderWidthBottom, color: this.borderColorBottom} },
-        set(x) { if ("style" in x) this.borderStyleBottom = x.style; if ("width" in x) this.borderWidthBottom = x.width; if ("color" in x) this.borderColorBottom = x.color; if ("radius" in x) this.borderRadiusBottom = x.radius; }
+        set(x) {
+          if ("style" in x) this.borderStyleBottom = x.style;
+          if ("width" in x) this.borderWidthBottom = x.width;
+          if ("color" in x) this.borderColorBottom = x.color;
+          if ("radius" in x) this.borderRadiusBottom = x.radius;
+        }
       },
 
       borderTop: {
         derived: true,
         after: ["borderStyleTop", "borderWidthTop", "borderColorTop"],
         get()     { return {style: this.borderStyleTop, width: this.borderWidthTop, color: this.borderColorTop} },
-        set(x)    { if ("style" in x) this.borderStyleTop = x.style; if ("width" in x) this.borderWidthTop = x.width; if ("color" in x) this.borderColorTop = x.color; if ("radius" in x) this.borderRadiusTop = x.radius; }
+        set(x) {
+          if ("style" in x) this.borderStyleTop = x.style;
+          if ("width" in x) this.borderWidthTop = x.width;
+          if ("color" in x) this.borderColorTop = x.color;
+          if ("radius" in x) this.borderRadiusTop = x.radius;
+        }
       },
 
 
@@ -161,7 +181,10 @@ export class Morph {
         derived: true,
         after:      ["borderWidthLeft", "borderWidthRight", "borderWidthTop", "borderWidthBottom"],
         get()       { return this.borderWidthLeft; },
-        set(value)  { this.borderWidthLeft = this.borderWidthRight = this.borderWidthTop = this.borderWidthBottom = value; }
+        set(value) {
+          this.borderWidthLeft = this.borderWidthRight =
+            this.borderWidthTop = this.borderWidthBottom = value;
+        }
       },
 
       borderRadius: {
@@ -188,14 +211,22 @@ export class Morph {
         derived: true,
         after:      ["borderStyleLeft", "borderStyleRight", "borderStyleTop", "borderStyleBottom"],
         get()       { return this.borderStyleLeft; },
-        set(value)  { this.borderStyleLeft = this.borderStyleRight = this.borderStyleTop = this.borderStyleBottom = value; }
+        set(value) {
+          this.borderStyleLeft = this.borderStyleRight =
+            this.borderStyleTop = this.borderStyleBottom = value;
+        }
       },
+
       borderColor: {
         derived: true,
         after:      ["borderColorLeft", "borderColorRight", "borderColorTop", "borderColorBottom"],
         get()       { return this.borderColorLeft; },
-        set(value)  { this.borderColorLeft = this.borderColorRight = this.borderColorTop = this.borderColorBottom = value; }
+        set(value) {
+          this.borderColorLeft = this.borderColorRight =
+            this.borderColorTop = this.borderColorBottom = value;
+        }
       },
+
       border: {
         derived: true,
         after: ["borderStyle", "borderWidth", "borderColor"],
