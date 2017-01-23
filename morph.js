@@ -134,6 +134,61 @@ export class Morph {
     return `<${this.constructor.name} - ${this.name ? this.name : this.id}>`;
   }
 
+  livelyCustomInspect() {
+    var properties = [],
+        ignored = [], seen = {},
+        wellKnown = Object.keys(this._morphicState);
+
+    wellKnown.push("id", "owner");
+    ignored.push("_id", "_owner");
+
+    properties.push(...wellKnown
+      .map(key => { seen[key] = true; return {key, value: this[key]}; })
+      .sort((a, b) => {
+        var aK = a.key.toLowerCase(),
+            bK = b.key.toLowerCase();
+        return aK < bK ? -1 : aK === bK ? 0 : 1
+      }))
+
+    var morphInternals = [
+      "attributeConnections",
+      "_animationQueue",
+      "_morphicState",
+      "_dirty",
+      "doNotCopyProperties",
+      "doNotSerialize",
+      "_env",
+      "_cachedPaths",
+      "_pathDependants",
+      "_rendering",
+      "_rev",
+      "_submorphOrderChanged",
+      "_tickingScripts",
+      "_transform",
+      "_invTransform",
+      "layout"
+    ]
+
+    if (this.attributeConnections) {
+      for (let c of this.attributeConnections)
+        ignored.push(`$$${c.sourceAttrName}`, `${c.sourceAttrName}`);
+    }
+
+    for (let ignore of ignored) seen[ignore] = true;
+    for (let key of morphInternals) {
+      if (!(key in this)) continue;
+      seen[key] = true;
+      properties.push({key, value: this[key], keyString: `[internal] ${key}`});
+    }
+
+    for (let key in this) {
+      if (seen[key] || !this.hasOwnProperty(key)) continue;
+      properties.unshift({key, value: this[key], keyString: `[UNKNOWN PROPERTY] ${key}`});
+    }
+
+    return {sort: false, includeDefault: false, properties};
+  }
+
   show() { return show(this); }
 
   setStatusMessage(msg, color, delay, opts) {
