@@ -70,9 +70,6 @@ export function prepareClassForManagedPropertiesAfterCreation(klass) {
 
   var {properties, propertySettings} = propertiesAndSettingsInHierarchyOf(klass);
   klass[propertiesAndSettingsCacheSym] = {properties, propertySettings};
-
-  var propertySettings = klass[defaultPropertiesSettingKey] || {};
-  var properties = klass[defaultPropertiesKey];
   if (!properties || typeof properties !== "object") {
     console.warn(`Class ${klass.name} indicates it has managed properties but its `
                + `properties accessor (${defaultPropertiesKey}) does not return `
@@ -175,7 +172,8 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
       sortedKeys = obj.sortKeysWithBeforeAndAfterConstraints(properties),
       propsNeedingInitialize = [],
       propsHavingValue = [];
-  // 2. this[valueStoreProperty] is were the actual values will be stored
+
+  // 1. this[valueStoreProperty] is were the actual values will be stored
   if (!instance.hasOwnProperty(valueStoreProperty))
     instance[valueStoreProperty] = {};
 
@@ -183,12 +181,15 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
     var key = sortedKeys[i],
         descriptor = properties[key];
 
-    var defaultValue = instance[valueStoreProperty][key] =
-      descriptor.hasOwnProperty("defaultValue") ?
-        descriptor.defaultValue : undefined;
+    var derived = descriptor.derived,
+        defaultValue = descriptor.hasOwnProperty("defaultValue") ?
+                        descriptor.defaultValue : undefined;
+    if (!derived) instance[valueStoreProperty][key] = defaultValue;
 
     if (descriptor.hasOwnProperty("initialize"))
-      propsNeedingInitialize.push({key, defaultValue});
+      propsNeedingInitialize.push({key, defaultValue, type: "initCall"});
+    else if (derived && defaultValue !== undefined)
+      propsNeedingInitialize.push({key, defaultValue, type: "derived"});
 
     if (values && key in values) {
       if (descriptor.readOnly) {
@@ -201,13 +202,14 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
 
   }
   
-  // 3. Run init code for properties
+  // 2. Run init code for properties
   for (var i = 0; i < propsNeedingInitialize.length; i++) {
-    var {key, defaultValue} = propsNeedingInitialize[i];
-    instance[valueStoreProperty][key] = properties[key].initialize.call(instance, defaultValue);
+    var {key, defaultValue, type} = propsNeedingInitialize[i];
+    if (type === "initCall") properties[key].initialize.call(instance, defaultValue);
+    else if (type === "derived") instance[key] = defaultValue;
   }
 
-  // 4. if we have values we will initialize the properties from it. Values
+  // 3. if we have values we will initialize the properties from it. Values
   // is expected to be a JS object mapping property names to property values
   if (values) {
     for (let i = 0; i < propsHavingValue.length; i++) {

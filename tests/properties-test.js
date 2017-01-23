@@ -97,10 +97,31 @@ describe("properties", function() {
       expect(obj).has.deep.property("_store.test", 23);
     })
 
+    it("sets default value with initializer for derived value", () => {
+      var obj = new classA();
+      var props = {
+        a: {defaultValue: 0},
+        b: {
+          afer: ["a"],
+          derived: true,
+          defaultValue: 23,
+          set(val) { this.a = val + 1; },
+          get() { return this.a - 1; }
+        }
+      }
+      prepareClassForProperties(classA, {}, props);
+      prepareInstanceForProperties(obj, {}, props);
+      expect(obj).property("a", 24);
+      expect(obj).property("b", 23);
+      expect(obj._state).have.property("a");
+      expect(obj._state).not.have.property("b");
+    })
+
     it("runs initialize", () => {
       var x = 3, obj = new classA();
-      prepareInstanceForProperties(obj, {valueStoreProperty: "_store"}, {test: {initialize: () => x + 2}});
-      expect(obj).has.deep.property("_store.test", 5);
+      prepareInstanceForProperties(obj, {valueStoreProperty: "_store"}, {test: {initialize: () => x += 2}});
+      expect(x).equals(5);
+      expect(obj).has.deep.property("_store.test", undefined);
     });
 
     it("initialize uses values from outside", () => {

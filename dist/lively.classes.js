@@ -279,7 +279,6 @@ var toConsumableArray = function (arr$$1) {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-var defaultPropertiesSettingKey = "propertySettings";
 var defaultPropertiesKey = "properties";
 var propertiesAndSettingsCacheSym = Symbol.for("lively.classes-properties-and-settings");
 
@@ -301,9 +300,6 @@ function prepareClassForManagedPropertiesAfterCreation(klass) {
       propertySettings = _propertiesAndSetting.propertySettings;
 
   klass[propertiesAndSettingsCacheSym] = { properties: properties, propertySettings: propertySettings };
-
-  var propertySettings = klass[defaultPropertiesSettingKey] || {};
-  var properties = klass[defaultPropertiesKey];
   if (!properties || (typeof properties === "undefined" ? "undefined" : _typeof(properties)) !== "object") {
     console.warn("Class " + klass.name + " indicates it has managed properties but its " + ("properties accessor (" + defaultPropertiesKey + ") does not return ") + "a valid property descriptor map");
     return;
@@ -405,7 +401,8 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
       sortedKeys = lively_lang.obj.sortKeysWithBeforeAndAfterConstraints(properties),
       propsNeedingInitialize = [],
       propsHavingValue = [];
-  // 2. this[valueStoreProperty] is were the actual values will be stored
+
+  // 1. this[valueStoreProperty] is were the actual values will be stored
 
 
   if (!instance.hasOwnProperty(valueStoreProperty)) instance[valueStoreProperty] = {};
@@ -414,9 +411,11 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
     var key = sortedKeys[i],
         descriptor = properties[key];
 
-    var defaultValue = instance[valueStoreProperty][key] = descriptor.hasOwnProperty("defaultValue") ? descriptor.defaultValue : undefined;
+    var derived = descriptor.derived,
+        defaultValue = descriptor.hasOwnProperty("defaultValue") ? descriptor.defaultValue : undefined;
+    if (!derived) instance[valueStoreProperty][key] = defaultValue;
 
-    if (descriptor.hasOwnProperty("initialize")) propsNeedingInitialize.push({ key: key, defaultValue: defaultValue });
+    if (descriptor.hasOwnProperty("initialize")) propsNeedingInitialize.push({ key: key, defaultValue: defaultValue, type: "initCall" });else if (derived && defaultValue !== undefined) propsNeedingInitialize.push({ key: key, defaultValue: defaultValue, type: "derived" });
 
     if (values && key in values) {
       if (descriptor.readOnly) {
@@ -425,16 +424,17 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
     }
   }
 
-  // 3. Run init code for properties
+  // 2. Run init code for properties
   for (var i = 0; i < propsNeedingInitialize.length; i++) {
     var _propsNeedingInitiali = propsNeedingInitialize[i],
         key = _propsNeedingInitiali.key,
-        defaultValue = _propsNeedingInitiali.defaultValue;
+        defaultValue = _propsNeedingInitiali.defaultValue,
+        type = _propsNeedingInitiali.type;
 
-    instance[valueStoreProperty][key] = properties[key].initialize.call(instance, defaultValue);
+    if (type === "initCall") properties[key].initialize.call(instance, defaultValue);else if (type === "derived") instance[key] = defaultValue;
   }
 
-  // 4. if we have values we will initialize the properties from it. Values
+  // 3. if we have values we will initialize the properties from it. Values
   // is expected to be a JS object mapping property names to property values
   if (values) {
     for (var _i2 = 0; _i2 < propsHavingValue.length; _i2++) {
