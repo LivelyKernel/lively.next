@@ -23,28 +23,24 @@ export default class Halo extends Morph {
     return {
       fill: {defaultValue: Color.transparent},
       target: {},
-      pointerId: {}
+      pointerId: {},
+      submorphs: {after: ["target"], initialize() { this.initButtons(); }},
+      layout: {after: ["submorphs"], initialize() { this.initLayout(); }}
     }
-  }
-
-  constructor(props = {}) {
-    super(props);
-    this.initLayout();
-    this.initButtons();
   }
 
   initLayout() {
     var layout = this.layout = new GridLayout({
       autoAssign: false,
       grid: [
-          [null,    null, "grab", null, "drag", null, "close"],
-          [null,    null,  null,  null,  null,  null,  null],
-          ["copy",  null,  null,  null,  null,  null, "edit"],
-          [null,    null,  null,  null,  null,  null, null],
-          ["style", null,  null,  null,  null,  null, "inspect"],
-          [null,    null,  null,  null,  null,  null, null],
-          ["rotate",null,  null,  null,  null,  null, "resize"],
-          [null,    "name","name","name","name","name", null]]});
+          [null,     null,   "grab", null,  "drag", null,   "close"  ],
+          [null,     null,   null,   null,  null,   null,   null     ],
+          ["copy",   null,   null,   null,  null,   null,   "edit"   ],
+          [null,     null,   null,   null,  null,   null,   null     ],
+          ["style",  null,   null,   null,  null,   null,   "inspect"],
+          [null,     null,   null,   null,  null,   null,   null     ],
+          ["rotate", null,   null,   null,  null,   null,   "resize" ],
+          [null,     "name", "name", "name","name", "name", null     ]]});
   
     layout.col(0).fixed = 36;
     layout.col(0).paddingRight = 10;
@@ -67,7 +63,6 @@ export default class Halo extends Morph {
 
   initButtons() {
     this.submorphs = [
-      ...this.submorphs,
       ...this.ensureResizeHandles(),
       this.closeHalo(),
       this.dragHalo(),
@@ -665,15 +660,17 @@ class NameHolder extends Morph {
 class NameHaloItem extends HaloItem {
 
   static get morphName() { return "name"; }
+  static get properties() {
+    return {
+      borderRadius: {defaultValue: 15},
+      fill: {defaultValue: Color.gray.withA(0.7)},
+      borderColor: {defaultValue: Color.green},
+      layout: {initialize() { this.layout = new HorizontalLayout({spacing: 0}); }},
+    }
+  }
 
   constructor(props) {
-    super({
-      borderRadius: 15,
-      fill: Color.gray.withA(0.7),
-      borderColor: Color.green,
-      layout: new HorizontalLayout({spacing: 0}),
-      ...props
-    });
+    super(props);
 
     this.initNameHolders();
 
