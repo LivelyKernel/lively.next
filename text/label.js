@@ -9,6 +9,25 @@ import { signal } from "lively.bindings";
 
 export class Label extends Morph {
 
+  static get properties() {
+    return {
+      fill:             {defaultValue: null},
+      draggable:        {defaultValue: false},
+      padding:          {defaultValue: Rectangle.inset(0)},
+      nativeCursor:     {defaultValue: "default"},
+      autofit:          {defaultValue: true},
+
+      // default text style
+      fontFamily:       {defaultValue: "Sans-Serif"},
+      fontSize:         {defaultValue: 12},
+      fontColor:        {defaultValue: Color.black},
+      fontWeight:       {defaultValue: "normal"},
+      fontStyle:        {defaultValue: "normal"},
+      textDecoration:   {defaultValue: "none"},
+      textStyleClasses: {defaultValue: undefined},
+    }
+  }
+
   static icon(iconName, props = {prefix: "", suffix: ""}) {
     return Icon.makeLabel(iconName, props);
   }
@@ -37,31 +56,6 @@ export class Label extends Morph {
     if (topRight !== undefined) this.topRight = topRight;
     if (topLeft !== undefined) this.topLeft = topLeft;
     if (center !== undefined) this.center = center;
-  }
-
-  get defaultTextStyle() {
-    return {
-      fontFamily: "Sans-Serif",
-      fontSize: 12,
-      fontColor: Color.black,
-      fontWeight: "normal",
-      fontStyle: "normal",
-      textDecoration: "none",
-      textStyleClasses: undefined,
-    }
-  }
-
-  get defaultProperties() {
-    return {
-      ...super.defaultProperties,
-      fill: null,
-      draggable: false,
-      padding: Rectangle.inset(0),
-      nativeCursor: "default",
-      autofit: true,
-      ...this.defaultTextStyle,
-      savedMarks: [],
-    };
   }
 
   get isLabel() { return true }

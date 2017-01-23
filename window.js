@@ -2,47 +2,36 @@ import { arr, obj, string } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { show, Label, morph, Morph, GridLayout } from "./index.js";
 import { connect, signal } from "lively.bindings";
+import { ShadowObject } from "./rendering/morphic-default.js";
 
 export default class Window extends Morph {
 
-  constructor(props = {}) {
-    super({
-      dropShadow: true, // FIXME!
-      ...obj.dissoc(props, ["title", "targetMorph"])
-    });
-    
-    this.submorphs = this.controls();
-    if (props.targetMorph) this.targetMorph = props.targetMorph;
+  static get properties() {
+    return {
+      title:        {after: ["submorphs"]},
+      targetMorph:  {after: ["submorphs"]},
+      submorphs:    {initialize() { this.submorphs = this.controls(); }},
+      dropShadow:   {initialize() { this.dropShadow = new ShadowObject(true); }},
+      fill:         {defaultValue: Color.lightGray},
+      borderRadius: {defaultValue: 7},
+      borderColor:  {defaultValue: Color.gray},
+      borderWidth:  {defaultValue: 1},
+      clipMode:     {defaultValue: "hidden"},
+      resizable:    {defaultValue: true}
+    }
+  }
 
-    this.title = props.title || this.name || "";
+  constructor(props = {}) {
+    super(props);
     this.resetPropertyCache();
     this.relayoutWindowControls();
     connect(this, "extent", this, "relayoutWindowControls");
     connect(this.titleLabel(), "value", this, "relayoutWindowControls");
   }
 
-  get defaultProperties() {
-    return {
-      ...super.defaultProperties,
-      fill: Color.lightGray,
-      borderRadius: 7,
-      dropShadow: true,
-      borderColor: Color.gray,
-      borderWidth: 1,
-      clipMode: "hidden",
-      resizable: true
-    }
-  }
-
-  get resizable() { return this.getProperty("resizable"); }
-  set resizable(val) { return this.setProperty("resizable", val); }
-
   get isWindow() { return true }
 
-  get targetMorph() {
-    return arr.withoutAll(this.submorphs, this.controls())[0];
-  }
-
+  get targetMorph() { return arr.withoutAll(this.submorphs, this.controls())[0]; }
   set targetMorph(morph) {
     var ctrls = this.controls();
     arr.withoutAll(this.submorphs, ctrls).forEach(ea => ea.remove());
@@ -50,9 +39,7 @@ export default class Window extends Morph {
     this.whenRendered().then(() => this.relayoutWindowControls());
   }
 
-  targetMorphBounds() {
-    return new Rectangle(0, 25, this.width, this.height - 25);
-  }
+  targetMorphBounds() { return new Rectangle(0, 25, this.width, this.height - 25); }
 
   resetPropertyCache() {
     // For remembering the position and extents of the window states
@@ -98,7 +85,7 @@ export default class Window extends Morph {
 
     return arr.compact([
 
-      this.getSubmorphNamed("close") || {
+      this.getSubmorphNamed("close") || morph({
         ...defaultStyle,
         name: "close",
         center: pt(15,13),
@@ -110,9 +97,9 @@ export default class Window extends Morph {
             fill: null, visible: false,
             center: defaultStyle.extent.scaleBy(.5), opacity: 0.5
           })]
-      },
+      }),
 
-      this.getSubmorphNamed("minimize") || {
+      this.getSubmorphNamed("minimize") || morph({
         ...defaultStyle,
         center: pt(35,13),
         name: "minimize",
@@ -124,9 +111,9 @@ export default class Window extends Morph {
             fill: null, visible: false,
             center: defaultStyle.extent.scaleBy(.5), opacity: 0.5
           })]
-      },
+      }),
 
-      this.resizable ? (this.getSubmorphNamed("maximize") || {
+      this.resizable ? (this.getSubmorphNamed("maximize") || morph({
         ...defaultStyle,
         name: "maximize",
         center: pt(55,13),
@@ -138,12 +125,12 @@ export default class Window extends Morph {
             fill: null, visible: false,
             center: defaultStyle.extent.scaleBy(.5), opacity: 0.5
           })]
-      }) : undefined
+      })) : undefined
     ]);
   }
 
   titleLabel() {
-    return this.getSubmorphNamed("titleLabel") || {
+    return this.getSubmorphNamed("titleLabel") || morph({
       padding: Rectangle.inset(0, 2, 0, 0),
       type: "label",
       name: "titleLabel",
@@ -151,12 +138,12 @@ export default class Window extends Morph {
       fontColor: Color.darkGray,
       reactsToPointer: false,
       value: ""
-    };
+    });
   }
 
   resizer() {
     const win = this;
-    return this.getSubmorphNamed("resizer") || {
+    return this.getSubmorphNamed("resizer") || morph({
       name: "resizer",
       nativeCursor: "nwse-resize",
       extent: pt(20,20),
@@ -166,7 +153,7 @@ export default class Window extends Morph {
         win.resizeBy(evt.state.dragDelta);
         this.bottomRight = win.extent;
       }
-    };
+    });
   }
 
   get title() { return this.titleLabel().textString; }

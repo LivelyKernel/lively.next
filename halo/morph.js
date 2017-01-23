@@ -19,21 +19,50 @@ import { styleHaloFor } from "./stylization.js";
 // inspect properties of a target morph in some way
 export default class Halo extends Morph {
 
-  constructor(props = {}) {
-    var target = props.target;
-    super({
-      fill: Color.transparent,
-      ...obj.dissoc(props, ["target"])
-    });
-    this.target = props.target;
-    this.initButtons();
-    this.initLayout();
-    this.focus();
+  static get properties() {  
+    return {
+      fill: {defaultValue: Color.transparent},
+      target: {},
+      pointerId: {},
+      submorphs: {after: ["target"], initialize() { this.initButtons(); }},
+      layout: {after: ["submorphs"], initialize() { this.initLayout(); }}
+    }
+  }
+
+  initLayout() {
+    var layout = this.layout = new GridLayout({
+      autoAssign: false,
+      grid: [
+          [null,     null,   "grab", null,  "drag", null,   "close"  ],
+          [null,     null,   null,   null,  null,   null,   null     ],
+          ["copy",   null,   null,   null,  null,   null,   "edit"   ],
+          [null,     null,   null,   null,  null,   null,   null     ],
+          ["style",  null,   null,   null,  null,   null,   "inspect"],
+          [null,     null,   null,   null,  null,   null,   null     ],
+          ["rotate", null,   null,   null,  null,   null,   "resize" ],
+          [null,     "name", "name", "name","name", "name", null     ]]});
+  
+    layout.col(0).fixed = 36;
+    layout.col(0).paddingRight = 10;
+    layout.col(2).fixed = 26;
+    layout.col(4).fixed = 26;
+    layout.col(6).fixed = 36;
+    layout.col(6).paddingLeft = 10;
+  
+    layout.row(0).fixed = 36;
+    layout.row(0).paddingBottom = 10;
+    layout.row(2).fixed = 26;
+    layout.row(4).fixed = 26;
+    layout.row(6).fixed = 26;
+    layout.row(7).fixed = 36;
+    layout.row(7).paddingTop = 10;
+  
+    layout.col(1).row(7).group.align = "center";
+    layout.col(1).row(7).group.resize = false;
   }
 
   initButtons() {
     this.submorphs = [
-      ...this.submorphs,
       ...this.ensureResizeHandles(),
       this.closeHalo(),
       this.dragHalo(),
@@ -45,38 +74,6 @@ export default class Halo extends Morph {
       this.styleHalo(),
       this.nameHalo(),
       this.originHalo()]
-  }
-
-  initLayout() {
-    this.layout = new GridLayout({
-      autoAssign: false,
-      grid: [
-          [null,    null, "grab", null, "drag", null, "close"],
-          [null,    null,  null,  null,  null,  null,  null],
-          ["copy",  null,  null,  null,  null,  null, "edit"],
-          [null,    null,  null,  null,  null,  null, null],
-          ["style", null,  null,  null,  null,  null, "inspect"],
-          [null,    null,  null,  null,  null,  null, null],
-          ["rotate",null,  null,  null,  null,  null, "resize"],
-          [null,    "name","name","name","name","name", null]]});
-
-    this.layout.col(0).fixed = 36;
-    this.layout.col(0).paddingRight = 10;
-    this.layout.col(2).fixed = 26;
-    this.layout.col(4).fixed = 26;
-    this.layout.col(6).fixed = 36;
-    this.layout.col(6).paddingLeft = 10;
-
-    this.layout.row(0).fixed = 36;
-    this.layout.row(0).paddingBottom = 10;
-    this.layout.row(2).fixed = 26;
-    this.layout.row(4).fixed = 26;
-    this.layout.row(6).fixed = 26;
-    this.layout.row(7).fixed = 36;
-    this.layout.row(7).paddingTop = 10;
-
-    this.layout.col(1).row(7).group.align = "center";
-    this.layout.col(1).row(7).group.resize = false;
   }
 
   get isEpiMorph() { return true; }
@@ -411,32 +408,30 @@ export default class Halo extends Morph {
 // properties such as the position of the halo target
 class HaloPropertyDisplay extends Text {
 
-  static get name() { return "propertyDisplay"; }
+  static get morphName() { return "propertyDisplay"; }
+  static get defaultPosition() { return pt(25,0); }
 
   static for(halo) {
-    return halo.getSubmorphNamed(this.name) || halo.addMorph(new this());
+    return halo.getSubmorphNamed(this.morphName) || halo.addMorph(new this({name: this.morphName}));
+  }
+
+  static get properties() {
+    return {
+      name:         {defaultValue: this.name},
+      fill:         {defaultValue: Color.gray.withA(.7)},
+      borderRadius: {defaultValue: 15},
+      padding:      {defaultValue: Rectangle.inset(5)},
+      visible:      {defaultValue: false},
+      readOnly:     {defaultValue: true},
+      fontSize:     {defaultValue: 12},
+      fontColor:    {defaultValue: Color.white},
+      position:     {defaultValue: this.defaultPosition}
+    }
   }
 
   get isHaloItem() { return false; }
 
   get halo() { return this.owner; }
-
-  get defaultPosition() { return pt(25,0); }
-
-  get defaultProperties() {
-    return {
-      ...super.defaultProperties,
-      name: this.constructor.name,
-      fill: Color.gray.withA(.7),
-      borderRadius: 15,
-      padding: Rectangle.inset(5),
-      visible: false,
-      readOnly: true,
-      fontSize: 12,
-      fontColor: Color.white,
-      position: this.defaultPosition
-    }
-  }
 
   displayedValue() { return this.textString; }
 
@@ -445,14 +440,14 @@ class HaloPropertyDisplay extends Text {
     val = String(val);
     this.visible = true;
     this.textString = val;
-    this.position = this.defaultPosition;
+    this.position = this.constructor.defaultPosition;
     if (this.bounds().insetBy(10).intersects(activeButton.bounds())) {
       this.position = pt(activeButton.topRight.x + 10, this.position.y);
     }
   }
 
   disable() {
-    this.position = this.defaultPosition;
+    this.position = this.constructor.defaultPosition;
     this.visible = false;
   }
 }
@@ -460,22 +455,17 @@ class HaloPropertyDisplay extends Text {
 // Placeholder for halot.target when multiple morphs are selected
 class MultiSelectionTarget extends Morph {
 
-  get isHaloItem() { return true }
-  get isMorphSelection() { return true; }
 
-  get defaultProperties() {
+  static get properties() {
     return {
-      ...super.defaultProperties,
-      visible: false,
-      modifiesSelectedMorphs: false,
-      selectedMorphs: [],
+      visible:                {defaultValue: false},
+      modifiesSelectedMorphs: {defaultValue: false},
+      selectedMorphs:         {defaultValue: []}
     }
   }
 
-  set selectedMorphs(morphs) { return this.setProperty("selectedMorphs", morphs); }
-  get selectedMorphs() { return this.getProperty("selectedMorphs"); }
-  set modifiesSelectedMorphs(bool) { return this.setProperty("modifiesSelectedMorphs", bool); }
-  get modifiesSelectedMorphs() { return this.getProperty("modifiesSelectedMorphs"); }
+  get isHaloItem() { return true }
+  get isMorphSelection() { return true; }
 
   selectsMorph(morph) { return this.selectedMorphs.includes(morph); }
 
@@ -552,32 +542,27 @@ class MultiSelectionTarget extends Morph {
 // display morph properties
 class HaloItem extends Morph {
 
-  static for(halo) {
-    return halo.getSubmorphNamed(this.name) || halo.addMorph(new this({halo}));
+  static get properties() {
+    return {
+      borderRadius: {defaultValue: 15},
+      fill:         {defaultValue: Color.gray.withA(.7)},
+      grabbable:    {defaultValue: false},
+      extent:       {defaultValue: pt(24,24)},
+      halo:         {},
+    }
   }
 
-  get defaultProperties() {
-    return {
-      ...super.defaultProperties,
-      borderRadius: 15,
-      fill: Color.gray.withA(.7),
-      grabbable: false,
-      extent: pt(24,24),
-      name: this.constructor.name || "unnamed halo item"
-    }
+  static for(halo) {
+    return halo.getSubmorphNamed(this.morphName) || halo.addMorph(new this({halo, name: this.morphName}));
   }
 
   get isEpiMorph() { return true; }
   get isHaloItem() { return true };
 
-  get halo() { return this.getProperty("halo"); }
-  set halo(h) { return this.setProperty("halo", h); }
-
   init() {}
   update() {}
   stop() {}
   valueForPropertyDisplay() { return undefined; }
-
 }
 
 
@@ -585,20 +570,26 @@ class HaloItem extends Morph {
 // name label + input of a morph
 class NameHolder extends Morph {
 
-  constructor(props) {
-    super({
-      tooltip: "Click to edit the morph's name",
-      draggable: false,
-      fill: Color.transparent,
-      layout: new HorizontalLayout({spacing: 7}),
-      ...props
-    });
-    this.nameHolder = new Text({
-      fill: Color.transparent,
-      fontColor: Color.darkgray,
-      active: true
-    });
-    this.submorphs = [this.nameHolder];
+  static get properties() {
+    return {
+      tooltip:   {defaultValue: "Click to edit the morph's name"},
+      draggable: {defaultValue: false},
+      fill:      {defaultValue: Color.transparent},
+      layout:    {
+        after: ["nameHolder"],
+        initialize() { this.layout = new HorizontalLayout({spacing: 7}); }
+      },
+      nameHolder: {
+        after: ["submorphs"],
+        initialize() {
+          this.nameHolder = this.addMorph(new Text({
+            fill: Color.transparent,
+            fontColor: Color.darkgray,
+            active: true
+          }))
+        }
+      }
+    }
   }
 
   onHoverIn(evt) {
@@ -668,16 +659,18 @@ class NameHolder extends Morph {
 
 class NameHaloItem extends HaloItem {
 
-  static get name() { return "name"; }
+  static get morphName() { return "name"; }
+  static get properties() {
+    return {
+      borderRadius: {defaultValue: 15},
+      fill: {defaultValue: Color.gray.withA(0.7)},
+      borderColor: {defaultValue: Color.green},
+      layout: {initialize() { this.layout = new HorizontalLayout({spacing: 0}); }},
+    }
+  }
 
   constructor(props) {
-    super({
-      borderRadius: 15,
-      fill: Color.gray.withA(0.7),
-      borderColor: Color.green,
-      layout: new HorizontalLayout({spacing: 0}),
-      ...props
-    });
+    super(props);
 
     this.initNameHolders();
 
@@ -764,14 +757,13 @@ class NameHaloItem extends HaloItem {
 
 class CloseHaloItem extends HaloItem {
 
-  static get name() { return "close"; }
+  static get morphName() { return "close"; }
 
-  get defaultProperties() {
+  static get properties() {
     return {
-      ...super.defaultProperties,
-      styleClasses: ["fa", "fa-close"],
-      draggable: false,
-      tooltip: "Remove this morph from the world"
+      styleClasses: {defaultValue: ["fa", "fa-close"]},
+      draggable: {defaultValue: false},
+      tooltip: {defaultValue: "Remove this morph from the world"}
     };
   }
 
@@ -791,14 +783,13 @@ class CloseHaloItem extends HaloItem {
 
 class GrabHaloItem extends HaloItem {
 
-  static get name() { return "grab"; }
+  static get morphName() { return "grab"; }
 
-  get defaultProperties() {
+  static get properties() {
     return {
-      ...super.defaultProperties,
-      name: "grab",
-      styleClasses: ["fa", "fa-hand-rock-o"],
-      tooltip: "Grab the morph"
+      name: {defaultValue: "grab"},
+      styleClasses: {defaultValue: ["fa", "fa-hand-rock-o"]},
+      tooltip: {defaultValue: "Grab the morph"}
     }
   }
 
@@ -853,7 +844,7 @@ class GrabHaloItem extends HaloItem {
 
 class DragHaloItem extends HaloItem {
 
-  static get name() { return "drag"; }
+  static get morphName() { return "drag"; }
   get tooltip() { return "Change the morph's position. Press (alt) while dragging to align the morph's position along a grid."; }
   get styleClasses() { return [...super.styleClasses, "fa", "fa-arrows"]; }
 
@@ -926,7 +917,7 @@ class DragHaloItem extends HaloItem {
 
 class InspectHaloItem extends HaloItem {
 
-  static get name() { return "inspect"; }
+  static get morphName() { return "inspect"; }
   get styleClasses() { return [...super.styleClasses, "fa", "fa-gears"]; }
   get draggable() { return false; }
   get tooltip() { return "Inspect the morph's local state"; }
@@ -941,7 +932,7 @@ class InspectHaloItem extends HaloItem {
 
 class EditHaloItem extends HaloItem {
 
-  static get name() { return "edit"; }
+  static get morphName() { return "edit"; }
   get styleClasses() { return [...super.styleClasses, "fa", "fa-wrench"]; }
   get draggable() { return false; }
   get tooltip() { return "Edit the morph's definition"; }
@@ -954,7 +945,7 @@ class EditHaloItem extends HaloItem {
 
 class RotateHaloItem extends HaloItem {
 
-  static get name() { return "rotate"; }
+  static get morphName() { return "rotate"; }
 
   constructor(props) { super(props); this.adaptAppearance(false); }
 
@@ -1061,7 +1052,7 @@ class RotateHaloItem extends HaloItem {
 
 class CopyHaloItem extends HaloItem {
 
-  static get name() { return "copy"; }
+  static get morphName() { return "copy"; }
   get tooltip() { return "Copy morph"; }
   get styleClasses() { return [...super.styleClasses, "fa", "fa-clone"]; }
 
@@ -1092,19 +1083,18 @@ class CopyHaloItem extends HaloItem {
 
 class OriginHaloItem extends HaloItem {
 
-  static get name() { return "origin"; }
+  static get morphName() { return "origin"; }
+
+  static get properties() {
+    return {
+      borderColor: {defaultValue: Color.black},
+      borderWidth: {defaultValue: 2},
+    };
+  }
 
   get fill() { return Color.red; }
   get extent() { return pt(15, 15); }
   get tooltip() { return "Change the morph's origin"; }
-
-  get defaultProperties() {
-    return {
-      ...super.defaultProperties,
-      borderColor: Color.black,
-      borderWidth: 2
-    };
-  }
 
   computePositionAtTarget() {
     return this.halo
@@ -1147,7 +1137,7 @@ class OriginHaloItem extends HaloItem {
 
 class StyleHaloItem extends HaloItem {
 
-  static get name() { return "style"; }
+  static get morphName() { return "style"; }
   get styleClasses() { return [...super.styleClasses, "fa", "fa-picture-o"]; }
   get tooltip() { return "Open stylize editor"; }
 

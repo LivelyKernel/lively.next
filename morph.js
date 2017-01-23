@@ -11,36 +11,6 @@ import { copyMorph } from "./serialization.js";
 
 const defaultCommandHandler = new CommandHandler();
 
-const defaultProperties = {
-  visible: true,
-  name: "aMorph",
-  position:  pt(0,0),
-  rotation:  0,
-  scale:  1,
-  opacity: 1,
-  origin: pt(0,0),
-  extent: pt(10, 10),
-  fill: Color.white,
-  borderStyleLeft: "solid", borderWidthLeft: 0, borderColorLeft: Color.white, borderRadiusLeft: 0,
-  borderStyleRight: "solid", borderWidthRight: 0, borderColorRight: Color.white, borderRadiusRight: 0,
-  borderStyleBottom: "solid", borderWidthBottom: 0, borderColorBottom: Color.white, borderRadiusBottom: 0,
-  borderStyleTop: "solid", borderWidthTop: 0, borderColorTop: Color.white, borderRadiusTop: 0,
-  clipMode: "visible",
-  scroll: pt(0,0),
-  reactsToPointer: true,
-  draggable: true,
-  grabbable: false,
-  halosEnabled: !!config.halosEnabled,
-  dropShadow: false,
-  styleClasses: ["morph"],
-  nativeCursor: "auto",
-  focusable: true,
-  epiMorph: false,
-  isLayoutable: true,
-  tooltip: null,
-  submorphs:  []
-}
-
 export function newMorphId(classOrClassName) {
   var prefix = typeof classOrClassName === "function" ?
     classOrClassName.name : typeof classOrClassName === "string" ?
@@ -49,6 +19,228 @@ export function newMorphId(classOrClassName) {
 }
 
 export class Morph {
+
+  static get propertySettings() {
+    return {
+      defaultGetter(key) { return this.getProperty(key); },
+      defaultSetter(key, value) { this.setProperty(key, value); },
+      valueStoreProperty: "_morphicState"
+    }
+  }
+
+  static get properties() {
+    return {
+
+      clipMode: {
+        defaultValue: "visible",
+        set(value) {
+          this.setProperty("clipMode", value);
+          if (!this.isClip()) this.scroll = pt(0, 0);
+        }
+      },
+
+      draggable:          {defaultValue: true},
+      dropShadow: {
+        defaultValue: false,
+        set(value) {
+          if (value && !value.isShadowObject) {
+            value = new ShadowObject(value);
+            value.morph = this;
+          }
+          this.setProperty("dropShadow", value);
+        }
+      },
+
+      epiMorph:           {defaultValue: false},
+      extent:             {defaultValue: pt(10, 10)},
+      fill:               {defaultValue: Color.white},
+      focusable:          {defaultValue: true},
+      grabbable:          {defaultValue: false},
+      halosEnabled:       {defaultValue: !!config.halosEnabled},
+      isLayoutable:       {defaultValue: true},
+      name:               {defaultValue: "aMorph"},
+      nativeCursor:       {defaultValue: "auto"},
+      opacity:            {defaultValue: 1},
+      origin:             {defaultValue: pt(0,0)},
+      position:           {defaultValue: pt(0,0)},
+      reactsToPointer:    {defaultValue: true},
+      rotation:           {defaultValue:  0},
+      scale:              {defaultValue:  1},
+      scroll: {
+        defaultValue: pt(0, 0),
+        set({x, y}) {
+          if (!this.isClip()) return;
+          var {x: maxScrollX, y: maxScrollY} = this.scrollExtent.subPt(this.extent);
+          x = Math.max(0, Math.min(maxScrollX, x));
+          y = Math.max(0, Math.min(maxScrollY, y));
+          this.setProperty("scroll", pt(x, y));
+          this.makeDirty();
+        }
+      },
+      styleClasses: {
+        defaultValue: ["morph"],
+        get() {
+          return this.constructor.styleClasses.concat(this.getProperty("styleClasses"));
+        },
+        set(value) {
+          this.setProperty("styleClasses", arr.withoutAll(value, this.constructor.styleClasses));
+        }
+      },
+      tooltip:            {defaultValue: null},
+      visible:            {defaultValue: true},
+      layout: {
+        after: ["submorphs"],
+        set(value) {
+          if (value) value.container = this;
+          this.setProperty("layout", value);
+        }
+      },
+
+      submorphs: {
+        defaultValue: [],
+        after: ["isLayoutable", "origin", "position", "rotation", "scale"],
+        get() { return (this.getProperty("submorphs") || []).slice(); },
+        set(newSubmorphs) {
+          this.layout && this.layout.disable();
+          this.submorphs.forEach(m => newSubmorphs.includes(m) || m.remove());
+          newSubmorphs.forEach(
+            (m, i) => this.submorphs[i] !== m &&
+              this.addMorph(m, this.submorphs[i]));
+          this.layout && this.layout.enable();
+        }
+      },
+
+      borderColorBottom:  {defaultValue: Color.white},
+      borderColorLeft:    {defaultValue: Color.white},
+      borderColorRight:   {defaultValue: Color.white},
+      borderColorTop:     {defaultValue: Color.white},
+      borderRadiusBottom: {defaultValue: 0},
+      borderRadiusLeft:   {defaultValue: 0},
+      borderRadiusRight:  {defaultValue: 0},
+      borderRadiusTop:    {defaultValue: 0},
+      borderStyleBottom:  {defaultValue: "solid"},
+      borderStyleLeft:    {defaultValue: "solid"},
+      borderStyleRight:   {defaultValue: "solid"},
+      borderStyleTop:     {defaultValue: "solid"},
+      borderWidthBottom:  {defaultValue: 0},
+      borderWidthLeft:    {defaultValue: 0},
+      borderWidthRight:   {defaultValue: 0},
+      borderWidthTop:     {defaultValue: 0},
+
+
+      borderLeft: {
+        derived: true,
+        after:   ["borderStyleLeft", "borderWidthLeft", "borderColorLeft"],
+        get()    { return {style: this.borderStyleLeft, width: this.borderWidthLeft, color: this.borderColorLeft} },
+        set(x) {
+          if ("style" in x) this.borderStyleLeft = x.style;
+          if ("width" in x) this.borderWidthLeft = x.width;
+          if ("color" in x) this.borderColorLeft = x.color;
+          if ("radius" in x) this.borderRadiusLeft = x.radius;
+        }
+      },
+
+      borderRight: {
+        derived: true,
+        after:  ["borderStyleRight", "borderWidthRight", "borderColorRight"],
+        get()   { return {style: this.borderStyleRight, width: this.borderWidthRight, color: this.borderColorRight} },
+        set(x) {
+          if ("style" in x) this.borderStyleRight = x.style;
+          if ("width" in x) this.borderWidthRight = x.width;
+          if ("color" in x) this.borderColorRight = x.color;
+          if ("radius" in x) this.borderRadiusRight = x.radius;
+        }
+      },
+
+      borderBottom: {
+        derived: true,
+        after: ["borderStyleBottom", "borderWidthBottom", "borderColorBottom"],
+        get()  { return {style: this.borderStyleBottom, width: this.borderWidthBottom, color: this.borderColorBottom} },
+        set(x) {
+          if ("style" in x) this.borderStyleBottom = x.style;
+          if ("width" in x) this.borderWidthBottom = x.width;
+          if ("color" in x) this.borderColorBottom = x.color;
+          if ("radius" in x) this.borderRadiusBottom = x.radius;
+        }
+      },
+
+      borderTop: {
+        derived: true,
+        after: ["borderStyleTop", "borderWidthTop", "borderColorTop"],
+        get()     { return {style: this.borderStyleTop, width: this.borderWidthTop, color: this.borderColorTop} },
+        set(x) {
+          if ("style" in x) this.borderStyleTop = x.style;
+          if ("width" in x) this.borderWidthTop = x.width;
+          if ("color" in x) this.borderColorTop = x.color;
+          if ("radius" in x) this.borderRadiusTop = x.radius;
+        }
+      },
+
+
+      borderWidth: {
+        derived: true,
+        after:      ["borderWidthLeft", "borderWidthRight", "borderWidthTop", "borderWidthBottom"],
+        get()       { return this.borderWidthLeft; },
+        set(value) {
+          this.borderWidthLeft = this.borderWidthRight =
+            this.borderWidthTop = this.borderWidthBottom = value;
+        }
+      },
+
+      borderRadius: {
+        derived: true,
+        after: ["borderRadiusLeft","borderRadiusRight","borderRadiusTop","borderRadiusBottom"],
+        get()      { return this.borderRadiusLeft; },
+        set(value) {
+          if (!value) value = 0;
+          var left = value, right = value, top = value, bottom = value;
+          if (value.isRectangle) {
+            left = value.left();
+            right = value.right();
+            top = value.top();
+            bottom = value.bottom();
+          }
+          this.borderRadiusLeft = left;
+          this.borderRadiusRight = right;
+          this.borderRadiusTop = top;
+          this.borderRadiusBottom = bottom;
+        }
+      },
+
+      borderStyle: {
+        derived: true,
+        after:      ["borderStyleLeft", "borderStyleRight", "borderStyleTop", "borderStyleBottom"],
+        get()       { return this.borderStyleLeft; },
+        set(value) {
+          this.borderStyleLeft = this.borderStyleRight =
+            this.borderStyleTop = this.borderStyleBottom = value;
+        }
+      },
+
+      borderColor: {
+        derived: true,
+        after:      ["borderColorLeft", "borderColorRight", "borderColorTop", "borderColorBottom"],
+        get()       { return this.borderColorLeft; },
+        set(value) {
+          this.borderColorLeft = this.borderColorRight =
+            this.borderColorTop = this.borderColorBottom = value;
+        }
+      },
+
+      border: {
+        derived: true,
+        after: ["borderStyle", "borderWidth", "borderColor"],
+        get()    { return {style: this.borderStyle, width: this.borderWidth, color: this.borderColor} },
+        set(x)   {
+          if ("style" in x) this.borderStyle = x.style;
+          if ("width" in x) this.borderWidth = x.width;
+          if ("color" in x) this.borderColor = x.color;
+          if ("radius" in x) this.borderRadius = x.radius;
+        }
+      }
+
+    }
+  }
 
   constructor(props = {}) {
     var env = props.env || MorphicEnv.default();
@@ -62,9 +254,8 @@ export class Morph {
     this._animationQueue = new AnimationQueue(this);
     this._cachedPaths = {};
     this._pathDependants = [];
-    this.tickingScripts = [];
-    this.loadDefaultProperties();
-    this.updateTransform(this);
+    this._tickingScripts = [];
+    this.loadDefaultProperties(props);
     if (props.submorphs) this.submorphs = props.submorphs;
     if (props.bounds) this.setBounds(props.bounds);
     Object.assign(this, obj.dissoc(props, ["env", "type", "submorphs", "bounds", "layout"]));
@@ -85,15 +276,14 @@ export class Morph {
     this._animationQueue = new AnimationQueue(this);
     this._cachedPaths = {};
     this._pathDependants = [];
-    this.tickingScripts = [];
+    this._tickingScripts = [];
     this.loadDefaultProperties();
-    this.updateTransform(this);
   }
 
   get __only_serialize__() {
-    return Object.keys(this._currentState)
+    return Object.keys(this._morphicState)
       .filter(key => this[key] != this.defaultProperties[key])
-        .concat("tickingScripts", "attributeConnections");
+        .concat("_tickingScripts", "attributeConnections");
   }
 
   get isMorph() { return true; }
@@ -101,29 +291,36 @@ export class Morph {
 
   get env() { return this._env; }
 
-  loadDefaultProperties() {
-    this._currentState = {...this.defaultProperties};
+  loadDefaultProperties(props) {
+    this.initializeProperties(props);
     // => FIXME some properties need their setter to be properly initialized,
     // once we have declarative properties this should go into a converter!
-    if ("dropShadow" in this._currentState)   this.dropShadow = this._currentState.dropShadow;
-    if ("borderLeft" in this._currentState)   this.borderLeft = this._currentState.borderLeft;
-    if ("borderRight" in this._currentState)  this.borderRight = this._currentState.borderRight;
-    if ("borderBottom" in this._currentState) this.borderBottom = this._currentState.borderBottom;
-    if ("borderTop" in this._currentState)    this.borderTop = this._currentState.borderTop;
-    if ("borderWidth" in this._currentState)  this.borderWidth = this._currentState.borderWidth;
-    if ("borderRadius" in this._currentState) this.borderRadius = this._currentState.borderRadius;
-    if ("borderStyle" in this._currentState)  this.borderStyle = this._currentState.borderStyle;
-    if ("borderColor" in this._currentState)  this.borderColor = this._currentState.borderColor;
-    if ("border" in this._currentState)       this.border = this._currentState.border;
-    if (this._currentState.submorphs.length) {
-      var submorphs = this._currentState.submorphs;
-      this._currentState.submorphs = [];
+    // if ("dropShadow" in this._morphicState)   this.dropShadow = this._morphicState.dropShadow;
+    if (this._morphicState.submorphs.length) {
+      var submorphs = this._morphicState.submorphs;
+      this._morphicState.submorphs = [];
       this.submorphs = submorphs;
     }
   }
-  get defaultProperties() { return defaultProperties; }
+
+  get defaultProperties() {
+    if (!this.constructor._morphicDefaultPropertyValues) {
+      var defaults = this.constructor._morphicDefaultPropertyValues = {},
+        propsAndSettings = this.constructor[Symbol.for("lively.classes-properties-and-settings")],
+          propDescriptors = propsAndSettings ?
+            propsAndSettings.properties :
+            obj.mergePropertyInHierarchy(this.constructor, "properties");
+      for (var key in propDescriptors) {
+        var descr = propDescriptors[key];
+        if (descr.hasOwnProperty("defaultValue"))
+          defaults[key] = descr.defaultValue;
+      }
+    }
+    return this.constructor._morphicDefaultPropertyValues;
+  }
+
   defaultProperty(key) { return this.defaultProperties[key]; }
-  getProperty(key) { return this._currentState[key]; }
+  getProperty(key) { return this._morphicState[key]; }
   setProperty(key, value, meta) { return this.addValueChange(key, value, meta); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -298,123 +495,7 @@ export class Morph {
      this.setProperty("styleRules", rules);
   }
 
-  get layout()         { return this.getProperty("layout") }
-  set layout(value)    {
-    if (value) value.container = this;
-    this.setProperty("layout", value);
-  }
-
-  get name()           { return this.getProperty("name"); }
-  set name(value)      { this.setProperty("name", value); }
-
-  get position()       { return this.getProperty("position"); }
-  set position(value)  { this.setProperty("position", value); }
-
-  get scale()          { return this.getProperty("scale"); }
-  set scale(value)     { this.setProperty("scale", value); }
-
-  get rotation()       { return this.getProperty("rotation"); }
-  set rotation(value)  { this.setProperty("rotation", value); }
-
-  get origin()         { return this.getProperty("origin"); }
-  set origin(value)    { return this.setProperty("origin", value); }
-
-  get extent()         { return this.getProperty("extent"); }
-  set extent(value)    { this.setProperty("extent", value); }
-
-  get fill()           { return this.getProperty("fill"); }
-  set fill(value)      { this.setProperty("fill", value); }
-
-  get opacity()         { return this.getProperty("opacity"); }
-  set opacity(value)    { this.setProperty("opacity", value); }
-
-  get borderLeft()    { return {style: this.borderStyleLeft, width: this.borderWidthLeft, color: this.borderColorLeft} }
-  set borderLeft(x)   { if ("style" in x) this.borderStyleLeft = x.style; if ("width" in x) this.borderWidthLeft = x.width; if ("color" in x) this.borderColorLeft = x.color; if ("radius" in x) this.borderRadiusLeft = x.radius; }
-  get borderRight()   { return {style: this.borderStyleRight, width: this.borderWidthRight, color: this.borderColorRight} }
-  set borderRight(x)  { if ("style" in x) this.borderStyleRight = x.style; if ("width" in x) this.borderWidthRight = x.width; if ("color" in x) this.borderColorRight = x.color; if ("radius" in x) this.borderRadiusRight = x.radius; }
-  get borderBottom()  { return {style: this.borderStyleBottom, width: this.borderWidthBottom, color: this.borderColorBottom} }
-  set borderBottom(x) { if ("style" in x) this.borderStyleBottom = x.style; if ("width" in x) this.borderWidthBottom = x.width; if ("color" in x) this.borderColorBottom = x.color; if ("radius" in x) this.borderRadiusBottom = x.radius; }
-  get borderTop()     { return {style: this.borderStyleTop, width: this.borderWidthTop, color: this.borderColorTop} }
-  set borderTop(x)    { if ("style" in x) this.borderStyleTop = x.style; if ("width" in x) this.borderWidthTop = x.width; if ("color" in x) this.borderColorTop = x.color; if ("radius" in x) this.borderRadiusTop = x.radius; }
-
-  get borderStyleLeft()        { return this.getProperty("borderStyleLeft"); }
-  set borderStyleLeft(value)   { this.setProperty("borderStyleLeft", value); }
-  get borderStyleRight()       { return this.getProperty("borderStyleRight"); }
-  set borderStyleRight(value)  { this.setProperty("borderStyleRight", value); }
-  get borderStyleBottom()      { return this.getProperty("borderStyleBottom"); }
-  set borderStyleBottom(value) { this.setProperty("borderStyleBottom", value); }
-  get borderStyleTop()         { return this.getProperty("borderStyleTop"); }
-  set borderStyleTop(value)    { this.setProperty("borderStyleTop", value); }
-  get borderRadiusLeft()        { return this.getProperty("borderRadiusLeft"); }
-  set borderRadiusLeft(value)   { this.setProperty("borderRadiusLeft", value); }
-  get borderRadiusRight()       { return this.getProperty("borderRadiusRight"); }
-  set borderRadiusRight(value)  { this.setProperty("borderRadiusRight", value); }
-  get borderRadiusBottom()      { return this.getProperty("borderRadiusBottom"); }
-  set borderRadiusBottom(value) { this.setProperty("borderRadiusBottom", value); }
-  get borderRadiusTop()         { return this.getProperty("borderRadiusTop"); }
-  set borderRadiusTop(value)    { this.setProperty("borderRadiusTop", value); }
-  get borderWidthLeft()        { return this.getProperty("borderWidthLeft"); }
-  set borderWidthLeft(value)   { this.setProperty("borderWidthLeft", value); }
-  get borderWidthRight()       { return this.getProperty("borderWidthRight"); }
-  set borderWidthRight(value)  { this.setProperty("borderWidthRight", value); }
-  get borderWidthBottom()      { return this.getProperty("borderWidthBottom"); }
-  set borderWidthBottom(value) { this.setProperty("borderWidthBottom", value); }
-  get borderWidthTop()         { return this.getProperty("borderWidthTop"); }
-  set borderWidthTop(value)    { this.setProperty("borderWidthTop", value); }
-  get borderColorLeft()        { return this.getProperty("borderColorLeft"); }
-  set borderColorLeft(value)   { this.setProperty("borderColorLeft", value); }
-  get borderColorRight()       { return this.getProperty("borderColorRight"); }
-  set borderColorRight(value)  { this.setProperty("borderColorRight", value); }
-  get borderColorBottom()      { return this.getProperty("borderColorBottom"); }
-  set borderColorBottom(value) { this.setProperty("borderColorBottom", value); }
-  get borderColorTop()         { return this.getProperty("borderColorTop"); }
-  set borderColorTop(value)    { this.setProperty("borderColorTop", value); }
-  get borderWidth()       { return this.borderWidthLeft; }
-  set borderWidth(value)  { this.borderWidthLeft = this.borderWidthRight = this.borderWidthTop = this.borderWidthBottom = value; }
-  get borderRadius()      { return this.borderRadiusLeft; }
-  set borderRadius(value) {
-    if (!value) value = 0;
-    var left = value, right = value, top = value, bottom = value;
-    if (value.isRectangle) {
-      left = value.left();
-      right = value.right();
-      top = value.top();
-      bottom = value.bottom();
-    }
-    this.borderRadiusLeft = left;
-    this.borderRadiusRight = right;
-    this.borderRadiusTop = top;
-    this.borderRadiusBottom = bottom;
-  }
-  get borderStyle()       { return this.borderStyleLeft; }
-  set borderStyle(value)  { this.borderStyleLeft = this.borderStyleRight = this.borderStyleTop = this.borderStyleBottom = value; }
-  get borderColor()       { return this.borderColorLeft; }
-  set borderColor(value)  { this.borderColorLeft = this.borderColorRight = this.borderColorTop = this.borderColorBottom = value; }
-  get border()    { return {style: this.borderStyle, width: this.borderWidth, color: this.borderColor} }
-  set border(x)   {
-    if ("style" in x) this.borderStyle = x.style;
-    if ("width" in x) this.borderWidth = x.width;
-    if ("color" in x) this.borderColor = x.color;
-    if ("radius" in x) this.borderRadius = x.radius;
-  }
-
-  get clipMode()       { return this.getProperty("clipMode"); }
-  set clipMode(value)  {
-    this.setProperty("clipMode", value);
-    if (!this.isClip()) this.scroll = pt(0,0);
-  }
   isClip() { return this.clipMode !== "visible"; }
-
-  get scroll()       { return this.getProperty("scroll"); }
-  set scroll({x,y})  {
-    if (!this.isClip()) return;
-    var {x: maxScrollX, y: maxScrollY} = this.scrollExtent.subPt(this.extent);
-    x = Math.max(0, Math.min(maxScrollX, x));
-    y = Math.max(0, Math.min(maxScrollY, y));
-    this.setProperty("scroll", pt(x,y));
-    this.makeDirty();
-  }
-
   get scrollExtent() {
     return (this.submorphs.length ?
       this.innerBounds().union(this.submorphBounds()) :
@@ -427,45 +508,6 @@ export class Morph {
   scrollRight(n) { this.scrollLeft(-n); }
   scrollPageDown(n) { this.scrollDown(this.height); }
   scrollPageUp(n) { this.scrollUp(this.height); }
-
-  get draggable()       { return this.getProperty("draggable"); }
-  set draggable(value)  { this.setProperty("draggable", value); }
-
-  get grabbable()       { return this.getProperty("grabbable"); }
-  set grabbable(value)  { this.setProperty("grabbable", value); }
-
-  get halosEnabled()       { return this.getProperty("halosEnabled"); }
-  set halosEnabled(value)  { this.setProperty("halosEnabled", value); }
-
-  // does this morph react to pointer / mouse events
-  get reactsToPointer()       { return this.getProperty("reactsToPointer"); }
-  set reactsToPointer(value)  { this.setProperty("reactsToPointer", value); }
-
-  // The shape of the OS mouse cursor. nativeCursor can be one of
-  // auto, default, none, context-menu, help, pointer, progress, wait, cell,
-  // crosshair, text, vertical-text, alias, copy, move, no-drop, not-allowed,
-  // e-resize, n-resize, ne-resize, nw-resize, s-resize, se-resize, sw-resize,
-  // w-resize, ew-resize, ns-resize, nesw-resize, nwse-resize, col-resize,
-  // row-resize, all-scroll, zoom-in, zoom-out, grab, grabbing
-  get nativeCursor()       { return this.getProperty("nativeCursor"); }
-  set nativeCursor(value)  { this.setProperty("nativeCursor", value); }
-
-  // can this morph receive keyboard focus?
-  get focusable()       { return this.getProperty("focusable"); }
-  set focusable(value)  { this.setProperty("focusable", value); }
-
-  get visible()       { return this.getProperty("visible"); }
-  set visible(value)  { this.setProperty("visible", value); }
-
-  get dropShadow()      { return this.getProperty("dropShadow"); }
-  set dropShadow(value) {
-    if (value && !value.isShadowObject) {
-      if (!value.isShadowObject) value = new ShadowObject(value);
-      value.morph = this;
-      this.setProperty("dropShadow", value);
-    }
-    this.setProperty("dropShadow", value);
-  }
 
   static get styleClasses() {
     // we statically determine default style classes based on the Morph
@@ -483,13 +525,6 @@ export class Morph {
       klass = klass[Symbol.for("lively-instance-superclass")];
     }
     return this._styleClasses = classNames;
-  }
-
-  get styleClasses() {
-    return this.constructor.styleClasses.concat(this.getProperty("styleClasses"));
-  }
-  set styleClasses(value)  {
-   this.setProperty("styleClasses", arr.withoutAll(value, this.constructor.styleClasses));
   }
 
   addStyleClass(className)  { this.styleClasses = arr.uniq(this.styleClasses.concat(className)) }
@@ -596,23 +631,9 @@ export class Morph {
     return false;
   }
 
-  get isLayoutable() { return this.getProperty("isLayoutable"); }
-  set isLayoutable(bool) { this.setProperty("isLayoutable", bool); }
-
-  get tooltip() { return this.getProperty("tooltip"); }
-  set tooltip(bool) { this.setProperty("tooltip", bool); }
-
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // morphic relationship
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  get submorphs() { return (this.getProperty("submorphs") || []).slice(); }
-  set submorphs(newSubmorphs) {
-      this.layout && this.layout.disable();
-      this.submorphs.forEach(m => newSubmorphs.includes(m) || m.remove());
-      newSubmorphs.forEach((m, i) => this.submorphs[i] !== m && this.addMorph(m, this.submorphs[i]));
-      this.layout && this.layout.enable();
-  }
 
   replaceWith(other, indexForOtherMorph) {
     // this method switches the scene graph location of two morphs (this and
@@ -636,7 +657,7 @@ export class Morph {
         otherSubmorphs = arr.without(other.submorphs, this),
         otherTfm = other.getTransform().copy(),
         otherIndex = otherOwner ? otherOwner.submorphs.indexOf(other) : -1;
- 
+
     myOwner && this.remove();
     otherOwner && other.remove();
     this.submorphs = [];
@@ -718,7 +739,7 @@ export class Morph {
       submorph._owner = this;
       submorph._cachedPaths = {};
       if (tfm) submorph.setTransform(tfm);
-      this._currentState["submorphs"] = submorphs;
+      this._morphicState["submorphs"] = submorphs;
 
       this._submorphOrderChanged = true;
       this.makeDirty();
@@ -1016,8 +1037,15 @@ export class Morph {
   get globalPosition() { return this.worldPoint(pt(0,0)) }
   set globalPosition(p) { return this.position = (this.owner ? this.owner.localize(p) : p); }
 
-  getTransform() { return this._transform }
-  getInverseTransform() { return this._invTransform }
+  getTransform() {
+    if (!this._transform) this.updateTransform();
+    return this._transform;
+  }
+
+  getInverseTransform() {
+    if (!this._invTransform) this.updateTransform();
+    return this._invTransform;
+  }
 
   updateTransform({position, scale, origin, rotation} = {}) {
     const tfm = this._transform || new Transform(),
@@ -1106,7 +1134,7 @@ export class Morph {
   }
 
   getSubmorphNamed(name) {
-    if (!this._currentState /*pre-init when used in constructor*/
+    if (!this._morphicState /*pre-init when used in constructor*/
      || !this.submorphs.length) return null;
     let isRe = obj.isRegExp(name);
     for (let i = 0; i < this.submorphs.length; i++) {
@@ -1332,7 +1360,7 @@ export class Morph {
 
   exportToJSON(options = {keepFunctions: true}) {
     // quick hack to "snapshot" into JSON
-    var exported = Object.keys(this._currentState).reduce((exported, name) => {
+    var exported = Object.keys(this._morphicState).reduce((exported, name) => {
       var val = this[name];
       if (name === "submorphs") val = val.map(ea => ea.exportToJSON());
       exported[name] = val;
@@ -1359,10 +1387,9 @@ export class Morph {
     this._animationQueue = new AnimationQueue(this);
     this._cachedPaths = {};
     this._pathDependants = [];
-    this.tickingScripts = [];
+    this._tickingScripts = [];
     this.loadDefaultProperties();
     Object.assign(this, spec)
-    this.updateTransform(this);
     return this;
   }
 
@@ -1436,7 +1463,7 @@ export class Morph {
     node.style.pointerEvents = "";
 
     var html = node.outerHTML;
-    
+
     html = html.replace(/(id|class)=\"[^\"]+\"/g, "")
                .replace(/pointer-events: [^;]+;/g, "");
 
@@ -1453,29 +1480,31 @@ export class Morph {
         scriptName = args.shift(),
         script = new TargetScript(this, scriptName, args);
     this.removeEqualScripts(script);
-    this.tickingScripts.push(script);
+    this._tickingScripts.push(script);
     script.startTicking(stepTime);
     return script;
   }
 
+  get tickingScripts() { return this._tickingScripts; }
+
   stopStepping() {
-    arr.invoke(this.tickingScripts, 'stop');
-    this.tickingScripts.length = [];
+    arr.invoke(this._tickingScripts, 'stop');
+    this._tickingScripts.length = [];
   }
 
   stopSteppingScriptNamed(selector) {
-    var scriptsToStop = this.tickingScripts.filter(ea => ea.selector === selector);
+    var scriptsToStop = this._tickingScripts.filter(ea => ea.selector === selector);
     this.stopScripts(scriptsToStop);
   }
 
   stopScripts(scripts) {
     arr.invoke(scripts, 'stop');
-    this.tickingScripts = arr.withoutAll(this.tickingScripts, scripts);
+    this._tickingScripts = arr.withoutAll(this._tickingScripts, scripts);
   }
 
   suspendStepping() {
-    if (this.tickingScripts)
-      arr.invoke(this.tickingScripts, 'suspend');
+    if (this._tickingScripts)
+      arr.invoke(this._tickingScripts, 'suspend');
   }
 
   suspendSteppingAll() {
@@ -1483,15 +1512,15 @@ export class Morph {
   }
 
   resumeStepping() {
-    arr.invoke(this.tickingScripts, 'resume');
+    arr.invoke(this._tickingScripts, 'resume');
   }
 
   resumeSteppingAll() {
-    this.withAllSubmorphsDo(ea => arr.invoke(ea.tickingScripts, 'resume'));
+    this.withAllSubmorphsDo(ea => arr.invoke(ea._tickingScripts, 'resume'));
   }
 
   removeEqualScripts(script) {
-    this.stopScripts(this.tickingScripts.filter(ea => ea.equals(script)));
+    this.stopScripts(this._tickingScripts.filter(ea => ea.equals(script)));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1551,21 +1580,27 @@ export class Morph {
 
 export class Ellipse extends Morph {
   // cut the corners so that a rectangle becomes an ellipse
-  set borderRadiusLeft(_) {}
-  get borderRadiusLeft() { return this.height; }
-  set borderRadiusRight(_) {}
-  get borderRadiusRight() { return this.height; }
-  set borderRadiusTop(_) {}
-  get borderRadiusTop() { return this.width; }
-  set borderRadiusBottom(_) {}
-  get borderRadiusBottom() { return this.width; }
+  static get properties() {
+    return {
+      borderRadiusLeft:   {get() { return this.height; }, set() {}},
+      borderRadiusRight:  {get() { return this.height; }, set() {}},
+      borderRadiusTop:    {get() { return this.width; }, set() {}},
+      borderRadiusBottom: {get() { return this.width; }, set() {}},
+    }
+  }
 }
 
 export class Triangle extends Morph {
 
+  static get properties() {
+    return {
+      direction: {defaultValue: "up"},
+      triangleFill: {after: ["fill"], initialize() { this.triangleFill = this.fill; }}
+    }
+  }
+
   constructor(props = {}) {
-    super({direction: "up", ...props});
-    this._currentState.triangleFill = props.fill;
+    super(props);
     this.update();
   }
 
@@ -1577,16 +1612,13 @@ export class Triangle extends Morph {
     super.onChange(change);
   }
 
-  get direction() { return this.getProperty("direction"); }
-  set direction(col) { this.setProperty("direction", col); }
-
   update() {
     var {x: width, y: height} = this.extent;
     if (width != height) this.extent = pt(Math.max(width, height), Math.max(width, height))
 
     this.origin = pt(width/2, height/2)
 
-    var color = this._currentState.triangleFill = this.fill || this._currentState.triangleFill;
+    var color = this.triangleFill = this.fill || this.triangleFill;
     this.fill = null;
 
     var base = {width: width/2, style: "solid", color: color},
@@ -1607,28 +1639,23 @@ export class Triangle extends Morph {
 
 export class Image extends Morph {
 
-  constructor(props) {
-    super(props);
-    if (!this.imageUrl)
-      this.imageUrl = System.decanonicalize("lively.morphic/lively-web-logo-small.png");
+  static get properties() {
+    return {
+      imageUrl: {defaultValue: System.decanonicalize("lively.morphic/lively-web-logo-small.png")}
+    }
   }
 
   get isImage() { return true }
 
-  get imageUrl()      { return this.getProperty("imageUrl"); }
-  set imageUrl(value) { this.setProperty("imageUrl", value); }
-
   async naturalExtent() {
-     var image = document.createElement('img')
-     var width, height;
-     return new Promise((resolve) => {
-        image.onload = function() {
-            width = this.width;
-            height = this.height;
-            resolve(pt(width, height));
-        };
-        image.src = this.imageUrl;
-     })
+    var image = document.createElement("img"), width, height;
+    return new Promise(resolve => {
+      image.onload = function() {
+        var {width, height} = this;
+        resolve(pt(width, height));
+      };
+      image.src = this.imageUrl;
+    });
   }
 
   render(renderer) { return renderer.renderImage(this); }
@@ -1718,13 +1745,26 @@ class PathPoint {
 
 export class Path extends Morph {
 
-  constructor(props) {
-    super({...obj.dissoc(props, "origin"), fill: Color.transparent});
+  static get properties() {
+    return {
+      vertices: {
+        defaultValue: [],
+        set(vs) {
+          vs = vs.map(v => new PathPoint(this, {...v, borderWidth: this.borderWidth}));
+          this.setProperty("vertices", vs);
+        }
+      }
+    }
+  }
+
+  constructor(props = {}) {
+    super({...obj.dissoc(props, "origin")});
     this.adjustOrigin(props.origin || this.origin);
     this.position = props.position || this.position;
   }
 
   get isPath() { return true; }
+  get isSvgMorph() { return true }
 
   onVertexChanged(vertex) {
     this.makeDirty();
@@ -1755,44 +1795,38 @@ export class Path extends Morph {
     super.onChange(change);
   }
 
-  get isSvgMorph() { return true }
-
-  get vertices() { return this.getProperty("vertices") || []; }
-  set vertices(vs) {
-     vs = vs.map(v => new PathPoint(this, { ...v, borderWidth: this.borderWidth}));
-     this.setProperty("vertices", vs);
-  }
-
   vertexBefore(v) {
-     const i = this.vertices.indexOf(v) - 1;
-     return this.vertices[i > 0 ? i : this.vertices.length - 1];
+    const i = this.vertices.indexOf(v) - 1;
+    return this.vertices[i > 0 ? i : this.vertices.length - 1];
   }
 
   vertexAfter(v) {
-     const i = this.vertices.indexOf(v) + 1;
-     return this.vertices[i > this.vertices.length - 1 ? 0 : i];
+    const i = this.vertices.indexOf(v) + 1;
+    return this.vertices[i > this.vertices.length - 1 ? 0 : i];
   }
 
   adjustVertices(delta) {
-     this.vertices && this.vertices.forEach((v) => {
+    this.vertices && this.vertices.forEach(v => {
         var {next, previous} = v.controlPoints;
         next = next.scaleByPt(delta);
         previous = previous.scaleByPt(delta);
-        v.position = v.position.addPt(this.origin).scaleByPt(delta).subPt(this.origin);
+        v.position = v.position
+          .addPt(this.origin)
+          .scaleByPt(delta)
+          .subPt(this.origin);
         v.controlPoints = {next, previous};
-     });
+      });
   }
 
   adjustOrigin(newOrigin) {
     this.adjustingOrigin = true;
-    this.vertices.forEach(v => {
-       v.position = this.origin.subPt(newOrigin).addXY(v.x, v.y);
-    });
+    this.vertices.forEach(v =>
+      v.position = this.origin.subPt(newOrigin).addXY(v.x, v.y));
     super.adjustOrigin(newOrigin);
     this.adjustingOrigin = false;
   }
 
-  addVertex(v, before=null) {
+  addVertex(v, before = null) {
     if (before) {
       const insertIndex = this.vertices.indexOf(before);
       this.vertices = this.vertices.splice(insertIndex, 0, v);
@@ -1811,7 +1845,6 @@ export class Polygon extends Path {
   constructor(props) {
     if (props.vertices && props.vertices.length > 2) {
       super(props);
-      this.fill = props.fill;
     } else {
       throw new Error("A polygon requires 3 or more vertices!");
     }

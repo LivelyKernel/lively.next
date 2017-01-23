@@ -174,8 +174,8 @@ export class ChangeManager {
   _record(morph, change) {
     // FIXME
     if (change.hasOwnProperty("value")) {
-      change.prevValue = morph._currentState[change.prop];
-      morph._currentState[change.prop] = change.value;
+      change.prevValue = morph._morphicState[change.prop];
+      morph._morphicState[change.prop] = change.value;
     }
 
     morph.makeDirty();
