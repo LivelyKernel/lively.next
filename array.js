@@ -503,6 +503,14 @@ function clear(array) {
   array.length = 0; return array;
 }
 
+function isSubset(list1, list2) {
+  // are all elements in list1 in list2?
+  for (var i = 0; i < list1.length; i++)
+    if (!list2.includes(list1[i]))
+    	  return false;
+  return true;
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-
 // asynchronous iteration
 // -=-=-=-=-=-=-=-=-=-=-=-
@@ -1117,6 +1125,7 @@ export {
   pushIfNotIncluded,
   replaceAt,
   clear,
+  isSubset,
   doAndContinue,
   nestedDelay,
   forEachShowingProgress,
