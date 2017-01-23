@@ -1,7 +1,7 @@
 /*global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout*/
 
 import { expect } from "mocha-es6";
-import { isObject, select, extend, inspect, equals, keys, isRegExp, isFunction, extract, isEmpty, deepCopy, inherit, values, merge, clone, isBoolean, dissoc, isString, isElement, isArray, deepMerge, isNumber, isUndefined, typeStringOf, safeToString, isMutableType, shortPrintStringOf, mergePropertyInHierarchy } from "../object.js";
+import { isObject, sortKeysWithBeforeAndAfterConstraints, select, extend, inspect, equals, keys, isRegExp, isFunction, extract, isEmpty, deepCopy, inherit, values, merge, clone, isBoolean, dissoc, isString, isElement, isArray, deepMerge, isNumber, isUndefined, typeStringOf, safeToString, isMutableType, shortPrintStringOf, mergePropertyInHierarchy } from "../object.js";
 
 var isNodejs = System.get("@system-env").node;
 var GLOBAL = System.global;
@@ -387,6 +387,26 @@ describe('object', function() {
     });
   });
 
+  describe("sortKeysWithBeforeAndAfterConstraints", () => {
+
+    it("works", () =>
+      expect(
+        sortKeysWithBeforeAndAfterConstraints({
+          foo: {},
+          bar: {after: ["foo"],
+          before: ["baz"]},
+          baz: {after: ["foo"]}}))
+            .equals(["foo","bar","baz"]));
+
+    it("throws error on cycle", () =>
+      expect(() => 
+        sortKeysWithBeforeAndAfterConstraints({
+          foo: {},
+          bar: {after: ["foo"], before: ["baz"]},
+          baz: {before: ["foo"]}
+        })).throws())
+
+  })
 });
 
 describe('properties', function() {

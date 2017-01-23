@@ -3,7 +3,7 @@
  */
 
 import { fromString as functionFromString, asScriptOf, argumentNames } from "./function.js";
-import { deepEquals as arrayDeepEquals } from "./array.js";
+import { deepEquals as arrayDeepEquals, isSubset, flatten } from "./array.js";
 
 
 // -=-=-=-=-=-=-=-=-
@@ -359,6 +359,93 @@ function deepMerge(objA, objB) {
   }, {});
 }
 
+
+function sortKeysWithBeforeAndAfterConstraints(properties, throwErrorOnMissing = false) {
+  // Expects `properties` to be a map of keys to objects having optional
+  // before/after attributes that, if present, should be lists of other property
+  // keys. `sortProperties` will return an ordered list of property keys so
+  // that the before / after requirements are fullfilled. If a cyclic
+  // dependency is encountered an error will be thrown.
+  // Example:
+  // ```
+  // sortProperties({foo: {}, bar: {after: ["foo"], before: ["baz"]}, "baz": {after: ["foo"]}})
+  // // => ["foo","bar","baz"]
+  // ```
+
+  // ignore-in-doc
+  // 1. convert "before" requirement into "after" and check if all properties
+  // mentioned in after/before are actually there
+  var keys = [], props = [], remaining = [];
+  for (var key in properties) {
+    var prop = properties[key],
+      	 before = prop.hasOwnProperty("before") ? prop.before : (prop.before = []),
+      	 after = prop.hasOwnProperty("after") ? prop.after : (prop.after = []);
+
+     keys.push(key);
+     props.push(prop);
+
+     for (let i = before.length; i--; ) {
+       var beforePropName = before[i];
+       var beforeProp = properties[beforePropName];
+       if (!beforeProp) {
+    	    console.warn(`[initializeProperties] ${this} sortProperties: `
+                    + `Property ${key} requires to be initialized before ${beforePropName} `
+                    + `but that property cannot be found.`);
+         before.splice(i, 1)
+         continue;
+       }         
+       if (!beforeProp.hasOwnProperty("after")) beforeProp.after = [];
+       beforeProp.after.push(key);
+     }
+
+     for (let i = after.length; i--; ) {
+       var afterPropName = after[i];
+       var afterProp = properties[afterPropName];
+       if (!afterProp) {
+    	    console.warn(`[initializeProperties] ${this} sortProperties: `
+                    + `Property ${key} requires to be initialized after ${afterPropName} `
+                    + `but that property cannot be found.`);
+         after.splice(i, 1);
+       }         
+     }
+
+     remaining.push(key);
+  }
+
+  // ignore-in-doc
+  // compute order
+  var resolvedGroups = [],
+      resolvedKeys = [],
+      lastLength = remaining.length + 1;
+
+  while (remaining.length) {
+    if (lastLength === remaining.length)
+      throw new Error("Circular dependencies in handler order, could not resolve properties "
+                			  + remaining.map(key => {
+                       var before = properties[key].before, after = properties[key].after;
+                       if ((!before || !before.length) && (!after || !after.length)) return "";
+                       var report = `${key}\n`;
+                       if (before && before.length) report += `  - before ${before.join(",")}\n`;
+                       if (after && after.length) report += `  - after ${after.join(",")}\n`;
+                       return report;
+                     }).join(""));
+    lastLength = remaining.length;
+    var resolvedGroup = [];
+    for (let i = remaining.length; i--; ) {
+      let key = remaining[i];
+      if (isSubset(properties[key].after, resolvedKeys)) {
+        remaining.splice(i, 1);
+        resolvedKeys.push(key);
+        resolvedGroup.push(key);
+      }
+    }
+    resolvedGroups.push(resolvedGroup);
+  }
+
+  return flatten(resolvedGroups, 1);
+}
+
+
 // -=-=-=-=-=-=-
 // inheritance
 // -=-=-=-=-=-=-
@@ -492,6 +579,7 @@ export {
   inherit,
   valuesInPropertyHierarchy,
   mergePropertyInHierarchy,
+  sortKeysWithBeforeAndAfterConstraints,
   deepCopy,
   typeStringOf,
   shortPrintStringOf,
