@@ -15,7 +15,7 @@ export class Button extends Morph {
 
   static get properties() {
     return {
-      padding:      {defaultValue: Rectangle.inset(0)},
+      padding:      {defaultValue: Rectangle.inset(4,2)},
       active:       {defaultValue: true},
       borderWidth:  {defaultValue: 1},
       extent:       {defaultValue: pt(100,24)},
@@ -24,7 +24,7 @@ export class Button extends Morph {
       labelMorph:   {
         after: ["submorphs"],
         initialize() {
-          return this.addMorph({
+          this.labelMorph = this.addMorph({
             type: "label", name: "label",
             value: "no label yet", fill: Color.white.withA(0),
             padding: Rectangle.inset(0)
@@ -131,7 +131,10 @@ export class Button extends Morph {
   }
 
   get labelWithTextAttributes() { return this.labelMorph.textAndAttributes; }
-  set labelWithTextAttributes(textAndAttributes) { this.labelMorph.textAndAttributes = textAndAttributes; this.relayout(); }
+  set labelWithTextAttributes(textAndAttributes) {
+    this.labelMorph.textAndAttributes = textAndAttributes;
+    this.relayout();
+  }
 
   get fontFamily() { return this.labelMorph.fontFamily; }
   set fontFamily(fontFamily) { this.labelMorph.fontFamily = fontFamily; this.relayout(); }
@@ -153,7 +156,8 @@ export class Button extends Morph {
     var padding = this.padding, label = this.labelMorph;
     label.fit();
     this.extent = padding.bottomLeft().addPt(padding.bottomRight()).addPt(label.extent);
-    return this.relayout();
+    this.relayout();
+    return this;
   }
 
   trigger() {
