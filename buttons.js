@@ -16,7 +16,7 @@ export class Button extends Morph {
   static get properties() {
     return {
       padding:      {defaultValue: Rectangle.inset(4,2)},
-      active:       {defaultValue: true},
+      active:       {after: ["labelMorph"], defaultValue: true},
       borderWidth:  {defaultValue: 1},
       extent:       {defaultValue: pt(100,24)},
       borderRadius: {defaultValue: 15},
