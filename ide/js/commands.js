@@ -53,7 +53,7 @@ function maybeSelectCommentOrLine(morph) {
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// FIXME duplication with lively.vm completions and lively morphic completions!
+// FIXME duplication with lively.vm completions and lively morphic completions and inspector!
 var symMatcher = /^Symbol\((.*)\)$/,
     knownSymbols = (() =>
       Object.getOwnPropertyNames(Symbol)

@@ -1,12 +1,13 @@
-import { Color, pt, Rectangle, rect } from "lively.graphics";
-import { obj, arr, promise, string, Path } from "lively.lang";
-import { connect, disconnect } from "lively.bindings";
-import { Morph, morph, show } from "../../index.js";
+import { Color, pt, Rectangle } from "lively.graphics";
+import { obj, arr, promise, string } from "lively.lang";
+import { connect } from "lively.bindings";
+import { Morph } from "../../index.js";
 import { Tree, TreeData } from "../../tree.js";
-import { GridLayout } from "../../layout.js";
+
 import { JavaScriptEditorPlugin } from "./editor-plugin.js";
 import { HorizontalResizer } from "../../resizers.js";
 import config from "../../config.js";
+
 
 
 var inspectorCommands = [
@@ -19,7 +20,7 @@ var inspectorCommands = [
      return true;
    }
  },
- 
+
  {
    name: "focus propertyTree",
    exec: inspector => {
@@ -31,55 +32,151 @@ var inspectorCommands = [
 
 ];
 
-function propertyNamesOf(obj) {
 
-  if (!obj) return [];
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// printing
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  var keys = arr.sortBy(Object.keys(obj), p => p.toLowerCase());
 
-  if (Array.isArray(obj)) {
-    var indexes = obj.length ? arr.range(0, obj.length-1).map(String) : [];
-    return indexes.concat(arr.withoutAll(keys, indexes));
-  }
-
-  return keys;
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// FIXME duplication with lively.vm completions and lively morphic completions and inspector!
+var symMatcher = /^Symbol\((.*)\)$/,
+    knownSymbols = (() =>
+      Object.getOwnPropertyNames(Symbol)
+        .filter(ea => typeof Symbol[ea] === "symbol")
+        .reduce((map, ea) => map.set(Symbol[ea], "Symbol." + ea), new Map()))();
+function printSymbol(sym) {
+  if (Symbol.keyFor(sym)) return `Symbol.for("${Symbol.keyFor(sym)}")`;
+  if (knownSymbols.get(sym)) return knownSymbols.get(sym)
+  var matched = String(sym).match(symMatcher);
+  return String(sym);
 }
+function safeToString(value) {
+  if (!value) return String(value);
+  if (Array.isArray(value)) return `[${value.map(safeToString).join(",")}]`;
+  if (typeof value === "symbol") return printSymbol(value);
+  try {
+    return String(value);
+  } catch (e) { return `Cannot print object: ${e}`; }
+}
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function printValue(value) {
-  if (obj.isPrimitive(value)) return string.print(value);
-  if (Array.isArray(value)) {
+  var result;
+  if (obj.isPrimitive(value)) result = string.print(value);
+  else if (Array.isArray(value)) {
     var tooLong = value.length > 3;
     if (tooLong) value = value.slice(0, 3);
     var printed = string.print(value);
     if (tooLong) printed = printed.slice(0, -1) + ", ...]";
-    return printed;
-  }
-  return string.print(value);
+    result = printed;
+  } else result = string.print(value);
+  result = result.replace(/\n/g, "");
+  return result;
 }
+
+function propertyNamesOf(obj) {
+  if (!obj) return [];
+  var keys = arr.sortBy(Object.keys(obj), p => p.toLowerCase());
+  if (Array.isArray(obj)) {
+    var indexes = obj.length ? arr.range(0, obj.length-1).map(String) : [];
+    return indexes.concat(arr.withoutAll(keys, indexes));
+  }
+  return keys;
+}
+
+var defaultPropertyOptions = {
+  includeDefault: true,
+  includeSymbols: true,
+  sort: true,
+  sortFunction: (a, b) => {
+    if (a.hasOwnProperty("priority") || b.hasOwnProperty("priority")) {
+      var aP = a.priority || 0, bP = b.priority || 0;
+      if (aP < bP) return -1;
+      if (aP > bP) return 1;
+    }
+
+    var aK = (a.keyString || a.key).toLowerCase(),
+        bK = (b.keyString || b.key).toLowerCase();
+    return aK < bK ? -1 : aK === bK ? 0 : 1;
+  }
+}
+
+function propertiesOf(target) {
+  if (!target) return [];
+
+  var seen = {}, props = [],
+      isCollapsed = true,
+      customProps = typeof target.livelyCustomInspect === "function" ?
+        target.livelyCustomInspect() : {},
+      options = {
+        ...defaultPropertyOptions,
+        ...customProps
+      };
+
+  if (customProps.properties) {
+    for (let {key, hidden, priority, keyString, value, valueString} of customProps.properties) {
+      seen[key] = true;
+      if (hidden) continue;
+      props.push({
+        priority,
+        key, keyString: keyString || safeToString(key),
+        value, valueString,
+        isCollapsed
+      });
+    }
+  }
+
+  if (options.includeDefault) {
+    var defaultProps = propertyNamesOf(target);
+    for (let key of defaultProps) {
+      if (key in seen) continue;
+      var value = target[key], valueString = printValue(value);
+      props.push({key, value, valueString, isCollapsed})
+    }
+    if (options.includeSymbols) {
+      for (let key of Object.getOwnPropertySymbols(target)) {
+        var keyString = safeToString(key), value = target[key], valueString = printValue(value);
+        props.push({key, keyString, value, valueString, isCollapsed});
+      }
+    }
+  }
+
+  if (options.sort) props = props.sort(options.sortFunction);
+
+  return props;
+}
+
+
+
 
 class InspectorTreeData extends TreeData {
 
   static forObject(obj) {
-    return new this({propName: "???", value: obj, isCollapsed: true})
+    return new this({key: "inspectee", value: {inspectee: obj}, isCollapsed: true});
   }
 
-  // display(node) { return `${node.propName}: ${string.truncate(String(node.value), 100).replace(/\n/g, "")}`; }
-  display(node) { return `${node.propName}: ${printValue(node.value).replace(/\n/g, "")}`; }
+  display(node) {
+     var keyString = node.keyString || node.key,
+         valueString = node.valueString || printValue(node.value);
+     return `${keyString}: ${valueString}`; 
+  }
+
   isCollapsed(node) { return node.isCollapsed; }
+
   collapse(node, bool) {
     node.isCollapsed = bool;
     if (bool || this.isLeaf(node)) return;
-    node.children = propertyNamesOf(node.value)
-      .map(propName => {
-        var childNode = {propName, value: node.value[propName], isCollapsed: true};
-        this.parentMap.set(childNode, node);
-        return childNode;
-      });
-  }
-  getChildren(node) { return this.isLeaf(node) ? null : this.isCollapsed(node) ? [] : node.children; }
-  isLeaf(node) { return obj.isPrimitive(node.value); }
 
+    node.children = propertiesOf(node.value).map(node => {
+      this.parentMap.set(node, node); return node; });
+  }
+
+  getChildren(node) { return node.children; }
+
+  isLeaf(node) { return obj.isPrimitive(node.value); }
 }
+
 
 // inspect(this)
 export function inspect(targetObject) {
@@ -103,7 +200,7 @@ export default class Inspector extends Morph {
       ...props
     });
     this.build();
-    this.state = {targetObject: undefined};
+    this.state = {targetObject: undefined, updateInProgress: false};
     this.targetObject = targetObject || null;
   }
 
@@ -112,11 +209,31 @@ export default class Inspector extends Morph {
   get targetObject() { return this.state.targetObject; }
   set targetObject(obj) {
     this.state.targetObject = obj;
-    var td =  InspectorTreeData.forObject(obj),
-        tree = this.get("propertyTree");
-    tree.treeData = td;
-    tree.onNodeCollapseChanged({node: td.root, isCollapsed: false})
+    this.prepareForNewTargetObject(obj);
   }
+
+  async prepareForNewTargetObject(target) {
+    if (this.isUpdating()) await this.whenUpdated();
+
+    var {promise: p, resolve} = promise.deferred();
+    this.state.updateInProgress = p;
+
+    try {
+      var td = InspectorTreeData.forObject(target),
+          tree = this.get("propertyTree");
+      tree.treeData = td;
+      await tree.onNodeCollapseChanged({node: td.root, isCollapsed: false});
+      tree.selectedIndex = 1;
+      await tree.execCommand("uncollapse selected node");
+    } catch (e) { this.showError(e); }
+
+    this.state.updateInProgress = null;
+
+  }
+
+  isUpdating() { return !!this.updateInProgress; }
+
+  whenUpdated() { return this.updateInProgress || Promise.resolve(); }
 
   get selectedObject() {
     var sel = this.get("propertyTree").selection;
@@ -165,7 +282,7 @@ export default class Inspector extends Morph {
       get context() { return jsPlugin.textMorph.owner.selectedObject },
       format: "esm"
     }
-    
+
     this.get("resizer").addScalingAbove(this.get("propertyTree"));
     this.get("resizer").addScalingBelow(this.get("codeEditor"));
     connect(this, "extent", this, "relayout");
