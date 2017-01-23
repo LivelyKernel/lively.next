@@ -2,7 +2,7 @@ import { obj, string } from "lively.lang";
 import { pt, Color, Point, Rectangle, rect } from "lively.graphics";
 import { morph, Morph, MorphicEnv } from "./index.js";
 import { Icon } from "./icons.js";
-import { connect } from "lively.bindings";
+import { connect, disconnect } from "lively.bindings";
 import { ShadowObject } from "./rendering/morphic-default.js";
 
 
@@ -130,11 +130,6 @@ class BoundsMarker extends Morph {
 }
 
 
-// var m = new StatusMessage({message: "test"}).openInWorld();
-// m.borderColorTop
-// m.setMessage("???", Color.green)
-// m.remove()
-
 export class StatusMessage extends Morph {
 
   static get properties() {
@@ -153,9 +148,33 @@ export class StatusMessage extends Morph {
       borderWidth:  {defaultValue: 5},
       fill:         {defaultValue: Color.white},
       dropShadow:   {defaultValue: new ShadowObject(true)},
-      message:      {after: ["submorphs"]},
-      color:        {after: ["submorphs"]},
+
+      message: {
+        after: ["submorphs"],
+        set(value) {
+          this.setProperty("message", value);
+          var text = this.getSubmorphNamed("messageText");
+          if (!text) return;
+          // FIXME not yet initialized
+          text.value = value;
+          var textEnd = text.documentEndPosition;
+          if (textEnd.row > this.maxLines) {
+            text.replace({start: {row: this.maxLines, column: 0}, end: textEnd}, "...\n");
+            if (!this.expandedContent) this.expandedContent = value;
+          }
+          textEnd = text.documentEndPosition;
+          if (textEnd.column !== 0) text.insertText("\n", textEnd);
+        }
+      },
+
+      color: {
+        after: ["borderColor"], derived: true,
+        get() { return this.borderColor; },
+        set(value) { this.borderColor = value; }
+      },
+
       submorphs:    {
+        after: ["extent"],
         initialize() {
           this.submorphs = [
             {
@@ -170,16 +189,12 @@ export class StatusMessage extends Morph {
               extent: pt(22,22), activeStyle: {fill: Color.white},
               label: Icon.makeLabel("close")
             }
-          ]
+          ];
+          this.relayout();
+          connect(this.getSubmorphNamed("closeButton"), "fire", this, "remove");
         }
       }
     }
-  }
-
-  constructor(props) {
-    super(props);
-    this.relayout();
-    connect(this.getSubmorphNamed("closeButton"), "fire", this, "remove");
   }
 
   relayout() {
@@ -189,23 +204,6 @@ export class StatusMessage extends Morph {
 
   isEpiMorph() { return true }
   isStatusMessage() { return true }
-
-  get message()         { return this.getProperty("message"); }
-  set message(value)    {
-    this.setProperty("message", value);
-    var text = this.getSubmorphNamed('messageText');
-    if (!text) return; // FIXME not yet initialized
-    text.value = value;
-    var textEnd = text.documentEndPosition;
-    if (textEnd.row > this.maxLines) {
-      text.replace({start: {row: this.maxLines, column: 0}, end: textEnd}, "...\n");
-      if (!this.expandedContent) this.expandedContent = value;
-    }
-    textEnd = text.documentEndPosition;
-    if (textEnd.column !== 0) text.insertText("\n", textEnd);
-  }
-  get color()            { /*just an alias for now*/return this.borderColor; }
-  set color(value)       { this.borderColor = value; }
 
   setMessage(msg, color) {
     this.message = msg;
@@ -251,26 +249,60 @@ export class StatusMessage extends Morph {
 }
 
 
+// var m = new StatusMessageForMorph({message: "test"}).openInWorld();
+// m.borderColorTop
+// m.setMessage("???", Color.green)
+// m.message = "foo"
+// m.submorphs[0].value
+// m.submorphs[0].textString
+// m.remove()
+
+
 export class StatusMessageForMorph extends StatusMessage {
 
   static get properties() {
     return {
       slidable: {defaultValue: false},
-      removeOnTargetMorphChange: {defaultValue: true},
-      targetMorph: {defaultValue: null} // id!
-    }
-  }
 
-  constructor(props) {
-    super(props);
-    if (this.expandable) {
-      var btn = this.addMorph({
-        name: "expandButton", type: "button",
-        extent: pt(22,22), activeStyle: {fill: Color.white},
-        label: Icon.makeLabel("expand")
-      });
-      connect(btn, "fire", this, "expand");
-      this.relayout();
+      // should "internal" changes in the morph we are showing the message for
+      // (like cursor changes in a text morph) make this message morph disappear?
+      removeOnTargetMorphChange: {defaultValue: true},
+
+      targetMorph: {
+        defaultValue: null,
+        get()      {
+          var id = this.getProperty("targetMorph");
+          return id && $world.getMorphWithId(id);
+        },
+        set(morph) {
+          this.setProperty("targetMorph", morph ? morph.id : null);
+          this.alignAtBottomOf(morph);
+        }
+      },
+
+      expandable: {
+        after: ["submorphs"],
+        set(val) {
+          this.setProperty("expandable", val);
+          if (val) {
+            if (!this.getSubmorphNamed("expandButton")) {
+              var btn = this.addMorph({
+                name: "expandButton", type: "button",
+                extent: pt(22,22), activeStyle: {fill: Color.white},
+                label: Icon.makeLabel("expand")
+              });
+              connect(btn, "fire", this, "expand");
+            }
+          } else {
+            if (this.getSubmorphNamed("expandButton")) {
+              this.getSubmorphNamed("expandButton").remove();
+              disconnect(btn, "fire", this, "expand");
+            }
+          }
+          this.relayout();
+        }
+      }
+
     }
   }
 
@@ -280,20 +312,6 @@ export class StatusMessageForMorph extends StatusMessage {
     if (expandBtn) {
       expandBtn.topRight = this.getSubmorphNamed("closeButton").topLeft.addXY(-3, 0);
     }
-  }
-
-  // should "internal" changes in the morph we are showing the message for
-  // (like cursor changes in a text morph) make this message morph disappear?
-  get removeOnTargetMorphChange()      { return this.getProperty("removeOnTargetMorphChange"); }
-  set removeOnTargetMorphChange(value) { this.setProperty("removeOnTargetMorphChange", value); }
-
-  get targetMorph()      {
-    var id = this.getProperty("targetMorph");
-    return id && $world.getMorphWithId(id);
-  }
-  set targetMorph(morph) {
-    this.setProperty("targetMorph", morph ? morph.id : null);
-    this.alignAtBottomOf(morph);
   }
 
   alignAtBottomOf(forMorph) {

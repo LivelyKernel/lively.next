@@ -58,31 +58,6 @@ export class Label extends Morph {
     if (center !== undefined) this.center = center;
   }
 
-  get defaultTextStyle() {
-    return {
-      fontFamily: "Sans-Serif",
-      fontSize: 12,
-      fontColor: Color.black,
-      fontWeight: "normal",
-      fontStyle: "normal",
-      textDecoration: "none",
-      textStyleClasses: undefined,
-    }
-  }
-
-  get defaultProperties() {
-    return {
-      ...super.defaultProperties,
-      fill: null,
-      draggable: false,
-      padding: Rectangle.inset(0),
-      nativeCursor: "default",
-      autofit: true,
-      ...this.defaultTextStyle,
-      savedMarks: [],
-    };
-  }
-
   get isLabel() { return true }
 
   get value() {
