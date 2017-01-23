@@ -10,6 +10,7 @@ export * from "./html-morph.js";
 export * from "./list.js";
 export * from "./env.js";
 export * from "./layout.js";
+export * from "./icons.js";
 export { StyleRules } from "./style-rules.js";
 export { show } from "./markers.js"
 export { default as Window } from "./window.js";
