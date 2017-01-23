@@ -65,10 +65,8 @@ function hasManagedProperties(klass) {
   return klass.hasOwnProperty(defaultPropertiesKey);
 }
 
-export function prepareClassForManagedPropertiesAfterCreation(klass, force = false) {
+export function prepareClassForManagedPropertiesAfterCreation(klass) {
   if (!hasManagedProperties(klass)) return;
-
-  if (!force && klass.hasOwnProperty(propertiesAndSettingsCacheSym)) return;
 
   var {properties, propertySettings} = propertiesAndSettingsInHierarchyOf(klass);
   klass[propertiesAndSettingsCacheSym] = {properties, propertySettings};

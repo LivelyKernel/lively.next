@@ -180,7 +180,7 @@ export function initializeClass(
           // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''} was defined via module bindings`)
           setSuperclass(klass, val);
           installMethods(klass, instanceMethods, classMethods);
-          prepareClassForManagedPropertiesAfterCreation(klass, true/*force*/);
+          prepareClassForManagedPropertiesAfterCreation(klass);
         });
     }
   }
