@@ -129,6 +129,12 @@ class BoundsMarker extends Morph {
 
 }
 
+
+// var m = new StatusMessage({message: "test"}).openInWorld();
+// m.borderColorTop
+// m.setMessage("???", Color.green)
+// m.remove()
+
 export class StatusMessage extends Morph {
 
   static get properties() {
@@ -151,7 +157,7 @@ export class StatusMessage extends Morph {
       color:        {after: ["submorphs"]},
       submorphs:    {
         initialize() {
-          return [
+          this.submorphs = [
             {
               name: "messageText",
               type: "text",
@@ -164,7 +170,7 @@ export class StatusMessage extends Morph {
               extent: pt(22,22), activeStyle: {fill: Color.white},
               label: Icon.makeLabel("close")
             }
-          ].map(morph);
+          ]
         }
       }
     }
