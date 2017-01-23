@@ -177,15 +177,15 @@ export class ConfirmPrompt extends AbstractPrompt {
      this.width = label.width + 10;
      this.height = label.height + 30;
      const l = this.layout = new GridLayout({
-        grid: [["label", "label"],
-               ["ok button", "cancel button"]]
+        grid: [["label", "label", "label", "label"],
+               [null, "ok button", "cancel button", null]]
      });
      l.col(0).paddingLeft = 5;
-     l.col(0).paddingRight = 2.5;
-     l.col(0).adjustMin(100);
-     l.col(1).paddingRight = 5;
-     l.col(1).paddingLeft = 2.5;
-     l.col(1).adjustMin(100);
+     l.col(1).paddingRight = 2.5;
+     l.col(1).fixed = 60;
+     l.col(2).fixed = 60;
+     l.col(2).paddingLeft = 2.5;
+     l.col(3).paddingRight = 5;
      l.row(1).paddingBottom = 5;
      l.row(1).fixed = 30;
   }
