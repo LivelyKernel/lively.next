@@ -29,7 +29,32 @@ export class Morph {
   }
 
   static get properties() {
-    return {
+    return {      
+      clipMode:           {defaultValue: "visible"},
+      draggable:          {defaultValue: true},
+      dropShadow:         {defaultValue: false},
+      epiMorph:           {defaultValue: false},
+      extent:             {defaultValue: pt(10, 10)},
+      fill:               {defaultValue: Color.white},
+      focusable:          {defaultValue: true},
+      grabbable:          {defaultValue: false},
+      halosEnabled:       {defaultValue: !!config.halosEnabled},
+      isLayoutable:       {defaultValue: true},
+      name:               {defaultValue: "aMorph"},
+      nativeCursor:       {defaultValue: "auto"},
+      opacity:            {defaultValue: 1},
+      origin:             {defaultValue: pt(0,0)},
+      position:           {defaultValue: pt(0,0)},
+      reactsToPointer:    {defaultValue: true},
+      rotation:           {defaultValue:  0},
+      scale:              {defaultValue:  1},
+      scroll:             {defaultValue: pt(0,0)},
+      styleClasses:       {defaultValue: ["morph"]},
+      tooltip:            {defaultValue: null},
+      visible:            {defaultValue: true},
+      submorphs:          {defaultValue:  [], after: ["isLayoutable", "origin", "position", "rotation", "scale"]},
+      layout:             {after: ["submorphs"]},
+
       borderColorBottom:  {defaultValue: Color.white},
       borderColorLeft:    {defaultValue: Color.white},
       borderColorRight:   {defaultValue: Color.white},
@@ -117,34 +142,8 @@ export class Morph {
           if ("color" in x) this.borderColor = x.color;
           if ("radius" in x) this.borderRadius = x.radius;
         }
-      },
+      }
 
-      
-      clipMode:           {defaultValue: "visible"},
-
-      draggable:          {defaultValue: true},
-      dropShadow:         {defaultValue: false},
-      epiMorph:           {defaultValue: false},
-      extent:             {defaultValue: pt(10, 10)},
-      fill:               {defaultValue: Color.white},
-      focusable:          {defaultValue: true},
-      grabbable:          {defaultValue: false},
-      halosEnabled:       {defaultValue: !!config.halosEnabled},
-      isLayoutable:       {defaultValue: true},
-      name:               {defaultValue: "aMorph"},
-      nativeCursor:       {defaultValue: "auto"},
-      opacity:            {defaultValue: 1},
-      origin:             {defaultValue: pt(0,0)},
-      position:           {defaultValue: pt(0,0)},
-      reactsToPointer:    {defaultValue: true},
-      rotation:           {defaultValue:  0},
-      scale:              {defaultValue:  1},
-      scroll:             {defaultValue: pt(0,0)},
-      styleClasses:       {defaultValue: ["morph"]},
-      tooltip:            {defaultValue: null},
-      visible:            {defaultValue: true},
-      submorphs:          {defaultValue:  [], after: ["isLayoutable", "origin", "position", "rotation", "scale"]},
-      layout:             {after: ["submorphs"]}
     }
   }
 
@@ -1698,9 +1697,9 @@ export class Path extends Morph {
     }
   }
 
-  constructor(props) {
+  constructor(props = {}) {
     super({...obj.dissoc(props, "origin"), fill: Color.transparent});
-    this.fill = this.fill;
+    this.fill = props.fill;
     this.adjustOrigin(props.origin || this.origin);
     this.position = props.position || this.position;
   }
