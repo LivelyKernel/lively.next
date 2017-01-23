@@ -5,6 +5,9 @@ import { pt, Rectangle, Color } from "lively.graphics";
 import { connect } from "lively.bindings";
 
 
+// var i = LoadingIndicator.open("test")
+// i.remove()
+
 export default class LoadingIndicator extends Morph {
 
   static open(label, props) {
@@ -23,84 +26,90 @@ export default class LoadingIndicator extends Morph {
     try { return await fn(); } finally { i.remove(); }
   }
 
+  static get properties() {
+    return {
+      fill:       {defaultValue: Color.rgbHex("#666")},
+      fontSize:   {defaultValue: 16},
+      fontFamily: {defaultValue: "Arial"},
+      name:       {defaultValue: "LoadingIndicator"},
+
+      label: {
+        derived: true, after: ["submorphs"],
+        get() { return this.getSubmorphNamed("label").value; },
+        set(val) { this.getSubmorphNamed("label").value = val; }
+      },
+
+      fontFamily: {
+        derived: true, after: ["submorphs"],
+        get() { return this.getSubmorphNamed("label").fontFamily; },
+        set(val) { this.getSubmorphNamed("label").fontFamily = val; }
+      },
+
+      fontSize: {
+        derived: true, after: ["submorphs"],
+        get() { return this.getSubmorphNamed("label").fontSize; },
+        set(val) { this.getSubmorphNamed("label").fontSize = val; }
+      },
+
+      submorphs: {
+        initialize() {
+          this.submorphs = [
+
+            Icon.makeLabel("spinner", {
+              name: "spinner",
+              fontColor: Color.white,
+              value: [["", {
+                fontFamily: "FontAwesome",
+                textStyleClasses: ["fa", "fa-5x", "fa-pulse"]
+              }]],
+              autofit: false,
+              origin: pt(30,30),
+              extent: pt(60,60),
+              topLeft: pt(0,0),
+              halosEnabled: false
+            }),
+
+            {
+              type: "label",
+              name: "label",
+              value: "",
+              fontSize: 12, fontFamily: "Arial",
+              fontColor: Color.white,
+              styleClasses: ["center-text"],
+              halosEnabled: false
+            },
+
+            {
+              type: "button",
+              name: "closeButton",
+              label: "X",
+              fontColor: Color.white,
+              activeStyle: {fill: null, borderWidth: 0},
+              extent: pt(20,20),
+              visible: false
+            }
+          ];
+
+        }
+      }
+    }
+  }
+
   constructor(props = {}) {
     super(props);
-    this.build();
     this.relayout();
+    connect(this, 'extent', this, 'relayout');
+    connect(this.get("label"), 'extent', this, "relayout");
+    connect(this.get("label"), 'value', this, "updateLabel");
+    connect(this.get("label"), 'fontSize', this, "updateLabel");
+    connect(this.get("label"), 'fontFamily', this, "updateLabel");
+    connect(this.get("closeButton"), 'fire', this, "remove");
   }
 
   get isEpiMorph() { return true }
 
-  get defaultProperties() {
-    return {
-      ...super.defaultProperties,
-      fill: Color.rgbHex("#666"),
-      fontSize: 16,
-      fontFamily: "Arial",
-      name: "LoadingIndicator",
-      epiMorph: true,
-    }
-  }
-
-  get label() { return this.getProperty("label") || ""; }
-  set label(label) { this.addValueChange("label", label); this.updateLabel(); }
-  get fontFamily() { return this.getProperty("fontFamily"); }
-  set fontFamily(fontFamily) { this.addValueChange("fontFamily", fontFamily); this.updateLabel(); }
-  get fontSize() { return this.getProperty("fontSize"); }
-  set fontSize(fontSize) {  this.addValueChange("fontSize", fontSize); this.updateLabel(); }
-
-  build() {
-    var {fontSize, fontFamily, label} = this;
-    this.submorphs = [
-
-      Icon.makeLabel("spinner", {
-        name: "spinner",
-        fontColor: Color.white,
-        value: [["", {
-          fontFamily: "FontAwesome",
-          textStyleClasses: ["fa", "fa-5x", "fa-pulse"]
-        }]],
-        autofit: false,
-        origin: pt(30,30),
-        extent: pt(60,60),
-        topLeft: pt(0,0),
-        halosEnabled: false
-      }),
-
-      {
-        type: "label",
-        name: "label",
-        value: label,
-        fontSize, fontFamily,
-        fontColor: Color.white,
-        styleClasses: ["center-text"],
-        halosEnabled: false
-      },
-
-      {
-        type: "button",
-        name: "closeButton",
-        label: "X",
-        fontColor: Color.white,
-        activeStyle: {fill: null, borderWidth: 0},
-        extent: pt(20,20),
-        visible: false
-      }
-    ];
-
-    connect(this, 'extent', this, 'relayout');
-    connect(this.get("label"), 'extent', this, "relayout");
-    connect(this.get("closeButton"), 'fire', this, "remove");
-  }
-
   updateLabel() {
-    var labelMorph = this.getSubmorphNamed("label");
-    if (!labelMorph) return
-    var {center, label, fontSize, fontFamily} = this;
-    labelMorph.value = label;
-    labelMorph.fontFamily = fontFamily;
-    labelMorph.fontSize = fontSize;
-    this.relayout();
+    var center = this.center; this.relayout();
     setTimeout(() => this.center = center, 0);
   }
 
