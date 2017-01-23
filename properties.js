@@ -171,25 +171,29 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
   var {valueStoreProperty} = {...defaultPropertySettings, ...propertySettings},
       sortedKeys = obj.sortKeysWithBeforeAndAfterConstraints(properties),
       propsNeedingInitialize = [],
-      propsHavingValue = [];
+      initActions = {};
 
   // 1. this[valueStoreProperty] is were the actual values will be stored
   if (!instance.hasOwnProperty(valueStoreProperty))
     instance[valueStoreProperty] = {};
 
   for (var i = 0; i < sortedKeys.length; i++) {
-    var key = sortedKeys[i],
+    let key = sortedKeys[i],
         descriptor = properties[key];
 
-    var derived = descriptor.derived,
+    let derived = descriptor.derived,
         defaultValue = descriptor.hasOwnProperty("defaultValue") ?
                         descriptor.defaultValue : undefined;
     if (!derived) instance[valueStoreProperty][key] = defaultValue;
 
-    if (descriptor.hasOwnProperty("initialize"))
-      propsNeedingInitialize.push({key, defaultValue, type: "initCall"});
-    else if (derived && defaultValue !== undefined)
-      propsNeedingInitialize.push({key, defaultValue, type: "derived"});
+    let initAction;
+    if (descriptor.hasOwnProperty("initialize")) {
+      initAction = initActions[key] = {initialize: defaultValue}
+      propsNeedingInitialize.push(key);
+    } else if (derived && defaultValue !== undefined) {
+      initAction = initActions[key] = {derived: defaultValue}
+      propsNeedingInitialize.push(key);
+    }
 
     if (values && key in values) {
       if (descriptor.readOnly) {
@@ -197,25 +201,44 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
           `Trying to initialize read-only property ${key} in ${instance}, ` +
             `skipping setting value`
         );
-      } else propsHavingValue.push(key);
+      } else {
+        if (!initAction) {
+          initAction = initActions[key] = {};
+          propsNeedingInitialize.push(key);
+        }
+        initAction.value = values[key];
+      }
     }
 
   }
   
   // 2. Run init code for properties
-  for (var i = 0; i < propsNeedingInitialize.length; i++) {
-    var {key, defaultValue, type} = propsNeedingInitialize[i];
-    if (type === "initCall") properties[key].initialize.call(instance, defaultValue);
-    else if (type === "derived") instance[key] = defaultValue;
-  }
-
-  // 3. if we have values we will initialize the properties from it. Values
+  // and if we have values we will initialize the properties from it. Values
   // is expected to be a JS object mapping property names to property values
-  if (values) {
-    for (let i = 0; i < propsHavingValue.length; i++) {
-      var key = propsHavingValue[i];
-      instance[key] = values[key]; // go through the setter!
+  for (let i = 0; i < propsNeedingInitialize.length; i++) {
+    let key = propsNeedingInitialize[i],
+        actions = initActions[key],
+        hasValue = actions.hasOwnProperty("value");
+
+    // if we have an initialize function we call it either with the value from
+    // values or with the defaultValue
+    if (actions.hasOwnProperty("initialize")) {
+      let value = hasValue ? actions.value : actions.initialize;
+      properties[key].initialize.call(instance, value);
+      if (hasValue) instance[key] = actions.value;
     }
+
+    // if we have a derived property we will call the setter with the default
+    // value or the value from values
+    else if (actions.hasOwnProperty("derived")) {
+      instance[key] = hasValue ? actions.value : actions.derived;
+    }
+
+    // if we only have the value from values we simply call the setter with it
+    else if (hasValue) {
+      instance[key] = actions.value;
+    }
+
   }
 
 }
