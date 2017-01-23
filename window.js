@@ -10,8 +10,8 @@ export default class Window extends Morph {
     return {
       title:        {after: ["submorphs"]},
       targetMorph:  {after: ["submorphs"]},
-      submorphs:    {defaultValue: [], initialize() { return this.controls(); }},
-      dropShadow:   {initialize() { return new ShadowObject(true); }},
+      submorphs:    {initialize() { this.submorphs = this.controls(); }},
+      dropShadow:   {initialize() { this.dropShadow = new ShadowObject(true); }},
       fill:         {defaultValue: Color.lightGray},
       borderRadius: {defaultValue: 7},
       borderColor:  {defaultValue: Color.gray},
