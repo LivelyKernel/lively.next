@@ -23575,11 +23575,7 @@ function hasManagedProperties(klass) {
 }
 
 function prepareClassForManagedPropertiesAfterCreation(klass) {
-  var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
   if (!hasManagedProperties(klass)) return;
-
-  if (!force && klass.hasOwnProperty(propertiesAndSettingsCacheSym)) return;
 
   var _propertiesAndSetting = propertiesAndSettingsInHierarchyOf(klass),
       properties = _propertiesAndSetting.properties,
@@ -23903,7 +23899,7 @@ function initializeClass(constructorFunc, superclassSpec) {
         // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''} was defined via module bindings`)
         setSuperclass(klass, val);
         installMethods(klass, instanceMethods, classMethods);
-        prepareClassForManagedPropertiesAfterCreation(klass, true /*force*/);
+        prepareClassForManagedPropertiesAfterCreation(klass);
       });
     }
   }
