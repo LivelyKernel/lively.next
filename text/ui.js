@@ -148,7 +148,7 @@ export class RichTextControl extends Morph {
   }
 
   openFontColorChooser() {
-    var picker = new ColorPicker({extent: pt(300,150)}).openInWorldNearHand();
+    var picker = new ColorPicker({}).openInWorldNearHand();
     connect(picker, "color", this, "changeFontColor");
     this.remove();
   }
