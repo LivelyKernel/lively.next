@@ -275,8 +275,7 @@ export class ValueScrubber extends Text {
      this.execCommand("toggle active mark");
      this.initPos = evt.position;
      this.factorLabel = new Tooltip({
-          position: evt.hand.position.addXY(10,10),
-          description: "1x"}).openInWorld();
+          description: "1x"}).openInWorld(evt.hand.position.addXY(10,10));
   }
 
   onKeyDown(evt) {
