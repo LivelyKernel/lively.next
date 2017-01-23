@@ -46,6 +46,10 @@ class AttributeConnection {
     return this;
   }
 
+  __after_deserialize__(snapshot, objRef) {
+    this.connect();
+  }
+  
   onSourceAndTargetRestored() {
     if (this.sourceObj && this.targetObj) this.connect();
   }
