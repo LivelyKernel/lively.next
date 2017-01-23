@@ -12,11 +12,11 @@ class Layout {
   constructor({spacing, border, container, autoResize, ignore} = {}) {
     this.border = {top: 0, left: 0, right: 0, bottom: 0, ...border};
     this.spacing = spacing || 0;
+    this.ignore = ignore || [];
+    this.lastBounds = this.container && this.container.bounds();
     this.active = false;
     this.container = container;
     this.autoResize = autoResize != undefined ? autoResize : true;
-    this.ignore = ignore || [];
-    this.lastBounds = this.container && this.container.bounds();
   }
 
   description() { return "Describe the layout behavior here."; }
@@ -930,7 +930,11 @@ export class GridLayout extends Layout {
   get fitToCell() { return this.config.fitToCell }
   set fitToCell(fit) { this.config.fitToCell = fit; this.apply() }
 
-  get notInLayout() { return arr.withoutAll(this.layoutableSubmorphs, this.cellGroups.map(g => g.morph)) }
+  get notInLayout() {
+    return arr.withoutAll(
+      this.layoutableSubmorphs,
+      this.cellGroups.map(g => g.morph));
+  }
 
   col(idx) { return this.grid.col(idx) }
   row(idx) { return this.grid.row(idx) }
