@@ -13,6 +13,441 @@
 (function (exports,lively_lang,lively_ast) {
 'use strict';
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj$$1) {
+  return typeof obj$$1;
+} : function (obj$$1) {
+  return obj$$1 && typeof Symbol === "function" && obj$$1.constructor === Symbol && obj$$1 !== Symbol.prototype ? "symbol" : typeof obj$$1;
+};
+
+
+
+
+
+
+
+
+
+
+
+var classCallCheck = function (instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+};
+
+var createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }
+
+  return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) defineProperties(Constructor, staticProps);
+    return Constructor;
+  };
+}();
+
+
+
+
+
+var defineProperty = function (obj$$1, key, value) {
+  if (key in obj$$1) {
+    Object.defineProperty(obj$$1, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj$$1[key] = value;
+  }
+
+  return obj$$1;
+};
+
+var _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
+var get = function get(object, property, receiver) {
+  if (object === null) object = Function.prototype;
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent === null) {
+      return undefined;
+    } else {
+      return get(parent, property, receiver);
+    }
+  } else if ("value" in desc) {
+    return desc.value;
+  } else {
+    var getter = desc.get;
+
+    if (getter === undefined) {
+      return undefined;
+    }
+
+    return getter.call(receiver);
+  }
+};
+
+var inherits = function (subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+  }
+
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+};
+
+
+
+
+
+
+
+
+
+
+
+var possibleConstructorReturn = function (self, call) {
+  if (!self) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+
+  return call && (typeof call === "object" || typeof call === "function") ? call : self;
+};
+
+
+
+var set = function set(object, property, value, receiver) {
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent !== null) {
+      set(parent, property, value, receiver);
+    }
+  } else if ("value" in desc && desc.writable) {
+    desc.value = value;
+  } else {
+    var setter = desc.set;
+
+    if (setter !== undefined) {
+      setter.call(receiver, value);
+    }
+  }
+
+  return value;
+};
+
+var slicedToArray = function () {
+  function sliceIterator(arr$$1, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
+
+    try {
+      for (var _i = arr$$1[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"]) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  return function (arr$$1, i) {
+    if (Array.isArray(arr$$1)) {
+      return arr$$1;
+    } else if (Symbol.iterator in Object(arr$$1)) {
+      return sliceIterator(arr$$1, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
+
+
+
+
+
+
+
+
+
+
+
+
+
+var toConsumableArray = function (arr$$1) {
+  if (Array.isArray(arr$$1)) {
+    for (var i = 0, arr2 = Array(arr$$1.length); i < arr$$1.length; i++) arr2[i] = arr$$1[i];
+
+    return arr2;
+  } else {
+    return Array.from(arr$$1);
+  }
+};
+
+// compactness
+// types -> fabrik
+// serialization, obscure references
+// debugging, more usful inspector
+// change system -> synchronization, serialization, debugging
+// initialization order, dependencies (ex. btn => label => submoprhs needed)
+// declaratively configuring objects
+
+
+// propertySettings: {
+//   valueStoreProperty: STRING|SYMBOL - optional, defaults to _state. This is where the
+//                                  actual values of the properties will be stored by default
+//   defaultGetter: FUNCTION(STRING) - default getter to be used
+//   defaultSetter: FUNCTION(STRING, VALUE) - default setter to be used
+// }
+// 
+// ????????????
+//   propertyDescriptorCacheKey: STRING|SYMBOL - where the result of
+//                                               initializeProperties() should go
+// ????????????
+
+
+// properties:
+// {STRING: DESCRIPTOR, ...}
+// properties are merged in the proto chain
+// 
+// descriptor: {
+//   get: FUNCTION       - optional
+//   set: FUNCTION       - optional
+//   defaultValue: OBJECT   - optional
+//   initialize: FUNCTION   - optional, function that when present should
+//                            produce a value for the property. Run after object creation
+//   autoSetter: BOOL       - optional, true if not specified
+//   usePropertyStore: BOOL - optional, true if not specified.
+//   priority: NUMBER       - optional, true if not specified.
+//   before: [STRING]       - optional, list of property names that depend on
+//                            the descriptor's property and that should be
+//                            initialized / sorted / ... *after*
+//                            it. Think of it as a constraint: "this property
+//                            needs to run before that property"
+//   after: [STRING]        - optional, list of property names that this property depends on
+//   internal: BOOL         - optional, if specified marks property as meant for
+//                            internal housekeeping. At this point this is only used
+//                            documentation and debugging purposes, it won't affect
+//                            how the property works
+// }
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var defaultPropertiesSettingKey = "propertySettings";
+var defaultPropertiesKey = "properties";
+var propertiesAndSettingsCacheSym = Symbol.for("lively.classes-properties-and-settings");
+
+var defaultPropertySettings = {
+  defaultSetter: null,
+  defaultGetter: null,
+  valueStoreProperty: "_state"
+};
+
+function hasManagedProperties(klass) {
+  return klass.hasOwnProperty(defaultPropertiesKey);
+}
+
+function prepareClassForManagedPropertiesAfterCreation(klass) {
+  var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+  if (!hasManagedProperties(klass)) return;
+
+  if (!force && klass.hasOwnProperty(propertiesAndSettingsCacheSym)) return;
+
+  var _propertiesAndSetting = propertiesAndSettingsInHierarchyOf(klass),
+      properties = _propertiesAndSetting.properties,
+      propertySettings = _propertiesAndSetting.propertySettings;
+
+  klass[propertiesAndSettingsCacheSym] = { properties: properties, propertySettings: propertySettings };
+
+  var propertySettings = klass[defaultPropertiesSettingKey] || {};
+  var properties = klass[defaultPropertiesKey];
+  if (!properties || (typeof properties === "undefined" ? "undefined" : _typeof(properties)) !== "object") {
+    console.warn("Class " + klass.name + " indicates it has managed properties but its " + ("properties accessor (" + defaultPropertiesKey + ") does not return ") + "a valid property descriptor map");
+    return;
+  }
+  prepareClassForProperties(klass, propertySettings, properties);
+}
+
+function prepareClassForProperties(klass, propertySettings, properties) {
+  ensurePropertyInitializer(klass);
+
+  var _defaultPropertySetti = _extends({}, defaultPropertySettings, propertySettings),
+      valueStoreProperty = _defaultPropertySetti.valueStoreProperty,
+      defaultGetter = _defaultPropertySetti.defaultGetter,
+      defaultSetter = _defaultPropertySetti.defaultSetter,
+      myProto = klass.prototype,
+      keys = Object.keys(properties);
+
+  keys.forEach(function (key) {
+    var descriptor = properties[key];
+
+    // ... define a getter to the property for the outside world...
+    var hasGetter = myProto.hasOwnProperty(key) && myProto.__lookupGetter__(key);
+    if (!hasGetter) {
+      var getter = descriptor.get || typeof defaultGetter === "function" && function () {
+        return defaultGetter.call(this, key);
+      } || function () {
+        return this[valueStoreProperty][key];
+      };
+      myProto.__defineGetter__(key, getter);
+    }
+
+    // ...define a setter if necessary
+    var hasSetter = myProto.hasOwnProperty(key) && myProto.__lookupSetter__(key);
+    if (!hasSetter) {
+      var descrHasSetter = descriptor.hasOwnProperty("set"),
+          setterNeeded = descrHasSetter || !descriptor.readOnly;
+      if (setterNeeded) {
+        var setter = descriptor.set || typeof defaultSetter === "function" && function (val) {
+          defaultSetter.call(this, key, val);
+        } || function (val) {
+          this[valueStoreProperty][key] = val;
+        };
+        myProto.__defineSetter__(key, setter);
+      }
+    }
+  });
+}
+
+function ensurePropertyInitializer(klass) {
+  // when we inherit from "conventional classes" those don't have an
+  // initializer method. We install a stub that calls the superclass function
+  // itself
+  Object.defineProperty(klass.prototype, "initializeProperties", {
+    enumerable: false,
+    configurable: true,
+    writable: true,
+    value: function value(values) {
+      var klass = this.constructor,
+          _ref = klass[propertiesAndSettingsCacheSym] || propertiesAndSettingsInHierarchyOf(klass),
+          properties = _ref.properties,
+          propertySettings = _ref.propertySettings;
+
+      prepareInstanceForProperties(this, propertySettings, properties, values);
+      return this;
+    }
+  });
+}
+
+function propertiesAndSettingsInHierarchyOf(klass) {
+  // walks class proto chain
+  var propertySettings = {},
+      properties = {},
+      allPropSettings = lively_lang.obj.valuesInPropertyHierarchy(klass, "propertySettings"),
+      allProps = lively_lang.obj.valuesInPropertyHierarchy(klass, "properties");
+
+  for (var i = 0; i < allPropSettings.length; i++) {
+    var current = allPropSettings[i];
+    current && (typeof current === "undefined" ? "undefined" : _typeof(current)) === "object" && Object.assign(propertySettings, current);
+  }
+
+  for (var _i = 0; _i < allProps.length; _i++) {
+    var _current = allProps[_i];
+    if ((typeof _current === "undefined" ? "undefined" : _typeof(_current)) !== "object") {
+      console.error("[initializeProperties] " + klass + " encountered property declaration " + ("that is not a JS object: " + _current));
+      continue;
+    }
+    // "deep" merge
+    for (var name in _current) {
+      if (!properties.hasOwnProperty(name)) properties[name] = _current[name];else Object.assign(properties[name], _current[name]);
+    }
+  }
+
+  return { properties: properties, propertySettings: propertySettings };
+}
+
+function prepareInstanceForProperties(instance, propertySettings, properties, values) {
+  var _defaultPropertySetti2 = _extends({}, defaultPropertySettings, propertySettings),
+      valueStoreProperty = _defaultPropertySetti2.valueStoreProperty,
+      sortedKeys = lively_lang.obj.sortKeysWithBeforeAndAfterConstraints(properties),
+      propsNeedingInitialize = [],
+      propsHavingValue = [];
+  // 2. this[valueStoreProperty] is were the actual values will be stored
+
+
+  if (!instance.hasOwnProperty(valueStoreProperty)) instance[valueStoreProperty] = {};
+
+  for (var i = 0; i < sortedKeys.length; i++) {
+    var key = sortedKeys[i],
+        descriptor = properties[key];
+
+    var defaultValue = instance[valueStoreProperty][key] = descriptor.hasOwnProperty("defaultValue") ? descriptor.defaultValue : undefined;
+
+    if (descriptor.hasOwnProperty("initialize")) propsNeedingInitialize.push({ key: key, defaultValue: defaultValue });
+
+    if (values && key in values) {
+      if (descriptor.readOnly) {
+        console.warn("Trying to initialize read-only property " + key + " in " + instance + ", " + "skipping setting value");
+      } else propsHavingValue.push(key);
+    }
+  }
+
+  // 3. Run init code for properties
+  for (var i = 0; i < propsNeedingInitialize.length; i++) {
+    var _propsNeedingInitiali = propsNeedingInitialize[i],
+        key = _propsNeedingInitiali.key,
+        defaultValue = _propsNeedingInitiali.defaultValue;
+
+    instance[valueStoreProperty][key] = properties[key].initialize.call(instance, defaultValue);
+  }
+
+  // 4. if we have values we will initialize the properties from it. Values
+  // is expected to be a JS object mapping property names to property values
+  if (values) {
+    for (var _i2 = 0; _i2 < propsHavingValue.length; _i2++) {
+      var key = propsHavingValue[_i2];
+      instance[key] = values[key]; // go through the setter!
+    }
+  }
+}
+
 var initializeSymbol = Symbol.for("lively-instance-initialize");
 var instanceRestorerSymbol = Symbol.for("lively-instance-restorer");
 var superclassSymbol = Symbol.for("lively-instance-superclass");
@@ -187,6 +622,7 @@ function initializeClass(constructorFunc, superclassSpec) {
         // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''} was defined via module bindings`)
         setSuperclass(klass, val);
         installMethods(klass, instanceMethods, classMethods);
+        prepareClassForManagedPropertiesAfterCreation(klass, true /*force*/);
       });
     }
   }
@@ -198,6 +634,10 @@ function initializeClass(constructorFunc, superclassSpec) {
         superclass = this[superclassSymbol];
     return "class " + className + " " + (superclass ? "extends " + superclass.name : "") + " {\n" + ("  constructor" + (constructorArgs ? constructorArgs[0] : "()") + " { /*...*/ }") + "\n}";
   };
+
+  // 7. If the class allows managed properties (auto getters/setters etc., see
+  // managed-properties.js) then setup those
+  prepareClassForManagedPropertiesAfterCreation(klass);
 
   return klass;
 }
@@ -235,206 +675,6 @@ var runtime = Object.freeze({
 	moduleSubscribeToToplevelChangesSym: moduleSubscribeToToplevelChangesSym,
 	initializeClass: initializeClass
 });
-
-var classCallCheck = function (instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
-};
-
-var createClass = function () {
-  function defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ("value" in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, descriptor.key, descriptor);
-    }
-  }
-
-  return function (Constructor, protoProps, staticProps) {
-    if (protoProps) defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) defineProperties(Constructor, staticProps);
-    return Constructor;
-  };
-}();
-
-
-
-
-
-var defineProperty = function (obj, key, value) {
-  if (key in obj) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
-  }
-
-  return obj;
-};
-
-var _extends = Object.assign || function (target) {
-  for (var i = 1; i < arguments.length; i++) {
-    var source = arguments[i];
-
-    for (var key in source) {
-      if (Object.prototype.hasOwnProperty.call(source, key)) {
-        target[key] = source[key];
-      }
-    }
-  }
-
-  return target;
-};
-
-var get = function get(object, property, receiver) {
-  if (object === null) object = Function.prototype;
-  var desc = Object.getOwnPropertyDescriptor(object, property);
-
-  if (desc === undefined) {
-    var parent = Object.getPrototypeOf(object);
-
-    if (parent === null) {
-      return undefined;
-    } else {
-      return get(parent, property, receiver);
-    }
-  } else if ("value" in desc) {
-    return desc.value;
-  } else {
-    var getter = desc.get;
-
-    if (getter === undefined) {
-      return undefined;
-    }
-
-    return getter.call(receiver);
-  }
-};
-
-var inherits = function (subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
-  }
-
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-};
-
-
-
-
-
-
-
-
-
-
-
-var possibleConstructorReturn = function (self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && (typeof call === "object" || typeof call === "function") ? call : self;
-};
-
-
-
-var set = function set(object, property, value, receiver) {
-  var desc = Object.getOwnPropertyDescriptor(object, property);
-
-  if (desc === undefined) {
-    var parent = Object.getPrototypeOf(object);
-
-    if (parent !== null) {
-      set(parent, property, value, receiver);
-    }
-  } else if ("value" in desc && desc.writable) {
-    desc.value = value;
-  } else {
-    var setter = desc.set;
-
-    if (setter !== undefined) {
-      setter.call(receiver, value);
-    }
-  }
-
-  return value;
-};
-
-var slicedToArray = function () {
-  function sliceIterator(arr$$1, i) {
-    var _arr = [];
-    var _n = true;
-    var _d = false;
-    var _e = undefined;
-
-    try {
-      for (var _i = arr$$1[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
-        _arr.push(_s.value);
-
-        if (i && _arr.length === i) break;
-      }
-    } catch (err) {
-      _d = true;
-      _e = err;
-    } finally {
-      try {
-        if (!_n && _i["return"]) _i["return"]();
-      } finally {
-        if (_d) throw _e;
-      }
-    }
-
-    return _arr;
-  }
-
-  return function (arr$$1, i) {
-    if (Array.isArray(arr$$1)) {
-      return arr$$1;
-    } else if (Symbol.iterator in Object(arr$$1)) {
-      return sliceIterator(arr$$1, i);
-    } else {
-      throw new TypeError("Invalid attempt to destructure non-iterable instance");
-    }
-  };
-}();
-
-
-
-
-
-
-
-
-
-
-
-
-
-var toConsumableArray = function (arr$$1) {
-  if (Array.isArray(arr$$1)) {
-    for (var i = 0, arr2 = Array(arr$$1.length); i < arr$$1.length; i++) arr2[i] = arr$$1[i];
-
-    return arr2;
-  } else {
-    return Array.from(arr$$1);
-  }
-};
 
 var assign = lively_ast.nodes.assign;
 var member = lively_ast.nodes.member;

@@ -1,10 +1,11 @@
-import { arr } from "lively.lang";
+import { arr, obj } from "lively.lang";
+import { prepareClassForManagedPropertiesAfterCreation } from "./properties.js";
 
-export const initializeSymbol = Symbol.for("lively-instance-initialize"),
+export const initializeSymbol       = Symbol.for("lively-instance-initialize"),
              instanceRestorerSymbol = Symbol.for("lively-instance-restorer"),
-             superclassSymbol = Symbol.for("lively-instance-superclass"),
-             moduleMetaSymbol = Symbol.for("lively-module-meta"),
-             objMetaSymbol = Symbol.for("lively-object-meta"),
+             superclassSymbol       = Symbol.for("lively-instance-superclass"),
+             moduleMetaSymbol       = Symbol.for("lively-module-meta"),
+             objMetaSymbol          = Symbol.for("lively-object-meta"),
              moduleSubscribeToToplevelChangesSym = Symbol.for("lively-klass-changes-subscriber");
 
 const constructorArgMatcher = /\([^\\)]*\)/;
@@ -64,7 +65,7 @@ function installGetterSetterDescriptor(klass, descr) {
 function installMethods(klass, instanceMethods, classMethods) {
   // install methods from two lists (static + instance) of {key, value} or
   // {key, get/set} descriptors
-  
+
   classMethods && classMethods.forEach(ea => {
     ea.value ?
       installValueDescriptor(klass, klass, ea) :
@@ -89,7 +90,7 @@ function installMethods(klass, instanceMethods, classMethods) {
     });
     klass.prototype[initializeSymbol].displayName = "lively-initialize";
   }
-  
+
   // 5. undefine properties that were removed form class definition
   const toDeleteInstance = arr.withoutAll(
     Object.getOwnPropertyNames(klass.prototype),
@@ -170,14 +171,17 @@ export function initializeClass(
     // https://github.com/LivelyKernel/lively.modules/issues/27 for more details
     if (superclassSpec && superclassSpec.referencedAs) {
       if (klass[moduleSubscribeToToplevelChangesSym]) {
-        currentModule.unsubscribeFromToplevelDefinitionChanges(klass[moduleSubscribeToToplevelChangesSym])
+        currentModule.unsubscribeFromToplevelDefinitionChanges(
+          klass[moduleSubscribeToToplevelChangesSym]);
       }
-      klass[moduleSubscribeToToplevelChangesSym] = currentModule.subscribeToToplevelDefinitionChanges((name, val) => {
-        if (name !== superclassSpec.referencedAs) return;
-        // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''} was defined via module bindings`)
-        setSuperclass(klass, val);
-        installMethods(klass, instanceMethods, classMethods);
-      });
+      klass[moduleSubscribeToToplevelChangesSym] =
+        currentModule.subscribeToToplevelDefinitionChanges((name, val) => {
+          if (name !== superclassSpec.referencedAs) return;
+          // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''} was defined via module bindings`)
+          setSuperclass(klass, val);
+          installMethods(klass, instanceMethods, classMethods);
+          prepareClassForManagedPropertiesAfterCreation(klass, true/*force*/);
+        });
     }
   }
 
@@ -190,6 +194,10 @@ export function initializeClass(
          + `  constructor${constructorArgs ? constructorArgs[0] : "()"} { /*...*/ }`
          + `\n}`;
   }
+
+  // 7. If the class allows managed properties (auto getters/setters etc., see
+  // managed-properties.js) then setup those
+  prepareClassForManagedPropertiesAfterCreation(klass);
 
   return klass;
 }
