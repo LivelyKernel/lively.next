@@ -327,23 +327,17 @@ export class ValueScrubber extends Text {
 
 export class CheckBox extends Morph {
 
-  get defaultProperties() {
+  static get properties() {
     return {
-      ...super.defaultProperties,
-      draggable: false,
-      extent: pt(15,15),
-      borderWidth: 0,
-      active: true,
-      checked: false,
-      fill: Color.transparent,
-      nativeCursor: "pointer"
+      draggable: {defaultValue: false},
+      extent: {defaultValue: pt(15,15)},
+      borderWidth: {defaultValue: 0},
+      active: {defaultValue: true},
+      checked: {defaultValue: false},
+      fill: {defaultValue: Color.transparent},
+      nativeCursor: {defaultValue: "pointer"},
     }
   }
-
-  get checked() { return this.getProperty("checked"); }
-  set checked(value) { this.addValueChange("checked", value); }
-  get active() { return this.getProperty("active"); }
-  set active(value) { this.addValueChange("active", value); }
 
   trigger() {
     try {
@@ -368,19 +362,57 @@ export class CheckBox extends Morph {
 
 export class LabeledCheckBox extends Morph {
 
+  static get properties() {
+    return {
+      name: {defaultValue: "LabeledCheckBox"},
+      alignCheckBox: {defaultValue: "left"},
+      label: {
+        defaultValue: "label", after: ["submorphs"], derived: true,
+        get() { return this.labelMorph.value; },
+        set(value) { this.labelMorph.value = value; }
+      },
+      checked: {
+        after: ["submorphs"], derived: true,
+        get() { return this.checkboxMorph.checked; },
+        set(value) { this.checkboxMorph.checked = value; signal(this, "checked", value); }
+      },
+      active: {
+        after: ["submorphs"], derived: true,
+        get() { return this.checkboxMorph.active; },
+        set(value) { this.checkboxMorph.active; }
+      },
+      labelMorph: {
+        derived: true, readOnly: true,
+        get() { return this.getSubmorphNamed("label"); }
+      },
+      checkboxMorph: {
+        derived: true, readOnly: true,
+        get() { return this.getSubmorphNamed("checkbox"); }
+      },
+
+      submorphs: {
+        initialize() {
+          this.submorphs = [
+            new CheckBox({name: "checkbox"}),
+            new Label({
+              nativeCursor: "pointer",
+              name: "label",
+              padding: Rectangle.inset(3, 0)
+            })
+          ];
+        }
+      }
+    };
+  }
+
+
   constructor(props) {
-    super({
-      name: "LabeledCheckBox",
-      ...props,
-      submorphs: [
-        new CheckBox({name: "checkbox"}),
-        new Label({
-          value: props.label, nativeCursor: "pointer",
-          name: "label", padding: Rectangle.inset(3, 0)
-        })]});
+    super(props);
+    connect(this, 'alignCheckBox', this, 'relayout');
     connect(this.labelMorph, 'value', this, 'relayout');
     connect(this.checkboxMorph, 'checked', this, 'checked');
     this.relayout();
+    setTimeout(() => this.relayout(), 0);
   }
 
   relayout() {
@@ -395,31 +427,6 @@ export class LabeledCheckBox extends Morph {
     this.extent = this.submorphBounds().extent();
   }
 
-  get labelMorph() { return this.getSubmorphNamed("label"); }
-  get checkboxMorph() { return this.getSubmorphNamed("checkbox"); }
-
-  get defaultProperties() {
-    return {
-      ...super.defaultProperties,
-      alignCheckBox: "left",
-      label: "label"
-    }
-  }
-  
-  get alignCheckBox() { return this.getProperty("alignCheckBox"); }
-  set alignCheckBox(leftOrRight) {
-    this.addValueChange("alignCheckBox", leftOrRight);
-    this.relayout();
-  }
-
-  get label() { return this.labelMorph.value; }
-  set label(value) { this.labelMorph.value = value; }
-
-  get checked() { return this.checkboxMorph.checked; }
-  set checked(value) { this.checkboxMorph.checked; signal(this, "checked", value); }
-
-  get active() { return this.checkboxMorph.active; }
-  set active(value) { this.checkboxMorph.active; }
   trigger() { this.checkboxMorph.trigger(); }
 
   onMouseDown(evt) {
