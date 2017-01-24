@@ -12,6 +12,67 @@ import {connect, signal} from "lively.bindings";
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
 
+class GradientTypeSelector extends Morph {
+      
+      get defaultLinearGradient() {
+         return new LinearGradient({stops: [
+              {color: Color.white, offset: 0},
+              {color: Color.black, offset: 1}]});
+      }
+      
+      get defaultRadialGradient() {
+         return new RadialGradient({
+               stops: [
+                {color: Color.white, offset: 0},
+                {color: Color.black, offset: 1}], 
+              focus: pt(.5,.5), 
+              bounds: rect(0,0,30,30)});
+      }
+
+      static get properties() {
+        return {
+          layout: {
+            initialize() {
+              this.layout = new GridLayout({
+               grid: [[null, "radialMode", null, "linearMode", null]],
+                       autoAssign: false, fitToCell: false})
+            }
+          },
+
+          submorphs: {
+            initialize() {
+              this.submorphs = [{
+                 type: "ellipse",
+                 morphClasses: ['modeButton'], name: "radialMode",
+                 fill: this.defaultRadialGradient,
+                 onMouseDown: (evt) => {
+                    signal(this, "radial");
+                 }
+              }, {
+                  type: 'ellipse',
+                  morphClasses: ['modeButton'], name: "linearMode",
+                  fill: this.defaultLinearGradient,
+                  onMouseDown: (evt) => {
+                     signal(this, "linear");
+                 }
+              }]
+            }
+          }
+        }
+      }
+
+      update(gradient) {
+         const [radial, linear] = this.submorphs;
+         radial.borderColor = linear.borderColor = Color.gray.darker();
+         if (gradient instanceof RadialGradient) {
+            radial.borderColor = Color.orange;
+         } else if (gradient instanceof LinearGradient) {
+            linear.borderColor = Color.orange;
+         }
+      }
+
+}
+
 export class GradientEditor extends Morph {
 
    constructor(props) {
@@ -91,14 +152,20 @@ export class GradientEditor extends Morph {
         const duration = 300;
         this.gradientHandle && await this.gradientHandle.fadeOut(duration);
         if (g instanceof RadialGradient) {
-           this.gradientHandle = new GradientFocusHandle({target: this.target, opacity: 0}).openInWorld()
+           this.gradientHandle = morph({
+               extent: this.target.extent, 
+               opacity: 0, fill: Color.transparent,
+               submorphs: [new GradientFocusHandle({target: this.target})]})
         } else if (g instanceof LinearGradient) {
-           this.gradientHandle = new GradientDirectionHandle({target: this.target, opacity: 0}).openInWorld()
+           this.gradientHandle = morph({
+                extent: this.target.extent, 
+                opacity: 0, fill: Color.transparent,
+                submorphs: [new GradientDirectionHandle({target: this.target})]})
         }
         if (this.gradientHandle) {
+           signal(this, "openHandle", this.gradientHandle);
            this.gradientHandle.animate({opacity: 1, duration});
            this.gradientHandle.relayout()
-           signal(this, "openHandle", this.gradientHandle);
         }
    }
 
@@ -110,51 +177,14 @@ export class GradientEditor extends Morph {
    }
    
    build() {
-       this.submorphs = [this.typeSelector(), this.gradientEditor()];
+       var selector;
+       this.submorphs = [selector = new GradientTypeSelector({name: "typeSelector"}), this.gradientEditor()];
+       connect(selector, "radial", this, "selectRadialGradient");
+       connect(selector, "linear", this, "selectLinearGradient");
        connect(this, "targetProperty", this, "update");
        this.update();
        this.styleRules = this.getStyler();
        this.updateGradientHandles();
-   }
-
-   typeSelector() {
-      const defaultLinearGradient = new LinearGradient({stops: [
-              {color: Color.white, offset: 0},
-              {color: Color.black, offset: 1}]}),
-            defaultRadialGradient = new RadialGradient({
-               stops: [
-                {color: Color.white, offset: 0},
-                {color: Color.black, offset: 1}], 
-              focus: pt(.5,.5), 
-              bounds: rect(0,0,30,30)});
-      return {name: "typeSelector",
-              layout: new GridLayout({
-                               grid: [[null, "radialMode", null, "linearMode", null]],
-                               autoAssign: false, fitToCell: false}),
-              update(gradient) {
-                 const [radial, linear] = this.submorphs;
-                 radial.borderColor = linear.borderColor = Color.gray.darker();
-                 if (gradient instanceof RadialGradient) {
-                    radial.borderColor = Color.orange;
-                 } else if (gradient instanceof LinearGradient) {
-                    linear.borderColor = Color.orange;
-                 }
-              },
-              submorphs: [{
-                 type: "ellipse",
-                 morphClasses: ['modeButton'], name: "radialMode",
-                 fill: defaultRadialGradient,
-                 onMouseDown: (evt) => {
-                    this.selectRadialGradient();
-                 }
-              }, {
-                  type: 'ellipse',
-                  morphClasses: ['modeButton'], name: "linearMode",
-                  fill: defaultLinearGradient,
-                  onMouseDown: (evt) => {
-                     this.selectLinearGradient();
-                 }
-              }]};
    }
 
    gradientStopControl(gradientEditor, idx) {
@@ -445,7 +475,7 @@ export class GradientFocusHandle extends Ellipse {
        const {bounds, focus} = this.target.fill; 
        this.extent = bounds.extent();
        this.submorphs.forEach(m => m.relayout());
-       this.center = this.target.worldPoint(this.target.extent.scaleByPt(focus).subPt(this.target.origin));
+       this.center = this.target.extent.scaleByPt(focus);
     }
 
     initBoundsHandles() {
@@ -528,7 +558,8 @@ class GradientDirectionHandle extends Ellipse {
      return new StyleRules({
         root: {borderColor: Color.orange, fill: Color.transparent, borderWidth: 1, 
                origin: pt(25,25), extent: pt(50,50)},
-        rotationPoint: {fill: Color.orange, extent: pt(10,10), nativeCursor: '-webkit-grab', tooltipt: "Adjust direction of linear gradient"},
+        rotationPoint: {fill: Color.orange, extent: pt(10,10), 
+                        nativeCursor: '-webkit-grab', tooltip: "Adjust direction of linear gradient"},
         propertyView: {fill: Color.black.withA(.7), borderRadius: 5,
                        padding: 5, fontColor: Color.white},
      })
@@ -537,7 +568,7 @@ class GradientDirectionHandle extends Ellipse {
   get isHaloItem() { return true }
 
   relayout() {
-      this.position = this.target.globalBounds().center();
+      this.position = this.target.innerBounds().center();
       this.rotationPoint.relayout();
   }
 

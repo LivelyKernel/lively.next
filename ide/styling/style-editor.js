@@ -272,14 +272,6 @@ class StyleEditor extends Morph {
              });
              const control = new Morph({
                   width: 150, height: 120, fill: Color.transparent,
-                  layout: new GridLayout({
-                      autoAssign: false,
-                      fitToCell: false,
-                      grid: [
-                      ["distanceLabel", null, "distanceSlider"],
-                      ["blurLabel", null, "blurSlider"],
-                      ["angleLabel", null, "angleSlider"],
-                      ["colorLabel", null, "colorPicker"]]}),
                   submorphs: [
                     {type: "label", value: "Distance: ", padding: 4, name: "distanceLabel"}, distanceInspector,
                     {type: "label", value: "Blur: ", padding: 4, name: "blurLabel"}, blurInspector,
@@ -287,6 +279,15 @@ class StyleEditor extends Morph {
                     {type: "label", value: "Color: ", padding: 4, name: "colorLabel"},
                     this.getColorField({target: value, property: 'color'})]
                });
+
+             control.layout = new GridLayout({
+                      autoAssign: false,
+                      fitToCell: false,
+                      grid: [
+                      ["distanceLabel", null, "distanceSlider"],
+                      ["blurLabel", null, "blurSlider"],
+                      ["angleLabel", null, "angleSlider"],
+                      ["colorLabel", null, "colorPicker"]]}),
              control.layout.col(0).paddingLeft = 1;
              control.layout.row(0).paddingBottom = 5;
              control.layout.row(1).paddingBottom = 5;
@@ -316,7 +317,8 @@ export class BodyStyleEditor extends StyleEditor {
 
    placeBehindMe(handle) {
       handle.remove();
-      this.world().addMorph(handle, this);
+      this.owner.addMorph(handle, this);
+      handle.center = this.owner.localize(this.target.globalBounds().center());
    }
 
    fillControl(target) {
