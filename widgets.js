@@ -15,6 +15,7 @@ export class Leash extends Path {
       const {start, end} = props;
       super({
          borderWidth: 2, borderColor: Color.black,
+         fill: Color.transparent,
          ...props,
          endpointStyle: {
              fill: Color.black, origin: pt(3.5,3.5), 
