@@ -272,13 +272,6 @@ export class ValueScrubber extends Text {
       this.value = props.value || 0;
   }
 
-  onDragStart(evt) {
-     this.execCommand("toggle active mark");
-     this.initPos = evt.position;
-     this.factorLabel = new Tooltip({
-          description: "1x"}).openInWorld(evt.hand.position.addXY(10,10));
-  }
-
   onKeyDown(evt) {
     super.onKeyDown(evt);
     if ("Enter" == evt.keyCombo) {
@@ -291,16 +284,27 @@ export class ValueScrubber extends Text {
     }
   }
 
+  onDragStart(evt) {
+     this.execCommand("toggle active mark");
+     this.initPos = evt.position;
+     this.factorLabel = new Tooltip({description: "1x"}).openInWorld(evt.hand.position.addXY(10,10));
+  }
+
+  getScaleAndOffset(evt) {
+     const {x, y} = evt.position.subPt(this.initPos),
+           scale = num.roundTo(Math.exp(-y / this.world().height * 4), 0.01);
+     return {offset: x, scale}
+  }
+
   onDrag(evt) {
       // x delta is the offset to the original value
       // y is the scale
-      const {x, y} = evt.position.subPt(this.initPos),
-            scaleFactor = num.roundTo(Math.exp(-y / this.world().height * 4), 0.01),
-            v = this.getCurrentValue(x, scaleFactor);
+      const {scale, offset} = this.getScaleAndOffset(evt),
+            v = this.getCurrentValue(offset, scale);
       signal(this, "scrub", v);
       this.textString = obj.safeToString(v);
       if (this.unit) this.textString += " " + this.unit;
-      this.factorLabel.description = scaleFactor + "x";
+      this.factorLabel.description = scale + "x";
       this.factorLabel.position = evt.hand.position.addXY(10,10);
   }
 
@@ -310,9 +314,8 @@ export class ValueScrubber extends Text {
   }
 
   onDragEnd(evt) {
-      const {x, y} = this.initPos.subPt(evt.position),
-            scaleFactor = num.roundTo(Math.exp(-y / this.world().height * 4), 0.01);
-      this.scrubbedValue = this.getCurrentValue(x, scaleFactor);
+      const {offset, scale} = this.getScaleAndOffset(evt);
+      this.value = this.getCurrentValue(offset, scale);
       this.factorLabel.softRemove();
   }
 
