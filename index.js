@@ -162,7 +162,7 @@ export class ObjectRef {
       return this;
     }
 
-    var {rev, __expr__, props} = snapshot;
+    var {rev, __expr__} = snapshot;
     rev = rev || 0;
     this.snapshotVersions.push(rev);
     this.snapshots[rev] = snapshot;
@@ -183,9 +183,9 @@ export class ObjectRef {
 
     if (typeof newObj.__deserialize__ === "function")
       newObj.__deserialize__(snapshot, this);
-    
-    if (props) {
 
+    var {props} = snapshot;
+    if (props) {
       var highPriorityKeys = ["submorphs"]; // FIXME!!!
       for (var i = 0; i < highPriorityKeys.length; i++) {
         var key = highPriorityKeys[i];
@@ -196,12 +196,14 @@ export class ObjectRef {
       for (var key in props)
         if (!highPriorityKeys.includes(key))
           this.recreatePropertyAndSetProperty(newObj, props, key, serializedObjMap, pool, path);
-
     }
 
     var idPropertyName = newObj.__serialization_id_property__ || this.idPropertyName;
     if (pool.reinitializeIds && newObj.hasOwnProperty(idPropertyName))
       newObj[idPropertyName] = pool.reinitializeIds(this.id, this);
+
+    if (typeof newObj.__after_deserialize__ === "function")
+      newObj.__after_deserialize__(snapshot, this);
 
     return this;
   }
