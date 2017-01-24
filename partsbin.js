@@ -4,8 +4,9 @@ import { resource } from "lively.resources";
 import { serializeMorph } from "lively.morphic/serialization.js";
 
 import { createFiles } from "lively.resources";
-import { registerPackage } from "lively.modules";
+import { registerPackage, importPackage } from "lively.modules";
 import { deserializeMorph } from 'lively.morphic/serialization.js';
+import { inspect } from "lively.morphic";
 
 var partsbinFolder = System.decanonicalize("lively.morphic/parts/")
 
@@ -18,7 +19,7 @@ async function createObjectSnapshot(obj) {
   if (moduleMeta) {
     var p = lively.modules.getPackage(moduleMeta.package.name);
     if (p && p.address.startsWith("local://")) {
-      var root = resource(p.address),
+      var root = resource(p.address).asDirectory(),
           packageJSON = await resourceToJSON(root, {});
       Object.assign(packages, {[root.parent().url]: packageJSON})
     }
@@ -31,7 +32,7 @@ async function loadObjectFromSnapshot(snapshot) {
   for (var baseURL in snapshot.packages) {
     var r = await createFiles(baseURL, snapshot.packages[baseURL]);
     for (var pName in snapshot.packages[baseURL]) {
-      await registerPackage(r.join(pName).url)
+      await importPackage(r.join(pName).url)
     }
   }
   return deserializeMorph(snapshot, {reinitializeIds: true, ignoreClassNotFound: false});
@@ -85,13 +86,13 @@ export async function interactivelyLoadObjectFromPartsBinFolder() {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // helper
-async function resourceToJSON(resource, base) {
-  if (!resource.isDirectory()) {
-    base[resource.name()] = await resource.read();
+async function resourceToJSON(currentResource, base) {
+  if (!currentResource.isDirectory()) {
+    base[currentResource.name()] = await currentResource.read();
     return base;
   } else {
-    var subBase = base[resource.name()] = {};
-    var files = await resource.dirList();
+    var subBase = base[currentResource.name()] = {};
+    var files = await currentResource.dirList();
     for (let f of files) {
       await resourceToJSON(f, subBase);
     }
