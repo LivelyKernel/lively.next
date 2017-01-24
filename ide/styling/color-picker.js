@@ -25,10 +25,11 @@ export class ColorPickerField extends Morph {
 
    build() {
       const topRight = this.innerBounds().topRight(),
-            bottomLeft = this.innerBounds().bottomLeft();
+            bottomLeft = this.innerBounds().bottomLeft(),
+            colorFieldExtent = pt(40,25);
 
       this.submorphs = [
-        {extent: pt(40,25), clipMode: "hidden",
+        {extent: colorFieldExtent, clipMode: "hidden",
          onMouseDown: (evt) => this.openPalette(evt),
          onHoverIn() {
             this.get("dropDownIndicator").animate({opacity: 1, duration: 300});
@@ -38,12 +39,12 @@ export class ColorPickerField extends Morph {
          },
          submorphs: [{
                name: "topLeft",
-               extent: pt(70,70)
+               extent: colorFieldExtent
            }, {
-               name: "bottomRight",
-               extent: pt(70,80),
-               origin: pt(35,0), topRight,
-               rotation: num.toRadians(-45)
+               name: "bottomRight", type: "polygon",
+               extent: colorFieldExtent,
+               origin: pt(0,0),
+               vertices: [pt(0,0), colorFieldExtent.withX(0), colorFieldExtent],
         }, Icon.makeLabel("chevron-down", {
                opacity: 0,
                name: "dropDownIndicator",

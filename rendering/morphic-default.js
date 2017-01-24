@@ -442,7 +442,7 @@ export function pathAttributes(path) {
 function shadowCss(morph) {
   return morph.dropShadow ?
             morph.dropShadow.toFilterCss() :
-            `drop-shadow(0px 0px 0px rgb(120, 120, 120))`;
+            ``;
 }
 
 function initDOMState(renderer, world) {
