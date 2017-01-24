@@ -1328,9 +1328,9 @@ class MorphHighlighterForHalo extends Morph {
   }
 
   show() {
-    if (this.halo.target.layout && this.showLayout) {
+    if (this.target.layout && this.showLayout) {
       this.layoutHalo = this.layoutHalo ||
-        this.world().showLayoutHaloFor(this.halo.target, this.pointerId);
+        this.world().showLayoutHaloFor(this.target, this.pointerId);
     } else {
       this.animate({opacity: 1, duration: 500});
       this.alignWithHalo();
