@@ -42,7 +42,7 @@ class StyleEditor extends Morph {
                          name: "colorPicker",
                          property
                     });
-       connect(this, "remove", colorField, "removeWidgets");
+       connect(this, "remove", colorField, "remove");
        connect(this, "onMouseDown", colorField, "removeWidgets");
        return colorField;
    }

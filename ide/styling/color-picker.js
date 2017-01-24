@@ -119,8 +119,7 @@ export class ColorPickerField extends Morph {
 
    remove() {
       super.remove();
-      this.picker && this.picker.remove();
-      this.palette && this.palette.remove();
+      this.removeWidgets();
       disconnect(this.target, "onChange", this, "update");
    }
 
