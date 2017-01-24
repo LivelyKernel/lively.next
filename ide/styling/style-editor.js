@@ -107,7 +107,7 @@ class StyleEditor extends Morph {
    }
 
    blur() {
-      if (this.opened) return;
+      if (this.opened || this.innerBounds().containsPoint(this.localize(this.env.world.firstHand.position))) return;
       this.blurred = true;
       this.animate({opacity: .7, duration})
    }
@@ -115,7 +115,6 @@ class StyleEditor extends Morph {
    show() {
       var world;
       if (this.opened) return;
-      this.openInWorld(this.position)
       this.blurred = false;
       this.animate({opacity: 1, visible: true, duration});
    }

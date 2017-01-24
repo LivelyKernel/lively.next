@@ -72,10 +72,10 @@ class StyleHalo extends Morph {
            this.getBorderHalo(),
            this.borderRadiusHalo()
          ]
-     }, this.getLayoutControl()];
+     }];
      this.focus();
      this.showBodyStyler();
-     this.layoutStyleEditor.show()
+     this.showLayoutStyleEditor();
      this.showBorderStyler();
      connect(this.target, "onChange", this, "update");
      this.relayout();  
@@ -134,6 +134,8 @@ class StyleHalo extends Morph {
       controls.position = this.localizePointFrom(this.target.origin.negated(), this.target);
       controls.submorphs.forEach(s => s.update && s.update(evt));
       this.layoutStyleEditor.update();
+      this.alignBorderStyler()
+      this.alignBodyStyler();
       return this;
    }
 
@@ -181,8 +183,7 @@ class StyleHalo extends Morph {
       this.layoutStyleEditor.hide();
       this.borderHalo.deactivate();
       if (this.borderStyler.opened) return;
-      this.leash = this.borderStyler.createLeashFor(this.borderHalo, this.getSideInWorld());
-      this.world().addMorph(this.leash, this);
+      this.world().addMorph(this.borderStyler.createLeashFor(this.borderHalo, this.getSideInWorld()), this);
       this.borderStyler.open()
 
    }
@@ -192,7 +193,7 @@ class StyleHalo extends Morph {
       this.layoutStyleEditor.hide();
       this.borderHalo.deactivate();
       if (this.bodyStyler.opened) return;
-      this.world().addMorph(this.bodyStyler.createLeashFor(this, "center"), this.bodyStyler);
+      this.world().addMorph(this.bodyStyler.createLeashFor(this.borderHalo, "center"), this);
       this.bodyStyler.open();
    }
 
@@ -236,6 +237,7 @@ class StyleHalo extends Morph {
          deselect() {
              this.borderSelected = this.bodySelected = false;
              halo.borderStyler.blur();
+             halo.layoutStyleEditor.blur();
              halo.bodyStyler.blur()
          },
          alignWithTarget() {
@@ -294,19 +296,34 @@ class StyleHalo extends Morph {
                             return visibleBounds.containsPoint(globalBounds[s]())});
    }
 
+   showLayoutStyleEditor() {
+      if (!this.layoutStyleEditor) {
+          this.layoutStyleEditor = this.addMorph(this.getLayoutControl());
+      }
+      this.layoutStyleEditor.show();
+      this.alignLayoutEditor();
+   }
+  
+   alignLayoutEditor() {
+      const topCenter = this.targetBounds
+                      .bottomCenter().addXY(0, 50);
+      this.layoutStyleEditor.topCenter = this.localize(topCenter);
+   }
+
    showBorderStyler() {
       if (!this.borderStyler) {
-          this.borderStyler = this.getBorderStyler();
+          this.borderStyler = this.addMorph(this.getBorderStyler());
       }
       this.borderStyler.show();
-      !this.borderStyler.opened && this.alignBorderStyler();
+      this.alignBorderStyler();
    }
 
    alignBorderStyler() {
+      if (this.borderStyler.opened) return;
       const vb = this.env.world.visibleBounds(),
-            visiblePart = vb.intersection(this.target.globalBounds()),
+            visiblePart = vb.intersection(this.targetBounds),
             pos = visiblePart.insetByRect(rect(-100, -50, 0, -50))[this.getSideInWorld()]();
-      this.borderStyler.center = pos;                                  
+      this.borderStyler.center = this.localize(pos);                                
    }
 
    getBorderStyler() {
@@ -329,17 +346,16 @@ class StyleHalo extends Morph {
 
    showBodyStyler() {
       if (!this.bodyStyler) {
-          this.bodyStyler = this.getBodyStyler();
+          this.bodyStyler = this.addMorph(this.getBodyStyler());
       }
-      !this.bodyStyler.opened && this.alignBodyStyler()
+      this.alignBodyStyler()
    }
 
    alignBodyStyler() {
+      if (this.bodyStyler.opened) return;
       const vb = this.env.world.visibleBounds(),
-            visiblePart = vb.intersection(this.target.globalBounds()),
-            pos = visiblePart.center()
-      this.bodyStyler.openInWorld();
-      this.bodyStyler.show();
+            visiblePart = vb.intersection(this.targetBounds),
+            pos = this.localize(visiblePart.center());
       this.bodyStyler.center = pos;
    }
 
@@ -410,12 +426,6 @@ class StyleHalo extends Morph {
       this.borderStyler.show();
       this.borderHalo.visible = true;
       this.borderHalo.activate();
-   }
-   
-   alignLayoutEditor() {
-      const topCenter = this.targetBounds
-                      .bottomCenter().addXY(0, 50);
-      this.layoutStyleEditor.topCenter = topCenter;
    }
 
    getLayoutControl() {
