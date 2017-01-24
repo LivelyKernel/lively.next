@@ -54,15 +54,15 @@ export default class ClassHelper {
 
   locateClass(meta) {
     // meta = {className, module: {package, pathInPackage}}
-    var module = meta.module;
-    if (module && module.package && module.package.name) {
-      var packagePath = System.decanonicalize(module.package.name + "/"),
-          moduleId = lively.lang.string.joinPath(packagePath, module.pathInPackage),
-          module = System.get("@lively-env").moduleEnv(moduleId);
-      if (!module)
+    var m = meta.module;
+    if (m && m.package && m.package.name) {
+      var packagePath = System.decanonicalize(m.package.name + "/"),
+          moduleId = lively.lang.string.joinPath(packagePath, m.pathInPackage),
+          realModule = System.get("@lively-env").moduleEnv(moduleId);
+      if (!realModule)
         console.warn(`Trying to deserialize instance of class ${meta.className} but the module ${moduleId} is not yet loaded`);
       else
-        return module.recorder[meta.className];
+        return realModule.recorder[meta.className];
     }
 
     // is it a global?
