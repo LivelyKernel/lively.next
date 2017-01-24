@@ -793,6 +793,13 @@ class GrabHaloItem extends HaloItem {
     }
   }
 
+ morphBeneath(position) {
+    var dropTarget = super.morphBeneath(position);
+    while (dropTarget && dropTarget.isHaloItem) 
+       dropTarget = dropTarget.morphBeneath(position);
+    return dropTarget;
+ }
+
   valueForPropertyDisplay() {
     var dropTarget = this.morphBeneath(this.hand.position),
         belongsToHalo = dropTarget.isHaloItem || dropTarget.ownerChain().find(m => m.isHaloItem);
@@ -1291,6 +1298,13 @@ class ResizeHandle extends HaloItem {
 
 class MorphHighlighterForHalo extends Morph {
 
+  static get properties() {
+    return {
+      draggable: {defaultValue: false},
+      fill:      {defaultValue: Color.transparent}
+    }
+  }
+
   static removeHighlightersFromHalo(halo) {
     var store = halo.state.morphHighlighters;
     for (var id in store) { store[id].remove(); delete store[id]; }
@@ -1316,8 +1330,7 @@ class MorphHighlighterForHalo extends Morph {
     var w = this.world() || this.halo.world();
     return w ? w.getMorphWithId(this.targetId) : null;
   }
-
-  get fill() { return Color.orange.withA(0.5); }
+  
   get name() { return "morphHighlighter"; }
 
   alignWithHalo() {
@@ -1331,8 +1344,12 @@ class MorphHighlighterForHalo extends Morph {
     if (this.target.layout && this.showLayout) {
       this.layoutHalo = this.layoutHalo ||
         this.world().showLayoutHaloFor(this.target, this.pointerId);
+      this.animate({opacity: 1, fill: Color.transparent, duration: 500});
+      this.alignWithHalo();
+      this.addMorph(this.layoutHalo);
+      if (this.halo.get('grab').hand.grabbedMorphs) this.layoutHalo.previewDrop(this.halo.get('grab').hand.grabbedMorphs);
     } else {
-      this.animate({opacity: 1, duration: 500});
+      this.animate({opacity: 1, fill: Color.orange.withA(0.5), duration: 500});
       this.alignWithHalo();
     }
   }

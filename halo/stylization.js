@@ -305,6 +305,7 @@ class StyleHalo extends Morph {
    }
   
    alignLayoutEditor() {
+      if (this.layoutStyleEditor.opened) return;
       const topCenter = this.targetBounds
                       .bottomCenter().addXY(0, 50);
       this.layoutStyleEditor.topCenter = this.localize(topCenter);

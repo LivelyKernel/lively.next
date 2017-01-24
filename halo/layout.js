@@ -639,7 +639,8 @@ export class FlexLayoutHalo extends Morph {
       isHaloItem: true,
       styleClasses: ["Halo"],
       extent: container.extent,
-      fill: Color.transparent
+      fill: Color.transparent,
+      previews: []
     });
     this.state = {container, pointerId, target: container.layout}
     this.alignWithTarget();
@@ -654,6 +655,7 @@ export class FlexLayoutHalo extends Morph {
   }
 
   previewDrop(morphs) {
+     if (this.previews.length > 0) return;
      this.previews = morphs.map(morph => 
          this.container.addMorph({
            isHaloItem: true,
@@ -671,6 +673,11 @@ export class FlexLayoutHalo extends Morph {
      this.previews.forEach(p => {
          p.step(); p.startStepping(2000, "step")
      });
+  }
+
+  remove() {
+     super.remove();
+     this.removePreviews();
   }
 
   removePreviews() {
