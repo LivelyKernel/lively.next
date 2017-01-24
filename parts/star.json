@@ -1,0 +1,785 @@
+{
+  "id": "Polygon_02E1402F_3562_490C_B571_94F673770781",
+  "snapshot": {
+    "Polygon_02E1402F_3562_490C_B571_94F673770781": {
+      "rev": 50036,
+      "props": {
+        "vertices": {
+          "key": "vertices",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "A7F6F0E8-7F4E-4F62-B931-43B23CB20CBC",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "099383E4-9DC1-4896-8DCA-FE86419CAC74",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "0E8A7363-5FC4-44B4-89BD-59C9016038C8",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "3CF6EA8B-E10A-4C61-87F4-474C5BD6D716",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "E020252B-63C9-4A3C-BE88-EE28975A2F02",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "53B18E9F-94CE-489F-AD6A-4008148624A7",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "E4A18C8C-5898-4D4D-82B6-515C9E80C631",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "4631E98D-88D0-4BE0-B590-DEA389429657",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "F5E881CF-91C3-49D0-BA4F-FA6B5916167B",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "24724BF4-2111-4223-BE57-9966D5C861BC",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "FEB4F33E-C5B9-4B70-B829-667A8A1E5627",
+              "rev": 0
+            }
+          ]
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Polygon",
+            "Path",
+            "Morph",
+            "morph"
+          ]
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(579.8,259.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(65.0,65.0)"
+        },
+        "name": {
+          "key": "name",
+          "value": "a polygon 1"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(117.6,126.8)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Polygon",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "A7F6F0E8-7F4E-4F62-B931-43B23CB20CBC": {
+      "rev": 0,
+      "props": {
+        "path": {
+          "key": "path",
+          "value": {
+            "__ref__": true,
+            "id": "Polygon_02E1402F_3562_490C_B571_94F673770781",
+            "rev": 50036
+          }
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "x": {
+          "key": "x",
+          "value": 25.360676825194844
+        },
+        "y": {
+          "key": "y",
+          "value": 1.662705016706127
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": 0
+        },
+        "_controlPoints": {
+          "key": "_controlPoints",
+          "value": {
+            "__ref__": true,
+            "id": "D7542E19-77BA-4D91-AF36-32643615CAD7",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "PathPoint",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "D7542E19-77BA-4D91-AF36-32643615CAD7": {
+      "rev": 0,
+      "props": {
+        "next": {
+          "key": "next",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "previous": {
+          "key": "previous",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        }
+      }
+    },
+    "099383E4-9DC1-4896-8DCA-FE86419CAC74": {
+      "rev": 0,
+      "props": {
+        "path": {
+          "key": "path",
+          "value": {
+            "__ref__": true,
+            "id": "Polygon_02E1402F_3562_490C_B571_94F673770781",
+            "rev": 50036
+          }
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "x": {
+          "key": "x",
+          "value": 52.59999999999998
+        },
+        "y": {
+          "key": "y",
+          "value": 40.84605990344946
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": 0
+        },
+        "_controlPoints": {
+          "key": "_controlPoints",
+          "value": {
+            "__ref__": true,
+            "id": "0B14E412-DFCE-4CF9-A18D-3F618E32B747",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "PathPoint",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "0B14E412-DFCE-4CF9-A18D-3F618E32B747": {
+      "rev": 0,
+      "props": {
+        "next": {
+          "key": "next",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "previous": {
+          "key": "previous",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        }
+      }
+    },
+    "0E8A7363-5FC4-44B4-89BD-59C9016038C8": {
+      "rev": 0,
+      "props": {
+        "path": {
+          "key": "path",
+          "value": {
+            "__ref__": true,
+            "id": "Polygon_02E1402F_3562_490C_B571_94F673770781",
+            "rev": 50036
+          }
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "x": {
+          "key": "x",
+          "value": 7.84218768522004
+        },
+        "y": {
+          "key": "y",
+          "value": 26.388705016706126
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": 0
+        },
+        "_controlPoints": {
+          "key": "_controlPoints",
+          "value": {
+            "__ref__": true,
+            "id": "9135A9E1-06F8-4807-9E7D-95356C345DE6",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "PathPoint",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "9135A9E1-06F8-4807-9E7D-95356C345DE6": {
+      "rev": 0,
+      "props": {
+        "next": {
+          "key": "next",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "previous": {
+          "key": "previous",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        }
+      }
+    },
+    "3CF6EA8B-E10A-4C61-87F4-474C5BD6D716": {
+      "rev": 0,
+      "props": {
+        "path": {
+          "key": "path",
+          "value": {
+            "__ref__": true,
+            "id": "Polygon_02E1402F_3562_490C_B571_94F673770781",
+            "rev": 50036
+          }
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "x": {
+          "key": "x",
+          "value": -20.080797076987643
+        },
+        "y": {
+          "key": "y",
+          "value": 65.0627050167061
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": 0
+        },
+        "_controlPoints": {
+          "key": "_controlPoints",
+          "value": {
+            "__ref__": true,
+            "id": "7D05631D-45E0-48F5-9854-8DE2918D24FB",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "PathPoint",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "7D05631D-45E0-48F5-9854-8DE2918D24FB": {
+      "rev": 0,
+      "props": {
+        "next": {
+          "key": "next",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "previous": {
+          "key": "previous",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        }
+      }
+    },
+    "E020252B-63C9-4A3C-BE88-EE28975A2F02": {
+      "rev": 0,
+      "props": {
+        "path": {
+          "key": "path",
+          "value": {
+            "__ref__": true,
+            "id": "Polygon_02E1402F_3562_490C_B571_94F673770781",
+            "rev": 50036
+          }
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "x": {
+          "key": "x",
+          "value": -20.503323174805132
+        },
+        "y": {
+          "key": "y",
+          "value": 16.944213422536023
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": 0
+        },
+        "_controlPoints": {
+          "key": "_controlPoints",
+          "value": {
+            "__ref__": true,
+            "id": "597DE3D7-D4F4-445C-8798-5E8C08A7D6D3",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "PathPoint",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "597DE3D7-D4F4-445C-8798-5E8C08A7D6D3": {
+      "rev": 0,
+      "props": {
+        "next": {
+          "key": "next",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "previous": {
+          "key": "previous",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        }
+      }
+    },
+    "53B18E9F-94CE-489F-AD6A-4008148624A7": {
+      "rev": 0,
+      "props": {
+        "path": {
+          "key": "path",
+          "value": {
+            "__ref__": true,
+            "id": "Polygon_02E1402F_3562_490C_B571_94F673770781",
+            "rev": 50036
+          }
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "x": {
+          "key": "x",
+          "value": -65
+        },
+        "y": {
+          "key": "y",
+          "value": 1.6627050167061412
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": 0
+        },
+        "_controlPoints": {
+          "key": "_controlPoints",
+          "value": {
+            "__ref__": true,
+            "id": "C6856031-6651-4783-9708-223E8AC96966",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "PathPoint",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "C6856031-6651-4783-9708-223E8AC96966": {
+      "rev": 0,
+      "props": {
+        "next": {
+          "key": "next",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "previous": {
+          "key": "previous",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        }
+      }
+    },
+    "E4A18C8C-5898-4D4D-82B6-515C9E80C631": {
+      "rev": 0,
+      "props": {
+        "path": {
+          "key": "path",
+          "value": {
+            "__ref__": true,
+            "id": "Polygon_02E1402F_3562_490C_B571_94F673770781",
+            "rev": 50036
+          }
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "x": {
+          "key": "x",
+          "value": -20.503323174805132
+        },
+        "y": {
+          "key": "y",
+          "value": -13.618803389123762
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": 0
+        },
+        "_controlPoints": {
+          "key": "_controlPoints",
+          "value": {
+            "__ref__": true,
+            "id": "5EB7DE96-9208-4D52-AB5A-B4F0B1027F0E",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "PathPoint",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "5EB7DE96-9208-4D52-AB5A-B4F0B1027F0E": {
+      "rev": 0,
+      "props": {
+        "next": {
+          "key": "next",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "previous": {
+          "key": "previous",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        }
+      }
+    },
+    "4631E98D-88D0-4BE0-B590-DEA389429657": {
+      "rev": 0,
+      "props": {
+        "path": {
+          "key": "path",
+          "value": {
+            "__ref__": true,
+            "id": "Polygon_02E1402F_3562_490C_B571_94F673770781",
+            "rev": 50036
+          }
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "x": {
+          "key": "x",
+          "value": -20.080797076987658
+        },
+        "y": {
+          "key": "y",
+          "value": -61.73729498329386
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": 0
+        },
+        "_controlPoints": {
+          "key": "_controlPoints",
+          "value": {
+            "__ref__": true,
+            "id": "65EC3074-D86B-46AB-82F6-4B6578615CD9",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "PathPoint",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "65EC3074-D86B-46AB-82F6-4B6578615CD9": {
+      "rev": 0,
+      "props": {
+        "next": {
+          "key": "next",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "previous": {
+          "key": "previous",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        }
+      }
+    },
+    "F5E881CF-91C3-49D0-BA4F-FA6B5916167B": {
+      "rev": 0,
+      "props": {
+        "path": {
+          "key": "path",
+          "value": {
+            "__ref__": true,
+            "id": "Polygon_02E1402F_3562_490C_B571_94F673770781",
+            "rev": 50036
+          }
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "x": {
+          "key": "x",
+          "value": 7.84218768522004
+        },
+        "y": {
+          "key": "y",
+          "value": -23.063294983293872
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": 0
+        },
+        "_controlPoints": {
+          "key": "_controlPoints",
+          "value": {
+            "__ref__": true,
+            "id": "0BC466AB-C8AA-4E0E-87A0-EA2FD0A14654",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "PathPoint",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "0BC466AB-C8AA-4E0E-87A0-EA2FD0A14654": {
+      "rev": 0,
+      "props": {
+        "next": {
+          "key": "next",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "previous": {
+          "key": "previous",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        }
+      }
+    },
+    "24724BF4-2111-4223-BE57-9966D5C861BC": {
+      "rev": 0,
+      "props": {
+        "path": {
+          "key": "path",
+          "value": {
+            "__ref__": true,
+            "id": "Polygon_02E1402F_3562_490C_B571_94F673770781",
+            "rev": 50036
+          }
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "x": {
+          "key": "x",
+          "value": 52.599999999999966
+        },
+        "y": {
+          "key": "y",
+          "value": -37.52064987003722
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": 0
+        },
+        "_controlPoints": {
+          "key": "_controlPoints",
+          "value": {
+            "__ref__": true,
+            "id": "F7F20C84-0FDE-40D9-9C15-26B8CF9DCDB8",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "PathPoint",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "F7F20C84-0FDE-40D9-9C15-26B8CF9DCDB8": {
+      "rev": 0,
+      "props": {
+        "next": {
+          "key": "next",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "previous": {
+          "key": "previous",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        }
+      }
+    },
+    "FEB4F33E-C5B9-4B70-B829-667A8A1E5627": {
+      "rev": 0,
+      "props": {
+        "path": {
+          "key": "path",
+          "value": {
+            "__ref__": true,
+            "id": "Polygon_02E1402F_3562_490C_B571_94F673770781",
+            "rev": 50036
+          }
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "x": {
+          "key": "x",
+          "value": 25.360676825194844
+        },
+        "y": {
+          "key": "y",
+          "value": 1.662705016706127
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": 0
+        },
+        "_controlPoints": {
+          "key": "_controlPoints",
+          "value": {
+            "__ref__": true,
+            "id": "4486BF8E-A3BD-438B-B739-BC7B5E821ACF",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "PathPoint",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "4486BF8E-A3BD-438B-B739-BC7B5E821ACF": {
+      "rev": 0,
+      "props": {
+        "next": {
+          "key": "next",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "previous": {
+          "key": "previous",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        }
+      }
+    }
+  },
+  "packages": {}
+}

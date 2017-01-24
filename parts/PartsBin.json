@@ -1,0 +1,67 @@
+{
+  "id": "Morph_B45257A4_C775_4EFB_B566_80D165C6F7BE",
+  "snapshot": {
+    "Morph_B45257A4_C775_4EFB_B566_80D165C6F7BE": {
+      "rev": 252530,
+      "props": {
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Partsbin",
+            "Morph",
+            "morph"
+          ]
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(91.8,193.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "name": {
+          "key": "name",
+          "value": "partsbin"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(73,97,184)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(492.3,321.0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Partsbin",
+        "module": {
+          "package": {
+            "name": "84B6759A-75DC-4855-B281-69B1CAE61DFE",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    }
+  },
+  "packages": {
+    "local://lively-object-modules/": {
+      "84B6759A-75DC-4855-B281-69B1CAE61DFE": {
+        "package.json": "{\n  \"name\": \"84B6759A-75DC-4855-B281-69B1CAE61DFE\",\n  \"version\": \"0.1.0\"\n}",
+        "index.js": "import { Morph, HTMLMorph, TilingLayout } from \"lively.morphic\";\nimport { ObjectDB } from \"lively.partsbin/index.js\";\nimport { pt } from \"lively.graphics/index.js\";\n\nimport { deserializeMorph } from \"lively.morphic/serialization.js\";\nimport { connect } from \"lively.bindings/index.js\";\n\n\nexport class Partsbin extends Morph {\n\n  reset() {\n    this.layout = new TilingLayout()\n  }\n\n  async showObjects() {\n    // await this.showObjects()\n\n    this.removeAllMorphs();\n\n    var db = ObjectDB.instance;\n\n\n    var {rows} = await db.db.allDocs({include_docs: false});\n\n    await db.setupDone;\n\n    var newest = await db.newestObjects()\n    \n    for (let key in newest) {\n      var {id, timestamp} = newest[key];\n      this.addPreviewMorph({...await db.objectById(id)});\n    }\n\n  }\n\n  addPreviewMorph({_id: id, preview: html, snapshot}) {\n    var preview = new HTMLMorph({html, extent: pt(100,100), nativeCursor: \"-webkit-grab\"});\n    preview.domNode.style.pointerEvents = \"none\";\n    connect(preview, 'onDragStart', this, 'createAndGrabNewInstance',\n      {converter: function() { return this.sourceObj; }});    \n    this.addMorph(preview);\n    preview.state = {id};\n  }\n\n  async createAndGrabNewInstance(target) {\n    // FIXME\n    this.env.eventDispatcher.eventState.draggedMorph = null;\n    try {\n      var db = ObjectDB.instance;\n      var {snapshot} = await db.objectById(target.state.id);\n      var newMorph = deserializeMorph(snapshot, {reinitializeIds: true});\n      this.world().firstHand.grab(newMorph);\n      newMorph.position = pt(0,0);\n    } catch (e) {\n      this.showError(e)\n    }\n  }\n\n}"
+      }
+    }
+  }
+}
