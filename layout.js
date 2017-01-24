@@ -986,13 +986,21 @@ export class GridLayout extends Layout {
     if (grid.length < rowCount) {
       grid = grid.concat(arr.withN(rowCount - grid.length, []));
     }
+    
 
     grid = grid.map(row => {
       if (row.length < columnCount)
         row = row.concat(arr.withN(columnCount - row.length, null));
-      return row.map(v => v ? (v.isMorph && v) || this.container.getSubmorphNamed(v) || v : v);
+      return row.map(v => {
+        if (v && v.isMorph) {
+           return v;
+        } else if (v) {
+           return this.container.getSubmorphNamed(v) || v;
+        } else {
+           return v;
+        }
+      })
     });
-
     return grid;
   }
 

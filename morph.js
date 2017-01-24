@@ -89,7 +89,7 @@ export class Morph {
       tooltip:            {defaultValue: null},
       visible:            {defaultValue: true},
       layout: {
-        after: ["submorphs"],
+        after: ["submorphs", "extent", "origin", "position", "isLayoutable"],
         set(value) {
           if (value) value.container = this;
           this.setProperty("layout", value);
@@ -256,7 +256,6 @@ export class Morph {
     this._pathDependants = [];
     this._tickingScripts = [];
     this.loadDefaultProperties(props);
-    if (props.submorphs) this.submorphs = props.submorphs;
     if (props.bounds) this.setBounds(props.bounds);
     Object.assign(this, obj.dissoc(props, ["env", "type", "submorphs", "bounds", "layout"]));
     if (props.layout) this.layout = props.layout;
