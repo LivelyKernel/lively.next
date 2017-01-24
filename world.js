@@ -4,7 +4,7 @@ import { tree, arr, string, obj, promise } from "lively.lang";
 import Halo from "./halo/morph.js"
 import { Menu } from "./menus.js"
 import { StatusMessage, StatusMessageForMorph } from './markers.js';
-import { Morph, Text, Window, config, MorphicEnv } from "./index.js";
+import { Morph, inspect, Text, Window, config, MorphicEnv } from "./index.js";
 import { TooltipViewer } from "./tooltips.js";
 import KeyHandler from "./events/KeyHandler.js";
 
@@ -439,6 +439,17 @@ var worldCommands = [
       var { ObjectEditor } = await System.import("lively.morphic/ide/js/objecteditor/index.js"),
           editor = await ObjectEditor.open({target: args.target});
       return editor;
+    }
+  },
+
+  {
+    name: "open object inspector",
+    exec: async (world, args = {target: null}) => {
+      if (!args.target) {
+        world.setStatusMessage("no target for Inspector");
+        return null;
+      }
+      return inspect({target: args.target});
     }
   },
 
