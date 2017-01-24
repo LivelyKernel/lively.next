@@ -10,6 +10,7 @@ import { addScript, isObjectClassFor } from "lively.classes/object-classes.js";
 import { Icon } from "../../../icons.js";
 import { chooseUnusedImports, interactivelyChooseImports } from "../import-helper.js";
 import { module } from "lively.modules";
+import { interactivelySaveObjectToPartsBinFolder } from "../../../partsbin.js";
 
 
 // var oe = ObjectEditor.open({target: this})
@@ -154,9 +155,16 @@ export class ObjectEditor extends Morph {
         };
 
     this.submorphs = [
+      {name: "objectCommands",
+       layout: new HorizontalLayout({direction: "centered", spacing: 2}),
+       submorphs: [
+         {...btnStyle, name: "inspectObjectButton", fontSize: 18, label: Icon.makeLabel("gears"), tooltip: "open object inspector"},
+         {...btnStyle, name: "publishButton", fontSize: 18, label: Icon.makeLabel("cloud-upload"), tooltip: "publish object to PartsBin"},
+       ]},
+
       {type: Tree, name: "classTree", treeData: new ClassTreeData(null),
-       borderBottom: {width: 1, color: Color.gray},
-       borderTop: {width: 1, color: Color.gray}},
+       borderTop: {width: 1, color: Color.gray},
+       borderBottom: {width: 1, color: Color.gray}},
 
       {name: "classAndMethodControls",
        layout: new HorizontalLayout({direction: "centered", spacing: 2}), submorphs: [
@@ -181,15 +189,20 @@ export class ObjectEditor extends Morph {
 
     var l = this.layout = new GridLayout({
       grid: [
+        ["objectCommands", "objectCommands", "objectCommands"],
         ["classTree", "sourceEditor", "importController"],
         ["classAndMethodControls", "sourceEditorControls", "importController"],
       ]});
     l.col(0).fixed = 180;
     l.col(2).fixed = 1;
-    l.row(1).fixed = 30;
+    l.row(0).fixed = 28;
+    l.row(2).fixed = 30;
     // var oe = ObjectEditor.open({target: this})
 
     // l.col(2).fixed = 100; l.row(0).paddingTop = 1; l.row(0).paddingBottom = 1;
+
+    connect(this.get("inspectObjectButton"), "fire", this, "execCommand", {converter: () => "open object inspector for target"});
+    connect(this.get("publishButton"), "fire", this, "execCommand", {converter: () => "publish target to PartsBin"});
 
     connect(this.get("classTree"), "selection", this, "onClassTreeSelection");
     connect(this.get("addMethodButton"), "fire", this, "interactivelyAddMethod");
@@ -807,6 +820,26 @@ localStorage["oe helper"] = JSON.stringify(store);
           var descr = ed.sourceDescriptorFor(klass);
           return ed.world().execCommand("open browser",
             {moduleName: descr.module.id, codeEntity: {name: klass.name}});
+        }
+      },
+
+      {
+        name: "open object inspector for target",
+        exec: async ed => {
+          return ed.world().execCommand("open object inspector", {target: ed.target});
+        }
+      },
+
+      {
+        name: "publish target to PartsBin",
+        exec: async ed => {
+          try {
+            var {partName} = await interactivelySaveObjectToPartsBinFolder(ed.target);
+            this.setStatusMessage(`Published ${this.target} as ${partName}`, Color.green);
+          } catch (e) {
+            if (e === "canceled") this.setStatusMessage("canceled");
+            else this.showError(e);
+          }
         }
       }
     ];
