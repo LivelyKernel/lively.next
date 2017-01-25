@@ -170,14 +170,14 @@ var set = function set(object, property, value, receiver) {
 };
 
 var slicedToArray = function () {
-  function sliceIterator(arr$$1, i) {
+  function sliceIterator(arr, i) {
     var _arr = [];
     var _n = true;
     var _d = false;
     var _e = undefined;
 
     try {
-      for (var _i = arr$$1[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
         _arr.push(_s.value);
 
         if (i && _arr.length === i) break;
@@ -196,11 +196,11 @@ var slicedToArray = function () {
     return _arr;
   }
 
-  return function (arr$$1, i) {
-    if (Array.isArray(arr$$1)) {
-      return arr$$1;
-    } else if (Symbol.iterator in Object(arr$$1)) {
-      return sliceIterator(arr$$1, i);
+  return function (arr, i) {
+    if (Array.isArray(arr)) {
+      return arr;
+    } else if (Symbol.iterator in Object(arr)) {
+      return sliceIterator(arr, i);
     } else {
       throw new TypeError("Invalid attempt to destructure non-iterable instance");
     }
@@ -219,13 +219,13 @@ var slicedToArray = function () {
 
 
 
-var toConsumableArray = function (arr$$1) {
-  if (Array.isArray(arr$$1)) {
-    for (var i = 0, arr2 = Array(arr$$1.length); i < arr$$1.length; i++) arr2[i] = arr$$1[i];
+var toConsumableArray = function (arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
 
     return arr2;
   } else {
-    return Array.from(arr$$1);
+    return Array.from(arr);
   }
 };
 
@@ -550,18 +550,23 @@ function installMethods(klass, instanceMethods, classMethods) {
   }
 
   // 5. undefine properties that were removed form class definition
-  var toDeleteInstance = lively_lang.arr.withoutAll(Object.getOwnPropertyNames(klass.prototype), instanceMethods.map(function (m) {
+  var instanceMethodsInClass = instanceMethods.map(function (m) {
     return m.key;
-  }).concat(["constructor", "arguments", "caller"]));
-  toDeleteInstance.forEach(function (key) {
-    delete klass.prototype[key];
-  });
-  var toDeleteClass = lively_lang.arr.withoutAll(Object.getOwnPropertyNames(klass), classMethods.map(function (m) {
+  }).concat(["constructor", "arguments", "caller"]),
+      instanceAttributes = Object.getOwnPropertyNames(klass.prototype);
+  for (var i = 0; i < instanceAttributes.length; i++) {
+    var name = instanceAttributes[i];
+    if (!instanceMethodsInClass.includes(name)) delete klass.prototype[name];
+  }
+
+  var classMethodsInClass = classMethods.map(function (m) {
     return m.key;
-  }).concat(["length", "name", "prototype", "arguments", "caller"]));
-  toDeleteClass.forEach(function (key) {
-    delete klass[key];
-  });
+  }).concat(["length", "name", "prototype", "arguments", "caller"]),
+      classAttributes = Object.getOwnPropertyNames(klass);
+  for (var _i = 0; _i < classAttributes.length; _i++) {
+    var _name = classAttributes[_i];
+    if (!classMethodsInClass.includes(_name)) delete klass[_name];
+  }
 }
 
 function ensureInitializeStub(superclass) {

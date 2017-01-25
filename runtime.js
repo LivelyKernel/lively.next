@@ -92,14 +92,21 @@ function installMethods(klass, instanceMethods, classMethods) {
   }
 
   // 5. undefine properties that were removed form class definition
-  const toDeleteInstance = arr.withoutAll(
-    Object.getOwnPropertyNames(klass.prototype),
-    instanceMethods.map(m => m.key).concat(["constructor", "arguments", "caller"]));
-  toDeleteInstance.forEach(key => { delete klass.prototype[key]; });
-  const toDeleteClass = arr.withoutAll(
-    Object.getOwnPropertyNames(klass),
-    classMethods.map(m => m.key).concat(["length", "name", "prototype", "arguments", "caller"]));
-  toDeleteClass.forEach(key => { delete klass[key]; });
+  let instanceMethodsInClass = instanceMethods.map(m => m.key)
+                                  .concat(["constructor", "arguments", "caller"]),
+      instanceAttributes = Object.getOwnPropertyNames(klass.prototype);
+  for (let i = 0; i < instanceAttributes.length; i++) {
+    let name = instanceAttributes[i];
+    if (!instanceMethodsInClass.includes(name)) delete klass.prototype[name];
+  }
+
+  let classMethodsInClass = classMethods.map(m => m.key)
+                              .concat(["length", "name", "prototype", "arguments", "caller"]),
+      classAttributes = Object.getOwnPropertyNames(klass);
+  for (let i = 0; i < classAttributes.length; i++) {
+    let name = classAttributes[i];
+    if (!classMethodsInClass.includes(name)) delete klass[name];
+  }
 }
 
 
