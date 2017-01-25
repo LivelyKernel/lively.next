@@ -25,6 +25,8 @@ async function createObjectSnapshot(obj) {
     }
   }
 
+  snapshot.preview = obj.renderPreview();
+
   return snapshot;
 }
 
@@ -41,15 +43,15 @@ async function loadObjectFromSnapshot(snapshot) {
 
 async function saveObjectToPartsbinFolder(obj, partName) {
   await resource(partsbinFolder).ensureExistance();
-  var partResource = resource(partsbinFolder).join(partName + ".json");
-  var snapshot = await createObjectSnapshot(obj);
+  var partResource = resource(partsbinFolder).join(partName + ".json"),
+      snapshot = await createObjectSnapshot(obj);
   await partResource.write(JSON.stringify(snapshot, null, 2))
   return {partResource}
 }
 
 async function loadObjectFromPartsbinFolder(partName) {
-  var rawContent = await resource(partsbinFolder).join(partName + ".json").read();
-  var deserialized = loadObjectFromSnapshot(JSON.parse(rawContent));
+  var rawContent = await resource(partsbinFolder).join(partName + ".json").read(),
+      deserialized = loadObjectFromSnapshot(JSON.parse(rawContent));
   return deserialized;
 }
 
@@ -65,23 +67,23 @@ export async function interactivelySaveObjectToPartsBinFolder(obj) {
 
 export async function interactivelyLoadObjectFromPartsBinFolder() {
   await resource(partsbinFolder).ensureExistance();
-  var files = await resource(partsbinFolder).dirList(1);
-  var partFiles = files.filter(ea => ea.name().endsWith(".json"));
-  var items = partFiles.map(ea => {
-    var partName = ea.name().replace(/\.json$/, "");
-    return {
-      isListItem: true, string: partName, value: partName
-    }
-  })
-  var {selected: [choice]} = await $world.filterableListPrompt(
-    "select part to load", items, {fuzzy: true});
+  var files = await resource(partsbinFolder).dirList(1),
+      partFiles = files.filter(ea => ea.name().endsWith(".json")),
+      items = partFiles.map(ea => {
+        var partName = ea.name().replace(/\.json$/, "");
+        return {
+          isListItem: true, string: partName, value: partName
+        }
+      }),
+      {selected: [choice]} = await $world.filterableListPrompt(
+                              "select part to load", items, {fuzzy: true});
   if (!choice) throw "canceled";
   return await loadObjectFromPartsbinFolder(choice);
 }
 
 // await saveObjectToPartsbinFolder(that, "PartsBin")
-// var obj = await interactivelyLoadObjectFromPartsBinFolder();
 // await interactivelySaveObjectToPartsBinFolder(that)
+// var obj = (await interactivelyLoadObjectFromPartsBinFolder()).openInWorld();
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
