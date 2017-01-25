@@ -77,7 +77,8 @@ class ModulePackageMapping {
     if (this._notificationHandlers) return;
     var S = this.System;
     this._notificationHandlers = [
-      subscribe("lively.modules/moduleloaded", evt => this.addModuleIdToCache(evt.module), S),
+      subscribe("lively.modules/moduleloaded",
+        evt => !this.modulesToPackage[evt.module] && this.addModuleIdToCache(evt.module), S),
       subscribe("lively.modules/moduleunloaded", evt => this.removeModuleFromCache(evt.module), S),
       subscribe("lively.modules/packageregistered", evt => this.clearCache(), S),
       subscribe("lively.modules/packageremoved", evt => this.clearCache(), S)
@@ -124,6 +125,7 @@ class ModulePackageMapping {
            itsPackage = packageName;
       }
       if (!itsPackage) itsPackage = "no group";
+
       packageToModule[itsPackage].push(moduleId);
       modulesToPackage[moduleId] = itsPackage;
     }
@@ -144,7 +146,6 @@ class ModulePackageMapping {
          itsPackage = packageName;
     }
     if (!itsPackage) itsPackage = "no group";
-  
     let modules = packageToModule[itsPackage] || (packageToModule[itsPackage] = []);
     modules.push(moduleId);
     return modulesToPackage[moduleId] = itsPackage;
