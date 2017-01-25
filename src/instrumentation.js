@@ -336,7 +336,7 @@ async function customTranslate(proceed, load) {
                                    // to define it here to avoid an
                                    // undefined entry later!
 
-          console.log("[lively.modules customTranslate] loaded %s from browser cache after %sms", load.name, Date.now()-start);
+          debug && console.log("[lively.modules customTranslate] loaded %s from browser cache after %sms", load.name, Date.now()-start);
           return Promise.resolve(stored.source);
         }
       }
@@ -352,7 +352,7 @@ async function customTranslate(proceed, load) {
                                    // to define it here to avoid an
                                    // undefined entry later!
 
-          console.log("[lively.modules customTranslate] loaded %s from filesystem cache after %sms", load.name, Date.now()-start);
+          debug && console.log("[lively.modules customTranslate] loaded %s from filesystem cache after %sms", load.name, Date.now()-start);
           return Promise.resolve(stored.source);
         }
       }
