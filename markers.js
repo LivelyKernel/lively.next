@@ -137,7 +137,7 @@ export class StatusMessage extends Morph {
       stayOpen:     {defaultValue: false},
       slidable:     {defaultValue: true}, // auto slide up on new message
       isMaximized:  {defaultValue: false},
-      expandable:   {defaultValue: true},
+      expandable:   {initialize() { this.expandable = true; }},
       maxLines:     {defaultValue: Infinity},
       name:         {defaultValue: "messageMorph"},
       extent:       {defaultValue: pt(240, 65)},
