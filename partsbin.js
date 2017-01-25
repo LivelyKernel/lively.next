@@ -4,16 +4,16 @@ import { resource } from "lively.resources";
 import { serializeMorph } from "lively.morphic/serialization.js";
 
 import { createFiles } from "lively.resources";
-import { registerPackage, importPackage } from "lively.modules";
+import { importPackage } from "lively.modules";
 import { deserializeMorph } from 'lively.morphic/serialization.js';
 import { inspect } from "lively.morphic";
 
 var partsbinFolder = System.decanonicalize("lively.morphic/parts/")
 
 async function createObjectSnapshot(obj) {
-  var snapshot = serializeMorph(obj);
-  var klass = obj.constructor, packages = snapshot.packages = {};  
-  var moduleMeta = klass[Symbol.for("lively-module-meta")];
+  var snapshot = serializeMorph(obj),
+      klass = obj.constructor, packages = snapshot.packages = {},
+      moduleMeta = klass[Symbol.for("lively-module-meta")];
 
   // if it's a "local" object package then save that as part of the snapshot
   if (moduleMeta) {
