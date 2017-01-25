@@ -37,6 +37,7 @@ export default function module(System, moduleName, parent) {
   return sysEnv.loadedModules[id] || (sysEnv.loadedModules[id] = new ModuleInterface(System, id));
 }
 
+
 // ModuleInterface is primarily used to provide an API that integrates the System
 // loader state with lively.modules extensions.
 // It does not hold any mutable state.

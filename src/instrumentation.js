@@ -4,7 +4,6 @@ var { funcCall, member, literal } = nodes;
 import { evalCodeTransform, evalCodeTransformOfSystemRegisterSetters } from "lively.vm";
 import { arr, string, properties } from "lively.lang";
 import module, { detectModuleFormat } from "./module.js";
-import { getPackage } from "./packages.js";
 import { resource } from 'lively.resources';
 import {
   install as installHook,
@@ -29,43 +28,10 @@ function canonicalURL(url) {
   return (protocol || "") + url;
 }
 
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // module cache experiment
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-export async function enableCachedFetch() {
-   // fetch module name -> module hash from server
-   const res = resource(System.baseURL + "combined/index.json");
-   if (!res) console.log("[CACHED FETCH] Could not retrieve hash index from server!");
-   System.get("@lively-env").packageCache.packageHashIndex = JSON.parse(await res.makeProxied().read());
-
-   // set flag
-   System.get("@lively-env").packageCache.cachedFetch = true;
-   console.log("[CACHED FETCH] Enabled");
-}
-
-export function rememberToCache(packageName, modulePath) {
-   var deps = System.get("@lively-env").packageCache.packageToCache[packageName] || [];
-   deps.push(modulePath);
-   System.get("@lively-env").packageCache.packageToCache[packageName] = deps;
-}
-
-export async function disableCachedFetch() {
-   System.get("@lively-env").packageCache.cachedFetch = false;
-   const toBeCached = System.get("@lively-env").packageCache.packageToCache;
-   for (var name in toBeCached) {
-       var translatedFiles = {}, cache = System._livelyModulesTranslationCache;
-       for (var path of toBeCached[name]) {
-          translatedFiles[path] = await cache.fetchStoredModuleSource(path);
-       }
-       if (name == System.baseURL) continue;
-       var req = {deps: Object.keys(translatedFiles), serverUri: System.baseURL},
-           payload = {method: "POST", body: JSON.stringify(req)};
-       await window.fetch(System.baseURL + "combined/create/" + name, payload);
-       console.log("[CACHED FETCH] Created bundle for", name);
-   }
-   console.log("[CACHED FETCH] Disabled");
-}
 
 export class ModuleTranslationCache {
   static get earliestDate() {
@@ -370,7 +336,7 @@ async function customTranslate(proceed, load) {
                                    // to define it here to avoid an
                                    // undefined entry later!
 
-          debug && console.log("[lively.modules customTranslate] loaded %s from browser cache after %sms", load.name, Date.now()-start);
+          console.log("[lively.modules customTranslate] loaded %s from browser cache after %sms", load.name, Date.now()-start);
           return Promise.resolve(stored.source);
         }
       }
@@ -386,7 +352,7 @@ async function customTranslate(proceed, load) {
                                    // to define it here to avoid an
                                    // undefined entry later!
 
-          debug && console.log("[lively.modules customTranslate] loaded %s from filesystem cache after %sms", load.name, Date.now()-start);
+          console.log("[lively.modules customTranslate] loaded %s from filesystem cache after %sms", load.name, Date.now()-start);
           return Promise.resolve(stored.source);
         }
       }
