@@ -1,5 +1,5 @@
 
-// INLINED /Users/robin/Development/lively-next/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -658,9 +658,9 @@
   typeof self === "object" ? self : this
 );
 
-// INLINED END /Users/robin/Development/lively-next/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
 
-// INLINED /Users/robin/Development/lively-next/lively.lang/dist/lively.lang.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
 
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -8186,9 +8186,9 @@ exports.uninstallGlobals = uninstallGlobals;
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.lang;
 })();
 
-// INLINED END /Users/robin/Development/lively-next/lively.lang/dist/lively.lang.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
 
-// INLINED /Users/robin/Development/lively-next/lively.notifications/dist/lively.notifications.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -8346,9 +8346,9 @@ exports.stopLogging = stopLogging;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /Users/robin/Development/lively-next/lively.notifications/dist/lively.notifications.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
 
-// INLINED /Users/robin/Development/lively-next/lively.ast/dist/lively.ast.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
 
 (function() {
   var module = undefined, require = undefined;
@@ -23276,9 +23276,9 @@ exports.fuzzyParse = fuzzyParse;
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.ast;
 })();
 
-// INLINED END /Users/robin/Development/lively-next/lively.ast/dist/lively.ast.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
 
-// INLINED /Users/robin/Development/lively-next/lively.classes/dist/lively.classes.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -23451,14 +23451,14 @@ var set = function set(object, property, value, receiver) {
 };
 
 var slicedToArray = function () {
-  function sliceIterator(arr$$1, i) {
+  function sliceIterator(arr, i) {
     var _arr = [];
     var _n = true;
     var _d = false;
     var _e = undefined;
 
     try {
-      for (var _i = arr$$1[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
         _arr.push(_s.value);
 
         if (i && _arr.length === i) break;
@@ -23477,11 +23477,11 @@ var slicedToArray = function () {
     return _arr;
   }
 
-  return function (arr$$1, i) {
-    if (Array.isArray(arr$$1)) {
-      return arr$$1;
-    } else if (Symbol.iterator in Object(arr$$1)) {
-      return sliceIterator(arr$$1, i);
+  return function (arr, i) {
+    if (Array.isArray(arr)) {
+      return arr;
+    } else if (Symbol.iterator in Object(arr)) {
+      return sliceIterator(arr, i);
     } else {
       throw new TypeError("Invalid attempt to destructure non-iterable instance");
     }
@@ -23500,13 +23500,13 @@ var slicedToArray = function () {
 
 
 
-var toConsumableArray = function (arr$$1) {
-  if (Array.isArray(arr$$1)) {
-    for (var i = 0, arr2 = Array(arr$$1.length); i < arr$$1.length; i++) arr2[i] = arr$$1[i];
+var toConsumableArray = function (arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
 
     return arr2;
   } else {
-    return Array.from(arr$$1);
+    return Array.from(arr);
   }
 };
 
@@ -23831,18 +23831,23 @@ function installMethods(klass, instanceMethods, classMethods) {
   }
 
   // 5. undefine properties that were removed form class definition
-  var toDeleteInstance = lively_lang.arr.withoutAll(Object.getOwnPropertyNames(klass.prototype), instanceMethods.map(function (m) {
+  var instanceMethodsInClass = instanceMethods.map(function (m) {
     return m.key;
-  }).concat(["constructor", "arguments", "caller"]));
-  toDeleteInstance.forEach(function (key) {
-    delete klass.prototype[key];
-  });
-  var toDeleteClass = lively_lang.arr.withoutAll(Object.getOwnPropertyNames(klass), classMethods.map(function (m) {
+  }).concat(["constructor", "arguments", "caller"]),
+      instanceAttributes = Object.getOwnPropertyNames(klass.prototype);
+  for (var i = 0; i < instanceAttributes.length; i++) {
+    var name = instanceAttributes[i];
+    if (!instanceMethodsInClass.includes(name)) delete klass.prototype[name];
+  }
+
+  var classMethodsInClass = classMethods.map(function (m) {
     return m.key;
-  }).concat(["length", "name", "prototype", "arguments", "caller"]));
-  toDeleteClass.forEach(function (key) {
-    delete klass[key];
-  });
+  }).concat(["length", "name", "prototype", "arguments", "caller"]),
+      classAttributes = Object.getOwnPropertyNames(klass);
+  for (var _i = 0; _i < classAttributes.length; _i++) {
+    var _name = classAttributes[_i];
+    if (!classMethodsInClass.includes(_name)) delete klass[_name];
+  }
 }
 
 function ensureInitializeStub(superclass) {
@@ -24271,9 +24276,9 @@ exports.classToFunctionTransform = classToFunctionTransform;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /Users/robin/Development/lively-next/lively.classes/dist/lively.classes.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
 
-// INLINED /Users/robin/Development/lively-next/lively.source-transform/dist/lively.source-transform.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -25210,9 +25215,9 @@ exports.stringifyFunctionWithoutToplevelRecorder = stringifyFunctionWithoutTople
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.sourceTransform;
 })();
-// INLINED END /Users/robin/Development/lively-next/lively.source-transform/dist/lively.source-transform.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
 
-// INLINED /Users/robin/Development/lively-next/lively.vm/dist/lively.vm.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -27025,9 +27030,9 @@ exports.evalCodeTransformOfSystemRegisterSetters = evalCodeTransformOfSystemRegi
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
 })();
-// INLINED END /Users/robin/Development/lively-next/lively.vm/dist/lively.vm.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
 
-// INLINED /Users/robin/Development/lively-next/lively.resources/dist/lively.resources_no-deps.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -27046,118 +27051,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 
 
-var asyncGenerator = function () {
-  function AwaitValue(value) {
-    this.value = value;
-  }
 
-  function AsyncGenerator(gen) {
-    var front, back;
-
-    function send(key, arg) {
-      return new Promise(function (resolve, reject) {
-        var request = {
-          key: key,
-          arg: arg,
-          resolve: resolve,
-          reject: reject,
-          next: null
-        };
-
-        if (back) {
-          back = back.next = request;
-        } else {
-          front = back = request;
-          resume(key, arg);
-        }
-      });
-    }
-
-    function resume(key, arg) {
-      try {
-        var result = gen[key](arg);
-        var value = result.value;
-
-        if (value instanceof AwaitValue) {
-          Promise.resolve(value.value).then(function (arg) {
-            resume("next", arg);
-          }, function (arg) {
-            resume("throw", arg);
-          });
-        } else {
-          settle(result.done ? "return" : "normal", result.value);
-        }
-      } catch (err) {
-        settle("throw", err);
-      }
-    }
-
-    function settle(type, value) {
-      switch (type) {
-        case "return":
-          front.resolve({
-            value: value,
-            done: true
-          });
-          break;
-
-        case "throw":
-          front.reject(value);
-          break;
-
-        default:
-          front.resolve({
-            value: value,
-            done: false
-          });
-          break;
-      }
-
-      front = front.next;
-
-      if (front) {
-        resume(front.key, front.arg);
-      } else {
-        back = null;
-      }
-    }
-
-    this._invoke = send;
-
-    if (typeof gen.return !== "function") {
-      this.return = undefined;
-    }
-  }
-
-  if (typeof Symbol === "function" && Symbol.asyncIterator) {
-    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
-      return this;
-    };
-  }
-
-  AsyncGenerator.prototype.next = function (arg) {
-    return this._invoke("next", arg);
-  };
-
-  AsyncGenerator.prototype.throw = function (arg) {
-    return this._invoke("throw", arg);
-  };
-
-  AsyncGenerator.prototype.return = function (arg) {
-    return this._invoke("return", arg);
-  };
-
-  return {
-    wrap: function (fn) {
-      return function () {
-        return new AsyncGenerator(fn.apply(this, arguments));
-      };
-    },
-    await: function (value) {
-      return new AwaitValue(value);
-    }
-  };
-}();
 
 
 
@@ -29393,9 +29287,9 @@ exports.unregisterExtension = unregisterExtension;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.resources;
 })();
-// INLINED END /Users/robin/Development/lively-next/lively.resources/dist/lively.resources_no-deps.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
 
-// INLINED /Users/robin/Development/lively-next/lively.modules/systemjs-init.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -29602,12 +29496,12 @@ exports.unregisterExtension = unregisterExtension;
   }
 
 })();
-// INLINED END /Users/robin/Development/lively-next/lively.modules/systemjs-init.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
-// INLINED /Users/robin/Development/lively-next/lively.modules/node_modules/semver/semver.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -30812,7 +30706,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-// INLINED END /Users/robin/Development/lively-next/lively.modules/node_modules/semver/semver.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
 semver = exports;
 })({}, {});
 
@@ -30889,13 +30783,6 @@ function computeRequireMap(System) {
   }, {});
 }
 
-function isJsFile(url) {
-  return (/\.js/i.test(url)
-  );
-}
-
-
-
 var join = lively_lang.string.joinPath;
 
 function isURL(string$$1) {
@@ -30932,118 +30819,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 
 
-var asyncGenerator = function () {
-  function AwaitValue(value) {
-    this.value = value;
-  }
 
-  function AsyncGenerator(gen) {
-    var front, back;
-
-    function send(key, arg) {
-      return new Promise(function (resolve, reject) {
-        var request = {
-          key: key,
-          arg: arg,
-          resolve: resolve,
-          reject: reject,
-          next: null
-        };
-
-        if (back) {
-          back = back.next = request;
-        } else {
-          front = back = request;
-          resume(key, arg);
-        }
-      });
-    }
-
-    function resume(key, arg) {
-      try {
-        var result = gen[key](arg);
-        var value = result.value;
-
-        if (value instanceof AwaitValue) {
-          Promise.resolve(value.value).then(function (arg) {
-            resume("next", arg);
-          }, function (arg) {
-            resume("throw", arg);
-          });
-        } else {
-          settle(result.done ? "return" : "normal", result.value);
-        }
-      } catch (err) {
-        settle("throw", err);
-      }
-    }
-
-    function settle(type, value) {
-      switch (type) {
-        case "return":
-          front.resolve({
-            value: value,
-            done: true
-          });
-          break;
-
-        case "throw":
-          front.reject(value);
-          break;
-
-        default:
-          front.resolve({
-            value: value,
-            done: false
-          });
-          break;
-      }
-
-      front = front.next;
-
-      if (front) {
-        resume(front.key, front.arg);
-      } else {
-        back = null;
-      }
-    }
-
-    this._invoke = send;
-
-    if (typeof gen.return !== "function") {
-      this.return = undefined;
-    }
-  }
-
-  if (typeof Symbol === "function" && Symbol.asyncIterator) {
-    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
-      return this;
-    };
-  }
-
-  AsyncGenerator.prototype.next = function (arg) {
-    return this._invoke("next", arg);
-  };
-
-  AsyncGenerator.prototype.throw = function (arg) {
-    return this._invoke("throw", arg);
-  };
-
-  AsyncGenerator.prototype.return = function (arg) {
-    return this._invoke("return", arg);
-  };
-
-  return {
-    wrap: function (fn) {
-      return function () {
-        return new AsyncGenerator(fn.apply(this, arguments));
-      };
-    },
-    await: function (value) {
-      return new AwaitValue(value);
-    }
-  };
-}();
 
 
 
@@ -31280,6 +31056,159 @@ function normalizePackageURL(System, packageURL) {
   return String(url).replace(/\/$/, "");
 }
 
+function allPackageNames(System) {
+  var sysPackages = System.packages,
+      livelyPackages = packageStore(System);
+  return lively_lang.arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages)));
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// This deals with which modules are mapped to which packages. There is
+// actually not a static ownership of packages to modules but based on the
+// currently loaded packages we compute what modules are mapped to which package
+// based on the module id / url and the package url. Since it is to expensive
+// to compute every time a module wants to know its package or a package its
+// modules we have a cache that is invalidated whenever new packages are loaded or
+// existing ones removed.
+
+var ModulePackageMapping = function () {
+  createClass(ModulePackageMapping, null, [{
+    key: "forSystem",
+    value: function forSystem(System) {
+      var existing = System["__lively.modules__modulePackageMapCache"];
+      if (existing) return existing;
+      var instance = new this(System);
+      System["__lively.modules__modulePackageMapCache"] = instance;
+      return instance;
+    }
+  }]);
+
+  function ModulePackageMapping(System) {
+    classCallCheck(this, ModulePackageMapping);
+
+    this.System = System;
+    this._notificationHandlers = null;
+    this.clearCache();
+    this.subscribeToSystemChanges();
+  }
+
+  createClass(ModulePackageMapping, [{
+    key: "subscribeToSystemChanges",
+    value: function subscribeToSystemChanges() {
+      var _this = this;
+
+      if (this._notificationHandlers) return;
+      var S = this.System;
+      this._notificationHandlers = [lively_notifications.subscribe("lively.modules/moduleloaded", function (evt) {
+        return _this.addModuleIdToCache(evt.module);
+      }, S), lively_notifications.subscribe("lively.modules/moduleunloaded", function (evt) {
+        return _this.removeModuleFromCache(evt.module);
+      }, S), lively_notifications.subscribe("lively.modules/packageregistered", function (evt) {
+        return _this.clearCache();
+      }, S), lively_notifications.subscribe("lively.modules/packageremoved", function (evt) {
+        return _this.clearCache();
+      }, S)];
+    }
+  }, {
+    key: "unsubscribeFromSystemChanges",
+    value: function unsubscribeFromSystemChanges() {
+      if (!this._notificationHandlers) return;
+      var S = this.System;
+      lively_notifications.unsubscribe("lively.modules/moduleloaded", this._notificationHandlers[0], S), lively_notifications.unsubscribe("lively.modules/moduleunloaded", this._notificationHandlers[1], S), lively_notifications.unsubscribe("lively.modules/packageregistered", this._notificationHandlers[2], S), lively_notifications.unsubscribe("lively.modules/packageremoved", this._notificationHandlers[3], S);
+      this._notificationHandlers = null;
+    }
+  }, {
+    key: "clearCache",
+    value: function clearCache() {
+      this._cacheInitialized = false;
+      this.packageToModule = {};
+      this.modulesToPackage = {};
+    }
+  }, {
+    key: "ensureCache",
+    value: function ensureCache() {
+      // The cache is invalidated when packages are added or removed.
+      // If a new module gets loaded it is added to the caches.
+      // When a module gets removed it is also removed from both maps.
+      var System = this.System,
+          _cacheInitialized = this._cacheInitialized,
+          packageToModule = this.packageToModule,
+          modulesToPackage = this.modulesToPackage;
+
+      if (_cacheInitialized) return this;
+
+      var packageNames = allPackageNames(System);
+      if (!packageNames.includes("no group")) packageNames.push("no group");
+
+      for (var j = 0; j < packageNames.length; j++) {
+        packageToModule[packageNames[j]] = [];
+      } // bulk load the cache
+      var modules = knownModuleNames(System);
+      for (var i = 0; i < modules.length; i++) {
+        var moduleId = modules[i],
+            itsPackage = void 0;
+        for (var _j = 0; _j < packageNames.length; _j++) {
+          var packageName = packageNames[_j];
+          if (moduleId.startsWith(packageName) && (!itsPackage || itsPackage.length < packageName.length)) itsPackage = packageName;
+        }
+        if (!itsPackage) itsPackage = "no group";
+        packageToModule[itsPackage].push(moduleId);
+        modulesToPackage[moduleId] = itsPackage;
+      }
+
+      this._cacheInitialized = true;
+
+      return this;
+    }
+  }, {
+    key: "addModuleIdToCache",
+    value: function addModuleIdToCache(moduleId) {
+      this.ensureCache();
+      var packageToModule = this.packageToModule,
+          modulesToPackage = this.modulesToPackage,
+          packageNames = Object.keys(packageToModule),
+          itsPackage = void 0;
+
+      for (var j = 0; j < packageNames.length; j++) {
+        var packageName = packageNames[j];
+        if (moduleId.startsWith(packageName) && (!itsPackage || itsPackage.length < packageName.length)) itsPackage = packageName;
+      }
+      if (!itsPackage) itsPackage = "no group";
+
+      var modules = packageToModule[itsPackage] || (packageToModule[itsPackage] = []);
+      modules.push(moduleId);
+      return modulesToPackage[moduleId] = itsPackage;
+    }
+  }, {
+    key: "removeModuleFromCache",
+    value: function removeModuleFromCache(moduleId) {
+      if (!this._cacheInitialized) return;
+      var packageToModule = this.packageToModule,
+          modulesToPackage = this.modulesToPackage;
+
+      var itsPackage = modulesToPackage[moduleId];
+      if (!itsPackage) return;
+      delete modulesToPackage[moduleId];
+      if (packageToModule[itsPackage]) lively_lang.arr.remove(packageToModule[itsPackage], moduleId);
+    }
+  }, {
+    key: "getPackageURLForModuleId",
+    value: function getPackageURLForModuleId(moduleId) {
+      return this.modulesToPackage[moduleId] || this.addModuleIdToCache(moduleId);
+    }
+  }, {
+    key: "getModuleIdsForPackageURL",
+    value: function getModuleIdsForPackageURL(packageURL) {
+      this.ensureCache();
+      return this.packageToModule[packageURL] || [];
+    }
+  }]);
+  return ModulePackageMapping;
+}();
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // We add instances of Package to the System which basically serves as
 // "database" for all module / package related state.
@@ -31408,27 +31337,27 @@ var PackageConfiguration = function () {
   }, {
     key: "applyLivelyConfigHooks",
     value: function applyLivelyConfigHooks(livelyConfig) {
-      var _this = this;
+      var _this2 = this;
 
       (livelyConfig.hooks || []).forEach(function (h) {
         try {
           var f = eval("(" + h.source + ")");
-          if (!f.name || !isInstalled(_this.System, h.target, f.name)) install(_this.System, h.target, f);
+          if (!f.name || !isInstalled(_this2.System, h.target, f.name)) install(_this2.System, h.target, f);
         } catch (e) {
-          console.error("Error installing hook for %s: %s", _this.packageURL, e, h);
+          console.error("Error installing hook for %s: %s", _this2.packageURL, e, h);
         }
       });
     }
   }, {
     key: "applyLivelyConfigBundles",
     value: function applyLivelyConfigBundles(livelyConfig) {
-      var _this2 = this;
+      var _this3 = this;
 
       if (!livelyConfig.bundles) return Promise.resolve();
       var normalized = Object.keys(livelyConfig.bundles).reduce(function (bundles, name) {
-        var absName = _this2.packageURL + "/" + name,
+        var absName = _this3.packageURL + "/" + name,
             files = livelyConfig.bundles[name].map(function (f) {
-          return _this2.System.decanonicalize(f, _this2.packageURL + "/");
+          return _this3.System.decanonicalize(f, _this3.packageURL + "/");
         });
         bundles[absName] = files;
         return bundles;
@@ -31456,10 +31385,10 @@ var PackageConfiguration = function () {
   }, {
     key: "applyLivelyConfigPackageMap",
     value: function applyLivelyConfigPackageMap(livelyConfig) {
-      var _this3 = this;
+      var _this4 = this;
 
       var subPackages = livelyConfig.packageMap ? Object.keys(livelyConfig.packageMap).map(function (name) {
-        return _this3.subpackageNameAndAddress(livelyConfig, name);
+        return _this4.subpackageNameAndAddress(livelyConfig, name);
       }) : [];
       return { subPackages: subPackages };
     }
@@ -31523,11 +31452,8 @@ var Package = function () {
   }, {
     key: "forModule",
     value: function forModule(System, module) {
-      var id = module.id,
-          map = moduleNamesByPackageNames(System),
-          pAddress = Object.keys(map).find(function (pName) {
-        return map[pName].includes(id);
-      });
+      var pAddress = ModulePackageMapping.forSystem(System).getPackageURLForModuleId(module.id);
+      if (!pAddress) throw new Error("Cannot find package URL of module " + module.id);
       return getPackage$1(System, pAddress, true /*normalized*/);
     }
   }]);
@@ -31559,10 +31485,13 @@ var Package = function () {
   }, {
     key: "modules",
     value: function modules() {
-      var _this4 = this;
+      var _this5 = this;
 
-      return (moduleNamesByPackageNames(this.System)[this.url] || []).map(function (id) {
-        return module$2(_this4.System, id);
+      var url = this.url,
+          System = this.System;
+
+      return ModulePackageMapping.forSystem(System).getModuleIdsForPackageURL(this.url).map(function (id) {
+        return module$2(_this5.System, id);
       });
     }
   }, {
@@ -31570,7 +31499,7 @@ var Package = function () {
     value: function () {
       var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(matches /*= url => url.match(/\.js$/)*/
       ) {
-        var _this5 = this;
+        var _this6 = this;
 
         var exclude = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [".git", "node_modules", ".module_cache"];
         var allPackages, packagesToIgnore, dirList, resourceURLs, loadedModules$$1;
@@ -31580,7 +31509,7 @@ var Package = function () {
               case 0:
                 allPackages = allPackageNames(this.System);
                 packagesToIgnore = allPackages.filter(function (purl) {
-                  return purl !== _this5.url && !_this5.url.startsWith(purl); /*parent packages*/
+                  return purl !== _this6.url && !_this6.url.startsWith(purl); /*parent packages*/
                 });
                 _context.next = 4;
                 return lively_resources.resource(this.address).dirList('infinity', { exclude: exclude });
@@ -31600,9 +31529,9 @@ var Package = function () {
                 if (matches) resourceURLs = resourceURLs.filter(matches);
 
                 return _context.abrupt("return", resourceURLs.map(function (url) {
-                  var nameInPackage = url.replace(_this5.address, "").replace(/^\//, ""),
+                  var nameInPackage = url.replace(_this6.address, "").replace(/^\//, ""),
                       isLoaded = loadedModules$$1.includes(url);
-                  return { isLoaded: isLoaded, url: url, nameInPackage: nameInPackage, package: _this5 };
+                  return { isLoaded: isLoaded, url: url, nameInPackage: nameInPackage, package: _this6 };
                 }));
 
               case 9:
@@ -31952,7 +31881,7 @@ var Package = function () {
     key: "search",
     value: function () {
       var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(needle) {
-        var _this6 = this;
+        var _this7 = this;
 
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         var modules;
@@ -31973,7 +31902,7 @@ var Package = function () {
               case 3:
                 _context5.t1 = function (_ref6) {
                   var url = _ref6.url;
-                  return module$2(_this6.System, url);
+                  return module$2(_this7.System, url);
                 };
 
                 _context5.t0 = _context5.sent.map(_context5.t1);
@@ -32049,28 +31978,6 @@ function removePackage$1(System, packageURL) {
 }
 function reloadPackage$1(System, packageURL) {
   return getPackage$1(System, packageURL).reload();
-}
-
-function allPackageNames(System) {
-  var sysPackages = System.packages,
-      livelyPackages = packageStore(System);
-  return lively_lang.arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages)));
-}
-
-function moduleNamesByPackageNames(System) {
-  var modules = knownModuleNames(System),
-      packageNames = allPackageNames(System);
-
-  return modules.reduce(function (packageMap, moduleName) {
-    var itsPackage = packageNames.reduce(function (itsPackage, packageName) {
-      if (!moduleName.startsWith(packageName)) return itsPackage;
-      if (!itsPackage || itsPackage.length < packageName.length) return packageName;
-      return itsPackage;
-    }, null) || "no group";
-    var packageModules = packageMap[itsPackage] || (packageMap[itsPackage] = []);
-    packageModules.push(moduleName);
-    return packageMap;
-  }, {});
 }
 
 function getPackages$1(System) {
@@ -32296,7 +32203,7 @@ var customTranslate = function () {
                         return cache.cacheModuleSource(load.name, hashForCache, translated);
 
                       case 6:
-                        console.log("[lively.modules customTranslate] stored cached version in filesystem for %s", load.name);
+                        debug && console.log("[lively.modules customTranslate] stored cached version in filesystem for %s", load.name);
                         _context10.next = 12;
                         break;
 
@@ -32322,7 +32229,7 @@ var customTranslate = function () {
                         return cache.cacheModuleSource(load.name, hashForCache, translated);
 
                       case 19:
-                        console.log("[lively.modules customTranslate] stored cached version for %s", load.name);
+                        debug && console.log("[lively.modules customTranslate] stored cached version for %s", load.name);
                         _context10.next = 25;
                         break;
 
@@ -33047,7 +32954,7 @@ var exceptions = [
 function (id) {
   return !id.endsWith(".js");
 }, function (id) {
-  return id.endsWith("dist/acorn.js") || id.endsWith("dist/escodegen.browser.js") || id.endsWith("bowser.js");
+  return id.endsWith("dist/acorn.js") || id.endsWith("dist/escodegen.browser.js") || id.endsWith("bowser.js") || id.endsWith("TweenMax.min.js");
 }, function (id) {
   return id.endsWith("babel-core/browser.js") || id.endsWith("system.src.js") || id.includes("systemjs-plugin-babel");
 }];
@@ -35804,7 +35711,8 @@ function livelySystemEnv(System) {
     notifications: System["__lively.modules__notifications"] || (System["__lively.modules__notifications"] = []),
     notificationSubscribers: System["__lively.modules__notificationSubscribers"] || (System["__lively.modules__notificationSubscribers"] = {}),
     options: System["__lively.modules__options"] || (System["__lively.modules__options"] = lively_lang.obj.deepCopy(defaultOptions)),
-    onLoadCallbacks: System["__lively.modules__onLoadCallbacks"] || (System["__lively.modules__onLoadCallbacks"] = [])
+    onLoadCallbacks: System["__lively.modules__onLoadCallbacks"] || (System["__lively.modules__onLoadCallbacks"] = []),
+    modulePackageMapCache: System["__lively.modules__modulePackageMapCache"]
   };
 }
 
@@ -36131,7 +36039,7 @@ var buildPackageMap = function () {
     var map = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
     var depth = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
 
-    var maxDepth, excludes, config, key, node_modules, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, url;
+    var maxDepth, excludes, config, key, node_modules, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _ref3, url;
 
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
@@ -36218,65 +36126,66 @@ var buildPackageMap = function () {
 
           case 32:
             if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-              _context.next = 40;
+              _context.next = 41;
               break;
             }
 
-            url = _step.value.url;
-            _context.next = 36;
+            _ref3 = _step.value;
+            url = _ref3.url;
+            _context.next = 37;
             return buildPackageMap(url, options, map, depth + 1);
 
-          case 36:
+          case 37:
             map = _context.sent;
 
-          case 37:
+          case 38:
             _iteratorNormalCompletion = true;
             _context.next = 32;
             break;
 
-          case 40:
-            _context.next = 46;
+          case 41:
+            _context.next = 47;
             break;
 
-          case 42:
-            _context.prev = 42;
+          case 43:
+            _context.prev = 43;
             _context.t4 = _context["catch"](30);
             _didIteratorError = true;
             _iteratorError = _context.t4;
 
-          case 46:
-            _context.prev = 46;
+          case 47:
             _context.prev = 47;
+            _context.prev = 48;
 
             if (!_iteratorNormalCompletion && _iterator.return) {
               _iterator.return();
             }
 
-          case 49:
-            _context.prev = 49;
+          case 50:
+            _context.prev = 50;
 
             if (!_didIteratorError) {
-              _context.next = 52;
+              _context.next = 53;
               break;
             }
 
             throw _iteratorError;
 
-          case 52:
-            return _context.finish(49);
-
           case 53:
-            return _context.finish(46);
+            return _context.finish(50);
 
           case 54:
-            return _context.abrupt("return", map);
+            return _context.finish(47);
 
           case 55:
+            return _context.abrupt("return", map);
+
+          case 56:
           case "end":
             return _context.stop();
         }
       }
-    }, _callee, this, [[3, 15], [18, 24], [30, 42, 46, 54], [47,, 49, 53]]);
+    }, _callee, this, [[3, 15], [18, 24], [30, 43, 47, 55], [48,, 50, 54]]);
   }));
 
   return function buildPackageMap(_x, _x2, _x3, _x4) {
@@ -36293,13 +36202,13 @@ function resolvePackageDependencies(pkg, packageMap) {
   var deps = _extends({}, pkg.dependencies, pkg.devDependencies);
   return Object.keys(deps).reduce(function (depMap, depName) {
     var depVersion = deps[depName],
-        _ref2 = lively_lang.obj.values(packageMap).find(function (_ref3) {
-      var name = _ref3.name,
-          version = _ref3.version;
+        _ref4 = lively_lang.obj.values(packageMap).find(function (_ref5) {
+      var name = _ref5.name,
+          version = _ref5.version;
       return name === depName && lively.modules.semver.satisfies(version, depVersion);
     }) || {},
-        name = _ref2.name,
-        version = _ref2.version;
+        name = _ref4.name,
+        version = _ref4.version;
 
     depMap[depName] = name ? name + "@" + version : undefined;
     return depMap;
@@ -36329,13 +36238,13 @@ function dependencyGraph(packageMap) {
     var cacheKey = depName + "@" + depVersionRange;
     if (cacheKey in cachedVersionQueries) return cachedVersionQueries[cacheKey];
 
-    var _ref4 = packages.find(function (_ref5) {
-      var name = _ref5.name,
-          version = _ref5.version;
+    var _ref6 = packages.find(function (_ref7) {
+      var name = _ref7.name,
+          version = _ref7.version;
       return name === depName && lively.modules.semver.satisfies(version, depVersionRange);
     }) || {},
-        name = _ref4.name,
-        version = _ref4.version;
+        name = _ref6.name,
+        version = _ref6.version;
 
     return cachedVersionQueries[cacheKey] = name ? name + "@" + version : undefined;
   }

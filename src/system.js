@@ -46,13 +46,14 @@ function livelySystemEnv(System) {
     },
     // this is where the canonical state of the module system is held...
     packageCache,
-    packages: System["__lively.modules__packages"]                               || (System["__lively.modules__packages"] = {}),
-    loadedModules: System["__lively.modules__loadedModules"]                     || (System["__lively.modules__loadedModules"] = {}),
-    pendingExportChanges: System["__lively.modules__pendingExportChanges"]       || (System["__lively.modules__pendingExportChanges"] = {}),
-    notifications: System["__lively.modules__notifications"]                     || (System["__lively.modules__notifications"] = []),
-    notificationSubscribers: System["__lively.modules__notificationSubscribers"] || (System["__lively.modules__notificationSubscribers"] = {}),
-    options: System["__lively.modules__options"]                                 || (System["__lively.modules__options"] = obj.deepCopy(defaultOptions)),
-    onLoadCallbacks: System["__lively.modules__onLoadCallbacks"]                 || (System["__lively.modules__onLoadCallbacks"] = [])
+    packages:                System["__lively.modules__packages"]                 || (System["__lively.modules__packages"]                = {}),
+    loadedModules:           System["__lively.modules__loadedModules"]            || (System["__lively.modules__loadedModules"]           = {}),
+    pendingExportChanges:    System["__lively.modules__pendingExportChanges"]     || (System["__lively.modules__pendingExportChanges"]    = {}),
+    notifications:           System["__lively.modules__notifications"]            || (System["__lively.modules__notifications"]           = []),
+    notificationSubscribers: System["__lively.modules__notificationSubscribers"]  || (System["__lively.modules__notificationSubscribers"] = {}),
+    options:                 System["__lively.modules__options"]                  || (System["__lively.modules__options"]                 = obj.deepCopy(defaultOptions)),
+    onLoadCallbacks:         System["__lively.modules__onLoadCallbacks"]          || (System["__lively.modules__onLoadCallbacks"]         = []),
+    modulePackageMapCache:   System["__lively.modules__modulePackageMapCache"]
   }
 }
 
