@@ -202,7 +202,7 @@ var exceptions = [
       // id => id.indexOf(resolve("node_modules/")) > -1,
       // id => canonicalURL(id).indexOf(node_modulesDir) > -1,
       id => !id.endsWith(".js"),
-      id => id.endsWith("dist/acorn.js") || id.endsWith("dist/escodegen.browser.js") || id.endsWith("bowser.js"),
+      id => id.endsWith("dist/acorn.js") || id.endsWith("dist/escodegen.browser.js") || id.endsWith("bowser.js") || id.endsWith("TweenMax.min.js"),
       id => id.endsWith("babel-core/browser.js") || id.endsWith("system.src.js") || id.includes("systemjs-plugin-babel"),
     ],
     pendingConfigs = [], configInitialized = false;
