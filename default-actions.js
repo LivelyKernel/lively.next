@@ -24,12 +24,12 @@ export var defaultTrackerActions = {
 
   async "broadcast": (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) => { 
     socket.broadcast.to(roomName).emit(broadcastMessage)
-    ackFn ? ackFn({status: 'Message delivered to ' + roomName}) : {}
+    if(ackFn && typeof ackFn === 'function'){ackFn({status: 'Message delivered to ' + roomName})}    
   },
   async "systemBroadcast": (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) => {
      var io = tracker.io;     
     io.nsps["/" + tracker.namespace].to(roomName).emit(broadcastMessage)
-    ackFn ? ackFn({status: 'System Broadcast Message delivered to ' + roomName}) : {}   
+    if(ackFn && typeof ackFn === 'function'){ackFn({status: 'System Broadcast Message delivered to ' + roomName})}
   },
   async "multiServerBroadcast": (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) =>{
       
@@ -42,8 +42,7 @@ export var defaultTrackerActions = {
         } else {
             socket.broadcast.to(roomName).emit(broadcastMessage)
         }
-        
-        ackFn ? ackFn({status: 'System Broadcast Message delivered to ' + roomName}) : {}
+        if(ackFn && typeof ackFn === 'function'){ackFn({status: 'System Broadcast Message delivered to ' + roomName})}
       })
   
   },  
@@ -52,11 +51,12 @@ export var defaultTrackerActions = {
   },
    async "joinRoom": (tracker, {sender, data: {roomName}}, ackFn, socket) => {
       await socket.join(roomName)
-      ackFn ? ackFn({status: 'Joined ' + roomName}) : {}   
+      if(ackFn && typeof ackFn === 'function'){ackFn({status: 'Joined ' + roomName})}      
+      console.log(sender + ' joined room ' + roomName)
   },
   async "leaveRoom": (tracker, {sender, data: {roomName}}, ackFn, socket) => {
       socket.leave(roomName)
-      ackFn ? ackFn({status: 'Left ' + roomName}) : {}
+      if(ackFn && typeof ackFn === 'function'){ackFn({status: 'Left ' + roomName})}
       console.log(sender + ' left room ' + roomName)
   },
   async "clientRoomList": (tracker, {}, ackFn, socket) => {    
@@ -68,11 +68,11 @@ export var defaultTrackerActions = {
       var contents
       if (roomName){
         contents = io.nsps["/" + tracker.namespace].adapter.rooms[roomName]
-        ackFn ? ackFn({roomName: roomName, sockets: contents.sockets,length: contents.length}) : {}
+        if(ackFn && typeof ackFn === 'function'){ackFn({roomName: roomName, sockets: contents.sockets,length: contents.length})}        
         
       } else {
-        contents = io.nsps["/" + tracker.namespace].adapter.rooms        
-        ackFn ? ackFn({roomList: contents}) : {}
+        contents = io.nsps["/" + tracker.namespace].adapter.rooms
+        if(ackFn && typeof ackFn === 'function'){ackFn({roomList: contents})}        
       }
                
       
