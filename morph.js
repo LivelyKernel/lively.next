@@ -279,6 +279,10 @@ export class Morph {
     this.loadDefaultProperties();
   }
 
+  __after_deserialize__() {
+    this.resumeStepping();
+  }
+
   get __only_serialize__() {
     return Object.keys(this._morphicState)
       .filter(key => this[key] != this.defaultProperties[key])
