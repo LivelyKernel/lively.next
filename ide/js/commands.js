@@ -77,7 +77,8 @@ function safeToString(value) {
 
 var printEvalResult = (function() {
   var itSym = typeof Symbol !== "undefined" && Symbol.iterator,
-      maxIterLength = 10;
+      maxIterLength = 10,
+      maxStringLength = 100;
 
   return function(result, maxDepth) {
     var err = result instanceof Error ? result : result.isError ? result.value : null;
@@ -110,6 +111,7 @@ var printEvalResult = (function() {
   function inspectPrinter(val, ignore) {
     if (!val) return ignore;
     if (typeof val === "symbol") return printSymbol(val);
+    if (typeof val === "string") return string.print(string.truncate(val, maxStringLength));
     if (val.isMorph) return safeToString(val);
     if (val instanceof Promise) return "Promise()";
     if (val instanceof Node) return safeToString(val);
