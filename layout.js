@@ -284,9 +284,9 @@ export class TilingLayout extends Layout {
     super.apply(animate);
     var width = this.getOptimalWidth(),
         currentRowHeight = 0,
-        currentRowWidth = 0,
+        currentRowWidth = this.border.left,
         {spacing, layoutableSubmorphs} = this,
-        previousRowHeight = spacing,
+        previousRowHeight = spacing + this.border.top,
         i = 0, rowSwitch = true;
 
     while (i < layoutableSubmorphs.length) {
@@ -305,7 +305,8 @@ export class TilingLayout extends Layout {
         i++;
       } else {
         previousRowHeight += spacing + currentRowHeight;
-        currentRowWidth = currentRowHeight = 0;
+        currentRowWidth = this.border.left;
+        currentRowHeight = 0;
         rowSwitch = true;
       }
     }
@@ -324,7 +325,7 @@ export class TilingLayout extends Layout {
   }
 
   getOptimalWidth() {
-    var width = this.container.width,
+    var width = this.container.width - this.border.left - this.border.right,
         maxSubmorphWidth = this.getMinWidth();
     return Math.max(width, maxSubmorphWidth);
   }
