@@ -134,9 +134,10 @@ describe("package loading", function() {
       await p.register();
       expect(arr.pluck(p.modules(), "id")).equals([project1aDir + "package.json"], "register")
       await p.import();
+
       expect(arr.pluck(p.modules(), "id"))
         .equals(["package.json", "entry-a.js", "other.js"].map(ea => project1aDir + ea), "import")
-
+      
       var innerDir = project1aDir + "my-projects/sub-project/",
           p2 = getPackage(S, innerDir);
       await p2.import();

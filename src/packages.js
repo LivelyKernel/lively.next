@@ -77,8 +77,7 @@ class ModulePackageMapping {
     if (this._notificationHandlers) return;
     var S = this.System;
     this._notificationHandlers = [
-      subscribe("lively.modules/moduleloaded",
-        evt => !this.modulesToPackage[evt.module] && this.addModuleIdToCache(evt.module), S),
+      subscribe("lively.modules/moduleloaded", evt => this.addModuleIdToCache(evt.module), S),
       subscribe("lively.modules/moduleunloaded", evt => this.removeModuleFromCache(evt.module), S),
       subscribe("lively.modules/packageregistered", evt => this.clearCache(), S),
       subscribe("lively.modules/packageremoved", evt => this.clearCache(), S)
@@ -137,8 +136,10 @@ class ModulePackageMapping {
 
   addModuleIdToCache(moduleId) {
     this.ensureCache();
-    let {packageToModule, modulesToPackage} = this,
-        packageNames = Object.keys(packageToModule), itsPackage;
+    let {packageToModule, modulesToPackage} = this;
+    if (modulesToPackage[moduleId]) return modulesToPackage[moduleId];
+
+    let packageNames = Object.keys(packageToModule), itsPackage;
     for (let j = 0; j < packageNames.length; j++) {
       let packageName = packageNames[j];
       if (moduleId.startsWith(packageName)

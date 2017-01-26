@@ -3280,7 +3280,7 @@ var ModulePackageMapping = function () {
       if (this._notificationHandlers) return;
       var S = this.System;
       this._notificationHandlers = [lively_notifications.subscribe("lively.modules/moduleloaded", function (evt) {
-        return !_this.modulesToPackage[evt.module] && _this.addModuleIdToCache(evt.module);
+        return _this.addModuleIdToCache(evt.module);
       }, S), lively_notifications.subscribe("lively.modules/moduleunloaded", function (evt) {
         return _this.removeModuleFromCache(evt.module);
       }, S), lively_notifications.subscribe("lively.modules/packageregistered", function (evt) {
@@ -3346,10 +3346,12 @@ var ModulePackageMapping = function () {
     value: function addModuleIdToCache(moduleId) {
       this.ensureCache();
       var packageToModule = this.packageToModule,
-          modulesToPackage = this.modulesToPackage,
-          packageNames = Object.keys(packageToModule),
-          itsPackage = void 0;
+          modulesToPackage = this.modulesToPackage;
 
+      if (modulesToPackage[moduleId]) return modulesToPackage[moduleId];
+
+      var packageNames = Object.keys(packageToModule),
+          itsPackage = void 0;
       for (var j = 0; j < packageNames.length; j++) {
         var packageName = packageNames[j];
         if (moduleId.startsWith(packageName) && (!itsPackage || itsPackage.length < packageName.length)) itsPackage = packageName;
@@ -6443,6 +6445,7 @@ function instantiate_triggerOnLoadCallbacks(proceed, load) {
     // Wait until module is properly loaded, i.e. added to the System module cache.
     // Then find those callbacks in System.get("@lively-env").onLoadCallbacks that
     // resolve to the loaded module, trigger + remove them
+
     lively_lang.promise.waitFor(function () {
       return System.get(load.name);
     }).then(function () {
