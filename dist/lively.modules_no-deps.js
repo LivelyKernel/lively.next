@@ -3843,6 +3843,7 @@ var Package = function () {
     key: "import",
     value: function () {
       var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+        var url, System, mainModule, exported;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -3851,15 +3852,29 @@ var Package = function () {
                 return this.register();
 
               case 2:
-                _context3.t0 = this.System;
-                _context3.next = 5;
-                return this.System.normalize(this.url);
-
-              case 5:
-                _context3.t1 = _context3.sent;
-                return _context3.abrupt("return", _context3.t0.import.call(_context3.t0, _context3.t1));
+                url = this.url;
+                System = this.System;
+                _context3.t0 = System;
+                _context3.next = 7;
+                return System.normalize(url);
 
               case 7:
+                _context3.t1 = _context3.sent;
+                mainModule = module$2(_context3.t0, _context3.t1);
+                _context3.next = 11;
+                return System.import(mainModule.id);
+
+              case 11:
+                exported = _context3.sent;
+                _context3.next = 14;
+                return lively_lang.promise.waitFor(1000, function () {
+                  return mainModule.isLoaded();
+                });
+
+              case 14:
+                return _context3.abrupt("return", exported);
+
+              case 15:
               case "end":
                 return _context3.stop();
             }
@@ -6425,7 +6440,7 @@ function instantiate_triggerOnLoadCallbacks(proceed, load) {
   var System = this;
 
   return proceed(load).then(function (result) {
-    // Wait until module is properly loaded, i.e. added to the System moule cache.
+    // Wait until module is properly loaded, i.e. added to the System module cache.
     // Then find those callbacks in System.get("@lively-env").onLoadCallbacks that
     // resolve to the loaded module, trigger + remove them
     lively_lang.promise.waitFor(function () {

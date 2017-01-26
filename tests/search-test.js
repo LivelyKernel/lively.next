@@ -168,9 +168,7 @@ describe("search", () => {
       const res = await getPackage(S, testProjectDir).search("comment");
       expect(res).to.containSubset([{
         moduleId: file2m,
-        line: 1,
-        column: 27,
-        length: 7
+        line: 1, column: 27, length: 7
       }]);
     });
 

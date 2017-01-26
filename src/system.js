@@ -323,7 +323,7 @@ function instantiate_triggerOnLoadCallbacks(proceed, load) {
   var System = this;
 
   return proceed(load).then(result => {
-    // Wait until module is properly loaded, i.e. added to the System moule cache.
+    // Wait until module is properly loaded, i.e. added to the System module cache.
     // Then find those callbacks in System.get("@lively-env").onLoadCallbacks that
     // resolve to the loaded module, trigger + remove them
     promise.waitFor(() => System.get(load.name)).then(() => {

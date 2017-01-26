@@ -524,7 +524,15 @@ class Package {
     await this.register();
     // *after* the package is registered the normalize call should resolve to the
     // package's main module
-    return this.System.import(await this.System.normalize(this.url));
+    let {url, System} = this,
+        mainModule = module(System, await System.normalize(url)),
+        exported = await System.import(mainModule.id);
+    // rk 2017-01-25: since the notifications that let the ModuleCache know
+    // that the module is loaded are async, we need to wait for lively.modules to
+    // "know" that the imported module (and all its dependencies) are actually
+    // loaded
+    await promise.waitFor(1000, () => mainModule.isLoaded());
+    return exported;
   }
 
   isRegistering() { return !!this.registerProcess; }
