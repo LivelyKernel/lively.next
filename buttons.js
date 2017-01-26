@@ -84,7 +84,6 @@ export class Button extends Morph {
 
       // button styles
       defaultActiveStyle: {
-        readOnly: true,
         defaultValue: {
           borderColor: Color.gray,
           fill: Color.rgb(240, 240, 240),
@@ -101,7 +100,6 @@ export class Button extends Morph {
       },
 
       defaultInactiveStyle: {
-        readOnly: true,
         defaultValue: {
           borderColor: Color.gray.withA(0.5),
           fill: Color.rgba(240, 240, 240, 0.5),
@@ -118,7 +116,6 @@ export class Button extends Morph {
       },
 
       defaultTriggerStyle: {
-        readOnly: true,
         defaultValue: {fill: Color.rgb(161,161,161)}
       },
       triggerStyle: {
