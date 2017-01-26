@@ -855,6 +855,12 @@ export class World extends Morph {
       {command: "window switcher",          target: this},
       {isDivider: true},
       ["Debugging", [
+        ["delete change history", () => {
+          var status = this.env.printStatus();
+          this.env.deleteHistory()
+          this.setStatusMessage(status);
+        }],
+        
         ["fix font metric", () => {
           this.env.fontMetric.reset();
           this.withAllSubmorphsDo(ea => ea.isText && ea.textLayout && ea.textLayout.reset());
