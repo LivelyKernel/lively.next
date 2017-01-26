@@ -29,6 +29,11 @@ export default class Window extends Morph {
     connect(this.titleLabel(), "value", this, "relayoutWindowControls");
   }
 
+  __deserialize__(snapshot, ref) {
+    super.__deserialize__(snapshot, ref)
+    this.resetPropertyCache();
+  }
+
   get isWindow() { return true }
 
   get targetMorph() { return arr.withoutAll(this.submorphs, this.controls())[0]; }
@@ -76,57 +81,59 @@ export default class Window extends Morph {
 
   buttons() {
 
-    let defaultStyle = {
-      type: "ellipse",
-      extent: pt(14,14),
-      onHoverIn() { this.submorphs[0].visible = true; },
-      onHoverOut() { this.submorphs[0].visible = false; }
-    };
+    let defaultStyle = {type: "ellipse", extent: pt(14,14)};
 
-    return arr.compact([
+    var closeButton = this.getSubmorphNamed("close") || morph({
+      ...defaultStyle,
+      name: "close",
+      center: pt(15,13),
+      borderColor: Color.darkRed,
+      fill: Color.rgb(255,96,82),
+      submorphs: [
+        Label.icon("times", {
+          fill: null, visible: false,
+          center: defaultStyle.extent.scaleBy(.5), opacity: 0.5
+        })]
+    });
+    connect(closeButton, 'onMouseDown', this, 'close');
+    connect(closeButton, 'onHoverIn', closeButton.submorphs[0], 'visible', {converter: () => true});
+    connect(closeButton, 'onHoverOut', closeButton.submorphs[0], 'visible', {converter: () => false});
 
-      this.getSubmorphNamed("close") || morph({
-        ...defaultStyle,
-        name: "close",
-        center: pt(15,13),
-        borderColor: Color.darkRed,
-        fill: Color.rgb(255,96,82),
-        onMouseDown: (evt) => { this.close(); },
-        submorphs: [
-          Label.icon("times", {
-            fill: null, visible: false,
-            center: defaultStyle.extent.scaleBy(.5), opacity: 0.5
-          })]
-      }),
+    var minimizeButton = this.getSubmorphNamed("minimize") || morph({
+      ...defaultStyle,
+      center: pt(35,13),
+      name: "minimize",
+      borderColor: Color.brown,
+      fill: Color.rgb(255,190,6),
+      submorphs: [
+        Label.icon("minus", {
+          fill: null, visible: false,
+          center: defaultStyle.extent.scaleBy(.5), opacity: 0.5
+        })]
+    });
+    connect(minimizeButton, 'onMouseDown', this, 'toggleMinimize');
+    connect(minimizeButton, 'onHoverIn', minimizeButton.submorphs[0], 'visible', {converter: () => true});
+    connect(minimizeButton, 'onHoverOut', minimizeButton.submorphs[0], 'visible', {converter: () => false});
 
-      this.getSubmorphNamed("minimize") || morph({
-        ...defaultStyle,
-        center: pt(35,13),
-        name: "minimize",
-        borderColor: Color.brown,
-        fill: Color.rgb(255,190,6),
-        onMouseDown: (evt) => { this.toggleMinimize(); },
-        submorphs: [
-          Label.icon("minus", {
-            fill: null, visible: false,
-            center: defaultStyle.extent.scaleBy(.5), opacity: 0.5
-          })]
-      }),
-
-      this.resizable ? (this.getSubmorphNamed("maximize") || morph({
+    if (this.resizable) {
+      var maximizeButton =  (this.getSubmorphNamed("maximize") || morph({
         ...defaultStyle,
         name: "maximize",
         center: pt(55,13),
         borderColor: Color.darkGreen,
         fill: Color.green,
-        onMouseDown: (evt) => { this.toggleMaximize(); },
         submorphs: [
           Label.icon("plus", {
             fill: null, visible: false,
             center: defaultStyle.extent.scaleBy(.5), opacity: 0.5
           })]
-      })) : undefined
-    ]);
+      }));
+      connect(maximizeButton, 'onMouseDown', this, 'toggleMaximize');
+      connect(maximizeButton, 'onHoverIn', maximizeButton.submorphs[0], 'visible', {converter: () => true});
+      connect(maximizeButton, 'onHoverOut', maximizeButton.submorphs[0], 'visible', {converter: () => false});
+    }
+
+    return arr.compact([closeButton, minimizeButton, maximizeButton]);
   }
 
   titleLabel() {
@@ -174,7 +181,7 @@ export default class Window extends Morph {
   toggleMinimize() {
     var cache = this.propertyCache,
         bounds = this.bounds(),
-        duration = 200, 
+        duration = 200,
         easing = Expo.easeOut;
     if (this.minimized) {
       cache.minimizedBounds = bounds;
