@@ -384,14 +384,15 @@ export class ObjectEditor extends Morph {
     if (this.state.isSaving) return;
 
     var m = module(evt.module),
-        {selectedModule, selectedClass} = this;
+        {selectedModule, selectedClass} = this,
+        ed = this.get("sourceEditor");
 
     if (!selectedModule || selectedModule.id !== m.id)
       return;
 
     if (this.hasUnsavedChanges()) {
       var newClassSource = await this.sourceDescriptorFor(selectedClass).source;
-      if (this.state.sourceHash !== string.hashCode(newClassSource)) {
+      if (string.hashCode(ed.textString) !== string.hashCode(newClassSource)) {
         this.addModuleChangeWarning(m.id);
         this.state.sourceHash = string.hashCode(newClassSource);
         return;
@@ -594,12 +595,15 @@ localStorage["oe helper"] = JSON.stringify(store);
       // FIXME move this into system interface!
       var m = this.selectedModule,
           origSource = await m.source();
+
+      this.state.isSaving = true;
       await m.addImports(choices);
 
     } catch (e) {
       origSource && await m.changeSource(origSource);
       this.showError(e);
     } finally {
+      this.state.isSaving = false;
       await this.get("importController").updateImports();
       await this.updateKnownGlobals();
       this.get("sourceEditor").focus();
