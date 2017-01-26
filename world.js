@@ -422,6 +422,15 @@ var worldCommands = [
   },
 
   {
+    name: "open PartsBin",
+    exec: async world => {
+      var { loadObjectFromPartsbinFolder } = await System.import("lively.morphic/partsbin.js")
+      var pb = await loadObjectFromPartsbinFolder("PartsBin");
+      return pb.openInWorldNearHand();
+    }
+  },
+
+  {
     name: "open object drawer",
     exec: async world => {
       var { default: ObjectDrawer } = await System.import("lively.morphic/object-drawer.js")
@@ -852,6 +861,7 @@ export class World extends Morph {
         }]
       ]],
       ["Tools", [
+        {command: "open PartsBin",            target: this},
         {command: "open object drawer",       target: this},
         {command: "open workspace",           target: this},
         {command: "open browser",             target: this},
