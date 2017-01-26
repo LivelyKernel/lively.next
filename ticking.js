@@ -8,6 +8,10 @@ class Script {
     this.currentTimeout = null;
   }
 
+  __additionally_serialize__(snapshot, ref, snapshotFn) {
+    snapshot.props.suspended.value = true;
+  }
+
   get isScript() { return true }
   get global() { return System.global; }
 
