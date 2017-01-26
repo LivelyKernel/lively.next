@@ -10,27 +10,35 @@ import { inspect } from "lively.morphic";
 
 var partsbinFolder = System.decanonicalize("lively.morphic/parts/")
 
-async function createObjectSnapshot(obj) {
-  var snapshot = serializeMorph(obj),
-      klass = obj.constructor, packages = snapshot.packages = {},
+async function createObjectSnapshot(aMorph) {
+  var snapshot = serializeMorph(aMorph),
+      packages = snapshot.packages = {},
+      packagesToSave = [];
+
+  // 1. save object packages
+  aMorph.withAllSubmorphsDo(m => {
+    let klass = aMorph.constructor,
       moduleMeta = klass[Symbol.for("lively-module-meta")];
-
-  // if it's a "local" object package then save that as part of the snapshot
-  if (moduleMeta) {
-    var p = lively.modules.getPackage(moduleMeta.package.name);
-    if (p && p.address.startsWith("local://")) {
-      var root = resource(p.address).asDirectory(),
-          packageJSON = await resourceToJSON(root, {});
-      Object.assign(packages, {[root.parent().url]: packageJSON})
+    // if it's a "local" object package then save that as part of the snapshot
+    if (moduleMeta) {
+      var p = lively.modules.getPackage(moduleMeta.package.name);
+      if (p && p.address.startsWith("local://"))
+        packagesToSave.push(p);
     }
-  }
+  });
+  packagesToSave.map(async p => {
+    var root = resource(p.address).asDirectory(),
+      packageJSON = await resourceToJSON(root, {});
+    Object.assign(packages, {[root.parent().url]: packageJSON});
+  })
 
-  snapshot.preview = obj.renderPreview();
+  // add preview
+  snapshot.preview = aMorph.renderPreview();
 
   return snapshot;
 }
 
-async function loadObjectFromSnapshot(snapshot) {
+export async function loadObjectFromSnapshot(snapshot) {
   for (var baseURL in snapshot.packages) {
     var r = await createFiles(baseURL, snapshot.packages[baseURL]);
     for (var pName in snapshot.packages[baseURL]) {
@@ -49,7 +57,7 @@ async function saveObjectToPartsbinFolder(obj, partName) {
   return {partResource}
 }
 
-async function loadObjectFromPartsbinFolder(partName) {
+export async function loadObjectFromPartsbinFolder(partName) {
   var rawContent = await resource(partsbinFolder).join(partName + ".json").read(),
       deserialized = loadObjectFromSnapshot(JSON.parse(rawContent));
   return deserialized;
@@ -61,8 +69,17 @@ export async function interactivelySaveObjectToPartsBinFolder(obj) {
               historyId: "lively.partsbin-partname-publish-to-folder-input-hist",
             });
   if (!partName) throw "canceled";
-  var {partResource} = await saveObjectToPartsbinFolder(obj, partName);
+  if (typeof obj.beforePublish === "function")
+    obj.beforePublish(partName);
+  var win = obj.getWindow(),
+      objOrWindow = win && win.targetMorph === obj ? win : obj,
+      {partResource} = await saveObjectToPartsbinFolder(objOrWindow, partName);
   return {partName, url: partResource.url}
+}
+
+export async function getAllPartResources() {
+  var files = await resource(partsbinFolder).dirList(1);
+  return files.filter(ea => ea.name().endsWith(".json"));
 }
 
 export async function interactivelyLoadObjectFromPartsBinFolder() {
@@ -83,6 +100,7 @@ export async function interactivelyLoadObjectFromPartsBinFolder() {
 
 // await saveObjectToPartsbinFolder(that, "PartsBin")
 // await interactivelySaveObjectToPartsBinFolder(that)
+// var obj = (await loadObjectFromPartsbinFolder("star")).openInWorld();
 // var obj = (await interactivelyLoadObjectFromPartsBinFolder()).openInWorld();
 
 
