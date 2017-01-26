@@ -1,0 +1,280 @@
+{
+  "id": "Text_A4248A76_C4E4_4613_972A_3C812D86A17E",
+  "snapshot": {
+    "Text_A4248A76_C4E4_4613_972A_3C812D86A17E": {
+      "rev": 180745,
+      "props": {
+        "savedMarks": {
+          "key": "savedMarks",
+          "value": []
+        },
+        "tabWidth": {
+          "key": "tabWidth",
+          "value": 2
+        },
+        "useSoftTabs": {
+          "key": "useSoftTabs",
+          "value": true
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,8,0,0)"
+        },
+        "fixedHeight": {
+          "key": "fixedHeight",
+          "value": false
+        },
+        "fixedWidth": {
+          "key": "fixedWidth",
+          "value": false
+        },
+        "readOnly": {
+          "key": "readOnly",
+          "value": false
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 1
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 3
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 3
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 3
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 3
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Text",
+            "Morph",
+            "morph"
+          ]
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(508.3,256.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "name": {
+          "key": "name",
+          "value": "a text 1"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(126.4,40.0)"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "selectable": {
+          "key": "selectable",
+          "value": true
+        },
+        "lineWrapping": {
+          "key": "lineWrapping",
+          "value": true
+        },
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "43EF4E37-7559-4367-9E1C-A2F1F9936673",
+              "rev": 0
+            }
+          ]
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "verbatim": true,
+          "value": [
+            [
+              "Lively rocks!",
+              [
+                {
+                  "fontFamily": "Sans-Serif",
+                  "fontSize": 12,
+                  "fontColor": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  },
+                  "fontWeight": "normal",
+                  "fontStyle": "normal",
+                  "textDecoration": "none",
+                  "fixedCharacterSpacing": false
+                },
+                {
+                  "fontFamily": "Helvetica Neue, Arial, sans-serif",
+                  "fontSize": 20,
+                  "fontColor": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  },
+                  "fontWeight": "normal",
+                  "fontStyle": "normal",
+                  "textDecoration": "none",
+                  "fixedCharacterSpacing": false
+                }
+              ]
+            ],
+            [
+              "",
+              []
+            ]
+          ]
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Text",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/morph.js"
+        }
+      }
+    },
+    "43EF4E37-7559-4367-9E1C-A2F1F9936673": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Text_A4248A76_C4E4_4613_972A_3C812D86A17E",
+            "rev": 180745
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "selectionChange"
+        },
+        "targetObj": {
+          "key": "targetObj"
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "openDebouncedFor"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "3AB9990A-F96D-45A5-91FE-2BC86E0453C6",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "sel => sel.textMorph"
+        },
+        "converter": {
+          "key": "converter"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "3AB9990A-F96D-45A5-91FE-2BC86E0453C6": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Text_A4248A76_C4E4_4613_972A_3C812D86A17E",
+            "rev": 180745
+          }
+        },
+        "target": {
+          "key": "target"
+        }
+      }
+    }
+  },
+  "packages": {},
+  "preview": "<div   draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate(0px, 34.176px) rotate(0deg) scale(0.791198, 0.791198); transform-origin: 0px 0px 0px; display: inline; width: 126.391px; height: 40px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div  style=\" position: absolute; left: 80.0938px; top: 8px; width: 3px; height: 24px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 24px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 24px; line-height: 24px;\"><span style=\"font-size: 20px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: normal; font-style: normal; text-decoration: none; color: rgb(0, 0, 0);\">Lively rocks!</span></div><div style=\"height: 0px; width: 110.391px;\"></div></div></div>"
+}

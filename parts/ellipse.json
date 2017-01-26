@@ -1,0 +1,73 @@
+{
+  "id": "Ellipse_3459978D_549D_4158_A332_398F09476B47",
+  "snapshot": {
+    "Ellipse_3459978D_549D_4158_A332_398F09476B47": {
+      "rev": 218362,
+      "props": {
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 146.3
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 130
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 130
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 146.3
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Ellipse",
+            "Morph",
+            "morph"
+          ]
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(21.0,488.0)"
+        },
+        "name": {
+          "key": "name",
+          "value": "ellipse"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(15,205,112)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.3,130.0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Ellipse",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    }
+  },
+  "packages": {},
+  "preview": "<div   draggable=\"false\" style=\"background: rgb(15, 205, 112); transform: translate(0px, 5.57075px) rotate(0deg) scale(0.683527, 0.683527); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 146.3px 130px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div>"
+}
