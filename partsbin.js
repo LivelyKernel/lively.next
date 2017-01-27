@@ -29,7 +29,8 @@ window.aMorph = aMorph
     packagesToSave.map(async p => {
       var root = resource(p.address).asDirectory(),
         packageJSON = await resourceToJSON(root, {});
-      Object.assign(packages, {[root.parent().url]: packageJSON});
+      if (!packages[root.parent().url]) packages[root.parent().url] = {}
+      Object.assign(packages[root.parent().url], packageJSON);
     }));
 
   // add preview

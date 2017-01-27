@@ -1,9 +1,13 @@
 {
-  "id": "Window_B113FC26_989E_4606_9E69_674D5395CB23",
+  "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
   "snapshot": {
-    "Window_B113FC26_989E_4606_9E69_674D5395CB23": {
-      "rev": 42997,
+    "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB": {
+      "rev": 1491360,
       "props": {
+        "resizable": {
+          "key": "resizable",
+          "value": true
+        },
         "borderWidthTop": {
           "key": "borderWidthTop",
           "value": 1
@@ -66,7 +70,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(456.4,356.5)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(211.9,365.5)"
         },
         "origin": {
           "key": "origin",
@@ -82,48 +86,52 @@
         },
         "extent": {
           "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(998.3,479.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(979.3,476.0)"
         },
         "dropShadow": {
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "D2CEFBCD-E03B-41E0-A45A-F5578C856358",
+            "id": "BBB6CA8A-DE7F-412F-80F9-D9B062E4344C",
             "rev": 0
           }
+        },
+        "clipMode": {
+          "key": "clipMode",
+          "value": "hidden"
         },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
-              "id": "Partsbin_519775A6_2562_49A0_9205_BD5515FFE7A0",
-              "rev": 48072
+              "id": "Partsbin_FABE76E2_FE67_4749_A597_AC6F9569555F",
+              "rev": 1492004
             },
             {
               "__ref__": true,
-              "id": "Ellipse_603660B0_11B3_4D80_8ACE_8565732705B4",
-              "rev": 1973
+              "id": "Ellipse_AC5F00AC_54E2_47D7_B8AC_A7324EAB76AC",
+              "rev": 1469308
             },
             {
               "__ref__": true,
-              "id": "Ellipse_F8E5AF83_0593_41C0_964F_907B4F69FBBA",
-              "rev": 2002
+              "id": "Ellipse_636A7042_07D4_4C36_BF60_EA64CCBEC628",
+              "rev": 1469328
             },
             {
               "__ref__": true,
-              "id": "Ellipse_5FB6EF98_1D65_413B_9332_60DA50650C04",
-              "rev": 2031
+              "id": "Ellipse_23DC893C_21DF_4058_9C4D_B5D19041532B",
+              "rev": 1469348
             },
             {
               "__ref__": true,
-              "id": "Label_8B473B7F_55C2_459C_9621_8856CA9EA750",
-              "rev": 47090
+              "id": "Label_9E5ADC89_0BAF_4DF5_94A8_50E6EBC1D1DB",
+              "rev": 1492017
             },
             {
               "__ref__": true,
-              "id": "Morph_9B38DFB0_273F_4D7C_97F1_593B942661EA",
-              "rev": 47072
+              "id": "Resizer_6670F1CA_BA14_415F_9A83_14AE79FCEA19",
+              "rev": 1492002
             }
           ]
         },
@@ -131,8 +139,8 @@
           "key": "targetMorph",
           "value": {
             "__ref__": true,
-            "id": "Partsbin_519775A6_2562_49A0_9205_BD5515FFE7A0",
-            "rev": 48072
+            "id": "Partsbin_FABE76E2_FE67_4749_A597_AC6F9569555F",
+            "rev": 1492004
           }
         },
         "title": {
@@ -148,7 +156,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "9D3A7F84-3A19-4E9A-AB65-A96F90A6D87B",
+              "id": "8A318272-53F3-4B15-AB15-4561DF8AA3AA",
               "rev": 0
             }
           ]
@@ -165,7 +173,7 @@
         }
       }
     },
-    "D2CEFBCD-E03B-41E0-A45A-F5578C856358": {
+    "BBB6CA8A-DE7F-412F-80F9-D9B062E4344C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -203,8 +211,8 @@
         }
       }
     },
-    "Partsbin_519775A6_2562_49A0_9205_BD5515FFE7A0": {
-      "rev": 48072,
+    "Partsbin_FABE76E2_FE67_4749_A597_AC6F9569555F": {
+      "rev": 1492004,
       "props": {
         "styleClasses": {
           "key": "styleClasses",
@@ -232,7 +240,7 @@
         },
         "extent": {
           "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(998.3,454.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(979.3,451.0)"
         },
         "draggable": {
           "key": "draggable",
@@ -243,8 +251,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_91A45423_CDA8_4D1C_B296_05A57693BE14",
-              "rev": 47076
+              "id": "Morph_5B03931C_219D_4BC7_B889_3DD018FBF21B",
+              "rev": 1492006
             }
           ]
         },
@@ -252,7 +260,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "3E6E9349-DB91-4DD1-A75A-484D08E52170",
+            "id": "EB6EE5DF-A8AB-486E-B389-7F5F3B2DC4C9",
             "rev": 0
           }
         },
@@ -265,7 +273,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "A66D5B86-1177-46C1-ABCA-D8281C82359A",
+              "id": "0F10BBD6-1DCF-433A-8E01-78AF821BC564",
               "rev": 0
             }
           ]
@@ -282,8 +290,8 @@
         }
       }
     },
-    "Morph_91A45423_CDA8_4D1C_B296_05A57693BE14": {
-      "rev": 47076,
+    "Morph_5B03931C_219D_4BC7_B889_3DD018FBF21B": {
+      "rev": 1492006,
       "props": {
         "borderWidthTop": {
           "key": "borderWidthTop",
@@ -346,7 +354,7 @@
         },
         "extent": {
           "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(998.3,40.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(979.3,40.0)"
         },
         "draggable": {
           "key": "draggable",
@@ -357,8 +365,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-              "rev": 42936
+              "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+              "rev": 1487619
             }
           ]
         },
@@ -366,7 +374,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "41379AA3-C5F2-4E6A-890C-5EE2E06BE1E3",
+            "id": "81A7E0BC-B0BC-46A6-8498-1081A7DC3173",
             "rev": 0
           }
         },
@@ -389,14 +397,14 @@
         }
       }
     },
-    "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC": {
-      "rev": 42936,
+    "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8": {
+      "rev": 1487619,
       "props": {
         "defaultTriggerStyle": {
           "key": "defaultTriggerStyle",
           "value": {
             "__ref__": true,
-            "id": "F9233848-EB4A-437F-927D-04CD9E7E6342",
+            "id": "7ED7026E-B4E2-4074-9B21-7E45198E115B",
             "rev": 0
           }
         },
@@ -404,7 +412,7 @@
           "key": "defaultInactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "E44F5391-BF6A-40A7-AFDD-DDA32E05DD39",
+            "id": "B1A4591F-2987-40AA-809D-BE7D9453CCEF",
             "rev": 0
           }
         },
@@ -412,7 +420,7 @@
           "key": "defaultActiveStyle",
           "value": {
             "__ref__": true,
-            "id": "0B64B8F6-3C8F-4EE9-A16F-31F98FA7525B",
+            "id": "3164316F-31F5-447C-92A1-4B7E8286690E",
             "rev": 0
           }
         },
@@ -476,9 +484,13 @@
             "morph"
           ]
         },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(484.0,5.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(474.5,5.0)"
         },
         "origin": {
           "key": "origin",
@@ -500,13 +512,17 @@
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(30.3,27.0)"
         },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
-              "id": "Label_CFEE33C4_6252_4445_9727_089D64121294",
-              "rev": 2125
+              "id": "Label_C707B066_9F04_4773_8839_AF8D90562D4B",
+              "rev": 1469431
             }
           ]
         },
@@ -514,7 +530,7 @@
           "key": "triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "B2584B58-76EE-4635-8007-84EF66926694",
+            "id": "709F57C0-3B45-4C7F-A677-2715B738225E",
             "rev": 0
           }
         },
@@ -522,7 +538,7 @@
           "key": "inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "DD9EE4B5-5575-41C1-8277-7AFCB6D4B868",
+            "id": "914EB822-768A-4984-97F8-0A7054B13755",
             "rev": 0
           }
         },
@@ -530,9 +546,13 @@
           "key": "activeStyle",
           "value": {
             "__ref__": true,
-            "id": "CDB41B76-3D94-4189-ABD7-A7D253D41AB8",
+            "id": "5ABEE00B-BFD5-44C4-8589-498A377CB61E",
             "rev": 0
           }
+        },
+        "active": {
+          "key": "active",
+          "value": true
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -543,42 +563,42 @@
           "value": [
             {
               "__ref__": true,
-              "id": "484D8CE3-FA26-4D63-BEF1-A7739FB20827",
+              "id": "4F39E746-CC03-4A21-97ED-2A10D5572E63",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "D8BFE52C-174F-4EAF-B0E7-8A04010727BF",
+              "id": "210BFD1E-8890-46A0-9D27-B15243AD2D16",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "5064119C-04AA-487C-B2D0-04F8A410E8D0",
+              "id": "199CCED1-DB6D-4617-8AA2-E13AAC736360",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "62D046DA-9842-4825-B01B-AE1DB3E8348A",
+              "id": "1E662DC4-7225-44E6-BCF5-B9903319F9C5",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "D4FC0169-0B98-4345-BD44-B7B2189516C4",
+              "id": "1811D3C5-E4CE-4D8E-9693-97629B028FAF",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "A26E4096-D080-468A-8439-CC93E94B7128",
+              "id": "1449285E-524B-4C25-837F-9EAF1EBEC5FF",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "23F9EC6B-0163-4B8E-99DD-0421D9C2ADCF",
+              "id": "865631D6-CDB0-4D8A-8075-656AB17DC92A",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "78F0E62E-6102-4863-8091-FA4FBC954F7B",
+              "id": "0DCD3980-6E58-423E-A071-EB503F5ACFF2",
               "rev": 0
             }
           ]
@@ -595,7 +615,7 @@
         }
       }
     },
-    "F9233848-EB4A-437F-927D-04CD9E7E6342": {
+    "7ED7026E-B4E2-4074-9B21-7E45198E115B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -608,7 +628,7 @@
         }
       }
     },
-    "E44F5391-BF6A-40A7-AFDD-DDA32E05DD39": {
+    "B1A4591F-2987-40AA-809D-BE7D9453CCEF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -633,7 +653,7 @@
         }
       }
     },
-    "0B64B8F6-3C8F-4EE9-A16F-31F98FA7525B": {
+    "3164316F-31F5-447C-92A1-4B7E8286690E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -658,9 +678,21 @@
         }
       }
     },
-    "Label_CFEE33C4_6252_4445_9727_089D64121294": {
-      "rev": 2125,
+    "Label_C707B066_9F04_4773_8839_AF8D90562D4B": {
+      "rev": 1469431,
       "props": {
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
@@ -668,6 +700,14 @@
         "fontSize": {
           "key": "fontSize",
           "value": 17
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
+        },
+        "autofit": {
+          "key": "autofit",
+          "value": true
         },
         "padding": {
           "key": "padding",
@@ -681,6 +721,10 @@
             "morph"
           ]
         },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "position": {
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(7.9,5.0)"
@@ -689,13 +733,25 @@
           "key": "origin",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "default"
+        },
         "name": {
           "key": "name",
           "value": "label"
         },
+        "fill": {
+          "key": "fill",
+          "value": null
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(14.6,17.0)"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
         },
         "submorphs": {
           "key": "submorphs",
@@ -708,7 +764,7 @@
               "",
               {
                 "__ref__": true,
-                "id": "7B4B21D2-AD0C-4D0D-90A2-875621D45D40",
+                "id": "ABFC7AF0-0DD6-431F-858B-B0701DF0B82B",
                 "rev": 0
               }
             ]
@@ -723,7 +779,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "FA97D5DF-43A3-46E4-8030-3E022A4E08B0",
+              "id": "73D8BEA9-024F-424B-BD4A-F4989560F66C",
               "rev": 0
             }
           ]
@@ -740,7 +796,7 @@
         }
       }
     },
-    "7B4B21D2-AD0C-4D0D-90A2-875621D45D40": {
+    "ABFC7AF0-0DD6-431F-858B-B0701DF0B82B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -759,7 +815,7 @@
         }
       }
     },
-    "FA97D5DF-43A3-46E4-8030-3E022A4E08B0": {
+    "73D8BEA9-024F-424B-BD4A-F4989560F66C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -778,8 +834,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_CFEE33C4_6252_4445_9727_089D64121294",
-            "rev": 2125
+            "id": "Label_C707B066_9F04_4773_8839_AF8D90562D4B",
+            "rev": 1469431
           }
         },
         "sourceAttrName": {
@@ -790,8 +846,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "targetMethodName": {
@@ -802,7 +858,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "31D13830-8845-4F86-8245-AAD706C938FB",
+            "id": "91BF1827-F307-4137-B0DF-C372CC717386",
             "rev": 0
           }
         },
@@ -826,7 +882,7 @@
         }
       }
     },
-    "31D13830-8845-4F86-8245-AAD706C938FB": {
+    "91BF1827-F307-4137-B0DF-C372CC717386": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -837,21 +893,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_CFEE33C4_6252_4445_9727_089D64121294",
-            "rev": 2125
+            "id": "Label_C707B066_9F04_4773_8839_AF8D90562D4B",
+            "rev": 1469431
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         }
       }
     },
-    "B2584B58-76EE-4635-8007-84EF66926694": {
+    "709F57C0-3B45-4C7F-A677-2715B738225E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -864,7 +920,7 @@
         }
       }
     },
-    "DD9EE4B5-5575-41C1-8277-7AFCB6D4B868": {
+    "914EB822-768A-4984-97F8-0A7054B13755": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -889,7 +945,7 @@
         }
       }
     },
-    "CDB41B76-3D94-4189-ABD7-A7D253D41AB8": {
+    "5ABEE00B-BFD5-44C4-8589-498A377CB61E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -914,7 +970,7 @@
         }
       }
     },
-    "484D8CE3-FA26-4D63-BEF1-A7739FB20827": {
+    "4F39E746-CC03-4A21-97ED-2A10D5572E63": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -933,8 +989,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "sourceAttrName": {
@@ -945,8 +1001,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "targetMethodName": {
@@ -957,7 +1013,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "1481935D-9E62-4A91-ADBF-BE943A62BB1F",
+            "id": "01048762-4895-4AB0-A58E-AED5DB900F58",
             "rev": 0
           }
         },
@@ -981,7 +1037,7 @@
         }
       }
     },
-    "1481935D-9E62-4A91-ADBF-BE943A62BB1F": {
+    "01048762-4895-4AB0-A58E-AED5DB900F58": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -992,21 +1048,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         }
       }
     },
-    "D8BFE52C-174F-4EAF-B0E7-8A04010727BF": {
+    "210BFD1E-8890-46A0-9D27-B15243AD2D16": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1025,8 +1081,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "sourceAttrName": {
@@ -1037,8 +1093,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "targetMethodName": {
@@ -1049,7 +1105,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "BED156FF-4A92-4981-B85C-628185ECF6FB",
+            "id": "B473748D-6085-43EC-ABA9-E78346A319C5",
             "rev": 0
           }
         },
@@ -1073,7 +1129,7 @@
         }
       }
     },
-    "BED156FF-4A92-4981-B85C-628185ECF6FB": {
+    "B473748D-6085-43EC-ABA9-E78346A319C5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1084,21 +1140,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         }
       }
     },
-    "5064119C-04AA-487C-B2D0-04F8A410E8D0": {
+    "199CCED1-DB6D-4617-8AA2-E13AAC736360": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1117,8 +1173,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "sourceAttrName": {
@@ -1129,8 +1185,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "targetMethodName": {
@@ -1141,7 +1197,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "B9C294EA-D825-4562-9703-761CC92AEBE3",
+            "id": "190A8FE5-D3AD-48A6-AA77-E1F51909ED41",
             "rev": 0
           }
         },
@@ -1165,7 +1221,7 @@
         }
       }
     },
-    "B9C294EA-D825-4562-9703-761CC92AEBE3": {
+    "190A8FE5-D3AD-48A6-AA77-E1F51909ED41": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1176,21 +1232,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         }
       }
     },
-    "62D046DA-9842-4825-B01B-AE1DB3E8348A": {
+    "1E662DC4-7225-44E6-BCF5-B9903319F9C5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1209,8 +1265,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "sourceAttrName": {
@@ -1221,8 +1277,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "targetMethodName": {
@@ -1233,7 +1289,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "04047398-C0D3-4A05-A4B3-30CC32A2DD94",
+            "id": "F8F9A6B3-0476-43A5-9690-86795A09A212",
             "rev": 0
           }
         },
@@ -1257,7 +1313,7 @@
         }
       }
     },
-    "04047398-C0D3-4A05-A4B3-30CC32A2DD94": {
+    "F8F9A6B3-0476-43A5-9690-86795A09A212": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1268,21 +1324,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         }
       }
     },
-    "D4FC0169-0B98-4345-BD44-B7B2189516C4": {
+    "1811D3C5-E4CE-4D8E-9693-97629B028FAF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1301,8 +1357,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "sourceAttrName": {
@@ -1313,8 +1369,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "targetMethodName": {
@@ -1325,7 +1381,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "563023A2-210A-4040-93CE-912BA32EE917",
+            "id": "446A32B9-DCE4-4883-9F5B-ECE292ECE30A",
             "rev": 0
           }
         },
@@ -1349,7 +1405,7 @@
         }
       }
     },
-    "563023A2-210A-4040-93CE-912BA32EE917": {
+    "446A32B9-DCE4-4883-9F5B-ECE292ECE30A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1360,21 +1416,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         }
       }
     },
-    "A26E4096-D080-468A-8439-CC93E94B7128": {
+    "1449285E-524B-4C25-837F-9EAF1EBEC5FF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1393,8 +1449,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "sourceAttrName": {
@@ -1405,8 +1461,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "targetMethodName": {
@@ -1417,7 +1473,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "6A35617F-86EA-45EF-B427-5793F7130A47",
+            "id": "A449B278-FCEE-4E5B-8DA4-74CEA986D225",
             "rev": 0
           }
         },
@@ -1441,7 +1497,7 @@
         }
       }
     },
-    "6A35617F-86EA-45EF-B427-5793F7130A47": {
+    "A449B278-FCEE-4E5B-8DA4-74CEA986D225": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1452,21 +1508,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         }
       }
     },
-    "23F9EC6B-0163-4B8E-99DD-0421D9C2ADCF": {
+    "865631D6-CDB0-4D8A-8075-656AB17DC92A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1485,8 +1541,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "sourceAttrName": {
@@ -1497,8 +1553,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "targetMethodName": {
@@ -1509,7 +1565,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "61818BB9-098B-4043-AB55-2475F7C69A4B",
+            "id": "D8C2EA94-D418-401D-B2FE-74AA569A509B",
             "rev": 0
           }
         },
@@ -1533,7 +1589,7 @@
         }
       }
     },
-    "61818BB9-098B-4043-AB55-2475F7C69A4B": {
+    "D8C2EA94-D418-401D-B2FE-74AA569A509B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1544,21 +1600,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         }
       }
     },
-    "78F0E62E-6102-4863-8091-FA4FBC954F7B": {
+    "0DCD3980-6E58-423E-A071-EB503F5ACFF2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1577,8 +1633,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "sourceAttrName": {
@@ -1589,8 +1645,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Partsbin_519775A6_2562_49A0_9205_BD5515FFE7A0",
-            "rev": 48072
+            "id": "Partsbin_FABE76E2_FE67_4749_A597_AC6F9569555F",
+            "rev": 1492004
           }
         },
         "targetMethodName": {
@@ -1601,7 +1657,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "2DC75218-194C-4154-A4F9-4D3533CC4D4E",
+            "id": "7980475C-51CE-4661-8B85-D17D7E7CBDBF",
             "rev": 0
           }
         },
@@ -1625,7 +1681,7 @@
         }
       }
     },
-    "2DC75218-194C-4154-A4F9-4D3533CC4D4E": {
+    "7980475C-51CE-4661-8B85-D17D7E7CBDBF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1636,21 +1692,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_9160E19E_FBC1_4B17_9CCF_11E9D1FBD6FC",
-            "rev": 42936
+            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
+            "rev": 1487619
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Partsbin_519775A6_2562_49A0_9205_BD5515FFE7A0",
-            "rev": 48072
+            "id": "Partsbin_FABE76E2_FE67_4749_A597_AC6F9569555F",
+            "rev": 1492004
           }
         }
       }
     },
-    "41379AA3-C5F2-4E6A-890C-5EE2E06BE1E3": {
+    "81A7E0BC-B0BC-46A6-8498-1081A7DC3173": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1661,7 +1717,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "E044B5B3-264A-45CB-9576-2D34D8E53296",
+            "id": "7574CE17-37B1-4CBB-95F7-0E6EE6CB5032",
             "rev": 0
           }
         },
@@ -1675,7 +1731,7 @@
         },
         "lastBounds": {
           "key": "lastBounds",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,998.3000000000001,40)"
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,979.3000000000001,40)"
         },
         "active": {
           "key": "active",
@@ -1685,8 +1741,8 @@
           "key": "container",
           "value": {
             "__ref__": true,
-            "id": "Morph_91A45423_CDA8_4D1C_B296_05A57693BE14",
-            "rev": 47076
+            "id": "Morph_5B03931C_219D_4BC7_B889_3DD018FBF21B",
+            "rev": 1492006
           }
         },
         "_autoResize": {
@@ -1713,7 +1769,7 @@
         }
       }
     },
-    "E044B5B3-264A-45CB-9576-2D34D8E53296": {
+    "7574CE17-37B1-4CBB-95F7-0E6EE6CB5032": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1738,7 +1794,7 @@
         }
       }
     },
-    "3E6E9349-DB91-4DD1-A75A-484D08E52170": {
+    "EB6EE5DF-A8AB-486E-B389-7F5F3B2DC4C9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1749,7 +1805,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "8368D41D-002F-46CE-B0BD-2D4DDD0F2C88",
+            "id": "83A1A356-8494-4DB9-B9CA-DDDFCA259A62",
             "rev": 0
           }
         },
@@ -1763,7 +1819,7 @@
         },
         "lastBounds": {
           "key": "lastBounds",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,25,998.3000000000001,454)"
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,25,979.3000000000001,451)"
         },
         "active": {
           "key": "active",
@@ -1773,8 +1829,8 @@
           "key": "container",
           "value": {
             "__ref__": true,
-            "id": "Partsbin_519775A6_2562_49A0_9205_BD5515FFE7A0",
-            "rev": 48072
+            "id": "Partsbin_FABE76E2_FE67_4749_A597_AC6F9569555F",
+            "rev": 1492004
           }
         },
         "autoResize": {
@@ -1793,7 +1849,7 @@
         }
       }
     },
-    "8368D41D-002F-46CE-B0BD-2D4DDD0F2C88": {
+    "83A1A356-8494-4DB9-B9CA-DDDFCA259A62": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1818,7 +1874,7 @@
         }
       }
     },
-    "A66D5B86-1177-46C1-ABCA-D8281C82359A": {
+    "0F10BBD6-1DCF-433A-8E01-78AF821BC564": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1837,8 +1893,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Partsbin_519775A6_2562_49A0_9205_BD5515FFE7A0",
-            "rev": 48072
+            "id": "Partsbin_FABE76E2_FE67_4749_A597_AC6F9569555F",
+            "rev": 1492004
           }
         },
         "sourceAttrName": {
@@ -1849,8 +1905,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_91A45423_CDA8_4D1C_B296_05A57693BE14",
-            "rev": 47076
+            "id": "Morph_5B03931C_219D_4BC7_B889_3DD018FBF21B",
+            "rev": 1492006
           }
         },
         "targetMethodName": {
@@ -1861,7 +1917,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "D0DDECB1-0CA4-44EC-941D-8DCDD53A30DF",
+            "id": "F341503B-3416-4A32-B8C9-DFF7638EA0EC",
             "rev": 0
           }
         },
@@ -1892,7 +1948,7 @@
         }
       }
     },
-    "D0DDECB1-0CA4-44EC-941D-8DCDD53A30DF": {
+    "F341503B-3416-4A32-B8C9-DFF7638EA0EC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1903,22 +1959,22 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Partsbin_519775A6_2562_49A0_9205_BD5515FFE7A0",
-            "rev": 48072
+            "id": "Partsbin_FABE76E2_FE67_4749_A597_AC6F9569555F",
+            "rev": 1492004
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Morph_91A45423_CDA8_4D1C_B296_05A57693BE14",
-            "rev": 47076
+            "id": "Morph_5B03931C_219D_4BC7_B889_3DD018FBF21B",
+            "rev": 1492006
           }
         }
       }
     },
-    "Ellipse_603660B0_11B3_4D80_8ACE_8565732705B4": {
-      "rev": 1973,
+    "Ellipse_AC5F00AC_54E2_47D7_B8AC_A7324EAB76AC": {
+      "rev": 1469308,
       "props": {
         "borderRadiusTop": {
           "key": "borderRadiusTop",
@@ -1985,8 +2041,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_9579CCFB_863D_453B_86F5_C134DFEB48DE",
-              "rev": 2126
+              "id": "Label_FA6A5C4C_383B_44EB_9F3F_445166932F9D",
+              "rev": 1469432
             }
           ]
         },
@@ -1999,17 +2055,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "1A449C87-8308-4EB3-B4AD-5D78AB5579F3",
+              "id": "B6BFDAF3-3654-4940-8825-0F48E8AEAD36",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "6A6331C5-0BFD-4091-9D7E-3EE2C4F151DB",
+              "id": "768FA6CB-1FE4-43DD-B2AB-EF5F6221ADE4",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "58164DC3-F192-4A34-A7F0-384A212F492D",
+              "id": "D351FCFA-0AA0-4FD2-8668-2D9AD08D285A",
               "rev": 0
             }
           ]
@@ -2026,12 +2082,36 @@
         }
       }
     },
-    "Label_9579CCFB_863D_453B_86F5_C134DFEB48DE": {
-      "rev": 2126,
+    "Label_FA6A5C4C_383B_44EB_9F3F_445166932F9D": {
+      "rev": 1469432,
       "props": {
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 12
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
+        },
+        "autofit": {
+          "key": "autofit",
+          "value": true
         },
         "padding": {
           "key": "padding",
@@ -2049,6 +2129,10 @@
             "morph"
           ]
         },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "position": {
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2.3,1.0)"
@@ -2061,9 +2145,21 @@
           "key": "opacity",
           "value": 0.5
         },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "default"
+        },
+        "fill": {
+          "key": "fill",
+          "value": null
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,12.0)"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
         },
         "submorphs": {
           "key": "submorphs",
@@ -2076,7 +2172,7 @@
               "",
               {
                 "__ref__": true,
-                "id": "0C02C76C-D419-43D2-A74C-0037B87EA9AC",
+                "id": "3FCD4366-B3BB-4527-8E5F-8870D9C931FD",
                 "rev": 0
               }
             ]
@@ -2101,7 +2197,7 @@
         }
       }
     },
-    "0C02C76C-D419-43D2-A74C-0037B87EA9AC": {
+    "3FCD4366-B3BB-4527-8E5F-8870D9C931FD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2120,7 +2216,7 @@
         }
       }
     },
-    "1A449C87-8308-4EB3-B4AD-5D78AB5579F3": {
+    "B6BFDAF3-3654-4940-8825-0F48E8AEAD36": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2139,8 +2235,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_603660B0_11B3_4D80_8ACE_8565732705B4",
-            "rev": 1973
+            "id": "Ellipse_AC5F00AC_54E2_47D7_B8AC_A7324EAB76AC",
+            "rev": 1469308
           }
         },
         "sourceAttrName": {
@@ -2151,8 +2247,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_B113FC26_989E_4606_9E69_674D5395CB23",
-            "rev": 42997
+            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
+            "rev": 1491360
           }
         },
         "targetMethodName": {
@@ -2163,7 +2259,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "C2E50BB9-0A46-4FD7-97D7-121B9DE7C20A",
+            "id": "06DAF702-77BB-4C39-984B-749F0C4CC212",
             "rev": 0
           }
         },
@@ -2187,28 +2283,28 @@
         }
       }
     },
-    "C2E50BB9-0A46-4FD7-97D7-121B9DE7C20A": {
+    "06DAF702-77BB-4C39-984B-749F0C4CC212": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_603660B0_11B3_4D80_8ACE_8565732705B4",
-            "rev": 1973
+            "id": "Ellipse_AC5F00AC_54E2_47D7_B8AC_A7324EAB76AC",
+            "rev": 1469308
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_B113FC26_989E_4606_9E69_674D5395CB23",
-            "rev": 42997
+            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
+            "rev": 1491360
           }
         }
       }
     },
-    "6A6331C5-0BFD-4091-9D7E-3EE2C4F151DB": {
+    "768FA6CB-1FE4-43DD-B2AB-EF5F6221ADE4": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2227,8 +2323,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_603660B0_11B3_4D80_8ACE_8565732705B4",
-            "rev": 1973
+            "id": "Ellipse_AC5F00AC_54E2_47D7_B8AC_A7324EAB76AC",
+            "rev": 1469308
           }
         },
         "sourceAttrName": {
@@ -2239,8 +2335,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_9579CCFB_863D_453B_86F5_C134DFEB48DE",
-            "rev": 2126
+            "id": "Label_FA6A5C4C_383B_44EB_9F3F_445166932F9D",
+            "rev": 1469432
           }
         },
         "targetMethodName": {
@@ -2251,7 +2347,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "F852337C-D501-4A8A-AA60-E7FD8EAC76F3",
+            "id": "B3504E6D-72F2-411C-B652-F1E8D27A6B71",
             "rev": 0
           }
         },
@@ -2279,28 +2375,28 @@
         }
       }
     },
-    "F852337C-D501-4A8A-AA60-E7FD8EAC76F3": {
+    "B3504E6D-72F2-411C-B652-F1E8D27A6B71": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_603660B0_11B3_4D80_8ACE_8565732705B4",
-            "rev": 1973
+            "id": "Ellipse_AC5F00AC_54E2_47D7_B8AC_A7324EAB76AC",
+            "rev": 1469308
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_9579CCFB_863D_453B_86F5_C134DFEB48DE",
-            "rev": 2126
+            "id": "Label_FA6A5C4C_383B_44EB_9F3F_445166932F9D",
+            "rev": 1469432
           }
         }
       }
     },
-    "58164DC3-F192-4A34-A7F0-384A212F492D": {
+    "D351FCFA-0AA0-4FD2-8668-2D9AD08D285A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2319,8 +2415,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_603660B0_11B3_4D80_8ACE_8565732705B4",
-            "rev": 1973
+            "id": "Ellipse_AC5F00AC_54E2_47D7_B8AC_A7324EAB76AC",
+            "rev": 1469308
           }
         },
         "sourceAttrName": {
@@ -2331,8 +2427,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_9579CCFB_863D_453B_86F5_C134DFEB48DE",
-            "rev": 2126
+            "id": "Label_FA6A5C4C_383B_44EB_9F3F_445166932F9D",
+            "rev": 1469432
           }
         },
         "targetMethodName": {
@@ -2343,7 +2439,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "B58B0FA6-A071-4F5E-B753-D5697D87515C",
+            "id": "B8E5686D-B8EB-4087-8CDA-F4C1FF898A9B",
             "rev": 0
           }
         },
@@ -2371,29 +2467,29 @@
         }
       }
     },
-    "B58B0FA6-A071-4F5E-B753-D5697D87515C": {
+    "B8E5686D-B8EB-4087-8CDA-F4C1FF898A9B": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_603660B0_11B3_4D80_8ACE_8565732705B4",
-            "rev": 1973
+            "id": "Ellipse_AC5F00AC_54E2_47D7_B8AC_A7324EAB76AC",
+            "rev": 1469308
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_9579CCFB_863D_453B_86F5_C134DFEB48DE",
-            "rev": 2126
+            "id": "Label_FA6A5C4C_383B_44EB_9F3F_445166932F9D",
+            "rev": 1469432
           }
         }
       }
     },
-    "Ellipse_F8E5AF83_0593_41C0_964F_907B4F69FBBA": {
-      "rev": 2002,
+    "Ellipse_636A7042_07D4_4C36_BF60_EA64CCBEC628": {
+      "rev": 1469328,
       "props": {
         "borderRadiusTop": {
           "key": "borderRadiusTop",
@@ -2464,8 +2560,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_71395C45_6A20_4668_8FE8_3E37A4B004C1",
-              "rev": 2127
+              "id": "Label_2ED83298_66C4_4757_B9A7_993A88BA771C",
+              "rev": 1469433
             }
           ]
         },
@@ -2478,17 +2574,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "5238CBD4-038E-4D84-A937-49204147FC63",
+              "id": "246D5E9B-BC24-4FCE-A02E-5AB0EBDD6322",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "1A37F77B-D6A6-4B64-8A7A-27D6117AD985",
+              "id": "4F897C30-7950-47A4-9933-5EAA1240DE50",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "2EF5BE90-F903-4B6F-B815-E3B6D5F59CA7",
+              "id": "7B920A4A-D487-4AAD-A111-4CC6DB03EDEA",
               "rev": 0
             }
           ]
@@ -2505,12 +2601,36 @@
         }
       }
     },
-    "Label_71395C45_6A20_4668_8FE8_3E37A4B004C1": {
-      "rev": 2127,
+    "Label_2ED83298_66C4_4757_B9A7_993A88BA771C": {
+      "rev": 1469433,
       "props": {
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 12
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
+        },
+        "autofit": {
+          "key": "autofit",
+          "value": true
         },
         "padding": {
           "key": "padding",
@@ -2528,6 +2648,10 @@
             "morph"
           ]
         },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "position": {
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2.3,1.0)"
@@ -2540,9 +2664,21 @@
           "key": "opacity",
           "value": 0.5
         },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "default"
+        },
+        "fill": {
+          "key": "fill",
+          "value": null
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,12.0)"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
         },
         "submorphs": {
           "key": "submorphs",
@@ -2555,7 +2691,7 @@
               "",
               {
                 "__ref__": true,
-                "id": "CC974448-939E-4487-99E7-712EF830F05F",
+                "id": "87753DA7-716A-4645-8C9F-174F4C697599",
                 "rev": 0
               }
             ]
@@ -2580,7 +2716,7 @@
         }
       }
     },
-    "CC974448-939E-4487-99E7-712EF830F05F": {
+    "87753DA7-716A-4645-8C9F-174F4C697599": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2599,7 +2735,7 @@
         }
       }
     },
-    "5238CBD4-038E-4D84-A937-49204147FC63": {
+    "246D5E9B-BC24-4FCE-A02E-5AB0EBDD6322": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2618,8 +2754,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_F8E5AF83_0593_41C0_964F_907B4F69FBBA",
-            "rev": 2002
+            "id": "Ellipse_636A7042_07D4_4C36_BF60_EA64CCBEC628",
+            "rev": 1469328
           }
         },
         "sourceAttrName": {
@@ -2630,8 +2766,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_B113FC26_989E_4606_9E69_674D5395CB23",
-            "rev": 42997
+            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
+            "rev": 1491360
           }
         },
         "targetMethodName": {
@@ -2642,7 +2778,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "0EC15B9A-402E-4A08-896C-F8CC921E982E",
+            "id": "FDE903E8-94B4-41F8-9958-DF21673DD41E",
             "rev": 0
           }
         },
@@ -2666,28 +2802,28 @@
         }
       }
     },
-    "0EC15B9A-402E-4A08-896C-F8CC921E982E": {
+    "FDE903E8-94B4-41F8-9958-DF21673DD41E": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_F8E5AF83_0593_41C0_964F_907B4F69FBBA",
-            "rev": 2002
+            "id": "Ellipse_636A7042_07D4_4C36_BF60_EA64CCBEC628",
+            "rev": 1469328
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_B113FC26_989E_4606_9E69_674D5395CB23",
-            "rev": 42997
+            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
+            "rev": 1491360
           }
         }
       }
     },
-    "1A37F77B-D6A6-4B64-8A7A-27D6117AD985": {
+    "4F897C30-7950-47A4-9933-5EAA1240DE50": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2706,8 +2842,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_F8E5AF83_0593_41C0_964F_907B4F69FBBA",
-            "rev": 2002
+            "id": "Ellipse_636A7042_07D4_4C36_BF60_EA64CCBEC628",
+            "rev": 1469328
           }
         },
         "sourceAttrName": {
@@ -2718,8 +2854,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_71395C45_6A20_4668_8FE8_3E37A4B004C1",
-            "rev": 2127
+            "id": "Label_2ED83298_66C4_4757_B9A7_993A88BA771C",
+            "rev": 1469433
           }
         },
         "targetMethodName": {
@@ -2730,7 +2866,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "E5DB63D8-F801-4F2D-BBE4-CD9367ED7E97",
+            "id": "23553DF8-C6CB-462F-89C1-D3680CD10049",
             "rev": 0
           }
         },
@@ -2758,28 +2894,28 @@
         }
       }
     },
-    "E5DB63D8-F801-4F2D-BBE4-CD9367ED7E97": {
+    "23553DF8-C6CB-462F-89C1-D3680CD10049": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_F8E5AF83_0593_41C0_964F_907B4F69FBBA",
-            "rev": 2002
+            "id": "Ellipse_636A7042_07D4_4C36_BF60_EA64CCBEC628",
+            "rev": 1469328
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_71395C45_6A20_4668_8FE8_3E37A4B004C1",
-            "rev": 2127
+            "id": "Label_2ED83298_66C4_4757_B9A7_993A88BA771C",
+            "rev": 1469433
           }
         }
       }
     },
-    "2EF5BE90-F903-4B6F-B815-E3B6D5F59CA7": {
+    "7B920A4A-D487-4AAD-A111-4CC6DB03EDEA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2798,8 +2934,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_F8E5AF83_0593_41C0_964F_907B4F69FBBA",
-            "rev": 2002
+            "id": "Ellipse_636A7042_07D4_4C36_BF60_EA64CCBEC628",
+            "rev": 1469328
           }
         },
         "sourceAttrName": {
@@ -2810,8 +2946,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_71395C45_6A20_4668_8FE8_3E37A4B004C1",
-            "rev": 2127
+            "id": "Label_2ED83298_66C4_4757_B9A7_993A88BA771C",
+            "rev": 1469433
           }
         },
         "targetMethodName": {
@@ -2822,7 +2958,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "7ABAEA12-498E-429E-9DE4-3F87A4294CE0",
+            "id": "F3C2E958-C898-40E1-93BE-1467EC22B109",
             "rev": 0
           }
         },
@@ -2850,29 +2986,29 @@
         }
       }
     },
-    "7ABAEA12-498E-429E-9DE4-3F87A4294CE0": {
+    "F3C2E958-C898-40E1-93BE-1467EC22B109": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_F8E5AF83_0593_41C0_964F_907B4F69FBBA",
-            "rev": 2002
+            "id": "Ellipse_636A7042_07D4_4C36_BF60_EA64CCBEC628",
+            "rev": 1469328
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_71395C45_6A20_4668_8FE8_3E37A4B004C1",
-            "rev": 2127
+            "id": "Label_2ED83298_66C4_4757_B9A7_993A88BA771C",
+            "rev": 1469433
           }
         }
       }
     },
-    "Ellipse_5FB6EF98_1D65_413B_9332_60DA50650C04": {
-      "rev": 2031,
+    "Ellipse_23DC893C_21DF_4058_9C4D_B5D19041532B": {
+      "rev": 1469348,
       "props": {
         "borderRadiusTop": {
           "key": "borderRadiusTop",
@@ -2939,8 +3075,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_3D203F19_6580_42AB_AF87_FFF542EAA4B8",
-              "rev": 2128
+              "id": "Label_76CA3F46_4697_4578_BFF7_CE28244330BD",
+              "rev": 1469434
             }
           ]
         },
@@ -2953,17 +3089,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "6438911C-098C-479D-B57D-301C92928CD1",
+              "id": "3EA87135-205B-4404-9350-774338DAAD52",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "A194BA3C-493D-4EC1-9BF2-70FC89788D39",
+              "id": "6D1C41E6-15C5-44BA-B8EB-F85E7F3CB219",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "D4D320AE-D5E3-4742-BE1D-6F01A6D2EB5E",
+              "id": "9963A292-E3A4-4665-9BC1-BC2D845AF608",
               "rev": 0
             }
           ]
@@ -2980,12 +3116,36 @@
         }
       }
     },
-    "Label_3D203F19_6580_42AB_AF87_FFF542EAA4B8": {
-      "rev": 2128,
+    "Label_76CA3F46_4697_4578_BFF7_CE28244330BD": {
+      "rev": 1469434,
       "props": {
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 12
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
+        },
+        "autofit": {
+          "key": "autofit",
+          "value": true
         },
         "padding": {
           "key": "padding",
@@ -3003,6 +3163,10 @@
             "morph"
           ]
         },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "position": {
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2.3,1.0)"
@@ -3015,9 +3179,21 @@
           "key": "opacity",
           "value": 0.5
         },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "default"
+        },
+        "fill": {
+          "key": "fill",
+          "value": null
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,12.0)"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
         },
         "submorphs": {
           "key": "submorphs",
@@ -3030,7 +3206,7 @@
               "",
               {
                 "__ref__": true,
-                "id": "42323669-AB3F-42A5-815D-CE044F3C2FC3",
+                "id": "228567C1-BA34-47FC-B370-CCD437BDE652",
                 "rev": 0
               }
             ]
@@ -3055,7 +3231,7 @@
         }
       }
     },
-    "42323669-AB3F-42A5-815D-CE044F3C2FC3": {
+    "228567C1-BA34-47FC-B370-CCD437BDE652": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3074,7 +3250,7 @@
         }
       }
     },
-    "6438911C-098C-479D-B57D-301C92928CD1": {
+    "3EA87135-205B-4404-9350-774338DAAD52": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3093,8 +3269,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_5FB6EF98_1D65_413B_9332_60DA50650C04",
-            "rev": 2031
+            "id": "Ellipse_23DC893C_21DF_4058_9C4D_B5D19041532B",
+            "rev": 1469348
           }
         },
         "sourceAttrName": {
@@ -3105,8 +3281,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_B113FC26_989E_4606_9E69_674D5395CB23",
-            "rev": 42997
+            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
+            "rev": 1491360
           }
         },
         "targetMethodName": {
@@ -3117,7 +3293,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "7E2783C1-3C3E-4707-A21C-222BB2E850B8",
+            "id": "D477790A-7F91-45AE-8E07-3F97B69F9732",
             "rev": 0
           }
         },
@@ -3141,28 +3317,28 @@
         }
       }
     },
-    "7E2783C1-3C3E-4707-A21C-222BB2E850B8": {
+    "D477790A-7F91-45AE-8E07-3F97B69F9732": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_5FB6EF98_1D65_413B_9332_60DA50650C04",
-            "rev": 2031
+            "id": "Ellipse_23DC893C_21DF_4058_9C4D_B5D19041532B",
+            "rev": 1469348
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_B113FC26_989E_4606_9E69_674D5395CB23",
-            "rev": 42997
+            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
+            "rev": 1491360
           }
         }
       }
     },
-    "A194BA3C-493D-4EC1-9BF2-70FC89788D39": {
+    "6D1C41E6-15C5-44BA-B8EB-F85E7F3CB219": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3181,8 +3357,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_5FB6EF98_1D65_413B_9332_60DA50650C04",
-            "rev": 2031
+            "id": "Ellipse_23DC893C_21DF_4058_9C4D_B5D19041532B",
+            "rev": 1469348
           }
         },
         "sourceAttrName": {
@@ -3193,8 +3369,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_3D203F19_6580_42AB_AF87_FFF542EAA4B8",
-            "rev": 2128
+            "id": "Label_76CA3F46_4697_4578_BFF7_CE28244330BD",
+            "rev": 1469434
           }
         },
         "targetMethodName": {
@@ -3205,7 +3381,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "E59D5E16-FD3B-4C17-9DE8-A46CA90DE20A",
+            "id": "E83BA9C6-E364-4FCD-A536-50760F65196E",
             "rev": 0
           }
         },
@@ -3233,28 +3409,28 @@
         }
       }
     },
-    "E59D5E16-FD3B-4C17-9DE8-A46CA90DE20A": {
+    "E83BA9C6-E364-4FCD-A536-50760F65196E": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_5FB6EF98_1D65_413B_9332_60DA50650C04",
-            "rev": 2031
+            "id": "Ellipse_23DC893C_21DF_4058_9C4D_B5D19041532B",
+            "rev": 1469348
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_3D203F19_6580_42AB_AF87_FFF542EAA4B8",
-            "rev": 2128
+            "id": "Label_76CA3F46_4697_4578_BFF7_CE28244330BD",
+            "rev": 1469434
           }
         }
       }
     },
-    "D4D320AE-D5E3-4742-BE1D-6F01A6D2EB5E": {
+    "9963A292-E3A4-4665-9BC1-BC2D845AF608": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3273,8 +3449,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_5FB6EF98_1D65_413B_9332_60DA50650C04",
-            "rev": 2031
+            "id": "Ellipse_23DC893C_21DF_4058_9C4D_B5D19041532B",
+            "rev": 1469348
           }
         },
         "sourceAttrName": {
@@ -3285,8 +3461,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_3D203F19_6580_42AB_AF87_FFF542EAA4B8",
-            "rev": 2128
+            "id": "Label_76CA3F46_4697_4578_BFF7_CE28244330BD",
+            "rev": 1469434
           }
         },
         "targetMethodName": {
@@ -3297,7 +3473,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "25B4C1F7-8208-45CC-AB4A-4F2C7E960E73",
+            "id": "009D583B-65C1-4884-8D98-EA6CC2371F05",
             "rev": 0
           }
         },
@@ -3325,33 +3501,57 @@
         }
       }
     },
-    "25B4C1F7-8208-45CC-AB4A-4F2C7E960E73": {
+    "009D583B-65C1-4884-8D98-EA6CC2371F05": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_5FB6EF98_1D65_413B_9332_60DA50650C04",
-            "rev": 2031
+            "id": "Ellipse_23DC893C_21DF_4058_9C4D_B5D19041532B",
+            "rev": 1469348
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_3D203F19_6580_42AB_AF87_FFF542EAA4B8",
-            "rev": 2128
+            "id": "Label_76CA3F46_4697_4578_BFF7_CE28244330BD",
+            "rev": 1469434
           }
         }
       }
     },
-    "Label_8B473B7F_55C2_459C_9621_8856CA9EA750": {
-      "rev": 47090,
+    "Label_9E5ADC89_0BAF_4DF5_94A8_50E6EBC1D1DB": {
+      "rev": 1492017,
       "props": {
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 12
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
+        },
+        "autofit": {
+          "key": "autofit",
+          "value": true
         },
         "padding": {
           "key": "padding",
@@ -3365,25 +3565,41 @@
             "morph"
           ]
         },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "reactsToPointer": {
           "key": "reactsToPointer",
           "value": false
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(474.5,4.5)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(465.0,4.5)"
         },
         "origin": {
           "key": "origin",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "default"
+        },
         "name": {
           "key": "name",
           "value": "titleLabel"
         },
+        "fill": {
+          "key": "fill",
+          "value": null
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(45.4,16.0)"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
         },
         "submorphs": {
           "key": "submorphs",
@@ -3396,7 +3612,7 @@
               "PartsBin",
               {
                 "__ref__": true,
-                "id": "466E5113-CC0D-47CD-8A00-12C0FCB6CC31",
+                "id": "964B2CC6-F3F7-4E4F-9227-EE5DAFAB206A",
                 "rev": 0
               }
             ]
@@ -3411,7 +3627,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "B4F8E9AE-5BFE-4FFC-9ADB-A7A3BA22BACF",
+              "id": "173D2B32-C043-485F-B977-D763D412A907",
               "rev": 0
             }
           ]
@@ -3428,11 +3644,11 @@
         }
       }
     },
-    "466E5113-CC0D-47CD-8A00-12C0FCB6CC31": {
+    "964B2CC6-F3F7-4E4F-9227-EE5DAFAB206A": {
       "rev": 0,
       "props": {}
     },
-    "B4F8E9AE-5BFE-4FFC-9ADB-A7A3BA22BACF": {
+    "173D2B32-C043-485F-B977-D763D412A907": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3451,8 +3667,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_8B473B7F_55C2_459C_9621_8856CA9EA750",
-            "rev": 47090
+            "id": "Label_9E5ADC89_0BAF_4DF5_94A8_50E6EBC1D1DB",
+            "rev": 1492017
           }
         },
         "sourceAttrName": {
@@ -3463,8 +3679,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_B113FC26_989E_4606_9E69_674D5395CB23",
-            "rev": 42997
+            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
+            "rev": 1491360
           }
         },
         "targetMethodName": {
@@ -3475,7 +3691,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "FF31F2D7-7849-41AF-A532-245CC6F25102",
+            "id": "2788DB2B-EB3D-46CF-A769-C18F49124547",
             "rev": 0
           }
         },
@@ -3499,7 +3715,7 @@
         }
       }
     },
-    "FF31F2D7-7849-41AF-A532-245CC6F25102": {
+    "2788DB2B-EB3D-46CF-A769-C18F49124547": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3510,22 +3726,22 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_8B473B7F_55C2_459C_9621_8856CA9EA750",
-            "rev": 47090
+            "id": "Label_9E5ADC89_0BAF_4DF5_94A8_50E6EBC1D1DB",
+            "rev": 1492017
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_B113FC26_989E_4606_9E69_674D5395CB23",
-            "rev": 42997
+            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
+            "rev": 1491360
           }
         }
       }
     },
-    "Morph_9B38DFB0_273F_4D7C_97F1_593B942661EA": {
-      "rev": 47072,
+    "Resizer_6670F1CA_BA14_415F_9A83_14AE79FCEA19": {
+      "rev": 1492002,
       "props": {
         "styleClasses": {
           "key": "styleClasses",
@@ -3537,7 +3753,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(978.3,459.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(959.3,456.0)"
         },
         "nativeCursor": {
           "key": "nativeCursor",
@@ -3578,7 +3794,7 @@
         }
       }
     },
-    "9D3A7F84-3A19-4E9A-AB65-A96F90A6D87B": {
+    "8A318272-53F3-4B15-AB15-4561DF8AA3AA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3597,8 +3813,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Window_B113FC26_989E_4606_9E69_674D5395CB23",
-            "rev": 42997
+            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
+            "rev": 1491360
           }
         },
         "sourceAttrName": {
@@ -3609,8 +3825,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_B113FC26_989E_4606_9E69_674D5395CB23",
-            "rev": 42997
+            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
+            "rev": 1491360
           }
         },
         "targetMethodName": {
@@ -3621,7 +3837,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "A3601856-E0B5-430A-A090-AFFE74C3DF29",
+            "id": "2335ECD9-6FA6-40C4-BE3A-76D4BB835BCB",
             "rev": 0
           }
         },
@@ -3645,7 +3861,7 @@
         }
       }
     },
-    "A3601856-E0B5-430A-A090-AFFE74C3DF29": {
+    "2335ECD9-6FA6-40C4-BE3A-76D4BB835BCB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3656,16 +3872,16 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Window_B113FC26_989E_4606_9E69_674D5395CB23",
-            "rev": 42997
+            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
+            "rev": 1491360
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_B113FC26_989E_4606_9E69_674D5395CB23",
-            "rev": 42997
+            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
+            "rev": 1491360
           }
         }
       }
@@ -3673,11 +3889,15 @@
   },
   "packages": {
     "local://lively-object-modules/": {
+      "84B6759A-75DC-4855-B281-69B1CAE61DFE": {
+        "package.json": "{\n  \"name\": \"84B6759A-75DC-4855-B281-69B1CAE61DFE\",\n  \"version\": \"0.1.0\"\n}",
+        "index.js": "import { Morph, HTMLMorph, TilingLayout } from \"lively.morphic\";\nimport { ObjectDB } from \"lively.partsbin/index.js\";\nimport { pt, Color } from \"lively.graphics/index.js\";\n\nimport { deserializeMorph } from \"lively.morphic/serialization.js\";\nimport { connect } from \"lively.bindings/index.js\";\nimport { arr } from \"lively.lang/index.js\";\nimport { getAllPartResources, loadObjectFromPartsbinFolder, loadObjectFromSnapshot } from \"lively.morphic/partsbin.js\";\n\n\nexport class Partsbin extends Morph {\n\n  get isPartsBin() { return true }\n\n  reset() {\n    this.layout = new TilingLayout()\n  }\n\n  beforePublish() {\n    this.clear()\n  }\n\n  __after_deserialize__(snapshot, rev) {\n    super.__after_deserialize__(snapshot, rev);\n    this.showObjects();\n  }\n\n  clear() {\n    arr.invoke(this.submorphs.filter(ea => ea.name !== \"button-bar\"), \"remove\");\n  }\n\n  async showObjects() {\n    // await this.showObjects()\n\n    this.clear();\n\n    var partResorces = await getAllPartResources(),\n        previewProto = await loadObjectFromPartsbinFolder(\"part-item-for-partsbin\");\n\n    for (let partResource of partResorces) {\n      var partName = partResource.name().replace(/\\.json$/, \"\");\n      var preview = this.addMorph(previewProto.copy());\n      preview.showPart(partResource)\n    }\n\n  }\n\n}"
+      },
       "F4311792-EB4F-418D-ABA4-DDF9E9FB065C": {
         "package.json": "{\n  \"name\": \"F4311792-EB4F-418D-ABA4-DDF9E9FB065C\",\n  \"version\": \"0.1.0\"\n}",
         "index.js": "import { Morph } from \"lively.morphic\";\n\nexport default class Resizer extends Morph {\n  onDrag(evt) {\n    this.owner.resizeBy(evt.state.dragDelta);\n    this.bottomRight = this.owner.extent;\n  }\n}\n\n"
       }
     }
   },
-  "preview": "<div   draggable=\"false\" style=\"background: rgb(230, 230, 230); transform: translate(0px, 26.0092px) rotate(0deg) scale(0.10017, 0.10017); transform-origin: 0px 0px 0px; display: inline; width: 998.3px; height: 479px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 7px; box-shadow: rgb(102, 102, 102) 1.41421px 1.41421px 6px; opacity: 1; position: absolute; overflow: hidden; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"background: rgb(253, 254, 254); transform: translate3d(0px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 998.3px; height: 454px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgb(253, 254, 254); transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 998.3px; height: 40px; border-style: solid; border-width: 1px; border-color: rgb(189, 195, 199); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"background: rgb(240, 240, 240); transform: translate3d(484px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 30.3px; height: 27px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"transform: translate3d(7.86px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 14.5781px; height: 17px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 17px; color: rgb(64, 64, 64); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div></div></div><div   draggable=\"false\" style=\"background: rgb(255, 96, 82); transform: translate3d(8px, 6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 14px; height: 14px; border-style: solid; border-width: 0px; border-color: transparent; border-radius: 14px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"transform: translate3d(2.3px, 1px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: none; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0.5; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div><div   draggable=\"false\" style=\"background: rgb(255, 190, 6); transform: translate3d(28px, 6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 14px; height: 14px; border-style: solid; border-width: 0px; border-color: rgb(182, 67, 0); border-radius: 14px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"transform: translate3d(2.3px, 1px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: none; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0.5; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div><div   draggable=\"false\" style=\"background: rgb(0, 204, 0); transform: translate3d(48px, 6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 14px; height: 14px; border-style: solid; border-width: 0px; border-color: transparent; border-radius: 14px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"transform: translate3d(2.3px, 1px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: none; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0.5; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div><div   draggable=\"false\" style=\"transform: translate3d(474.47px, 4.5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 45.3594px; height: 16px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(102, 102, 102); padding: 2px 0px 0px;\"><span>PartsBin</span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div   draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(978.3px, 459px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 20px; height: 20px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: nwse-resize;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div>"
+  "preview": "<div   draggable=\"false\" style=\"background: rgb(230, 230, 230); transform: translate(0px, 25.6969px) rotate(0deg) scale(0.102114, 0.102114); transform-origin: 0px 0px 0px; display: inline; width: 979.3px; height: 476px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 7px; box-shadow: rgb(102, 102, 102) 1.41421px 1.41421px 6px; opacity: 1; position: absolute; overflow: hidden; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"background: rgb(253, 254, 254); transform: translate3d(0px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 979.3px; height: 451px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgb(253, 254, 254); transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 979.3px; height: 40px; border-style: solid; border-width: 1px; border-color: rgb(189, 195, 199); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"background: rgb(240, 240, 240); transform: translate3d(474.5px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 30.3px; height: 27px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"transform: translate3d(7.86px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 14.5781px; height: 17px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 17px; color: rgb(64, 64, 64); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div></div></div><div   draggable=\"false\" style=\"background: rgb(255, 96, 82); transform: translate3d(8px, 6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 14px; height: 14px; border-style: solid; border-width: 0px; border-color: transparent; border-radius: 14px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"transform: translate3d(2.3px, 1px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: none; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0.5; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div><div   draggable=\"false\" style=\"background: rgb(255, 190, 6); transform: translate3d(28px, 6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 14px; height: 14px; border-style: solid; border-width: 0px; border-color: rgb(182, 67, 0); border-radius: 14px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"transform: translate3d(2.3px, 1px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: none; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0.5; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div><div   draggable=\"false\" style=\"background: rgb(0, 204, 0); transform: translate3d(48px, 6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 14px; height: 14px; border-style: solid; border-width: 0px; border-color: transparent; border-radius: 14px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"transform: translate3d(2.3px, 1px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: none; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0.5; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div><div   draggable=\"false\" style=\"transform: translate3d(464.97px, 4.5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 45.3594px; height: 16px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(102, 102, 102); padding: 2px 0px 0px;\"><span>PartsBin</span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div   draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(959.3px, 456px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 20px; height: 20px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: nwse-resize;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div>"
 }

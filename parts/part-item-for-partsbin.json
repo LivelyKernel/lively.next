@@ -1,8 +1,8 @@
 {
-  "id": "Part_dash_item_dash_for_dash_partsbin_9CD93BA9_AFCE_4284_A5F3_A8F07DEE14D6",
+  "id": "Part_dash_item_dash_for_dash_partsbin_351CCCD9_9982_40BE_AB66_3C596BF2E17C",
   "snapshot": {
-    "Part_dash_item_dash_for_dash_partsbin_9CD93BA9_AFCE_4284_A5F3_A8F07DEE14D6": {
-      "rev": 1373755,
+    "Part_dash_item_dash_for_dash_partsbin_351CCCD9_9982_40BE_AB66_3C596BF2E17C": {
+      "rev": 35647,
       "props": {
         "borderWidthTop": {
           "key": "borderWidthTop",
@@ -62,7 +62,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(1247.0,117.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(635.2,50.0)"
         },
         "origin": {
           "key": "origin",
@@ -85,13 +85,13 @@
           "value": [
             {
               "__ref__": true,
-              "id": "htmlmorph_2728A889_3182_41C3_AD34_0DCC88B9C218",
-              "rev": 1402507
+              "id": "HTMLMorph_7C8A5D0B_6BB1_442E_845B_24EC79730CD4",
+              "rev": 9062
             },
             {
               "__ref__": true,
-              "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-              "rev": 1365737
+              "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+              "rev": 8400
             }
           ]
         },
@@ -114,8 +114,8 @@
         }
       }
     },
-    "htmlmorph_2728A889_3182_41C3_AD34_0DCC88B9C218": {
-      "rev": 1402507,
+    "HTMLMorph_7C8A5D0B_6BB1_442E_845B_24EC79730CD4": {
+      "rev": 9062,
       "props": {
         "styleClasses": {
           "key": "styleClasses",
@@ -168,14 +168,14 @@
         }
       }
     },
-    "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4": {
-      "rev": 1365737,
+    "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140": {
+      "rev": 8400,
       "props": {
         "defaultTriggerStyle": {
           "key": "defaultTriggerStyle",
           "value": {
             "__ref__": true,
-            "id": "0243E2DB-B2AB-4267-86EC-12E2356BEEB1",
+            "id": "1DE29F1A-38F4-4F54-B0A1-84D577E55687",
             "rev": 0
           }
         },
@@ -183,7 +183,7 @@
           "key": "defaultInactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "CE435C1C-E6FE-489A-9A70-C8DE3D51A555",
+            "id": "5F79C4C2-FE55-4858-A249-E2C56320DFC3",
             "rev": 0
           }
         },
@@ -191,7 +191,7 @@
           "key": "defaultActiveStyle",
           "value": {
             "__ref__": true,
-            "id": "7545FB04-ABAF-49CC-97F8-4D04AFA58AE8",
+            "id": "00D784E6-7E08-4B37-9354-C0972DEF6378",
             "rev": 0
           }
         },
@@ -255,10 +255,6 @@
             "morph"
           ]
         },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
         "position": {
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(107.7,7.0)"
@@ -279,17 +275,13 @@
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(28.0,28.0)"
         },
-        "draggable": {
-          "key": "draggable",
-          "value": false
-        },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
-              "id": "label_D299DFE0_709F_4C31_9E2E_A7125E3480FA",
-              "rev": 1365738
+              "id": "Label_C0B5D97B_9A81_40CF_83B7_1AB5C6EE43E3",
+              "rev": 9014
             }
           ]
         },
@@ -297,7 +289,7 @@
           "key": "triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "C043B4D4-F657-4B14-8830-C85E6311F647",
+            "id": "4861A6C6-7793-496E-AB91-9818CA91DC23",
             "rev": 0
           }
         },
@@ -305,7 +297,7 @@
           "key": "inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "B6034590-2B76-4197-AB3D-6DD56AE92EFB",
+            "id": "5A7AEEE7-9E21-4C0B-969F-666B850A13E5",
             "rev": 0
           }
         },
@@ -313,13 +305,9 @@
           "key": "activeStyle",
           "value": {
             "__ref__": true,
-            "id": "ECCD86CF-9FA0-4045-BE29-7ACA49B9318C",
+            "id": "404273CA-6B36-40D2-A995-826687A790D9",
             "rev": 0
           }
-        },
-        "active": {
-          "key": "active",
-          "value": true
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -330,42 +318,42 @@
           "value": [
             {
               "__ref__": true,
-              "id": "5583B34F-20F5-482C-9679-84A6778483F6",
+              "id": "270E36F1-681E-48A5-8761-CEBCF77B7631",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "42E5F290-F6E9-41E0-8077-29163E862675",
+              "id": "386CA408-97AF-4ADB-B4E5-9FF32E084E92",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "D9D00112-7D56-42CB-8F30-655C68356470",
+              "id": "E2128305-D255-4841-9E36-29BA0669DA55",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "40DF9F93-1A72-4D8E-BC31-89873D161E48",
+              "id": "2EA77D7E-431C-4E84-9789-72AD89BC8D4E",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "95CF58C8-67E7-4251-A929-03F38576DE9A",
+              "id": "A97E0911-E3E0-4173-A597-97F2DD39A483",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "433A4A41-5D4B-4F4C-BBA3-2300DCE1DCF7",
+              "id": "905B86F3-38A9-49B4-B11F-9CA5BC91E124",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "B68B775F-0F86-40E5-A225-7BDD0E95EAAD",
+              "id": "CC39573D-77A2-4491-B423-EFBB9C5A684B",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "72BC33AA-76E3-4BDE-B1BF-6ABEFF7582CC",
+              "id": "DE9CF782-AD5E-46E4-A488-8B40C93C0B11",
               "rev": 0
             }
           ]
@@ -382,7 +370,7 @@
         }
       }
     },
-    "0243E2DB-B2AB-4267-86EC-12E2356BEEB1": {
+    "1DE29F1A-38F4-4F54-B0A1-84D577E55687": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -395,7 +383,7 @@
         }
       }
     },
-    "CE435C1C-E6FE-489A-9A70-C8DE3D51A555": {
+    "5F79C4C2-FE55-4858-A249-E2C56320DFC3": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -420,7 +408,7 @@
         }
       }
     },
-    "7545FB04-ABAF-49CC-97F8-4D04AFA58AE8": {
+    "00D784E6-7E08-4B37-9354-C0972DEF6378": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -445,36 +433,12 @@
         }
       }
     },
-    "label_D299DFE0_709F_4C31_9E2E_A7125E3480FA": {
-      "rev": 1365738,
+    "Label_C0B5D97B_9A81_40CF_83B7_1AB5C6EE43E3": {
+      "rev": 9014,
       "props": {
-        "textDecoration": {
-          "key": "textDecoration",
-          "value": "none"
-        },
-        "fontStyle": {
-          "key": "fontStyle",
-          "value": "normal"
-        },
-        "fontWeight": {
-          "key": "fontWeight",
-          "value": "normal"
-        },
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
-        },
-        "fontSize": {
-          "key": "fontSize",
-          "value": 12
-        },
-        "fontFamily": {
-          "key": "fontFamily",
-          "value": "Sans-Serif"
-        },
-        "autofit": {
-          "key": "autofit",
-          "value": true
         },
         "padding": {
           "key": "padding",
@@ -487,10 +451,6 @@
             "Morph",
             "morph"
           ]
-        },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "position": {
           "key": "position",
@@ -508,17 +468,9 @@
           "key": "name",
           "value": "label"
         },
-        "fill": {
-          "key": "fill",
-          "value": null
-        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,12.0)"
-        },
-        "draggable": {
-          "key": "draggable",
-          "value": false
         },
         "submorphs": {
           "key": "submorphs",
@@ -531,7 +483,7 @@
               "",
               {
                 "__ref__": true,
-                "id": "881F766E-4381-477A-9ECC-E23B87E36711",
+                "id": "10FE840D-14FF-486D-AD31-4E26FB9DF402",
                 "rev": 0
               }
             ]
@@ -546,7 +498,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "2BB972A0-3202-463B-B125-D3700BACDB21",
+              "id": "A8521474-B2F7-4511-9D37-2F23E6121843",
               "rev": 0
             }
           ]
@@ -563,9 +515,13 @@
         }
       }
     },
-    "881F766E-4381-477A-9ECC-E23B87E36711": {
+    "10FE840D-14FF-486D-AD31-4E26FB9DF402": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "fontFamily": {
           "key": "fontFamily",
           "value": ""
@@ -578,9 +534,13 @@
         }
       }
     },
-    "2BB972A0-3202-463B-B125-D3700BACDB21": {
+    "A8521474-B2F7-4511-9D37-2F23E6121843": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -593,8 +553,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "label_D299DFE0_709F_4C31_9E2E_A7125E3480FA",
-            "rev": 1365738
+            "id": "Label_C0B5D97B_9A81_40CF_83B7_1AB5C6EE43E3",
+            "rev": 9014
           }
         },
         "sourceAttrName": {
@@ -605,8 +565,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "targetMethodName": {
@@ -617,7 +577,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "8344BFF2-094B-44BD-854E-ECD1EAE248C2",
+            "id": "C024E653-8815-468B-B147-141DA7B6AB5C",
             "rev": 0
           }
         },
@@ -641,28 +601,32 @@
         }
       }
     },
-    "8344BFF2-094B-44BD-854E-ECD1EAE248C2": {
+    "C024E653-8815-468B-B147-141DA7B6AB5C": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "label_D299DFE0_709F_4C31_9E2E_A7125E3480FA",
-            "rev": 1365738
+            "id": "Label_C0B5D97B_9A81_40CF_83B7_1AB5C6EE43E3",
+            "rev": 9014
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         }
       }
     },
-    "C043B4D4-F657-4B14-8830-C85E6311F647": {
+    "4861A6C6-7793-496E-AB91-9818CA91DC23": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -675,7 +639,7 @@
         }
       }
     },
-    "B6034590-2B76-4197-AB3D-6DD56AE92EFB": {
+    "5A7AEEE7-9E21-4C0B-969F-666B850A13E5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -700,7 +664,7 @@
         }
       }
     },
-    "ECCD86CF-9FA0-4045-BE29-7ACA49B9318C": {
+    "404273CA-6B36-40D2-A995-826687A790D9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -727,15 +691,19 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "B85C48B6-8AC5-474A-9653-5C79D33D417A",
+            "id": "074EE246-EFF9-49D6-AB16-9ECAB2FA15DA",
             "rev": 0
           }
         }
       }
     },
-    "B85C48B6-8AC5-474A-9653-5C79D33D417A": {
+    "074EE246-EFF9-49D6-AB16-9ECAB2FA15DA": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "color": {
           "key": "color",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
@@ -750,7 +718,7 @@
         }
       }
     },
-    "5583B34F-20F5-482C-9679-84A6778483F6": {
+    "270E36F1-681E-48A5-8761-CEBCF77B7631": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -769,8 +737,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "sourceAttrName": {
@@ -781,8 +749,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "targetMethodName": {
@@ -793,7 +761,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "206E026F-05AC-4BC1-AE39-07DCE87E62BA",
+            "id": "3E2CFE6E-95F1-494B-B431-691EACB5D854",
             "rev": 0
           }
         },
@@ -817,7 +785,7 @@
         }
       }
     },
-    "206E026F-05AC-4BC1-AE39-07DCE87E62BA": {
+    "3E2CFE6E-95F1-494B-B431-691EACB5D854": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -828,21 +796,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         }
       }
     },
-    "42E5F290-F6E9-41E0-8077-29163E862675": {
+    "386CA408-97AF-4ADB-B4E5-9FF32E084E92": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -861,8 +829,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "sourceAttrName": {
@@ -873,8 +841,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "targetMethodName": {
@@ -885,7 +853,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "15E10645-EBDE-4319-B994-ABC05A5F2C3D",
+            "id": "90A78D9C-C36B-47C9-94D9-52189B7E0004",
             "rev": 0
           }
         },
@@ -909,7 +877,7 @@
         }
       }
     },
-    "15E10645-EBDE-4319-B994-ABC05A5F2C3D": {
+    "90A78D9C-C36B-47C9-94D9-52189B7E0004": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -920,21 +888,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         }
       }
     },
-    "D9D00112-7D56-42CB-8F30-655C68356470": {
+    "E2128305-D255-4841-9E36-29BA0669DA55": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -953,8 +921,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "sourceAttrName": {
@@ -965,8 +933,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "targetMethodName": {
@@ -977,7 +945,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "27D1690A-2B93-4219-A4D4-4DB174BD8104",
+            "id": "2815D339-35C4-4F7C-B559-FF223907795E",
             "rev": 0
           }
         },
@@ -1001,7 +969,7 @@
         }
       }
     },
-    "27D1690A-2B93-4219-A4D4-4DB174BD8104": {
+    "2815D339-35C4-4F7C-B559-FF223907795E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1012,21 +980,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         }
       }
     },
-    "40DF9F93-1A72-4D8E-BC31-89873D161E48": {
+    "2EA77D7E-431C-4E84-9789-72AD89BC8D4E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1045,8 +1013,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "sourceAttrName": {
@@ -1057,8 +1025,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "targetMethodName": {
@@ -1069,7 +1037,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "F70B3034-910A-4A4A-B08D-7DFFCC972BCB",
+            "id": "437FDADC-33EF-4B77-89D0-0570B441C661",
             "rev": 0
           }
         },
@@ -1093,7 +1061,7 @@
         }
       }
     },
-    "F70B3034-910A-4A4A-B08D-7DFFCC972BCB": {
+    "437FDADC-33EF-4B77-89D0-0570B441C661": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1104,21 +1072,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         }
       }
     },
-    "95CF58C8-67E7-4251-A929-03F38576DE9A": {
+    "A97E0911-E3E0-4173-A597-97F2DD39A483": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1137,8 +1105,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "sourceAttrName": {
@@ -1149,8 +1117,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "targetMethodName": {
@@ -1161,7 +1129,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "7BD9E5F1-526A-4863-B48E-6FB146E0DC41",
+            "id": "E5CE17A2-3E95-4291-A729-628B74B575F8",
             "rev": 0
           }
         },
@@ -1185,7 +1153,7 @@
         }
       }
     },
-    "7BD9E5F1-526A-4863-B48E-6FB146E0DC41": {
+    "E5CE17A2-3E95-4291-A729-628B74B575F8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1196,21 +1164,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         }
       }
     },
-    "433A4A41-5D4B-4F4C-BBA3-2300DCE1DCF7": {
+    "905B86F3-38A9-49B4-B11F-9CA5BC91E124": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1229,8 +1197,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "sourceAttrName": {
@@ -1241,8 +1209,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "targetMethodName": {
@@ -1253,7 +1221,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "9FF21FB1-4135-4E5A-B0BC-5DB1DF4F3BA0",
+            "id": "53911BD5-70F3-4B03-95F8-2E33762DFFE5",
             "rev": 0
           }
         },
@@ -1277,7 +1245,7 @@
         }
       }
     },
-    "9FF21FB1-4135-4E5A-B0BC-5DB1DF4F3BA0": {
+    "53911BD5-70F3-4B03-95F8-2E33762DFFE5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1288,21 +1256,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         }
       }
     },
-    "B68B775F-0F86-40E5-A225-7BDD0E95EAAD": {
+    "CC39573D-77A2-4491-B423-EFBB9C5A684B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1321,8 +1289,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "sourceAttrName": {
@@ -1333,8 +1301,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "targetMethodName": {
@@ -1345,7 +1313,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "C0C93CC3-24FD-405C-908C-03F0520C9569",
+            "id": "2E8940E2-AAB4-4895-ADBC-33C03E9599B7",
             "rev": 0
           }
         },
@@ -1369,7 +1337,7 @@
         }
       }
     },
-    "C0C93CC3-24FD-405C-908C-03F0520C9569": {
+    "2E8940E2-AAB4-4895-ADBC-33C03E9599B7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1380,23 +1348,27 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         }
       }
     },
-    "72BC33AA-76E3-4BDE-B1BF-6ABEFF7582CC": {
+    "DE9CF782-AD5E-46E4-A488-8B40C93C0B11": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -1409,8 +1381,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "sourceAttrName": {
@@ -1421,8 +1393,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_9CD93BA9_AFCE_4284_A5F3_A8F07DEE14D6",
-            "rev": 1373755
+            "id": "Part_dash_item_dash_for_dash_partsbin_351CCCD9_9982_40BE_AB66_3C596BF2E17C",
+            "rev": 35647
           }
         },
         "targetMethodName": {
@@ -1433,7 +1405,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "A2563F86-5FAA-442D-84FA-6F1E066668D7",
+            "id": "B6C466B7-6A67-481D-8C9B-0B6AEF166B5E",
             "rev": 0
           }
         },
@@ -1457,23 +1429,27 @@
         }
       }
     },
-    "A2563F86-5FAA-442D-84FA-6F1E066668D7": {
+    "B6C466B7-6A67-481D-8C9B-0B6AEF166B5E": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_AB9A2F48_C778_4542_BA52_AAE0D8A08DA4",
-            "rev": 1365737
+            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
+            "rev": 8400
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_9CD93BA9_AFCE_4284_A5F3_A8F07DEE14D6",
-            "rev": 1373755
+            "id": "Part_dash_item_dash_for_dash_partsbin_351CCCD9_9982_40BE_AB66_3C596BF2E17C",
+            "rev": 35647
           }
         }
       }
@@ -1483,9 +1459,9 @@
     "local://lively-object-modules/": {
       "38C79579-61C1-46DE-A025-FF870C3DA84F": {
         "package.json": "{\n  \"name\": \"38C79579-61C1-46DE-A025-FF870C3DA84F\",\n  \"version\": \"0.1.0\"\n}",
-        "index.js": "import { Morph, Icon, HTMLMorph } from \"lively.morphic\";\nimport { Color, pt } from \"lively.graphics/index.js\";\nimport { connect, disconnect } from \"lively.bindings/index.js\";\nimport { resource } from \"lively.resources/index.js\";\nimport { loadObjectFromSnapshot } from \"lively.morphic/partsbin.js\";\n\nexport default class Part_dash_item_dash_for_dash_partsbin extends Morph {\n\n  reset() {\n    connect(this.get(\"remove-button\"), 'fire', this, 'interactivelyRemovePart');\n  }\n\n  async showPart(partResource) {\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/star.json\")\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/button.json\")\n    // await this.showPart()\n    var partName = partResource.name().replace(/\\.json$/, \"\");\n    var snapshot = JSON.parse(await partResource.read());\n    this.state = {partName, partResource, snapshot};\n    this.addPreviewMorph();\n  }\n\n  addPreviewMorph() {\n    var {partName, snapshot} = this.state;\n\n    var margin = 10,\n        previewWidth = 100+2*margin,\n        previewHeight = 100+2*margin,\n        {x: w, y: h} = this.extent,\n        borderWidth = 1,\n        previewHTML = `<div style=\"width: 100%;\">`\n                    + `<div style=\"position: absolute; top: ${margin}px;`\n                    + `            left: ${margin + (w-previewWidth) / 2}px\">`\n                    + snapshot.preview\n                    + `</div>`\n                    + `<div style=\"background-color: rgba(255,255,255, 0.8); `\n                    + `            font-family: Arial; position: absolute; `\n                    + `            left: ${borderWidth}px;`\n                    + `            width: ${w - 2*borderWidth}px;`\n                    + `            bottom: 3px\"><center>${partName}</center></div>`\n                    + `</div>`,\n      previewSpec = {\n        name: \"html-preview\",\n        fill: null,\n        reactsToPointer: false,\n        html: previewHTML,\n        extent: pt(w, h),\n        // border: {width: 1, color: Color.gray, radius: 5},\n        nativeCursor: \"-webkit-grab\"\n      };\n\n    var preview = this.getSubmorphNamed(\"html-preview\") || this.addMorph(new HTMLMorph());\n    Object.assign(preview, previewSpec);\n\n    preview.domNode.style.pointerEvents = \"none\";\n    // disconnect(preview, 'onDragStart', this, 'createAndGrabNewInstance',\n    //   {converter: function() { return this.sourceObj; }});\n    return preview;\n  }\n\n  onDragStart(evt) {\n    this.createAndGrabNewInstance();\n  }\n  \n  async createAndGrabNewInstance() {\n    // FIXME\n    this.env.eventDispatcher.eventState.draggedMorph = null;\n    try {\n      var {snapshot} = this.state;\n      var newMorph = await loadObjectFromSnapshot(snapshot)\n      this.world().firstHand.grab(newMorph);\n      newMorph.position = pt(0,0);\n    } catch (e) {\n      this.showError(e)\n    }\n  }\n\n  async interactivelyRemovePart() {\n    var {partName, partResource} = this.state;\n    var really = await this.world().confirm(`Do you really want to remove part ${partName}?`);\n    if (!really) return;\n    await partResource.remove();\n    if (this.owner.isPartsBin) { this.remove(); }\n  }\n}\n\n"
+        "index.js": "import { Morph, Icon, HTMLMorph } from \"lively.morphic\";\nimport { Color, pt } from \"lively.graphics/index.js\";\nimport { connect, disconnect } from \"lively.bindings/index.js\";\nimport { resource } from \"lively.resources/index.js\";\nimport { loadObjectFromSnapshot } from \"lively.morphic/partsbin.js\";\n\nexport default class Part_dash_item_dash_for_dash_partsbin extends Morph {\n\n  reset() {\n    connect(this.get(\"remove-button\"), 'fire', this, 'interactivelyRemovePart');\n  }\n\n  async showPart(partResource) {\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/star.json\")\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/button.json\")\n    // await this.showPart()\n    var partName = partResource.name().replace(/\\.json$/, \"\");\n    var snapshot = JSON.parse(await partResource.read());\n    this.state = {partName, partResource, snapshot};\n    this.addPreviewMorph();\n  }\n\n  addPreviewMorph() {\n    var {partName, snapshot} = this.state;\n\n    var margin = 10,\n        previewWidth = 100+2*margin,\n        previewHeight = 100+2*margin,\n        {x: w, y: h} = this.extent,\n        borderWidth = 1,\n        previewHTML = `<div style=\"width: 100%;\">`\n                    + `<div style=\"position: absolute; top: ${margin}px;`\n                    + `            left: ${margin + (w-previewWidth) / 2}px\">`\n                    + snapshot.preview\n                    + `</div>`\n                    + `<div style=\"background-color: rgba(255,255,255, 0.8); `\n                    + `            font-family: Arial; position: absolute; `\n                    + `            left: ${borderWidth}px;`\n                    + `            width: ${w - 2*borderWidth}px;`\n                    + `            bottom: 3px\"><center>${partName}</center></div>`\n                    + `</div>`,\n      previewSpec = {\n        name: \"html-preview\",\n        fill: null,\n        reactsToPointer: false,\n        html: previewHTML,\n        extent: pt(w, h),\n        // border: {width: 1, color: Color.gray, radius: 5},\n        nativeCursor: \"-webkit-grab\"\n      };\n\n    var preview = this.getSubmorphNamed(\"html-preview\") || this.addMorph(new HTMLMorph());\n    Object.assign(preview, previewSpec);\n\n    preview.domNode.style.pointerEvents = \"none\";\n    // disconnect(preview, 'onDragStart', this, 'createAndGrabNewInstance',\n    //   {converter: function() { return this.sourceObj; }});\n    return preview;\n  }\n\n  onDragStart(evt) {\n    this.createAndGrabNewInstance();\n  }\n  \n  async createAndGrabNewInstance() {\n    // FIXME\n    var hand = this.world().firstHand;\n    this.draggable = false;\n    this.env.eventDispatcher.eventState.draggedMorph = null;\n    try {\n      var {snapshot} = this.state;\n      var newMorph = await loadObjectFromSnapshot(snapshot)\n      hand.grab(newMorph);\n      newMorph.position = pt(0,0);\n    } catch (e) {\n      this.showError(e)\n    } finally {\n      this.draggable = true;\n    }\n  }\n\n  async interactivelyRemovePart() {\n    var {partName, partResource} = this.state;\n    var really = await this.world().confirm(`Do you really want to remove part ${partName}?`);\n    if (!really) return;\n    await partResource.remove();\n    if (this.owner.isPartsBin) { this.remove(); }\n  }\n}\n\n"
       }
     }
   },
-  "preview": "<div   draggable=\"false\" style=\"background: rgb(253, 254, 254); transform: translate(0px, 5.57075px) rotate(0deg) scale(0.683527, 0.683527); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 1px; border-color: rgb(189, 195, 199); border-radius: 4px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: -webkit-grab;\"><div style=\"position: absolute; width: 100%; height: 100%; \"><div style=\"width: 100%;\"><div style=\"position: absolute; top: 10px;            left: 23.150000000000006px\"><div draggable=\"false\" style=\"transform: translate(-19.7369px, -16.3598px) rotate(-178.453deg) scale(0.769655, 0.769655); transform-origin: 65px 65px 0px; position: absolute; opacity: 1; cursor: auto; width: 117.6px; height: 126.8px; display: inline; filter: drop-shadow(rgb(120, 120, 120) 0px 0px 0px);\"><svg width=\"117.6\" height=\"126.8\" viewBox=\"0 0 117.6 126.8\" style=\"position: absolute;  overflow: visible;\"><defs></defs><path stroke-width=\"0\" fill=\"rgb(204,204,0)\" paint-order=\"stroke\" stroke=\"rgb(255,255,255)\" d=\"M90.36067682519484, 66.66270501670616 C 90.36067682519484, 66.66270501670616 117.59999999999998,105.8460599034495 117.59999999999998,105.8460599034495 C 117.59999999999998,105.8460599034495 72.84218768522004,91.38870501670617 72.84218768522004,91.38870501670617 C 72.84218768522004,91.38870501670617 44.91920292301236,130.06270501670616 44.91920292301236,130.06270501670616 C 44.91920292301236,130.06270501670616 44.49667682519487,81.94421342253607 44.49667682519487,81.94421342253607 C 44.49667682519487,81.94421342253607 0,66.66270501670617 0,66.66270501670617 C 0,66.66270501670617 44.49667682519487,51.38119661087626 44.49667682519487,51.38119661087626 C 44.49667682519487,51.38119661087626 44.91920292301234,3.2627050167061427 44.91920292301234,3.2627050167061427 C 44.91920292301234,3.2627050167061427 72.84218768522004,41.93670501670615 72.84218768522004,41.93670501670615 C 72.84218768522004,41.93670501670615 117.59999999999997,27.479350129962796 117.59999999999997,27.479350129962796 C 117.59999999999997,27.479350129962796 90.36067682519484,66.66270501670616 90.36067682519484,66.66270501670616\"></path></svg><div style=\"position: absolute; transform: translate(65px, 65px);\"></div></div></div><div style=\"background-color: rgba(255,255,255, 0.8);             font-family: Arial; position: absolute;             left: 1px;            width: 144.3px;            bottom: 3px\"><center>star</center></div></div></div><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div   draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(107.66px, 7px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 28px; height: 28px; border-style: solid; border-width: 1px; border-color: rgb(230, 230, 230); border-radius: 5px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"transform: translate3d(9.28px, 8px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer; font-family: sans-serif; font-size: 12px; color: rgb(64, 64, 64); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div>"
+  "preview": "<div   draggable=\"false\" style=\"background: rgb(253, 254, 254); transform: translate(0px, 5.57075px) rotate(0deg) scale(0.683527, 0.683527); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 1px; border-color: rgb(189, 195, 199); border-radius: 4px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: -webkit-grab;\"><div style=\"position: absolute; width: 100%; height: 100%; \"><div style=\"width: 100%;\"><div style=\"position: absolute; top: 10px;            left: 23.150000000000006px\"><div draggable=\"false\" style=\"background: rgb(76, 223, 46); transform: translate(0px, 0px) rotate(0deg) scale(2, 2); transform-origin: 0px 0px 0px; display: inline; width: 50px; height: 50px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(45px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(45px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(45px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(45px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(45px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(45px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(45px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(45px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(45px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(45px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(40px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(40px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(40px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(40px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(40px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(40px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(40px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(40px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(40px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(40px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(35px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(35px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(35px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(35px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(35px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(35px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(35px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(35px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(35px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(35px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(30px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(30px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(30px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(30px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(30px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(30px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(30px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(30px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(30px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(30px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(25px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(25px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(25px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(25px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(25px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(25px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(25px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(25px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(25px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(25px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(20px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(20px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(20px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(20px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(20px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(20px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(20px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(20px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(20px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(20px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(15px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(15px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(15px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(15px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(15px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(15px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(15px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(15px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(15px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(15px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(10px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(10px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(10px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(10px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(10px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(10px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(10px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(10px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(10px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(10px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(5px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(5px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(5px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(5px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(5px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(5px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(5px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(5px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(5px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(5px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(0px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(0px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(0px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(0px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(0px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(0px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(0px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(0px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(0px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div><div style=\"background-color: rgba(255,255,255, 0.8);             font-family: Arial; position: absolute;             left: 1px;            width: 144.3px;            bottom: 3px\"><center>game-of-life</center></div></div></div><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div   draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(107.7px, 7px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 28px; height: 28px; border-style: solid; border-width: 1px; border-color: rgb(230, 230, 230); border-radius: 5px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"transform: translate3d(9.28px, 8px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer; font-family: sans-serif; font-size: 12px; color: rgb(64, 64, 64); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div>"
 }
