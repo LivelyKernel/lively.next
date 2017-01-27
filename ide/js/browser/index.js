@@ -2,16 +2,16 @@ import { Color, pt, Rectangle } from "lively.graphics";
 import { arr, fun, promise, string } from "lively.lang";
 import { connect, disconnect, noUpdate } from "lively.bindings";
 import { Window, morph, show, Label, HorizontalLayout, GridLayout, config } from "lively.morphic";
-import { DropDownList } from "lively.morphic/list.js";
+import { DropDownList } from "lively.morphic/components/list.js";
 import InputLine from "lively.morphic/text/input-line.js";
 import { JSONEditorPlugin } from "lively.morphic/ide/json/editor-plugin.js";
-import { HorizontalResizer } from "lively.morphic/resizers.js";
-import { Icon } from "lively.morphic/icons.js";
+import { HorizontalResizer } from "lively.morphic/components/resizers.js";
+import { Icon } from "lively.morphic/components/icons.js";
 import { JavaScriptEditorPlugin } from "../editor-plugin.js";
 import EvalBackendChooser from "../eval-backend-ui.js";
 
 import browserCommands from "./commands.js";
-import { Tree, TreeData } from "lively.morphic/tree.js"
+import { Tree, TreeData } from "lively.morphic/components/tree.js"
 
 import "mocha-es6/index.js";
 
@@ -63,7 +63,7 @@ export default class Browser extends Window {
     // browse spec:
     // packageName, moduleName, textPosition like {row: 0, column: 0}
     var {packageName, moduleName, textPosition, codeEntity} = browseSpec;
-  
+
     var browser = browserOrProps instanceof Browser ?
       browserOrProps : new this(browserOrProps);
 
@@ -262,7 +262,7 @@ export default class Browser extends Window {
                  {...btnStyle, name: "historyBackwardButton", label: Icon.makeLabel("step-backward"), tooltip: "back in browse history"},
                  {...btnStyle, name: "browseHistoryButton", label: Icon.makeLabel("history"), tooltip: "show browse history"},
                  {...btnStyle, name: "historyForwardButton", label: Icon.makeLabel("step-forward"), tooltip: "forward in browse history"},
-                 
+
                  {extent: pt(10,18), fill: Color.white},
 
                  {...btnStyle, name: "searchButton", label: Icon.makeLabel("search"), tooltip: "code search"},
@@ -739,7 +739,7 @@ export default class Browser extends Window {
             module.name, content, {targetModule: module.name, doEval: true});
         } else await system.coreInterface.resourceWrite(module.name, content);
       }
-  
+
       this.updateSource(content);
       await this.updateCodeEntities(module);
       await this.updateTestUI(module);
@@ -893,7 +893,7 @@ export default class Browser extends Window {
         this.addModuleChangeWarning(m.id);
         this.state.sourceHash = string.hashCode(await m.source());
       } else await this.get("sourceEditor").saveExcursion(() => this.onModuleSelected(mInList));
-      
+
     }
   }
 

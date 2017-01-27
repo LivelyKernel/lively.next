@@ -1,11 +1,11 @@
-import {Window, Morph, Text, VerticalLayout, 
+import {Window, Morph, Text, VerticalLayout,
         GridLayout, HorizontalLayout, FillLayout} from "../../index.js";
 import {pt, Color, LinearGradient, rect} from "lively.graphics";
 import {signal, connect, disconnect} from "lively.bindings";
-import {Slider} from "../../widgets.js";
+import {Slider} from "lively.morphic/components/widgets.js";
+import {Icon} from "lively.morphic/components/icons.js";
 import {obj, num} from "lively.lang";
 import {ColorPalette} from "./color-palette.js";
-import {Icon} from "../../icons.js";
 import { StyleRules } from '../../style-rules.js';
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
@@ -61,7 +61,7 @@ export class ColorPickerField extends Morph {
    }
 
    onHoverIn() {
-      if (!this.palette) 
+      if (!this.palette)
            this.palette = new ColorPalette({color: this.targetProperty});
    }
 
@@ -150,7 +150,7 @@ export class ColorPicker extends Window {
   get styler() {
      return new StyleRules({
         key: {fill: Color.transparent, fontColor: Color.gray, fontWeight: 'bold'},
-        large: {fontSize: 20}, 
+        large: {fontSize: 20},
         active: {fontColor: Color.orange, borderColor: Color.orange},
         value: {fill: Color.transparent, fontColor: Color.gray.lighter()},
         editable: {borderRadius: 4, borderWidth: 1, padding: rect(2,2,2,2), borderColor: Color.gray.lighter()}
@@ -158,7 +158,7 @@ export class ColorPicker extends Window {
   }
 
   onKeyDown(evt) {
-     if (evt.key == "Escape") { 
+     if (evt.key == "Escape") {
          this.close();
      }
   }
@@ -243,7 +243,7 @@ export class ColorPicker extends Window {
     connect(colorPalette.get('field'), 'extent', colorPalette.get('field'), 'relayout');
     return colorPalette;
   }
-  
+
   alphaSlider() {
     return {
        name: "alphaSlider",
@@ -256,7 +256,7 @@ export class ColorPicker extends Window {
         new Slider({
              target: this, min: 0, max: 1,
              property: "alpha", width: 170
-      }), {type: "label", padding: 3, value: (this.alpha * 100).toFixed(), 
+      }), {type: "label", padding: 3, value: (this.alpha * 100).toFixed(),
            fontSize: 12, fontColor: Color.gray, name: "alphaDisplay"}]
     }
   }
@@ -326,7 +326,7 @@ export class ColorPicker extends Window {
       name: "scale",
       fill: Color.transparent,
       update() {
-         this.getSubmorphNamed('hueGradient').setBounds(this.innerBounds().insetBy(5)); 
+         this.getSubmorphNamed('hueGradient').setBounds(this.innerBounds().insetBy(5));
       },
       submorphs: [{
         name: "hueGradient",
@@ -376,7 +376,7 @@ export class ColorPicker extends Window {
       },
       submorphs: [
         {type: 'label', morphClasses: [editable && 'large', 'key'], value: key},
-        {type: editable ? 'text' : 'label', morphClasses: [editable && 'editable', 'value'], 
+        {type: editable ? 'text' : 'label', morphClasses: [editable && 'editable', 'value'],
          readOnly: !editable,
          onFocus() {
             this.morphClasses = [editable && 'editable', 'value', 'active'];
@@ -388,7 +388,7 @@ export class ColorPicker extends Window {
             if ("Enter" == evt.keyCombo && editable && setValue) {
                setValue(this.textString); this.owner.focus(); evt.stop();
             } else {
-               super.onKeyDown(evt); 
+               super.onKeyDown(evt);
             }
          }, textString: obj.safeToString(value)}]
     })

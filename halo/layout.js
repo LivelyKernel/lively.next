@@ -1,16 +1,16 @@
-import { Ellipse, Morph, Path, Text, 
-         HorizontalLayout, GridLayout, 
+import { Ellipse, Morph, Path, Text,
+         HorizontalLayout, GridLayout,
          VerticalLayout, morph, Menu } from "../index.js";
 import { Color, pt, rect, Line, Rectangle } from "lively.graphics";
 import { string, obj, arr, num, grid } from "lively.lang";
-import { CheckBox, ValueScrubber, PropertyInspector } from "../widgets.js";
+import { CheckBox, ValueScrubber, PropertyInspector } from "lively.morphic/components/widgets.js";
 import { connect } from "lively.bindings";
 
 class AxisHalo extends Morph {
-  
+
   constructor({halo, targetAxis}) {
-    super({fill: Color.transparent, 
-           halo, targetAxis, 
+    super({fill: Color.transparent,
+           halo, targetAxis,
            container: halo.container});
     this.initialize();
   }
@@ -24,39 +24,39 @@ class AxisHalo extends Morph {
     this.submorphs = [this.proportionSlider, this.axisMenu];
     this.halo.addGuide(this);
   }
-  
+
   // replace by constraint: if minSlider dragging, and mouse inside halo, hide menu
-  
-  set forceMenuHidden(hidden) { 
-    this._forceMenuHidden = hidden; 
+
+  set forceMenuHidden(hidden) {
+    this._forceMenuHidden = hidden;
     this.axisMenu.visible = !hidden;
   }
-  
+
   get forceMenuHidden() { return this._forceMenuHidden }
-  
+
   get lastAxis() { return !this.targetAxis.after }
-  
+
   fetchBounds() { return this.fetchPosition().extent(this.fetchExtent()) }
-  
+
   alignWithTarget() {
     this.extent = this.fetchExtent();
     this.position = this.fetchPosition();
     this.proportionSlider.alignWithTarget();
     this.axisMenu.alignWithTarget();
   }
-  
+
   // if mouse inside halo, show menu
-  
+
   onHoverIn() {
     this.minSlider.requestToShow();
     this.axisMenu.visible = !this.forceMenuHidden && true;
   }
-  
+
   onHoverOut(evt) {
-    this.minSlider.requestToHide(); 
+    this.minSlider.requestToHide();
     this.axisMenu.visible = this.forceMenuVisible || false;
   }
-  
+
   proportionSlider() {
     var self = this,
         proportionViewer = this.proportionViewer();
@@ -69,10 +69,10 @@ class AxisHalo extends Morph {
               this.setBounds(self.getProportionSliderBounds(this));
             },
             onDragStart() {
-              proportionViewer.visible = true;  
+              proportionViewer.visible = true;
             },
             onDrag: (evt) => {
-                this.targetAxis.adjustStretch(this.getDelta(evt)); 
+                this.targetAxis.adjustStretch(this.getDelta(evt));
                 self.halo.alignWithTarget();
             },
             onDragEnd() {
@@ -80,7 +80,7 @@ class AxisHalo extends Morph {
             }
         }));
   }
-  
+
   devider() {
     return new Morph({
         visible: !this.lastAxis,
@@ -90,12 +90,12 @@ class AxisHalo extends Morph {
         reactsToPointer: false
     });
   }
-  
+
   minSlider() {
     const self = this,
           minSpaceVisualizer = this.minSpaceVisualizer(),
           minViewer = this.minViewer();
-    
+
     return this.halo.addGuide(new Ellipse({
             nativeCursor: this.getResizeCursor(),
             fill: Color.green,
@@ -122,7 +122,7 @@ class AxisHalo extends Morph {
               minSpaceVisualizer.visible = true;
               this.active = true;
             },
-            onDrag: (evt) => { 
+            onDrag: (evt) => {
               this.targetAxis.adjustMin(-this.getDelta(evt));
               this.halo.alignWithTarget();
             },
@@ -132,25 +132,25 @@ class AxisHalo extends Morph {
               minSpaceVisualizer.visible = false;
               this.active = false;
               if (this.shouldHide) {
-                  this.visible = false; 
+                  this.visible = false;
                   this.shouldHide = false;
               }
             }
         }));
   }
-  
+
   minViewer() {
-    const gridLayout = this.target, 
+    const gridLayout = this.target,
           self = this;
     return this.viewer({
-        position: this.getMinViewerPosition(), 
+        position: this.getMinViewerPosition(),
         alignWithTarget() {
             const {min} = self.targetAxis;
-            this.textString = `min: ${min.toFixed()}px !`; 
+            this.textString = `min: ${min.toFixed()}px !`;
         }
     });
   }
-  
+
   minSpaceBorder() {
     return new Path({
       position: pt(-1,-1),
@@ -160,7 +160,7 @@ class AxisHalo extends Morph {
       ...this.getMinSpaceBorder()
     });
   }
-  
+
   minSpaceVisualizer() {
     const self = this,
           minSpaceBorder = this.minSpaceBorder();
@@ -175,7 +175,7 @@ class AxisHalo extends Morph {
             }
           }))
   }
-  
+
   axisMenu() {
     const lockButton = this.lockButton(),
           menuButton = this.menuButton(),
@@ -189,13 +189,13 @@ class AxisHalo extends Morph {
       alignWithTarget() { this.bottomRight = this.owner.extent.subPt(self.getMenuOffset(this)) }
     });
   }
-  
+
   lockButton() {
     const self = this;
     return this.halo.addGuide(new Morph({
           fill: Color.transparent,
           extent: pt(25,25),
-          submorphs: [{center: pt(12.5, 12.5), 
+          submorphs: [{center: pt(12.5, 12.5),
                       fill: Color.transparent,
                       styleClasses: ["fa", "fa-unlock"]}],
           alignWithTarget() {
@@ -216,7 +216,7 @@ class AxisHalo extends Morph {
           }
         }));
   }
-  
+
   menuButton() {
     const self = this,
           remove = () => {
@@ -238,7 +238,7 @@ class AxisHalo extends Morph {
             fill: Color.transparent,
             extent: pt(25,25),
             submorphs: [{fill: Color.transparent,
-                         styleClasses: ["fa", "fa-cog"], 
+                         styleClasses: ["fa", "fa-cog"],
                          center: pt(12.5,12.5)}],
             onMouseDown(evt) {
               // is menu open keep menu visible at all times
@@ -254,7 +254,7 @@ class AxisHalo extends Morph {
             }
           });
   }
-  
+
   viewer({position, alignWithTarget}) {
     return this.halo.addGuide(new Text({
         styleClasses: ["Halo"],
@@ -267,88 +267,88 @@ class AxisHalo extends Morph {
         readOnly: true
     }));
   }
-  
+
   proportionViewer() {
     const self = this;
     return this.viewer({
         position: this.getProportionViewerPosition(),
         alignWithTarget() {
             const {length} = self.targetAxis;
-            this.textString = `${length.toFixed(1)}px`; 
+            this.textString = `${length.toFixed(1)}px`;
         }
     });
   }
 }
 
 class RowHalo extends AxisHalo {
-  
+
   constructor({row, halo}) {
     super({targetAxis: halo.target.row(row), halo});
   }
-  
+
   get subject() { return "row" }
-  
+
   getDelta(evt) { return evt.state.dragDelta.y }
-  
+
   axisOffset() { return this.targetAxis.origin.position.y }
-  
+
   fetchPosition() { return pt(-45, this.axisOffset() + 10); }
   fetchExtent() { return pt(40, this.targetAxis.length - 10); }
-  
+
   getMenuOffset(menu) { return this.targetAxis.length > menu.height ? pt(2, 5) : pt(26, 10); }
   getMenuLayout() { return new VerticalLayout() }
-  
+
   getResizeCursor() { return "row-resize" }
-  
+
   getMinViewerPosition() { return pt(50, 20)}
   getMinSliderPosition() { return pt(0, -this.targetAxis.min) }
   getMinSpaceExtent() { return  pt(this.container.width + 45, this.targetAxis.min) }
-  getMinSpaceBorder() { 
+  getMinSpaceBorder() {
     return {
       extent: pt(this.container.width + 50, 2),
       vertices: [pt(0,1), pt(this.container.width + 50, 1)]
     }
   }
-  
+
   getProportionViewerPosition() { return pt(40, 20) }
   getProportionSliderBounds(slider) { return pt(0, slider.owner.height - 5).extent(pt(40, 10)) }
-  
+
   getDeviderBounds() { return pt(15, 4).extent(pt(25, 2)) }
 }
 
 class ColumnHalo extends AxisHalo {
-  
+
   constructor({col, halo}) {
     super({targetAxis: halo.target.col(col), halo});
   }
-  
+
   get subject() { return "column" }
-  
+
   getDelta(evt) { return evt.state.dragDelta.x }
-  
+
   axisOffset() { return this.targetAxis.origin.position.x }
-  
+
   fetchPosition() { return pt(this.axisOffset() + 10, -45); }
   fetchExtent() { return pt(this.targetAxis.length - 10, 40); }
-  
+
   getMenuOffset(menu) { return this.targetAxis.length > menu.width ? pt(5, 3) : pt(8, 26); }
   getMenuLayout() { return new HorizontalLayout() }
-  
+
   getResizeCursor() { return "col-resize" }
-  
+
   getMinViewerPosition() { return pt(20, 50) }
   getMinSliderPosition() { return pt(-this.targetAxis.min, 0) }
   getMinSpaceExtent() { return pt(this.targetAxis.min, this.container.height + 45) }
-  getMinSpaceBorder() { 
+  getMinSpaceBorder() {
     return {
       extent: pt(2, this.container.height + 50),
       vertices: [pt(1,0), pt(1, this.container.height + 50)]
     }
   }
-  
+
   getProportionViewerPosition() { return pt(20, 40); }
   getProportionSliderBounds(slider) { return pt(slider.owner.width - 5, 0).extent(pt(10, 40));}
-  
+
   getDeviderBounds() { return pt(4,15).extent(pt(2, 25)) }
 }
 
@@ -376,22 +376,22 @@ export class GridLayoutHalo extends Morph {
   optionControls() {
       const layout = this.target,
             compensateOrigin = new CheckBox({
-                name: "compensateOrigin", 
+                name: "compensateOrigin",
                 checked: layout.compensateOrigin}),
             fitToCell = new CheckBox({
                 name: "fitToCell", checked: layout.fitToCell});
       connect(compensateOrigin, "toggle", layout, "compensateOrigin");
       connect(fitToCell, "toggle", layout, "fitToCell");
       connect(compensateOrigin, "toggle", this, "alignWithTarget");
-      return [[{type: "text", textString: "Compensate Origin", 
+      return [[{type: "text", textString: "Compensate Origin",
                padding: rect(5,0,10,10), fill: Color.transparent,
                fontColor: Color.gray.darker(),
                readOnly: true}, compensateOrigin],
-               [{type: "text", textString: "Fit morphs to cell", 
+               [{type: "text", textString: "Fit morphs to cell",
                padding: rect(5,0,10,10), fill: Color.transparent,
                fontColor: Color.gray.darker(),
                readOnly: true}, fitToCell]]
-              .map(x => { return {submorphs: x, fill: Color.transparent, 
+              .map(x => { return {submorphs: x, fill: Color.transparent,
                                   layout: new HorizontalLayout({spacing: 3})}})
   }
 
@@ -408,9 +408,9 @@ export class GridLayoutHalo extends Morph {
     this.addMissingGuides();
     arr.reverse(this.guides).forEach(guide => guide.alignWithTarget());
   }
-  
+
   addMissingGuides() {
-    arr.withoutAll(this.target.cellGroups, 
+    arr.withoutAll(this.target.cellGroups,
                    this.guides.map(g => g.cellGroup))
        .forEach(group => this.addMorph(this.cellGuide(group)));
   }
@@ -422,11 +422,11 @@ export class GridLayoutHalo extends Morph {
     this.initColumnGuides();
     this.initRowGuides();
   }
-  
+
   get cells() {
     return arr.flatten(this.target.col(0).items.map(c => c.row(0).items))
   }
-  
+
   initCellGuides() {
     const cellContainer = this.addMorph({
        fill: Color.transparent,
@@ -437,16 +437,16 @@ export class GridLayoutHalo extends Morph {
     this.target.cellGroups.forEach(group => {
       cellContainer.addMorph(this.cellGuide(group));
     })
-    
+
     this.addMorph(this.resizer());
   }
-  
+
   addGuide(guide) {
     guide.isHaloItem = true;
     this.guides.push(guide);
     return guide;
   }
-  
+
   initRowGuides() {
     const self = this;
     this.addGuide(this.addMorph(new Morph({
@@ -462,7 +462,7 @@ export class GridLayoutHalo extends Morph {
         this.addMorph(new RowHalo({row, halo: this}));
     });
   }
-  
+
   initColumnGuides() {
     const self = this;
     this.addGuide(this.addMorph(new Morph({
@@ -473,12 +473,12 @@ export class GridLayoutHalo extends Morph {
       bottomLeft: pt(0, -5),
       alignWithTarget() { this.width = self.container.width }
     })))
-    
+
     arr.range(0, this.target.columnCount - 1).forEach(col => {
         this.addMorph(new ColumnHalo({col, halo: this}));
     });
   }
-  
+
   resizer() {
     const self = this;
     return this.addGuide(new Morph({
@@ -494,15 +494,15 @@ export class GridLayoutHalo extends Morph {
       }
     }))
   }
-  
+
   cellResizer(cellGroup, corner) {
     var self = this,
         adjacentCorner = corner == "topLeft" ? "bottomRight" : "topLeft",
         getCorner = (c) => { return cellGroup.bounds().partNamed(c) }
     return new Ellipse({
-      borderWidth: 1, 
+      borderWidth: 1,
       visible: false,
-      borderColor: Color.black, 
+      borderColor: Color.black,
       nativeCursor: "nwse-resize",
       removeCell(cell) {
         cellGroup.disconnect(cell);
@@ -543,7 +543,7 @@ export class GridLayoutHalo extends Morph {
     const self = this,
           topLeft = this.cellResizer(cellGroup, "topLeft"),
           bottomRight = this.cellResizer(cellGroup, "bottomRight");
-    
+
     return this.addGuide(new Morph({
       cellGroup,
       bounds: cellGroup.bounds(),
@@ -597,7 +597,7 @@ export class GridLayoutHalo extends Morph {
 }
 
 export class TilingLayoutHalo extends Morph {
-  
+
   constructor(container, pointerId) {
     super({
       isHaloItem: true,
@@ -611,25 +611,25 @@ export class TilingLayoutHalo extends Morph {
 
   get container() { return this.state.container }
   get target() { return this.state.target }
-  
-  alignWithTarget() { 
+
+  alignWithTarget() {
      this.setBounds(this.container.globalBounds());
   };
 
   optionControls() {
       const layout = this.target,
             spacing = new PropertyInspector({
-                              min: 0, target: layout, 
+                              min: 0, target: layout,
                               unit: "px", property: "spacing"});
-      return [[{type: "text", textString: "Submorph Spacing", 
+      return [[{type: "text", textString: "Submorph Spacing",
                padding: 5, fill: Color.transparent,
                fontColor: Color.gray.darker(),
                readOnly: true}, spacing]]
-              .map(x => { return {submorphs: x, fill: Color.transparent, 
+              .map(x => { return {submorphs: x, fill: Color.transparent,
                                   layout: new HorizontalLayout({spacing: 3})}})
   }
 
-  
+
 }
 
 export class FlexLayoutHalo extends Morph {
@@ -656,7 +656,7 @@ export class FlexLayoutHalo extends Morph {
 
   previewDrop(morphs) {
      if (this.previews.length > 0) return;
-     this.previews = morphs.map(morph => 
+     this.previews = morphs.map(morph =>
          this.container.addMorph({
            isHaloItem: true,
            bounds: morph.bounds(),
@@ -665,9 +665,9 @@ export class FlexLayoutHalo extends Morph {
            borderWidth: 2,
            opacity: 1,
            borderStyle: "dashed",
-           step() { this.opacity == 1 ? 
-                      this.animate({opacity: .5, duration: 2000}) : 
-                      this.animate({opacity: 1, duration: 2000}); 
+           step() { this.opacity == 1 ?
+                      this.animate({opacity: .5, duration: 2000}) :
+                      this.animate({opacity: 1, duration: 2000});
            }
         }));
      this.previews.forEach(p => {
@@ -689,7 +689,7 @@ export class FlexLayoutHalo extends Morph {
     evt.hand.dropMorphsOn(this.container);
   }
 
-  alignWithTarget() { 
+  alignWithTarget() {
        this.setBounds(this.container.globalBounds());
   };
 
@@ -708,16 +708,16 @@ export class FlexLayoutHalo extends Morph {
             spacing = new PropertyInspector({min: 0, target: layout, unit: "px", property: "spacing"}),
             autoResize = new CheckBox({
                 name: "autoResize", checked: layout.autoResize});
-      connect(autoResize, "toggle", this, "updateResizePolicy");      
-      return [[{type: "text", textString: "Resize Container", 
+      connect(autoResize, "toggle", this, "updateResizePolicy");
+      return [[{type: "text", textString: "Resize Container",
                padding: rect(5,0,10,10), fill: Color.transparent,
                fontColor: Color.gray.darker(),
                readOnly: true}, autoResize],
-               [{type: "text", textString: "Submorph Spacing", 
+               [{type: "text", textString: "Submorph Spacing",
                padding: 5, fill: Color.transparent,
                fontColor: Color.gray.darker(),
                readOnly: true}, spacing]]
-              .map(x => { return {submorphs: x, fill: Color.transparent, 
+              .map(x => { return {submorphs: x, fill: Color.transparent,
                                   layout: new HorizontalLayout({spacing: 3})}})
   }
 

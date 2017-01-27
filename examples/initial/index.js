@@ -2,7 +2,7 @@
 
   var l2lClient = await setupLively2Lively();
   await setupLivelyShell({l2lClient})
-  
+
   window.addEventListener('beforeunload', function(evt) {
     var msg = "Really?";
     evt.returnValue = msg;
@@ -32,13 +32,13 @@ async function loadWorld(from) {
 
 import { pt } from 'lively.graphics';
 import { World, MorphicEnv, show } from 'lively.morphic';
-import ObjectDrawer from "lively.morphic/object-drawer.js";
+import ObjectDrawer from "lively.morphic/components/object-drawer.js";
 import Workspace from "lively.morphic/ide/js/workspace.js";
 
 function createNewWorld() {
   var world = window.$world = window.$$world = new World({
     name: "world",
-    extent: pt(window.innerWidth, window.innerHeight)  
+    extent: pt(window.innerWidth, window.innerHeight)
   });
 
   MorphicEnv.default().setWorld(world);

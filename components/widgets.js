@@ -1,13 +1,11 @@
 import { obj, num, arr, properties } from "lively.lang";
 import { pt, Color, Rectangle, rect } from "lively.graphics";
-import { Morph, Button, List, Text, GridLayout, HorizontalLayout, Path, Ellipse } from "./index.js";
-import { Icon } from "./icons.js";
 import { signal, connect, disconnect } from "lively.bindings";
-import { Tooltip } from "./tooltips.js";
-import { StyleRules } from "./style-rules.js";
-import config from "./config.js";
-import { Label } from "./text/label.js";
+import { Morph, Button, List, Text, GridLayout, HorizontalLayout, 
+         StyleRules, Path, Ellipse, config, Label } from "lively.morphic";
 import { intersect, shape } from 'svg-intersections';
+import { Icon } from "./icons.js";
+import { Tooltip } from "./tooltips.js";
 
 export class Leash extends Path {
 

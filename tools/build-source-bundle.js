@@ -11,14 +11,14 @@ var targetFile2 = "dist/lively.morphic.js";
 var placeholderSrc = "throw new Error('Not yet read')";
 
 var parts = {
-  "lively.lang":             {source: placeholderSrc, path: require.resolve("lively.lang/dist/lively.lang.dev.js")},
+  "lively.lang":             {source: placeholderSrc, path: require.resolve("lively.lang/dist/lively.lang.js")},
   "lively.graphics":         {source: placeholderSrc, path: require.resolve('lively.graphics/dist/lively.graphics.js')},
   "lively.serializer2":      {source: placeholderSrc, path: require.resolve('lively.serializer2/dist/lively.serializer2.js')},
   "lively.bindings":         {source: placeholderSrc, path: require.resolve('lively.bindings/dist/lively.bindings.js')},
   "virtual-dom":             {source: placeholderSrc, path: require.resolve('virtual-dom/dist/virtual-dom.js')},
   "gsap":                    {source: placeholderSrc, path: require.resolve('gsap/src/minified/TweenMax.min.js')},
   "bowser":                  {source: placeholderSrc, path: require.resolve('bowser')},
-  "kld-intersections":       {source: placeholderSrc, path: "dist/kld-intersections.js"},
+  "svg-intersections":       {source: placeholderSrc, path: "dist/svg-intersections.js"},
   // "jsdom":                   {source: placeholderSrc, path: require.resolve("dist/jsdom.js")}
 }
 // output format - 'amd', 'cjs', 'es6', 'iife', 'umd'
@@ -58,7 +58,11 @@ module.exports = Promise.resolve()
         "lively.bindings": "lively.bindings",
         "lively.graphics": "lively.graphics",
         "lively.serializer2": "lively.serializer2",
-        "lively.morphic": "lively.morphic"
+        "lively.morphic": "lively.morphic",
+        "lively.resources": "lively.resources",
+        "lively.notifications": "lively.notifications",
+        "svg-intersections": "svgIntersections",
+        "lively.morphic/list.js": "lively.morphic" 
       }
     })
   })
@@ -68,10 +72,8 @@ module.exports = Promise.resolve()
     console.log("massging code...")
     var source = bundled.code;
     var noDeps = `
-// INLINED ${parts["gsap"].path}
-${parts["gsap"].source}
-// INLINED END ${parts["gsap"].path}
-${parts["kld-intersections"].source}
+${parts["gsap"].source}\n
+${parts["svg-intersections"].source}\n
 (function() {
   ${parts["bowser"].source}
   ${parts["virtual-dom"].source}

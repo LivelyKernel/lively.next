@@ -57,12 +57,11 @@ class CustomVNode {
 
 export class HTMLMorph extends Morph {
 
-  constructor(props) {
-    super({
-      extent: pt(420, 330),
-      html: this.defaultHTML,
-      ...props
-    });
+  static get properties() {  
+    return {
+      extent: {defaultValue: pt(420, 330)},
+      html: {defaultValue: this.defaultHTML},
+    }
   }
 
   get html() { return this.domNode.innerHTML; }

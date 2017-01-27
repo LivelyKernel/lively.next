@@ -1,5 +1,5 @@
 import { obj, arr, promise } from "lively.lang";
-import LoadingIndicator from "./loading-indicator.js";
+import LoadingIndicator from "lively.morphic/components/loading-indicator.js";
 
 function printArg(x) {
   return obj.inspect(x, {maxDepth: 1}).replace(/\n/g, "").replace(/\s+/g, " ");

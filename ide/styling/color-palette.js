@@ -1,12 +1,12 @@
-import { Color, Complementary, Triadic, Tetradic, 
+import { Color, Complementary, Triadic, Tetradic,
          Quadratic, Analogous, Neutral, pt, Point,
          flatDesignColors, materialDesignColors, webSafeColors } from "lively.graphics";
-import { Morph, VerticalLayout, HorizontalLayout, 
+import { Morph, VerticalLayout, HorizontalLayout,
          Text, TilingLayout, Ellipse, Image } from "../../index.js";
-import { DropDownSelector, ModeSelector, Slider } from "../../widgets.js";
+import { DropDownSelector, ModeSelector, Slider } from "lively.morphic/components/widgets.js";
 import { connect, disconnect, signal } from "lively.bindings";
 import { num, arr } from "lively.lang";
-import { StyleRules } from "../../style-rules.js"; 
+import { StyleRules } from "../../style-rules.js";
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
 
@@ -29,7 +29,7 @@ export class ColorPalette extends Morph {
       this.harmony = Complementary;
       this.colorFieldWidth = 20,
       this.cachedPalette = {};
-      this.submorphs = [{type: "polygon", name: "arrow", 
+      this.submorphs = [{type: "polygon", name: "arrow",
                         vertices: [pt(-1,0),pt(0,-.5), pt(1,0)],
                         bottomCenter: pt(this.width/2, 0)},
                        {name: 'body',
@@ -132,7 +132,7 @@ export class ColorPalette extends Morph {
       duration ? this.fadeOut(duration) : this.remove();
       signal(this, 'close');
    }
-   
+
    get pivotBrightness() {
       const [h,s,b] = (this.pivotColor || this.color).toHSB();
       return b;
@@ -279,7 +279,7 @@ export class ColorPalette extends Morph {
                         this.close(200);
                      }
                   } : {
-                     morphClasses: ['vacantColorField'], 
+                     morphClasses: ['vacantColorField'],
                   }
                })};
    }
@@ -479,7 +479,7 @@ export class ColorPalette extends Morph {
 
   harmonySelector() {
      return this.getSubmorphNamed("harmonySelector") || new DropDownSelector({
-         name: "harmonySelector", target: this, 
+         name: "harmonySelector", target: this,
          property: "harmony", isHaloItem: true,
          values: {Complement: () => Complementary,
                   Triadic: () => Triadic,

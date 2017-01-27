@@ -1,3 +1,4 @@
+/* global System */
 import {
   Morph, HorizontalLayout,
   Path,
@@ -8,8 +9,7 @@ import {
 import { Color, pt, rect, Rectangle, LinearGradient } from "lively.graphics";
 import { obj, properties, num, arr } from "lively.lang";
 import { connect, signal, disconnect, disconnectAll, once } from "lively.bindings";
-import { Icon } from "../icons.js";
-import Inspector from "../ide/js/inspector.js";
+import { Icon } from "lively.morphic/componnets/icons.js";
 import { styleHaloFor } from "./stylization.js";
 
 
@@ -19,7 +19,7 @@ import { styleHaloFor } from "./stylization.js";
 // inspect properties of a target morph in some way
 export default class Halo extends Morph {
 
-  static get properties() {  
+  static get properties() {
     return {
       fill: {defaultValue: Color.transparent},
       target: {},
@@ -41,14 +41,14 @@ export default class Halo extends Morph {
           [null,     null,   null,   null,  null,   null,   null     ],
           ["rotate", null,   null,   null,  null,   null,   "resize" ],
           [null,     "name", "name", "name","name", "name", null     ]]});
-  
+
     layout.col(0).fixed = 36;
     layout.col(0).paddingRight = 10;
     layout.col(2).fixed = 26;
     layout.col(4).fixed = 26;
     layout.col(6).fixed = 36;
     layout.col(6).paddingLeft = 10;
-  
+
     layout.row(0).fixed = 36;
     layout.row(0).paddingBottom = 10;
     layout.row(2).fixed = 26;
@@ -56,7 +56,7 @@ export default class Halo extends Morph {
     layout.row(6).fixed = 26;
     layout.row(7).fixed = 36;
     layout.row(7).paddingTop = 10;
-  
+
     layout.col(1).row(7).group.align = "center";
     layout.col(1).row(7).group.resize = false;
   }
@@ -317,7 +317,7 @@ export default class Halo extends Morph {
                     bottomLeft: [pt(width, 0), pt(0, height)]};
 
     if (diagonal) { diagonal.setBounds(bounds); return; }
-    
+
     const [v1, v2] = vertices[corner],
           guideGradient = new LinearGradient({
             stops: [
@@ -795,7 +795,7 @@ class GrabHaloItem extends HaloItem {
 
  morphBeneath(position) {
     var dropTarget = super.morphBeneath(position);
-    while (dropTarget && dropTarget.isHaloItem) 
+    while (dropTarget && dropTarget.isHaloItem)
        dropTarget = dropTarget.morphBeneath(position);
     return dropTarget;
  }
@@ -931,7 +931,10 @@ class InspectHaloItem extends HaloItem {
 
   onMouseDown(evt) {
     this.halo.remove();
-    Inspector.openInWindow({targetObject: this.halo.target});
+    async () => {
+       var { Inspector } = await System.import("lively.morphic/ide/js/inspector.js");
+       Inspector.openInWindow({targetObject: this.halo.target});
+    }
   }
 
 }
@@ -1166,7 +1169,7 @@ class ResizeHandle extends HaloItem {
     if (rotation > 0) rotation = rotation - 360;
     var offset = -8 - (rotation / 45).toFixed();
     if (offset == 0) offset = 8;
-  
+
     return arr.zip(
       arr.rotate(
         [
@@ -1330,7 +1333,7 @@ class MorphHighlighterForHalo extends Morph {
     var w = this.world() || this.halo.world();
     return w ? w.getMorphWithId(this.targetId) : null;
   }
-  
+
   get name() { return "morphHighlighter"; }
 
   alignWithHalo() {

@@ -21,8 +21,8 @@ $$world.openInWindow(morph({
 
 import { pt, Rectangle } from "lively.graphics";
 import { obj } from "lively.lang";
-import { morph } from "./index.js";
-import { Label } from "./text/label.js";
+import { morph } from "../index.js";
+import { Label } from "../text/label.js";
 
 export class Icon {
   

@@ -1,4 +1,4 @@
-import { Label, Morph, show } from "./index.js";
+import { Label, Morph, show } from "lively.morphic";
 import { arr, obj, promise, fun } from "lively.lang";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 

@@ -5,12 +5,12 @@ import { Color, pt, rect, Line, Rectangle} from "lively.graphics";
 import { intersect, shape, bezier } from 'svg-intersections';
 import { arr, num } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
-import { BorderStyleEditor, BodyStyleEditor, 
+import { BorderStyleEditor, BodyStyleEditor,
          LayoutStyleEditor, HTMLEditor, PathEditor, PolygonEditor,
          ImageEditor, NoEditor } from "../ide/styling/style-editor.js";
-import { Icon } from "../icons.js";
+import { Icon } from "lively.morphic/components/icons.js";
+import { Leash } from "lively.morphic/components/widgets.js";
 import { StyleRules } from "../style-rules.js";
-import { Leash } from "../widgets.js";
 import { Event } from "../events/Event.js";
 import { pathAttributes } from "../rendering/morphic-default.js";
 
@@ -23,12 +23,12 @@ import { pathAttributes } from "../rendering/morphic-default.js";
 intersect.plugin(bezier);
 
 function pointOnLine(a, b, pos, bw) {
-   var v0 = pt(a.x, a.y), v1 = pt(b.x, b.y), 
+   var v0 = pt(a.x, a.y), v1 = pt(b.x, b.y),
        l = v1.subPt(v0), ln = l.scaleBy(1/l.r()),
        dot = v1.subPt(pos).dotProduct(ln);
    return v1.subPt(ln.scaleBy(Math.max(1,Math.min(dot, l.r())))).addXY(bw,bw);
 }
-         
+
 export function styleHaloFor(x, pointerId) {
     var styleHaloClass = StyleHalo;
     if (x instanceof Ellipse) {
@@ -54,7 +54,7 @@ class StyleHalo extends Morph {
           target
        });
        this.state = {pointerId};
-       this.initialize(); 
+       this.initialize();
    }
 
    onKeyDown(evt) {
@@ -78,13 +78,13 @@ class StyleHalo extends Morph {
      this.showLayoutStyleEditor();
      this.showBorderStyler();
      connect(this.target, "onChange", this, "update");
-     this.relayout();  
+     this.relayout();
    }
 
    update() {
       this.relayout();
    }
-   
+
    get isLayoutHalo() { return true; }
    get isHaloItem() { return true; }
 
@@ -93,7 +93,7 @@ class StyleHalo extends Morph {
          formatter: {draggable: false, fill: Color.transparent},
          borderHalo: {
            draggable: false,
-           borderWidth: Math.max(3, this.target.borderWidth), 
+           borderWidth: Math.max(3, this.target.borderWidth),
            fill: Color.transparent,
            borderColor: Color.orange.withA(0.4)},
          borderRadiusHalo: {
@@ -111,7 +111,7 @@ class StyleHalo extends Morph {
    get targetBounds() { return this.target.globalPosition
                                           .addPt(this.target.origin.negated())
                                           .extent(this.target.extent); }
-   
+
    onMouseMove(evt) { this.relayout(evt) }
 
    onMouseDown(evt) {
@@ -152,8 +152,8 @@ class StyleHalo extends Morph {
       const {x,y} = evt.positionIn(this.submorphs[0]),
             brHalo = this.getSubmorphNamed("borderRadiusHalo") || {active: false},
             bw = this.target.borderWidth || 1;
-            
-      return !brHalo.active && intersect(  
+
+      return !brHalo.active && intersect(
               this.intersectionShape(),
               shape("rect", {x: x - bw, y: y - bw, width: bw * 2, height: bw * 2})).points.length > 0;
    }
@@ -165,17 +165,17 @@ class StyleHalo extends Morph {
             pos = pt(num.roundTo(x,1),num.roundTo(y,1)),
             {width, height, origin} = this.target;
       if (!rect(0,0,width,height).containsPoint(pt(x,y))) return false;
-      const v = intersect(  
+      const v = intersect(
               this.intersectionShape(),
               shape("line", {x1: x, y1: 0, x2: x, y2: height})),
             vs = v.points.length > 0 && v.points.map(({x,y}) => pt(num.roundTo(x,1), num.roundTo(y,1))),
             lv = vs && Rectangle.unionPts(vs).rightEdge(),
-            h = intersect(  
-              this.intersectionShape(), 
+            h = intersect(
+              this.intersectionShape(),
               shape("line", {x1: 0, y1: y, x2: width, y2: y})),
             hs = h.points.length > 0 && h.points.map(({x,y}) => pt(num.roundTo(x,1), num.roundTo(y,1))),
             lh = hs && Rectangle.unionPts(hs).topEdge();
-      return lh && lv && lh.includesPoint(pos) && lv.includesPoint(pos) 
+      return lh && lv && lh.includesPoint(pos) && lv.includesPoint(pos)
    }
 
    openBorderStyler() {
@@ -211,7 +211,7 @@ class StyleHalo extends Morph {
             this.borderColor = Color.orange.withA(.4);
          },
          selectBorder() {
-            if (!this.active) return; 
+            if (!this.active) return;
             this.borderColor = Color.orange;
             halo.nativeCursor = this.nativeCursor = "pointer";
             this.borderSelected = true;
@@ -241,7 +241,7 @@ class StyleHalo extends Morph {
              halo.bodyStyler.blur()
          },
          alignWithTarget() {
-           const {width, height} = halo.targetBounds, 
+           const {width, height} = halo.targetBounds,
                  b = pt(0,0).extent(pt(width,height));
            this.setBounds(b);
            this.borderRadius = target.borderRadius;
@@ -264,7 +264,7 @@ class StyleHalo extends Morph {
    }
 
    getBorderHalo() {
-      const target = this.target, 
+      const target = this.target,
             halo = this;
       this.borderHalo = morph(this.borderHaloShape({
          name: "borderHalo",
@@ -303,7 +303,7 @@ class StyleHalo extends Morph {
       this.layoutStyleEditor.show();
       this.alignLayoutEditor();
    }
-  
+
    alignLayoutEditor() {
       if (this.layoutStyleEditor.opened) return;
       const topCenter = this.targetBounds
@@ -324,7 +324,7 @@ class StyleHalo extends Morph {
       const vb = this.env.world.visibleBounds(),
             visiblePart = vb.intersection(this.targetBounds),
             pos = visiblePart.insetByRect(rect(-100, -50, 0, -50))[this.getSideInWorld()]();
-      this.borderStyler.center = this.localize(pos);                                
+      this.borderStyler.center = this.localize(pos);
    }
 
    getBorderStyler() {
@@ -360,7 +360,7 @@ class StyleHalo extends Morph {
       this.bodyStyler.center = pos;
    }
 
-   getBodyStyler() { 
+   getBodyStyler() {
      const bodyStyler = new BodyStyleEditor({
                  name: "bodyStyler",
                  target: this.target,
@@ -378,15 +378,15 @@ class StyleHalo extends Morph {
           name: "borderRadiusHalo",
           center: getPos(),
           type: 'ellipse',
-          onHoverIn() { 
-              this.active = true; 
+          onHoverIn() {
+              this.active = true;
               halo.borderHalo.deselectBorder();
               halo.bodyStyler.blur();
           },
           onHoverOut(evt) { if (evt.state.draggedMorph != this) this.active = false; },
           update(evt) { this.center = getPos(); },
-          onDragStart(evt) { 
-             this.active = true; 
+          onDragStart(evt) {
+             this.active = true;
              halo.borderStyler.hide();
              halo.bodyStyler.hide();
              this.targetTransform = halo.target.getGlobalTransform().inverse();
@@ -408,7 +408,7 @@ class StyleHalo extends Morph {
           },
           onDragEnd(evt) {
             this.active = false;
-            this.borderRadiusView.remove(); 
+            this.borderRadiusView.remove();
             halo.borderStyler.show();
             halo.bodyStyler.show();
           }
@@ -442,7 +442,7 @@ class StyleHalo extends Morph {
       connect(this.layoutStyleEditor, "extent", this, "alignLayoutEditor");
       return this.layoutStyleEditor;
    }
-   
+
 
 }
 
@@ -472,8 +472,8 @@ class VertexHandle extends Morph {
    constructor({halo, position, index}) {
       const bw = halo.target.borderWidth || 2;
       super({
-         halo, index, 
-         morphClasses: ['vertexHandles', 'sharp'], 
+         halo, index,
+         morphClasses: ['vertexHandles', 'sharp'],
          center: position.addXY(bw, bw),
       });
       this.initialize()
@@ -519,12 +519,12 @@ class VertexHandle extends Morph {
       const self = this;
       return [
            new Leash({
-               morphClasses: ['controlPoint'], visible: false, 
+               morphClasses: ['controlPoint'], visible: false,
                vertices: [pt(0,0), this.vertex.controlPoints.previous],
-               update() { 
+               update() {
                    const pos = self.vertex.controlPoints.previous;
                    if (this.vertices[1].position.equals(pos)) return;
-                   this.vertices =  [pt(0,0), pos]; 
+                   this.vertices =  [pt(0,0), pos];
                },
                onEndpointDrag: (endpoint, evt) => {
                   if (endpoint.index == 1) {
@@ -532,14 +532,14 @@ class VertexHandle extends Morph {
                       this.update();
                   }
                }
-             }), 
+             }),
            new Leash({
                morphClasses: ['controlPoint'], visible: false,
                vertices: [pt(0,0), this.vertex.controlPoints.next],
-               update() { 
+               update() {
                    const pos = self.vertex.controlPoints.next;
                    if (this.vertices[1].position.equals(pos)) return;
-                   this.vertices = [pt(0,0), pos]; 
+                   this.vertices = [pt(0,0), pos];
                },
                onEndpointDrag: (endpoint, evt) => {
                  if (endpoint.index == 1) {
@@ -549,7 +549,7 @@ class VertexHandle extends Morph {
                }})
       ]
    }
-                 
+
    onMouseDown(evt) {
       this.halo.deselectVertexHandles();
       this.select();
@@ -575,11 +575,11 @@ class VertexHandle extends Morph {
       this.morphClasses = ['vertexHandles'];
       this.hideControlPoints();
    }
-   
+
    transformVertex() {
        this.vertex.isSmooth = !this.vertex.isSmooth;
-       this.morphClasses = this.vertex.isSmooth ? 
-                                ['vertexHandles','selected','smooth'] : 
+       this.morphClasses = this.vertex.isSmooth ?
+                                ['vertexHandles','selected','smooth'] :
                                 ['vertexHandles', "selected", 'sharp'],
        this.update();
    }
@@ -588,7 +588,7 @@ class VertexHandle extends Morph {
       return this.halo.target.vertices;
    }
 
-   get vertex() { 
+   get vertex() {
       return this.vertices[this.index];
    }
 
@@ -607,18 +607,18 @@ class VertexHandle extends Morph {
    hideControlPoints() {
       this.submorphs.forEach(controlPoint => { controlPoint.visible = false })
    }
-   
-   
+
+
    removeVertex() {
       const vs = this.halo.target.vertices;
       if( vs.length > 2) arr.removeAt(vs, this.index);
       this.halo.target.makeDirty();
    }
-   
+
    onDragStart(evt) {
       this.get('handlePlaceholder').visible = false;
    }
-   
+
    onDrag(evt) {
       this.vertex.moveBy(evt.state.dragDelta);
       this.halo.relayout();
@@ -635,7 +635,7 @@ class SvgStyleHalo extends StyleHalo {
     borderRadiusHalo() {
        return undefined;
     }
-    
+
     getBorderStyler() {
       const borderStyler = new PolygonEditor({target: this.target, title: "Change Border Style"});
       connect(borderStyler, "open", this, 'openBorderStyler');
@@ -716,7 +716,7 @@ class SvgStyleHalo extends StyleHalo {
        connect(this.borderStyler, "close", this, "cleanupHandles");
        this.initVertexHandles();
    }
-    
+
     borderHaloShape(props) {
         const halo = this;
         return {
@@ -726,7 +726,7 @@ class SvgStyleHalo extends StyleHalo {
            vertices: halo.target.vertices,
            position: halo.target.origin,
            submorphs: [{
-                name: 'handlePlaceholder', 
+                name: 'handlePlaceholder',
                type: 'ellipse', visible: false,
                onMouseDown() {
                   const bw = halo.target.borderWidth;
@@ -736,7 +736,7 @@ class SvgStyleHalo extends StyleHalo {
            showHandlePlaceholder(pos) {
               const bw = halo.target.borderWidth || 2;
               var vs = halo.target.vertices,
-                 [v0, v1] = arr.min(arr.zip(vs, arr.rotate(vs)), ([a,b]) => 
+                 [v0, v1] = arr.min(arr.zip(vs, arr.rotate(vs)), ([a,b]) =>
                                 pos.dist(pointOnLine(a, b, pos, bw))),
                  handlePos = pointOnLine(v0,v1, pos, bw);
               const ph = this.get("handlePlaceholder")
@@ -757,7 +757,7 @@ class SvgStyleHalo extends StyleHalo {
               this.position = halo.target.origin;
               if (!halo.target.borderWidth) this.moveBy(pt(-1,-1));
               if (halo.borderStyler.opened) halo.updateVertexHandles();
-           }  
+           }
         }
     }
 }
@@ -783,7 +783,7 @@ class PathStyleHalo extends SvgStyleHalo {
    borderHaloShape(props) {
         return {
            ...super.borderHaloShape(props),
-           type: "path" 
+           type: "path"
         }
     }
 

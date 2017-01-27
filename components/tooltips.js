@@ -1,7 +1,5 @@
 import { Color } from "lively.graphics";
-import { Morph, Label, HorizontalLayout } from "./index.js";
-import config from "./config.js";
-
+import { Morph, Label, HorizontalLayout, config } from "lively.morphic";
 
 export class TooltipViewer {
 

@@ -1,6 +1,6 @@
 
 import { pt, Color, Rectangle } from "lively.graphics";
-import { Morph } from "./index.js";
+import { Morph } from "lively.morphic";
 import { signal, disconnect, connect } from "lively.bindings";
 
 // var b = new Button({label: "test", extent: pt(22,18)}).openInWorld()

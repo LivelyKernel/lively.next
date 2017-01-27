@@ -1,10 +1,8 @@
 import { obj, string } from "lively.lang";
 import { pt, Color, Point, Rectangle, rect } from "lively.graphics";
-import { morph, Morph, MorphicEnv } from "./index.js";
-import { Icon } from "./icons.js";
+import { morph, Morph, MorphicEnv, ShadowObject } from "lively.morphic";
 import { connect, disconnect } from "lively.bindings";
-import { ShadowObject } from "./rendering/morphic-default.js";
-
+import { Icon } from "./icons.js";
 
 export function show(target) {
 

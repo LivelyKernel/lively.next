@@ -1,8 +1,7 @@
 import { arr, obj, string } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
-import { show, Label, morph, Morph, GridLayout } from "./index.js";
+import { show, Label, morph, Morph, GridLayout, ShadowObject } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
-import { ShadowObject } from "./rendering/morphic-default.js";
 
 export default class Window extends Morph {
 

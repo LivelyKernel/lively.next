@@ -3,11 +3,11 @@ import { Morph, HorizontalLayout, GridLayout, config } from "lively.morphic";
 import { pt, Color } from "lively.graphics";
 import { JavaScriptEditorPlugin } from "../editor-plugin.js";
 import { withSuperclasses, lexicalClassMembers, isClass } from "lively.classes/util.js";
-import { TreeData, Tree } from "lively.morphic/tree.js";
+import { Icon } from "lively.morphic/components/icons.js";
+import { TreeData, Tree } from "lively.morphic/components/tree.js";
 import { connect } from "lively.bindings";
 import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
 import { addScript, isObjectClassFor } from "lively.classes/object-classes.js";
-import { Icon } from "../../../icons.js";
 import { chooseUnusedImports, interactivelyChooseImports } from "../import-helper.js";
 import { module } from "lively.modules";
 import { interactivelySaveObjectToPartsBinFolder } from "../../../partsbin.js";
@@ -54,7 +54,7 @@ class ClassTreeData extends TreeData {
       return node.target.name;
 
     // method
-    
+
     return node.name || "no name";
   }
 
@@ -225,7 +225,7 @@ export class ObjectEditor extends Morph {
     connect(this.get("sourceEditor"), "textChange", this, "updateUnsavedChangeIndicatorDebounced");
 
     connect(this.get("classTree"), "contextMenuRequested", this, "contextMenuForClassTree");
-    
+
     // this.build()
     // this.refresh()
   }
@@ -398,7 +398,7 @@ export class ObjectEditor extends Morph {
         return;
       }
     }
-    
+
     await this.refresh(true);
   }
 
@@ -661,7 +661,7 @@ localStorage["oe helper"] = JSON.stringify(store);
       this.setStatusMessage("no message selected");
       return;
     }
-    
+
     if (typeof this.target[selectedMethod.name] !== "function") {
       this.setStatusMessage(`${selectedMethod.name} is not a method of ${this.target}`);
       return;

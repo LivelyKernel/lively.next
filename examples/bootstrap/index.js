@@ -1,7 +1,7 @@
 import { arr } from "lively.lang";
 import { pt, Color, Point } from "lively.graphics";
 import { Morph, World, List, Polygon, MorphicEnv, show } from "lively.morphic";
-import ObjectDrawer from "lively.morphic/object-drawer.js";
+import ObjectDrawer from "lively.morphic/components/object-drawer.js";
 import Workspace from "lively.morphic/ide/js/workspace.js";
 
 var world = new World({
@@ -61,7 +61,7 @@ async function startLively2Lively() {
   ClientCommand.installLively2LivelyServices(client1);
   resourceExtension.resourceClass.defaultL2lClient = client1;
   registerExtension(resourceExtension);
-  
+
   // var cmd = new ClientCommand(client1)
   // await cmd.spawn({command: "ls"})
   // cmd.stdout

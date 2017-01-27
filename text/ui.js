@@ -1,9 +1,10 @@
+/* global System */
 import { fun, arr } from "lively.lang"
 import { show, morph, Morph } from "../index.js";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { connect } from "lively.bindings"
-import { Icon } from "../icons.js";
-import { ColorPicker } from "../ide/styling/color-picker.js";
+import { Icon } from "lively.morphic/components/icons.js";
+
 
 const cachedControls = new WeakMap();
 
@@ -147,8 +148,9 @@ export class RichTextControl extends Morph {
       fontWeight => fontWeight === "bold" || fontWeight === "700" ? "normal" : "bold")
   }
 
-  openFontColorChooser() {
-    var picker = new ColorPicker({}).openInWorldNearHand();
+  async openFontColorChooser() {
+    var { ColorPicker } = await System.import("lively.morphic/ide/styling/color-picker.js"),
+        picker = new ColorPicker({}).openInWorldNearHand();
     connect(picker, "color", this, "changeFontColor");
     this.remove();
   }

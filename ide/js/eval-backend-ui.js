@@ -3,7 +3,7 @@
 import { pt, Point, Color, Rectangle } from "lively.graphics";
 import { arr } from "lively.lang";
 import { connect, noUpdate } from "lively.bindings";
-import { DropDownList } from "lively.morphic";
+import { DropDownList } from "lively.morphic/components/list.js";
 
 export default class EvalBackendChooser {
 

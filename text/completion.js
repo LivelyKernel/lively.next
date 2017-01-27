@@ -1,7 +1,7 @@
 import { Color, pt } from "lively.graphics";
 import { morph } from "lively.morphic";
 import { connect } from "lively.bindings";
-import { FilterableList } from "lively.morphic/list.js";
+import { FilterableList } from "lively.morphic/components/list.js";
 import { arr, string } from "lively.lang";
 
 

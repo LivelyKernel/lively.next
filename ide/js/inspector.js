@@ -1,13 +1,10 @@
 import { Color, pt, Rectangle } from "lively.graphics";
 import { obj, arr, promise, string } from "lively.lang";
 import { connect } from "lively.bindings";
-import { Morph } from "../../index.js";
-import { Tree, TreeData } from "../../tree.js";
-
+import { Morph, config } from "lively.morphic";
+import { Tree, TreeData } from "lively.morphic/components/tree.js";
+import { HorizontalResizer } from "lively.morphic/components/resizers.js";
 import { JavaScriptEditorPlugin } from "./editor-plugin.js";
-import { HorizontalResizer } from "../../resizers.js";
-import config from "../../config.js";
-
 
 
 var inspectorCommands = [
@@ -159,7 +156,7 @@ class InspectorTreeData extends TreeData {
   display(node) {
      var keyString = node.keyString || node.key,
          valueString = node.valueString || printValue(node.value);
-     return `${keyString}: ${valueString}`; 
+     return `${keyString}: ${valueString}`;
   }
 
   isCollapsed(node) { return node.isCollapsed; }

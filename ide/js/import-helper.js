@@ -1,6 +1,6 @@
 import { arr, string } from 'lively.lang';
 import { pt } from 'lively.graphics';
-import LoadingIndicator from "../../loading-indicator.js";
+import LoadingIndicator from "lively.morphic/components/loading-indicator.js";
 import { config } from "lively.morphic";
 import { ImportInjector, ImportRemover } from "lively.modules/src/import-modification.js";
 import module from "lively.modules/src/module.js";

@@ -1,7 +1,7 @@
 import { arr } from "lively.lang";
 import { pt, Color, Point } from "lively.graphics";
 import { Morph, World, List, Polygon, MorphicEnv, show } from "lively.morphic";
-import ObjectDrawer from "lively.morphic/object-drawer.js";
+import ObjectDrawer from "lively.morphic/components/object-drawer.js";
 import Workspace from "lively.morphic/ide/js/workspace.js";
 
 var world = new World({

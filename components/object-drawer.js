@@ -1,10 +1,10 @@
 import { arr } from "lively.lang";
 import { pt, Point, Color, Rectangle } from "lively.graphics";
-import { Morph, Polygon } from "./index.js";
+import { Morph, Polygon } from "lively.morphic";
 import { RichTextControl } from "lively.morphic/text/ui.js"
-import { Tree, TreeData } from "lively.morphic/tree.js"
+import { Tree, TreeData } from "./tree.js"
 import { connect } from "lively.bindings"
-import { Leash } from "./widgets.js"
+import { Leash } from "lively.morphic/components/widgets.js"
 
 
 export default class ObjectDrawer extends Morph {

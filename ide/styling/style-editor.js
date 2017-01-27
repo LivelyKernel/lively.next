@@ -8,10 +8,10 @@ import { Rectangle, Color, LinearGradient, pt, Point, rect,
 import { obj, num, arr, properties } from "lively.lang";
 import { signal, connect, disconnect } from "lively.bindings";
 import { ValueScrubber, CheckBox, ModeSelector, DropDownSelector,
-         Slider, PropertyInspector } from "../../widgets.js";
+         Slider, PropertyInspector } from "lively.morphic/components/widgets.js";
+import { Icon } from "lively.morphic/components/icons.js";
 import { ColorPickerField } from "./color-picker.js";
 import { GradientEditor } from "./gradient-editor.js";
-import { Icon } from "../../icons.js";
 import { StyleRules } from "../../style-rules.js";
 import KeyHandler from "../../events/KeyHandler.js";
 
@@ -50,7 +50,7 @@ class StyleEditor extends Morph {
    get styler() {
        return new StyleRules({
           closeButton: {
-              fontSize: 22, 
+              fontSize: 22,
               fontColor: Color.gray.darker(),
               nativeCursor: "pointer"
           },
@@ -125,7 +125,7 @@ class StyleEditor extends Morph {
       this.submorphs = [this.titleLabel(this.title)];
       this.animate({
             morphClasses: ["closed"],
-            position: this.openPosition, 
+            position: this.openPosition,
             layout: new VerticalLayout({spacing: 5}),
             duration})
       signal(this, "close", false);
@@ -137,13 +137,13 @@ class StyleEditor extends Morph {
       const [titleLabel] = this.submorphs,
             {submorphs: [instruction]} = titleLabel
 
-      this.layout = null; 
+      this.layout = null;
       this.opacity = 1;
       this.nativeCursor = "auto";
       this.openPosition = this.position;
-      
+
       titleLabel.addMorphAt(Icon.makeLabel("times-circle-o", {
-           name: "closeButton",  
+           name: "closeButton",
            onMouseDown: () => this.close()
       }), 0);
       instruction.animate({nativeCursor: "auto", fontColor: Color.gray.darker(), duration});
@@ -188,7 +188,7 @@ class StyleEditor extends Morph {
 
   createSelectableControl({controls, init}) {
       const modeSelector = new ModeSelector({
-                    name: "modeSelector", 
+                    name: "modeSelector",
                     items: controls, init,
                     width: this.width - 20}),
             selectableControl = new Morph({
@@ -197,7 +197,7 @@ class StyleEditor extends Morph {
               remove() { super.remove(); arr.invoke(this.submorphs, 'remove'); },
               select(control) {
                  const c = control();
-                 c.opacity = 0; 
+                 c.opacity = 0;
                  this.animate({submorphs: [modeSelector, c], duration});
                  c.animate({opacity: 1, duration})
               },
@@ -247,8 +247,8 @@ class StyleEditor extends Morph {
              property: "opacity", width: 150
       }));
   }
-  
-  shadowControl() {   
+
+  shadowControl() {
      return this.createToggledControl({
           title: "Drop Shadow",
           target: this.target, property: "dropShadow",
@@ -381,7 +381,7 @@ export class PolygonEditor extends BorderStyleEditor {
     }
 
     controls(target) {
-       return [...super.controls(target), 
+       return [...super.controls(target),
                this.vertexEditModes(target)
                ]
     }
@@ -389,7 +389,7 @@ export class PolygonEditor extends BorderStyleEditor {
     get keybindings() { return super.keybindings.concat([
         {keys: "Alt-A", command: "add vertices"},
         {keys: "Alt-D", command: "delete vertices"},
-        {keys: "Alt-S", command: "transform vertices"}]); 
+        {keys: "Alt-S", command: "transform vertices"}]);
     }
 
     get commands() {
@@ -415,7 +415,7 @@ export class PolygonEditor extends BorderStyleEditor {
     get vertexModeStyles() {
        return new StyleRules({
           modeLabel: {
-             fontColor: Color.white, fontWeight: 'bold', fill: Color.transparent, 
+             fontColor: Color.white, fontWeight: 'bold', fill: Color.transparent,
           },
           modeBox: {borderRadius: 5, nativeCursor: 'pointer'},
           addMode: {fill: Color.rgb(39,174,96)},
@@ -452,7 +452,7 @@ export class PolygonEditor extends BorderStyleEditor {
                this.opacity = .5;
             },
             submorphs: [{
-                 type: 'label', value: doc, 
+                 type: 'label', value: doc,
                  morphClasses: ['modeLabel']
             }, {type: 'label', value: prettyKeys.join(" "), morphClasses: ['modeLabel']}]
         });
@@ -561,7 +561,7 @@ export class LayoutStyleEditor extends StyleEditor {
 }
 
 export class HTMLEditor extends Morph {
-   
+
    constructor(props) {
       super({
         extent: props.target.extent,
@@ -590,7 +590,7 @@ export class HTMLEditor extends Morph {
    blur() { this.animate({opacity: .5, duration})}
    show() { this.animate({opacity: 1, visible: true, duration}) }
    hide() { this.visible = false; }
-   
+
 }
 
 export class PathEditor extends BorderStyleEditor {
@@ -601,8 +601,8 @@ export class PathEditor extends BorderStyleEditor {
     }
 
     controls(target) {
-       return [this.borderControl(target), 
-               this.opacityControl(target), 
+       return [this.borderControl(target),
+               this.opacityControl(target),
                this.shadowControl(target)]
     }
 
@@ -622,7 +622,7 @@ export class ImageEditor extends StyleEditor {
     urlEditor(target) {
        return {
           layout: new HorizontalLayout({spacing: 3}),
-          fill: Color.transparent, 
+          fill: Color.transparent,
           styleRules: new StyleRules({
                  urlBar: {borderRadius: 5,
                    padding: 4, fill: Color.white.withA(.8),
@@ -649,33 +649,33 @@ export class ImageEditor extends StyleEditor {
                 this.fontColor = Color.gray.darker();
              }})]}
     }
-    
+
 }
 
 export class NoEditor {
 
    constructor(props) {
-   
+
    }
 
    blur() {
-   
+
    }
 
    show() {
-   
+
    }
 
    hide() {
-   
+
    }
 
    openInWorld() {
-   
+
    }
 
    remove() {
-   
+
    }
 
    open() {
@@ -683,5 +683,3 @@ export class NoEditor {
    }
 
 }
-
-

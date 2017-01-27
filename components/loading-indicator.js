@@ -55,13 +55,13 @@ export default class LoadingIndicator extends Morph {
         initialize() {
           this.submorphs = [
 
-            Icon.makeLabel("spinner", {
+            Icon.makeLabel("refresh", {
               name: "spinner",
               fontColor: Color.white,
-              value: [["", {
-                fontFamily: "FontAwesome",
-                textStyleClasses: ["fa", "fa-5x", "fa-pulse"]
-              }]],
+              fontFamily: "FontAwesome",
+              fontSize: 60,
+              // padding: 5,
+              textStyleClasses: ["fa", "fa-spin", "fa-fw"],
               autofit: false,
               origin: pt(30,30),
               extent: pt(60,60),

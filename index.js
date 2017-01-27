@@ -3,27 +3,22 @@ export * from "./morph.js";
 export * from "./world.js";
 export * from "./text/morph.js";
 export * from "./text/label.js";
-export * from "./buttons.js";
-export * from "./widgets.js";
-export * from "./menus.js";
 export * from "./html-morph.js";
-export * from "./list.js";
 export * from "./env.js";
 export * from "./layout.js";
-export * from "./icons.js";
 export { StyleRules } from "./style-rules.js";
-export { show } from "./markers.js"
-export { default as Window } from "./window.js";
+export { show } from "./components/markers.js"
+export { ShadowObject } from "./rendering/morphic-default.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import { World, Hand } from "./world.js";
 import { Morph, Image, Ellipse, Triangle, Path, Polygon } from "./morph.js";
-import { List } from "./list.js";
 import { Text } from "./text/morph.js";
 import { Label } from "./text/label.js";
-import { Button } from "./buttons.js";
-import { CheckBox } from "./widgets.js";
+import { Button } from "./components/buttons.js";
+import { CheckBox } from "./components/widgets.js";
+import { List } from "./components/list.js";
 import { HTMLMorph } from './html-morph.js';
 
 export function morph(props = {}, opts = {restore: false}) {

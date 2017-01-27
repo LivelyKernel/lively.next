@@ -1,6 +1,6 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
 import { morph,  World, MorphicEnv } from "../index.js";
-import { Tree, TreeData } from "../tree.js";
+import { Tree, TreeData } from "lively.morphic/components/tree.js";
 import { expect } from "mocha-es6";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { arr } from "lively.lang";
@@ -107,7 +107,7 @@ describe("tree", function() {
   });
 
   describe("view state", () => {
-  
+
     it("can be externalized and applied", async () => {
       // createTree({});
       var tree1 = tree,
@@ -118,7 +118,7 @@ describe("tree", function() {
       // env.world.addMorph(tree1); // env.world.addMorph(tree2);
       // tree2.moveBy(pt(300,0))
       // tree1.remove(); tree2.remove();
-      
+
       tree2.nodes.forEach((n) => tree2.treeData.collapse(n, true));
       tree2.update();
 
@@ -131,6 +131,6 @@ describe("tree", function() {
       expect(arr.pluck(tree2.nodes, "name"))
         .equals(["root", "child 1", "child 2", "child 3", "child 3 - 1", "child 3 - 2", "child 4"]);
     });
-  
+
   });
 });

@@ -1,11 +1,10 @@
 /*global System*/
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, arr, string, obj, promise } from "lively.lang";
-import Halo from "./halo/morph.js"
-import { Menu } from "./menus.js"
-import { StatusMessage, StatusMessageForMorph } from './markers.js';
+import { Menu } from "lively.morphic/components/menus.js"
+import { StatusMessage, StatusMessageForMorph } from 'lively.morphic/components/markers.js';
 import { Morph, inspect, Text, Window, config, MorphicEnv } from "./index.js";
-import { TooltipViewer } from "./tooltips.js";
+import { TooltipViewer } from "lively.morphic/components/tooltips.js";
 import KeyHandler from "./events/KeyHandler.js";
 
 import {
@@ -16,7 +15,7 @@ import {
   PasswordPrompt,
   ListPrompt,
   EditListPrompt
-} from "./prompts.js";
+} from "lively.morphic/components/prompts.js";
 import { once } from "lively.bindings";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--
@@ -193,7 +192,7 @@ var worldCommands = [
       return true;
     }
   },
-  
+
   {
     name: "open status message of focused morph",
     exec: world => {
@@ -221,7 +220,7 @@ var worldCommands = [
       var thirdWMin = 700,
           thirdW = Math.min(thirdWMin, Math.max(1000, worldB.width/3)),
           thirdColBounds = worldB.withWidth(thirdW);
-      
+
       if (!how) how = await askForHow();
       if (!how) return;
 
@@ -258,7 +257,7 @@ var worldCommands = [
           case "halftop": return bounds.withY(worldB.top()).withHeight(bounds.height/2);
           case "halfbottom": return bounds.withHeight(worldB.height/2).withY(worldB.top() + worldB.height/2);
           case "reset": return win.normalBounds || pt(500,400).extentAsRectangle().withCenter(bounds.center());
-  
+
           case "quadrant1": return resizeBounds("halftop", resizeBounds("col1", bounds));
           case "quadrant2": return resizeBounds("halftop", resizeBounds("col2", bounds));
           case "quadrant3": return resizeBounds("halftop", resizeBounds("col3", bounds));
@@ -333,13 +332,13 @@ var worldCommands = [
       var {a,b,format} = opts;
       if (!format) var {a,b, format} = findFormat(a, b);
       else { a = String(a);  b = String(b); }
-  
+
       // import * as diff from "https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js"
       var diff = await System.import("https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js"),
           diffed = await diffInWindow(a, b, {fontFamily: "monospace", ...opts, format});
-  
+
       return diffed;
-  
+
       function findFormat(a, b) {
         if (obj.isPrimitive(a) || a instanceof RegExp
          || obj.isPrimitive(b) || b instanceof RegExp)
@@ -349,11 +348,11 @@ var worldCommands = [
           catch (e) { a = String(a); b = String(b); }
         return {format: "diffLines", a, b}
       }
-  
+
       async function diffInWindow(a, b, opts) {
         var {format} = opts;
         var plugin = null, content;
-  
+
         if (format === "patch") {
           var {headerA, headerB, filenameA, filenameB, context} = opts
           var content = [[diff.createTwoFilesPatch(
@@ -361,7 +360,7 @@ var worldCommands = [
                           headerA, headerB, typeof context === "number" ? {context} : undefined), {}]];
           var { DiffEditorPlugin } = await System.import("lively.morphic/ide/diff/editor-plugin.js");
           plugin = new DiffEditorPlugin();
-  
+
         } else {
           diffed = diff[format](a,b, opts);
           content = diffed.map(({count, value, added, removed}) => {
@@ -370,16 +369,16 @@ var worldCommands = [
                 {fontWeight: "bold", textDecoration: "", fontColor: Color.green} :
                 {fontWeight: "normal", textDecoration: "", fontColor: Color.darkGray};
             return [value, attribute];
-          })        
+          })
         }
-  
+
         var win = world.execCommand("open text window", opts),
             textMorph = win.targetMorph;
         win.extent = pt(300, 200).maxPt(textMorph.textBounds().extent());
-  
+
         textMorph.textAndAttributes = content;
         if (plugin) textMorph.addPlugin(plugin);
-  
+
         return textMorph;
       }
     }
@@ -397,9 +396,9 @@ var worldCommands = [
       if (!editor1) return world.setStatusMessage("Canceled");
       if (!editor2) editor2 = await selectMorph(arr.without(editors, editor1));
       if (!editor2) return world.setStatusMessage("Canceled");
-  
+
       return doDiff(editor1, editor2);
-  
+
       function doDiff(ed1, ed2) {
         var p1 = ed1.pluginFind(ea => ea.evalEnvironment);
         var fn1 = (p1 && p1.evalEnvironment.targetModule) || 'no file';
@@ -410,14 +409,14 @@ var worldCommands = [
           filenameA: fn1, filenameB: fn2
         })
       }
-  
+
       async function selectMorph(morphs, thenDo) {
         var candidates = morphs.map(ea =>
           ({isListItem: true, value: ea, string: ea.name || String(ea)}));
         var {selected: [choice]} = await world.filterableListPrompt("choose text: ", candidates, {onSelection: m => m && m.show()});
         return choice;
       }
-      
+
     }
   },
 
@@ -433,7 +432,7 @@ var worldCommands = [
   {
     name: "open object drawer",
     exec: async world => {
-      var { default: ObjectDrawer } = await System.import("lively.morphic/object-drawer.js")
+      var { default: ObjectDrawer } = await System.import("lively.morphic/components/object-drawer.js")
       return new ObjectDrawer().openInWorldNearHand();
     }
   },
@@ -911,12 +910,13 @@ export class World extends Morph {
     return this.submorphs.find(m => m.isHalo && m.state.pointerId === pointerId);
   }
 
-  showHaloFor(target, pointerId = this.firstHand && this.firstHand.pointerId) {
+  async showHaloFor(target, pointerId = this.firstHand && this.firstHand.pointerId) {
+    var {default: Halo} = await System.import("lively.morphic/halo/morph.js");
     return this.addMorph(new Halo({pointerId, target}));
   }
 
-  showHaloForSelection(selection, pointerId) {
-    return selection.length > 0 && this.showHaloFor(selection, pointerId);
+  async showHaloForSelection(selection, pointerId) {
+    return selection.length > 0 && await this.showHaloFor(selection, pointerId);
   }
 
   layoutHaloForPointerId(pointerId = this.firstHand && this.firstHand.pointerId) {
@@ -1014,7 +1014,7 @@ export class World extends Morph {
         m.remove();
         arr.remove(messages, m);
       }
-  
+
       messages.forEach(msg => !msg.isMaximized && msg.slidable && msg.animate({
         position: msg.position.addPt(pt(0, -statusMessage.extent.y - 10)),
         duration: 500
@@ -1192,4 +1192,3 @@ export class Hand extends Morph {
   }
 
 }
-
