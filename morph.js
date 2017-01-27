@@ -1441,9 +1441,7 @@ export class Morph {
     var goalWidth = opts.width,
         goalHeight = opts.height,
         { scale, position, origin, rotation } = this,
-        invTfm = new Transform(
-                position.negated(),
-                0, pt(1/this.scale,1/scale)),
+        invTfm = new Transform(position.negated(), 0, pt(1/this.scale,1/scale)),
         bbox = invTfm.transformRectToRect(this.bounds()),
         w = bbox.width, h = bbox.height,
         ratio = Math.min(goalWidth/w, goalHeight/h),
