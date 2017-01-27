@@ -68,7 +68,13 @@ export var defaultTrackerActions = {
       var contents
       if (roomName){
         contents = io.nsps["/" + tracker.namespace].adapter.rooms[roomName]
-        if(ackFn && typeof ackFn === 'function'){ackFn({roomName: roomName, sockets: contents.sockets,length: contents.length})}        
+        if(ackFn && typeof ackFn === 'function'){
+          if(contents){
+            ackFn({roomName: roomName, sockets: contents.sockets,length: contents.length})
+          } else {
+            ackFn({roomName: null, sockets: null, length: 0})
+          }
+        }        
         
       } else {
         contents = io.nsps["/" + tracker.namespace].adapter.rooms
