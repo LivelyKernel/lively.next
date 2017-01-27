@@ -21,16 +21,18 @@ export default class L2LClient extends L2LConnection {
     var key = L2LClient._clients.keys().next().value;
     return L2LClient._clients.get(key);
   }
-  static forceNew({hostname,port,namespace,io}){
-    var path;
-    hostname ? {} : hostname = 'localhost'
-    port ? {} : port = '9011'
-    namespace ? {} : namespace = '/l2l'
-    io ? path = io.path() : path = '/lively-socket.io'
+  static forceNew(options){   
+    var {hostname,port,io,namespace}  = {
+      hostname: 'localhost',
+      port: 9011,      
+      namespace: '/l2l',
+      ...options
+    }
+    var path = '/lively-socket.io'
     var origin = `http://${hostname}:${port}`,
     client = new this(origin,path,namespace);
     client.open();
-    client.register();
+    client.register();    
     return client;
   
   }
