@@ -11,26 +11,26 @@ import { inspect } from "lively.morphic";
 var partsbinFolder = System.decanonicalize("lively.morphic/parts/")
 
 async function createObjectSnapshot(aMorph) {
+window.aMorph = aMorph
   var snapshot = serializeMorph(aMorph),
       packages = snapshot.packages = {},
-      packagesToSave = [];
 
-  // 1. save object packages
-  aMorph.withAllSubmorphsDo(m => {
-    let klass = aMorph.constructor,
-      moduleMeta = klass[Symbol.for("lively-module-meta")];
-    // if it's a "local" object package then save that as part of the snapshot
-    if (moduleMeta) {
-      var p = lively.modules.getPackage(moduleMeta.package.name);
-      if (p && p.address.startsWith("local://"))
-        packagesToSave.push(p);
-    }
-  });
-  packagesToSave.map(async p => {
-    var root = resource(p.address).asDirectory(),
-      packageJSON = await resourceToJSON(root, {});
-    Object.assign(packages, {[root.parent().url]: packageJSON});
-  })
+      // 1. save object packages
+      packagesToSave = aMorph.withAllSubmorphsDo(m => {
+        let klass = m.constructor,
+            moduleMeta = klass[Symbol.for("lively-module-meta")];
+        // if it's a "local" object package then save that as part of the snapshot
+        if (!moduleMeta) return null;
+        var p = lively.modules.getPackage(moduleMeta.package.name);
+        return p && p.address.startsWith("local://") ? p : null
+      }).filter(Boolean);
+
+  await Promise.all(
+    packagesToSave.map(async p => {
+      var root = resource(p.address).asDirectory(),
+        packageJSON = await resourceToJSON(root, {});
+      Object.assign(packages, {[root.parent().url]: packageJSON});
+    }));
 
   // add preview
   snapshot.preview = aMorph.renderPreview();
@@ -101,6 +101,7 @@ export async function interactivelyLoadObjectFromPartsBinFolder() {
 // await saveObjectToPartsbinFolder(that, "PartsBin")
 // await interactivelySaveObjectToPartsBinFolder(that)
 // var obj = (await loadObjectFromPartsbinFolder("star")).openInWorld();
+// var obj = (await loadObjectFromPartsbinFolder("foo")).openInWorld();
 // var obj = (await interactivelyLoadObjectFromPartsBinFolder()).openInWorld();
 
 
