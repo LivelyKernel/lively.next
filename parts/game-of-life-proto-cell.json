@@ -1,0 +1,72 @@
+{
+  "id": "Morph_7F12A3D8_FD00_4FBF_A7AF_9C9083640F2A",
+  "snapshot": {
+    "Morph_7F12A3D8_FD00_4FBF_A7AF_9C9083640F2A": {
+      "rev": 275211,
+      "props": {
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Game_dash_of_dash_life_dash_cell",
+            "Morph",
+            "morph"
+          ]
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(1020.0,200.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "name": {
+          "key": "name",
+          "value": "game-of-life-proto-cell"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(41.8,37.1)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "state": {
+          "key": "state",
+          "value": "alive"
+        },
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Game_dash_of_dash_life_dash_cell",
+        "module": {
+          "package": {
+            "name": "CDBE7408-0B24-49A0-B582-A9F51CF2A3DA",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    }
+  },
+  "packages": {
+    "local://lively-object-modules/": {
+      "CDBE7408-0B24-49A0-B582-A9F51CF2A3DA": {
+        "package.json": "{\n  \"name\": \"CDBE7408-0B24-49A0-B582-A9F51CF2A3DA\",\n  \"version\": \"0.1.0\"\n}",
+        "index.js": "import { Morph } from \"lively.morphic\";\nimport { arr, obj } from \"lively.lang/index.js\";\nimport { Color } from \"lively.graphics/index.js\";\n\nexport default class Game_dash_of_dash_life_dash_cell extends Morph {\n\n  static get properties() {\n    // this.state = \"alive\"\n    return {\n      col: {}, row: {},\n      state: {\n        defaultValue: \"alive\",\n        set(newState) {\n          this._neighbors = null;\n          if (newState !== \"dead\" && newState !== \"alive\")\n            throw new Error(\"Invalid state: \" + newState);\n          this.setProperty(\"state\", newState);\n          this.renderGameOfLifeCell();\n        }\n      }\n    }\n  }\n\n  reset() {\n    // state can be \"dead\" or \"alive\"\n    this.state = \"dead\";\n    this.renderGameOfLifeCell();\n    this.grabbable = false;\n  }\n\n  isAlive() {\n    return this.state === \"alive\";\n  }\n\n\n  isDying() {\n    return this.state === \"alive\"\n        && (arr.invoke(this.neighbors(), \"isAlive\").filter(Boolean).length < 2\n         || arr.invoke(this.neighbors(), \"isAlive\").filter(Boolean).length > 3);\n  }\n\n\n  isReborn() {\n    return this.state === \"dead\"\n        && arr.invoke(this.neighbors(), \"isAlive\").filter(Boolean).length === 3;\n  }\n\n\n  neighbors() {\n    return obj.values(this.neighborsByPosition());\n  }\n\n\n  neighborsByPosition() {\n\n    // computes the eight neighbors of a cell and returns it as an object with\n    // fields top, bottom, left, right, bottomLeft, bottomRight, topLeft, topRight,\n\n    // the code below isn't written in the most efficient manner to maintain\n    // readability. Since we are looping a couple of times over the morph array for\n    // each cell it takes a while to compute. This is why we cache the result\n    if (this._neighborsByPosition) return this._neighborsByPosition;\n\n    var row = this.row, col = this.col;\n    var others = arr.without(this.owner.submorphs, this);\n\n    // we could store the row / col but why when you can compute it...\n    var maxRow = arr.max(others, ea => ea.row).row + 1;\n    var maxCol = arr.max(others, ea => ea.col).col + 1;\n\n    // left, right, top and bottom\n    var l = {row: row, col: col-1};\n    var r = {row: row, col: col+1};\n    var t = {row: row-1, col: col};\n    var b = {row: row+1, col: col}\n\n    // make it \"infinite\", i.e. when cell is at the right edge its right neighbor\n    // is the lefmost cell on the same row, etc.\n    l.col = l.col < 0 ? maxCol + l.col : l.col % maxCol;\n    r.col = r.col < 0 ? maxCol + r.col : r.col % maxCol;\n    t.row = t.row < 0 ? maxCol + t.row : t.row % maxRow;\n    b.row = b.row < 0 ? maxCol + b.row : b.row % maxRow;\n\n    // the cells on the diagonal can be derived\n    var tl = {row: t.row, col: l.col};\n    var tr = {row: t.row, col: r.col};\n    var bl = {row: b.row, col: l.col};\n    var br = {row: b.row, col: r.col};\n\n    var neighbors = {\n      top:         others.find(ea => ea.row === t.row && ea.col === t.col),\n      bottom:      others.find(ea => ea.row === b.row && ea.col === b.col),\n      left:        others.find(ea => ea.row === l.row && ea.col === l.col),\n      right:       others.find(ea => ea.row === r.row && ea.col === r.col),\n      bottomLeft:  others.find(ea => ea.row === bl.row && ea.col === bl.col),\n      bottomRight: others.find(ea => ea.row === br.row && ea.col === br.col),\n      topLeft:     others.find(ea => ea.row === tl.row && ea.col === tl.col),\n      topRight:    others.find(ea => ea.row === tr.row && ea.col === tr.col)\n    }\n\n    return this._neighborsByPosition = neighbors;\n  }\n\n\n  onMouseDown(evt) {\n    this.state = this.state === \"alive\" ? \"dead\" : \"alive\";\n  }\n\n\n  renderGameOfLifeCell() {\n    this.fill = this.state === \"alive\" ? Color.black : Color.white;\n  }\n\n}\n\n"
+      }
+    }
+  },
+  "preview": "<div   draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate(0.049px, 5.61429px) rotate(0deg) scale(2.39, 2.39); transform-origin: 0px 0px 0px; display: inline; width: 41.8px; height: 37.1429px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div>"
+}
