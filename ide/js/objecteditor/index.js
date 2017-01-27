@@ -579,8 +579,6 @@ localStorage["oe helper"] = JSON.stringify(store);
   }
 
   async interactivelyAddImport() {
-    if (!this.isShowingImports()) await this.toggleShowingImports();
-
     try {
       var {selectedClass, selectedMethod} = this.state;
       if (!selectedClass) {
