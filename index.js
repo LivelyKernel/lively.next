@@ -136,7 +136,7 @@ class AttributeConnection {
   deactivate() { delete this.isActive; }
 
   connect() {
-    var existing = this.getExistingConnection()
+    let existing = this.getExistingConnection();
     if (existing !== this) {
       // when existing == null just add new connection when
       // existing === this then connect was called twice or we are in
@@ -147,21 +147,22 @@ class AttributeConnection {
 
     // Check for existing getters that might be there and not belong to
     // lively.bindings We deal with them in addSourceObjGetterAndSetter()
-    var existingSetter = this.sourceObj.__lookupSetter__(this.sourceAttrName),
-        existingGetter = this.sourceObj.__lookupGetter__(this.sourceAttrName);
+    let {sourceObj, sourceAttrName, forceAttributeConnection} = this,
+        existingSetter = sourceObj.__lookupSetter__(sourceAttrName),
+        existingGetter = sourceObj.__lookupGetter__(sourceAttrName);
 
     // Check if a method is the source. We check both the value behind
     // sourceAttrName and $$sourceAttrName because when deserializing
     // scripts those get currently stored in $$sourceAttrName (for
     // non-scripts it doesn't matter since those methods should be in the
     // prototype chain)
-    var methodOrValue = !existingSetter && !existingGetter &&
+    let methodOrValue = !existingSetter && !existingGetter &&
       (this.getSourceValue() || this.getPrivateSourceValue());
 
     // method connect... FIXME refactori into own class!
-    if (typeof methodOrValue === "function" && !this.forceAttributeConnection) {
+    if (typeof methodOrValue === "function" && !forceAttributeConnection) {
       if (!methodOrValue.isWrapped) {
-        this.addConnectionWrapper(this.sourceObj, this.sourceAttrName, methodOrValue);
+        this.addConnectionWrapper(sourceObj, sourceAttrName, methodOrValue);
       }
     } else { // attribute connect
       this.addSourceObjGetterAndSetter(existingGetter, existingSetter);
@@ -171,16 +172,16 @@ class AttributeConnection {
   }
 
   disconnect() {
-    var obj = this.sourceObj;
-    if (!obj || !obj.attributeConnections)
+    let {sourceObj} = this;
+    if (!sourceObj || !sourceObj.attributeConnections)
       return this.removeSourceObjGetterAndSetter();
 
-    obj.attributeConnections = obj.attributeConnections.filter(con =>
+    sourceObj.attributeConnections = sourceObj.attributeConnections.filter(con =>
       !this.isSimilarConnection(con));
-    var connectionsWithSameSourceAttr = obj.attributeConnections.filter(con =>
+    let connectionsWithSameSourceAttr = sourceObj.attributeConnections.filter(con =>
       this.getSourceAttrName() == con.getSourceAttrName());
-    if (obj.attributeConnections.length == 0)
-      delete obj.attributeConnections;
+    if (sourceObj.attributeConnections.length == 0)
+      delete sourceObj.attributeConnections;
     if (connectionsWithSameSourceAttr.length == 0)
       this.removeSourceObjGetterAndSetter();
 
@@ -201,33 +202,39 @@ class AttributeConnection {
     //   argument array for allowing conversion.
 
     if (this.isActive/*this.isRecursivelyActivated()*/) return null;
-    var connection = this, updater = this.getUpdater(), converter = this.getConverter(),
-      target = this.targetObj, propName = this.targetMethodName;
+
+    var connection = this,
+        updater = this.getUpdater(),
+        converter = this.getConverter(),
+        target = this.targetObj,
+        propName = this.targetMethodName;
+
     if (!target || !propName) {
       var msg = 'Cannot update ' + this.toString(newValue)
           + ' because of no target ('
           + target + ') or targetProp (' + propName+') ';
       if (this.isWeakConnection) { this.disconnect(); }
       console.error(msg);
-
       return null;
     }
-    var targetMethod = target[propName], callOrSetTarget = function(newValue, oldValue) {
-      // use a function and not a method to capture this in self and so
-      // that no bind is necessary and oldValue is accessible. Note that
-      // when updater calls this method arguments can be more than just
-      // the new value
-      var args = arr.from(arguments);
-      if (converter) {
-        newValue = converter.call(connection, newValue, oldValue);
-        args[0] = newValue;
-      }
-      var result = (typeof targetMethod === 'function') ?
-        targetMethod.apply(target, args) :
-        target[propName] = newValue;
-      if (connection.removeAfterUpdate) connection.disconnect();
-      return result;
-    };
+
+    var targetMethod = target[propName],
+        callOrSetTarget = function(newValue, oldValue) {
+          // use a function and not a method to capture this in self and so
+          // that no bind is necessary and oldValue is accessible. Note that
+          // when updater calls this method arguments can be more than just
+          // the new value
+          var args = arr.from(arguments);
+          if (converter) {
+            newValue = converter.call(connection, newValue, oldValue);
+            args[0] = newValue;
+          }
+          var result = (typeof targetMethod === 'function') ?
+            targetMethod.apply(target, args) :
+            target[propName] = newValue;
+          if (connection.removeAfterUpdate) connection.disconnect();
+          return result;
+        };
 
     try {
       this.isActive = true;
@@ -241,24 +248,19 @@ class AttributeConnection {
         world.logError(e, 'AttributeConnection>>update: ');
       } else {
         console.error('Error when trying to update ' + this + ' with value '
-             + newValue + ':\n' + e + '\n' + e.stack);
+                     + newValue + ':\n' + e + '\n' + e.stack);
       }
-    } finally {
-      delete this.isActive;
-    }
+    } finally { delete this.isActive; }
 
     return null;
   }
 
   addSourceObjGetterAndSetter(existingGetter, existingSetter) {
-    if ((existingGetter && existingGetter.isAttributeConnectionGetter) ||
-      (existingSetter && existingSetter.isAttributeConnectionSetter)) {
-      return;
-    }
+    if ((existingGetter && existingGetter.isAttributeConnectionGetter)
+     || (existingSetter && existingSetter.isAttributeConnectionSetter)) { return; }
 
-    var sourceObj = this.sourceObj,
-      sourceAttrName = this.sourceAttrName,
-      newAttrName = this.privateAttrName(sourceAttrName);
+    var {sourceObj, sourceAttrName} = this,
+        newAttrName = this.privateAttrName(sourceAttrName);
 
     if (sourceObj[newAttrName]) {
       console.warn('newAttrName ' + newAttrName + ' already exists.' +
@@ -281,25 +283,23 @@ class AttributeConnection {
     if (!existingGetter && !existingSetter && sourceObj.hasOwnProperty(sourceAttrName))
       sourceObj[newAttrName] = sourceObj[sourceAttrName];
 
-    this.sourceObj.__defineSetter__(sourceAttrName, function(newVal) {
+    sourceObj.__defineSetter__(sourceAttrName, (newVal) => {
       var oldVal = sourceObj[newAttrName];
       sourceObj[newAttrName] = newVal;
       if (sourceObj.attributeConnections === undefined) {
         console.error('Sth wrong with sourceObj, has no attributeConnections');
         return null;
       }
-      sourceObj.attributeConnections.forEach(function(c) {
+      sourceObj.attributeConnections.forEach((c) => {
         if (c && c.getSourceAttrName() === sourceAttrName && c.signalOnAssignment)
-        c.update(newVal, oldVal);
+          c.update(newVal, oldVal);
       });
       return newVal;
     });
-    this.sourceObj.__lookupSetter__(sourceAttrName).isAttributeConnectionSetter = true;
+    sourceObj.__lookupSetter__(sourceAttrName).isAttributeConnectionSetter = true;
 
-    this.sourceObj.__defineGetter__(this.sourceAttrName, function() {
-      return sourceObj[newAttrName];
-    });
-    this.sourceObj.__lookupGetter__(sourceAttrName).isAttributeConnectionGetter = true;
+    sourceObj.__defineGetter__(sourceAttrName, () => sourceObj[newAttrName]);
+    sourceObj.__lookupGetter__(sourceAttrName).isAttributeConnectionGetter = true;
   }
 
   addConnectionWrapper(sourceObj, methodName, origMethod) {
@@ -311,13 +311,14 @@ class AttributeConnection {
     sourceObj[this.privateAttrName(methodName)] = origMethod;
     sourceObj[methodName] = function connectionWrapper() {
       if (this.attributeConnections === undefined)
-          throw new Error('Sth wrong with this, has no attributeConnections')
-      var conns = lively.lang.obj.clone(this.attributeConnections),
-        result = this[methodName].originalFunction.apply(this, arguments);
-      conns.forEach(function(c) {
+          throw new Error('[lively.bindings] Something is wrong with connection source object, it has no attributeConnections');
+      var conns = this.attributeConnections.slice(),
+          result = this[methodName].originalFunction.apply(this, arguments);
+      for (var i = 0; i < conns.length; i++) {
+        var c = conns[i];
         if (c.getSourceAttrName() === methodName)
-        result = c.update(result);
-      });
+          result = c.update(result);
+      }
       return result;
     };
 
@@ -375,12 +376,11 @@ class AttributeConnection {
   }
 
   isSimilarConnection(other) {
-    if (!other) return false;
-    if (other.constructor != this.constructor) return false;
-    return this.sourceObj == other.sourceObj &&
-      this.sourceAttrName == other.sourceAttrName &&
-      this.targetObj == other.targetObj &&
-      this.targetMethodName == other.targetMethodName;
+    if (!other || other.constructor != this.constructor) return false;
+    return this.sourceObj == other.sourceObj
+        && this.sourceAttrName == other.sourceAttrName
+        && this.targetObj == other.targetObj
+        && this.targetMethodName == other.targetMethodName;
   }
 
   toString(optValue) {
@@ -392,9 +392,7 @@ class AttributeConnection {
         optValue ? ('-->' + String(optValue) + '-->') : '-->',
         this.getTargetObj(),
         this.getTargetMethodName());
-    } catch(e) {
-      return '<Error in AttributeConnection>>toString>';
-    }
+    } catch(e) { return '<Error in AttributeConnection>>toString>'; }
   }
 }
 
