@@ -211,32 +211,6 @@ describe("connect", () => {
   });
 
 
-  it("disconnect during connection method invocation", function() {
-    var gInvoked = false;
-    var obj = {
-      f: function() { disconnectAll(this); },
-      g: function() { gInvoked = true; }
-    };
-    connect(obj, 'f', obj, 'g');
-    obj.f();
-    expect().assert(gInvoked);
-  });
-
-
-  it("connect during connection method invocation", function() {
-    var gInvoked = false, hInvoked = false;
-    var obj = {
-      f: function() { connect(this, 'f', this, 'h'); },
-      g: function() { gInvoked = true; },
-      h: function() { hInvoked = true; }
-    };
-    connect(obj, 'f', obj, 'g');
-    obj.f();
-    expect().assert(gInvoked);
-    expect().assert(!hInvoked);
-  });
-
-
   it("force attribute connection", function() {
     var obj = {m: function() { return 3 }, x: 2};
     connect(obj, 'm', obj, 'x', {forceAttributeConnection: true});
@@ -460,56 +434,78 @@ describe("connection points", () => {
 
 describe("method connections", () => {
 
+
+  it("disconnect during connection method invocation", function() {
+    var gInvoked = false;
+    var obj = {
+      f: function() { disconnectAll(this); },
+      g: function() { gInvoked = true; }
+    };
+    connect(obj, 'f', obj, 'g');
+    obj.f();
+    expect().assert(gInvoked);
+  });
+
+
+  it("connect during connection method invocation", function() {
+    var gInvoked = false, hInvoked = false;
+    var obj = {
+      f: function() { connect(this, 'f', this, 'h'); },
+      g: function() { gInvoked = true; },
+      h: function() { hInvoked = true; }
+    };
+    connect(obj, 'f', obj, 'g');
+    obj.f();
+    expect().assert(gInvoked);
+    expect().assert(!hInvoked);
+  });
   
   it("connect two methods", function() {
-    var obj1 = {m1: function() { return 3 }};
-    var obj2 = {m2: function(val) { return val + 2 }};
+    var obj1 = {m1: function(val) { return val + 1 }};
+    var obj2 = {m2: function(val) { this.result = val + 2 }};
     connect(obj1, 'm1', obj2, 'm2');
-    var result = obj1.m1();
-    expect(5).equals(result, 'method connection not working');
+    expect(obj1.m1(3)).equals(4, 'method result in connection wrong');
+    expect(obj2.result).equals(5, 'target method invocation failed');
   });
 
   it("connect two methods with updater", function() {
-    var obj1 = {m1: function() { return 3 }};
-    var obj2 = {m2: function(val) { return val + 2 }};
+    var obj1 = {m1: function(val) { return val + 1 }};
+    var obj2 = {m2: function(val) { this.result = val + 2 }};
     connect(obj1, 'm1', obj2, 'm2', {
       updater: function($proceed, val) {
-        if (val != 3)
-          throw new Error('updater didnt get the correct value');
-        return $proceed(val)
+        return $proceed(val + 4)
       }});
-    var result = obj1.m1();
-    expect(5).equals(result, 'method connection not working');
+    expect(obj1.m1(3)).equals(4, 'normal invocation not working');
+    expect(obj2.result).equals(3 + 4 + 2, 'method connection not working');
   });
 
   it("connect two methods twice", function() {
-    var obj1 = {m1: function() { return 3 }};
-    var obj2 = {m2: function(val) { return val + 2 }};
+    var obj1 = {m1: function(val) { return val + 1 }};
+    var obj2 = {m2: function(val) { this.result = val + 2 }};
     connect(obj1, 'm1', obj2, 'm2');
     connect(obj1, 'm1', obj2, 'm2');
     expect().assert(typeof obj1.m1 === "function", 'wrapping failed');
-    var result = obj1.m1();
-    expect(5).equals(result, 'method connection not working');
+    expect(obj1.m1(3)).equals(4, 'method result in connection wrong');
+    expect(obj2.result).equals(5, 'target method invocation failed');
   });
 
   it("double connect two methods", function() {
-    var obj1 = {m1: function() { return 3 }},
-      obj2 = {m2: function(val) { return val + 2 }},
-      obj3 = {m3: function(val) { return val * 2 }},
-      m1 = obj1.m1,
-      con1 = connect(obj1, 'm1', obj2, 'm2'),
-      con2 = connect(obj1, 'm1', obj3, 'm3'),
-      result = obj1.m1();
+    var obj1 = {m1: function(val) { return val + 1 }},
+        obj2 = {m2: function(val) { this.result = val + 2 }},
+        obj3 = {m3: function(val) { this.result = val + 3 }},
+        m1 = obj1.m1,
+        con1 = connect(obj1, 'm1', obj2, 'm2'),
+        con2 = connect(obj1, 'm1', obj3, 'm3');
 
-    expect(10).equals(result, 'double method connection not working 1');
+    expect(obj1.m1(3)).equals(4, 'normal invocation not working 1');
+    expect(obj2.result).equals(3+2, 'normal invocation not working 1');
+    expect(obj3.result).equals(3+3, 'normal invocation not working 1');
 
     con1.disconnect();
-    result = obj1.m1();
-    expect(6).equals(result, 'double method connection not working 2');
+    expect(obj1.m1(3)).equals(4, 'normal invocaion not working 2');
 
     con2.disconnect();
-    result = obj1.m1();
-    expect(3).equals(result, 'double method connection not working 3');
+    expect(obj1.m1(3)).equals(4, 'normal invocation not working 3');
 
     expect().assert(!obj1.attributeConnections, 'there are still connections left')
 
@@ -517,29 +513,34 @@ describe("method connections", () => {
   });
 
   it("transitive method connect", function() {
-    var obj1 = {m1: function() { return 3 }},
-      obj2 = {m2: function(val) { return val + 2 }},
-      obj3 = {m3: function(val) { return val * 2 }},
-      con1 = connect(obj1, 'm1', obj2, 'm2'),
-      con2 = connect(obj2, 'm2', obj3, 'm3');
+    var obj1 = {m1: function(val) { return val + 1 }},
+        obj2 = {m2: function(val) { this.result = val + 2 }},
+        obj3 = {m3: function(val) { this.result = val + 3 }},
+        con1 = connect(obj1, 'm1', obj2, 'm2'),
+        con2 = connect(obj2, 'm2', obj3, 'm3');
 
-    var result = obj1.m1();
-    expect(10).equals(result, 'double method connection not working');
+    expect(obj1.m1(3)).equals(4, 'normal invocation not working');
+    expect(obj2.result).equals(3 + 2, 'normal invocation not working m2');
+    expect(obj3.result).equals(3 + 3, 'normal invocation not working m3');
 
     con1.disconnect();
-    expect(3).equals(obj1.m1(), 'one method connection not working after disconnect of con1');
-    expect(6).equals(obj2.m2(1), 'remaining connection not working');
+    expect(obj1.m1(4)).equals(5, 'one method connection not working after disconnect of con1');
+    obj2.m2(1)
+    expect(obj2.result).equals(3, 'remaining connection not working');
 
     con2.disconnect();
-    expect(3).equals(obj2.m2(1), 'after con2 disconnect m2');
-    expect(2).equals(obj3.m3(1), 'after con2 disconnect m3');
+    obj2.m2(1);
+    expect(obj2.result).equals(1 + 2, 'after con2 disconnect m2');
+    expect(obj3.result).equals(1 + 3, 'after con2 disconnect m2');
+    obj3.m3(4);
+    expect(obj3.result).equals(4 + 3, 'after con2 disconnect m3');
   });
 
   it("connect method to arribute", function() {
-    var obj1 = {m1: function() { return 3 }}, obj2 = {x: null};
+    var obj1 = {m1: function(val) { return val + 1 }}, obj2 = {x: null};
     connect(obj1, 'm1', obj2, 'x');
-    var r = obj1.m1();
-    expect(3).equals(r, 'result not correct');
+    var r = obj1.m1(3);
+    expect(3+1).equals(r, 'result not correct');
     expect(3).equals(obj2.x, 'connected attribute not set correctly');
   });
 

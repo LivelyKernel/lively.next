@@ -317,7 +317,7 @@ class AttributeConnection {
       for (var i = 0; i < conns.length; i++) {
         var c = conns[i];
         if (c.getSourceAttrName() === methodName)
-          result = c.update(result);
+          c.update(arguments[0]);
       }
       return result;
     };
