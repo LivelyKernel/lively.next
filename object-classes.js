@@ -236,6 +236,8 @@ class ObjectModule {
       }
     }
 
+    if (className === superClassName) className = "Object" + className;
+
     var classSource = superClassName === "Object" ?
           `class ${className} {}\n` :
           `class ${className} extends ${superClassName} {}\n`;
