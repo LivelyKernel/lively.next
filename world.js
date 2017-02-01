@@ -565,21 +565,22 @@ var worldCommands = [
       }
 
       items = arr.sortBy(items, ea => ea.string);
-
-      var {selected} = await world.filterableListPrompt(
+      (async () => {
+         var {selected} = await world.filterableListPrompt(
             "Choose module to open", items, {
               historyId: "lively.morphic-choose and browse module",
               requester: browser || focused,
               width: 700, multiSelect: true, listFontColor: "white", fuzzy: "value.shortName"});
 
-      for (var i = 0; i < selected.length; i++) {
-        var {package: p, shortName} = selected[i],
-            loc = {packageName: p.name, moduleName: shortName},
-            b = await Browser.browse(
-              loc, i === 0 ? browser : undefined, backend);
-        b.moveBy(pt(i*20, i*20));
-        b.activate();
-      }
+         for (var i = 0; i < selected.length; i++) {
+           var {package: p, shortName} = selected[i],
+               loc = {packageName: p.name, moduleName: shortName},
+               b = await Browser.browse(
+                  loc, i === 0 ? browser : undefined, backend);
+           b.moveBy(pt(i*20, i*20));
+           b.activate();
+         }
+      })();
 
       return true;
     }
