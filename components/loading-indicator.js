@@ -1,5 +1,5 @@
 import { promise } from "lively.lang";
-import { Morph } from "lively.morphic";
+import { Morph, Text } from "lively.morphic";
 import { Icon } from "./icons.js";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { connect } from "lively.bindings";
@@ -28,11 +28,11 @@ export default class LoadingIndicator extends Morph {
 
   static get properties() {
     return {
-      fill:       {defaultValue: Color.rgbHex("#666")},
+      fill:       {defaultValue: Color.rgbHex("#666").withA(.7)},
       fontSize:   {defaultValue: 16},
       fontFamily: {defaultValue: "Arial"},
       name:       {defaultValue: "LoadingIndicator"},
-
+      borderRadius: {defaultValue: 10},
       label: {
         derived: true, after: ["submorphs"],
         get() { return this.getSubmorphNamed("label").value; },
@@ -55,15 +55,13 @@ export default class LoadingIndicator extends Morph {
         initialize() {
           this.submorphs = [
 
-            Icon.makeLabel("refresh", {
-              name: "spinner",
+            new Text({
+              textString: Icon.makeLabel("refresh").textString,
+              name: "spinner", fill: Color.transparent,
               fontColor: Color.white,
               fontFamily: "FontAwesome",
-              fontSize: 60,
-              // padding: 5,
-              textStyleClasses: ["fa", "fa-spin", "fa-fw"],
-              autofit: false,
-              origin: pt(30,30),
+              fontSize: 50, readOnly: true,
+              textStyleClasses: ["fa", "fa-spin", "fa-3x", "fa-fw"],
               extent: pt(60,60),
               topLeft: pt(0,0),
               halosEnabled: false
@@ -82,14 +80,17 @@ export default class LoadingIndicator extends Morph {
             {
               type: "button",
               name: "closeButton",
-              label: "X",
+              label: Icon.makeLabel('times').textString,
+              fontFamily: 'FontAwesome',
               fontColor: Color.white,
-              activeStyle: {fill: null, borderWidth: 0},
-              extent: pt(20,20),
-              visible: false
+              activeStyle: {
+                   extent: pt(20,20), fill: Color.transparent, 
+                   borderWidth: 0, fontColor: Color.white},
+              visible: false,
+              extent: pt(20,20)
             }
           ];
-
+ 
         }
       }
     }
@@ -119,7 +120,9 @@ export default class LoadingIndicator extends Morph {
         w = Math.max(spinner.width, label.width) + padding.left() + padding.right(),
         h = spinner.height + label.height + padding.top() + padding.bottom();
     this.extent = pt(w,h);
+    closeButton.width = 20;
     closeButton.topRight = this.innerBounds().topRight();
+    spinner.width = 60;
     spinner.topCenter = this.innerBounds().topCenter().addXY(0, padding.top());
     label.topCenter = spinner.bottomCenter.addXY(0, 4);
   }
