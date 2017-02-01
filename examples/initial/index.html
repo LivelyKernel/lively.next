@@ -4,11 +4,23 @@
     <title>lively.morphic example 1</title>
   </head>
   <body style="margin: 0;">
-    <div id="lively-world"></div>
+    <link href="https://fonts.googleapis.com/css?family=Libre+Franklin:400,400i,500,500i,900" rel="stylesheet">
+    <link rel="stylesheet" href="lively.morphic/assets/font-awesome/css/font-awesome.min.css">
     <script src="/lively.modules/node_modules/babel-standalone/babel.js"></script>
     <script src="/lively.modules/node_modules/systemjs/dist/system.src.js"></script>
     <script src="/lively.modules/dist/lively.modules.js"></script>
-
+    <div id="lively-world"> 
+    <div id="loading indicator" style="
+         position: absolute;
+         margin: auto; left: 0;
+         right: 0; top: 0;
+         bottom: 0; width: 220px; height: 50px;
+         color: white; font-family: Libre Franklin;
+         font-size: 30pt; border-radius: 10px;
+         padding: 10px; background: rgba(0,0,0,.5)">
+         <div style="float: left">Loading</div>
+         <i style="padding: 5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i></div>
+    </div>
     <script>
       var origin = document.location.origin;
       Promise.resolve()
@@ -16,6 +28,7 @@
         .then(bootstrapLivelySystem)
         .then(function() { console.log("3. loading lively.morphic"); })
         .then(function () { return lively.modules.importPackage('.'); })
+        .then(function() { document.getElementById('lively-world').remove() })
         .then(function() { console.log("... lively.morphic loaded"); })
       .catch(function(err) {
         if (err.originalErr) err = err.originalErr;
@@ -40,7 +53,6 @@
             // System.debug = true;
             return lively.modules.changeSystem(System, true);
           })
-
           .then(function() {
             return importPackageAndDo(
               "lively.lang",
@@ -72,7 +84,6 @@
               function(m) { lively.modules = m; lively.modules.unwrapModuleLoad(); lively.modules.wrapModuleLoad(); })})
 
           .then(function() { return importPackageAndDo(origin + "/lively.2lively"); })
-
           .then(function() { console.log("...lively.system bootstrapped!"); })
       }
 
