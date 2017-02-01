@@ -52,7 +52,7 @@ async function lazyInspect(obj) {
   // lazy load
   var {inspect: realInspect} = await System.import("lively.morphic/ide/js/inspector.js")
   inspect = realInspect;
-  return realInspect(obj);
+  return await realInspect(obj);
 }
 
 export var inspect = lazyInspect;

@@ -1,7 +1,7 @@
 import { arr, obj } from "lively.lang";
 import { pt, Point, Color, Rectangle } from "lively.graphics";
 import { config } from "../../index.js";
-import { Window } from "lively.morphic/components/window.js";
+import Window from "lively.morphic/components/window.js";
 import { DropDownList } from "lively.morphic/components/list.js";
 import { JavaScriptEditorPlugin } from "./editor-plugin.js";
 import EvalBackendChooser from "./eval-backend-ui.js";

@@ -94,10 +94,10 @@ class ClassTreeData extends TreeData {
 
 export class ObjectEditor extends Morph {
 
-  static open(options = {}) {
+  static async open(options = {}) {
     var ed = new this(options),
         winOpts = {name: "ObjectEditor window", title: options.title || "ObjectEditor"},
-        win = ed.openInWindow(winOpts).activate();
+        win = (await ed.openInWindow(winOpts)).activate();
 
     return win;
   }

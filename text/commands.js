@@ -1166,7 +1166,7 @@ var usefulEditorCommands = [
       if (parts[0].match(/^[0-9]+$/)) url += ":" + parts.shift();
 
       var { default: TextEditor } = await System.import("lively.morphic/ide/text-editor.js"),
-          textEd = TextEditor.openInWindow();
+          textEd = await TextEditor.openInWindow();
       textEd.location = url;
       return textEd;
     }

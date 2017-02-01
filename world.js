@@ -304,7 +304,7 @@ var worldCommands = [
 
   {
     name: "open text window",
-    exec: (world, opts = {}) => {
+    exec: async (world, opts = {}) => {
       var {title, extent, content, mode, name} = opts;
 
       title = title ||  "text window";
@@ -312,11 +312,11 @@ var worldCommands = [
       extent = extent || pt(500, 400);
       name = name || "text workspace";
 
-      return world.openInWindow(
+      return (await world.openInWindow(
         new Text({padding: Rectangle.inset(3),
                   ...obj.dissoc(opts, ["title", "content"]),
                   textString: content, clipMode: "auto", name, extent}),
-        {title}).activate();
+        {title})).activate();
     }
   },
 
@@ -615,7 +615,7 @@ var worldCommands = [
     progressIndicator: "opening test runner...",
     exec: async world => {
       var {default: TestRunner} = await System.import("lively.morphic/ide/test-runner.js");
-      return TestRunner.open();
+      return await TestRunner.open();
     }
   },
 
@@ -628,7 +628,7 @@ var worldCommands = [
       var browser = file ?
         HTTPFileBrowser.forFile(file, location) :
         HTTPFileBrowser.forLocation(location || document.location.origin);
-      return world.openInWindow(browser).activate();
+      return (await world.openInWindow(browser)).activate();
     }
   },
 
@@ -721,7 +721,8 @@ export class World extends Morph {
   activePrompt() { return this.getPrompts().reverse().find(ea => ea.isActive()); }
   getPrompts() { return this.submorphs.filter(ea => ea.isPrompt); }
 
-  openInWindow(morph, opts = {title: morph.name, name: "window for " + morph.name}) {
+  async openInWindow(morph, opts = {title: morph.name, name: "window for " + morph.name}) {
+    const { default: Window } = await System.import("lively.morphic/components/window.js"); 
     return new Window({
       ...opts,
       extent: morph.extent.addXY(0, 25),

@@ -1,10 +1,11 @@
 import { fun, arr, obj, string } from 'lively.lang';
 import { pt, Color, Rectangle } from "lively.graphics";
-import { config, Window, show } from 'lively.morphic';
+import { config, show } from 'lively.morphic';
 import { FilterableList } from "lively.morphic/components/list.js";
 import { LabeledCheckBox } from "lively.morphic/components/widgets.js";
 import LoadingIndicator from "lively.morphic/components/loading-indicator.js";
 import Browser from "./js/browser/index.js";
+import Window from "lively.morphic/components/window.js";
 import { connect } from 'lively.bindings';
 
 

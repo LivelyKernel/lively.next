@@ -9,7 +9,7 @@ import {
 import { Color, pt, rect, Rectangle, LinearGradient } from "lively.graphics";
 import { obj, properties, num, arr } from "lively.lang";
 import { connect, signal, disconnect, disconnectAll, once } from "lively.bindings";
-import { Icon } from "lively.morphic/componnets/icons.js";
+import { Icon } from "lively.morphic/components/icons.js";
 import { styleHaloFor } from "./stylization.js";
 
 
@@ -931,10 +931,10 @@ class InspectHaloItem extends HaloItem {
 
   onMouseDown(evt) {
     this.halo.remove();
-    async () => {
-       var { Inspector } = await System.import("lively.morphic/ide/js/inspector.js");
+    (async () => {
+       var {default: Inspector} = await System.import("lively.morphic/ide/js/inspector.js");
        Inspector.openInWindow({targetObject: this.halo.target});
-    }
+    })()
   }
 
 }

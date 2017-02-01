@@ -176,15 +176,15 @@ class InspectorTreeData extends TreeData {
 
 
 // inspect(this)
-export function inspect(targetObject) {
-  return Inspector.openInWindow({targetObject});
+export async function inspect(targetObject) {
+  return await Inspector.openInWindow({targetObject});
 }
 
 export default class Inspector extends Morph {
 
-  static openInWindow(props) {
+  static async openInWindow(props) {
     var i = new this(props).openInWorld();
-    i.world().openInWindow(i).activate();
+    (await i.world().openInWindow(i)).activate();
     return i;
   }
 

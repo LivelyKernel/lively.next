@@ -190,11 +190,11 @@ const testRunnerCSS = `.mocha-test-runner {
 
 export default class TestRunner extends HTMLMorph {
 
-  static open(props) {
+  static async open(props) {
     var runner = new this({extent: pt(500,600), ...props}).openInWorld();
-    return runner.world().openInWindow(
+    return (await runner.world().openInWindow(
       runner, {title: "test runner", name: "test runner window"}
-    ).activate();
+    )).activate();
   }
 
   constructor(props) {
