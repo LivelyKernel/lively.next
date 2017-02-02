@@ -1004,7 +1004,7 @@ export class World extends Morph {
   }
 
   openStatusMessage(statusMessage, delay) {
-    // world.setStatusMessage("test", Color.green)
+    // $world.setStatusMessage("test", Color.green)
 
     this.addMorph(statusMessage);
 
@@ -1017,10 +1017,11 @@ export class World extends Morph {
         arr.remove(messages, m);
       }
 
-      messages.forEach(msg => !msg.isMaximized && msg.slidable && msg.animate({
-        position: msg.position.addPt(pt(0, -statusMessage.extent.y - 10)),
-        duration: 500
-      }));
+      messages.forEach(async msg => {
+        if(!msg.isMaximized && msg.slidable) {
+          msg.slideTo(msg.position.addPt(pt(0, -statusMessage.extent.y - 10)))
+        }
+      });
 
       const msgPos = this.visibleBounds().bottomRight().addXY(-20, -20);
       statusMessage.align(statusMessage.bounds().bottomRight(), msgPos);

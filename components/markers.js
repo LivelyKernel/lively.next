@@ -208,8 +208,18 @@ export class StatusMessage extends Morph {
     this.color = color;
   }
 
-  expand() {
+  async slideTo(pos) {
+     this.sliding = this.animate({
+            position: pos,
+            duration: 500
+          });
+     await this.sliding;
+     this.sliding = false
+  }
+
+  async expand() {
     if (!this.expandable) return;
+    if (this.sliding) await this.sliding;
     var world = this.world();
     if (!world || this.isMaximized) return;
     this.isMaximized = true;
