@@ -43,7 +43,7 @@ describe("halos", () => {
   it("halo items are placed correctly", async () => {
     submorph1.origin = pt(20,30);
     submorph1.position = pt(100,100);
-    var halo = world.showHaloFor(submorph1),
+    var halo = await world.showHaloFor(submorph1),
         _ = await halo.whenRendered(),
         _ = await promise.delay(),
         innerButton = halo.buttonControls
@@ -56,7 +56,7 @@ describe("halos", () => {
   it("halo items never overlap each other", async () => {
     submorph1.origin = pt(20,30);
     submorph1.extent = pt(20,20);
-    var halo = world.showHaloFor(submorph1),
+    var halo = await world.showHaloFor(submorph1),
         _ = await halo.whenRendered(),
         _ = await promise.delay(),
         innerButton = halo.buttonControls.find(item =>
@@ -68,21 +68,21 @@ describe("halos", () => {
   });
 
   it("can select multiple morphs", async () => {
-     var halo = world.showHaloForSelection([submorph1, submorph2]);
+     var halo = await world.showHaloForSelection([submorph1, submorph2]);
      await halo.whenRendered(); await promise.delay();
      expect(halo.target.selectedMorphs).equals([submorph1, submorph2]);
      expect(halo.borderBox.globalBounds()).equals(submorph1.globalBounds().union(submorph2.globalBounds()));
   });
 
   it("can select and deselect morphs from selection", async () => {
-    var halo = world.showHaloForSelection([submorph1, submorph2]);
-    halo = halo.addMorphToSelection(submorph3);
+    var halo = await world.showHaloForSelection([submorph1, submorph2]);
+    halo = await halo.addMorphToSelection(submorph3);
     await halo.whenRendered(); await promise.delay();
     expect(halo.target.selectedMorphs).equals([submorph1, submorph2, submorph3]);
     expect(halo.borderBox.globalBounds()).equals(submorph1.globalBounds()
                                  .union(submorph2.globalBounds())
                                  .union(submorph3.globalBounds()));
-    halo = halo.removeMorphFromSelection(submorph2);
+    halo = await halo.removeMorphFromSelection(submorph2);
     await halo.whenRendered(); await promise.delay();
     expect(halo.target.selectedMorphs).equals([submorph1, submorph3]);
     expect(halo.borderBox.globalBounds()).equals(
@@ -91,13 +91,13 @@ describe("halos", () => {
   })
 
   it("name shows name", async () => {
-    var halo = world.showHaloFor(submorph1);
+    var halo = await world.showHaloFor(submorph1);
     await halo.whenRendered(); await promise.delay();
     expect(halo.nameHalo().nameHolders[0].submorphs[0].textString).equals(submorph1.name);
   })
 
   it("drag drags", async () => {
-    var halo = world.showHaloFor(submorph1);
+    var halo = await world.showHaloFor(submorph1);
     await halo.whenRendered(); await promise.delay();
     halo.dragHalo().init();
     halo.dragHalo().update(pt(10,5));
@@ -105,7 +105,7 @@ describe("halos", () => {
   });
 
   it("drags correctly of owner is transformed", async () => {
-    var halo = world.showHaloFor(submorph2);
+    var halo = await world.showHaloFor(submorph2);
     await halo.whenRendered(); await promise.delay();
     submorph2.owner.rotateBy(45);
     const prevGlobalPos = submorph2.globalPosition;
@@ -115,7 +115,7 @@ describe("halos", () => {
   })
   
   it("drags gridded and shows guides", async () => {
-    var halo = world.showHaloFor(submorph1);
+    var halo = await world.showHaloFor(submorph1);
     halo.dragHalo().init();
     halo.dragHalo().update(pt(10,11), true);
     await halo.whenRendered(); await promise.delay();
@@ -129,7 +129,7 @@ describe("halos", () => {
   });
 
   it("active drag hides other halos and displays position", async () => {
-    var halo = world.showHaloFor(submorph1),
+    var halo = await world.showHaloFor(submorph1),
         dragHalo = halo.dragHalo(),
         otherHalos = halo.buttonControls.filter((b) => b != dragHalo && !b.isHandle)
     dragHalo.init();
@@ -140,7 +140,7 @@ describe("halos", () => {
   })
 
   it("resize resizes", async () => {
-    var halo = world.showHaloFor(submorph1),
+    var halo = await world.showHaloFor(submorph1),
         resizeHandle = halo.ensureResizeHandles().find(h => h.corner == "bottomRight");
     resizeHandle.init(pt(0,0))
     resizeHandle.update(pt(10,5));
@@ -149,7 +149,7 @@ describe("halos", () => {
 
   it("resizes correctly if transformation present", async () => {
     submorph1.rotation = num.toRadians(-45);
-    var halo = world.showHaloFor(submorph1),
+    var halo = await world.showHaloFor(submorph1),
         resizeHandle = halo.ensureResizeHandles().find(h => h.corner == "bottomCenter");
     resizeHandle.init(pt(0,0))
     resizeHandle.update(pt(10,10));
@@ -159,7 +159,7 @@ describe("halos", () => {
   it("align to the morph extent while resizing", async () => {
     submorph1.origin = pt(20,30);
     submorph1.position = pt(100,100);
-    var halo = world.showHaloFor(submorph1, "test-pointer-1"),
+    var halo = await world.showHaloFor(submorph1, "test-pointer-1"),
         resizeButton = halo.ensureResizeHandles().find(h => h.corner == "bottomRight"),
         resizeButtonCenter = resizeButton.globalBounds().center();
     resizeButton.init(pt(0,0));
@@ -168,7 +168,7 @@ describe("halos", () => {
   });
 
   it("active resize hides other halos and displays extent", async () => {
-    var halo = world.showHaloFor(submorph1),
+    var halo = await world.showHaloFor(submorph1),
         resizeHalo = halo.ensureResizeHandles().find(h => h.corner == "bottomRight"),
         otherHalos = halo.buttonControls.filter((b) => 
             b != resizeHalo && !b.isHandle 
@@ -180,8 +180,8 @@ describe("halos", () => {
     otherHalos.forEach((h) => expect(h).to.have.property("visible", false));
   });
 
-  it("resizes proportionally", () => {
-    var halo = world.showHaloFor(submorph1),
+  it("resizes proportionally", async () => {
+    var halo = await world.showHaloFor(submorph1),
         resizeHandle = halo.ensureResizeHandles().find(h => h.corner == "bottomRight");
     resizeHandle.init(pt(0,0), true);
     expect(submorph1.extent.x).equals(submorph1.extent.y);
@@ -198,8 +198,8 @@ describe("halos", () => {
     expect(submorph1.extent.x).equals(submorph1.extent.y);
   });
 
-  it("shows a visual guide when resizing proportionally", () => {
-    var halo = world.showHaloFor(submorph1),
+  it("shows a visual guide when resizing proportionally", async () => {
+    var halo = await world.showHaloFor(submorph1),
         resizeHandle = halo.ensureResizeHandles().find(h => h.corner == "bottomRight");
     resizeHandle.init(pt(0,0), true);
     resizeHandle.update(pt(10,5), true);
@@ -207,8 +207,8 @@ describe("halos", () => {
     expect(d).to.not.be.undefined;
   });
 
-  it("rotate rotates", () => {
-    var halo = world.showHaloFor(submorph1);
+  it("rotate rotates", async () => {
+    var halo = await world.showHaloFor(submorph1);
     submorph1.rotation = num.toRadians(10);
     halo.rotateHalo().init(num.toRadians(10));
     halo.rotateHalo().update(num.toRadians(10));
@@ -217,8 +217,8 @@ describe("halos", () => {
     expect(submorph1.rotation).closeTo(num.toRadians(25), 0.1);
   });
   
-  it("rotate does not align to Halo while active", () => {
-    var halo = world.showHaloFor(submorph1);
+  it("rotate does not align to Halo while active", async () => {
+    var halo = await world.showHaloFor(submorph1);
     submorph1.rotation = num.toRadians(10);
     halo.rotateHalo().init(num.toRadians(10));
     halo.rotateHalo().position = pt(55,55);
@@ -228,15 +228,15 @@ describe("halos", () => {
     expect(halo.rotateHalo().position).not.equals(pt(55,55));
   })
 
-  it("rotate snaps to 45 degree angles", () => {
-    var halo = world.showHaloFor(submorph1);
+  it("rotate snaps to 45 degree angles", async () => {
+    var halo = await world.showHaloFor(submorph1);
     halo.rotateHalo().init(num.toRadians(10));
     halo.rotateHalo().update(num.toRadians(52));
     expect(submorph1.rotation).equals(num.toRadians(45));
   });
 
-  it("indicates rotation", () => {
-    var halo = world.showHaloFor(submorph1),
+  it("indicates rotation", async () => {
+    var halo = await world.showHaloFor(submorph1),
         rh = halo.rotateHalo(),
         oh = halo.originHalo();
     rh.init(num.toRadians(10));
@@ -247,22 +247,22 @@ describe("halos", () => {
       .equals([oh.globalBounds().center(), rh.globalBounds().center()]);
   });
 
-  it("scale scales", () => {
-    var halo = world.showHaloFor(submorph1);
+  it("scale scales", async () => {
+    var halo = await world.showHaloFor(submorph1);
     halo.rotateHalo().initScale(pt(10,10));
     halo.rotateHalo().updateScale(pt(20,20));
     expect(submorph1.scale).equals(2);
   });
 
-  it("scale snaps to factors of 0.5", () => {
-    var halo = world.showHaloFor(submorph1);
+  it("scale snaps to factors of 0.5", async () => {
+    var halo = await world.showHaloFor(submorph1);
     halo.rotateHalo().initScale(pt(10,10));
     halo.rotateHalo().updateScale(pt(19.5,19.5));
     expect(submorph1.scale).equals(2);
   });
 
-  it("indicates scale", () => {
-    var halo = world.showHaloFor(submorph1),
+  it("indicates scale", async () => {
+    var halo = await world.showHaloFor(submorph1),
         rh = halo.rotateHalo(),
         oh = halo.originHalo();
     rh.initScale(pt(10,10));
@@ -274,8 +274,8 @@ describe("halos", () => {
               [oh.globalBounds().center(), rh.globalBounds().center()]);
   });
 
-  it("active rotate halo hides other halos and displays rotation", () => {
-    var halo = world.showHaloFor(submorph1),
+  it("active rotate halo hides other halos and displays rotation", async () => {
+    var halo = await world.showHaloFor(submorph1),
         rotateHalo = halo.rotateHalo(),
         otherHalos = halo.buttonControls.filter((b) => b != rotateHalo);
     rotateHalo.init();
@@ -287,69 +287,69 @@ describe("halos", () => {
     });
   })
 
-  it("close removes", () => {
-    var halo = world.showHaloFor(submorph1);
+  it("close removes", async () => {
+    var halo = await world.showHaloFor(submorph1);
     halo.closeHalo().update();
     expect(submorph1.owner).equals(null);
   });
 
-  it("origin shifts origin", () => {
+  it("origin shifts origin", async () => {
     submorph1.origin = pt(20,30);
-    var halo = world.showHaloFor(submorph1);
+    var halo = await world.showHaloFor(submorph1);
     halo.originHalo().update(pt(10,5));
     expect(submorph1.origin).equals(pt(30, 35));
     expect(halo.originHalo().globalBounds().center()).equals(submorph1.worldPoint(pt(0,0)));
   });
 
-  it("origin shifts origin according to global delta", () => {
+  it("origin shifts origin according to global delta", async () => {
     submorph1.position = pt(200,100);
     submorph1.rotateBy(num.toRadians(90));
-    var halo = world.showHaloFor(submorph1);
+    var halo = await world.showHaloFor(submorph1);
     halo.originHalo().update(pt(20,5));
     expect(submorph1.origin).equals(pt(5, -20));
   });
 
-  it("shifting the origin will not move bounds", () => {
+  it("shifting the origin will not move bounds", async () => {
     submorph1.position = pt(200,100);
     submorph1.rotateBy(num.toRadians(90));
     var oldGlobalPos = submorph1.globalBounds().topLeft();
-    var halo = world.showHaloFor(submorph1);
+    var halo = await world.showHaloFor(submorph1);
     halo.originHalo().update(pt(20,5));
     expect(submorph1.origin).equals(pt(5, -20));
     expect(submorph1.globalBounds().topLeft()).equals(oldGlobalPos);
 
     submorph1.rotation = num.toRadians(-42);
     oldGlobalPos = submorph2.globalBounds().topLeft();
-    halo = world.showHaloFor(submorph2);
+    halo = await world.showHaloFor(submorph2);
     halo.originHalo().update(pt(20,5));
     closeToPoint(submorph2.globalBounds().topLeft(), oldGlobalPos);
 
     submorph2.rotation = num.toRadians(-20);
     oldGlobalPos = submorph2.globalBounds().topLeft();
-    halo = world.showHaloFor(submorph2);
+    halo = await world.showHaloFor(submorph2);
     halo.originHalo().update(pt(20,5));
     closeToPoint(submorph2.globalBounds().topLeft(), oldGlobalPos);
   });
 
-  it("shifting the origin will not move submorphs", () => {
+  it("shifting the origin will not move submorphs", async () => {
     submorph1.position = pt(200,100);
     submorph1.rotateBy(num.toRadians(90));
-    var halo = world.showHaloFor(submorph1);
+    var halo = await world.showHaloFor(submorph1);
     var oldGlobalPos = submorph2.globalPosition;
     halo.originHalo().update(pt(20,5));
     closeToPoint(submorph2.globalPosition, oldGlobalPos);
   });
 
-  it("origin halo aligns correctly if owner is transformed", () => {
-    var halo = world.showHaloFor(submorph2);
+  it("origin halo aligns correctly if owner is transformed", async () => {
+    var halo = await world.showHaloFor(submorph2);
     submorph1.rotation = num.toRadians(-45);
     submorph2.rotation = num.toRadians(-45);
     halo.alignWithTarget();
     expect(submorph2.worldPoint(submorph2.origin)).equals(halo.originHalo().globalBounds().center());
   });
 
-  it("origin halo aligns correctly if morph is transformed with different origin", () => {
-    var halo = world.showHaloFor(submorph1);
+  it("origin halo aligns correctly if morph is transformed with different origin", async () => {
+    var halo = await world.showHaloFor(submorph1);
     submorph1.adjustOrigin(submorph1.innerBounds().center());
     submorph1.rotation = num.toRadians(-45);
     halo.alignWithTarget();
@@ -358,8 +358,8 @@ describe("halos", () => {
     closeToPoint(originHaloCenter, originWorldPos);
   });
 
-  it("origin halo aligns correctly if owner is transformed with different origin", () => {
-    var halo = world.showHaloFor(submorph2);
+  it("origin halo aligns correctly if owner is transformed with different origin", async () => {
+    var halo = await world.showHaloFor(submorph2);
     submorph1.adjustOrigin(submorph2.innerBounds().center());
     submorph2.adjustOrigin(submorph2.innerBounds().center());
     submorph1.rotation = num.toRadians(-45);
@@ -370,8 +370,8 @@ describe("halos", () => {
     closeToPoint(originHaloCenter, originWorldPos);
   });
 
-  it("grab grabs", () => {
-    var halo = world.showHaloFor(submorph2),
+  it("grab grabs", async () => {
+    var halo = await world.showHaloFor(submorph2),
         hand = world.handForPointerId("test-pointer");
     halo.grabHalo().init(hand)
     hand.update({halo, position: submorph1.globalBounds().center()});
@@ -382,8 +382,8 @@ describe("halos", () => {
     expect(submorph2.owner).equals(submorph1);
   });
 
-  it("copy copies", () => {
-    var halo = world.showHaloFor(submorph2),
+  it("copy copies", async () => {
+    var halo = await world.showHaloFor(submorph2),
         hand = world.handForPointerId("test-pointer");
     halo.copyHalo().init(hand)
     var copy = halo.target;

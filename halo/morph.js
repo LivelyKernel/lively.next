@@ -205,20 +205,20 @@ export default class Halo extends Morph {
   // morph selection support
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  addMorphToSelection(morph) {
+  async addMorphToSelection(morph) {
     const world = this.world(),
           currentTargets = this.target.isMorphSelection ?
                              this.target.selectedMorphs : [this.target];
     this.remove();
-    return world.showHaloForSelection([...currentTargets, morph], this.state.pointerId);
+    return await world.showHaloForSelection([...currentTargets, morph], this.state.pointerId);
   }
 
-  removeMorphFromSelection(morph) {
+  async removeMorphFromSelection(morph) {
     const world = this.world();
     this.remove();
     if (this.target.isMorphSelection) {
       arr.remove(this.target.selectedMorphs, morph);
-      return world.showHaloForSelection(
+      return await world.showHaloForSelection(
         this.target.selectedMorphs,
         this.state.pointerId);
     }
