@@ -1,9 +1,9 @@
 import { Token, Tokenizer } from "../highlighting.js";
 
 const words = {
-  keyword: ["typeof", "new", "catch", "function", "return", "catch", "switch", "var", "if", "in", "from", "while", "do", "else", "case", "break", "class", "export", "import", "throw", "extends", "const", "let", "async", "await", "default"],
+  keyword: ["typeof", "new", "catch", "function", "return", "catch", "switch", "var", "if", "in", "from", "while", "do", "else", "case", "break", "class", "export", "import", "throw", "extends", "const", "let", "async", "await", "default", "of", "for"],
   constant: ["null", "undefined", "true", "false"],
-  global: ["window", "alert", "console", "JSON", "Math", "fetch", "parseInt", "parseFloat", "String", "Number", "Array", "Object", "Function", "Date"],
+  global: ["window", "alert", "console", "JSON", "Math", "fetch", "parseInt", "parseFloat", "String", "Number", "Array", "Object", "Function", "Date", "$world"],
   dynamic: ["this", "super"]
 };
 
