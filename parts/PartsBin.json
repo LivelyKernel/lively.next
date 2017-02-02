@@ -169,7 +169,7 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "window.js"
+          "pathInPackage": "components/window.js"
         }
       }
     },
@@ -611,7 +611,7 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "buttons.js"
+          "pathInPackage": "components/buttons.js"
         }
       }
     },
@@ -3891,7 +3891,7 @@
     "local://lively-object-modules/": {
       "84B6759A-75DC-4855-B281-69B1CAE61DFE": {
         "package.json": "{\n  \"name\": \"84B6759A-75DC-4855-B281-69B1CAE61DFE\",\n  \"version\": \"0.1.0\"\n}",
-        "index.js": "import { Morph, HTMLMorph, TilingLayout } from \"lively.morphic\";\nimport { ObjectDB } from \"lively.partsbin/index.js\";\nimport { pt, Color } from \"lively.graphics/index.js\";\n\nimport { deserializeMorph } from \"lively.morphic/serialization.js\";\nimport { connect } from \"lively.bindings/index.js\";\nimport { arr } from \"lively.lang/index.js\";\nimport { getAllPartResources, loadObjectFromPartsbinFolder, loadObjectFromSnapshot } from \"lively.morphic/partsbin.js\";\n\n\nexport class Partsbin extends Morph {\n\n  get isPartsBin() { return true }\n\n  reset() {\n    this.layout = new TilingLayout()\n  }\n\n  beforePublish() {\n    this.clear()\n  }\n\n  __after_deserialize__(snapshot, rev) {\n    super.__after_deserialize__(snapshot, rev);\n    this.showObjects();\n  }\n\n  clear() {\n    arr.invoke(this.submorphs.filter(ea => ea.name !== \"button-bar\"), \"remove\");\n  }\n\n  async showObjects() {\n    // await this.showObjects()\n\n    this.clear();\n\n    var partResorces = await getAllPartResources(),\n        previewProto = await loadObjectFromPartsbinFolder(\"part-item-for-partsbin\");\n\n    for (let partResource of partResorces) {\n      var partName = partResource.name().replace(/\\.json$/, \"\");\n      var preview = this.addMorph(previewProto.copy());\n      preview.showPart(partResource)\n    }\n\n  }\n\n}"
+        "index.js": "import { Morph, TilingLayout } from \"lively.morphic\";\nimport { arr } from \"lively.lang\";\nimport { getAllPartResources, loadObjectFromPartsbinFolder } from \"lively.morphic/partsbin.js\";\n\n\nexport class Partsbin extends Morph {\n\n  get isPartsBin() { return true }\n\n  reset() {\n    this.layout = new TilingLayout()\n  }\n\n  beforePublish() {\n    this.clear()\n  }\n\n  __after_deserialize__(snapshot, rev) {\n    super.__after_deserialize__(snapshot, rev);\n    this.showObjects();\n  }\n\n  clear() {\n    arr.invoke(this.submorphs.filter(ea => ea.name !== \"button-bar\"), \"remove\");\n  }\n\n  async showObjects() {\n    // await this.showObjects()\n\n    this.clear();\n\n    var partResorces = await getAllPartResources(),\n        previewProto = await loadObjectFromPartsbinFolder(\"part-item-for-partsbin\");\n\n    for (let partResource of partResorces) {\n      var partName = partResource.name().replace(/\\.json$/, \"\");\n      var preview = this.addMorph(previewProto.copy());\n      preview.showPart(partResource)\n    }\n\n  }\n\n}"
       },
       "F4311792-EB4F-418D-ABA4-DDF9E9FB065C": {
         "package.json": "{\n  \"name\": \"F4311792-EB4F-418D-ABA4-DDF9E9FB065C\",\n  \"version\": \"0.1.0\"\n}",

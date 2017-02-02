@@ -366,7 +366,7 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "buttons.js"
+          "pathInPackage": "components/buttons.js"
         }
       }
     },

@@ -11,7 +11,6 @@ import { inspect } from "lively.morphic";
 var partsbinFolder = System.decanonicalize("lively.morphic/parts/")
 
 async function createObjectSnapshot(aMorph) {
-window.aMorph = aMorph
   var snapshot = serializeMorph(aMorph),
       packages = snapshot.packages = {},
 
