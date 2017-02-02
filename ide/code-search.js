@@ -1,6 +1,6 @@
 import { fun, arr, obj, string } from 'lively.lang';
 import { pt, Color, Rectangle } from "lively.graphics";
-import { config, show } from 'lively.morphic';
+import { config, List, Text, Window, show } from '../index.js';
 import { FilterableList } from "lively.morphic/components/list.js";
 import { LabeledCheckBox } from "lively.morphic/components/widgets.js";
 import LoadingIndicator from "lively.morphic/components/loading-indicator.js";
@@ -56,59 +56,80 @@ export class CodeSearcher extends FilterableList {
     return win;
   }
 
+  static get properties() {
+    return {
+
+      fill:       {defaultValue: Color.white},
+      extent:     {defaultValue: pt(800,500)},
+      fontFamily: {defaultValue: "Inconsolata, monospace"},
+      fontSize:   {defaultValue: 14},
+      historyId:  {defaultValue: "lively.morphic-code searcher"},
+
+      submorphs: {
+        initialize() {
+          this.submorphs = [
+            Text.makeInputLine({name: "input", fixedHeight: false, autofit: true, borderBottom: {width: 1, color: Color.gray, padding: Rectangle.inset(5)}}),
+            new List({name: "list", items: [], clipMode: "auto", borderTop: {width: 1, color: Color.gray}})
+          ]
+        }
+      },
+
+      browser: {
+        set(browser) {
+          this.setProperty("browser", browser ? browser.id : null);
+        },
+        get() {
+          var w = this.world(), id = this.getProperty("browser");
+          return !w || !id ? null : w.getMorphWithId(id);
+        }
+      },
+
+      backend: {
+        after: ["browser"], derived: true,
+        defaultValue: "local",
+        get() {
+          var browser = this.browser;
+          return browser ? browser.backend : this.getProperty("backend");
+        },
+
+        set(backend) {
+          var browser = this.browser;
+          if (browser) browser.backend = backend;
+          else this.setProperty("backend", backend);
+        }
+
+      },
+
+      searchInUnloadedModulesCheckbox: {
+        after: ["submorphs"], dderived: true,
+        get() {
+          return this.getSubmorphNamed("searchInUnloadedModulesCheckbox") ||
+            this.addMorph(new LabeledCheckBox({
+                  checked: false,
+                  name: "searchInUnloadedModulesCheckbox",
+                  label: "search in unloaded modules"}))
+        }
+      },
+
+      currentSearchTerm: {defaultValue: ""},
+      currentFilters: {defaultValue: ""},
+
+    }
+  }
+
   constructor(props = {}) {
-    super({
-      fill: Color.white,
-      extent: pt(800,500),
-      fontFamily: "Inconsolata, monospace",
-      fontSize: 14,
-      historyId: "lively.morphic-code searcher",
-      ...obj.dissoc(props, "targetBrowser", "backend", "input")});
-    var cb = this.addMorph(new LabeledCheckBox({
-      checked: false,
-      name: "searchInUnloadedModulesCheckbox",
-      label: "search in unloaded modules"}));
-
-    if (props.targetBrowser)
-      this.state.targetBrowser = props.targetBrowser.id;
-    this.state.currentSearchTerm = "";
-    this.state.currentFilters = "";
-    this.state.backend = props.backend || "local";
-
+    if (props.targetBrowser) props.browser = props.targetBrowser;
+    super(props);
     connect(this, "accepted", this, "openBrowserForSelection");
-    connect(cb, "checked", this, "searchAgain");
-
-    
-    if (props.input) this.input = props.input;
+    connect(this.searchInUnloadedModulesCheckbox, "checked", this, "searchAgain");
   }
 
   relayout() {
     super.relayout();
-
     var input = this.getSubmorphNamed("input"),
         cb = this.getSubmorphNamed("searchInUnloadedModulesCheckbox");
     cb && (cb.rightCenter = input.rightCenter);
   }
-
-  get browser() {
-    var w = this.world();
-    if (!w || !this.state.targetBrowser) return null;
-    return w.getMorphWithId(this.state.targetBrowser);
-  }
-
-  get backend() {
-    var browser = this.browser;
-    return browser ? browser.backend : this.state.backend;
-  }
-
-  set backend(backend) {
-    var browser = this.browser;
-    if (browser) browser.backend = backend;
-    else this.state.backend = backend;
-  }
-
-  get input() { return this.getSubmorphNamed("input").input; }
-  set input(x) { this.getSubmorphNamed("input").input = x; }
 
   async getLivelySystem() {
     var backend = this.backend,
@@ -124,7 +145,7 @@ export class CodeSearcher extends FilterableList {
       this.progressIndicator = this.addMorph(LoadingIndicator.open());
       this.progressIndicator.center = this.center;
     }
-    this.progressIndicator.label = label;  
+    this.progressIndicator.label = label;
   }
 
   removeIndicator() {
@@ -140,19 +161,16 @@ export class CodeSearcher extends FilterableList {
 
     fun.debounceNamed(this.id + "updateFilterDebounced", 1200, async (needle) => {
       this.removeIndicator();
-      try {
-        await this.searchAndUpdate(needle);
-      } catch(err) {
-        this.world().logError(err);
-      }
+      try { await this.searchAndUpdate(needle); }
+      catch(err) { this.world().logError(err); }
     })(searchInput);
   }
 
   searchAgain() {
-    var needle = this.state.currentSearchTerm;
+    var needle = this.currentSearchTerm;
     if (needle <= 2) return;
     this.getSubmorphNamed("list").items = [];
-    this.state.currentSearchTerm = "";
+    this.currentSearchTerm = "";
     this.searchAndUpdate(needle);
   }
 
@@ -165,9 +183,9 @@ export class CodeSearcher extends FilterableList {
       win.title = `${win.title.split("-")[0].trim()} - ${filterTokens.join(" + ")}`;
 
     var searchTerm = filterTokens.shift(),
-        newSearch = searchTerm != this.state.currentSearchTerm;
+        newSearch = searchTerm != this.currentSearchTerm;
     if (newSearch) {
-      this.state.currentSearchTerm = searchTerm;
+      this.currentSearchTerm = searchTerm;
       var includeUnloaded = this.getSubmorphNamed("searchInUnloadedModulesCheckbox").checked;
       this.ensureIndicator("searching...")
       this.items = await doSearch(
@@ -181,9 +199,9 @@ export class CodeSearcher extends FilterableList {
     }
 
     filterTokens = filterTokens.map(ea => ea.toLowerCase());
-    if (newSearch || this.state.currentFilters !== filterTokens.join("+")) {
-      this.state.currentFilters = filterTokens.join("+");
-      var filteredItems = this.state.allItems.filter(item =>
+    if (newSearch || this.currentFilters !== filterTokens.join("+")) {
+      this.currentFilters = filterTokens.join("+");
+      var filteredItems = this.items.filter(item =>
         filterTokens.every(token => item.string.toLowerCase().includes(token)))
       this.get('list').items = filteredItems;
     }
@@ -200,7 +218,7 @@ export class CodeSearcher extends FilterableList {
         browser = await Browser.browse(
           browseSpec, browserOrProps,
           browser? browser.backend : this.backend);
-    browser.state.associatedSearchPanel = this;
+    browser.associatedSearchPanel = this;
     return browser.activate();
   }
 

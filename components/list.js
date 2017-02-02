@@ -10,7 +10,7 @@ function asItem(obj) {
   // {isListItem: true, string: STRING, value: OBJECT}
   if (obj && obj.isListItem && typeof obj.string === "string") return obj;
   if (!obj || !obj.isListItem) return {isListItem: true, string: String(obj), value: obj};
-  var label = obj.string || obj.label || "no item.string";  
+  var label = obj.string || obj.label || "no item.string";
   obj.string = typeof label === "string" ? label :
     Array.isArray(label) ?
       label.map(ea => String(ea[0])).join("") :
@@ -20,26 +20,17 @@ function asItem(obj) {
 
 class ListItemMorph extends Label {
 
-  constructor(props) {
-    super({
-      autofit: false, fill: null,
-      textString: "", itemIndex: undefined,
-      selectionFontColor: Color.white,
-      selectionColor: Color.blue,
-      nonSelectionFontColor: Color.rgbHex("333"),
-      fontColor: Color.rgbHex("333"),
-      ...props
-    });
+  static get properties() {
+    return {
+      autofit:               {defaultValue: false},
+      fill:                  {defaultValue: null},
+      itemIndex:             {defaultValue: undefined},
+      selectionFontColor:    {defaultValue: Color.white},
+      selectionColor:        {defaultValue: Color.blue},
+      nonSelectionFontColor: {defaultValue: Color.rgbHex("333")},
+      fontColor:             {defaultValue: Color.rgbHex("333")},
+    }
   }
-
-  get selectionFontColor() { return this.getProperty("selectionFontColor"); }
-  set selectionFontColor(c) { this.addValueChange("selectionFontColor", c); }
-
-  get nonSelectionFontColor() { return this.getProperty("nonSelectionFontColor"); }
-  set nonSelectionFontColor(c) { this.addValueChange("nonSelectionFontColor", c); }
-
-  get selectionColor() { return this.getProperty("selectionColor"); }
-  set selectionColor(c) { this.addValueChange("selectionColor", c); }
 
   displayItem(item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, props) {
     if (props.fontFamily) this.fontFamily = props.fontFamily;
@@ -55,7 +46,7 @@ class ListItemMorph extends Label {
     else this.value = label
 
     this.tooltip = this.textString;
-    this.itemIndex = itemIndex;    
+    this.itemIndex = itemIndex;
     this.position = pos;
     // if its wider, its wider...
     this.extent = pt(Math.max(goalWidth, this.textBounds().width), itemHeight);
@@ -199,7 +190,7 @@ var listCommands = [
 
   {
     name: "print contents in text window",
-    exec: list => {      
+    exec: list => {
       var title = "items of " + list.name,
           content = list.items.map(item => {
             if (typeof item === "string") return item;
@@ -228,43 +219,161 @@ var listCommands = [
 
 export class List extends Morph {
 
+  static get properties() {
+
+    return {
+
+      morphClasses:    {defaultValue: ['list']},
+      fill:            {defaultValue: Color.white},
+      clipMode:        {defaultValue: "auto"},
+
+      theme: {
+        after: ["styleRules"],
+        set(val) {
+          this.setProperty("theme", val);
+          this.styleRules = this.listStyle(val);
+        }
+      },
+
+      extent: {
+        set(value) {
+          if (value.eqPt(this.extent)) return;
+          this.setProperty("extent", value);
+          this.update();
+        }
+      },
+
+      fontFamily: {
+        defaultValue: "Helvetica Neue, Arial, sans-serif",
+        set(value) {
+          this.setProperty("fontFamily", value);
+          this.invalidateCache();
+        }
+      },
+
+      fontSize: {
+        defaultValue: 12,
+        set(value) {
+          this.setProperty("fontSize", value);
+          this.invalidateCache();
+        }
+      },
+
+      padding: {
+        defaultValue: Rectangle.inset(3)
+      },
+
+      itemPadding: {
+        defaultValue: Rectangle.inset(1),
+        set(value) {
+          this.setProperty("itemPadding", value);
+          this.invalidateCache();
+        }
+      },
+
+      items: {
+        defaultValue: [], after: ["submorphs"],
+        set(items) {
+          this.setProperty("items", items.map(asItem));
+          this.update();
+        }
+      },
+
+      multiSelect: {
+        defaultValue: false
+      },
+
+      values: {
+        after: ["items"], readOnly: true,
+        get() { return this.items.map(ea => ea.value); }
+      },
+
+      selectedIndex: {
+        defaultValue: [], after: ["selectedIndexes"],
+        get() { return this.selectedIndexes[0]; },
+        set(i) { return this.selectedIndexes = typeof i === "number" ? [i] : []; }
+      },
+
+      selectedIndexes: {
+        after: ["items"],
+        get() { return this.getProperty("selectedIndexes") || []; },
+        set(indexes) {
+          var maxLength = this.items.length;
+          this.setProperty(
+            "selectedIndexes",
+            (indexes || []).filter(i => 0 <= i && i < maxLength));
+          this.update();
+          signal(this, "selection", this.selection);
+        }
+      },
+
+      selection: {
+        after: ["selections"],
+        get() { return this.selections[0]; },
+        set(itemOrValue) { this.selections = [itemOrValue]; }
+      },
+
+      selections: {
+        after: ["selectedIndexes"],
+        get() { return this.selectedIndexes.map(i => this.items[i] && this.items[i].value); },
+        set(sels) { this.selectedIndexes = sels.map(ea => this.findIndex(ea)); }
+      },
+
+      selectedItems: {
+        after: ["selectedIndexes"], readOnly: true,
+        get() { return this.selectedIndexes.map(i => this.items[i]); }
+      },
+
+      listItemContainer: {
+        after: ["submorphs"], readOnly: true,
+        get() {
+          return this.getSubmorphNamed("listItemContainer") || this.addMorph({
+            name: "listItemContainer", fill: null, clipMode: "visible", halosEnabled: false
+          });
+        }
+      },
+
+      itemMorphs: {
+        after: ["submorphs"], readOnly: true,
+        get() { return this.listItemContainer.submorphs; }
+      },
+
+      itemHeight: {
+        after: ["fontFamily", "fontSize", "itemPadding"], readOnly: true,
+        get() {
+          if (this._itemHeight) return this._itemHeight;
+          var h = this.env.fontMetric.defaultLineHeight(
+            {fontFamily: this.fontFamily, fontSize: this.fontSize});
+          var padding = this.itemPadding;
+          if (padding) h += padding.top() + padding.bottom();
+          return this._itemHeight = h;
+        }
+      }
+
+    }
+  }
+
   constructor(props = {}) {
     if (!props.bounds && !props.extent) props.extent = pt(400, 360);
-    super({
-      morphClasses: ['list'],
-      fill: Color.white,
-      fontFamily: "Helvetica Neue, Arial, sans-serif",
-      fontSize: 12,
-      items: [],
-      selectedIndexes: [],
-      clipMode: "auto",
-      padding: props.padding || Rectangle.inset(3),
-      itemPadding: props.itemPadding || Rectangle.inset(1),
-      multiSelect: false,
-      ...props
-    });
-    this.styleRules = this.listStyle(props.theme),
+    super(props);
     this.update();
   }
 
   listStyle(theme) {
     if (theme == "dark") {
       return new StyleRules({
-      list: {
-        fill: Color.transparent,
-        hideScrollbars: true,
-        nonSelectionFontColor: Color.gray,
-        selectionFontColor: Color.black,
-        selectionColor: Color.gray.lighter(),
-        padding: Rectangle.inset(2, 0)
-      }})
-     } else {
-        return new StyleRules({
-          list: {
-            padding: Rectangle.inset(2, 0)
-          }
-        })
-     }
+        list: {
+          fill: Color.transparent,
+          hideScrollbars: true,
+          nonSelectionFontColor: Color.gray,
+          selectionFontColor: Color.black,
+          selectionColor: Color.gray.lighter(),
+          padding: Rectangle.inset(2, 0)
+        }
+      });
+    } else {
+      return new StyleRules({list: {padding: Rectangle.inset(2, 0)}});
+    }
   }
 
   get isList() { return true; }
@@ -282,46 +391,6 @@ export class List extends Morph {
   get connections() {
     return {selection: {signalOnAssignment: false}};
   }
-
-  get extent() { return this.getProperty("extent"); }
-  set extent(value) {
-    if (value.eqPt(this.extent)) return;
-    this.addValueChange("extent", value);
-    this.update();
-  }
-
-  get fontFamily() { return this.getProperty("fontFamily"); }
-  set fontFamily(value) {
-    this.addValueChange("fontFamily", value);
-    this.invalidateCache();
-  }
-
-  get fontSize() { return this.getProperty("fontSize"); }
-  set fontSize(value) {
-    this.addValueChange("fontSize", value);
-    this.invalidateCache();
-  }
-
-  get padding() { return this.getProperty("padding"); }
-  set padding(value) {
-    this.addValueChange("padding", value);
-  }
-
-  get itemPadding() { return this.getProperty("itemPadding"); }
-  set itemPadding(value) {
-    this.addValueChange("itemPadding", value);
-    this.invalidateCache();
-  }
-
-  get items() { return this.getProperty("items"); }
-  set items(items) {
-    this.addValueChange("items", items.map(asItem));
-  }
-
-  get multiSelect() { return this.getProperty("multiSelect"); }
-  set multiSelect(bool) { this.addValueChange("multiSelect", bool); }
-
-  get values() { return this.items.map(ea => ea.value); }
 
   invalidateCache() {
     delete this._itemHeight;
@@ -382,26 +451,6 @@ export class List extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // selection
 
-  get selectedIndex() { return this.selectedIndexes[0]; }
-  set selectedIndex(i) { return this.selectedIndexes = typeof i === "number" ? [i] : []; }
-  get selectedIndexes() { return this.getProperty("selectedIndexes") || []; }
-  set selectedIndexes(indexes) {
-    var maxLength = this.items.length;
-    this.addValueChange(
-      "selectedIndexes",
-      (indexes || []).filter(i => 0 <= i && i < maxLength));
-    this.update()
-    signal(this, "selection", this.selection);
-  }
-
-  get selection() { return this.selections[0]; }
-  set selection(itemOrValue) { this.selections = [itemOrValue]; }
-
-  get selections() { return this.selectedIndexes.map(i => this.items[i] && this.items[i].value); }
-  set selections(sels) { this.selectedIndexes = sels.map(ea => this.findIndex(ea)); }
-
-  get selectedItems() { return this.selectedIndexes.map(i => this.items[i]); }
-
   selectItemMorph(itemMorph) {
     this.selectedIndexes = [itemMorph.itemIndex];
   }
@@ -421,22 +470,6 @@ export class List extends Morph {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // rendering
-
-  get listItemContainer() {
-    return this.getSubmorphNamed("listItemContainer") || this.addMorph({
-      name: "listItemContainer", fill: null, clipMode: "visible", halosEnabled: false
-    });
-  }
-
-  get itemMorphs() { return this.listItemContainer.submorphs; }
-
-  get itemHeight() {
-    if (this._itemHeight) return this._itemHeight;
-    var h = this.env.fontMetric.defaultLineHeight({fontFamily: this.fontFamily, fontSize: this.fontSize});
-    var padding = this.itemPadding;
-    if (padding) h += padding.top() + padding.bottom();
-    return this._itemHeight = h;
-  }
 
   update() {
     var items = this.items;
@@ -486,7 +519,7 @@ export class List extends Morph {
       }
 
       itemMorphs.slice(lastItemIndex-firstItemIndex).forEach(ea => ea.remove());
-    
+
       listItemContainer.position = pt(padLeft, padTop);
       listItemContainer.extent = pt(maxWidth, Math.max(padTop + padBottom + itemHeight*items.length, this.height));
     });
@@ -566,9 +599,7 @@ export class List extends Morph {
     ].concat(super.keybindings);
   }
 
-  get commands() {
-    return listCommands;
-  }
+  get commands() { return listCommands; }
 
 }
 
@@ -578,57 +609,209 @@ import { connect } from "lively.bindings";
 
 export class FilterableList extends Morph {
 
+  static get properties() {
+
+    return {
+
+      fill: {defaultValue: Color.transparent,},
+      borderColor: {defaultValue: Color.gray},
+      borderWidth: {borderWidth: 1},
+
+      updateSelectionsAfterFilter: {defaultValue: false},
+
+      submorphs: {
+        initialize() {
+          this.submorphs = [
+            Text.makeInputLine({name: "input", fixedHeight: false, autofit: true}),
+            new List({name: "list", items: [], clipMode: "auto"})
+          ]
+        }
+      },
+
+      listMorph: {
+        derived: true, readOnly: true, after: ["submorphs"],
+        get() { return this.getSubmorphNamed("list"); },
+      },
+
+      inputMorph: {
+        derived: true, readOnly: true, after: ["submorphs"],
+        get() { return this.getSubmorphNamed("input"); },
+      },
+
+      theme: {
+        after: ["submorphs"],
+        get() { return this.listMorph.theme; },
+        set(val) {
+          this.listMorph.theme = val;
+          this.inputMorph.styleRules = this.inputStyle(val);
+        }
+      },
+
+      fontFamily: {
+        derived: true, after: ["submorphs"], defaultValue: "Helvetica Neue, Arial, sans-serif",
+        get() { return this.listMorph.fontFamily; },
+        set(val) {
+          this.listMorph.fontFamily = val;
+          this.inputMorph.fontFamily = val;
+          this.relayout();
+        }
+      },
+
+      padding: {
+        derived: true, after: ["submorphs"], defaultValue: Rectangle.inset(2,0),
+        get() { return this.listMorph.padding; },
+        set(val) {
+          this.listMorph.padding = val;
+          this.inputMorph.padding = val;
+          this.relayout();
+        }
+      },
+
+      fontSize: {
+        derived: true, after: ["submorphs"], defaultValue: 11,
+        get() { return this.listMorph.fontSize; },
+        set(val) {
+          this.listMorph.fontSize = val;
+          this.inputMorph.fontSize = val;
+          this.relayout();
+        }
+      },
+
+      itemPadding: {
+        derived: true, after: ["submorphs"],
+        get() { return this.listMorph.itemPadding; },
+        set(val) { this.listMorph.itemPadding = val; }
+      },
+
+      input: {
+        derived: true, after: ["submorphs"], defaultValue: "",
+        get() { return this.inputMorph.input; },
+        set(val) { this.inputMorph.input = val; }
+      },
+
+      historyId: {
+        derived: true, after: ["submorphs"], defaultValue: null,
+        get() { return this.inputMorph.historyId; },
+        set(val) { this.inputMorph.historyId = val; }
+      },
+
+      multiSelect: {
+        derived: true, after: ["submorphs"],
+        get() { return this.listMorph.multiSelect; },
+        set(multiSelect) { this.listMorph.multiSelect = multiSelect; }
+      },
+
+      items: {
+        after: ["submorphs"], defaultValue: [],
+        set(items) {
+          this.setProperty("items", items.map(asItem));
+          this.updateFilter();
+        }
+      },
+
+      visibleItems: {
+        derived: true, after: ["submorphs"],
+        get visibleItems() { return this.listMorph.items; }
+      },
+
+      selection: {
+        derived: true, after: ["submorphs"],
+        get() { return this.listMorph.selection; },
+        set(x) { this.listMorph.selection = x; }
+      },
+
+      selectedIndex: {
+        derived: true, after: ["submorphs"],
+        get() { return this.listMorph.selectedIndex; },
+        set(x) { this.listMorph.selectedIndex = x; }
+      },
+
+      fuzzy: {
+        derived: true, after: ["filterFunction", "sortFunction"],
+        set(fuzzy) {
+          // fuzzy => bool or prop;
+          this.setProperty("fuzzy", fuzzy);
+          if (!fuzzy) {
+            if (this.sortFunction === this.fuzzySortFunction)
+              this.sortFunction = null;
+            if (this.filterFunction === this.fuzzyFilterFunction)
+              this.filterFunction = this.defaultFilterFunction;
+          } else  {
+            if (!this.sortFunction) this.sortFunction = this.fuzzySortFunction
+            if (this.filterFunction == this.defaultFilterFunction)
+              this.filterFunction = this.fuzzyFilterFunction;
+          }
+        }
+      },
+
+      filterFunction: {
+        get() {
+          return this.getProperty("filterFunction") || this.defaultFilterFunction;
+        }
+      },
+
+      sortFunction: {},
+
+      defaultFilterFunction: {
+        readOnly: true,
+        get() {
+          return this._defaultFilterFunction
+              || (this._defaultFilterFunction = (parsedInput, item) =>
+                    parsedInput.lowercasedTokens.every(token =>
+                      item.string.toLowerCase().includes(token)));
+        }
+      },
+
+      fuzzySortFunction: {
+        get() {
+          return this._fuzzySortFunction
+              || (this._fuzzySortFunction = (parsedInput, item) => {
+                var prop = typeof this.fuzzy === "string" ? this.fuzzy : "string";
+                // preioritize those completions that are close to the input
+                var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
+                var base = 0;
+                parsedInput.lowercasedTokens.forEach(t => {
+                  if (fuzzyValue.startsWith(t)) base -= 10;
+                  else if (fuzzyValue.includes(t)) base -= 5;
+                });
+                return arr.sum(parsedInput.lowercasedTokens.map(token =>
+                  string.levenshtein(fuzzyValue.toLowerCase(), token))) + base
+              })
+        }
+      },
+
+      fuzzyFilterFunction: {
+        get() {
+          return this._fuzzyFilterFunction
+              || (this._fuzzyFilterFunction = (parsedInput, item) => {
+            var prop = typeof this.fuzzy === "string" ? this.fuzzy : "string";
+            var tokens = parsedInput.lowercasedTokens;
+            if (tokens.every(token => item.string.toLowerCase().includes(token))) return true;
+            // "fuzzy" match against item.string or another prop of item
+            var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
+            return arr.sum(parsedInput.lowercasedTokens.map(token =>
+                    string.levenshtein(fuzzyValue, token))) <= 3;
+          });
+        }
+      }
+
+    }
+
+  }
+
   constructor(props = {}) {
-    var fontFamily = props.fontFamily || "Helvetica Neue, Arial, sans-serif",
-        padding = props.padding || Rectangle.inset(2,0),
-        itemPadding = props.itemPadding,
-        fontSize = props.fontSize || 11,
-        input = props.input || "",
-        historyId = props.historyId || null,
-        inputText = Text.makeInputLine({
-          name: "input",
-          textString: input,
-          fontSize, fontFamily,
-          historyId
-        }),
-        list = new List({
-          name: "list", items: [],
-          clipMode: "auto",
-          fontSize, fontFamily,
-          padding, itemPadding,
-          borderWidth: props.borderWidth,
-          borderColor: props.borderColor,
-          theme: props.theme
-        });
-
-    super({
-      borderWidth: 1,
-      fill: Color.transparent,
-      borderColor: Color.gray,
-      submorphs: [inputText, list],
-      updateSelectionsAfterFilter: false,
-    });
-
-    this.state = {
-      allItems: null,
-      sortFunction: props.sortFunction || null, // (parsedInput, item) => ...
-      filterFunction: props.filterFunction || this.defaultFilterFunction
-    };
-
-    inputText.styleRules = this.inputStyle(props.theme);
-
-    props = obj.dissoc(props, ["fontFamily", "fontSize", "input"]);
     if (!props.bounds && !props.extent) props.extent = pt(400, 360);
-    Object.assign(this, {items: []}, props);
+    super(props);
 
     connect(this.get("input"), "inputChanged", this, "updateFilter");
-    connect(this.get("list"), "selection", this, "selectionChanged");
+    connect(this.listMorph, "selection", this, "selectionChanged");
     connect(this, "extent", this, "relayout");
     this.relayout();
+    setTimeout(() => this.relayout());
   }
 
   relayout() {
-    var input = this.get("input"), list = this.get("list");
+    var input = this.inputMorph, list = this.listMorph;
     list.width = input.width = this.width;
     list.setBounds(this.innerBounds().withTopLeft(input.bottomLeft.addXY(0,5)));
   }
@@ -651,7 +834,7 @@ export class FilterableList extends Morph {
         input: {
           borderWidth: 1,
           borderColor: Color.gray,
-          padding: Rectangle.inset(2)
+          // padding: Rectangle.inset(2)
         }
       })
     }
@@ -659,28 +842,9 @@ export class FilterableList extends Morph {
 
   focus() { this.get("input").focus(); }
 
-  get updateSelectionsAfterFilter() { return this.getProperty("updateSelectionsAfterFilter"); }
-  set updateSelectionsAfterFilter(bool) { this.setProperty("updateSelectionsAfterFilter", bool); }
-
-  get multiSelect() { return this.get("list").multiSelect; }
-  set multiSelect(multiSelect) { this.get("list").multiSelect = multiSelect; }
-
-  get items() { return this.state.allItems || []; }
-  set items(items) {
-    var l = this.get("list");
-    this.state.allItems = items.map(asItem);
-    this.updateFilter();
-  }
-  get visibleItems() { return this.get("list").items; }
-
-  get selection() { return this.get("list").selection; }
-  set selection(x) { this.get("list").selection = x; }
-  get selectedIndex() { return this.get("list").selectedIndex; }
-  set selectedIndex(x) { this.get("list").selectedIndex = x; }
-
   selectionChanged(sel) { signal(this, "selection", sel); }
 
-  scrollSelectionIntoView() { return this.get("list").scrollSelectionIntoView(); }
+  scrollSelectionIntoView() { return this.listMorph.scrollSelectionIntoView(); }
 
   parseInput() {
     var filterText = this.get("input").textString,
@@ -711,72 +875,16 @@ export class FilterableList extends Morph {
     return {tokens: parsed.tokens, lowercasedTokens};
   }
 
-  get defaultFilterFunction() {
-    return this._defaultFilterFunction
-        || (this._defaultFilterFunction = (parsedInput, item) =>
-              parsedInput.lowercasedTokens.every(token =>
-                item.string.toLowerCase().includes(token)));
-  }
-
-  get fuzzySortFunction() {
-    return this._fuzzySortFunction
-        || (this._fuzzySortFunction = (parsedInput, item) => {
-          var prop = typeof this.fuzzy === "string" ? this.fuzzy : "string";
-          // preioritize those completions that are close to the input
-          var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
-          var base = 0;
-          parsedInput.lowercasedTokens.forEach(t => {
-            if (fuzzyValue.startsWith(t)) base -= 10;
-            else if (fuzzyValue.includes(t)) base -= 5;
-          });
-          return arr.sum(parsedInput.lowercasedTokens.map(token =>
-            string.levenshtein(fuzzyValue.toLowerCase(), token))) + base
-        })
-  }
-
-  get fuzzyFilterFunction() {
-    return this._fuzzyFilterFunction
-        || (this._fuzzyFilterFunction = (parsedInput, item) => {
-      var prop = typeof this.fuzzy === "string" ? this.fuzzy : "string";
-      var tokens = parsedInput.lowercasedTokens;
-      if (tokens.every(token => item.string.toLowerCase().includes(token))) return true;
-      // "fuzzy" match against item.string or another prop of item
-      var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
-      return arr.sum(parsedInput.lowercasedTokens.map(token =>
-              string.levenshtein(fuzzyValue, token))) <= 3;
-    });
-  }
-  
-  get fuzzy() { return this.getProperty("fuzzy"); }
-  set fuzzy(fuzzy) {
-    // fuzzy => bool or prop;
-    this.setProperty("fuzzy", fuzzy);
-    if (!fuzzy) {
-      if (this.sortFunction === this.fuzzySortFunction)
-        this.sortFunction = null;
-      if (this.filterFunction === this.fuzzyFilterFunction)
-        this.filterFunction = this.defaultFilterFunction;
-    } else  {
-      if (!this.sortFunction) this.sortFunction = this.fuzzySortFunction
-      if (this.filterFunction == this.defaultFilterFunction)
-        this.filterFunction = this.fuzzyFilterFunction;
-    }
-  }
-  get filterFunction() { return this.state.filterFunction; }
-  set filterFunction(fn) { this.state.filterFunction = fn; }
-  get sortFunction() { return this.state.sortFunction; }
-  set sortFunction(fn) { this.state.sortFunction = fn; }
-
   updateFilter() {
     var parsedInput = this.parseInput(),
         filterFunction = this.filterFunction,
         sortFunction = this.sortFunction,
-        filteredItems = this.state.allItems.filter(item => filterFunction(parsedInput, item));
+        filteredItems = this.items.filter(item => filterFunction(parsedInput, item));
 
     if (sortFunction)
       filteredItems = arr.sortBy(filteredItems, ea => sortFunction(parsedInput, ea));
 
-    var list = this.get("list"),
+    var list = this.listMorph,
         newSelectedIndexes = this.updateSelectionsAfterFilter ?
           list.selectedIndexes.map(i => filteredItems.indexOf(list.items[i])).filter(i => i !== -1) :
           list.selectedIndexes;
@@ -787,10 +895,10 @@ export class FilterableList extends Morph {
   }
 
   acceptInput() {
-    var list = this.get("list");
+    var list = this.listMorph;
     this.get("input").acceptInput();
     var result = {
-      filtered: this.state.allItems,
+      filtered: this.items,
       selected: list.selections,
       status: "accepted"
     }
@@ -830,7 +938,7 @@ export class FilterableList extends Morph {
       },
 
       ...listCommands.map(cmd =>
-        ({...cmd, exec: (morph, opts, count) => cmd.exec(this.get("list"), opts, count)}))
+        ({...cmd, exec: (morph, opts, count) => cmd.exec(this.listMorph, opts, count)}))
     ]);
   }
 
@@ -841,44 +949,59 @@ export class DropDownList extends Button {
 
   // new DropDownList({selection: 1, items: [1,2,3,4]}).openInWorld()
 
+  static get properties() {
+    return {
+
+      borderRadius: {defaultValue: 2},
+      padding:      {defaultValue: Rectangle.inset(3,2)},
+
+      list: {
+        readOnly: true, after: ["submorphs"],
+        get() {
+          if (this._list) return this._list;
+          return this._list = new List({
+            name: "list",
+            fontSize: this.fontSize,
+            fontFamily: this.fontFamily,
+            fontColor: this.fontColor,
+            border: this.border
+          });
+        }
+      },
+
+      items: {
+        derived: true, after: ["list"],
+        get() { return this.list.items; },
+        set(value) { this.list.items = value; }
+      },
+
+      selection: {
+        after: ["list"],
+        set selection(value) {
+          this.setProperty("selection", value);
+          if (!value) {
+            this.list.selection = null;
+            this.label = "";
+          } else {
+            var item = this.list.find(value);
+            this.label = item ?
+              [[item.string || String(item), {}], [" ", {}], Icon.textAttribute("caret-down")] :
+              "selection not found in list";
+            this.list.selection = value;
+          }
+        }
+      }
+
+    }
+
+  }
+
   constructor(props = {}) {
-    super({
-      borderRadius: 2,
-      padding: Rectangle.inset(3,2),
-      ...props
-    });
+    super(props);
     connect(this, "fire", this, "toggleList");
   }
 
   isListVisible() { return this.list.owner === this; }
-
-  get list() {
-    if (this._list) return this._list;
-    return this._list = new List({
-      name: "list",
-      fontSize: this.fontSize,
-      fontFamily: this.fontFamily,
-      fontColor: this.fontColor,
-      border: this.border
-    });
-  }
-
-  get items() { return this.list.items; }
-  set items(value) { this.list.items = value; }
-  get selection() { return this.getProperty("selection"); }
-  set selection(value) {
-    this.addValueChange("selection", value);
-    if (!value) {
-      this.list.selection = null;
-      this.label = "";
-    } else {
-      var item = this.list.find(value);
-      this.label = item ?
-        [[item.string || String(item), {}], [" ", {}], Icon.textAttribute("caret-down")] :
-        "selection not found in list";
-      this.list.selection = value;
-    }
-  }
 
   toggleList() {
     var list = this.list;
@@ -904,7 +1027,7 @@ export class DropDownList extends Button {
           return true;
         }
       },
-      
+
       {
         name: "cancel",
         exec: () => {
