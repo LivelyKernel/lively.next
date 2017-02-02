@@ -67,7 +67,7 @@ export class Text extends Morph {
       textLayout, textRenderer, lineWrapping, plugins,
       fontMetric, textString, selectable, selection, clipMode, textAttributes, textAndAttributes,
       fontFamily, fontSize, fontColor, fontWeight, fontStyle, textDecoration, fixedCharacterSpacing,
-      backgroundColor, textStyleClasses,
+      backgroundColor, textStyleClasses, selectionColor,
       position, rightCenter, leftCenter, topCenter, bottom, top, right, left,
       bottomCenter, bottomLeft, bottomRight, topRight, topLeft, center,
     } = props;
@@ -75,7 +75,7 @@ export class Text extends Morph {
     props = obj.dissoc(props, [
       "textLayout", "textRenderer", "lineWrapping", "plugins",
       "textString","fontMetric", "selectable", "selection", "clipMode",
-      "textAttributes", "textAndAttributes",
+      "textAttributes", "textAndAttributes", "selectionColor",
       // default style attrs: need document to be installed first
       "fontFamily", "fontSize", "fontColor", "fontWeight", "fontStyle", "textDecoration",
       "backgroundColor", "fixedCharacterSpacing", "textStyleClasses"
@@ -110,6 +110,8 @@ export class Text extends Morph {
     else if (textAttributes) textAttributes.map(range => this.addTextAttribute(range));
 
     if (plugins) this.plugins = plugins;
+
+    if (selectionColor) this.selectionColor = selectionColor; 
 
     this.fit();
     this._needsFit = false;

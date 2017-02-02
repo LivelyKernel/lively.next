@@ -1,14 +1,28 @@
-import { Window, Leash, GridLayout, FillLayout, Ellipse, Text,
-         VerticalLayout, HorizontalLayout, Image, Triangle,
-         TilingLayout, Morph, morph, Menu, Path } from "../../index.js";
-import { Rectangle, Color, LinearGradient, pt, Point, rect,
-         materialDesignColors, flatDesignColors, RadialGradient,
-         webSafeColors, Complementary, Triadic, Tetradic, Quadratic,
-         Analagous, Neutral} from "lively.graphics";
-import { obj, num, arr, properties } from "lively.lang";
-import { signal, connect, disconnect } from "lively.bindings";
-import { ValueScrubber, CheckBox, ModeSelector, DropDownSelector,
-         Slider, PropertyInspector } from "lively.morphic/components/widgets.js";
+import {
+  GridLayout,
+  VerticalLayout,
+  HorizontalLayout,
+  TilingLayout,
+  Morph
+} from "../../index.js";
+import {
+  Rectangle,
+  Color,
+  LinearGradient,
+  pt,
+  rect
+} from "lively.graphics";
+import { obj, arr } from "lively.lang";
+import { signal, connect } from "lively.bindings";
+import {
+  CheckBox,
+  ModeSelector,
+  DropDownSelector,
+  Slider,
+  PropertyInspector,
+  Leash
+} from "lively.morphic/components/widgets.js";
+
 import { Icon } from "lively.morphic/components/icons.js";
 import { ColorPickerField } from "./color-picker.js";
 import { GradientEditor } from "./gradient-editor.js";

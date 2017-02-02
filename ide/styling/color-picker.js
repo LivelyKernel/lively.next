@@ -1,10 +1,15 @@
-import {Window, Morph, Text, VerticalLayout,
-        GridLayout, HorizontalLayout, FillLayout} from "../../index.js";
+import {
+  Morph,
+  VerticalLayout,
+  GridLayout,
+  HorizontalLayout
+} from "../../index.js";
 import {pt, Color, LinearGradient, rect} from "lively.graphics";
 import {signal, connect, disconnect} from "lively.bindings";
 import {Slider} from "lively.morphic/components/widgets.js";
 import {Icon} from "lively.morphic/components/icons.js";
-import {obj, num} from "lively.lang";
+import Window from "lively.morphic/components/window.js";
+import { obj } from "lively.lang";
 import {ColorPalette} from "./color-palette.js";
 import { StyleRules } from '../../style-rules.js';
 
@@ -145,6 +150,7 @@ export class ColorPicker extends Window {
     this.titleLabel().fontColor = Color.gray;
     this.update();
     this.focus();
+    setTimeout(() => this.get('picker').update(this, true), 1000);
   }
 
   get styler() {
@@ -306,8 +312,13 @@ export class ColorPicker extends Window {
         borderColor: Color.black,
         borderWidth: 3,
         extent: pt(18,18),
-        update(colorPicker) {
-          this.position = colorPicker.pickerPosition.addXY(5,-5);
+        update(colorPicker, animated = false) {
+          const position = colorPicker.pickerPosition.addXY(5,-5);
+          if (animated) {
+             this.animate({position, duration: 300});
+          } else { 
+             this.position = position
+           }
         },
         submorphs: [{
           type: "ellipse",
@@ -315,7 +326,7 @@ export class ColorPicker extends Window {
           borderColor: Color.white,
           reactsToPointer: false,
           borderWidth: 3,
-          center: pt(8,8),
+          center: pt(9,9),
           extent: pt(12,12)
         }]
       }];
@@ -375,14 +386,19 @@ export class ColorPicker extends Window {
         this.submorphs[1].textString = obj.safeToString(value);
       },
       submorphs: [
-        {type: 'label', morphClasses: [editable && 'large', 'key'], value: key},
+        {type: 'label', name: "keyLabel", morphClasses: [editable && 'large', 'key'], value: key},
         {type: editable ? 'text' : 'label', morphClasses: [editable && 'editable', 'value'],
          readOnly: !editable,
+         selectionColor: Color.gray.darker(),
          onFocus() {
-            this.morphClasses = [editable && 'editable', 'value', 'active'];
+            this.get('keyLabel').morphClasses = ['key', ...editable ? ['large', 'active'] : []];
+            this.morphClasses = [...editable ? ['editable', 'active'] : [], 'value'];
+            this.selection.cursorBlinkStart();
          },
          onBlur() {
+            this.get('keyLabel').morphClasses = [editable && 'large', 'key'];
             this.morphClasses = [editable && 'editable', 'value'];
+            this.selection.uninstall();
          },
          onKeyDown(evt) {
             if ("Enter" == evt.keyCombo && editable && setValue) {

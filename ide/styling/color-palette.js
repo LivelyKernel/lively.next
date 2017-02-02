@@ -4,7 +4,7 @@ import { Color, Complementary, Triadic, Tetradic,
 import { Morph, VerticalLayout, HorizontalLayout,
          Text, TilingLayout, Ellipse, Image } from "../../index.js";
 import { DropDownSelector, ModeSelector, Slider } from "lively.morphic/components/widgets.js";
-import { connect, disconnect, signal } from "lively.bindings";
+import { connect, signal } from "lively.bindings";
 import { num, arr } from "lively.lang";
 import { StyleRules } from "../../style-rules.js";
 
