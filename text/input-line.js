@@ -134,7 +134,7 @@ export default class InputLine extends Text {
       input = input.slice(this.label.length);
     return input;
   }
-  set input(val) { this.textString = this.label + val; }
+  set input(val) { this.textString = this.label + (val ? String(val) : ""); }
 
   get placeholder() {
     return this._placeHolder ? this._placeHolder.value : null;
