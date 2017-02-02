@@ -278,15 +278,15 @@ var worldCommands = [
 
   {
     name: "open workspace",
-    exec: async (world, opts = {language: "javascript"}) => {
-      var lang = opts.language || "javascript",
-          workspaceModules = {
+    exec: async (world, opts) => {
+      opts = {content: "", language: "javascript", ...opts};
+      var workspaceModules = {
             "javascript": "lively.morphic/ide/js/workspace.js",
             get "js"() { return this["javascript"]; },
             "shell": "lively.morphic/ide/shell/workspace.js"
           },
-          { default: Workspace } = await System.import(workspaceModules[lang]);
-      return new Workspace({center: world.center}).activate();
+          { default: Workspace } = await System.import(workspaceModules[opts.language]);
+      return new Workspace({center: world.center, content: opts.content}).activate();
     }
   },
 
