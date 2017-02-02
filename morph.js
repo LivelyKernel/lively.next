@@ -303,29 +303,17 @@ export class Morph {
 
   get env() { return this._env; }
 
-  loadDefaultProperties(props) {
-    this.initializeProperties(props);
-    // => FIXME some properties need their setter to be properly initialized,
-    // once we have declarative properties this should go into a converter!
-    // if ("dropShadow" in this._morphicState)   this.dropShadow = this._morphicState.dropShadow;
-    if (this._morphicState.submorphs.length) {
-      var submorphs = this._morphicState.submorphs;
-      this._morphicState.submorphs = [];
-      this.submorphs = submorphs;
-    }
-  }
-
   get defaultProperties() {
     if (!this.constructor._morphicDefaultPropertyValues) {
       var defaults = this.constructor._morphicDefaultPropertyValues = {},
-        propsAndSettings = this.constructor[Symbol.for("lively.classes-properties-and-settings")],
-          propDescriptors = propsAndSettings ?
-            propsAndSettings.properties :
-            obj.mergePropertyInHierarchy(this.constructor, "properties");
+          propDescriptors = this.propertiesAndPropertySettings().properties;
       for (var key in propDescriptors) {
         var descr = propDescriptors[key];
-        if (descr.hasOwnProperty("defaultValue"))
-          defaults[key] = descr.defaultValue;
+        if (descr.hasOwnProperty("defaultValue")) {
+          let val = descr.defaultValue;
+          if (Array.isArray(val)) val = val.slice();
+          defaults[key] = val;
+        }
       }
     }
     return this.constructor._morphicDefaultPropertyValues;
@@ -1391,7 +1379,7 @@ export class Morph {
     this._cachedPaths = {};
     this._pathDependants = [];
     this._tickingScripts = [];
-    this.loadDefaultProperties();
+    this.initializeProperties();
     Object.assign(this, spec)
     return this;
   }
