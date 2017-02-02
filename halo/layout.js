@@ -655,6 +655,7 @@ export class FlexLayoutHalo extends Morph {
   }
 
   previewDrop(morphs) {
+     const pulseDuration = 2000;
      if (this.previews.length > 0) return;
      this.previews = morphs.map(morph =>
          this.container.addMorph({
@@ -665,13 +666,14 @@ export class FlexLayoutHalo extends Morph {
            borderWidth: 2,
            opacity: 1,
            borderStyle: "dashed",
-           step() { this.opacity == 1 ?
-                      this.animate({opacity: .5, duration: 2000}) :
-                      this.animate({opacity: 1, duration: 2000});
+           async step() {
+              const easing = Sine.easeInOut;
+              await this.animate({opacity: .5, duration: pulseDuration / 2, easing})
+              await this.animate({opacity: 1, duration: pulseDuration / 2, easing});
            }
         }));
      this.previews.forEach(p => {
-         p.step(); p.startStepping(2000, "step")
+         p.step(); p.startStepping(pulseDuration, "step")
      });
   }
 
