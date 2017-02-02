@@ -58,7 +58,34 @@ export class Text extends Morph {
       padding:     {defaultValue: Rectangle.inset(0)},
       useSoftTabs: {defaultValue: config.text.useSoftTabs !== undefined ? config.text.useSoftTabs : true},
       tabWidth:    {defaultValue: config.text.tabWidth || 2},
-      savedMarks:  {defaultValue: []}
+      savedMarks:  {defaultValue: []},
+
+      clipMode: {
+        defaultValue: "visible",
+        set(value)  {
+          this.setProperty("clipMode", value);
+          this.fixedWidth = this.fixedHeight = this.isClip();
+        },
+      },
+
+      fixedWidth: {
+        after: ["clipMode"],
+        get() { return this.getProperty("fixedWidth") },
+        set(value) {
+          this.setProperty("fixedWidth", value);
+          this._needsFit = true;
+        }
+      },
+
+      fixedHeight: {
+        after: ["clipMode"],
+        get() { return this.getProperty("fixedHeight") },
+        set(value) {
+          this.setProperty("fixedHeight", value);
+          this._needsFit = true;
+        }
+      }
+
     }
   }
 
@@ -183,50 +210,38 @@ export class Text extends Morph {
   get readOnly() { return this.getProperty("readOnly"); }
   set readOnly(value) {
     this.nativeCursor = value ? "default" : "auto";
-    this.addValueChange("readOnly", value);
+    this.setProperty("readOnly", value);
   }
 
   rejectsInput() { return this.readOnly /*|| !this.isFocused()*/ }
 
   get selectable() { return this.getProperty("selectable"); }
   set selectable(value) {
-    this.addValueChange("selectable", value);
+    this.setProperty("selectable", value);
     if (!value) this.selection.collapse();
-  }
-
-  get fixedWidth() { return this.getProperty("fixedWidth") }
-  set fixedWidth(value) {
-    this.addValueChange("fixedWidth", value);
-    this._needsFit = true;
-  }
-
-  get fixedHeight() { return this.getProperty("fixedHeight"); }
-  set fixedHeight(value) {
-    this.addValueChange("fixedHeight", value);
-    this._needsFit = true;
   }
 
   get padding() { return this.getProperty("padding"); }
   set padding(value) {
-    this.addValueChange("padding", typeof value === "number" ? Rectangle.inset(value) : value);
+    this.setProperty("padding", typeof value === "number" ? Rectangle.inset(value) : value);
     this._needsFit = true;
   }
 
   get fontFamily() { return this.defaultTextStyle.fontFamily; }
   set fontFamily(fontFamily) {
-    this.addValueChange("fontFamily", fontFamily);
+    this.setProperty("fontFamily", fontFamily);
     this.setDefaultTextStyle({fontFamily});
   }
 
   get fontSize() { return this.defaultTextStyle.fontSize; }
   set fontSize(fontSize) {
-    this.addValueChange("fontSize", fontSize);
+    this.setProperty("fontSize", fontSize);
     this.setDefaultTextStyle({fontSize});
   }
 
   get fontColor() { return this.defaultTextStyle.fontColor; }
   set fontColor(fontColor) {
-    this.addValueChange("fontColor", fontColor);
+    this.setProperty("fontColor", fontColor);
     this.setDefaultTextStyle({fontColor});
   }
 
@@ -235,37 +250,37 @@ export class Text extends Morph {
 
   get fontWeight() { return this.defaultTextStyle.fontWeight; }
   set fontWeight(fontWeight) {
-    this.addValueChange("fontWeight", fontWeight);
+    this.setProperty("fontWeight", fontWeight);
     this.setDefaultTextStyle({fontWeight});
   }
 
   get fontStyle() { return this.defaultTextStyle.fontStyle; }
   set fontStyle(fontStyle) {
-    this.addValueChange("fontStyle", fontStyle);
+    this.setProperty("fontStyle", fontStyle);
     this.setDefaultTextStyle({fontStyle});
   }
 
   get textDecoration() { return this.defaultTextStyle.textDecoration; }
   set textDecoration(textDecoration) {
-    this.addValueChange("textDecoration", textDecoration);
+    this.setProperty("textDecoration", textDecoration);
     this.setDefaultTextStyle({textDecoration});
   }
 
   get fixedCharacterSpacing() { return this.defaultTextStyle.fixedCharacterSpacing; }
   set fixedCharacterSpacing(fixedCharacterSpacing) {
-    this.addValueChange("fixedCharacterSpacing", fixedCharacterSpacing);
+    this.setProperty("fixedCharacterSpacing", fixedCharacterSpacing);
     this.setDefaultTextStyle({fixedCharacterSpacing});
   }
 
   get textStyleClasses() { return this.defaultTextStyle.textStyleClasses; }
   set textStyleClasses(textStyleClasses) {
-    this.addValueChange("textStyleClasses", textStyleClasses);
+    this.setProperty("textStyleClasses", textStyleClasses);
     this.setDefaultTextStyle({textStyleClasses});
   }
 
   get lineWrapping() { return this.getProperty("lineWrapping") }
   set lineWrapping(lineWrapping) {
-    this.addValueChange("lineWrapping", lineWrapping);
+    this.setProperty("lineWrapping", lineWrapping);
     this.textLayout.updateFromMorphIfNecessary(this);
   }
 
@@ -330,7 +345,7 @@ export class Text extends Morph {
     if (val > config.text.markStackSize)
       toRemove.push(...val.splice(0, val.length - config.text.markStackSize));
     toRemove.map(ea => this.removeAnchor(ea));
-    return this.addValueChange("savedMarks", val);
+    return this.setProperty("savedMarks", val);
   }
 
   get activeMark() { return this.getProperty("activeMark"); }
@@ -342,7 +357,7 @@ export class Text extends Morph {
       if (!this.savedMarks.includes(m))
         this.removeAnchor(m);
     }
-    this.addValueChange("activeMark", val);
+    this.setProperty("activeMark", val);
   }
 
   saveMark(p = this.cursorPosition, activate) {
@@ -434,12 +449,6 @@ export class Text extends Morph {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  get clipMode()  { return this.getProperty("clipMode"); }
-  set clipMode(value)  {
-    this.addValueChange("clipMode", value);
-    this.fixedWidth = this.fixedHeight = this.isClip();
-  }
-
   textBounds() {
     return this.textLayout ? this.textLayout.textBounds(this) : this.padding.topLeft().extent(pt(0,0));
   }
@@ -452,9 +461,9 @@ export class Text extends Morph {
   }
 
   get useSoftTabs()  { return this.getProperty("useSoftTabs"); }
-  set useSoftTabs(value)  { this.addValueChange("useSoftTabs", value); }
+  set useSoftTabs(value)  { this.setProperty("useSoftTabs", value); }
   get tabWidth()  { return this.getProperty("tabWidth"); }
-  set tabWidth(value)  { this.addValueChange("tabWidth", value); }
+  set tabWidth(value)  { this.setProperty("tabWidth", value); }
   get tab() { return this.useSoftTabs ? " ".repeat(this.tabWidth) : "\t"; }
 
   get commands() {
