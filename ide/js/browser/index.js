@@ -10,7 +10,6 @@ import { Icon } from "lively.morphic/components/icons.js";
 import Window from "lively.morphic/components/window.js";
 import { JavaScriptEditorPlugin } from "../editor-plugin.js";
 import EvalBackendChooser from "../eval-backend-ui.js";
-
 import browserCommands from "./commands.js";
 import { Tree, TreeData } from "lively.morphic/components/tree.js"
 
@@ -386,6 +385,8 @@ export default class Browser extends Window {
   set selectedPackage(p) {
     this.selectPackageNamed(!p ? null : typeof p === "string" ? p : p.url || p.address);
   }
+
+  get selectedCodeEntity() { return  this.ui.codeEntityTree.selection; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // source changes
@@ -981,7 +982,17 @@ export default class Browser extends Window {
 
   menuItems() {
     return [
-      ["test", () => {}]
+      ["browse snippet", () => {
+        var p = this.selectedPackage,
+            m = this.selectedModule,
+            c = this.selectedCodeEntity,
+            codeSnip = `$world.execCommand("open browser", {`
+        if (p) codeSnip += `packageName: "${p.name}"`;
+        if (m) codeSnip += `, moduleName: "${m.name}"`;
+        if (c) codeSnip += `, codeEntity: ${JSON.stringify(obj.select(c, ["name", "type"]))}`;
+        codeSnip += `});`
+        this.world().execCommand("open workspace", {content: codeSnip})
+      }]
     ]
   }
 }
