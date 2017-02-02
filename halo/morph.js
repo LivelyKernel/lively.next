@@ -138,7 +138,7 @@ export default class Halo extends Morph {
     const targetBounds = this.target.globalBounds(),
           worldBounds = this.target.world().innerBounds(),
           {x, y, width, height} = targetBounds.intersection(worldBounds);
-    this.layout.disable();
+    this.layout && this.layout.disable();
     this.setBounds(targetBounds.insetBy(-36).intersection(worldBounds));
     this.borderBox.setBounds(this.localize(pt(x,y)).extent(pt(width,height)));
     if (this.state.activeButton) {
@@ -152,7 +152,7 @@ export default class Halo extends Morph {
     }
     this.ensureResizeHandles().forEach(h => h.alignInHalo());
     this.originHalo().alignInHalo();
-    this.layout.enable();
+    this.layout && this.layout.enable();
     return this;
   }
 

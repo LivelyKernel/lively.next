@@ -2,7 +2,8 @@
 
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { MorphicEnv } from "../index.js";
-import { morph, Menu } from "../index.js";
+import { morph } from "../index.js";
+import { Menu } from 'lively.morphic/components/menus.js';
 import { expect } from "mocha-es6";
 import { promise } from "lively.lang";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
