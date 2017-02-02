@@ -39,7 +39,7 @@ export var defaultRenderer = {
 
     if (!selection) return [];
 
-    var {start, end, lead, cursorVisible} = selection,
+    var {start, end, lead, cursorVisible, selectionColor} = selection,
         start               = textLayouter.docToScreenPos(morph, start),
         end                 = textLayouter.docToScreenPos(morph, end),
         isReverse           = selection.isReverse(),
@@ -55,7 +55,7 @@ export var defaultRenderer = {
         leadLineHeight      = lead.row in lines ?
                                 lines[lead.row].height :
                                 defaultHeight || (defaultHeight = textLayouter.defaultCharSize(morph).height);
-
+console.log(selectionColor);
     // collapsed selection -> cursor
     if (selection.isEmpty())
       return [this.cursor(cursorPos, leadLineHeight, cursorVisible, diminished, cursorWidth)];
@@ -63,7 +63,7 @@ export var defaultRenderer = {
     // single line -> one rectangle
     if (start.row === end.row)
       return [
-        this.selectionLayerPart(startPos, endPos.addXY(0, endLineHeight)),
+        this.selectionLayerPart(startPos, endPos.addXY(0, endLineHeight), selectionColor),
         this.cursor(cursorPos, leadLineHeight, cursorVisible, diminished, cursorWidth)]
 
     let endPosLine1 = pt(morph.width, startPos.y + lines[start.row].height),
@@ -72,8 +72,8 @@ export var defaultRenderer = {
     // two lines -> two rectangles
     if (start.row+1 === end.row) {
       return [
-        this.selectionLayerPart(startPos, endPosLine1),
-        this.selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight)),
+        this.selectionLayerPart(startPos, endPosLine1, selectionColor),
+        this.selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight), selectionColor),
         this.cursor(cursorPos, leadLineHeight, cursorVisible, diminished, cursorWidth)];
     }
 
@@ -82,9 +82,9 @@ export var defaultRenderer = {
 
     // 3+ lines -> three rectangles
     return [
-      this.selectionLayerPart(startPos, endPosLine1),
-      this.selectionLayerPart(startPosLine2, endPosMiddle),
-      this.selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight)),
+      this.selectionLayerPart(startPos, endPosLine1, selectionColor),
+      this.selectionLayerPart(startPosLine2, endPosMiddle, selectionColor),
+      this.selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight), selectionColor),
       this.cursor(cursorPos, leadLineHeight, cursorVisible, diminished, cursorWidth)];
 
   },
@@ -231,13 +231,13 @@ export var defaultRenderer = {
   },
 
 
-  selectionLayerPart(startPos, endPos) {
+  selectionLayerPart(startPos, endPos, selectionColor) {
     return h('div.selection-layer-part', {
       style: {
         pointerEvents: "none", position: "absolute",
         left: startPos.x + "px", top: startPos.y + "px",
         width: (endPos.x-startPos.x) + "px", height: (endPos.y-startPos.y)+"px",
-        backgroundColor: "#bed8f7",
+        backgroundColor: selectionColor,
         zIndex: 1
       }
     })

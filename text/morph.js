@@ -228,6 +228,9 @@ export class Text extends Morph {
     this.setDefaultTextStyle({fontColor});
   }
 
+  get selectionColor() { return this.selection.selectionColor }
+  set selectionColor(c) { this.selection.selectionColor = c; }
+
   get fontWeight() { return this.defaultTextStyle.fontWeight; }
   set fontWeight(fontWeight) {
     this.addValueChange("fontWeight", fontWeight);

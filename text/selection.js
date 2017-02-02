@@ -112,6 +112,9 @@ export class Selection {
   get end() { return this.range.end }
   set end(val) { this.range = Range.fromPositions(this.start, val); }
 
+  get selectionColor() { return this._selectionColor || "#bed8f7" }
+  set selectionColor(c) { this._selectionColor = c; }
+
   get anchor() { return this.isReverse() ? this.range.end : this.range.start }
   set anchor(pos) {
     this.range = {start: pos, end: this.lead};
