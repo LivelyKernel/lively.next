@@ -55,7 +55,7 @@ export var defaultRenderer = {
         leadLineHeight      = lead.row in lines ?
                                 lines[lead.row].height :
                                 defaultHeight || (defaultHeight = textLayouter.defaultCharSize(morph).height);
-console.log(selectionColor);
+
     // collapsed selection -> cursor
     if (selection.isEmpty())
       return [this.cursor(cursorPos, leadLineHeight, cursorVisible, diminished, cursorWidth)];
