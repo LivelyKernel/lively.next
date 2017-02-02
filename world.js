@@ -3,7 +3,8 @@ import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, arr, string, obj, promise } from "lively.lang";
 import { Menu } from "lively.morphic/components/menus.js"
 import { StatusMessage, StatusMessageForMorph } from 'lively.morphic/components/markers.js';
-import { Morph, inspect, Text, Window, config, MorphicEnv } from "./index.js";
+import Window from 'lively.morphic/components/window.js';
+import { Morph, inspect, Text, config, MorphicEnv } from "./index.js";
 import { TooltipViewer } from "lively.morphic/components/tooltips.js";
 import KeyHandler from "./events/KeyHandler.js";
 
@@ -312,11 +313,11 @@ var worldCommands = [
       extent = extent || pt(500, 400);
       name = name || "text workspace";
 
-      return (await world.openInWindow(
+      return world.openInWindow(
         new Text({padding: Rectangle.inset(3),
                   ...obj.dissoc(opts, ["title", "content"]),
                   textString: content, clipMode: "auto", name, extent}),
-        {title})).activate();
+        {title}).activate();
     }
   },
 
@@ -629,7 +630,7 @@ var worldCommands = [
       var browser = file ?
         HTTPFileBrowser.forFile(file, location) :
         HTTPFileBrowser.forLocation(location || document.location.origin);
-      return (await world.openInWindow(browser)).activate();
+      return world.openInWindow(browser).activate();
     }
   },
 
@@ -723,7 +724,6 @@ export class World extends Morph {
   getPrompts() { return this.submorphs.filter(ea => ea.isPrompt); }
 
   async openInWindow(morph, opts = {title: morph.name, name: "window for " + morph.name}) {
-    const { default: Window } = await System.import("lively.morphic/components/window.js"); 
     return new Window({
       ...opts,
       extent: morph.extent.addXY(0, 25),

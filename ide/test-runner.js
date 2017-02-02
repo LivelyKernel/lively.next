@@ -192,9 +192,9 @@ export default class TestRunner extends HTMLMorph {
 
   static async open(props) {
     var runner = new this({extent: pt(500,600), ...props}).openInWorld();
-    return (await runner.world().openInWindow(
+    return runner.world().openInWindow(
       runner, {title: "test runner", name: "test runner window"}
-    )).activate();
+    ).activate();
   }
 
   constructor(props) {

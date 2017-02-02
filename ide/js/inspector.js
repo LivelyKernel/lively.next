@@ -182,9 +182,9 @@ export async function inspect(targetObject) {
 
 export default class Inspector extends Morph {
 
-  static async openInWindow(props) {
+  static openInWindow(props) {
     var i = new this(props).openInWorld();
-    (await i.world().openInWindow(i)).activate();
+    i.world().openInWindow(i).activate();
     return i;
   }
 

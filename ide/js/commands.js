@@ -219,7 +219,7 @@ export var jsEditorCommands = [
         result = await doEval(morph, undefined, opts);
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
-      await Inspector.openInWindow({targetObject: err ? err : result.value});
+      Inspector.openInWindow({targetObject: err ? err : result.value});
       return result;
     }
   },

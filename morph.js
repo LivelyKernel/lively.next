@@ -892,9 +892,9 @@ export class Morph {
     return this;
   }
 
-  async openInWindow(opts = {title: this.name, name: "window for " + this.name, world: null}) {
+  openInWindow(opts = {title: this.name, name: "window for " + this.name, world: null}) {
     var world = opts.world || this.world() || this.env.world;
-    return await world.openInWindow(this, obj.dissoc(opts, ["world"]));
+    return world.openInWindow(this, obj.dissoc(opts, ["world"]));
   }
 
   isAncestorOf(aMorph) {
