@@ -1,79 +1,81 @@
 import { arr, obj } from "lively.lang";
 
+/*
+
+Rules define how style properties of morphs within a certain submorph
+hierarchy are to be set. Rules are able to identify morphs either via
+their name or their morphClasses property. Rules are applied to a morph
+(including its submorphs) once a style rule is assigned to it. Rules will
+also be refreshed upon a morph in case its name or morphClasses property
+is changed. Rules can be nested, where the rule closest to a respective
+morph will override the property values of any other rules that affect
+that morph.
+
+*/
+
+
 export class StyleRules {
+  constructor(rules) {
+    this.rules = rules;
+  }
 
-   /*
-      Rules define how style properties of morphs within a certain
-      submorph hierarchy are to be set.
-      Rules are able to identify morphs either via their name or their
-      morphClasses property.
-      Rules are applied to a morph (including its submorphs) 
-      once a style rule is assigned to it.
-      Rules will also be refreshed upon a morph in case 
-      its name or morphClasses property is changed.
-      Rules can be nested, where the rule closest to a respective morph
-      will override the property values of any other rules that affect that morph.
-   */
-   
-   constructor(rules) {
-      this.rules = rules;
-   }
+  applyToAll(root, morph) {
+    const removedLayouts = {};
+    root.withAllSubmorphsDo(m => {
+      removedLayouts[m.id] = m.layout;
+      m.layout = null;
+    });
+    (morph || root).withAllSubmorphsDo(m => this.enforceRulesOn(m));
+    root.withAllSubmorphsDo(m => {
+      (m.layout = removedLayouts[m.id]) || this.applyLayout(m);
+    });
+  }
 
-   applyToAll(root, morph) {
-      const removedLayouts = {};
-      root.withAllSubmorphsDo(m => { 
-           removedLayouts[m.id] = m.layout; 
-           m.layout = null;
-       });
-      (morph || root).withAllSubmorphsDo(m => this.enforceRulesOn(m));
-      root.withAllSubmorphsDo(m => {
-         (m.layout = removedLayouts[m.id]) || this.applyLayout(m);
-      });
-      
-   }
-
-   onMorphChange(morph, change) {
+  onMorphChange(morph, change) {
     const {selector, args, prop, prevValue, value} = change;
     if (selector == "addMorphAt") {
-        this.applyToAll(morph, args[0]);
+      this.applyToAll(morph, args[0]);
     } else if (prop == "name" || prop == "morphClasses") {
-        if (prevValue == value) return;
-        this.enforceRulesOn(morph);
-        this.applyLayout(morph);
+      if (prevValue == value)
+        return;
+      this.enforceRulesOn(morph);
+      this.applyLayout(morph);
     }
   }
 
   getShadowedProps(morph) {
-     var props  = {}, curr = morph;
-     while (curr && curr.styleRules != this) {
-         if (curr.styleRules) props = {...props, ...curr.styleRules.getStyleProps(morph)}
-         curr = curr.owner;
-     }
-     return ["layout", ...Object.keys(props)];
+    var props = {}, curr = morph;
+    while (curr && curr.styleRules != this) {
+      if (curr.styleRules)
+        props = {...props, ...curr.styleRules.getStyleProps(morph)};
+      curr = curr.owner;
+    }
+    return ["layout", ...Object.keys(props)];
   }
 
   getStyleProps(morph) {
     if (this.rules[morph.name]) {
-          return this.rules[morph.name]; // name overrides morphClasses
+      return this.rules[morph.name]; // name overrides morphClasses
     } else if (morph.morphClasses) {
-          return obj.merge(arr.compact(morph.morphClasses.map(c => this.rules[c])));
+      return obj.merge(arr.compact(morph.morphClasses.map(c => this.rules[c])));
     }
-    return {}
+    return {};
   }
 
-   enforceRulesOn(morph) {
-     var styleProps = this.getStyleProps(morph), 
-         shadowedProps = this.getShadowedProps(morph);
-     styleProps && this.applyToMorph(morph, obj.dissoc(styleProps, shadowedProps));
-   }
+  enforceRulesOn(morph) {
+    var styleProps = this.getStyleProps(morph),
+      shadowedProps = this.getShadowedProps(morph);
+    styleProps &&
+      this.applyToMorph(morph, obj.dissoc(styleProps, shadowedProps));
+  }
 
-   applyLayout(morph) {
-      const layout = this.getStyleProps(morph).layout;
-      if (layout) morph.layout = layout;
-   }
+  applyLayout(morph) {
+    const layout = this.getStyleProps(morph).layout;
+    if (layout)
+      morph.layout = layout;
+  }
 
-   applyToMorph(morph, styleProps) {
-     return Object.assign(morph, styleProps);
-   }
-   
+  applyToMorph(morph, styleProps) {
+    return Object.assign(morph, styleProps);
+  }
 }

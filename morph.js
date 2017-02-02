@@ -237,6 +237,15 @@ export class Morph {
           if ("color" in x) this.borderColor = x.color;
           if ("radius" in x) this.borderRadius = x.radius;
         }
+      },
+
+      morphClasses: {}, //2017-01-31 rk: What is this????
+
+      styleRules: {
+        set(rules) {
+          this.setProperty("styleRules", rules);
+          if (rules) rules.applyToAll(this);
+        }
       }
 
     }
@@ -255,7 +264,7 @@ export class Morph {
     this._cachedPaths = {};
     this._pathDependants = [];
     this._tickingScripts = [];
-    this.loadDefaultProperties(props);
+    this.initializeProperties(props);
     if (props.bounds) this.setBounds(props.bounds);
     Object.assign(this, obj.dissoc(props, ["env", "type", "submorphs", "bounds", "layout"]));
     if (props.layout) this.layout = props.layout;
@@ -276,7 +285,7 @@ export class Morph {
     this._cachedPaths = {};
     this._pathDependants = [];
     this._tickingScripts = [];
-    this.loadDefaultProperties();
+    this.initializeProperties();
   }
 
   __after_deserialize__() {
@@ -487,15 +496,6 @@ export class Morph {
       return this;
     }
     return anim ? anim.asPromise() : this;
-  }
-
-  get morphClasses() { return this.getProperty("morphClasses"); }
-  set morphClasses(classes) { this.setProperty("morphClasses", classes); }
-
-  get styleRules() { return this.getProperty("styleRules"); }
-  set styleRules(rules) {
-     if (rules) rules.applyToAll(this);
-     this.setProperty("styleRules", rules);
   }
 
   isClip() { return this.clipMode !== "visible"; }
