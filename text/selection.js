@@ -11,6 +11,8 @@ export class Selection {
     this.initialize(range)
   }
 
+  get isSelection() { return true; }
+
   initialize(range) { 
     this._goalColumn = undefined;
     this._isReverse = false;

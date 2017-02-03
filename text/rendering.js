@@ -90,7 +90,7 @@ export var defaultRenderer = {
   },
 
   renderMarkerLayer(textLayouter, morph) {
-    let markers = morph._markers, parts = [];
+    let markers = morph.markers, parts = [];
     if (!markers) return parts;
 
     for (let m of markers) {

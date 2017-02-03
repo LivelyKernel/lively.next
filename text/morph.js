@@ -51,14 +51,35 @@ export class Text extends Morph {
 
   static get properties() {
     return {
-      readOnly:    {defaultValue: false},
+
+      fontMetric: {},
+
+      textLayout: {
+        after: ["fontMetric", "padding"],
+        initialize() {
+          this.textLayout = new TextLayout(this.fontMetric || this.env.fontMetric);
+        }
+      },
+
+      textRenderer: {defaultValue: defaultRenderer},
+
+      document: {
+        after: ["textLayout"],
+        initialize() { this.changeDocument(TextDocument.fromString(""), true); }
+      },
+
+      undoManager: {
+        initialize() { this.undoManager = new UndoManager(); }
+      },
+
       draggable:   {defaultValue: false},
-      fixedWidth:  {defaultValue: false},
-      fixedHeight: {defaultValue: false},
-      padding:     {defaultValue: Rectangle.inset(0)},
       useSoftTabs: {defaultValue: config.text.useSoftTabs !== undefined ? config.text.useSoftTabs : true},
       tabWidth:    {defaultValue: config.text.tabWidth || 2},
-      savedMarks:  {defaultValue: []},
+
+      tab: {
+        after: ["useSoftTabs", "tabWidth"], readOnly: true,
+        get() { return this.useSoftTabs ? " ".repeat(this.tabWidth) : "\t"; }
+      },
 
       clipMode: {
         defaultValue: "visible",
@@ -69,7 +90,7 @@ export class Text extends Morph {
       },
 
       fixedWidth: {
-        after: ["clipMode"],
+        after: ["clipMode"], defaultValue: false,
         get() { return this.getProperty("fixedWidth") },
         set(value) {
           this.setProperty("fixedWidth", value);
@@ -78,11 +99,323 @@ export class Text extends Morph {
       },
 
       fixedHeight: {
-        after: ["clipMode"],
+        after: ["clipMode"], defaultValue: false,
         get() { return this.getProperty("fixedHeight") },
         set(value) {
           this.setProperty("fixedHeight", value);
           this._needsFit = true;
+        }
+      },
+
+      readOnly: {
+        defaultValue: false,
+        set(value) {
+          this.nativeCursor = value ? "default" : "auto";
+          this.setProperty("readOnly", value);
+        }
+      },
+
+      selectable: {
+        after: ["selection"], defaultValue: true,
+        set(value) {
+          this.setProperty("selectable", value);
+          if (!value) this.selection.collapse();
+        }
+      },
+
+      padding: {
+        defaultValue: Rectangle.inset(0),
+        set(value) {
+          this.setProperty("padding", typeof value === "number" ? Rectangle.inset(value) : value);
+          this._needsFit = true;
+        }
+      },
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // selection
+
+      cursorScreenPosition: {
+        derived: true, after: ["cursorPosition"],
+        get() { return this.toScreenPosition(this.cursorPosition); },
+        set(p) { return this.cursorPosition = this.toDocumentPosition(p); }
+      },
+      cursorPosition: {
+        derived: true, after: ["selection"],
+        get() { return this.selection.lead; },
+        set(p) { this.selection.range = {start: p, end: p}; }
+      },
+
+      selection: {
+        get() {
+          var sel = this.getProperty("selection");
+          if (sel) return sel;
+          sel = new (config.text.useMultiSelect ? MultiSelection : Selection)(this);
+          this.setProperty("selection", sel);
+          return sel
+        },
+        set(selOrRange) {
+          if (!selOrRange) {
+            if (this.selection.isMultiSelection) {
+              this.selection.disableMultiSelect();
+            }
+            this.selection.collapse();
+          } else if (selOrRange.isSelection) this.setProperty("selection", selOrRange);
+          else this.selection.range = selOrRange;
+        }
+      },
+
+      selections: {
+        derived: true, after: ["selection"],
+        get() {
+          return this.selection.isMultiSelection ?
+            this.selection.selections :
+            [this.selection];
+        },
+
+        set(sels) {
+          this.selection = sels[0];
+          if (!this.selection.isMultiSelection) return;
+          sels.slice(1).forEach(ea => this.selection.addRange(ea));
+        }
+      },
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // content
+
+      textString: {
+        after: ["document"], derived: true,
+        get() { return this.document ? this.document.textString : "" },
+        set(value) {
+          value = value ? String(value) : "";
+          this.deleteText({start: {column: 0, row: 0}, end: this.document.endPosition});
+          this.insertText(value, {column: 0, row: 0});
+        }
+      },
+
+      value: {
+        after: ["textAttributes"], derived: true,
+        get() {
+          var {textAndAttributes} = this;
+          if (textAndAttributes.length === 1) {
+            var [text, style] = textAndAttributes[0];
+            if (!Object.keys(style || {}).length) return text;
+          }
+          return textAndAttributes;
+        },
+        set(value) {
+          typeof value === "string" ?
+            this.textString = value :
+            this.textAndAttributes = value;
+        }
+      },
+
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // default font styling
+
+      textAttributes: {
+        derived: true, after: ["document"],
+        get() { return this.document.textAttributes; },
+        set(attrs) {
+          attrs.map(range => this.addTextAttribute(range));
+          // this.document.textAttributes = attrs;
+          this.onAttributesChanged();
+        }
+      },
+
+      textAndAttributes: {
+        derived: true, after: ["document"],
+        get() { return this.document.textAndAttributes; },
+        set(textAndAttributes) {
+          // 1. remove everything
+          this.deleteText({start: {row: 0, column: 0}, end: this.documentEndPosition});
+          // 2. set text, don't set attributes yet so that attributes don't grow
+          // across their border when more text is subsequently inserted
+          var rangesAndAttrs = textAndAttributes.map(([text, attrs]) =>
+            [this.insertText(text, this.documentEndPosition), attrs]);
+          // 3. From the ranges we get from the text insertion we now where to
+          // install the attributes
+          rangesAndAttrs.forEach(([range, attrs]) =>
+            (Array.isArray(attrs) ? attrs : [attrs]).forEach(attr =>
+              this.addTextAttribute(attr, range)));
+          return {start: {row: 0, column: 0}, end: this.documentEndPosition};
+        }
+      },
+
+      defaultTextStyleAttribute: {
+        derived: true, after: ["textAttributes"],
+        get() {
+          // currently we have this cryptic convention of having the attribute start
+          // at {row: 0, column -1}...
+          var attr = this.textAttributes.find(ea =>
+            ea.isStyleAttribute && (ea.start.row < 0 || ea.start.row === 0 && ea.start.column < 0));
+          if (!attr)
+            attr = this.addTextAttribute(new TextStyleAttribute(
+              {...defaultTextStyle}, {start: {row: 0, column: -1}, end: this.documentEndPosition}));
+          return attr;
+        }
+      },
+
+      defaultTextStyle: {
+        derived: true, after: ["defaultTextStyleAttribute"],
+        initialize() { this.defaultTextStyle = defaultTextStyle; },
+        get() { return this.defaultTextStyleAttribute.data; },
+        set(style) { this.setDefaultTextStyle(style); }
+      },
+
+
+      fontFamily: {
+        derived: true, after: ["defaultTextStyle"],
+        get() { return this.defaultTextStyle.fontFamily; },
+        set(fontFamily) {
+          this.setProperty("fontFamily", fontFamily);
+          this.setDefaultTextStyle({fontFamily});
+        }
+      },
+
+      fontSize: {
+        derived: true, after: ["defaultTextStyle"],
+        get() { return this.defaultTextStyle.fontSize; },
+        set(fontSize) {
+          this.setProperty("fontSize", fontSize);
+          this.setDefaultTextStyle({fontSize});
+        }
+      },
+
+      selectionColor: {
+        derived: true, after: ["defaultTextStyle"],
+        get() { return this.defaultTextStyle.selectionColor; },
+        set(selectionColor) {
+          this.setProperty("selectionColor", selectionColor);
+          this.setDefaultTextStyle({selectionColor});
+        }
+      },
+
+      fontColor: {
+        derived: true, after: ["defaultTextStyle"],
+        get() { return this.defaultTextStyle.fontColor; },
+        set(fontColor) {
+          this.setProperty("fontColor", fontColor);
+          this.setDefaultTextStyle({fontColor});
+        }
+      },
+
+      fontWeight: {
+        derived: true, after: ["defaultTextStyle"],
+        get() { return this.defaultTextStyle.fontWeight; },
+        set(fontWeight) {
+          this.setProperty("fontWeight", fontWeight);
+          this.setDefaultTextStyle({fontWeight});
+        }
+      },
+
+      fontStyle: {
+        derived: true, after: ["defaultTextStyle"],
+        get() { return this.defaultTextStyle.fontStyle; },
+        set(fontStyle) {
+          this.setProperty("fontStyle", fontStyle);
+          this.setDefaultTextStyle({fontStyle});
+        }
+      },
+
+      textDecoration: {
+        derived: true, after: ["defaultTextStyle"],
+        get() { return this.defaultTextStyle.textDecoration; },
+        set(textDecoration) {
+          this.setProperty("textDecoration", textDecoration);
+          this.setDefaultTextStyle({textDecoration});
+        }
+      },
+
+      fixedCharacterSpacing: {
+        derived: true, after: ["defaultTextStyle"],
+        get() { return this.defaultTextStyle.fixedCharacterSpacing; },
+        set(fixedCharacterSpacing) {
+          this.setProperty("fixedCharacterSpacing", fixedCharacterSpacing);
+          this.setDefaultTextStyle({fixedCharacterSpacing});
+        }
+      },
+
+      textStyleClasses: {
+        derived: true, after: ["defaultTextStyle"],
+        get() { return this.defaultTextStyle.textStyleClasses; },
+        set(textStyleClasses) {
+          this.setProperty("textStyleClasses", textStyleClasses);
+          this.setDefaultTextStyle({textStyleClasses});
+        }
+      },
+
+      backgroundColor: {
+        derived: true, after: ["defaultTextStyle"],
+        get() { return this.defaultTextStyle.backgroundColor; },
+        set(backgroundColor) {
+          this.setProperty("backgroundColor", backgroundColor);
+          this.setDefaultTextStyle({backgroundColor});
+        }
+      },
+
+      lineWrapping: {
+        after: ["textLayout", "document"],
+        set(lineWrapping) {
+          this.setProperty("lineWrapping", lineWrapping);
+          this.textLayout.updateFromMorphIfNecessary(this);
+        }
+      },
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // anchors – positions in text that move when text is changed
+      anchors: {
+        defaultValue: [],
+      },
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // markers
+      markers: {
+        defaultValue: [],
+      },
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // marks
+      savedMarks: {
+        defaultValue: [], after: ["anchors"],
+        set(val) {
+          var savedMarks = this.savedMarks;
+          val = val.map(ea => ea.isAnchor ? ea : this.addAnchor({...ea, id: "saved-mark-" + string.newUUID()}));
+          var toRemove = this.savedMarks.filter(ea => !val.includes(ea))
+          if (val > config.text.markStackSize)
+            toRemove.push(...val.splice(0, val.length - config.text.markStackSize));
+          toRemove.map(ea => this.removeAnchor(ea));
+          return this.setProperty("savedMarks", val);
+        }
+      },
+
+      activeMarkPosition: {
+        after: ["activeMark"], derived: true,
+        get() { var m = this.activeMark; return m ? m.position : null; }
+      },
+
+      activeMark: {
+        after: ["anchors"],
+        set(val) {
+          if (val) val = this.addAnchor(val.isAnchor ? val : {...val, id: "saved-mark-" + string.newUUID()});
+          else {
+            var m = this.activeMark;
+            if (!this.savedMarks.includes(m))
+              this.removeAnchor(m);
+          }
+          this.setProperty("activeMark", val);
+        }
+      },
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // plugins
+      plugins: {
+        defaultValue: [], after: ["textAttributes", "value"],
+        set(plugins) {
+          var prevPlugins = this.getProperty("plugins"),
+              removed = arr.withoutAll(prevPlugins, plugins);
+          removed.forEach(p => this.removePlugin(p));
+          plugins.forEach(p => this.addPlugin(p));
         }
       }
 
@@ -91,54 +424,11 @@ export class Text extends Morph {
 
   constructor(props = {}) {
     var {
-      textLayout, textRenderer, lineWrapping, plugins,
-      fontMetric, textString, selectable, selection, clipMode, textAttributes, textAndAttributes,
-      fontFamily, fontSize, fontColor, fontWeight, fontStyle, textDecoration, fixedCharacterSpacing,
-      backgroundColor, textStyleClasses, selectionColor,
       position, rightCenter, leftCenter, topCenter, bottom, top, right, left,
       bottomCenter, bottomLeft, bottomRight, topRight, topLeft, center,
     } = props;
 
-    props = obj.dissoc(props, [
-      "textLayout", "textRenderer", "lineWrapping", "plugins",
-      "textString","fontMetric", "selectable", "selection", "clipMode",
-      "textAttributes", "textAndAttributes", "selectionColor",
-      // default style attrs: need document to be installed first
-      "fontFamily", "fontSize", "fontColor", "fontWeight", "fontStyle", "textDecoration",
-      "backgroundColor", "fixedCharacterSpacing", "textStyleClasses"
-    ]);
-
     super(props);
-
-    this.textLayout = textLayout || new TextLayout(fontMetric || this.env.fontMetric);
-    this.textRenderer = textRenderer || defaultRenderer;
-    this.changeDocument(TextDocument.fromString(textString || ""), true);
-    this.undoManager = new UndoManager();
-    if (selection) this.selection = selection;
-    this._anchors = null;
-    this._markers = null;
-    this.selectable = typeof selectable !== "undefined" ? selectable : true;
-    if (clipMode !== undefined) this.clipMode = clipMode;
-    this.lineWrapping = lineWrapping !== undefined ? lineWrapping : true;
-
-    this.setDefaultTextStyle({
-      fontFamily:            fontFamily            || defaultTextStyle.fontFamily,
-      fontSize:              fontSize              || defaultTextStyle.fontSize,
-      backgroundColor:       backgroundColor       || defaultTextStyle.backgroundColor,
-      fontColor:             fontColor             || defaultTextStyle.fontColor,
-      fontWeight:            fontWeight            || defaultTextStyle.fontWeight,
-      fontStyle:             fontStyle             || defaultTextStyle.fontStyle,
-      textDecoration:        textDecoration        || defaultTextStyle.textDecoration,
-      fixedCharacterSpacing: fixedCharacterSpacing !== undefined ? fixedCharacterSpacing : defaultTextStyle.fixedCharacterSpacing,
-      textStyleClasses:      textStyleClasses      || defaultTextStyle.textStyleClasses
-    });
-
-    if (textAndAttributes) this.textAndAttributes = textAndAttributes;
-    else if (textAttributes) textAttributes.map(range => this.addTextAttribute(range));
-
-    if (plugins) this.plugins = plugins;
-
-    if (selectionColor) this.selectionColor = selectionColor; 
 
     this.fit();
     this._needsFit = false;
@@ -166,11 +456,15 @@ export class Text extends Morph {
     this.textRenderer = defaultRenderer;
     this.changeDocument(TextDocument.fromString(""), true);
     this.undoManager = new UndoManager();
-    this._anchors = null;
-    this._markers = null;
     this.setDefaultTextStyle(defaultTextStyle);
     // this.fit();
     // this._needsFit = false;
+  }
+
+
+  get __only_serialize__() {
+    var propNames = super.__only_serialize__;
+    return arr.withoutAll(propNames, ["document", "textLayout", "undoManager", "textRenderer", "textAttributes"]);
   }
 
   __additionally_serialize__(snapshot, objRef) {
@@ -207,108 +501,30 @@ export class Text extends Morph {
     textChange && signal(this, "textChange", change);
   }
 
-  get readOnly() { return this.getProperty("readOnly"); }
-  set readOnly(value) {
-    this.nativeCursor = value ? "default" : "auto";
-    this.setProperty("readOnly", value);
-  }
-
   rejectsInput() { return this.readOnly /*|| !this.isFocused()*/ }
 
-  get selectable() { return this.getProperty("selectable"); }
-  set selectable(value) {
-    this.setProperty("selectable", value);
-    if (!value) this.selection.collapse();
-  }
-
-  get padding() { return this.getProperty("padding"); }
-  set padding(value) {
-    this.setProperty("padding", typeof value === "number" ? Rectangle.inset(value) : value);
-    this._needsFit = true;
-  }
-
-  get fontFamily() { return this.defaultTextStyle.fontFamily; }
-  set fontFamily(fontFamily) {
-    this.setProperty("fontFamily", fontFamily);
-    this.setDefaultTextStyle({fontFamily});
-  }
-
-  get fontSize() { return this.defaultTextStyle.fontSize; }
-  set fontSize(fontSize) {
-    this.setProperty("fontSize", fontSize);
-    this.setDefaultTextStyle({fontSize});
-  }
-
-  get fontColor() { return this.defaultTextStyle.fontColor; }
-  set fontColor(fontColor) {
-    this.setProperty("fontColor", fontColor);
-    this.setDefaultTextStyle({fontColor});
-  }
-
-  get selectionColor() { return this.selection.selectionColor }
-  set selectionColor(c) { this.selection.selectionColor = c; }
-
-  get fontWeight() { return this.defaultTextStyle.fontWeight; }
-  set fontWeight(fontWeight) {
-    this.setProperty("fontWeight", fontWeight);
-    this.setDefaultTextStyle({fontWeight});
-  }
-
-  get fontStyle() { return this.defaultTextStyle.fontStyle; }
-  set fontStyle(fontStyle) {
-    this.setProperty("fontStyle", fontStyle);
-    this.setDefaultTextStyle({fontStyle});
-  }
-
-  get textDecoration() { return this.defaultTextStyle.textDecoration; }
-  set textDecoration(textDecoration) {
-    this.setProperty("textDecoration", textDecoration);
-    this.setDefaultTextStyle({textDecoration});
-  }
-
-  get fixedCharacterSpacing() { return this.defaultTextStyle.fixedCharacterSpacing; }
-  set fixedCharacterSpacing(fixedCharacterSpacing) {
-    this.setProperty("fixedCharacterSpacing", fixedCharacterSpacing);
-    this.setDefaultTextStyle({fixedCharacterSpacing});
-  }
-
-  get textStyleClasses() { return this.defaultTextStyle.textStyleClasses; }
-  set textStyleClasses(textStyleClasses) {
-    this.setProperty("textStyleClasses", textStyleClasses);
-    this.setDefaultTextStyle({textStyleClasses});
-  }
-
-  get lineWrapping() { return this.getProperty("lineWrapping") }
-  set lineWrapping(lineWrapping) {
-    this.setProperty("lineWrapping", lineWrapping);
-    this.textLayout.updateFromMorphIfNecessary(this);
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // anchors – positions in text that move when text is changed
-  get anchors() { return this._anchors || (this._anchors = []); }
   addAnchor(anchor) {
     if (!anchor) return;
+
     if (typeof anchor === "string") {
       anchor = {id: anchor, row: 0, column: 0};
     }
 
     if (!anchor.isAnchor) {
       let {id, column, row} = anchor;
-      anchor = new Anchor(id, row || column ? {row, column} : undefined, anchor.insertBehavior || "move");
+      anchor = new Anchor(id,
+                row || column ? {row, column} : undefined,
+                anchor.insertBehavior || "move");
     }
 
     var existing = anchor.id && this.anchors.find(ea => ea.id === anchor.id);
-    if (existing) {
-      return Object.assign(existing, anchor);
-    }
-
-    this.anchors.push(anchor);
+    if (existing) Object.assign(existing, anchor);
+    else this.anchors.push(anchor);
     return anchor;
   }
 
   removeAnchor(anchor) {
-    this._anchors = this.anchors.filter(
+    this.anchors = this.anchors.filter(
       typeof anchor === "string" ?
         ea => ea.id !== anchor :
         ea => ea !== anchor);
@@ -317,19 +533,17 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // markers, text ranges with styles that are rendered over/below the text and
   // do not influence the text appearance themselves
-  get markers() { return this._markers; }
   addMarker(marker) {
     // id, range, style
-    if (!this._markers) this._markers = [];
     this.removeMarker(marker.id);
-    this._markers.push(marker);
+    this.markers.push(marker);
     this.makeDirty();
     return marker;
   }
+
   removeMarker(marker) {
-    if (!this._markers) return;
     var id = typeof marker === "string" ? marker : marker.id;
-    this._markers = this.markers.filter(ea => ea.id !== id);
+    this.markers = this.markers.filter(ea => ea.id !== id);
     this.makeDirty();
   }
 
@@ -337,28 +551,6 @@ export class Text extends Morph {
   // marks: text position that are saved and can be retrieved
   // the activeMark affects movement commands: when it's active movement will
   // select
-  get savedMarks() { return this.getProperty("savedMarks") || []; }
-  set savedMarks(val) {
-    var savedMarks = this.savedMarks;
-    val = val.map(ea => ea.isAnchor ? ea : this.addAnchor({...ea, id: "saved-mark-" + string.newUUID()}));
-    var toRemove = this.savedMarks.filter(ea => !val.includes(ea))
-    if (val > config.text.markStackSize)
-      toRemove.push(...val.splice(0, val.length - config.text.markStackSize));
-    toRemove.map(ea => this.removeAnchor(ea));
-    return this.setProperty("savedMarks", val);
-  }
-
-  get activeMark() { return this.getProperty("activeMark"); }
-  get activeMarkPosition() { var m = this.activeMark; return m ? m.position : null; }
-  set activeMark(val) {
-    if (val) val = this.addAnchor(val.isAnchor ? val : {...val, id: "saved-mark-" + string.newUUID()});
-    else {
-      var m = this.activeMark;
-      if (!this.savedMarks.includes(m))
-        this.removeAnchor(m);
-    }
-    this.setProperty("activeMark", val);
-  }
 
   saveMark(p = this.cursorPosition, activate) {
     var prevMark = this.activeMark;
@@ -406,35 +598,26 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // plugins: objects that can attach/detach to/from text objects and react to
   // text changes as well as modify text however they see fit
-  get plugins() { return this._plugins || []; }
-  set plugins(plugins) {
-    var prevPlugins = this._plugins || [],
-        removed = arr.withoutAll(prevPlugins, plugins);
-    removed.forEach(p => this.removePlugin(p));
-    plugins.forEach(p => this.addPlugin(p));
-  };
 
   addPlugin(plugin) {
-    if (!this._plugins) this._plugins = [];
-    if (!this._plugins.includes(plugin)) {
-      this._plugins.push(plugin);
+    if (!this.plugins.includes(plugin)) {
+      this.plugins.push(plugin);
       typeof plugin.attach === "function" && plugin.attach(this);
     }
     return plugin;
   }
 
   removePlugin(plugin) {
-    if (!this._plugins || !this._plugins.includes(plugin)) return false;
-    arr.remove(this._plugins, plugin);
+    if (!this.plugins.includes(plugin)) return false;
+    arr.remove(this.plugins, plugin);
     typeof plugin.detach === "function" && plugin.detach(this);
     return true
   }
 
   pluginCollect(method, result = []) {
-    if (this._plugins)
-      this._plugins.forEach(p =>
-        typeof p[method] === "function" &&
-          (result = p[method](result)));
+    this.plugins.forEach(p =>
+      typeof p[method] === "function" &&
+        (result = p[method](result)));
     return result;
   }
 
@@ -444,7 +627,7 @@ export class Text extends Morph {
   }
 
   pluginFind(iterator) {
-    return this._plugins && this._plugins.slice().reverse().find(iterator);
+    return this.plugins.slice().reverse().find(iterator);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -459,12 +642,6 @@ export class Text extends Morph {
       .addPt(this.padding.bottomRight())
       .maxPt(super.scrollExtent);
   }
-
-  get useSoftTabs()  { return this.getProperty("useSoftTabs"); }
-  set useSoftTabs(value)  { this.setProperty("useSoftTabs", value); }
-  get tabWidth()  { return this.getProperty("tabWidth"); }
-  set tabWidth(value)  { this.setProperty("tabWidth", value); }
-  get tab() { return this.useSoftTabs ? " ".repeat(this.tabWidth) : "\t"; }
 
   get commands() {
     return this.pluginCollect("getCommands", (this._commands || []).concat(commands))
@@ -483,15 +660,15 @@ export class Text extends Morph {
     // itsself. From inside here we just set the selection to each range in the
     // multi selection and then let the comand run normally
     if (multiSelect && multiSelectAction === "forEach") {
-      var origSelection = this._selection,
+      var origSelection = this.selection,
           selections = this.selection.selections.slice().reverse();
-      this._selection = selections[0];
+      this.selection = selections[0];
       this._multiSelection = origSelection;
 
       try {
         var result = this.execCommand(commandOrName, args, count, evt);
       } catch(err) {
-        this._selection = origSelection;
+        this.selection = origSelection;
         this._multiSelection = null;
         this.selection.mergeSelections();
         throw err;
@@ -503,12 +680,12 @@ export class Text extends Morph {
       if (typeof result.then === "function" && typeof result.catch === "function") {
         return promise.finally(promise.chain([() => result].concat(
             selections.slice(1).map(sel => () => {
-              this._selection = sel;
+              this.selection = sel;
               return Promise.resolve(this.execCommand(commandOrName, args, count, evt))
                       .then(result => results.push(result));
             }))).then(() => results),
             () => {
-              this._selection = origSelection;
+              this.selection = origSelection;
               this._multiSelection = null;
               this.selection.mergeSelections();
             });
@@ -516,11 +693,11 @@ export class Text extends Morph {
       } else {
         try {
           for (var sel of selections.slice(1)) {
-            this._selection = sel;
+            this.selection = sel;
             results.push(this.execCommand(commandOrName, args, count, evt))
           }
         } finally {
-          this._selection = origSelection;
+          this.selection = origSelection;
           this._multiSelection = null;
           this.selection.mergeSelections();
         }
@@ -564,25 +741,6 @@ export class Text extends Morph {
     if (resetStyle)
       this.setDefaultTextStyle(defaultTextStyle);
     this.makeDirty();
-  }
-
-  get textString() { return this.document ? this.document.textString : "" }
-  set textString(value) {
-    this.deleteText({start: {column: 0, row: 0}, end: this.document.endPosition});
-    this.insertText(value, {column: 0, row: 0});
-  }
-  get value() {
-    var {textAndAttributes} = this;
-    if (textAndAttributes.length === 1) {
-      var [text, style] = textAndAttributes[0];
-      if (!Object.keys(style || {}).length) return text;
-    }
-    return textAndAttributes;
-  }
-  set value(value) {
-    typeof value === "string" ?
-      this.textString = value :
-      this.textAndAttributes = value;
   }
 
   textInRange(range) { return this.document.textInRange(range); }
@@ -644,22 +802,6 @@ export class Text extends Morph {
     return new Range(range);
   }
 
-  get textAndAttributes() { return this.document.textAndAttributes; }
-  set textAndAttributes(textAndAttributes) {
-    // 1. remove everything
-    this.deleteText({start: {row: 0, column: 0}, end: this.documentEndPosition});
-    // 2. set text, don't set attributes yet so that attributes don't grow
-    // across their border when more text is subsequently inserted
-    var rangesAndAttrs = textAndAttributes.map(([text, attrs]) =>
-      [this.insertText(text, this.documentEndPosition), attrs]);
-    // 3. From the ranges we get from the text insertion we now where to
-    // install the attributes
-    rangesAndAttrs.forEach(([range, attrs]) =>
-      (Array.isArray(attrs) ? attrs : [attrs]).forEach(attr =>
-        this.addTextAttribute(attr, range)));
-    return {start: {row: 0, column: 0}, end: this.documentEndPosition};
-  }
-
   setTextWithTextAttributes(text, attributes) {
      this.deleteText({start: {row: 0, column: 0}, end: this.documentEndPosition});
      return this.insertTextWithTextAttributes(text, attributes, {row: 0, column: 0});
@@ -689,7 +831,7 @@ export class Text extends Morph {
     if (!text.length) return Range.fromPositions(pos, pos);
 
     // ensure that the default text style includes the newly inserted text
-    var defaultStyleAttr = this.defaultTextStyleAttribute
+    var defaultStyleAttr = this.defaultTextStyleAttribute;
     if (lessPosition(defaultStyleAttr.end, pos)) {
       var prevEnd = defaultStyleAttr.end;
       // FIXME this is a hacky version of updating the document's cache, this
@@ -721,11 +863,11 @@ export class Text extends Morph {
       }
     }, () => {
       this._needsFit = true;
-      this._anchors && this.anchors.forEach(ea => ea.onInsert(range));
+      this.anchors.forEach(ea => ea.onInsert(range));
       // When auto multi select commands run, we replace the actual selection
       // with individual normal selections
       if (this._multiSelection) this._multiSelection.updateFromAnchors();
-      else if (this._selection) this.selection.updateFromAnchors();
+      else this.selection.updateFromAnchors();
     });
 
     this.undoManager.undoStop();
@@ -755,11 +897,11 @@ export class Text extends Morph {
         args: [text, range.start],
       }
     }, () => {
-      this._anchors && this.anchors.forEach(ea => ea.onDelete(range));
+      this.anchors.forEach(ea => ea.onDelete(range));
       // When auto multi select commands run, we replace the actual selection
       // with individual normal selections
       if (this._multiSelection) this._multiSelection.updateFromAnchors();
-      else if (this._selection) this.selection.updateFromAnchors();
+      else this.selection.updateFromAnchors();
     });
     this.undoManager.undoStop();
     return text;
@@ -841,12 +983,6 @@ export class Text extends Morph {
   // TextAttributes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  get textAttributes() { return this.document ? this.document.textAttributes : []; }
-  set textAttributes(attrs) {
-    this.document.textAttributes = attrs;
-    this.onAttributesChanged();
-  }
-
   setSortedTextAttributes(attrs) {
     // see comment in document
     this.document.setSortedTextAttributes(attrs);
@@ -903,24 +1039,10 @@ export class Text extends Morph {
   // text styles (ranges)
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  set defaultTextStyle(style) { this.setDefaultTextStyle(style); }
-  get defaultTextStyle() { return this.defaultTextStyleAttribute.data; }
-
   setDefaultTextStyle(style = obj.select(this, TextStyleAttribute.styleProps)) {
     var attr = this.defaultTextStyleAttribute;
     Object.assign(attr.data, style);
     this.onAttributesChanged();
-    return attr;
-  }
-
-  get defaultTextStyleAttribute() {
-    // currently we have this cryptic convention of having the attribute start
-    // at {row: 0, column -1}...
-    var attr = this.textAttributes.find(ea =>
-      ea.isStyleAttribute && (ea.start.row < 0 || ea.start.row === 0 && ea.start.column < 0));
-    if (!attr)
-      attr = this.addTextAttribute(new TextStyleAttribute(
-        {...defaultTextStyle}, {start: {row: 0, column: -1}, end: this.documentEndPosition}));
     return attr;
   }
 
@@ -947,21 +1069,6 @@ export class Text extends Morph {
     return this.selection.selections && this.selection.selections.length > 1;
   }
 
-  get selection() { return this._selection || (this._selection = new (config.text.useMultiSelect ? MultiSelection : Selection)(this)); }
-  set selection(range) { return this.selection.range = range; }
-
-  get selections() {
-    return this.selection.isMultiSelection ?
-      this.selection.selections :
-      [this.selection];
-  }
-
-  set selections(sels) {
-    this.selection = sels[0];
-    if (!this.selection.isMultiSelection) return;
-    sels.slice(1).forEach(ea => this.selection.addRange(ea));
-  }
-
   selectionBounds() {
     return this.selections.map(sel => {
       var start = this.charBoundsFromTextPosition(sel.start),
@@ -973,12 +1080,8 @@ export class Text extends Morph {
     }).reduce((all, ea) => ea.union(all));
   }
 
-  get cursorPosition() { return this.selection.lead; }
-  set cursorPosition(p) { this.selection.range = {start: p, end: p}; }
   get documentEndPosition() { return this.document ? this.document.endPosition : {row: 0, column: 0}; }
   isAtDocumentEnd() { return eqPosition(this.cursorPosition, this.documentEndPosition); }
-  get cursorScreenPosition() { return this.toScreenPosition(this.cursorPosition); }
-  set cursorScreenPosition(p) { return this.cursorPosition = this.toDocumentPosition(p); }
 
   cursorUp(n = 1) { return this.selection.goUp(n); }
   cursorDown(n = 1) { return this.selection.goDown(n); }
@@ -1072,7 +1175,7 @@ export class Text extends Morph {
     this.scrollPositionIntoView(this.cursorPosition);
   }
 
-  centerRange(range = this.selection.range, offset = pt(0,0), alignAtTopIfLarger = true) {    
+  centerRange(range = this.selection.range, offset = pt(0,0), alignAtTopIfLarger = true) {
     var t = this.charBoundsFromTextPosition(range.start).top(),
         b = this.charBoundsFromTextPosition(range.end).bottom(),
         height = b - t;
