@@ -123,14 +123,22 @@ function ensurePropertyInitializer(klass) {
   // when we inherit from "conventional classes" those don't have an
   // initializer method. We install a stub that calls the superclass function
   // itself
+  Object.defineProperty(klass.prototype, "propertiesAndPropertySettings", {
+    enumerable: false,
+    configurable: true,
+    writable: true,
+    value: function() {
+      var klass = this.constructor;
+      return klass[propertiesAndSettingsCacheSym]
+          || propertiesAndSettingsInHierarchyOf(klass);
+    }
+  });
   Object.defineProperty(klass.prototype, "initializeProperties", {
     enumerable: false,
     configurable: true,
     writable: true,
     value: function(values) {
-      var klass = this.constructor,
-          {properties, propertySettings} = klass[propertiesAndSettingsCacheSym]
-                                        || propertiesAndSettingsInHierarchyOf(klass);
+      var {properties, propertySettings} = this.propertiesAndPropertySettings();
       prepareInstanceForProperties(this, propertySettings, properties, values)
       return this;
     }
