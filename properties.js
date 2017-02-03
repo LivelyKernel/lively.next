@@ -192,6 +192,7 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
     let derived = descriptor.derived,
         defaultValue = descriptor.hasOwnProperty("defaultValue") ?
                         descriptor.defaultValue : undefined;
+    if (Array.isArray(defaultValue)) defaultValue = defaultValue.slice();
     if (!derived) instance[valueStoreProperty][key] = defaultValue;
 
     let initAction;
