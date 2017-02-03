@@ -352,15 +352,23 @@ function ensurePropertyInitializer(klass) {
   // when we inherit from "conventional classes" those don't have an
   // initializer method. We install a stub that calls the superclass function
   // itself
+  Object.defineProperty(klass.prototype, "propertiesAndPropertySettings", {
+    enumerable: false,
+    configurable: true,
+    writable: true,
+    value: function value() {
+      var klass = this.constructor;
+      return klass[propertiesAndSettingsCacheSym] || propertiesAndSettingsInHierarchyOf(klass);
+    }
+  });
   Object.defineProperty(klass.prototype, "initializeProperties", {
     enumerable: false,
     configurable: true,
     writable: true,
     value: function value(values) {
-      var klass = this.constructor,
-          _ref = klass[propertiesAndSettingsCacheSym] || propertiesAndSettingsInHierarchyOf(klass),
-          properties = _ref.properties,
-          propertySettings = _ref.propertySettings;
+      var _propertiesAndPropert = this.propertiesAndPropertySettings(),
+          properties = _propertiesAndPropert.properties,
+          propertySettings = _propertiesAndPropert.propertySettings;
 
       prepareInstanceForProperties(this, propertySettings, properties, values);
       return this;
@@ -413,6 +421,7 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
 
     var derived = descriptor.derived,
         defaultValue = descriptor.hasOwnProperty("defaultValue") ? descriptor.defaultValue : undefined;
+    if (Array.isArray(defaultValue)) defaultValue = defaultValue.slice();
     if (!derived) instance[valueStoreProperty][key] = defaultValue;
 
     var initAction = void 0;
