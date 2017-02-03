@@ -293,9 +293,15 @@ export class Morph {
   }
 
   get __only_serialize__() {
-    return Object.keys(this._morphicState)
-      .filter(key => this[key] != this.defaultProperties[key])
-        .concat("_tickingScripts", "attributeConnections");
+    var defaults = this.defaultProperties;
+    var properties = this.propertiesAndPropertySettings().properties;
+    var propsToSerialize = ["_tickingScripts", "attributeConnections"];
+    for (var key in properties) {
+      var descr = properties[key];
+      if (descr.readOnly || descr.derived || this[key] === defaults[key]) continue;
+      propsToSerialize.push(key);
+    }
+    return propsToSerialize;
   }
 
   get isMorph() { return true; }
