@@ -723,7 +723,7 @@ export class World extends Morph {
   activePrompt() { return this.getPrompts().reverse().find(ea => ea.isActive()); }
   getPrompts() { return this.submorphs.filter(ea => ea.isPrompt); }
 
-  async openInWindow(morph, opts = {title: morph.name, name: "window for " + morph.name}) {
+  openInWindow(morph, opts = {title: morph.name, name: "window for " + morph.name}) {
     return new Window({
       ...opts,
       extent: morph.extent.addXY(0, 25),

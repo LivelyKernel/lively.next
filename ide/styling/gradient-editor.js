@@ -165,7 +165,6 @@ export class GradientEditor extends Morph {
         if (this.gradientHandle) {
            signal(this, "openHandle", this.gradientHandle);
            this.gradientHandle.animate({opacity: 1, duration});
-           this.gradientHandle.relayout()
         }
    }
 

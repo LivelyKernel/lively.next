@@ -176,8 +176,8 @@ class InspectorTreeData extends TreeData {
 
 
 // inspect(this)
-export async function inspect(targetObject) {
-  return await Inspector.openInWindow({targetObject});
+export function inspect(targetObject) {
+  return Inspector.openInWindow({targetObject});
 }
 
 export default class Inspector extends Morph {
