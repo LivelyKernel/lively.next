@@ -1,12 +1,13 @@
 import { exec } from "./shell-exec.js";
 import { join, getPackageSpec, readPackageSpec } from "./helpers.js";
 import { Package } from "./package.js";
-import { tmpDir } from "os";
 var resource = lively.resources.resource;
 
 var packageSpecFile = getPackageSpec();
 
-export async function install(baseDir, toURL) {
+// var baseDir = "/home/lively/lively-web.org/lively.next/";
+
+export async function install(baseDir) {
 
   try {
     var log = [];
@@ -28,6 +29,7 @@ export async function install(baseDir, toURL) {
 
     if (baseDir.startsWith("/")) baseDir = "file://" + baseDir;
     await resource(baseDir).asDirectory().ensureExistance();
+
     console.log("=> Reading package specs from " + packageSpecFile);
     var knownProjects = await readPackageSpec(packageSpecFile),
         packages = await Promise.all(knownProjects.map(spec =>
@@ -83,6 +85,7 @@ export async function install(baseDir, toURL) {
     var livelyServerDir = join(baseDir, "lively.installer/")
     if (hasUI) $world.inform("Packages successfully updated!\n" + packages.map(ea => ea.name).join("\n"));
     else console.log(`=> Done!\npackages installed and / or updated! You can start a lively server by running './start.sh' inside ${livelyServerDir}.\nAfterwards your first lively.next world is ready to run at http://localhost:9011/index.html`);
+
   } catch (e) {
     console.error("Error occurred during installation: " + e.stack);
     log.push(e.stack || e);
@@ -97,13 +100,13 @@ export async function install(baseDir, toURL) {
 
 
 async function saveConflictingInitialFiles(baseDir, whileFn) {
+  // stores conflicting files of the base directory into a backup dir
 
   var initialLivelyFilesDir = join(baseDir, `/lively.morphic/examples/initial/`),
       existingFiles = (await resource(baseDir).dirList(1))
         .filter(ea => !ea.isDirectory())
-        .map(ea => ea.name())
-
-  var conflictingFiles = [];
+        .map(ea => ea.name()),
+      conflictingFiles = [];
 
   for (let fn of existingFiles) {
     var existing = resource(baseDir).join(fn),
@@ -118,21 +121,21 @@ async function saveConflictingInitialFiles(baseDir, whileFn) {
     return [];
   }
 
+  var timestamp = new Date().toJSON().replace(/[\.\:]/g, "_"),
+      backupDir = resource(baseDir).join(`${timestamp}_install-backup/`);
 
-  var tmp = resource(`file://${tmpDir()}`).join("lively.installer/");
-  await tmp.ensureExistance();
+  await backupDir.ensureExistance();
   for (let fn of conflictingFiles)
-    resource(baseDir).join(fn).copyTo(resource(tmp.join(fn)))
+    resource(baseDir).join(fn).copyTo(resource(backupDir.join(fn)));
 
   try {
     await whileFn();
   } finally {
-    console.log(`[lively.installer] There are conflicting initial files:`)
+    console.log(`[lively.installer] There are conflicting files in the base directory:`)
     for (let fn of conflictingFiles) {
       var local = resource(baseDir).join(fn);
       console.log(local.url);
-      resource(tmp.join(fn)).copyTo(local);
     }
-    console.log(`[lively.installer] The conflicting initial files were not updated. To commit them, add them to ${initialLivelyFilesDir}`);
+    console.log(`[lively.installer] These files were updated and your version of of them was put into ${backupDir.url}.`);
   }
 }
