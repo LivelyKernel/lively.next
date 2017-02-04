@@ -48,7 +48,8 @@ function createDummyWorld() {
   world = new World({name: "world", extent: pt(300,300), submorphs: [
     text("text\nfor tests", {
       position: pt(10.10),
-      fill: Color.gray.lighter(2)
+      fill: Color.gray.lighter(2),
+      cursorPosition: {row: 0, column: 0}
     })]})
   sut = world.get("text");
   return world;
@@ -160,16 +161,17 @@ describe("anchors", () => {
 
   it("adds anchor by id", () => {
     var t = text("hello\nworld", {}),
+        nAnchors = t.anchors.length,
         a = t.addAnchor({id: "test", column: 1, row: 1});
-    expect(t.anchors).to.have.length(1);
+    expect(t.anchors).to.have.length(nAnchors+1);
     expect(t.addAnchor({id: "test"})).equals(a);
-    expect(t.anchors).to.have.length(1);
+    expect(t.anchors).to.have.length(nAnchors+1);
     t.removeAnchor(a);
-    expect(t.anchors).to.have.length(0);
+    expect(t.anchors).to.have.length(nAnchors);
     t.addAnchor({id: "test"})
-    expect(t.anchors).to.have.length(1);
+    expect(t.anchors).to.have.length(nAnchors+1);
     t.removeAnchor("test");
-    expect(t.anchors).to.have.length(0);
+    expect(t.anchors).to.have.length(nAnchors);
   });
 
   it("insert moves anchors around", () => {
@@ -411,7 +413,8 @@ describe("text mouse events", () => {
 
 describe("saved marks", () => {
 
-  var t; beforeEach(() => t = text("hello\n world"));
+  var t; beforeEach(() => t = text("hello\n world", {cursorPosition: {row: 0, column: 0}}));
+  // t.openInWorld(); t.focus();
 
   it("activates mark to select", () => {
     t.cursorPosition = t.activeMark = {row: 0, column: 1};

@@ -400,7 +400,7 @@ describe("key events", () => {
       var [e] = await env.eventDispatcher.simulateDOMEvents({type: "keydown", key: "z"});
       !e.propagationStopped && await env.eventDispatcher.simulateDOMEvents({type: "input", key: "z"});
       expect(log).equals("!");
-      expect(submorph4.textString).equals("ztext");
+      expect(submorph4.textString).equals("textz");
       expect(env).deep.property("eventDispatcher.eventState.keyInputState")
         .deep.equals({count: undefined, keyChain: ""});
     });

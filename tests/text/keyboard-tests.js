@@ -12,10 +12,10 @@ function text(string, props) {
     fontFamily: "Monaco, monospace",
     fontSize: 10,
     extent: pt(100,100),
+    cursorPosition: {row: 0, column: 0},
     ...props
   });
 }
-
 
 describe("text key input", () => {
 

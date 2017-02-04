@@ -146,6 +146,7 @@ export class Text extends Morph {
       },
 
       selection: {
+        after: ["textLayout", "document", "textString"],
         get() {
           var sel = this.getProperty("selection");
           if (sel) return sel;
@@ -518,8 +519,9 @@ export class Text extends Morph {
     }
 
     var existing = anchor.id && this.anchors.find(ea => ea.id === anchor.id);
-    if (existing) Object.assign(existing, anchor);
-    else this.anchors.push(anchor);
+    if (existing) return Object.assign(existing, anchor);
+
+    this.anchors.push(anchor);
     return anchor;
   }
 
