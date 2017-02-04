@@ -337,6 +337,10 @@ export class Morph {
     return `<${this.constructor.name} - ${this.name ? this.name : this.id}>`;
   }
 
+  edit() {
+    return this.env.world.execCommand("open object editor", {target: this});
+  }
+
   livelyCustomInspect() {
     var properties = [],
         ignored = [], seen = {},
