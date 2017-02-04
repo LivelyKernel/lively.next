@@ -1,4 +1,4 @@
-/*global declare, it, describe, beforeEach, afterEach*/
+/*global declare, it, describe, beforeEach, afterEach, before, after*/
 import { expect } from "mocha-es6";
 
 import { arr } from "lively.lang";
@@ -41,7 +41,11 @@ function setup() {
                    + "-v\n"
                    + "+w\n"
                    + " x\n";
-  editor = new Text({textString: patchString, lineWrapping: false, plugins: [new DiffEditorPlugin()]});
+  editor = new Text({
+    textString: patchString,
+    lineWrapping: false,
+    plugins: [new DiffEditorPlugin()]
+  });
   editor.openInWorld();
 }
 
@@ -60,9 +64,7 @@ describe("diff navigator", () => {
   after(() => teardown());
 
   it("find hunk start end", function() {
-    var nav = new DiffNavigator();
-
-    var result;
+    var nav = new DiffNavigator(), result;
 
     result = nav.findContainingHunkOrPatchRange(editor, r(0,0, 0,0));
     expect(r(0,0, 14,0)).deep.equals(result);
@@ -86,4 +88,5 @@ describe("diff navigator", () => {
     result = nav.findContainingHunkOrPatchRange(editor, r(15,0, 17,0));
     expect(r(14,0, 23,0)).deep.equals(result);
   });
+
 });
