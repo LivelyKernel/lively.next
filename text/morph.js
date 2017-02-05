@@ -69,7 +69,8 @@ export class Text extends Morph {
       },
 
       undoManager: {
-        initialize() { this.undoManager = new UndoManager(); }
+        before: ["document"],
+        initialize() { this.ensureUndoManager(); }
       },
 
       draggable:   {defaultValue: false},
@@ -431,6 +432,8 @@ export class Text extends Morph {
 
     super(props);
 
+    this.undoManager.reset();
+
     this.fit();
     this._needsFit = false;
     // Update position after fit
@@ -456,7 +459,7 @@ export class Text extends Morph {
     this.textLayout = new TextLayout(this.env.fontMetric);
     this.textRenderer = defaultRenderer;
     this.changeDocument(TextDocument.fromString(""), true);
-    this.undoManager = new UndoManager();
+    this.ensureUndoManager();
     this.setDefaultTextStyle(defaultTextStyle);
     // this.fit();
     // this._needsFit = false;
@@ -1613,6 +1616,12 @@ export class Text extends Morph {
 
       return Range.at(pos);
     }
+  }
+
+  ensureUndoManager() {
+    if (this.undoManager) return this.undoManager;
+    var filterFn = change => change.selector === "insertText" || change.selector === "deleteText";
+    return this.undoManager = new UndoManager(filterFn);
   }
 
   textUndo() {

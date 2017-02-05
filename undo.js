@@ -14,7 +14,7 @@ class Undo {
   recorded() { return !!this.changes; }
   isRecording() { return !!this.recorder; }
 
-  startRecording() {
+  startRecording(filterFn) {
     if (this.recorded() || this.isRecording())
       throw new Error("Undo already recorded / recording");
     if (!this.targets.length)
@@ -22,9 +22,15 @@ class Undo {
 
     this.timestamp = Date.now();
     var morph = this.targets[0];
-    this.recorder = morph.recordChangesStart(({target}) =>
-      !target.isUsedAsEpiMorph() && this.targets.some(undoTarget =>
-        undoTarget === target || undoTarget.isAncestorOf(target)));
+
+    this.recorder = morph.recordChangesStart(change => {
+      var {target} = change;
+      if (target.isUsedAsEpiMorph()) return false;
+      if (!this.targets.some(undoTarget =>
+            undoTarget === target || undoTarget.isAncestorOf(target))) return false;
+      if (typeof filterFn === "function") return filterFn(change);
+      return true;
+    });
 
     return this;
   }
@@ -80,8 +86,9 @@ function printArg(x) {
 
 export class UndoManager {
 
-  constructor() {
+  constructor(optFilter) {
     this.reset();
+    this.filter = optFilter;
   }
 
   reset() {
@@ -143,7 +150,7 @@ export class UndoManager {
       console.warn(`There is already an undo recorded`)
       return;
     }
-    return this.undoInProgress = new Undo(name, [morph], this.counter++).startRecording();
+    return this.undoInProgress = new Undo(name, [morph], this.counter++).startRecording(this.filter);
   }
 
   undoStop() {
