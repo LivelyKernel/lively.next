@@ -10,26 +10,52 @@ import { connect, once, noUpdate } from "lively.bindings";
 
 export default class Workspace extends Window {
 
-  constructor(props = {}) {
-    super({
-      title: "Workspace",
-      targetMorph: {
-        type: "text", name: "editor",
-        textString: props.content || "// Enter and evaluate JavaScript code here",
-        ...config.codeEditor.defaultStyle,
-        plugins: [new JavaScriptEditorPlugin()]
-      },
-      extent: pt(400,300),
-      ...obj.dissoc(props, ["content"])
-    });
+  static get properties() {
 
-    var ed = this.targetMorph;
-    this.jsPlugin.evalEnvironment = {
-      targetModule: "lively://lively.next-workspace/" + ed.id,
-      context: ed, format: "esm"
+    return {
+      extent: {defaultValue: pt(400,300)},
+
+      title: {
+        initialize(val) {
+          this.title = val || "Workspace";
+        },
+      },
+
+      targetMorph: {
+        initialize() {
+          this.targetMorph = {
+            type: "text", name: "editor",
+            textString: "// Enter and evaluate JavaScript code here",
+            ...config.codeEditor.defaultStyle,
+            plugins: [new JavaScriptEditorPlugin()]
+          };
+        }
+      },
+
+      content: {
+        derived: true, after: ["targetMorph"],
+        get() { return this.targetMorph.textString; },
+        set(val) { if (val) this.targetMorph.textString = val; }
+      },
+
+      jsPlugin: {
+        derived: true, readOnly: true, after: ["targetMorph"],
+        get() { return this.targetMorph.pluginFind(p => p.isEditorPlugin); },
+        initialize() {
+          var ed = this.targetMorph;
+          this.jsPlugin.evalEnvironment = {
+            targetModule: "lively://lively.next-workspace/" + ed.id,
+            context: ed, format: "esm"
+          }
+          this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(this, this.getEvalBackend()));
+        }
+      }
+
     }
-    this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(this, this.getEvalBackend()));
   }
+
+  setEvalBackend(choice) { this.jsPlugin.evalEnvironment.remote = choice; }
+  getEvalBackend() { this.jsPlugin.evalEnvironment.remote; }
 
   relayoutWindowControls() {
     super.relayoutWindowControls();
@@ -41,11 +67,6 @@ export default class Workspace extends Window {
     }
   }
 
-  get jsPlugin() { return this.targetMorph.pluginFind(p => p.isEditorPlugin); }
-
-  setEvalBackend(choice) { this.jsPlugin.evalEnvironment.remote = choice; }
-  getEvalBackend() { this.jsPlugin.evalEnvironment.remote; }
-  
   get commands() {
     return [
       EvalBackendChooser.default.activateEvalBackendCommand(this)
