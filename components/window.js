@@ -7,8 +7,6 @@ export default class Window extends Morph {
 
   static get properties() {
     return {
-      title:        {after: ["submorphs"]},
-      targetMorph:  {after: ["submorphs"]},
       submorphs:    {initialize() { this.submorphs = this.controls(); }},
       dropShadow:   {initialize() { this.dropShadow = new ShadowObject(true); }},
       fill:         {defaultValue: Color.lightGray},
@@ -16,7 +14,37 @@ export default class Window extends Morph {
       borderColor:  {defaultValue: Color.gray},
       borderWidth:  {defaultValue: 1},
       clipMode:     {defaultValue: "hidden"},
-      resizable:    {defaultValue: true}
+      resizable:    {defaultValue: true},
+
+      title: {
+        after: ["submorphs"], derived: true,
+        get() { return this.titleLabel().textString; },
+        set(title) {
+          var textAndAttrs = typeof title === "string" ? [[title, {}]] : title,
+              maxLength = 100, length = 0, truncated = [];
+          for (let ea of textAndAttrs) {
+            let [string, attr] = ea;
+            string = string.replace(/\n/g, "");
+            var delta = string.length + length - maxLength;
+            if (delta > 0) string = string.slice(0, -delta);
+            truncated.push([string, attr || {}]);
+            if (length >= maxLength) break;
+          }
+          this.titleLabel().value = truncated;
+        }
+      },
+
+      targetMorph:  {
+        after: ["submorphs"], derived: true,
+        get() { return arr.withoutAll(this.submorphs, this.controls())[0]; },
+        set(morph) {
+          var ctrls = this.controls();
+          arr.withoutAll(this.submorphs, ctrls).forEach(ea => ea.remove());
+          if (morph) this.addMorph(morph, ctrls[0]);
+          this.whenRendered().then(() => this.relayoutWindowControls());
+        }
+      }
+
     }
   }
 
@@ -34,14 +62,6 @@ export default class Window extends Morph {
   }
 
   get isWindow() { return true }
-
-  get targetMorph() { return arr.withoutAll(this.submorphs, this.controls())[0]; }
-  set targetMorph(morph) {
-    var ctrls = this.controls();
-    arr.withoutAll(this.submorphs, ctrls).forEach(ea => ea.remove());
-    if (morph) this.addMorph(morph, ctrls[0]);
-    this.whenRendered().then(() => this.relayoutWindowControls());
-  }
 
   targetMorphBounds() { return new Rectangle(0, 25, this.width, this.height - 25); }
 
@@ -148,33 +168,18 @@ export default class Window extends Morph {
   }
 
   resizer() {
-    const win = this;
-    return this.getSubmorphNamed("resizer") || morph({
+    var win = this, resizer = this.getSubmorphNamed("resizer");
+    if (resizer) return resizer;    
+    resizer = morph({
       name: "resizer",
       nativeCursor: "nwse-resize",
       extent: pt(20,20),
       fill: Color.transparent,
       bottomRight: this.extent,
-      onDrag(evt) {
-        win.resizeBy(evt.state.dragDelta);
-        this.bottomRight = win.extent;
-      }
     });
-  }
-
-  get title() { return this.titleLabel().textString; }
-  set title(title) {
-    var textAndAttrs = typeof title === "string" ? [[title, {}]] : title,
-        maxLength = 100, length = 0, truncated = [];
-    for (let ea of textAndAttrs) {
-      let [string, attr] = ea;
-      string = string.replace(/\n/g, "");
-      var delta = string.length + length - maxLength;
-      if (delta > 0) string = string.slice(0, -delta);
-      truncated.push([string, attr || {}]);
-      if (length >= maxLength) break;
-    }
-    this.titleLabel().value = truncated;
+    connect(resizer, 'onDrag', win, 'resizeBy', {converter: evt => evt.state.dragDelta});
+    connect(win, 'extent', resizer, 'bottomRight');
+    return resizer;
   }
 
   toggleMinimize() {
