@@ -264,9 +264,20 @@ export class Morph {
     this._cachedPaths = {};
     this._pathDependants = [];
     this._tickingScripts = [];
+    this.initializeProperties
     this.initializeProperties(props);
     if (props.bounds) this.setBounds(props.bounds);
-    Object.assign(this, obj.dissoc(props, ["env", "type", "submorphs", "bounds", "layout"]));
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // rk 2017-02-04: FIXME remove the assign below once we are fully
+    // transitioned to properties. Properties themselves set their default or
+    // constructor value in initializeProperties
+    var dontAssign = ["env", "type", "submorphs", "bounds", "layout"],
+        properties = this.propertiesAndPropertySettings().properties
+    for (var key in properties) dontAssign.push(key);
+    Object.assign(this, obj.dissoc(props, dontAssign));
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
     if (props.layout) this.layout = props.layout;
   }
 

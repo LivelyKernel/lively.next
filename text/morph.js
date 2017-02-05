@@ -216,11 +216,11 @@ export class Text extends Morph {
       // default font styling
 
       textAttributes: {
-        derived: true, after: ["document"],
+        derived: true, after: ["document", "textString"],
         get() { return this.document.textAttributes; },
         set(attrs) {
-          attrs.map(range => this.addTextAttribute(range));
-          // this.document.textAttributes = attrs;
+          // attrs.map(range => this.addTextAttribute(range));
+          this.document.textAttributes = attrs;
           this.onAttributesChanged();
         }
       },
