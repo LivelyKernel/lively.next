@@ -305,7 +305,7 @@ var worldCommands = [
 
   {
     name: "open text window",
-    exec: async (world, opts = {}) => {
+    exec: (world, opts = {}) => {
       var {title, extent, content, mode, name} = opts;
 
       title = title ||  "text window";
