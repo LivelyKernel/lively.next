@@ -82,7 +82,7 @@ export async function install(baseDir) {
     pBar && pBar.remove();
     indicator && indicator.remove();
 
-    var livelyServerDir = join(baseDir, "lively.installer/")
+    var livelyServerDir = baseDir
     if (hasUI) $world.inform("Packages successfully updated!\n" + packages.map(ea => ea.name).join("\n"));
     else console.log(`=> Done!\npackages installed and / or updated! You can start a lively server by running './start.sh' inside ${livelyServerDir}.\nAfterwards your first lively.next world is ready to run at http://localhost:9011/index.html`);
 
