@@ -13,18 +13,162 @@ export class Label extends Morph {
     return {
       fill:             {defaultValue: null},
       draggable:        {defaultValue: false},
-      padding:          {defaultValue: Rectangle.inset(0)},
       nativeCursor:     {defaultValue: "default"},
-      autofit:          {defaultValue: true},
 
-      // default text style
-      fontFamily:       {defaultValue: "Sans-Serif"},
-      fontSize:         {defaultValue: 12},
-      fontColor:        {defaultValue: Color.black},
-      fontWeight:       {defaultValue: "normal"},
-      fontStyle:        {defaultValue: "normal"},
-      textDecoration:   {defaultValue: "none"},
-      textStyleClasses: {defaultValue: undefined},
+      value: {
+        derived: true, after: ["textAndAttributes", "textString"],
+        get() {
+          var {textAndAttributes} = this;
+          if (textAndAttributes.length === 1) {
+            var [text, style] = textAndAttributes[0];
+            if (!Object.keys(style || {}).length) return text;
+          }
+          return textAndAttributes;
+        },
+        set(value) {
+          typeof value === "string" ?
+            this.textString = value :
+            this.textAndAttributes = value;
+        }
+      },
+
+      textString: {
+        derived: true, after: ["textAndAttributes"],
+        get() { return this.textAndAttributes.map(([text]) => text).join(""); },
+        set(value) { this.textAndAttributes = [[value, {}]]; }
+      },
+    
+      textAndAttributes: {
+        get() {
+      				var val = this.getProperty("textAndAttributes");
+          if (!val || val.length < 1) val = [[""]];
+          return val;
+        },
+      
+        set(value) {
+          if (!Array.isArray(value)) value = [[String(value), {}]];
+          if (value.length === 0) value = [["", {}]];
+          this._cachedTextBounds = null;
+          this.setProperty("textAndAttributes", value);
+          if (this.autofit) this._needsFit = true;
+          signal(this, "value", value);
+        }
+      },
+    
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // valueAndAnnotation is a way to put rich text content followed by a right
+      // aligned annotation into a label. It simply is using textAndAttributes with
+      // the convention that the last string/attribue pair in textAndAttributes is the
+      // annotation (the attribute includes the textStyleClass "annotation")
+    
+      valueAndAnnotation: {
+        derived: true, after: ["textAndAttributes"],
+
+        get() {
+          var value = this.textAndAttributes, annotation = null;
+          if (value.length > 1)  {
+            var [string, props] = arr.last(value);
+            if (props && props.textStyleClasses && props.textStyleClasses.includes("annotation")) {
+              value = value.slice(0, -1);
+              annotation = [string, props];
+            }
+          }
+          return {value, annotation};
+        },
+      
+        set(valueAndAnnotation) {
+          var {value, annotation} = valueAndAnnotation;
+          
+          // Ensure value is in the right format for being the prefix in textAndAttributes
+          if (!value) value = "";
+          if (typeof value === "string") value = [[value, {}]]
+          if (!Array.isArray(value)) value = String(value);
+          else if (value.length === 2 && typeof value[0] === "string") value = [value]
+      
+          var textAndAttributes = value.slice();
+      
+          // convert and add the annotation
+          if (annotation) {
+            if (typeof annotation === "string") annotation = [annotation, {}];
+            textAndAttributes.push(annotation);
+            var annAttr = annotation[1];
+            if (!annAttr) annAttr = annotation[1] = {};
+            annAttr.textStyleClasses = (annAttr.textStyleClasses || []).concat("annotation");
+            if (!annAttr.textStyleClasses.includes("annotation"))
+              annAttr.textStyleClasses.push("annotation");
+          }
+      
+          this.textAndAttributes = textAndAttributes;
+        }
+
+      },
+    
+      autofit: {
+        defaultValue: true,
+        set autofit(value) {
+          this.setProperty("autofit", value);
+          if (value) this._needsFit = true;
+        }
+      },
+    
+      padding: {
+        defaultValue: Rectangle.inset(0),
+        set padding(value) {
+          this._cachedTextBounds = null;
+          this.setProperty("padding", typeof value === "number" ? Rectangle.inset(value) : value);
+          if (this.autofit) this._needsFit = true;
+        }
+      },
+
+      fontFamily: {
+        defaultValue: "Sans-Serif",
+        set fontFamily(fontFamily) {
+          this._cachedTextBounds = null;
+          this.setProperty("fontFamily", fontFamily);
+          if (this.autofit) this._needsFit = true;
+        }
+      },
+    
+      fontSize: {
+        defaultValue: 12,
+        set fontSize(fontSize) {
+          this._cachedTextBounds = null;
+          this.setProperty("fontSize", fontSize);
+          if (this.autofit) this._needsFit = true;
+        }
+      },
+    
+      fontColor: {defaultValue: Color.black},
+    
+      fontWeight: {
+        defaultValue: "normal",
+        set fontWeight(fontWeight) {
+          this._cachedTextBounds = null;
+          this.setProperty("fontWeight", fontWeight);
+          if (this.autofit) this._needsFit = true;
+        }
+      },
+    
+      fontStyle: {
+        defaultValue: "normal",
+        set fontStyle(fontStyle) {
+          this._cachedTextBounds = null;
+          this.setProperty("fontStyle", fontStyle);
+          if (this.autofit) this._needsFit = true;
+        }
+      },
+    
+      textDecoration: {defaultValue: "none"},
+    
+      textStyleClasses: {
+        defaultValue: undefined,
+        set textStyleClasses(textStyleClasses) {
+          this._cachedTextBounds = null;
+          this.setProperty("textStyleClasses", textStyleClasses);
+          if (this.autofit) this._needsFit = true;
+        }
+      }
+
     }
   }
 
@@ -59,139 +203,6 @@ export class Label extends Morph {
   }
 
   get isLabel() { return true }
-
-  get value() {
-    var {textAndAttributes} = this;
-    if (textAndAttributes.length === 1) {
-      var [text, style] = textAndAttributes[0];
-      if (!Object.keys(style || {}).length) return text;
-    }
-    return textAndAttributes;
-  }
-  set value(value) {
-    typeof value === "string" ?
-      this.textString = value :
-      this.textAndAttributes = value;
-  }
-
-  get textString() { return this.textAndAttributes.map(([text]) => text).join(""); }
-  set textString(value) { this.textAndAttributes = [[value, {}]]; }
-
-  get textAndAttributes() {
-    var val = this.getProperty("textAndAttributes");
-    if (!val || val.length < 1) val = [[""]];
-    return val;
-  }
-
-  set textAndAttributes(value) {
-    if (!Array.isArray(value)) value = [[String(value), {}]];
-    if (value.length === 0) value = [["", {}]];
-    this._cachedTextBounds = null;
-    this.addValueChange("textAndAttributes", value);
-    if (this.autofit) this._needsFit = true;
-    signal(this, "value", value);
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // valueAndAnnotation is a way to put rich text content followed by a right
-  // aligned annotation into a label. It simply is using textAndAttributes with
-  // the convention that the last string/attribue pair in textAndAttributes is the
-  // annotation (the attribute includes the textStyleClass "annotation")
-
-  get valueAndAnnotation() {
-    var value = this.textAndAttributes, annotation = null;
-    if (value.length > 1)  {
-      var [string, props] = arr.last(value);
-      if (props && props.textStyleClasses && props.textStyleClasses.includes("annotation")) {
-        value = value.slice(0, -1);
-        annotation = [string, props];
-      }
-    }
-    return {value, annotation};
-  }
-
-  set valueAndAnnotation(valueAndAnnotation) {
-    var {value, annotation} = valueAndAnnotation;
-    
-    // Ensure value is in the right format for being the prefix in textAndAttributes
-    if (!value) value = "";
-    if (typeof value === "string") value = [[value, {}]]
-    if (!Array.isArray(value)) value = String(value);
-    else if (value.length === 2 && typeof value[0] === "string") value = [value]
-
-    var textAndAttributes = value.slice();
-
-    // convert and add the annotation
-    if (annotation) {
-      if (typeof annotation === "string") annotation = [annotation, {}];
-      textAndAttributes.push(annotation);
-      var annAttr = annotation[1];
-      if (!annAttr) annAttr = annotation[1] = {};
-      annAttr.textStyleClasses = (annAttr.textStyleClasses || []).concat("annotation");
-      if (!annAttr.textStyleClasses.includes("annotation"))
-        annAttr.textStyleClasses.push("annotation");
-    }
-
-    this.textAndAttributes = textAndAttributes;
-  }
-
-  get autofit() { return this.getProperty("autofit") }
-  set autofit(value) {
-    this.addValueChange("autofit", value);
-    if (value) this._needsFit = true;
-  }
-
-  get padding() { return this.getProperty("padding"); }
-  set padding(value) {
-    this._cachedTextBounds = null;
-    this.addValueChange("padding", typeof value === "number" ? Rectangle.inset(value) : value);
-    if (this.autofit) this._needsFit = true;
-  }
-
-  get fontFamily() { return this.getProperty("fontFamily"); }
-  set fontFamily(fontFamily) {
-    this._cachedTextBounds = null;
-    this.addValueChange("fontFamily", fontFamily);
-    if (this.autofit) this._needsFit = true;
-  }
-
-  get fontSize() { return this.getProperty("fontSize"); }
-  set fontSize(fontSize) {
-    this._cachedTextBounds = null;
-    this.addValueChange("fontSize", fontSize);
-    if (this.autofit) this._needsFit = true;
-  }
-
-  get fontColor() { return this.getProperty("fontColor"); }
-  set fontColor(fontColor) {
-    this.addValueChange("fontColor", fontColor);
-  }
-
-  get fontWeight() { return this.getProperty("fontWeight"); }
-  set fontWeight(fontWeight) {
-    this._cachedTextBounds = null;
-    this.addValueChange("fontWeight", fontWeight);
-    if (this.autofit) this._needsFit = true;
-  }
-
-  get fontStyle() { return this.getProperty("fontStyle"); }
-  set fontStyle(fontStyle) {
-    this._cachedTextBounds = null;
-    this.addValueChange("fontStyle", fontStyle);
-    if (this.autofit) this._needsFit = true;
-  }
-
-  get textDecoration() { return this.getProperty("textDecoration"); }
-  set textDecoration(textDecoration) {
-    this.addValueChange("textDecoration", textDecoration);
-  }
-
-  get textStyleClasses() { return this.getProperty("textStyleClasses"); }
-  set textStyleClasses(textStyleClasses) {
-    this._cachedTextBounds = null;
-    this.addValueChange("textStyleClasses", textStyleClasses);
-    if (this.autofit) this._needsFit = true;
-  }
 
   get textStyle() {
     return obj.select(this, [
