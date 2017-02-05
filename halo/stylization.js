@@ -339,9 +339,7 @@ class StyleHalo extends Morph {
     if (this.borderStyler.opened) return;
     const vb = this.env.world.visibleBounds(),
           visiblePart = vb.intersection(this.targetBounds),
-          pos = visiblePart
-            .insetByRect(rect(-100, -50, 0, -50))
-            .this.getSideInWorld()();
+          pos = visiblePart.insetByRect(rect(-100, -50, 0, -50))[this.getSideInWorld()]();
     this.borderStyler.center = this.localize(pos);
   }
 

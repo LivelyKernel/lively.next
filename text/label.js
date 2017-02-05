@@ -37,14 +37,14 @@ export class Label extends Morph {
         get() { return this.textAndAttributes.map(([text]) => text).join(""); },
         set(value) { this.textAndAttributes = [[value, {}]]; }
       },
-    
+
       textAndAttributes: {
         get() {
       				var val = this.getProperty("textAndAttributes");
           if (!val || val.length < 1) val = [[""]];
           return val;
         },
-      
+
         set(value) {
           if (!Array.isArray(value)) value = [[String(value), {}]];
           if (value.length === 0) value = [["", {}]];
@@ -54,13 +54,13 @@ export class Label extends Morph {
           signal(this, "value", value);
         }
       },
-    
+
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // valueAndAnnotation is a way to put rich text content followed by a right
       // aligned annotation into a label. It simply is using textAndAttributes with
       // the convention that the last string/attribue pair in textAndAttributes is the
       // annotation (the attribute includes the textStyleClass "annotation")
-    
+
       valueAndAnnotation: {
         derived: true, after: ["textAndAttributes"],
 
@@ -75,18 +75,18 @@ export class Label extends Morph {
           }
           return {value, annotation};
         },
-      
+
         set(valueAndAnnotation) {
           var {value, annotation} = valueAndAnnotation;
-          
+
           // Ensure value is in the right format for being the prefix in textAndAttributes
           if (!value) value = "";
           if (typeof value === "string") value = [[value, {}]]
           if (!Array.isArray(value)) value = String(value);
           else if (value.length === 2 && typeof value[0] === "string") value = [value]
-      
+
           var textAndAttributes = value.slice();
-      
+
           // convert and add the annotation
           if (annotation) {
             if (typeof annotation === "string") annotation = [annotation, {}];
@@ -97,12 +97,12 @@ export class Label extends Morph {
             if (!annAttr.textStyleClasses.includes("annotation"))
               annAttr.textStyleClasses.push("annotation");
           }
-      
+
           this.textAndAttributes = textAndAttributes;
         }
 
       },
-    
+
       autofit: {
         defaultValue: true,
         set autofit(value) {
@@ -110,7 +110,7 @@ export class Label extends Morph {
           if (value) this._needsFit = true;
         }
       },
-    
+
       padding: {
         defaultValue: Rectangle.inset(0),
         initialize(value) { this.padding = value; /*for num -> rect conversion*/},
@@ -129,7 +129,7 @@ export class Label extends Morph {
           if (this.autofit) this._needsFit = true;
         }
       },
-    
+
       fontSize: {
         defaultValue: 12,
         set fontSize(fontSize) {
@@ -138,9 +138,9 @@ export class Label extends Morph {
           if (this.autofit) this._needsFit = true;
         }
       },
-    
+
       fontColor: {defaultValue: Color.black},
-    
+
       fontWeight: {
         defaultValue: "normal",
         set fontWeight(fontWeight) {
@@ -149,7 +149,7 @@ export class Label extends Morph {
           if (this.autofit) this._needsFit = true;
         }
       },
-    
+
       fontStyle: {
         defaultValue: "normal",
         set fontStyle(fontStyle) {
@@ -158,9 +158,9 @@ export class Label extends Morph {
           if (this.autofit) this._needsFit = true;
         }
       },
-    
+
       textDecoration: {defaultValue: "none"},
-    
+
       textStyleClasses: {
         defaultValue: undefined,
         set textStyleClasses(textStyleClasses) {
@@ -184,6 +184,7 @@ export class Label extends Morph {
     super(obj.dissoc(props, ["fontMetric"]));
     if (fontMetric)
       this._fontMetric = fontMetric;
+    this._cachedTextBounds = null;
     this.fit();
     // Update position + extent after fit
     if (extent !== undefined) this.extent = extent;

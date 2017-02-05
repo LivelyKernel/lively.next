@@ -1,7 +1,7 @@
 import { obj, num, arr, properties } from "lively.lang";
 import { pt, Color, Rectangle, rect } from "lively.graphics";
 import { signal, connect, disconnect } from "lively.bindings";
-import { Morph, Button, List, Text, GridLayout, HorizontalLayout, 
+import { Morph, Button, List, Text, GridLayout, HorizontalLayout,
          StyleRules, Path, Ellipse, config, Label } from "lively.morphic";
 import { intersect, shape } from 'svg-intersections';
 import { Icon } from "./icons.js";
@@ -16,7 +16,7 @@ export class Leash extends Path {
          fill: Color.transparent,
          ...props,
          endpointStyle: {
-             fill: Color.black, origin: pt(3.5,3.5), 
+             fill: Color.black, origin: pt(3.5,3.5),
              extent: pt(10,10), nativeCursor: "-webkit-grab",
              ...props.endpointStyle
          },
@@ -28,10 +28,10 @@ export class Leash extends Path {
    }
 
    get endpointStyle() { return this._endpointStyle }
-   set endpointStyle(style) { 
+   set endpointStyle(style) {
        this._endpointStyle = style;
-       this.startPoint && Object.assign(this.startPoint, this.getEndpointStyle(0)); 
-       this.endPoint && Object.assign(this.endPoint, this.getEndpointStyle(1)); 
+       this.startPoint && Object.assign(this.startPoint, this.getEndpointStyle(0));
+       this.endPoint && Object.assign(this.endPoint, this.getEndpointStyle(1));
    }
 
    remove() {
@@ -48,8 +48,8 @@ export class Leash extends Path {
    }
 
    getEndpointStyle(idx) {
-      return {...this.endpointStyle, ...idx == 0 ? 
-                 this.endpointStyle.start : 
+      return {...this.endpointStyle, ...idx == 0 ?
+                 this.endpointStyle.start :
                  this.endpointStyle.end}
    }
 
@@ -104,8 +104,8 @@ export class Leash extends Path {
                   this.clearConnection()
                   this.connectedMorph = morph;
                   this.attachedSide = side;
-                  this.vertex = {...leash.vertices[idx], 
-                                 controlPoints: leash.controlPointsFor(side)} 
+                  this.vertex = {...leash.vertices[idx],
+                                 controlPoints: leash.controlPointsFor(side)}
                   connect(this.connectedMorph, "position", this, "update");
                   connect(this.connectedMorph, "extent", this, "update");
                   this.update();
@@ -184,7 +184,7 @@ export class PropertyInspector extends Morph {
    constructor(props) {
        const {target, property} = props;
        super({
-           ...props, 
+           ...props,
            morphClasses: ["root"],
            submorphs: [new ValueScrubber({
                         name: "value",
@@ -208,23 +208,23 @@ export class PropertyInspector extends Morph {
 
    get styler() {
        const buttonStyle = {
-            type: "button", 
+            type: "button",
             clipMode: "hidden",
             activeStyle: {
-                fill: Color.transparent, 
+                fill: Color.transparent,
                 borderWidth: 0, fontColor: Color.white.darker()
-            }, 
+            },
             triggerStyle: {fill: Color.transparent, fontColor: Color.black}
          };
        return new StyleRules({
            root: {
               extent:pt(55, 25), borderRadius: 5,
-              borderWidth: 1, borderColor: Color.gray, 
+              borderWidth: 1, borderColor: Color.gray,
               clipMode: "hidden"},
            down: {padding: rect(0,-5,0,10), ...buttonStyle},
            up: {padding: rect(0,0,0,-5), ...buttonStyle},
            value: {fill: Color.white, padding: Rectangle.inset(4), fontSize: 15},
-           
+
        })
    }
 
@@ -232,16 +232,16 @@ export class PropertyInspector extends Morph {
        this.get("value").value = this.target[this.property];
    }
 
-   increment() { 
+   increment() {
       if (this.max != undefined && this.target[this.property] >= this.max) return;
-      this.target[this.property] += 1; 
-      this.update() 
+      this.target[this.property] += 1;
+      this.update()
    }
 
-   decrement() { 
+   decrement() {
       if (this.min != undefined && this.target[this.property] <= this.min) return;
-      this.target[this.property] -= 1; 
-      this.update() 
+      this.target[this.property] -= 1;
+      this.update()
    }
 
    initLayout() {
@@ -363,6 +363,11 @@ export class CheckBox extends Morph {
 
 export class LabeledCheckBox extends Morph {
 
+  static example() {
+    var cb = new LabeledCheckBox({label: "foo"}).openInWorld();
+    // cb.remove()
+  }
+
   static get properties() {
     return {
       name: {defaultValue: "LabeledCheckBox"},
@@ -439,168 +444,213 @@ export class LabeledCheckBox extends Morph {
 
 export class ModeSelector extends Morph {
 
-   constructor(props) {
-     var {items, init, tooltips = {}} = props, keys, values;
-     if (obj.isArray(items)) {
-         keys = values = items;
-     } else {
-         keys = obj.keys(items);
-         values = obj.values(items);
-     }
-     super({
-         keys, values, tooltips,
-         morphClasses: ['root'],
-         layout: new GridLayout({
-             grid: [[...arr.interpose(keys.map(k => k + "Label"), null)]],
-             autoAssign: false, fitToCell: true, 
-         }),
-         ...props
+
+  static example() {
+    var cb = new ModeSelector({items: {foo: {}}}).openInWorld();
+    // cb.remove()
+  }
+
+
+  constructor(props) {
+    var {items, init, tooltips = {}} = props, keys, values;
+    if (obj.isArray(items)) {
+      keys = values = items;
+    } else {
+      keys = obj.keys(items);
+      values = obj.values(items);
+    }
+    super({
+      keys,
+      values,
+      tooltips,
+      morphClasses: ["root"],
+      layout: new GridLayout({
+        grid: [[...arr.interpose(keys.map(k => k + "Label"), null)]],
+        autoAssign: false,
+        fitToCell: true
+      }),
+      ...props
+    });
+    this.build();
+    this.update(
+      init ? init : keys[0],
+      values[keys.includes(init) ? keys.indexOf(init) : 0],
+      true
+    );
+    connect(this, "extent", this, "relayout");
+    this.whenRendered().then(() => {
+      this.withAllSubmorphsDo(ea => {
+        if (ea.isLabel) {
+          ea._cachedTextBounds = null;
+          ea.fit();
+        }
       })
-      this.build();
-      this.update(init ? init : keys[0], 
-                   values[keys.includes(init) ? keys.indexOf(init) : 0],
-                   true);
-      connect(this, "extent", this, "relayout");
-    }
+    })
+  }
 
-    build() {
-       this.submorphs = [
-            {name: "typeMarker"},
-            ...this.createLabels(this.keys, this.values, this.tooltips)
-         ]
-       this.layout.col(0).row(0).group.align = "topCenter";
-       this.layout.col(2).row(0).group.align = "topCenter";
-       this.applyStyler();
-    }
+  build() {
+    this.submorphs = [
+      {name: "typeMarker"},
+      ...this.createLabels(this.keys, this.values, this.tooltips)
+    ];
+    this.layout.col(0).row(0).group.align = "topCenter";
+    this.layout.col(2).row(0).group.align = "topCenter";
+    this.applyStyler();
+  }
 
-    applyStyler() {
-       this.withAllSubmorphsDo(m => {
-         var styleProps;
-         if (styleProps = this.styler[m.name]) {
-            Object.assign(m, styleProps);
-         } else if (m.morphClasses) {
-            styleProps = obj.merge(arr.compact(m.morphClasses.map(c => this.styler[c])));
-            Object.assign(m, styleProps);
-         }
-      })
-    }
+  applyStyler() {
+    this.withAllSubmorphsDo(m => {
+      var styleProps;
+      if (styleProps = this.styler[m.name]) {
+        Object.assign(m, styleProps);
+      } else if (m.morphClasses) {
+        styleProps = obj.merge(
+          arr.compact(m.morphClasses.map(c => this.styler[c]))
+        );
+        Object.assign(m, styleProps);
+      }
+    });
+  }
 
-    get styler() {
-       return {
-          root: {fill: Color.transparent,
-                 height: 30, origin: pt(0,5)},
-          typeMarker: {fill: Color.gray.darker(), borderRadius: 3},
-          label: {fontWeight: 'bold', nativeCursor: "pointer", padding: Rectangle.inset(4)}
-       }
-    }
+  get styler() {
+    return {
+      root: {fill: Color.transparent, height: 30, origin: pt(0, 5)},
+      typeMarker: {fill: Color.gray.darker(), borderRadius: 3},
+      label: {
+        fontWeight: "bold",
+        nativeCursor: "pointer",
+        padding: Rectangle.inset(4)
+      }
+    };
+  }
 
-    createLabels(keys, values, tooltips = {}) {
-       return arr.zip(keys, values)
-                 .map(([name, value]) => {
-                   const tooltip = tooltips[name];
-                   return {
-                      name: name + "Label", morphClasses: ['label'],
-                      type: "label", value: name, 
-                      ...this.labelStyle,
-                      ...tooltip && {tooltip},
-                      onMouseDown: () => {
-                         this.update(name, value);
-                }}});
-    }
+  createLabels(keys, values, tooltips = {}) {
+    return arr.zip(keys, values).map(([name, value]) => {
+      const tooltip = tooltips[name];
+      return {
+        name: name + "Label",
+        morphClasses: ["label"],
+        type: "label",
+        value: name,
+        ...this.labelStyle,
+        ...(tooltip && {tooltip}),
+        onMouseDown: evt => { this.update(name, value); }
+      };
+    });
+  }
 
-    async relayout() { 
-        return this.currentLabel && this.get("typeMarker").animate({
-                       bounds: this.currentLabel.bounds(), 
-                       duration: 200}); 
-    }
-    
-    async update(label, value, silent=false) {
-       const newLabel = this.get(label + "Label"), duration = 200
-       if (newLabel == this.currentLabel) return;
-       if (this.currentLabel) this.currentLabel.fontColor = Color.black;
-       this.currentLabel = newLabel;
-       newLabel.fontColor = Color.white;
-       await this.relayout(duration);
-       !silent && signal(this, label, value)
-       !silent && signal(this, "switchLabel", value);
-    }
+  async relayout() {
+    return this.currentLabel &&
+      this
+        .get("typeMarker")
+        .animate({bounds: this.currentLabel.bounds(), duration: 200});
+  }
+
+  async update(label, value, silent = false) {
+    const newLabel = this.get(label + "Label"), duration = 200;
+    if (newLabel == this.currentLabel)
+      return;
+    if (this.currentLabel)
+      this.currentLabel.fontColor = Color.black;
+    this.currentLabel = newLabel;
+    newLabel.fontColor = Color.white;
+    await this.relayout(duration);
+    !silent && signal(this, label, value);
+    !silent && signal(this, "switchLabel", value);
+  }
 }
 
 export class DropDownSelector extends Morph {
 
-   constructor(props) {
-      const {target, property, values} = props;
-      super({border: {
-                radius: 3, 
-                color: Color.gray.darker(), 
-                style: "solid"},
-              layout: new HorizontalLayout({spacing: 4}),
-              ...props
-             });
-      this.build();
-   }
+  constructor(props) {
+    const {target, property, values} = props;
+    super({
+      border: {radius: 3, color: Color.gray.darker(), style: "solid"},
+      layout: new HorizontalLayout({spacing: 4}),
+      ...props
+    });
+    this.build();
+  }
 
-   build() {
-      this.dropDownLabel = Icon.makeLabel("chevron-circle-down", {
-                                   opacity: 0, fontSize: 16, 
-                                   fontColor: Color.gray.darker()
-                            });
-      this.submorphs = [{
-                  type: "text", name: "currentValue", 
-                  textString: this.getNameFor(this.target[this.property]), 
-                  padding: Rectangle.inset(0), readOnly: true,
-                }, this.dropDownLabel];
-   }
+  build() {
+    this.dropDownLabel = Icon.makeLabel("chevron-circle-down", {
+      opacity: 0,
+      fontSize: 16,
+      fontColor: Color.gray.darker()
+    });
+    this.submorphs = [
+      {
+        type: "text",
+        name: "currentValue",
+        textString: this.getNameFor(this.target[this.property]),
+        padding: Rectangle.inset(0),
+        readOnly: true
+      },
+      this.dropDownLabel
+    ];
+  }
 
-   getMenuEntries() {
-      const currentValue = this.getNameFor(this.target[this.property]);
-      return [{command: currentValue, target: this}, ...arr.compact(this.commands.map(c => { 
-          return c.name != currentValue && {command: c.name, target: this}
-         }))];
-   }
+  getMenuEntries() {
+    const currentValue = this.getNameFor(this.target[this.property]);
+    return [
+      {command: currentValue, target: this},
+      ...arr.compact(
+        this.commands.map(c => {
+          return c.name != currentValue && {command: c.name, target: this};
+        })
+      )
+    ];
+  }
 
-   get commands() {
-      if (obj.isArray(this.values)) {
-         return this.values.map(v => {
-             return {name: v, exec: () => { this.value = v }}
-         });
-      } else {
-         return properties.forEachOwn(this.values, (name, v) => {
-             return {
-               name, 
-               exec: () => { this.value = v }
-            }
-         });
-      }
-      
-   }
+  get commands() {
+    if (obj.isArray(this.values)) {
+      return this.values.map(v => {
+        return {
+          name: v,
+          exec: () => {
+            this.value = v;
+          }
+        };
+      });
+    } else {
+      return properties.forEachOwn(this.values, (name, v) => {
+        return {
+          name,
+          exec: () => {
+            this.value = v;
+          }
+        };
+      });
+    }
+  }
 
-   getNameFor(value) {
-      if (this.getCurrentValue) return this.getCurrentValue();
-      if (obj.isArray(this.values)) {
-         return obj.safeToString(value);
-      } else {
-         return obj.safeToString(properties.nameFor(this.values, value));
-      }
-   }
+  getNameFor(value) {
+    if (this.getCurrentValue)
+      return this.getCurrentValue();
+    if (obj.isArray(this.values)) {
+      return obj.safeToString(value);
+    } else {
+      return obj.safeToString(properties.nameFor(this.values, value));
+    }
+  }
 
-   set value(v) {
-      if (obj.isFunction(v)) {
-          v();
-       } else {
-          this.target[this.property] = v;
-       } 
-      this.get("currentValue").textString = this.getNameFor(v);
-   }
+  set value(v) {
+    if (obj.isFunction(v)) {
+      v();
+    } else {
+      this.target[this.property] = v;
+    }
+    this.get("currentValue").textString = this.getNameFor(v);
+  }
 
-   onHoverIn() {
-      this.dropDownLabel.animate({opacity: 1, duration: 300});
-   }
+  onHoverIn() {
+    this.dropDownLabel.animate({opacity: 1, duration: 300});
+  }
 
-   onHoverOut() {
-      this.dropDownLabel.animate({opacity: 0, duration: 200});
-   }
- 
+  onHoverOut() {
+    this.dropDownLabel.animate({opacity: 0, duration: 200});
+  }
+
   onMouseDown(evt) {
     this.menu = this.world().openWorldMenu(evt, this.getMenuEntries());
     this.menu.globalPosition = this.globalPosition;
