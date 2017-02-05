@@ -103,7 +103,7 @@ class StyleEditor extends Morph {
            onDrag: (evt) => this.onDrag(evt),
            submorphs: [{
              type: "text",
-             fontWeight: "bold", padding: 5,
+             fontWeight: "bold", padding: Rectangle.inset(5),
              fontColor: Color.gray, fontSize: 12, readOnly: true,
              fill: Color.transparent, draggable: true, nativeCursor: 'pointer',
              textString: title,
@@ -287,10 +287,10 @@ class StyleEditor extends Morph {
              const control = new Morph({
                   width: 150, height: 120, fill: Color.transparent,
                   submorphs: [
-                    {type: "label", value: "Distance: ", padding: 4, name: "distanceLabel"}, distanceInspector,
-                    {type: "label", value: "Blur: ", padding: 4, name: "blurLabel"}, blurInspector,
-                    {type: "label", value: "Angle: ", padding: 4, name: "angleLabel"}, angleSlider,
-                    {type: "label", value: "Color: ", padding: 4, name: "colorLabel"},
+                    {type: "label", value: "Distance: ", padding: Rectangle.inset(4), name: "distanceLabel"}, distanceInspector,
+                    {type: "label", value: "Blur: ", padding: Rectangle.inset(4), name: "blurLabel"}, blurInspector,
+                    {type: "label", value: "Angle: ", padding: Rectangle.inset(4), name: "angleLabel"}, angleSlider,
+                    {type: "label", value: "Color: ", padding: Rectangle.inset(4), name: "colorLabel"},
                     this.getColorField({target: value, property: 'color'})]
                });
 
@@ -639,11 +639,11 @@ export class ImageEditor extends StyleEditor {
           fill: Color.transparent,
           styleRules: new StyleRules({
                  urlBar: {borderRadius: 5,
-                   padding: 4, fill: Color.white.withA(.8),
+                   padding: Rectangle.inset(4), fill: Color.white.withA(.8),
                    fontColor: Color.gray.darker(), fontSize: 15
                  },
                   saveButton: {
-                     fontSize: 18, padding: 2,
+                     fontSize: 18, padding: Rectangle.inset(2),
                      nativeCursor: "pointer",
                      fontColor: Color.gray.darker(),
                      tooltip: "Update the image URL"

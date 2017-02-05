@@ -1,4 +1,4 @@
-import { RadialGradient, Complementary, Point,
+import { RadialGradient, Rectangle, Complementary, Point,
          Triadic, Tetradic, Quadratic, pt, rect,
          Analogous, Neutral, Color, LinearGradient } from "lively.graphics";
 import {ColorPalette} from "./color-palette.js";
@@ -93,10 +93,10 @@ export class GradientEditor extends Morph {
       return new StyleRules({
               body: {layout: new VerticalLayout({spacing: 3}),fill: Color.transparent},
               addStopLabel: {fontSize: 18, fontColor: Color.orange, center: pt(-1, -17), extent: pt(10,10),
-                             padding: 0, fixedWidth: true, fixedHeight: true},
+                             padding: Rectangle.inset(0), fixedWidth: true, fixedHeight: true},
               stopControlPreview: {extent: pt(2, 50), fill: Color.orange},
               propertyView: {fill: Color.black.withA(.7), borderRadius: 5,
-                             padding: 5, fontColor: Color.white},
+                             padding: Rectangle.inset(5), fontColor: Color.white},
               stopControlLine: {extent: pt(2,50), fill: Color.gray.darker(), tooltip: "Drag to change proportional offset of stop"},
               stopControlHead: {fill: Color.black.withA(.3), borderRadius: 20, extent: pt(15,15), center: pt(1, -13)},
               pickerField: {imageUrl: WHEEL_URL, extent: pt(15,15), tooltip: "Open Color Picker",
@@ -104,7 +104,7 @@ export class GradientEditor extends Morph {
               paletteField: {nativeCursor: "pointer", clipMode: "hidden", tooltip: "Open Color Palette"},
               typeSelector: {fill: Color.transparent, extent: pt(180, 40)},
               modeButton: {extent: pt(30,30), borderWidth: 2},
-              instruction: {fontSize: 15, padding: 15, fontWeight: "bold", fontColor: Color.black.lighter()},
+              instruction: {fontSize: 15, padding: Rectangle.inset(15), fontWeight: "bold", fontColor: Color.black.lighter()},
               closeButton: {fontColor: Color.gray.lighter(),
                             tooltip: "Remove Stop", fontSize: 17, nativeCursor: "pointer"},
               gradientEditor: {width: 180, height: 50, borderRadius: 5,
@@ -447,7 +447,7 @@ export class GradientFocusHandle extends Ellipse {
           bottomCenter: {nativeCursor: "ns-resize"},
           leftCenter: {nativeCursor: "ew-resize"},
           propertyView: {fill: Color.black.withA(.7), borderRadius: 5,
-                         padding: 5, fontColor: Color.white},
+                         padding: Rectangle.inset(5), fontColor: Color.white},
           boundsHandle: {borderColor: Color.orange.darker(), fill: Color.orange.withA(.7),
                          tooltip: "Resize bounds of radial gradient"},
           crossBar: {borderWidth: 2, borderColor: Color.orange, center: pt(11,11), draggable: false},
@@ -560,7 +560,7 @@ class GradientDirectionHandle extends Ellipse {
         rotationPoint: {fill: Color.orange, extent: pt(10,10),
                         nativeCursor: '-webkit-grab', tooltip: "Adjust direction of linear gradient"},
         propertyView: {fill: Color.black.withA(.7), borderRadius: 5,
-                       padding: 5, fontColor: Color.white},
+                       padding: Rectangle.inset(5), fontColor: Color.white},
      })
   }
 

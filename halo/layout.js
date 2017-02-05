@@ -258,7 +258,7 @@ class AxisHalo extends Morph {
   viewer({position, alignWithTarget}) {
     return this.halo.addGuide(new Text({
         styleClasses: ["Halo"],
-        padding: 6,
+        padding: Rectangle.inset(6),
         visible: false,
         borderRadius: 10,
         fontColor: Color.white,
@@ -622,7 +622,7 @@ export class TilingLayoutHalo extends Morph {
                               min: 0, target: layout,
                               unit: "px", property: "spacing"});
       return [[{type: "text", textString: "Submorph Spacing",
-               padding: 5, fill: Color.transparent,
+               padding: Rectangle.inset(5), fill: Color.transparent,
                fontColor: Color.gray.darker(),
                readOnly: true}, spacing]]
               .map(x => { return {submorphs: x, fill: Color.transparent,
@@ -716,7 +716,7 @@ export class FlexLayoutHalo extends Morph {
                fontColor: Color.gray.darker(),
                readOnly: true}, autoResize],
                [{type: "text", textString: "Submorph Spacing",
-               padding: 5, fill: Color.transparent,
+               padding: Rectangle.inset(5), fill: Color.transparent,
                fontColor: Color.gray.darker(),
                readOnly: true}, spacing]]
               .map(x => { return {submorphs: x, fill: Color.transparent,

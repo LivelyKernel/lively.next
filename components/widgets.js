@@ -223,7 +223,7 @@ export class PropertyInspector extends Morph {
               clipMode: "hidden"},
            down: {padding: rect(0,-5,0,10), ...buttonStyle},
            up: {padding: rect(0,0,0,-5), ...buttonStyle},
-           value: {fill: Color.white, padding: 4, fontSize: 15},
+           value: {fill: Color.white, padding: Rectangle.inset(4), fontSize: 15},
            
        })
    }
@@ -490,7 +490,7 @@ export class ModeSelector extends Morph {
           root: {fill: Color.transparent,
                  height: 30, origin: pt(0,5)},
           typeMarker: {fill: Color.gray.darker(), borderRadius: 3},
-          label: {fontWeight: 'bold', nativeCursor: "pointer", padding: 4}
+          label: {fontWeight: 'bold', nativeCursor: "pointer", padding: Rectangle.inset(4)}
        }
     }
 
@@ -548,7 +548,7 @@ export class DropDownSelector extends Morph {
       this.submorphs = [{
                   type: "text", name: "currentValue", 
                   textString: this.getNameFor(this.target[this.property]), 
-                  padding: 0, readOnly: true,
+                  padding: Rectangle.inset(0), readOnly: true,
                 }, this.dropDownLabel];
    }
 

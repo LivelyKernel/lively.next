@@ -113,6 +113,7 @@ export class Label extends Morph {
     
       padding: {
         defaultValue: Rectangle.inset(0),
+        initialize(value) { this.padding = value; /*for num -> rect conversion*/},
         set padding(value) {
           this._cachedTextBounds = null;
           this.setProperty("padding", typeof value === "number" ? Rectangle.inset(value) : value);

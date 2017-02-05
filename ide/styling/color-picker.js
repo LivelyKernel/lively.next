@@ -4,7 +4,7 @@ import {
   GridLayout,
   HorizontalLayout
 } from "../../index.js";
-import {pt, Color, LinearGradient, rect} from "lively.graphics";
+import {pt, Rectangle, Color, LinearGradient, rect} from "lively.graphics";
 import {signal, connect, disconnect} from "lively.bindings";
 import {Slider} from "lively.morphic/components/widgets.js";
 import {Icon} from "lively.morphic/components/icons.js";
@@ -258,11 +258,11 @@ export class ColorPicker extends Window {
           this.get("alphaDisplay").value = (colorPicker.color.a * 100).toFixed();
        },
        submorphs: [
-        {type: "label", padding: 3, value: "Alpha", fontColor: Color.gray, fontWeight: 'bold'},
+        {type: "label", padding: Rectangle.inset(3), value: "Alpha", fontColor: Color.gray, fontWeight: 'bold'},
         new Slider({
              target: this, min: 0, max: 1,
              property: "alpha", width: 170
-      }), {type: "label", padding: 3, value: (this.alpha * 100).toFixed(),
+      }), {type: "label", padding: Rectangle.inset(3), value: (this.alpha * 100).toFixed(),
            fontSize: 12, fontColor: Color.gray, name: "alphaDisplay"}]
     }
   }
