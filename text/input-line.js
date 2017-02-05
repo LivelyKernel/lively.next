@@ -81,38 +81,98 @@ export default class InputLine extends Text {
     return hist;
   }
 
+  static get properties() {
+
+    return {
+      fixedWidth:   {defaultValue: true},
+      fixedHeight:  {defaultValue: true},
+      extent:       {defaultValue: pt(100, 20)},
+      padding:      {defaultValue: Rectangle.inset(2,4)},
+      clipMode:     {defaultValue: "hidden"},
+      lineWrapping: {defaultValue: false},
+      historyId:    {defaultValue: null},
+      clearOnInput: {defaultValue: false},
+
+      height: {
+        after: ["padding", "textAttributes"],
+        initialize() {
+          this.height = this.defaultLineHeight + this.padding.top() + this.padding.bottom();
+        }
+      },
+
+      label: {
+        derived: true, after: ["textString"], defaultValue: "",
+        set(value) {
+          disconnect(this, 'textChange', this, 'onInputChanged');
+          this.textString = value + this.input;
+          connect(this, 'textChange', this, 'onInputChanged');
+          this.setProperty("label", value);
+        }
+      },
+
+      input: {
+        after: ["label"], derived: true,
+        get() {
+          var input = this.textString;
+          if (this.label && input.startsWith(this.label))
+            input = input.slice(this.label.length);
+          return input;
+        },
+        set(val) { this.textString = this.label + (val ? String(val) : ""); }
+      },
+
+      placeholder: {
+        after: ["submorphs", "textAttributes", "textString", "extent"], dervied: true,
+        get() {
+          var placeholder = this.getSubmorphNamed("placeholder");
+          return placeholder ? placeholder.value : null;
+        },
+        set(val) {
+          var placeholder = this.getSubmorphNamed("placeholder");
+          if (!val) {
+            if (placeholder) {
+              placeholder.remove();
+              placeholder = null;
+            }
+          } else {
+            if (!placeholder) {
+              placeholder = this.addMorph(Text.makeLabel(val, {
+                ...this.defaultTextStyle,
+                name: "placeholder",
+                reactsToPointer: false,
+                fontColor: Color.gray
+              }));
+              placeholder.onInputChange = () => {
+                placeholder.visible = !this.input.length;
+              }
+              placeholder.onLabelChange = () => {
+                let fm = this.env.fontMetric,
+                    style = this.defaultTextStyle,
+                    w = fm.sizeFor(style, this.label || "").width;
+                placeholder.leftCenter = this.leftCenter.addXY(w + this.padding.left(), 0);
+                if (this.wdith < placeholder.right)
+                  this.wdith = placeholder.right;
+              }
+              connect(this, "inputChanged", placeholder, "onInputChange");
+              connect(this, "label", placeholder, "onLabelChange")
+              placeholder.onInputChange();
+              placeholder.onLabelChange();
+            }
+          }
+        }
+      }
+    }
+  }
+
   constructor(props = {}) {
-    var {label, placeholder} = props;
-    super({
-      extent: pt(100, 20), padding: Rectangle.inset(1),
-      clipMode: "hidden", lineWrapping: false,
-      historyId: null, clearOnInput: false,
-      ...obj.dissoc(props, ["label", "placeholder"])
-    })
-    if (label) this.label = label || "";
-    if (placeholder) this.placeholder = placeholder;
-    this.height = this.defaultLineHeight + this.padding.top() + this.padding.bottom();
+    super(props);
     connect(this, 'textChange', this, 'onInputChanged');
     connect(this, 'selectionChange', this, 'fixCursor');
   }
 
   get isInputLine() { return true; }
 
-  get label() { return this.getProperty("label") || ""; }
-  set label(value) {
-    disconnect(this, 'textChange', this, 'onInputChanged');
-    this.textString = value + this.input;
-    connect(this, 'textChange', this, 'onInputChanged');
-    this.addValueChange("label", value);
-  }
-
   get allowDuplicatesInHistory() { return false }
-
-  get historyId() { return this.getProperty("historyId"); }
-  set historyId(value) { this.addValueChange("historyId", value); }
-
-  get clearOnInput() { return this.getProperty("clearOnInput"); }
-  set clearOnInput(value) { this.addValueChange("clearOnInput", value); }
 
   resetHistory() { this.inputHistory = {items: [], max: 50, index: 0}; }
 
@@ -126,48 +186,6 @@ export default class InputLine extends Text {
   set inputHistory(hist) {
     this._inputHistory = hist;
     this.historyId && this.constructor.setHistory(this.historyId, this._inputHistory);
-  }
-
-  get input() {
-    var input = this.textString;
-    if (this.label && input.startsWith(this.label))
-      input = input.slice(this.label.length);
-    return input;
-  }
-  set input(val) { this.textString = this.label + (val ? String(val) : ""); }
-
-  get placeholder() {
-    return this._placeHolder ? this._placeHolder.value : null;
-  }
-  set placeholder(val) {
-    if (!val) {
-      if (this._placeHolder) {
-        this._placeHolder.remove();
-        this._placeHolder = null;
-      }
-    } else {
-      if (!this._placeHolder) {
-        this._placeHolder = this.addMorph(Text.makeLabel(val, {
-          ...this.defaultTextStyle,
-          name: "placeholder",
-          reactsToPointer: false,
-          fontColor: Color.gray
-        }));
-        this._placeHolder.onInputChange = () => {
-          this._placeHolder.visible = !this.input.length;
-        }
-        this._placeHolder.onLabelChange = () => {
-          let fm = this.env.fontMetric,
-              style = this.defaultTextStyle,
-              w = fm.sizeFor(style, this.label).width;
-          this._placeHolder.leftCenter = this.leftCenter.addXY(w + this.padding.left(), 0);
-        }
-        connect(this, "inputChanged", this._placeHolder, "onInputChange");
-        connect(this, "label", this._placeHolder, "onLabelChange")
-        this._placeHolder.onInputChange();
-        this._placeHolder.onLabelChange();
-      }
-    }
   }
 
   clear() {
@@ -310,6 +328,7 @@ export default class InputLine extends Text {
 import { HTMLMorph } from "../html-morph.js"
 
 export class PasswordInputLine extends HTMLMorph {
+
   constructor(opts = {}) {
     super(opts);
     this.html = `<input style="height: calc(100% - 6px); width: calc(100% - 6px);" type="password" value="">`;
