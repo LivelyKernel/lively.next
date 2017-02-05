@@ -1,5 +1,5 @@
 import { promise } from "lively.lang";
-import { Morph, Text } from "lively.morphic";
+import { Morph, Image, Text } from "lively.morphic";
 import { Icon } from "./icons.js";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { connect } from "lively.bindings";
@@ -28,7 +28,7 @@ export default class LoadingIndicator extends Morph {
 
   static get properties() {
     return {
-      fill:       {defaultValue: Color.rgbHex("#666").withA(.7)},
+      fill:       {defaultValue: Color.rgbHex("#555").withA(.9)},
       fontSize:   {defaultValue: 16},
       fontFamily: {defaultValue: "Arial"},
       name:       {defaultValue: "LoadingIndicator"},
@@ -55,14 +55,10 @@ export default class LoadingIndicator extends Morph {
         initialize() {
           this.submorphs = [
 
-            new Text({
-              textString: Icon.makeLabel("refresh").textString,
+            new Image({
+              imageUrl: "http://localhost:9011/lively.morphic/lively-web-logo-small-animate.svg",
               name: "spinner", fill: Color.transparent,
-              fontColor: Color.white,
-              fontFamily: "FontAwesome",
-              fontSize: 50, readOnly: true,
-              textStyleClasses: ["fa", "fa-spin", "fa-3x", "fa-fw"],
-              extent: pt(60,60),
+              extent: pt(100,104),
               topLeft: pt(0,0),
               halosEnabled: false
             }),
@@ -105,6 +101,7 @@ export default class LoadingIndicator extends Morph {
     connect(this.get("label"), 'fontSize', this, "updateLabel");
     connect(this.get("label"), 'fontFamily', this, "updateLabel");
     connect(this.get("closeButton"), 'fire', this, "remove");
+    this.get("closeButton").fit();
   }
 
   get isEpiMorph() { return true }
@@ -115,16 +112,16 @@ export default class LoadingIndicator extends Morph {
   }
 
   relayout() {
-    var padding = Rectangle.inset(8, 4),
+    var padding = Rectangle.inset(12, 12),
         [spinner, label, closeButton] = this.submorphs,
-        w = Math.max(spinner.width, label.width) + padding.left() + padding.right(),
+        w = Math.min(120, Math.max(spinner.width, label.width))+ padding.left() + padding.right(),
         h = spinner.height + label.height + padding.top() + padding.bottom();
     this.extent = pt(w,h);
-    closeButton.width = 20;
-    closeButton.topRight = this.innerBounds().topRight();
-    spinner.width = 60;
+    spinner.width = 100;
     spinner.topCenter = this.innerBounds().topCenter().addXY(0, padding.top());
     label.topCenter = spinner.bottomCenter.addXY(0, 4);
+    closeButton.width = 20;
+    closeButton.topRight = pt(w-25, 0);
   }
 
   onHoverIn(evt) { this.get("closeButton").visible = true; }
