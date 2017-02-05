@@ -34,7 +34,7 @@ function createDummyWorld() {
       submorphs: [{name: "submorph2", extent: pt(20,20), position: pt(5,10), fill: Color.green}]
     },
     {name: "submorph3", extent: pt(50,50), position: pt(200,20), fill: Color.yellow},
-    {name: "submorph4", type: "text", extent: pt(50,50), position: pt(200,200), fill: Color.blue, textString: "text"}];
+    {name: "submorph4", type: "text", extent: pt(50,50), position: pt(200,200), fill: Color.blue, textString: "text", cursorPosition: {row: 0, column: 0}}];
 
   submorph1 = world.submorphs[0];
   submorph2 = world.submorphs[0].submorphs[0];
@@ -400,7 +400,7 @@ describe("key events", () => {
       var [e] = await env.eventDispatcher.simulateDOMEvents({type: "keydown", key: "z"});
       !e.propagationStopped && await env.eventDispatcher.simulateDOMEvents({type: "input", key: "z"});
       expect(log).equals("!");
-      expect(submorph4.textString).equals("textz");
+      expect(submorph4.textString).equals("ztext");
       expect(env).deep.property("eventDispatcher.eventState.keyInputState")
         .deep.equals({count: undefined, keyChain: ""});
     });
