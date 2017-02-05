@@ -137,6 +137,7 @@ export default class JavaScriptNavigator {
 
   expandRegion(ed, src, ast, expandState) {
       // use token if no selection
+
       var hasSelection = expandState.range[0] !== expandState.range[1],
           p = ed.indexToPosition(expandState.range[0]),
           token = ed.tokenAt(p);
@@ -145,7 +146,8 @@ export default class JavaScriptNavigator {
         return expandOnToken(token)
       }
 
-      ast = ast || (new JavaScriptNavigator()).ensureAST(src);
+      ast = ast || this.parse(src);
+
       var pos = expandState.range[0],
           nodes = lively.ast.query.nodesAtIndex(ast, pos),
           containingNode = nodes.reverse().find(function(node) {
