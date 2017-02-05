@@ -19,7 +19,9 @@ function listItem(item) {
   return item;
 }
 
-describe("import helper - cleanup unused imports", () => {
+describe("import helper - cleanup unused imports", function() {
+
+  this.timeout(5000);
 
   it("runs command on text", async () => {
     var ed = new Text({plugins: [new JavaScriptEditorPlugin()]}),
@@ -39,8 +41,10 @@ describe("import helper - cleanup unused imports", () => {
 });
 
 
-describe("import helper - injection command", () => {
+describe("import helper - injection command", function() {
   // end-to-end test
+
+  this.timeout(6000);
 
   var ed, queryMatcher;
   beforeEach(() => {

@@ -8,7 +8,7 @@ import { DiffEditorPlugin } from "lively.morphic/ide/diff/editor-plugin.js";
 
 var editor;
 
-function setup() {
+async function setup() {
   var patchString = "diff --git a/test.txt b/test.txt\n"
                    + "index e42fd89..581f1fd 100644\n"
                    + "--- a/test.txt\n"
@@ -47,6 +47,7 @@ function setup() {
     plugins: [new DiffEditorPlugin()]
   });
   editor.openInWorld();
+  await editor.whenRendered();
 }
 
 function teardown(whenDone) {

@@ -8,6 +8,7 @@ import { dummyFontMetric as fontMetric, expectSelection } from "../test-helpers.
 expectSelection(chai);
 
 import config from "../../config.js";
+import { Color } from "lively.graphics";
 
 function range(startRow, startCol, endRow, endCol) {
   return {start: {row: startRow, column: startCol}, end: {row: endRow, column: endCol}}
@@ -19,7 +20,11 @@ describe("undo", function() {
 
   this.timeout(config.text.undoGroupDelay*2);
 
-  beforeEach(() => text = new Text({textString: "hello\nworld", fontMetric}));
+  beforeEach(() => text = new Text({
+    textString: "hello\nworld",
+    fontMetric,
+    cursorPosition: {row: 0, column: 0}
+  }))
 
   it("can undo simple insert", () => {
     text.insertText("foo", {row: 1, column: 0});
@@ -119,6 +124,17 @@ describe("undo", function() {
     expect(text.undoManager.undos[0].changes).to.have.length(2);
     expect(text.undoManager.undos[0]).containSubset(
       {changes: [{selector: "insertText"}, {selector: "insertText"}]})
+  });
+
+  it("ignores non-text changes", () => {
+    // text = new Text({textString: "hello\nworld", fontMetric})
+    text.undoManager.group();
+    text.insertText("a");
+    text.addMarker({id: "fooo"})
+    text.undoManager.group();
+    expect(text.undoManager.undos).to.have.length(1);
+    expect(text.undoManager.undos[0].changes).to.have.length(1);
+    expect(text.undoManager.undos[0]).containSubset({changes: [{selector: "insertText"}]})
   });
 
 });

@@ -118,13 +118,14 @@ function assertContraction(editor, expander, cursorIndexOrRange, expectedSelecte
   assertExpansionOrContraction(editor, expander, "contractRegion", cursorIndexOrRange, expectedSelectedString);
 }
 
-describe("js code navigator expand and contract", () => {
+var editor, nav;
 
-  var editor, nav;
+describe("js code navigator expand and contract", () => {
 
   beforeEach(() => {
     editor = new Text({plugins: [new JavaScriptEditorPlugin()]});
     nav = editor.pluginInvokeFirst("getNavigator");
+    editor.plugins[0].requestHighlight(true);
   });
 
   it("expandRegion", function() {
