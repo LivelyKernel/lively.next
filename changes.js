@@ -2,14 +2,6 @@
 import { arr, string, obj } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
 
-function newKeyIn(obj, base = "_") {
-  var i = 1, key;
-  do {
-    key = base + "-" + i++;
-  } while (key in obj);
-  return key;
-}
-
 function signalBindings(obj, name, change) {
   // optimized lively.bindings.signal
   var conns = obj.attributeConnections;
@@ -249,7 +241,7 @@ export class ChangeManager {
 
     // Recorder object to be used to record specific changes when they occur,
     // based on change listeners
-    var id = newKeyIn(this.changeRecorders, optName + "__change_recorder_" + Date.now()),
+    var id = obj.newKeyIn(this.changeRecorders, optName + "__change_recorder_" + Date.now()),
         listener = optFilter ?
           change => optFilter(change) && recorder.changes.push(change) :
           change => recorder.changes.push(change),
