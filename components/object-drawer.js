@@ -6,6 +6,13 @@ import { Tree, TreeData } from "./tree.js"
 import { connect } from "lively.bindings"
 import { Leash } from "lively.morphic/components/widgets.js"
 
+class DummyTreeData extends TreeData {
+  display(node) { return node.name }
+  isCollapsed(node) { return node.isCollapsed }
+  collapse(node, bool) { node.isCollapsed = bool; }
+  getChildren(node) { return node.isLeaf ? null : node.isCollapsed ? [] : node.children }
+  isLeaf(node) { return node.isLeaf }
+}
 
 export default class ObjectDrawer extends Morph {
 
@@ -180,13 +187,7 @@ export default class ObjectDrawer extends Morph {
 
     pos = pt(arr.last(this.submorphs).right, 0).addPt(margin);
 
-    var root = new (class extends TreeData {
-      display(node) { return node.name }
-      isCollapsed(node) { return node.isCollapsed }
-      collapse(node, bool) { node.isCollapsed = bool; }
-      getChildren(node) { return node.isLeaf ? null : node.isCollapsed ? [] : node.children }
-      isLeaf(node) { return node.isLeaf }
-    })({
+    var root = new DummyTreeData({
       name: "root",
       isCollapsed: false,
       isLeaf: false,

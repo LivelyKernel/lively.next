@@ -39,35 +39,153 @@ var tree = new Tree({
 
 export class TreeNode extends Morph {
 
+  static get properties() {
+    return {
+
+      myNode: {},
+
+      toggle: {
+        after: ["submorphs"], derived: true, readOnly: true,
+        get() {
+          return this.getSubmorphNamed("toggle") || (this.addMorph({
+            type: Label, name: "toggle",
+            fill: null, textString: this.isCollapsed ? "\uf196" : "\uf147",
+            padding: Rectangle.inset(2),
+            fontSize: this.fontSize-3,
+            textStyleClasses: ["fa"],
+            fontFamily: "FontAwesome",
+            nativeCursor: "pointer"
+          }));
+        }
+      },
+
+      label: {
+        after: ["submorphs"], derived: true, readOnly: true,
+        get() {
+          return this.getSubmorphNamed("label") || (this.addMorph({
+            type: Label, name: "label", autofit: false,
+            fontSize: this.fontSize, fontWeight: this.fontWeight, fontFamily: this.fontFamily,
+            fill: null
+          }));
+        }
+      },
+
+      labelValue: {
+        after: ["label"], derived: true,
+        get() { var l = this.label; return l.owner ? l.value : ""; },
+        set(val) { var l = this.label; l.value = val; }
+      },
+
+      displayedMorph: {
+        after: ["submorphs", "toggle"], derived: true,
+        get() { return arr.without(this.submorphs, this.getSubmorphNamed("toggle"))[0]; },
+        set(m) {
+          var prev = this.displayedMorph;
+          if (prev === m) return;
+          prev && prev.remove();
+          m.owner !== this && this.addMorph(m);
+        }
+      },
+
+      selectionFontColor: {
+        defaultValue: Color.white,
+      },
+
+      nonSelectionFontColor: {
+        defaultValue: Color.rgbHex("333"),
+      },
+
+      selectionColor: {
+        defaultValue: Color.blue,
+      },
+
+      fontFamily: {
+        after: ["label", "toggle"],
+        set(fontFamily) {
+          this.setProperty("fontFamily", fontFamily);
+          this.label.fontFamily = fontFamily;
+        }
+      },
+
+      fontSize: {
+        after: ["label", "toggle"],
+        set(fontSize) {
+          this.setProperty("fontSize", fontSize);
+          var l = this.label;
+          l.fontSize = fontSize;
+          var toggle = this.getSubmorphNamed("toggle");
+          if (toggle) toggle.fontSize = fontSize-3;
+        }
+      },
+
+      fontColor: {
+        after: ["label", "toggle"],
+        defaultValue: Color.rgbHex("333"),
+        set(fontColor) {
+          this.setProperty("fontColor", fontColor);
+          var l = this.label;
+          l.fontColor = fontColor;
+          var toggle = this.getSubmorphNamed("toggle");
+          if (toggle) toggle.fontColor = fontColor;
+        }
+      },
+
+      fontWeight: {
+        after: ["label", "toggle"],
+        set(fontWeight) {
+          this.setProperty("fontWeight", fontWeight);
+          var l = this.label;
+          l.fontWeight = fontWeight;
+          var toggle = this.getSubmorphNamed("toggle");
+          if (toggle) toggle.fontWeight = fontWeight;
+        }
+      },
+
+      isCollapsed: {
+        defaultValue: false,
+        set(bool) {
+          if (this.isCollapsed === bool) return;
+          this.setProperty("isCollapsed", bool);
+          var toggle = this.getSubmorphNamed("toggle");
+          toggle && (toggle.textString = bool ? "\uf196" : "\uf147");
+          if (this.myNode) {
+            signal(this, "collapseChanged", {node: this.myNode, isCollapsed: bool});
+          }
+        }
+      },
+
+      isCollapsable: {
+        defaultValue: false,
+        set(bool) {
+          this.setProperty("isCollapsable", bool);
+          var toggle = this.getSubmorphNamed("toggle");
+          if (!bool && toggle) toggle.remove();
+          if (bool && !toggle) this.addMorph(this.toggle);
+          this.relayout();
+        }
+      },
+
+    }
+  }
+
   constructor(props = {}) {
-    var {isCollapsed, isCollapsable} = props;
-    super({
-      textString: "",
-      selectionFontColor: Color.white,
-      nonSelectionFontColor: Color.rgbHex("333"),
-      selectionColor: Color.blue,
-      fontColor: Color.rgbHex("333"),
-      ...obj.dissoc(props, ["isCollapsed", "isCollapsable"])
-    });
-    this.isCollapsable = props.hasOwnProperty("isCollapsable") ? props.isCollapsable : false;
-    this.isCollapsed = props.hasOwnProperty("isCollapsed") ? props.isCollapsed : false;
+    super(props);
     this.relayout();
-    this.state = {node: null};
   }
 
   displayNode(displayedNode, node, pos, defaultToggleWidth, goalWidth, isSelected, isCollapsable, isCollapsed) {
     this.fill = isSelected ? this.selectionColor : null;
 
-    this.state = null;
     this.position = pos;
 
     this.isCollapsable = isCollapsable;
     this.isCollapsed = isCollapsed;
 
-    var {label, toggle} = this,
+    var {label} = this,
+        toggle = this.getSubmorphNamed("toggle"),
         displayedMorph;
 
-    if (!isCollapsable && toggle.owner) { toggle.remove(); }
+    if (!isCollapsable && toggle) { toggle.remove(); }
     if (!displayedNode) displayedNode = "";
     if (displayedNode.isMorph) {
       if (label.owner) label.remove();
@@ -86,7 +204,7 @@ export class TreeNode extends Morph {
 
     this.fontColor = isSelected ? this.selectionFontColor : this.nonSelectionFontColor;
 
-    if (toggle.owner) {
+    if (toggle) {
       toggle.fit();
       var toggleWidth = toggle.right + toggle.padding.right(),
           {y: height} = this.extent = displayedMorph.extent.addXY(toggleWidth, 0);
@@ -99,13 +217,14 @@ export class TreeNode extends Morph {
 
 // if (this.owner) this.width = this.owner.width;
 
-    this.state = {node};
+    this.myNode = node;
   }
 
   relayout() {
-    var { label, toggle } = this;
+    var { label } = this;
+    var toggle = this.getSubmorphNamed("toggle");
     label.owner && label.fit();
-    if (toggle.owner) {
+    if (toggle) {
       toggle.fit();
       var bounds = toggle.textBounds();
       this.height = Math.max(bounds.height, this.height);
@@ -116,100 +235,6 @@ export class TreeNode extends Morph {
     }
   }
 
-  get toggle() {
-    return this._toggle || (this._toggle = this.addMorph({
-      type: Label, name: "toggle",
-      fill: null, textString: this.isCollapsed ? "\uf196" : "\uf147",
-      padding: Rectangle.inset(2),
-      fontSize: this.fontSize-3,
-      textStyleClasses: ["fa"],
-      fontFamily: "FontAwesome",
-      nativeCursor: "pointer"
-    }));
-  }
-
-  get label() {
-    return this._label || (this._label = this.addMorph({
-      type: Label, name: "label", autofit: false,
-      fontSize: this.fontSize, fontWeight: this.fontWeight, fontFamily: this.fontFamily,
-      fill: null
-    }));
-  }
-
-  get labelValue() { var l = this.label; return l.owner ? l.value : ""; }
-  set labelValue(val) { var l = this.label; l.value = val; }
-
-  get displayedMorph() { return arr.without(this.submorphs, this.toggle)[0]; }
-  set displayedMorph(m) {
-    var prev = this.displayedMorph;
-    if (prev === m) return;
-    prev && prev.remove();
-    m.owner !== this && this.addMorph(m);
-  }
-
-  get selectionFontColor() { return this.getProperty("selectionFontColor"); }
-  set selectionFontColor(c) { this.addValueChange("selectionFontColor", c); }
-
-  get nonSelectionFontColor() { return this.getProperty("nonSelectionFontColor"); }
-  set nonSelectionFontColor(c) { this.addValueChange("nonSelectionFontColor", c); }
-
-  get selectionColor() { return this.getProperty("selectionColor"); }
-  set selectionColor(c) { this.addValueChange("selectionColor", c); }
-
-  get fontFamily() { return this.getProperty("fontFamily"); }
-  set fontFamily(fontFamily) {
-    this.addValueChange("fontFamily", fontFamily);
-    this.label.fontFamily = fontFamily;
-  }
-
-  get fontSize() { return this.getProperty("fontSize"); }
-  set fontSize(fontSize) {
-    this.addValueChange("fontSize", fontSize);
-    var l = this.label;
-    l.fontSize = fontSize;
-    var toggle = this.toggle;
-    toggle.fontSize = fontSize-3;
-  }
-
-  get fontColor() { return this.getProperty("fontColor"); }
-  set fontColor(fontColor) {
-    this.addValueChange("fontColor", fontColor);
-    var l = this.label;
-    l.fontColor = fontColor;
-    var toggle = this.toggle;
-    toggle.fontColor = fontColor;
-  }
-
-  get fontWeight() { return this.getProperty("fontWeight"); }
-  set fontWeight(fontWeight) {
-    this.addValueChange("fontWeight", fontWeight);
-    var l = this.label;
-    l.fontWeight = fontWeight;
-    var toggle = this.toggle;
-    toggle.fontWeight = fontWeight;
-  }
-
-  get isCollapsed() { return this.getProperty("isCollapsed"); }
-  set isCollapsed(bool) {
-    if (this.isCollapsed === bool) return;
-
-    this.addValueChange("isCollapsed", bool);
-    var toggle = this.toggle;
-    toggle && (toggle.textString = bool ? "\uf196" : "\uf147");
-    if (this.state && this.state.node) {
-      signal(this, "collapseChanged", {node: this.state.node, isCollapsed: bool});
-    }
-  }
-
-  get isCollapsable() { return this.getProperty("isCollapsable"); }
-  set isCollapsable(bool) {
-    this.addValueChange("isCollapsable", bool);
-    var toggle = this.toggle;
-    if (!bool && toggle.owner) toggle.remove();
-    if (bool && !toggle.owner) this.addMorph(toggle);
-    this.relayout();
-  }
-
   onContextMenu(evt) {
     this.owner.owner.contextMenuForNode(this, evt)
   }
@@ -217,7 +242,8 @@ export class TreeNode extends Morph {
   onMouseDown(evt) {
     if (!evt.leftMouseButtonPressed() || evt.isCtrlDown()) return;
 
-    if (this.toggle && evt.state.clickedOnMorph === this.toggle) {
+    var toggle = this.getSubmorphNamed("toggle");
+    if (toggle && evt.state.clickedOnMorph === toggle) {
       this.toggleCollapse();
     } else {
       this.select();
@@ -227,7 +253,7 @@ export class TreeNode extends Morph {
   toggleCollapse() { this.isCollapsed = !this.isCollapsed; }
 
   select() {
-    signal(this, "selected", this.state.node);
+    signal(this, "selected", this.myNode);
   }
 
 }
@@ -235,27 +261,91 @@ export class TreeNode extends Morph {
 
 export class Tree extends Morph {
 
+  static get properties() {
+
+    return {
+      clipMode: {defaultValue: "auto"},
+      padding: {defaultValue: Rectangle.inset(2)},
+
+      resizeNodes: {
+        defaultValue: false,
+        set(val) { this.setProperty("resizeNodes", val); this.resetCache(); this.update(); }
+      },
+
+      treeData: {
+        set(val) { this.setProperty("treeData", val); this.resetCache(); this.update(); }
+      },
+
+      selection: {
+        set(sel) { this.setProperty("selection", sel); this.update(); }
+      },
+
+      selectedIndex: {
+        derived: true, after: ["selection", "nodes"],
+        get() { return this.selection ? this.nodes.indexOf(this.selection) : -1; },
+        set(i) { this.selection = this.nodes[i]; }
+      },
+
+      nodes: {
+        derived: true, after: ["treeData"],
+        get() { return this.treeData.asList(); },
+      },
+
+      selectedNodeAndSiblings: {
+        readOnly: true, derived: true, after: ["selection", "treeData"],
+        get() {
+          return this.selection ?
+            this.treeData.nodeWithSiblings(this.selection) : [];
+        },
+      },
+
+      fontFamily: {
+        defaultValue: "Inconsolata, monospace",
+        set(fontFamily) { this.setProperty("fontFamily", fontFamily); this.update(); }
+      },
+
+      fontSize: {
+        defaultValue: 15,
+        set(fontSize) { this.setProperty("fontSize", fontSize); this.update(); }
+      },
+
+      fontColor: {
+        defaultValue: Color.almostBlack,
+        set(fontColor) { this.setProperty("fontColor", fontColor); this.update(); }
+      },
+
+      fontWeight: {
+        set(fontWeight) { this.setProperty("fontWeight", fontWeight); this.update(); }
+      },
+
+      submorphs: {
+        initialize() {
+          this.submorphs = [{
+            name: "nodeItemContainer",
+            extent: this.extent, fill: null,
+            draggable: false, grabbable: false, clipMode: "visible"
+          }];
+        }
+      },
+
+      nodeItemContainer: {
+        derived: true, readOnly: true, after: ["submorphs"],
+        get() { return this.submorphs[0]; },
+      },
+
+      nodeMorphs: {
+        derived: true, readOnly: true, after: ["submorphs"],
+        get() { return this.nodeItemContainer.submorphs.slice(); }
+      }
+
+    }
+  }
+
   constructor(props = {}) {
     if (!props.treeData)
       throw new Error("Cannot create tree without TreeData!");
-
-    super({
-      selection: null, clipMode: "auto",
-      padding: Rectangle.inset(2),
-      fontSize: 15,
-      fontFamily: "Inconsolata, monospace",
-      fontColor: Color.almostBlack,
-      resizeNodes: false,
-      ...props
-    });
-
+    super(props);
     this.resetCache();
-    this.addMorph({
-      name: "nodeItemContainer",
-      extent: this.extent, fill: null,
-      draggable: false, grabbable: false, clipMode: "visible"
-    });
-
     this.update();
     connect(this, 'extent', this, 'update');
   }
@@ -263,9 +353,6 @@ export class Tree extends Morph {
   resetCache() { this._lineHeightCache = null; }
 
   get isTree() { return true; }
-
-  get nodeItemContainer() { return this.submorphs[0]; }
-  get nodeMorphs() { return this.nodeItemContainer.submorphs.slice(); }
 
   get nodeStyle() {
     return {
@@ -276,42 +363,6 @@ export class Tree extends Morph {
       autofit: !this.resizeNodes
     }
   }
-
-  get resizeNodes() { return this.getProperty("resizeNodes"); }
-  set resizeNodes(val) { this.addValueChange("resizeNodes", val); this.resetCache(); this.update(); }
-
-  get treeData() { return this.getProperty("treeData"); }
-  set treeData(val) { this.addValueChange("treeData", val); this.resetCache(); this.update(); }
-
-  get selection() { return this.getProperty("selection"); }
-  set selection(sel) {
-    this.addValueChange("selection", sel);
-    this.update();
-  }
-
-  get selectedIndex() { return this.selection ? this.nodes.indexOf(this.selection) : -1; }
-  set selectedIndex(i) { this.selection = this.nodes[i]; }
-
-  get nodes() { return this.treeData.asList(); }
-  get selectedNodeAndSiblings() {
-    return this.selection ?
-      this.treeData.nodeWithSiblings(this.selection) : [];
-  }
-
-  get padding() { return this.getProperty("padding"); }
-  set padding(bool) { this.addValueChange("padding", bool); }
-
-  get fontFamily() { return this.getProperty("fontFamily"); }
-  set fontFamily(fontFamily) { this.addValueChange("fontFamily", fontFamily); }
-
-  get fontSize() { return this.getProperty("fontSize"); }
-  set fontSize(fontSize) { this.addValueChange("fontSize", fontSize); }
-
-  get fontColor() { return this.getProperty("fontColor"); }
-  set fontColor(fontColor) { this.addValueChange("fontColor", fontColor); }
-
-  get fontWeight() { return this.getProperty("fontWeight"); }
-  set fontWeight(fontWeight) { this.addValueChange("fontWeight", fontWeight); }
 
   get defaultNodeHeight() {
     return this.defaultNodeMorphTextBounds.height;
@@ -401,7 +452,7 @@ export class Tree extends Morph {
           connect(nodeMorph, 'collapseChanged', this, 'onNodeCollapseChanged');
           connect(nodeMorph, 'selected', this, 'selection');
         }
-  
+
         var node = nodes[i].node;
         nodeMorph.displayNode(
           treeData.safeDisplay(node),
@@ -412,14 +463,14 @@ export class Tree extends Morph {
           node === selection,
           !treeData.isLeaf(node),
           treeData.isCollapsed(node));
-  
+
         var height = nodeMorph.height;
         lineHeightCache[i] = height;
         maxWidth = Math.max(maxWidth, nodeMorph.width);
-  
+
         y += height;
       }
-  
+
       nodeMorphs.forEach(ea => ea.remove()); // remove invisible left overs
     });
 
@@ -578,7 +629,7 @@ export class Tree extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // event handling
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
+
   contextMenuForNode(nodeMorph, evt) {
     signal(this, "contextMenuRequested", {nodeMorph, evt});
   }
@@ -623,6 +674,8 @@ export class TreeData {
     this.root = root;
     this.parentMap = new WeakMap();
   }
+
+  get __dont_serialize__() { return ["parentMap"]; }
 
   display(node) { throw new Error("Not yet implemented"); }
   isCollapsed(node) { throw new Error("Not yet implemented"); }
