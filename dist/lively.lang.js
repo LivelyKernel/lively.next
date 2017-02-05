@@ -3392,6 +3392,17 @@ function asObject(obj) {
   }
 }
 
+function newKeyIn(obj) {
+  var base = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "_";
+
+  var i = 1,
+      key;
+  do {
+    key = base + "-" + i++;
+  } while (key in obj);
+  return key;
+}
+
 
 
 var obj = Object.freeze({
@@ -3427,7 +3438,8 @@ var obj = Object.freeze({
 	shortPrintStringOf: shortPrintStringOf,
 	isMutableType: isMutableType,
 	safeToString: safeToString,
-	asObject: asObject
+	asObject: asObject,
+	newKeyIn: newKeyIn
 });
 
 /*global btoa*/

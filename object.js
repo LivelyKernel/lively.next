@@ -551,6 +551,13 @@ function asObject(obj) {
   }
 }
 
+function newKeyIn(obj, base = "_") {
+  var i = 1, key;
+  do {
+    key = base + "-" + i++;
+  } while (key in obj);
+  return key;
+}
 
 export {  
   isArray,
@@ -585,5 +592,6 @@ export {
   shortPrintStringOf,
   isMutableType,
   safeToString,
-  asObject
+  asObject,
+  newKeyIn
 }

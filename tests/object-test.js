@@ -1,7 +1,7 @@
 /*global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout*/
 
 import { expect } from "mocha-es6";
-import { isObject, sortKeysWithBeforeAndAfterConstraints, select, extend, inspect, equals, keys, isRegExp, isFunction, extract, isEmpty, deepCopy, inherit, values, merge, clone, isBoolean, dissoc, isString, isElement, isArray, deepMerge, isNumber, isUndefined, typeStringOf, safeToString, isMutableType, shortPrintStringOf, mergePropertyInHierarchy } from "../object.js";
+import { isObject, newKeyIn, sortKeysWithBeforeAndAfterConstraints, select, extend, inspect, equals, keys, isRegExp, isFunction, extract, isEmpty, deepCopy, inherit, values, merge, clone, isBoolean, dissoc, isString, isElement, isArray, deepMerge, isNumber, isUndefined, typeStringOf, safeToString, isMutableType, shortPrintStringOf, mergePropertyInHierarchy } from "../object.js";
 
 var isNodejs = System.get("@system-env").node;
 var GLOBAL = System.global;
@@ -211,7 +211,7 @@ describe('object', function() {
          + "  method: function method(arg1,arg2) {/*...*/}\n"
          + "}");
     });
-    
+
     it("uses custom printer", function() {
       function customPrinter(val, ignore) { return typeof val === "number" ? val + 1 : ignore; }
       expect(inspect(obj1, {maxDepth: 1, customPrinter: customPrinter})).equal(
@@ -399,14 +399,24 @@ describe('object', function() {
             .equals(["foo","bar","baz"]));
 
     it("throws error on cycle", () =>
-      expect(() => 
+      expect(() =>
         sortKeysWithBeforeAndAfterConstraints({
           foo: {},
           bar: {after: ["foo"], before: ["baz"]},
           baz: {before: ["foo"]}
         })).throws())
 
-  })
+  });
+
+  describe("newKeyIn", () => {
+
+    it("works", () => {
+      var obj = {foo: "b a r"};
+      expect(newKeyIn(obj, "foo")).equals("foo-1");
+    });
+
+  });
+
 });
 
 describe('properties', function() {
