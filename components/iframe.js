@@ -4,6 +4,7 @@ import { HTMLMorph } from "lively.morphic";
 
 // IFrameMorph.printTextMorph(that)
 
+// var im = IFrameMorph.open({src: "http://localhost:9011/test.html"})
 // var im = IFrameMorph.open({src: "http://spiegel.de"})
 // var im = IFrameMorph.open({src: "http://localhost:9011/proxy/www.spiegel.de"})
 // await im.whenLoaded()
@@ -50,24 +51,57 @@ export class IFrameMorph extends HTMLMorph {
   }
 
   static open(props = {}) {
-    return new this(obj.dissoc(props, "title")).openInWindow({title: props.title}).targetMorph;
+    return new this(props).openInWindow({title: props.title}).targetMorph;
   }
 
+  static get properties() {
+    return {
+    
+      iframe: {
+        after: ["domNode"], readOnly: true,
+        get() { return this.domNode; }
+      },
+    
+      innerWindow: {
+        after: ["iframe"], readOnly: true,
+        get() { return this.iframe.contentWindow; }
+      },
+    
+      innerWorld: {
+        after: ["innerWindow"], readOnly: true,
+        get() { return this.innerWindow.$world; }
+      },
+    
+    
+      src: {
+        after: ["domNode"],
+        set(src) { this.changeSrc(src, null); }
+      },
+    
+      srcdoc: {
+        after: ["domNode"],
+        set(srcdoc) { this.changeSrc(null, srcdoc); }
+      },
+    
+      domNode: {
+        get() {
+          if (!this._domNode) {
+            this._domNode = this.document.createElement("iframe")
+            this._domNode.setAttribute("style", "position: absolute; width: 100%; height: 100%;");
+            this._domNode.setAttribute("allowfullscreen", true);
+          }
+          return this._domNode
+        },
+        set(node) { return this._domNode = node; }
+      }
+
+    }
+
+  }
   constructor(props) {
     if (!props.src && !props.srcdoc) props.srcdoc = "<p>Empty iframe</p>";
     super(props);
   }
-
-  get iframe() { return this.domNode; }
-  get domNode() {
-    if (!this._domNode) {
-      this._domNode = this.document.createElement("iframe")
-      this._domNode.setAttribute("style", "position: absolute; width: 100%; height: 100%;");
-      this._domNode.setAttribute("allowfullscreen", true);
-    }
-    return this._domNode
-  }
-  set domNode(node) { return this._domNode = node; }
 
   changeSrc(src, srcDoc) {
     var {iframe, _loadPromise: p} = this;
@@ -88,16 +122,7 @@ export class IFrameMorph extends HTMLMorph {
     this._loadPromise[set] = val;
   }
 
-  get src() { return this.getProperty("src"); }
-  set src(src) { this.changeSrc(src, null); }
-
-  get srcdoc() { return this.getProperty("srcdoc"); }
-  set srcdoc(srcdoc) { this.changeSrc(null, srcdoc); }
-
   whenLoaded() { return this._loadPromise.promise; }
-
-  get innerWindow() { return this.iframe.contentWindow; }
-  get innerWorld() { return this.innerWindow.$world; }
 
   reload() { return this.iframe.src = this.src; }
   run(func) { return this.innerWindow.eval('(' + func + ')();'); }

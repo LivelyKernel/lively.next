@@ -57,15 +57,45 @@ class CustomVNode {
 
 export class HTMLMorph extends Morph {
 
-  static get properties() {  
+  static get properties() {
     return {
       extent: {defaultValue: pt(420, 330)},
-      html: {defaultValue: this.defaultHTML},
+
+      html: {
+        initialize() { this.html = this.defaultHTML},
+        get() { return this.domNode.innerHTML; },
+        set(value) { this.domNode.innerHTML = value; }
+      },
+
+      domNode: {
+        derived: true,/*FIXME only for dont serialize...*/
+        get() {
+          if (!this._domNode) {
+            this._domNode = this.document.createElement("div")
+            this._domNode.setAttribute("style", "position: absolute; width: 100%; height: 100%;");
+          }
+          return this._domNode
+        },
+        set(node) {
+          if (this.domNode.parentNode) {
+            this.domNode.parentNode.replaceChild(node, this.domNode);
+          }
+          return this._domNode = node;
+        }
+      },
+
+      document: {
+        readOnly: true,
+        get() { return this.env.renderer.domEnvironment.document; }
+      },
+
+      scrollExtent: {
+        readOnly: true,
+        get() { return pt(this.domNode.scrollWidth, this.domNode.scrollHeight); }
+      }
+
     }
   }
-
-  get html() { return this.domNode.innerHTML; }
-  set html(value) { this.domNode.innerHTML = value; }
 
   get defaultHTML() {
      return `
@@ -78,32 +108,8 @@ export class HTMLMorph extends Morph {
 </div>`
   }
 
-  get domNode() {
-    if (!this._domNode) {
-      this._domNode = this.document.createElement("div")
-      this._domNode.setAttribute("style", "position: absolute; width: 100%; height: 100%;");
-    }
-    return this._domNode
-  }
-  set domNode(node) {
-    if (this.domNode.parentNode) {
-      this.domNode.parentNode.replaceChild(node, this.domNode);
-    }
-    return this._domNode = node;
-  }
-
-  get document() { return this.env.renderer.domEnvironment.document; }
-
-  get scrollExtent() { return pt(this.domNode.scrollWidth, this.domNode.scrollHeight); }
-
   render(renderer) {
     return new CustomVNode(this, renderer);
-  }
-
-  copy() {
-     const copiedHtmlMorph = super.copy();
-     copiedHtmlMorph.html = this.html;
-     return copiedHtmlMorph;
   }
 
 }
