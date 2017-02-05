@@ -1,129 +1,9 @@
 {
-  "id": "Text_A4248A76_C4E4_4613_972A_3C812D86A17E",
+  "id": "Text_6C341728_A67E_49B3_BC8B_CB938250B4D9",
   "snapshot": {
-    "Text_A4248A76_C4E4_4613_972A_3C812D86A17E": {
-      "rev": 180745,
+    "Text_6C341728_A67E_49B3_BC8B_CB938250B4D9": {
+      "rev": 249132,
       "props": {
-        "savedMarks": {
-          "key": "savedMarks",
-          "value": []
-        },
-        "tabWidth": {
-          "key": "tabWidth",
-          "value": 2
-        },
-        "useSoftTabs": {
-          "key": "useSoftTabs",
-          "value": true
-        },
-        "padding": {
-          "key": "padding",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,8,0,0)"
-        },
-        "fixedHeight": {
-          "key": "fixedHeight",
-          "value": false
-        },
-        "fixedWidth": {
-          "key": "fixedWidth",
-          "value": false
-        },
-        "readOnly": {
-          "key": "readOnly",
-          "value": false
-        },
-        "borderWidthTop": {
-          "key": "borderWidthTop",
-          "value": 1
-        },
-        "borderWidthRight": {
-          "key": "borderWidthRight",
-          "value": 1
-        },
-        "borderWidthLeft": {
-          "key": "borderWidthLeft",
-          "value": 1
-        },
-        "borderWidthBottom": {
-          "key": "borderWidthBottom",
-          "value": 1
-        },
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 3
-        },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 3
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 3
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 3
-        },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Text",
-            "Morph",
-            "morph"
-          ]
-        },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(508.3,256.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "name": {
-          "key": "name",
-          "value": "a text 1"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(126.4,40.0)"
-        },
-        "draggable": {
-          "key": "draggable",
-          "value": false
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
-        },
-        "selectable": {
-          "key": "selectable",
-          "value": true
-        },
-        "lineWrapping": {
-          "key": "lineWrapping",
-          "value": true
-        },
         "_tickingScripts": {
           "key": "_tickingScripts",
           "value": []
@@ -133,10 +13,157 @@
           "value": [
             {
               "__ref__": true,
-              "id": "43EF4E37-7559-4367-9E1C-A2F1F9936673",
+              "id": "CC47179D-B215-4FA1-BBEA-9907514F7008",
               "rev": 0
             }
           ]
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(126.4,40.0)"
+        },
+        "name": {
+          "key": "name",
+          "value": "a text 1"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(99.3,372.0)"
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Text",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 3
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 3
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 3
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 3
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 1
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
+        },
+        "useSoftTabs": {
+          "key": "useSoftTabs",
+          "value": true
+        },
+        "tabWidth": {
+          "key": "tabWidth",
+          "value": 2
+        },
+        "fixedWidth": {
+          "key": "fixedWidth",
+          "value": false
+        },
+        "fixedHeight": {
+          "key": "fixedHeight",
+          "value": false
+        },
+        "readOnly": {
+          "key": "readOnly",
+          "value": false
+        },
+        "selectable": {
+          "key": "selectable",
+          "value": true
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,8,0,0)"
+        },
+        "selection": {
+          "key": "selection",
+          "value": {
+            "__ref__": true,
+            "id": "A0399256-1D2C-48F3-8FD3-040EDE52E4E4",
+            "rev": 0
+          }
+        },
+        "anchors": {
+          "key": "anchors",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "3D6C24A4-BF0E-42BC-A683-A621A58E827D",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "990E79B3-653E-4A4B-B71B-3EC2BF4C8EC5",
+              "rev": 0
+            }
+          ]
+        },
+        "markers": {
+          "key": "markers",
+          "value": []
+        },
+        "savedMarks": {
+          "key": "savedMarks",
+          "value": []
+        },
+        "plugins": {
+          "key": "plugins",
+          "value": []
         },
         "textAndAttributes": {
           "key": "textAndAttributes",
@@ -193,7 +220,7 @@
         }
       }
     },
-    "43EF4E37-7559-4367-9E1C-A2F1F9936673": {
+    "CC47179D-B215-4FA1-BBEA-9907514F7008": {
       "rev": 0,
       "props": {
         "doNotSerialize": {
@@ -208,8 +235,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Text_A4248A76_C4E4_4613_972A_3C812D86A17E",
-            "rev": 180745
+            "id": "Text_6C341728_A67E_49B3_BC8B_CB938250B4D9",
+            "rev": 249132
           }
         },
         "sourceAttrName": {
@@ -227,7 +254,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "3AB9990A-F96D-45A5-91FE-2BC86E0453C6",
+            "id": "AA7E5458-E3C5-4DB8-8DBC-910E130D8F6E",
             "rev": 0
           }
         },
@@ -258,23 +285,262 @@
         }
       }
     },
-    "3AB9990A-F96D-45A5-91FE-2BC86E0453C6": {
+    "AA7E5458-E3C5-4DB8-8DBC-910E130D8F6E": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Text_A4248A76_C4E4_4613_972A_3C812D86A17E",
-            "rev": 180745
+            "id": "Text_6C341728_A67E_49B3_BC8B_CB938250B4D9",
+            "rev": 249132
           }
         },
         "target": {
           "key": "target"
         }
       }
+    },
+    "A0399256-1D2C-48F3-8FD3-040EDE52E4E4": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "textMorph": {
+          "key": "textMorph",
+          "value": {
+            "__ref__": true,
+            "id": "Text_6C341728_A67E_49B3_BC8B_CB938250B4D9",
+            "rev": 249132
+          }
+        },
+        "selections": {
+          "key": "selections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "98ABC2ED-5349-4F74-A705-AED7D5C63D5A",
+              "rev": 0
+            }
+          ]
+        },
+        "cursorBlinkProcess": {
+          "key": "cursorBlinkProcess",
+          "value": null
+        },
+        "_cursorVisible": {
+          "key": "_cursorVisible",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "MultiSelection",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/selection.js"
+        }
+      }
+    },
+    "98ABC2ED-5349-4F74-A705-AED7D5C63D5A": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "textMorph": {
+          "key": "textMorph",
+          "value": {
+            "__ref__": true,
+            "id": "Text_6C341728_A67E_49B3_BC8B_CB938250B4D9",
+            "rev": 249132
+          }
+        },
+        "_goalColumn": {
+          "key": "_goalColumn",
+          "value": 10
+        },
+        "_isReverse": {
+          "key": "_isReverse",
+          "value": false
+        },
+        "startAnchor": {
+          "key": "startAnchor",
+          "value": {
+            "__ref__": true,
+            "id": "3D6C24A4-BF0E-42BC-A683-A621A58E827D",
+            "rev": 0
+          }
+        },
+        "endAnchor": {
+          "key": "endAnchor",
+          "value": {
+            "__ref__": true,
+            "id": "990E79B3-653E-4A4B-B71B-3EC2BF4C8EC5",
+            "rev": 0
+          }
+        },
+        "_range": {
+          "key": "_range",
+          "value": {
+            "__ref__": true,
+            "id": "D9E5E7D6-331D-4C02-BC06-7C0A50FF0EF6",
+            "rev": 0
+          }
+        },
+        "_cursorVisible": {
+          "key": "_cursorVisible",
+          "value": true
+        },
+        "cursorBlinkProcess": {
+          "key": "cursorBlinkProcess",
+          "value": null
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Selection",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/selection.js"
+        }
+      }
+    },
+    "3D6C24A4-BF0E-42BC-A683-A621A58E827D": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "id": {
+          "key": "id",
+          "value": null
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "1EB07CAA-F02C-44E2-B737-EB1CBDF9D96E",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "1EB07CAA-F02C-44E2-B737-EB1CBDF9D96E": {
+      "rev": 0,
+      "props": {
+        "row": {
+          "key": "row",
+          "value": 0
+        },
+        "column": {
+          "key": "column",
+          "value": 10
+        }
+      }
+    },
+    "990E79B3-653E-4A4B-B71B-3EC2BF4C8EC5": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "id": {
+          "key": "id",
+          "value": null
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "957357EA-E866-4794-8AA2-8C14F6701C0B",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "957357EA-E866-4794-8AA2-8C14F6701C0B": {
+      "rev": 0,
+      "props": {
+        "row": {
+          "key": "row",
+          "value": 0
+        },
+        "column": {
+          "key": "column",
+          "value": 10
+        }
+      }
+    },
+    "D9E5E7D6-331D-4C02-BC06-7C0A50FF0EF6": {
+      "rev": 0,
+      "props": {
+        "start": {
+          "key": "start",
+          "value": {
+            "__ref__": true,
+            "id": "1EB07CAA-F02C-44E2-B737-EB1CBDF9D96E",
+            "rev": 0
+          }
+        },
+        "end": {
+          "key": "end",
+          "value": {
+            "__ref__": true,
+            "id": "957357EA-E866-4794-8AA2-8C14F6701C0B",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Range",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/range.js"
+        }
+      }
     }
   },
   "packages": {},
-  "preview": "<div   draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate(0px, 34.176px) rotate(0deg) scale(0.791198, 0.791198); transform-origin: 0px 0px 0px; display: inline; width: 126.391px; height: 40px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div  style=\" position: absolute; left: 80.0938px; top: 8px; width: 3px; height: 24px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 24px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 24px; line-height: 24px;\"><span style=\"font-size: 20px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: normal; font-style: normal; text-decoration: none; color: rgb(0, 0, 0);\">Lively rocks!</span></div><div style=\"height: 0px; width: 110.391px;\"></div></div></div>"
+  "preview": "<div   draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate(0px, 34.176px) rotate(0deg) scale(0.791198, 0.791198); transform-origin: 0px 0px 0px; display: inline; width: 126.391px; height: 40px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div  style=\" position: absolute; left: 90.8281px; top: 8px; width: 3px; height: 24px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 24px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 24px; line-height: 24px;\"><span style=\"font-size: 20px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: normal; font-style: normal; text-decoration: none; color: rgb(0, 0, 0);\">Lively rocks!</span></div><div style=\"height: 0px; width: 110.391px;\"></div></div></div>"
 }

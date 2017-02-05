@@ -1,152 +1,9 @@
 {
-  "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
+  "id": "Window_E31F996B_B843_4E6F_A647_2F6FFFF929B9",
   "snapshot": {
-    "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB": {
-      "rev": 1491360,
+    "Window_E31F996B_B843_4E6F_A647_2F6FFFF929B9": {
+      "rev": 20942,
       "props": {
-        "resizable": {
-          "key": "resizable",
-          "value": true
-        },
-        "borderWidthTop": {
-          "key": "borderWidthTop",
-          "value": 1
-        },
-        "borderWidthRight": {
-          "key": "borderWidthRight",
-          "value": 1
-        },
-        "borderWidthLeft": {
-          "key": "borderWidthLeft",
-          "value": 1
-        },
-        "borderWidthBottom": {
-          "key": "borderWidthBottom",
-          "value": 1
-        },
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 7
-        },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 7
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 7
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 7
-        },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Window",
-            "Morph",
-            "morph"
-          ]
-        },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(211.9,365.5)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "name": {
-          "key": "name",
-          "value": "PartsBinWindow"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(979.3,476.0)"
-        },
-        "dropShadow": {
-          "key": "dropShadow",
-          "value": {
-            "__ref__": true,
-            "id": "BBB6CA8A-DE7F-412F-80F9-D9B062E4344C",
-            "rev": 0
-          }
-        },
-        "clipMode": {
-          "key": "clipMode",
-          "value": "hidden"
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Partsbin_FABE76E2_FE67_4749_A597_AC6F9569555F",
-              "rev": 1492004
-            },
-            {
-              "__ref__": true,
-              "id": "Ellipse_AC5F00AC_54E2_47D7_B8AC_A7324EAB76AC",
-              "rev": 1469308
-            },
-            {
-              "__ref__": true,
-              "id": "Ellipse_636A7042_07D4_4C36_BF60_EA64CCBEC628",
-              "rev": 1469328
-            },
-            {
-              "__ref__": true,
-              "id": "Ellipse_23DC893C_21DF_4058_9C4D_B5D19041532B",
-              "rev": 1469348
-            },
-            {
-              "__ref__": true,
-              "id": "Label_9E5ADC89_0BAF_4DF5_94A8_50E6EBC1D1DB",
-              "rev": 1492017
-            },
-            {
-              "__ref__": true,
-              "id": "Resizer_6670F1CA_BA14_415F_9A83_14AE79FCEA19",
-              "rev": 1492002
-            }
-          ]
-        },
-        "targetMorph": {
-          "key": "targetMorph",
-          "value": {
-            "__ref__": true,
-            "id": "Partsbin_FABE76E2_FE67_4749_A597_AC6F9569555F",
-            "rev": 1492004
-          }
-        },
-        "title": {
-          "key": "title",
-          "value": "PartsBin"
-        },
         "_tickingScripts": {
           "key": "_tickingScripts",
           "value": []
@@ -156,10 +13,145 @@
           "value": [
             {
               "__ref__": true,
-              "id": "8A318272-53F3-4B15-AB15-4561DF8AA3AA",
+              "id": "1867B897-9C54-4C5A-B457-20656B62FDCF",
               "rev": 0
             }
           ]
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "F4F548A1-40B0-4970-9182-590167747576",
+            "rev": 0
+          }
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(979.3,476.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        },
+        "name": {
+          "key": "name",
+          "value": "PartsBinWindow"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(104.0,211.0)"
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Window",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Partsbin_7F93E79C_637E_44B5_AB70_EAE435904E43",
+              "rev": 26727
+            },
+            {
+              "__ref__": true,
+              "id": "Ellipse_FC9D9A1F_BE7C_412B_B452_544B61599772",
+              "rev": 20952
+            },
+            {
+              "__ref__": true,
+              "id": "Ellipse_D43139A2_636D_4D34_A98C_56D7F64274F2",
+              "rev": 20956
+            },
+            {
+              "__ref__": true,
+              "id": "Ellipse_31AFA87E_FDB3_4C0F_8372_6EDFBC5EA66F",
+              "rev": 20960
+            },
+            {
+              "__ref__": true,
+              "id": "Label_8652280B_C1E8_4E83_87EC_E1A2031E702A",
+              "rev": 26028
+            },
+            {
+              "__ref__": true,
+              "id": "Resizer_6734A00F_F072_4B87_848D_0D55ED007188",
+              "rev": 26023
+            }
+          ]
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 7
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 7
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 7
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 7
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 1
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
+        },
+        "title": {
+          "key": "title",
+          "value": "PartsBin"
+        },
+        "targetMorph": {
+          "key": "targetMorph",
+          "value": {
+            "__ref__": true,
+            "id": "Partsbin_7F93E79C_637E_44B5_AB70_EAE435904E43",
+            "rev": 26727
+          }
         }
       },
       "lively.serializer-class-info": {
@@ -173,7 +165,99 @@
         }
       }
     },
-    "BBB6CA8A-DE7F-412F-80F9-D9B062E4344C": {
+    "1867B897-9C54-4C5A-B457-20656B62FDCF": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Window_E31F996B_B843_4E6F_A647_2F6FFFF929B9",
+            "rev": 20942
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "extent"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Window_E31F996B_B843_4E6F_A647_2F6FFFF929B9",
+            "rev": 20942
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayoutWindowControls"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "E876D6CE-F808-412B-8586-B99F95410596",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "E876D6CE-F808-412B-8586-B99F95410596": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Window_E31F996B_B843_4E6F_A647_2F6FFFF929B9",
+            "rev": 20942
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Window_E31F996B_B843_4E6F_A647_2F6FFFF929B9",
+            "rev": 20942
+          }
+        }
+      }
+    },
+    "F4F548A1-40B0-4970-9182-590167747576": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -211,59 +295,9 @@
         }
       }
     },
-    "Partsbin_FABE76E2_FE67_4749_A597_AC6F9569555F": {
-      "rev": 1492004,
+    "Partsbin_7F93E79C_637E_44B5_AB70_EAE435904E43": {
+      "rev": 26727,
       "props": {
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Partsbin",
-            "Morph",
-            "morph"
-          ]
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,25.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "name": {
-          "key": "name",
-          "value": "partsbin"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(253,254,254)"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(979.3,451.0)"
-        },
-        "draggable": {
-          "key": "draggable",
-          "value": false
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Morph_5B03931C_219D_4BC7_B889_3DD018FBF21B",
-              "rev": 1492006
-            }
-          ]
-        },
-        "layout": {
-          "key": "layout",
-          "value": {
-            "__ref__": true,
-            "id": "EB6EE5DF-A8AB-486E-B389-7F5F3B2DC4C9",
-            "rev": 0
-          }
-        },
         "_tickingScripts": {
           "key": "_tickingScripts",
           "value": []
@@ -273,8 +307,58 @@
           "value": [
             {
               "__ref__": true,
-              "id": "0F10BBD6-1DCF-433A-8E01-78AF821BC564",
+              "id": "5B2767CC-7B31-4A06-A5AE-B55943FC8130",
               "rev": 0
+            }
+          ]
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(979.3,451.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(253,254,254)"
+        },
+        "name": {
+          "key": "name",
+          "value": "partsbin"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,25.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Partsbin",
+            "Morph",
+            "morph"
+          ]
+        },
+        "layout": {
+          "key": "layout",
+          "value": {
+            "__ref__": true,
+            "id": "F1BCC586-FA13-4904-A8FC-66B2304814FB",
+            "rev": 0
+          }
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Morph_1F01D866_C9AB_4930_98E1_7A21CFB436A5",
+              "rev": 26027
             }
           ]
         }
@@ -290,532 +374,7 @@
         }
       }
     },
-    "Morph_5B03931C_219D_4BC7_B889_3DD018FBF21B": {
-      "rev": 1492006,
-      "props": {
-        "borderWidthTop": {
-          "key": "borderWidthTop",
-          "value": 1
-        },
-        "borderWidthRight": {
-          "key": "borderWidthRight",
-          "value": 1
-        },
-        "borderWidthLeft": {
-          "key": "borderWidthLeft",
-          "value": 1
-        },
-        "borderWidthBottom": {
-          "key": "borderWidthBottom",
-          "value": 1
-        },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Morph",
-            "morph"
-          ]
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "name": {
-          "key": "name",
-          "value": "button-bar"
-        },
-        "isLayoutable": {
-          "key": "isLayoutable",
-          "value": false
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(253,254,254)"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(979.3,40.0)"
-        },
-        "draggable": {
-          "key": "draggable",
-          "value": false
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-              "rev": 1487619
-            }
-          ]
-        },
-        "layout": {
-          "key": "layout",
-          "value": {
-            "__ref__": true,
-            "id": "81A7E0BC-B0BC-46A6-8498-1081A7DC3173",
-            "rev": 0
-          }
-        },
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections"
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "Morph",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "morph.js"
-        }
-      }
-    },
-    "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8": {
-      "rev": 1487619,
-      "props": {
-        "defaultTriggerStyle": {
-          "key": "defaultTriggerStyle",
-          "value": {
-            "__ref__": true,
-            "id": "7ED7026E-B4E2-4074-9B21-7E45198E115B",
-            "rev": 0
-          }
-        },
-        "defaultInactiveStyle": {
-          "key": "defaultInactiveStyle",
-          "value": {
-            "__ref__": true,
-            "id": "B1A4591F-2987-40AA-809D-BE7D9453CCEF",
-            "rev": 0
-          }
-        },
-        "defaultActiveStyle": {
-          "key": "defaultActiveStyle",
-          "value": {
-            "__ref__": true,
-            "id": "3164316F-31F5-447C-92A1-4B7E8286690E",
-            "rev": 0
-          }
-        },
-        "padding": {
-          "key": "padding",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(5,5,0,0)"
-        },
-        "borderWidthTop": {
-          "key": "borderWidthTop",
-          "value": 1
-        },
-        "borderWidthRight": {
-          "key": "borderWidthRight",
-          "value": 1
-        },
-        "borderWidthLeft": {
-          "key": "borderWidthLeft",
-          "value": 1
-        },
-        "borderWidthBottom": {
-          "key": "borderWidthBottom",
-          "value": 1
-        },
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 15
-        },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 15
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 15
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 15
-        },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Button",
-            "Morph",
-            "morph"
-          ]
-        },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(474.5,5.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "pointer"
-        },
-        "name": {
-          "key": "name",
-          "value": "reload-button"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(30.3,27.0)"
-        },
-        "draggable": {
-          "key": "draggable",
-          "value": false
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Label_C707B066_9F04_4773_8839_AF8D90562D4B",
-              "rev": 1469431
-            }
-          ]
-        },
-        "triggerStyle": {
-          "key": "triggerStyle",
-          "value": {
-            "__ref__": true,
-            "id": "709F57C0-3B45-4C7F-A677-2715B738225E",
-            "rev": 0
-          }
-        },
-        "inactiveStyle": {
-          "key": "inactiveStyle",
-          "value": {
-            "__ref__": true,
-            "id": "914EB822-768A-4984-97F8-0A7054B13755",
-            "rev": 0
-          }
-        },
-        "activeStyle": {
-          "key": "activeStyle",
-          "value": {
-            "__ref__": true,
-            "id": "5ABEE00B-BFD5-44C4-8589-498A377CB61E",
-            "rev": 0
-          }
-        },
-        "active": {
-          "key": "active",
-          "value": true
-        },
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "4F39E746-CC03-4A21-97ED-2A10D5572E63",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "210BFD1E-8890-46A0-9D27-B15243AD2D16",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "199CCED1-DB6D-4617-8AA2-E13AAC736360",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "1E662DC4-7225-44E6-BCF5-B9903319F9C5",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "1811D3C5-E4CE-4D8E-9693-97629B028FAF",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "1449285E-524B-4C25-837F-9EAF1EBEC5FF",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "865631D6-CDB0-4D8A-8075-656AB17DC92A",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "0DCD3980-6E58-423E-A071-EB503F5ACFF2",
-              "rev": 0
-            }
-          ]
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "Button",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "components/buttons.js"
-        }
-      }
-    },
-    "7ED7026E-B4E2-4074-9B21-7E45198E115B": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(161,161,161)"
-        }
-      }
-    },
-    "B1A4591F-2987-40AA-809D-BE7D9453CCEF": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "borderColor": {
-          "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(204,204,204,0.5)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(240,240,240,0.5)"
-        },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(64,64,64,0.5)"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "not-allowed"
-        }
-      }
-    },
-    "3164316F-31F5-447C-92A1-4B7E8286690E": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "borderColor": {
-          "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
-        },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "pointer"
-        }
-      }
-    },
-    "Label_C707B066_9F04_4773_8839_AF8D90562D4B": {
-      "rev": 1469431,
-      "props": {
-        "textDecoration": {
-          "key": "textDecoration",
-          "value": "none"
-        },
-        "fontStyle": {
-          "key": "fontStyle",
-          "value": "normal"
-        },
-        "fontWeight": {
-          "key": "fontWeight",
-          "value": "normal"
-        },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
-        },
-        "fontSize": {
-          "key": "fontSize",
-          "value": 17
-        },
-        "fontFamily": {
-          "key": "fontFamily",
-          "value": "Sans-Serif"
-        },
-        "autofit": {
-          "key": "autofit",
-          "value": true
-        },
-        "padding": {
-          "key": "padding",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Label",
-            "Morph",
-            "morph"
-          ]
-        },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(7.9,5.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "default"
-        },
-        "name": {
-          "key": "name",
-          "value": "label"
-        },
-        "fill": {
-          "key": "fill",
-          "value": null
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(14.6,17.0)"
-        },
-        "draggable": {
-          "key": "draggable",
-          "value": false
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
-        },
-        "textAndAttributes": {
-          "key": "textAndAttributes",
-          "value": [
-            [
-              "",
-              {
-                "__ref__": true,
-                "id": "ABFC7AF0-0DD6-431F-858B-B0701DF0B82B",
-                "rev": 0
-              }
-            ]
-          ]
-        },
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "73D8BEA9-024F-424B-BD4A-F4989560F66C",
-              "rev": 0
-            }
-          ]
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "Label",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "text/label.js"
-        }
-      }
-    },
-    "ABFC7AF0-0DD6-431F-858B-B0701DF0B82B": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "fontFamily": {
-          "key": "fontFamily",
-          "value": ""
-        },
-        "textStyleClasses": {
-          "key": "textStyleClasses",
-          "value": [
-            "fa"
-          ]
-        }
-      }
-    },
-    "73D8BEA9-024F-424B-BD4A-F4989560F66C": {
+    "5B2767CC-7B31-4A06-A5AE-B55943FC8130": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -834,8 +393,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_C707B066_9F04_4773_8839_AF8D90562D4B",
-            "rev": 1469431
+            "id": "Partsbin_7F93E79C_637E_44B5_AB70_EAE435904E43",
+            "rev": 26727
           }
         },
         "sourceAttrName": {
@@ -846,1067 +405,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "91BF1827-F307-4137-B0DF-C372CC717386",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "91BF1827-F307-4137-B0DF-C372CC717386": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Label_C707B066_9F04_4773_8839_AF8D90562D4B",
-            "rev": 1469431
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        }
-      }
-    },
-    "709F57C0-3B45-4C7F-A677-2715B738225E": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(161,161,161)"
-        }
-      }
-    },
-    "914EB822-768A-4984-97F8-0A7054B13755": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "borderColor": {
-          "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(204,204,204,0.5)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(240,240,240,0.5)"
-        },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(64,64,64,0.5)"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "not-allowed"
-        }
-      }
-    },
-    "5ABEE00B-BFD5-44C4-8589-498A377CB61E": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "borderColor": {
-          "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
-        },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "pointer"
-        }
-      }
-    },
-    "4F39E746-CC03-4A21-97ED-2A10D5572E63": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "extent"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "01048762-4895-4AB0-A58E-AED5DB900F58",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "01048762-4895-4AB0-A58E-AED5DB900F58": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        }
-      }
-    },
-    "210BFD1E-8890-46A0-9D27-B15243AD2D16": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "padding"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "B473748D-6085-43EC-ABA9-E78346A319C5",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "B473748D-6085-43EC-ABA9-E78346A319C5": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        }
-      }
-    },
-    "199CCED1-DB6D-4617-8AA2-E13AAC736360": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "fontSize"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "190A8FE5-D3AD-48A6-AA77-E1F51909ED41",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "190A8FE5-D3AD-48A6-AA77-E1F51909ED41": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        }
-      }
-    },
-    "1E662DC4-7225-44E6-BCF5-B9903319F9C5": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "fontFamily"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "F8F9A6B3-0476-43A5-9690-86795A09A212",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "F8F9A6B3-0476-43A5-9690-86795A09A212": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        }
-      }
-    },
-    "1811D3C5-E4CE-4D8E-9693-97629B028FAF": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "active"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "updateButtonStyle"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "446A32B9-DCE4-4883-9F5B-ECE292ECE30A",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "446A32B9-DCE4-4883-9F5B-ECE292ECE30A": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        }
-      }
-    },
-    "1449285E-524B-4C25-837F-9EAF1EBEC5FF": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "activeStyle"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "updateButtonStyle"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "A449B278-FCEE-4E5B-8DA4-74CEA986D225",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "A449B278-FCEE-4E5B-8DA4-74CEA986D225": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        }
-      }
-    },
-    "865631D6-CDB0-4D8A-8075-656AB17DC92A": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "inactiveStyle"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "updateButtonStyle"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "D8C2EA94-D418-401D-B2FE-74AA569A509B",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "D8C2EA94-D418-401D-B2FE-74AA569A509B": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        }
-      }
-    },
-    "0DCD3980-6E58-423E-A071-EB503F5ACFF2": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "fire"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Partsbin_FABE76E2_FE67_4749_A597_AC6F9569555F",
-            "rev": 1492004
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "showObjects"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "7980475C-51CE-4661-8B85-D17D7E7CBDBF",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "7980475C-51CE-4661-8B85-D17D7E7CBDBF": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_B9826500_98DA_4F87_A1EF_96D8AAF84ED8",
-            "rev": 1487619
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Partsbin_FABE76E2_FE67_4749_A597_AC6F9569555F",
-            "rev": 1492004
-          }
-        }
-      }
-    },
-    "81A7E0BC-B0BC-46A6-8498-1081A7DC3173": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "border": {
-          "key": "border",
-          "value": {
-            "__ref__": true,
-            "id": "7574CE17-37B1-4CBB-95F7-0E6EE6CB5032",
-            "rev": 0
-          }
-        },
-        "_spacing": {
-          "key": "_spacing",
-          "value": 5
-        },
-        "ignore": {
-          "key": "ignore",
-          "value": []
-        },
-        "lastBounds": {
-          "key": "lastBounds",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,979.3000000000001,40)"
-        },
-        "active": {
-          "key": "active",
-          "value": false
-        },
-        "container": {
-          "key": "container",
-          "value": {
-            "__ref__": true,
-            "id": "Morph_5B03931C_219D_4BC7_B889_3DD018FBF21B",
-            "rev": 1492006
-          }
-        },
-        "_autoResize": {
-          "key": "_autoResize",
-          "value": false
-        },
-        "_direction": {
-          "key": "_direction",
-          "value": "centered"
-        },
-        "maxHeight": {
-          "key": "maxHeight",
-          "value": 0
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "HorizontalLayout",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "layout.js"
-        }
-      }
-    },
-    "7574CE17-37B1-4CBB-95F7-0E6EE6CB5032": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 3
-        },
-        "left": {
-          "key": "left",
-          "value": 3
-        },
-        "right": {
-          "key": "right",
-          "value": 3
-        },
-        "top": {
-          "key": "top",
-          "value": 3
-        }
-      }
-    },
-    "EB6EE5DF-A8AB-486E-B389-7F5F3B2DC4C9": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "border": {
-          "key": "border",
-          "value": {
-            "__ref__": true,
-            "id": "83A1A356-8494-4DB9-B9CA-DDDFCA259A62",
-            "rev": 0
-          }
-        },
-        "spacing": {
-          "key": "spacing",
-          "value": 10
-        },
-        "ignore": {
-          "key": "ignore",
-          "value": []
-        },
-        "lastBounds": {
-          "key": "lastBounds",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,25,979.3000000000001,451)"
-        },
-        "active": {
-          "key": "active",
-          "value": false
-        },
-        "container": {
-          "key": "container",
-          "value": {
-            "__ref__": true,
-            "id": "Partsbin_FABE76E2_FE67_4749_A597_AC6F9569555F",
-            "rev": 1492004
-          }
-        },
-        "autoResize": {
-          "key": "autoResize",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "TilingLayout",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "layout.js"
-        }
-      }
-    },
-    "83A1A356-8494-4DB9-B9CA-DDDFCA259A62": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "top": {
-          "key": "top",
-          "value": 40
-        },
-        "left": {
-          "key": "left",
-          "value": 0
-        },
-        "right": {
-          "key": "right",
-          "value": 0
-        },
-        "bottom": {
-          "key": "bottom",
-          "value": 0
-        }
-      }
-    },
-    "0F10BBD6-1DCF-433A-8E01-78AF821BC564": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Partsbin_FABE76E2_FE67_4749_A597_AC6F9569555F",
-            "rev": 1492004
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "extent"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Morph_5B03931C_219D_4BC7_B889_3DD018FBF21B",
-            "rev": 1492006
+            "id": "Morph_1F01D866_C9AB_4930_98E1_7A21CFB436A5",
+            "rev": 26027
           }
         },
         "targetMethodName": {
@@ -1917,7 +417,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "F341503B-3416-4A32-B8C9-DFF7638EA0EC",
+            "id": "25345B77-F2FF-4249-B6D2-EB755AA33075",
             "rev": 0
           }
         },
@@ -1948,7 +448,475 @@
         }
       }
     },
-    "F341503B-3416-4A32-B8C9-DFF7638EA0EC": {
+    "Morph_1F01D866_C9AB_4930_98E1_7A21CFB436A5": {
+      "rev": 26027,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(979.3,40.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(253,254,254)"
+        },
+        "isLayoutable": {
+          "key": "isLayoutable",
+          "value": false
+        },
+        "name": {
+          "key": "name",
+          "value": "button-bar"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Morph",
+            "morph"
+          ]
+        },
+        "layout": {
+          "key": "layout",
+          "value": {
+            "__ref__": true,
+            "id": "1BF5049A-46C2-4607-806A-603026842C69",
+            "rev": 0
+          }
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+              "rev": 20948
+            }
+          ]
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 1
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Morph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "1BF5049A-46C2-4607-806A-603026842C69": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "border": {
+          "key": "border",
+          "value": {
+            "__ref__": true,
+            "id": "0104F4E0-6660-4E24-8022-6B6C8A2DC879",
+            "rev": 0
+          }
+        },
+        "_spacing": {
+          "key": "_spacing",
+          "value": 5
+        },
+        "ignore": {
+          "key": "ignore",
+          "value": []
+        },
+        "lastBounds": {
+          "key": "lastBounds",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,979.3,40)"
+        },
+        "active": {
+          "key": "active",
+          "value": false
+        },
+        "container": {
+          "key": "container",
+          "value": {
+            "__ref__": true,
+            "id": "Morph_1F01D866_C9AB_4930_98E1_7A21CFB436A5",
+            "rev": 26027
+          }
+        },
+        "_autoResize": {
+          "key": "_autoResize",
+          "value": false
+        },
+        "_direction": {
+          "key": "_direction",
+          "value": "centered"
+        },
+        "maxHeight": {
+          "key": "maxHeight",
+          "value": 0
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "HorizontalLayout",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "layout.js"
+        }
+      }
+    },
+    "0104F4E0-6660-4E24-8022-6B6C8A2DC879": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 3
+        },
+        "left": {
+          "key": "left",
+          "value": 3
+        },
+        "right": {
+          "key": "right",
+          "value": 3
+        },
+        "top": {
+          "key": "top",
+          "value": 3
+        }
+      }
+    },
+    "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441": {
+      "rev": 20948,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "763E8060-7365-436D-AD2F-4AEF4EED096A",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "03D5832D-0AA4-46BA-B6C5-7BF54398378A",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "60C80B1A-5D4B-471D-9AD9-036DD64B861B",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "D6C46E13-3DBE-4BFE-B353-B6093FC5238D",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "E326126B-3F1B-44AF-8D9E-64F5A3545FB8",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "2792930E-5523-4E27-A893-182B02883F29",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "97CCA9A8-971D-47FF-822F-E0A19D12E066",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "72074DB3-8098-4FAB-ABD0-C0112F4DE3B1",
+              "rev": 0
+            }
+          ]
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(30.3,27.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
+        },
+        "name": {
+          "key": "name",
+          "value": "reload-button"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(474.5,5.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Button",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Label_30AB4550_FC07_4581_B96C_64DDFDDCE190",
+              "rev": 20950
+            }
+          ]
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 15
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 15
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 15
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 15
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 1
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(5,5,0,0)"
+        },
+        "defaultActiveStyle": {
+          "key": "defaultActiveStyle",
+          "value": {
+            "__ref__": true,
+            "id": "47528823-1EBA-4654-B513-819F8E2EEBF6",
+            "rev": 0
+          }
+        },
+        "activeStyle": {
+          "key": "activeStyle",
+          "value": {
+            "__ref__": true,
+            "id": "AD7173B8-9A6C-4314-BC16-AB1351F11454",
+            "rev": 0
+          }
+        },
+        "defaultInactiveStyle": {
+          "key": "defaultInactiveStyle",
+          "value": {
+            "__ref__": true,
+            "id": "BA918135-036B-4876-BEB3-A67AE6D68678",
+            "rev": 0
+          }
+        },
+        "inactiveStyle": {
+          "key": "inactiveStyle",
+          "value": {
+            "__ref__": true,
+            "id": "6292F59B-8F72-4308-A3F0-F5DEECE7E74B",
+            "rev": 0
+          }
+        },
+        "defaultTriggerStyle": {
+          "key": "defaultTriggerStyle",
+          "value": {
+            "__ref__": true,
+            "id": "24604226-F780-4F2E-914D-C63C3017867D",
+            "rev": 0
+          }
+        },
+        "triggerStyle": {
+          "key": "triggerStyle",
+          "value": {
+            "__ref__": true,
+            "id": "DB485415-79C0-47FC-92E2-27F65A7AFBF5",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Button",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "components/buttons.js"
+        }
+      }
+    },
+    "763E8060-7365-436D-AD2F-4AEF4EED096A": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "extent"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "3371D68D-0C79-4B43-847B-43B3232FE6C5",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "3371D68D-0C79-4B43-847B-43B3232FE6C5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1959,93 +927,667 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Partsbin_FABE76E2_FE67_4749_A597_AC6F9569555F",
-            "rev": 1492004
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Morph_5B03931C_219D_4BC7_B889_3DD018FBF21B",
-            "rev": 1492006
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
           }
         }
       }
     },
-    "Ellipse_AC5F00AC_54E2_47D7_B8AC_A7324EAB76AC": {
-      "rev": 1469308,
+    "03D5832D-0AA4-46BA-B6C5-7BF54398378A": {
+      "rev": 0,
       "props": {
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 14
+        "_rev": {
+          "key": "_rev",
+          "value": 0
         },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 14
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 14
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 14
-        },
-        "borderColorTop": {
-          "key": "borderColorTop"
-        },
-        "borderColorRight": {
-          "key": "borderColorRight"
-        },
-        "borderColorLeft": {
-          "key": "borderColorLeft"
-        },
-        "borderColorBottom": {
-          "key": "borderColorBottom"
-        },
-        "styleClasses": {
-          "key": "styleClasses",
+        "doNotSerialize": {
+          "key": "doNotSerialize",
           "value": [
-            "Ellipse",
-            "Morph",
-            "morph"
+            "isActive",
+            "converter",
+            "updater"
           ]
         },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
         },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(8.0,6.0)"
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "padding"
         },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
         },
-        "name": {
-          "key": "name",
-          "value": "close"
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
         },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,96,82)"
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "D69247B9-24D4-4655-8CEC-F833A41D60B3",
+            "rev": 0
+          }
         },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(14.0,14.0)"
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
         },
-        "submorphs": {
-          "key": "submorphs",
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "D69247B9-24D4-4655-8CEC-F833A41D60B3": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        }
+      }
+    },
+    "60C80B1A-5D4B-471D-9AD9-036DD64B861B": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
           "value": [
-            {
-              "__ref__": true,
-              "id": "Label_FA6A5C4C_383B_44EB_9F3F_445166932F9D",
-              "rev": 1469432
-            }
+            "isActive",
+            "converter",
+            "updater"
           ]
         },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fontSize"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "F1E3D927-79A7-451A-8CEF-816EA4A0EA61",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "F1E3D927-79A7-451A-8CEF-816EA4A0EA61": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        }
+      }
+    },
+    "D6C46E13-3DBE-4BFE-B353-B6093FC5238D": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fontFamily"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "3D0A122C-1756-4FB6-9A4C-5412EED56BDB",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "3D0A122C-1756-4FB6-9A4C-5412EED56BDB": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        }
+      }
+    },
+    "E326126B-3F1B-44AF-8D9E-64F5A3545FB8": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "active"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "updateButtonStyle"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "1F9E2720-B8AC-4FB0-B657-57C081CCB952",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "1F9E2720-B8AC-4FB0-B657-57C081CCB952": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        }
+      }
+    },
+    "2792930E-5523-4E27-A893-182B02883F29": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "activeStyle"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "updateButtonStyle"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "A99799A4-7F7D-45B7-A858-099D97A975CB",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "A99799A4-7F7D-45B7-A858-099D97A975CB": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        }
+      }
+    },
+    "97CCA9A8-971D-47FF-822F-E0A19D12E066": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "inactiveStyle"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "updateButtonStyle"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "E5B946A6-23E5-41A4-95F3-B15B7BF4DB0A",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "E5B946A6-23E5-41A4-95F3-B15B7BF4DB0A": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        }
+      }
+    },
+    "72074DB3-8098-4FAB-ABD0-C0112F4DE3B1": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fire"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Partsbin_7F93E79C_637E_44B5_AB70_EAE435904E43",
+            "rev": 26727
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "showObjects"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "0EC76FC5-5894-4A63-8262-8CEB71D3C0C4",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "0EC76FC5-5894-4A63-8262-8CEB71D3C0C4": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Partsbin_7F93E79C_637E_44B5_AB70_EAE435904E43",
+            "rev": 26727
+          }
+        }
+      }
+    },
+    "Label_30AB4550_FC07_4581_B96C_64DDFDDCE190": {
+      "rev": 20950,
+      "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
           "value": []
@@ -2055,20 +1597,514 @@
           "value": [
             {
               "__ref__": true,
-              "id": "B6BFDAF3-3654-4940-8825-0F48E8AEAD36",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "768FA6CB-1FE4-43DD-B2AB-EF5F6221ADE4",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "D351FCFA-0AA0-4FD2-8668-2D9AD08D285A",
+              "id": "3EC38942-8396-4383-A2C5-D21EC11B04E3",
               "rev": 0
             }
           ]
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(14.6,17.0)"
+        },
+        "name": {
+          "key": "name",
+          "value": "label"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(7.9,5.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            [
+              "",
+              {
+                "__ref__": true,
+                "id": "EF2F1AA9-9394-438D-85A1-9A8618091C70",
+                "rev": 0
+              }
+            ]
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 17
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Label",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/label.js"
+        }
+      }
+    },
+    "3EC38942-8396-4383-A2C5-D21EC11B04E3": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Label_30AB4550_FC07_4581_B96C_64DDFDDCE190",
+            "rev": 20950
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "extent"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "0FB82B8C-F807-4B94-B5E6-5E5C4565D8FE",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "0FB82B8C-F807-4B94-B5E6-5E5C4565D8FE": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Label_30AB4550_FC07_4581_B96C_64DDFDDCE190",
+            "rev": 20950
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_AA553D5F_C1CA_46A8_95DA_79AFDE5A0441",
+            "rev": 20948
+          }
+        }
+      }
+    },
+    "EF2F1AA9-9394-438D-85A1-9A8618091C70": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": ""
+        },
+        "textStyleClasses": {
+          "key": "textStyleClasses",
+          "value": [
+            "fa"
+          ]
+        }
+      }
+    },
+    "47528823-1EBA-4654-B513-819F8E2EEBF6": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        }
+      }
+    },
+    "AD7173B8-9A6C-4314-BC16-AB1351F11454": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        }
+      }
+    },
+    "BA918135-036B-4876-BEB3-A67AE6D68678": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(204,204,204,0.5)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(240,240,240,0.5)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(64,64,64,0.5)"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "not-allowed"
+        }
+      }
+    },
+    "6292F59B-8F72-4308-A3F0-F5DEECE7E74B": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(204,204,204,0.5)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(240,240,240,0.5)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(64,64,64,0.5)"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "not-allowed"
+        }
+      }
+    },
+    "24604226-F780-4F2E-914D-C63C3017867D": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(161,161,161)"
+        }
+      }
+    },
+    "DB485415-79C0-47FC-92E2-27F65A7AFBF5": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(161,161,161)"
+        }
+      }
+    },
+    "25345B77-F2FF-4249-B6D2-EB755AA33075": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Partsbin_7F93E79C_637E_44B5_AB70_EAE435904E43",
+            "rev": 26727
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Morph_1F01D866_C9AB_4930_98E1_7A21CFB436A5",
+            "rev": 26027
+          }
+        }
+      }
+    },
+    "F1BCC586-FA13-4904-A8FC-66B2304814FB": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "border": {
+          "key": "border",
+          "value": {
+            "__ref__": true,
+            "id": "56E93336-D186-4CD8-BFA9-CEB90AB42BC9",
+            "rev": 0
+          }
+        },
+        "spacing": {
+          "key": "spacing",
+          "value": 10
+        },
+        "ignore": {
+          "key": "ignore",
+          "value": []
+        },
+        "lastBounds": {
+          "key": "lastBounds",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,25,979.3,451)"
+        },
+        "active": {
+          "key": "active",
+          "value": false
+        },
+        "container": {
+          "key": "container",
+          "value": {
+            "__ref__": true,
+            "id": "Partsbin_7F93E79C_637E_44B5_AB70_EAE435904E43",
+            "rev": 26727
+          }
+        },
+        "autoResize": {
+          "key": "autoResize",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "TilingLayout",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "layout.js"
+        }
+      }
+    },
+    "56E93336-D186-4CD8-BFA9-CEB90AB42BC9": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "top": {
+          "key": "top",
+          "value": 40
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        }
+      }
+    },
+    "Ellipse_FC9D9A1F_BE7C_412B_B452_544B61599772": {
+      "rev": 20952,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "AE7E7F43-C331-41AE-B7FB-323D1FF69AB6",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "449BD143-813E-4C7B-BDE5-1FD2FDAAFCD9",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "BC3D2001-D535-499F-961D-1953751AA0C6",
+              "rev": 0
+            }
+          ]
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(14.0,14.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,96,82)"
+        },
+        "name": {
+          "key": "name",
+          "value": "close"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(8.0,6.0)"
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Ellipse",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Label_2971E2E8_9E26_49FA_A379_CB467B95A696",
+              "rev": 20954
+            }
+          ]
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop"
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 14
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 14
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 14
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 14
         }
       },
       "lively.serializer-class-info": {
@@ -2082,44 +2118,190 @@
         }
       }
     },
-    "Label_FA6A5C4C_383B_44EB_9F3F_445166932F9D": {
-      "rev": 1469432,
+    "AE7E7F43-C331-41AE-B7FB-323D1FF69AB6": {
+      "rev": 0,
       "props": {
-        "textDecoration": {
-          "key": "textDecoration",
-          "value": "none"
+        "_rev": {
+          "key": "_rev",
+          "value": 0
         },
-        "fontStyle": {
-          "key": "fontStyle",
-          "value": "normal"
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
         },
-        "fontWeight": {
-          "key": "fontWeight",
-          "value": "normal"
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Ellipse_FC9D9A1F_BE7C_412B_B452_544B61599772",
+            "rev": 20952
+          }
         },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseDown"
         },
-        "fontSize": {
-          "key": "fontSize",
-          "value": 12
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Window_E31F996B_B843_4E6F_A647_2F6FFFF929B9",
+            "rev": 20942
+          }
         },
-        "fontFamily": {
-          "key": "fontFamily",
-          "value": "Sans-Serif"
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "close"
         },
-        "autofit": {
-          "key": "autofit",
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "0AA598B0-0931-4119-8186-A8D16F02DA7A",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
           "value": true
         },
-        "padding": {
-          "key": "padding",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "0AA598B0-0931-4119-8186-A8D16F02DA7A": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Ellipse_FC9D9A1F_BE7C_412B_B452_544B61599772",
+            "rev": 20952
+          }
         },
-        "visible": {
-          "key": "visible",
-          "value": false
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Window_E31F996B_B843_4E6F_A647_2F6FFFF929B9",
+            "rev": 20942
+          }
+        }
+      }
+    },
+    "449BD143-813E-4C7B-BDE5-1FD2FDAAFCD9": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Ellipse_FC9D9A1F_BE7C_412B_B452_544B61599772",
+            "rev": 20952
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onHoverIn"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Label_2971E2E8_9E26_49FA_A379_CB467B95A696",
+            "rev": 20954
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "visible"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "0A6D33E8-D034-4679-B45B-51E5C2439038",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "() => true"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "Label_2971E2E8_9E26_49FA_A379_CB467B95A696": {
+      "rev": 20954,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,12.0)"
+        },
+        "opacity": {
+          "key": "opacity",
+          "value": 0.5
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2.3,1.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -2129,36 +2311,8 @@
             "morph"
           ]
         },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2.3,1.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "opacity": {
-          "key": "opacity",
-          "value": 0.5
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "default"
-        },
-        "fill": {
-          "key": "fill",
-          "value": null
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,12.0)"
-        },
-        "draggable": {
-          "key": "draggable",
+        "visible": {
+          "key": "visible",
           "value": false
         },
         "submorphs": {
@@ -2172,18 +2326,19 @@
               "",
               {
                 "__ref__": true,
-                "id": "3FCD4366-B3BB-4527-8E5F-8870D9C931FD",
+                "id": "EA68F438-EABB-421D-8713-50C6803C029F",
                 "rev": 0
               }
             ]
           ]
         },
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
         },
-        "attributeConnections": {
-          "key": "attributeConnections"
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
         }
       },
       "lively.serializer-class-info": {
@@ -2197,7 +2352,7 @@
         }
       }
     },
-    "3FCD4366-B3BB-4527-8E5F-8870D9C931FD": {
+    "EA68F438-EABB-421D-8713-50C6803C029F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2216,95 +2371,28 @@
         }
       }
     },
-    "B6BFDAF3-3654-4940-8825-0F48E8AEAD36": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Ellipse_AC5F00AC_54E2_47D7_B8AC_A7324EAB76AC",
-            "rev": 1469308
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "onMouseDown"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
-            "rev": 1491360
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "close"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "06DAF702-77BB-4C39-984B-749F0C4CC212",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "06DAF702-77BB-4C39-984B-749F0C4CC212": {
+    "0A6D33E8-D034-4679-B45B-51E5C2439038": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_AC5F00AC_54E2_47D7_B8AC_A7324EAB76AC",
-            "rev": 1469308
+            "id": "Ellipse_FC9D9A1F_BE7C_412B_B452_544B61599772",
+            "rev": 20952
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
-            "rev": 1491360
+            "id": "Label_2971E2E8_9E26_49FA_A379_CB467B95A696",
+            "rev": 20954
           }
         }
       }
     },
-    "768FA6CB-1FE4-43DD-B2AB-EF5F6221ADE4": {
+    "BC3D2001-D535-499F-961D-1953751AA0C6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2323,100 +2411,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_AC5F00AC_54E2_47D7_B8AC_A7324EAB76AC",
-            "rev": 1469308
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "onHoverIn"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Label_FA6A5C4C_383B_44EB_9F3F_445166932F9D",
-            "rev": 1469432
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "visible"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "B3504E6D-72F2-411C-B652-F1E8D27A6B71",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        },
-        "converterString": {
-          "key": "converterString",
-          "value": "() => true"
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "B3504E6D-72F2-411C-B652-F1E8D27A6B71": {
-      "rev": 0,
-      "props": {
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Ellipse_AC5F00AC_54E2_47D7_B8AC_A7324EAB76AC",
-            "rev": 1469308
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Label_FA6A5C4C_383B_44EB_9F3F_445166932F9D",
-            "rev": 1469432
-          }
-        }
-      }
-    },
-    "D351FCFA-0AA0-4FD2-8668-2D9AD08D285A": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Ellipse_AC5F00AC_54E2_47D7_B8AC_A7324EAB76AC",
-            "rev": 1469308
+            "id": "Ellipse_FC9D9A1F_BE7C_412B_B452_544B61599772",
+            "rev": 20952
           }
         },
         "sourceAttrName": {
@@ -2427,8 +2423,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_FA6A5C4C_383B_44EB_9F3F_445166932F9D",
-            "rev": 1469432
+            "id": "Label_2971E2E8_9E26_49FA_A379_CB467B95A696",
+            "rev": 20954
           }
         },
         "targetMethodName": {
@@ -2439,7 +2435,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "B8E5686D-B8EB-4087-8CDA-F4C1FF898A9B",
+            "id": "D6C24224-531C-48FD-AD31-FAFAB46CF33D",
             "rev": 0
           }
         },
@@ -2467,104 +2463,30 @@
         }
       }
     },
-    "B8E5686D-B8EB-4087-8CDA-F4C1FF898A9B": {
+    "D6C24224-531C-48FD-AD31-FAFAB46CF33D": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_AC5F00AC_54E2_47D7_B8AC_A7324EAB76AC",
-            "rev": 1469308
+            "id": "Ellipse_FC9D9A1F_BE7C_412B_B452_544B61599772",
+            "rev": 20952
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_FA6A5C4C_383B_44EB_9F3F_445166932F9D",
-            "rev": 1469432
+            "id": "Label_2971E2E8_9E26_49FA_A379_CB467B95A696",
+            "rev": 20954
           }
         }
       }
     },
-    "Ellipse_636A7042_07D4_4C36_BF60_EA64CCBEC628": {
-      "rev": 1469328,
+    "Ellipse_D43139A2_636D_4D34_A98C_56D7F64274F2": {
+      "rev": 20956,
       "props": {
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 14
-        },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 14
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 14
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 14
-        },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(182,67,0)"
-        },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(182,67,0)"
-        },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(182,67,0)"
-        },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(182,67,0)"
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Ellipse",
-            "Morph",
-            "morph"
-          ]
-        },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(28.0,6.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "name": {
-          "key": "name",
-          "value": "minimize"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,190,6)"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(14.0,14.0)"
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Label_2ED83298_66C4_4757_B9A7_993A88BA771C",
-              "rev": 1469433
-            }
-          ]
-        },
         "_tickingScripts": {
           "key": "_tickingScripts",
           "value": []
@@ -2574,20 +2496,94 @@
           "value": [
             {
               "__ref__": true,
-              "id": "246D5E9B-BC24-4FCE-A02E-5AB0EBDD6322",
+              "id": "5899BC36-3D26-49AF-8B06-A9594023675E",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "4F897C30-7950-47A4-9933-5EAA1240DE50",
+              "id": "4F23CE39-5D44-4A39-B92D-06AF78222E49",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "7B920A4A-D487-4AAD-A111-4CC6DB03EDEA",
+              "id": "522CFFD8-349B-4EAF-86BB-12C2535D77F9",
               "rev": 0
             }
           ]
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(14.0,14.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,190,6)"
+        },
+        "name": {
+          "key": "name",
+          "value": "minimize"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(28.0,6.0)"
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Ellipse",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Label_5E4AB46E_95D2_42F1_BAC5_B547B6B6EFDC",
+              "rev": 20958
+            }
+          ]
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(182,67,0)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(182,67,0)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(182,67,0)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(182,67,0)"
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 14
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 14
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 14
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 14
         }
       },
       "lively.serializer-class-info": {
@@ -2601,44 +2597,190 @@
         }
       }
     },
-    "Label_2ED83298_66C4_4757_B9A7_993A88BA771C": {
-      "rev": 1469433,
+    "5899BC36-3D26-49AF-8B06-A9594023675E": {
+      "rev": 0,
       "props": {
-        "textDecoration": {
-          "key": "textDecoration",
-          "value": "none"
+        "_rev": {
+          "key": "_rev",
+          "value": 0
         },
-        "fontStyle": {
-          "key": "fontStyle",
-          "value": "normal"
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
         },
-        "fontWeight": {
-          "key": "fontWeight",
-          "value": "normal"
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Ellipse_D43139A2_636D_4D34_A98C_56D7F64274F2",
+            "rev": 20956
+          }
         },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseDown"
         },
-        "fontSize": {
-          "key": "fontSize",
-          "value": 12
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Window_E31F996B_B843_4E6F_A647_2F6FFFF929B9",
+            "rev": 20942
+          }
         },
-        "fontFamily": {
-          "key": "fontFamily",
-          "value": "Sans-Serif"
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "toggleMinimize"
         },
-        "autofit": {
-          "key": "autofit",
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "FF74E232-E238-4066-8A39-130EB37CBA38",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
           "value": true
         },
-        "padding": {
-          "key": "padding",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "FF74E232-E238-4066-8A39-130EB37CBA38": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Ellipse_D43139A2_636D_4D34_A98C_56D7F64274F2",
+            "rev": 20956
+          }
         },
-        "visible": {
-          "key": "visible",
-          "value": false
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Window_E31F996B_B843_4E6F_A647_2F6FFFF929B9",
+            "rev": 20942
+          }
+        }
+      }
+    },
+    "4F23CE39-5D44-4A39-B92D-06AF78222E49": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Ellipse_D43139A2_636D_4D34_A98C_56D7F64274F2",
+            "rev": 20956
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onHoverIn"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Label_5E4AB46E_95D2_42F1_BAC5_B547B6B6EFDC",
+            "rev": 20958
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "visible"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "F1F0D9C7-8DA8-4775-9E0F-F35C46D7D434",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "() => true"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "Label_5E4AB46E_95D2_42F1_BAC5_B547B6B6EFDC": {
+      "rev": 20958,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,12.0)"
+        },
+        "opacity": {
+          "key": "opacity",
+          "value": 0.5
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2.3,1.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -2648,36 +2790,8 @@
             "morph"
           ]
         },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2.3,1.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "opacity": {
-          "key": "opacity",
-          "value": 0.5
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "default"
-        },
-        "fill": {
-          "key": "fill",
-          "value": null
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,12.0)"
-        },
-        "draggable": {
-          "key": "draggable",
+        "visible": {
+          "key": "visible",
           "value": false
         },
         "submorphs": {
@@ -2691,18 +2805,19 @@
               "",
               {
                 "__ref__": true,
-                "id": "87753DA7-716A-4645-8C9F-174F4C697599",
+                "id": "2DD662ED-BF73-42E8-9E2C-EDE624ABEA47",
                 "rev": 0
               }
             ]
           ]
         },
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
         },
-        "attributeConnections": {
-          "key": "attributeConnections"
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
         }
       },
       "lively.serializer-class-info": {
@@ -2716,7 +2831,7 @@
         }
       }
     },
-    "87753DA7-716A-4645-8C9F-174F4C697599": {
+    "2DD662ED-BF73-42E8-9E2C-EDE624ABEA47": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2735,95 +2850,28 @@
         }
       }
     },
-    "246D5E9B-BC24-4FCE-A02E-5AB0EBDD6322": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Ellipse_636A7042_07D4_4C36_BF60_EA64CCBEC628",
-            "rev": 1469328
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "onMouseDown"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
-            "rev": 1491360
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "toggleMinimize"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "FDE903E8-94B4-41F8-9958-DF21673DD41E",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "FDE903E8-94B4-41F8-9958-DF21673DD41E": {
+    "F1F0D9C7-8DA8-4775-9E0F-F35C46D7D434": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_636A7042_07D4_4C36_BF60_EA64CCBEC628",
-            "rev": 1469328
+            "id": "Ellipse_D43139A2_636D_4D34_A98C_56D7F64274F2",
+            "rev": 20956
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
-            "rev": 1491360
+            "id": "Label_5E4AB46E_95D2_42F1_BAC5_B547B6B6EFDC",
+            "rev": 20958
           }
         }
       }
     },
-    "4F897C30-7950-47A4-9933-5EAA1240DE50": {
+    "522CFFD8-349B-4EAF-86BB-12C2535D77F9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2842,100 +2890,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_636A7042_07D4_4C36_BF60_EA64CCBEC628",
-            "rev": 1469328
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "onHoverIn"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Label_2ED83298_66C4_4757_B9A7_993A88BA771C",
-            "rev": 1469433
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "visible"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "23553DF8-C6CB-462F-89C1-D3680CD10049",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        },
-        "converterString": {
-          "key": "converterString",
-          "value": "() => true"
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "23553DF8-C6CB-462F-89C1-D3680CD10049": {
-      "rev": 0,
-      "props": {
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Ellipse_636A7042_07D4_4C36_BF60_EA64CCBEC628",
-            "rev": 1469328
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Label_2ED83298_66C4_4757_B9A7_993A88BA771C",
-            "rev": 1469433
-          }
-        }
-      }
-    },
-    "7B920A4A-D487-4AAD-A111-4CC6DB03EDEA": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Ellipse_636A7042_07D4_4C36_BF60_EA64CCBEC628",
-            "rev": 1469328
+            "id": "Ellipse_D43139A2_636D_4D34_A98C_56D7F64274F2",
+            "rev": 20956
           }
         },
         "sourceAttrName": {
@@ -2946,8 +2902,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_2ED83298_66C4_4757_B9A7_993A88BA771C",
-            "rev": 1469433
+            "id": "Label_5E4AB46E_95D2_42F1_BAC5_B547B6B6EFDC",
+            "rev": 20958
           }
         },
         "targetMethodName": {
@@ -2958,7 +2914,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "F3C2E958-C898-40E1-93BE-1467EC22B109",
+            "id": "AD93426E-E85A-4D2C-8EE4-26AA8F1362AB",
             "rev": 0
           }
         },
@@ -2986,100 +2942,30 @@
         }
       }
     },
-    "F3C2E958-C898-40E1-93BE-1467EC22B109": {
+    "AD93426E-E85A-4D2C-8EE4-26AA8F1362AB": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_636A7042_07D4_4C36_BF60_EA64CCBEC628",
-            "rev": 1469328
+            "id": "Ellipse_D43139A2_636D_4D34_A98C_56D7F64274F2",
+            "rev": 20956
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_2ED83298_66C4_4757_B9A7_993A88BA771C",
-            "rev": 1469433
+            "id": "Label_5E4AB46E_95D2_42F1_BAC5_B547B6B6EFDC",
+            "rev": 20958
           }
         }
       }
     },
-    "Ellipse_23DC893C_21DF_4058_9C4D_B5D19041532B": {
-      "rev": 1469348,
+    "Ellipse_31AFA87E_FDB3_4C0F_8372_6EDFBC5EA66F": {
+      "rev": 20960,
       "props": {
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 14
-        },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 14
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 14
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 14
-        },
-        "borderColorTop": {
-          "key": "borderColorTop"
-        },
-        "borderColorRight": {
-          "key": "borderColorRight"
-        },
-        "borderColorLeft": {
-          "key": "borderColorLeft"
-        },
-        "borderColorBottom": {
-          "key": "borderColorBottom"
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Ellipse",
-            "Morph",
-            "morph"
-          ]
-        },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(48.0,6.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "name": {
-          "key": "name",
-          "value": "maximize"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,204,0)"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(14.0,14.0)"
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Label_76CA3F46_4697_4578_BFF7_CE28244330BD",
-              "rev": 1469434
-            }
-          ]
-        },
         "_tickingScripts": {
           "key": "_tickingScripts",
           "value": []
@@ -3089,20 +2975,90 @@
           "value": [
             {
               "__ref__": true,
-              "id": "3EA87135-205B-4404-9350-774338DAAD52",
+              "id": "623FD9CF-0A2D-40DE-8430-71E42F9BE7A0",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "6D1C41E6-15C5-44BA-B8EB-F85E7F3CB219",
+              "id": "CB32B737-8062-4ABB-BB43-BB62B639B34B",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "9963A292-E3A4-4665-9BC1-BC2D845AF608",
+              "id": "474609A4-025F-4293-A49C-55960A20D5FB",
               "rev": 0
             }
           ]
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(14.0,14.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,204,0)"
+        },
+        "name": {
+          "key": "name",
+          "value": "maximize"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(48.0,6.0)"
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Ellipse",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Label_138E626E_F877_4B07_9FE8_B59A53E79C85",
+              "rev": 20962
+            }
+          ]
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop"
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 14
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 14
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 14
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 14
         }
       },
       "lively.serializer-class-info": {
@@ -3116,141 +3072,7 @@
         }
       }
     },
-    "Label_76CA3F46_4697_4578_BFF7_CE28244330BD": {
-      "rev": 1469434,
-      "props": {
-        "textDecoration": {
-          "key": "textDecoration",
-          "value": "none"
-        },
-        "fontStyle": {
-          "key": "fontStyle",
-          "value": "normal"
-        },
-        "fontWeight": {
-          "key": "fontWeight",
-          "value": "normal"
-        },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
-        },
-        "fontSize": {
-          "key": "fontSize",
-          "value": 12
-        },
-        "fontFamily": {
-          "key": "fontFamily",
-          "value": "Sans-Serif"
-        },
-        "autofit": {
-          "key": "autofit",
-          "value": true
-        },
-        "padding": {
-          "key": "padding",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
-        },
-        "visible": {
-          "key": "visible",
-          "value": false
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Label",
-            "Morph",
-            "morph"
-          ]
-        },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2.3,1.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "opacity": {
-          "key": "opacity",
-          "value": 0.5
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "default"
-        },
-        "fill": {
-          "key": "fill",
-          "value": null
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,12.0)"
-        },
-        "draggable": {
-          "key": "draggable",
-          "value": false
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
-        },
-        "textAndAttributes": {
-          "key": "textAndAttributes",
-          "value": [
-            [
-              "",
-              {
-                "__ref__": true,
-                "id": "228567C1-BA34-47FC-B370-CCD437BDE652",
-                "rev": 0
-              }
-            ]
-          ]
-        },
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections"
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "Label",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "text/label.js"
-        }
-      }
-    },
-    "228567C1-BA34-47FC-B370-CCD437BDE652": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "fontFamily": {
-          "key": "fontFamily",
-          "value": ""
-        },
-        "textStyleClasses": {
-          "key": "textStyleClasses",
-          "value": [
-            "fa"
-          ]
-        }
-      }
-    },
-    "3EA87135-205B-4404-9350-774338DAAD52": {
+    "623FD9CF-0A2D-40DE-8430-71E42F9BE7A0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3269,8 +3091,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_23DC893C_21DF_4058_9C4D_B5D19041532B",
-            "rev": 1469348
+            "id": "Ellipse_31AFA87E_FDB3_4C0F_8372_6EDFBC5EA66F",
+            "rev": 20960
           }
         },
         "sourceAttrName": {
@@ -3281,8 +3103,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
-            "rev": 1491360
+            "id": "Window_E31F996B_B843_4E6F_A647_2F6FFFF929B9",
+            "rev": 20942
           }
         },
         "targetMethodName": {
@@ -3293,7 +3115,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "D477790A-7F91-45AE-8E07-3F97B69F9732",
+            "id": "7CA15DD8-47B5-41C5-AEF0-1E37F05F6277",
             "rev": 0
           }
         },
@@ -3317,28 +3139,28 @@
         }
       }
     },
-    "D477790A-7F91-45AE-8E07-3F97B69F9732": {
+    "7CA15DD8-47B5-41C5-AEF0-1E37F05F6277": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_23DC893C_21DF_4058_9C4D_B5D19041532B",
-            "rev": 1469348
+            "id": "Ellipse_31AFA87E_FDB3_4C0F_8372_6EDFBC5EA66F",
+            "rev": 20960
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
-            "rev": 1491360
+            "id": "Window_E31F996B_B843_4E6F_A647_2F6FFFF929B9",
+            "rev": 20942
           }
         }
       }
     },
-    "6D1C41E6-15C5-44BA-B8EB-F85E7F3CB219": {
+    "CB32B737-8062-4ABB-BB43-BB62B639B34B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3357,8 +3179,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_23DC893C_21DF_4058_9C4D_B5D19041532B",
-            "rev": 1469348
+            "id": "Ellipse_31AFA87E_FDB3_4C0F_8372_6EDFBC5EA66F",
+            "rev": 20960
           }
         },
         "sourceAttrName": {
@@ -3369,8 +3191,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_76CA3F46_4697_4578_BFF7_CE28244330BD",
-            "rev": 1469434
+            "id": "Label_138E626E_F877_4B07_9FE8_B59A53E79C85",
+            "rev": 20962
           }
         },
         "targetMethodName": {
@@ -3381,7 +3203,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "E83BA9C6-E364-4FCD-A536-50760F65196E",
+            "id": "9117D329-D3D1-48AE-AB84-27B8F133A71B",
             "rev": 0
           }
         },
@@ -3409,28 +3231,122 @@
         }
       }
     },
-    "E83BA9C6-E364-4FCD-A536-50760F65196E": {
+    "Label_138E626E_F877_4B07_9FE8_B59A53E79C85": {
+      "rev": 20962,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,12.0)"
+        },
+        "opacity": {
+          "key": "opacity",
+          "value": 0.5
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2.3,1.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "visible": {
+          "key": "visible",
+          "value": false
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            [
+              "",
+              {
+                "__ref__": true,
+                "id": "839D41A3-313E-4006-8280-6103A110546C",
+                "rev": 0
+              }
+            ]
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Label",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/label.js"
+        }
+      }
+    },
+    "839D41A3-313E-4006-8280-6103A110546C": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": ""
+        },
+        "textStyleClasses": {
+          "key": "textStyleClasses",
+          "value": [
+            "fa"
+          ]
+        }
+      }
+    },
+    "9117D329-D3D1-48AE-AB84-27B8F133A71B": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_23DC893C_21DF_4058_9C4D_B5D19041532B",
-            "rev": 1469348
+            "id": "Ellipse_31AFA87E_FDB3_4C0F_8372_6EDFBC5EA66F",
+            "rev": 20960
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_76CA3F46_4697_4578_BFF7_CE28244330BD",
-            "rev": 1469434
+            "id": "Label_138E626E_F877_4B07_9FE8_B59A53E79C85",
+            "rev": 20962
           }
         }
       }
     },
-    "9963A292-E3A4-4665-9BC1-BC2D845AF608": {
+    "474609A4-025F-4293-A49C-55960A20D5FB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3449,8 +3365,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_23DC893C_21DF_4058_9C4D_B5D19041532B",
-            "rev": 1469348
+            "id": "Ellipse_31AFA87E_FDB3_4C0F_8372_6EDFBC5EA66F",
+            "rev": 20960
           }
         },
         "sourceAttrName": {
@@ -3461,8 +3377,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_76CA3F46_4697_4578_BFF7_CE28244330BD",
-            "rev": 1469434
+            "id": "Label_138E626E_F877_4B07_9FE8_B59A53E79C85",
+            "rev": 20962
           }
         },
         "targetMethodName": {
@@ -3473,7 +3389,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "009D583B-65C1-4884-8D98-EA6CC2371F05",
+            "id": "FA46A554-4661-462C-8F84-311C3B3FB5F3",
             "rev": 0
           }
         },
@@ -3501,61 +3417,63 @@
         }
       }
     },
-    "009D583B-65C1-4884-8D98-EA6CC2371F05": {
+    "FA46A554-4661-462C-8F84-311C3B3FB5F3": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_23DC893C_21DF_4058_9C4D_B5D19041532B",
-            "rev": 1469348
+            "id": "Ellipse_31AFA87E_FDB3_4C0F_8372_6EDFBC5EA66F",
+            "rev": 20960
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_76CA3F46_4697_4578_BFF7_CE28244330BD",
-            "rev": 1469434
+            "id": "Label_138E626E_F877_4B07_9FE8_B59A53E79C85",
+            "rev": 20962
           }
         }
       }
     },
-    "Label_9E5ADC89_0BAF_4DF5_94A8_50E6EBC1D1DB": {
-      "rev": 1492017,
+    "Label_8652280B_C1E8_4E83_87EC_E1A2031E702A": {
+      "rev": 26028,
       "props": {
-        "textDecoration": {
-          "key": "textDecoration",
-          "value": "none"
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
         },
-        "fontStyle": {
-          "key": "fontStyle",
-          "value": "normal"
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "9B6DC772-03E5-4C90-AE5A-C173A3E28E7B",
+              "rev": 0
+            }
+          ]
         },
-        "fontWeight": {
-          "key": "fontWeight",
-          "value": "normal"
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(45.4,16.0)"
         },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        "name": {
+          "key": "name",
+          "value": "titleLabel"
         },
-        "fontSize": {
-          "key": "fontSize",
-          "value": 12
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
-        "fontFamily": {
-          "key": "fontFamily",
-          "value": "Sans-Serif"
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(467.0,4.5)"
         },
-        "autofit": {
-          "key": "autofit",
-          "value": true
-        },
-        "padding": {
-          "key": "padding",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,2,0,-2)"
+        "reactsToPointer": {
+          "key": "reactsToPointer",
+          "value": false
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -3564,42 +3482,6 @@
             "Morph",
             "morph"
           ]
-        },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "reactsToPointer": {
-          "key": "reactsToPointer",
-          "value": false
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(465.0,4.5)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "default"
-        },
-        "name": {
-          "key": "name",
-          "value": "titleLabel"
-        },
-        "fill": {
-          "key": "fill",
-          "value": null
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(45.4,16.0)"
-        },
-        "draggable": {
-          "key": "draggable",
-          "value": false
         },
         "submorphs": {
           "key": "submorphs",
@@ -3612,25 +3494,19 @@
               "PartsBin",
               {
                 "__ref__": true,
-                "id": "964B2CC6-F3F7-4E4F-9227-EE5DAFAB206A",
+                "id": "4AD7CC33-491E-4658-993B-A480DB7EB522",
                 "rev": 0
               }
             ]
           ]
         },
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,2,0,-2)"
         },
-        "attributeConnections": {
-          "key": "attributeConnections",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "173D2B32-C043-485F-B977-D763D412A907",
-              "rev": 0
-            }
-          ]
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
         }
       },
       "lively.serializer-class-info": {
@@ -3644,11 +3520,7 @@
         }
       }
     },
-    "964B2CC6-F3F7-4E4F-9227-EE5DAFAB206A": {
-      "rev": 0,
-      "props": {}
-    },
-    "173D2B32-C043-485F-B977-D763D412A907": {
+    "9B6DC772-03E5-4C90-AE5A-C173A3E28E7B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3667,8 +3539,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_9E5ADC89_0BAF_4DF5_94A8_50E6EBC1D1DB",
-            "rev": 1492017
+            "id": "Label_8652280B_C1E8_4E83_87EC_E1A2031E702A",
+            "rev": 26028
           }
         },
         "sourceAttrName": {
@@ -3679,8 +3551,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
-            "rev": 1491360
+            "id": "Window_E31F996B_B843_4E6F_A647_2F6FFFF929B9",
+            "rev": 20942
           }
         },
         "targetMethodName": {
@@ -3691,7 +3563,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "2788DB2B-EB3D-46CF-A769-C18F49124547",
+            "id": "3DFB8A22-E143-468B-B6E8-66B712E57ED7",
             "rev": 0
           }
         },
@@ -3715,7 +3587,7 @@
         }
       }
     },
-    "2788DB2B-EB3D-46CF-A769-C18F49124547": {
+    "3DFB8A22-E143-468B-B6E8-66B712E57ED7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3726,23 +3598,54 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_9E5ADC89_0BAF_4DF5_94A8_50E6EBC1D1DB",
-            "rev": 1492017
+            "id": "Label_8652280B_C1E8_4E83_87EC_E1A2031E702A",
+            "rev": 26028
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
-            "rev": 1491360
+            "id": "Window_E31F996B_B843_4E6F_A647_2F6FFFF929B9",
+            "rev": 20942
           }
         }
       }
     },
-    "Resizer_6670F1CA_BA14_415F_9A83_14AE79FCEA19": {
-      "rev": 1492002,
+    "4AD7CC33-491E-4658-993B-A480DB7EB522": {
+      "rev": 0,
+      "props": {}
+    },
+    "Resizer_6734A00F_F072_4B87_848D_0D55ED007188": {
+      "rev": 26023,
       "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(20.0,20.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
+        },
+        "name": {
+          "key": "name",
+          "value": "resizer"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "nwse-resize"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(959.3,456.0)"
+        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
@@ -3751,36 +3654,9 @@
             "morph"
           ]
         },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(959.3,456.0)"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "nwse-resize"
-        },
-        "name": {
-          "key": "name",
-          "value": "resizer"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(20.0,20.0)"
-        },
         "submorphs": {
           "key": "submorphs",
           "value": []
-        },
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections"
         }
       },
       "lively.serializer-class-info": {
@@ -3791,98 +3667,6 @@
             "version": "0.1.0"
           },
           "pathInPackage": "index.js"
-        }
-      }
-    },
-    "8A318272-53F3-4B15-AB15-4561DF8AA3AA": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
-            "rev": 1491360
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "extent"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
-            "rev": 1491360
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayoutWindowControls"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "2335ECD9-6FA6-40C4-BE3A-76D4BB835BCB",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "2335ECD9-6FA6-40C4-BE3A-76D4BB835BCB": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
-            "rev": 1491360
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Window_5CCCDFAB_CB86_4327_B85B_59B1838F44BB",
-            "rev": 1491360
-          }
         }
       }
     }
@@ -3899,5 +3683,5 @@
       }
     }
   },
-  "preview": "<div   draggable=\"false\" style=\"background: rgb(230, 230, 230); transform: translate(0px, 25.6969px) rotate(0deg) scale(0.102114, 0.102114); transform-origin: 0px 0px 0px; display: inline; width: 979.3px; height: 476px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 7px; box-shadow: rgb(102, 102, 102) 1.41421px 1.41421px 6px; opacity: 1; position: absolute; overflow: hidden; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"background: rgb(253, 254, 254); transform: translate3d(0px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 979.3px; height: 451px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgb(253, 254, 254); transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 979.3px; height: 40px; border-style: solid; border-width: 1px; border-color: rgb(189, 195, 199); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"background: rgb(240, 240, 240); transform: translate3d(474.5px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 30.3px; height: 27px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"transform: translate3d(7.86px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 14.5781px; height: 17px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 17px; color: rgb(64, 64, 64); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div></div></div><div   draggable=\"false\" style=\"background: rgb(255, 96, 82); transform: translate3d(8px, 6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 14px; height: 14px; border-style: solid; border-width: 0px; border-color: transparent; border-radius: 14px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"transform: translate3d(2.3px, 1px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: none; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0.5; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div><div   draggable=\"false\" style=\"background: rgb(255, 190, 6); transform: translate3d(28px, 6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 14px; height: 14px; border-style: solid; border-width: 0px; border-color: rgb(182, 67, 0); border-radius: 14px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"transform: translate3d(2.3px, 1px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: none; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0.5; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div><div   draggable=\"false\" style=\"background: rgb(0, 204, 0); transform: translate3d(48px, 6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 14px; height: 14px; border-style: solid; border-width: 0px; border-color: transparent; border-radius: 14px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"transform: translate3d(2.3px, 1px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: none; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0.5; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div><div   draggable=\"false\" style=\"transform: translate3d(464.97px, 4.5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 45.3594px; height: 16px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(102, 102, 102); padding: 2px 0px 0px;\"><span>PartsBin</span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div   draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(959.3px, 456px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 20px; height: 20px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: nwse-resize;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div>"
+  "preview": "<div   draggable=\"false\" style=\"background: rgb(230, 230, 230); transform: translate(0px, 25.6969px) rotate(0deg) scale(0.102114, 0.102114); transform-origin: 0px 0px 0px; display: inline; width: 979.3px; height: 476px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 7px; box-shadow: rgb(102, 102, 102) 1.41421px 1.41421px 6px; opacity: 1; position: absolute; overflow: hidden; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"background: rgb(253, 254, 254); transform: translate3d(0px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 979.3px; height: 451px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgb(253, 254, 254); transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 979.3px; height: 40px; border-style: solid; border-width: 1px; border-color: rgb(189, 195, 199); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"background: rgb(240, 240, 240); transform: translate3d(474.5px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 30.3px; height: 27px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"transform: translate3d(7.86px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 14.5781px; height: 17px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 17px; color: rgb(64, 64, 64); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div></div></div><div   draggable=\"false\" style=\"background: rgb(255, 96, 82); transform: translate3d(8px, 6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 14px; height: 14px; border-style: solid; border-width: 0px; border-color: transparent; border-radius: 14px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"transform: translate3d(2.3px, 1px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: none; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0.5; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div><div   draggable=\"false\" style=\"background: rgb(255, 190, 6); transform: translate3d(28px, 6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 14px; height: 14px; border-style: solid; border-width: 0px; border-color: rgb(182, 67, 0); border-radius: 14px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"transform: translate3d(2.3px, 1px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: none; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0.5; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div><div   draggable=\"false\" style=\"background: rgb(0, 204, 0); transform: translate3d(48px, 6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 14px; height: 14px; border-style: solid; border-width: 0px; border-color: transparent; border-radius: 14px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"transform: translate3d(2.3px, 1px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: none; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0.5; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(0, 0, 0); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div><div   draggable=\"false\" style=\"transform: translate3d(466.97px, 4.5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 45.3594px; height: 16px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: default; font-family: sans-serif; font-size: 12px; color: rgb(102, 102, 102); padding: 2px 0px 0px;\"><span>PartsBin</span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div   draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(959.3px, 456px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 20px; height: 20px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: nwse-resize;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div>"
 }
