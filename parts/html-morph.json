@@ -1,0 +1,49 @@
+{
+  "id": "htmlmorph_72A88992_CDF5_4EA2_AFE5_D2AE2E29240E",
+  "snapshot": {
+    "htmlmorph_72A88992_CDF5_4EA2_AFE5_D2AE2E29240E": {
+      "rev": 25920,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(510.0,234.5)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "HTMLMorph",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "html": {
+          "key": "html",
+          "value": "\n<div style=\"display: flex;\n            align-items: center;\n            justify-content: center;\n            height: 100%;\n            background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))\">\n  <p style=\"font: bold 40pt Inconsolata, monospace; color: lightgray;\">&lt;HTML/&gt;</p>\n</div>"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "HTMLMorph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "html-morph.js"
+        }
+      }
+    }
+  },
+  "packages": {},
+  "preview": "<div   draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate(0px, 10.7143px) rotate(0deg) scale(0.238095, 0.238095); transform-origin: 0px 0px 0px; display: inline; width: 420px; height: 330px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; width: 100%; height: 100%;\">\n<div style=\"display: flex;\n            align-items: center;\n            justify-content: center;\n            height: 100%;\n            background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))\">\n  <p style=\"font: bold 40pt Inconsolata, monospace; color: lightgray;\">&lt;HTML/&gt;</p>\n</div></div><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div>"
+}
