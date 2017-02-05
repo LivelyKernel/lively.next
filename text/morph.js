@@ -259,12 +259,11 @@ export class Text extends Morph {
       },
 
       defaultTextStyle: {
-        derived: true, after: ["defaultTextStyleAttribute"],
+        after: ["defaultTextStyleAttribute"],
         initialize() { this.defaultTextStyle = defaultTextStyle; },
         get() { return this.defaultTextStyleAttribute.data; },
         set(style) { this.setDefaultTextStyle(style); }
       },
-
 
       fontFamily: {
         derived: true, after: ["defaultTextStyle"],
