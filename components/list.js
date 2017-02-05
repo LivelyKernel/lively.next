@@ -622,7 +622,11 @@ export class FilterableList extends Morph {
       submorphs: {
         initialize() {
           this.submorphs = [
-            Text.makeInputLine({name: "input", fixedHeight: false, autofit: true}),
+            Text.makeInputLine({
+              name: "input",
+              fixedHeight: false,
+              autofit: false
+            }),
             new List({name: "list", items: [], clipMode: "auto"})
           ]
         }
@@ -811,9 +815,9 @@ export class FilterableList extends Morph {
   }
 
   relayout() {
-    var input = this.inputMorph, list = this.listMorph;
-    list.width = input.width = this.width;
-    list.setBounds(this.innerBounds().withTopLeft(input.bottomLeft.addXY(0,5)));
+    var { inputMorph, listMorph } = this;
+    listMorph.width = inputMorph.width = this.width;
+    listMorph.setBounds(this.innerBounds().withTopLeft(inputMorph.bottomLeft));
   }
 
   get isList() { return true; }
@@ -826,7 +830,7 @@ export class FilterableList extends Morph {
           borderRadius: 20,
           fill: Color.gray.withA(0.8),
           fontColor: Color.gray.darker(),
-          padding: rect(10,2,0,-2)
+          padding: rect(10,2)
         }
       })
     } else {

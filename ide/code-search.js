@@ -1,11 +1,11 @@
 import { fun, arr, obj, string } from 'lively.lang';
 import { pt, Color, Rectangle } from "lively.graphics";
-import { config, List, Text, Window, show } from '../index.js';
-import { FilterableList } from "lively.morphic/components/list.js";
+import { config, Text, show } from '../index.js';
+import { FilterableList, List } from "lively.morphic/components/list.js";
+import Window from "lively.morphic/components/window.js";
 import { LabeledCheckBox } from "lively.morphic/components/widgets.js";
 import LoadingIndicator from "lively.morphic/components/loading-indicator.js";
 import Browser from "./js/browser/index.js";
-import Window from "lively.morphic/components/window.js";
 import { connect } from 'lively.bindings';
 
 
@@ -68,8 +68,17 @@ export class CodeSearcher extends FilterableList {
       submorphs: {
         initialize() {
           this.submorphs = [
-            Text.makeInputLine({name: "input", fixedHeight: false, autofit: true, borderBottom: {width: 1, color: Color.gray, padding: Rectangle.inset(5)}}),
-            new List({name: "list", items: [], clipMode: "auto", borderTop: {width: 1, color: Color.gray}})
+            Text.makeInputLine({
+              name: "input",
+              padding: Rectangle.inset(10, 10),
+              borderBottom: {width: 1, color: Color.gray}
+            }),
+            new List({
+              name: "list",
+              items: [],
+              clipMode: "auto",
+              borderTop: {width: 1, color: Color.gray}
+            })
           ]
         }
       },
@@ -224,15 +233,6 @@ export class CodeSearcher extends FilterableList {
 
   onWindowActivated() {
     this.get("input").selectAll();
-  }
-
-  get commands() {
-    return super.commands.concat([
-      {
-        name: "toggle search in unloaded modules",
-        exec: () => { this.get("searchInUnloadedModulesCheckbox").toggle(); return true; }
-      }
-    ]);
   }
 
   get commands() {
