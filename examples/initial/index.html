@@ -4,22 +4,29 @@
     <title>lively.morphic example 1</title>
   </head>
   <body style="margin: 0;">
-    <link href="https://fonts.googleapis.com/css?family=Libre+Franklin:400,400i,500,500i,900" rel="stylesheet">
-    <link rel="stylesheet" href="lively.morphic/assets/font-awesome/css/font-awesome.min.css">
     <script src="/lively.modules/node_modules/babel-standalone/babel.js"></script>
     <script src="/lively.modules/node_modules/systemjs/dist/system.src.js"></script>
     <script src="/lively.modules/dist/lively.modules.js"></script>
     <div id="lively-world"> 
     <div id="loading indicator" style="
          position: absolute;
-         margin: auto; left: 0;
-         right: 0; top: 0;
-         bottom: 0; width: 220px; height: 50px;
-         color: white; font-family: Libre Franklin;
+         left: 0; right: 0; top: 0; bottom: 0;
+         width: 320px; height: 180px;
+         margin: auto;
+         color: #ff7700;
+         font-family: Helvetica Neue, Arial, sans-serif;
          font-size: 30pt; border-radius: 10px;
-         padding: 10px; background: rgba(0,0,0,.5)">
-         <div style="float: left">Loading</div>
-         <i style="padding: 5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i></div>
+         padding: 10px; background: #666">
+           <center><b>Loading</b></center>
+           <div style="
+             background-image: url(/lively.morphic/lively-web-logo-small-animate.svg);
+             background-size: cover;
+             height: 100%;
+             margin-left: 110px;
+             margin-top: 20px;
+           "></div>
+         </div>
+    </div>
     </div>
     <script>
       var origin = document.location.origin;

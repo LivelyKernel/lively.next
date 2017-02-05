@@ -56,7 +56,7 @@ export default class LoadingIndicator extends Morph {
           this.submorphs = [
 
             new Image({
-              imageUrl: "http://localhost:9011/lively.morphic/lively-web-logo-small-animate.svg",
+              imageUrl: System.decanonicalize("lively.morphic/") + "lively-web-logo-small-animate.svg",
               name: "spinner", fill: Color.transparent,
               extent: pt(100,104),
               topLeft: pt(0,0),
