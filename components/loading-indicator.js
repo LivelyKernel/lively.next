@@ -64,26 +64,22 @@ export default class LoadingIndicator extends Morph {
             }),
 
             {
-              type: "label",
-              name: "label",
-              value: "",
-              fontSize: 12, fontFamily: "Arial",
+              type: "label", name: "label", value: "",
+              fontSize: 16, fontFamily: "Helvetica Neue, Arial",
               fontColor: Color.white,
               styleClasses: ["center-text"],
               halosEnabled: false
             },
 
             {
-              type: "button",
-              name: "closeButton",
-              label: Icon.makeLabel('times').textString,
+              type: "button", name: "closeButton",
+              label: [Icon.textAttribute('times')],
               fontFamily: 'FontAwesome',
               fontColor: Color.white,
               activeStyle: {
-                   extent: pt(20,20), fill: Color.transparent, 
-                   borderWidth: 0, fontColor: Color.white},
-              visible: false,
-              extent: pt(20,20)
+                extent: pt(20,20), fill: Color.transparent,
+                borderWidth: 0, fontColor: Color.white},
+              visible: false
             }
           ];
  
@@ -112,16 +108,16 @@ export default class LoadingIndicator extends Morph {
   }
 
   relayout() {
-    var padding = Rectangle.inset(12, 12),
+    var padding = Rectangle.inset(20, 12),
         [spinner, label, closeButton] = this.submorphs,
-        w = Math.min(120, Math.max(spinner.width, label.width))+ padding.left() + padding.right(),
+        w = Math.max(spinner.width, label.width, 120) + padding.left() + padding.right(),
         h = spinner.height + label.height + padding.top() + padding.bottom();
     this.extent = pt(w,h);
     spinner.width = 100;
     spinner.topCenter = this.innerBounds().topCenter().addXY(0, padding.top());
     label.topCenter = spinner.bottomCenter.addXY(0, 4);
     closeButton.width = 20;
-    closeButton.topRight = pt(w-25, 0);
+    closeButton.right = w;
   }
 
   onHoverIn(evt) { this.get("closeButton").visible = true; }
