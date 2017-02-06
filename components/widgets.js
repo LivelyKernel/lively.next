@@ -2,10 +2,8 @@ import { obj, num, arr, properties } from "lively.lang";
 import { pt, Color, Rectangle, rect } from "lively.graphics";
 import { signal, connect, disconnect } from "lively.bindings";
 import { Morph, Button, List, Text, GridLayout, HorizontalLayout,
-         StyleRules, Path, Ellipse, config, Label } from "lively.morphic";
+         StyleRules, Path, Ellipse, config, Label, Tooltip, Icon } from "lively.morphic";
 import { intersect, shape } from 'svg-intersections';
-import { Icon } from "./icons.js";
-import { Tooltip } from "./tooltips.js";
 
 export class Leash extends Path {
 
@@ -224,7 +222,6 @@ export class PropertyInspector extends Morph {
            down: {padding: rect(0,-5,0,10), ...buttonStyle},
            up: {padding: rect(0,0,0,-5), ...buttonStyle},
            value: {fill: Color.white, padding: Rectangle.inset(4), fontSize: 15},
-
        })
    }
 
@@ -443,7 +440,6 @@ export class LabeledCheckBox extends Morph {
 }
 
 export class ModeSelector extends Morph {
-
 
   static example() {
     var cb = new ModeSelector({items: {foo: {}}}).openInWorld();

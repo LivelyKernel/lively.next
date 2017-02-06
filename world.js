@@ -1,11 +1,9 @@
 /*global System*/
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, arr, string, obj, promise } from "lively.lang";
-import { Menu } from "lively.morphic/components/menus.js"
-import { StatusMessage, StatusMessageForMorph } from 'lively.morphic/components/markers.js';
-import Window from 'lively.morphic/components/window.js';
-import { Morph, inspect, Text, config, MorphicEnv } from "./index.js";
-import { TooltipViewer } from "lively.morphic/components/tooltips.js";
+import { StatusMessage, StatusMessageForMorph } from './components/markers.js';
+import { Morph, inspect, Text, config, MorphicEnv, Window, Menu } from "./index.js";
+import { TooltipViewer } from "./components/tooltips.js";
 import KeyHandler from "./events/KeyHandler.js";
 
 import {
@@ -16,7 +14,7 @@ import {
   PasswordPrompt,
   ListPrompt,
   EditListPrompt
-} from "lively.morphic/components/prompts.js";
+} from "./components/prompts.js";
 import { once } from "lively.bindings";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--
@@ -861,7 +859,7 @@ export class World extends Morph {
           this.env.deleteHistory()
           this.setStatusMessage(status);
         }],
-        
+
         ["fix font metric", () => {
           this.env.fontMetric.reset();
           this.withAllSubmorphsDo(ea => ea.isText && ea.textLayout && ea.textLayout.reset());

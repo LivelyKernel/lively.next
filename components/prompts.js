@@ -3,7 +3,7 @@ import { Rectangle, Color, pt } from 'lively.graphics';
 import { Morph, morph, Text, GridLayout } from 'lively.morphic';
 import { arr, obj, promise } from "lively.lang";
 import { List, FilterableList } from "./list.js"
-import { PasswordInputLine } from "lively.morphic/text/input-line.js"
+import { PasswordInputLine } from "../text/input-line.js"
 import { Icon } from "./icons.js"
 import { connect } from 'lively.bindings';
 

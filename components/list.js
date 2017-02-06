@@ -1,5 +1,4 @@
-import { Morph, Text, StyleRules, Label } from "lively.morphic";
-import { Button } from "lively.morphic/components/buttons.js";
+import { Morph, Text, StyleRules, Label, Button } from "lively.morphic";
 import { pt, Color, Rectangle, rect } from "lively.graphics";
 import { arr, Path, string, obj } from "lively.lang";
 import { signal } from "lively.bindings";

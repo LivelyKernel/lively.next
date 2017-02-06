@@ -9,6 +9,11 @@ export * from "./layout.js";
 export { StyleRules } from "./style-rules.js";
 export { show } from "./components/markers.js"
 export { ShadowObject } from "./rendering/morphic-default.js";
+export { Button } from "./components/buttons.js";
+export { Menu } from "./components/menus.js";
+export * from "./components/tooltips.js";
+export { Icon } from "./components/icons.js";
+export * from "./components/list.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -20,6 +25,8 @@ import { Button } from "./components/buttons.js";
 import { CheckBox } from "./components/widgets.js";
 import { List } from "./components/list.js";
 import { HTMLMorph } from './html-morph.js';
+import Window from "./components/window.js";
+export { Window };
 
 export function morph(props = {}, opts = {restore: false}) {
   var klass = Morph;

@@ -3,7 +3,7 @@ import {
   VerticalLayout,
   HorizontalLayout,
   TilingLayout,
-  Morph
+  Morph, Icon
 } from "../../index.js";
 import {
   Rectangle,
@@ -21,9 +21,8 @@ import {
   Slider,
   PropertyInspector,
   Leash
-} from "lively.morphic/components/widgets.js";
+} from "../../components/widgets.js";
 
-import { Icon } from "lively.morphic/components/icons.js";
 import { ColorPickerField } from "./color-picker.js";
 import { GradientEditor } from "./gradient-editor.js";
 import { StyleRules } from "../../style-rules.js";

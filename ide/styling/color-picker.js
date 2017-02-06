@@ -1,14 +1,12 @@
 import {
-  Morph,
+  Morph, Icon, Window,
   VerticalLayout,
   GridLayout,
   HorizontalLayout
 } from "../../index.js";
 import {pt, Rectangle, Color, LinearGradient, rect} from "lively.graphics";
 import {signal, connect, disconnect} from "lively.bindings";
-import {Slider} from "lively.morphic/components/widgets.js";
-import {Icon} from "lively.morphic/components/icons.js";
-import Window from "lively.morphic/components/window.js";
+import {Slider} from "../../components/widgets.js";
 import { obj } from "lively.lang";
 import {ColorPalette} from "./color-palette.js";
 import { StyleRules } from '../../style-rules.js';
@@ -316,7 +314,7 @@ export class ColorPicker extends Window {
           const position = colorPicker.pickerPosition.addXY(5,-5);
           if (animated) {
              this.animate({position, duration: 300});
-          } else { 
+          } else {
              this.position = position
            }
         },

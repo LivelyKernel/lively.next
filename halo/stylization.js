@@ -1,4 +1,5 @@
-import { Morph, Text, Ellipse, Polygon, Image, Path, HTMLMorph, morph} from "../index.js";
+import { Morph, Text, Ellipse, Polygon,
+         Icon, Image, Path, HTMLMorph, morph} from "../index.js";
 import { VerticalLayout, HorizontalLayout, FillLayout,
          TilingLayout, GridLayout} from '../layout.js';
 import { Color, pt, rect, Line, Rectangle} from "lively.graphics";
@@ -8,8 +9,7 @@ import { connect, disconnect } from "lively.bindings";
 import { BorderStyleEditor, BodyStyleEditor,
          LayoutStyleEditor, HTMLEditor, PathEditor, PolygonEditor,
          ImageEditor, NoEditor } from "../ide/styling/style-editor.js";
-import { Icon } from "lively.morphic/components/icons.js";
-import { Leash } from "lively.morphic/components/widgets.js";
+import { Leash } from "../components/widgets.js";
 import { StyleRules } from "../style-rules.js";
 import { Event } from "../events/Event.js";
 import { pathAttributes } from "../rendering/morphic-default.js";

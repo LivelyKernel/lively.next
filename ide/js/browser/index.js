@@ -1,13 +1,12 @@
 import { Color, pt, Rectangle } from "lively.graphics";
 import { arr, fun, promise, string } from "lively.lang";
 import { connect, disconnect, noUpdate } from "lively.bindings";
-import { morph, show, Label, HorizontalLayout, GridLayout, config } from "lively.morphic";
-import { DropDownList } from "lively.morphic/components/list.js";
-import InputLine from "lively.morphic/text/input-line.js";
+import { morph, show, Label, HorizontalLayout, GridLayout,
+         DropDownList, config, Window } from "lively.morphic";
+import InputLine from "../../../text/input-line.js";
 import { JSONEditorPlugin } from "lively.morphic/ide/json/editor-plugin.js";
 import { HorizontalResizer } from "lively.morphic/components/resizers.js";
 import { Icon } from "lively.morphic/components/icons.js";
-import Window from "lively.morphic/components/window.js";
 import { JavaScriptEditorPlugin } from "../editor-plugin.js";
 import EvalBackendChooser from "../eval-backend-ui.js";
 import browserCommands from "./commands.js";
