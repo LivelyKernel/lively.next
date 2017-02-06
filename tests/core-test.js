@@ -347,6 +347,19 @@ describe("geometric transformations", () => {
     expect(pt(150,150)).equals(morph2.worldPoint(pt(0,0)));
   });
 
+  it("localizes positions if parent scrolled", function() {
+    var world = morph({type: "world", extent: pt(300,300)}),
+        morph1 = morph({extent: pt(50, 50), position: pt(150,150), 
+                        clipMode: "scroll"}),
+        morph2 = morph({extent: pt(100, 100), position: pt(0,0)});
+    world.addMorph(morph1);
+    morph1.addMorph(morph2);
+    morph2.position = pt(50,50);
+    morph1.scroll = pt(50,50);
+    closeToPoint(morph2.localize(pt(150,150)), pt(0,0))
+    expect(pt(150,150)).equals(morph2.worldPoint(pt(0,0)));
+  });
+
 });
 
 

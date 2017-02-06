@@ -436,6 +436,7 @@ export class Text extends Morph {
     this.fit();
     this._needsFit = false;
     // Update position after fit
+    if (selectionColor !== undefined) this.selectionColor = selectionColor;
     if (position !== undefined) this.position = position;
     if (rightCenter !== undefined) this.rightCenter = rightCenter;
     if (leftCenter !== undefined) this.leftCenter = leftCenter;
@@ -1350,7 +1351,7 @@ export class Text extends Morph {
     if (clickedOnMorph !== this) return;
 
     var maxClicks = 3, normedClickCount = ((clickCount - 1) % maxClicks) + 1,
-        clickPos = this.scroll.addPt(this.localize(position)),
+        clickPos = this.localize(position),
         clickTextPos = this.textPositionFromPoint(clickPos);
 
     if (evt.leftMouseButtonPressed() && !evt.isShiftDown() && !evt.isAltDown()
@@ -1405,11 +1406,11 @@ export class Text extends Morph {
   onMouseMove(evt) {
     if (!evt.leftMouseButtonPressed() || !this.selectable
      || evt.state.clickedOnMorph !== this) return;
-    this.selection.lead = this.textPositionFromPoint(this.scroll.addPt(this.localize(evt.position)))
+    this.selection.lead = this.textPositionFromPoint(this.localize(evt.position))
   }
 
   onContextMenu(evt) {
-    var posClicked = this.textPositionFromPoint(this.scroll.addPt(this.localize(evt.position)));
+    var posClicked = this.textPositionFromPoint(this.localize(evt.position));
     var sels = this.selection.selections || [this.selection];
     if (this.selection.isEmpty() || sels.every(sel => !sel.range.containsPosition(posClicked)))
       this.cursorPosition = posClicked;

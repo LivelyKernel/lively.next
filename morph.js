@@ -970,7 +970,15 @@ export class Morph {
 
   transformPointToMorph(other, p) {
      for(var [d, m] of this.pathToMorph(other)) {
+        if (this != m && d == 'up') {
+          p.x -= m.scroll.x;
+          p.y -= m.scroll.y;
+        }
         this.applyTransform(d, m, p);
+        if (this != m && d == 'down') {
+          p.x += m.scroll.x;
+          p.y += m.scroll.y;
+        }
      }
      return p;
   }
@@ -979,10 +987,8 @@ export class Morph {
      var tl, tr, br, bl;
      [tl = r.topLeft(), tr = r.topRight(),
       br = r.bottomRight(), bl = r.bottomLeft()].forEach(corner => {
-        for(var [d, m] of this.pathToMorph(other)) {
-           this.applyTransform(d, m, corner);
-        }
-       });
+        this.transformPointToMorph(other, corner);  
+     });
      return Rectangle.unionPts([tl,tr,br,bl]);
   }
 
@@ -1071,8 +1077,8 @@ export class Morph {
     tfm.b = scale * Math.sin(rotation);
     tfm.c = scale * - Math.sin(rotation);
     tfm.d = scale * Math.cos(rotation);
-    tfm.e = tfm.a * -origin.x + tfm.c * -origin.y + this.position.x;
-    tfm.f = tfm.b * -origin.x + tfm.d * -origin.y + this.position.y;
+    tfm.e = tfm.a * -origin.x + tfm.c * -origin.y + position.x;
+    tfm.f = tfm.b * -origin.x + tfm.d * -origin.y + position.y;
 
     const {a,b,c,d,e,f} = tfm,
           det = a * d - c * b,
