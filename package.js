@@ -68,9 +68,11 @@ export class Package {
 
   async ensure(packages) {
     if (!await this.existsInFileSystem()) {
+      console.log(`  cloning git repo from ${this.config.repoURL}`);
       await this.repo.clone(this.config.repoURL, this.config.branch);
     } else if (!await this.isGitRepo()) {
       // dir does exists but is not a git repo
+      console.log(`  initializing git repo from ${this.config.repoURL}`);
       var helperDir = join(this.directory, ".temp-lively-clone-helper"),
           helperRepo = new Repository(helperDir, {log: this._log});
       await helperRepo.clone(this.config.repoURL, this.config.branch);
@@ -136,6 +138,17 @@ function rm(path) {
     return exec("npm install", {log: this._log, cwd: this.directory});
   }
 
+  async npmInstallOrFix() {
+    var url = this.directory.startsWith("/") ? "file://" + this.directory : this.directory,
+        node_modulesDir = join(url, "node_modules/")
+    await lively.resources.resource(node_modulesDir).ensureExistance()
+    var packagesToInstall = await this.npmPackagesThatNeedFixing();
+    if (packagesToInstall.length) {
+      console.log(`  Installing npm packages:\n    ${packagesToInstall.join("\n    ")}`)
+      await this.fixNPMPackages(packagesToInstall);
+    }
+  }
+
   async npmPackagesThatNeedFixing() {
     var cmd = await exec('npm list --depth 1 --json --silent', {log: this._log, cwd: this.directory}),
         { stdout } = cmd,
@@ -143,7 +156,7 @@ function rm(path) {
         depNames = Object.getOwnPropertyNames(npmList.dependencies || {});
     return depNames.reduce(function(depsToFix, name) {
       var dep = npmList.dependencies[name];
-      if (dep.missing || dep.invalid) depsToFix.push(name);
+      if (dep.missing) depsToFix.push(name);
       return depsToFix;
     }, []);
   }
@@ -161,7 +174,12 @@ function rm(path) {
     for (let p of packages) {
       if (indicator) indicator.setLabel(`npm install\n${p}`);
       var {code, output} = await exec(`npm install ${p}`, {log: this._log, cwd: this.directory});
-      if (code && typeof $$world !== "undefined") await $$world.inform(`npm install of ${p}failed:\n${output}`);
+      if (code) {
+        var msg = `npm install of ${p}failed:\n${output}`;
+        this._log.push(msg)
+        if (typeof $$world !== "undefined") await $$world.inform(msg);
+        else console.error(msg);
+      }
     }
     indicator && indicator.remove();
   }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 { # this ensures the entire script is downloaded #
-  
+
 
 if [ -z "$LIVELY_INSTALLER_REPO" ]; then
   LIVELY_INSTALLER_REPO="https://github.com/LivelyKernel/lively.installer"
@@ -50,20 +50,7 @@ npm_install() {
 }
 
 
-install_installer() {
-  
-  which git >/dev/null 2>&1;
-  if [[ $? -ne 0 ]]; then
-    echo >&2 "git is not installed, cannot install Lively!"
-    exit 1
-  fi
-
-  which node >/dev/null 2>&1;
-  if [[ $? -ne 0 ]]; then
-    echo >&2 "node.js is not installed, cannot install Lively!"
-    exit 1
-  fi
-
+npm_version_test() {
   export NPM_VERSION=$(npm -v)
 
 node -e "$(cat <<'EOF'
@@ -80,7 +67,23 @@ EOF
     echo >&2 "stopping, unsupported npm version"
     exit 1
   fi
+}
 
+install_installer() {
+
+  which git >/dev/null 2>&1;
+  if [[ $? -ne 0 ]]; then
+    echo >&2 "git is not installed, cannot install Lively!"
+    exit 1
+  fi
+
+  which node >/dev/null 2>&1;
+  if [[ $? -ne 0 ]]; then
+    echo >&2 "node.js is not installed, cannot install Lively!"
+    exit 1
+  fi
+
+  # npm_version_test
 
   install_from_git
   npm_install

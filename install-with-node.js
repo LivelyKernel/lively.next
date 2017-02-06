@@ -1,3 +1,5 @@
+/*global process,require,System*/
+
 require("systemjs");
 var modules = require("lively.modules");
 

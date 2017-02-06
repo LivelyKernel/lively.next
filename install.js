@@ -6,6 +6,7 @@ var resource = lively.resources.resource;
 var packageSpecFile = getPackageSpec();
 
 // var baseDir = "/home/lively/lively-web.org/lively.next/";
+// var baseDir = "/Users/robert/Lively/lively-dev4/";
 
 export async function install(baseDir) {
 
@@ -25,8 +26,7 @@ export async function install(baseDir) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // reading package spec + init base dir
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    console.log("=> Initializing ensuring existance of " + baseDir);
-
+    console.log("=> Ensuring existance of " + baseDir);
     if (baseDir.startsWith("/")) baseDir = "file://" + baseDir;
     await resource(baseDir).asDirectory().ensureExistance();
 
@@ -58,7 +58,7 @@ export async function install(baseDir) {
       pBar && pBar.setLabel(`npm install ${p.name}`)
       if (await p.npmInstallNeeded()) {
         console.log(`npm install of ${p.name}...`);
-        await p.npmInstall();
+        await p.npmInstallOrFix();
       } else {
         console.log(`npm install of ${p.name} not required`);
       }
