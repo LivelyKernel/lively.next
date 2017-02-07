@@ -255,7 +255,7 @@ export default class EventDispatcher {
     var type         = domEvt.type,
         state        = this.eventState,
         eventTargets = [targetMorph].concat(targetMorph.ownerChain()),
-        hand         = domEvt.hasOwnProperty("pointerId") ? 
+        hand         = "pointerId" in domEvt ? 
                             this.world.handForPointerId(domEvt.pointerId) : 
                             this.world.firstHand,
         halo         = domEvt.pointerId ? this.world.haloForPointerId(domEvt.pointerId) : null,
