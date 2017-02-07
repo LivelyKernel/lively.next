@@ -75,7 +75,7 @@ describe("tree", function() {
 
   it("selects", () => {
     expect(tree.selectedIndex).equals(-1);
-    expect(tree.selection).equals(null)
+    expect(tree.selection).equals(undefined)
     tree.selection = tree.treeData.root.children[1];
     expect(tree.selectedIndex).equals(2);
     expect(tree.selection).containSubset({isCollapsed: true, name: "child 2"});

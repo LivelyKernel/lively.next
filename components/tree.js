@@ -1,4 +1,4 @@
-import { arr, obj, tree, string, promise } from "lively.lang";
+import { arr, fun, obj, tree, string, promise } from "lively.lang";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { Label } from "lively.morphic/text/label.js";
 import { Morph } from "lively.morphic";
@@ -31,10 +31,11 @@ var root = new (class extends TreeData {
   ]
 });
 
-var tree = new Tree({
+var treeMorph = new Tree({
   extent: pt(200,70), fill: Color.white, border: {color: Color.gray, width: 1},
   treeData: root
 }).openInWorld();
+
 */
 
 export class TreeNode extends Morph {
@@ -516,7 +517,7 @@ export class Tree extends Morph {
     var selId = this.selection ? nodeIdFn(this.selection) : null,
         collapsedMap = new Map();
 
-    lively.lang.tree.prewalk(this.treeData.root,
+    tree.prewalk(this.treeData.root,
       node => collapsedMap.set(nodeIdFn(node), this.treeData.isCollapsed(node)),
       node => this.treeData.getChildrenIfUncollapsed(node));
 
@@ -573,12 +574,14 @@ export class Tree extends Morph {
   async uncollapse(node = this.selection) {
     if (!node || !this.treeData.isCollapsed(node)) return;
     await this.onNodeCollapseChanged({node, isCollapsed: false});
+    this.update()
     return node;
   }
 
   async collapse(node = this.selection) {
     if (!node || this.treeData.isCollapsed(node)) return;
     await this.onNodeCollapseChanged({node, isCollapsed: true});
+    this.update()
     return node;
   }
 
@@ -591,7 +594,9 @@ export class Tree extends Morph {
     this.scrollIndexIntoView(i);
   }
 
-  onScroll() { this.update(); }
+  onScroll() {
+    fun.throttleNamed("onScroll-update-" + this.id, 100, () => { this.update(); })();
+  }
 
   scrollSelectionIntoView() {
     this.selection && this.scrollIndexIntoView(this.selectedIndex);
@@ -911,7 +916,7 @@ var treeCommands = [
 
         var startNode = td.parentNode(tree.selection)
         var maxDepth = -1;
-        lively.lang.tree.prewalk(startNode,
+        tree.prewalk(startNode,
           (node, i, depth) => {
             if (depth < maxDepth) return;
             if (depth > maxDepth) {

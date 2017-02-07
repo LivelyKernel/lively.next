@@ -523,7 +523,7 @@ export default class HTTPFileBrowser extends Morph {
     }
     var win = this.getWindow();
     if (win) win.title = "file browser – " + url;
-    await this.fileTree.onNodeCollapseChanged({node: treeData.root, isCollapsed: false});
+    await this.fileTree.uncollapse(treeData.root);
     this._isLoading = false;
     this.fileTree.focus();
   }
