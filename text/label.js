@@ -105,7 +105,7 @@ export class Label extends Morph {
 
       autofit: {
         defaultValue: true,
-        set autofit(value) {
+        set (value) {
           this.setProperty("autofit", value);
           if (value) this._needsFit = true;
         }
@@ -114,7 +114,7 @@ export class Label extends Morph {
       padding: {
         defaultValue: Rectangle.inset(0),
         initialize(value) { this.padding = value; /*for num -> rect conversion*/},
-        set padding(value) {
+        set (value) {
           this._cachedTextBounds = null;
           this.setProperty("padding", typeof value === "number" ? Rectangle.inset(value) : value);
           if (this.autofit) this._needsFit = true;
@@ -123,7 +123,7 @@ export class Label extends Morph {
 
       fontFamily: {
         defaultValue: "Sans-Serif",
-        set fontFamily(fontFamily) {
+        set (fontFamily) {
           this._cachedTextBounds = null;
           this.setProperty("fontFamily", fontFamily);
           if (this.autofit) this._needsFit = true;
@@ -132,7 +132,7 @@ export class Label extends Morph {
 
       fontSize: {
         defaultValue: 12,
-        set fontSize(fontSize) {
+        set (fontSize) {
           this._cachedTextBounds = null;
           this.setProperty("fontSize", fontSize);
           if (this.autofit) this._needsFit = true;
@@ -143,7 +143,7 @@ export class Label extends Morph {
 
       fontWeight: {
         defaultValue: "normal",
-        set fontWeight(fontWeight) {
+        set (fontWeight) {
           this._cachedTextBounds = null;
           this.setProperty("fontWeight", fontWeight);
           if (this.autofit) this._needsFit = true;
@@ -152,7 +152,7 @@ export class Label extends Morph {
 
       fontStyle: {
         defaultValue: "normal",
-        set fontStyle(fontStyle) {
+        set (fontStyle) {
           this._cachedTextBounds = null;
           this.setProperty("fontStyle", fontStyle);
           if (this.autofit) this._needsFit = true;
@@ -163,7 +163,7 @@ export class Label extends Morph {
 
       textStyleClasses: {
         defaultValue: undefined,
-        set textStyleClasses(textStyleClasses) {
+        set (textStyleClasses) {
           this._cachedTextBounds = null;
           this.setProperty("textStyleClasses", textStyleClasses);
           if (this.autofit) this._needsFit = true;
