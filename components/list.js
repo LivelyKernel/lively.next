@@ -816,7 +816,7 @@ export class FilterableList extends Morph {
   relayout() {
     var { inputMorph, listMorph } = this;
     listMorph.width = inputMorph.width = this.width;
-    listMorph.setBounds(this.innerBounds().withTopLeft(inputMorph.bottomLeft));
+    listMorph.setBounds(this.innerBounds().withTopLeft(inputMorph.bottomLeft.addXY(0, 5)));
   }
 
   get isList() { return true; }

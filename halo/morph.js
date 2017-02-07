@@ -420,8 +420,8 @@ class HaloPropertyDisplay extends Text {
   static get properties() {
     return {
       name:         {defaultValue: this.name},
-      fill:         {defaultValue: Color.gray.withA(.7)},
-      borderRadius: {defaultValue: 15},
+      fill:         {defaultValue: Color.black.withA(.7)},
+      borderRadius: {defaultValue: 7},
       padding:      {defaultValue: Rectangle.inset(5)},
       visible:      {defaultValue: false},
       readOnly:     {defaultValue: true},
