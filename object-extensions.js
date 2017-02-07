@@ -28,3 +28,8 @@ Object.defineProperty(System, "__serialize__", {
   configurable: true,
   value: () => ({__expr__: "System"})
 });
+
+Object.defineProperty(System.global, "__serialize__", {
+  configurable: true,
+  value: () => ({__expr__: "System.global"})
+});
