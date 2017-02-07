@@ -174,6 +174,8 @@ export class TreeNode extends Morph {
   }
 
   displayNode(displayedNode, node, pos, defaultToggleWidth, goalWidth, isSelected, isCollapsable, isCollapsed) {
+    this.myNode = null;
+
     this.fill = isSelected ? this.selectionColor : null;
 
     this.position = pos;
