@@ -874,8 +874,9 @@ export class World extends Morph {
         {command: "open browser",             target: this},
         {command: "choose and browse module", target: this},
         {command: "open code search",         target: this},
-        {command: "open test runner",         target: this},
-        {command: "open shell workspace",     target: this}]
+        {command: "open file browser",         target: this},
+        {command: "open shell workspace",     target: this}
+      ]
       ],
       {command: "report a bug",          target: this},
       ];
