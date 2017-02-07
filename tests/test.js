@@ -13,7 +13,8 @@ function serializationRoundtrip(obj) {
 function itSerializesInto(subject, expected) {
   var title = `serializes ${String(subject)} into ${JSON.stringify(expected)}`
   return it(title, () => {
-    expect(obj.values(serialize(subject))[0]).deep.equals(expected);
+    var {id, snapshot} = serialize(subject);
+    expect(snapshot[id]).deep.equals(expected);
   });
 }
 
