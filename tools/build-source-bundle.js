@@ -1,5 +1,9 @@
 /*global require, process*/
 
+var systemjs = require('../../lively.modules/node_modules/systemjs');
+var lang = require('lively.lang');
+var ast = require('../../lively.ast');
+var classes = require('lively.classes');
 var fs = require("fs");
 var path = require("path");
 var rollup = require('rollup');
@@ -23,24 +27,72 @@ var parts = {
 }
 // output format - 'amd', 'cjs', 'es6', 'iife', 'umd'
 
+function escapeRegExp(str) {
+  return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+  }
+
+function insertForwardDeclarations(source) {
+   const vars = {
+      LoadingIndicator: "Morph$$1",
+      ListItemMorph: "Label$$1",
+      "DropDownList$$1": "Button$$1"},
+         exportedNames = {
+            LoadingIndicator: 'LoadingIndicator',
+            ListItemMorph: 'ListItemMorph',
+            "DropDownList$$1": 'DropDownList'
+         };
+   for (var v in vars) {
+    console.log('replacing ' + v);
+    source = source.replace(`var ${v}`, () => `exports.${exportedNames[v]} = ${v}`);
+     var re = new RegExp(`${escapeRegExp(v)} = function \(.*\) \{\[\\s\\S\]*?\}\\(${escapeRegExp(vars[v])}\\);`),
+         fn = source.match(re),
+         fn = fn ? fn[0] : "",
+         args = /\(\s*([^)]+?)\s*\)/.exec(fn);
+      if (!fn) {
+         console.log('could not replace ', v);
+         continue;
+     }
+      if (args[1]) {
+        var superClasses = args[1].split(/\s*,\s*/);
+        if (superClasses.length > 0) console.log("Inserting check for ", superClasses[0]);
+        var instfn = fn.replace('inherits', `
+              inherits`);
+        source = source.replace(fn, () => `(function ${v}_Builder() { 
+              if (${v}) return ${v};
+              if (!${vars[v]}) {
+                 setTimeout(${v}_Builder, 0);
+                 return;
+              }
+        ${instfn}})()`);
+        source = source.replace(`exports.${exportedNames[v]} = ${v};`, "");
+      }
+   }
+   return Object.keys(vars).length > 0 ? "var " + Object.keys(vars).join(',') + ";\n" + source : source;
+}
+
+const opts = {classHolder: {type: "Identifier", name: "_classRecorder"}, functionNode: {type: "Identifier", name: "lively.classes.runtime.initializeClass"}};
+
 module.exports = Promise.resolve()
 // 1. make sure deps are build
 //.then(() => require("./build-kld-intersections.js"))
   // .then(() => require("./build-jsdom.js"))
   .then(() => {
     Object.keys(parts).forEach(name =>
-      parts[name].source = fs.readFileSync(parts[name].path));
+      parts[name].source = fs.readFileSync(parts[name].path).toString());
  })
   .then(() => {
     console.log('rolling up...')
     return rollup.rollup({
       entry: "index.js",
       plugins: [
+        {transform: (source, id) => {
+            return ast.stringify(ast.transform.objectSpreadTransform(classes.classToFunctionTransform(source, opts)));
+        }},
         babel({
           exclude: 'node_modules/**',
           sourceMap: false,
           babelrc: false,
-          plugins: ['transform-async-to-generator', "syntax-object-rest-spread", "transform-object-rest-spread", "external-helpers"],
+          plugins: ['transform-exponentiation-operator', 'transform-async-to-generator', "syntax-object-rest-spread", "transform-object-rest-spread", "external-helpers"],
           presets: [["es2015", {"modules": false}]]
         })
       ]
@@ -80,7 +132,8 @@ ${parts["svg-intersections"].source}\n
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
-  ${source}
+  System.global._classRecorder = {};
+  ${insertForwardDeclarations(source)}
   if (typeof module !== "undefined" && typeof require === "function") module.exports = GLOBAL.lively.modules;
 })();`;
 
@@ -93,7 +146,8 @@ ${parts["svg-intersections"].source}\n
   return `
 // INLINED ${parts[key].path}
 ${parts[key].source}
-// INLINED END ${parts[key].path}`; }).join("\n") + "\n" + noDeps;
+// INLINED END ${parts[key].path}`
+}).join("\n") + "\n" + noDeps;
 
     return {noDeps: noDeps, complete: complete};
   })
