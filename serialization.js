@@ -1,4 +1,4 @@
-import { ObjectPool } from "lively.serializer2";
+import { ObjectPool, serialize, deserialize } from "lively.serializer2";
 import { World } from "./index.js";
 import { resource } from "lively.resources";
 import { newMorphId } from "./morph.js";
@@ -15,18 +15,11 @@ function normalizeOptions(options) {
 }
 
 export function serializeMorph(m, options) {
-  options = normalizeOptions(options);
-  var objPool = options.objPool || new ObjectPool(options),
-      ref = objPool.add(m);
-  return {id: ref.id, snapshot: objPool.snapshot()};
+  return serialize(m, normalizeOptions(options));
 }
 
 export function deserializeMorph(idAndSnapshot, options) {
-  options = normalizeOptions(options);
-  var {id, snapshot} = idAndSnapshot,
-      objPool = options.objPool || new ObjectPool(options);
-  objPool.readSnapshot(snapshot);
-  return objPool.resolveToObj(id)
+  return deserialize(idAndSnapshot, normalizeOptions(options));
 }
 
 export async function loadWorldFromResource(fromResource) {
