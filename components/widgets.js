@@ -265,7 +265,33 @@ export class ValueScrubber extends Text {
       });
 
       this.value = props.value || 0;
+      
   }
+
+  relayout() {
+    const d = 5;
+    if (this.width + d < this.textBounds().width) {
+      this.squeezeLabel(this.width + d);
+    } else if (this.width > this.textBounds().width) {
+      this.expandLabel(this.width);
+    }
+  }
+   
+   squeezeLabel(len) {
+      if (this.fontSize < 11) return;
+      while (this.fontSize > 10 && this.textBounds().width > len) {
+         this.fontSize -= 2
+         this.padding = this.padding.withY(this.padding.top() + 1);
+      }
+   }
+
+   expandLabel(len) {
+      if (this.fontSize > 13) return;
+      while (this.fontSize < 14 && this.textBounds().width < len) {
+         this.fontSize += 2
+         this.padding = this.padding.withY(this.padding.top() - 1);
+      }
+   }
 
   onKeyDown(evt) {
     super.onKeyDown(evt);
@@ -301,6 +327,7 @@ export class ValueScrubber extends Text {
       if (this.unit) this.textString += " " + this.unit;
       this.factorLabel.description = scale + "x";
       this.factorLabel.position = evt.hand.position.addXY(10,10);
+      this.relayout();
   }
 
   getCurrentValue(delta, s) {
@@ -319,6 +346,7 @@ export class ValueScrubber extends Text {
       this.scrubbedValue = v;
       this.textString = obj.safeToString(v) || "";
       if (this.unit) this.textString += " " + this.unit;
+      this.relayout();
   }
 
 }
