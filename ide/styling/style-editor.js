@@ -3,7 +3,7 @@ import {
   VerticalLayout,
   HorizontalLayout,
   TilingLayout,
-  Morph, Icon
+  Morph, Icon, morph
 } from "../../index.js";
 import {
   Rectangle,
@@ -151,11 +151,21 @@ class StyleEditor extends Morph {
     this.animate({opacity: 1, visible: true, duration});
   }
 
-  close() {
+  async close() {
     this.opened = false;
     this.layout = null;
-    this.submorphs = [this.titleLabel(this.title)];
+    const titleLabel = this.submorphs[0],
+          {submorphs: [_, instruction]} = titleLabel;
+    titleLabel.layout = null;
+    titleLabel.submorphs = [instruction];
+    titleLabel.animate({layout: new HorizontalLayout(), duration});
+    instruction.animate({
+       nativeCursor: 'pointer',
+       fontColor: Color.gray,
+       duration
+    })
     this.animate({
+      submorphs: [titleLabel],
       morphClasses: ["closed"],
       position: this.openPosition,
       layout: new VerticalLayout({spacing: 5}),
@@ -170,19 +180,24 @@ class StyleEditor extends Morph {
     this.opened = true;
     const [titleLabel] = this.submorphs,
       {submorphs: [instruction]} = titleLabel;
-
+    titleLabel.layout = null;
     this.layout = null;
     this.opacity = 1;
     this.nativeCursor = "auto";
     this.openPosition = this.position;
 
-    var btn = titleLabel.addMorphAt({
+    var btn = morph({
       type: "button",
       label: [Icon.textAttribute("times-circle-o")],
-      fontSize: 16,
-      fill: null, borderWidth: 0,
-    }, 0);
+      fontSize: 22, 
+      activeStyle: {fill: Color.transparent}, borderWidth: 0,
+    });
+    
     btn.fit();
+    titleLabel.submorphs = [btn, instruction];
+    titleLabel.animate({
+        layout: new HorizontalLayout(), 
+        duration});
     connect(btn, 'fire', this, 'close');
     instruction.animate({
       nativeCursor: "auto",
