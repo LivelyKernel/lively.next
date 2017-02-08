@@ -436,7 +436,6 @@ export class Text extends Morph {
     this.fit();
     this._needsFit = false;
     // Update position after fit
-    if (selectionColor !== undefined) this.selectionColor = selectionColor;
     if (position !== undefined) this.position = position;
     if (rightCenter !== undefined) this.rightCenter = rightCenter;
     if (leftCenter !== undefined) this.leftCenter = leftCenter;

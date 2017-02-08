@@ -114,8 +114,7 @@ export class Selection {
   get end() { return this.range.end }
   set end(val) { this.range = Range.fromPositions(this.start, val); }
 
-  get selectionColor() { return this._selectionColor || "#bed8f7" }
-  set selectionColor(c) { this._selectionColor = c; }
+  get selectionColor() { return this.textMorph.selectionColor || "#bed8f7" }
 
   get anchor() { return this.isReverse() ? this.range.end : this.range.start }
   set anchor(pos) {
