@@ -198,11 +198,12 @@ export class TreeNode extends Morph {
       if (!label.owner) this.addMorph(label);
       displayedMorph = this.displayedMorph = label;
       this.labelValue = displayedNode;
+      displayedMorph.fit()
       if (goalWidth) {
         displayedMorph.width = Math.max(
           displayedMorph.textBounds().width,
           goalWidth - defaultToggleWidth);
-      } else displayedMorph.fit();
+      }
     }
 
     this.fontColor = isSelected ? this.selectionFontColor : this.nonSelectionFontColor;
