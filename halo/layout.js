@@ -636,9 +636,9 @@ export class FlexLayoutHalo extends Morph {
 
   constructor(container, pointerId) {
     super({
+      reactsToPointer: false,
       isHaloItem: true,
       styleClasses: ["Halo"],
-      extent: container.extent,
       fill: Color.transparent,
       previews: []
     });
@@ -680,6 +680,7 @@ export class FlexLayoutHalo extends Morph {
   remove() {
      super.remove();
      this.removePreviews();
+     return this;
   }
 
   removePreviews() {
