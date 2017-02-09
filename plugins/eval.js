@@ -33,6 +33,7 @@ export default class EvalPlugin {
         res.end(stringifiedEvalResult);
       })
       .catch(err => {
+        if (err.originalErr) err = err.originalErr;
         console.error("eval error: " + err);
         res.writeHead(200, {'Content-Type': 'application/json'});
         res.end(JSON.stringify({isError: true, value: String(err.stack || err)}));
