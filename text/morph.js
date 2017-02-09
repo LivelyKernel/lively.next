@@ -455,6 +455,7 @@ export class Text extends Morph {
   __deserialize__(snapshot, objRef) {
     super.__deserialize__(snapshot, objRef);
 
+    this.markers = [];
     this.textLayout = new TextLayout(this.env.fontMetric);
     this.textRenderer = defaultRenderer;
     this.changeDocument(TextDocument.fromString(""), true);
@@ -467,7 +468,8 @@ export class Text extends Morph {
 
   get __only_serialize__() {
     var propNames = super.__only_serialize__;
-    return arr.withoutAll(propNames, ["document", "textLayout", "undoManager", "textRenderer", "textAttributes"]);
+    return arr.withoutAll(propNames,
+      ["document", "textLayout", "undoManager", "textRenderer", "textAttributes", "markers"]);
   }
 
   __additionally_serialize__(snapshot, objRef) {
