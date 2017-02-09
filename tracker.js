@@ -183,10 +183,14 @@ export default class L2LTracker extends L2LConnection {
 
   send(msg, ackFn) {
     [msg, ackFn] = this.prepareSend(msg, ackFn);
-    this.whenOnline().then(() => {
+    return this.whenOnline().then(() => {
       var {action, target} = msg,
           socket = this.getSocketForClientId(target);
-      if (!socket) throw new Error(`Trying to send message ${action} to ${target} but cannot find a connection to it!`);
+      if (!socket) {
+        var errMsg = `Trying to send message ${action} to ${target} but cannot find a connection to it!`;
+        console.error(errMsg);
+        throw new Error(errMsg);
+      }
       typeof ackFn === "function" ?
         socket.emit(action, msg, ackFn) :
         socket.emit(action, msg);
