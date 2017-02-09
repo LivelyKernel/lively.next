@@ -84,8 +84,8 @@ export class Event {
 
   stop() {
     this.stopped = true;
-    this.domEvt && this.domEvt.stopPropagation();
-    this.domEvt && this.domEvt.preventDefault();
+    this.domEvt && typeof this.domEvt.stopPropagation === "function" && this.domEvt.stopPropagation();
+    this.domEvt && typeof this.domEvt.preventDefault === "function" && this.domEvt.preventDefault();
     this.onStopCallbacks.forEach(ea => ea());
   }
 

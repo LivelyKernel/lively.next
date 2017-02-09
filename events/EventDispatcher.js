@@ -565,6 +565,7 @@ export default class EventDispatcher {
     //   await $world.env.eventDispatcher.doCopy("foo124");
     return this.keyInputHelper.doCopy(content);
   }
+
   doPaste() { return this.keyInputHelper.doPaste(); }
 
 }
