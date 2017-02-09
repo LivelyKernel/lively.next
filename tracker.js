@@ -38,24 +38,24 @@ export default class L2LTracker extends L2LConnection {
     this.clients = new Map();
 
     this.addService("register",
-      (tracker, msg, ackfn, socket) => tracker.registerClient(msg, ackfn, socket));
+      (tracker, msg, ackfn, socket) =>
+        tracker.registerClient(msg, ackfn, socket));
+
     this.addService("unregister",
-      (tracker, msg, ackfn, socket) => tracker.unregisterClient(msg, ackfn, socket));
+      (tracker, msg, ackfn, socket) =>
+        tracker.unregisterClient(msg, ackfn, socket));
       
     Object.keys(defaultActions).forEach(name =>
       this.addService(name, defaultActions[name]));
     Object.keys(defaultTrackerActions).forEach(name =>
       this.addService(name, defaultTrackerActions[name]));
-      
   }
 
   get ioNamespace() { return this.io.of(this.namespace); }
 
   getTrackerList() {
-    return Array.from(this.constructor._trackers).map(function(ea){
-      return ea[1]
-    }
-  )}
+    return Array.from(this.constructor._trackers).map(ea => ea[1])
+  }
 
   isOnline() { return this._open; }
 
@@ -67,6 +67,14 @@ export default class L2LTracker extends L2LConnection {
   getSocketForClientId(clientId) {
     var clientData = this.clients.get(clientId);
     return clientData ? this.ioNamespace.sockets[clientData.socketId] : null;
+  }
+
+  removeDisconnectedClients() {
+    var ids = Array.from(this.clients.keys()),
+        toRemove = ids.filter(id => !this.getSocketForClientId(id));
+    toRemove.forEach(id => this.clients.delete(id));
+    if (toRemove.length)
+      console.log(`[${this}] removing disconnected clients ${ids.join(",")}`)
   }
 
   open() {
