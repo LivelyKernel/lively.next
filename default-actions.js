@@ -7,6 +7,7 @@ export var defaultActions = {
   },
 
   "remote-eval": (tracker, {sender, data: {source}}, ackFn, socket) => {
+
     Promise.resolve().then(() => eval(source))
       .then(result => ackFn({value: result}))
       .catch(err => {
@@ -15,6 +16,23 @@ export var defaultActions = {
         console.error("eval error: " + err);
         typeof ackFn === "function" && ackFn({isError: true, value: String(err.stack || err)})
       });
+  },
+
+  "remote-eval-2": (tracker, {sender, data: {source}}, ackFn, socket) => {
+    Promise.resolve().then(() => {
+      var result = eval(source);
+      if (!(result instanceof Promise)) {
+        console.error("unexpected eval result:" + result)
+        throw new Error("unexpected eval result:" + result);
+      }
+      return result;
+    })
+    .then(evalResult => ackFn(evalResult))
+    .catch(err => {
+      console.error("eval error: " + err);
+      if (err.originalErr) err = err.originalErr;
+      typeof ackFn === "function" && ackFn({isError: true, value: String(err.stack || err)})
+    });
   }
 
 }
