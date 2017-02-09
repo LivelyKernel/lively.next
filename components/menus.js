@@ -195,6 +195,10 @@ export class Menu extends Morph {
 
     if (item.isDivider) return item;
 
+    if (item.hasOwnProperty("string") && item.hasOwnProperty("action")) {
+      return obj.select(item, ["string", "action", "annotation"]);
+    }
+
     if (Array.isArray(item)) {
       var [name, actionOrList] = item;
 
