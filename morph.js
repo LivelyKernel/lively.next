@@ -1262,8 +1262,11 @@ export class Morph {
   onContextMenu(evt) {
     if (evt.targetMorph !== this) return;
     evt.stop();
-    this.openMenu(this.menuItems(), evt);
+    Promise
+      .resolve(this.menuItems()).then(items => this.openMenu(items, evt))
+      .catch(err => $world.logError(err));
   }
+
   openMenu(items, optEvt) {
     return items && items.length ? this.world().openWorldMenu(optEvt, items) : null;
   }

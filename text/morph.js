@@ -1414,7 +1414,7 @@ export class Text extends Morph {
     return super.onContextMenu(evt);
   }
 
-  menuItems() {
+  async menuItems() {
     var items = [
       ["run command", () => { this.focus(); this.world().execCommand("run command")}],
       {command: "text undo", alias: "undo", target: this, showKeyShortcuts: true},
@@ -1422,8 +1422,13 @@ export class Text extends Morph {
       {command: "manual clipboard copy", alias: "copy", target: this, showKeyShortcuts: this.keysForCommand("clipboard copy"), args: {collapseSelection: false, delete: false}},
       {command: "manual clipboard paste", alias: "paste", target: this, showKeyShortcuts: this.keysForCommand("clipboard paste")}];
 
-    return this.pluginCollect("getMenuItems", items);
+    for (let plugin of this.plugins) {
+      if (typeof plugin["getMenuItems"] === "function")
+        items = await plugin["getMenuItems"](items);
+    }
+    return items;
   }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // keyboard events
 

@@ -963,7 +963,7 @@ export default class Browser extends Window {
       .concat(EvalBackendChooser.default.activateEvalBackendCommand(this));
   }
 
-  onContextMenu(evt) {
+  async onContextMenu(evt) {
     evt.stop();
 
     var target = evt.targetMorph;
@@ -975,9 +975,9 @@ export default class Browser extends Window {
 
     var items = [];
     if ([sourceEditor, moduleList, codeEntityTree].includes(target))
-      items.push(...target.menuItems());
+      items.push(...await target.menuItems());
 
-    this.openMenu([...items, ...this.menuItems()], evt);
+    this.openMenu([...items, ...await this.menuItems()], evt);
   }
 
   menuItems() {
