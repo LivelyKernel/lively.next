@@ -1,26 +1,15 @@
 {
-  "id": "Text_6C341728_A67E_49B3_BC8B_CB938250B4D9",
+  "id": "Text_F57876D7_3184_4B6E_863F_E461A4F11815",
   "snapshot": {
-    "Text_6C341728_A67E_49B3_BC8B_CB938250B4D9": {
-      "rev": 249132,
+    "Text_F57876D7_3184_4B6E_863F_E461A4F11815": {
+      "rev": 24085,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
           "value": []
         },
         "attributeConnections": {
-          "key": "attributeConnections",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "CC47179D-B215-4FA1-BBEA-9907514F7008",
-              "rev": 0
-            }
-          ]
-        },
-        "draggable": {
-          "key": "draggable",
-          "value": false
+          "key": "attributeConnections"
         },
         "extent": {
           "key": "extent",
@@ -36,11 +25,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(99.3,372.0)"
-        },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(103.0,296.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -102,30 +87,6 @@
           "key": "borderWidthTop",
           "value": 1
         },
-        "useSoftTabs": {
-          "key": "useSoftTabs",
-          "value": true
-        },
-        "tabWidth": {
-          "key": "tabWidth",
-          "value": 2
-        },
-        "fixedWidth": {
-          "key": "fixedWidth",
-          "value": false
-        },
-        "fixedHeight": {
-          "key": "fixedHeight",
-          "value": false
-        },
-        "readOnly": {
-          "key": "readOnly",
-          "value": false
-        },
-        "selectable": {
-          "key": "selectable",
-          "value": true
-        },
         "padding": {
           "key": "padding",
           "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,8,0,0)"
@@ -134,7 +95,15 @@
           "key": "selection",
           "value": {
             "__ref__": true,
-            "id": "A0399256-1D2C-48F3-8FD3-040EDE52E4E4",
+            "id": "3E379884-E801-46F1-A76A-9B823B468434",
+            "rev": 0
+          }
+        },
+        "defaultTextStyle": {
+          "key": "defaultTextStyle",
+          "value": {
+            "__ref__": true,
+            "id": "F8324B23-187F-4918-8ED9-20B55584EDF2",
             "rev": 0
           }
         },
@@ -143,19 +112,15 @@
           "value": [
             {
               "__ref__": true,
-              "id": "3D6C24A4-BF0E-42BC-A683-A621A58E827D",
+              "id": "4C67980D-5BC2-4BE8-BB68-2B53BDD02B5F",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "990E79B3-653E-4A4B-B71B-3EC2BF4C8EC5",
+              "id": "691E7796-D323-4D43-B00F-404408BCA832",
               "rev": 0
             }
           ]
-        },
-        "markers": {
-          "key": "markers",
-          "value": []
         },
         "savedMarks": {
           "key": "savedMarks",
@@ -172,6 +137,20 @@
             [
               "Lively rocks!",
               [
+                {
+                  "fontFamily": "Sans-Serif",
+                  "fontSize": 12,
+                  "fontColor": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  },
+                  "fontWeight": "normal",
+                  "fontStyle": "normal",
+                  "textDecoration": "none",
+                  "fixedCharacterSpacing": false
+                },
                 {
                   "fontFamily": "Sans-Serif",
                   "fontSize": 12,
@@ -220,88 +199,7 @@
         }
       }
     },
-    "CC47179D-B215-4FA1-BBEA-9907514F7008": {
-      "rev": 0,
-      "props": {
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Text_6C341728_A67E_49B3_BC8B_CB938250B4D9",
-            "rev": 249132
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "selectionChange"
-        },
-        "targetObj": {
-          "key": "targetObj"
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "openDebouncedFor"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "AA7E5458-E3C5-4DB8-8DBC-910E130D8F6E",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        },
-        "converterString": {
-          "key": "converterString",
-          "value": "sel => sel.textMorph"
-        },
-        "converter": {
-          "key": "converter"
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "AA7E5458-E3C5-4DB8-8DBC-910E130D8F6E": {
-      "rev": 0,
-      "props": {
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Text_6C341728_A67E_49B3_BC8B_CB938250B4D9",
-            "rev": 249132
-          }
-        },
-        "target": {
-          "key": "target"
-        }
-      }
-    },
-    "A0399256-1D2C-48F3-8FD3-040EDE52E4E4": {
+    "3E379884-E801-46F1-A76A-9B823B468434": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -312,8 +210,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_6C341728_A67E_49B3_BC8B_CB938250B4D9",
-            "rev": 249132
+            "id": "Text_F57876D7_3184_4B6E_863F_E461A4F11815",
+            "rev": 24085
           }
         },
         "selections": {
@@ -321,7 +219,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "98ABC2ED-5349-4F74-A705-AED7D5C63D5A",
+              "id": "ED4AAECB-C3B8-4D06-ACE4-6F899FBF7A34",
               "rev": 0
             }
           ]
@@ -346,7 +244,7 @@
         }
       }
     },
-    "98ABC2ED-5349-4F74-A705-AED7D5C63D5A": {
+    "ED4AAECB-C3B8-4D06-ACE4-6F899FBF7A34": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -357,13 +255,13 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_6C341728_A67E_49B3_BC8B_CB938250B4D9",
-            "rev": 249132
+            "id": "Text_F57876D7_3184_4B6E_863F_E461A4F11815",
+            "rev": 24085
           }
         },
         "_goalColumn": {
           "key": "_goalColumn",
-          "value": 10
+          "value": 6
         },
         "_isReverse": {
           "key": "_isReverse",
@@ -373,7 +271,7 @@
           "key": "startAnchor",
           "value": {
             "__ref__": true,
-            "id": "3D6C24A4-BF0E-42BC-A683-A621A58E827D",
+            "id": "4C67980D-5BC2-4BE8-BB68-2B53BDD02B5F",
             "rev": 0
           }
         },
@@ -381,7 +279,7 @@
           "key": "endAnchor",
           "value": {
             "__ref__": true,
-            "id": "990E79B3-653E-4A4B-B71B-3EC2BF4C8EC5",
+            "id": "691E7796-D323-4D43-B00F-404408BCA832",
             "rev": 0
           }
         },
@@ -389,7 +287,7 @@
           "key": "_range",
           "value": {
             "__ref__": true,
-            "id": "D9E5E7D6-331D-4C02-BC06-7C0A50FF0EF6",
+            "id": "935A0729-89DD-4CA8-B84F-9D01FAC6BA0A",
             "rev": 0
           }
         },
@@ -413,7 +311,7 @@
         }
       }
     },
-    "3D6C24A4-BF0E-42BC-A683-A621A58E827D": {
+    "4C67980D-5BC2-4BE8-BB68-2B53BDD02B5F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -428,7 +326,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "1EB07CAA-F02C-44E2-B737-EB1CBDF9D96E",
+            "id": "BCF5322F-390C-4E66-A6AE-3F7768E5D0E8",
             "rev": 0
           }
         },
@@ -448,7 +346,7 @@
         }
       }
     },
-    "1EB07CAA-F02C-44E2-B737-EB1CBDF9D96E": {
+    "BCF5322F-390C-4E66-A6AE-3F7768E5D0E8": {
       "rev": 0,
       "props": {
         "row": {
@@ -457,11 +355,11 @@
         },
         "column": {
           "key": "column",
-          "value": 10
+          "value": 6
         }
       }
     },
-    "990E79B3-653E-4A4B-B71B-3EC2BF4C8EC5": {
+    "691E7796-D323-4D43-B00F-404408BCA832": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -476,7 +374,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "957357EA-E866-4794-8AA2-8C14F6701C0B",
+            "id": "AB036BC8-ECEE-4DEE-86E8-BBD9AD712715",
             "rev": 0
           }
         },
@@ -496,7 +394,7 @@
         }
       }
     },
-    "957357EA-E866-4794-8AA2-8C14F6701C0B": {
+    "AB036BC8-ECEE-4DEE-86E8-BBD9AD712715": {
       "rev": 0,
       "props": {
         "row": {
@@ -505,18 +403,18 @@
         },
         "column": {
           "key": "column",
-          "value": 10
+          "value": 6
         }
       }
     },
-    "D9E5E7D6-331D-4C02-BC06-7C0A50FF0EF6": {
+    "935A0729-89DD-4CA8-B84F-9D01FAC6BA0A": {
       "rev": 0,
       "props": {
         "start": {
           "key": "start",
           "value": {
             "__ref__": true,
-            "id": "1EB07CAA-F02C-44E2-B737-EB1CBDF9D96E",
+            "id": "BCF5322F-390C-4E66-A6AE-3F7768E5D0E8",
             "rev": 0
           }
         },
@@ -524,7 +422,7 @@
           "key": "end",
           "value": {
             "__ref__": true,
-            "id": "957357EA-E866-4794-8AA2-8C14F6701C0B",
+            "id": "AB036BC8-ECEE-4DEE-86E8-BBD9AD712715",
             "rev": 0
           }
         }
@@ -539,8 +437,53 @@
           "pathInPackage": "text/range.js"
         }
       }
+    },
+    "F8324B23-187F-4918-8ED9-20B55584EDF2": {
+      "rev": 0,
+      "props": {
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 12
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
+        },
+        "backgroundColor": {
+          "key": "backgroundColor"
+        },
+        "fixedCharacterSpacing": {
+          "key": "fixedCharacterSpacing",
+          "value": false
+        },
+        "textStyleClasses": {
+          "key": "textStyleClasses"
+        },
+        "link": {
+          "key": "link"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor"
+        }
+      }
     }
   },
   "packages": {},
-  "preview": "<div   draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate(0px, 34.176px) rotate(0deg) scale(0.791198, 0.791198); transform-origin: 0px 0px 0px; display: inline; width: 126.391px; height: 40px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div  style=\" position: absolute; left: 90.8281px; top: 8px; width: 3px; height: 24px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 24px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 24px; line-height: 24px;\"><span style=\"font-size: 20px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: normal; font-style: normal; text-decoration: none; color: rgb(0, 0, 0);\">Lively rocks!</span></div><div style=\"height: 0px; width: 110.391px;\"></div></div></div>"
+  "preview": "<div   draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate(0px, 34.176px) rotate(0deg) scale(0.791198, 0.791198); transform-origin: 0px 0px 0px; display: inline; width: 126.391px; height: 40px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div  style=\" position: absolute; left: 56.75px; top: 8px; width: 3px; height: 24px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 24px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 24px; line-height: 24px;\"><span style=\"font-size: 20px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">Lively rocks!</span></div><div style=\"height: 0px; width: 110.391px;\"></div></div></div>"
 }
