@@ -1,14 +1,17 @@
 /*global System, beforeEach, afterEach, describe, it*/
 
 import { expect } from "mocha-es6";
-import { removeDir, createFiles, modifyJSON, noTrailingSlash, inspect as i } from "./helpers.js";
+import { modifyJSON, noTrailingSlash, inspect as i } from "./helpers.js";
 
 import { obj, arr } from "lively.lang";
 import { getSystem, removeSystem, printSystemConfig, loadedModules } from "../src/system.js";
 import { getPackage, applyConfig, getPackages } from "../src/packages.js";
 import module from "../src/module.js";
+import { resource, createFiles } from "lively.resources";
 
 var testDir = System.decanonicalize("lively.modules/tests/package-tests-temp/");
+// await resource(testDir).exists()
+// await resource(testDir).remove()
 
 var project1aDir = testDir + "dep1/",
     project1bDir = testDir + "dep2/",
@@ -46,7 +49,7 @@ describe("package loading", function() {
 
   afterEach(() => {
     removeSystem("test");
-    return removeDir(testDir);
+    return resource(testDir).remove();
   });
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -288,7 +291,7 @@ describe("mutual dependent packages", () => {
 
   afterEach(async () => {
     removeSystem("test")
-    await removeDir(testDir);
+    await resource(testDir).remove();
   });
 
 
