@@ -35,6 +35,14 @@ export default class L2LConnection {
     if (this.debug) console.log(`[${this}] error: ${err}`);
   }
 
+  removeService(selector) {
+    delete this.actions[selector];
+  }
+
+  removeServices(selectors) {
+    selectors.forEach(ea => this.removeService(ea));
+  }
+
   addService(selector, handlerFn) {
     this.actions[selector] = handlerFn;
   }
