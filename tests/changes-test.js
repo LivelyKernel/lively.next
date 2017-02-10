@@ -183,7 +183,7 @@ describe("changes", function () {
       var m = morph({extent: pt(10,20), fill: Color.red}),
           q = m._animationQueue;
       q.registerAnimation({fill: Color.green, extent: pt(50,50), easing: "easInOut", onFinish: () => m.remove()});
-      expect(q.animations[0].changedProps).deep.equals({fill: Color.green, extent: pt(50,50)});
+      expect(q.animations[0].animatedProps).deep.equals({fill: Color.green, extent: pt(50,50)});
     })
     
     it("does not enqueue the same prop animation more than once", () => {
@@ -202,7 +202,7 @@ describe("changes", function () {
           q = m._animationQueue,
           a = {extent: pt(10,20), easing: "easeInOut", onFinish: () => m.remove()},
           anim = new PropertyAnimation(null, m, a);
-      expect(anim.changedProps).deep.equals({extent: pt(10,20)})
+      expect(anim.animatedProps).deep.equals({extent: pt(10,20)})
       expect(anim.affectsMorph).to.be.false;
       q.registerAnimation(a);
       expect(q.animations.length).equals(0);
