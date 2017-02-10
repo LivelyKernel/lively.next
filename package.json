@@ -1,0 +1,23 @@
+{
+  "name": "lively.morphic-mirror",
+  "version": "0.1.0",
+  
+  "dependencies": {
+    "virtual-dom": "^2.1.1"
+  }, 
+  "systemjs": {
+    "main": "index.js",
+    "map": {
+      "virtual-dom": "./node_modules/virtual-dom/dist/virtual-dom.js"
+    },
+    "meta": {
+      "node_modules/virtual-dom/dist/virtual-dom.js": {
+        "format": "amd"
+      }
+    }
+  },
+  "lively": {
+    "main": "index.js",
+    "packageMap": {}
+  }
+}
