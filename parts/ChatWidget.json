@@ -1,8 +1,8 @@
 {
-  "id": "ObjectChatWidget_5CA376A6_D1B5_42E4_8BC0_E77898D1B88E",
+  "id": "ObjectChatWidget_61D53692_B75C_4F9D_99DF_1823FA4360D5",
   "snapshot": {
-    "ObjectChatWidget_5CA376A6_D1B5_42E4_8BC0_E77898D1B88E": {
-      "rev": 2883,
+    "ObjectChatWidget_61D53692_B75C_4F9D_99DF_1823FA4360D5": {
+      "rev": 19226,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -29,7 +29,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(1207.0,180.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(129.0,686.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -45,27 +45,27 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Text_75B29177_D210_441C_8D42_9F8B28C881AA",
-              "rev": 8665
+              "id": "Text_8EC40935_2CD9_4C74_939F_F285943BAD20",
+              "rev": 15160
             },
             {
               "__ref__": true,
-              "id": "Text_297F4F1C_0A69_4F80_BE3F_ECF8F1154887",
-              "rev": 2682
+              "id": "Text_C92A95B9_D867_4E38_A418_CF99BFAFA287",
+              "rev": 14959
             },
             {
               "__ref__": true,
-              "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-              "rev": 2684
+              "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+              "rev": 14957
             },
             {
               "__ref__": true,
-              "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+              "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+              "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
               "rev": 0
             }
           ]
@@ -82,8 +82,8 @@
         }
       }
     },
-    "Text_75B29177_D210_441C_8D42_9F8B28C881AA": {
-      "rev": 8665,
+    "Text_8EC40935_2CD9_4C74_939F_F285943BAD20": {
+      "rev": 15160,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -188,7 +188,7 @@
           "key": "selection",
           "value": {
             "__ref__": true,
-            "id": "6BB75EB1-6C59-4614-9189-9EE1106D9F89",
+            "id": "6D2B0F20-A628-42EA-B4FF-BDA20EEA4BC1",
             "rev": 0
           }
         },
@@ -196,7 +196,7 @@
           "key": "defaultTextStyle",
           "value": {
             "__ref__": true,
-            "id": "F12ED778-662F-4DD7-9057-BBE13F1C98FC",
+            "id": "B656888B-B6EB-4F61-AD1D-BEF01AB4F6C1",
             "rev": 0
           }
         },
@@ -205,17 +205,32 @@
           "value": [
             {
               "__ref__": true,
-              "id": "FBC90B37-EEC4-4363-B7F6-2F281B90B107",
+              "id": "C9C14E1A-A4D2-4010-BB4A-2A39F0422B14",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "A52B6956-6F0B-48F6-9DFF-C9D8B9078781",
+              "id": "279FFBDE-F892-4AD5-B679-F6AF209A491A",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "saved-mark-48F988A3-E4E1-49F4-A705-506200B4B1B3",
+              "id": "3CF7A667-56BB-4628-8051-59F4758D33CA",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "DB51240D-DE03-483E-81D9-5D01F134B677",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "saved-mark-9CEEFF24-ACBC-4402-9C6F-EC6A1189FB3B",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "saved-mark-E2577F6A-5000-4202-BBEA-DE47B4D1EA05",
               "rev": 0
             }
           ]
@@ -225,7 +240,22 @@
           "value": [
             {
               "__ref__": true,
-              "id": "saved-mark-48F988A3-E4E1-49F4-A705-506200B4B1B3",
+              "id": "3CF7A667-56BB-4628-8051-59F4758D33CA",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "DB51240D-DE03-483E-81D9-5D01F134B677",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "saved-mark-9CEEFF24-ACBC-4402-9C6F-EC6A1189FB3B",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "saved-mark-E2577F6A-5000-4202-BBEA-DE47B4D1EA05",
               "rev": 0
             }
           ]
@@ -256,7 +286,7 @@
         }
       }
     },
-    "6BB75EB1-6C59-4614-9189-9EE1106D9F89": {
+    "6D2B0F20-A628-42EA-B4FF-BDA20EEA4BC1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -267,8 +297,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_75B29177_D210_441C_8D42_9F8B28C881AA",
-            "rev": 8665
+            "id": "Text_8EC40935_2CD9_4C74_939F_F285943BAD20",
+            "rev": 15160
           }
         },
         "selections": {
@@ -276,7 +306,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "8FC1A5C5-1ABA-42AE-8A90-370E1B6BE415",
+              "id": "A41A0702-8DE8-4CBC-B495-108A0502B71A",
               "rev": 0
             }
           ]
@@ -301,7 +331,7 @@
         }
       }
     },
-    "8FC1A5C5-1ABA-42AE-8A90-370E1B6BE415": {
+    "A41A0702-8DE8-4CBC-B495-108A0502B71A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -312,8 +342,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_75B29177_D210_441C_8D42_9F8B28C881AA",
-            "rev": 8665
+            "id": "Text_8EC40935_2CD9_4C74_939F_F285943BAD20",
+            "rev": 15160
           }
         },
         "_goalColumn": {
@@ -328,7 +358,7 @@
           "key": "startAnchor",
           "value": {
             "__ref__": true,
-            "id": "FBC90B37-EEC4-4363-B7F6-2F281B90B107",
+            "id": "C9C14E1A-A4D2-4010-BB4A-2A39F0422B14",
             "rev": 0
           }
         },
@@ -336,7 +366,7 @@
           "key": "endAnchor",
           "value": {
             "__ref__": true,
-            "id": "A52B6956-6F0B-48F6-9DFF-C9D8B9078781",
+            "id": "279FFBDE-F892-4AD5-B679-F6AF209A491A",
             "rev": 0
           }
         },
@@ -344,7 +374,7 @@
           "key": "_range",
           "value": {
             "__ref__": true,
-            "id": "7D43F479-0677-457D-A04E-B4AA7A7A9C22",
+            "id": "FE5953EC-41B4-4F2A-AD8D-BF1BC8202693",
             "rev": 0
           }
         },
@@ -368,7 +398,7 @@
         }
       }
     },
-    "FBC90B37-EEC4-4363-B7F6-2F281B90B107": {
+    "C9C14E1A-A4D2-4010-BB4A-2A39F0422B14": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -383,7 +413,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "0F775F00-1872-470B-A8DF-CEAA22975235",
+            "id": "FCDD652E-3AE0-4994-802D-393DED2150A7",
             "rev": 0
           }
         },
@@ -403,7 +433,7 @@
         }
       }
     },
-    "0F775F00-1872-470B-A8DF-CEAA22975235": {
+    "FCDD652E-3AE0-4994-802D-393DED2150A7": {
       "rev": 0,
       "props": {
         "row": {
@@ -416,7 +446,7 @@
         }
       }
     },
-    "A52B6956-6F0B-48F6-9DFF-C9D8B9078781": {
+    "279FFBDE-F892-4AD5-B679-F6AF209A491A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -431,7 +461,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "3EAF10C2-119D-4E14-9D99-7739E9023AEA",
+            "id": "EC23825E-08D7-4547-B417-0224267F55CC",
             "rev": 0
           }
         },
@@ -451,7 +481,7 @@
         }
       }
     },
-    "3EAF10C2-119D-4E14-9D99-7739E9023AEA": {
+    "EC23825E-08D7-4547-B417-0224267F55CC": {
       "rev": 0,
       "props": {
         "row": {
@@ -464,14 +494,14 @@
         }
       }
     },
-    "7D43F479-0677-457D-A04E-B4AA7A7A9C22": {
+    "FE5953EC-41B4-4F2A-AD8D-BF1BC8202693": {
       "rev": 0,
       "props": {
         "start": {
           "key": "start",
           "value": {
             "__ref__": true,
-            "id": "0F775F00-1872-470B-A8DF-CEAA22975235",
+            "id": "FCDD652E-3AE0-4994-802D-393DED2150A7",
             "rev": 0
           }
         },
@@ -479,7 +509,7 @@
           "key": "end",
           "value": {
             "__ref__": true,
-            "id": "3EAF10C2-119D-4E14-9D99-7739E9023AEA",
+            "id": "EC23825E-08D7-4547-B417-0224267F55CC",
             "rev": 0
           }
         }
@@ -495,7 +525,7 @@
         }
       }
     },
-    "F12ED778-662F-4DD7-9057-BBE13F1C98FC": {
+    "B656888B-B6EB-4F61-AD1D-BEF01AB4F6C1": {
       "rev": 0,
       "props": {
         "fontFamily": {
@@ -544,18 +574,22 @@
         }
       }
     },
-    "saved-mark-48F988A3-E4E1-49F4-A705-506200B4B1B3": {
+    "3CF7A667-56BB-4628-8051-59F4758D33CA": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "id": {
           "key": "id",
-          "value": "saved-mark-48F988A3-E4E1-49F4-A705-506200B4B1B3"
+          "value": null
         },
         "position": {
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "137EC594-4837-4C4F-9962-DE21B4964C6D",
+            "id": "EABBCDBE-6BF1-4DED-B0FC-4E07D3AC03A8",
             "rev": 0
           }
         },
@@ -575,7 +609,7 @@
         }
       }
     },
-    "137EC594-4837-4C4F-9962-DE21B4964C6D": {
+    "EABBCDBE-6BF1-4DED-B0FC-4E07D3AC03A8": {
       "rev": 0,
       "props": {
         "row": {
@@ -588,8 +622,105 @@
         }
       }
     },
-    "Text_297F4F1C_0A69_4F80_BE3F_ECF8F1154887": {
-      "rev": 2682,
+    "DB51240D-DE03-483E-81D9-5D01F134B677": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "id": {
+          "key": "id",
+          "value": null
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "EABBCDBE-6BF1-4DED-B0FC-4E07D3AC03A8",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "saved-mark-9CEEFF24-ACBC-4402-9C6F-EC6A1189FB3B": {
+      "rev": 0,
+      "props": {
+        "id": {
+          "key": "id",
+          "value": "saved-mark-9CEEFF24-ACBC-4402-9C6F-EC6A1189FB3B"
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "EABBCDBE-6BF1-4DED-B0FC-4E07D3AC03A8",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "saved-mark-E2577F6A-5000-4202-BBEA-DE47B4D1EA05": {
+      "rev": 0,
+      "props": {
+        "id": {
+          "key": "id",
+          "value": "saved-mark-E2577F6A-5000-4202-BBEA-DE47B4D1EA05"
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "EABBCDBE-6BF1-4DED-B0FC-4E07D3AC03A8",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "Text_C92A95B9_D867_4E38_A418_CF99BFAFA287": {
+      "rev": 14959,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -686,7 +817,7 @@
           "key": "selection",
           "value": {
             "__ref__": true,
-            "id": "54C12EF3-F1A0-40DE-8CF4-0BAE69B994CE",
+            "id": "66253AFD-CCEB-470A-9946-9C687FB28E3E",
             "rev": 0
           }
         },
@@ -694,7 +825,7 @@
           "key": "defaultTextStyle",
           "value": {
             "__ref__": true,
-            "id": "377E5C1D-FAE8-49CB-A6EE-A1754BE4A7CC",
+            "id": "4D8DF3AE-B519-4C02-900E-D67438011A10",
             "rev": 0
           }
         },
@@ -703,12 +834,12 @@
           "value": [
             {
               "__ref__": true,
-              "id": "DDB7DDCF-121B-438C-8D96-0564CB6DEF7C",
+              "id": "40EBD14D-8F7F-4F8D-9544-0B1C3802AD33",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "0EF38488-EEFB-4613-B665-2FB4F9A6F24F",
+              "id": "5069F36A-649E-49FB-BBED-E1BE0C855133",
               "rev": 0
             }
           ]
@@ -743,7 +874,7 @@
         }
       }
     },
-    "54C12EF3-F1A0-40DE-8CF4-0BAE69B994CE": {
+    "66253AFD-CCEB-470A-9946-9C687FB28E3E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -754,8 +885,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_297F4F1C_0A69_4F80_BE3F_ECF8F1154887",
-            "rev": 2682
+            "id": "Text_C92A95B9_D867_4E38_A418_CF99BFAFA287",
+            "rev": 14959
           }
         },
         "selections": {
@@ -763,7 +894,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "E2AC0C94-DFFA-447E-8149-D5F664508B5F",
+              "id": "1797360E-D417-4EA7-890D-6C03C8270888",
               "rev": 0
             }
           ]
@@ -788,7 +919,7 @@
         }
       }
     },
-    "E2AC0C94-DFFA-447E-8149-D5F664508B5F": {
+    "1797360E-D417-4EA7-890D-6C03C8270888": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -799,8 +930,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_297F4F1C_0A69_4F80_BE3F_ECF8F1154887",
-            "rev": 2682
+            "id": "Text_C92A95B9_D867_4E38_A418_CF99BFAFA287",
+            "rev": 14959
           }
         },
         "_goalColumn": {
@@ -815,7 +946,7 @@
           "key": "startAnchor",
           "value": {
             "__ref__": true,
-            "id": "DDB7DDCF-121B-438C-8D96-0564CB6DEF7C",
+            "id": "40EBD14D-8F7F-4F8D-9544-0B1C3802AD33",
             "rev": 0
           }
         },
@@ -823,7 +954,7 @@
           "key": "endAnchor",
           "value": {
             "__ref__": true,
-            "id": "0EF38488-EEFB-4613-B665-2FB4F9A6F24F",
+            "id": "5069F36A-649E-49FB-BBED-E1BE0C855133",
             "rev": 0
           }
         },
@@ -831,7 +962,7 @@
           "key": "_range",
           "value": {
             "__ref__": true,
-            "id": "BD226AA4-798A-4D86-9CF3-A76C1B516CB2",
+            "id": "4837A0B7-9DE4-4555-888E-8FD88ADE2E24",
             "rev": 0
           }
         },
@@ -855,7 +986,7 @@
         }
       }
     },
-    "DDB7DDCF-121B-438C-8D96-0564CB6DEF7C": {
+    "40EBD14D-8F7F-4F8D-9544-0B1C3802AD33": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -870,7 +1001,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "528AFA60-B8B1-4EC3-B47E-E557A2BD50F5",
+            "id": "A029F6F9-9E99-4E26-84E5-2015CD29A304",
             "rev": 0
           }
         },
@@ -890,13 +1021,9 @@
         }
       }
     },
-    "528AFA60-B8B1-4EC3-B47E-E557A2BD50F5": {
+    "A029F6F9-9E99-4E26-84E5-2015CD29A304": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "row": {
           "key": "row",
           "value": 0
@@ -907,7 +1034,7 @@
         }
       }
     },
-    "0EF38488-EEFB-4613-B665-2FB4F9A6F24F": {
+    "5069F36A-649E-49FB-BBED-E1BE0C855133": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -922,7 +1049,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "FA006BCC-E69D-46F3-8088-559EC245A448",
+            "id": "FE5544E9-3932-49C8-BE47-F58624B0868B",
             "rev": 0
           }
         },
@@ -942,13 +1069,9 @@
         }
       }
     },
-    "FA006BCC-E69D-46F3-8088-559EC245A448": {
+    "FE5544E9-3932-49C8-BE47-F58624B0868B": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "row": {
           "key": "row",
           "value": 0
@@ -959,18 +1082,14 @@
         }
       }
     },
-    "BD226AA4-798A-4D86-9CF3-A76C1B516CB2": {
+    "4837A0B7-9DE4-4555-888E-8FD88ADE2E24": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "start": {
           "key": "start",
           "value": {
             "__ref__": true,
-            "id": "528AFA60-B8B1-4EC3-B47E-E557A2BD50F5",
+            "id": "A029F6F9-9E99-4E26-84E5-2015CD29A304",
             "rev": 0
           }
         },
@@ -978,7 +1097,7 @@
           "key": "end",
           "value": {
             "__ref__": true,
-            "id": "FA006BCC-E69D-46F3-8088-559EC245A448",
+            "id": "FE5544E9-3932-49C8-BE47-F58624B0868B",
             "rev": 0
           }
         }
@@ -994,7 +1113,7 @@
         }
       }
     },
-    "377E5C1D-FAE8-49CB-A6EE-A1754BE4A7CC": {
+    "4D8DF3AE-B519-4C02-900E-D67438011A10": {
       "rev": 0,
       "props": {
         "fontFamily": {
@@ -1043,8 +1162,8 @@
         }
       }
     },
-    "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8": {
-      "rev": 2684,
+    "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D": {
+      "rev": 14957,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1055,37 +1174,37 @@
           "value": [
             {
               "__ref__": true,
-              "id": "F2D16784-6248-489B-825E-6F93C9577C0B",
+              "id": "05B489A7-D5F8-4551-A8E0-1155A9793A80",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "5EEC2F03-9058-4044-8518-072E143EFF2D",
+              "id": "462FC261-31BF-4FCB-BD44-8597900D2327",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "19449BA4-779E-4EC6-8BE6-C954C9C89D51",
+              "id": "6FCFFFCF-70B0-48E5-A8E4-67BC2580B2C5",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "7E3692B6-72E5-4DB7-A8F7-BAA37402A44B",
+              "id": "5AF550DA-CB96-426A-A9FD-0720ACD7F52F",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "8808569C-7581-438B-A400-73E0126B3302",
+              "id": "0803A439-5382-44BA-9A74-9EA5601A4A54",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "8F644F63-6C11-4BCF-AE7E-230388F58AD6",
+              "id": "A14EF8C9-9F66-4914-A4E7-605E01ABAFA3",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "BC041B83-63A9-42FE-AD36-D651D7FE9B59",
+              "id": "8E79F9C1-B9CC-4BDD-BC29-9A3A1FD4AF6E",
               "rev": 0
             }
           ]
@@ -1128,8 +1247,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_942D4E8A_B221_4295_A04E_38F1173C2678",
-              "rev": 2686
+              "id": "Label_5E16B72F_CB7D_482D_8FF2_684B31A564B5",
+              "rev": 14956
             }
           ]
         },
@@ -1189,7 +1308,7 @@
           "key": "defaultActiveStyle",
           "value": {
             "__ref__": true,
-            "id": "0AF7789D-36CE-4111-96CB-C1B8DFB53C05",
+            "id": "9E8B151E-8A59-4CBF-8AAA-8B1CC501E10D",
             "rev": 0
           }
         },
@@ -1197,7 +1316,7 @@
           "key": "activeStyle",
           "value": {
             "__ref__": true,
-            "id": "09BAF5FD-9E4E-41D6-B0B6-9C55313F5365",
+            "id": "1701F350-3C06-4896-B1A6-0B8C5CCE004C",
             "rev": 0
           }
         },
@@ -1205,7 +1324,7 @@
           "key": "defaultInactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "46FDA54B-4F2D-44E4-B8EB-AB7C33F0678C",
+            "id": "32C20853-8E35-482D-BD78-81004FB99852",
             "rev": 0
           }
         },
@@ -1213,7 +1332,7 @@
           "key": "inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "1357F4DD-4749-458D-A6CD-0F7F66C6161C",
+            "id": "41EA9A44-2B55-4955-8418-23DA602192E6",
             "rev": 0
           }
         },
@@ -1221,7 +1340,7 @@
           "key": "defaultTriggerStyle",
           "value": {
             "__ref__": true,
-            "id": "74131CA5-4BA8-47FC-B365-D885BD57877A",
+            "id": "98DDF107-275D-4AC5-9770-0CCDEF86DE21",
             "rev": 0
           }
         },
@@ -1229,7 +1348,7 @@
           "key": "triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "521941DE-032E-4371-B285-F44C20A57812",
+            "id": "29F50130-9CD3-4B36-AEE2-61F1A5D1807E",
             "rev": 0
           }
         }
@@ -1245,7 +1364,7 @@
         }
       }
     },
-    "F2D16784-6248-489B-825E-6F93C9577C0B": {
+    "05B489A7-D5F8-4551-A8E0-1155A9793A80": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1264,8 +1383,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "sourceAttrName": {
@@ -1276,8 +1395,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "targetMethodName": {
@@ -1288,7 +1407,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "B8ABF15C-7A6A-49EA-A64C-024251589442",
+            "id": "1169BAE9-B88D-4415-B4EA-5D30388D9EA4",
             "rev": 0
           }
         },
@@ -1312,7 +1431,7 @@
         }
       }
     },
-    "B8ABF15C-7A6A-49EA-A64C-024251589442": {
+    "1169BAE9-B88D-4415-B4EA-5D30388D9EA4": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1323,21 +1442,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         }
       }
     },
-    "5EEC2F03-9058-4044-8518-072E143EFF2D": {
+    "462FC261-31BF-4FCB-BD44-8597900D2327": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1356,8 +1475,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "sourceAttrName": {
@@ -1368,8 +1487,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "targetMethodName": {
@@ -1380,7 +1499,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "685B01D5-CDC6-4742-B406-508AA9779CA2",
+            "id": "BFF207E0-062A-47D6-8DE8-57AE5E985F4B",
             "rev": 0
           }
         },
@@ -1404,7 +1523,7 @@
         }
       }
     },
-    "685B01D5-CDC6-4742-B406-508AA9779CA2": {
+    "BFF207E0-062A-47D6-8DE8-57AE5E985F4B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1415,21 +1534,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         }
       }
     },
-    "19449BA4-779E-4EC6-8BE6-C954C9C89D51": {
+    "6FCFFFCF-70B0-48E5-A8E4-67BC2580B2C5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1448,8 +1567,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "sourceAttrName": {
@@ -1460,8 +1579,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "targetMethodName": {
@@ -1472,7 +1591,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "4299CA86-E710-497C-82B1-D6C5D867C570",
+            "id": "CF3BB6A0-A2F3-40F6-89F9-1175EE100ACD",
             "rev": 0
           }
         },
@@ -1496,7 +1615,7 @@
         }
       }
     },
-    "4299CA86-E710-497C-82B1-D6C5D867C570": {
+    "CF3BB6A0-A2F3-40F6-89F9-1175EE100ACD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1507,21 +1626,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         }
       }
     },
-    "7E3692B6-72E5-4DB7-A8F7-BAA37402A44B": {
+    "5AF550DA-CB96-426A-A9FD-0720ACD7F52F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1540,8 +1659,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "sourceAttrName": {
@@ -1552,8 +1671,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "targetMethodName": {
@@ -1564,7 +1683,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "B287D2EA-C311-422E-AC28-3A3011E10D83",
+            "id": "0897407E-F5FC-425B-AC7A-AB0691009337",
             "rev": 0
           }
         },
@@ -1588,7 +1707,7 @@
         }
       }
     },
-    "B287D2EA-C311-422E-AC28-3A3011E10D83": {
+    "0897407E-F5FC-425B-AC7A-AB0691009337": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1599,21 +1718,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         }
       }
     },
-    "8808569C-7581-438B-A400-73E0126B3302": {
+    "0803A439-5382-44BA-9A74-9EA5601A4A54": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1632,8 +1751,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "sourceAttrName": {
@@ -1644,8 +1763,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "targetMethodName": {
@@ -1656,7 +1775,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "AF06E2B3-2380-4573-B11B-6313ACEB1D5A",
+            "id": "AA2A797D-7D56-49E7-9534-A43FCB621951",
             "rev": 0
           }
         },
@@ -1680,7 +1799,7 @@
         }
       }
     },
-    "AF06E2B3-2380-4573-B11B-6313ACEB1D5A": {
+    "AA2A797D-7D56-49E7-9534-A43FCB621951": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1691,21 +1810,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         }
       }
     },
-    "8F644F63-6C11-4BCF-AE7E-230388F58AD6": {
+    "A14EF8C9-9F66-4914-A4E7-605E01ABAFA3": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1724,8 +1843,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "sourceAttrName": {
@@ -1736,8 +1855,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "targetMethodName": {
@@ -1748,7 +1867,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "4C783B6E-F7FC-45F9-B1D8-1B78DE794A16",
+            "id": "0174C53C-1A77-41C4-897B-AD54BE7C56D3",
             "rev": 0
           }
         },
@@ -1772,7 +1891,7 @@
         }
       }
     },
-    "4C783B6E-F7FC-45F9-B1D8-1B78DE794A16": {
+    "0174C53C-1A77-41C4-897B-AD54BE7C56D3": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1783,21 +1902,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         }
       }
     },
-    "BC041B83-63A9-42FE-AD36-D651D7FE9B59": {
+    "8E79F9C1-B9CC-4BDD-BC29-9A3A1FD4AF6E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1816,8 +1935,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "sourceAttrName": {
@@ -1828,8 +1947,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "targetMethodName": {
@@ -1840,7 +1959,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "FEBB5B38-C4CD-408B-A760-216EE70D10E2",
+            "id": "F1F33E21-77D8-4ECE-A8D2-1291F5F7078E",
             "rev": 0
           }
         },
@@ -1864,7 +1983,7 @@
         }
       }
     },
-    "FEBB5B38-C4CD-408B-A760-216EE70D10E2": {
+    "F1F33E21-77D8-4ECE-A8D2-1291F5F7078E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1875,22 +1994,22 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         }
       }
     },
-    "Label_942D4E8A_B221_4295_A04E_38F1173C2678": {
-      "rev": 2686,
+    "Label_5E16B72F_CB7D_482D_8FF2_684B31A564B5": {
+      "rev": 14956,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1901,7 +2020,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "D283E1D3-CD7C-4FE7-A035-F577A536841D",
+              "id": "8B6BFE4F-2A93-4DF5-AF0E-36B07A8C0097",
               "rev": 0
             }
           ]
@@ -1949,7 +2068,7 @@
               "Send Message",
               {
                 "__ref__": true,
-                "id": "28563119-9A1C-4DBF-8861-AEE9C8468733",
+                "id": "360F35F9-21D3-4C80-9D94-AC0C31755E75",
                 "rev": 0
               }
             ]
@@ -1975,7 +2094,7 @@
         }
       }
     },
-    "D283E1D3-CD7C-4FE7-A035-F577A536841D": {
+    "8B6BFE4F-2A93-4DF5-AF0E-36B07A8C0097": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1994,8 +2113,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_942D4E8A_B221_4295_A04E_38F1173C2678",
-            "rev": 2686
+            "id": "Label_5E16B72F_CB7D_482D_8FF2_684B31A564B5",
+            "rev": 14956
           }
         },
         "sourceAttrName": {
@@ -2006,8 +2125,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         },
         "targetMethodName": {
@@ -2018,7 +2137,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "70AF6D8E-AD7B-4070-B902-7DD3AE85EFBA",
+            "id": "2974223F-CA40-418E-8C40-8DE2B771E50B",
             "rev": 0
           }
         },
@@ -2042,7 +2161,7 @@
         }
       }
     },
-    "70AF6D8E-AD7B-4070-B902-7DD3AE85EFBA": {
+    "2974223F-CA40-418E-8C40-8DE2B771E50B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2053,21 +2172,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_942D4E8A_B221_4295_A04E_38F1173C2678",
-            "rev": 2686
+            "id": "Label_5E16B72F_CB7D_482D_8FF2_684B31A564B5",
+            "rev": 14956
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_4167E13A_E1BD_456F_A871_0A8446696CE8",
-            "rev": 2684
+            "id": "A_button_1_6E8B9DCF_5A36_451C_94F7_F97FF8574C0D",
+            "rev": 14957
           }
         }
       }
     },
-    "28563119-9A1C-4DBF-8861-AEE9C8468733": {
+    "360F35F9-21D3-4C80-9D94-AC0C31755E75": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2076,32 +2195,7 @@
         }
       }
     },
-    "0AF7789D-36CE-4111-96CB-C1B8DFB53C05": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "borderColor": {
-          "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
-        },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "pointer"
-        }
-      }
-    },
-    "09BAF5FD-9E4E-41D6-B0B6-9C55313F5365": {
+    "9E8B151E-8A59-4CBF-8AAA-8B1CC501E10D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2126,7 +2220,32 @@
         }
       }
     },
-    "46FDA54B-4F2D-44E4-B8EB-AB7C33F0678C": {
+    "1701F350-3C06-4896-B1A6-0B8C5CCE004C": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        }
+      }
+    },
+    "32C20853-8E35-482D-BD78-81004FB99852": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2151,7 +2270,7 @@
         }
       }
     },
-    "1357F4DD-4749-458D-A6CD-0F7F66C6161C": {
+    "41EA9A44-2B55-4955-8418-23DA602192E6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2176,7 +2295,7 @@
         }
       }
     },
-    "74131CA5-4BA8-47FC-B365-D885BD57877A": {
+    "98DDF107-275D-4AC5-9770-0CCDEF86DE21": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2189,7 +2308,7 @@
         }
       }
     },
-    "521941DE-032E-4371-B285-F44C20A57812": {
+    "29F50130-9CD3-4B36-AEE2-61F1A5D1807E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2202,7 +2321,7 @@
         }
       }
     },
-    "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6": {
+    "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E": {
       "rev": 0,
       "props": {
         "_tickingScripts": {
@@ -2214,37 +2333,37 @@
           "value": [
             {
               "__ref__": true,
-              "id": "CC562798-588F-42F9-927B-827CD1EDA667",
+              "id": "B8F77B01-B077-44A3-B7E4-4ECF2DB34DEB",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "AEBA9A30-F30D-44F4-B5F9-9076A5A92F80",
+              "id": "E8E69EFF-937B-4DB9-8647-40D5E4B491B5",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "07E80DC6-7DB2-4424-AC91-06C7A44A632A",
+              "id": "7CD8493B-2452-4F0E-9097-D48C66BF72A6",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "C924BF18-0669-4015-962B-8BF1D13319F2",
+              "id": "7F734EB5-A947-4BF4-9E88-B22504E6EE59",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "7A726150-6A69-4D9A-B2C8-90B1449A8B2D",
+              "id": "F0E47AD4-A1B9-4A4E-8897-99B54A6F032B",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "BD5F217E-1160-49FE-95CA-09CD35C90761",
+              "id": "F1BA3DCE-D5E4-411D-A622-E99456E08445",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "B5C919B2-98BD-4D2C-9B5D-2FF51FB2234A",
+              "id": "40780931-F4F6-4857-AC08-585D743E3EB1",
               "rev": 0
             }
           ]
@@ -2283,8 +2402,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_C9B61B64_51EE_475F_9D17_7237B61A87C5",
-              "rev": 14083
+              "id": "Label_17B49A3A_A8D1_40DF_96D2_D18431E7A2D7",
+              "rev": 18610
             }
           ]
         },
@@ -2340,7 +2459,7 @@
           "key": "activeStyle",
           "value": {
             "__ref__": true,
-            "id": "110780D7-7D16-4685-B0CC-6EF05897E56A",
+            "id": "4A3A3881-A071-4478-B73A-FD951EE2B14B",
             "rev": 0
           }
         },
@@ -2348,7 +2467,7 @@
           "key": "inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "F94D8D10-2C14-45D0-A7FF-9D72450E7C98",
+            "id": "8450A888-68EB-4458-8E5E-5697CA5FEC1F",
             "rev": 0
           }
         },
@@ -2356,7 +2475,7 @@
           "key": "triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "B6FDF706-B436-4C9F-AED7-2933AC7DEF9D",
+            "id": "83F10323-36AF-4273-8B85-6409541239DF",
             "rev": 0
           }
         }
@@ -2372,7 +2491,7 @@
         }
       }
     },
-    "CC562798-588F-42F9-927B-827CD1EDA667": {
+    "B8F77B01-B077-44A3-B7E4-4ECF2DB34DEB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2391,7 +2510,7 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2403,7 +2522,7 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2415,7 +2534,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "9B0F2FAF-9338-4445-A01C-33F9270737D9",
+            "id": "508D9FF6-FDA0-48CA-B6B3-989CB9A86D1F",
             "rev": 0
           }
         },
@@ -2439,7 +2558,7 @@
         }
       }
     },
-    "9B0F2FAF-9338-4445-A01C-33F9270737D9": {
+    "508D9FF6-FDA0-48CA-B6B3-989CB9A86D1F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2450,7 +2569,7 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2458,13 +2577,13 @@
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         }
       }
     },
-    "AEBA9A30-F30D-44F4-B5F9-9076A5A92F80": {
+    "E8E69EFF-937B-4DB9-8647-40D5E4B491B5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2483,7 +2602,7 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2495,7 +2614,7 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2507,7 +2626,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "92BF036E-4BC1-451E-B29C-A753336CFEA9",
+            "id": "014A6C21-90C7-49C8-B18D-A8DA6C333AB2",
             "rev": 0
           }
         },
@@ -2531,7 +2650,7 @@
         }
       }
     },
-    "92BF036E-4BC1-451E-B29C-A753336CFEA9": {
+    "014A6C21-90C7-49C8-B18D-A8DA6C333AB2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2542,7 +2661,7 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2550,13 +2669,13 @@
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         }
       }
     },
-    "07E80DC6-7DB2-4424-AC91-06C7A44A632A": {
+    "7CD8493B-2452-4F0E-9097-D48C66BF72A6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2575,7 +2694,7 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2587,7 +2706,7 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2599,7 +2718,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "28CF0DEE-FED0-4104-8AE6-54C60AF2FE00",
+            "id": "3DABA687-45D2-47BB-9CB7-85822FB74BF3",
             "rev": 0
           }
         },
@@ -2623,7 +2742,7 @@
         }
       }
     },
-    "28CF0DEE-FED0-4104-8AE6-54C60AF2FE00": {
+    "3DABA687-45D2-47BB-9CB7-85822FB74BF3": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2634,7 +2753,7 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2642,13 +2761,13 @@
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         }
       }
     },
-    "C924BF18-0669-4015-962B-8BF1D13319F2": {
+    "7F734EB5-A947-4BF4-9E88-B22504E6EE59": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2667,7 +2786,7 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2679,7 +2798,7 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2691,7 +2810,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "C128861C-1812-4E37-900A-0C9FDD558007",
+            "id": "F648FE92-85EE-4428-8142-F93CEAD3C6B5",
             "rev": 0
           }
         },
@@ -2715,7 +2834,7 @@
         }
       }
     },
-    "C128861C-1812-4E37-900A-0C9FDD558007": {
+    "F648FE92-85EE-4428-8142-F93CEAD3C6B5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2726,7 +2845,7 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2734,13 +2853,13 @@
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         }
       }
     },
-    "7A726150-6A69-4D9A-B2C8-90B1449A8B2D": {
+    "F0E47AD4-A1B9-4A4E-8897-99B54A6F032B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2759,7 +2878,7 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2771,7 +2890,7 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2783,7 +2902,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "3A15326D-8277-4D96-8A84-941C5605E46F",
+            "id": "26EF54B6-6CA6-45F5-964D-B4A6C508C222",
             "rev": 0
           }
         },
@@ -2807,7 +2926,7 @@
         }
       }
     },
-    "3A15326D-8277-4D96-8A84-941C5605E46F": {
+    "26EF54B6-6CA6-45F5-964D-B4A6C508C222": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2818,7 +2937,7 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2826,13 +2945,13 @@
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         }
       }
     },
-    "BD5F217E-1160-49FE-95CA-09CD35C90761": {
+    "F1BA3DCE-D5E4-411D-A622-E99456E08445": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2851,7 +2970,7 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2863,7 +2982,7 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2875,7 +2994,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "EC72B746-D7CD-431A-98CD-3B94A8C4D8E3",
+            "id": "9E7D9C06-860A-44F8-BABF-D2AF303EEBFD",
             "rev": 0
           }
         },
@@ -2899,7 +3018,7 @@
         }
       }
     },
-    "EC72B746-D7CD-431A-98CD-3B94A8C4D8E3": {
+    "9E7D9C06-860A-44F8-BABF-D2AF303EEBFD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2910,7 +3029,7 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2918,13 +3037,13 @@
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         }
       }
     },
-    "B5C919B2-98BD-4D2C-9B5D-2FF51FB2234A": {
+    "40780931-F4F6-4857-AC08-585D743E3EB1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2943,7 +3062,7 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2955,7 +3074,7 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -2967,7 +3086,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "54A6E5C8-CEE5-47E1-AB09-FB649EF3D306",
+            "id": "C1E35F31-F7A8-4752-9674-354FB86C62B3",
             "rev": 0
           }
         },
@@ -2991,7 +3110,7 @@
         }
       }
     },
-    "54A6E5C8-CEE5-47E1-AB09-FB649EF3D306": {
+    "C1E35F31-F7A8-4752-9674-354FB86C62B3": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3002,7 +3121,7 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -3010,14 +3129,14 @@
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         }
       }
     },
-    "Label_C9B61B64_51EE_475F_9D17_7237B61A87C5": {
-      "rev": 14083,
+    "Label_17B49A3A_A8D1_40DF_96D2_D18431E7A2D7": {
+      "rev": 18610,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -3028,7 +3147,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "647C8FCA-9604-4B6D-9D6B-776370278917",
+              "id": "1707501D-A9EB-4ECA-986F-EAC0DA97C57F",
               "rev": 0
             }
           ]
@@ -3072,7 +3191,7 @@
               "Disconnect",
               {
                 "__ref__": true,
-                "id": "21C7D7D3-D384-49A7-A2F7-FBAD35DB64B5",
+                "id": "D3894B34-9714-4390-B395-265EE09AF519",
                 "rev": 0
               }
             ]
@@ -3098,7 +3217,7 @@
         }
       }
     },
-    "647C8FCA-9604-4B6D-9D6B-776370278917": {
+    "1707501D-A9EB-4ECA-986F-EAC0DA97C57F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3117,8 +3236,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_C9B61B64_51EE_475F_9D17_7237B61A87C5",
-            "rev": 14083
+            "id": "Label_17B49A3A_A8D1_40DF_96D2_D18431E7A2D7",
+            "rev": 18610
           }
         },
         "sourceAttrName": {
@@ -3129,7 +3248,7 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         },
@@ -3141,7 +3260,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "1C8E5836-0121-42E9-8B40-AE78E7167111",
+            "id": "9681A468-EB97-41D0-B60B-0C039C95F998",
             "rev": 0
           }
         },
@@ -3165,7 +3284,7 @@
         }
       }
     },
-    "1C8E5836-0121-42E9-8B40-AE78E7167111": {
+    "9681A468-EB97-41D0-B60B-0C039C95F998": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3176,21 +3295,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_C9B61B64_51EE_475F_9D17_7237B61A87C5",
-            "rev": 14083
+            "id": "Label_17B49A3A_A8D1_40DF_96D2_D18431E7A2D7",
+            "rev": 18610
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_38807D03_346D_43DB_A9E7_79D9E62ECFA6",
+            "id": "A_button_1_0CA73056_DAA5_4C6C_AB26_779DFD3A0A8E",
             "rev": 0
           }
         }
       }
     },
-    "21C7D7D3-D384-49A7-A2F7-FBAD35DB64B5": {
+    "D3894B34-9714-4390-B395-265EE09AF519": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3199,7 +3318,7 @@
         }
       }
     },
-    "110780D7-7D16-4685-B0CC-6EF05897E56A": {
+    "4A3A3881-A071-4478-B73A-FD951EE2B14B": {
       "rev": 0,
       "props": {
         "borderColor": {
@@ -3224,7 +3343,7 @@
         }
       }
     },
-    "F94D8D10-2C14-45D0-A7FF-9D72450E7C98": {
+    "8450A888-68EB-4458-8E5E-5697CA5FEC1F": {
       "rev": 0,
       "props": {
         "borderColor": {
@@ -3249,7 +3368,7 @@
         }
       }
     },
-    "B6FDF706-B436-4C9F-AED7-2933AC7DEF9D": {
+    "83F10323-36AF-4273-8B85-6409541239DF": {
       "rev": 0,
       "props": {
         "fill": {
@@ -3262,7 +3381,7 @@
         }
       }
     },
-    "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724": {
+    "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC": {
       "rev": 0,
       "props": {
         "_tickingScripts": {
@@ -3274,37 +3393,37 @@
           "value": [
             {
               "__ref__": true,
-              "id": "7A682DC7-6D53-41E2-8F8E-AE01C9177E07",
+              "id": "3C85F696-2C9E-4AE7-980A-0975D043E709",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "9EA7E677-F9B2-4ED3-AB43-181305C33598",
+              "id": "E49C46FA-D366-4CC2-B0A0-9447FBBEA257",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "52D91521-D0B4-4F39-A272-DFBCFCCCF22F",
+              "id": "B8F96755-3DB8-491E-B89A-C529CB5C022E",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "419ABA43-A860-48AF-9063-2285E9FD344C",
+              "id": "972D28D9-C6AD-480E-9E26-4DA7CF6F8457",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "5D5BADAF-0902-47FE-B6DE-06E118C4B7F9",
+              "id": "0AFFF9BF-C60F-449B-9D39-5B5A847D57CD",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "434A96CE-3731-41CE-8F3D-9D639F55B8BC",
+              "id": "F04FEBC8-F9E4-4BA5-A27A-4090119B29D9",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "25CB1136-FD79-468F-8046-18026EB9F3B8",
+              "id": "30D1CF68-302D-4B11-A944-62FE41D2DE73",
               "rev": 0
             }
           ]
@@ -3343,8 +3462,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_D91750D9_132E_4A99_8C60_D13FD81114AC",
-              "rev": 16934
+              "id": "Label_954D01C4_9F0A_4FF9_9055_FDB758106148",
+              "rev": 3721
             }
           ]
         },
@@ -3400,7 +3519,7 @@
           "key": "activeStyle",
           "value": {
             "__ref__": true,
-            "id": "18C7EDAC-E1B7-414C-8155-FBCCC8D70495",
+            "id": "8D5F88F5-B7DF-48AB-A0D1-305A3E47146E",
             "rev": 0
           }
         },
@@ -3408,7 +3527,7 @@
           "key": "inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "D37CBCD9-068E-45BC-B4B7-D50342A181EA",
+            "id": "840062C9-D686-4CA2-A64A-129ED2D53A57",
             "rev": 0
           }
         },
@@ -3416,7 +3535,7 @@
           "key": "triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "E2F71680-E121-4D1E-B053-8AB94DB280A4",
+            "id": "8FB993B3-B169-4185-8E9C-0925E25FCECD",
             "rev": 0
           }
         }
@@ -3432,7 +3551,7 @@
         }
       }
     },
-    "7A682DC7-6D53-41E2-8F8E-AE01C9177E07": {
+    "3C85F696-2C9E-4AE7-980A-0975D043E709": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3451,7 +3570,7 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3463,7 +3582,7 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3475,7 +3594,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "95BE280A-1F62-46CA-BBDC-C2BAA35BD714",
+            "id": "C22394BF-EF3D-4B15-87CF-BBFF19A5887B",
             "rev": 0
           }
         },
@@ -3499,7 +3618,7 @@
         }
       }
     },
-    "95BE280A-1F62-46CA-BBDC-C2BAA35BD714": {
+    "C22394BF-EF3D-4B15-87CF-BBFF19A5887B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3510,7 +3629,7 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3518,13 +3637,13 @@
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         }
       }
     },
-    "9EA7E677-F9B2-4ED3-AB43-181305C33598": {
+    "E49C46FA-D366-4CC2-B0A0-9447FBBEA257": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3543,7 +3662,7 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3555,7 +3674,7 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3567,7 +3686,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "D0C280EA-B566-44A4-A21F-E9EF3911C1C0",
+            "id": "59B50362-1F6A-42CF-9540-50184542DB7D",
             "rev": 0
           }
         },
@@ -3591,7 +3710,7 @@
         }
       }
     },
-    "D0C280EA-B566-44A4-A21F-E9EF3911C1C0": {
+    "59B50362-1F6A-42CF-9540-50184542DB7D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3602,7 +3721,7 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3610,13 +3729,13 @@
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         }
       }
     },
-    "52D91521-D0B4-4F39-A272-DFBCFCCCF22F": {
+    "B8F96755-3DB8-491E-B89A-C529CB5C022E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3635,7 +3754,7 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3647,7 +3766,7 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3659,7 +3778,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "E7A0FFE1-0679-427A-8350-C4D076DB2AB3",
+            "id": "7AA83C95-B9B6-4786-BAA9-D1D1B7DBFDE7",
             "rev": 0
           }
         },
@@ -3683,7 +3802,7 @@
         }
       }
     },
-    "E7A0FFE1-0679-427A-8350-C4D076DB2AB3": {
+    "7AA83C95-B9B6-4786-BAA9-D1D1B7DBFDE7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3694,7 +3813,7 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3702,13 +3821,13 @@
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         }
       }
     },
-    "419ABA43-A860-48AF-9063-2285E9FD344C": {
+    "972D28D9-C6AD-480E-9E26-4DA7CF6F8457": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3727,7 +3846,7 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3739,7 +3858,7 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3751,7 +3870,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "DE8E5168-12FE-4EA2-AD17-5808149ECB37",
+            "id": "2AEF5D92-007F-49FB-8CC6-951DD4A95A37",
             "rev": 0
           }
         },
@@ -3775,7 +3894,7 @@
         }
       }
     },
-    "DE8E5168-12FE-4EA2-AD17-5808149ECB37": {
+    "2AEF5D92-007F-49FB-8CC6-951DD4A95A37": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3786,7 +3905,7 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3794,13 +3913,13 @@
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         }
       }
     },
-    "5D5BADAF-0902-47FE-B6DE-06E118C4B7F9": {
+    "0AFFF9BF-C60F-449B-9D39-5B5A847D57CD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3819,7 +3938,7 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3831,7 +3950,7 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3843,7 +3962,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "610C0FED-4E66-49EE-BBD3-441FE8772B5C",
+            "id": "92AE0169-1AFB-4FB7-86AA-D456987047F5",
             "rev": 0
           }
         },
@@ -3867,7 +3986,7 @@
         }
       }
     },
-    "610C0FED-4E66-49EE-BBD3-441FE8772B5C": {
+    "92AE0169-1AFB-4FB7-86AA-D456987047F5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3878,7 +3997,7 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3886,13 +4005,13 @@
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         }
       }
     },
-    "434A96CE-3731-41CE-8F3D-9D639F55B8BC": {
+    "F04FEBC8-F9E4-4BA5-A27A-4090119B29D9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3911,7 +4030,7 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3923,7 +4042,7 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3935,7 +4054,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "ABA4FC75-E253-4866-8A14-DA78CDC8E516",
+            "id": "E52195D3-DE60-417A-81D0-5D4E2118EB66",
             "rev": 0
           }
         },
@@ -3959,7 +4078,7 @@
         }
       }
     },
-    "ABA4FC75-E253-4866-8A14-DA78CDC8E516": {
+    "E52195D3-DE60-417A-81D0-5D4E2118EB66": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3970,7 +4089,7 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -3978,13 +4097,13 @@
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         }
       }
     },
-    "25CB1136-FD79-468F-8046-18026EB9F3B8": {
+    "30D1CF68-302D-4B11-A944-62FE41D2DE73": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4003,7 +4122,7 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -4015,7 +4134,7 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -4027,7 +4146,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "ABF61B18-3E03-412F-973A-B9E428E48BC8",
+            "id": "70777C65-67E5-42AB-AA3F-0D6EF88A5BBD",
             "rev": 0
           }
         },
@@ -4051,7 +4170,7 @@
         }
       }
     },
-    "ABF61B18-3E03-412F-973A-B9E428E48BC8": {
+    "70777C65-67E5-42AB-AA3F-0D6EF88A5BBD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4062,7 +4181,7 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -4070,14 +4189,14 @@
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         }
       }
     },
-    "Label_D91750D9_132E_4A99_8C60_D13FD81114AC": {
-      "rev": 16934,
+    "Label_954D01C4_9F0A_4FF9_9055_FDB758106148": {
+      "rev": 3721,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -4088,7 +4207,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "5CAF2328-D2EE-449C-8658-3AE293453B7D",
+              "id": "A7E4CE36-EC02-48E6-B6A5-5C8C446A8882",
               "rev": 0
             }
           ]
@@ -4132,7 +4251,7 @@
               "Connect",
               {
                 "__ref__": true,
-                "id": "80086567-3F61-4C71-9A7F-2275E76029B3",
+                "id": "7671ED8B-05E1-4361-A6B8-6EBB776939EB",
                 "rev": 0
               }
             ]
@@ -4158,7 +4277,7 @@
         }
       }
     },
-    "5CAF2328-D2EE-449C-8658-3AE293453B7D": {
+    "A7E4CE36-EC02-48E6-B6A5-5C8C446A8882": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4177,8 +4296,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_D91750D9_132E_4A99_8C60_D13FD81114AC",
-            "rev": 16934
+            "id": "Label_954D01C4_9F0A_4FF9_9055_FDB758106148",
+            "rev": 3721
           }
         },
         "sourceAttrName": {
@@ -4189,7 +4308,7 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         },
@@ -4201,7 +4320,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "8BA305DA-5C63-4D2B-B333-000D5122F182",
+            "id": "798AD382-D186-4C17-BC2F-B150C0A8F101",
             "rev": 0
           }
         },
@@ -4225,7 +4344,7 @@
         }
       }
     },
-    "8BA305DA-5C63-4D2B-B333-000D5122F182": {
+    "798AD382-D186-4C17-BC2F-B150C0A8F101": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4236,21 +4355,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_D91750D9_132E_4A99_8C60_D13FD81114AC",
-            "rev": 16934
+            "id": "Label_954D01C4_9F0A_4FF9_9055_FDB758106148",
+            "rev": 3721
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "A_button_1_69BFD96B_4C97_4CA6_8A64_9E93D30EA724",
+            "id": "A_button_1_4A271BA8_52ED_400C_910F_3F0A30BC51AC",
             "rev": 0
           }
         }
       }
     },
-    "80086567-3F61-4C71-9A7F-2275E76029B3": {
+    "7671ED8B-05E1-4361-A6B8-6EBB776939EB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4259,7 +4378,7 @@
         }
       }
     },
-    "18C7EDAC-E1B7-414C-8155-FBCCC8D70495": {
+    "8D5F88F5-B7DF-48AB-A0D1-305A3E47146E": {
       "rev": 0,
       "props": {
         "borderColor": {
@@ -4284,7 +4403,7 @@
         }
       }
     },
-    "D37CBCD9-068E-45BC-B4B7-D50342A181EA": {
+    "840062C9-D686-4CA2-A64A-129ED2D53A57": {
       "rev": 0,
       "props": {
         "borderColor": {
@@ -4309,7 +4428,7 @@
         }
       }
     },
-    "E2F71680-E121-4D1E-B053-8AB94DB280A4": {
+    "8FB993B3-B169-4185-8E9C-0925E25FCECD": {
       "rev": 0,
       "props": {
         "fill": {
@@ -4327,7 +4446,7 @@
     "local://lively-object-modules/": {
       "2972CF7D-AA88-423F-9F64-8EADC7D17CA5": {
         "package.json": "{\n  \"name\": \"2972CF7D-AA88-423F-9F64-8EADC7D17CA5\",\n  \"version\": \"0.1.0\"\n}",
-        "index.js": "import { Morph} from \"lively.morphic\";\nimport L2LClient from \"lively.2lively/client.js\";\n\nexport default class ObjectChatWidget extends Morph {\n   async remoteSend(formattedMessage) {\n    if (!this.client){\n      this.connect();\n      await this.client.whenRegistered();\n    }\n    var trackerId = this.client.trackerId\n\n    var msg = {\n        action: \"l2lMessage\", target: 'l2lChat',\n        data: {payload: formattedMessage},\n        messageId: \"test-message-1\",\n        sender: 'xxx',\n        n:0\n      }\n    \n    this.client.sendTo(trackerId,\"broadcast\",{broadcastMessage: msg,roomName: 'l2lChat'})\n    \n  }\n  \n\n  onLoad() {\n\n    var textMorphs = [\n      $world.get('ChatPane'),\n      $world.get('MessageBox')\n    ]\n\n    textMorphs.forEach(function(ea){\n      if(ea.attributeConnections && ea.attributeConnections[0]){\n        ea.attributeConnections[0].disconnect()\n      }\n    })\n  \n    $world.__proto__.setUserId = function(name){\n      $world.userId = name\n    }\n    $world.__proto__.getUserId = function(){\n      if((!$world.userId) || (typeof $world.userId != 'string')){\n        return {type: 'error', data: 'Missing or invalid user Id'}\n      }\n      return {type: 'success', data: $world.userId}\n    }\n    this.loaded = true;\n  }\n  onLoadFromPartsBin(){\n    console.log('Load Complete')\n    this.onLoad();\n  }\n  aMessage(msgBody){\n    var user = $world.getUserId()\n    if (user.type == 'error'){\n      return {\n        type: 'error',\n        data: 'msg not sent, error encountered',\n        error: user\n      }\n    }\n    var timeStamp = new Date();\n    return (\"<\" + timeStamp.toTimeString().split('(')[0] + \"> | \" + user.data + \" | : \" + msgBody + '\\n')\n  }\n  sendMessage(msg) {\n  if (typeof msg != 'string' || msg == ''){return}\n    var formattedMessage = this.aMessage(msg)\n    if (formattedMessage.type == 'error'){\n      if (formattedMessage.error.data == \"Missing or invalid user Id\"){\n        var person = window.prompt(\"Please enter user Id\", \"LivelyUser\");\n        if (person != null) {\n          $world.setUserId(person)\n          this.sendMessage(msg)\n        }\n      }\n      \n      return;\n    }\n    this.postMessage(formattedMessage)\n    this.remoteSend(formattedMessage)\n  }\n  postMessage(formattedMessage) {\n    var chatPane = this.get('ChatPane')\n    chatPane.textString += formattedMessage\n    this.get('MessageBox').textString = ''\n  \n  }\n\n  async connect(){\n    if (!this.client){\n      this.client = L2LClient.forceNew();\n      await this.client.whenRegistered();\n      this.chatSetup();\n    }\n  \n  }\n  \n  async disconnect() {\n    if(this.client){\n      await this.client.remove();\n      delete this.client;\n    }\n  }\n  chatSetup() {\n    var trackerId = this.client.trackerId\n    var self = this;\n    this.client.sendTo(trackerId,'joinRoom',{roomName: 'l2lChat'})\n    this.client.addService('l2lMessage',(tracker,msg,ackFn,sender) => {\n      self.postMessage(msg.data.payload)\n    })\n  }\n}\n\n"
+        "index.js": "import { Morph} from \"lively.morphic\";\nimport L2LClient from \"lively.2lively/client.js\";\n\nexport default class ObjectChatWidget extends Morph {\n   async remoteSend(formattedMessage) {\n    if (!this.client){\n      this.connect();\n      await this.client.whenRegistered();\n    }\n    var trackerId = this.client.trackerId\n\n    var msg = {\n          action: \"l2lMessage\", target: 'l2lChat',\n          data: {payload: formattedMessage},\n          messageId: \"l2lChatMessage\"\n        }\n    var ackFn = (a)=>{console.log(a)}\n    [msg, ackFn] = this.client.prepareSend(msg, ackFn);\n    \n    this.client.sendTo(trackerId,\"broadcast\",{broadcastMessage: msg,roomName: 'l2lChat'},ackFn)\n    \n  }\n  \n\n  onLoad() {\n\n    var textMorphs = [\n      $world.get('ChatPane'),\n      $world.get('MessageBox')\n    ]\n\n    textMorphs.forEach(function(ea){\n      if(ea.attributeConnections && ea.attributeConnections[0]){\n        ea.attributeConnections[0].disconnect()\n      }\n    })\n  \n    $world.__proto__.setUserId = function(name){\n      $world.userId = name\n    }\n    $world.__proto__.getUserId = function(){\n      if((!$world.userId) || (typeof $world.userId != 'string')){\n        return {type: 'error', data: 'Missing or invalid user Id'}\n      }\n      return {type: 'success', data: $world.userId}\n    }\n    this.loaded = true;\n  }\n  onLoadFromPartsBin(){\n    console.log('Load Complete')\n    this.onLoad();\n  }\n  aMessage(msgBody){\n    var user = $world.getUserId()\n    if (user.type == 'error'){\n      return {\n        type: 'error',\n        data: 'msg not sent, error encountered',\n        error: user\n      }\n    }\n    var timeStamp = new Date();\n    return (\"<\" + timeStamp.toTimeString().split('(')[0] + \"> | \" + user.data + \" | : \" + msgBody + '\\n')\n  }\n  sendMessage(msg) {\n  if (typeof msg != 'string' || msg == ''){return}\n    var formattedMessage = this.aMessage(msg)\n    if (formattedMessage.type == 'error'){\n      if (formattedMessage.error.data == \"Missing or invalid user Id\"){\n        var person = window.prompt(\"Please enter user Id\", \"LivelyUser\");\n        if (person != null) {\n          $world.setUserId(person)\n          this.sendMessage(msg)\n        }\n      }\n      \n      return;\n    }\n    this.postMessage(formattedMessage)\n    this.remoteSend(formattedMessage)\n  }\n  postMessage(formattedMessage) {\n    var chatPane = this.get('ChatPane')\n    chatPane.textString += formattedMessage\n    this.get('MessageBox').textString = ''\n  \n  }\n\n  async connect(){\n    if (!this.client){\n      this.client = L2LClient.forceNew();\n      await this.client.whenRegistered();\n      this.chatSetup();\n    }\n  \n  }\n  \n  async disconnect() {\n    if(this.client){\n      await this.client.remove();\n      delete this.client;\n    }\n  }\n  chatSetup() {\n    var trackerId = this.client.trackerId\n    var self = this;\n    this.client.sendTo(trackerId,'joinRoom',{roomName: 'l2lChat'})\n    this.client.addService('l2lMessage',(tracker,msg,ackFn,sender) => {\n      self.postMessage(msg.data.payload)\n    })\n  }\n}\n\n"
       },
       "B2DA6F05-1884-46B8-9CC0-5535BCA65388": {
         "package.json": "{\n  \"name\": \"B2DA6F05-1884-46B8-9CC0-5535BCA65388\",\n  \"version\": \"0.1.0\"\n}",
