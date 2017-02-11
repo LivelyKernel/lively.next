@@ -45,8 +45,8 @@ export function morph(props = {}, opts = {restore: false}) {
         case 'list':     klass = List; break;
         case 'button':   klass = Button; break;
         case 'checkbox': klass = CheckBox; break;
-        case 'polygon': klass = Polygon; break;
-        case 'html': klass = HTMLMorph; break;
+        case 'polygon':  klass = Polygon; break;
+        case 'html':     klass = HTMLMorph; break;
       }
   }
 
