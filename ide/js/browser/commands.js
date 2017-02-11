@@ -292,7 +292,7 @@ export default function browserCommands(browser) {
      {
        name: "run setup code of tests (before and beforeEach)",
        exec: async (browser, args = {what: "setup"}) => {
-       
+
           var m = browser.selectedModule;
           if (!m) return browser.world().inform("No module selected", {requester: browser});
 
@@ -309,17 +309,19 @@ export default function browserCommands(browser) {
           // the stringified body of all before(() => ...) or after(() => ...) calls
           var what = (args && args.what) || "setup", // or: teardown
               prop = what === "setup" ? "setupCalls" : "teardownCalls",
-              beforeCode = testDescriptors[0][prop].map((beforeFn, i) => {
-                return `await ((${lively.ast.stringify(beforeFn)})());`;
-                var bodyStmts = beforeFn.body.body || [beforeFn.body];
-                return bodyStmts.map(lively.ast.stringify).join("\n")
-              }),
+              nCalls = 0,
+              beforeCode = testDescriptors.map(descr => {
+                return descr[prop].map((beforeFn, i) => {
+                  nCalls++;
+                  return `await ((${lively.ast.stringify(beforeFn)})());`
+                })
+              }).join("\n"),
               {coreInterface: livelySystem} = await browser.systemInterface();
 
           try {
             for (let snippet of beforeCode)
               await livelySystem.runEval(beforeCode, {...ed.evalEnvironment});
-            browser.setStatusMessage(`Executed ${beforeCode.length} test ${what} functions`);
+            browser.setStatusMessage(`Executed ${nCalls} test ${what} functions`);
           } catch (e) {
             browser.showError(new Error(`Error when running ${what} calls of test:\n${e.stack}`));
           }
