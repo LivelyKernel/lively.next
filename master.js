@@ -2,25 +2,43 @@ import {
   serialize as serializePatch
 } from "./vdom-serialized-patch-browserified.js";
 
-import { diff } from "./node_modules/virtual-dom/dist/virtual-dom.js";
+import { diff, VNode, VText } from "./node_modules/virtual-dom/dist/virtual-dom.js";
 
 import L2LClient from "lively.2lively/client.js";
-import { promise } from "lively.lang";
+import { promise, obj, tree } from "lively.lang";
+import { inspect } from "lively.morphic";
 
 const debug = true;
 
-function renderMorph(morph) {
-  var node = morph.render(morph.env.renderer)
-  lively.lang.tree.postwalk(node,
-    n => {
-      if (n.properties) {
-        if (n.properties.hasOwnProperty("animation")) delete n.properties.animation;
-        if (n.properties.hasOwnProperty("morph-after-render-hook")) delete n.properties["morph-after-render-hook"];
-      }
-    },
-    n => n.children);
-  return node;
+function makeNodeSerializable(node) {
+  var serializableNode = node,
+      className = node.constructor.name;
+
+
+  if (className === "CustomVNode") {
+    serializableNode = new VNode("DIV", {innerHTML: node.morph.html}, node.children, node.key, node.namespace)
+  } else if (className === "VirtualText") {
+
+  } else if (className === "VirtualNode") {
+
+    var p = node.properties;
+    if (p && (p.hasOwnProperty("animation") || p.hasOwnProperty("morph-after-render-hook"))) {
+      serializableNode = new VNode(node.tagName, obj.dissoc(p, ["morph-after-render-hook", "animation"]), node.children, node.key, node.namespace)
+    }
+
+    if (node.children && node.children.length) {
+      if (serializableNode === node) serializableNode = new VNode(node.tagName, node.properties, node.children, node.key, node.namespace);
+      serializableNode.children = serializableNode.children.map(ea => makeNodeSerializable(ea));
+    }
+  }
+
+  return serializableNode;
 }
+
+function renderMorph(morph) {
+  return morph.render(morph.env.renderer);
+}
+
 
 export default class Master {
 
@@ -62,12 +80,6 @@ export default class Master {
     }
   }
 
-  // constructor(l2lTargetId, targetMorph) {
-  //   this.l2lTargetId = l2lTargetId;
-  //   this.targetMorph = targetMorph;
-  //   this.prevVdomNode = null;
-  // }
-
   constructor(targetMorph, channel, clientId = "__default__") {
     this.channel = channel;
     this.targetMorph = targetMorph;
@@ -89,34 +101,22 @@ export default class Master {
   async disconnect() {
     var id = this.clientId;
     return this.channel.send("lively.morphic-mirror.disconnect", {id});
-
-    // var l2lClient = L2LClient.default();
-    // return l2lClient.sendToAndWait(this.l2lTargetId, "lively.morphic-mirror.disconnect", {})
   }
 
   sendInitialView() {
-    var node = this.getVdomNode(),
+    var node = this.prevVdomNode = makeNodeSerializable(renderMorph(this.targetMorph)),
         id = this.clientId;
     return this.channel.send("lively.morphic-mirror.render", {node, id});
-
-    // var l2lClient = L2LClient.default();
-    // return l2lClient.sendToAndWait(this.l2lTargetId, "lively.morphic-mirror.render", {node})
   }
 
   sendViewPatch() {
     var patch = this.getVdomPatch(),
         id = this.clientId;
     return this.channel.send("lively.morphic-mirror.render-patch", {patch, id});
-    // var l2lClient = L2LClient.default();
-    // return l2lClient.sendToAndWait(this.l2lTargetId, "lively.morphic-mirror.render-patch", {patch})
-  }
-
-  getVdomNode() {
-    return this.prevVdomNode = renderMorph(this.targetMorph);
   }
 
   getVdomPatch() {
-    var newNode = renderMorph(this.targetMorph),
+    var newNode = makeNodeSerializable(renderMorph(this.targetMorph)),
         patch = serializePatch(diff(this.prevVdomNode, newNode));
     this.prevVdomNode = newNode;
     return patch;

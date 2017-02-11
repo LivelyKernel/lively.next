@@ -72,6 +72,20 @@ describe("lively.mirror test", () => {
       expect(client.rootNode.innerHTML).match(/height: 40px/);
     });
 
+    it("mirrors html morph", async () => {
+      master.targetMorph.addMorph({type: "html", html: "<h1>test<\/h1>"});
+      await master.sendUpdate();
+      expect(client.rootNode.innerHTML).match(/<h1>test<\/h1>/);
+    });
+    
+    it("mirrors and updates html morph", async () => {
+      master.targetMorph.addMorph({type: "html", html: "<h1>test<\/h1>"});
+      await master.sendUpdate();
+      master.targetMorph.submorphs[0].html = "<h1>test2<\/h1>";
+      await master.sendUpdate();
+      expect(client.rootNode.innerHTML).match(/<h1>test2<\/h1>/);
+    });
+
   });
 
 });
