@@ -84,7 +84,7 @@ export class JavaScriptEditorPlugin extends EditorPlugin {
       .concat(astEditorCommands);
   }
 
-  getMenuItems(items) {
+  async getMenuItems(items) {
     var editor = this.textMorph;
     items = items.concat([
       {isDivider: true},
