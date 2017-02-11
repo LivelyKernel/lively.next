@@ -153,7 +153,7 @@ export class Color {
     if (!str || str === 'none') {
       return null;
     } else {
-      return parse(str);
+      return this.fromTuple(this.parse(str));
     }
   }
 
@@ -165,7 +165,7 @@ export class Color {
       return null;
     } else {
       color = parse(str);
-      return [color.red(),color.green(),color.blue(),color.alpha()];
+      return [color.red,color.green,color.blue,color.alpha];
     }
   }
 
