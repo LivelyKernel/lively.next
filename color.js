@@ -439,13 +439,9 @@ export class LinearGradient extends Gradient {
   
   toCSSString() {
     // default webkit way of defining gradients
-    var str = `-webkit-gradient(linear,
-        ${this.vector.x * 100.0}\% 
-        ${this.vector.y * 100.0}\%, 
-        ${this.vector.maxX() * 100.0}\% 
-        ${this.vector.maxY() * 100.0}\%`;
-    for (var i = 0; i < this.stops.length; i++)
-        str += `,color-stop(${(this.stops[i].offset * 100).toFixed() + "%"}, ${this.stops[i].color.toRGBAString()})`;
+    var deg = num.toDegrees(this.vectorAsAngle()) + 90,
+        str = `linear-gradient(` + (deg + "deg,");
+    str += this.stops.map(s => `${s.color.toRGBAString()} ${(s.offset * 100).toFixed() + "%"}`).join(',');
     str += ')';
     return str;
   }
@@ -469,7 +465,7 @@ export class RadialGradient extends Gradient {
   toCSSString() {
     const innerCircle = this.focus.scaleBy(100.0),
           ext = this.bounds.extent();
-    var str = `radial-gradient(${ext.x / 2}px ${ext.y / 2}px ellipse at ${innerCircle.x}\% ${innerCircle.y}\% `;
+    var str = `radial-gradient(${ext.x / 2}px ${ext.y / 2}px at ${innerCircle.x}\% ${innerCircle.y}\%`;
     for (var i = 0; i < this.stops.length; i++)
         str += `,${this.stops[i].color.toRGBAString()} ${(this.stops[i].offset * 100).toFixed() + "%"}`;
     str += ')';
