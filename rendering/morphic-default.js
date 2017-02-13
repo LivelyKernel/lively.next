@@ -230,7 +230,11 @@ export class PropertyAnimation {
      return new Promise((resolve, reject) => {
          this.resolvePromise = () => {
               this.onFinish(this);
-              resolve(this.morph);             
+              if (this.subAnimations) {
+                 this.subAnimations.then(resolve);
+              } else {
+                 resolve(this.morph);
+              }             
          }
      })
   }
@@ -241,13 +245,13 @@ export class PropertyAnimation {
   }
 
   convertGradients(config) {
-    if (config.fill) {
+    if (config.fill && config.fill.isGradient && this.morph.fill.isGradient) {
       // linear -> radial
         var fillBefore = this.morph.fill, 
             fillAfter = config.fill,
             d = config.duration || 1000;
         if (fillBefore.type == "linearGradient" && fillAfter.type == "radialGradient") {
-            (async () => {
+            this.subAnimation = (async () => {
               await this.morph.animate({
                   fill: new LinearGradient({...fillBefore, vector: rect(0,0,0,1)}),
                   duration: d  / 2, easing: Power4.easeIn});
@@ -255,17 +259,18 @@ export class PropertyAnimation {
                      stops: fillBefore.stops, 
                      focus: pt(.5,0),
                      bounds: rect(0,0, this.morph.width * 100, this.morph.height * 2)})
-              this.morph.animate({
+              await this.morph.animate({
                     fill: fillAfter, 
                     duration: d / 2,
                     easing: Power4.easeOut});
+              return this.morph;
             })()
             return obj.dissoc(config, ['fill']);
         }
         // radial -> linear
         if (fillBefore.type == "radialGradient" && fillAfter.type == "linearGradient") {
            // fix easing
-            (async () => {
+            this.subAnimations = (async () => {
               await this.morph.animate({fill: new RadialGradient({
                      stops: fillBefore.stops, 
                      focus: pt(.5,0),
@@ -273,10 +278,11 @@ export class PropertyAnimation {
                      }),
                      duration: d / 2, easing: Power4.easeIn})
               this.morph.fill = new LinearGradient({...fillBefore, vector: rect(0,0,0,1)});
-              this.morph.animate({
+              await this.morph.animate({
                     fill: fillAfter, 
                     duration: d / 2, 
                     easing: Power4.easeOut});
+              return this.morph;
             })();
             return obj.dissoc(config, ['fill']);
         }
@@ -359,7 +365,6 @@ export class PropertyAnimation {
                   stops: afterStops}).toString()
         before.backgroundImage = beforeGradient;
         after.backgroundImage = afterGradient;
-        console.log(this.morph.id, before, after);
       }
       // solid -> gradient
       if (fillBefore.isColor && fillAfter.isGradient) {
