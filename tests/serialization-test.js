@@ -1,6 +1,6 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
-import { MorphicEnv } from "../index.js";
+import { MorphicEnv, Morph } from "../index.js";
 import { morph } from "../index.js";
 import { expect } from "mocha-es6";
 import { pt, Color } from "lively.graphics";
@@ -26,6 +26,7 @@ async function setup() {
 
 function teardown() { MorphicEnv.popDefault().uninstall(); }
 
+class OnLoadTestMorph extends Morph { onLoad() { this.onLoadCalled = true; }}
 
 describe("morph serialization", () => {
   
@@ -41,6 +42,12 @@ describe("morph serialization", () => {
     expect(copy.position).equals(m.position);
     expect(copy.fill).equals(m.fill);
     expect(copy.extent).equals(m.extent);
+  });
+  
+  it("uses onLoad function", () => {
+    var m = new OnLoadTestMorph();
+    expect(m.onLoadCalled).equals(undefined, "onLoad called on construction");
+    expect(m.copy().onLoadCalled).equals(true, "onLoad not called on deserialization");
   });
 
 });

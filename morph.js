@@ -301,6 +301,10 @@ export class Morph {
 
   __after_deserialize__() {
     this.resumeStepping();
+    if (typeof this.onLoad === "function") {
+      try { this.onLoad(); }
+      catch (e) { console.error(`[lively.morphic] ${this}.onLoad() error: ${e.stack}`)}
+    }
   }
 
   get __only_serialize__() {
