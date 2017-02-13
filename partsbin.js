@@ -4,9 +4,8 @@ import { resource } from "lively.resources";
 import { serializeMorph } from "lively.morphic/serialization.js";
 
 import { createFiles } from "lively.resources";
-import { importPackage } from "lively.modules";
+import { reloadPackage } from "lively.modules";
 import { deserializeMorph } from 'lively.morphic/serialization.js';
-import { inspect } from "lively.morphic";
 
 var partsbinFolder = System.decanonicalize("lively.morphic/parts/")
 
@@ -42,23 +41,49 @@ export async function loadObjectFromSnapshot(snapshot) {
   for (var baseURL in snapshot.packages) {
     var r = await createFiles(baseURL, snapshot.packages[baseURL]);
     for (var pName in snapshot.packages[baseURL]) {
-      await importPackage(r.join(pName).url)
+      await reloadPackage(r.join(pName).url, {forgetEnv: false, forgetDeps: false});
     }
   }
   return deserializeMorph(snapshot, {reinitializeIds: true, ignoreClassNotFound: false});
 }
 
+export async function saveObjectToPartsbinFolder(obj, partName, options = {}) {
 
-async function saveObjectToPartsbinFolder(obj, partName) {
-  await resource(partsbinFolder).ensureExistance();
-  var partResource = resource(partsbinFolder).join(partName + ".json"),
+  options = {
+    preferWindow: true,
+    partsbinFolder,
+    ...options
+  }
+
+  if (options.preferWindow) {
+    var win = obj.getWindow();
+    obj = win && win.targetMorph === obj ? win : obj;
+  }
+
+  try {
+    if (typeof obj.beforePublish === "function")
+      obj.beforePublish(partName);
+  } catch (e) {
+    var msg = `Error in beforePublish of ${obj}\n${e.stack}`;
+    if (typeof obj.world === "function" && obj.world()) obj.world().logError(new Error(msg));
+    else console.error(msg);
+  }
+
+  await resource(options.partsbinFolder).ensureExistance();
+  var partResource = resource(options.partsbinFolder).join(partName + ".json"),
       snapshot = await createObjectSnapshot(obj);
   await partResource.write(JSON.stringify(snapshot, null, 2))
-  return {partResource}
+
+  return {partName, url: partResource.url}
 }
 
-export async function loadObjectFromPartsbinFolder(partName) {
-  var rawContent = await resource(partsbinFolder).join(partName + ".json").read(),
+export async function loadObjectFromPartsbinFolder(partName, options) {
+  options = {
+    partsbinFolder,
+    ...options
+  }
+
+  var rawContent = await resource(options.partsbinFolder).join(partName + ".json").read(),
       deserialized = loadObjectFromSnapshot(JSON.parse(rawContent));
   return deserialized;
 }
@@ -69,12 +94,7 @@ export async function interactivelySaveObjectToPartsBinFolder(obj) {
               historyId: "lively.partsbin-partname-publish-to-folder-input-hist",
             });
   if (!partName) throw "canceled";
-  if (typeof obj.beforePublish === "function")
-    obj.beforePublish(partName);
-  var win = obj.getWindow(),
-      objOrWindow = win && win.targetMorph === obj ? win : obj,
-      {partResource} = await saveObjectToPartsbinFolder(objOrWindow, partName);
-  return {partName, url: partResource.url}
+  return saveObjectToPartsbinFolder(obj, partName);
 }
 
 export async function getAllPartResources() {
