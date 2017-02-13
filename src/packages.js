@@ -576,7 +576,8 @@ class Package {
     return registerP;
   }
 
-  remove() {
+  remove(opts) {
+    opts = {forgetEnv: true, forgetDeps: false, ...opts};
     var {System, url} = this;
 
     url = url.replace(/\/$/, "");
@@ -586,7 +587,7 @@ class Package {
 
     if (p)
       p.modules.forEach(mod =>
-        module(System, mod.name).unload({forgetEnv: true, forgetDeps: false}));
+        module(System, mod.name).unload(opts));
 
     removeFromPackageStore(System, this);
     System.delete(String(packageConfigURL));
@@ -602,7 +603,7 @@ class Package {
     emit("lively.modules/packageremoved", {"package": this.url}, Date.now(), System);
   }
 
-  reload() { this.remove(); return this.import(); }
+  reload(opts) { this.remove(opts); return this.import(); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // searching
@@ -633,7 +634,7 @@ class Package {
 function importPackage(System, packageURL) { return getPackage(System, packageURL).import(); }
 function registerPackage(System, packageURL, optPkgConfig) { return getPackage(System, packageURL).register(optPkgConfig); }
 function removePackage(System, packageURL) { return getPackage(System, packageURL).remove(); }
-function reloadPackage(System, packageURL) { return getPackage(System, packageURL).reload(); }
+function reloadPackage(System, packageURL, opts) { return getPackage(System, packageURL).reload(opts); }
 
 function getPackages(System) {
   // Note does not return package instances but spec objects that can be JSON

@@ -3724,7 +3724,7 @@ var Package = function () {
         }, _callee, this);
       }));
 
-      function resources(_x2, _x3) {
+      function resources(_x2) {
         return _ref.apply(this, arguments);
       }
 
@@ -3856,27 +3856,28 @@ var Package = function () {
               case 2:
                 url = this.url;
                 System = this.System;
-                _context3.t0 = System;
-                _context3.next = 7;
+                _context3.t0 = module$2;
+                _context3.t1 = System;
+                _context3.next = 8;
                 return System.normalize(url);
 
-              case 7:
-                _context3.t1 = _context3.sent;
-                mainModule = module$2(_context3.t0, _context3.t1);
-                _context3.next = 11;
+              case 8:
+                _context3.t2 = _context3.sent;
+                mainModule = (0, _context3.t0)(_context3.t1, _context3.t2);
+                _context3.next = 12;
                 return System.import(mainModule.id);
 
-              case 11:
+              case 12:
                 exported = _context3.sent;
-                _context3.next = 14;
+                _context3.next = 15;
                 return lively_lang.promise.waitFor(1000, function () {
                   return mainModule.isLoaded();
                 });
 
-              case 14:
+              case 15:
                 return _context3.abrupt("return", exported);
 
-              case 15:
+              case 16:
               case "end":
                 return _context3.stop();
             }
@@ -4027,7 +4028,7 @@ var Package = function () {
         }, _callee4, this, [[15, 31, 35, 43], [36,, 38, 42]]);
       }));
 
-      function register(_x5, _x6) {
+      function register(_x4) {
         return _ref4.apply(this, arguments);
       }
 
@@ -4035,7 +4036,8 @@ var Package = function () {
     }()
   }, {
     key: "remove",
-    value: function remove() {
+    value: function remove(opts) {
+      opts = _extends({ forgetEnv: true, forgetDeps: false }, opts);
       var System = this.System,
           url = this.url;
 
@@ -4048,7 +4050,7 @@ var Package = function () {
       });
 
       if (p) p.modules.forEach(function (mod) {
-        return module$2(System, mod.name).unload({ forgetEnv: true, forgetDeps: false });
+        return module$2(System, mod.name).unload(opts);
       });
 
       removeFromPackageStore(System, this);
@@ -4066,8 +4068,8 @@ var Package = function () {
     }
   }, {
     key: "reload",
-    value: function reload() {
-      this.remove();return this.import();
+    value: function reload(opts) {
+      this.remove(opts);return this.import();
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -4130,7 +4132,7 @@ var Package = function () {
         }, _callee5, this);
       }));
 
-      function search(_x8, _x9) {
+      function search(_x6) {
         return _ref5.apply(this, arguments);
       }
 
@@ -4173,8 +4175,8 @@ function registerPackage$1(System, packageURL, optPkgConfig) {
 function removePackage$1(System, packageURL) {
   return getPackage$1(System, packageURL).remove();
 }
-function reloadPackage$1(System, packageURL) {
-  return getPackage$1(System, packageURL).reload();
+function reloadPackage$1(System, packageURL, opts) {
+  return getPackage$1(System, packageURL).reload(opts);
 }
 
 function getPackages$1(System) {
@@ -4728,14 +4730,15 @@ var ModuleInterface = function () {
                 return _context.abrupt("return", this._ast);
 
               case 2:
-                _context.next = 4;
+                _context.t0 = lively_ast.parse;
+                _context.next = 5;
                 return this.source();
 
-              case 4:
-                _context.t0 = _context.sent;
-                return _context.abrupt("return", this._ast = lively_ast.parse(_context.t0));
+              case 5:
+                _context.t1 = _context.sent;
+                return _context.abrupt("return", this._ast = (0, _context.t0)(_context.t1));
 
-              case 6:
+              case 7:
               case "end":
                 return _context.stop();
             }
@@ -6657,7 +6660,7 @@ var buildPackageMap = function () {
     }, _callee, this, [[3, 15], [18, 24], [30, 43, 47, 55], [48,, 50, 54]]);
   }));
 
-  return function buildPackageMap(_x, _x2, _x3, _x4) {
+  return function buildPackageMap(_x) {
     return _ref.apply(this, arguments);
   };
 }();
@@ -7006,8 +7009,8 @@ function registerPackage$$1(packageURL) {
 function removePackage$$1(packageURL) {
   return removePackage$1(exports.System, packageURL);
 }
-function reloadPackage$$1(packageURL) {
-  return reloadPackage$1(exports.System, packageURL);
+function reloadPackage$$1(packageURL, opts) {
+  return reloadPackage$1(exports.System, packageURL, opts);
 }
 function getPackages$$1() {
   return getPackages$1(exports.System);
