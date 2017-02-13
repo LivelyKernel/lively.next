@@ -375,7 +375,7 @@ describe("polygons and paths", () => {
 
 describe("contains point", () => {
 
-  it("testMorphsContainingPoint", function() {
+  it("can filter morphs by point inclusion", function() {
     var world =       morph({type: "world", extent: pt(300,300)}),
         morph1 =      morph({position: pt(0, 0), extent: pt(100, 100), fill: Color.red}),
         submorph =    morph({position: pt(20, 20), extent: pt(30, 30), fill: Color.green}),
@@ -416,7 +416,7 @@ describe("contains point", () => {
     expect(world).equals(result[4]);
   });
 
-  it("testMorphsContainingPointWithAddMorphFront", function() {
+  it("morphs containing point with added morph in front", function() {
     var world = morph({type: "world", extent: pt(300,300)}),
         morph1 = morph({position: pt(0, 0), extent: pt(100, 100)}),
         morph2 = morph({position: pt(0, 0), extent: pt(100, 100)});
@@ -431,7 +431,7 @@ describe("contains point", () => {
     expect(morph2).equals(result[1],'for ' + pt(1,1));
   });
 
-  it("testMorphsContainingPointDoesNotIncludeOffsetedOwner", function() {
+  it("morphs containing point does not include offset of owner", function() {
     var world = morph({type: "world", extent: pt(300,300)}),
         owner = morph({name: 'owner', position: pt(0, 0), extent: pt(100, 100), fill: Color.red}),
         submorph = morph({name: 'submorph', position: pt(110, 10), extent: pt(90, 90), fill: Color.green}),
@@ -446,6 +446,26 @@ describe("contains point", () => {
     expect(world).equals(result[2],'for 2');
     expect(other).equals(result[1],'for 1');
     expect(submorph).equals(result[0],'for 0');
+  });
+
+  it("scroll influences morphs containing point", function() {
+    var world = morph({type: "world", extent: pt(300,300)}),
+        owner = morph({name: 'owner', position: pt(0, 0), extent: pt(200, 200), fill: Color.red}),
+        submorph = morph({name: 'submorph', position: pt(150, 50), extent: pt(100, 1000), fill: Color.green}),
+        other = morph({name: 'other', position: pt(0, 0), extent: pt(100, 100), fill: Color.blue});
+
+    world.addMorph(owner)
+    owner.addMorph(submorph)
+    submorph.addMorph(other)
+
+    owner.clipMode = "scroll";
+    owner.scroll = pt(0, 1000);
+
+    var result = world.morphsContainingPoint(pt(150,50));
+    expect(3).equals(result.length,'for ' + pt(150,50));
+    expect(world).equals(result[2],'for 2');
+    expect(owner).equals(result[1],'for 1');
+    expect(submorph).equals(result[0],'for 1');
   });
 
 });

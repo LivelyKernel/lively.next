@@ -1045,7 +1045,7 @@ export class Morph {
   localizePointFrom(pt, otherMorph) {
     // map local point to owner coordinates
     try {
-      return pt.matrixTransform(otherMorph.transformToMorph(this));
+      return otherMorph.transformPointToMorph(this, pt);
     } catch (er) {
       console.warn("problem " + er + " in localizePointFrom");
       return pt;
@@ -1115,11 +1115,11 @@ export class Morph {
   }
 
   innerBoundsContainsWorldPoint(p) { // p is in world coordinates
-    return this.innerBoundsContainsPoint(this.owner == null ? p : this.localize(p));
+    return this.innerBoundsContainsPoint(this.localize(p));
   }
 
   innerBoundsContainsPoint(p) { // p is in local coordinates (offset by origin)
-    return this.innerBounds().containsPoint(p.addPt(this.origin));
+    return this.innerBounds().containsPoint(p.addPt(this.origin).subPt(this.scroll));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
