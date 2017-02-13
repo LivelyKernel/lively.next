@@ -90,8 +90,8 @@ export class LocalCoreInterface extends AbstractCoreInterface {
     return modules.removePackage(packageURL);
   }
 
-  async reloadPackage(packageURL) {
-    return modules.reloadPackage(packageURL);
+  async reloadPackage(packageURL, opts) {
+    return modules.reloadPackage(packageURL, opts);
   }
 
   async packageConfChange(source, confFile) {

@@ -239,8 +239,8 @@ try {
     return this.runEvalAndStringify(`lively.modules.removePackage(${JSON.stringify(packageURL)})`);
   }
 
-  async reloadPackage(packageURL) {
-    return this.runEvalAndStringify(`lively.modules.reloadPackage(${JSON.stringify(packageURL)})`);
+  async reloadPackage(packageURL, opts) {
+    return this.runEvalAndStringify(`lively.modules.reloadPackage(${JSON.stringify(packageURL)}, ${JSON.stringify(opts)})`);
   }
 
   packageConfChange(source, confFile) {
