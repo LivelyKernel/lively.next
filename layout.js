@@ -334,7 +334,7 @@ export class TilingLayout extends Layout {
 export class CellGroup {
 
   constructor({cell, morph, layout, align}) {
-    this.state = {cells: [cell], layout, align, resize: true};
+    this.state = {cells: [cell], layout, align, resize: layout.fitToCell};
     layout && layout.addGroup(this);
     this.morph = morph;
   }
@@ -379,7 +379,7 @@ export class CellGroup {
   apply(animate = false) {
     var target = this.morph;
     if(target) {
-      const bounds = this.layout.fitToCell ? this.bounds() : this.bounds().topLeft().extent(target.extent),
+      const bounds = this.bounds(),
             offset = this.compensateOrigin ? this.layout.container.origin.negated() : pt(0,0)
       if (animate) {
         var extent = this.resize ? bounds.extent() : target.extent,
@@ -929,7 +929,10 @@ export class GridLayout extends Layout {
   set compensateOrigin(compensate) { this.config.compensateOrigin = compensate; this.apply() }
 
   get fitToCell() { return this.config.fitToCell }
-  set fitToCell(fit) { this.config.fitToCell = fit; this.apply() }
+  set fitToCell(fit) { 
+     this.config.fitToCell = fit; 
+     this.cellGroups.forEach(g => g.resize = fit);
+     this.apply() }
 
   get notInLayout() {
     return arr.withoutAll(
