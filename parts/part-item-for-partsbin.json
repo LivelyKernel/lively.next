@@ -1,8 +1,8 @@
 {
-  "id": "Part_dash_item_dash_for_dash_partsbin_1204269F_DD96_4B99_91FB_8F466F672F3B",
+  "id": "Part_dash_item_dash_for_dash_partsbin_D894FB80_3D69_43DC_8625_770A8981FAD0",
   "snapshot": {
-    "Part_dash_item_dash_for_dash_partsbin_1204269F_DD96_4B99_91FB_8F466F672F3B": {
-      "rev": 43684,
+    "Part_dash_item_dash_for_dash_partsbin_D894FB80_3D69_43DC_8625_770A8981FAD0": {
+      "rev": 1038471,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -44,13 +44,13 @@
           "value": [
             {
               "__ref__": true,
-              "id": "HTMLMorph_02AD1F6C_9A61_4E82_8B3F_2BE091A91C3A",
-              "rev": 3818
+              "id": "HTMLMorph_9A95930B_3B4E_4DB6_9CB6_4D99D78C25EE",
+              "rev": 239714
             },
             {
               "__ref__": true,
-              "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-              "rev": 2049
+              "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+              "rev": 237826
             }
           ]
         },
@@ -114,8 +114,8 @@
         }
       }
     },
-    "HTMLMorph_02AD1F6C_9A61_4E82_8B3F_2BE091A91C3A": {
-      "rev": 3818,
+    "HTMLMorph_9A95930B_3B4E_4DB6_9CB6_4D99D78C25EE": {
+      "rev": 239714,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -140,9 +140,21 @@
           "key": "nativeCursor",
           "value": "-webkit-grab"
         },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "reactsToPointer": {
           "key": "reactsToPointer",
           "value": false
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -158,7 +170,7 @@
         },
         "html": {
           "key": "html",
-          "value": "<div style=\"width: 100%;\"><div style=\"position: absolute; top: 10px;            left: 23.150000000000006px\"><div draggable=\"false\" style=\"background-image: linear-gradient(rgb(242, 243, 244) 0%, rgb(215, 219, 221) 100%); transform: translate(16.4216px, 0px) rotate(0deg) scale(0.245098, 0.245098); transform-origin: 0px 0px 0px; display: inline; width: 274px; height: 408px; border-style: solid; border-width: 1px; border-color: rgb(215, 219, 221); border-radius: 9px; box-shadow: rgba(102, 102, 102, 0.517647) 6.36396px 6.36396px 22px; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(9px, 9px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 256px; height: 23px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div style=\" position: absolute; left: 44.0312px; top: 3px; width: 3px; height: 14px; background-color: black; z-index: 5; display: none;\"></div><div style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 14px; padding: 3px 11px 6px 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 14px; line-height: 14px;\"><span style=\"font-size: 12px; font-family: sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">Search</span></div><div style=\"height: 0px; width: 38.0312px;\"></div></div></div><div draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(9px, 41px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 256px; height: 358px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: auto;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div><div style=\"background-color: rgba(255,255,255, 0.8);             font-family: Arial; position: absolute;             left: 1px;            width: 144.3px;            bottom: 3px\"><center>IconPicker</center></div></div>"
+          "value": "\n<div style=\"display: flex;\n            align-items: center;\n            justify-content: center;\n            height: 100%;\n            background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))\">\n  <p style=\"font: bold 20pt Inconsolata, monospace; color: lightgray;\">Loading</p>\n</div>"
         }
       },
       "lively.serializer-class-info": {
@@ -172,8 +184,8 @@
         }
       }
     },
-    "Button_E971B73C_0D0C_4833_A011_7549FD9E7210": {
-      "rev": 2049,
+    "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A": {
+      "rev": 237826,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -184,45 +196,49 @@
           "value": [
             {
               "__ref__": true,
-              "id": "73460952-CF93-42E2-8D23-B5F7BB4855DC",
+              "id": "6A462608-CF3C-4AC8-BA63-5A6B32BA46C2",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "9DE1B7E2-DC4D-4879-B147-FE839D32AA42",
+              "id": "D0D87C8A-22F6-4D88-87B5-E72CF6ED0EA1",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "676BD185-D332-4408-959D-575BB612651A",
+              "id": "BE986240-DDD9-430E-81DB-8753E511A5F8",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "65952421-9B9D-4227-AAB0-28379E3713A0",
+              "id": "220AA2E4-7E68-4265-93CD-CCD1EB0AEFA3",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "9F794004-45F3-41C6-9245-608496975EB3",
+              "id": "AEB71510-CFA5-4C28-B576-28E09202D956",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "52B256A0-D9A5-4D79-B404-1D31C4DDDFAF",
+              "id": "6A2AE3D8-5660-4A9E-90DD-D02CD8515E99",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "919D5E15-0E1C-4975-933F-0E6CEE837532",
+              "id": "7A085EE8-58BC-4536-82B7-62ED2697E5D5",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "DD6D14A0-D510-4376-85AA-536187F87BDC",
+              "id": "0ECBCA2C-B4FB-402C-9634-F7757A91EDF1",
               "rev": 0
             }
           ]
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
         },
         "extent": {
           "key": "extent",
@@ -244,6 +260,10 @@
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(107.7,7.0)"
         },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
@@ -257,8 +277,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_A3809502_4670_46F4_8577_40E4F60524A5",
-              "rev": 3671
+              "id": "Label_BD1C810A_5C58_429A_99EF_A46A0577C62A",
+              "rev": 239639
             }
           ]
         },
@@ -314,11 +334,15 @@
           "key": "padding",
           "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(4,2,0,0)"
         },
+        "active": {
+          "key": "active",
+          "value": true
+        },
         "defaultActiveStyle": {
           "key": "defaultActiveStyle",
           "value": {
             "__ref__": true,
-            "id": "FF68E281-596F-432A-B57E-CED88AB4537F",
+            "id": "A6CFB1D3-EE17-41AE-A51F-406B6FC60A0C",
             "rev": 0
           }
         },
@@ -326,7 +350,7 @@
           "key": "activeStyle",
           "value": {
             "__ref__": true,
-            "id": "3698D9D2-75D6-43E8-B2F3-159C0E16673A",
+            "id": "F651E078-7470-4E7B-87C0-8484377BB7CD",
             "rev": 0
           }
         },
@@ -334,7 +358,7 @@
           "key": "defaultInactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "9341C253-18D4-453E-9A4D-E2B2570D7F95",
+            "id": "4172B113-2F27-415E-B34C-F5537394D753",
             "rev": 0
           }
         },
@@ -342,7 +366,7 @@
           "key": "inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "49F21777-BD44-454B-9B72-BE65679A3B29",
+            "id": "C8E6043A-3779-43F2-B5B3-B8718BFE8263",
             "rev": 0
           }
         },
@@ -350,7 +374,7 @@
           "key": "defaultTriggerStyle",
           "value": {
             "__ref__": true,
-            "id": "033BC4DC-C1E7-4445-8EE7-CB34D1BB4C68",
+            "id": "B54F23A0-85E8-4DEB-B34D-5DAC5C04C091",
             "rev": 0
           }
         },
@@ -358,7 +382,7 @@
           "key": "triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "8A89C163-FD44-4EF5-86AD-2337225B5BDA",
+            "id": "B23F1CD6-6481-4700-8204-8868E9A33A73",
             "rev": 0
           }
         }
@@ -374,7 +398,7 @@
         }
       }
     },
-    "73460952-CF93-42E2-8D23-B5F7BB4855DC": {
+    "6A462608-CF3C-4AC8-BA63-5A6B32BA46C2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -393,8 +417,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "sourceAttrName": {
@@ -405,8 +429,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "targetMethodName": {
@@ -417,7 +441,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "B6645BC4-3DD5-4DA8-8425-5F691A3B8C90",
+            "id": "F8C450AA-1488-4F7C-96BC-8B076DA2691F",
             "rev": 0
           }
         },
@@ -441,7 +465,7 @@
         }
       }
     },
-    "B6645BC4-3DD5-4DA8-8425-5F691A3B8C90": {
+    "F8C450AA-1488-4F7C-96BC-8B076DA2691F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -452,21 +476,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         }
       }
     },
-    "9DE1B7E2-DC4D-4879-B147-FE839D32AA42": {
+    "D0D87C8A-22F6-4D88-87B5-E72CF6ED0EA1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -485,8 +509,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "sourceAttrName": {
@@ -497,8 +521,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "targetMethodName": {
@@ -509,7 +533,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "136D6C43-5683-4041-97FC-8D75C6B9971A",
+            "id": "BD4D235C-ACD0-44A8-9038-A4284201AEC8",
             "rev": 0
           }
         },
@@ -533,7 +557,7 @@
         }
       }
     },
-    "136D6C43-5683-4041-97FC-8D75C6B9971A": {
+    "BD4D235C-ACD0-44A8-9038-A4284201AEC8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -544,21 +568,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         }
       }
     },
-    "676BD185-D332-4408-959D-575BB612651A": {
+    "BE986240-DDD9-430E-81DB-8753E511A5F8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -577,8 +601,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "sourceAttrName": {
@@ -589,8 +613,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "targetMethodName": {
@@ -601,7 +625,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "D7F953D4-A447-4E47-91F7-0293F9884A60",
+            "id": "7DCA4CEC-A7C8-4ED2-A4F8-96DCB8778187",
             "rev": 0
           }
         },
@@ -625,7 +649,7 @@
         }
       }
     },
-    "D7F953D4-A447-4E47-91F7-0293F9884A60": {
+    "7DCA4CEC-A7C8-4ED2-A4F8-96DCB8778187": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -636,21 +660,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         }
       }
     },
-    "65952421-9B9D-4227-AAB0-28379E3713A0": {
+    "220AA2E4-7E68-4265-93CD-CCD1EB0AEFA3": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -669,8 +693,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "sourceAttrName": {
@@ -681,8 +705,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "targetMethodName": {
@@ -693,7 +717,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "1C3C778A-BFF4-4B6B-9639-AB408B070C3A",
+            "id": "F1FFC466-5297-485F-B062-88E09FA736E8",
             "rev": 0
           }
         },
@@ -717,7 +741,7 @@
         }
       }
     },
-    "1C3C778A-BFF4-4B6B-9639-AB408B070C3A": {
+    "F1FFC466-5297-485F-B062-88E09FA736E8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -728,21 +752,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         }
       }
     },
-    "9F794004-45F3-41C6-9245-608496975EB3": {
+    "AEB71510-CFA5-4C28-B576-28E09202D956": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -761,8 +785,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "sourceAttrName": {
@@ -773,8 +797,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "targetMethodName": {
@@ -785,7 +809,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "FF04D6AB-309C-45D9-808A-6FB505A35B25",
+            "id": "B8B5BC4B-9958-4E9E-9EFE-1699088CED29",
             "rev": 0
           }
         },
@@ -809,7 +833,7 @@
         }
       }
     },
-    "FF04D6AB-309C-45D9-808A-6FB505A35B25": {
+    "B8B5BC4B-9958-4E9E-9EFE-1699088CED29": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -820,21 +844,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         }
       }
     },
-    "52B256A0-D9A5-4D79-B404-1D31C4DDDFAF": {
+    "6A2AE3D8-5660-4A9E-90DD-D02CD8515E99": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -853,8 +877,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "sourceAttrName": {
@@ -865,8 +889,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "targetMethodName": {
@@ -877,7 +901,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "144CC290-A493-41ED-9F63-CF6350907C74",
+            "id": "2C8ABCA0-8C02-4616-B9C6-FF9AF76FAD48",
             "rev": 0
           }
         },
@@ -901,7 +925,7 @@
         }
       }
     },
-    "144CC290-A493-41ED-9F63-CF6350907C74": {
+    "2C8ABCA0-8C02-4616-B9C6-FF9AF76FAD48": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -912,21 +936,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         }
       }
     },
-    "919D5E15-0E1C-4975-933F-0E6CEE837532": {
+    "7A085EE8-58BC-4536-82B7-62ED2697E5D5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -945,8 +969,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "sourceAttrName": {
@@ -957,8 +981,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "targetMethodName": {
@@ -969,7 +993,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "1B080EC7-FA09-4DC1-BE39-301C22676A84",
+            "id": "938CAEF0-4F25-4E92-AD98-2A8094048818",
             "rev": 0
           }
         },
@@ -993,7 +1017,7 @@
         }
       }
     },
-    "1B080EC7-FA09-4DC1-BE39-301C22676A84": {
+    "938CAEF0-4F25-4E92-AD98-2A8094048818": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1004,21 +1028,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         }
       }
     },
-    "DD6D14A0-D510-4376-85AA-536187F87BDC": {
+    "0ECBCA2C-B4FB-402C-9634-F7757A91EDF1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1037,8 +1061,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "sourceAttrName": {
@@ -1049,8 +1073,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_1204269F_DD96_4B99_91FB_8F466F672F3B",
-            "rev": 43684
+            "id": "Part_dash_item_dash_for_dash_partsbin_D894FB80_3D69_43DC_8625_770A8981FAD0",
+            "rev": 1038471
           }
         },
         "targetMethodName": {
@@ -1061,7 +1085,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "3DB3F01D-B4FD-4EF4-AC3E-B69FFD416FF3",
+            "id": "D901AEF0-51DD-4CBE-88E1-DC41FEF7A8AE",
             "rev": 0
           }
         },
@@ -1085,7 +1109,7 @@
         }
       }
     },
-    "3DB3F01D-B4FD-4EF4-AC3E-B69FFD416FF3": {
+    "D901AEF0-51DD-4CBE-88E1-DC41FEF7A8AE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1096,22 +1120,22 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_1204269F_DD96_4B99_91FB_8F466F672F3B",
-            "rev": 43684
+            "id": "Part_dash_item_dash_for_dash_partsbin_D894FB80_3D69_43DC_8625_770A8981FAD0",
+            "rev": 1038471
           }
         }
       }
     },
-    "Label_A3809502_4670_46F4_8577_40E4F60524A5": {
-      "rev": 3671,
+    "Label_BD1C810A_5C58_429A_99EF_A46A0577C62A": {
+      "rev": 239639,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1122,14 +1146,22 @@
           "value": [
             {
               "__ref__": true,
-              "id": "4019100A-0D9F-43BC-9C43-EC42A2D0B990",
+              "id": "93D4C854-3BB7-4B74-A847-6BC3EE413F55",
               "rev": 0
             }
           ]
         },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,12.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": null
         },
         "name": {
           "key": "name",
@@ -1146,6 +1178,10 @@
         "position": {
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.3,8.0)"
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -1166,19 +1202,43 @@
               "",
               {
                 "__ref__": true,
-                "id": "449D497C-8688-4F1F-8B36-4F8D905C06FA",
+                "id": "46173C82-64EB-4570-A9C9-7566BEE0750E",
                 "rev": 0
               }
             ]
           ]
         },
+        "autofit": {
+          "key": "autofit",
+          "value": true
+        },
         "padding": {
           "key": "padding",
           "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
         },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 12
+        },
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
         }
       },
       "lively.serializer-class-info": {
@@ -1192,7 +1252,7 @@
         }
       }
     },
-    "4019100A-0D9F-43BC-9C43-EC42A2D0B990": {
+    "93D4C854-3BB7-4B74-A847-6BC3EE413F55": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1211,8 +1271,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_A3809502_4670_46F4_8577_40E4F60524A5",
-            "rev": 3671
+            "id": "Label_BD1C810A_5C58_429A_99EF_A46A0577C62A",
+            "rev": 239639
           }
         },
         "sourceAttrName": {
@@ -1223,8 +1283,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         },
         "targetMethodName": {
@@ -1235,7 +1295,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "5EFAF2E2-16D3-4718-B387-569C7005BDE4",
+            "id": "A77930A0-D8C4-4342-87CF-EE10E3D35F81",
             "rev": 0
           }
         },
@@ -1259,7 +1319,7 @@
         }
       }
     },
-    "5EFAF2E2-16D3-4718-B387-569C7005BDE4": {
+    "A77930A0-D8C4-4342-87CF-EE10E3D35F81": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1270,21 +1330,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_A3809502_4670_46F4_8577_40E4F60524A5",
-            "rev": 3671
+            "id": "Label_BD1C810A_5C58_429A_99EF_A46A0577C62A",
+            "rev": 239639
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
-            "rev": 2049
+            "id": "Button_EEE2E317_E637_4C59_83B4_EF9D48E07F7A",
+            "rev": 237826
           }
         }
       }
     },
-    "449D497C-8688-4F1F-8B36-4F8D905C06FA": {
+    "46173C82-64EB-4570-A9C9-7566BEE0750E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1303,7 +1363,7 @@
         }
       }
     },
-    "FF68E281-596F-432A-B57E-CED88AB4537F": {
+    "A6CFB1D3-EE17-41AE-A51F-406B6FC60A0C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1328,7 +1388,7 @@
         }
       }
     },
-    "3698D9D2-75D6-43E8-B2F3-159C0E16673A": {
+    "F651E078-7470-4E7B-87C0-8484377BB7CD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1355,13 +1415,13 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "E84DE169-8E4E-4746-AD09-106BF330CA9B",
+            "id": "A8361F91-24CD-4816-B141-2AD400B8A1AF",
             "rev": 0
           }
         }
       }
     },
-    "E84DE169-8E4E-4746-AD09-106BF330CA9B": {
+    "A8361F91-24CD-4816-B141-2AD400B8A1AF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1382,7 +1442,7 @@
         }
       }
     },
-    "9341C253-18D4-453E-9A4D-E2B2570D7F95": {
+    "4172B113-2F27-415E-B34C-F5537394D753": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1407,7 +1467,7 @@
         }
       }
     },
-    "49F21777-BD44-454B-9B72-BE65679A3B29": {
+    "C8E6043A-3779-43F2-B5B3-B8718BFE8263": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1432,7 +1492,7 @@
         }
       }
     },
-    "033BC4DC-C1E7-4445-8EE7-CB34D1BB4C68": {
+    "B54F23A0-85E8-4DEB-B34D-5DAC5C04C091": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1445,7 +1505,7 @@
         }
       }
     },
-    "8A89C163-FD44-4EF5-86AD-2337225B5BDA": {
+    "B23F1CD6-6481-4700-8204-8868E9A33A73": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1463,9 +1523,9 @@
     "local://lively-object-modules/": {
       "38C79579-61C1-46DE-A025-FF870C3DA84F": {
         "package.json": "{\n  \"name\": \"38C79579-61C1-46DE-A025-FF870C3DA84F\",\n  \"version\": \"0.1.0\"\n}",
-        "index.js": "import { Morph, Icon, HTMLMorph } from \"lively.morphic\";\nimport { Color, pt } from \"lively.graphics/index.js\";\nimport { connect, once, disconnect } from \"lively.bindings/index.js\";\nimport { resource } from \"lively.resources/index.js\";\nimport { loadObjectFromSnapshot } from \"lively.morphic/partsbin.js\";\n\nexport default class Part_dash_item_dash_for_dash_partsbin extends Morph {\n\n  reset() {\n    connect(this.get(\"remove-button\"), 'fire', this, 'interactivelyRemovePart');\n  }\n\n  async showPart(partResource) {\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/star.json\")\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/button.json\")\n    // await this.showPart()\n    var partName = partResource.name().replace(/\\.json$/, \"\");\n    var snapshot = JSON.parse(await partResource.read());\n    this.state = {partName, partResource, snapshot};\n    this.addPreviewMorph();\n  }\n\n  addPreviewMorph() {\n    var {partName, snapshot} = this.state;\n\n    var margin = 10,\n        previewWidth = 100+2*margin,\n        previewHeight = 100+2*margin,\n        {x: w, y: h} = this.extent,\n        borderWidth = 1,\n        previewHTML = `<div style=\"width: 100%;\">`\n                    + `<div style=\"position: absolute; top: ${margin}px;`\n                    + `            left: ${margin + (w-previewWidth) / 2}px\">`\n                    + snapshot.preview\n                    + `</div>`,\n      previewSpec = {\n        name: \"html-preview\",\n        fill: null,\n        reactsToPointer: false,\n        html: previewHTML,\n        extent: pt(w, h),\n        // border: {width: 1, color: Color.gray, radius: 5},\n        nativeCursor: \"-webkit-grab\"\n      };\n\n    var preview = this.getSubmorphNamed(\"html-preview\") || this.addMorph(new HTMLMorph());\n    this.addMorph({\n        bottomCenter: preview.bottomCenter,\n        type: 'label', fontSize: 15,\n        value: partName\n    })\n    Object.assign(preview, previewSpec);\n\n    preview.domNode.style.pointerEvents = \"none\";\n    // disconnect(preview, 'onDragStart', this, 'createAndGrabNewInstance',\n    //   {converter: function() { return this.sourceObj; }});\n    return preview;\n  }\n\n  onDragStart(evt) {\n    this.createAndGrabNewInstance();\n  }\n  \n  async createAndGrabNewInstance() {\n    // FIXME\n    var hand = this.world().firstHand;\n    this.draggable = false;\n    this.env.eventDispatcher.eventState.draggedMorph = null;\n    try {\n      var {snapshot} = this.state;\n      var preview = this.get('html-preview'),\n          newMorph = preview.copy(),\n          positionInHand = hand.localize(preview.globalPosition);\n      hand.grab(newMorph);\n      newMorph.dropShadow = false;\n      newMorph.origin = newMorph.extent.scaleBy(.5);\n      newMorph.topLeft = positionInHand;\n      var previewDiv = preview.domNode.childNodes[0].childNodes[0].childNodes[0],\n          scale = 1 / (previewDiv.getBoundingClientRect().width / previewDiv.offsetWidth)\n      newMorph.animate({scale, duration: 400});\n      newMorph.loadPart = async () => {\n         //newMorph.addMorph({}) // add css loading indicator\n         var part = await loadObjectFromSnapshot(snapshot);\n         newMorph.owner.addMorph(part)\n         part.center = newMorph.center;\n         newMorph.remove();\n      };\n      once(newMorph, 'remove', newMorph, 'loadPart');\n    } catch (e) {\n      this.showError(e)\n    } finally {\n      this.draggable = true;\n    }\n  }\n\n  async interactivelyRemovePart() {\n    var {partName, partResource} = this.state;\n    var really = await this.world().confirm(`Do you really want to remove part ${partName}?`);\n    if (!really) return;\n    await partResource.remove();\n    if (this.owner.isPartsBin) { this.remove(); }\n  }\n}\n\n"
+        "index.js": "import { Morph, morph, Icon, HTMLMorph } from \"lively.morphic\";\nimport { Color, pt } from \"lively.graphics/index.js\";\nimport { connect, once, disconnect } from \"lively.bindings/index.js\";\nimport { resource } from \"lively.resources/index.js\";\nimport { loadObjectFromSnapshot } from \"lively.morphic/partsbin.js\";\nimport LoadingIndicator from \"lively.morphic/components/loading-indicator.js\";\n\nexport default class Part_dash_item_dash_for_dash_partsbin extends Morph {\n\n  reset() {\n    connect(this.get(\"remove-button\"), 'fire', this, 'interactivelyRemovePart');\n  }\n\n  beforePublish() {\n     this.clear()\n  }\n\n  clear() {\n     this.get('preview-label').remove();\n     this.get('html-preview').html = `\n<div style=\"display: flex;\n            align-items: center;\n            justify-content: center;\n            height: 100%;\n            background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))\">\n  <p style=\"font: bold 20pt Inconsolata, monospace; color: lightgray;\">Loading</p>\n</div>`\n  }\n  \n  async showPart(partResource) {\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/star.json\")\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/button.json\")\n    // await this.showPart()\n    var partName = partResource.name().replace(/\\.json$/, \"\");\n    var snapshot = JSON.parse(await partResource.read());\n    this.state = {partName, partResource, snapshot};\n    this.addPreviewMorph();\n  }\n\n  addPreviewMorph() {\n    var {partName, snapshot} = this.state;\n\n    var margin = 10,\n        previewWidth = 100+2*margin,\n        previewHeight = 100+2*margin,\n        {x: w, y: h} = this.extent,\n        borderWidth = 1,\n        previewHTML = `<div style=\"width: 100%;\">`\n                    + `<div style=\"position: absolute; top: ${margin}px;`\n                    + `            left: ${margin + (w-previewWidth) / 2}px\">`\n                    + snapshot.preview\n                    + `</div>`,\n      previewSpec = {\n        name: \"html-preview\",\n        fill: null,\n        reactsToPointer: false,\n        html: previewHTML,\n        extent: pt(w, h),\n        // border: {width: 1, color: Color.gray, radius: 5},\n        nativeCursor: \"-webkit-grab\"\n      };\n\n    var preview = this.getSubmorphNamed(\"html-preview\") || this.addMorph(new HTMLMorph());\n    this.addMorph({\n        bottomCenter: preview.bottomCenter,\n        type: 'label', fontSize: 15,\n        value: partName, name: 'preview-label'\n    })\n    Object.assign(preview, previewSpec);\n\n    preview.domNode.style.pointerEvents = \"none\";\n    // disconnect(preview, 'onDragStart', this, 'createAndGrabNewInstance',\n    //   {converter: function() { return this.sourceObj; }});\n    return preview;\n  }\n\n  onDragStart(evt) {\n    this.createAndGrabNewInstance();\n  }\n  \n  async createAndGrabNewInstance() {\n    // FIXME\n    var hand = this.world().firstHand;\n    this.draggable = false;\n    this.env.eventDispatcher.eventState.draggedMorph = null;\n    try {\n      var {snapshot} = this.state;\n      var preview = this.get('html-preview'),\n          newMorph = preview.copy(),\n          positionInHand = hand.localize(preview.globalPosition);\n      hand.grab(newMorph);\n      newMorph.dropShadow = false;\n      newMorph.origin = newMorph.extent.scaleBy(.5);\n      newMorph.topLeft = positionInHand;\n      var previewDiv = preview.domNode.childNodes[0].childNodes[0].childNodes[0],\n          scale = 1 / (previewDiv.getBoundingClientRect().width / previewDiv.offsetWidth)\n      newMorph.animate({scale, duration: 400});\n      newMorph.loadPart = async () => {\n         newMorph.addMorph({\n           fill: Color.black.withA(.7), scale: 1 / scale,\n           extent: pt(100,100), borderRadius: 5,\n           submorphs: [{\n              type: 'text',\n              fontFamily: 'FontAwesome',\n              extent: pt(60,60),\n              padding: 10,\n              fontSize: 60,\n              textStyleClasses: ['fa', 'fa-spin', 'fa-fw'],\n              textString: Icon.makeLabel('refresh').textString,\n              fill: Color.transparent,\n              fontColor: Color.white,\n           }, {\n             type: 'label', value: 'Loading Part...', \n             fontColor: Color.white, fontSize: 13,\n             bottomCenter: pt(50,95)\n           }]\n         }).center = pt(0,0);\n         var part = await loadObjectFromSnapshot(snapshot);\n         newMorph.owner.addMorph(part)\n         part.center = newMorph.center;\n         newMorph.remove();\n      };\n      once(newMorph, 'remove', newMorph, 'loadPart');\n    } catch (e) {\n      this.showError(e)\n    } finally {\n      this.draggable = true;\n    }\n  }\n\n  async interactivelyRemovePart() {\n    var {partName, partResource} = this.state;\n    var really = await this.world().confirm(`Do you really want to remove part ${partName}?`);\n    if (!really) return;\n    await partResource.remove();\n    if (this.owner.isPartsBin) { this.remove(); }\n  }\n}\n\n"
       }
     }
   },
-  "preview": "<div   draggable=\"false\" style=\"background: rgb(253, 254, 254); transform: translate(0px, 5.57075px) rotate(0deg) scale(0.683527, 0.683527); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 1px; border-color: rgb(189, 195, 199); border-radius: 4px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: -webkit-grab;\"><div style=\"position: absolute; width: 100%; height: 100%; \"><div style=\"width: 100%;\"><div style=\"position: absolute; top: 10px;            left: 23.150000000000006px\"><div draggable=\"false\" style=\"background-image: linear-gradient(rgb(242, 243, 244) 0%, rgb(215, 219, 221) 100%); transform: translate(16.4216px, 0px) rotate(0deg) scale(0.245098, 0.245098); transform-origin: 0px 0px 0px; display: inline; width: 274px; height: 408px; border-style: solid; border-width: 1px; border-color: rgb(215, 219, 221); border-radius: 9px; box-shadow: rgba(102, 102, 102, 0.517647) 6.36396px 6.36396px 22px; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(9px, 9px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 256px; height: 23px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div style=\" position: absolute; left: 44.0312px; top: 3px; width: 3px; height: 14px; background-color: black; z-index: 5; display: none;\"></div><div style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 14px; padding: 3px 11px 6px 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 14px; line-height: 14px;\"><span style=\"font-size: 12px; font-family: sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">Search</span></div><div style=\"height: 0px; width: 38.0312px;\"></div></div></div><div draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(9px, 41px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 256px; height: 358px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: auto;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div><div style=\"background-color: rgba(255,255,255, 0.8);             font-family: Arial; position: absolute;             left: 1px;            width: 144.3px;            bottom: 3px\"><center>IconPicker</center></div></div></div><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div   draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(107.7px, 7px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 28px; height: 28px; border-style: solid; border-width: 1px; border-color: rgb(230, 230, 230); border-radius: 5px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"transform: translate3d(9.28px, 8px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer; font-family: sans-serif; font-size: 12px; color: rgb(64, 64, 64); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div>"
+  "preview": "<div   draggable=\"false\" style=\"background: rgb(253, 254, 254); transform: translate(0px, 5.57075px) rotate(0deg) scale(0.683527, 0.683527); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 1px; border-color: rgb(189, 195, 199); border-radius: 4px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: -webkit-grab;\"><div style=\"position: absolute; width: 100%; height: 100%; \">\n<div style=\"display: flex;\n            align-items: center;\n            justify-content: center;\n            height: 100%;\n            background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))\">\n  <p style=\"font: bold 20pt Inconsolata, monospace; color: lightgray;\">Loading</p>\n</div></div><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div   draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(107.7px, 7px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 28px; height: 28px; border-style: solid; border-width: 1px; border-color: rgb(230, 230, 230); border-radius: 5px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"transform: translate3d(9.28px, 8px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer; font-family: sans-serif; font-size: 12px; color: rgb(64, 64, 64); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div>"
 }
