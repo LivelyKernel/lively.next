@@ -77,7 +77,6 @@ class StyleHalo extends Morph {
     this.showLayoutStyleEditor();
     this.showBorderStyler();
     connect(this.target, "onChange", this, "update");
-    this.relayout();
   }
 
   update() {
