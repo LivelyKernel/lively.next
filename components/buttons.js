@@ -19,6 +19,7 @@ export class Button extends Morph {
       borderWidth:  {defaultValue: 1},
       extent:       {defaultValue: pt(100,24)},
       borderRadius: {defaultValue: 15},
+      borderColor:  {defaultValue: Color.rgb(204,204,204)},
       draggable:    {defaultValue: false},
 
       // button label
