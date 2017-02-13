@@ -62,6 +62,7 @@ Parsing JS code into ASTs and tools to query and transform these trees.
 ### node.js
 
 ```js
+require('lively.lang')
 var ast = require('lively.ast'),
     parsed = ast.parse("1 + 2");
 ast.printAst(parsed);
@@ -76,7 +77,11 @@ ast.printAst(parsed);
 
 ### browser
 
-HTML: `<script src="dist/lively.ast.bundle.js"></script>`
+HTML:
+```html
+<script src="node_modules/dist/lively.lang.js"></script>
+<script src="dist/lively.ast.js"></script>
+```
 
 JS: like above
 
