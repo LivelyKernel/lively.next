@@ -1,0 +1,139 @@
+{
+  "id": "Morph_E367D4CD_B222_4F64_9DC6_7A8736566E24",
+  "snapshot": {
+    "Morph_E367D4CD_B222_4F64_9DC6_7A8736566E24": {
+      "rev": 59789,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.3,130.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(119,95,51)"
+        },
+        "name": {
+          "key": "name",
+          "value": "a morph 1"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(126.3,282.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Morph",
+            "morph"
+          ]
+        },
+        "layout": {
+          "key": "layout",
+          "value": {
+            "__ref__": true,
+            "id": "E132BE5E-D69C-413C-9F1E-C8843044F5C0",
+            "rev": 0
+          }
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Morph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "E132BE5E-D69C-413C-9F1E-C8843044F5C0": {
+      "rev": 0,
+      "props": {
+        "border": {
+          "key": "border",
+          "value": {
+            "__ref__": true,
+            "id": "576F2D4A-EB03-417D-A58B-DB58874AA548",
+            "rev": 0
+          }
+        },
+        "_spacing": {
+          "key": "_spacing",
+          "value": 0
+        },
+        "ignore": {
+          "key": "ignore",
+          "value": []
+        },
+        "lastBounds": {
+          "key": "lastBounds"
+        },
+        "active": {
+          "key": "active",
+          "value": false
+        },
+        "container": {
+          "key": "container",
+          "value": {
+            "__ref__": true,
+            "id": "Morph_E367D4CD_B222_4F64_9DC6_7A8736566E24",
+            "rev": 59789
+          }
+        },
+        "_autoResize": {
+          "key": "_autoResize",
+          "value": false
+        },
+        "_direction": {
+          "key": "_direction",
+          "value": "leftToRight"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "HorizontalLayout",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "layout.js"
+        }
+      }
+    },
+    "576F2D4A-EB03-417D-A58B-DB58874AA548": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        }
+      }
+    }
+  },
+  "packages": {},
+  "preview": "<div   draggable=\"false\" style=\"background: rgb(119, 95, 51); transform: translate(0px, 5.57075px) rotate(0deg) scale(0.683527, 0.683527); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div>"
+}

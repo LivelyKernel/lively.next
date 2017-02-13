@@ -1,56 +1,35 @@
 {
-  "id": "Part_dash_item_dash_for_dash_partsbin_351CCCD9_9982_40BE_AB66_3C596BF2E17C",
+  "id": "Part_dash_item_dash_for_dash_partsbin_1204269F_DD96_4B99_91FB_8F466F672F3B",
   "snapshot": {
-    "Part_dash_item_dash_for_dash_partsbin_351CCCD9_9982_40BE_AB66_3C596BF2E17C": {
-      "rev": 35647,
+    "Part_dash_item_dash_for_dash_partsbin_1204269F_DD96_4B99_91FB_8F466F672F3B": {
+      "rev": 43684,
       "props": {
-        "borderWidthTop": {
-          "key": "borderWidthTop",
-          "value": 1
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
         },
-        "borderWidthRight": {
-          "key": "borderWidthRight",
-          "value": 1
+        "attributeConnections": {
+          "key": "attributeConnections"
         },
-        "borderWidthLeft": {
-          "key": "borderWidthLeft",
-          "value": 1
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.3,130.0)"
         },
-        "borderWidthBottom": {
-          "key": "borderWidthBottom",
-          "value": 1
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(253,254,254)"
         },
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 4
+        "name": {
+          "key": "name",
+          "value": "part-item-for-partsbin"
         },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 4
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 4
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 4
-        },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(10.0,50.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -60,47 +39,68 @@
             "morph"
           ]
         },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(635.2,50.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "name": {
-          "key": "name",
-          "value": "part-item-for-partsbin"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(253,254,254)"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.3,130.0)"
-        },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
-              "id": "HTMLMorph_7C8A5D0B_6BB1_442E_845B_24EC79730CD4",
-              "rev": 9062
+              "id": "HTMLMorph_02AD1F6C_9A61_4E82_8B3F_2BE091A91C3A",
+              "rev": 3818
             },
             {
               "__ref__": true,
-              "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-              "rev": 8400
+              "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+              "rev": 2049
             }
           ]
         },
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
         },
-        "attributeConnections": {
-          "key": "attributeConnections"
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 4
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 4
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 4
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 4
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 1
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
         }
       },
       "lively.serializer-class-info": {
@@ -114,9 +114,36 @@
         }
       }
     },
-    "HTMLMorph_7C8A5D0B_6BB1_442E_845B_24EC79730CD4": {
-      "rev": 9062,
+    "HTMLMorph_02AD1F6C_9A61_4E82_8B3F_2BE091A91C3A": {
+      "rev": 3818,
       "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.3,130.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": null
+        },
+        "name": {
+          "key": "name",
+          "value": "html-preview"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "-webkit-grab"
+        },
+        "reactsToPointer": {
+          "key": "reactsToPointer",
+          "value": false
+        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
@@ -125,36 +152,13 @@
             "morph"
           ]
         },
-        "reactsToPointer": {
-          "key": "reactsToPointer",
-          "value": false
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "-webkit-grab"
-        },
-        "name": {
-          "key": "name",
-          "value": "html-preview"
-        },
-        "fill": {
-          "key": "fill",
-          "value": null
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.3,130.0)"
-        },
         "submorphs": {
           "key": "submorphs",
           "value": []
         },
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections"
+        "html": {
+          "key": "html",
+          "value": "<div style=\"width: 100%;\"><div style=\"position: absolute; top: 10px;            left: 23.150000000000006px\"><div draggable=\"false\" style=\"background-image: linear-gradient(rgb(242, 243, 244) 0%, rgb(215, 219, 221) 100%); transform: translate(16.4216px, 0px) rotate(0deg) scale(0.245098, 0.245098); transform-origin: 0px 0px 0px; display: inline; width: 274px; height: 408px; border-style: solid; border-width: 1px; border-color: rgb(215, 219, 221); border-radius: 9px; box-shadow: rgba(102, 102, 102, 0.517647) 6.36396px 6.36396px 22px; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(9px, 9px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 256px; height: 23px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div style=\" position: absolute; left: 44.0312px; top: 3px; width: 3px; height: 14px; background-color: black; z-index: 5; display: none;\"></div><div style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 14px; padding: 3px 11px 6px 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 14px; line-height: 14px;\"><span style=\"font-size: 12px; font-family: sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">Search</span></div><div style=\"height: 0px; width: 38.0312px;\"></div></div></div><div draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(9px, 41px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 256px; height: 358px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: auto;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div><div style=\"background-color: rgba(255,255,255, 0.8);             font-family: Arial; position: absolute;             left: 1px;            width: 144.3px;            bottom: 3px\"><center>IconPicker</center></div></div>"
         }
       },
       "lively.serializer-class-info": {
@@ -168,147 +172,9 @@
         }
       }
     },
-    "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140": {
-      "rev": 8400,
+    "Button_E971B73C_0D0C_4833_A011_7549FD9E7210": {
+      "rev": 2049,
       "props": {
-        "defaultTriggerStyle": {
-          "key": "defaultTriggerStyle",
-          "value": {
-            "__ref__": true,
-            "id": "1DE29F1A-38F4-4F54-B0A1-84D577E55687",
-            "rev": 0
-          }
-        },
-        "defaultInactiveStyle": {
-          "key": "defaultInactiveStyle",
-          "value": {
-            "__ref__": true,
-            "id": "5F79C4C2-FE55-4858-A249-E2C56320DFC3",
-            "rev": 0
-          }
-        },
-        "defaultActiveStyle": {
-          "key": "defaultActiveStyle",
-          "value": {
-            "__ref__": true,
-            "id": "00D784E6-7E08-4B37-9354-C0972DEF6378",
-            "rev": 0
-          }
-        },
-        "padding": {
-          "key": "padding",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(4,2,0,0)"
-        },
-        "borderWidthTop": {
-          "key": "borderWidthTop",
-          "value": 1
-        },
-        "borderWidthRight": {
-          "key": "borderWidthRight",
-          "value": 1
-        },
-        "borderWidthLeft": {
-          "key": "borderWidthLeft",
-          "value": 1
-        },
-        "borderWidthBottom": {
-          "key": "borderWidthBottom",
-          "value": 1
-        },
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 5
-        },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 5
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 5
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 5
-        },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
-        },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
-        },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
-        },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Button",
-            "Morph",
-            "morph"
-          ]
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(107.7,7.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "pointer"
-        },
-        "name": {
-          "key": "name",
-          "value": "remove-button"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(28.0,28.0)"
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Label_C0B5D97B_9A81_40CF_83B7_1AB5C6EE43E3",
-              "rev": 9014
-            }
-          ]
-        },
-        "triggerStyle": {
-          "key": "triggerStyle",
-          "value": {
-            "__ref__": true,
-            "id": "4861A6C6-7793-496E-AB91-9818CA91DC23",
-            "rev": 0
-          }
-        },
-        "inactiveStyle": {
-          "key": "inactiveStyle",
-          "value": {
-            "__ref__": true,
-            "id": "5A7AEEE7-9E21-4C0B-969F-666B850A13E5",
-            "rev": 0
-          }
-        },
-        "activeStyle": {
-          "key": "activeStyle",
-          "value": {
-            "__ref__": true,
-            "id": "404273CA-6B36-40D2-A995-826687A790D9",
-            "rev": 0
-          }
-        },
         "_tickingScripts": {
           "key": "_tickingScripts",
           "value": []
@@ -318,45 +184,183 @@
           "value": [
             {
               "__ref__": true,
-              "id": "270E36F1-681E-48A5-8761-CEBCF77B7631",
+              "id": "73460952-CF93-42E2-8D23-B5F7BB4855DC",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "386CA408-97AF-4ADB-B4E5-9FF32E084E92",
+              "id": "9DE1B7E2-DC4D-4879-B147-FE839D32AA42",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "E2128305-D255-4841-9E36-29BA0669DA55",
+              "id": "676BD185-D332-4408-959D-575BB612651A",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "2EA77D7E-431C-4E84-9789-72AD89BC8D4E",
+              "id": "65952421-9B9D-4227-AAB0-28379E3713A0",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "A97E0911-E3E0-4173-A597-97F2DD39A483",
+              "id": "9F794004-45F3-41C6-9245-608496975EB3",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "905B86F3-38A9-49B4-B11F-9CA5BC91E124",
+              "id": "52B256A0-D9A5-4D79-B404-1D31C4DDDFAF",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "CC39573D-77A2-4491-B423-EFBB9C5A684B",
+              "id": "919D5E15-0E1C-4975-933F-0E6CEE837532",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "DE9CF782-AD5E-46E4-A488-8B40C93C0B11",
+              "id": "DD6D14A0-D510-4376-85AA-536187F87BDC",
               "rev": 0
             }
           ]
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(28.0,28.0)"
+        },
+        "name": {
+          "key": "name",
+          "value": "remove-button"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(107.7,7.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Button",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Label_A3809502_4670_46F4_8577_40E4F60524A5",
+              "rev": 3671
+            }
+          ]
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 5
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 5
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 5
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 5
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 1
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(4,2,0,0)"
+        },
+        "defaultActiveStyle": {
+          "key": "defaultActiveStyle",
+          "value": {
+            "__ref__": true,
+            "id": "FF68E281-596F-432A-B57E-CED88AB4537F",
+            "rev": 0
+          }
+        },
+        "activeStyle": {
+          "key": "activeStyle",
+          "value": {
+            "__ref__": true,
+            "id": "3698D9D2-75D6-43E8-B2F3-159C0E16673A",
+            "rev": 0
+          }
+        },
+        "defaultInactiveStyle": {
+          "key": "defaultInactiveStyle",
+          "value": {
+            "__ref__": true,
+            "id": "9341C253-18D4-453E-9A4D-E2B2570D7F95",
+            "rev": 0
+          }
+        },
+        "inactiveStyle": {
+          "key": "inactiveStyle",
+          "value": {
+            "__ref__": true,
+            "id": "49F21777-BD44-454B-9B72-BE65679A3B29",
+            "rev": 0
+          }
+        },
+        "defaultTriggerStyle": {
+          "key": "defaultTriggerStyle",
+          "value": {
+            "__ref__": true,
+            "id": "033BC4DC-C1E7-4445-8EE7-CB34D1BB4C68",
+            "rev": 0
+          }
+        },
+        "triggerStyle": {
+          "key": "triggerStyle",
+          "value": {
+            "__ref__": true,
+            "id": "8A89C163-FD44-4EF5-86AD-2337225B5BDA",
+            "rev": 0
+          }
         }
       },
       "lively.serializer-class-info": {
@@ -370,45 +374,936 @@
         }
       }
     },
-    "1DE29F1A-38F4-4F54-B0A1-84D577E55687": {
+    "73460952-CF93-42E2-8D23-B5F7BB4855DC": {
       "rev": 0,
       "props": {
         "_rev": {
           "key": "_rev",
           "value": 0
         },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(161,161,161)"
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "extent"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "B6645BC4-3DD5-4DA8-8425-5F691A3B8C90",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
         }
       }
     },
-    "5F79C4C2-FE55-4858-A249-E2C56320DFC3": {
+    "B6645BC4-3DD5-4DA8-8425-5F691A3B8C90": {
       "rev": 0,
       "props": {
         "_rev": {
           "key": "_rev",
           "value": 0
         },
-        "borderColor": {
-          "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(204,204,204,0.5)"
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
         },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(240,240,240,0.5)"
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        }
+      }
+    },
+    "9DE1B7E2-DC4D-4879-B147-FE839D32AA42": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
         },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(64,64,64,0.5)"
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "padding"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "136D6C43-5683-4041-97FC-8D75C6B9971A",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "136D6C43-5683-4041-97FC-8D75C6B9971A": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        }
+      }
+    },
+    "676BD185-D332-4408-959D-575BB612651A": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fontSize"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "D7F953D4-A447-4E47-91F7-0293F9884A60",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "D7F953D4-A447-4E47-91F7-0293F9884A60": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        }
+      }
+    },
+    "65952421-9B9D-4227-AAB0-28379E3713A0": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fontFamily"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "1C3C778A-BFF4-4B6B-9639-AB408B070C3A",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "1C3C778A-BFF4-4B6B-9639-AB408B070C3A": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        }
+      }
+    },
+    "9F794004-45F3-41C6-9245-608496975EB3": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "active"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "updateButtonStyle"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "FF04D6AB-309C-45D9-808A-6FB505A35B25",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "FF04D6AB-309C-45D9-808A-6FB505A35B25": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        }
+      }
+    },
+    "52B256A0-D9A5-4D79-B404-1D31C4DDDFAF": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "activeStyle"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "updateButtonStyle"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "144CC290-A493-41ED-9F63-CF6350907C74",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "144CC290-A493-41ED-9F63-CF6350907C74": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        }
+      }
+    },
+    "919D5E15-0E1C-4975-933F-0E6CEE837532": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "inactiveStyle"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "updateButtonStyle"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "1B080EC7-FA09-4DC1-BE39-301C22676A84",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "1B080EC7-FA09-4DC1-BE39-301C22676A84": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        }
+      }
+    },
+    "DD6D14A0-D510-4376-85AA-536187F87BDC": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fire"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Part_dash_item_dash_for_dash_partsbin_1204269F_DD96_4B99_91FB_8F466F672F3B",
+            "rev": 43684
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "interactivelyRemovePart"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "3DB3F01D-B4FD-4EF4-AC3E-B69FFD416FF3",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "3DB3F01D-B4FD-4EF4-AC3E-B69FFD416FF3": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Part_dash_item_dash_for_dash_partsbin_1204269F_DD96_4B99_91FB_8F466F672F3B",
+            "rev": 43684
+          }
+        }
+      }
+    },
+    "Label_A3809502_4670_46F4_8577_40E4F60524A5": {
+      "rev": 3671,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "4019100A-0D9F-43BC-9C43-EC42A2D0B990",
+              "rev": 0
+            }
+          ]
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,12.0)"
+        },
+        "name": {
+          "key": "name",
+          "value": "label"
         },
         "nativeCursor": {
           "key": "nativeCursor",
-          "value": "not-allowed"
+          "value": "pointer"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.3,8.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            [
+              "",
+              {
+                "__ref__": true,
+                "id": "449D497C-8688-4F1F-8B36-4F8D905C06FA",
+                "rev": 0
+              }
+            ]
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Label",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/label.js"
         }
       }
     },
-    "00D784E6-7E08-4B37-9354-C0972DEF6378": {
+    "4019100A-0D9F-43BC-9C43-EC42A2D0B990": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Label_A3809502_4670_46F4_8577_40E4F60524A5",
+            "rev": 3671
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "extent"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "5EFAF2E2-16D3-4718-B387-569C7005BDE4",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "5EFAF2E2-16D3-4718-B387-569C7005BDE4": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Label_A3809502_4670_46F4_8577_40E4F60524A5",
+            "rev": 3671
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_E971B73C_0D0C_4833_A011_7549FD9E7210",
+            "rev": 2049
+          }
+        }
+      }
+    },
+    "449D497C-8688-4F1F-8B36-4F8D905C06FA": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": ""
+        },
+        "textStyleClasses": {
+          "key": "textStyleClasses",
+          "value": [
+            "fa"
+          ]
+        }
+      }
+    },
+    "FF68E281-596F-432A-B57E-CED88AB4537F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -433,238 +1328,7 @@
         }
       }
     },
-    "Label_C0B5D97B_9A81_40CF_83B7_1AB5C6EE43E3": {
-      "rev": 9014,
-      "props": {
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
-        },
-        "padding": {
-          "key": "padding",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Label",
-            "Morph",
-            "morph"
-          ]
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.3,8.0)"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "pointer"
-        },
-        "name": {
-          "key": "name",
-          "value": "label"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,12.0)"
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
-        },
-        "textAndAttributes": {
-          "key": "textAndAttributes",
-          "value": [
-            [
-              "",
-              {
-                "__ref__": true,
-                "id": "10FE840D-14FF-486D-AD31-4E26FB9DF402",
-                "rev": 0
-              }
-            ]
-          ]
-        },
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "A8521474-B2F7-4511-9D37-2F23E6121843",
-              "rev": 0
-            }
-          ]
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "Label",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "text/label.js"
-        }
-      }
-    },
-    "10FE840D-14FF-486D-AD31-4E26FB9DF402": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "fontFamily": {
-          "key": "fontFamily",
-          "value": ""
-        },
-        "textStyleClasses": {
-          "key": "textStyleClasses",
-          "value": [
-            "fa"
-          ]
-        }
-      }
-    },
-    "A8521474-B2F7-4511-9D37-2F23E6121843": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Label_C0B5D97B_9A81_40CF_83B7_1AB5C6EE43E3",
-            "rev": 9014
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "extent"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "C024E653-8815-468B-B147-141DA7B6AB5C",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "C024E653-8815-468B-B147-141DA7B6AB5C": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Label_C0B5D97B_9A81_40CF_83B7_1AB5C6EE43E3",
-            "rev": 9014
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        }
-      }
-    },
-    "4861A6C6-7793-496E-AB91-9818CA91DC23": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(161,161,161)"
-        }
-      }
-    },
-    "5A7AEEE7-9E21-4C0B-969F-666B850A13E5": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "borderColor": {
-          "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(204,204,204,0.5)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(240,240,240,0.5)"
-        },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(64,64,64,0.5)"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "not-allowed"
-        }
-      }
-    },
-    "404273CA-6B36-40D2-A995-826687A790D9": {
+    "3698D9D2-75D6-43E8-B2F3-159C0E16673A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -691,13 +1355,13 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "074EE246-EFF9-49D6-AB16-9ECAB2FA15DA",
+            "id": "E84DE169-8E4E-4746-AD09-106BF330CA9B",
             "rev": 0
           }
         }
       }
     },
-    "074EE246-EFF9-49D6-AB16-9ECAB2FA15DA": {
+    "E84DE169-8E4E-4746-AD09-106BF330CA9B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -718,739 +1382,79 @@
         }
       }
     },
-    "270E36F1-681E-48A5-8761-CEBCF77B7631": {
+    "9341C253-18D4-453E-9A4D-E2B2570D7F95": {
       "rev": 0,
       "props": {
         "_rev": {
           "key": "_rev",
           "value": 0
         },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
+        "borderColor": {
+          "key": "borderColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(204,204,204,0.5)"
         },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(240,240,240,0.5)"
         },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "extent"
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(64,64,64,0.5)"
         },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "3E2CFE6E-95F1-494B-B431-691EACB5D854",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "not-allowed"
         }
       }
     },
-    "3E2CFE6E-95F1-494B-B431-691EACB5D854": {
+    "49F21777-BD44-454B-9B72-BE65679A3B29": {
       "rev": 0,
       "props": {
         "_rev": {
           "key": "_rev",
           "value": 0
         },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
+        "borderColor": {
+          "key": "borderColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(204,204,204,0.5)"
         },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(240,240,240,0.5)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(64,64,64,0.5)"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "not-allowed"
         }
       }
     },
-    "386CA408-97AF-4ADB-B4E5-9FF32E084E92": {
+    "033BC4DC-C1E7-4445-8EE7-CB34D1BB4C68": {
       "rev": 0,
       "props": {
         "_rev": {
           "key": "_rev",
           "value": 0
         },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "padding"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "90A78D9C-C36B-47C9-94D9-52189B7E0004",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(161,161,161)"
         }
       }
     },
-    "90A78D9C-C36B-47C9-94D9-52189B7E0004": {
+    "8A89C163-FD44-4EF5-86AD-2337225B5BDA": {
       "rev": 0,
       "props": {
         "_rev": {
           "key": "_rev",
           "value": 0
         },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        }
-      }
-    },
-    "E2128305-D255-4841-9E36-29BA0669DA55": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "fontSize"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "2815D339-35C4-4F7C-B559-FF223907795E",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "2815D339-35C4-4F7C-B559-FF223907795E": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        }
-      }
-    },
-    "2EA77D7E-431C-4E84-9789-72AD89BC8D4E": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "fontFamily"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "437FDADC-33EF-4B77-89D0-0570B441C661",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "437FDADC-33EF-4B77-89D0-0570B441C661": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        }
-      }
-    },
-    "A97E0911-E3E0-4173-A597-97F2DD39A483": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "active"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "updateButtonStyle"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "E5CE17A2-3E95-4291-A729-628B74B575F8",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "E5CE17A2-3E95-4291-A729-628B74B575F8": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        }
-      }
-    },
-    "905B86F3-38A9-49B4-B11F-9CA5BC91E124": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "activeStyle"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "updateButtonStyle"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "53911BD5-70F3-4B03-95F8-2E33762DFFE5",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "53911BD5-70F3-4B03-95F8-2E33762DFFE5": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        }
-      }
-    },
-    "CC39573D-77A2-4491-B423-EFBB9C5A684B": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "inactiveStyle"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "updateButtonStyle"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "2E8940E2-AAB4-4895-ADBC-33C03E9599B7",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "2E8940E2-AAB4-4895-ADBC-33C03E9599B7": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        }
-      }
-    },
-    "DE9CF782-AD5E-46E4-A488-8B40C93C0B11": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "fire"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_351CCCD9_9982_40BE_AB66_3C596BF2E17C",
-            "rev": 35647
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "interactivelyRemovePart"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "B6C466B7-6A67-481D-8C9B-0B6AEF166B5E",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "B6C466B7-6A67-481D-8C9B-0B6AEF166B5E": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_F1A69F60_5B39_430B_A32E_F7FC7E92E140",
-            "rev": 8400
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_351CCCD9_9982_40BE_AB66_3C596BF2E17C",
-            "rev": 35647
-          }
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(161,161,161)"
         }
       }
     }
@@ -1459,9 +1463,9 @@
     "local://lively-object-modules/": {
       "38C79579-61C1-46DE-A025-FF870C3DA84F": {
         "package.json": "{\n  \"name\": \"38C79579-61C1-46DE-A025-FF870C3DA84F\",\n  \"version\": \"0.1.0\"\n}",
-        "index.js": "import { Morph, Icon, HTMLMorph } from \"lively.morphic\";\nimport { Color, pt } from \"lively.graphics/index.js\";\nimport { connect, disconnect } from \"lively.bindings/index.js\";\nimport { resource } from \"lively.resources/index.js\";\nimport { loadObjectFromSnapshot } from \"lively.morphic/partsbin.js\";\n\nexport default class Part_dash_item_dash_for_dash_partsbin extends Morph {\n\n  reset() {\n    connect(this.get(\"remove-button\"), 'fire', this, 'interactivelyRemovePart');\n  }\n\n  async showPart(partResource) {\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/star.json\")\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/button.json\")\n    // await this.showPart()\n    var partName = partResource.name().replace(/\\.json$/, \"\");\n    var snapshot = JSON.parse(await partResource.read());\n    this.state = {partName, partResource, snapshot};\n    this.addPreviewMorph();\n  }\n\n  addPreviewMorph() {\n    var {partName, snapshot} = this.state;\n\n    var margin = 10,\n        previewWidth = 100+2*margin,\n        previewHeight = 100+2*margin,\n        {x: w, y: h} = this.extent,\n        borderWidth = 1,\n        previewHTML = `<div style=\"width: 100%;\">`\n                    + `<div style=\"position: absolute; top: ${margin}px;`\n                    + `            left: ${margin + (w-previewWidth) / 2}px\">`\n                    + snapshot.preview\n                    + `</div>`\n                    + `<div style=\"background-color: rgba(255,255,255, 0.8); `\n                    + `            font-family: Arial; position: absolute; `\n                    + `            left: ${borderWidth}px;`\n                    + `            width: ${w - 2*borderWidth}px;`\n                    + `            bottom: 3px\"><center>${partName}</center></div>`\n                    + `</div>`,\n      previewSpec = {\n        name: \"html-preview\",\n        fill: null,\n        reactsToPointer: false,\n        html: previewHTML,\n        extent: pt(w, h),\n        // border: {width: 1, color: Color.gray, radius: 5},\n        nativeCursor: \"-webkit-grab\"\n      };\n\n    var preview = this.getSubmorphNamed(\"html-preview\") || this.addMorph(new HTMLMorph());\n    Object.assign(preview, previewSpec);\n\n    preview.domNode.style.pointerEvents = \"none\";\n    // disconnect(preview, 'onDragStart', this, 'createAndGrabNewInstance',\n    //   {converter: function() { return this.sourceObj; }});\n    return preview;\n  }\n\n  onDragStart(evt) {\n    this.createAndGrabNewInstance();\n  }\n  \n  async createAndGrabNewInstance() {\n    // FIXME\n    var hand = this.world().firstHand;\n    this.draggable = false;\n    this.env.eventDispatcher.eventState.draggedMorph = null;\n    try {\n      var {snapshot} = this.state;\n      var newMorph = await loadObjectFromSnapshot(snapshot)\n      hand.grab(newMorph);\n      newMorph.position = pt(0,0);\n    } catch (e) {\n      this.showError(e)\n    } finally {\n      this.draggable = true;\n    }\n  }\n\n  async interactivelyRemovePart() {\n    var {partName, partResource} = this.state;\n    var really = await this.world().confirm(`Do you really want to remove part ${partName}?`);\n    if (!really) return;\n    await partResource.remove();\n    if (this.owner.isPartsBin) { this.remove(); }\n  }\n}\n\n"
+        "index.js": "import { Morph, Icon, HTMLMorph } from \"lively.morphic\";\nimport { Color, pt } from \"lively.graphics/index.js\";\nimport { connect, once, disconnect } from \"lively.bindings/index.js\";\nimport { resource } from \"lively.resources/index.js\";\nimport { loadObjectFromSnapshot } from \"lively.morphic/partsbin.js\";\n\nexport default class Part_dash_item_dash_for_dash_partsbin extends Morph {\n\n  reset() {\n    connect(this.get(\"remove-button\"), 'fire', this, 'interactivelyRemovePart');\n  }\n\n  async showPart(partResource) {\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/star.json\")\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/button.json\")\n    // await this.showPart()\n    var partName = partResource.name().replace(/\\.json$/, \"\");\n    var snapshot = JSON.parse(await partResource.read());\n    this.state = {partName, partResource, snapshot};\n    this.addPreviewMorph();\n  }\n\n  addPreviewMorph() {\n    var {partName, snapshot} = this.state;\n\n    var margin = 10,\n        previewWidth = 100+2*margin,\n        previewHeight = 100+2*margin,\n        {x: w, y: h} = this.extent,\n        borderWidth = 1,\n        previewHTML = `<div style=\"width: 100%;\">`\n                    + `<div style=\"position: absolute; top: ${margin}px;`\n                    + `            left: ${margin + (w-previewWidth) / 2}px\">`\n                    + snapshot.preview\n                    + `</div>`,\n      previewSpec = {\n        name: \"html-preview\",\n        fill: null,\n        reactsToPointer: false,\n        html: previewHTML,\n        extent: pt(w, h),\n        // border: {width: 1, color: Color.gray, radius: 5},\n        nativeCursor: \"-webkit-grab\"\n      };\n\n    var preview = this.getSubmorphNamed(\"html-preview\") || this.addMorph(new HTMLMorph());\n    this.addMorph({\n        bottomCenter: preview.bottomCenter,\n        type: 'label', fontSize: 15,\n        value: partName\n    })\n    Object.assign(preview, previewSpec);\n\n    preview.domNode.style.pointerEvents = \"none\";\n    // disconnect(preview, 'onDragStart', this, 'createAndGrabNewInstance',\n    //   {converter: function() { return this.sourceObj; }});\n    return preview;\n  }\n\n  onDragStart(evt) {\n    this.createAndGrabNewInstance();\n  }\n  \n  async createAndGrabNewInstance() {\n    // FIXME\n    var hand = this.world().firstHand;\n    this.draggable = false;\n    this.env.eventDispatcher.eventState.draggedMorph = null;\n    try {\n      var {snapshot} = this.state;\n      var preview = this.get('html-preview'),\n          newMorph = preview.copy(),\n          positionInHand = hand.localize(preview.globalPosition);\n      hand.grab(newMorph);\n      newMorph.dropShadow = false;\n      newMorph.origin = newMorph.extent.scaleBy(.5);\n      newMorph.topLeft = positionInHand;\n      var previewDiv = preview.domNode.childNodes[0].childNodes[0].childNodes[0],\n          scale = 1 / (previewDiv.getBoundingClientRect().width / previewDiv.offsetWidth)\n      newMorph.animate({scale, duration: 400});\n      newMorph.loadPart = async () => {\n         //newMorph.addMorph({}) // add css loading indicator\n         var part = await loadObjectFromSnapshot(snapshot);\n         newMorph.owner.addMorph(part)\n         part.center = newMorph.center;\n         newMorph.remove();\n      };\n      once(newMorph, 'remove', newMorph, 'loadPart');\n    } catch (e) {\n      this.showError(e)\n    } finally {\n      this.draggable = true;\n    }\n  }\n\n  async interactivelyRemovePart() {\n    var {partName, partResource} = this.state;\n    var really = await this.world().confirm(`Do you really want to remove part ${partName}?`);\n    if (!really) return;\n    await partResource.remove();\n    if (this.owner.isPartsBin) { this.remove(); }\n  }\n}\n\n"
       }
     }
   },
-  "preview": "<div   draggable=\"false\" style=\"background: rgb(253, 254, 254); transform: translate(0px, 5.57075px) rotate(0deg) scale(0.683527, 0.683527); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 1px; border-color: rgb(189, 195, 199); border-radius: 4px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: -webkit-grab;\"><div style=\"position: absolute; width: 100%; height: 100%; \"><div style=\"width: 100%;\"><div style=\"position: absolute; top: 10px;            left: 23.150000000000006px\"><div draggable=\"false\" style=\"background: rgb(76, 223, 46); transform: translate(0px, 0px) rotate(0deg) scale(2, 2); transform-origin: 0px 0px 0px; display: inline; width: 50px; height: 50px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(45px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(45px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(45px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(45px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(45px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(45px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(45px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(45px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(45px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(45px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(40px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(40px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(40px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(40px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(40px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(40px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(40px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(40px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(40px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(40px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(35px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(35px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(35px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(35px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(35px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(35px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(35px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(35px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(35px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(35px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(30px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(30px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(30px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(30px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(30px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(30px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(30px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(30px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(30px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(30px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(25px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(25px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(25px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(25px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(25px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(25px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(25px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(25px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(25px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(25px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(20px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(20px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(20px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(20px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(20px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(20px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(20px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(20px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(20px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(20px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(15px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(15px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(15px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(15px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(15px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(15px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(15px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(15px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(15px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(15px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(10px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(10px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(10px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(10px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(10px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(10px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(10px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(10px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(10px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(10px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(5px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(5px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(5px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(5px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(5px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(5px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(5px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(5px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(5px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(5px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(0px, 45px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(0px, 40px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(0px, 35px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(0px, 30px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(0px, 25px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(0px, 20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(0px, 15px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(0px, 10px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(0px, 5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div draggable=\"false\" style=\"background: rgb(0, 0, 0); transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 5px; height: 5px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div><div style=\"background-color: rgba(255,255,255, 0.8);             font-family: Arial; position: absolute;             left: 1px;            width: 144.3px;            bottom: 3px\"><center>game-of-life</center></div></div></div><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div   draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(107.7px, 7px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 28px; height: 28px; border-style: solid; border-width: 1px; border-color: rgb(230, 230, 230); border-radius: 5px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"transform: translate3d(9.28px, 8px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer; font-family: sans-serif; font-size: 12px; color: rgb(64, 64, 64); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div>"
+  "preview": "<div   draggable=\"false\" style=\"background: rgb(253, 254, 254); transform: translate(0px, 5.57075px) rotate(0deg) scale(0.683527, 0.683527); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 1px; border-color: rgb(189, 195, 199); border-radius: 4px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: -webkit-grab;\"><div style=\"position: absolute; width: 100%; height: 100%; \"><div style=\"width: 100%;\"><div style=\"position: absolute; top: 10px;            left: 23.150000000000006px\"><div draggable=\"false\" style=\"background-image: linear-gradient(rgb(242, 243, 244) 0%, rgb(215, 219, 221) 100%); transform: translate(16.4216px, 0px) rotate(0deg) scale(0.245098, 0.245098); transform-origin: 0px 0px 0px; display: inline; width: 274px; height: 408px; border-style: solid; border-width: 1px; border-color: rgb(215, 219, 221); border-radius: 9px; box-shadow: rgba(102, 102, 102, 0.517647) 6.36396px 6.36396px 22px; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(9px, 9px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 256px; height: 23px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div style=\" position: absolute; left: 44.0312px; top: 3px; width: 3px; height: 14px; background-color: black; z-index: 5; display: none;\"></div><div style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 14px; padding: 3px 11px 6px 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 14px; line-height: 14px;\"><span style=\"font-size: 12px; font-family: sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">Search</span></div><div style=\"height: 0px; width: 38.0312px;\"></div></div></div><div draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(9px, 41px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 256px; height: 358px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: auto;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div><div style=\"background-color: rgba(255,255,255, 0.8);             font-family: Arial; position: absolute;             left: 1px;            width: 144.3px;            bottom: 3px\"><center>IconPicker</center></div></div></div><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div   draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(107.7px, 7px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 28px; height: 28px; border-style: solid; border-width: 1px; border-color: rgb(230, 230, 230); border-radius: 5px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"transform: translate3d(9.28px, 8px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer; font-family: sans-serif; font-size: 12px; color: rgb(64, 64, 64); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div>"
 }
