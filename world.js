@@ -770,7 +770,7 @@ export class World extends Morph {
         addHalo = (!evt.halo || removeHalo) && haloTarget;
     if (removeLayoutHalo) evt.layoutHalo.remove();
     if (removeHalo) evt.halo.remove();
-    if (addHalo) { this.showHaloFor(haloTarget, evt.domEvt.pointerId); return; }
+    if (addHalo) { evt.stop(); this.showHaloFor(haloTarget, evt.domEvt.pointerId); return; }
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     if (evt.state.menu) evt.state.menu.remove();
@@ -779,6 +779,7 @@ export class World extends Morph {
   }
 
   onMouseUp(evt) {
+    if (evt.isCommandKey() || evt.isShiftDown()) evt.stop();
     if (evt.isAltDown() && config.altClickDefinesThat) {
       var target = this.morphsContainingPoint(evt.position)[0];
       // FIXME currently delayed to overwrite that in old morphic
