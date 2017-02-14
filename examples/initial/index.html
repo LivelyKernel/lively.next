@@ -7,27 +7,29 @@
     <script src="/lively.modules/node_modules/babel-standalone/babel.js"></script>
     <script src="/lively.modules/node_modules/systemjs/dist/system.src.js"></script>
     <script src="/lively.modules/dist/lively.modules.js"></script>
-    <div id="lively-world"> 
-    <div id="loading indicator" style="
-         position: absolute;
-         left: 0; right: 0; top: 0; bottom: 0;
-         width: 200px; height: 180px;
-         margin: auto;
-         color: #ff7700;
-         font-family: Helvetica Neue, Arial, sans-serif;
-         font-size: 30pt; border-radius: 10px;
-         padding: 10px; background: #666">
-           <center><b>Loading</b></center>
-           <div style="
-             background-image: url(/lively.morphic/lively-web-logo-small-animate.svg);
-             background-size: cover;
-             height: 100%;
-             margin-left: 50px;
-             margin-top: 20px;
-           "></div>
-         </div>
+
+    <div id="preview"> 
+      <div id="loading indicator" style="
+           position: absolute;
+           left: 0; right: 0; top: 0; bottom: 0;
+           width: 320px; height: 180px;
+           margin: auto;
+           color: #ff7700;
+           font-family: Helvetica Neue, Arial, sans-serif;
+           font-size: 30pt; border-radius: 10px;
+           padding: 10px; background: #666">
+             <center><b>Loading</b></center>
+             <div style="
+               background-image: url(/lively.morphic/lively-web-logo-small-animate.svg);
+               background-size: cover;
+               height: 100%;
+               margin-left: 110px;
+               margin-top: 20px;
+             "></div>
+           </div>
+      </div>
     </div>
-    </div>
+
     <script>
       var origin = document.location.origin;
       Promise.resolve()
@@ -35,15 +37,18 @@
         .then(bootstrapLivelySystem)
         .then(function() { console.log("3. loading lively.morphic"); })
         .then(function () { return lively.modules.importPackage('.'); })
-        .then(function() { document.getElementById('lively-world').remove() })
-        .then(function() { console.log("... lively.morphic loaded"); })
-      .catch(function(err) {
-        if (err.originalErr) err = err.originalErr;
-        console.error(err);
-        var printed = err.message;
-        printed += err.stack.includes(err.message) ? err.stack.replace(err.message, "\n") : err.stack;
-        console.error(printed);
-      })
+        .then(function(startModule) {
+          document.getElementById('preview').remove();
+          return startModule.run();
+        })
+        .then(function() { console.log("...lively.morphic loaded"); })
+        .catch(function(err) {
+          if (err.originalErr) err = err.originalErr;
+          console.error(err);
+          var printed = err.message;
+          printed += err.stack.includes(err.message) ? err.stack.replace(err.message, "\n") : err.stack;
+          console.error(printed);
+        });
 
       function bootstrapLivelySystem() {
 
@@ -91,7 +96,7 @@
               function(m) { lively.modules = m; lively.modules.unwrapModuleLoad(); lively.modules.wrapModuleLoad(); })})
 
           .then(function() { return importPackageAndDo(origin + "/lively.2lively"); })
-          .then(function() { console.log("...lively.system bootstrapped!"); })
+          .then(function() { console.log("...lively.system bootstrapped!"); });
       }
 
       function importPackageAndDo(packageURL, doFunc) {
@@ -102,12 +107,12 @@
       }
       
       function polyfills() {
-        return Promise.all([
-          "PointerEvent" in window ?
-            null : lively.resources.loadViaScript(`${origin}/lively.morphic/node_modules/pepjs/dist/pep.js`),
-          "fetch" in window ?
-            null : lively.resources.loadViaScript(`//cdnjs.cloudflare.com/ajax/libs/fetch/1.0.0/fetch.js`)
-        ]);
+        var loads = [];
+        if (!("PointerEvent" in window))
+          loads.push(lively.resources.loadViaScript(`${origin}/lively.morphic/node_modules/pepjs/dist/pep.js`));
+        if (!("fetch" in window))
+          loads.push(lively.resources.loadViaScript(`//cdnjs.cloudflare.com/ajax/libs/fetch/1.0.0/fetch.js`));
+        return Promise.all(loads);
       }
     </script>
   </body>

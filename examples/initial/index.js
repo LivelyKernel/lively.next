@@ -1,4 +1,4 @@
-(async function setup() {
+export async function run() {
 
   var l2lClient = await setupLively2Lively();
   await setupLivelyShell({l2lClient})
@@ -13,7 +13,7 @@
 
   if (loadWorldFrom) loadWorld(loadWorldFrom)
   else createNewWorld();
-})();
+}
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
