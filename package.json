@@ -1,10 +1,9 @@
 {
-  "name": "lively.morphic-mirror",
+  "name": "lively.mirror",
   "version": "0.1.0",
-  
   "dependencies": {
     "virtual-dom": "^2.1.1"
-  }, 
+  },
   "systemjs": {
     "main": "index.js",
     "map": {

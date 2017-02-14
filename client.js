@@ -20,14 +20,14 @@ export default class Client {
     Object.keys(this.services).forEach(name =>
       l2lClient.addService(name,
         async (tracker, msg, ackFn) => this.services[name](tracker, msg, ackFn)));
-    debug && console.log(`[lively.morphic-mirror client] services installed`);
+    debug && console.log(`[lively.mirror client] services installed`);
   }
 
   static uninstallLively2LivelyServices(options = {}) {
     var {l2lClient} = options;
     l2lClient = l2lClient || L2LClient.default()
     Object.keys(this.services).forEach(name => l2lClient.removeService(name));
-    debug && console.log(`[lively.morphic-mirror client] services uninstalled`);
+    debug && console.log(`[lively.mirror client] services uninstalled`);
   }
 
   static invokeServices(selector, data, ackFn) {
@@ -38,8 +38,8 @@ export default class Client {
     if (this._services) return this._services;
     return this._services = {
 
-      "lively.morphic-mirror.install-l2l-channel": (_, {data: {masterId, id}}, ackFn) => {
-        debug && console.log(`[lively.morphic-mirror client] install l2l channel`);
+      "lively.mirror.install-l2l-channel": (_, {data: {masterId, id}}, ackFn) => {
+        debug && console.log(`[lively.mirror client] install l2l channel`);
         id = id || "__default__";
         var status = "OK"
         try {
@@ -58,8 +58,8 @@ export default class Client {
         if (typeof ackFn === "function") ackFn({status});
       },
     
-      "lively.morphic-mirror.render": (_, {data: {id, node}}, ackFn) => {
-        debug && console.log(`[lively.morphic-mirror client] rendering initial node`);
+      "lively.mirror.render": (_, {data: {id, node}}, ackFn) => {
+        debug && console.log(`[lively.mirror client] rendering initial node`);
         id = id || "__default__";
         var status = "OK"
         try {
@@ -73,8 +73,8 @@ export default class Client {
         if (typeof ackFn === "function") ackFn({status});
       },
     
-      "lively.morphic-mirror.render-patch": (_, {data: {id, patch}}, ackFn) => {
-        debug && console.log(`[lively.morphic-mirror client] rendering patch`);
+      "lively.mirror.render-patch": (_, {data: {id, patch}}, ackFn) => {
+        debug && console.log(`[lively.mirror client] rendering patch`);
         id = id || "__default__";
         var status = "OK"
         try {
@@ -88,8 +88,8 @@ export default class Client {
         if (typeof ackFn === "function") ackFn({status});
       },
     
-      "lively.morphic-mirror.disconnect": (_, {data: {id}}, ackFn) => {
-        debug && console.log(`[lively.morphic-mirror client] disconnect`);
+      "lively.mirror.disconnect": (_, {data: {id}}, ackFn) => {
+        debug && console.log(`[lively.mirror client] disconnect`);
         id = id || "__default__";
         var status = "OK"
         try {
@@ -177,7 +177,7 @@ export default class Client {
 
   patch(patch) {
     if (!this.initialized)
-      throw new Error("[lively.morphic-mirror client] trying to apply patch but client wasn't rendered yet");
+      throw new Error("[lively.mirror client] trying to apply patch but client wasn't rendered yet");
     applySerializedPatch(this.rootNode.childNodes[0], patch);
   }
 
@@ -191,14 +191,14 @@ export default class Client {
     var events = this.eventCollector.collectedEvents.slice();
     this.eventCollector.collectedEvents.length = 0;
 
-    this.channel.send("lively.morphic-mirror.process-client-events", {events})
-      .then(() => debug && console.log(`[lively.morphic-mirror client] ${events.length} events send`))
+    this.channel.send("lively.mirror.process-client-events", {events})
+      .then(() => debug && console.log(`[lively.mirror client] ${events.length} events send`))
       .catch(err => console.error(err))
       .then(() => this.eventSendInProgress = false);
 
     // var l2lClient = L2LClient.default();
-    // l2lClient.sendToAndWait(this.master, "lively.morphic-mirror.process-client-events", {events})
-    //   .then(() => debug && console.log(`[lively.morphic-mirror client] ${events.length} events send`))
+    // l2lClient.sendToAndWait(this.master, "lively.mirror.process-client-events", {events})
+    //   .then(() => debug && console.log(`[lively.mirror client] ${events.length} events send`))
     //   .catch(err => console.error(err))
     //   .then(() => this.eventSendInProgress = false);
   }

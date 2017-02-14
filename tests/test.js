@@ -10,7 +10,7 @@ import {
 
 import {
   serialize as serializePatch, patch as patchSerialized
-} from "lively.morphic-mirror/vdom-serialized-patch-browserified.js";
+} from "lively.mirror/vdom-serialized-patch-browserified.js";
 import { Morph, morph } from "lively.morphic";
 import { pt } from "lively.graphics";
 import Master from "../master.js";
@@ -40,15 +40,15 @@ describe("lively.mirror test", () => {
     it("creates client node", () => {
       expect(client.rootNode.innerHTML).match(/disconnected/);
       var node = serializedH("div.foo", {});
-      Client.invokeServices("lively.morphic-mirror.render", {id: client.id, node});
+      Client.invokeServices("lively.mirror.render", {id: client.id, node});
       expect(client.rootNode.innerHTML).match(/div class="foo"/);
     });
 
     it("updates client node", () => {
       var node = serializedH("div.foo");
-      Client.invokeServices("lively.morphic-mirror.render", {id: client.id, node});
+      Client.invokeServices("lively.mirror.render", {id: client.id, node});
       var patch = serializePatch(diff(h("div.foo"), h("div.foo.bar")));
-      Client.invokeServices("lively.morphic-mirror.render-patch", {id: client.id, patch});
+      Client.invokeServices("lively.mirror.render-patch", {id: client.id, patch});
       expect(client.rootNode.innerHTML).match(/div class="foo bar"/);
     });
 
@@ -77,7 +77,7 @@ describe("lively.mirror test", () => {
       await master.sendUpdate();
       expect(client.rootNode.innerHTML).match(/<h1>test<\/h1>/);
     });
-    
+
     it("mirrors and updates html morph", async () => {
       master.targetMorph.addMorph({type: "html", html: "<h1>test<\/h1>"});
       await master.sendUpdate();

@@ -14,19 +14,40 @@ function makeNodeSerializable(node) {
   var serializableNode = node,
       className = node.constructor.name;
 
-
   if (className === "CustomVNode") {
-    serializableNode = new VNode("DIV", {innerHTML: node.morph.html}, node.children, node.key, node.namespace)
-  } else if (className === "VirtualText") {
+    // serializes an html morph...
+    // currently we send over the entire HTML source...!
 
-  } else if (className === "VirtualNode") {
+    // serializableNode = new VNode("DIV", {innerHTML: node.morph.domNode.innerHTML, ...node.properties}, node.children, node.key, node.namespace)
+    // console.log(serializableNode)
+    var {morph, morphVtree} = node;
+    node = morphVtree || node.renderMorph();
+    var {properties, tagName, children, key, namespace} = node;
+    properties = obj.dissoc(properties, ["morph-after-render-hook", "animation"]);
+    children = children ? children.slice() : [];
+    serializableNode = new VNode(tagName, properties, children, key, namespace);
+    className = "VirtualNode";
 
-    var p = node.properties;
+    if (children[0]) {
+      var htmlNode = children[0],
+          {properties, tagName, children, key, namespace} = htmlNode;
+      serializableNode.children[0] = new VNode(tagName, {...properties}, children, key, namespace);
+      serializableNode.children[0].properties.innerHTML = morph.html;
+    }
+  }
+
+  if (className === "VirtualText") {
+    // sending over the entire text content
+  }
+  
+  if (className === "VirtualNode") {
+    // removing hooks as those can't be JSONified
+    var p = serializableNode.properties;
     if (p && (p.hasOwnProperty("animation") || p.hasOwnProperty("morph-after-render-hook"))) {
-      serializableNode = new VNode(node.tagName, obj.dissoc(p, ["morph-after-render-hook", "animation"]), node.children, node.key, node.namespace)
+      serializableNode = new VNode(serializableNode.tagName, obj.dissoc(p, ["morph-after-render-hook", "animation"]), serializableNode.children, serializableNode.key, serializableNode.namespace)
     }
 
-    if (node.children && node.children.length) {
+    if (serializableNode.children && serializableNode.children.length) {
       if (serializableNode === node) serializableNode = new VNode(node.tagName, node.properties, node.children, node.key, node.namespace);
       serializableNode.children = serializableNode.children.map(ea => makeNodeSerializable(ea));
     }
@@ -48,21 +69,21 @@ export default class Master {
     Object.keys(this.services).forEach(name =>
       l2lClient.addService(name,
         async (tracker, msg, ackFn) => this.services[name](tracker, msg, ackFn)));
-    debug && console.log(`[lively.morphic-mirror master] services installed`);
+    debug && console.log(`[lively.mirror master] services installed`);
   }
 
   static uninstallLively2LivelyServices(options = {}) {
     var {l2lClient} = options;
     l2lClient = l2lClient || L2LClient.default()
     Object.keys(this.services).forEach(name => l2lClient.removeService(name));
-    debug && console.log(`[lively.morphic-mirror master] services uninstalled`);
+    debug && console.log(`[lively.mirror master] services uninstalled`);
   }
 
   static get services() {
     if (this._services) return this._services;
     return this._services = {
-      "lively.morphic-mirror.process-client-events": (_, {data: {events, masterId}}, ackFn) => {
-        debug && console.log(`[lively.morphic-mirror master] receiving client events`);
+      "lively.mirror.process-client-events": (_, {data: {events, masterId}}, ackFn) => {
+        debug && console.log(`[lively.mirror master] receiving client events`);
         try {
           events.map(ea => {
             var targetId = ea.target;
@@ -100,19 +121,19 @@ export default class Master {
 
   async disconnect() {
     var id = this.clientId;
-    return this.channel.send("lively.morphic-mirror.disconnect", {id});
+    return this.channel.send("lively.mirror.disconnect", {id});
   }
 
   sendInitialView() {
     var node = this.prevVdomNode = makeNodeSerializable(renderMorph(this.targetMorph)),
         id = this.clientId;
-    return this.channel.send("lively.morphic-mirror.render", {node, id});
+    return this.channel.send("lively.mirror.render", {node, id});
   }
 
   sendViewPatch() {
     var patch = this.getVdomPatch(),
         id = this.clientId;
-    return this.channel.send("lively.morphic-mirror.render-patch", {patch, id});
+    return this.channel.send("lively.mirror.render-patch", {patch, id});
   }
 
   getVdomPatch() {
