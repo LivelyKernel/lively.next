@@ -145,7 +145,6 @@ export class ObjectEditor extends Morph {
 
         btnStyle = {
           type: "button",
-          fontSize: 10,
           activeStyle: {
             fill: Color.white,
             border: {color: Color.lightGray, style: "solid", radius: 5},
@@ -226,8 +225,7 @@ export class ObjectEditor extends Morph {
 
     connect(this.get("classTree"), "contextMenuRequested", this, "contextMenuForClassTree");
 
-    // this.build()
-    // this.refresh()
+    // this.build(); this.refresh();
   }
 
   isShowingImports() { return this.get("importsList").width > 10; }

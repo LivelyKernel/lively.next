@@ -2,6 +2,7 @@
 import { pt, Color, Rectangle } from "lively.graphics";
 import { Morph } from "lively.morphic";
 import { signal, disconnect, connect } from "lively.bindings";
+import { obj } from "lively.lang/index.js";
 
 // var b = new Button({label: "test", extent: pt(22,18)}).openInWorld()
 // b.scale = 10
@@ -61,20 +62,38 @@ export class Button extends Morph {
         after: ["labelMorph", "activeStyle", "inactiveStyle"],
         defaultValue: true
       },
+
       fontFamily: {
-        after: ["labelMorph"], derived: true,
+        after: ["active"],
+        derived: true,
         get() { return this.labelMorph.fontFamily; },
-        set(fontFamily) { this.labelMorph.fontFamily = fontFamily; }
+        set(fontFamily) {
+          var style = this.active ? this.activeStyle : this.inActiveStyle;
+          style.fontFamily = fontFamily;
+          this.labelMorph.fontFamily = fontFamily;
+        }
       },
+
       fontSize: {
-        after: ["labelMorph"], derived: true,
+        after: ["active"],
+        derived: true,
         get() { return this.labelMorph.fontSize; },
-        set(fontSize) { this.labelMorph.fontSize = fontSize; }
+        set(fontSize) {
+          var style = this.active ? this.activeStyle : this.inActiveStyle;
+          style.fontSize = fontSize;
+          this.labelMorph.fontSize = fontSize;
+        }
       },
+
       fontColor: {
-        after: ["labelMorph"], derived: true,
+        after: ["active"],
+        derived: true,
         get() { return this.labelMorph.fontColor; },
-        set(fontColor) { this.labelMorph.fontColor = fontColor; }
+        set(fontColor) {
+          var style = this.active ? this.activeStyle : this.inActiveStyle;
+          style.fontColor = fontColor;
+          this.labelMorph.fontColor = fontColor;
+        }
       },
 
       labelWithTextAttributes: {
@@ -94,9 +113,14 @@ export class Button extends Morph {
       },
       activeStyle: {
         after: ["labelMorph"],
-        initialize() { this.activeStyle = this.defaultActiveStyle; },
+        initialize() { this.activeStyle = obj.clone(this.defaultActiveStyle); },
         set(value) {
-          this.setProperty("activeStyle", {...this.defaultActiveStyle, ...value});
+        console.log(value)
+          this.setProperty("activeStyle", {
+            ...this.defaultActiveStyle,
+            ...obj.select(this, ["fontSize", "fontFamily", "fontColor"]),
+            ...value,
+          });
         }
       },
 
@@ -110,9 +134,13 @@ export class Button extends Morph {
       },
       inactiveStyle: {
         after: ["labelMorph"],
-        initialize() { this.inactiveStyle = this.defaultInactiveStyle; },
+        initialize() { this.inactiveStyle = obj.clone(this.defaultInactiveStyle); },
         set(value) {
-          this.setProperty("inactiveStyle", {...this.defaultInactiveStyle, ...value});
+          this.setProperty("inactiveStyle", {
+            ...this.defaultInactiveStyle,
+            ...obj.select(this, ["fontSize", "fontFamily", "fontColor"]),
+            ...value,
+          });
         }
       },
 
@@ -121,9 +149,13 @@ export class Button extends Morph {
       },
       triggerStyle: {
         after: ["labelMorph"],
-        initialize() { this.triggerStyle = this.defaultTriggerStyle; },
+        initialize() { this.triggerStyle = obj.clone(this.defaultTriggerStyle); },
         set(value) {
-          this.setProperty("triggerStyle", {...this.defaultTriggerStyle, ...value});
+          this.setProperty("triggerStyle", {
+            ...this.defaultTriggerStyle,
+            ...obj.select(this, ["fontSize", "fontFamily", "fontColor"]),
+            ...value,
+          });
         }
       }
 
