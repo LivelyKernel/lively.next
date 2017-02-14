@@ -1,0 +1,3284 @@
+{
+  "id": "Rectangle_B2F193B9_9053_42A5_97CC_173BDC5B4603",
+  "snapshot": {
+    "Rectangle_B2F193B9_9053_42A5_97CC_173BDC5B4603": {
+      "rev": 12484,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(278.3,105.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(253,254,254)"
+        },
+        "name": {
+          "key": "name",
+          "value": "mirror-controller"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,-2.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(145.3,422.5)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Rectangle",
+            "Morph",
+            "morph"
+          ]
+        },
+        "layout": {
+          "key": "layout",
+          "value": null
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+              "rev": 12360
+            },
+            {
+              "__ref__": true,
+              "id": "Text_0B92AB1E_1A51_4743_BD2A_C6E66CACA194",
+              "rev": 12396
+            },
+            {
+              "__ref__": true,
+              "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+              "rev": 12460
+            }
+          ]
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 30
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 30
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 30
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 30
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 2
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 2
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 2
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 2
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Rectangle",
+        "module": {
+          "package": {
+            "name": "AA1DACAC-8241-455B-9259-655D545ED7CE",
+            "version": null
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "Button_A341F4EA_FEBC_4113_A201_5775912591C1": {
+      "rev": 12360,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "F2B4F7AE-1E82-48BF-AA9C-A30154C61998",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "3FC7517A-4F9E-4BD8-850C-9EF3A5982B4D",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "8BC7F973-FD3D-42AE-B851-9F1F45544908",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "CD011FC9-5083-4A63-9F64-6129F277A8B2",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "D8E36DB7-D61E-4A8D-AEBA-2DBB9B63708E",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "E0867D5C-1484-49FE-B117-2AB9A5A54127",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "BC0C5263-7BC6-4824-846C-61DADC429CBF",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "1B624853-257D-4919-8020-8B04EE77E732",
+              "rev": 0
+            }
+          ]
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(99.3,28.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
+        },
+        "name": {
+          "key": "name",
+          "value": "connectButton"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(34.0,7.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Button",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Label_4A5814DA_6D32_4703_849A_7407905B80AB",
+              "rev": 12488
+            }
+          ]
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 15
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 15
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 15
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 15
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 1
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(4,2,0,0)"
+        },
+        "defaultActiveStyle": {
+          "key": "defaultActiveStyle",
+          "value": {
+            "__ref__": true,
+            "id": "6DA6B3D9-B625-4B15-8648-635C6DE33095",
+            "rev": 0
+          }
+        },
+        "activeStyle": {
+          "key": "activeStyle",
+          "value": {
+            "__ref__": true,
+            "id": "05EA0E9F-5430-4A9C-BDEA-E29A906F274F",
+            "rev": 0
+          }
+        },
+        "defaultInactiveStyle": {
+          "key": "defaultInactiveStyle",
+          "value": {
+            "__ref__": true,
+            "id": "4E9C9BC4-29E9-40A0-A96F-D788D7669447",
+            "rev": 0
+          }
+        },
+        "inactiveStyle": {
+          "key": "inactiveStyle",
+          "value": {
+            "__ref__": true,
+            "id": "1CA2F355-0BD0-4636-A9D7-A82FB74DCC40",
+            "rev": 0
+          }
+        },
+        "defaultTriggerStyle": {
+          "key": "defaultTriggerStyle",
+          "value": {
+            "__ref__": true,
+            "id": "6DDC41C9-8698-44A8-A8D8-087BFD92C02D",
+            "rev": 0
+          }
+        },
+        "triggerStyle": {
+          "key": "triggerStyle",
+          "value": {
+            "__ref__": true,
+            "id": "5CB529EF-ECD9-4E5C-97FE-5ADF104CD564",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Button",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "components/buttons.js"
+        }
+      }
+    },
+    "F2B4F7AE-1E82-48BF-AA9C-A30154C61998": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "extent"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "0F067E81-74BF-4862-8CA9-DD8A75CA5874",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "0F067E81-74BF-4862-8CA9-DD8A75CA5874": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        }
+      }
+    },
+    "3FC7517A-4F9E-4BD8-850C-9EF3A5982B4D": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "padding"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "63177C03-39F1-4FBF-A20C-0EBF114210AD",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "63177C03-39F1-4FBF-A20C-0EBF114210AD": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        }
+      }
+    },
+    "8BC7F973-FD3D-42AE-B851-9F1F45544908": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fontSize"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "365B7D59-13F5-405F-81A6-01977F70F547",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "365B7D59-13F5-405F-81A6-01977F70F547": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        }
+      }
+    },
+    "CD011FC9-5083-4A63-9F64-6129F277A8B2": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fontFamily"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "27CB1AED-9DA8-41E3-895D-D101804B3DDF",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "27CB1AED-9DA8-41E3-895D-D101804B3DDF": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        }
+      }
+    },
+    "D8E36DB7-D61E-4A8D-AEBA-2DBB9B63708E": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "active"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "updateButtonStyle"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "9C88EAC1-A5FB-47E5-82BD-D515B784AED6",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "9C88EAC1-A5FB-47E5-82BD-D515B784AED6": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        }
+      }
+    },
+    "E0867D5C-1484-49FE-B117-2AB9A5A54127": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "activeStyle"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "updateButtonStyle"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "AF6AC6A8-9E56-4327-879E-F1F418605B9E",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "AF6AC6A8-9E56-4327-879E-F1F418605B9E": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        }
+      }
+    },
+    "BC0C5263-7BC6-4824-846C-61DADC429CBF": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "inactiveStyle"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "updateButtonStyle"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "9264C785-C1C3-4152-BFA9-CFB4C347C5D2",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "9264C785-C1C3-4152-BFA9-CFB4C347C5D2": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        }
+      }
+    },
+    "1B624853-257D-4919-8020-8B04EE77E732": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fire"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Rectangle_B2F193B9_9053_42A5_97CC_173BDC5B4603",
+            "rev": 12484
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "interactivelyConnectToMirrorClient"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "D35DEE68-4A84-46AB-A2DA-C8D614AFBF66",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "D35DEE68-4A84-46AB-A2DA-C8D614AFBF66": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Rectangle_B2F193B9_9053_42A5_97CC_173BDC5B4603",
+            "rev": 12484
+          }
+        }
+      }
+    },
+    "Label_4A5814DA_6D32_4703_849A_7407905B80AB": {
+      "rev": 12488,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "440BCD0D-79ED-4726-BC74-3C4FC55FC00E",
+              "rev": 0
+            }
+          ]
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(52.0,14.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(255,255,255,0)"
+        },
+        "name": {
+          "key": "name",
+          "value": "label"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(23.6,7.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            [
+              "connect...",
+              {
+                "__ref__": true,
+                "id": "885DE1DA-B9A3-4EAE-BEE7-2EBE98E6B5A1",
+                "rev": 0
+              }
+            ]
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Label",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/label.js"
+        }
+      }
+    },
+    "440BCD0D-79ED-4726-BC74-3C4FC55FC00E": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Label_4A5814DA_6D32_4703_849A_7407905B80AB",
+            "rev": 12488
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "extent"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "78E35095-4B27-4AA8-B097-AD63C2A85A4B",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "78E35095-4B27-4AA8-B097-AD63C2A85A4B": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Label_4A5814DA_6D32_4703_849A_7407905B80AB",
+            "rev": 12488
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_A341F4EA_FEBC_4113_A201_5775912591C1",
+            "rev": 12360
+          }
+        }
+      }
+    },
+    "885DE1DA-B9A3-4EAE-BEE7-2EBE98E6B5A1": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        }
+      }
+    },
+    "6DA6B3D9-B625-4B15-8648-635C6DE33095": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        }
+      }
+    },
+    "05EA0E9F-5430-4A9C-BDEA-E29A906F274F": {
+      "rev": 0,
+      "props": {
+        "fontSize": {
+          "key": "fontSize",
+          "value": 12
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        }
+      }
+    },
+    "4E9C9BC4-29E9-40A0-A96F-D788D7669447": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(204,204,204,0.5)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(240,240,240,0.5)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(64,64,64,0.5)"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "not-allowed"
+        }
+      }
+    },
+    "1CA2F355-0BD0-4636-A9D7-A82FB74DCC40": {
+      "rev": 0,
+      "props": {
+        "fontSize": {
+          "key": "fontSize",
+          "value": 12
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(64,64,64,0.5)"
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(204,204,204,0.5)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(240,240,240,0.5)"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "not-allowed"
+        }
+      }
+    },
+    "6DDC41C9-8698-44A8-A8D8-087BFD92C02D": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(161,161,161)"
+        }
+      }
+    },
+    "5CB529EF-ECD9-4E5C-97FE-5ADF104CD564": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(161,161,161)"
+        }
+      }
+    },
+    "Text_0B92AB1E_1A51_4743_BD2A_C6E66CACA194": {
+      "rev": 12396,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "clipMode": {
+          "key": "clipMode",
+          "value": "hidden"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(255.0,48.0)"
+        },
+        "name": {
+          "key": "name",
+          "value": "statusLabel"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(8.0,42.0)"
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Text",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 3
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 3
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 3
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 3
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 1
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
+        },
+        "fixedWidth": {
+          "key": "fixedWidth",
+          "value": true
+        },
+        "fixedHeight": {
+          "key": "fixedHeight",
+          "value": true
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,8,0,0)"
+        },
+        "selection": {
+          "key": "selection",
+          "value": {
+            "__ref__": true,
+            "id": "0EE84A13-DBE7-44BB-A567-C05ECB8B43DA",
+            "rev": 0
+          }
+        },
+        "defaultTextStyle": {
+          "key": "defaultTextStyle",
+          "value": {
+            "__ref__": true,
+            "id": "2763B73A-24F7-470B-816D-D0AC17C524EA",
+            "rev": 0
+          }
+        },
+        "lineWrapping": {
+          "key": "lineWrapping",
+          "value": true
+        },
+        "anchors": {
+          "key": "anchors",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "255800B8-1C80-429F-8A44-59A35DF98FFD",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "09E6A209-2360-49D1-AF52-CA18A88CE2B1",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "60DC3BF6-C47E-4E6A-A177-08D916E5D584",
+              "rev": 0
+            }
+          ]
+        },
+        "savedMarks": {
+          "key": "savedMarks",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "60DC3BF6-C47E-4E6A-A177-08D916E5D584",
+              "rev": 0
+            }
+          ]
+        },
+        "plugins": {
+          "key": "plugins",
+          "value": []
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "verbatim": true,
+          "value": [
+            [
+              "disconnected",
+              [
+                {
+                  "fontFamily": "Sans-Serif",
+                  "fontSize": 12,
+                  "fontColor": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  },
+                  "fontWeight": "normal",
+                  "fontStyle": "normal",
+                  "textDecoration": "none",
+                  "fixedCharacterSpacing": false,
+                  "_rev": 0
+                },
+                {
+                  "fontFamily": "Sans-Serif",
+                  "fontSize": 12,
+                  "fontColor": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  },
+                  "fontWeight": "normal",
+                  "fontStyle": "normal",
+                  "textDecoration": "none",
+                  "fixedCharacterSpacing": false,
+                  "_rev": 0
+                },
+                {
+                  "fontFamily": "Sans-Serif",
+                  "fontSize": 12,
+                  "fontColor": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  },
+                  "fontWeight": "normal",
+                  "fontStyle": "normal",
+                  "textDecoration": "none",
+                  "fixedCharacterSpacing": false,
+                  "_rev": 0
+                }
+              ]
+            ],
+            [
+              "",
+              []
+            ]
+          ]
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Text",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/morph.js"
+        }
+      }
+    },
+    "0EE84A13-DBE7-44BB-A567-C05ECB8B43DA": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "textMorph": {
+          "key": "textMorph",
+          "value": {
+            "__ref__": true,
+            "id": "Text_0B92AB1E_1A51_4743_BD2A_C6E66CACA194",
+            "rev": 12396
+          }
+        },
+        "selections": {
+          "key": "selections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "2D88EDA3-82C4-4E07-9165-F44EC6F64C73",
+              "rev": 0
+            }
+          ]
+        },
+        "cursorBlinkProcess": {
+          "key": "cursorBlinkProcess",
+          "value": null
+        },
+        "_cursorVisible": {
+          "key": "_cursorVisible",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "MultiSelection",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/selection.js"
+        }
+      }
+    },
+    "2D88EDA3-82C4-4E07-9165-F44EC6F64C73": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "textMorph": {
+          "key": "textMorph",
+          "value": {
+            "__ref__": true,
+            "id": "Text_0B92AB1E_1A51_4743_BD2A_C6E66CACA194",
+            "rev": 12396
+          }
+        },
+        "_goalColumn": {
+          "key": "_goalColumn",
+          "value": 12
+        },
+        "_isReverse": {
+          "key": "_isReverse",
+          "value": false
+        },
+        "startAnchor": {
+          "key": "startAnchor",
+          "value": {
+            "__ref__": true,
+            "id": "255800B8-1C80-429F-8A44-59A35DF98FFD",
+            "rev": 0
+          }
+        },
+        "endAnchor": {
+          "key": "endAnchor",
+          "value": {
+            "__ref__": true,
+            "id": "09E6A209-2360-49D1-AF52-CA18A88CE2B1",
+            "rev": 0
+          }
+        },
+        "_range": {
+          "key": "_range",
+          "value": {
+            "__ref__": true,
+            "id": "315179F4-6BF0-48B1-9904-44D72E30BB07",
+            "rev": 0
+          }
+        },
+        "_cursorVisible": {
+          "key": "_cursorVisible",
+          "value": true
+        },
+        "cursorBlinkProcess": {
+          "key": "cursorBlinkProcess",
+          "value": null
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Selection",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/selection.js"
+        }
+      }
+    },
+    "255800B8-1C80-429F-8A44-59A35DF98FFD": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "id": {
+          "key": "id",
+          "value": null
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "4A4DCFA0-64DD-4189-A9C9-B777D3675B2A",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "4A4DCFA0-64DD-4189-A9C9-B777D3675B2A": {
+      "rev": 0,
+      "props": {
+        "column": {
+          "key": "column",
+          "value": 36
+        },
+        "row": {
+          "key": "row",
+          "value": 0
+        }
+      }
+    },
+    "09E6A209-2360-49D1-AF52-CA18A88CE2B1": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "id": {
+          "key": "id",
+          "value": null
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "C2AC17BD-7369-4C3C-BC74-7DEBA4667844",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "C2AC17BD-7369-4C3C-BC74-7DEBA4667844": {
+      "rev": 0,
+      "props": {
+        "column": {
+          "key": "column",
+          "value": 36
+        },
+        "row": {
+          "key": "row",
+          "value": 0
+        }
+      }
+    },
+    "315179F4-6BF0-48B1-9904-44D72E30BB07": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "start": {
+          "key": "start",
+          "value": {
+            "__ref__": true,
+            "id": "1D5265DE-45C8-4EAD-8B26-CF6267BEB439",
+            "rev": 0
+          }
+        },
+        "end": {
+          "key": "end",
+          "value": {
+            "__ref__": true,
+            "id": "417FE6A6-0E3A-4A76-98ED-C3EA3E9326C0",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Range",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/range.js"
+        }
+      }
+    },
+    "1D5265DE-45C8-4EAD-8B26-CF6267BEB439": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "row": {
+          "key": "row",
+          "value": 0
+        },
+        "column": {
+          "key": "column",
+          "value": 12
+        }
+      }
+    },
+    "417FE6A6-0E3A-4A76-98ED-C3EA3E9326C0": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "row": {
+          "key": "row",
+          "value": 0
+        },
+        "column": {
+          "key": "column",
+          "value": 12
+        }
+      }
+    },
+    "2763B73A-24F7-470B-816D-D0AC17C524EA": {
+      "rev": 0,
+      "props": {
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 12
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
+        },
+        "backgroundColor": {
+          "key": "backgroundColor"
+        },
+        "fixedCharacterSpacing": {
+          "key": "fixedCharacterSpacing",
+          "value": false
+        },
+        "textStyleClasses": {
+          "key": "textStyleClasses"
+        },
+        "link": {
+          "key": "link"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor"
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        }
+      }
+    },
+    "60DC3BF6-C47E-4E6A-A177-08D916E5D584": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "id": {
+          "key": "id",
+          "value": null
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "24B3B2B4-83C4-4B0E-968B-D0670A87F86C",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "24B3B2B4-83C4-4B0E-968B-D0670A87F86C": {
+      "rev": 0,
+      "props": {
+        "column": {
+          "key": "column",
+          "value": 48
+        },
+        "row": {
+          "key": "row",
+          "value": 0
+        }
+      }
+    },
+    "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882": {
+      "rev": 12460,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "509982BC-C9FA-4F96-B091-0B9F7E12121A",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "BF955FAC-26D8-4B59-9036-525546416581",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "FBA056F2-DE20-4AFB-A882-544D8AFD1664",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "1EFE8D9F-F5B9-4C0B-A615-9A49BA43C083",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "68999526-3DE1-4C7A-8C0C-F845450BBDDF",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "652D9746-33F8-40B8-AE50-66C6DF78A062",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "7AAB64FD-EF72-40F0-9938-93481793CD17",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "FF26CE15-1B7D-4537-924F-2180DCDA3ACF",
+              "rev": 0
+            }
+          ]
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(102.3,28.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
+        },
+        "name": {
+          "key": "name",
+          "value": "openClientButton"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.0,8.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Button",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Label_541B0C37_6CEB_4CC2_8CDB_2273BFDE01DD",
+              "rev": 12491
+            }
+          ]
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 15
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 15
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 15
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 15
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 1
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(4,2,0,0)"
+        },
+        "defaultActiveStyle": {
+          "key": "defaultActiveStyle",
+          "value": {
+            "__ref__": true,
+            "id": "AEE7F2DA-802C-40B8-A511-3BD1640F0F53",
+            "rev": 0
+          }
+        },
+        "activeStyle": {
+          "key": "activeStyle",
+          "value": {
+            "__ref__": true,
+            "id": "160363C5-8EEF-4056-8C2E-52E7AD9E680E",
+            "rev": 0
+          }
+        },
+        "defaultInactiveStyle": {
+          "key": "defaultInactiveStyle",
+          "value": {
+            "__ref__": true,
+            "id": "89BF8C68-8839-41DA-9968-86A6FAFFFC94",
+            "rev": 0
+          }
+        },
+        "inactiveStyle": {
+          "key": "inactiveStyle",
+          "value": {
+            "__ref__": true,
+            "id": "19206382-F35D-4741-BFD3-F9702C9D304F",
+            "rev": 0
+          }
+        },
+        "defaultTriggerStyle": {
+          "key": "defaultTriggerStyle",
+          "value": {
+            "__ref__": true,
+            "id": "B8BF166B-3DAA-4773-8C41-64885093EF5A",
+            "rev": 0
+          }
+        },
+        "triggerStyle": {
+          "key": "triggerStyle",
+          "value": {
+            "__ref__": true,
+            "id": "28D93674-0F8F-43B3-8124-F576A7E5C094",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Button",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "components/buttons.js"
+        }
+      }
+    },
+    "509982BC-C9FA-4F96-B091-0B9F7E12121A": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "extent"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "4E1AA21C-B448-4EE2-8960-7D0A95BEADA8",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "4E1AA21C-B448-4EE2-8960-7D0A95BEADA8": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        }
+      }
+    },
+    "BF955FAC-26D8-4B59-9036-525546416581": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "padding"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "17B80EA7-1FDC-42AC-B583-8CC326A54CB4",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "17B80EA7-1FDC-42AC-B583-8CC326A54CB4": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        }
+      }
+    },
+    "FBA056F2-DE20-4AFB-A882-544D8AFD1664": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fontSize"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "C6BFE2B5-B1FE-4406-BB85-10A50A824335",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "C6BFE2B5-B1FE-4406-BB85-10A50A824335": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        }
+      }
+    },
+    "1EFE8D9F-F5B9-4C0B-A615-9A49BA43C083": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fontFamily"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "1B74BC14-7541-48CC-BAE0-E25AC8184A36",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "1B74BC14-7541-48CC-BAE0-E25AC8184A36": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        }
+      }
+    },
+    "68999526-3DE1-4C7A-8C0C-F845450BBDDF": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "active"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "updateButtonStyle"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "39F65872-55CC-4D8A-809D-C9C6F93F0CFA",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "39F65872-55CC-4D8A-809D-C9C6F93F0CFA": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        }
+      }
+    },
+    "652D9746-33F8-40B8-AE50-66C6DF78A062": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "activeStyle"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "updateButtonStyle"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "F1275FA6-BEC7-44AF-8F70-387AF6C2DE1E",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "F1275FA6-BEC7-44AF-8F70-387AF6C2DE1E": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        }
+      }
+    },
+    "7AAB64FD-EF72-40F0-9938-93481793CD17": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "inactiveStyle"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "updateButtonStyle"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "C293AC5D-5B48-48BE-9AD5-F44C423CDD98",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "C293AC5D-5B48-48BE-9AD5-F44C423CDD98": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        }
+      }
+    },
+    "FF26CE15-1B7D-4537-924F-2180DCDA3ACF": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fire"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Rectangle_B2F193B9_9053_42A5_97CC_173BDC5B4603",
+            "rev": 12484
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "openClientBrowserWindow"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "04DC0AD6-10A9-4455-9E00-D408D862D2D2",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "04DC0AD6-10A9-4455-9E00-D408D862D2D2": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Rectangle_B2F193B9_9053_42A5_97CC_173BDC5B4603",
+            "rev": 12484
+          }
+        }
+      }
+    },
+    "Label_541B0C37_6CEB_4CC2_8CDB_2273BFDE01DD": {
+      "rev": 12491,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "2E3594B0-AFE0-47DC-8821-E37DCD74A20C",
+              "rev": 0
+            }
+          ]
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(58.0,14.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(255,255,255,0)"
+        },
+        "name": {
+          "key": "name",
+          "value": "label"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(22.1,7.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            [
+              "open client",
+              {
+                "__ref__": true,
+                "id": "AF052577-B685-4784-893B-AD603212D8D2",
+                "rev": 0
+              }
+            ]
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Label",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/label.js"
+        }
+      }
+    },
+    "2E3594B0-AFE0-47DC-8821-E37DCD74A20C": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Label_541B0C37_6CEB_4CC2_8CDB_2273BFDE01DD",
+            "rev": 12491
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "extent"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "DD9572AE-A3D8-41A0-B128-59709DFD6A5F",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "DD9572AE-A3D8-41A0-B128-59709DFD6A5F": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Label_541B0C37_6CEB_4CC2_8CDB_2273BFDE01DD",
+            "rev": 12491
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Button_4F4FCB8A_FC3C_406C_A0BB_9ED620DDE882",
+            "rev": 12460
+          }
+        }
+      }
+    },
+    "AF052577-B685-4784-893B-AD603212D8D2": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        }
+      }
+    },
+    "AEE7F2DA-802C-40B8-A511-3BD1640F0F53": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        }
+      }
+    },
+    "160363C5-8EEF-4056-8C2E-52E7AD9E680E": {
+      "rev": 0,
+      "props": {
+        "fontSize": {
+          "key": "fontSize",
+          "value": 12
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        }
+      }
+    },
+    "89BF8C68-8839-41DA-9968-86A6FAFFFC94": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(204,204,204,0.5)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(240,240,240,0.5)"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(64,64,64,0.5)"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "not-allowed"
+        }
+      }
+    },
+    "19206382-F35D-4741-BFD3-F9702C9D304F": {
+      "rev": 0,
+      "props": {
+        "fontSize": {
+          "key": "fontSize",
+          "value": 12
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(64,64,64,0.5)"
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(204,204,204,0.5)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(240,240,240,0.5)"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "not-allowed"
+        }
+      }
+    },
+    "B8BF166B-3DAA-4773-8C41-64885093EF5A": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(161,161,161)"
+        }
+      }
+    },
+    "28D93674-0F8F-43B3-8124-F576A7E5C094": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(161,161,161)"
+        }
+      }
+    }
+  },
+  "packages": {
+    "local://lively-object-modules/": {
+      "AA1DACAC-8241-455B-9259-655D545ED7CE": {
+        "package.json": "{\n  \"name\": \"AA1DACAC-8241-455B-9259-655D545ED7CE\",\n  \"version\": \"0.1.0\"\n}",
+        "index.js": "import { Morph } from \"lively.morphic\";\nimport Master from \"lively.mirror/master.js\";\nimport L2LClient from \"lively.2lively/client.js\";\nimport { connect, disconnect } from \"lively.bindings/index.js\";\nimport { promise } from \"lively.lang/index.js\";\n\nexport default class Rectangle extends Morph {\n\n  async reset() {\n    this.stopStepping();\n    if (this.mirrorMaster) {\n      try {\n        await this.mirrorMaster.disconnect()\n      } catch (e) { $world.logError(e); }\n    }\n    this.mirrorMaster = null;\n    this.get(\"statusLabel\").textString = \"disconnected\";\n    this.get(\"openClientButton\").label = \"open client\";\n    this.get(\"connectButton\").label = \"connect...\";\n    disconnect(this.get(\"connectButton\"), 'fire', this, 'reset');\n    connect(this.get(\"connectButton\"), 'fire', this, 'interactivelyConnectToMirrorClient');\n    connect(this.get(\"openClientButton\"), 'fire', this, 'openClientBrowserWindow');\n  }\n\n  async interactivelyConnectToMirrorClient() {\n    // await l2lClient.register()\n\n    if (this.mirrorMaster) await this.reset();\n\n    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n    // 1. select a l2l connection for the client\n    var clients = await this.findMirrorClients();\n    var {selected: [clientL2lId]} = await $world.listPrompt(\"select client id\", clients, {requester: this});\n\n    if (!clientL2lId) return this.reset();\n\n    // 2. initialize the master\n    var clientId = \"__default__\",\n        l2lClient = L2LClient.default(),\n        channel = {\n          send(selector, data) {\n            return l2lClient.sendToAndWait(clientL2lId, selector, data);\n          }\n        }\n    this.mirrorMaster = new Master($world, channel, clientId);\n    Master.installLively2LivelyServices();\n\n    // 2b. let the client now who is its master! (for sending events)\n    await l2lClient.sendToAndWait(clientL2lId,\n      \"lively.mirror.install-l2l-channel\",\n      {masterId: l2lClient.id, id: clientId});\n\n    // 3. Updae the ui\n    this.get(\"statusLabel\").textString = \"connected to \" + clientL2lId;\n    this.get(\"connectButton\").label = \"disconnect\";\n    connect(this.get(\"connectButton\"), 'fire', this, 'reset');\n    disconnect(this.get(\"connectButton\"), 'fire', this, 'interactivelyConnectToMirrorClient');\n\n    await promise.delay(500);\n\n    // 4. start send process\n    this.startStepping(100, \"triggerMirrorUpdate\");\n  }\n\n  openClientBrowserWindow() {\n    window.open(`${document.location.origin}/mirror.html`, \"_blank\")\n  }\n\n  async findMirrorClients() {\n    var l2lClient = L2LClient.default(),\n        {data: clients} = await l2lClient.sendToAndWait(l2lClient.trackerId, \"getClients\", {}),\n        m = new Map(clients),\n        otherClients = []\n\n    for (let [key, val] of m)\n      if (key !== l2lClient.id)\n        otherClients.push(key);\n  \n    return otherClients;\n  }\n\n  async triggerMirrorUpdate() {\n    if (this.updateInProgress) return;\n    this.updateInProgress = true;\n    try {\n      var answer = await this.mirrorMaster.sendUpdate();\n      this.get(\"statusLabel\").textString = JSON.stringify(answer.data);\n    } catch (e) {\n      $world.logError(e);\n    } finally {\n      this.updateInProgress = false;\n    }\n  }\n\n}\n\n"
+      }
+    }
+  },
+  "preview": "<div   draggable=\"false\" style=\"background: rgb(253, 254, 254); transform: translate(7.10543e-15px, 32.4168px) rotate(0deg) scale(0.359324, 0.359324); transform-origin: 0px -2px 0px; display: inline; width: 278.3px; height: 105px; border-style: solid; border-width: 2px; border-color: rgb(189, 195, 199); border-radius: 30px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(-2px, -4px);\"><div   draggable=\"false\" style=\"background: rgb(240, 240, 240); transform: translate3d(34px, 7px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 99.3px; height: 28px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(23.63px, 7px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 52.0312px; height: 14px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer; font-family: sans-serif; font-size: 12px; color: rgb(64, 64, 64); padding: 0px;\"><span>connect...</span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div><div   draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate3d(8px, 42px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 255px; height: 48px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute; overflow: hidden;  cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div  style=\" position: absolute; left: 76.7188px; top: 8px; width: 3px; height: 14px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 14px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 14px; line-height: 14px;\"><span style=\"font-size: 12px; font-family: sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">disconnected</span></div><div style=\"height: 0px; width: 70.7188px;\"></div></div></div><div   draggable=\"false\" style=\"background: rgb(240, 240, 240); transform: translate3d(146px, 8px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 102.3px; height: 28px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(22.13px, 7px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 58.0469px; height: 14px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible;  cursor: pointer; font-family: sans-serif; font-size: 12px; color: rgb(64, 64, 64); padding: 0px;\"><span>open client</span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div>"
+}
