@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>lively.morphic example 1</title>
+    
+    <style type="text/css" id="lively-morphic-css">
+    
+    /*-=- html fixes -=-*/
+    
+    textarea.lively-text-input.debug {
+      z-index: 20 !important;
+      opacity: 1 !important;
+      background: rgba(0,255,0,0.5) !important;
+    }
+    
+    .no-html-select {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    
+    .hiddenScrollbar::-webkit-scrollbar { 
+      /* This is the magic bit */
+      display: none;
+    }
+    
+    
+    /*-=- generic morphic -=-*/
+    
+    .Morph {
+      outline: none;
+      /*for aliasing issue in chrome: http://stackoverflow.com/questions/6492027/css-transform-jagged-edges-in-chrome*/
+      -webkit-backface-visibility: hidden;
+    
+      /*include border size in extent of element*/
+      box-sizing: border-box;
+    
+      /*don't use dom selection on morphs*/
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      zIndex: 1010
+    }
+    
+    .Tooltip {
+      z-index:  3;
+    }
+    
+    .Hand {
+      z-index: 1;
+    }
+    
+    /*-=- halos -=-*/
+    
+    .Halo {
+      z-index: 2;
+    }
+    
+    .HaloItem {
+      /*FIXME: we shouldn't need to hardcode the size...*/
+    	 line-height: 24px !important;
+    	 text-align: center;
+    	 vertical-align: middle;
+    }
+    
+    .halo-mesh {
+      background-color:transparent;
+      background-image: linear-gradient(rgba(0,0,0,.1) 2px, transparent 2px),
+      linear-gradient(90deg, rgba(0,0,0,.1) 2px, transparent 2px),
+      linear-gradient(rgba(0,0,0,.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,.1) 1px, transparent 1px);
+      background-size:100px 100px, 100px 100px, 10px 10px, 10px 10px;
+      background-position:-2px -2px, -2px -2px, -1px -1px, -1px -1px;
+    }
+    
+    /*-=- text -=-*/
+    
+    .center-text {
+    	 text-align: center;
+    }
+    
+    .v-center-text {
+      position: relative;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    
+    div.text-layer span {
+      line-height: normal;
+    }
+    
+    /*-=- text -=-*/
+    
+    .Label span {
+      white-space: nowrap;
+    }
+    
+    .Label .annotation {
+    /*  vertical-align: middle;
+      height: 100%;*/
+      /*vertical align*/
+      float: right;
+      position: relative;
+      top: 50%;
+      transform: translateY(-50%);
+      text-align: right;
+    }
+    
+    .truncated-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    </style>
+    <link type="text/css" rel="stylesheet" id="lively-font-inconsolata" href="http://localhost:9011/lively.morphic/assets/inconsolata/inconsolata.css">
+    <link type="text/css" rel="stylesheet" id="lively-font-awesome" href="http://localhost:9011/lively.morphic/assets/font-awesome/css/font-awesome.css">
+
+  </head>
+  <body style="margin: 0;">
+    <script src="/lively.modules/node_modules/babel-standalone/babel.js"></script>
+    <script src="/lively.modules/node_modules/systemjs/dist/system.src.js"></script>
+    <script src="/lively.modules/dist/lively.modules.js"></script>
+    <div id="lively-world"> 
+    <div id="loading indicator" style="
+         position: absolute;
+         left: 0; right: 0; top: 0; bottom: 0;
+         width: 320px; height: 180px;
+         margin: auto;
+         color: #ff7700;
+         font-family: Helvetica Neue, Arial, sans-serif;
+         font-size: 30pt; border-radius: 10px;
+         padding: 10px; background: #666">
+           <center><b>Loading</b></center>
+           <div style="
+             background-image: url(/lively.morphic/lively-web-logo-small-animate.svg);
+             background-size: cover;
+             height: 100%;
+             margin-left: 110px;
+             margin-top: 20px;
+           "></div>
+         </div>
+    </div>
+    </div>
+    <script>
+      var origin = document.location.origin;
+      Promise.resolve()
+        .then(polyfills)
+        .then(bootstrapLivelySystem)
+        .then(function () { return lively.modules.importPackage('lively.mirror'); })
+        .then(function () { return lively.modules.importPackage('.'); })
+        .then(function () { return lively.modules.module('./mirror.js').load(); })
+        .then(function (startModule) { return startModule.run(); })
+        .then(function() { document.getElementById('lively-world').remove() })
+      .catch(function(err) {
+        if (err.originalErr) err = err.originalErr;
+        console.error(err);
+        var printed = err.message;
+        printed += err.stack.includes(err.message) ? err.stack.replace(err.message, "\n") : err.stack;
+        console.error(printed);
+      })
+
+      function bootstrapLivelySystem() {
+
+        // for loading an instrumented version of the packages comprising the lively.system
+        return Promise.resolve()
+          .then(function() { console.log("1. loading initial system so we can bootstrap..."); })
+          .then(function () { return lively.modules.importPackage(origin + '/lively-system-interface/'); })
+          .then(function() { console.log("... done!"); })
+
+          .then(function() { console.log("2. preparing to bootstrap..."); })
+
+          .then(function () {
+            var System = lively.modules.getSystem("bootstrapped");
+            // System.debug = true;
+            return lively.modules.changeSystem(System, true);
+          })
+          .then(function() {
+            return importPackageAndDo(
+              "lively.lang",
+              function(m) { delete m._prevLivelyGlobal; }); })
+
+          .then(function() {
+            return importPackageAndDo(
+              "lively.ast",
+              function(m) { lively.ast = m; }); })
+
+          .then(function() {
+            return importPackageAndDo(
+              "lively.source-transform",
+              function(m) { lively.sourceTransform = m; }); })
+
+          .then(function() {
+            return importPackageAndDo(
+              "lively.classes",
+              function(m) { lively.classes = m; }); })
+
+          .then(function() {
+            return importPackageAndDo(
+              "lively.vm",
+              function(m) { lively.vm = m; }); })
+
+          .then(function() {
+            return importPackageAndDo(
+              "lively.modules",
+              function(m) { lively.modules = m; lively.modules.unwrapModuleLoad(); lively.modules.wrapModuleLoad(); })})
+
+          .then(function() { return importPackageAndDo(origin + "/lively.2lively"); })
+          .then(function() { console.log("...lively.system bootstrapped!"); })
+      }
+
+      function importPackageAndDo(packageURL, doFunc) {
+        var name = packageURL.split("/").slice(-1)[0];
+        return lively.modules.importPackage(packageURL)
+          .then(doFunc || function() {})
+          .then(function() { console.log("...%s loaded...", name); })
+      }
+      
+      function polyfills() {
+        return Promise.all([
+          "PointerEvent" in window ?
+            null : lively.resources.loadViaScript(`${origin}/lively.morphic/node_modules/pepjs/dist/pep.js`),
+          "fetch" in window ?
+            null : lively.resources.loadViaScript(`//cdnjs.cloudflare.com/ajax/libs/fetch/1.0.0/fetch.js`)
+        ]);
+      }
+    </script>
+    
+  </body>
+</html>
