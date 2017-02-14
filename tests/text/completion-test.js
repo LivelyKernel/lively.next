@@ -18,14 +18,14 @@ describe("completion controller", () => {
 
   beforeEach(() => text = new Text({textString: "abc\nafg\n", fontMetric}));
   
-  it("computes word completions", async () => {
+  inBrowser("computes word completions", async () => {
     text.cursorPosition = {row: 2, column: 0}
     var controller = new CompletionController(text, [new WordCompleter()]),
         {items} = await controller.completionListSpec();
     expect(items).containSubset([{value: {completion: "afg"}}, {value: {completion: "abc"}}]);
   });
 
-  it("computes dynamic JS completions", async () => {
+  inBrowser("computes dynamic JS completions", async () => {
     if (!System.get(System.decanonicalize("lively.vm/index.js"))) return;
     text.textString = "this.";
     text.gotoDocumentEnd();
@@ -65,7 +65,7 @@ describe("completion widget", () => {
   beforeEach(() => createMorphicEnv());
   afterEach(() => destroyMorphicEnv());
 
-  it("opens it", async () => {
+  inBrowser("opens it", async () => {
     await text.simulateKeys("Alt-Space");
     await promise.delay(0);
     var menu = world.get("text completion menu");

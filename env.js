@@ -127,7 +127,7 @@ export class MorphicEnv {
 
   getSystemChangeTargets() {
     var world = this.world, targets = [];
-    if (!world) return targets;
+    if (!world || typeof world.getWindows !== "function") return targets;
     for (let win of world.getWindows()) {
       win.isBrowser && targets.push(win);
       win.targetMorph && win.targetMorph.isObjectEditor &&

@@ -18,8 +18,9 @@ export class ModuleTopLevelVarCompleter {
 
   async compute(textMorph, prefix) {
 
+    // "lazy" dependency
     var {serverInterfaceFor, localInterface} = System.get(
-      System.decanonicalize("lively-system-interface"))
+      System.decanonicalize("lively-system-interface")) || {};
 
     if (!serverInterfaceFor || !localInterface) return [];
 
@@ -91,7 +92,7 @@ export class DynamicJavaScriptCompleter {
     // FIXME this should got into a seperate JavaScript support module where
     // the dependency can be properly declared
     var {serverInterfaceFor, localInterface} = System.get(
-      System.decanonicalize("lively-system-interface"));
+      System.decanonicalize("lively-system-interface")) || {};
 
     if (!serverInterfaceFor || !localInterface) return [];
 

@@ -10,16 +10,17 @@ import { createDOMEnvironment } from "../rendering/dom-helper.js";
 
 
 var partsbinFolder = "local://morphic-partsbin-tests/", env
+var isNode = System.get("@system-env").node;
 
 async function setup() {
-  if (!MorphicEnv.envs.length) {
+  if (isNode) {
     env = MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment()));
     env.setWorld(new World({name: "world", extent: pt(300,300)}));
   }
 }
 
 function teardown() {
-  return env && MorphicEnv.popDefault().uninstall()
+  return isNode && MorphicEnv.popDefault().uninstall();
 }
 
 describe("partsbin", function () {
