@@ -580,7 +580,7 @@ export function renderMorph(morph, renderer = morph.env.renderer) {
   // helper that outputs a dom element for the morph, independent from the
   // morph being rendered as part of a world or not. The node returned *is not*
   // the DOM node that represents the morph as part of its world! It's a new node!
-  return create(morph.render(renderer));
+  return create(morph.render(renderer), renderer.domEnvironment);
 }
 
 export function renderRootMorph(world, renderer) {

@@ -48,9 +48,7 @@ function createDummyWorld() {
 }
 
 async function setup() {
-  env = new MorphicEnv(await createDOMEnvironment());
-  // env = new MorphicEnv();
-  MorphicEnv.pushDefault(env);
+  env = MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment()));
   await env.setWorld(createDummyWorld());
 }
 

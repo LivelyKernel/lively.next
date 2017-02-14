@@ -2,17 +2,36 @@
 import { expect } from "mocha-es6";
 import { pt, Color } from "lively.graphics";
 import { saveObjectToPartsbinFolder, loadObjectFromPartsbinFolder } from "../partsbin.js";
-import { morph, inspect } from "lively.morphic";
+import { morph, World, MorphicEnv, inspect } from "lively.morphic";
 import { resource } from "lively.resources";
 import { arr } from "lively.lang";
 import { addScript } from "lively.classes/object-classes.js";
+import { createDOMEnvironment } from "../rendering/dom-helper.js";
 
 
-var partsbinFolder = "local://morphic-partsbin-tests/"
+var partsbinFolder = "local://morphic-partsbin-tests/", env
 
-describe("partsbin", () => {
+async function setup() {
+  if (!MorphicEnv.envs.length) {
+    env = MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment()));
+    env.setWorld(new World({name: "world", extent: pt(300,300)}));
+  }
+}
 
-  afterEach(() => resource(partsbinFolder).remove());
+function teardown() {
+  return env && MorphicEnv.popDefault().uninstall()
+}
+
+describe("partsbin", function () {
+
+  this.timeout(6000);
+
+  beforeEach(setup);
+
+  afterEach(async () => {
+    await resource(partsbinFolder).remove();
+    await teardown()
+  });
 
   it("publishes part as file", async () => {
     var m = morph({name: "test-morph"}),

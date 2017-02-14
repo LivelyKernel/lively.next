@@ -1,5 +1,5 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
-import { morph, MorphicEnv, List } from "../index.js";
+import { morph, World, MorphicEnv, List } from "../index.js";
 import { expect } from "mocha-es6";
 import { arr } from "lively.lang";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
@@ -9,9 +9,7 @@ var inBrowser = System.get("@system-env").browser ? it :
 
 var env, world;
 function createDummyWorld() {
-  return morph({
-    type: "world", name: "world", extent: pt(300,300),
-  });
+  return new World({name: "world", extent: pt(300,300)});
 }
 
 

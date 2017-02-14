@@ -21,22 +21,19 @@ export class MorphicEnv {
   }
 
   static default() {
-    if (!this._envs || !this._envs.length) this.pushDefault(new this());
-    return this._envs[this._envs.length-1];
+    var {envs} = this;
+    if (!envs.length) this.pushDefault(new this());
+    return envs[envs.length-1];
   }
 
-  static pushDefault(env) {
-    if (!this._envs) this._envs = [];
-    this._envs.push(env);
-    return env;
-  }
+  static pushDefault(env) { this.envs.push(env); return env; }
 
-  static popDefault() {
-    if (!this._envs) this._envs = [];
-    return this._envs.pop();
-  }
+  static popDefault() { return this.envs.pop(); }
+
+  static get envs() { return this._envs || (this._envs = []); }
 
   constructor(domEnv = defaultDOMEnv()) {
+    this.initialized = false;
     this.fontMetric = null;
     this.renderer = null;
     this.eventDispatcher = null;
@@ -46,17 +43,21 @@ export class MorphicEnv {
     this.objPool = null;
     this.synchronizer = null;
 
-    if (typeof domEnv.then === "function") {
-      this._waitForDOMEnv = domEnv.then(env => {
-        this._waitForDOMEnv = null;
-        this.initWithDOMEnv(env);
-      }).catch(err => console.error(`Error initializing MorphicEnv with dom env: ${err.stack}`));
-    } else this.initWithDOMEnv(domEnv);
-
     this.changeManager = new ChangeManager();
     this.undoManager = new UndoManager();
 
     this.installSystemChangeHandlers();
+
+    if (typeof domEnv.then === "function") {
+      this._waitForDOMEnv = domEnv.then(env => {
+        this._waitForDOMEnv = null;
+        this.initWithDOMEnv(env);
+        this.initialized = true;
+      }).catch(err => console.error(`Error initializing MorphicEnv with dom env: ${err.stack}`));
+    } else {
+      this.initWithDOMEnv(domEnv);
+      this.initialized = true;
+    }
   }
 
   initWithDOMEnv(domEnv) {
@@ -70,6 +71,9 @@ export class MorphicEnv {
   }
 
   uninstall() {
+    if (this._waitForDOMEnv)
+      return this._waitForDOMEnv.then(() => this.uninstall());
+
     this.deleteHistory();
     this.uninstallWorldRelated();
     if (this.fontMetric) {
@@ -77,12 +81,13 @@ export class MorphicEnv {
       this.fontMetric = null;
     }
     this.domEnv && this.domEnv.destroy();
+    this.initialized = false;
+    return Promise.resolve();
   }
 
   setWorld(world) {
-    if (this._waitForDOMEnv) {
+    if (this._waitForDOMEnv)
       return this._waitForDOMEnv.then(() => this.setWorld(world));
-    }
     return this.setWorldRenderedOn(world, this.domEnv.document.body);
   }
 
@@ -110,7 +115,7 @@ export class MorphicEnv {
       subscribe("lively.modules/modulechanged", (evt) =>
         this.getSystemChangeTargets().forEach(ea => ea.onModuleChanged(evt)))];
   }
-  
+
   uninstallSystemChangeHandlers() {
     if (!this.systemChangeHandlers) return;
     var handlers = this.systemChangeHandlers;
@@ -120,7 +125,7 @@ export class MorphicEnv {
         unsubscribe(name, handler)))
   }
 
-  getSystemChangeTargets() {    
+  getSystemChangeTargets() {
     var world = this.world, targets = [];
     if (!world) return targets;
     for (let win of world.getWindows()) {
