@@ -1,4 +1,3 @@
-
 import { pt, Color, Rectangle } from "lively.graphics";
 import { Morph } from "lively.morphic";
 import { signal, disconnect, connect } from "lively.bindings";
@@ -68,7 +67,7 @@ export class Button extends Morph {
         derived: true,
         get() { return this.labelMorph.fontFamily; },
         set(fontFamily) {
-          var style = this.active ? this.activeStyle : this.inActiveStyle;
+          var style = this.active ? this.activeStyle : this.inactiveStyle;
           style.fontFamily = fontFamily;
           this.labelMorph.fontFamily = fontFamily;
         }
@@ -79,7 +78,7 @@ export class Button extends Morph {
         derived: true,
         get() { return this.labelMorph.fontSize; },
         set(fontSize) {
-          var style = this.active ? this.activeStyle : this.inActiveStyle;
+          var style = this.active ? this.activeStyle : this.inactiveStyle;
           style.fontSize = fontSize;
           this.labelMorph.fontSize = fontSize;
         }
@@ -90,7 +89,7 @@ export class Button extends Morph {
         derived: true,
         get() { return this.labelMorph.fontColor; },
         set(fontColor) {
-          var style = this.active ? this.activeStyle : this.inActiveStyle;
+          var style = this.active ? this.activeStyle : this.inactiveStyle;
           style.fontColor = fontColor;
           this.labelMorph.fontColor = fontColor;
         }
