@@ -49,7 +49,7 @@ export class ShadowObject {
     }
 
     get isShadowObject() { return true; }
-    
+
     toCss() {
        const {x, y} = Point.polar(this.distance, num.toRadians(this.rotation));
        return `${this.color.toString()} ${x}px ${y}px ${this.blur}px`
@@ -120,7 +120,7 @@ class StyleMapper {
   }
 
   static getSvgAttributes({width, height, borderWidth}) {
-     return {width: width || 1, height: height || 1, 
+     return {width: width || 1, height: height || 1,
              viewBox: [0, 0, width || 1, height || 1].join(" ")};
   }
 
@@ -133,12 +133,12 @@ class StyleMapper {
           {x: endX, y: endY, controlPoints: {previous: {x: endPrevX, y: endPrevY}}} = arr.last(vertices),
            endPrev = pt(endX + endPrevX, endY + endPrevY),
            interVertices = vertices.slice(1, -1);
-     return {"stroke-width": path.borderWidth, ...this.getSvgBorderStyle(path), 
-             fill: path.fill ? ((path.fill.isGradient) ? "url(#gradient-fill" + path.id + ")" : path.fill.toString()) 
+     return {"stroke-width": path.borderWidth, ...this.getSvgBorderStyle(path),
+             fill: path.fill ? ((path.fill.isGradient) ? "url(#gradient-fill" + path.id + ")" : path.fill.toString())
                                : "transparent",
-             "paint-order": "stroke", 
+             "paint-order": "stroke",
              stroke: (path.borderColor.isGradient ? "url(#gradient-borderColor" + path.id + ")" : path.borderColor.toString()),
-              d: "M" + `${startX}, ${startY} ` + "C " + `${startNext.x}, ${startNext.y} ` + 
+              d: "M" + `${startX}, ${startY} ` + "C " + `${startNext.x}, ${startNext.y} ` +
                   interVertices.map(({x,y, controlPoints: {previous: p, next: n}}) => {
                     return `${x + p.x},${y + p.y} ${x},${y} C ${x + n.x},${y + n.y}`
                   }).join(" ") + ` ${endPrev.x},${endPrev.y} ${endX},${endY}`
@@ -177,13 +177,13 @@ export class AnimationQueue {
     this.animations = [];
   }
 
-  maskedProps(type) { 
+  maskedProps(type) {
      const l = this.animations.length;
      if (l > 0) {
         return obj.merge(this.animations.map(a => a.getAnimationProps(type)[0]));
      } else {
         return {}
-     } 
+     }
   }
 
   get animationsActive() { return true }
@@ -234,7 +234,7 @@ export class PropertyAnimation {
                  this.subAnimations.then(resolve);
               } else {
                  resolve(this.morph);
-              }             
+              }
          }
      })
   }
@@ -247,7 +247,7 @@ export class PropertyAnimation {
   convertGradients(config) {
     if (config.fill && config.fill.isGradient && this.morph.fill.isGradient) {
       // linear -> radial
-        var fillBefore = this.morph.fill, 
+        var fillBefore = this.morph.fill,
             fillAfter = config.fill,
             d = config.duration || 1000;
         if (fillBefore.type == "linearGradient" && fillAfter.type == "radialGradient") {
@@ -256,11 +256,11 @@ export class PropertyAnimation {
                   fill: new LinearGradient({...fillBefore, vector: rect(0,0,0,1)}),
                   duration: d  / 2, easing: Power4.easeIn});
               this.morph.fill = new RadialGradient({
-                     stops: fillBefore.stops, 
+                     stops: fillBefore.stops,
                      focus: pt(.5,0),
                      bounds: rect(0,0, this.morph.width * 100, this.morph.height * 2)})
               await this.morph.animate({
-                    fill: fillAfter, 
+                    fill: fillAfter,
                     duration: d / 2,
                     easing: Power4.easeOut});
               return this.morph;
@@ -272,15 +272,15 @@ export class PropertyAnimation {
            // fix easing
             this.subAnimations = (async () => {
               await this.morph.animate({fill: new RadialGradient({
-                     stops: fillBefore.stops, 
+                     stops: fillBefore.stops,
                      focus: pt(.5,0),
-                     bounds: rect(0,0, this.morph.width * 100, this.morph.height * 2),    
+                     bounds: rect(0,0, this.morph.width * 100, this.morph.height * 2),
                      }),
                      duration: d / 2, easing: Power4.easeIn})
               this.morph.fill = new LinearGradient({...fillBefore, vector: rect(0,0,0,1)});
               await this.morph.animate({
-                    fill: fillAfter, 
-                    duration: d / 2, 
+                    fill: fillAfter,
+                    duration: d / 2,
                     easing: Power4.easeOut});
               return this.morph;
             })();
@@ -330,7 +330,7 @@ export class PropertyAnimation {
          unchangedProps.push(prop);
       }
     }
-    return [obj.dissoc(before, unchangedProps), 
+    return [obj.dissoc(before, unchangedProps),
             obj.dissoc(after, unchangedProps)];
   }
 
@@ -362,7 +362,7 @@ export class PropertyAnimation {
               afterGradient = new fillAfter.__proto__.constructor({
                   ...fillAfter,
                   vector: fillAfter.vector && fillAfter.vectorAsAngle(),
-                  stops: afterStops}).toString()
+                  stops: afterStops}).toString();
         before.backgroundImage = beforeGradient;
         after.backgroundImage = afterGradient;
       }
@@ -377,7 +377,7 @@ export class PropertyAnimation {
         delete before['background'];
         delete after['background'];
         before.backgroundImage = solidGradient;
-      } 
+      }
       // gradient -> solid
       if (fillBefore.isGradient && fillAfter.isColor) {
         const g = fillBefore,
@@ -395,7 +395,7 @@ export class PropertyAnimation {
         delete before['background'];
         after.backgroundImage = solidGradient;
         before.backgroundImage = originalGradient;
-      } 
+      }
     }
     return [obj.isEmpty(before) ? false : before, obj.isEmpty(after) ? false : after]
   }
@@ -435,7 +435,7 @@ export class PropertyAnimation {
          this.morph.makeDirty();
       };
       if (TweenMax && before && after) {
-        TweenMax.fromTo(node, this.duration / 1000, 
+        TweenMax.fromTo(node, this.duration / 1000,
                    before,
                   {...after,
                    ease: this.easing,
