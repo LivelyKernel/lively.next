@@ -1192,6 +1192,21 @@ export class Morph {
     return this.withAllSubmorphsDetect(({id: morphId}) => id === morphId);
   }
 
+  setMirrored(bool){
+    if(!bool){
+      this.addStyleClass('hidden-in-mirror')
+    } else {
+      this.removeStyleClass('hidden-in-mirror')
+    }
+  }
+
+  isMirrored(){
+    if(this.styleClasses.indexOf('hidden-in-mirror') >= 0){
+      return true
+    }
+    return false
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
