@@ -31,14 +31,14 @@
   "devDependencies": {
     "acorn": "^4.0.3",
     "acorn-es7-plugin": "^1.1.3",
-    "acorn-object-spread": "LivelyKernel/acorn-object-spread#e38d8f",
+    "acorn-object-spread": "LivelyKernel/acorn-object-spread#0da456",
     "babel-core": "^6.16.0",
     "babel-plugin-external-helpers": "^6.8.0",
     "babel-plugin-syntax-object-rest-spread": "^6.13.0",
     "babel-plugin-transform-async-to-generator": "^6.16.0",
     "babel-plugin-transform-object-rest-spread": "^6.20.2",
     "babel-preset-es2015": "^6.16.0",
-    "estree-to-js": "^0.1.4",
+    "estree-to-js": "^0.2.0",
     "mocha-es6": "^0.4",
     "rollup": "^0.36.1",
     "rollup-plugin-babel": "^2.6.1"

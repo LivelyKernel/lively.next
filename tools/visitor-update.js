@@ -4,7 +4,7 @@ var fs = require("fs"),
     estreeVisitor = "generated/estree-visitor.js";
 
 function createEstreeVisitorModule() {
-  var estreeSpec = JSON.parse(fs.readFileSync(require.resolve("estree-to-js/generated/es6.json"))),
+  var estreeSpec = JSON.parse(fs.readFileSync(require.resolve("estree-to-js/generated/es7.json"))),
       source = `"format esm";\n${estree.createVisitor(estreeSpec, []/*exceptions*/, "Visitor")}\nexport default Visitor;`;
   return lang.promise(fs.writeFile)(estreeVisitor, source);
 }
