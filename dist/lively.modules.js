@@ -13729,7 +13729,7 @@ module.exports = function(acorn) {
         // ...the spread logic borrowed from babylon :)
         if (this.type === tt.ellipsis) {
           prop = this.parseSpread()
-          prop.type = isPattern ? "RestProperty" : "SpreadProperty"
+          prop.type = isPattern ? "RestElement" : "SpreadElement"
           node.properties.push(prop)
           continue
         }
@@ -13808,7 +13808,7 @@ module.exports = function(acorn) {
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v4.4.7',
+        version: 'v4.4.5',
         browser: true,
         env: {},
         argv: [],
@@ -18736,7 +18736,7 @@ module.exports = function(acorn) {
 'use strict';
 
 // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-// Generated on 16-07-17 17:25 PDT
+// Generated on 17-02-14 21:00 PST
 
 function Visitor() {}
 Visitor.prototype.accept = function accept(node, state, path) {
@@ -18783,10 +18783,6 @@ Visitor.prototype.accept = function accept(node, state, path) {
       return this.visitModuleDeclaration(node, state, path);
     case "ModuleSpecifier":
       return this.visitModuleSpecifier(node, state, path);
-    case "RestProperty":
-      return this.visitRestProperty(node, state, path);
-    case "SpreadProperty":
-      return this.visitSpreadProperty(node, state, path);
     case "Identifier":
       return this.visitIdentifier(node, state, path);
     case "Literal":
@@ -18851,6 +18847,8 @@ Visitor.prototype.accept = function accept(node, state, path) {
       return this.visitConditionalExpression(node, state, path);
     case "CallExpression":
       return this.visitCallExpression(node, state, path);
+    case "NewExpression":
+      return this.visitNewExpression(node, state, path);
     case "SequenceExpression":
       return this.visitSequenceExpression(node, state, path);
     case "ArrowFunctionExpression":
@@ -18899,8 +18897,6 @@ Visitor.prototype.accept = function accept(node, state, path) {
       return this.visitFunctionDeclaration(node, state, path);
     case "VariableDeclaration":
       return this.visitVariableDeclaration(node, state, path);
-    case "NewExpression":
-      return this.visitNewExpression(node, state, path);
     case "ForOfStatement":
       return this.visitForOfStatement(node, state, path);
     case "ClassDeclaration":
@@ -19064,18 +19060,6 @@ Visitor.prototype.visitModuleSpecifier = function visitModuleSpecifier(node, sta
   var visitor = this;
   // local is of types Identifier
   node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-  return node;
-};
-Visitor.prototype.visitRestProperty = function visitRestProperty(node, state, path) {
-  var visitor = this;
-  // argument is of types Expression
-  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-  return node;
-};
-Visitor.prototype.visitSpreadProperty = function visitSpreadProperty(node, state, path) {
-  var visitor = this;
-  // argument is of types Expression
-  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
   return node;
 };
 Visitor.prototype.visitIdentifier = function visitIdentifier(node, state, path) {
@@ -19266,7 +19250,7 @@ Visitor.prototype.visitArrayExpression = function visitArrayExpression(node, sta
 };
 Visitor.prototype.visitObjectExpression = function visitObjectExpression(node, state, path) {
   var visitor = this;
-  // properties is a list with types Property, SpreadProperty
+  // properties is a list with types Property, SpreadElement
   var newElements = [];
   for (var i = 0; i < node["properties"].length; i++) {
     var ea = node["properties"][i];
@@ -19362,6 +19346,20 @@ Visitor.prototype.visitCallExpression = function visitCallExpression(node, state
   node["arguments"] = newElements;
   return node;
 };
+Visitor.prototype.visitNewExpression = function visitNewExpression(node, state, path) {
+  var visitor = this;
+  // callee is of types Expression
+  node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
+  // arguments is a list with types Expression
+  var newElements = [];
+  for (var i = 0; i < node["arguments"].length; i++) {
+    var ea = node["arguments"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["arguments", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["arguments"] = newElements;
+  return node;
+};
 Visitor.prototype.visitSequenceExpression = function visitSequenceExpression(node, state, path) {
   var visitor = this;
   // expressions is a list with types Expression
@@ -19438,7 +19436,7 @@ Visitor.prototype.visitAssignmentProperty = function visitAssignmentProperty(nod
 };
 Visitor.prototype.visitObjectPattern = function visitObjectPattern(node, state, path) {
   var visitor = this;
-  // properties is a list with types AssignmentProperty, RestProperty
+  // properties is a list with types AssignmentProperty, RestElement
   var newElements = [];
   for (var i = 0; i < node["properties"].length; i++) {
     var ea = node["properties"][i];
@@ -19575,9 +19573,7 @@ Visitor.prototype.visitExportAllDeclaration = function visitExportAllDeclaration
 Visitor.prototype.visitAwaitExpression = function visitAwaitExpression(node, state, path) {
   var visitor = this;
   // argument is of types Expression
-  if (node["argument"]) {
-    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-  }
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
   return node;
 };
 Visitor.prototype.visitRegExpLiteral = function visitRegExpLiteral(node, state, path) {
@@ -19610,20 +19606,6 @@ Visitor.prototype.visitVariableDeclaration = function visitVariableDeclaration(n
     if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
   }
   node["declarations"] = newElements;
-  return node;
-};
-Visitor.prototype.visitNewExpression = function visitNewExpression(node, state, path) {
-  var visitor = this;
-  // callee is of types Expression, Super
-  node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
-  // arguments is a list with types Expression, SpreadElement
-  var newElements = [];
-  for (var i = 0; i < node["arguments"].length; i++) {
-    var ea = node["arguments"][i];
-    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["arguments", i])) : ea;
-    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-  }
-  node["arguments"] = newElements;
   return node;
 };
 Visitor.prototype.visitForOfStatement = function visitForOfStatement(node, state, path) {
@@ -22347,18 +22329,18 @@ var ObjectSpreadTransformer = function (_Visitor) {
     key: "accept",
     value: function accept(node, state, path) {
       if (node.type === "ObjectExpression") {
-        node = this.transformSpreadProperty(node);
+        node = this.transformSpreadElement(node);
       }
       return get(ObjectSpreadTransformer.prototype.__proto__ || Object.getPrototypeOf(ObjectSpreadTransformer.prototype), "accept", this).call(this, node, state, path);
     }
   }, {
-    key: "transformSpreadProperty",
-    value: function transformSpreadProperty(node) {
+    key: "transformSpreadElement",
+    value: function transformSpreadElement(node) {
       var currentGroup = [],
           propGroups = [currentGroup];
 
       node.properties.forEach(function (prop$$1) {
-        if (prop$$1.type !== "SpreadProperty") currentGroup.push(prop$$1);else {
+        if (prop$$1.type !== "SpreadElement") currentGroup.push(prop$$1);else {
           propGroups.push(prop$$1);
           currentGroup = [];
           propGroups.push(currentGroup);
@@ -22370,7 +22352,7 @@ var ObjectSpreadTransformer = function (_Visitor) {
       if (!currentGroup.length) propGroups.pop();
 
       return funcCall.apply(undefined, [member("Object", "assign")].concat(toConsumableArray(propGroups.map(function (group) {
-        return group.type === "SpreadProperty" ? group.argument : {
+        return group.type === "SpreadElement" ? group.argument : {
           properties: group,
           type: 'ObjectExpression'
         };
@@ -23268,7 +23250,7 @@ Object.defineProperty(Node.prototype, "__serialize__", {
   configurable: true,
   value: function value() {
     return {
-      __expr__: JSON.stringify(this)
+      __expr__: "(" + JSON.stringify(this) + ")"
     };
   }
 });
