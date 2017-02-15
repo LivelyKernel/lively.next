@@ -114,7 +114,6 @@ export class Button extends Morph {
         after: ["labelMorph"],
         initialize() { this.activeStyle = obj.clone(this.defaultActiveStyle); },
         set(value) {
-        console.log(value)
           this.setProperty("activeStyle", {
             ...this.defaultActiveStyle,
             ...obj.select(this, ["fontSize", "fontFamily", "fontColor"]),
