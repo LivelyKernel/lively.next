@@ -449,20 +449,24 @@ export class PropertyAnimation {
 
 export function defaultStyle(morph) {
 
-  var {
-    opacity, clipMode, reactsToPointer,
-    nativeCursor,
-  } = morph,
-     styleProps = StyleMapper.getStyleProps(morph),
-     maskedProps = morph._animationQueue.maskedProps("css");
-     
+  var { opacity, reactsToPointer, nativeCursor, clipMode } = morph,
+      styleProps = StyleMapper.getStyleProps(morph),
+      maskedProps = morph._animationQueue.maskedProps("css");
+
   if ('backgroundImage' in maskedProps) delete styleProps['background'];
-  
+
+  if (clipMode !== "hidden") {
+    styleProps.overflow = clipMode;
+    // Fix for Chrome scroll issue, see
+    // https://github.com/noraesae/perfect-scrollbar/issues/612
+    // https://developers.google.com/web/updates/2016/04/scroll-anchoring
+    styleProps["overflow-anchor"] = "none";
+  }
+
   return {
     ...styleProps,
     ...maskedProps,
     position: "absolute",
-    overflow: clipMode,
     "pointer-events": reactsToPointer ? "auto" : "none",
     cursor: nativeCursor
   };
@@ -475,7 +479,6 @@ export function defaultStyle(morph) {
 function MorphAfterRenderHook(morph, renderer) { this.morph = morph; this.renderer = renderer; }
 MorphAfterRenderHook.prototype.hook = function(node, propertyName, previousValue) {
   // 1. wait for node to be really rendered, i.e. it's in DOM
-  // this.morph._dirty = false;
   promise.waitFor(400, () => !!node.parentNode).catch(err => false).then(isInDOM => {
     if (isInDOM) {
       // 2. update scroll of morph itself
@@ -536,7 +539,8 @@ export function defaultAttributes(morph, renderer) {
     // doesn't work b/c of https://github.com/Matt-Esch/virtual-dom/issues/338
     // check the pull request mentioned in the issue, once that's merged we
     // might be able to remove the hook
-    // scrollLeft: morph.scroll.x, scrollTop: morph.scroll.y,
+  		scrollLeft: morph.scroll.x,
+  		scrollTop: morph.scroll.y,
     "morph-after-render-hook": new MorphAfterRenderHook(morph, renderer)
   };
 }

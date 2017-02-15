@@ -1,5 +1,5 @@
 import { Color, pt, Rectangle } from "lively.graphics";
-import { arr, fun, promise, string } from "lively.lang";
+import { arr, obj, fun, promise, string } from "lively.lang";
 import { connect, disconnect, noUpdate } from "lively.bindings";
 import { morph, show, Label, HorizontalLayout, GridLayout,
          DropDownList, config, Window } from "lively.morphic";

@@ -433,7 +433,11 @@ export default class EventDispatcher {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       case "scroll":
         events = [new Event(type, domEvt, this, [targetMorph], hand, halo, layoutHalo)
-          .onDispatch(() => targetMorph.scroll = pt(domEvt.target.scrollLeft, domEvt.target.scrollTop))]
+          .onDispatch(() => {
+            var {scrollLeft: newX, scrollTop: newY} = domEvt.target,
+                {x, y} = targetMorph.scroll;
+            if (x !== newX || y !== newY) targetMorph.scroll = pt(newX, newY);
+          })]
         break;
 
       case "input": case "compositionstart": case "compositionupdate": case "compositionend":
@@ -547,7 +551,7 @@ export default class EventDispatcher {
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // scroll events
-      if (type === "scroll" && ("scrollLeft" in spec || "scrollRight" in spec)) {
+      if (type === "scroll" && ("scrollLeft" in spec || "scrollTop" in spec)) {
         spec.target.scrollLeft = spec.scrollLeft || 0;
         spec.target.scrollTop = spec.scrollTop || 0;
       }

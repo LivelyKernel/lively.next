@@ -991,7 +991,7 @@ export class Morph {
      var tl, tr, br, bl;
      [tl = r.topLeft(), tr = r.topRight(),
       br = r.bottomRight(), bl = r.bottomLeft()].forEach(corner => {
-        this.transformPointToMorph(other, corner);  
+        this.transformPointToMorph(other, corner);
      });
      return Rectangle.unionPts([tl,tr,br,bl]);
   }
@@ -1320,7 +1320,7 @@ export class Morph {
   onScroll(evt) {}
 
   onMouseWheel(evt) {
-
+return ;
     var scrollTarget = evt.targetMorphs.find(ea => ea.isClip());
     if (this !== scrollTarget) return;
     var {deltaY, deltaX} = evt.domEvt,
