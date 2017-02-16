@@ -82,34 +82,88 @@ export default class Master {
     debug && console.log(`[lively.mirror master] services uninstalled`);
   }
 
+
+  static invokeServices(selector, data, ackFn) {
+    this.services[selector](null, {data}, ackFn);
+  }
+
   static get services() {
     if (this._services) return this._services;
     return this._services = {
-      "lively.mirror.process-client-events": (_, {data: {events, masterId}}, ackFn) => {
+      async "lively.mirror.process-client-events": (_, {data: {events, masterId}}, ackFn) => {
         debug && console.log(`[lively.mirror master] receiving client events`);
         try {
-          events.map(ea => {
-            var targetId = ea.target;
-            if (typeof targetId === "string") ea.target = document.getElementById(targetId);
-            try {
-              $world.env.eventDispatcher.dispatchDOMEvent(ea);
-            } catch (e) {
-              console.log(targetId);
-              throw e;
-            }
-          })
+
+          var master = Master.getInstance(masterId);
+          if (!master) {
+            var msg = `[lively.mirror.process-client-events] Trying to find master for id ${masterId} failed.`;
+            $world.logError(new Error(msg));
+            if (typeof ackFn === "function") ackFn({error: msg});
+            return;
+          }
+          await master.dispatchEvents(events);
         } catch (e) { $world.logError(e); }
+
         if (typeof ackFn === "function") ackFn({status: "OK"});
       }
     }
   }
 
-  constructor(targetMorph, channel, clientId = "__default__") {
+
+
+  static get instances() {
+    if (!this._instances) this._instances = new Map();
+    return this._instances;
+  }
+
+  static getInstance(id) {
+    var instance = this.instances.get(id);
+    if (!instance) {
+      instance = this.createInstance(id);
+      this.instances.set(id, instance);
+    }
+    return instance;
+  }
+
+  static removeInstance(id) {
+    if (!this.instances) return
+    var instance = this.instances.get(id);
+    if (!instance) return;
+    instance.disconnect();
+    this.instances.delete(id)
+  }
+
+  static createInstance(id, targetMorph, channel, clientId) {
+    var instance = this.instances.get(id);
+    if (instance) instance.reset();
+    instance = new this(id, targetMorph, channel, clientId);
+    this.instances.set(id, instance);
+    return instance;
+  }
+
+  constructor(id, targetMorph, channel, clientId = "__default__") {
+    this.id = id;
     this.channel = channel;
     this.targetMorph = targetMorph;
     this.clientId = clientId;
     this.prevVdomNode = null;
     this.sendInProgress = false;
+  }
+
+  async l2lSetup(clientL2lId) {
+    var l2lClient = L2LClient.default();
+    this.channel = {
+      send(selector, data) {
+        return l2lClient.sendToAndWait(clientL2lId, selector, data);
+      }
+    }
+
+    Master.installLively2LivelyServices();
+
+    // 2b. let the client now who is its master! (for sending events)
+    await l2lClient.sendToAndWait(clientL2lId,
+      "lively.mirror.install-l2l-channel",
+      {masterId: this.id, sender: l2lClient.id, id: this.clientId});
   }
 
   sendUpdate() {
@@ -152,4 +206,15 @@ export default class Master {
     return patch;
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  dispatchEvents(events) {
+    var doc = this.targetMorph.env.domEnv.document;
+    events.map(ea => {
+      var targetId = ea.target;
+      if (typeof targetId === "string") ea.target = doc.getElementById(targetId);
+      try {
+        this.targetMorph.env.eventDispatcher.dispatchDOMEvent(ea);
+      } catch (e) { throw e; }
+    });
+  }
 }

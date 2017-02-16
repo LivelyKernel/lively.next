@@ -40,7 +40,7 @@ export default class Client {
     if (this._services) return this._services;
     return this._services = {
 
-      "lively.mirror.install-l2l-channel": (_, {data: {masterId, id}}, ackFn) => {
+      "lively.mirror.install-l2l-channel": (_, {data: {sender, masterId, id}}, ackFn) => {
         debug && console.log(`[lively.mirror client] install l2l channel`);
         id = id || "__default__";
         var status = "OK"
@@ -49,17 +49,17 @@ export default class Client {
           mirror.channel = {
             send(selector, data) {
               var l2lClient = L2LClient.default();
-              return l2lClient.sendToAndWait(masterId, selector, data);
+              return l2lClient.sendToAndWait(sender, selector, {masterId, ...data});
             }
           }
         } catch (e) {
           console.error(e);
           status = String(e);
         }
-    
+
         if (typeof ackFn === "function") ackFn({status});
       },
-    
+
       "lively.mirror.render": (_, {data: {id, node}}, ackFn) => {
         debug && console.log(`[lively.mirror client] rendering initial node`);
         id = id || "__default__";
@@ -71,7 +71,7 @@ export default class Client {
           console.error(e);
           status = String(e);
         }
-    
+
         if (typeof ackFn === "function") ackFn({status});
       },
 
@@ -86,10 +86,10 @@ export default class Client {
           console.error(e);
           status = String(e);
         }
-    
+
         if (typeof ackFn === "function") ackFn({status});
       },
-    
+
       "lively.mirror.disconnect": (_, {data: {id}}, ackFn) => {
         debug && console.log(`[lively.mirror client] disconnect`);
         id = id || "__default__";
@@ -159,10 +159,11 @@ export default class Client {
 
   deserializeNode(vdomNode) {
     if (vdomNode instanceof VNode || vdomNode instanceof VText) return vdomNode;
-    var {text, tagName, properties, children, key, namespace} = vdomNode;
-    if (text) return new VText(text);
-    if (children && children.length) children = children.map(ea => this.deserializeNode(ea));
-    return new VNode(tagName, properties, children, key, namespace);
+    return vdomAsJSON.fromJson(vdomNode);
+    // var {text, tagName, properties, children, key, namespace} = vdomNode;
+    // if (text) return new VText(text);
+    // if (children && children.length) children = children.map(ea => this.deserializeNode(ea));
+    // return new VNode(tagName, properties, children, key, namespace);
   }
 
   render(vdomNode) {
@@ -197,7 +198,7 @@ export default class Client {
     var events = this.eventCollector.collectedEvents.slice();
     this.eventCollector.collectedEvents.length = 0;
 
-    this.channel.send("lively.mirror.process-client-events", {events})
+    Promise.resolve(this.channel.send("lively.mirror.process-client-events", {events}))
       .then(() => debug && console.log(`[lively.mirror client] ${events.length} events send`))
       .catch(err => console.error(err))
       .then(() => this.eventSendInProgress = false);
