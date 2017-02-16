@@ -23,7 +23,7 @@ function makeNodeSerializable(node) {
     var {morph, morphVtree} = node;
     node = morphVtree || node.renderMorph();
     var {properties, tagName, children, key, namespace} = node;
-    properties = obj.dissoc(properties, ["morph-after-render-hook", "animation"]);
+    properties = obj.dissoc(properties, ["morph-render-done-hook", "morph-after-render-hook", "animation"]);
     children = children ? children.slice() : [];
     serializableNode = new VNode(tagName, properties, children, key, namespace);
     className = "VirtualNode";
@@ -43,8 +43,8 @@ function makeNodeSerializable(node) {
   if (className === "VirtualNode") {
     // removing hooks as those can't be JSONified
     var p = serializableNode.properties;
-    if (p && (p.hasOwnProperty("animation") || p.hasOwnProperty("morph-after-render-hook"))) {
-      serializableNode = new VNode(serializableNode.tagName, obj.dissoc(p, ["morph-after-render-hook", "animation"]), serializableNode.children, serializableNode.key, serializableNode.namespace)
+    if (p && (p.hasOwnProperty("animation") || p.hasOwnProperty("morph-after-render-hook") || p.hasOwnProperty("morph-render-done-hook"))) {
+      serializableNode = new VNode(serializableNode.tagName, obj.dissoc(p, ["morph-render-done-hook", "morph-after-render-hook", "animation"]), serializableNode.children, serializableNode.key, serializableNode.namespace)
     }
 
     if (serializableNode.children && serializableNode.children.length) {
@@ -127,12 +127,17 @@ export default class Master {
   sendInitialView() {
     var node = this.prevVdomNode = makeNodeSerializable(renderMorph(this.targetMorph)),
         id = this.clientId;
+    try { JSON.stringify(node); } catch (e) {
+     window.node = node;
+     throw new Error("Node cannot be serialized"); 
+     }
     return this.channel.send("lively.mirror.render", {node, id});
   }
 
   sendViewPatch() {
     var patch = this.getVdomPatch(),
         id = this.clientId;
+    try { JSON.stringify(patch); } catch (e) { throw new Error("patch cannot be serialized"); }
     return this.channel.send("lively.mirror.render-patch", {patch, id});
   }
 

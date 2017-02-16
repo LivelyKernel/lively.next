@@ -3,7 +3,6 @@ import { expect } from "mocha-es6";
 import { string } from "lively.lang";
 import Client from "../client.js";
 
-
 import {
   h, create as createElement, diff, patch
 } from "../node_modules/virtual-dom/dist/virtual-dom.js";
