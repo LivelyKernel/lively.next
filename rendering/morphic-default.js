@@ -455,7 +455,7 @@ export function defaultStyle(morph) {
 
   if ('backgroundImage' in maskedProps) delete styleProps['background'];
 
-  if (clipMode !== "hidden") {
+  if (clipMode !== "visible") {
     styleProps.overflow = clipMode;
     // Fix for Chrome scroll issue, see
     // https://github.com/noraesae/perfect-scrollbar/issues/612
