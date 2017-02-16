@@ -2,6 +2,7 @@
   "name": "lively.mirror",
   "version": "0.1.0",
   "dependencies": {
+    "vdom-as-json": "^1.0.11",
     "virtual-dom": "^2.1.1"
   },
   "systemjs": {

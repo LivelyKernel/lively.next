@@ -3,12 +3,14 @@ import {
 } from "./vdom-serialized-patch-browserified.js";
 
 import {
-  VNode, VText,
+  VNode, patch as applyPatch, VText,
   create as createElement,
 } from "./node_modules/virtual-dom/dist/virtual-dom.js";
 import EventCollector from "./client-events.js";
 
 import L2LClient from "lively.2lively/client.js";
+
+import vdomAsJSON from "./node_modules/vdom-as-json/dist/vdom-as-json.js";
 
 const debug = true;
 
@@ -72,14 +74,14 @@ export default class Client {
     
         if (typeof ackFn === "function") ackFn({status});
       },
-    
-      "lively.mirror.render-patch": (_, {data: {id, patch}}, ackFn) => {
+
+      "lively.mirror.render-patch": (_, {data: {id, useOptimizedPatchFormat, patch}}, ackFn) => {
         debug && console.log(`[lively.mirror client] rendering patch`);
         id = id || "__default__";
         var status = "OK"
         try {
           var mirror = Client.getInstance(id);
-          mirror.patch(patch);
+          mirror.patch(patch, useOptimizedPatchFormat);
         } catch (e) {
           console.error(e);
           status = String(e);
@@ -99,12 +101,12 @@ export default class Client {
           console.error(e);
           status = String(e);
         }
-    
+
         if (typeof ackFn === "function") ackFn({status});
       }
-    
+
     }
-  
+
   }
 
   static get instances() {
@@ -175,10 +177,14 @@ export default class Client {
     this.initialized = true;
   }
 
-  patch(patch) {
+  patch(patch, useOptimizedPatchFormat) {
     if (!this.initialized)
       throw new Error("[lively.mirror client] trying to apply patch but client wasn't rendered yet");
-    applySerializedPatch(this.rootNode.childNodes[0], patch);
+    if (useOptimizedPatchFormat) {
+      applySerializedPatch(this.rootNode.childNodes[0], patch);
+    } else {
+      applyPatch(this.rootNode.childNodes[0], vdomAsJSON.fromJson(patch));
+    }
   }
 
   sendEvents() {

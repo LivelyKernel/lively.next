@@ -8,7 +8,10 @@ import L2LClient from "lively.2lively/client.js";
 import { promise, obj, tree } from "lively.lang";
 import { inspect } from "lively.morphic";
 
-const debug = true;
+import vdomAsJSON from "./node_modules/vdom-as-json/dist/vdom-as-json.js";
+
+const debug = true,
+      useOptimizedPatchFormat = true;
 
 function makeNodeSerializable(node) {
   var serializableNode = node,
@@ -127,23 +130,24 @@ export default class Master {
   sendInitialView() {
     var node = this.prevVdomNode = makeNodeSerializable(renderMorph(this.targetMorph)),
         id = this.clientId;
-    try { JSON.stringify(node); } catch (e) {
-     window.node = node;
-     throw new Error("Node cannot be serialized"); 
-     }
+    // try { JSON.stringify(node); } catch (e) { throw new Error("Node cannot be serialized");  }
+    node = vdomAsJSON.toJson(node);
     return this.channel.send("lively.mirror.render", {node, id});
   }
 
   sendViewPatch() {
     var patch = this.getVdomPatch(),
         id = this.clientId;
-    try { JSON.stringify(patch); } catch (e) { throw new Error("patch cannot be serialized"); }
-    return this.channel.send("lively.mirror.render-patch", {patch, id});
+    // try { JSON.stringify(patch); } catch (e) { throw new Error("patch cannot be serialized"); }
+    return this.channel.send("lively.mirror.render-patch", {useOptimizedPatchFormat, patch, id});
   }
 
   getVdomPatch() {
     var newNode = makeNodeSerializable(renderMorph(this.targetMorph)),
-        patch = serializePatch(diff(this.prevVdomNode, newNode));
+        rawPatch = diff(this.prevVdomNode, newNode),
+        patch = useOptimizedPatchFormat ?
+                  serializePatch(rawPatch) :
+                  vdomAsJSON.toJson(rawPatch);
     this.prevVdomNode = newNode;
     return patch;
   }
