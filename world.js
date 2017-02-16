@@ -801,46 +801,53 @@ export class World extends Morph {
   }
 
   onDragStart(evt) {
-     this.selectionStartPos = evt.positionIn(this);
-     this.morphSelection = this.addMorph({
-        isSelectionElement: true,
-        position: this.selectionStartPos, extent: evt.state.dragDelta,
-        fill: Color.gray.withA(.2),
-        borderWidth: 2, borderColor: Color.gray
-     });
-     this.selectedMorphs = {};
+     if (evt.leftMouseButtonPressed()) {
+       this.selectionStartPos = evt.positionIn(this);
+       this.morphSelection = this.addMorph({
+          isSelectionElement: true,
+          position: this.selectionStartPos, extent: evt.state.dragDelta,
+          fill: Color.gray.withA(.2),
+          borderWidth: 2, borderColor: Color.gray
+       });
+       this.selectedMorphs = {};
+     }
   }
 
   onDrag(evt) {
-     const selectionBounds = Rectangle.fromAny(evt.position, this.selectionStartPos)
-     this.morphSelection.setBounds(selectionBounds);
-     this.submorphs.forEach(c => {
-         if (c.isSelectionElement || c.isHand) return;
-         const candidateBounds = c.bounds(),
-               included = selectionBounds.containsRect(candidateBounds);
-
-         if (!this.selectedMorphs[c.id] && included) {
-            this.selectedMorphs[c.id] = this.addMorph({
-                isSelectionElement: true,
-                bounds: candidateBounds,
-                borderColor: Color.red,
-                borderWidth: 1,
-                fill: Color.transparent
-            }, this.morphSelection);
-         }
-         if (this.selectedMorphs[c.id] && !included) {
-            this.selectedMorphs[c.id].remove();
-            delete this.selectedMorphs[c.id];
-         }
-     })
+    if (this.morphSelection) {
+      const selectionBounds = Rectangle.fromAny(evt.position, this.selectionStartPos)
+       this.morphSelection.setBounds(selectionBounds);
+       this.submorphs.forEach(c => {
+           if (c.isSelectionElement || c.isHand) return;
+           const candidateBounds = c.bounds(),
+                 included = selectionBounds.containsRect(candidateBounds);
+  
+           if (!this.selectedMorphs[c.id] && included) {
+              this.selectedMorphs[c.id] = this.addMorph({
+                  isSelectionElement: true,
+                  bounds: candidateBounds,
+                  borderColor: Color.red,
+                  borderWidth: 1,
+                  fill: Color.transparent
+              }, this.morphSelection);
+           }
+           if (this.selectedMorphs[c.id] && !included) {
+              this.selectedMorphs[c.id].remove();
+              delete this.selectedMorphs[c.id];
+           }
+       })
+    }
   }
 
   onDragEnd(evt) {
-     this.morphSelection.fadeOut(200);
-     obj.values(this.selectedMorphs).map(m => m.remove());
-     this.showHaloForSelection(Object.keys(this.selectedMorphs)
-                                     .map(id => this.getMorphWithId(id)));
-     this.selectedMorphs = {};
+     if (this.morphSelection) {
+       this.morphSelection.fadeOut(200);
+       obj.values(this.selectedMorphs).map(m => m.remove());
+       this.showHaloForSelection(Object.keys(this.selectedMorphs)
+                                       .map(id => this.getMorphWithId(id)));
+       this.selectedMorphs = {};
+       this.morphSelection = null;
+     }
   }
 
   menuItems() {
