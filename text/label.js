@@ -1,9 +1,9 @@
-import { obj, arr, string } from "lively.lang";
+import { obj, arr, string, properties } from "lively.lang";
 import { Rectangle, Color } from "lively.graphics";
 import { Morph } from "../index.js";
 import { defaultStyle, defaultAttributes } from "../rendering/morphic-default.js";
 import { h } from "virtual-dom";
-import { Icon } from "../components/icons.js";
+import { Icon, Icons } from "../components/icons.js";
 import { signal } from "lively.bindings";
 
 
@@ -11,9 +11,16 @@ export class Label extends Morph {
 
   static get properties() {
     return {
-      fill:             {defaultValue: null},
+      fill:             {defaultValue: Color.transparent},
       draggable:        {defaultValue: false},
       nativeCursor:     {defaultValue: "default"},
+
+      isIcon: {
+        derived: true,
+        get() { 
+           return properties.values(Icons).map(({code}) => code).includes(this.textString) 
+        }
+      },
 
       value: {
         derived: true, after: ["textAndAttributes", "textString"],
