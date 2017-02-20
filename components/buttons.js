@@ -21,7 +21,27 @@ export class Button extends Morph {
       borderRadius: {defaultValue: 15},
       borderColor:  {defaultValue: Color.rgb(204,204,204)},
       draggable:    {defaultValue: false},
-
+ 
+      activeMode: {
+        after: ["labelMorph", "activeStyle", "inactiveStyle"],
+        get() {
+           return this._buttonMode || 'active'
+        },
+        set(m) {
+           switch(m) {
+             case "active":
+               this.activate();
+               break;
+             case "inactive":
+               this.deactivate();
+               break;
+             case "triggered":
+               this.perform();
+               break;
+           }
+           this._buttonMode = m;
+        }
+      },
       // button label
       labelMorph: {
         after: ["submorphs"], derived: true,
@@ -57,40 +77,38 @@ export class Button extends Morph {
         }
       },
 
-      active: {
-        after: ["labelMorph", "activeStyle", "inactiveStyle"],
-        defaultValue: true
-      },
-
       fontFamily: {
-        after: ["active"],
+        after: ["label"],
         derived: true,
         get() { return this.labelMorph.fontFamily; },
         set(fontFamily) {
-          var style = this.active ? this.activeStyle : this.inactiveStyle;
-          style.fontFamily = fontFamily;
           this.labelMorph.fontFamily = fontFamily;
         }
       },
 
       fontSize: {
-        after: ["active"],
+        after: ["label"],
         derived: true,
         get() { return this.labelMorph.fontSize; },
         set(fontSize) {
-          var style = this.active ? this.activeStyle : this.inactiveStyle;
-          style.fontSize = fontSize;
           this.labelMorph.fontSize = fontSize;
         }
       },
 
+      fontStyle: {
+        after: ["label"],
+        derived: true,
+        get() { return this.labelMorph.fontStyle; },
+        set(fontStyle) {
+          this.labelMorph.fontStyle = fontStyle;
+        }
+      },
+
       fontColor: {
-        after: ["active"],
+        after: ["label"],
         derived: true,
         get() { return this.labelMorph.fontColor; },
         set(fontColor) {
-          var style = this.active ? this.activeStyle : this.inactiveStyle;
-          style.fontColor = fontColor;
           this.labelMorph.fontColor = fontColor;
         }
       },
@@ -111,7 +129,7 @@ export class Button extends Morph {
         }
       },
       activeStyle: {
-        after: ["labelMorph"],
+        after: ["labelMorph", "fontSize", "fontColor", "fontFamily"],
         initialize() { this.activeStyle = obj.clone(this.defaultActiveStyle); },
         set(value) {
           this.setProperty("activeStyle", {
@@ -131,7 +149,7 @@ export class Button extends Morph {
         }
       },
       inactiveStyle: {
-        after: ["labelMorph"],
+        after: ["labelMorph", "fontSize", "fontColor", "fontFamily"],
         initialize() { this.inactiveStyle = obj.clone(this.defaultInactiveStyle); },
         set(value) {
           this.setProperty("inactiveStyle", {
@@ -146,7 +164,7 @@ export class Button extends Morph {
         defaultValue: {fill: Color.rgb(161,161,161)}
       },
       triggerStyle: {
-        after: ["labelMorph"],
+        after: ["labelMorph", "fontSize", "fontColor", "fontFamily"],
         initialize() { this.triggerStyle = obj.clone(this.defaultTriggerStyle); },
         set(value) {
           this.setProperty("triggerStyle", {
@@ -162,15 +180,13 @@ export class Button extends Morph {
 
   constructor(props) {
     super(props);
-    this.updateButtonStyle();
+    this.updateButtonStyle(this.activeStyle)
+    this.activeMode = 'active';
     this.relayout();
     connect(this, 'extent', this, 'relayout');
     connect(this, 'padding', this, 'relayout');
     connect(this, 'fontSize', this, 'relayout');
     connect(this, 'fontFamily', this, 'relayout');
-    connect(this, 'active', this, 'updateButtonStyle');
-    connect(this, 'activeStyle', this, 'updateButtonStyle');
-    connect(this, 'inactiveStyle', this, 'updateButtonStyle');
   }
 
   get isButton() { return true }
@@ -192,9 +208,8 @@ export class Button extends Morph {
     return this;
   }
 
-  updateButtonStyle() {
-    var isActive = this.active;
-    Object.assign(this, isActive ? this.activeStyle : this.inactiveStyle);
+  updateButtonStyle(style) {
+    Object.assign(this, style);
     this.labelMorph.nativeCursor = this.nativeCursor;
   }
 
@@ -204,6 +219,41 @@ export class Button extends Morph {
     this.extent = padding.bottomLeft().addPt(padding.bottomRight()).addPt(label.extent);
     this.relayout();
     return this;
+  }
+
+  get isActive() {
+    return this.activeMode == 'active'
+  }
+
+  get buttonStyleProps() {
+    return ["fontStyle", "fontColor", "fontSize", "fontFamily", 
+            ...Object.keys(obj.dissoc(Morph.properties, ['position']))]
+  }
+
+  cacheStyle() {
+     const modeToCache = {
+             inactive: 'inactiveStyle',
+             active: 'activeStyle',
+             triggered: 'triggerStyle'
+           },
+           cachedStyle = obj.select(this, this.buttonStyleProps);
+    console.log(modeToCache[this.activeMode]);
+    this[modeToCache[this.activeMode]] = cachedStyle;
+  }
+
+  activate() {
+    this.cacheStyle();
+    this.updateButtonStyle(this.activeStyle)
+  }
+
+  deactivate() {
+    this.cacheStyle();
+    this.updateButtonStyle(this.inactiveStyle)
+  }
+
+  perform() {
+    this.cacheStyle();
+    this.updateButtonStyle(this.triggerStyle)
   }
 
   trigger() {
@@ -218,26 +268,26 @@ export class Button extends Morph {
   }
 
   onMouseDown(evt) {
-    if (this.active)
-      Object.assign(this, this.triggerStyle);
+    if (this.isActive)
+      this.activeMode = 'triggered'
   }
 
   onMouseUp(evt) {
-    if (evt.isClickTarget(this) && this.active) {
-      Object.assign(this, this.activeStyle);
+    if (evt.isClickTarget(this) && this.activeMode == 'triggered') {
+      this.activeMode = 'active';
       this.trigger();
     }
   }
 
   onHoverOut(evt) {
     // When leaving the button without mouse up, reset appearance
-    if (this.active && evt.isClickTarget(this))
-      Object.assign(this, this.activeStyle);
+    if (this.activeMode == 'triggered' && evt.isClickTarget(this))
+      this.activeMode = 'active';
   }
 
   onHoverIn(evt) {
-    if (this.active && evt.isClickTarget(this))
-      Object.assign(this, this.triggerStyle);
+    if (this.isActive && evt.isClickTarget(this))
+      this.activeMode = 'triggered';
   }
 
 }
