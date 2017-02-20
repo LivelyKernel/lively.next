@@ -3,7 +3,6 @@ var bcryptPath = System.decanonicalize("lively.user/node_modules/bcryptjs/index.
 var bcrypt = System._nodeRequire(bcryptPath);
 import * as authserver from "lively.user/authserver.js"
 
-
 export default class user {
   constructor(options) {
   var {name, password, email} = options  
@@ -20,9 +19,4 @@ export default class user {
   // currently resolves always to true
     return authserver.authenticate(name,email,pwd)
   }
-
-  
-  
 }
-
-
