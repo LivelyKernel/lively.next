@@ -1,4 +1,4 @@
-import { Morph, Text, Ellipse, Polygon,
+import { Morph, Text, Ellipse, Polygon, Button,
          Icon, Image, Path, HTMLMorph, morph} from "../index.js";
 import { VerticalLayout, HorizontalLayout, FillLayout,
          TilingLayout, GridLayout} from '../layout.js';
@@ -6,7 +6,7 @@ import { Color, pt, rect, Line, Rectangle} from "lively.graphics";
 import { intersect, shape, bezier } from 'svg-intersections';
 import { arr, num } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
-import { BorderStyleEditor, BodyStyleEditor,
+import { BorderStyleEditor, BodyStyleEditor, ButtonBodyEditor, ButtonBorderEditor,
          LayoutStyleEditor, HTMLEditor, PathEditor, PolygonEditor,
          ImageEditor, NoEditor } from "../ide/styling/style-editor.js";
 import { Leash } from "../components/widgets.js";
@@ -41,6 +41,8 @@ export function styleHaloFor(x, pointerId) {
     styleHaloClass = HTMLStyleHalo;
   } else if (x instanceof Path) {
     styleHaloClass = PathStyleHalo;
+  } else if (x instanceof Button) {
+    styleHaloClass = ButtonStyleHalo;
   }
   return new styleHaloClass(x, pointerId).openInWorld().relayout();
 }
@@ -329,6 +331,8 @@ class StyleHalo extends Morph {
   showBorderStyler() {
     if (!this.borderStyler) {
       this.borderStyler = this.addMorph(this.getBorderStyler());
+      connect(this.borderStyler, "open", this, "openBorderStyler");
+      connect(this.borderStyler, "close", this, "showStyleEditors");
     }
     this.borderStyler.show();
     this.alignBorderStyler();
@@ -348,10 +352,8 @@ class StyleHalo extends Morph {
       target: this.target,
       title: "Change Border Style"
     });
-    connect(borderStyler, "open", this, "openBorderStyler");
     connect(borderStyler, "show", this.borderHalo, "selectBorder");
     connect(borderStyler, "blur", this.borderHalo, "deselectBorder");
-    connect(borderStyler, "close", this, "showStyleEditors");
     return borderStyler;
   }
 
@@ -363,6 +365,8 @@ class StyleHalo extends Morph {
   showBodyStyler() {
     if (!this.bodyStyler) {
       this.bodyStyler = this.addMorph(this.getBodyStyler());
+      connect(this.bodyStyler, "open", this, "openBodyStyler");
+      connect(this.bodyStyler, "close", this, "showStyleEditors");
     }
     this.alignBodyStyler();
   }
@@ -382,9 +386,7 @@ class StyleHalo extends Morph {
       target: this.target,
       title: "Change Body Style"
     });
-    connect(bodyStyler, "open", this, "openBodyStyler");
     connect(bodyStyler, "show", this.borderHalo, "selectBody");
-    connect(bodyStyler, "close", this, "showStyleEditors");
     return bodyStyler;
   }
 
@@ -686,7 +688,6 @@ class SvgStyleHalo extends StyleHalo {
       target: this.target,
       title: "Change Border Style"
     });
-    connect(borderStyler, "open", this, "openBorderStyler");
     connect(borderStyler, "add vertices", this, "startAddingVertices");
     connect(borderStyler, "delete vertices", this, "startDeletingVertices");
     connect(
@@ -850,7 +851,6 @@ class PathStyleHalo extends SvgStyleHalo {
     if (this.borderStyler.opened)
       return;
     super.openBorderStyler();
-    // this.leash.startPoint.attachTo(this.target, "topCenter");
   }
 
   borderHaloShape(props) {
@@ -859,7 +859,6 @@ class PathStyleHalo extends SvgStyleHalo {
 
   getBorderStyler() {
     const borderStyler = new PathEditor({target: this.target});
-    connect(borderStyler, "open", this, "openBorderStyler");
     return borderStyler;
   }
 
@@ -877,6 +876,31 @@ class ImageStyleHalo extends StyleHalo {
 
   getBodyStyler() {
     return new ImageEditor({target: this.target});
+  }
+
+}
+
+class ButtonStyleHalo extends StyleHalo {
+
+  // getLayoutControl() { 
+  //    return new NoEditor({target: this.target})
+  // }
+
+  getBorderStyler() {
+     return new ButtonBorderEditor({
+       name: 'borderStyler',
+       title: "Change Button's Border", 
+       target: this.target
+     });
+  }
+
+
+  getBodyStyler() {
+     return new ButtonBodyEditor({
+       name: 'bodyStyler',
+       title: "Change Button's Body", 
+       target: this.target
+     });
   }
 
 }

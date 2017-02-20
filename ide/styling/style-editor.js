@@ -2,7 +2,7 @@ import {
   GridLayout,
   VerticalLayout,
   HorizontalLayout,
-  TilingLayout,
+  TilingLayout, Button,
   Morph, Icon, morph
 } from "../../index.js";
 import {
@@ -12,23 +12,38 @@ import {
   pt,
   rect
 } from "lively.graphics";
-import { obj, arr } from "lively.lang";
-import { signal, connect } from "lively.bindings";
+import { obj, properties, arr, string } from "lively.lang";
+import { signal, connect, disconnect } from "lively.bindings";
 import {
   CheckBox,
   ModeSelector,
   DropDownSelector,
   Slider,
   PropertyInspector,
-  Leash
+  Leash,
 } from "../../components/widgets.js";
 
 import { ColorPickerField } from "./color-picker.js";
 import { GradientEditor } from "./gradient-editor.js";
 import { StyleRules } from "../../style-rules.js";
 import KeyHandler from "../../events/KeyHandler.js";
+import { loadObjectFromPartsbinFolder } from "../../partsbin.js";
 
-const duration = 200;
+const duration = 200,
+      focusHalo = {
+          blur: 6,
+          color: Color.rgb(52,152,219),
+          distance: 0,
+          rotation: 45
+        };
+var iconPicker;
+
+async function initIconPicker() {
+  iconPicker = await loadObjectFromPartsbinFolder('IconPicker');
+  iconPicker.isHaloItem = true;
+}
+
+initIconPicker();
 
 class StyleEditor extends Morph {
 
@@ -45,16 +60,29 @@ class StyleEditor extends Morph {
     this.build();
   }
 
+  static get properties() {
+     return {
+         defaultPropertyValues: {defaultValue: {}}
+     }
+  }
+
   build() {
     this.submorphs = [this.titleLabel(this.title)];
     this.styleRules = this.styler;
+    connect(this, 'submorphChanged', this, 'equalizeControlWidths');
+  }
+
+  equalizeControlWidths() {
+     const maxWidth = arr.max(this.submorphs, c => c.bounds().width);
+     this.submorphs.forEach(c => c.width = maxWidth);
   }
 
   getColorField({target, property}) {
     const colorField = new ColorPickerField({
-      target: target || this.target,
+      target,
       name: "colorPicker",
-      property
+      property,
+      defaultValue: this.defaultPropertyValues[property]
     });
     connect(this, "remove", colorField, "remove");
     connect(this, "onMouseDown", colorField, "removeWidgets");
@@ -63,10 +91,12 @@ class StyleEditor extends Morph {
 
   get styler() {
     return new StyleRules({
-      closeButton: {
-        fontSize: 22,
+      closeStylerButton: {
         fontColor: Color.gray.darker(),
-        nativeCursor: "pointer"
+        nativeCursor: "pointer",
+        fill: Color.transparent,
+        fontSize: 22,
+        borderWidth: 0
       },
       closed: {
         dropShadow: true,
@@ -187,10 +217,9 @@ class StyleEditor extends Morph {
     this.openPosition = this.position;
 
     var btn = morph({
-      type: "button",
-      label: [Icon.textAttribute("times-circle-o")],
-      fontSize: 22, 
-      activeStyle: {fill: Color.transparent}, borderWidth: 0,
+      type: "button", morphClasses: ['closeStylerButton'],
+      fontSize: 22,
+      label: Icon.makeLabel("times-circle-o")
     });
     
     btn.fit();
@@ -235,10 +264,11 @@ class StyleEditor extends Morph {
 
   updateControls(newControls) {
     const [titleLabel, _] = this.submorphs;
-    this.animate({submorphs: [titleLabel, ...newControls], duration});
+    // this.animate({submorphs: [titleLabel, ...newControls], duration});
+    this.submorphs = [titleLabel, ...newControls];
   }
 
-  createControl(name, controlElement) {
+  createControl(name, controlElement, toggleable) {
     return {
       name,
       morphClasses: ["controlWrapper"],
@@ -255,11 +285,10 @@ class StyleEditor extends Morph {
             name: "modeSelector",
             items: controls,
             init,
-            width: this.width - 20
           }),
           selectableControl = new Morph({
             morphClasses: ["controlWrapper"],
-            layout: new VerticalLayout({spacing: 10}),
+            layout: new VerticalLayout({spacing: 10, autoResize: true}),
             remove() {
               super.remove();
               arr.invoke(this.submorphs, "remove");
@@ -272,8 +301,9 @@ class StyleEditor extends Morph {
             },
             submorphs: [modeSelector, controls[init]()]
           });
+    modeSelector.width = this.width - 40;
     connect(modeSelector, "switchLabel", selectableControl, "select");
-    modeSelector.layout.col(0).remove();
+    connect(selectableControl, 'extent', selectableControl, 'relayout');
     return selectableControl;
   }
 
@@ -322,7 +352,7 @@ class StyleEditor extends Morph {
 
   opacityControl(target) {
     return this.createControl("Opacity", new Slider({
-      target: this.target,
+      target,
       min: 0,
       max: 1,
       property: "opacity",
@@ -330,10 +360,10 @@ class StyleEditor extends Morph {
     }));
   }
 
-  shadowControl() {
+  shadowControl(target) {
     return this.createToggledControl({
       title: "Drop Shadow",
-      target: this.target,
+      target,
       property: "dropShadow",
       render: value => {
         if (!value)
@@ -431,13 +461,13 @@ export class BodyStyleEditor extends StyleEditor {
   placeBehindMe(handle) {
     handle.remove();
     this.owner.addMorph(handle, this);
-    handle.center = this.owner.localize(this.target.globalBounds().center());
+    handle.relayout();
   }
 
   fillControl(target) {
     return this.createSelectableControl({
       controls: {
-        "Fill": () => this.getColorField({property: "fill"}),
+        "Fill": () => this.getColorField({target, property: "fill"}),
         "Gradient": () => {
           const g = new GradientEditor({target, property: "fill"});
           g.gradientHandle && this.placeBehindMe(g.gradientHandle);
@@ -485,9 +515,9 @@ export class BorderStyleEditor extends StyleEditor {
           property: "borderStyle",
           values: ["solid", "dashed", "dotted"]
         }),
-        this.getColorField({property: "borderColor"}),
+        this.getColorField({target, property: "borderColor"}),
         new PropertyInspector({
-          min: 0,
+          min: 0, defaultValue: 0,
           target,
           unit: "pt",
           property: "borderWidth"
@@ -816,6 +846,228 @@ export class ImageEditor extends StyleEditor {
 
 }
 
+function buttonModeSelector(buttonEditor, button, getControls) {
+   var selector, 
+       renderControls = (mode) => {
+            buttonEditor.updateControls([selector, ...getControls(buttonEditor.switchButtonMode(button, mode))])
+       };
+   selector = morph({
+      fill: Color.transparent,
+      layout: new HorizontalLayout({spacing: 4}),
+      submorphs: [{
+       type: 'label',
+       value: 'Button Mode: ',
+       fontWeight: 'bold',
+       padding: 6
+      },
+      new DropDownSelector({
+        isHaloItem: true,
+        width: buttonEditor.width - 20,
+        target: buttonEditor, property: 'buttonMode',
+        values: {
+          "Inactive": () => renderControls('inactive'),
+          "Active": () => renderControls('active'),
+          "Triggered": () => renderControls('triggered')
+        },
+        getCurrentValue() { return string.capitalize(buttonEditor.buttonMode) }
+      })]});
+   return selector;
+}
+
+export class ButtonBorderEditor extends BorderStyleEditor {
+ 
+  controls(button) {
+     const getControls = (b) => [
+        ...super.controls.bind(this)(b)
+     ];
+     this.defaultPropertyValues = button.defaultProperties
+     return [buttonModeSelector(this, button, getControls), ...getControls(button)];
+  }
+
+  get buttonMode() {
+     return this.target.activeMode;
+  }
+
+  close() {
+     this.target.activeMode = 'active'
+     super.close();
+  }
+
+  remove() {
+     this.target.activeMode = 'active';
+     super.remove();
+  }
+
+  switchButtonMode(button, mode) {
+     button.activeMode = mode;
+     return button;
+  }
+}
+
+
+export class ButtonBodyEditor extends BodyStyleEditor {
+
+  controls(button) {
+     const getControls = (b) => [
+          this.labelTypeControl(b),
+          this.createControl('Font Style', this.labelControl(b)),
+          ...super.controls.bind(this)(b)
+       ];
+     this.defaultPropertyValues = button.defaultProperties
+     return [buttonModeSelector(this, button, getControls), ...getControls(button)];
+  }
+
+  get buttonMode() {
+    return this.target.activeMode;
+  }
+
+  remove() {
+     this.target.activeMode = 'active';
+     super.remove();
+  }
+
+  close() {
+     this.target.activeMode = 'active';
+     super.close();
+  }
+
+  labelTypeControl(button) {
+    return this.createSelectableControl({
+      controls: {
+        "Icon": () => {
+            if (!button.labelMorph.isIcon) this.setButtonIcon('smile-o');
+            return this.iconLabelControl(button)
+         },
+        "Text": () => {
+            if (button.labelMorph.isIcon) button.label = "a button";
+            return this.textLabelControl(button);
+        }
+      },
+      init: button.labelMorph.isIcon ? "Icon" : "Text"
+    })
+  }
+
+  labelControl(button) {
+    var container,
+        btnStyle = {
+          type: "button", borderRadius: 5, padding: Rectangle.inset(0),
+          grabbable: false, draggable: false, extent: pt(30,30)
+        },
+        fontSizeInspector = new PropertyInspector({
+            name: "fontSizeInspector",
+            min: 0,
+            target: button,
+            property: "fontSize"
+          }),
+        container = new Morph({
+          width: 130,
+          height: 100,
+          fill: Color.transparent,
+          submorphs: [
+            {
+              type: "label",
+              value: "Font Size: ",
+              padding: Rectangle.inset(4),
+              name: "fontSizeLabel"
+            },
+            fontSizeInspector,
+            {
+              type: "label",
+              value: "Font Color: ",
+              padding: Rectangle.inset(4),
+              name: "fontColorLabel"
+            },
+            this.getColorField({
+               target: button, 
+               property: "fontColor"
+            }),
+            {fill: Color.transparent, name: "rich text controls",
+             layout: new HorizontalLayout({spacing: 3}),
+             submorphs:[
+              {name: "bold button",      ...btnStyle, label: Icon.makeLabel("bold")},
+              {name: "italic button",    ...btnStyle, label: Icon.makeLabel("italic")},
+              {name: "underline button", ...btnStyle, label: Icon.makeLabel("underline")}]}
+          ]
+        });
+
+        container.layout = new GridLayout({
+          autoAssign: false,
+          fitToCell: false,
+          grid: [
+            ["fontSizeLabel", null, "fontSizeInspector"],
+            ["fontColorLabel", null, "colorPicker"],
+            ["rich text controls", "rich text controls", "rich text controls"]
+          ]
+        }), 
+        container.layout.col(0).paddingLeft = 1;
+        container.layout.row(0).paddingBottom = 5;
+        return container;
+  }
+
+  textLabelControl(button) {
+     return morph({
+          type: "text",
+          name: "urlBar",
+          textString: button.label,
+          autoFit: false, padding: 5,
+          borderRadius: 5, fontSize: 14,
+          onFocus() {
+            this.animate({dropShadow: focusHalo})
+          },
+          onBlur() {
+            this.animate({dropShadow: false, duration});
+            button.label = this.textString;
+          },
+          doSave() {
+            button.label = this.textString;
+          }
+        })
+  }
+
+  setButtonIcon(iconName) {
+     const v = Icon.makeLabel(iconName).value,
+           changeIconButton = this.get('changeIconButton');
+     if (changeIconButton) changeIconButton.label = v;
+     this.target.label = v;
+     if (this.iconPicker) {
+       disconnect(this.iconPicker, 'select', this, 'setButtonIcon');
+       this.iconPicker.remove();
+     }
+  }
+
+  iconLabelControl(button) {
+     // icon picker
+     return morph({
+        fill: Color.transparent,
+        layout: new HorizontalLayout({spacing: 4}),
+        submorphs: [
+        {
+          type: "label",
+          value: "Label Icon: ",
+          padding: rect(0,13,30,4)
+        },
+        new Button({
+          name: 'changeIconButton',
+          label: button.labelMorph.isIcon ? button.labelMorph.value : Icon.makeLabel('smile-o').value,
+          extent: pt(40,40), 
+          fontSize: 28,
+          triggerStyle: {fontSize: 28},
+          activeStyle: {fill: Color.white, borderRadius: 5, fontSize: 28},
+          action: async () => {
+             this.iconPicker = iconPicker
+             connect(this.iconPicker, 'select', this, 'setButtonIcon');
+             this.iconPicker.openInWorld();
+          }
+       })]})
+  }
+
+  switchButtonMode(button, mode) {
+     button.activeMode = mode;
+     return button;
+  }
+
+}
+
 export class NoEditor {
   constructor(props) {}
   blur() {}
@@ -823,5 +1075,6 @@ export class NoEditor {
   hide() {}
   openInWorld() {}
   remove() {}
+  update() {}
   open() { return this; }
 }
