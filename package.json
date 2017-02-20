@@ -73,6 +73,6 @@
   },
   "scripts": {
     "build": "node tools/build.js",
-    "test": "mocha-es6 tests/{,text/}*-test.js"
+    "test": "mocha-es6 tests/{,text/,components/}*-test.js"
   }
 }

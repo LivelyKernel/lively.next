@@ -137,6 +137,7 @@ export class Button extends Morph {
             ...obj.select(this, ["fontSize", "fontFamily", "fontColor"]),
             ...value,
           });
+          if (this.isActive) this.updateButtonStyle(this.activeStyle);
         }
       },
 
@@ -157,6 +158,7 @@ export class Button extends Morph {
             ...obj.select(this, ["fontSize", "fontFamily", "fontColor"]),
             ...value,
           });
+          if (this.activeMode == 'inactive') this.updateButtonStyle(this.inactiveStyle);
         }
       },
 
@@ -172,6 +174,7 @@ export class Button extends Morph {
             ...obj.select(this, ["fontSize", "fontFamily", "fontColor"]),
             ...value,
           });
+          if (this.activeMode == 'triggered') this.updateButtonStyle(this.triggerStyle);
         }
       }
 
@@ -227,7 +230,7 @@ export class Button extends Morph {
 
   get buttonStyleProps() {
     return ["fontStyle", "fontColor", "fontSize", "fontFamily", 
-            ...Object.keys(obj.dissoc(Morph.properties, ['position']))]
+            ...Object.keys(obj.dissoc(Morph.properties, ['position', 'extent']))]
   }
 
   cacheStyle() {

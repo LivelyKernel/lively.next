@@ -104,6 +104,14 @@ describe("buttons", function() {
        expect(b.label).equals(Icon.makeLabel("times-circle-o").textString);
     });
 
+    it('excludes position and extent from style modes', () => {
+      button.extent = pt(100,100)
+      button.position = pt(0,0);
+      button.activeMode = 'triggered';
+      expect(button.activeStyle.extent).to.be.undefined;
+      expect(button.activeStyle.position).to.be.undefined;
+    })
+
     it('allows to change the label', () => {
        button.label = "Hello!";
        button.activeMode = "triggered";
@@ -122,7 +130,7 @@ describe("buttons", function() {
           fill: Color.red, fontSize: 50, 
           fontStyle: 'italic', fontColor: Color.blue
      };
-          button.activeMode = 'triggered';
+     button.activeMode = 'triggered';
      expect(button.activeStyle.fontSize).equals(15, 'active font size');
      env.eventDispatcher.simulateDOMEvents({type: "pointerdown", target: button});
      expect(button.activeMode).equals('triggered');
