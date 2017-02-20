@@ -1,26 +1,24 @@
 import { string, promise } from "lively.lang";
-import * as bcrypt from "lively.user/node_modules/bcryptjs";
+var bcryptPath = System.decanonicalize("lively.user/node_modules/bcryptjs/index.js").replace(/^file:\/\//, "");
+var bcrypt = System._nodeRequire(bcryptPath);
 import * as authserver from "lively.user/authserver.js"
 
 
 export default class user {
   constructor(options) {
-  var {name, password} = options  
+  var {name, password, email} = options  
   this.name = name ? name : 'anonymous'
-  this.token = this.authenticate(name,password)
+  this.email = email ? email : 'a@b.c'
+  this.token = this.authenticate(name,email,password)
 
   //Freeze to prevent manual changes to the object
   Object.freeze(this)
-  }
+  }  
   
-  toString(){
-    return "Module for user authentication"
-  } 
-  
-  authenticate(name,pwd){
+  authenticate(name,email,pwd){
   // replace with db accessor pulling hash from db
   // currently resolves always to true
-    return authserver.authenticate(name,pwd)
+    return authserver.authenticate(name,email,pwd)
   }
 
   
