@@ -4,7 +4,6 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "jquery": "^3.1.1",
-    "jsonwebtoken": "^7.3.0",
-    "sqlite3": "^3.1.8"
+    "jsonwebtoken": "^7.3.0"
   }
 }
