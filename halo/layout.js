@@ -367,6 +367,20 @@ export class GridLayoutHalo extends Morph {
     this.initialize();
   }
 
+  previewDrop(morphs) {
+     if (morphs.length < 1) return;
+     var cell = this.cellGuides.find(g => g.fullContainsWorldPoint(morphs[0].globalPosition));
+     if (cell != this.currentCell) {
+       this.currentCell && this.currentCell.stopPreview();
+     }
+     this.currentCell = cell;
+     this.currentCell && this.currentCell.startPreview()
+  }
+
+  handleDrop(morph) {
+     if (this.currentCell) this.currentCell.cellGroup.morph = morph;
+  }
+
   initialize() {
       this.initGuides();
       this.alignWithTarget();
@@ -437,7 +451,7 @@ export class GridLayoutHalo extends Morph {
     this.target.cellGroups.forEach(group => {
       cellContainer.addMorph(this.cellGuide(group));
     })
-
+    this.cellGuides = cellContainer.submorphs;
     this.addMorph(this.resizer());
   }
 
@@ -569,11 +583,11 @@ export class GridLayoutHalo extends Morph {
         self.addMorph(this.remove());
         this.submorphs.forEach(b => { b.visible = true });
       },
-      onHoverIn(evt) {
+      startPreview(evt) {
         // if hand carries a morph, preview the alignment of the morph
-        if (evt.hand.grabbedMorphs.length > 0) this.fill = Color.orange.withA(.7);
+        this.fill = Color.orange.withA(.7);
       },
-      onHoverOut(evt) {
+      stopPreview(evt) {
         this.fill = Color.transparent;
       },
       onDrop(evt) {
@@ -603,7 +617,8 @@ export class TilingLayoutHalo extends Morph {
       isHaloItem: true,
       styleClasses: ["Halo"],
       extent: container.extent,
-      fill: Color.transparent
+      fill: Color.transparent,
+      previews: []
     });
     this.state = {container, pointerId, target: container.layout}
     this.alignWithTarget();
@@ -615,6 +630,33 @@ export class TilingLayoutHalo extends Morph {
   alignWithTarget() {
      this.setBounds(this.container.globalBounds());
   };
+
+  handleDrop(morph) {
+  
+  }
+
+  previewDrop(morphs) {
+     const pulseDuration = 2000;
+     if (this.previews.length > 0) return;
+     this.previews = morphs.map(morph =>
+         this.container.addMorph({
+           isHaloItem: true,
+           bounds: morph.bounds(),
+           fill: Color.orange.withA(.3),
+           borderColor: Color.orange,
+           borderWidth: 2,
+           opacity: 1,
+           borderStyle: "dashed",
+           async step() {
+              const easing = Sine.easeInOut;
+              await this.animate({opacity: .5, duration: pulseDuration / 2, easing})
+              await this.animate({opacity: 1, duration: pulseDuration / 2, easing});
+           }
+        }));
+     this.previews.forEach(p => {
+         p.step(); p.startStepping(pulseDuration, "step")
+     });
+  }
 
   optionControls() {
       const layout = this.target,
@@ -652,6 +694,10 @@ export class FlexLayoutHalo extends Morph {
 
   onHoverOut(evt) {
      this.removePreviews();
+  }
+
+  handleDrop(morph) {
+  
   }
 
   previewDrop(morphs) {
@@ -708,7 +754,9 @@ export class FlexLayoutHalo extends Morph {
 
   optionControls() {
       const layout = this.target,
-            spacing = new PropertyInspector({min: 0, target: layout, unit: "px", property: "spacing"}),
+            spacing = new PropertyInspector({
+                min: 0, target: layout, defaultValue: 0,
+                unit: "px", property: "spacing"}),
             autoResize = new CheckBox({
                 name: "autoResize", checked: layout.autoResize});
       connect(autoResize, "toggle", this, "updateResizePolicy");

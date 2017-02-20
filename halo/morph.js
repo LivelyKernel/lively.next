@@ -804,7 +804,9 @@ class GrabHaloItem extends HaloItem {
 
   valueForPropertyDisplay() {
     var dropTarget = this.morphBeneath(this.hand.position),
-        belongsToHalo = dropTarget.isHaloItem || dropTarget.ownerChain().find(m => m.isHaloItem);
+        belongsToHalo = dropTarget && (
+              dropTarget.isHaloItem || 
+              dropTarget.ownerChain().find(m => m.isHaloItem));
     if (!belongsToHalo) {
       this.halo.toggleMorphHighlighter(
         dropTarget && dropTarget != this.world(),
@@ -831,6 +833,7 @@ class GrabHaloItem extends HaloItem {
   stop(hand) {
     var undo = this.halo.target.undoInProgress,
         dropTarget = this.morphBeneath(hand.position);
+    MorphHighlighterForHalo.interceptDrop(this.halo, dropTarget, this.halo.target);
     undo.addTarget(dropTarget);
     dropTarget.onDrop({hand});
     this.halo.state.activeButton = null;
@@ -1323,6 +1326,11 @@ class MorphHighlighterForHalo extends Morph {
     return store[morph.id];
   }
 
+  static interceptDrop(halo, target, morph) {
+     var store = halo.state.morphHighlighters = halo.state.morphHighlighters || {};
+     store && store[target.id].handleDrop(morph)
+  }
+
   get halo() { return this.getProperty("halo"); }
   set halo(val) { this.setProperty("halo", val); }
 
@@ -1349,22 +1357,28 @@ class MorphHighlighterForHalo extends Morph {
     if (this.target.layout && this.showLayout) {
       this.layoutHalo = this.layoutHalo ||
         this.world().showLayoutHaloFor(this.target, this.pointerId);
-      this.animate({opacity: 1, fill: Color.transparent, duration: 500});
+      this.opacity = 1;
+      this.fill = Color.transparent;
       this.alignWithHalo();
       this.addMorph(this.layoutHalo);
       if (this.halo.get('grab').hand.grabbedMorphs) this.layoutHalo.previewDrop(this.halo.get('grab').hand.grabbedMorphs);
     } else {
-      this.animate({opacity: 1, fill: Color.orange.withA(0.5), duration: 500});
+      this.fill = Color.orange.withA(0.5);
+      this.opacity = 1;
       this.alignWithHalo();
     }
   }
+
+  handleDrop(morph) {
+    this.layoutHalo && this.layoutHalo.handleDrop(morph);
+  } 
 
   deactivate() {
     if (this.layoutHalo) {
       this.layoutHalo.remove();
       this.layoutHalo = null;
     }
-    this.animate({opacity: 0, duration: 500});
+    this.opacity = 0;
     this.alignWithHalo();
   }
 
