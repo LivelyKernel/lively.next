@@ -180,13 +180,13 @@ export class Slider extends Morph {
 export class PropertyInspector extends Morph {
 
    constructor(props) {
-       const {target, property} = props;
+       const {target, property, defaultValue} = props;
        super({
            ...props,
            morphClasses: ["root"],
            submorphs: [new ValueScrubber({
                         name: "value",
-                        value: target[property],
+                        value: target[property] || defaultValue,
                         ...obj.dissoc(props, ["name"])}),
                         {type: "button", name: "down", label: Icon.makeLabel(
                                   "sort-desc", {padding: rect(2,2,0,0), fontSize: 12})},
@@ -231,13 +231,13 @@ export class PropertyInspector extends Morph {
 
    increment() {
       if (this.max != undefined && this.target[this.property] >= this.max) return;
-      this.target[this.property] += 1;
+      this.target[this.property] = (this.target[this.property] || this.defaultValue) + 1;
       this.update()
    }
 
    decrement() {
       if (this.min != undefined && this.target[this.property] <= this.min) return;
-      this.target[this.property] -= 1;
+      this.target[this.property] = (this.target[this.property] || this.defaultValue) - 1;
       this.update()
    }
 

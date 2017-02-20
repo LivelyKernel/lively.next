@@ -16,7 +16,7 @@ const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-c
 export class ColorPickerField extends Morph {
 
    constructor(props) {
-      const {property, target} = props;
+      const {property, target, defaultValue} = props;
       super({
          extent: pt(70,30), layout: new HorizontalLayout(),
          borderRadius: 5, fill: Color.gray, clipMode: "hidden",
@@ -76,7 +76,7 @@ export class ColorPickerField extends Morph {
    }
 
    get targetProperty() {
-      const v  = this.target[this.property];
+      const v  = this.target[this.property] || this.defaultValue;
       if (v && v.isGradient) return Color.blue
       return v;
    }
