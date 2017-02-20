@@ -8,7 +8,7 @@ import {Morph, Image, VerticalLayout, GridLayout,
 import {num, obj, arr} from "lively.lang";
 import {Icon} from "lively.morphic/components/icons.js";
 import {StyleRules} from "../../style-rules.js";
-import {connect, signal} from "lively.bindings";
+import {connect, signal, once} from "lively.bindings";
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
 
@@ -55,20 +55,20 @@ class GradientTypeSelector extends Morph {
                   onMouseDown: (evt) => {
                      signal(this, "linear");
                  }
-              }]
+              }];
             }
           }
         }
       }
 
       update(gradient) {
-         const [radial, linear] = this.submorphs;
-         radial.borderColor = linear.borderColor = Color.gray.darker();
-         if (gradient instanceof RadialGradient) {
+        const [radial, linear] = this.submorphs;
+        radial.borderColor = linear.borderColor = Color.gray.darker();
+        if (gradient instanceof RadialGradient) {
             radial.borderColor = Color.orange;
-         } else if (gradient instanceof LinearGradient) {
+        } else if (gradient instanceof LinearGradient) {
             linear.borderColor = Color.orange;
-         }
+        }
       }
 
 }
@@ -118,52 +118,48 @@ export class GradientEditor extends Morph {
       this.gradientClass = RadialGradient;
       this.get("linearMode").borderColor = Color.gray.darker();
       this.get("radialMode").borderColor = Color.orange;
-      this.applyGradient(this.gradientClass);
-      this.updateGradientHandles();
+      await this.applyGradient(this.gradientClass);
+      await this.updateGradientHandles(this.gradientClass);
    }
 
    async selectLinearGradient() {
       this.gradientClass = LinearGradient;
       this.get("radialMode").borderColor = Color.gray.darker();
       this.get("linearMode").borderColor = Color.orange;
-      this.applyGradient(this.gradientClass);
-      this.updateGradientHandles();
+      await this.applyGradient(this.gradientClass);
+      await this.updateGradientHandles(this.gradientClass);
    }
 
-   applyGradient(gradientClass) {
+   async applyGradient(gradientClass) {
       const prevGradient = this.targetProperty,
             gradientEditor = this.get("gradientEditor");
       if (prevGradient && prevGradient.isGradient) {
          const {stops,focus, vector} = prevGradient;
-         this.targetProperty  = new gradientClass({stops, bounds: this.target.innerBounds(), focus, vector});
+         await this.target.animate({[this.property]: new gradientClass({
+               stops, bounds: this.target.innerBounds(), focus, vector}), duration: 500});
       } else {
-         this.targetProperty = new gradientClass({
+         await this.target.animate({[this.property]: new gradientClass({
             stops: [
               {color: Color.white, offset: 0},
               {color: Color.black, offset: 1}
             ],
             bounds: this.target.innerBounds()}
-          );
+          ), duration: 500});
       }
       this.update();
    }
 
-   async updateGradientHandles(g = this.targetProperty) {
+   async updateGradientHandles(gradientClass) {
         const duration = 300;
         this.gradientHandle && await this.gradientHandle.fadeOut(duration);
-        if (g instanceof RadialGradient) {
-           this.gradientHandle = morph({
-               extent: this.target.extent,
-               opacity: 0, fill: Color.transparent,
-               submorphs: [new GradientFocusHandle({target: this.target})]})
-        } else if (g instanceof LinearGradient) {
-           this.gradientHandle = morph({
-                extent: this.target.extent,
-                opacity: 0, fill: Color.transparent,
-                submorphs: [new GradientDirectionHandle({target: this.target})]})
+        if (gradientClass == RadialGradient) {
+           this.gradientHandle = new GradientFocusHandle({target: this.target})
+        } else if (gradientClass == LinearGradient) {
+           this.gradientHandle = new GradientDirectionHandle({target: this.target})
         }
         if (this.gradientHandle) {
            signal(this, "openHandle", this.gradientHandle);
+           this.gradientHandle.opacity = 0;
            this.gradientHandle.animate({opacity: 1, duration});
         }
    }
@@ -171,7 +167,6 @@ export class GradientEditor extends Morph {
    update(g = this.targetProperty) {
       if (g && g.isGradient) {
         this.get("gradientEditor").update(g);
-        this.get("typeSelector").update(g);
       }
    }
 
@@ -182,8 +177,9 @@ export class GradientEditor extends Morph {
        connect(selector, "linear", this, "selectLinearGradient");
        connect(this, "targetProperty", this, "update");
        this.update();
+       selector.update(this.targetProperty);
        this.styleRules = this.getStyler();
-       this.updateGradientHandles();
+       this.targetProperty && this.updateGradientHandles(this.targetProperty.__proto__.constructor);
    }
 
    gradientStopControl(gradientEditor, idx) {
@@ -474,7 +470,9 @@ export class GradientFocusHandle extends Ellipse {
        const {bounds, focus} = this.target.fill;
        this.extent = bounds.extent();
        this.submorphs.forEach(m => m.relayout());
-       this.center = this.target.extent.scaleByPt(focus);
+       this.rotation = this.target.rotation;
+       if (this.owner) 
+          this.center = this.owner.localizePointFrom(this.target.extent.scaleByPt(focus), this.target);
     }
 
     initBoundsHandles() {
@@ -523,7 +521,7 @@ export class GradientFocusHandle extends Ellipse {
              })).openInWorld(evt.hand.position.addPt(pt(10,10)));
           },
           onDrag(evt) {
-             const {x,y} = this.tfm.transformDirection(evt.state.dragDelta),
+             const {x,y} = evt.state.dragDelta,
                    g = self.target.fill;
              g.focus = g.focus.addXY(x / self.target.width, y / self.target.height)
              this.focusView.textString = `x: ${(g.focus.x * 100).toFixed()}%, y: ${(g.focus.y * 100).toFixed()}%`;
@@ -567,7 +565,8 @@ class GradientDirectionHandle extends Ellipse {
   get isHaloItem() { return true }
 
   relayout() {
-      this.position = this.target.innerBounds().center();
+      if (this.owner)
+        this.position = this.owner.localizePointFrom(this.target.extent.scaleBy(.5), this.target);
       this.rotationPoint.relayout();
   }
 
