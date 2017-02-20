@@ -208,10 +208,8 @@ export class PropertyInspector extends Morph {
        const buttonStyle = {
             type: "button",
             clipMode: "hidden",
-            activeStyle: {
-                fill: Color.transparent,
-                borderWidth: 0, fontColor: Color.white.darker()
-            },
+            fill: Color.transparent,
+            borderWidth: 0, fontColor: Color.white.darker(),
             triggerStyle: {fill: Color.transparent, fontColor: Color.black}
          };
        return new StyleRules({
@@ -491,7 +489,8 @@ export class ModeSelector extends Morph {
       layout: new GridLayout({
         grid: [[...arr.interpose(keys.map(k => k + "Label"), null)]],
         autoAssign: false,
-        fitToCell: true
+        align: 'center',
+        fitToCell: false
       }),
       ...props
     });
@@ -517,8 +516,10 @@ export class ModeSelector extends Morph {
       {name: "typeMarker"},
       ...this.createLabels(this.keys, this.values, this.tooltips)
     ];
-    this.layout.col(0).row(0).group.align = "topCenter";
-    this.layout.col(2).row(0).group.align = "topCenter";
+    this.layout.row(0).items.forEach(c => {
+      c.group.align = 'center';
+    })
+    this.layout.row(0).paddingBottom = 10;
     this.applyStyler();
   }
 
@@ -606,18 +607,18 @@ export class DropDownSelector extends Morph {
       {
         type: "text",
         name: "currentValue",
-        textString: this.getNameFor(this.target[this.property]),
         padding: Rectangle.inset(0),
         readOnly: true
       },
       this.dropDownLabel
     ];
+    this.relayout();
   }
 
   getMenuEntries() {
-    const currentValue = this.getNameFor(this.target[this.property]);
+    const currentValue = this.getNameFor(this.value);
     return [
-      {command: currentValue, target: this},
+      ...this.value ? [{command: currentValue, target: this}] : [],
       ...arr.compact(
         this.commands.map(c => {
           return c.name != currentValue && {command: c.name, target: this};
@@ -658,13 +659,27 @@ export class DropDownSelector extends Morph {
     }
   }
 
+  get value() { return this.target[this.property] }
+
   set value(v) {
     if (obj.isFunction(v)) {
       v();
     } else {
       this.target[this.property] = v;
     }
-    this.get("currentValue").textString = this.getNameFor(v);
+    this.relayout()
+  }
+
+  relayout() {
+    const vPrinted = this.getNameFor(this.value),
+          valueLabel = this.get("currentValue");
+    if (vPrinted == 'undefined') {
+         valueLabel.textString = 'Not set'
+         valueLabel.fontColor = Color.gray;
+    } else {
+       valueLabel.textString = vPrinted;
+       valueLabel.fontColor = Color.black;
+    }
   }
 
   onHoverIn() {

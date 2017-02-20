@@ -237,7 +237,6 @@ export class Button extends Morph {
              triggered: 'triggerStyle'
            },
            cachedStyle = obj.select(this, this.buttonStyleProps);
-    console.log(modeToCache[this.activeMode]);
     this[modeToCache[this.activeMode]] = cachedStyle;
   }
 

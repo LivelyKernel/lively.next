@@ -152,7 +152,11 @@ export class SearchWidget extends Morph {
       submorphs: {
         after: ["extent"],
         initialize() {
-          let btnStyle = {fontSize: 18, extent: pt(24,24), activeStyle: {borderWidth: 0, fill: null, fontColor: Color.gray.darker()}},
+          let btnStyle = {extent: pt(24,24), 
+                          triggerStyle: {fontSize: 18},
+                          activeStyle: {
+                             fontSize: 18, borderWidth: 0, 
+                             fill: Color.transparent, fontColor: Color.gray.darker()}},
               fontSize = 14, fontFamily = "Inconsolata, monospace";
 
           this.submorphs = [
