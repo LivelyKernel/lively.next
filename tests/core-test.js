@@ -144,6 +144,14 @@ describe("relationship", () => {
       expect(world.submorphs.indexOf(submorph2)).equals(0, "subm index submorph2");
     });
 
+    it("leaves the global position unchanged", () => {
+      var m1 = world.addMorph({submorphs: [{extent: pt(100,200)}], clipMode: 'scroll'});
+      m1.scroll = pt(0,100);
+      const globalPositionBefore = submorph1.globalPosition;
+      m1.addMorph(submorph1);
+      expect(globalPositionBefore).equals(submorph1.globalPosition);
+    });
+
   });
 
   describe("morph lookup", () => {

@@ -949,7 +949,8 @@ export class Morph {
     var tfm = new Transform();
     for (var morph = this; (morph != other) && (morph != undefined); morph = morph.owner) {
        tfm.preConcatenate(new Transform(morph.origin))
-          .preConcatenate(morph.getTransform());
+          .preConcatenate(morph.getTransform())
+          .preConcatenate(new Transform(morph.scroll.negated()));
     }
     return tfm;
   }
