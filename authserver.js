@@ -5,7 +5,10 @@ var jwt = System._nodeRequire(jwtpath);
 var sqlite3Path = System.decanonicalize("lively.user/node_modules/sqlite3/lib/sqlite3.js").replace(/^file:\/\//, "");
 var sqlite3 = System._nodeRequire(sqlite3Path);
 
+//replace with uuid, visible only to server
 var key = "mysecret"
+
+//temporary substitute for a database
 var users = [
   {
     name: 'Matt',

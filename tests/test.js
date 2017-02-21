@@ -17,12 +17,17 @@ describe("Authentication", () => {
   });
   it("Check if valid token is generated during correct login", async () =>{
     var tempUser = new user({name: 'Matt', password: 'password'})
-    var verifiedToken = jwt.verify(tempUser.token,'mysecret')
-    
-    // Drop milliseconds because iat is only valid to the second
-    var now = parseInt(Date.now()/1000)
-    // Check if token is valid in timeframe
-    var seconds = 30
-    expect(now-verifiedToken.iat).lessThan(30,'token is more than ' + seconds + ' seconds old')
+    var response = await authserver.verify(tempUser)    
+    console.log(response)    
+    expect(response.type == 'success').equals(true,'token is invalid: \n' + JSON.stringify(response.reason))
   });
+  it("Check if INvalid token is generated during bad login", async () =>{
+    var tempUser = new user({name: 'baduser', password: 'badpassword'})
+    var response = await authserver.verify(tempUser)
+    console.log(response)
+    expect((response.type == 'failed') && (response.reason == 'JWT malformed')).equals(true,'Token does not correctly refuse authentication')
+  });
+  it("Check if token correctly checks for timeout", async () =>{
+    
+  })
 });
