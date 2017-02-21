@@ -2,6 +2,8 @@ var bcryptPath = System.decanonicalize("lively.user/node_modules/bcryptjs/index.
 var bcrypt = System._nodeRequire(bcryptPath);
 var jwtpath = System.decanonicalize("lively.user/node_modules/jsonwebtoken/index.js").replace(/^file:\/\//, "");
 var jwt = System._nodeRequire(jwtpath);
+var sqlite3Path = System.decanonicalize("lively.user/node_modules/sqlite3/lib/sqlite3.js").replace(/^file:\/\//, "");
+var sqlite3 = System._nodeRequire(sqlite3Path);
 
 var key = "mysecret"
 var users = [
