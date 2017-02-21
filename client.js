@@ -1,16 +1,16 @@
 import {
-  patch as applySerializedPatch,
+  patch as applySerializedPatch
 } from "./vdom-serialized-patch-browserified.js";
 
 import {
   VNode, patch as applyPatch, VText,
   create as createElement,
 } from "./node_modules/virtual-dom/dist/virtual-dom.js";
+import { fromJson as vdomFromJson } from "./node_modules/vdom-as-json/dist/vdom-as-json.js";
+
 import EventCollector from "./client-events.js";
-
 import L2LClient from "lively.2lively/client.js";
-
-import vdomAsJSON from "./node_modules/vdom-as-json/dist/vdom-as-json.js";
+import { replaceUndefinedPlaceholderWithUndefined } from "./helper.js";
 
 const debug = true;
 
@@ -159,11 +159,11 @@ export default class Client {
 
   deserializeNode(vdomNode) {
     if (vdomNode instanceof VNode || vdomNode instanceof VText) return vdomNode;
-    return vdomAsJSON.fromJson(vdomNode);
-    // var {text, tagName, properties, children, key, namespace} = vdomNode;
-    // if (text) return new VText(text);
-    // if (children && children.length) children = children.map(ea => this.deserializeNode(ea));
-    // return new VNode(tagName, properties, children, key, namespace);
+    // return vdomFromJson(vdomNode);
+    var {text, tagName, properties, children, key, namespace} = vdomNode;
+    if (text) return new VText(text);
+    if (children && children.length) children = children.map(ea => this.deserializeNode(ea));
+    return new VNode(tagName, properties, children, key, namespace);
   }
 
   render(vdomNode) {
@@ -182,9 +182,10 @@ export default class Client {
     if (!this.initialized)
       throw new Error("[lively.mirror client] trying to apply patch but client wasn't rendered yet");
     if (useOptimizedPatchFormat) {
+      replaceUndefinedPlaceholderWithUndefined(patch);
       applySerializedPatch(this.rootNode.childNodes[0], patch);
     } else {
-      applyPatch(this.rootNode.childNodes[0], vdomAsJSON.fromJson(patch));
+      applyPatch(this.rootNode.childNodes[0], vdomFromJson(patch));
     }
   }
 

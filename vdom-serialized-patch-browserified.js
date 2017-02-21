@@ -1,6 +1,145 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.vdomSerializedPatch = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
+var types = require('./types');
+
+var SoftSetHook =
+  require('virtual-dom/virtual-hyperscript/hooks/soft-set-hook');
+
+function arrayToJson(arr) {
+  var len = arr.length;
+  var i = -1;
+  var res = new Array(len);
+  while (++i < len) {
+    res[i] = toJson(arr[i]);
+  }
+  return res;
+}
+
+function plainObjectToJson(obj) {
+  var res = {};
+  /* jshint -W089 */
+  /* this is fine; these objects are always plain */
+  for (var key in obj) {
+    var val = obj[key];
+    res[key] = typeof val !== 'undefined' ? toJson(val) : val;
+  }
+  return res;
+}
+
+function virtualNodeToJson(obj) {
+  var res = {
+    // type
+    t: types.VirtualNode,
+    tn: obj.tagName
+  };
+  if (Object.keys(obj.properties).length) {
+    res.p = plainObjectToJson(obj.properties);
+  }
+  if (obj.children.length) {
+    res.c = arrayToJson(obj.children);
+  }
+  if (obj.key) {
+    res.k = obj.key;
+  }
+  if (obj.namespace) {
+    res.n = obj.namespace;
+  }
+  return res;
+}
+
+function virtualTextToJson(obj) {
+  return {
+    // type
+    t: types.VirtualTree,
+    // text
+    x: obj.text
+  };
+}
+
+function virtualPatchToJson(obj) {
+  var res = {
+    // type
+    t: types.VirtualPatch,
+    // patch type
+    pt: obj.type
+  };
+
+  if (obj.vNode) {
+    res.v = toJson(obj.vNode);
+  }
+
+  if (obj.patch) {
+    res.p = toJson(obj.patch);
+  }
+
+  return res;
+}
+
+function softSetHookToJson(obj) {
+  return {
+    // type
+    t: types.SoftSetHook,
+    value: obj.value
+  };
+}
+
+function objectToJson(obj) {
+  if ('patch' in obj && typeof obj.type === 'number') {
+    return virtualPatchToJson(obj);
+  }
+  if (obj.type === 'VirtualNode') {
+    return virtualNodeToJson(obj);
+  }
+  if (obj.type === 'VirtualText') {
+    return virtualTextToJson(obj);
+  }
+  if (obj instanceof SoftSetHook) {
+    return softSetHookToJson(obj);
+  }
+
+  // plain object
+  return plainObjectToJson(obj);
+}
+
+function toJson(obj) {
+
+  var type = typeof obj;
+
+  switch (type) {
+    case 'string':
+    case 'boolean':
+    case 'number':
+      return obj;
+  }
+
+  // type === 'object'
+  if (Array.isArray(obj)) {
+    return arrayToJson(obj);
+  }
+
+  if (!obj) { // null
+    return null;
+  }
+
+  return objectToJson(obj);
+}
+
+module.exports = toJson;
+},{"./types":2,"virtual-dom/virtual-hyperscript/hooks/soft-set-hook":18}],2:[function(require,module,exports){
+module.exports = {
+  VirtualTree: 1,
+  VirtualPatch: 2,
+  VirtualNode: 3,
+  SoftSetHook: 4
+};
+},{}],3:[function(require,module,exports){
+'use strict';
+
+module.exports = require('./lib/toJson');
+},{"./lib/toJson":1}],4:[function(require,module,exports){
+'use strict';
+
 var serialize = require('./lib/serialize');
 var patch = require('./lib/patch');
 
@@ -8,9 +147,8 @@ module.exports = {
   serialize: serialize,
   patch: patch
 };
-window.vdomSerializedPatch = module.exports
 
-},{"./lib/patch":5,"./lib/serialize":14}],2:[function(require,module,exports){
+},{"./lib/patch":8,"./lib/serialize":17}],5:[function(require,module,exports){
 var isObject = require('./isObject');
 var isSoftSetHook = require('./isSoftSetHook');
 
@@ -102,7 +240,7 @@ function getPrototype(value) {
   }
 }
 
-},{"./isObject":6,"./isSoftSetHook":7}],3:[function(require,module,exports){
+},{"./isObject":9,"./isSoftSetHook":10}],6:[function(require,module,exports){
 var applyProperties = require("./applyProperties")
 var isVText = require('./isVText');
 var isVNode = require('./isVNode');
@@ -139,7 +277,7 @@ function createElement(vnode) {
   return node
 }
 
-},{"./applyProperties":2,"./isVNode":8,"./isVText":9}],4:[function(require,module,exports){
+},{"./applyProperties":5,"./isVNode":11,"./isVText":12}],7:[function(require,module,exports){
 // Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
 // We don't want to read all of the DOM nodes in the tree so we use
 // the in-order tree indexing to eliminate recursion down certain branches.
@@ -226,7 +364,7 @@ function ascending(a, b) {
   return a > b ? 1 : -1
 }
 
-},{}],5:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var patchRecursive = require('./patchRecursive');
 
 function patch(rootNode, patches) {
@@ -234,20 +372,20 @@ function patch(rootNode, patches) {
 }
 
 module.exports = patch;
-},{"./patchRecursive":11}],6:[function(require,module,exports){
+},{"./patchRecursive":14}],9:[function(require,module,exports){
 'use strict';
 
 module.exports = function isObject(x) {
   return typeof x === "object" && x !== null;
 };
-},{}],7:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 module.exports = isSoftSetHook
 
 function isSoftSetHook(x) {
   return x && typeof x === 'object' && typeof x.value !== 'undefined';
 }
 
-},{}],8:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 module.exports = isVirtualNode
 
 var types = require('./types');
@@ -256,7 +394,7 @@ function isVirtualNode(x) {
   return x && x.t === types.VirtualNode
 }
 
-},{"./types":12}],9:[function(require,module,exports){
+},{"./types":15}],12:[function(require,module,exports){
 module.exports = isVirtualText
 
 var types = require('./types');
@@ -265,7 +403,7 @@ function isVirtualText(x) {
   return x && x.t === types.VirtualTree;
 }
 
-},{"./types":12}],10:[function(require,module,exports){
+},{"./types":15}],13:[function(require,module,exports){
 var applyProperties = require("./applyProperties");
 var patchTypes = require("../patchTypes");
 var render = require('./createElement');
@@ -382,7 +520,7 @@ function replaceRoot(oldRoot, newRoot) {
     return newRoot;
 }
 
-},{"../patchTypes":13,"./applyProperties":2,"./createElement":3}],11:[function(require,module,exports){
+},{"../patchTypes":16,"./applyProperties":5,"./createElement":6}],14:[function(require,module,exports){
 var domIndex = require("./domIndex")
 var patchOp = require("./patchOp")
 
@@ -438,7 +576,7 @@ function patchIndices(patches) {
 
 module.exports = patchRecursive;
 
-},{"./domIndex":4,"./patchOp":10}],12:[function(require,module,exports){
+},{"./domIndex":7,"./patchOp":13}],15:[function(require,module,exports){
 // copied from vdom-as-json/types.js
 
 module.exports = {
@@ -447,7 +585,7 @@ module.exports = {
   VirtualNode: 3,
   SoftSetHook: 4
 };
-},{}],13:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 // original this was is-vpatch.js
 
 module.exports = {
@@ -461,7 +599,7 @@ module.exports = {
   REMOVE: 7,
   THUNK: 8
 };
-},{}],14:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 var patchTypes = require('../patchTypes');
 var toJson = require('vdom-as-json/toJson');
 
@@ -531,192 +669,7 @@ function serializeRootPatch(patch) {
 };
 module.exports = serializeRootPatch;
 
-},{"../patchTypes":13,"vdom-as-json/toJson":18}],15:[function(require,module,exports){
-'use strict';
-
-var types = require('./types');
-var undefinedConst = require('./undefined');
-
-var SoftSetHook =
-  require('virtual-dom/virtual-hyperscript/hooks/soft-set-hook');
-
-function arrayToJson(arr, ctx) {
-  var len = arr.length;
-  var i = -1;
-  var res = new Array(len);
-  while (++i < len) {
-    res[i] = toJson(arr[i], ctx);
-  }
-  return res;
-}
-
-function plainObjectToJson(obj, ctx) {
-  var res = {};
-  var trackPatchIndex = false;
-  var childCtx = ctx;
-  if(obj && obj['a'] && obj['a'].tagName) {
-    childCtx = cloneObj({}, ctx); //clone ctx
-    trackPatchIndex = true;
-  }
-  //childCtx['patchHashIndex'] = null;
-
-  /* jshint -W089 */
-  /* this is fine; these objects are always plain */
-  for (var key in obj) {
-    var val = obj[key];
-    if(trackPatchIndex) {
-      childCtx['patchHashIndex'] = parseInt(key);
-    }
-    res[key] = typeof val !== 'undefined' ?
-        toJson(val, childCtx) : undefinedConst;
-  }
-  return res;
-}
-
-function virtualNodeToJson(obj, ctx) {
-  var res = {
-    // type
-    t: types.VirtualNode,
-    tn: obj.tagName
-  };
-  if (Object.keys(obj.properties).length) {
-    res.p = plainObjectToJson(obj.properties, ctx);
-  }
-  if (obj.children.length) {
-    res.c = arrayToJson(obj.children, ctx);
-  }
-  if (obj.key) {
-    res.k = obj.key;
-  }
-  if (obj.namespace) {
-    res.n = obj.namespace;
-  }
-  return res;
-}
-
-function virtualTextToJson(obj, ctx) {
-  return {
-    // type
-    t: types.VirtualTree,
-    // text
-    x: obj.text
-  };
-}
-
-function virtualPatchToJson(obj, ctx) {
-  var res = {
-    // type
-    t: types.VirtualPatch,
-    // patch type
-    pt: obj.type
-  };
-
-  if (obj.vNode) {
-    if(ctx && ctx.patchHashIndex != null) {
-      //if the context contains the index (from the key in the hash) for this
-      //patch, use it as a string key for this value so we can just reference
-      //that point in the root tree instead of serializing same content over
-      //again
-      res.v = "i:"+ctx.patchHashIndex;
-    } else {
-      res.v = toJson(obj.vNode, ctx);
-    }
-  }
-
-  if (obj.patch) {
-    res.p = toJson(obj.patch, ctx);
-  }
-
-  return res;
-}
-
-function softSetHookToJson(obj, ctx) {
-  return {
-    // type
-    t: types.SoftSetHook,
-    value: obj.value
-  };
-}
-
-function objectToJson(obj, ctx) {
-  if ('patch' in obj && typeof obj.type === 'number') {
-    return virtualPatchToJson(obj, ctx);
-  }
-  if (obj.type === 'VirtualNode') {
-    return virtualNodeToJson(obj, ctx);
-  }
-  if (obj.type === 'VirtualText') {
-    return virtualTextToJson(obj, ctx);
-  }
-  if (obj instanceof SoftSetHook) {
-    return softSetHookToJson(obj, ctx);
-  }
-
-  // plain object
-  return plainObjectToJson(obj, ctx);
-}
-
-function toJson(obj, ctx) {
-
-  var type = typeof obj;
-
-  switch (type) {
-    case 'string':
-    case 'boolean':
-    case 'number':
-      return obj;
-  }
-
-  // type === 'object'
-  if (Array.isArray(obj)) {
-    return arrayToJson(obj, ctx || {});
-  }
-
-  if (!obj) { // null
-    return null;
-  }
-
-  //If we enter with a null context and we've got an object with an 'a'
-  //property with an object with tag name then it's likely we have a
-  //patchset object and the a is the original root of the diff tree
-  if(obj && obj['a'] && obj['a'].tagName && !ctx) {
-    ctx = {diffRoot: obj['a']};
-  } else if(ctx == null) {
-    ctx = {};
-  }
-
-  return objectToJson(obj, ctx);
-}
-
-//PhantomJS doesn't support Object.assigns, so just implement a clone
-//method here.
-function cloneObj(a,b) {
-  Object.keys(b).forEach(function(k) {
-    a[k] = b[k];
-  });
-  return a;
-}
-
-module.exports = toJson;
-
-},{"./types":16,"./undefined":17,"virtual-dom/virtual-hyperscript/hooks/soft-set-hook":19}],16:[function(require,module,exports){
-module.exports = {
-  VirtualTree: 1,
-  VirtualPatch: 2,
-  VirtualNode: 3,
-  SoftSetHook: 4
-};
-},{}],17:[function(require,module,exports){
-//Magic value to map keys with a value of undefined to in JSON form since JSON
-//won't preserve those.  This is necessary because in patches, the removal of 
-//a property is represented by the property name mapped to undefined
-module.exports = "____UnDeFiNeD____"; 
-
-},{}],18:[function(require,module,exports){
-'use strict';
-
-module.exports = require('./lib/toJson');
-},{"./lib/toJson":15}],19:[function(require,module,exports){
+},{"../patchTypes":16,"vdom-as-json/toJson":3}],18:[function(require,module,exports){
 'use strict';
 
 module.exports = SoftSetHook;
@@ -735,5 +688,5 @@ SoftSetHook.prototype.hook = function (node, propertyName) {
     }
 };
 
-},{}]},{},[1])(1)
+},{}]},{},[4])(4)
 });

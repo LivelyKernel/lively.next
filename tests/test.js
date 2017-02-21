@@ -47,7 +47,7 @@ describe("lively.mirror test", () => {
       var node = serializedH("div.foo");
       Client.invokeServices("lively.mirror.render", {id: client.id, node});
       var patch = serializePatch(diff(h("div.foo"), h("div.foo.bar")));
-      Client.invokeServices("lively.mirror.render-patch", {id: client.id, patch});
+      Client.invokeServices("lively.mirror.render-patch", {id: client.id, patch, useOptimizedPatchFormat: true});
       expect(client.rootNode.innerHTML).match(/div class="foo bar"/);
     });
 
@@ -57,7 +57,11 @@ describe("lively.mirror test", () => {
   
     beforeEach(() => {
       var masterChannel = {send(selector, data) { return Client.invokeServices(selector, data); }};
-      master = new Master(morph({extent: pt(20,30)}), masterChannel, client.id);
+      master = new Master("test-master", morph({extent: pt(20,30)}), masterChannel, client.id);
+    });
+
+    afterEach(() => {
+      Master.removeInstance("test-master");
     });
 
     it("initializes and updates client from master", async () => {

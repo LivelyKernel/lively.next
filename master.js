@@ -6,7 +6,8 @@ import { diff, VNode, VText } from "./node_modules/virtual-dom/dist/virtual-dom.
 
 import L2LClient from "lively.2lively/client.js";
 import { promise, obj, tree } from "lively.lang";
-import { inspect } from "lively.morphic";
+import { inspect, show } from "lively.morphic";
+import { replaceUndefinedWithPlaceholder } from "./helper.js";
 
 import vdomAsJSON from "./node_modules/vdom-as-json/dist/vdom-as-json.js";
 
@@ -109,8 +110,6 @@ export default class Master {
     }
   }
 
-
-
   static get instances() {
     if (!this._instances) this._instances = new Map();
     return this._instances;
@@ -135,7 +134,7 @@ export default class Master {
 
   static createInstance(id, targetMorph, channel, clientId) {
     var instance = this.instances.get(id);
-    if (instance) instance.reset();
+    if (instance) instance.disconnect();
     instance = new this(id, targetMorph, channel, clientId);
     this.instances.set(id, instance);
     return instance;
@@ -185,25 +184,30 @@ export default class Master {
     var node = this.prevVdomNode = makeNodeSerializable(renderMorph(this.targetMorph)),
         id = this.clientId;
     // try { JSON.stringify(node); } catch (e) { throw new Error("Node cannot be serialized");  }
-    node = vdomAsJSON.toJson(node);
+    // node = vdomAsJSON.toJson(node);
     return this.channel.send("lively.mirror.render", {node, id});
   }
 
   sendViewPatch() {
     var patch = this.getVdomPatch(),
         id = this.clientId;
-    // try { JSON.stringify(patch); } catch (e) { throw new Error("patch cannot be serialized"); }
+    if (!patch) return Promise.resolve(null);
+
+    replaceUndefinedWithPlaceholder(patch);
+
     return this.channel.send("lively.mirror.render-patch", {useOptimizedPatchFormat, patch, id});
   }
 
   getVdomPatch() {
     var newNode = makeNodeSerializable(renderMorph(this.targetMorph)),
-        rawPatch = diff(this.prevVdomNode, newNode),
-        patch = useOptimizedPatchFormat ?
-                  serializePatch(rawPatch) :
-                  vdomAsJSON.toJson(rawPatch);
+        rawPatch = diff(this.prevVdomNode, newNode);
     this.prevVdomNode = newNode;
-    return patch;
+
+    if (Object.keys(rawPatch).length === 1 && rawPatch.a) return null; // no patch
+    
+    return useOptimizedPatchFormat ?
+            serializePatch(rawPatch) :
+            vdomAsJSON.toJson(rawPatch);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -218,3 +222,4 @@ export default class Master {
     });
   }
 }
+

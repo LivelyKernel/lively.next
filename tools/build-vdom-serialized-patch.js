@@ -5,7 +5,7 @@ var path = require("path");
 var cmd = "browserify "
         + "node_modules/vdom-serialized-patch/index.js "
         + "--standalone vdomSerializedPatch "
-        + "-o vdom-serialized-patch-browserified-2.js";
+        + "-o vdom-serialized-patch-browserified.js";
 var out = exec(cmd, {cwd: path.resolve(__dirname, "..")});
 
 console.log(out.toString());
