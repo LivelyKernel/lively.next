@@ -16,7 +16,6 @@ export default class user {
   
   authenticate(name,email,pwd){
   // replace with db accessor pulling hash from db
-  // currently resolves always to true
     return authserver.authenticate(name,email,pwd)
   }
 }

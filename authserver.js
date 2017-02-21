@@ -8,6 +8,10 @@ var users = [
   {
     name: 'Matt',
     hash:  '$2a$10$p4zdkYKOegab0ZKtvlUVeO6sxDSRVS8C5FwRsFC/6Kpc5KZxwYmCu'
+  },
+  {
+    name: 'some_anon',
+    hash:  '$2a$10$p4zdkYKOegab0ZKtvlUVeO6sxDSRVS8C5FwRsFC/6Kpc5KZxwYmCu'
   }
 ]
 
@@ -22,6 +26,8 @@ export function authenticate(username,email,password){
   var hash = user.hash  
   if (bcrypt.compareSync(password,hash)){
     return tokenize(username,email,Date.now())
+  } else {
+    return {error: "User Not Authenticated"}
   }
 }
 
