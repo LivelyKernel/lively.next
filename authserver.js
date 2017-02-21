@@ -35,6 +35,33 @@ export function authenticate(username,email,password){
 
 //Export temporarily while testing function. Export to be removed.
 export function tokenize(username,email,date){
-  var token = jwt.sign({ username: username, email: email, date: date}, key);
+  var token = jwt.sign({ username: username, email: email, date: date}, key,{ expiresIn: 60 * 60 });
   return token
+}
+
+export async function verify(user){
+  var response;
+  await jwt.verify(user.token,key,(err,decode)=>{
+    if(err){
+      if (err.name == 'TokenExpiredError'){
+        response = {
+          type: 'failed',
+          reason: 'JWT Expired'
+        }
+      }
+      if (err.name == 'JsonWebTokenError'){
+        response = {
+          type: 'failed',
+          reason: 'JWT malformed'
+        }
+      }
+      
+    } else {
+      response = {
+        type: 'success',
+        reason: 'jwt valid'
+      }      
+    }    
+  })  
+  return response;
 }
