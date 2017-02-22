@@ -16,13 +16,13 @@ describe("Authentication", () => {
     expect(bcrypt.compareSync(password,hash)).equals(true)
   });
   it("Check if valid token is generated during correct login", async () =>{
-    var tempUser = new user({name: 'Matt', password: 'password'})
+    var tempUser = new user({name: 'Matt', email: "a@b.c", password: 'password'})
     var response = await authserver.verify(tempUser)    
-    console.log(response)    
+    console.log(tempUser)    
     expect(response.type == 'success').equals(true,'token is invalid: \n' + JSON.stringify(response.reason))
   });
   it("Check if INvalid token is generated during bad login", async () =>{
-    var tempUser = new user({name: 'baduser', password: 'badpassword'})
+    var tempUser = new user({name: 'baduser', email: "a@bademail.com", password: 'badpassword'})
     var response = await authserver.verify(tempUser)
     console.log(response)
     expect((response.type == 'failed') && (response.reason == 'JWT malformed')).equals(true,'Token does not correctly refuse authentication')
