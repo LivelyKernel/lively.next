@@ -25,21 +25,9 @@ async function getfromDB(username,email){
     db.close();
     
   }
-  // console.log(results)
   return results;
 }
 
-//temporary substitute for a database
-// var users = [
-//   {
-//     name: 'Matt',
-//     hash:  '$2a$10$p4zdkYKOegab0ZKtvlUVeO6sxDSRVS8C5FwRsFC/6Kpc5KZxwYmCu'
-//   },
-//   {
-//     name: 'some_anon',
-//     hash:  '$2a$10$p4zdkYKOegab0ZKtvlUVeO6sxDSRVS8C5FwRsFC/6Kpc5KZxwYmCu'
-//   }
-// ]
 
 export async function authenticate(username,email,password){
   
@@ -94,31 +82,5 @@ export async function verify(user){
         })
       })
   });
-  return response
-  // jwt.verify(user.token,key,(err,decode)=>{
-  //   
-  //   if(err){
-  //     if (err.name == 'TokenExpiredError'){
-  //       response = {
-  //         type: 'failed',
-  //         reason: 'JWT Expired'
-  //       }
-  //     }
-  //     if (err.name == 'JsonWebTokenError'){
-  //       response = {
-  //         type: 'failed',
-  //         reason: 'JWT malformed'
-  //       }
-  //     }
-  //     
-  //   } else {
-  //     console.log('foo')
-  //     response = {
-  //       type: 'success',
-  //       reason: 'jwt valid'
-  //     }      
-  //   }    
-  // })
-  // // console.log(await response)
-  // return response;
+  return response 
 }

@@ -24,8 +24,7 @@ describe("Authentication", () => {
   it("Check if INvalid token is generated during bad login", async () =>{
     var tempUser = new user({name: 'baduser', email: "a@bademail.com", password: 'badpassword'})
     await tempUser.authenticated(300);    
-    var response = await authserver.verify(tempUser).catch(err => {
-      console.log(err)
+    var response = await authserver.verify(tempUser).catch(err => {      
       return (err)
     })    
     expect((response.type == 'failed') && (response.reason == 'JWT malformed')).equals(true,'Token does not correctly refuse authentication')
