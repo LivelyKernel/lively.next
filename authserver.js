@@ -23,7 +23,9 @@ async function getfromDB(username,email){
     })  
   } finally {  
     db.close();
-  }  
+    
+  }
+  // console.log(results)
   return results;
 }
 
@@ -40,50 +42,83 @@ async function getfromDB(username,email){
 // ]
 
 export async function authenticate(username,email,password){
+  
   var users = await getfromDB(username,email)
   //check 0-th record, as both username and email are PKs  
-  var user = users[0]
-  
+  var user = users[0]  
   if(!user){
     return {status: 'error', body: {data: 'No such username'}}
   }
-  var hash = user.hash  
+  var hash = user.hash
   if (bcrypt.compareSync(password,hash)){
-    return tokenize(username,email,Date.now())
+    var result = await tokenize(username,email,Date.now())    
+    return result
   } else {
     return {error: "User Not Authenticated"}
   }
 }
 
 //Export temporarily while testing function. Export to be removed.
-export function tokenize(username,email,date){
-  var token = jwt.sign({ username: username, email: email, date: date}, key,{ expiresIn: 60 * 60 });
+export async function tokenize(username,email,date){  
+  var token = await jwt.sign({ username: username, email: email, date: date}, key,{ expiresIn: 60 * 60 });  
   return token
 }
 
-export async function verify(user){
-  var response;
-  await jwt.verify(user.token,key,(err,decode)=>{
-    if(err){
-      if (err.name == 'TokenExpiredError'){
-        response = {
-          type: 'failed',
-          reason: 'JWT Expired'
-        }
-      }
-      if (err.name == 'JsonWebTokenError'){
-        response = {
-          type: 'failed',
-          reason: 'JWT malformed'
-        }
-      }
-      
-    } else {
-      response = {
-        type: 'success',
-        reason: 'jwt valid'
-      }      
-    }    
-  })  
-  return response;
+export async function verify(user){  
+  var response = await new Promise((resolve,reject)=>{
+      jwt.verify(user.token,key,(err,decode)=>{        
+        if (err){
+          if (err.name == 'TokenExpiredError'){
+            reject ({
+              type: 'failed',
+              reason: 'JWT Expired'
+            })
+          } else if (err.name == 'JsonWebTokenError'){          
+            reject( {
+              type: 'failed',
+              reason: 'JWT malformed'
+            })
+          
+          } else {
+            reject({
+              type: 'failed',
+              reason: 'other',
+              detail: err
+            })
+          }
+          
+        }        
+        resolve({
+          type: 'success',
+          reason: 'jwt valid'      
+        })
+      })
+  });
+  return response
+  // jwt.verify(user.token,key,(err,decode)=>{
+  //   
+  //   if(err){
+  //     if (err.name == 'TokenExpiredError'){
+  //       response = {
+  //         type: 'failed',
+  //         reason: 'JWT Expired'
+  //       }
+  //     }
+  //     if (err.name == 'JsonWebTokenError'){
+  //       response = {
+  //         type: 'failed',
+  //         reason: 'JWT malformed'
+  //       }
+  //     }
+  //     
+  //   } else {
+  //     console.log('foo')
+  //     response = {
+  //       type: 'success',
+  //       reason: 'jwt valid'
+  //     }      
+  //   }    
+  // })
+  // // console.log(await response)
+  // return response;
 }

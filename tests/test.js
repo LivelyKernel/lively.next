@@ -17,14 +17,17 @@ describe("Authentication", () => {
   });
   it("Check if valid token is generated during correct login", async () =>{
     var tempUser = new user({name: 'Matt', email: "a@b.c", password: 'password'})
+    await tempUser.authenticated(300);
     var response = await authserver.verify(tempUser)    
-    console.log(tempUser)    
     expect(response.type == 'success').equals(true,'token is invalid: \n' + JSON.stringify(response.reason))
   });
   it("Check if INvalid token is generated during bad login", async () =>{
     var tempUser = new user({name: 'baduser', email: "a@bademail.com", password: 'badpassword'})
-    var response = await authserver.verify(tempUser)
-    console.log(response)
+    await tempUser.authenticated(300);    
+    var response = await authserver.verify(tempUser).catch(err => {
+      console.log(err)
+      return (err)
+    })    
     expect((response.type == 'failed') && (response.reason == 'JWT malformed')).equals(true,'Token does not correctly refuse authentication')
   });
   it("Check if token correctly checks for timeout", async () =>{

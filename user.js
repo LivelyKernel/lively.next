@@ -8,14 +8,28 @@ export default class user {
   var {name, password, email} = options  
   this.name = name ? name : 'anonymous'
   this.email = email ? email : null
-  this.token = this.authenticate(name,email,password)
+  // this.token = this.authenticate(name,email,password)
+  this.authenticate(name,email,password)
 
   //Freeze to prevent manual changes to the object
-  Object.freeze(this)
+  // Object.freeze(this)
   }  
+
+  isReady() {
+      return ((this.token) && (typeof this.token == 'string' || this.token.status == 'error'));
+    }
+
+  authenticated(timeout) {
+    return promise.waitFor(timeout, () => this.isReady())
+            .catch(err =>            
+              Promise.reject(/timeout/i.test(String(err)) ?
+                new Error(`Timeout in ${this}.authenticated`) : err))
+  }
   
-  async authenticate(name,email,pwd){
+  async authenticate(name,email,pwd){  
   // replace with db accessor pulling hash from db
-    return authserver.authenticate(name,email,pwd)
+    var result = await authserver.authenticate(name,email,pwd)    
+    this.token = await result    
+    // return result;
   }
 }
