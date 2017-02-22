@@ -3,27 +3,46 @@ var bcrypt = System._nodeRequire(bcryptPath);
 var jwtpath = System.decanonicalize("lively.user/node_modules/jsonwebtoken/index.js").replace(/^file:\/\//, "");
 var jwt = System._nodeRequire(jwtpath);
 var sqlite3Path = System.decanonicalize("lively.user/node_modules/sqlite3/lib/sqlite3.js").replace(/^file:\/\//, "");
-var sqlite3 = System._nodeRequire(sqlite3Path);
+var sqlite3 = System._nodeRequire(sqlite3Path).verbose();
 
 //replace with uuid, visible only to server
 var key = "mysecret"
 
-//temporary substitute for a database
-var users = [
-  {
-    name: 'Matt',
-    hash:  '$2a$10$p4zdkYKOegab0ZKtvlUVeO6sxDSRVS8C5FwRsFC/6Kpc5KZxwYmCu'
-  },
-  {
-    name: 'some_anon',
-    hash:  '$2a$10$p4zdkYKOegab0ZKtvlUVeO6sxDSRVS8C5FwRsFC/6Kpc5KZxwYmCu'
-  }
-]
+//Database for user information
+async function getfromDB(username,email){
+  var dbPath = System.decanonicalize("lively.user/userdb.db").replace(/^file:\/\//, "");
+  var db = new sqlite3.Database(dbPath);
+  try {
+    var results = await new Promise((resolve, reject) => {  
+      db.serialize(function() { 
+        db.all("SELECT * FROM users where username='" + username + "' and email='" + email + "'", function(err, rows) {
+          if (err) reject(err)
+          else resolve(rows);
+        });
+      });
+    })  
+  } finally {  
+    db.close();
+  }  
+  return results;
+}
 
-export function authenticate(username,email,password){
-  var user = users.filter(function(ea){
-    return ea.name == username
-  })[0]
+//temporary substitute for a database
+// var users = [
+//   {
+//     name: 'Matt',
+//     hash:  '$2a$10$p4zdkYKOegab0ZKtvlUVeO6sxDSRVS8C5FwRsFC/6Kpc5KZxwYmCu'
+//   },
+//   {
+//     name: 'some_anon',
+//     hash:  '$2a$10$p4zdkYKOegab0ZKtvlUVeO6sxDSRVS8C5FwRsFC/6Kpc5KZxwYmCu'
+//   }
+// ]
+
+export async function authenticate(username,email,password){
+  var users = await getfromDB(username,email)
+  //check 0-th record, as both username and email are PKs  
+  var user = users[0]
   
   if(!user){
     return {status: 'error', body: {data: 'No such username'}}
