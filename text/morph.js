@@ -18,6 +18,7 @@ import { lessPosition, lessEqPosition, eqPosition } from "./position.js";
 import InputLine from "./input-line.js";
 import { Label } from "./label.js";
 import { Snippet } from "./snippets.js";
+import { RichTextControl } from "./ui.js";
 
 
 const defaultTextStyle = {
@@ -1706,6 +1707,12 @@ export class Text extends Morph {
   }
   get doitContext() { var {context} = this.evalEnvironment || {}; return context; }
   set doitContext(c) { (this.evalEnvironment || {}).context = c; }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // controls
+  openRichTextControl() {
+    return RichTextControl.openDebouncedFor(this);
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // serialization

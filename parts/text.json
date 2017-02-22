@@ -1,19 +1,26 @@
 {
-  "id": "Text_F57876D7_3184_4B6E_863F_E461A4F11815",
+  "id": "Text_B54DAF97_6A86_45D1_A08D_E4590BF5399B",
   "snapshot": {
-    "Text_F57876D7_3184_4B6E_863F_E461A4F11815": {
-      "rev": 24085,
+    "Text_B54DAF97_6A86_45D1_A08D_E4590BF5399B": {
+      "rev": 327383,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
           "value": []
         },
         "attributeConnections": {
-          "key": "attributeConnections"
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "FB97F36A-84D2-4E97-9CB6-649F0EFBCB6B",
+              "rev": 0
+            }
+          ]
         },
         "extent": {
           "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(126.4,40.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(137.0,41.0)"
         },
         "name": {
           "key": "name",
@@ -25,11 +32,12 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(103.0,296.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(195.4,732.5)"
         },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
+            "A_text_1",
             "Text",
             "Morph",
             "morph"
@@ -95,7 +103,7 @@
           "key": "selection",
           "value": {
             "__ref__": true,
-            "id": "3E379884-E801-46F1-A76A-9B823B468434",
+            "id": "85DC4AB3-42B4-4534-9244-0435304DFE79",
             "rev": 0
           }
         },
@@ -103,7 +111,7 @@
           "key": "defaultTextStyle",
           "value": {
             "__ref__": true,
-            "id": "F8324B23-187F-4918-8ED9-20B55584EDF2",
+            "id": "0CB73E08-4E38-41E2-BFBA-997D0CD75223",
             "rev": 0
           }
         },
@@ -112,12 +120,12 @@
           "value": [
             {
               "__ref__": true,
-              "id": "4C67980D-5BC2-4BE8-BB68-2B53BDD02B5F",
+              "id": "F70A6C53-2EF9-4B91-A044-30FB306A1157",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "691E7796-D323-4D43-B00F-404408BCA832",
+              "id": "8A1D8437-A623-4511-9FA0-8736B2C96ED0",
               "rev": 0
             }
           ]
@@ -149,35 +157,11 @@
                   "fontWeight": "normal",
                   "fontStyle": "normal",
                   "textDecoration": "none",
-                  "fixedCharacterSpacing": false
+                  "fixedCharacterSpacing": false,
+                  "_rev": 0
                 },
                 {
-                  "fontFamily": "Sans-Serif",
-                  "fontSize": 12,
-                  "fontColor": {
-                    "r": 0,
-                    "g": 0,
-                    "b": 0,
-                    "a": 1
-                  },
-                  "fontWeight": "normal",
-                  "fontStyle": "normal",
-                  "textDecoration": "none",
-                  "fixedCharacterSpacing": false
-                },
-                {
-                  "fontFamily": "Helvetica Neue, Arial, sans-serif",
-                  "fontSize": 20,
-                  "fontColor": {
-                    "r": 0,
-                    "g": 0,
-                    "b": 0,
-                    "a": 1
-                  },
-                  "fontWeight": "normal",
-                  "fontStyle": "normal",
-                  "textDecoration": "none",
-                  "fixedCharacterSpacing": false
+                  "fontSize": 22
                 }
               ]
             ],
@@ -189,17 +173,109 @@
         }
       },
       "lively.serializer-class-info": {
-        "className": "Text",
+        "className": "A_text_1",
         "module": {
           "package": {
-            "name": "lively.morphic",
+            "name": "E8C6C421-4AC5-4D5B-8468-89C51C7CD4D0",
             "version": "0.1.0"
           },
-          "pathInPackage": "text/morph.js"
+          "pathInPackage": "index.js"
         }
       }
     },
-    "3E379884-E801-46F1-A76A-9B823B468434": {
+    "FB97F36A-84D2-4E97-9CB6-649F0EFBCB6B": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Text_B54DAF97_6A86_45D1_A08D_E4590BF5399B",
+            "rev": 327383
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "selectionChange"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Text_B54DAF97_6A86_45D1_A08D_E4590BF5399B",
+            "rev": 327383
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "openRichTextControl"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "8986D646-6268-4AAF-A5D7-59C740480CD7",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "8986D646-6268-4AAF-A5D7-59C740480CD7": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Text_B54DAF97_6A86_45D1_A08D_E4590BF5399B",
+            "rev": 327383
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Text_B54DAF97_6A86_45D1_A08D_E4590BF5399B",
+            "rev": 327383
+          }
+        }
+      }
+    },
+    "85DC4AB3-42B4-4534-9244-0435304DFE79": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -210,8 +286,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_F57876D7_3184_4B6E_863F_E461A4F11815",
-            "rev": 24085
+            "id": "Text_B54DAF97_6A86_45D1_A08D_E4590BF5399B",
+            "rev": 327383
           }
         },
         "selections": {
@@ -219,7 +295,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "ED4AAECB-C3B8-4D06-ACE4-6F899FBF7A34",
+              "id": "061BBAD1-9B14-4B96-BD79-C3EB84C8EA94",
               "rev": 0
             }
           ]
@@ -244,7 +320,7 @@
         }
       }
     },
-    "ED4AAECB-C3B8-4D06-ACE4-6F899FBF7A34": {
+    "061BBAD1-9B14-4B96-BD79-C3EB84C8EA94": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -255,13 +331,13 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_F57876D7_3184_4B6E_863F_E461A4F11815",
-            "rev": 24085
+            "id": "Text_B54DAF97_6A86_45D1_A08D_E4590BF5399B",
+            "rev": 327383
           }
         },
         "_goalColumn": {
           "key": "_goalColumn",
-          "value": 6
+          "value": 13
         },
         "_isReverse": {
           "key": "_isReverse",
@@ -271,7 +347,7 @@
           "key": "startAnchor",
           "value": {
             "__ref__": true,
-            "id": "4C67980D-5BC2-4BE8-BB68-2B53BDD02B5F",
+            "id": "F70A6C53-2EF9-4B91-A044-30FB306A1157",
             "rev": 0
           }
         },
@@ -279,7 +355,7 @@
           "key": "endAnchor",
           "value": {
             "__ref__": true,
-            "id": "691E7796-D323-4D43-B00F-404408BCA832",
+            "id": "8A1D8437-A623-4511-9FA0-8736B2C96ED0",
             "rev": 0
           }
         },
@@ -287,7 +363,7 @@
           "key": "_range",
           "value": {
             "__ref__": true,
-            "id": "935A0729-89DD-4CA8-B84F-9D01FAC6BA0A",
+            "id": "F6CF11A3-6FFA-4F82-BEB3-97ABE5D2F7A5",
             "rev": 0
           }
         },
@@ -311,7 +387,7 @@
         }
       }
     },
-    "4C67980D-5BC2-4BE8-BB68-2B53BDD02B5F": {
+    "F70A6C53-2EF9-4B91-A044-30FB306A1157": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -326,7 +402,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "BCF5322F-390C-4E66-A6AE-3F7768E5D0E8",
+            "id": "5E3061AB-9FAF-448D-9562-25ADF0ECFD0C",
             "rev": 0
           }
         },
@@ -346,7 +422,7 @@
         }
       }
     },
-    "BCF5322F-390C-4E66-A6AE-3F7768E5D0E8": {
+    "5E3061AB-9FAF-448D-9562-25ADF0ECFD0C": {
       "rev": 0,
       "props": {
         "row": {
@@ -355,11 +431,11 @@
         },
         "column": {
           "key": "column",
-          "value": 6
+          "value": 13
         }
       }
     },
-    "691E7796-D323-4D43-B00F-404408BCA832": {
+    "8A1D8437-A623-4511-9FA0-8736B2C96ED0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -374,7 +450,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "AB036BC8-ECEE-4DEE-86E8-BBD9AD712715",
+            "id": "BD01E220-96D9-4EEA-9159-1213210A170A",
             "rev": 0
           }
         },
@@ -394,7 +470,7 @@
         }
       }
     },
-    "AB036BC8-ECEE-4DEE-86E8-BBD9AD712715": {
+    "BD01E220-96D9-4EEA-9159-1213210A170A": {
       "rev": 0,
       "props": {
         "row": {
@@ -403,18 +479,18 @@
         },
         "column": {
           "key": "column",
-          "value": 6
+          "value": 13
         }
       }
     },
-    "935A0729-89DD-4CA8-B84F-9D01FAC6BA0A": {
+    "F6CF11A3-6FFA-4F82-BEB3-97ABE5D2F7A5": {
       "rev": 0,
       "props": {
         "start": {
           "key": "start",
           "value": {
             "__ref__": true,
-            "id": "BCF5322F-390C-4E66-A6AE-3F7768E5D0E8",
+            "id": "5E3061AB-9FAF-448D-9562-25ADF0ECFD0C",
             "rev": 0
           }
         },
@@ -422,7 +498,7 @@
           "key": "end",
           "value": {
             "__ref__": true,
-            "id": "AB036BC8-ECEE-4DEE-86E8-BBD9AD712715",
+            "id": "BD01E220-96D9-4EEA-9159-1213210A170A",
             "rev": 0
           }
         }
@@ -438,7 +514,7 @@
         }
       }
     },
-    "F8324B23-187F-4918-8ED9-20B55584EDF2": {
+    "0CB73E08-4E38-41E2-BFBA-997D0CD75223": {
       "rev": 0,
       "props": {
         "fontFamily": {
@@ -480,10 +556,21 @@
         },
         "nativeCursor": {
           "key": "nativeCursor"
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
         }
       }
     }
   },
-  "packages": {},
-  "preview": "<div   draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate(0px, 34.176px) rotate(0deg) scale(0.791198, 0.791198); transform-origin: 0px 0px 0px; display: inline; width: 126.391px; height: 40px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div  style=\" position: absolute; left: 56.75px; top: 8px; width: 3px; height: 24px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 24px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 24px; line-height: 24px;\"><span style=\"font-size: 20px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">Lively rocks!</span></div><div style=\"height: 0px; width: 110.391px;\"></div></div></div>"
+  "packages": {
+    "local://lively-object-modules/": {
+      "E8C6C421-4AC5-4D5B-8468-89C51C7CD4D0": {
+        "package.json": "{\n  \"name\": \"E8C6C421-4AC5-4D5B-8468-89C51C7CD4D0\",\n  \"version\": \"0.1.0\"\n}",
+        "index.js": "import { Text } from \"lively.morphic\";\n\nexport default class A_text_1 extends Text {\n  resete() {\n\n\n// No object-specific behavior exists yet for <Text - a text 1>\n// Use the \"+\" button to add new behaviors\nthis.document._textAttributes\nthis.document.textAttributes\nthis.textAttributes\nthis.document.textAndAttributes[0][1]\nthis.document.textAttributesChunkedByLine(0, 1, true)\nthis.document.textAndAttributes.map(([text, attrs]) => `\"${text}\"\\n${attrs.join(\"\\n\")}\\n`).join(\"\\n\")\nthis.document.lines.length\n\narr.flatmap(this.textAttributesChunkedByLine(0, maxRow, true), (chunked, row) => {\n      if (row === maxRow) newline = \"\";\n      return arr.toTuples(chunked, 3).map(\n        ([startCol, endCol, attrs]) =>\n          [(this.lines[row] + newline).slice(startCol, endCol), attrs]);\n    })\n\n\n\n  }\n}\n\n"
+      }
+    }
+  },
+  "preview": "<div   draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate(0px, 35.0416px) rotate(0deg) scale(0.729677, 0.729677); transform-origin: 0px 0px 0px; display: inline; width: 137.047px; height: 41px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute; cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div  style=\" position: absolute; left: 127.047px; top: 8px; width: 3px; height: 25px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 25px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 25px; line-height: 25px;\"><span style=\"font-size: 22px; font-family: sans-serif; font-weight: normal; font-style: normal; text-decoration: none; color: rgb(0, 0, 0);\">Lively rocks!</span></div><div style=\"height: 0px; width: 121.047px;\"></div></div></div>"
 }
