@@ -60,6 +60,7 @@ export class Button extends Morph {
             existing.remove();
           }
           labelMorph.name = "label";
+          labelMorph.reactsToPointer = false;
           this.addMorphAt(labelMorph, 0);
           connect(this.labelMorph, 'extent', this, 'relayout');
         }

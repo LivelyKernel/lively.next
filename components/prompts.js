@@ -133,7 +133,7 @@ export class InformPrompt extends AbstractPrompt {
      l.col(1).fixed = 100;
      l.col(0).paddingLeft = 5;
      l.row(1).paddingBottom = 5;
-     l.row(1).fixed = 30;
+     l.row(1).fixed = 30
   }
 
   onKeyDown(evt) {
@@ -236,7 +236,7 @@ export class MultipleChoicePrompt extends AbstractPrompt {
     });
     buttons.forEach((b, i) => {
       l.col(i).paddingLeft = 5;
-      l.col(i).proportion = (b.width + 10) / (this.width - 20);
+      l.col(i).width = b.width;
       l.col(i).paddingRight = 5;
     })
     l.row(1).paddingBottom = 5;
@@ -503,7 +503,7 @@ export class EditListPrompt extends ListPrompt {
      });
 
      l.row(0).fixed = 30;
-     l.row(1).fixed = undefined
+     l.row(1).fixed = false
      l.row(2).fixed = 30;
      l.row(0).paddingTop = 5;
      l.row(0).paddingBottom = 5;
