@@ -1,4 +1,4 @@
-import { arr, string } from "lively.lang";
+import { arr, num, string } from "lively.lang";
 import { printTree } from "lively.lang/text-graphics.js";
 
 
@@ -27,7 +27,7 @@ class TreeNode {
     while (node) { result.push(node); node = node.parent; }
     return result;
   }
-  
+
   traverse(doFn) {
     var result = [doFn.call(null,this)];
     if (this.isLeaf) return result;
@@ -118,6 +118,30 @@ class InnerTreeNode extends TreeNode {
     return last.insert(lines, last.size);
   }
 
+  withParentChainsUpToCommonParentDo(otherNode, otherNodeAndParentsDoFunc, thisNodeAndParentsDoFunc) {
+    // Given the two nodes this and otherNode, run two iterations:
+    // 1. Up to but not including the common parent node (the first node in
+    // both this.withParents() and otherNode.withParents()) call
+    // `otherNodeAndParentsDoFunc` for otherNode and all its parents
+    // 2. Up to but not including the common parent node for this and all my
+    // parents
+    var myParents = this.withParents(),
+        currentOtherNode = otherNode,
+        commonParent, otherI = 0;
+    while (currentOtherNode) {
+      if (myParents.includes(currentOtherNode)) { commonParent = currentOtherNode; break; }
+      otherNodeAndParentsDoFunc(currentOtherNode, otherI++);
+      currentOtherNode = currentOtherNode.parent;
+    }
+
+    let commonParentIndex = myParents.indexOf(commonParent);
+    if (commonParentIndex < 0) commonParentIndex = myParents.length; // in this case for all
+    let thisNodeAndParents = myParents.slice(0, commonParentIndex);
+    for (let i = 0; i < thisNodeAndParents.length; i++) {
+      thisNodeAndParentsDoFunc(thisNodeAndParents[i], i);
+    }
+  }
+
   remove(index) {
     if (index > this.size) throw new Error(`Trying to remove index ${index} from ${this}`);
 
@@ -138,12 +162,12 @@ class InnerTreeNode extends TreeNode {
         maxChildren = options.maxLeafSize,
         minChildren = options.minLeafSize;
 
-    var needsMerge = children.length - 1 < minChildren;
-    if (needsMerge) {
-      var prevLine = children[0].prevLine();
-      var leftSibling = prevLine ? prevLine.parent : null;
-      var nextLine = arr.last(children).nextLine();
-      var rightSibling = nextLine ? nextLine.parent : null;
+    var needsChange = children.length - 1 < minChildren;
+    if (needsChange) {
+      var prevLine = children[0].prevLine(),
+          leftSibling = prevLine ? prevLine.parent : null,
+          nextLine = arr.last(children).nextLine(),
+          rightSibling = nextLine ? nextLine.parent : null;
     }
 
     // remove line from my children
@@ -152,7 +176,7 @@ class InnerTreeNode extends TreeNode {
     this.resize(-1);
 
     // if less than desired nodes...
-    if (needsMerge) {
+    if (needsChange) {
 
       // ...try to merge with left or right sibling
       var mergeLeft = leftSibling && leftSibling.children.length + children.length <= maxChildren,
@@ -160,26 +184,42 @@ class InnerTreeNode extends TreeNode {
           mergeTarget = mergeLeft ? leftSibling : mergeRight ? rightSibling : null;
 
       if (mergeTarget) {
-        // update size of sibling and parents up to common parent
-        var mySize = this.size,
-            myParents = this.withParents(),
-            nodeToResize = mergeTarget,
-            commonParent;
-        while (nodeToResize) {
-          if (myParents.includes(nodeToResize)) {
-            commonParent = nodeToResize; break; }
-          nodeToResize.size += mySize;
-          nodeToResize = nodeToResize.parent;
-        }
-
+        // update size of sibling and parents up to common parent and
         // subtract my size from self and all parents up to common parent with sibling
-        if (commonParent)
-          myParents.slice(0, myParents.indexOf(commonParent)).forEach(n => n.size -= mySize);
+        var mySize = this.size;
+        this.withParentChainsUpToCommonParentDo(mergeTarget,
+          (mergeNodeOrParent) => mergeNodeOrParent.size += mySize,
+          (thisOrParent => thisOrParent.size -= mySize));
+
         // move children over
         children.forEach(ea => ea.parent = mergeTarget);
         if (mergeLeft) mergeTarget.children.push(...children);
         else mergeTarget.children.unshift(...children);
         children.length = 0;
+
+      } else {
+        // if this node can't be merged with a sibling than at least try to
+        // steal nodes from a sibling to fill me up!
+
+        var stealLeftN = leftSibling ? Math.ceil((leftSibling.children.length - minChildren) / 2) : 0,
+            stealRightN = rightSibling ? Math.ceil((rightSibling.children.length - minChildren) / 2) : 0,
+            stealLeft = stealLeftN > 0 && stealLeftN >= stealRightN,
+            stealRight = !stealLeft && stealRightN > 0;
+        
+        if (stealLeft || stealRight) {
+          var newChildren = stealLeft ?
+                leftSibling.children.splice(leftSibling.children.length - stealLeftN, stealLeftN) :
+                rightSibling.children.splice(0, stealRightN),
+              stealTarget = stealLeft ? leftSibling : rightSibling,
+              stealN = stealLeft ? stealLeftN : stealRightN;
+          this.withParentChainsUpToCommonParentDo(stealTarget,
+            (mergeNodeOrParent) => mergeNodeOrParent.size -= stealN,
+            (thisOrParent => thisOrParent.size += stealN));
+          newChildren.forEach(ea => ea.parent = this);
+          if (stealLeft) this.children.unshift(...newChildren);
+          else this.children.push(...newChildren);          
+        }
+
       }
     }
 
@@ -404,9 +444,9 @@ export default class TextTree {
     if (this.root !== newRoot) this.root = newRoot;
   }
 
-  print() {
-    return this.root.print(0, 0, "root");
-  }
+  consistencyCheck() { this.root.consistencyCheck(); }
+
+  print() { return this.root.print(0, 0, "root"); }
 
   print2() {
     return printTree(this.root,

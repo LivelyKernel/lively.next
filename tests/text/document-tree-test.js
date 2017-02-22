@@ -143,6 +143,18 @@ describe("text tree", () => {
         + ` line 1 (height: 0, text: "d")`);
     });
 
+    it("balances by stealing values to be consistent", () => {
+      // steal lines from the second leaf node so that node one is OK
+      //                   node (size: 4)                          
+      //              •••••               •••••                    
+      // node (leaf, size: 1)          node (leaf, size: 3)        
+      //       •                       ••••      •      ••••       
+      // line (2)                line (3)    line (4)    line (5)  
+      var t = new TextTree(["1", "2", "3", "4", "5"], opts);
+      t.removeLine(0);
+      t.consistencyCheck();
+    });
+
   });
 
 
