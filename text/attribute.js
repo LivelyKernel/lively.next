@@ -102,7 +102,11 @@ export class TextStyleAttribute extends TextAttribute {
   }
 
   static isStyleData(data) {
-    return arr.withoutAll(Object.keys(data), this.styleProps).length === 0;
+    var ignored = ["_rev"].concat(this.styleProps);
+    for (var name in data)
+      if (!ignored.includes(name))
+        return false;
+    return true;
   }
 
   get isStyleAttribute() { return true; }
