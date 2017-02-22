@@ -37,6 +37,31 @@ class TreeNode {
     return result;
   }
 
+  consistencyCheck() {
+    var {
+      isRoot,
+      isLeaf,
+      children,
+      options: {maxLeafSize, maxNodeSize, minLeafSize, minNodeSize}
+    } = this;
+    if (!isRoot) {
+      var max = isLeaf ? maxLeafSize : maxNodeSize,
+          min = isLeaf ? minLeafSize : minNodeSize;
+      if (!num.between(children.length, min, max))
+        throw new Error(`children count of ${this} expected to be between ${min} and ${max} but is ${children.length}`);
+      if (isLeaf) {
+        if (!children.every(ea => ea.isLine))
+          throw new Error(`children of leaf ${this} are not all lines!`)
+      } else {
+        if (!children.every(ea => ea.isNode))
+          throw new Error(`children of non-leaf ${this} are not all inner nodes!`)
+      }
+    }
+
+    if (!isLeaf)
+      children.forEach(ea => ea.consistencyCheck());
+  }
+
 }
 
 

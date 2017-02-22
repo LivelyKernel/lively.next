@@ -5,37 +5,12 @@ import { arr } from "lively.lang";
 
 var opts = {maxLeafSize: 3, minLeafSize: 2, maxNodeSize: 5, minNodeSize: 2};
 
-function consistencyCheck(tree) {
-  tree.root.traverse(ea => {
-    var {
-      isRoot,
-      isLeaf,
-      children,
-      options: {maxLeafSize, maxNodeSize, minLeafSize, minNodeSize}
-    } = ea;
-    if (isRoot)
-      return;
-    var max = isLeaf ? maxLeafSize : maxNodeSize,
-      min = isLeaf ? minLeafSize : minNodeSize;
-    expect(children.length).within(min, max, `children count of ${ea}`);
-    if (isLeaf)
-      expect().assert(
-        children.every(ea => ea.isLine),
-        `children of ${ea} are not all lines!`
-      );
-    else
-      expect().assert(
-        children.every(ea => ea.isNode),
-        `children of ${ea} are not all nodes!`
-      );
-  });
-}
-
 describe("text tree", () => {
 
   it("finds lines by row", () => {
     var textTree = new TextTree(["a", "b", "c", "d"]);
-    consistencyCheck(textTree);
+    textTree.consistencyCheck();
+    
     var lines = [0,1,2,3,4].map(n => textTree.root.findRow(n));
     expect().assert(lines[0], "line 0 not found");
     expect().assert(lines[1], "line 1 not found");
@@ -110,7 +85,7 @@ describe("text tree", () => {
       textTree.insertLines(["a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a"])
       textTree.insertLine("b");
       textTree.insertLine("b");
-      consistencyCheck(textTree);
+      textTree.consistencyCheck();
     });
 
     it("balances after insert 2", () => {
@@ -118,7 +93,7 @@ describe("text tree", () => {
       textTree.insertLines(["a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a"])
       textTree.insertLine("b");
       textTree.insertLine("b");
-      consistencyCheck(textTree);
+      textTree.consistencyCheck();
     });
 
   });
