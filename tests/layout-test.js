@@ -227,25 +227,27 @@ describe("layout", () => {
     it("can fix its height or width", () => {
       grid.col(1).fixed = true;
       grid.row(1).fixed = true;
-      layout.container.resizeBy(pt(100,100));
-      expect(grid.col(0).row(0).adjustedProportion.width).closeTo(1/2, 0.0001);
+      console.log('resize');
+      debugger;
+      layout.container.resizeBy(pt(100,100))
       expect(grid.col(0).row(0).dynamicWidth).equals(300);
+      expect(grid.col(0).row(0).width).equals(150);
       closeToPoint(grid.col(1).row(1).bounds().extent(), pt(100,100));
       closeToPoint(grid.col(0).row(0).bounds().extent(), pt(150,150));
     });
     
     it("can change its height or width proportion", () => {
-      grid.col(1).adjustProportion(1/6)
-      grid.row(1).adjustProportion(1/6)
+      grid.col(1).width += 50;
+      grid.row(1).height += 50;
       expect(grid.col(1).row(1).bounds().extent()).equals(pt(150,150));
       expect(grid.col(0).row(0).bounds().extent()).equals(pt(100,100));
-      expect(grid.col(2).row(2).bounds().extent()).equals(pt(50,50));
+      expect(grid.col(2).row(2).bounds().extent()).equals(pt(50,50), "steals from next flexible axis");
     });
     
     it("propagates sizing changes to neighbors", () => {
-      grid.col(1).adjustProportion(1/6)
-      expect(grid.col(0).proportion).equals(1/3);
-      expect(grid.col(2).proportion).equals(1/6);
+      grid.col(1).width += 50;
+      expect(grid.col(0).width).equals(100);
+      expect(grid.col(2).width).equals(50);
     });
   })
 
@@ -344,16 +346,17 @@ describe("layout", () => {
                           [[null, "m1", null], /* 50 px*/
                            ["m2", null, null],
                            [null, null,"m3"]]});
-      m.layout.col(1).fixed = 50;
-      m.layout.row(0).fixed = 50;
+      m.layout.col(1).width = 50;
+      m.layout.row(0).height = 50;
+      m.layout.row(0).fixed = true;
+      m.layout.col(1).fixed = true;
       m.layout.apply();
       expect(m2.position).equals(pt(0, 50));
-      expect(m3.position).equals(pt(175, 175));
-      expect(m1.position.x).closeTo(125, 0.0001);
-      expect(m1.position.y).equals(0);
+      expect(m3.position).equals(pt(150, 200));
+      expect(m1.position).equals(pt(100,0));
       m.resizeBy(pt(100,100));
       m.layout.col(1).fixed = false;
-      expect(m.layout.col(1).length).closeTo(400 / 3, 0.00001);
+      expect(m.layout.col(1).width).equals(50);
     });
 
     it("can set minimum spacing for columns and rows", () => {
@@ -370,7 +373,7 @@ describe("layout", () => {
       expect(m.extent).equals(pt(50,50));
       expect(m1.position).equals(pt(50, 0));
       expect(m2.position).equals(pt(0, 50));
-      expect(m3.position).equals(pt(50, 50));
+      expect(m3.position).equals(pt(50, 50), "m3 position");
       m.extent = pt(100, 100);
       expect(m.extent).equals(pt(100,100));
       expect(m1.position).equals(pt(50, 0));
@@ -393,34 +396,34 @@ describe("layout", () => {
     });
 
     it("can vary the proportional width and height of rows and columns", () => {
-      m.layout.col(0).adjustStretch(60);
-      expect(m.layout.col(0).proportion).equals(1/3 + 0.2)
-      expect(m.layout.col(1).proportion).equals(1/3 - 0.2)
-      m.layout.row(0).adjustStretch(60);
-      expect(m.layout.row(0).proportion).equals(1/3 + 0.2)
-      expect(m.layout.row(1).proportion).equals(1/3 - 0.2)
-      m.layout.col(0).adjustStretch(300)
-      expect(m.layout.col(0).proportion).equals(2/3);
-      expect(m.layout.col(1).proportion).equals(0);
-      m.layout.row(0).adjustStretch(300)
-      expect(m.layout.row(0).proportion).equals(2/3);
-      expect(m.layout.row(1).proportion).equals(0);
-      expect(m.layout.row(0).col(0).height).equals(m.layout.row(0).proportion * 300);
-      expect(m.layout.row(1).col(0).height).equals(m.layout.row(1).proportion * 300);
+      m.layout.col(0).width += 60;
+      expect(m.layout.col(0).width).equals(160)
+      expect(m.layout.col(1).width).equals(40)
+      m.layout.row(0).height += 60;
+      expect(m.layout.row(0).height).equals(160)
+      expect(m.layout.row(1).height).equals(40)
+      m.layout.col(0).width += 300;
+      expect(m.layout.col(0).width).equals(200);
+      expect(m.layout.col(1).width).equals(0);
+      m.layout.row(0).height += 300;
+      expect(m.layout.row(0).height).equals(200);
+      expect(m.layout.row(1).height).equals(0);
+      expect(m.layout.row(0).col(0).height).equals(200);
+      expect(m.layout.row(1).col(0).height).equals(0);
     });
     
     it("can vary proportion of the last column", () => {
-      m.layout.col(2).adjustStretch(100);
-      expect(m.layout.col(0).proportion).equals(1/4);
-      expect(m.layout.col(1).proportion).equals(1/4);
-      expect(m.layout.col(2).proportion).equals(1/2);
-      expect(m.width).equals(4/3 * 300);
+      m.layout.col(2).width += 100;
+      expect(m.layout.col(0).width).equals(100);
+      expect(m.layout.col(1).width).equals(100);
+      expect(m.layout.col(2).width).equals(200);
+      expect(m.width).equals(300 + 100);
     })
     
     it("widens container when varying fixed width column", () => {
       m.layout.col(2).fixed = true;
-      m.layout.col(2).adjustStretch(100);
-      expect(m.layout.col(2).fixed).equals(200);
+      m.layout.col(2).width += 100;
+      expect(m.layout.col(2).width).equals(200);
       expect(m.width).equals(400);
     })
     
@@ -431,18 +434,15 @@ describe("layout", () => {
                           [[null, "m1", null], /* 50 px*/
                            ["m2", null, null],
                            [null, null,"m3"]]});
-      m.layout.col(1).fixed = 50;
-      m.layout.row(0).fixed = 50;
-      m.layout.col(1).adjustStretch(50);
-      expect(m.layout.col(1).fixed).equals(100);
-      expect(m.layout.col(0).adjustedProportion).closeTo(1/2, 0.0001);
-      expect(m.layout.col(2).adjustedProportion).closeTo(1/2, 0.0001);
-      m.layout.col(0).fixed = true;
-      expect(m.layout.col(0).fixed).closeTo(125, 0.0001);
-      expect(m.layout.col(2).adjustedProportion).closeTo(1, 0.00001);
+      m.layout.col(1).fixed = true; 
+      m.layout.col(1).width += 50;
+      expect(m.width).equals(350);
+      expect(m.layout.col(1).width).equals(150);
+      expect(m.layout.col(0).width).equals(100);
+      expect(m.layout.col(2).width).equals(100);
     })
     
-    xit("can vary proportions correctly in presence of fixed axis", () => {
+    it("can vary proportions correctly in presence of fixed axis", () => {
       var [m1,m2,m3] = m.submorphs;
       m.layout = new GridLayout({grid:
                          /* 100px 100px */
@@ -450,45 +450,43 @@ describe("layout", () => {
                      ["m2", null, null, null],
                      [null, null, null, "m3"]]});
       m.width = 400;
-      m.layout.col(2).fixed = 100;
-      m.layout.col(1).fixed = 100;
-      expect(m.layout.col(3).adjustedProportion).equals(1/2)
-      expect(m.layout.col(0).adjustedProportion).equals(1/2)
-      m.layout.col(0).adjustStretch(50);
+      m.layout.col(2).fixed = true;
+      m.layout.col(1).fixed = true;
+      expect(m.layout.col(3).width).equals(100)
+      expect(m.layout.col(0).width).equals(100)
+      m.layout.col(0).width += 50;
       m.layout.apply();
-      expect(m2.width).closeTo(150, 0.0001);
+      expect(m2.width).equals(150);
       expect(m3.width).equals(50);
-      m.layout.col(3).adjustStretch(60);
+      m.layout.col(3).width += 60;
       m.layout.apply()
-      expect(m2.width).closeTo(150, 0.0001);
-      expect(m3.width).closeTo(110, 0.0001);
-      m.layout.col(3).adjustStretch(-60);
+      expect(m2.width).equals(150);
+      expect(m3.width).equals(110);
+      m.layout.col(3).width -= 60;
       m.layout.apply();
-      expect(m2.width).closeTo(150, 0.0001);
-      expect(m3.width).closeTo(50, 0.0001);
-      m.layout.col(3).adjustStretch(-50); // 0
+      expect(m2.width).equals(150);
+      expect(m3.width).equals(50);
+      m.layout.col(3).width -= 50; // 0
       m.layout.apply();
-      expect(m.layout.col(3).adjustedProportion).equals(0);
-      expect(m.layout.col(0).adjustedProportion).closeTo(1, 0.0001);
-      expect(m2.width).closeTo(150, 0.0001);
+      expect(m.layout.col(3).width).equals(0);
+      expect(m.layout.col(0).width).equals(200);
+      expect(m2.width).equals(150);
       expect(m3.width).equals(0);
-      m.layout.col(3).adjustStretch(-50);  // prevent
+      m.layout.col(3).width -= 50;
       m.layout.apply();
-      expect(m3.width).equals(0);
+      expect(m3.width).equals(0, 'prevent negative widths');
       expect(m2.width).closeTo(150, 0.0001);
-      expect(m.layout.col(3).adjustedProportion).equals(0);
-      expect(m.layout.col(0).adjustedProportion).closeTo(1, 0.0001);
+      expect(m.layout.col(3).width).equals(0);
+      expect(m.layout.col(0).width).closeTo(200, 0.0001);
       m.width = 400;
-      m.layout.col(3).fixed = 100;
-      m.layout.col(2).fixed = 100;
-      m.layout.col(1).fixed = 100;
+      m.layout.col(3).fixed = m.layout.col(2).fixed = m.layout.col(1).fixed = true;
+      m.layout.col(3).width = m.layout.col(2).width = m.layout.col(1).width = 100;
       m.layout.apply();
       expect(m.layout.col(0).dynamicLength).equals(100);
-      m.layout.col(0).adjustStretch(300);
+      m.layout.col(0).width += 300;
       m.layout.apply();
       expect(m.layout.col(0).dynamicLength).equals(400);
-      expect(m.layout.col(0).proportion).equals(4/7);
-      expect(m.layout.col(0).length).equals(400);
+      expect(m.layout.col(0).width).equals(400);
       expect(m.width).equals(700);
       expect(m2.width).closeTo(400, 0.001);
       expect(m3.width).closeTo(100, 0.0001);
