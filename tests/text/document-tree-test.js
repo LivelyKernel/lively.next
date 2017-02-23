@@ -155,8 +155,47 @@ describe("text tree", () => {
       t.consistencyCheck();
     });
 
+    it("remove many lines", () => {
+      var textTree = new TextTree(["a", "b", "c", "d"], opts);
+      textTree.removeLines(1, 2);
+      textTree.consistencyCheck();
+      expect(textTree.print()).equals(
+          `root (size: 2)\n`
+        + ` line 0 (height: 0, text: "a")\n`
+        + ` line 1 (height: 0, text: "d")`);
+    });
+
   });
 
+
+  describe("bugs", () => {
+  
+    it("all nodes have correct size", () => {
+
+      var opts = {maxLeafSize: 3, minLeafSize: 2, maxNodeSize: 3, minNodeSize: 2},
+          textTree = new TextTree([], opts);
+      for (var i = 0; i < 10; i++) textTree.insertLine("" + i);
+      expect(textTree.lines().map(ea => ea.text)).equals(arr.range(0, 9))
+
+      textTree.removeLines(1,3);
+      expect(textTree.lines().map(ea => ea.text)).equals(["0", "4", "5", "6", "7", "8", "9"]);
+      textTree.print();
+      textTree.removeLines(1,3);
+      expect(textTree.lines().map(ea => ea.text)).equals(["0", "7", "8", "9"]);
+      textTree.consistencyCheck();
+    });
+
+    it("inserts followed by removes not conistent", () => {
+      var opts = {maxLeafSize: 3, minLeafSize: 2, maxNodeSize: 3, minNodeSize: 2},
+          textTree = new TextTree([], opts);
+      for (var i = 0; i < 7; i++) textTree.insertLine("" + i);
+      textTree.print();
+      textTree.removeLines(1,3);
+      textTree.consistencyCheck();
+      textTree.print();
+    });
+
+  });
 
 });
 

@@ -42,8 +42,17 @@ class TreeNode {
       isRoot,
       isLeaf,
       children,
+      size,
       options: {maxLeafSize, maxNodeSize, minLeafSize, minNodeSize}
     } = this;
+
+    if (size === 0)
+      throw new Error(`size of ${this} expected to be > 0!`);
+
+    var sumChildSizes = arr.sum(arr.pluck(children, "size"));
+    if (sumChildSizes != size)
+      throw new Error(`Sum of child sizes is not size of ${this}: ${sumChildSizes} != ${size}`);
+
     if (!isRoot) {
       var max = isLeaf ? maxLeafSize : maxNodeSize,
           min = isLeaf ? minLeafSize : minNodeSize;
@@ -79,9 +88,16 @@ class InnerTreeNode extends TreeNode {
   get isNode() { return true; }
 
   resize(n) {
-    this.size += n;
+    this.size = this.size + n;
     this.parent && this.parent.resize(n);
     // if (n > 0) this.balanceAfterGrowth(n);
+  }
+
+  lines(result = []) {
+    if (this.isLeaf) { result.push(...this.children); return result; }
+    for (var i = 0; i < this.children.length; i++)
+      this.children[i].lines(result)
+    return result;
   }
 
   findRow(row) {
@@ -90,7 +106,7 @@ class InnerTreeNode extends TreeNode {
     for (var i = 0; i < this.children.length; i++) {
       var child = this.children[i], childSize = child.size;
       if (row < childSize) return child.findRow(row);
-      row -= childSize;
+      row = row - childSize;
     }
     return null;
   }
@@ -111,7 +127,7 @@ class InnerTreeNode extends TreeNode {
     for (; i < this.children.length; i++) {
       var child = this.children[i], childSize = child.size;
       if (atIndex <= childSize) return child.insert(lines, atIndex);
-      atIndex -= childSize;
+      atIndex = atIndex - childSize;
     }
 
     var last = this.children[i-1];
@@ -142,84 +158,187 @@ class InnerTreeNode extends TreeNode {
     }
   }
 
-  remove(index) {
-    if (index > this.size) throw new Error(`Trying to remove index ${index} from ${this}`);
+  findLeafs(fromIndex, toIndex, baseIndex = 0) {
+    // when searching for the parents of multiple lines indicated by fromIndex
+    // (start line, inclusive) and toIndex (end line, inclusive), this methods
+    // finds the leaf nodes for those lines.
+    // The return value is an array of spec objects,
+    // [{node, full: BOOLEAN, firstLine: NUMBER, lastLine: NUMBER}]
+    // full indicates if all children are affected,
+    // firstLine, lastLine are the indices in node.children that should be
+    // selected (inclusive)
+    if (fromIndex > baseIndex + this.size || toIndex < baseIndex) return [];
 
-    if (!this.isLeaf) {
-      for (var i = 0; i < this.children.length; i++) {
-        var child = this.children[i], childSize = child.size;
-        if (index < childSize) return child.remove(index);
-        index -= childSize;
-      }
-      throw new Error("Should never get here...");
+    if (this.isLeaf) {
+      var firstLine = Math.max(0, fromIndex - baseIndex),
+          max = this.children.length-1,
+          lastLine = Math.min(max, toIndex - baseIndex),
+          full = false;
+      if (firstLine === 0 && lastLine === max) { full = true; lastLine = max; }
+      return [{node: this, firstLine, lastLine, full}];
     }
 
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // merge left or right
+    var result = [];
+    for (var i = 0; i < this.children.length; i++) {
+      var c = this.children[i];
+      result.push(...c.findLeafs(fromIndex, toIndex, baseIndex));
+      baseIndex = baseIndex + c.size;
+    }
+    return result;
+  }
+
+  removeFromToInRoot(fromIndex, toIndex) {
+    // Remove lines fromIndex to toIndex
+    if (!this.isRoot)
+      throw new Error("removeFromTo() should be called on the root node");
+
+    if (fromIndex > toIndex)
+      [fromIndex, toIndex] = [toIndex, fromIndex];
+
+    let {size, options: {maxLeafSize, minLeafSize}} = this,
+        leafs = this.findLeafs(fromIndex, toIndex),
+        first = leafs.shift(),
+        last = leafs.pop(),
+        toRemove = leafs,
+        rebalance = [],
+        firstLeftSibling, lastRightSibling,
+        firstNeedsMerge = false, lastNeedsMerge = false;
+
+
+    if (fromIndex >= size) return;
+
+    if (last && first.node === last.node) last = null;
+
+    // The first, leftmost affected node. If all its lines are remove, remove
+    // it entirely, otherwise remember it for merge/stealing
+    if (first.full) toRemove.push(first);
+    else {
+      let {lastLine, firstLine, node: {children}} = first,
+          n = (lastLine - firstLine)+1;
+      firstNeedsMerge = children.length - n < minLeafSize;
+    }
+
+    // ...same with the last (rightmost) affected node
+    if (last) {
+      if (last.full) toRemove.push(last);
+      else {
+        let {lastLine, firstLine, node: {children}} = last,
+            n = (lastLine - firstLine)+1;
+        lastNeedsMerge = children.length - n < minLeafSize;
+      }
+    }
+
+    // look for siblings for merge steal operations before we change anything
+    if (firstNeedsMerge || lastNeedsMerge) {
+      var prevLine = first.node.children[0].prevLine();
+      firstLeftSibling = prevLine ? prevLine.parent : null;
+      var nextLine = arr.last(last ? last.node.children : first.node.children).nextLine();
+      lastRightSibling = nextLine ? nextLine.parent : null;
+    }
+
+    // remove the nodes inbetween first/last + first if "full" and last if "full"
+    for (let i = 0; i < toRemove.length; i++) {
+      var node = toRemove[i].node,
+          n = node.children.length;
+      node.children.forEach(ea => ea.parent = null);
+      node.children.length = 0;
+      node.resize(-n);
+      var p = node.parent;
+      if (p) {
+        node.parent = null;
+        p.children.splice(p.children.indexOf(node), 1);
+        if (!rebalance.includes(p)) rebalance.push(p);
+      }
+    }
+
+    // if only some lines in first get removed do that here
+    if (!first.full) {
+      let {lastLine, firstLine, node} = first,
+          {children, options} = node,
+          n = (lastLine - firstLine)+1,
+          removedLines = children.splice(firstLine, n);
+      removedLines.forEach(ea => ea.parent = null);
+      node.resize(-n);
+    }
+
+    // ...same for last
+    if (last && !last.full) {
+      let {lastLine, firstLine, node} = last,
+          {children} = node,
+          n = (lastLine - firstLine)+1,
+          removedLines = children.splice(firstLine, n);
+      removedLines.forEach(ea => ea.parent = null);
+      node.resize(-n);
+    }
+
+    // merge if needed
+    if (firstNeedsMerge) {
+      first.node.letLeafMergeOrStealAfterRemove(
+        firstLeftSibling, !last || last.full ? lastRightSibling : last.node);
+    }
+
+    // also do that for last but consider the case that the first node might
+    // have been merged "away"
+    if (last && lastNeedsMerge) {
+      last.node.letLeafMergeOrStealAfterRemove(
+        first.full || !first.node.parent ? firstLeftSibling : first.node, lastRightSibling);
+    }
+
+    // rebalance all affected nodes, meaning to change tree structure as necessary
+    rebalance.forEach(ea => ea.balanceAfterShrink());
+  }
+
+  letLeafMergeOrStealAfterRemove(leftSibling, rightSibling) {
+    if (!this.isLeaf)
+      throw new Error(`Called letLeafMergeOrStealAfterRemove() in non-leaf ${this}`);
 
     var {children, options} = this,
-        line = children[index],
         maxChildren = options.maxLeafSize,
-        minChildren = options.minLeafSize;
+        minChildren = options.minLeafSize,
+        needsChange = children.length < minChildren;
 
-    var needsChange = children.length - 1 < minChildren;
-    if (needsChange) {
-      var prevLine = children[0].prevLine(),
-          leftSibling = prevLine ? prevLine.parent : null,
-          nextLine = arr.last(children).nextLine(),
-          rightSibling = nextLine ? nextLine.parent : null;
-    }
+    // if (!needsMerge)
+    //   throw new Error(`Called letLeafMergeOrStealAfterRemove() but ${this} does not need merge/theft!`);
 
-    // remove line from my children
-    children.splice(index, 1);
-    line.parent = null;
-    this.resize(-1);
+    // ...try to merge with left or right sibling
+    var mergeLeft = leftSibling && leftSibling.children.length + children.length <= maxChildren,
+        mergeRight = !mergeLeft && rightSibling && rightSibling.children.length + children.length <= maxChildren,
+        mergeTarget = mergeLeft ? leftSibling : mergeRight ? rightSibling : null;
 
-    // if less than desired nodes...
-    if (needsChange) {
+    if (mergeTarget) {
+      // update size of sibling and parents up to common parent and
+      // subtract my size from self and all parents up to common parent with sibling
+      var mySize = this.size;
+      this.withParentChainsUpToCommonParentDo(mergeTarget,
+        (mergeNodeOrParent) => mergeNodeOrParent.size += mySize,
+        (thisOrParent => thisOrParent.size -= mySize));
 
-      // ...try to merge with left or right sibling
-      var mergeLeft = leftSibling && leftSibling.children.length + children.length <= maxChildren,
-          mergeRight = !mergeLeft && rightSibling && rightSibling.children.length + children.length <= maxChildren,
-          mergeTarget = mergeLeft ? leftSibling : mergeRight ? rightSibling : null;
+      // move children over
+      children.forEach(ea => ea.parent = mergeTarget);
+      if (mergeLeft) mergeTarget.children.push(...children);
+      else mergeTarget.children.unshift(...children);
+      children.length = 0;
+    }  else {
+      // if this node can't be merged with a sibling than at least try to
+      // steal nodes from a sibling to fill me up!
 
-      if (mergeTarget) {
-        // update size of sibling and parents up to common parent and
-        // subtract my size from self and all parents up to common parent with sibling
-        var mySize = this.size;
-        this.withParentChainsUpToCommonParentDo(mergeTarget,
-          (mergeNodeOrParent) => mergeNodeOrParent.size += mySize,
-          (thisOrParent => thisOrParent.size -= mySize));
+      var stealLeftN = leftSibling ? Math.ceil((leftSibling.children.length - minChildren) / 2) : 0,
+          stealRightN = rightSibling ? Math.ceil((rightSibling.children.length - minChildren) / 2) : 0,
+          stealLeft = stealLeftN > 0 && stealLeftN >= stealRightN,
+          stealRight = !stealLeft && stealRightN > 0;
 
-        // move children over
-        children.forEach(ea => ea.parent = mergeTarget);
-        if (mergeLeft) mergeTarget.children.push(...children);
-        else mergeTarget.children.unshift(...children);
-        children.length = 0;
-
-      } else {
-        // if this node can't be merged with a sibling than at least try to
-        // steal nodes from a sibling to fill me up!
-
-        var stealLeftN = leftSibling ? Math.ceil((leftSibling.children.length - minChildren) / 2) : 0,
-            stealRightN = rightSibling ? Math.ceil((rightSibling.children.length - minChildren) / 2) : 0,
-            stealLeft = stealLeftN > 0 && stealLeftN >= stealRightN,
-            stealRight = !stealLeft && stealRightN > 0;
-        
-        if (stealLeft || stealRight) {
-          var newChildren = stealLeft ?
-                leftSibling.children.splice(leftSibling.children.length - stealLeftN, stealLeftN) :
-                rightSibling.children.splice(0, stealRightN),
-              stealTarget = stealLeft ? leftSibling : rightSibling,
-              stealN = stealLeft ? stealLeftN : stealRightN;
-          this.withParentChainsUpToCommonParentDo(stealTarget,
-            (mergeNodeOrParent) => mergeNodeOrParent.size -= stealN,
-            (thisOrParent => thisOrParent.size += stealN));
-          newChildren.forEach(ea => ea.parent = this);
-          if (stealLeft) this.children.unshift(...newChildren);
-          else this.children.push(...newChildren);          
-        }
-
+      if (stealLeft || stealRight) {
+        var newChildren = stealLeft ?
+              leftSibling.children.splice(leftSibling.children.length - stealLeftN, stealLeftN) :
+              rightSibling.children.splice(0, stealRightN),
+            stealTarget = stealLeft ? leftSibling : rightSibling,
+            stealN = stealLeft ? stealLeftN : stealRightN;
+        this.withParentChainsUpToCommonParentDo(stealTarget,
+          (mergeNodeOrParent) => mergeNodeOrParent.size -= stealN,
+          (thisOrParent => thisOrParent.size += stealN));
+        newChildren.forEach(ea => ea.parent = this);
+        if (stealLeft) this.children.unshift(...newChildren);
+        else this.children.push(...newChildren);
       }
     }
 
@@ -233,8 +352,6 @@ class InnerTreeNode extends TreeNode {
     } else {
       this.balanceAfterShrink();
     }
-
-    return line;
   }
 
   balanceAfterGrowth() {
@@ -251,8 +368,8 @@ class InnerTreeNode extends TreeNode {
 
     var splitIndex = Math.floor(children.length / 2),
         i = 0, mySize = 0, otherSize = 0;
-    for (; i < splitIndex; i++) mySize += children[i].size;
-    for (; i < children.length; i++) otherSize += children[i].size;
+    for (; i < splitIndex; i++) mySize = mySize+ children[i].size;
+    for (; i < children.length; i++) otherSize = otherSize + children[i].size;
 
     this.children = children.slice(0, splitIndex);
     this.size = mySize;
@@ -380,7 +497,7 @@ class Line extends TreeNode {
           node = parents[i + 1],
           nodeIndex = parent.children.indexOf(node);
       for (var j = 0; j < nodeIndex; j++) {
-        index += parent.children[j].size;
+        index = index + parent.children[j].size;
       }
     }
     return index;
@@ -420,12 +537,19 @@ export default class TextTree {
       this.insertLines(lines);
   }
 
+  lines() { return this.root.lines(); }
+
   insertLine(text, atIndex = this.root.size) {
     return this.insertLines([text], atIndex)[0];
   }
 
   removeLine(row) {
-    this.root.remove(row);
+    this.root.removeFromToInRoot(row, row);
+    // this.root.remove(row);
+  }
+
+  removeLines(fromRow, toRow) {
+    this.root.removeFromToInRoot(fromRow, toRow);
   }
 
   insertLines(lines, atIndex) {
