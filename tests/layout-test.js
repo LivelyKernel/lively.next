@@ -227,8 +227,6 @@ describe("layout", () => {
     it("can fix its height or width", () => {
       grid.col(1).fixed = true;
       grid.row(1).fixed = true;
-      console.log('resize');
-      debugger;
       layout.container.resizeBy(pt(100,100))
       expect(grid.col(0).row(0).dynamicWidth).equals(300);
       expect(grid.col(0).row(0).width).equals(150);
@@ -586,7 +584,6 @@ describe("layout", () => {
       m.layout.row(0).fixed = 75;
       m.height = 300;
       m.layout.row(0).addAfter();
-      debugger;
       m.layout.col(0).addBefore();
       m.layout.apply();
       expect(m.layout.row(0).height).equals(300/4, 'row 0')
@@ -605,13 +602,15 @@ describe("layout", () => {
 
     it("can remove rows and columns", () => {
           // [[null, null],
-          //  ["m2", null]]
+          //  [null, "m3"]]
        const [m1, m2, m3] = m.submorphs;
-       m.layout.col(1).remove();
-       m.layout.row(2).remove();
+       m.layout.col(0).remove();
+       m.layout.row(1).remove();
        m.layout.apply();
        expect(m.width).equals(300);
-       expect(m2.position).equals(pt(0, 150));
+       expect(m3.position).equals(pt(150, 150));
+       m.layout.col(1).remove();
+       expect(m.layout.col(0).after).to.be.undefined;
     });
     
     it("removes removed submorphs from layout", () => {

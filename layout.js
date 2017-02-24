@@ -566,7 +566,6 @@ class LayoutAxis {
   }
 
   adjustOtherProportions(remove) {
-    debugger;
     const before = this.axisBefore, after = this.axisAfter,
           dynamicProportions = arr.sum([...before, ...after].filter(a => !a.fixed).map(a => a.proportion)),
           removeOwnProportion = c => c.proportion = c.proportion / dynamicProportions,
@@ -712,6 +711,9 @@ export class LayoutColumn extends LayoutAxis {
       c.group.disconnect(c);
       this.layout.removeGroup(c.group);
     });
+    if (!this.before) {
+      this.layout.grid = this.after.getRoot();
+    }
     a.equalizeDynamicAxis();
   }
 
@@ -795,6 +797,9 @@ export class LayoutRow extends LayoutAxis {
       c.group.disconnect(c);
       this.layout.removeGroup(c.group);
     });
+    if (!this.before) {
+      this.layout.grid = this.after.getRoot();
+    }
     a.equalizeDynamicAxis();
   }
 
