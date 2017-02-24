@@ -4,32 +4,9 @@ var bcryptPath = System.decanonicalize("lively.user/node_modules/bcryptjs/index.
 var bcrypt = System._nodeRequire(bcryptPath);
 var jwtpath = System.decanonicalize("lively.user/node_modules/jsonwebtoken/index.js").replace(/^file:\/\//, "");
 var jwt = System._nodeRequire(jwtpath);
-// var sqlite3Path = System.decanonicalize("lively.user/node_modules/sqlite3/lib/sqlite3.js").replace(/^file:\/\//, "");
-// var sqlite3 = System._nodeRequire(sqlite3Path).verbose();
 
 //replace with uuid, visible only to server
 var key = "mysecret"
-
-//Database for user information
-// async function getfromDB(username,email){
-//   var dbPath = System.decanonicalize("lively.user/userdb.db").replace(/^file:\/\//, "");
-//   var db = new sqlite3.Database(dbPath);
-//   try {
-//     var results = await new Promise((resolve, reject) => {  
-//       db.serialize(function() { 
-//         db.all("SELECT * FROM users where username='" + username + "' and email='" + email + "'", function(err, rows) {
-//           if (err) reject(err)
-//           else resolve(rows);
-//         });
-//       });
-//     })  
-//   } finally {  
-//     db.close();
-//     
-//   }
-//   return results;
-// }
-
 
 export async function authenticate(username,email,password){
   

@@ -1,6 +1,5 @@
 import { string, promise } from "lively.lang";
-var bcryptPath = System.decanonicalize("lively.user/node_modules/bcryptjs/index.js").replace(/^file:\/\//, "");
-var bcrypt = System._nodeRequire(bcryptPath);
+
 import * as authserver from "lively.user/authserver.js"
 
 export default class user {
