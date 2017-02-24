@@ -491,12 +491,63 @@ class LayoutAxis {
   get before() { throw Error("before() not implemented!") }
   get after() { throw Error("after() not implemented!") }
 
+  get containerLength() { return this.container[this.dimension] }
+  set containerLength(length) { this.container[this.dimension] = length; }
+
   getRoot() {
     return (this.axisBefore[0] || this).items[0];
   }
 
   get container() { return this.origin.container }
   get layout() { return this.origin.layout }
+
+  get frozen() { return this.origin.frozen[this.dimension] }
+  set frozen(active) { this.origin.frozen[this.dimension] = active}
+
+  get fixed() { return this.origin.fixed[this.dimension] }
+  set fixed(active) {
+    var newLength;
+    if (isNumber(active)) {
+      newLength = active;
+      active = true;
+    }
+    this.items.forEach(c => {
+      c.fixed[this.dimension] = active;
+    });
+    if (newLength) this[this.dimension] = newLength;
+    if (this.containerLength < this.staticLength) this.containerLength = this.staticLength;
+    this.adjustOtherProportions(active)
+  }
+
+  get length() { return this.origin[this.dimension]; }
+  set length(x) { 
+    this.items.forEach(cell => {
+      cell[this.dimension] = x;
+    });
+  }
+
+  get proportion() { return this.origin.proportion[this.dimension]; }
+  set proportion(prop) {
+    this.items.forEach(cell => {
+      cell.proportion[this.dimension] = prop;
+    });
+  }
+
+  get min() { return this.origin.min[this.dimension]; }
+  set min(x) { this.adjustMin(x - this.min); }
+
+  adjustMin(delta) {
+    this.items.forEach(c => {
+      if (c.min[this.dimension] + delta < 0) {
+        c.min[this.dimension] = 0;
+      } else if (c.min[this.dimension] + delta > c[this.dimension] ) {
+        c.min[this.dimension] += delta;
+      } else {
+        c.min[this.dimension] += delta;
+      }
+    });
+    this.layout.apply()
+  }
 
   /* 
    In order to be numerically stable (lengths go to very small values or 0)
@@ -597,29 +648,15 @@ export class LayoutColumn extends LayoutAxis {
     this.items = [...cell.above, cell, ...cell.below];
   }
 
+  get dimension() { return 'width' }
+
   get before() { return this.origin.left && new LayoutColumn(this.origin.left); }
   get after() { return this.origin.right && new LayoutColumn(this.origin.right); }
 
-  get containerLength() { return this.container.width }
-  set containerLength(width) { this.container.width = width; }
-
   row(idx) { return this.items[idx]; }
-
-  get min() { return this.origin.min.width || 0; }
-  set min(x) { this.adjustMin(x - this.min); }
 
   get dynamicLength() { return this.origin.dynamicWidth }
   get staticLength() { return this.origin.totalStaticWidth }
-
-  get frozen() { return this.origin.frozen.width }
-  set frozen(active) { this.origin.frozen.width = active }
-
-  get length() { return this.origin.width; }
-  set length(w) { 
-    this.items.forEach(cell => {
-      cell.width = w;
-    });
-  }
 
   get width() { return this.length}
   set width(w) {
@@ -647,21 +684,6 @@ export class LayoutColumn extends LayoutAxis {
      this.layout.apply();
   }
 
-  get fixed() { return this.origin.fixed.width }
-  set fixed(active) {
-    var newWidth;
-    if (isNumber(active)) {
-      newWidth = active;
-      active = true;
-    }
-    this.items.forEach(c => {
-      c.fixed.width = active;
-    });
-    if (newWidth) this.width = newWidth;
-    if (this.containerLength < this.staticLength) this.containerLength = this.staticLength;
-    this.adjustOtherProportions(active);
-  }
-
   emptyAxis() {
     const col = new LayoutColumn(new LayoutCell({
          column: arr.withN(this.items.length, null),
@@ -687,26 +709,6 @@ export class LayoutColumn extends LayoutAxis {
     return col
   }
 
-  adjustMin(delta) {
-    this.items.forEach(c => {
-      if (c.min.width + delta < 0) {
-        c.min.width = 0;
-      } else if (c.min.width + delta > c.width) {
-        c.min.width += delta;
-      } else {
-        c.min.width += delta;
-      }
-    });
-    this.layout.apply()
-  }
-
-  get proportion() { return this.origin.proportion.width }
-  set proportion(prop) {
-    this.items.forEach(cell => {
-      cell.proportion.width = prop;
-    });
-  }
-
   remove() {
     const a = this.before || this.after;
     this.items.forEach(c => {
@@ -726,6 +728,8 @@ export class LayoutRow extends LayoutAxis {
     super(cell);
     this.items = [...cell.before, cell, ...cell.after];
   }
+
+  get dimension() { return 'height' }
 
   emptyAxis() {
     const row = new LayoutRow(new LayoutCell({
@@ -760,26 +764,8 @@ export class LayoutRow extends LayoutAxis {
   get before() { return this.origin.top && new LayoutRow(this.origin.top) }
   get after() { return this.origin.bottom && new LayoutRow(this.origin.bottom) }
 
-  get frozen() { return this.origin.frozen.height }
-  set frozen(active) { this.origin.frozen.height = active}
-
-  get min() { return this.origin.min.height || 0; }
-  set min(x) { this.adjustMin(x - this.min); }
-
-  get fixed() { return this.origin.fixed.height }
-  set fixed(active) {
-    var newHeight;
-    if (isNumber(active)) {
-      newHeight = active;
-      active = true;
-    }
-    this.items.forEach(c => {
-      c.fixed.height = active;
-    });
-    if (newHeight) this.height = newHeight;
-    if (this.containerLength < this.staticLength) this.containerLength = this.staticLength;
-    this.adjustOtherProportions(active)
-  }
+  get dynamicLength() { return this.origin.dynamicHeight }
+  get staticLength() { return this.origin.totalStaticHeight }
 
   attachTo(row) {
     arr.zip(this.items, row.items)
@@ -793,32 +779,6 @@ export class LayoutRow extends LayoutAxis {
 
   col(idx) { return this.items[idx]; }
 
-  adjustMin(delta) {
-    this.items.forEach(c => {
-      if (c.min.height + delta < 0) {
-        c.min.height = 0;
-      } else if (c.min.height + delta > c.height) {
-        c.min.height += delta;
-      } else {
-        c.min.height += delta;
-      }
-    });
-    this.layout.apply();
-  }
-
-  get containerLength() { return this.container.height }
-  set containerLength(height) { this.container.height = height; }
-
-  get dynamicLength() { return this.origin.dynamicHeight }
-  get staticLength() { return this.origin.totalStaticHeight }
-
-  get length() { return this.origin.height }
-  set length(h) { 
-    this.items.forEach(cell => {
-      cell.height = h;
-    });
-  }
-
   get height() { return this.length }
   set height(h) {
     const delta = h - this.height;
@@ -830,13 +790,6 @@ export class LayoutRow extends LayoutAxis {
       this.proportion = this.origin.dynamicHeight > 0 ? this.height / this.origin.dynamicHeight : 0;
     }
     this.layout.apply();
-  }
-
-  get proportion() { return this.origin.proportion.height; }
-  set proportion(prop) {
-    this.items.forEach(cell => {
-      cell.proportion.height = prop;
-    });
   }
 
   remove() {
