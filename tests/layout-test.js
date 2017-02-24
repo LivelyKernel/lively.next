@@ -272,6 +272,68 @@ describe("layout", () => {
       expect(m3.position).equals(pt(200, 200));
     });
 
+    it("aligns stores the dynamic proportions", () => {
+      const [m1, m2, m3] = m.submorphs;
+      expect(m.layout.col(0).proportion).equals(1/3);
+      expect(m.layout.col(1).proportion).equals(1/3);
+      expect(m.layout.col(2).proportion).equals(1/3);
+      expect(m.layout.row(0).proportion).equals(1/3);
+      expect(m.layout.row(2).proportion).equals(1/3);
+      expect(m.layout.row(2).proportion).equals(1/3);
+    });
+
+    it("adjusts dynamic proportions on axis fixation", () => {
+      const [m1, m2, m3] = m.submorphs;
+      m.layout.col(1).fixed = true;
+      m.layout.row(1).fixed = true
+      expect(m.layout.col(0).proportion).equals(1/2);
+      expect(m.layout.col(2).proportion).equals(1/2);
+      expect(m.layout.row(0).proportion).equals(1/2);
+      expect(m.layout.row(2).proportion).equals(1/2);
+      m.layout.col(1).fixed = false;
+      m.layout.row(1).fixed = false
+      expect(m.layout.col(0).proportion).equals(1/3);
+      expect(m.layout.col(2).proportion).equals(1/3);
+      expect(m.layout.row(0).proportion).equals(1/3);
+      expect(m.layout.row(2).proportion).equals(1/3);
+    });
+
+    it("expands container when fixed size exceeds initial extent", () => {
+      const [m1, m2, m3] = m.submorphs;
+      m.layout.col(0).fixed = 500;
+      expect(m.extent).equals(pt(700,300));
+    });
+
+    it("adjusts dynamic proportions when one axis adjusts width or height", () => {
+      const [m1, m2, m3] = m.submorphs;
+      m.layout.col(1).width += 100;
+      m.layout.row(1).height += 100;
+      expect(m.layout.col(0).proportion).equals(1/3);
+      expect(m.layout.col(1).proportion).equals(2/3);
+      expect(m.layout.col(2).proportion).equals(0);
+      expect(m.layout.row(0).proportion).equals(1/3);
+      expect(m.layout.row(1).proportion).equals(2/3);
+      expect(m.layout.row(2).proportion).equals(0);
+    });
+    
+    it("adjusts dynamic proportions when one axis reaches or leaves minimum", () => {
+      const [m1, m2, m3] = m.submorphs;
+      m.layout.col(1).min = 50;
+      m.layout.row(1).min = 50;
+      m.extent = pt(25,25);
+      expect(m.extent).equals(pt(50,50));
+      expect(m.layout.col(0).proportion).equals(1/2);
+      expect(m.layout.col(2).proportion).equals(1/2);
+      expect(m.layout.row(0).proportion).equals(1/2);
+      expect(m.layout.row(2).proportion).equals(1/2);
+      m.extent = pt(200,200);
+      expect(m.layout.col(1).proportion).equals(1/3, 'col 1');
+      expect(m.layout.col(2).proportion).equals(1/3, 'col 3');
+      expect(m.layout.col(0).proportion).equals(1/3, 'col 0');
+      expect(m.layout.row(0).proportion).equals(1/3);
+      expect(m.layout.row(2).proportion).equals(1/3);
+    });
+
     it("appends missing cells", () => {
       const [m1, m2, m3] = m.submorphs;
       m.layout = new GridLayout({
@@ -352,25 +414,49 @@ describe("layout", () => {
       m.layout.col(1).fixed = true;
       m.layout.apply();
       expect(m2.position).equals(pt(0, 50));
-      expect(m3.position).equals(pt(150, 200));
+      expect(m3.position.roundTo(.1)).equals(pt(150, 200));
       expect(m1.position).equals(pt(100,0));
       m.resizeBy(pt(100,100));
       m.layout.col(1).fixed = false;
       expect(m.layout.col(1).width).equals(50);
     });
 
+    it("is numerically stable", () => {
+      const [m1, m2, m3] = m.submorphs;
+      m.layout = new GridLayout({
+                          grid:
+                          [[null, "m1", null],
+                           ["m2", null, null],
+                           [null, null,"m3"]]});
+      expect(m.layout.col(0).proportion).equals(1/3);
+      m.extent = pt(0, 0);
+      expect(m.layout.col(0).proportion).equals(1/3, 'preserve proportion');
+      expect(m.extent).equals(pt(0,0));
+      expect(m1.position).equals(pt(0, 0));
+      expect(m2.position).equals(pt(0, 0));
+      expect(m3.position).equals(pt(0, 0), "m3 position");
+      m.extent = pt(300, 300);
+      expect(m.layout.col(0).proportion).equals(1/3, 'preserve proportion');
+      expect(m.layout.col(0).width).equals(100, 'proportion defines length');
+      expect(m.extent).equals(pt(300,300));
+      expect(m1.position).equals(pt(100, 0));
+      expect(m2.position).equals(pt(0, 100));
+      expect(m3.position).equals(pt(200, 200));
+    });
+
     it("can set minimum spacing for columns and rows", () => {
       const [m1, m2, m3] = m.submorphs;
       m.layout = new GridLayout({
                           grid:
-                               /* 50px */
+                         /* 50px */
                           [[null, "m1", null], /* 50 px*/
                            ["m2", null, null],
                            [null, null,"m3"]]});
       m.layout.col(0).min = 50;
       m.layout.row(0).min = 50;
       m.extent = pt(25, 25); // too small!
-      expect(m.extent).equals(pt(50,50));
+      expect(m.extent).equals(pt(50,50), 'framed extent');
+      expect(m.layout.col(0).proportion).equals(1/3);
       expect(m1.position).equals(pt(50, 0));
       expect(m2.position).equals(pt(0, 50));
       expect(m3.position).equals(pt(50, 50), "m3 position");
@@ -414,10 +500,10 @@ describe("layout", () => {
     
     it("can vary proportion of the last column", () => {
       m.layout.col(2).width += 100;
+      expect(m.width).equals(300 + 100);
       expect(m.layout.col(0).width).equals(100);
       expect(m.layout.col(1).width).equals(100);
       expect(m.layout.col(2).width).equals(200);
-      expect(m.width).equals(300 + 100);
     })
     
     it("widens container when varying fixed width column", () => {
@@ -469,7 +555,7 @@ describe("layout", () => {
       m.layout.col(3).width -= 50; // 0
       m.layout.apply();
       expect(m.layout.col(3).width).equals(0);
-      expect(m.layout.col(0).width).equals(200);
+      expect(m.layout.col(0).width).equals(150);
       expect(m2.width).equals(150);
       expect(m3.width).equals(0);
       m.layout.col(3).width -= 50;
@@ -477,11 +563,9 @@ describe("layout", () => {
       expect(m3.width).equals(0, 'prevent negative widths');
       expect(m2.width).closeTo(150, 0.0001);
       expect(m.layout.col(3).width).equals(0);
-      expect(m.layout.col(0).width).closeTo(200, 0.0001);
+      expect(m.layout.col(0).width).equals(150);
+      m.layout.col(3).fixed = m.layout.col(2).fixed = m.layout.col(1).fixed = 100;
       m.width = 400;
-      m.layout.col(3).fixed = m.layout.col(2).fixed = m.layout.col(1).fixed = true;
-      m.layout.col(3).width = m.layout.col(2).width = m.layout.col(1).width = 100;
-      m.layout.apply();
       expect(m.layout.col(0).dynamicLength).equals(100);
       m.layout.col(0).width += 300;
       m.layout.apply();
@@ -499,10 +583,18 @@ describe("layout", () => {
           //  [X, "m2", null, null],
           //  [X, null, null, "m3"]]
       const [m1, m2, m3] = m.submorphs;
-      m.layout.row(0).fixed = (300 / 4);
+      m.layout.row(0).fixed = 75;
+      m.height = 300;
       m.layout.row(0).addAfter();
+      debugger;
       m.layout.col(0).addBefore();
       m.layout.apply();
+      expect(m.layout.row(0).height).equals(300/4, 'row 0')
+      expect(m.layout.row(1).proportion).closeTo(1/3, .0001, 'row 1')
+      expect(m.layout.row(1).dynamicLength).closeTo(225, .0001, 'row 1 dyn length')
+      expect(m.layout.row(1).length).closeTo(225/3, .0001, 'row 1 length')
+      expect(m.layout.row(2).proportion).closeTo(1/3, .0001, 'row 2')
+      expect(m.layout.row(3).proportion).closeTo(1/3, .0001, 'row 3')
       expect(m.layout.columnCount).equals(4);
       expect(m.layout.col(3)).to.not.be.null;
       expect(m.layout.rowCount).equals(4);
