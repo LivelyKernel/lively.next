@@ -1,6 +1,6 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
 import { expect } from "mocha-es6";
-import TextTree from "../../text/document-tree.js";
+import TextTree from "../../text2/document-tree.js";
 import { arr } from "lively.lang";
 
 var opts = {maxLeafSize: 3, minLeafSize: 2, maxNodeSize: 5, minNodeSize: 2};
