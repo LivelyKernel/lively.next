@@ -506,7 +506,7 @@ class LayoutAxis {
 
   get fixed() { return this.origin.fixed[this.dimension] }
   set fixed(active) {
-    var newLength;
+    var newLength, containerLength;
     if (isNumber(active)) {
       newLength = active;
       active = true;
@@ -514,9 +514,10 @@ class LayoutAxis {
     this.items.forEach(c => {
       c.fixed[this.dimension] = active;
     });
+    containerLength = this.containerLength;
     if (newLength) this[this.dimension] = newLength;
-    if (this.containerLength < this.staticLength) this.containerLength = this.staticLength;
     this.adjustOtherProportions(active)
+    this.containerLength = containerLength; // force length
   }
 
   get length() { return this.origin[this.dimension]; }
@@ -564,11 +565,6 @@ class LayoutAxis {
     if (!this.fixed) this.proportion = this.dynamicLength > 0 ? this.length / this.dynamicLength : 0;
   }
 
-  // 1/3 1/3 1/3 
-  // 1/2  (1/3) 1/2
-  // 1   (1/3) (1/2)
-  // 1/2  1/2
-
   adjustOtherProportions(remove) {
     debugger;
     const before = this.axisBefore, after = this.axisAfter,
@@ -590,7 +586,6 @@ class LayoutAxis {
        this.frozen = true;
        this.fixed = true;
        this.length = this.min;
-       this.containerLength = newLength; // force length
     }
     return this;
   }

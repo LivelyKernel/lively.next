@@ -301,7 +301,7 @@ describe("layout", () => {
     it("expands container when fixed size exceeds initial extent", () => {
       const [m1, m2, m3] = m.submorphs;
       m.layout.col(0).fixed = 500;
-      expect(m.extent).equals(pt(700,300));
+      expect(m.extent).equals(pt(500,300));
     });
 
     it("adjusts dynamic proportions when one axis adjusts width or height", () => {
