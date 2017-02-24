@@ -8,6 +8,8 @@ var jwt = System._nodeRequire(jwtpath);
 //replace with uuid, visible only to server
 var key = "mysecret"
 
+// var adminpassword = 'adminpassword'
+
 export async function authenticate(username,email,password){
   
   var users = await userdb.getfromDB(username,email)
@@ -25,10 +27,38 @@ export async function authenticate(username,email,password){
   }
 }
 
-export async function addUser(username,email,password){
+export async function removeUser(username,email,adminpassword){  
+  var users = await userdb.getfromDB('admin','admin@lively-next.org')
+  
+  //check 0-th record, as both username and email are PKs  
+  var admin = users[0]  
+  if(!admin){
+    return {status: 'error', body: {data: 'No admin'}}
+  }
+  var adminhash = admin.hash
+  if (!bcrypt.compareSync(adminpassword,adminhash)){
+    return {status: 'error', body: {data: 'Unable to add user, admin not authenticated'}}
+  }
+
+  return await userdb.remove({username,email})
+  
+}
+
+export async function addUser(username,email,password,adminpassword){  
+  var users = await userdb.getfromDB('admin','admin@lively-next.org')
+  
+  //check 0-th record, as both username and email are PKs  
+  var admin = users[0]  
+  if(!admin){
+    return {status: 'error', body: {data: 'No admin'}}
+  }
+  var adminhash = admin.hash
+  if (!bcrypt.compareSync(adminpassword,adminhash)){
+    return {status: 'error', body: {data: 'Unable to add user, admin not authenticated'}}
+  }
   var salt = bcrypt.genSaltSync(10);
   var hash = bcrypt.hashSync(password, salt);
-  userdb.push({username,email,hash})
+  return await userdb.push({username,email,hash})
 }
 
 //Export temporarily while testing function. Export to be removed.

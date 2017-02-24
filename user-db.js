@@ -3,29 +3,28 @@ var sqlite3 = System._nodeRequire(sqlite3Path).verbose();
 var dbPath = System.decanonicalize("lively.user/userdb.db").replace(/^file:\/\//, "");
 
 export async function remove(user){
-  var adminhash = '123'
-  if (adminhash){
-  //here we will validate that this is an approved action by comparing hash to admin hash
-  //for now, it's just always true'
-  var approved = true;
+  var {username, email} = user  
+  
+  var db = new sqlite3.Database(dbPath);
+  try {
+    var response = await new Promise((resolve, reject) => {        
+        var stmnt = "DELETE FROM users WHERE username='" + username + "' and email='" + email + "'"        
+        db.run(stmnt, (err) => {
+          if (err) {            
+              reject(err)
+          }
+          else resolve('User: ' + username + ' removed from ' + dbPath)
+        });
+    }).catch(err => {      
+      return (err)
+    })
+  } finally {  
+    db.close();    
   }
-  if (!approved){
-    console.log('Error: Unaauthorized attempt to remove user')
-    return
-  }
-
+  console.log(response)
+  return response
 }
-export async function push(user,adminhash){
-  var adminhash = '123'
-  if (adminhash){
-  //here we will validate that this is an approved action by comparing hash to admin hash
-  //for now, it's just always true'
-  var approved = true;
-  }
-  if (!approved){
-    console.log('Error: Unaauthorized attempt to add user')
-    return
-  }
+export async function push(user){  
   var {username, email, hash} = user  
   
   var db = new sqlite3.Database(dbPath);
