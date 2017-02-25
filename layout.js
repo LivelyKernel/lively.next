@@ -364,11 +364,6 @@ export class CellGroup {
   set morph(value) {
     const conflictingGroup = value && this.layout.getCellGroupFor(value);
     if (conflictingGroup) conflictingGroup.morph = null;
-    if (value) {
-       this.layout.morphToGroup[value.id || value] = this;
-    } else {
-       if (this.morph && this.layout.morphToGroup[this.morph.id] == this) delete this.layout.morphToGroup[this.morph.id];
-    }
     this.state.morph = value;
     this.layout.apply();
   }
@@ -391,7 +386,6 @@ export class CellGroup {
         target[this.align] = bounds[this.align]().addPt(offset);
       }
     }
-
   }
 
   get cells() { return this.state.cells; }
@@ -644,8 +638,8 @@ export class LayoutColumn extends LayoutAxis {
 
   get dimension() { return 'width' }
 
-  get before() { return this.origin.left && new LayoutColumn(this.origin.left); }
-  get after() { return this.origin.right && new LayoutColumn(this.origin.right); }
+  get before() { return this._before || (this._before = this.origin.left && new LayoutColumn(this.origin.left)) }
+  get after() { return this._after || (this._after = this.origin.right && new LayoutColumn(this.origin.right)) }
 
   row(idx) { return this.items[idx]; }
 
@@ -694,6 +688,8 @@ export class LayoutColumn extends LayoutAxis {
   }
 
   attachTo(col) {
+    this.after && (this.after._before = null);
+    this._after = null;
     arr.zip(this.items, col.items)
        .forEach(([a, b]) => {
          a.right = b;
@@ -711,6 +707,8 @@ export class LayoutColumn extends LayoutAxis {
       c.group.disconnect(c);
       this.layout.removeGroup(c.group);
     });
+    this.before && (this.before._after = null);
+    this.after && (this.after._before = null);
     if (!this.before) {
       this.layout.grid = this.after.getRoot();
     }
@@ -758,13 +756,15 @@ export class LayoutRow extends LayoutAxis {
     this.layout.apply();
   }
 
-  get before() { return this.origin.top && new LayoutRow(this.origin.top) }
-  get after() { return this.origin.bottom && new LayoutRow(this.origin.bottom) }
+  get before() { return this._before || (this._before = this.origin.top && new LayoutRow(this.origin.top)) }
+  get after() { return this._after || (this._after = this.origin.bottom && new LayoutRow(this.origin.bottom)) }
 
   get dynamicLength() { return this.origin.dynamicHeight }
   get staticLength() { return this.origin.totalStaticHeight }
 
   attachTo(row) {
+    this.after && (this.after._before = null);
+    this._after = null;
     arr.zip(this.items, row.items)
        .forEach(([a, b]) => {
           a.bottom = b;
@@ -797,6 +797,8 @@ export class LayoutRow extends LayoutAxis {
       c.group.disconnect(c);
       this.layout.removeGroup(c.group);
     });
+    this.before && (this.before._after = null);
+    this.after && (this.after._before = null);
     if (!this.before) {
       this.layout.grid = this.after.getRoot();
     }
@@ -949,7 +951,6 @@ export class GridLayout extends Layout {
     super(config);
     config = {autoAssign: true, fitToCell: true, ...config};
     this.cellGroups = [];
-    this.morphToGroup = {};
     this.config = config;
   }
 
@@ -1026,15 +1027,14 @@ export class GridLayout extends Layout {
     this.container.extent = pt(Math.max(this.grid.totalStaticWidth, this.container.width),
                                Math.max(this.grid.totalStaticHeight, this.container.height));
     this.fitAxis();
-    this.layoutableSubmorphs.forEach(m => {
-      const g = this.getCellGroupFor(m);
+    this.cellGroups.forEach(g => {
       g && g.apply(animate);
     });
     this.active = false;
   }
 
   getCellGroupFor(morph) {
-    return morph && (this.morphToGroup[morph.id] || this.morphToGroup[morph.name]);
+    return morph && this.cellGroups.find(g => g.morph == morph);
   }
 
   onSubmorphRemoved(removedMorph) {
