@@ -108,7 +108,9 @@ export class ObjectEditor extends Morph {
 
   constructor(props = {}) {
     super({
-      extent: pt(800, 500),
+      extent: pt(800, 500), 
+      fill: Color.transparent,
+      reactsToPointer: false,
       name: "object-editor",
       ...obj.dissoc(props, ["target"])
     });
@@ -155,6 +157,7 @@ export class ObjectEditor extends Morph {
 
     this.submorphs = [
       {name: "objectCommands",
+       fill: Color.transparent, reactsToPointer: false,
        layout: new HorizontalLayout({direction: "centered", spacing: 2}),
        submorphs: [
          {...btnStyle, name: "inspectObjectButton", fontSize: 18, label: Icon.makeLabel("gears"), tooltip: "open object inspector"},
@@ -171,21 +174,29 @@ export class ObjectEditor extends Morph {
          {...btnStyle, name: "removeMethodButton", label: Icon.makeLabel("minus"), tooltip: "remove selected method"},
          {...btnStyle, name: "openInBrowserButton", fontSize: 14, label: Icon.makeLabel("external-link"), tooltip: "open selected class in system browser"},
        ]},
-
+       
       {name: "sourceEditor", ...textStyle},
 
       {name: "sourceEditorControls",
        borderLeft: {width: 1, color: Color.gray},
        borderRight: {width: 1, color: Color.gray},
-       layout: new HorizontalLayout({direction: "centered", spacing: 2}), submorphs: [
+       layout: new GridLayout({
+          rows: [0, {paddingTop: 2, paddingBottom: 2}],
+          columns: [
+            1, {paddingRight: 1, fixed: 30}, 
+            2, {paddingLeft: 1, fixed: 30},
+            4, {paddingRight: 2, fixed: 74}
+           ],
+          grid: [[null, 'saveButton', 'runMethodButton', null, 'toggleImportsButton']]}), 
+       submorphs: [
           {...btnStyle, name: "saveButton", fontSize: 18, label: Icon.makeLabel("save"), tooltip: "save"},
           {...btnStyle, name: "runMethodButton", fontSize: 18, label: Icon.makeLabel("play-circle-o"), tooltip: "execute selected method"},
-          {...btnStyle, name: "toggleImportsButton", label: "imports", tooltip: "toggle showing imports", isLayoutable: false}
+          {...btnStyle, name: "toggleImportsButton", label: "imports", tooltip: "toggle showing imports", isLayoutable: false, bottomRight: pt(1000, 50)}
         ]},
 
       new ImportController({name: "importController"})
     ];
-
+    
     var l = this.layout = new GridLayout({
       grid: [
         ["objectCommands", "objectCommands", "objectCommands"],
@@ -216,10 +227,6 @@ export class ObjectEditor extends Morph {
     connect(this.get("saveButton"), "fire", this, "execCommand", {converter: () => "save source"});
     connect(this.get("runMethodButton"), "fire", this, "execCommand", {converter: () => "run selected method"});
 
-
-    connect(this.get("sourceEditorControls"), "extent", this.get("toggleImportsButton"), "rightCenter",
-      {converter: function() { return this.sourceObj.innerBounds().rightCenter().addXY(-3, 0); }});
-
     connect(this.get("toggleImportsButton"), "fire", this, "toggleShowingImports");
     connect(this.get("sourceEditor"), "textChange", this, "updateUnsavedChangeIndicatorDebounced");
 
@@ -232,10 +239,12 @@ export class ObjectEditor extends Morph {
 
   toggleShowingImports(timeout = 300/*ms*/) {
     var expandedWidth = Math.min(300, Math.max(150, this.get("importsList").listItemContainer.width)),
-        newWidth = this.isShowingImports() ? 1 : expandedWidth,
+        newWidth = this.isShowingImports() ? -expandedWidth : expandedWidth,
         column = this.layout.grid.col(2)
-    column.items.forEach(ea => ea.fixed.width = newWidth);
-    this.layout.apply(timeout ? {duration: timeout} : null);
+    this.layout.disable();
+    column.width += newWidth;
+    column.before.width -= newWidth;
+    this.layout.enable(timeout ? {duration: timeout} : null);
     return lively.lang.promise.delay(timeout);
   }
 
@@ -863,7 +872,8 @@ class ImportController extends Morph {
   build() {
 
     var listStyle = {
-          // borderWidth: 1, borderColor: Color.gray,
+          borderWidthTop: 1, borderWidthBottom: 1,
+          borderColor: Color.gray,
           fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif",
           type: "list"
         },
