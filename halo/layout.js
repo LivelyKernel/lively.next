@@ -72,8 +72,8 @@ class AxisHalo extends Morph {
               proportionViewer.visible = true;
             },
             onDrag: (evt) => {
-                this.targetAxis.adjustStretch(this.getDelta(evt));
-                self.halo.alignWithTarget();
+                this.adjustStretch(this.getDelta(evt));
+                this.halo.alignWithTarget();
             },
             onDragEnd() {
                 proportionViewer.visible = false;
@@ -123,7 +123,7 @@ class AxisHalo extends Morph {
               this.active = true;
             },
             onDrag: (evt) => {
-              this.targetAxis.adjustMin(-this.getDelta(evt));
+              this.targetAxis.min += -this.getDelta(evt);
               this.halo.alignWithTarget();
             },
             onDragEnd() {
@@ -288,6 +288,10 @@ class RowHalo extends AxisHalo {
 
   get subject() { return "row" }
 
+  adjustStretch(delta) {
+     this.targetAxis.height += delta;
+  }
+
   getDelta(evt) { return evt.state.dragDelta.y }
 
   axisOffset() { return this.targetAxis.origin.position.y }
@@ -323,6 +327,10 @@ class ColumnHalo extends AxisHalo {
   }
 
   get subject() { return "column" }
+
+  adjustStretch(delta) {
+     this.targetAxis.width += delta;
+  }
 
   getDelta(evt) { return evt.state.dragDelta.x }
 
@@ -369,7 +377,7 @@ export class GridLayoutHalo extends Morph {
 
   previewDrop(morphs) {
      if (morphs.length < 1) return;
-     var cell = this.cellGuides.find(g => g.fullContainsWorldPoint(morphs[0].globalPosition));
+     var cell = this.cellGuides.find(g => g.fullContainsWorldPoint($world.firstHand.position));
      if (cell != this.currentCell) {
        this.currentCell && this.currentCell.stopPreview();
      }
@@ -445,8 +453,7 @@ export class GridLayoutHalo extends Morph {
     const cellContainer = this.addMorph({
        fill: Color.transparent,
        borderRadius: this.borderRadius,
-       extent: this.extent,
-       clipMode: "hidden"
+       extent: this.extent
     })
     this.target.cellGroups.forEach(group => {
       cellContainer.addMorph(this.cellGuide(group));
