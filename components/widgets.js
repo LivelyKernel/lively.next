@@ -184,6 +184,11 @@ export class PropertyInspector extends Morph {
        super({
            ...props,
            morphClasses: ["root"],
+           layout: new GridLayout({
+             columns: [1, {paddingLeft: 5, paddingRight: 5, fixed: 25}],
+             grid:[["value", "up"],
+                   ["value", "down"]]
+           }),
            submorphs: [new ValueScrubber({
                         name: "value",
                         value: target[property] || defaultValue,
@@ -198,7 +203,6 @@ export class PropertyInspector extends Morph {
 
    build() {
        this.styleRules = this.styler;
-       this.initLayout();
        connect(this.get("value"), "scrub", this.target, this.property);
        connect(this.get("up"), "fire", this, "increment");
        connect(this.get("down"), "fire", this, "decrement");
@@ -237,17 +241,6 @@ export class PropertyInspector extends Morph {
       if (this.min != undefined && this.target[this.property] <= this.min) return;
       this.target[this.property] = (this.target[this.property] || this.defaultValue) - 1;
       this.update()
-   }
-
-   initLayout() {
-      const l = this.layout = new GridLayout({
-                      grid:[["value", "up"],
-                            ["value", "down"]]
-                    });
-      l.col(1).paddingLeft = 5;
-      l.col(1).paddingRight = 5;
-      l.col(1).fixed = 25;
-      return l;
    }
 
 }

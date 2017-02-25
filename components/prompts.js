@@ -126,14 +126,17 @@ export class InformPrompt extends AbstractPrompt {
      this.width = label.width + 10;
      this.height = label.height + 30;
      const l = this.layout = new GridLayout({
+        columns: [
+          0, {paddingLeft: 5},
+          1, {fixed: 100},
+          2, {paddingRight: 5}
+        ],
+        rows: [
+          1, {paddingBottom: 5, fixed: 30},
+        ],
         grid: [["label", "label", "label"],
                [null, "ok button", null]]
      });
-     l.col(2).paddingRight = 5;
-     l.col(1).fixed = 100;
-     l.col(0).paddingLeft = 5;
-     l.row(1).paddingBottom = 5;
-     l.row(1).fixed = 30
   }
 
   onKeyDown(evt) {
@@ -177,17 +180,18 @@ export class ConfirmPrompt extends AbstractPrompt {
      this.width = label.width + 10;
      this.height = label.height + 30;
      const l = this.layout = new GridLayout({
-        grid: [["label", "label", "label", "label"],
-               [null, "ok button", "cancel button", null]]
+       columns: [
+         0, {paddingLeft: 5},
+         1, {paddingRight: 2.5, fixed: 60},
+         2, {paddingLeft: 2.5, fixed: 60},
+         3, {paddingRIght: 5}
+       ], 
+       rows: [
+         1, {paddingBottom: 5, fixed: 30}
+       ],
+       grid: [["label", "label", "label", "label"],
+              [null, "ok button", "cancel button", null]]
      });
-     l.col(0).paddingLeft = 5;
-     l.col(1).paddingRight = 2.5;
-     l.col(1).fixed = 60;
-     l.col(2).fixed = 60;
-     l.col(2).paddingLeft = 2.5;
-     l.col(3).paddingRight = 5;
-     l.row(1).paddingBottom = 5;
-     l.row(1).fixed = 30;
   }
 }
 
@@ -305,18 +309,21 @@ export class TextPrompt extends AbstractPrompt {
     this.width = Math.min(this.maxWidth, goalWidth + 10);
 
     const l = this.layout = new GridLayout({
+      columns: [
+        0, {paddingLeft: 2.5},
+        1, {fixed: 100},
+        2, {paddingRight: 2.5, fixed: 100}
+      ],
+      rows: [
+        2, {paddingTop: 2.5},
+        2, {paddingBottom: 2.5}
+      ],
       grid: [
         ["label", "label", "label"],
         ["input", "input", "input"],
         [null, "ok button", "cancel button"]
       ]
     });
-    l.col(0).paddingLeft = 2.5;
-    l.col(2).paddingRight = 2.5;
-    l.col(2).fixed = 100;
-    l.col(1).fixed = 100;
-    l.row(2).paddingTop = 2.5;
-    l.row(2).paddingBottom = 2.5;
   }
 
   focus() { this.get("input").focus(); }
@@ -342,26 +349,23 @@ export class PasswordPrompt extends AbstractPrompt {
     connect(this.get("ok button"), 'fire', this, 'resolve');
     connect(this.get("cancel button"), 'fire', this, 'reject');
 
-    this.initLayout();
+    this.layout = new GridLayout({
+       rows: [
+         1, {paddingBottom: 5},
+         2, {paddingBottom: 5}
+       ],
+       columns: [
+         0, {paddingLeft: 5, paddingRight: 2.5},
+         1, {fixed: 100},
+         2, {paddingLeft: 2.5, paddingRight: 5, fixed: 100}
+       ],
+       grid: [["label", "label", "label"],
+              ["input", "input", "input"],
+              [null,    "ok button", "cancel button"]]
+     });
   }
 
   resolve() { super.resolve(this.get("input").acceptInput()); }
-
-  initLayout() {
-     const l = this.layout = new GridLayout({
-        grid: [["label", "label", "label"],
-               ["input", "input", "input"],
-               [null,    "ok button", "cancel button"]]
-     });
-     l.col(2).fixed = 100;
-     l.col(1).fixed = 100;
-     l.col(2).paddingRight = 5;
-     l.col(2).paddingLeft = 2.5;
-     l.col(0).paddingLeft = 5;
-     l.col(0).paddingRight = 2.5;
-     l.row(1).paddingBottom = 5;
-     l.row(2).paddingBottom = 5;
-  }
 
   focus() { this.get("input").focus(); }
 }
@@ -435,25 +439,21 @@ export class ListPrompt extends AbstractPrompt {
     connect(this.get("ok button"), 'fire', this, 'resolve');
     connect(this.get("cancel button"), 'fire', this, 'reject');
 
-    this.initLayout();
-  }
-
-  initLayout() {
-     var l = this.layout = new GridLayout({
-        grid: [["label", "label", "label"],
-               ["list", "list", "list"],
-               [null,"ok button", "cancel button"]]
+    this.layout = new GridLayout({
+       rows: [
+         0, {fixed: 30},
+         1, {paddingBottom: 10},
+         2, {fixed: 30, paddingBottom: 5}
+       ],
+       columns: [
+         0, {paddingLeft: 5},
+         1, {fixed: 100, paddingRight: 5},
+         2, {fixed: 100, paddingRight: 5}
+       ],
+       grid: [["label", "label", "label"],
+              ["list", "list", "list"],
+              [null,"ok button", "cancel button"]]
      });
-
-     l.row(0).fixed = 30;
-     l.row(2).fixed = 30;
-     l.row(2).paddingBottom = 5;
-     l.col(0).paddingLeft = 5;
-     l.col(1).fixed = 100;
-     l.col(1).paddingRight = 5;
-     l.row(1).paddingBottom = 10;
-     l.col(2).fixed = 100;
-     l.col(2).paddingRight = 5;
   }
 
   resolve() {
@@ -492,27 +492,23 @@ export class EditListPrompt extends ListPrompt {
 
     connect(addBtn, 'fire', this, 'addItemToList');
     connect(rmBtn, 'fire', this, 'removeSelectedItemsFromList');
-  }
 
-  initLayout() {
-     var l = this.layout = new GridLayout({
+    this.layout = new GridLayout({
         autoAssign: false,
+        columns: [
+          0, {paddingLeft: 5, paddingRight: 5},
+          3, {paddingRight: 5},
+          4, {paddingRight: 5}
+        ],
+        rows: [
+          0, {fixed: 30, paddingTop: 5, paddingBottom: 5},
+          1, {paddingBottom: 2},
+          2, {fixed: 30, paddingBottom: 5}
+        ],
         grid: [["label", "label", "label", "label", "label"],
                ["list", "list", "list", "list", "list"],
                ["add item button", "remove item button", null, "ok button", "cancel button"]]
      });
-
-     l.row(0).fixed = 30;
-     l.row(1).fixed = false
-     l.row(2).fixed = 30;
-     l.row(0).paddingTop = 5;
-     l.row(0).paddingBottom = 5;
-     l.row(1).paddingBottom = 2;
-     l.row(2).paddingBottom = 5;
-     l.col(0).paddingLeft = 5;
-     l.col(0).paddingRight = 5;
-     l.col(3).paddingRight = 5;
-     l.col(4).paddingRight = 5;
   }
 
   async removeSelectedItemsFromList() {

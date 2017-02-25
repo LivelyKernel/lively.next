@@ -32,6 +32,16 @@ export default class Halo extends Morph {
   initLayout() {
     var layout = this.layout = new GridLayout({
       autoAssign: false,
+      columns: [
+        0, {fixed: 36, paddingRight: 10},
+        2, {fixed: 26}, 4, {fixed: 26},
+        6, {fixed: 36, paddingLeft: 10}
+      ],
+      rows: [
+        0, {fixed: 36, paddingBottom: 10},
+        2, {fixed: 26}, 4, {fixed: 26}, 6, {fixed: 26},
+        7, {fixed: 36, paddingTop: 10}
+      ],
       grid: [
           [null,     null,   "grab", null,  "drag", null,   "close"  ],
           [null,     null,   null,   null,  null,   null,   null     ],
@@ -41,21 +51,6 @@ export default class Halo extends Morph {
           [null,     null,   null,   null,  null,   null,   null     ],
           ["rotate", null,   null,   null,  null,   null,   "resize" ],
           [null,     "name", "name", "name","name", "name", null     ]]});
-
-    layout.col(0).fixed = 36;
-    layout.col(0).paddingRight = 10;
-    layout.col(2).fixed = 26;
-    layout.col(4).fixed = 26;
-    layout.col(6).fixed = 36;
-    layout.col(6).paddingLeft = 10;
-
-    layout.row(0).fixed = 36;
-    layout.row(0).paddingBottom = 10;
-    layout.row(2).fixed = 26;
-    layout.row(4).fixed = 26;
-    layout.row(6).fixed = 26;
-    layout.row(7).fixed = 36;
-    layout.row(7).paddingTop = 10;
 
     layout.col(1).row(7).group.align = "center";
     layout.col(1).row(7).group.resize = false;
