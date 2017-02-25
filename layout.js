@@ -965,6 +965,17 @@ export class GridLayout extends Layout {
     this.grid = rows[0].col(0);
     this.col(0).equalizeDynamicAxis();
     this.row(0).equalizeDynamicAxis();
+    this.initRowsAndColumns();
+  }
+
+  initRowsAndColumns() {
+    const {rows = [], columns = []} = this.config;
+    for (var [idx, props] of arr.toTuples(rows, 2)) {
+      Object.assign(this.row(idx), props);
+    }
+    for (var [idx, props] of arr.toTuples(columns, 2)) {
+      Object.assign(this.col(idx), props);
+    }
   }
 
   get compensateOrigin() { return this.config.compensateOrigin; }
