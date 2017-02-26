@@ -275,7 +275,8 @@ export class TextPrompt extends AbstractPrompt {
       historyId,
       name: "input", textString: input || "",
       borderWidth: 0, borderRadius: 20, fill: Color.rgbHex("#DDD"),
-      fontSize: 14, fontColor: Color.rgbHex("#666"), padding: Rectangle.inset(10,5)
+      fontSize: 14, fontColor: Color.rgbHex("#666"),
+      padding: Rectangle.inset(10,5), fixedHeight: false
     }));
 
     if (historyId && useLastInput) {
