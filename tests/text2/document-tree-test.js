@@ -175,13 +175,13 @@ describe("text tree", () => {
       var opts = {maxLeafSize: 3, minLeafSize: 2, maxNodeSize: 3, minNodeSize: 2},
           textTree = new TextTree([], opts);
       for (var i = 0; i < 10; i++) textTree.insertLine("" + i);
-      expect(textTree.lines().map(ea => ea.text)).equals(arr.range(0, 9))
+      expect(textTree.lines.map(ea => ea.text)).equals(arr.range(0, 9))
 
       textTree.removeLines(1,3);
-      expect(textTree.lines().map(ea => ea.text)).equals(["0", "4", "5", "6", "7", "8", "9"]);
+      expect(textTree.lines.map(ea => ea.text)).equals(["0", "4", "5", "6", "7", "8", "9"]);
       textTree.print();
       textTree.removeLines(1,3);
-      expect(textTree.lines().map(ea => ea.text)).equals(["0", "7", "8", "9"]);
+      expect(textTree.lines.map(ea => ea.text)).equals(["0", "7", "8", "9"]);
       textTree.consistencyCheck();
     });
 

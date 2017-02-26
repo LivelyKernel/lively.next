@@ -532,12 +532,14 @@ export default class TextTree {
 
   constructor(lines, options) {
     this.options = {...defaultOptions, ...options};
-    this.root = new InnerTreeNode(null, [], 0, this.options);
-    if (lines)
-      this.insertLines(lines);
+    this.lines = lines;
   }
 
-  lines() { return this.root.lines(); }
+  get lines() { return this.root.lines(); }
+  set lines(lines = []) {
+    this.root = new InnerTreeNode(null, [], 0, this.options);
+    this.insertLines(lines);
+  }
 
   insertLine(text, atIndex = this.root.size) {
     return this.insertLines([text], atIndex)[0];
