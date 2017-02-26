@@ -1,4 +1,4 @@
-import { Color, pt } from "lively.graphics";
+import { Color, Rectangle, pt } from "lively.graphics";
 import { morph, FilterableList } from "lively.morphic";
 import { connect } from "lively.bindings";
 import { arr, string } from "lively.lang";
@@ -133,8 +133,10 @@ export class CompletionController {
       extent: bounds.extent(),
       items, input: prefix,
       name: "text completion menu",
-      borderColor: Color.gray, borderWidth: 1,
       historyId: "lively.morphic-text completion",
+      fill: Color.white,
+      border: {width: 1, color: Color.gray},
+      inputPadding: Rectangle.inset(2,1),
 
       filterFunction: (parsedInput, item) => {
         var tokens = parsedInput.lowercasedTokens;

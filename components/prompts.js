@@ -419,8 +419,9 @@ export class ListPrompt extends AbstractPrompt {
       historyId, useLastInput,
       borderWidth: 0, borderColor: Color.gray,
       fontSize: listFontSize, fontFamily: listFontFamily,
-      padding, itemPadding, theme: "dark"
+      padding, itemPadding, inputPadding: Rectangle.inset(10,2), theme: "dark"
     }
+
     if (filterable && fuzzy) listProps.fuzzy = fuzzy;
     if (filterable && typeof filterFunction === "function")
       listProps.filterFunction = filterFunction;

@@ -62,6 +62,10 @@ export class CodeSearcher extends FilterableList {
       extent:     {defaultValue: pt(800,500)},
       fontFamily: {defaultValue: "Inconsolata, monospace"},
       fontSize:   {defaultValue: 14},
+      inputPadding: {defaultValue: Rectangle.inset(4,3)},
+      itemPadding: {defaultValue: Rectangle.inset(4,2)},
+      borderWidth: {defaultValue: 0},
+
       historyId:  {defaultValue: "lively.morphic-code searcher"},
 
       submorphs: {
@@ -69,8 +73,9 @@ export class CodeSearcher extends FilterableList {
           this.submorphs = [
             Text.makeInputLine({
               name: "input",
-              padding: Rectangle.inset(10, 10),
-              borderBottom: {width: 1, color: Color.gray}
+              borderBottom: {width: 1, color: Color.gray},
+              fixedHeight: false,
+              autofit: true,
             }),
             new List({
               name: "list",

@@ -613,9 +613,8 @@ export class FilterableList extends Morph {
     return {
 
       fill: {defaultValue: Color.transparent,},
-      borderColor: {defaultValue: Color.gray},
-      borderWidth: {borderWidth: 1},
-
+      borderWidth: {defaultValue: 1},
+      borderColor: {defaultValue: 1},
       updateSelectionsAfterFilter: {defaultValue: false},
 
       submorphs: {
@@ -661,7 +660,8 @@ export class FilterableList extends Morph {
       },
 
       padding: {
-        derived: true, after: ["submorphs"], defaultValue: Rectangle.inset(2,0),
+        derived: true, after: ["submorphs"],
+        defaultValue: Rectangle.inset(2,0),
         get() { return this.listMorph.padding; },
         set(val) {
           this.listMorph.padding = val;
@@ -686,6 +686,13 @@ export class FilterableList extends Morph {
         set(val) { this.listMorph.itemPadding = val; }
       },
 
+      inputPadding: {
+        derived: true, after: ["submorphs", "padding"],
+        defaultValue: Rectangle.inset(2),
+        get() { return this.inputMorph.padding; },
+        set(val) { this.inputMorph.padding = val; }
+      },
+
       input: {
         derived: true, after: ["submorphs"], defaultValue: "",
         get() { return this.inputMorph.input; },
@@ -705,7 +712,8 @@ export class FilterableList extends Morph {
       },
 
       items: {
-        after: ["submorphs"], defaultValue: [],
+        after: ["submorphs", "fuzzy", "fuzzySortFunction", "fuzzyFilterFunction"],
+        defaultValue: [],
         set(items) {
           this.setProperty("items", items.map(asItem));
           this.updateFilter();
@@ -805,18 +813,21 @@ export class FilterableList extends Morph {
   constructor(props = {}) {
     if (!props.bounds && !props.extent) props.extent = pt(400, 360);
     super(props);
-
     connect(this.get("input"), "inputChanged", this, "updateFilter");
     connect(this.listMorph, "selection", this, "selectionChanged");
     connect(this, "extent", this, "relayout");
+    this.updateFilter();
     this.relayout();
     setTimeout(() => this.relayout());
   }
 
   relayout() {
-    var { inputMorph, listMorph } = this;
-    listMorph.width = inputMorph.width = this.width;
-    listMorph.setBounds(this.innerBounds().withTopLeft(inputMorph.bottomLeft.addXY(0, 5)));
+    var { inputMorph, listMorph, borderWidth: offset } = this,
+        inputH = inputMorph.height,
+        w = this.width - offset*2;
+    inputMorph.topLeft = pt(offset, offset);
+    listMorph.setBounds(new Rectangle(offset, inputH, w, this.height-inputH-offset));
+    listMorph.width = inputMorph.width = w;
   }
 
   get isList() { return true; }
@@ -835,9 +846,8 @@ export class FilterableList extends Morph {
     } else {
       return new StyleRules({
         input: {
-          borderWidth: 1,
-          borderColor: Color.gray,
-          // padding: Rectangle.inset(2)
+          borderWidth: 0,
+          borderColor: Color.gray
         }
       })
     }
