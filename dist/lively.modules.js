@@ -23597,12 +23597,12 @@ function prepareClassForManagedPropertiesAfterCreation(klass) {
 function prepareClassForProperties(klass, propertySettings, properties) {
   ensurePropertyInitializer(klass);
 
-  var _defaultPropertySetti = _extends({}, defaultPropertySettings, propertySettings),
-      valueStoreProperty = _defaultPropertySetti.valueStoreProperty,
-      defaultGetter = _defaultPropertySetti.defaultGetter,
-      defaultSetter = _defaultPropertySetti.defaultSetter,
+  var valueStoreProperty = propertySettings.valueStoreProperty,
+      defaultGetter = propertySettings.defaultGetter,
+      defaultSetter = propertySettings.defaultSetter,
       myProto = klass.prototype,
       keys = Object.keys(properties);
+
 
   keys.forEach(function (key) {
     var descriptor = properties[key];
@@ -23665,7 +23665,7 @@ function ensurePropertyInitializer(klass) {
 
 function propertiesAndSettingsInHierarchyOf(klass) {
   // walks class proto chain
-  var propertySettings = {},
+  var propertySettings = _extends({}, defaultPropertySettings),
       properties = {},
       allPropSettings = lively_lang.obj.valuesInPropertyHierarchy(klass, "propertySettings"),
       allProps = lively_lang.obj.valuesInPropertyHierarchy(klass, "properties");
@@ -23691,15 +23691,12 @@ function propertiesAndSettingsInHierarchyOf(klass) {
 }
 
 function prepareInstanceForProperties(instance, propertySettings, properties, values) {
-  var _defaultPropertySetti2 = _extends({}, defaultPropertySettings, propertySettings),
-      valueStoreProperty = _defaultPropertySetti2.valueStoreProperty,
+  var valueStoreProperty = propertySettings.valueStoreProperty,
       sortedKeys = lively_lang.obj.sortKeysWithBeforeAndAfterConstraints(properties),
       propsNeedingInitialize = [],
       initActions = {};
 
   // 1. this[valueStoreProperty] is were the actual values will be stored
-
-
   if (!instance.hasOwnProperty(valueStoreProperty)) instance[valueStoreProperty] = {};
 
   for (var i = 0; i < sortedKeys.length; i++) {
