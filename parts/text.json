@@ -1,26 +1,16 @@
 {
-  "id": "Text_B54DAF97_6A86_45D1_A08D_E4590BF5399B",
+  "id": "A_text_1_8D52AE66_57E4_49BD_A266_F5A78BB2A077",
   "snapshot": {
-    "Text_B54DAF97_6A86_45D1_A08D_E4590BF5399B": {
-      "rev": 327383,
+    "A_text_1_8D52AE66_57E4_49BD_A266_F5A78BB2A077": {
+      "rev": 181695,
       "props": {
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "FB97F36A-84D2-4E97-9CB6-649F0EFBCB6B",
-              "rev": 0
-            }
-          ]
+        "draggable": {
+          "key": "draggable",
+          "value": false
         },
         "extent": {
           "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(137.0,41.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(181.0,51.0)"
         },
         "name": {
           "key": "name",
@@ -32,7 +22,11 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(195.4,732.5)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(285.7,407.0)"
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -95,6 +89,30 @@
           "key": "borderWidthTop",
           "value": 1
         },
+        "useSoftTabs": {
+          "key": "useSoftTabs",
+          "value": true
+        },
+        "tabWidth": {
+          "key": "tabWidth",
+          "value": 2
+        },
+        "fixedWidth": {
+          "key": "fixedWidth",
+          "value": false
+        },
+        "fixedHeight": {
+          "key": "fixedHeight",
+          "value": false
+        },
+        "readOnly": {
+          "key": "readOnly",
+          "value": false
+        },
+        "selectable": {
+          "key": "selectable",
+          "value": true
+        },
         "padding": {
           "key": "padding",
           "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,8,0,0)"
@@ -103,7 +121,7 @@
           "key": "selection",
           "value": {
             "__ref__": true,
-            "id": "85DC4AB3-42B4-4534-9244-0435304DFE79",
+            "id": "D14701A4-71D8-4E9B-97C2-EB772F52BF89",
             "rev": 0
           }
         },
@@ -111,7 +129,7 @@
           "key": "defaultTextStyle",
           "value": {
             "__ref__": true,
-            "id": "0CB73E08-4E38-41E2-BFBA-997D0CD75223",
+            "id": "CA1418A2-9350-4C5F-8464-1DD740DE48D7",
             "rev": 0
           }
         },
@@ -120,12 +138,12 @@
           "value": [
             {
               "__ref__": true,
-              "id": "F70A6C53-2EF9-4B91-A044-30FB306A1157",
+              "id": "selection-start-389447EB-CC27-413B-B57F-A9193A86C05D",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "8A1D8437-A623-4511-9FA0-8736B2C96ED0",
+              "id": "selection-end-389447EB-CC27-413B-B57F-A9193A86C05D",
               "rev": 0
             }
           ]
@@ -138,32 +156,27 @@
           "key": "plugins",
           "value": []
         },
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "9AA659CD-099C-4A08-AB4F-9C68B584A2A2",
+              "rev": 0
+            }
+          ]
+        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "verbatim": true,
           "value": [
             [
               "Lively rocks!",
-              [
-                {
-                  "fontFamily": "Sans-Serif",
-                  "fontSize": 12,
-                  "fontColor": {
-                    "r": 0,
-                    "g": 0,
-                    "b": 0,
-                    "a": 1
-                  },
-                  "fontWeight": "normal",
-                  "fontStyle": "normal",
-                  "textDecoration": "none",
-                  "fixedCharacterSpacing": false,
-                  "_rev": 0
-                },
-                {
-                  "fontSize": 22
-                }
-              ]
+              []
             ],
             [
               "",
@@ -177,105 +190,13 @@
         "module": {
           "package": {
             "name": "E8C6C421-4AC5-4D5B-8468-89C51C7CD4D0",
-            "version": "0.1.0"
+            "version": null
           },
           "pathInPackage": "index.js"
         }
       }
     },
-    "FB97F36A-84D2-4E97-9CB6-649F0EFBCB6B": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Text_B54DAF97_6A86_45D1_A08D_E4590BF5399B",
-            "rev": 327383
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "selectionChange"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Text_B54DAF97_6A86_45D1_A08D_E4590BF5399B",
-            "rev": 327383
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "openRichTextControl"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "8986D646-6268-4AAF-A5D7-59C740480CD7",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "8986D646-6268-4AAF-A5D7-59C740480CD7": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Text_B54DAF97_6A86_45D1_A08D_E4590BF5399B",
-            "rev": 327383
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Text_B54DAF97_6A86_45D1_A08D_E4590BF5399B",
-            "rev": 327383
-          }
-        }
-      }
-    },
-    "85DC4AB3-42B4-4534-9244-0435304DFE79": {
+    "D14701A4-71D8-4E9B-97C2-EB772F52BF89": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -286,8 +207,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_B54DAF97_6A86_45D1_A08D_E4590BF5399B",
-            "rev": 327383
+            "id": "A_text_1_8D52AE66_57E4_49BD_A266_F5A78BB2A077",
+            "rev": 181695
           }
         },
         "selections": {
@@ -295,7 +216,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "061BBAD1-9B14-4B96-BD79-C3EB84C8EA94",
+              "id": "C1D2F577-0A69-477A-9765-6DFCC057F630",
               "rev": 0
             }
           ]
@@ -320,24 +241,20 @@
         }
       }
     },
-    "061BBAD1-9B14-4B96-BD79-C3EB84C8EA94": {
+    "C1D2F577-0A69-477A-9765-6DFCC057F630": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "textMorph": {
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_B54DAF97_6A86_45D1_A08D_E4590BF5399B",
-            "rev": 327383
+            "id": "A_text_1_8D52AE66_57E4_49BD_A266_F5A78BB2A077",
+            "rev": 181695
           }
         },
         "_goalColumn": {
           "key": "_goalColumn",
-          "value": 13
+          "value": 8
         },
         "_isReverse": {
           "key": "_isReverse",
@@ -347,7 +264,7 @@
           "key": "startAnchor",
           "value": {
             "__ref__": true,
-            "id": "F70A6C53-2EF9-4B91-A044-30FB306A1157",
+            "id": "selection-start-389447EB-CC27-413B-B57F-A9193A86C05D",
             "rev": 0
           }
         },
@@ -355,7 +272,7 @@
           "key": "endAnchor",
           "value": {
             "__ref__": true,
-            "id": "8A1D8437-A623-4511-9FA0-8736B2C96ED0",
+            "id": "selection-end-389447EB-CC27-413B-B57F-A9193A86C05D",
             "rev": 0
           }
         },
@@ -363,7 +280,7 @@
           "key": "_range",
           "value": {
             "__ref__": true,
-            "id": "F6CF11A3-6FFA-4F82-BEB3-97ABE5D2F7A5",
+            "id": "2D1BF99A-4B8D-443D-B6B2-2749CF548DAB",
             "rev": 0
           }
         },
@@ -387,22 +304,18 @@
         }
       }
     },
-    "F70A6C53-2EF9-4B91-A044-30FB306A1157": {
+    "selection-start-389447EB-CC27-413B-B57F-A9193A86C05D": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "id": {
           "key": "id",
-          "value": null
+          "value": "selection-start-389447EB-CC27-413B-B57F-A9193A86C05D"
         },
         "position": {
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "5E3061AB-9FAF-448D-9562-25ADF0ECFD0C",
+            "id": "9CB23E97-5F38-42FA-91BF-00FABD9077CB",
             "rev": 0
           }
         },
@@ -422,7 +335,7 @@
         }
       }
     },
-    "5E3061AB-9FAF-448D-9562-25ADF0ECFD0C": {
+    "9CB23E97-5F38-42FA-91BF-00FABD9077CB": {
       "rev": 0,
       "props": {
         "row": {
@@ -431,26 +344,22 @@
         },
         "column": {
           "key": "column",
-          "value": 13
+          "value": 8
         }
       }
     },
-    "8A1D8437-A623-4511-9FA0-8736B2C96ED0": {
+    "selection-end-389447EB-CC27-413B-B57F-A9193A86C05D": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "id": {
           "key": "id",
-          "value": null
+          "value": "selection-end-389447EB-CC27-413B-B57F-A9193A86C05D"
         },
         "position": {
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "BD01E220-96D9-4EEA-9159-1213210A170A",
+            "id": "8AEA1185-1B57-45B3-A649-39354883B6ED",
             "rev": 0
           }
         },
@@ -470,7 +379,7 @@
         }
       }
     },
-    "BD01E220-96D9-4EEA-9159-1213210A170A": {
+    "8AEA1185-1B57-45B3-A649-39354883B6ED": {
       "rev": 0,
       "props": {
         "row": {
@@ -479,18 +388,18 @@
         },
         "column": {
           "key": "column",
-          "value": 13
+          "value": 8
         }
       }
     },
-    "F6CF11A3-6FFA-4F82-BEB3-97ABE5D2F7A5": {
+    "2D1BF99A-4B8D-443D-B6B2-2749CF548DAB": {
       "rev": 0,
       "props": {
         "start": {
           "key": "start",
           "value": {
             "__ref__": true,
-            "id": "5E3061AB-9FAF-448D-9562-25ADF0ECFD0C",
+            "id": "9CB23E97-5F38-42FA-91BF-00FABD9077CB",
             "rev": 0
           }
         },
@@ -498,7 +407,7 @@
           "key": "end",
           "value": {
             "__ref__": true,
-            "id": "BD01E220-96D9-4EEA-9159-1213210A170A",
+            "id": "8AEA1185-1B57-45B3-A649-39354883B6ED",
             "rev": 0
           }
         }
@@ -514,7 +423,7 @@
         }
       }
     },
-    "0CB73E08-4E38-41E2-BFBA-997D0CD75223": {
+    "CA1418A2-9350-4C5F-8464-1DD740DE48D7": {
       "rev": 0,
       "props": {
         "fontFamily": {
@@ -523,7 +432,7 @@
         },
         "fontSize": {
           "key": "fontSize",
-          "value": 12
+          "value": 30
         },
         "fontColor": {
           "key": "fontColor",
@@ -556,14 +465,103 @@
         },
         "nativeCursor": {
           "key": "nativeCursor"
-        },
+        }
+      }
+    },
+    "9AA659CD-099C-4A08-AB4F-9C68B584A2A2": {
+      "rev": 0,
+      "props": {
         "_rev": {
           "key": "_rev",
           "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "A_text_1_8D52AE66_57E4_49BD_A266_F5A78BB2A077",
+            "rev": 181695
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "selectionChange"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "A_text_1_8D52AE66_57E4_49BD_A266_F5A78BB2A077",
+            "rev": 181695
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "openRichTextControl"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "37F37C90-B9A8-4F03-AD24-59918CDD7945",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "37F37C90-B9A8-4F03-AD24-59918CDD7945": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "A_text_1_8D52AE66_57E4_49BD_A266_F5A78BB2A077",
+            "rev": 181695
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "A_text_1_8D52AE66_57E4_49BD_A266_F5A78BB2A077",
+            "rev": 181695
+          }
         }
       }
     }
   },
+  "requiredVersion": "~0.1",
   "packages": {
     "local://lively-object-modules/": {
       "E8C6C421-4AC5-4D5B-8468-89C51C7CD4D0": {
@@ -572,5 +570,5 @@
       }
     }
   },
-  "preview": "<div   draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate(0px, 35.0416px) rotate(0deg) scale(0.729677, 0.729677); transform-origin: 0px 0px 0px; display: inline; width: 137.047px; height: 41px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute; cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div  style=\" position: absolute; left: 127.047px; top: 8px; width: 3px; height: 25px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 25px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 25px; line-height: 25px;\"><span style=\"font-size: 22px; font-family: sans-serif; font-weight: normal; font-style: normal; text-decoration: none; color: rgb(0, 0, 0);\">Lively rocks!</span></div><div style=\"height: 0px; width: 121.047px;\"></div></div></div>"
+  "preview": "<div   draggable=\"false\" style=\"background: rgb(255, 255, 255); transform: translate(0px, 35.9152px) rotate(0deg) scale(0.552343, 0.552343); transform-origin: 0px 0px 0px; display: inline; width: 181.047px; height: 51px; border-style: solid; border-width: 1px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute; cursor: text;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"></div><div  style=\" position: absolute; left: 101.031px; top: 8px; width: 3px; height: 35px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 35px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 35px; line-height: 35px;\"><span style=\"font-size: 30px; font-family: sans-serif; font-weight: normal; font-style: normal; text-decoration: none; color: rgb(0, 0, 0);\">Lively rocks!</span></div><div style=\"height: 0px; width: 165.047px;\"></div></div></div>"
 }
