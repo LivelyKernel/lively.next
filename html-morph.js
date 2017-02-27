@@ -62,7 +62,7 @@ export class HTMLMorph extends Morph {
       extent: {defaultValue: pt(420, 330)},
 
       html: {
-        initialize() { this.html = this.defaultHTML},
+        initialize() { this.html = this.defaultHTML; },
         get() { return this.domNode.innerHTML; },
         set(value) { this.domNode.innerHTML = value; }
       },
