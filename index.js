@@ -4,6 +4,8 @@ export { ObjectPool } from "./object-pool.js";
 
 import { ObjectPool } from "./object-pool.js";
 
+import { version as serializerVersion } from "./package.json";
+
 function normalizeOptions(options) {
   options = {reinitializeIds: false, ...options}
 
@@ -15,15 +17,20 @@ function normalizeOptions(options) {
 
 export function serialize(obj, options) {
   options = normalizeOptions(options);
-  var objPool = options.objPool || new ObjectPool(options),
-      ref = objPool.add(obj);
-  return {id: ref.id, snapshot: objPool.snapshot()};
+  let objPool = options.objPool || new ObjectPool(options),
+      ref = objPool.add(obj),
+      requiredVersion = "~" + serializerVersion.replace(/\.[^\.]+/, ""); // semver
+  return {id: ref.id, snapshot: objPool.snapshot(), requiredVersion};
 }
 
 export function deserialize(idAndSnapshot, options) {
   options = normalizeOptions(options);
-  var {id, snapshot} = idAndSnapshot,
-      objPool = options.objPool || new ObjectPool(options);
+  let {id, snapshot, requiredVersion} = idAndSnapshot;
+  if (!lively.modules.semver.satisfies(serializerVersion, requiredVersion))
+    console.warn(`[lively.serializer deserialization] snapshot requires version `
+               + `${requiredVersion} but serializer has incompatible version `
+               + `${serializerVersion}. Deserialization might fail...!`);
+  let objPool = options.objPool || new ObjectPool(options);
   objPool.readSnapshot(snapshot);
   return objPool.resolveToObj(id)
 }
