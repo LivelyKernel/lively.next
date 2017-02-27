@@ -1,4 +1,4 @@
-import { arr } from "lively.lang";
+import { arr, string } from "lively.lang";
 
 const classMetaForSerializationProp = "lively.serializer-class-info",
       moduleMetaInClassProp = Symbol.for("lively-module-meta");
@@ -54,16 +54,22 @@ export default class ClassHelper {
 
   locateClass(meta) {
     // meta = {className, module: {package, pathInPackage}}
-    var m = meta.module;
-    if (m && m.package && m.package.name) {
-      var packagePath = System.decanonicalize(m.package.name + "/"),
-          moduleId = lively.lang.string.joinPath(packagePath, m.pathInPackage),
-          realModule = System.get("@lively-env").moduleEnv(moduleId);
+    let m = meta.module;
+    if (m) {
+      let moduleId = m.pathInPackage;
+      if (m.package && m.package.name && m.package.name !== "no group"/*FIXME*/) {
+        let packagePath = System.decanonicalize(m.package.name.replace(/\/*$/, "/"));
+        moduleId = string.joinPath(packagePath, moduleId);
+      }
+
+      let livelyEnv = System.get("@lively-env"),
+          realModule = livelyEnv.moduleEnv(moduleId) || livelyEnv.moduleEnv(m.pathInPackage);
       if (!realModule)
         console.warn(`Trying to deserialize instance of class ${meta.className} but the module ${moduleId} is not yet loaded`);
       else
         return realModule.recorder[meta.className];
     }
+
 
     // is it a global?
     return System.global[meta.className];
@@ -74,7 +80,7 @@ export default class ClassHelper {
   static sourceModulesInObjRef(snapshotedObjRef) {
     //                                  /--- that's the ref
     // from snapshot = {[key]: {..., props: [...]}}
-    var modules = [],
+    let modules = [],
         prop = snapshotedObjRef && snapshotedObjRef[classMetaForSerializationProp];
     if (prop && prop.module) modules.push(prop.module);
     return modules;
