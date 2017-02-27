@@ -19,7 +19,7 @@ export function serialize(obj, options) {
   options = normalizeOptions(options);
   let objPool = options.objPool || new ObjectPool(options),
       ref = objPool.add(obj),
-      requiredVersion = "~" + serializerVersion.replace(/\.[^\.]+/, ""); // semver
+      requiredVersion = "~" + serializerVersion.replace(/\.[^\.]+$/, ""); // semver
   return {id: ref.id, snapshot: objPool.snapshot(), requiredVersion};
 }
 
