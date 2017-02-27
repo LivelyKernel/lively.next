@@ -474,10 +474,13 @@ export class Text extends Morph {
   }
 
   __additionally_serialize__(snapshot, objRef) {
+    var {defaultTextStyleAttribute} = this;
     snapshot.props.textAndAttributes = {
       key: "textAndAttributes",
       verbatim: true,
-      value: this.textAndAttributes.map(([text, attrs]) => [text, attrs.map(ea => ea.data)])
+      value: this.textAndAttributes.map(([text, attrs]) =>
+        [text, arr.without(attrs, defaultTextStyleAttribute)
+          .map(ea => ea.data)])
     };
   }
 
