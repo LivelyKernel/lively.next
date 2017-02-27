@@ -50,7 +50,8 @@ describe("properties", function() {
     var classA; beforeEach(() => classA = class ClassA {});
 
     it("of simple property", () => {
-      prepareClassForProperties(classA, {valueStoreProperty: "_store"}, {test: {}});
+      var {propertySettings} = propertiesAndSettingsInHierarchyOf(classA);
+      prepareClassForProperties(classA, {...propertySettings, valueStoreProperty: "_store"}, {test: {}});
 
       expect().assert(classA.prototype.__lookupGetter__("test"), "no test getter");
       expect().assert(classA.prototype.__lookupSetter__("test"), "no test setter");
@@ -63,14 +64,16 @@ describe("properties", function() {
     });
 
     it("read only", () => {
-      prepareClassForProperties(classA, {}, {test: {readOnly: true}});
+      var {propertySettings} = propertiesAndSettingsInHierarchyOf(classA)
+      prepareClassForProperties(classA, propertySettings, {test: {readOnly: true}});
       expect().assert(classA.prototype.__lookupGetter__("test"), "no test getter");
       expect().assert(!classA.prototype.__lookupSetter__("test"), "has test setter");
     });
 
     it("with custom getter / setter", () => {
       var x = 23;
-      prepareClassForProperties(classA, {}, {test: {get: () => x, set: val => x = val}});
+      var {propertySettings} = propertiesAndSettingsInHierarchyOf(classA)
+      prepareClassForProperties(classA, propertySettings, {test: {get: () => x, set: val => x = val}});
 
       var obj = new classA();
       expect(obj.test).equals(23);
@@ -109,8 +112,9 @@ describe("properties", function() {
           get() { return this.a - 1; }
         }
       }
-      prepareClassForProperties(classA, {}, props);
-      prepareInstanceForProperties(obj, {}, props);
+      var {propertySettings} = propertiesAndSettingsInHierarchyOf(classA)
+      prepareClassForProperties(classA, propertySettings, props);
+      prepareInstanceForProperties(obj, propertySettings, props);
       expect(obj).property("a", 24);
       expect(obj).property("b", 23);
       expect(obj._state).have.property("a");
@@ -152,8 +156,9 @@ describe("properties", function() {
         test: {after: ["test2"], set: val => order.push("test", val)},
         test2: {set: val => order.push("test2", val)},
       }
-      prepareClassForProperties(classA, {}, properties);
-      prepareInstanceForProperties(obj, {}, properties, {test: 1, test2: 2});
+      var {propertySettings} = propertiesAndSettingsInHierarchyOf(classA)
+      prepareClassForProperties(classA, propertySettings, properties);
+      prepareInstanceForProperties(obj, propertySettings, properties, {test: 1, test2: 2});
       expect(order).equals(["test2", 2, "test", 1], 1);
     });
 
@@ -165,10 +170,11 @@ describe("properties", function() {
 
     it("settings can designate default setter", () => {
       var obj = new classA(), recorded = [];
-      var settings = {defaultSetter(key, value) { recorded.push(key, value); }}
+      var {propertySettings} = propertiesAndSettingsInHierarchyOf(classA)
+      var propertySettings = {...propertySettings, defaultSetter(key, value) { recorded.push(key, value); }}
       var properties = {test: {}}
-      prepareClassForProperties(classA, settings, properties);
-      prepareInstanceForProperties(obj, settings, properties);
+      prepareClassForProperties(classA, propertySettings, properties);
+      prepareInstanceForProperties(obj, propertySettings, properties);
       obj.test = 99;
       expect(recorded).equals(["test", 99]);
     });

@@ -86,7 +86,7 @@ function prepareClassForProperties(klass, propertySettings, properties) {
         valueStoreProperty,
         defaultGetter,
         defaultSetter
-      } = {...defaultPropertySettings, ...propertySettings },
+      } = propertySettings,
       myProto = klass.prototype,
       keys = Object.keys(properties);
 
@@ -147,7 +147,7 @@ function ensurePropertyInitializer(klass) {
 
 function propertiesAndSettingsInHierarchyOf(klass) {
   // walks class proto chain
-  var propertySettings = {},
+  var propertySettings = {...defaultPropertySettings},
       properties = {},
       allPropSettings = obj.valuesInPropertyHierarchy(klass, "propertySettings"),
       allProps = obj.valuesInPropertyHierarchy(klass, "properties");
@@ -176,7 +176,7 @@ function propertiesAndSettingsInHierarchyOf(klass) {
 }
 
 function prepareInstanceForProperties(instance, propertySettings, properties, values) {
-  var {valueStoreProperty} = {...defaultPropertySettings, ...propertySettings},
+  var {valueStoreProperty} = propertySettings,
       sortedKeys = obj.sortKeysWithBeforeAndAfterConstraints(properties),
       propsNeedingInitialize = [],
       initActions = {};
