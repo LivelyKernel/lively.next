@@ -22,6 +22,12 @@ export class ObjectPool {
     return new this(options).readSnapshot(snapshoted);
   }
 
+  static withObject(obj, options) {
+    var pool = new this(options);
+    pool.add(obj);
+    return pool;
+  }
+
   constructor(options) {
     this.uuidGen = string.newUUID;
     this._obj_ref_map = new Map();
