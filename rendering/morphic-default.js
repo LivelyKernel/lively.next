@@ -319,7 +319,7 @@ export class PropertyAnimation {
 
   get easing() { return this.config.easing || Power4.easeInOut }
   get onFinish() { return this.config.onFinish || (() => {})}
-  set onFinish(cb) { this.config.onFinish = cb }
+  setonFinish(cb) { this.config.onFinish = cb }
   get duration() { return this.config.duration || 1000 }
 
 
@@ -499,8 +499,9 @@ MorphAfterRenderHook.prototype.updateScroll = function(morph, node) {
 
   if (node) {
     const {x, y} = morph.scroll;
-    node.scrollTop !== y && (node.scrollTop = y);
-    node.scrollLeft !== x && (node.scrollLeft = x);
+    // prevent interference with bounce back animation
+    node.scrollTop !== y && (morph.submorphBounds().height - morph.height - node.scrollTop >= 0) && (node.scrollTop = y);
+    node.scrollLeft !== x && (morph.submorphBounds().width - morph.width - node.scrollLeft >= 0) && (node.scrollLeft = x);
   }
 }
 MorphAfterRenderHook.prototype.updateScrollOfSubmorphs = function(morph, renderer) {
