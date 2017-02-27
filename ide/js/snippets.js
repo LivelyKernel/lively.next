@@ -58,13 +58,13 @@ var _snippets = [
   ["do", "do {${1:/* code */}} while (${0:/* condition */});"],
   
   
-  ["fori", 'for (var ${0:prop} in ${1:obj}) {\n  ${2:obj[prop]}\n}'],
+  ["fori", 'for (let ${0:prop} in ${1:obj}) {\n  ${2:obj[prop]}\n}'],
   ["foro", 'for (let ${0:value} of ${1:iterable}) {\n  ${2:value}\n}'],
   
   
-  ["for-", 'for (var ${0:i} = ${1:list}.length; ${2:i}--; ) {\n  $3\n}'],
+  ["for-", 'for (let ${0:i} = ${1:list}.length; ${2:i}--; ) {\n  $3\n}'],
   
-  ["for", 'for (var ${0:i} = 0; ${1:i} < ${3:list}.length; ${2:i}++) {\n  $4\n}'],
+  ["for", 'for (let ${0:i} = 0; ${1:i} < ${3:list}.length; ${2:i}++) {\n  $4\n}'],
 
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -121,7 +121,7 @@ var _snippets = [
   ["ce", "console.error($0)"],
   ["s", "show(`$0`);"],
 
-  ["l2lC", 'import L2LClient from "lively.2lively/client.js";\nvar l2lClient = L2LClient.default();$0'],
+  ["l2lC", 'import L2LClient from "lively.2lively/client.js";\nlet l2lClient = L2LClient.default();$0'],
   
   // functions
   ["fun", "function ${0:functionName}($1) {$2}"],
