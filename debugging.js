@@ -6,6 +6,14 @@ import { HTMLMorph, inspect } from "lively.morphic";
 
 /*
 
+import { serializeMorph } from "lively.morphic/serialization.js";
+
+var snap = serializeMorph($world.get("browser"))
+
+lively.lang.num.humanReadableByteSize(JSON.stringify(snap).length)
+
+var i = SnapshotInspector.forSnapshot(snap.snapshot)
+
 var a = {bar: 15}; a.b = {foo: 23};
 var p = new ObjectPool(); p.add(a)
 var i = SnapshotInspector.forSnapshot(p.snapshot())
@@ -13,6 +21,9 @@ var i = SnapshotInspector.forSnapshot(p.snapshot())
 var ids = p.objectRefs().map(ea => ea.id);
 i.findIdReferencePathFromToId(ids[0], ids[1]);
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+// var viz = await ObjectGraphVisualizer.renderSnapshotAndOpen(window.snapshot)
 */
 
 export class SnapshotInspector {
@@ -218,12 +229,13 @@ function referencesInArray(snapshot, arr, optPath) {
 function referencesAndClassNamesOfId(snapshot, id) {
   // given an id, the regObj behind it is taken and for all its references a list is assembled
   // [id:ClassName]
-  return referencesOfId(snapshot, id).map(id => id + ':' + classNameOfId(snapshot, id));
+  return referencesOfId(snapshot, id).map(id =>
+    id + ':' + classNameOfId(snapshot, id));
 }
 
 function classNameOfId(snapshot, id) {
-  var ref = snapshot[id];
-  var {className} = ref[ClassHelper.classMetaForSerializationProp] || {}
+  var ref = snapshot[id],
+      {className} = ref[ClassHelper.classMetaForSerializationProp] || {};
   return className || "Object";
 }
 
@@ -289,13 +301,11 @@ function findPathFromToId(snapshot, fromId, toId, options = {}) {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-import cytoscape from "http://js.cytoscape.org/js/cytoscape.js";
+import cytoscape from "https://cdn.rawgit.com/cytoscape/cytoscape.js/v2.7.15/dist/cytoscape.js";
 import coseBilkentLayout from "https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.0.5/cytoscape-cose-bilkent.js";
 import { connect } from "lively.bindings";
 coseBilkentLayout(cytoscape);
 
-
-// var viz = await ObjectGraphVisualizer.renderSnapshotAndOpen(window.snapshot)
 
 export class ObjectGraphVisualizer extends HTMLMorph {
 
