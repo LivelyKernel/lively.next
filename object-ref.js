@@ -40,14 +40,14 @@ export class ObjectRef {
     if (path.length > 100) throw new Error(
       `Stopping serializer, encountered a possibly infinit loop: ${path.join(".")}`);
 
-    var {id, realObj, snapshots} = this;
+    let {id, realObj, snapshots} = this;
 
     if (!realObj) {
       console.error(`Cannot marshall object ref ${id}, no real object!`);
       return {...this.asRefForSerializedObjMap(), isMissing: true};
     }
 
-    var rev = realObj._rev || 0,
+    let rev = realObj._rev || 0,
         ref = this.asRefForSerializedObjMap(rev);
     arr.pushIfNotIncluded(this.snapshotVersions, rev);
 
@@ -60,27 +60,50 @@ export class ObjectRef {
 
     // can realObj be manually serialized, e.g. into an expression?
     if (typeof realObj.__serialize__ === "function") {
-      var serialized = realObj.__serialize__(this, serializedObjMap, pool);
+      let serialized = realObj.__serialize__(this, serializedObjMap, pool);
       if (serialized.hasOwnProperty("__expr__"))
         serialized = {__expr__: pool.expressionSerializer.exprStringEncode(serialized)};
       snapshots[rev] = serializedObjMap[id] = serialized;
       return ref;
     }
 
+    // serialize class properties as indicated by realObj.constructor.properties
+    let snapshot = snapshots[rev] = serializedObjMap[id] = {rev, props: {}},
+        props = snapshot.props,
+        classProperties = realObj.constructor[Symbol.for("lively.classes-properties-and-settings")],
+        onlyKeys = realObj.__only_serialize__,
+        exceptKeys = realObj.__dont_serialize__ ?
+          obj.mergePropertyInHierarchy(realObj, "__dont_serialize__") : [];
+    if (classProperties) {
+      let {properties, propertySettings} = classProperties,
+          valueStoreProperty = propertySettings.valueStoreProperty || "_state",
+          valueStore = realObj[valueStoreProperty];
+
+      if (valueStore) {
+        // don't save the store property as well - we are already saving the
+        // managed properties directly
+
+        for (let key in properties) {
+          if (exceptKeys.includes(key) || (onlyKeys && !onlyKeys.includes(key))) continue;
+          let spec = properties[key];
+          if (spec.derived) continue;
+          if (!spec || (spec.hasOwnProperty("serialize") && !spec.serialize)) continue;
+          props[key] = {
+            key,
+            value: this.snapshotProperty(
+                      realObj[key], path.concat([key]),
+                      serializedObjMap, pool)
+          };
+          exceptKeys.push(key);
+        }
+
+        exceptKeys.push(valueStoreProperty);
+      }
+    }
+
     // do the generic serialization, i.e. enumerate all properties and
-    // serialize the referenced objects recursively
-    var snapshot = snapshots[rev] = serializedObjMap[id] = {rev, props: {}},
-        props = snapshot.props, keys;
-
-    if (realObj.__dont_serialize__) {
-      var exceptions = obj.mergePropertyInHierarchy(realObj, "__dont_serialize__");
-      keys = arr.withoutAll(Object.getOwnPropertyNames(realObj), exceptions);
-
-    } else if (realObj.__only_serialize__) {
-      // FIXME what about __only_serialize__ && __dont_serialize__?
-      keys = realObj.__only_serialize__;
-
-    } else keys = Object.getOwnPropertyNames(realObj);
+    let keys = onlyKeys || Object.getOwnPropertyNames(realObj);
+    if (exceptKeys.length) keys = arr.withoutAll(keys, exceptKeys);
 
     for (let i = 0; i < keys.length; i++) {
       let key = keys[i];
@@ -139,19 +162,19 @@ export class ObjectRef {
 
     debugDeserialization && console.log(`[deserialize] ${path.join(".")}`);
 
-    var snapshot = serializedObjMap[this.id];
+    let snapshot = serializedObjMap[this.id];
     if (!snapshot) {
       console.error(`Cannot recreateObjFromSnapshot ObjectRef `
                   + `${this.id} b/c of missing snapshot in snapshot map!`);
       return this;
     }
 
-    var {rev, __expr__} = snapshot;
+    let {rev, __expr__} = snapshot;
     rev = rev || 0;
     this.snapshotVersions.push(rev);
     this.snapshots[rev] = snapshot;
 
-    var newObj;
+    let newObj;
     if (__expr__) {
       newObj = pool.expressionSerializer.deserializeExpr(__expr__);
     } else {
@@ -168,26 +191,38 @@ export class ObjectRef {
     if (typeof newObj.__deserialize__ === "function")
       newObj.__deserialize__(snapshot, this);
 
-    var {props} = snapshot;
+    let {props} = snapshot,
+        deserializedKeys = {};
+
     if (props) {
-      var highPriorityKeys = ["submorphs"]; // FIXME!!!
-      var lowPriorityKeys = ["attributeConnections"]; // FIXME!!!
-      for (var i = 0; i < highPriorityKeys.length; i++) {
-        var key = highPriorityKeys[i];
-        if (key in props)
-          this.recreatePropertyAndSetProperty(newObj, props, key, serializedObjMap, pool, path);
+
+      // deserialize class properties as indicated by realObj.constructor.properties
+      let classProperties = newObj.constructor[Symbol.for("lively.classes-properties-and-settings")];
+      if (classProperties) {
+        let {properties, propertySettings} = classProperties,
+            valueStoreProperty = propertySettings.valueStoreProperty || "_state";
+
+        // if props has a valueStoreProperty then we directly deserialize that.
+        // As of 2017-02-26 this is for backwards compat.
+        if (!props[valueStoreProperty]) {
+          if (!newObj.hasOwnProperty(valueStoreProperty))
+            newObj.initializeProperties();
+          let valueStore = newObj[valueStoreProperty],
+              sortedKeys = obj.sortKeysWithBeforeAndAfterConstraints(properties);
+          for (let i = 0; i < sortedKeys.length; i++) {
+            let key = sortedKeys[i],
+                spec = properties[key];
+            if (spec.derived || !(key in props)) continue;
+            this.recreatePropertyAndSetProperty(newObj, props, key, serializedObjMap, pool, path);
+            deserializedKeys[key] = true;
+          }
+        }
       }
 
+      // deserialize generic properties
       for (var key in props)
-        if (!highPriorityKeys.includes(key) && !lowPriorityKeys.includes(key))
+        if (!deserializedKeys.hasOwnProperty(key))
           this.recreatePropertyAndSetProperty(newObj, props, key, serializedObjMap, pool, path);
-
-      for (var i = 0; i < lowPriorityKeys.length; i++) {
-        var key = lowPriorityKeys[i];
-        if (key in props)
-          this.recreatePropertyAndSetProperty(newObj, props, key, serializedObjMap, pool, path);
-      }
-
     }
 
     var idPropertyName = newObj.__serialization_id_property__ || this.idPropertyName;

@@ -1,8 +1,10 @@
 /*global describe, it, beforeEach, afterEach*/
 import { expect } from "mocha-es6";
 
-import { ObjectPool, ObjectRef } from "../index.js";
+import { ObjectPool, deserialize, serialize, ObjectRef } from "../index.js";
 import ClassHelper from "../class-helper.js";
+import { resource } from "lively.resources";
+import { version as serializerVersion } from "../package.json";
 
 function serializationRoundtrip(obj, serializer = new ObjectPool()) {
   var ref = objPool.add(obj);
@@ -67,7 +69,7 @@ describe('class serialization', function() {
     expect(result).to.deep.equal([{
       className: "TestDummy",
       module: {
-        package: {name: "lively.serializer2", version: "0.1.0"},
+        package: {name: "lively.serializer2", version: serializerVersion},
         pathInPackage: "tests/class-serialization-test.js"
       }
     }]);
@@ -89,7 +91,7 @@ describe('class serialization', function() {
   });
 
   it("raise no error when class not found when overridden", function() {
-  
+
     var objPool = new ObjectPool(),
         klass = class Dummy_testDontRaiseErrorWhenClassNotFound {},
         instance = new klass(),
@@ -104,7 +106,44 @@ describe('class serialization', function() {
     expect("Dummy_testDontRaiseErrorWhenClassNotFound").to.equal(result.className)
   });
 
-  it("serializes inline classes", () => {
-  
-  })
+  xit("serializes inline classes", () => {
+
+  });
+
+});
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+
+var testModule = "local://lively-serializer-class-test/class-prop-test.js";
+
+describe("class properties", () => {
+
+  beforeEach(async () => {
+    var source = `export class Foo {
+       static get properties() {
+         return {
+           foo: {defaultValue: 23, serialize: false},
+           bar: {defaultValue: 24},
+         }
+       }
+       constructor() { this.initializeProperties(); }
+    }`;
+    await resource(testModule).write(source)
+    await System.import(testModule);
+  });
+
+  afterEach(async () => lively.modules.module(testModule).unload());
+
+  it("it can ignore properties and initializes them", async () => {
+    var {Foo} = System.get(testModule),
+        instance = new Foo(),
+        {id, snapshot} = serialize(new Foo());
+    expect(snapshot[id].props).deep.equals({bar: {key: "bar", value: 24}});
+    var instance2 = deserialize({id, snapshot});
+    expect(instance2.foo).equals(23);
+    expect(instance2.bar).equals(24);
+  });
+
 });
