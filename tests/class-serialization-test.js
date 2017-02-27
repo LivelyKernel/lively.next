@@ -130,7 +130,7 @@ describe("class properties", () => {
        }
        constructor() { this.initializeProperties(); }
     }`;
-    await resource(testModule).write(source)
+    await System.resource(testModule).write(source);
     await System.import(testModule);
   });
 

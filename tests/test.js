@@ -134,7 +134,12 @@ describe("marshalling", () => {
   describe("serialized expressions", () => {
 
     it("simple", () => {
-      var exprObj = {n: 1, __serialize__() { return {__expr__: `({n: ${this.n + 1}, __serialize__: function ${this.__serialize__}})` }}},
+      function __serialize__() {
+        return {
+          __expr__: `({n: ${this.n + 1}, __serialize__: ${String(this.__serialize__)}})`
+        }
+      }
+      var exprObj = {n: 1, __serialize__},
           obj = {foo: exprObj},
           {id} = objPool.add(obj),
           objPool2 = ObjectPool.fromSnapshot(objPool.snapshot()),
@@ -159,9 +164,9 @@ describe("marshalling", () => {
       expect(snapshot).deep.equals(
         {[id]: {rev: 0, props: {foo: {key: "foo", value: "__lv_expr__:foo()"}}}});
       try {
-        window.foo = () => foo;
+        System.global.foo = () => foo;
         var obj2 = ObjectPool.fromSnapshot(objPool.snapshot()).resolveToObj(id);
-      } finally { delete window.foo; }
+      } finally { delete System.global.foo; }
       expect(obj2).deep.equals(obj2, "deserialize not working");
     });
 
