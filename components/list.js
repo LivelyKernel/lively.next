@@ -1,4 +1,4 @@
-import { Morph, Text, StyleRules, Label, Button } from "lively.morphic";
+import { Morph, GridLayout, Text, StyleRules, Label, Button } from "lively.morphic";
 import { pt, Color, Rectangle, rect } from "lively.graphics";
 import { arr, Path, string, obj } from "lively.lang";
 import { signal } from "lively.bindings";
@@ -655,7 +655,6 @@ export class FilterableList extends Morph {
         set(val) {
           this.listMorph.fontFamily = val;
           this.inputMorph.fontFamily = val;
-          this.relayout();
         }
       },
 
@@ -666,7 +665,6 @@ export class FilterableList extends Morph {
         set(val) {
           this.listMorph.padding = val;
           this.inputMorph.padding = val;
-          this.relayout();
         }
       },
 
@@ -676,7 +674,6 @@ export class FilterableList extends Morph {
         set(val) {
           this.listMorph.fontSize = val;
           this.inputMorph.fontSize = val;
-          this.relayout();
         }
       },
 
@@ -815,19 +812,15 @@ export class FilterableList extends Morph {
     super(props);
     connect(this.get("input"), "inputChanged", this, "updateFilter");
     connect(this.listMorph, "selection", this, "selectionChanged");
-    connect(this, "extent", this, "relayout");
     this.updateFilter();
-    this.relayout();
-    setTimeout(() => this.relayout());
-  }
-
-  relayout() {
-    var { inputMorph, listMorph, borderWidth: offset } = this,
-        inputH = inputMorph.height,
-        w = this.width - offset*2;
-    inputMorph.topLeft = pt(offset, offset);
-    listMorph.setBounds(new Rectangle(offset, inputH, w, this.height-inputH-offset));
-    listMorph.width = inputMorph.width = w;
+    this.layout = new GridLayout({
+      rows: [
+        0, {fixed: 25},
+        1, {paddingTop: 5}
+      ],
+      grid: [[this.inputMorph],
+             [this.listMorph]]
+    });
   }
 
   get isList() { return true; }
