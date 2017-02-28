@@ -437,6 +437,16 @@ describe('l2l', function() {
       client1.trackerId
       await client1.whenRegistered(300);
     });
+    describe("user integration", () => {
+
+      it('Ensure anonymous user is created on init without options', async ()=>{
+          console.log(client1)
+          expect(client1.user).to.be.an('object',"user object not present");
+          expect(client1.user.name).equals('anonymous',"Username not created as anonymous")
+          expect(client1.user.email).equals(null,"null email for anonymous user not present")
+          expect(client1.user.token).to.be.an('object','failed token object not present')
+      })
+    })
   });
 
 
