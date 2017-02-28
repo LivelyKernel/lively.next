@@ -1,8 +1,8 @@
 {
-  "id": "Reply_E8AD3D67_7FED_4A38_924B_B6A3B081F840",
+  "id": "Reply_9CD9B863_8E22_4E44_8E8D_1B0954595B95",
   "snapshot": {
-    "Reply_E8AD3D67_7FED_4A38_924B_B6A3B081F840": {
-      "rev": 719938,
+    "Reply_9CD9B863_8E22_4E44_8E8D_1B0954595B95": {
+      "rev": 1877925,
       "props": {
         "extent": {
           "key": "extent",
@@ -22,7 +22,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(6.0,6.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(22.9,461.5)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -36,7 +36,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "13611CE0-B796-4185-820D-DA2681F0AE6C",
+            "id": "7A19A172-1D15-4942-81FE-59D2E881D1B6",
             "rev": 0
           }
         },
@@ -45,20 +45,28 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_8B4B49C7_DD01_4674_A054_480892241141",
-              "rev": 709036
+              "id": "Morph_B5C50A9E_F9B6_4ADB_8545_E8EA9B9F4BC5",
+              "rev": 1595089
             },
             {
               "__ref__": true,
-              "id": "Morph_AC2B6C9A_B610_4B8D_88FE_7D169AC4ED53",
-              "rev": 709038
+              "id": "Morph_3920FEFB_E8E6_4718_BECB_3578A9A8D0AF",
+              "rev": 1487480
             },
             {
               "__ref__": true,
-              "id": "Morph_33D30C51_7944_400D_BA49_978992BD1D80",
-              "rev": 611272
+              "id": "Morph_3B7FD096_E97C_40D6_9666_AB2AEA839C10",
+              "rev": 1879345
             }
           ]
+        },
+        "replies": {
+          "key": "replies",
+          "value": []
+        },
+        "date": {
+          "key": "date",
+          "value": "28 February 2017"
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -79,7 +87,7 @@
         }
       }
     },
-    "13611CE0-B796-4185-820D-DA2681F0AE6C": {
+    "7A19A172-1D15-4942-81FE-59D2E881D1B6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -90,7 +98,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "A6099B40-A868-43AE-AC63-25BDEC36116E",
+            "id": "1E9825A7-B34E-4587-903E-D3D5AA6BB8F9",
             "rev": 0
           }
         },
@@ -104,7 +112,7 @@
         },
         "lastBounds": {
           "key": "lastBounds",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(6,6,588.3,104)"
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(22.85000000000008,461.5,588.3,104)"
         },
         "active": {
           "key": "active",
@@ -114,8 +122,8 @@
           "key": "container",
           "value": {
             "__ref__": true,
-            "id": "Reply_E8AD3D67_7FED_4A38_924B_B6A3B081F840",
-            "rev": 719938
+            "id": "Reply_9CD9B863_8E22_4E44_8E8D_1B0954595B95",
+            "rev": 1877925
           }
         },
         "autoResize": {
@@ -127,17 +135,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "92BEAFB7-5288-42AA-A0B1-16A8394E5360",
+              "id": "78936B93-2F99-4130-B4CE-F7EBB14A04D6",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "BCBD4CFF-3B46-4760-91C1-43B51890E623",
+              "id": "906C2C5C-1FEB-4348-906E-29130F8DAE54",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "C5CA798E-4354-44F8-9552-1C7F113E3D38",
+              "id": "BDF736B6-4510-4285-B635-BBAD462BB274",
               "rev": 0
             }
           ]
@@ -146,7 +154,7 @@
           "key": "config",
           "value": {
             "__ref__": true,
-            "id": "E41CDCBF-7E06-4C79-829F-9DC391C555AB",
+            "id": "9ED3361E-576C-4599-8F3E-081AC83F650D",
             "rev": 0
           }
         },
@@ -154,7 +162,7 @@
           "key": "grid",
           "value": {
             "__ref__": true,
-            "id": "692E932E-CCB1-47B5-B2A7-CF79DB220F98",
+            "id": "D462FA88-D466-4C7A-A6D0-DFEF1FCCAA16",
             "rev": 0
           }
         }
@@ -170,7 +178,7 @@
         }
       }
     },
-    "A6099B40-A868-43AE-AC63-25BDEC36116E": {
+    "1E9825A7-B34E-4587-903E-D3D5AA6BB8F9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -195,7 +203,7 @@
         }
       }
     },
-    "92BEAFB7-5288-42AA-A0B1-16A8394E5360": {
+    "78936B93-2F99-4130-B4CE-F7EBB14A04D6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -206,7 +214,7 @@
           "key": "state",
           "value": {
             "__ref__": true,
-            "id": "5E1A876E-37CD-4947-9CA4-45442CC93687",
+            "id": "14D31A89-23FB-4B58-A64C-06521DA6F2DF",
             "rev": 0
           }
         }
@@ -222,7 +230,7 @@
         }
       }
     },
-    "5E1A876E-37CD-4947-9CA4-45442CC93687": {
+    "14D31A89-23FB-4B58-A64C-06521DA6F2DF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -234,7 +242,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "974825C6-C22F-471F-A14D-D815AE4DFAA9",
+              "id": "1EE52ED7-326D-4443-A79B-32D4D2A87DC6",
               "rev": 0
             }
           ]
@@ -243,7 +251,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "13611CE0-B796-4185-820D-DA2681F0AE6C",
+            "id": "7A19A172-1D15-4942-81FE-59D2E881D1B6",
             "rev": 0
           }
         },
@@ -258,13 +266,13 @@
           "key": "morph",
           "value": {
             "__ref__": true,
-            "id": "Morph_8B4B49C7_DD01_4674_A054_480892241141",
-            "rev": 709036
+            "id": "Morph_B5C50A9E_F9B6_4ADB_8545_E8EA9B9F4BC5",
+            "rev": 1595089
           }
         }
       }
     },
-    "974825C6-C22F-471F-A14D-D815AE4DFAA9": {
+    "1EE52ED7-326D-4443-A79B-32D4D2A87DC6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -275,7 +283,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "13611CE0-B796-4185-820D-DA2681F0AE6C",
+            "id": "7A19A172-1D15-4942-81FE-59D2E881D1B6",
             "rev": 0
           }
         },
@@ -283,7 +291,7 @@
           "key": "fixed",
           "value": {
             "__ref__": true,
-            "id": "D1B4A84C-E77F-4290-B89E-FA1E290599FC",
+            "id": "F5351856-40FB-4C40-8C65-A3DACD84F0AA",
             "rev": 0
           }
         },
@@ -291,7 +299,7 @@
           "key": "frozen",
           "value": {
             "__ref__": true,
-            "id": "1EFBC52F-D946-437D-9724-7C94F8AF47BC",
+            "id": "A0C835AB-D178-4A6B-9897-ECA0C41D2BA3",
             "rev": 0
           }
         },
@@ -299,7 +307,7 @@
           "key": "min",
           "value": {
             "__ref__": true,
-            "id": "4D2478C4-09E3-42E8-B6AF-B07236B09632",
+            "id": "321B4F83-94C5-4210-9D95-A500717A7B79",
             "rev": 0
           }
         },
@@ -310,7 +318,7 @@
           "key": "left",
           "value": {
             "__ref__": true,
-            "id": "3A6C8B09-701A-43F8-B31D-0563A5291D79",
+            "id": "9B300A14-2A11-4B0C-9FAA-875ECE5BB0B6",
             "rev": 0
           }
         },
@@ -328,7 +336,7 @@
           "key": "proportion",
           "value": {
             "__ref__": true,
-            "id": "8D62F036-3F44-41FD-89F0-A309F323FE36",
+            "id": "65F1F188-5246-4C11-BAED-905B49F48EFB",
             "rev": 0
           }
         },
@@ -344,7 +352,7 @@
           "key": "group",
           "value": {
             "__ref__": true,
-            "id": "92BEAFB7-5288-42AA-A0B1-16A8394E5360",
+            "id": "78936B93-2F99-4130-B4CE-F7EBB14A04D6",
             "rev": 0
           }
         }
@@ -360,7 +368,7 @@
         }
       }
     },
-    "D1B4A84C-E77F-4290-B89E-FA1E290599FC": {
+    "F5351856-40FB-4C40-8C65-A3DACD84F0AA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -377,7 +385,7 @@
         }
       }
     },
-    "1EFBC52F-D946-437D-9724-7C94F8AF47BC": {
+    "A0C835AB-D178-4A6B-9897-ECA0C41D2BA3": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -394,7 +402,7 @@
         }
       }
     },
-    "4D2478C4-09E3-42E8-B6AF-B07236B09632": {
+    "321B4F83-94C5-4210-9D95-A500717A7B79": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -411,7 +419,7 @@
         }
       }
     },
-    "3A6C8B09-701A-43F8-B31D-0563A5291D79": {
+    "9B300A14-2A11-4B0C-9FAA-875ECE5BB0B6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -422,7 +430,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "13611CE0-B796-4185-820D-DA2681F0AE6C",
+            "id": "7A19A172-1D15-4942-81FE-59D2E881D1B6",
             "rev": 0
           }
         },
@@ -430,7 +438,7 @@
           "key": "fixed",
           "value": {
             "__ref__": true,
-            "id": "E5E28E04-1281-43FB-BCD1-DE4029E18F02",
+            "id": "1754C1DF-2A84-4A1C-AFA5-A825B80108EB",
             "rev": 0
           }
         },
@@ -438,7 +446,7 @@
           "key": "frozen",
           "value": {
             "__ref__": true,
-            "id": "8994B32A-AF31-4247-849F-539323A895EF",
+            "id": "F6DAA797-5C0D-40D9-AE7B-29D0CADAD0AD",
             "rev": 0
           }
         },
@@ -446,7 +454,7 @@
           "key": "min",
           "value": {
             "__ref__": true,
-            "id": "3C2E70CF-41AA-495B-8BAB-BBB61D2BA43D",
+            "id": "950D2B44-187E-47D6-BC63-C374A6C87ED7",
             "rev": 0
           }
         },
@@ -457,7 +465,7 @@
           "key": "left",
           "value": {
             "__ref__": true,
-            "id": "692E932E-CCB1-47B5-B2A7-CF79DB220F98",
+            "id": "D462FA88-D466-4C7A-A6D0-DFEF1FCCAA16",
             "rev": 0
           }
         },
@@ -468,7 +476,7 @@
           "key": "right",
           "value": {
             "__ref__": true,
-            "id": "974825C6-C22F-471F-A14D-D815AE4DFAA9",
+            "id": "1EE52ED7-326D-4443-A79B-32D4D2A87DC6",
             "rev": 0
           }
         },
@@ -480,7 +488,7 @@
           "key": "proportion",
           "value": {
             "__ref__": true,
-            "id": "6CB158BB-CEA1-4CB9-8A71-270564847374",
+            "id": "25A12FB7-58BF-4F69-A7E4-8B95102003DC",
             "rev": 0
           }
         },
@@ -496,7 +504,7 @@
           "key": "group",
           "value": {
             "__ref__": true,
-            "id": "BCBD4CFF-3B46-4760-91C1-43B51890E623",
+            "id": "906C2C5C-1FEB-4348-906E-29130F8DAE54",
             "rev": 0
           }
         },
@@ -516,7 +524,7 @@
         }
       }
     },
-    "E5E28E04-1281-43FB-BCD1-DE4029E18F02": {
+    "1754C1DF-2A84-4A1C-AFA5-A825B80108EB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -533,7 +541,7 @@
         }
       }
     },
-    "8994B32A-AF31-4247-849F-539323A895EF": {
+    "F6DAA797-5C0D-40D9-AE7B-29D0CADAD0AD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -550,7 +558,7 @@
         }
       }
     },
-    "3C2E70CF-41AA-495B-8BAB-BBB61D2BA43D": {
+    "950D2B44-187E-47D6-BC63-C374A6C87ED7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -567,7 +575,7 @@
         }
       }
     },
-    "692E932E-CCB1-47B5-B2A7-CF79DB220F98": {
+    "D462FA88-D466-4C7A-A6D0-DFEF1FCCAA16": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -578,7 +586,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "13611CE0-B796-4185-820D-DA2681F0AE6C",
+            "id": "7A19A172-1D15-4942-81FE-59D2E881D1B6",
             "rev": 0
           }
         },
@@ -586,7 +594,7 @@
           "key": "fixed",
           "value": {
             "__ref__": true,
-            "id": "7C6ACC49-28BA-49A3-A180-FCDB2B1B4F21",
+            "id": "70F6B894-0C0C-41E2-881C-F44160AE767B",
             "rev": 0
           }
         },
@@ -594,7 +602,7 @@
           "key": "frozen",
           "value": {
             "__ref__": true,
-            "id": "E00918E5-A4BC-44D1-8CE9-5D47FADCEAB6",
+            "id": "08FBC865-DDE6-407D-A580-2A8727E0F2F0",
             "rev": 0
           }
         },
@@ -602,7 +610,7 @@
           "key": "min",
           "value": {
             "__ref__": true,
-            "id": "BD71CC73-6975-4D7C-A110-BC5A9CAA5559",
+            "id": "A53D7EAD-1C31-4901-9C2F-871102E48C8E",
             "rev": 0
           }
         },
@@ -619,7 +627,7 @@
           "key": "right",
           "value": {
             "__ref__": true,
-            "id": "3A6C8B09-701A-43F8-B31D-0563A5291D79",
+            "id": "9B300A14-2A11-4B0C-9FAA-875ECE5BB0B6",
             "rev": 0
           }
         },
@@ -631,7 +639,7 @@
           "key": "proportion",
           "value": {
             "__ref__": true,
-            "id": "56F9941B-9A3B-426B-A7CB-E9808032B0FF",
+            "id": "C0D9EBAC-BF6A-4F7C-A7B2-804F0EC330A5",
             "rev": 0
           }
         },
@@ -647,7 +655,7 @@
           "key": "group",
           "value": {
             "__ref__": true,
-            "id": "C5CA798E-4354-44F8-9552-1C7F113E3D38",
+            "id": "BDF736B6-4510-4285-B635-BBAD462BB274",
             "rev": 0
           }
         },
@@ -667,7 +675,7 @@
         }
       }
     },
-    "7C6ACC49-28BA-49A3-A180-FCDB2B1B4F21": {
+    "70F6B894-0C0C-41E2-881C-F44160AE767B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -684,7 +692,7 @@
         }
       }
     },
-    "E00918E5-A4BC-44D1-8CE9-5D47FADCEAB6": {
+    "08FBC865-DDE6-407D-A580-2A8727E0F2F0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -701,7 +709,7 @@
         }
       }
     },
-    "BD71CC73-6975-4D7C-A110-BC5A9CAA5559": {
+    "A53D7EAD-1C31-4901-9C2F-871102E48C8E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -718,7 +726,7 @@
         }
       }
     },
-    "56F9941B-9A3B-426B-A7CB-E9808032B0FF": {
+    "C0D9EBAC-BF6A-4F7C-A7B2-804F0EC330A5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -735,7 +743,7 @@
         }
       }
     },
-    "C5CA798E-4354-44F8-9552-1C7F113E3D38": {
+    "BDF736B6-4510-4285-B635-BBAD462BB274": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -746,7 +754,7 @@
           "key": "state",
           "value": {
             "__ref__": true,
-            "id": "C258460C-18E8-45D4-B7B5-9E722F664A4F",
+            "id": "B470F83C-563D-4E4B-BD02-1B4FCB125959",
             "rev": 0
           }
         }
@@ -762,7 +770,7 @@
         }
       }
     },
-    "C258460C-18E8-45D4-B7B5-9E722F664A4F": {
+    "B470F83C-563D-4E4B-BD02-1B4FCB125959": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -774,7 +782,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "692E932E-CCB1-47B5-B2A7-CF79DB220F98",
+              "id": "D462FA88-D466-4C7A-A6D0-DFEF1FCCAA16",
               "rev": 0
             }
           ]
@@ -783,7 +791,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "13611CE0-B796-4185-820D-DA2681F0AE6C",
+            "id": "7A19A172-1D15-4942-81FE-59D2E881D1B6",
             "rev": 0
           }
         },
@@ -800,7 +808,7 @@
         }
       }
     },
-    "6CB158BB-CEA1-4CB9-8A71-270564847374": {
+    "25A12FB7-58BF-4F69-A7E4-8B95102003DC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -817,7 +825,7 @@
         }
       }
     },
-    "BCBD4CFF-3B46-4760-91C1-43B51890E623": {
+    "906C2C5C-1FEB-4348-906E-29130F8DAE54": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -828,7 +836,7 @@
           "key": "state",
           "value": {
             "__ref__": true,
-            "id": "FC2A2918-B459-445C-B628-38F14C9FC960",
+            "id": "3290DA56-17D6-414C-90B6-77CC5999DF20",
             "rev": 0
           }
         }
@@ -844,7 +852,7 @@
         }
       }
     },
-    "FC2A2918-B459-445C-B628-38F14C9FC960": {
+    "3290DA56-17D6-414C-90B6-77CC5999DF20": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -856,7 +864,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "3A6C8B09-701A-43F8-B31D-0563A5291D79",
+              "id": "9B300A14-2A11-4B0C-9FAA-875ECE5BB0B6",
               "rev": 0
             }
           ]
@@ -865,7 +873,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "13611CE0-B796-4185-820D-DA2681F0AE6C",
+            "id": "7A19A172-1D15-4942-81FE-59D2E881D1B6",
             "rev": 0
           }
         },
@@ -880,14 +888,14 @@
           "key": "morph",
           "value": {
             "__ref__": true,
-            "id": "Morph_AC2B6C9A_B610_4B8D_88FE_7D169AC4ED53",
-            "rev": 709038
+            "id": "Morph_3920FEFB_E8E6_4718_BECB_3578A9A8D0AF",
+            "rev": 1487480
           }
         }
       }
     },
-    "Morph_AC2B6C9A_B610_4B8D_88FE_7D169AC4ED53": {
-      "rev": 709038,
+    "Morph_3920FEFB_E8E6_4718_BECB_3578A9A8D0AF": {
+      "rev": 1487480,
       "props": {
         "extent": {
           "key": "extent",
@@ -921,8 +929,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Ellipse_4840B1ED_ABE2_471E_9CC1_E326015F01CA",
-              "rev": 464024
+              "id": "Ellipse_3564D5EE_2019_4712_B38F_FA92B18DD40B",
+              "rev": 1132783
             }
           ]
         },
@@ -945,8 +953,8 @@
         }
       }
     },
-    "Ellipse_4840B1ED_ABE2_471E_9CC1_E326015F01CA": {
-      "rev": 464024,
+    "Ellipse_3564D5EE_2019_4712_B38F_FA92B18DD40B": {
+      "rev": 1132783,
       "props": {
         "clipMode": {
           "key": "clipMode",
@@ -993,8 +1001,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_4C570B5B_E074_4196_973E_F293D662E165",
-              "rev": 464487
+              "id": "Label_13E24432_7034_431E_9728_5A70459464FF",
+              "rev": 1132878
             }
           ]
         },
@@ -1065,9 +1073,13 @@
         }
       }
     },
-    "Label_4C570B5B_E074_4196_973E_F293D662E165": {
-      "rev": 464487,
+    "Label_13E24432_7034_431E_9728_5A70459464FF": {
+      "rev": 1132878,
       "props": {
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(29.1,37.0)"
@@ -1100,6 +1112,10 @@
           "key": "scale",
           "value": 3.6381062509975495
         },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
@@ -1119,15 +1135,23 @@
               "",
               {
                 "__ref__": true,
-                "id": "BD5D0C71-4C38-4C36-B06C-60F15560EF28",
+                "id": "E19E61CE-E7FC-4E17-8FC7-2E5401BDD5CE",
                 "rev": 0
               }
             ]
           ]
         },
+        "autofit": {
+          "key": "autofit",
+          "value": true
+        },
         "padding": {
           "key": "padding",
           "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
         },
         "fontSize": {
           "key": "fontSize",
@@ -1136,6 +1160,18 @@
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1156,7 +1192,7 @@
         }
       }
     },
-    "BD5D0C71-4C38-4C36-B06C-60F15560EF28": {
+    "E19E61CE-E7FC-4E17-8FC7-2E5401BDD5CE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1175,7 +1211,7 @@
         }
       }
     },
-    "8D62F036-3F44-41FD-89F0-A309F323FE36": {
+    "65F1F188-5246-4C11-BAED-905B49F48EFB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1192,8 +1228,8 @@
         }
       }
     },
-    "Morph_8B4B49C7_DD01_4674_A054_480892241141": {
-      "rev": 709036,
+    "Morph_B5C50A9E_F9B6_4ADB_8545_E8EA9B9F4BC5": {
+      "rev": 1595089,
       "props": {
         "extent": {
           "key": "extent",
@@ -1226,7 +1262,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "AF5514A6-6A98-488B-BE72-3517E0072633",
+            "id": "AE62B9D3-6690-4DD0-BC1F-3A52532E176E",
             "rev": 0
           }
         },
@@ -1235,18 +1271,18 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Text_C66E65E4_F92F_4560_A363_D88EA092B2AD",
-              "rev": 709031
+              "id": "Text_F919C3BA_E26F_4123_B2D1_B55DF7083059",
+              "rev": 1595091
             },
             {
               "__ref__": true,
-              "id": "Text_EE796EC6_69BC_4741_A6A2_66E1004048B7",
-              "rev": 709033
+              "id": "Text_9169A3B8_A92B_402E_B900_FF3B95EEDB39",
+              "rev": 1595093
             },
             {
               "__ref__": true,
-              "id": "Morph_5C8EEC07_F329_434A_BD17_3390456ADE86",
-              "rev": 709035
+              "id": "Morph_F868732A_5F1C_4CE4_AB77_A4406AE6C90B",
+              "rev": 1808937
             }
           ]
         },
@@ -1317,7 +1353,7 @@
         }
       }
     },
-    "AF5514A6-6A98-488B-BE72-3517E0072633": {
+    "AE62B9D3-6690-4DD0-BC1F-3A52532E176E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1328,7 +1364,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "EE4503D5-FF1E-4D21-9D58-6660682BEB25",
+            "id": "DE621294-E2DB-41F3-A64C-BDC4498C8287",
             "rev": 0
           }
         },
@@ -1342,7 +1378,7 @@
         },
         "lastBounds": {
           "key": "lastBounds",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(71.85707329574578,0,512.4429267042542,102)"
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(71.85707329574578,0,512.4429267042542,101)"
         },
         "active": {
           "key": "active",
@@ -1352,8 +1388,8 @@
           "key": "container",
           "value": {
             "__ref__": true,
-            "id": "Morph_8B4B49C7_DD01_4674_A054_480892241141",
-            "rev": 709036
+            "id": "Morph_B5C50A9E_F9B6_4ADB_8545_E8EA9B9F4BC5",
+            "rev": 1595089
           }
         },
         "autoResize": {
@@ -1365,17 +1401,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "9C17DC2D-2F40-4179-AAE0-576C523ABCC2",
+              "id": "92CD634C-1E07-4AAC-A62C-0E82CB50CB63",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "5AB95484-5955-4605-B3D4-D7FC79FF09A1",
+              "id": "D4C506DB-3B68-4C50-B86B-398114123EAF",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "6D13829C-1C99-4024-8BC2-426A587D6F89",
+              "id": "AF45FBEC-7878-4C77-844F-8D1796A08F28",
               "rev": 0
             }
           ]
@@ -1384,7 +1420,7 @@
           "key": "config",
           "value": {
             "__ref__": true,
-            "id": "CA022E7B-4117-454E-99F2-3A0770649512",
+            "id": "7A779EBC-E6DB-4FA3-B239-5B34A4FAD5BD",
             "rev": 0
           }
         },
@@ -1392,7 +1428,7 @@
           "key": "grid",
           "value": {
             "__ref__": true,
-            "id": "F5A38280-0E1E-4E33-91BF-A841E1181584",
+            "id": "C9DD3B52-7DE9-4BF6-AE46-7D7E64ABBBDE",
             "rev": 0
           }
         }
@@ -1408,7 +1444,7 @@
         }
       }
     },
-    "EE4503D5-FF1E-4D21-9D58-6660682BEB25": {
+    "DE621294-E2DB-41F3-A64C-BDC4498C8287": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1433,7 +1469,7 @@
         }
       }
     },
-    "9C17DC2D-2F40-4179-AAE0-576C523ABCC2": {
+    "92CD634C-1E07-4AAC-A62C-0E82CB50CB63": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1444,7 +1480,7 @@
           "key": "state",
           "value": {
             "__ref__": true,
-            "id": "57D4D580-3E67-48C4-937E-58F88CA77F05",
+            "id": "05ABD22E-CAFC-4177-ACEE-1C414B0C2051",
             "rev": 0
           }
         }
@@ -1460,7 +1496,7 @@
         }
       }
     },
-    "57D4D580-3E67-48C4-937E-58F88CA77F05": {
+    "05ABD22E-CAFC-4177-ACEE-1C414B0C2051": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1472,7 +1508,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "F5A38280-0E1E-4E33-91BF-A841E1181584",
+              "id": "C9DD3B52-7DE9-4BF6-AE46-7D7E64ABBBDE",
               "rev": 0
             }
           ]
@@ -1481,7 +1517,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "AF5514A6-6A98-488B-BE72-3517E0072633",
+            "id": "AE62B9D3-6690-4DD0-BC1F-3A52532E176E",
             "rev": 0
           }
         },
@@ -1496,13 +1532,13 @@
           "key": "morph",
           "value": {
             "__ref__": true,
-            "id": "Text_C66E65E4_F92F_4560_A363_D88EA092B2AD",
-            "rev": 709031
+            "id": "Text_F919C3BA_E26F_4123_B2D1_B55DF7083059",
+            "rev": 1595091
           }
         }
       }
     },
-    "F5A38280-0E1E-4E33-91BF-A841E1181584": {
+    "C9DD3B52-7DE9-4BF6-AE46-7D7E64ABBBDE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1513,7 +1549,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "AF5514A6-6A98-488B-BE72-3517E0072633",
+            "id": "AE62B9D3-6690-4DD0-BC1F-3A52532E176E",
             "rev": 0
           }
         },
@@ -1521,7 +1557,7 @@
           "key": "fixed",
           "value": {
             "__ref__": true,
-            "id": "0CE2C434-44B7-4AF2-9074-89F823465413",
+            "id": "A9599659-6ED1-47B5-A58F-4E73D38F44CE",
             "rev": 0
           }
         },
@@ -1529,7 +1565,7 @@
           "key": "frozen",
           "value": {
             "__ref__": true,
-            "id": "35C4977B-0B50-4F0B-912A-89E8E85B8FAA",
+            "id": "A13C3CC3-0681-4058-8833-AA2D546EC20A",
             "rev": 0
           }
         },
@@ -1537,7 +1573,7 @@
           "key": "min",
           "value": {
             "__ref__": true,
-            "id": "F126C45B-477D-43A2-88AE-86B8CE70401C",
+            "id": "65569ED4-7D3E-4773-9CAD-97EA89BBD193",
             "rev": 0
           }
         },
@@ -1551,7 +1587,7 @@
           "key": "bottom",
           "value": {
             "__ref__": true,
-            "id": "CFABCD0D-E1E2-4546-8C36-19EF15ED3E16",
+            "id": "4CB90C10-E260-4FF3-937E-2AF86A8244A4",
             "rev": 0
           }
         },
@@ -1566,7 +1602,7 @@
           "key": "proportion",
           "value": {
             "__ref__": true,
-            "id": "CDA85E97-6CB1-4A36-A98D-2235C5F7183F",
+            "id": "D3BA3F83-8C04-4F43-BDEF-CEB87C11C000",
             "rev": 0
           }
         },
@@ -1582,7 +1618,7 @@
           "key": "group",
           "value": {
             "__ref__": true,
-            "id": "9C17DC2D-2F40-4179-AAE0-576C523ABCC2",
+            "id": "92CD634C-1E07-4AAC-A62C-0E82CB50CB63",
             "rev": 0
           }
         },
@@ -1602,7 +1638,7 @@
         }
       }
     },
-    "0CE2C434-44B7-4AF2-9074-89F823465413": {
+    "A9599659-6ED1-47B5-A58F-4E73D38F44CE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1619,7 +1655,7 @@
         }
       }
     },
-    "35C4977B-0B50-4F0B-912A-89E8E85B8FAA": {
+    "A13C3CC3-0681-4058-8833-AA2D546EC20A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1636,7 +1672,7 @@
         }
       }
     },
-    "F126C45B-477D-43A2-88AE-86B8CE70401C": {
+    "65569ED4-7D3E-4773-9CAD-97EA89BBD193": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1653,7 +1689,7 @@
         }
       }
     },
-    "CFABCD0D-E1E2-4546-8C36-19EF15ED3E16": {
+    "4CB90C10-E260-4FF3-937E-2AF86A8244A4": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1664,7 +1700,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "AF5514A6-6A98-488B-BE72-3517E0072633",
+            "id": "AE62B9D3-6690-4DD0-BC1F-3A52532E176E",
             "rev": 0
           }
         },
@@ -1672,7 +1708,7 @@
           "key": "fixed",
           "value": {
             "__ref__": true,
-            "id": "EE77C9F7-4F64-46E9-92C6-4ADCD6D64950",
+            "id": "78B95023-1F99-45E4-A44D-F0674A2B4824",
             "rev": 0
           }
         },
@@ -1680,7 +1716,7 @@
           "key": "frozen",
           "value": {
             "__ref__": true,
-            "id": "E9DD6738-7066-4D64-8CEA-6C170C350C53",
+            "id": "6A620E6C-7E25-4F9B-8B6A-BDC0BF0A2B7E",
             "rev": 0
           }
         },
@@ -1688,7 +1724,7 @@
           "key": "min",
           "value": {
             "__ref__": true,
-            "id": "93EDF7A3-B86E-4A84-88A2-293AA71D7267",
+            "id": "41FC0FB6-3DB0-4EF2-91CD-7732D08B9B8C",
             "rev": 0
           }
         },
@@ -1696,7 +1732,7 @@
           "key": "top",
           "value": {
             "__ref__": true,
-            "id": "F5A38280-0E1E-4E33-91BF-A841E1181584",
+            "id": "C9DD3B52-7DE9-4BF6-AE46-7D7E64ABBBDE",
             "rev": 0
           }
         },
@@ -1707,7 +1743,7 @@
           "key": "bottom",
           "value": {
             "__ref__": true,
-            "id": "20A38C1C-326A-4C93-A357-A29ABD8F50A0",
+            "id": "69BAE646-C4BA-485F-B83E-EE086B33076D",
             "rev": 0
           }
         },
@@ -1722,7 +1758,7 @@
           "key": "proportion",
           "value": {
             "__ref__": true,
-            "id": "A77012D2-B1F0-4568-A2F8-13B751DC978A",
+            "id": "A9C49946-B431-490C-A7F4-737D5F0D6B47",
             "rev": 0
           }
         },
@@ -1738,7 +1774,7 @@
           "key": "group",
           "value": {
             "__ref__": true,
-            "id": "5AB95484-5955-4605-B3D4-D7FC79FF09A1",
+            "id": "D4C506DB-3B68-4C50-B86B-398114123EAF",
             "rev": 0
           }
         }
@@ -1754,7 +1790,7 @@
         }
       }
     },
-    "EE77C9F7-4F64-46E9-92C6-4ADCD6D64950": {
+    "78B95023-1F99-45E4-A44D-F0674A2B4824": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1771,7 +1807,7 @@
         }
       }
     },
-    "E9DD6738-7066-4D64-8CEA-6C170C350C53": {
+    "6A620E6C-7E25-4F9B-8B6A-BDC0BF0A2B7E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1788,7 +1824,7 @@
         }
       }
     },
-    "93EDF7A3-B86E-4A84-88A2-293AA71D7267": {
+    "41FC0FB6-3DB0-4EF2-91CD-7732D08B9B8C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1805,7 +1841,7 @@
         }
       }
     },
-    "20A38C1C-326A-4C93-A357-A29ABD8F50A0": {
+    "69BAE646-C4BA-485F-B83E-EE086B33076D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1816,7 +1852,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "AF5514A6-6A98-488B-BE72-3517E0072633",
+            "id": "AE62B9D3-6690-4DD0-BC1F-3A52532E176E",
             "rev": 0
           }
         },
@@ -1824,7 +1860,7 @@
           "key": "fixed",
           "value": {
             "__ref__": true,
-            "id": "0C765C00-07F0-4F1D-8A67-1BF02111ED13",
+            "id": "8A673108-AB0A-46B9-A0F4-70788FA8C863",
             "rev": 0
           }
         },
@@ -1832,7 +1868,7 @@
           "key": "frozen",
           "value": {
             "__ref__": true,
-            "id": "AFD0BD62-3DEE-429D-B9BC-03FA4B3A36C9",
+            "id": "C7FC89D8-343E-4092-B85C-9798C49B11BE",
             "rev": 0
           }
         },
@@ -1840,7 +1876,7 @@
           "key": "min",
           "value": {
             "__ref__": true,
-            "id": "3240B484-67FE-4A73-A295-1E386B13B37A",
+            "id": "8FF4A53D-17C6-4E4D-8A0C-5399C9628566",
             "rev": 0
           }
         },
@@ -1848,7 +1884,7 @@
           "key": "top",
           "value": {
             "__ref__": true,
-            "id": "CFABCD0D-E1E2-4546-8C36-19EF15ED3E16",
+            "id": "4CB90C10-E260-4FF3-937E-2AF86A8244A4",
             "rev": 0
           }
         },
@@ -1869,7 +1905,7 @@
           "key": "proportion",
           "value": {
             "__ref__": true,
-            "id": "E3862EFF-BC50-4104-B656-4F20BD7ABD50",
+            "id": "9A984243-24C6-4E18-B964-F9C55AB48BB7",
             "rev": 0
           }
         },
@@ -1885,7 +1921,7 @@
           "key": "group",
           "value": {
             "__ref__": true,
-            "id": "6D13829C-1C99-4024-8BC2-426A587D6F89",
+            "id": "AF45FBEC-7878-4C77-844F-8D1796A08F28",
             "rev": 0
           }
         },
@@ -1905,7 +1941,7 @@
         }
       }
     },
-    "0C765C00-07F0-4F1D-8A67-1BF02111ED13": {
+    "8A673108-AB0A-46B9-A0F4-70788FA8C863": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1922,7 +1958,7 @@
         }
       }
     },
-    "AFD0BD62-3DEE-429D-B9BC-03FA4B3A36C9": {
+    "C7FC89D8-343E-4092-B85C-9798C49B11BE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1939,7 +1975,7 @@
         }
       }
     },
-    "3240B484-67FE-4A73-A295-1E386B13B37A": {
+    "8FF4A53D-17C6-4E4D-8A0C-5399C9628566": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1956,7 +1992,7 @@
         }
       }
     },
-    "E3862EFF-BC50-4104-B656-4F20BD7ABD50": {
+    "9A984243-24C6-4E18-B964-F9C55AB48BB7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1973,7 +2009,7 @@
         }
       }
     },
-    "6D13829C-1C99-4024-8BC2-426A587D6F89": {
+    "AF45FBEC-7878-4C77-844F-8D1796A08F28": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1984,7 +2020,7 @@
           "key": "state",
           "value": {
             "__ref__": true,
-            "id": "F227B67E-F747-4975-B879-35B7E4ED7192",
+            "id": "F30E3B74-8165-44F9-A814-A3C01DEBEC92",
             "rev": 0
           }
         }
@@ -2000,7 +2036,7 @@
         }
       }
     },
-    "F227B67E-F747-4975-B879-35B7E4ED7192": {
+    "F30E3B74-8165-44F9-A814-A3C01DEBEC92": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2012,7 +2048,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "20A38C1C-326A-4C93-A357-A29ABD8F50A0",
+              "id": "69BAE646-C4BA-485F-B83E-EE086B33076D",
               "rev": 0
             }
           ]
@@ -2021,7 +2057,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "AF5514A6-6A98-488B-BE72-3517E0072633",
+            "id": "AE62B9D3-6690-4DD0-BC1F-3A52532E176E",
             "rev": 0
           }
         },
@@ -2036,14 +2072,14 @@
           "key": "morph",
           "value": {
             "__ref__": true,
-            "id": "Morph_5C8EEC07_F329_434A_BD17_3390456ADE86",
-            "rev": 709035
+            "id": "Morph_F868732A_5F1C_4CE4_AB77_A4406AE6C90B",
+            "rev": 1808937
           }
         }
       }
     },
-    "Morph_5C8EEC07_F329_434A_BD17_3390456ADE86": {
-      "rev": 709035,
+    "Morph_F868732A_5F1C_4CE4_AB77_A4406AE6C90B": {
+      "rev": 1808937,
       "props": {
         "extent": {
           "key": "extent",
@@ -2076,7 +2112,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "C4EF3064-3072-4E6C-82BD-D577A1A29A6B",
+            "id": "47496867-8666-4486-A881-BFCADE7172E2",
             "rev": 0
           }
         },
@@ -2085,23 +2121,23 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Show_replies_6D558852_1FFC_4288_AE78_0FDC57CBF12F",
-              "rev": 464483
+              "id": "Show_replies_012818A3_8038_406D_8A25_57B21D489352",
+              "rev": 1877922
             },
             {
               "__ref__": true,
-              "id": "Button_F2031993_DB11_4F3E_8CE4_6342A1A577A3",
-              "rev": 464484
+              "id": "Button_5567B674_64C3_44CA_95E8_8502F4EAA6D3",
+              "rev": 1875914
             },
             {
               "__ref__": true,
-              "id": "Button_24DB0D16_B64A_4237_8708_92A23A720153",
-              "rev": 464485
+              "id": "Button_2C02584F_17CA_48AB_91B6_19EF84663EDC",
+              "rev": 1808940
             },
             {
               "__ref__": true,
-              "id": "Text_4C410EE1_5A24_4002_9F3D_CBD4BD53C691",
-              "rev": 464486
+              "id": "Text_2FE6ACAD_1D17_4350_9069_230CDF0A1917",
+              "rev": 1808941
             }
           ]
         },
@@ -2124,7 +2160,7 @@
         }
       }
     },
-    "C4EF3064-3072-4E6C-82BD-D577A1A29A6B": {
+    "47496867-8666-4486-A881-BFCADE7172E2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2135,7 +2171,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "8F409180-030D-49B0-B42D-E6F0DE57A7BB",
+            "id": "4700138A-A68D-4633-AA34-ACB35F9ED128",
             "rev": 0
           }
         },
@@ -2149,7 +2185,7 @@
         },
         "lastBounds": {
           "key": "lastBounds",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,101.33333333333333,512.4429267042542,32.66666666666667)"
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,68.33333333333334,512.4429267042542,32.66666666666666)"
         },
         "active": {
           "key": "active",
@@ -2159,8 +2195,8 @@
           "key": "container",
           "value": {
             "__ref__": true,
-            "id": "Morph_5C8EEC07_F329_434A_BD17_3390456ADE86",
-            "rev": 709035
+            "id": "Morph_F868732A_5F1C_4CE4_AB77_A4406AE6C90B",
+            "rev": 1808937
           }
         },
         "_autoResize": {
@@ -2187,7 +2223,7 @@
         }
       }
     },
-    "8F409180-030D-49B0-B42D-E6F0DE57A7BB": {
+    "4700138A-A68D-4633-AA34-ACB35F9ED128": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2212,12 +2248,16 @@
         }
       }
     },
-    "Show_replies_6D558852_1FFC_4288_AE78_0FDC57CBF12F": {
-      "rev": 464483,
+    "Show_replies_012818A3_8038_406D_8A25_57B21D489352": {
+      "rev": 1877922,
       "props": {
         "clipMode": {
           "key": "clipMode",
           "value": "hidden"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
         },
         "extent": {
           "key": "extent",
@@ -2265,8 +2305,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_0D9D8170_CFBC_4255_ACBC_60E3CE470BC1",
-              "rev": 464468
+              "id": "Morph_7A857AF5_6ADE_477E_AB99_62293163FB2A",
+              "rev": 1877923
             }
           ]
         },
@@ -2314,7 +2354,7 @@
           "key": "defaultActiveStyle",
           "value": {
             "__ref__": true,
-            "id": "B5232F27-1958-431D-B04F-678993ACBAB3",
+            "id": "8793F8EA-4E82-40AA-9804-CE2A8512DE3E",
             "rev": 0
           }
         },
@@ -2322,7 +2362,7 @@
           "key": "activeStyle",
           "value": {
             "__ref__": true,
-            "id": "6F8E260F-719D-4CB5-AB27-8704590B0314",
+            "id": "54FD73A9-2DD0-4B88-A171-1D0CB100E598",
             "rev": 0
           }
         },
@@ -2330,7 +2370,7 @@
           "key": "defaultInactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "B8E57C8A-CE8D-40C8-A2D3-EC0FD68D84F5",
+            "id": "17948C4E-435F-4524-8A83-E99165E34419",
             "rev": 0
           }
         },
@@ -2338,7 +2378,7 @@
           "key": "inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "6A03AF24-66F1-409A-A8D9-CDF280305F00",
+            "id": "5EF86D61-BDC5-4300-98CD-97CF762796DE",
             "rev": 0
           }
         },
@@ -2346,7 +2386,7 @@
           "key": "defaultTriggerStyle",
           "value": {
             "__ref__": true,
-            "id": "C11D0445-2ED2-402E-964A-A8B56C9173F7",
+            "id": "8E42B3A7-4345-4117-BA02-C44CEE213588",
             "rev": 0
           }
         },
@@ -2354,7 +2394,7 @@
           "key": "triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "9DB53AFA-EB31-4A4B-B4BD-2984D190B333",
+            "id": "C4380BB0-8777-4BB9-9FD6-ADB246AFBE8B",
             "rev": 0
           }
         },
@@ -2367,7 +2407,14 @@
           "value": []
         },
         "attributeConnections": {
-          "key": "attributeConnections"
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "056D4C7A-02BC-49A5-BD3A-3077A32554DF",
+              "rev": 0
+            }
+          ]
         }
       },
       "lively.serializer-class-info": {
@@ -2381,8 +2428,8 @@
         }
       }
     },
-    "Morph_0D9D8170_CFBC_4255_ACBC_60E3CE470BC1": {
-      "rev": 464468,
+    "Morph_7A857AF5_6ADE_477E_AB99_62293163FB2A": {
+      "rev": 1877923,
       "props": {
         "extent": {
           "key": "extent",
@@ -2423,7 +2470,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "1C161FA7-F71D-40D3-84DF-8EEC91BC6C1A",
+            "id": "125F89FD-BD3E-430A-9733-467018F76760",
             "rev": 0
           }
         },
@@ -2432,13 +2479,13 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_606BDE3A_8533_4271_B00E_2F8ECDB78521",
-              "rev": 464466
+              "id": "Morph_E080509F_0025_4FFB_B4E0_BD60A552D387",
+              "rev": 1877927
             },
             {
               "__ref__": true,
-              "id": "Text_9BA97423_54B7_41F4_A8E6_ED7820686691",
-              "rev": 464467
+              "id": "Text_7F691B4B_3BCC_4ED5_B74D_A645B481A950",
+              "rev": 1877933
             }
           ]
         },
@@ -2461,7 +2508,7 @@
         }
       }
     },
-    "1C161FA7-F71D-40D3-84DF-8EEC91BC6C1A": {
+    "125F89FD-BD3E-430A-9733-467018F76760": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2472,7 +2519,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "2D12C4B0-7124-4FC0-81F7-57C75962B5D3",
+            "id": "AAE4BC44-93D7-4453-B6CF-F98F4662E938",
             "rev": 0
           }
         },
@@ -2486,7 +2533,7 @@
         },
         "lastBounds": {
           "key": "lastBounds",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,4.6,185.6,41)"
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,4.6,185.59375,41)"
         },
         "active": {
           "key": "active",
@@ -2496,8 +2543,8 @@
           "key": "container",
           "value": {
             "__ref__": true,
-            "id": "Morph_0D9D8170_CFBC_4255_ACBC_60E3CE470BC1",
-            "rev": 464468
+            "id": "Morph_7A857AF5_6ADE_477E_AB99_62293163FB2A",
+            "rev": 1877923
           }
         },
         "_autoResize": {
@@ -2524,7 +2571,7 @@
         }
       }
     },
-    "2D12C4B0-7124-4FC0-81F7-57C75962B5D3": {
+    "AAE4BC44-93D7-4453-B6CF-F98F4662E938": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2549,8 +2596,8 @@
         }
       }
     },
-    "Morph_606BDE3A_8533_4271_B00E_2F8ECDB78521": {
-      "rev": 464466,
+    "Morph_E080509F_0025_4FFB_B4E0_BD60A552D387": {
+      "rev": 1877927,
       "props": {
         "clipMode": {
           "key": "clipMode",
@@ -2588,13 +2635,13 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_1509709C_4798_4849_924B_7B73307E25BE",
-              "rev": 464458
+              "id": "Label_5B17D420_2158_4F53_A82F_C28C60E264EB",
+              "rev": 1646460
             },
             {
               "__ref__": true,
-              "id": "Label_F5C0F0EC_4192_4BD2_9295_DEFAA5C83E90",
-              "rev": 464463
+              "id": "Label_7A6C783D_570D_4D5C_B15B_F0D9DD45B623",
+              "rev": 1877929
             }
           ]
         },
@@ -2617,9 +2664,13 @@
         }
       }
     },
-    "Label_1509709C_4798_4849_924B_7B73307E25BE": {
-      "rev": 464458,
+    "Label_5B17D420_2158_4F53_A82F_C28C60E264EB": {
+      "rev": 1646460,
       "props": {
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(30.9,36.0)"
@@ -2644,6 +2695,10 @@
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(-15.4,-22.0)"
         },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
@@ -2663,15 +2718,23 @@
               "",
               {
                 "__ref__": true,
-                "id": "16F5D700-6EE0-4F69-B9DE-845BAE7952EE",
+                "id": "938291A2-A919-40CE-8321-9C0797F6CCEF",
                 "rev": 0
               }
             ]
           ]
         },
+        "autofit": {
+          "key": "autofit",
+          "value": true
+        },
         "padding": {
           "key": "padding",
           "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
         },
         "fontSize": {
           "key": "fontSize",
@@ -2680,6 +2743,18 @@
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -2700,7 +2775,7 @@
         }
       }
     },
-    "16F5D700-6EE0-4F69-B9DE-845BAE7952EE": {
+    "938291A2-A919-40CE-8321-9C0797F6CCEF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2719,12 +2794,20 @@
         }
       }
     },
-    "Label_F5C0F0EC_4192_4BD2_9295_DEFAA5C83E90": {
-      "rev": 464463,
+    "Label_7A6C783D_570D_4D5C_B15B_F0D9DD45B623": {
+      "rev": 1877929,
       "props": {
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(30.9,36.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
         },
         "name": {
           "key": "name",
@@ -2746,6 +2829,10 @@
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(-15.4,-22.0)"
         },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
@@ -2765,11 +2852,15 @@
               "",
               {
                 "__ref__": true,
-                "id": "1ED2EB6A-1972-4E8B-A442-C962C0808C33",
+                "id": "A95BE611-FC4D-4273-9927-BD92083098D0",
                 "rev": 0
               }
             ]
           ]
+        },
+        "autofit": {
+          "key": "autofit",
+          "value": true
         },
         "padding": {
           "key": "padding",
@@ -2786,6 +2877,18 @@
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(68,138,255)"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -2806,7 +2909,7 @@
         }
       }
     },
-    "1ED2EB6A-1972-4E8B-A442-C962C0808C33": {
+    "A95BE611-FC4D-4273-9927-BD92083098D0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2815,8 +2918,8 @@
         }
       }
     },
-    "Text_9BA97423_54B7_41F4_A8E6_ED7820686691": {
-      "rev": 464467,
+    "Text_7F691B4B_3BCC_4ED5_B74D_A645B481A950": {
+      "rev": 1877933,
       "props": {
         "draggable": {
           "key": "draggable",
@@ -2926,7 +3029,7 @@
           "key": "selection",
           "value": {
             "__ref__": true,
-            "id": "5BBEAEFD-9BF8-46F8-8AF0-609B40428A37",
+            "id": "0559E38A-4DAA-45ED-A69F-36EDA2BB3A72",
             "rev": 0
           }
         },
@@ -2934,7 +3037,7 @@
           "key": "defaultTextStyle",
           "value": {
             "__ref__": true,
-            "id": "A7A9D47C-26C4-4D20-8A55-489383ACF65D",
+            "id": "84E70F58-ADC5-46C8-96D1-24D18EE742DD",
             "rev": 0
           }
         },
@@ -2943,12 +3046,12 @@
           "value": [
             {
               "__ref__": true,
-              "id": "B8422555-FDD3-4599-8EBF-1156469298C3",
+              "id": "B8A7BC2A-9D50-4324-8A42-54B3072B10E9",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "BB382DAC-7E62-4DE9-91C5-773ED4087844",
+              "id": "37F9809A-8C33-4680-88AB-744D6EBA4EAE",
               "rev": 0
             }
           ]
@@ -3025,7 +3128,7 @@
         }
       }
     },
-    "5BBEAEFD-9BF8-46F8-8AF0-609B40428A37": {
+    "0559E38A-4DAA-45ED-A69F-36EDA2BB3A72": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3036,8 +3139,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_9BA97423_54B7_41F4_A8E6_ED7820686691",
-            "rev": 464467
+            "id": "Text_7F691B4B_3BCC_4ED5_B74D_A645B481A950",
+            "rev": 1877933
           }
         },
         "selections": {
@@ -3045,7 +3148,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "A7A5E0AD-B5DD-4F88-9487-7BB9D4F8199B",
+              "id": "6365A374-104D-4231-88AF-F1A9BE09CF91",
               "rev": 0
             }
           ]
@@ -3070,7 +3173,7 @@
         }
       }
     },
-    "A7A5E0AD-B5DD-4F88-9487-7BB9D4F8199B": {
+    "6365A374-104D-4231-88AF-F1A9BE09CF91": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3081,8 +3184,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_9BA97423_54B7_41F4_A8E6_ED7820686691",
-            "rev": 464467
+            "id": "Text_7F691B4B_3BCC_4ED5_B74D_A645B481A950",
+            "rev": 1877933
           }
         },
         "_goalColumn": {
@@ -3097,7 +3200,7 @@
           "key": "startAnchor",
           "value": {
             "__ref__": true,
-            "id": "B8422555-FDD3-4599-8EBF-1156469298C3",
+            "id": "B8A7BC2A-9D50-4324-8A42-54B3072B10E9",
             "rev": 0
           }
         },
@@ -3105,7 +3208,7 @@
           "key": "endAnchor",
           "value": {
             "__ref__": true,
-            "id": "BB382DAC-7E62-4DE9-91C5-773ED4087844",
+            "id": "37F9809A-8C33-4680-88AB-744D6EBA4EAE",
             "rev": 0
           }
         },
@@ -3113,7 +3216,7 @@
           "key": "_range",
           "value": {
             "__ref__": true,
-            "id": "6B082556-B5F7-40E4-9DC1-A43495F7AC60",
+            "id": "D918998A-E852-45AA-963D-74490E769555",
             "rev": 0
           }
         },
@@ -3137,7 +3240,7 @@
         }
       }
     },
-    "B8422555-FDD3-4599-8EBF-1156469298C3": {
+    "B8A7BC2A-9D50-4324-8A42-54B3072B10E9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3152,7 +3255,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "B2013DEF-291C-439B-ABE6-1BB373FF67B7",
+            "id": "362074A5-1022-4795-A8DB-07E18A1034D7",
             "rev": 0
           }
         },
@@ -3172,12 +3275,12 @@
         }
       }
     },
-    "B2013DEF-291C-439B-ABE6-1BB373FF67B7": {
+    "362074A5-1022-4795-A8DB-07E18A1034D7": {
       "rev": 0,
       "props": {
         "column": {
           "key": "column",
-          "value": 36
+          "value": 72
         },
         "row": {
           "key": "row",
@@ -3185,7 +3288,7 @@
         }
       }
     },
-    "BB382DAC-7E62-4DE9-91C5-773ED4087844": {
+    "37F9809A-8C33-4680-88AB-744D6EBA4EAE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3200,7 +3303,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "64D977A8-8198-4901-8901-93A5E7CAE693",
+            "id": "F811BB8D-943E-4EC3-8C97-1F768E070462",
             "rev": 0
           }
         },
@@ -3220,12 +3323,12 @@
         }
       }
     },
-    "64D977A8-8198-4901-8901-93A5E7CAE693": {
+    "F811BB8D-943E-4EC3-8C97-1F768E070462": {
       "rev": 0,
       "props": {
         "column": {
           "key": "column",
-          "value": 36
+          "value": 72
         },
         "row": {
           "key": "row",
@@ -3233,7 +3336,7 @@
         }
       }
     },
-    "6B082556-B5F7-40E4-9DC1-A43495F7AC60": {
+    "D918998A-E852-45AA-963D-74490E769555": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3244,7 +3347,7 @@
           "key": "start",
           "value": {
             "__ref__": true,
-            "id": "35F04F3D-20DE-4641-938B-ACCDF2B54F1A",
+            "id": "E6AE7F8F-2C47-4C02-964B-CFD253ABF703",
             "rev": 0
           }
         },
@@ -3252,7 +3355,7 @@
           "key": "end",
           "value": {
             "__ref__": true,
-            "id": "2568FF72-49F1-47AF-80E1-5FC7D777F83B",
+            "id": "2B780377-21F1-4CFD-B6FB-4D3EB75E56EF",
             "rev": 0
           }
         }
@@ -3268,7 +3371,7 @@
         }
       }
     },
-    "35F04F3D-20DE-4641-938B-ACCDF2B54F1A": {
+    "E6AE7F8F-2C47-4C02-964B-CFD253ABF703": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3285,7 +3388,7 @@
         }
       }
     },
-    "2568FF72-49F1-47AF-80E1-5FC7D777F83B": {
+    "2B780377-21F1-4CFD-B6FB-4D3EB75E56EF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3302,7 +3405,7 @@
         }
       }
     },
-    "A7A9D47C-26C4-4D20-8A55-489383ACF65D": {
+    "84E70F58-ADC5-46C8-96D1-24D18EE742DD": {
       "rev": 0,
       "props": {
         "fontFamily": {
@@ -3351,7 +3454,7 @@
         }
       }
     },
-    "B5232F27-1958-431D-B04F-678993ACBAB3": {
+    "8793F8EA-4E82-40AA-9804-CE2A8512DE3E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3376,7 +3479,7 @@
         }
       }
     },
-    "6F8E260F-719D-4CB5-AB27-8704590B0314": {
+    "54FD73A9-2DD0-4B88-A171-1D0CB100E598": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3484,8 +3587,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_0D9D8170_CFBC_4255_ACBC_60E3CE470BC1",
-              "rev": 464468
+              "id": "Morph_7A857AF5_6ADE_477E_AB99_62293163FB2A",
+              "rev": 1877923
             }
           ]
         },
@@ -3557,7 +3660,7 @@
           "key": "borderLeft",
           "value": {
             "__ref__": true,
-            "id": "5383BD80-76EE-410A-A45A-081EDCE8FB89",
+            "id": "DCCD4230-721F-435F-B4A8-388EF5F2CC4B",
             "rev": 0
           }
         },
@@ -3565,7 +3668,7 @@
           "key": "borderRight",
           "value": {
             "__ref__": true,
-            "id": "43A731A0-6A83-4440-B755-49D4E26F4B65",
+            "id": "72F06400-E6FB-4201-82AF-128CB0E5B74A",
             "rev": 0
           }
         },
@@ -3573,7 +3676,7 @@
           "key": "borderBottom",
           "value": {
             "__ref__": true,
-            "id": "EA1AAAE4-FC8B-49B5-8B96-360C1FA4B999",
+            "id": "627052C8-F9C9-4969-BCDC-38B7366EAD3B",
             "rev": 0
           }
         },
@@ -3581,7 +3684,7 @@
           "key": "borderTop",
           "value": {
             "__ref__": true,
-            "id": "FFD4B03A-A9D3-4107-8B97-46FD088C685C",
+            "id": "876CC4BD-B427-474F-B70E-8D7E44C719B0",
             "rev": 0
           }
         },
@@ -3601,7 +3704,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "5AD75BFA-74B5-4941-9448-8E278BA3850C",
+            "id": "B1E1CD22-9089-4792-81FC-A141AE0215AB",
             "rev": 0
           }
         },
@@ -3613,7 +3716,7 @@
         }
       }
     },
-    "5383BD80-76EE-410A-A45A-081EDCE8FB89": {
+    "DCCD4230-721F-435F-B4A8-388EF5F2CC4B": {
       "rev": 0,
       "props": {
         "style": {
@@ -3630,7 +3733,7 @@
         }
       }
     },
-    "43A731A0-6A83-4440-B755-49D4E26F4B65": {
+    "72F06400-E6FB-4201-82AF-128CB0E5B74A": {
       "rev": 0,
       "props": {
         "style": {
@@ -3647,7 +3750,7 @@
         }
       }
     },
-    "EA1AAAE4-FC8B-49B5-8B96-360C1FA4B999": {
+    "627052C8-F9C9-4969-BCDC-38B7366EAD3B": {
       "rev": 0,
       "props": {
         "style": {
@@ -3664,7 +3767,7 @@
         }
       }
     },
-    "FFD4B03A-A9D3-4107-8B97-46FD088C685C": {
+    "876CC4BD-B427-474F-B70E-8D7E44C719B0": {
       "rev": 0,
       "props": {
         "style": {
@@ -3681,7 +3784,7 @@
         }
       }
     },
-    "5AD75BFA-74B5-4941-9448-8E278BA3850C": {
+    "B1E1CD22-9089-4792-81FC-A141AE0215AB": {
       "rev": 0,
       "props": {
         "style": {
@@ -3698,7 +3801,7 @@
         }
       }
     },
-    "B8E57C8A-CE8D-40C8-A2D3-EC0FD68D84F5": {
+    "17948C4E-435F-4524-8A83-E99165E34419": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3723,7 +3826,7 @@
         }
       }
     },
-    "6A03AF24-66F1-409A-A8D9-CDF280305F00": {
+    "5EF86D61-BDC5-4300-98CD-97CF762796DE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3756,7 +3859,7 @@
         }
       }
     },
-    "C11D0445-2ED2-402E-964A-A8B56C9173F7": {
+    "8E42B3A7-4345-4117-BA02-C44CEE213588": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3769,7 +3872,7 @@
         }
       }
     },
-    "9DB53AFA-EB31-4A4B-B4BD-2984D190B333": {
+    "C4380BB0-8777-4BB9-9FD6-ADB246AFBE8B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3876,8 +3979,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_0D9D8170_CFBC_4255_ACBC_60E3CE470BC1",
-              "rev": 464468
+              "id": "Morph_7A857AF5_6ADE_477E_AB99_62293163FB2A",
+              "rev": 1877923
             }
           ]
         },
@@ -3949,7 +4052,7 @@
           "key": "borderLeft",
           "value": {
             "__ref__": true,
-            "id": "C09B9FE2-BE21-42F5-BFC7-D6E334F2DB36",
+            "id": "E141272A-657A-4B2D-A801-613FB2858375",
             "rev": 0
           }
         },
@@ -3957,7 +4060,7 @@
           "key": "borderRight",
           "value": {
             "__ref__": true,
-            "id": "73F78C26-ED0D-457A-A271-6182F410B166",
+            "id": "6D454698-F154-4E6A-9602-F8A89622F74D",
             "rev": 0
           }
         },
@@ -3965,7 +4068,7 @@
           "key": "borderBottom",
           "value": {
             "__ref__": true,
-            "id": "E6CE677F-3F26-4636-B256-71ABBEC8C488",
+            "id": "9CA918EA-6AC1-4089-A93C-35B7EEEDB566",
             "rev": 0
           }
         },
@@ -3973,7 +4076,7 @@
           "key": "borderTop",
           "value": {
             "__ref__": true,
-            "id": "473DF5B7-94B0-488E-8F5F-28FF463EA5E0",
+            "id": "A7D59E4C-93C5-4A9B-BF49-9F5EBD71D4B9",
             "rev": 0
           }
         },
@@ -3997,7 +4100,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "2A9E476E-FCAA-4B72-97A9-925708DED4DF",
+            "id": "2797B668-A155-4D0E-A432-A07FA66ABE72",
             "rev": 0
           }
         },
@@ -4009,13 +4112,9 @@
         }
       }
     },
-    "C09B9FE2-BE21-42F5-BFC7-D6E334F2DB36": {
+    "E141272A-657A-4B2D-A801-613FB2858375": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "style": {
           "key": "style",
           "value": "solid"
@@ -4030,13 +4129,9 @@
         }
       }
     },
-    "73F78C26-ED0D-457A-A271-6182F410B166": {
+    "6D454698-F154-4E6A-9602-F8A89622F74D": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "style": {
           "key": "style",
           "value": "solid"
@@ -4051,13 +4146,9 @@
         }
       }
     },
-    "E6CE677F-3F26-4636-B256-71ABBEC8C488": {
+    "9CA918EA-6AC1-4089-A93C-35B7EEEDB566": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "style": {
           "key": "style",
           "value": "solid"
@@ -4072,13 +4163,9 @@
         }
       }
     },
-    "473DF5B7-94B0-488E-8F5F-28FF463EA5E0": {
+    "A7D59E4C-93C5-4A9B-BF49-9F5EBD71D4B9": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "style": {
           "key": "style",
           "value": "solid"
@@ -4093,13 +4180,9 @@
         }
       }
     },
-    "2A9E476E-FCAA-4B72-97A9-925708DED4DF": {
+    "2797B668-A155-4D0E-A432-A07FA66ABE72": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "style": {
           "key": "style",
           "value": "solid"
@@ -4114,12 +4197,100 @@
         }
       }
     },
-    "Button_F2031993_DB11_4F3E_8CE4_6342A1A577A3": {
-      "rev": 464484,
+    "056D4C7A-02BC-49A5-BD3A-3077A32554DF": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Show_replies_012818A3_8038_406D_8A25_57B21D489352",
+            "rev": 1877922
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fire"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Reply_9CD9B863_8E22_4E44_8E8D_1B0954595B95",
+            "rev": 1877925
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "toggleReplies"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "9DB041FF-9307-493F-84BC-7878DD61516F",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "9DB041FF-9307-493F-84BC-7878DD61516F": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Show_replies_012818A3_8038_406D_8A25_57B21D489352",
+            "rev": 1877922
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Reply_9CD9B863_8E22_4E44_8E8D_1B0954595B95",
+            "rev": 1877925
+          }
+        }
+      }
+    },
+    "Button_5567B674_64C3_44CA_95E8_8502F4EAA6D3": {
+      "rev": 1875914,
       "props": {
         "clipMode": {
           "key": "clipMode",
           "value": "hidden"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
         },
         "extent": {
           "key": "extent",
@@ -4131,7 +4302,7 @@
         },
         "name": {
           "key": "name",
-          "value": "connect button"
+          "value": "reply button"
         },
         "nativeCursor": {
           "key": "nativeCursor",
@@ -4166,8 +4337,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_7349982F_7910_4843_9CE5_99F450657467",
-              "rev": 464474
+              "id": "Morph_5CC040A5_192F_49BE_A447_B9395C7D082D",
+              "rev": 1875915
             }
           ]
         },
@@ -4215,7 +4386,7 @@
           "key": "defaultActiveStyle",
           "value": {
             "__ref__": true,
-            "id": "4C31E248-4CF4-48BB-AD26-2F292831ECE8",
+            "id": "4EF3B11A-6334-474B-B149-6EEF22C3DAC0",
             "rev": 0
           }
         },
@@ -4223,7 +4394,7 @@
           "key": "activeStyle",
           "value": {
             "__ref__": true,
-            "id": "DDE42489-0CAB-477F-9A7A-3D4D6A0A1DD0",
+            "id": "C94FEA74-614A-4748-823F-0C390518120F",
             "rev": 0
           }
         },
@@ -4231,7 +4402,7 @@
           "key": "defaultInactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "1F867858-EB21-4012-AD0F-5BEC9BE8350B",
+            "id": "58418299-A74A-4EC8-9B2D-DEEE84E0B26D",
             "rev": 0
           }
         },
@@ -4239,7 +4410,7 @@
           "key": "inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "7379CB2A-5FEA-4AD6-B867-04E30A9D9625",
+            "id": "B45B5C7F-0DB4-44CD-A682-69F7BE2CC1DD",
             "rev": 0
           }
         },
@@ -4247,7 +4418,7 @@
           "key": "defaultTriggerStyle",
           "value": {
             "__ref__": true,
-            "id": "4014CCA6-DBDA-4282-810A-0FCA59F61A76",
+            "id": "1B366400-5743-4C93-B9E8-D7B02CA937A7",
             "rev": 0
           }
         },
@@ -4255,7 +4426,7 @@
           "key": "triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "7A377995-75E8-41D3-B6FA-F98622437348",
+            "id": "E24C8436-6CA3-4CAD-A61A-DB6E2EA2AA3B",
             "rev": 0
           }
         },
@@ -4264,7 +4435,14 @@
           "value": []
         },
         "attributeConnections": {
-          "key": "attributeConnections"
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "9A3E1E31-1F15-474A-9CD5-41CE919B6EFB",
+              "rev": 0
+            }
+          ]
         }
       },
       "lively.serializer-class-info": {
@@ -4278,8 +4456,8 @@
         }
       }
     },
-    "Morph_7349982F_7910_4843_9CE5_99F450657467": {
-      "rev": 464474,
+    "Morph_5CC040A5_192F_49BE_A447_B9395C7D082D": {
+      "rev": 1875915,
       "props": {
         "extent": {
           "key": "extent",
@@ -4320,7 +4498,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "4165C3BD-B727-4EBB-8401-FD7AD3921271",
+            "id": "D16049E3-B3B1-42D7-BE62-8CC1C885F28C",
             "rev": 0
           }
         },
@@ -4329,13 +4507,13 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_BAFC0C7B_ADCE_430A_8AB5_F1D4D033310D",
-              "rev": 464472
+              "id": "Label_C735212F_4004_4C05_BC14_CEFFB4FEB110",
+              "rev": 1651010
             },
             {
               "__ref__": true,
-              "id": "Text_FC2C121C_9968_4625_9D7F_7FF278CA27A2",
-              "rev": 464473
+              "id": "Text_5725D398_ABBE_40BA_9F7D_FEA394C723DA",
+              "rev": 1651012
             }
           ]
         },
@@ -4358,7 +4536,7 @@
         }
       }
     },
-    "4165C3BD-B727-4EBB-8401-FD7AD3921271": {
+    "D16049E3-B3B1-42D7-BE62-8CC1C885F28C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4369,7 +4547,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "5105EB1A-1E00-444D-9947-68380F93DFF2",
+            "id": "416CB612-0473-4E6E-908C-B0931D16F338",
             "rev": 0
           }
         },
@@ -4393,8 +4571,8 @@
           "key": "container",
           "value": {
             "__ref__": true,
-            "id": "Morph_7349982F_7910_4843_9CE5_99F450657467",
-            "rev": 464474
+            "id": "Morph_5CC040A5_192F_49BE_A447_B9395C7D082D",
+            "rev": 1875915
           }
         },
         "_autoResize": {
@@ -4421,7 +4599,7 @@
         }
       }
     },
-    "5105EB1A-1E00-444D-9947-68380F93DFF2": {
+    "416CB612-0473-4E6E-908C-B0931D16F338": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4446,9 +4624,13 @@
         }
       }
     },
-    "Label_BAFC0C7B_ADCE_430A_8AB5_F1D4D033310D": {
-      "rev": 464472,
+    "Label_C735212F_4004_4C05_BC14_CEFFB4FEB110": {
+      "rev": 1651010,
       "props": {
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(42.0,42.0)"
@@ -4473,6 +4655,10 @@
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
@@ -4492,15 +4678,23 @@
               "",
               {
                 "__ref__": true,
-                "id": "B8014D6A-9593-47E2-A25D-5C1AECBFDDB5",
+                "id": "834A91C0-4025-400D-9101-7A384795729D",
                 "rev": 0
               }
             ]
           ]
         },
+        "autofit": {
+          "key": "autofit",
+          "value": true
+        },
         "padding": {
           "key": "padding",
           "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(3,3,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
         },
         "fontSize": {
           "key": "fontSize",
@@ -4509,6 +4703,18 @@
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -4529,7 +4735,7 @@
         }
       }
     },
-    "B8014D6A-9593-47E2-A25D-5C1AECBFDDB5": {
+    "834A91C0-4025-400D-9101-7A384795729D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4548,8 +4754,8 @@
         }
       }
     },
-    "Text_FC2C121C_9968_4625_9D7F_7FF278CA27A2": {
-      "rev": 464473,
+    "Text_5725D398_ABBE_40BA_9F7D_FEA394C723DA": {
+      "rev": 1651012,
       "props": {
         "draggable": {
           "key": "draggable",
@@ -4659,7 +4865,7 @@
           "key": "selection",
           "value": {
             "__ref__": true,
-            "id": "2D673DA8-7A86-4A81-B13C-7B057A73C4C3",
+            "id": "48844622-2B72-46ED-8E98-2F3588E7E0D7",
             "rev": 0
           }
         },
@@ -4667,7 +4873,7 @@
           "key": "defaultTextStyle",
           "value": {
             "__ref__": true,
-            "id": "8F16D230-5C31-4AB2-AE43-477D8E55F1B7",
+            "id": "DFBBDF92-47BE-4043-90FA-503F1B66950D",
             "rev": 0
           }
         },
@@ -4676,17 +4882,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "EF3656B7-CBF4-4C41-85F3-313D6618098F",
+              "id": "7CE8B600-6FAD-493C-AD67-84D4A89A500C",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "2153D3FE-880E-49A9-B4C2-4F776EBCA574",
+              "id": "BD78B8C1-85D1-42AF-858A-AEFCAAC37D47",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "5E096270-039A-4F1B-9916-B8201AA5559A",
+              "id": "C1D1D215-121D-4787-981A-EB8C28F2CFD4",
               "rev": 0
             }
           ]
@@ -4696,7 +4902,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "5E096270-039A-4F1B-9916-B8201AA5559A",
+              "id": "C1D1D215-121D-4787-981A-EB8C28F2CFD4",
               "rev": 0
             }
           ]
@@ -4874,7 +5080,7 @@
         }
       }
     },
-    "2D673DA8-7A86-4A81-B13C-7B057A73C4C3": {
+    "48844622-2B72-46ED-8E98-2F3588E7E0D7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4885,8 +5091,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_FC2C121C_9968_4625_9D7F_7FF278CA27A2",
-            "rev": 464473
+            "id": "Text_5725D398_ABBE_40BA_9F7D_FEA394C723DA",
+            "rev": 1651012
           }
         },
         "selections": {
@@ -4894,7 +5100,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "C4511A87-9887-43A5-A768-ED03D53B2647",
+              "id": "DB466E4B-495C-457B-BC19-235E9DF016AC",
               "rev": 0
             }
           ]
@@ -4919,7 +5125,7 @@
         }
       }
     },
-    "C4511A87-9887-43A5-A768-ED03D53B2647": {
+    "DB466E4B-495C-457B-BC19-235E9DF016AC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4930,8 +5136,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_FC2C121C_9968_4625_9D7F_7FF278CA27A2",
-            "rev": 464473
+            "id": "Text_5725D398_ABBE_40BA_9F7D_FEA394C723DA",
+            "rev": 1651012
           }
         },
         "_goalColumn": {
@@ -4946,7 +5152,7 @@
           "key": "startAnchor",
           "value": {
             "__ref__": true,
-            "id": "EF3656B7-CBF4-4C41-85F3-313D6618098F",
+            "id": "7CE8B600-6FAD-493C-AD67-84D4A89A500C",
             "rev": 0
           }
         },
@@ -4954,7 +5160,7 @@
           "key": "endAnchor",
           "value": {
             "__ref__": true,
-            "id": "2153D3FE-880E-49A9-B4C2-4F776EBCA574",
+            "id": "BD78B8C1-85D1-42AF-858A-AEFCAAC37D47",
             "rev": 0
           }
         },
@@ -4962,7 +5168,7 @@
           "key": "_range",
           "value": {
             "__ref__": true,
-            "id": "AAF7DC4C-92B7-407F-8E21-996D68D81CB8",
+            "id": "767FB28D-F0D0-44EC-B2FE-1491980C6DA5",
             "rev": 0
           }
         },
@@ -4986,7 +5192,7 @@
         }
       }
     },
-    "EF3656B7-CBF4-4C41-85F3-313D6618098F": {
+    "7CE8B600-6FAD-493C-AD67-84D4A89A500C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5001,7 +5207,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "EC3F5CF3-E128-4E4C-BEF4-A9FF99D58BAA",
+            "id": "94552F12-4164-4F7F-B940-E287622B6F51",
             "rev": 0
           }
         },
@@ -5021,12 +5227,12 @@
         }
       }
     },
-    "EC3F5CF3-E128-4E4C-BEF4-A9FF99D58BAA": {
+    "94552F12-4164-4F7F-B940-E287622B6F51": {
       "rev": 0,
       "props": {
         "column": {
           "key": "column",
-          "value": 50
+          "value": 55
         },
         "row": {
           "key": "row",
@@ -5034,7 +5240,7 @@
         }
       }
     },
-    "2153D3FE-880E-49A9-B4C2-4F776EBCA574": {
+    "BD78B8C1-85D1-42AF-858A-AEFCAAC37D47": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5049,7 +5255,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "E652D103-B634-4590-928B-3CC7B3E46A3F",
+            "id": "BF26365F-90BA-42D4-BC17-8ABD16D15A41",
             "rev": 0
           }
         },
@@ -5069,12 +5275,12 @@
         }
       }
     },
-    "E652D103-B634-4590-928B-3CC7B3E46A3F": {
+    "BF26365F-90BA-42D4-BC17-8ABD16D15A41": {
       "rev": 0,
       "props": {
         "column": {
           "key": "column",
-          "value": 50
+          "value": 55
         },
         "row": {
           "key": "row",
@@ -5082,7 +5288,7 @@
         }
       }
     },
-    "AAF7DC4C-92B7-407F-8E21-996D68D81CB8": {
+    "767FB28D-F0D0-44EC-B2FE-1491980C6DA5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5093,7 +5299,7 @@
           "key": "start",
           "value": {
             "__ref__": true,
-            "id": "DB84E4CF-0C5A-4E68-86B2-30FE75B432AD",
+            "id": "7C89337D-D18F-4DB6-9DBA-1F9B2A81B701",
             "rev": 0
           }
         },
@@ -5101,7 +5307,7 @@
           "key": "end",
           "value": {
             "__ref__": true,
-            "id": "4E0998F6-4CEE-4CD4-B28C-00CE86011FC4",
+            "id": "59026AC1-EC09-4066-94D7-00A2DE782BA0",
             "rev": 0
           }
         }
@@ -5117,7 +5323,7 @@
         }
       }
     },
-    "DB84E4CF-0C5A-4E68-86B2-30FE75B432AD": {
+    "7C89337D-D18F-4DB6-9DBA-1F9B2A81B701": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5134,7 +5340,7 @@
         }
       }
     },
-    "4E0998F6-4CEE-4CD4-B28C-00CE86011FC4": {
+    "59026AC1-EC09-4066-94D7-00A2DE782BA0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5151,7 +5357,7 @@
         }
       }
     },
-    "8F16D230-5C31-4AB2-AE43-477D8E55F1B7": {
+    "DFBBDF92-47BE-4043-90FA-503F1B66950D": {
       "rev": 0,
       "props": {
         "fontFamily": {
@@ -5200,7 +5406,7 @@
         }
       }
     },
-    "5E096270-039A-4F1B-9916-B8201AA5559A": {
+    "C1D1D215-121D-4787-981A-EB8C28F2CFD4": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5215,7 +5421,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "DBAFF30E-CA43-46F0-9B1E-1C4551BA17CE",
+            "id": "6CA62775-3909-404E-8DA9-499D6CB02F67",
             "rev": 0
           }
         },
@@ -5235,12 +5441,12 @@
         }
       }
     },
-    "DBAFF30E-CA43-46F0-9B1E-1C4551BA17CE": {
+    "6CA62775-3909-404E-8DA9-499D6CB02F67": {
       "rev": 0,
       "props": {
         "column": {
           "key": "column",
-          "value": 50
+          "value": 55
         },
         "row": {
           "key": "row",
@@ -5248,7 +5454,7 @@
         }
       }
     },
-    "4C31E248-4CF4-48BB-AD26-2F292831ECE8": {
+    "4EF3B11A-6334-474B-B149-6EEF22C3DAC0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5273,7 +5479,7 @@
         }
       }
     },
-    "DDE42489-0CAB-477F-9A7A-3D4D6A0A1DD0": {
+    "C94FEA74-614A-4748-823F-0C390518120F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5338,7 +5544,7 @@
         },
         "name": {
           "key": "name",
-          "value": "connect button"
+          "value": "reply button"
         },
         "opacity": {
           "key": "opacity",
@@ -5380,8 +5586,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_7349982F_7910_4843_9CE5_99F450657467",
-              "rev": 464474
+              "id": "Morph_5CC040A5_192F_49BE_A447_B9395C7D082D",
+              "rev": 1875915
             }
           ]
         },
@@ -5453,7 +5659,7 @@
           "key": "borderLeft",
           "value": {
             "__ref__": true,
-            "id": "E5C80473-93FE-4384-8CB2-FF4AF87341B9",
+            "id": "0BA53F75-99B6-42E9-A36D-CA7ECD2564C4",
             "rev": 0
           }
         },
@@ -5461,7 +5667,7 @@
           "key": "borderRight",
           "value": {
             "__ref__": true,
-            "id": "53B9BD06-4172-4B24-97D9-56CF40487E1B",
+            "id": "6F44B783-176E-427E-B5B0-D7A0F34089AA",
             "rev": 0
           }
         },
@@ -5469,7 +5675,7 @@
           "key": "borderBottom",
           "value": {
             "__ref__": true,
-            "id": "DBC8F22D-0A67-4B9C-84D2-6F68AA9D52C3",
+            "id": "C758E246-F6BD-4A97-A8AB-8C5209F721E3",
             "rev": 0
           }
         },
@@ -5477,7 +5683,7 @@
           "key": "borderTop",
           "value": {
             "__ref__": true,
-            "id": "05885B4A-77D6-405B-8CD6-DC0D947771A0",
+            "id": "AE45FB60-6DD0-46D1-AF5A-3573A7196F5F",
             "rev": 0
           }
         },
@@ -5497,7 +5703,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "572F37AC-9353-4AD2-A471-D18D0B8D8B80",
+            "id": "E051E32E-1BCD-4411-8EB9-5ED7EC1A2B62",
             "rev": 0
           }
         },
@@ -5509,7 +5715,7 @@
         }
       }
     },
-    "E5C80473-93FE-4384-8CB2-FF4AF87341B9": {
+    "0BA53F75-99B6-42E9-A36D-CA7ECD2564C4": {
       "rev": 0,
       "props": {
         "style": {
@@ -5526,7 +5732,7 @@
         }
       }
     },
-    "53B9BD06-4172-4B24-97D9-56CF40487E1B": {
+    "6F44B783-176E-427E-B5B0-D7A0F34089AA": {
       "rev": 0,
       "props": {
         "style": {
@@ -5543,7 +5749,7 @@
         }
       }
     },
-    "DBC8F22D-0A67-4B9C-84D2-6F68AA9D52C3": {
+    "C758E246-F6BD-4A97-A8AB-8C5209F721E3": {
       "rev": 0,
       "props": {
         "style": {
@@ -5560,7 +5766,7 @@
         }
       }
     },
-    "05885B4A-77D6-405B-8CD6-DC0D947771A0": {
+    "AE45FB60-6DD0-46D1-AF5A-3573A7196F5F": {
       "rev": 0,
       "props": {
         "style": {
@@ -5577,7 +5783,7 @@
         }
       }
     },
-    "572F37AC-9353-4AD2-A471-D18D0B8D8B80": {
+    "E051E32E-1BCD-4411-8EB9-5ED7EC1A2B62": {
       "rev": 0,
       "props": {
         "style": {
@@ -5594,7 +5800,7 @@
         }
       }
     },
-    "1F867858-EB21-4012-AD0F-5BEC9BE8350B": {
+    "58418299-A74A-4EC8-9B2D-DEEE84E0B26D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5619,7 +5825,7 @@
         }
       }
     },
-    "7379CB2A-5FEA-4AD6-B867-04E30A9D9625": {
+    "B45B5C7F-0DB4-44CD-A682-69F7BE2CC1DD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5652,7 +5858,7 @@
         }
       }
     },
-    "4014CCA6-DBDA-4282-810A-0FCA59F61A76": {
+    "1B366400-5743-4C93-B9E8-D7B02CA937A7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5665,7 +5871,7 @@
         }
       }
     },
-    "7A377995-75E8-41D3-B6FA-F98622437348": {
+    "E24C8436-6CA3-4CAD-A61A-DB6E2EA2AA3B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5771,8 +5977,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_7349982F_7910_4843_9CE5_99F450657467",
-              "rev": 464474
+              "id": "Morph_5CC040A5_192F_49BE_A447_B9395C7D082D",
+              "rev": 1875915
             }
           ]
         },
@@ -5844,7 +6050,7 @@
           "key": "borderLeft",
           "value": {
             "__ref__": true,
-            "id": "EE2552B1-204C-48EE-841C-8AC11D3B9C95",
+            "id": "07FE2134-7B0D-45A3-A38C-8CA4E2706316",
             "rev": 0
           }
         },
@@ -5852,7 +6058,7 @@
           "key": "borderRight",
           "value": {
             "__ref__": true,
-            "id": "369E95D8-8306-4F28-8674-6F3425B08B73",
+            "id": "20C84F7B-9771-4243-B9BA-FA2445A04D8A",
             "rev": 0
           }
         },
@@ -5860,7 +6066,7 @@
           "key": "borderBottom",
           "value": {
             "__ref__": true,
-            "id": "7AB5B0EF-3E42-4D29-9F21-D03EA0831C4C",
+            "id": "CBE1056E-4B6D-42F0-9755-3A6F486E1599",
             "rev": 0
           }
         },
@@ -5868,7 +6074,7 @@
           "key": "borderTop",
           "value": {
             "__ref__": true,
-            "id": "4E6D728E-39BD-4C36-A3F9-694186EF5A10",
+            "id": "CD064DA9-48A2-4147-BDF5-47D0122ED1AA",
             "rev": 0
           }
         },
@@ -5892,7 +6098,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "4943B135-F6F2-4BB9-8BF8-4CAB21531633",
+            "id": "6B16D03B-CC21-4995-84CE-5AF7577A195D",
             "rev": 0
           }
         },
@@ -5904,13 +6110,9 @@
         }
       }
     },
-    "EE2552B1-204C-48EE-841C-8AC11D3B9C95": {
+    "07FE2134-7B0D-45A3-A38C-8CA4E2706316": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "style": {
           "key": "style",
           "value": "solid"
@@ -5925,13 +6127,9 @@
         }
       }
     },
-    "369E95D8-8306-4F28-8674-6F3425B08B73": {
+    "20C84F7B-9771-4243-B9BA-FA2445A04D8A": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "style": {
           "key": "style",
           "value": "solid"
@@ -5946,13 +6144,9 @@
         }
       }
     },
-    "7AB5B0EF-3E42-4D29-9F21-D03EA0831C4C": {
+    "CBE1056E-4B6D-42F0-9755-3A6F486E1599": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "style": {
           "key": "style",
           "value": "solid"
@@ -5967,13 +6161,9 @@
         }
       }
     },
-    "4E6D728E-39BD-4C36-A3F9-694186EF5A10": {
+    "CD064DA9-48A2-4147-BDF5-47D0122ED1AA": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "style": {
           "key": "style",
           "value": "solid"
@@ -5988,13 +6178,9 @@
         }
       }
     },
-    "4943B135-F6F2-4BB9-8BF8-4CAB21531633": {
+    "6B16D03B-CC21-4995-84CE-5AF7577A195D": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "style": {
           "key": "style",
           "value": "solid"
@@ -6009,12 +6195,100 @@
         }
       }
     },
-    "Button_24DB0D16_B64A_4237_8708_92A23A720153": {
-      "rev": 464485,
+    "9A3E1E31-1F15-474A-9CD5-41CE919B6EFB": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Button_5567B674_64C3_44CA_95E8_8502F4EAA6D3",
+            "rev": 1875914
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fire"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Reply_9CD9B863_8E22_4E44_8E8D_1B0954595B95",
+            "rev": 1877925
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "addReply"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "690D9EC5-F5E0-4D8A-A779-9E57EBDB69BE",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "690D9EC5-F5E0-4D8A-A779-9E57EBDB69BE": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Button_5567B674_64C3_44CA_95E8_8502F4EAA6D3",
+            "rev": 1875914
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Reply_9CD9B863_8E22_4E44_8E8D_1B0954595B95",
+            "rev": 1877925
+          }
+        }
+      }
+    },
+    "Button_2C02584F_17CA_48AB_91B6_19EF84663EDC": {
+      "rev": 1808940,
       "props": {
         "clipMode": {
           "key": "clipMode",
           "value": "hidden"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
         },
         "extent": {
           "key": "extent",
@@ -6026,7 +6300,7 @@
         },
         "name": {
           "key": "name",
-          "value": "connect button"
+          "value": "edit button"
         },
         "nativeCursor": {
           "key": "nativeCursor",
@@ -6061,8 +6335,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_6BC87958_8FBE_43FB_BBDB_69220660ABDA",
-              "rev": 464480
+              "id": "Morph_6571DEE2_9D98_45C6_A7AE_27396F5D413C",
+              "rev": 1654496
             }
           ]
         },
@@ -6110,7 +6384,7 @@
           "key": "defaultActiveStyle",
           "value": {
             "__ref__": true,
-            "id": "4CC17B8A-34DA-4801-985D-439B04806D2C",
+            "id": "77065A53-023F-4E0B-8F82-A26BCAD3A75C",
             "rev": 0
           }
         },
@@ -6118,7 +6392,7 @@
           "key": "activeStyle",
           "value": {
             "__ref__": true,
-            "id": "7972AE19-D7A4-47F4-92DF-600C45321035",
+            "id": "F8EF388B-5034-4804-8EDB-3AAF6B3669C6",
             "rev": 0
           }
         },
@@ -6126,7 +6400,7 @@
           "key": "defaultInactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "7A96959E-1DBB-4558-B785-C3F7A916F5FB",
+            "id": "FB8D02D9-5CF0-447F-8F7D-764C9B89C0CB",
             "rev": 0
           }
         },
@@ -6134,7 +6408,7 @@
           "key": "inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "23123F59-F9CC-4793-8A7A-0AC943460C01",
+            "id": "01ED92E6-0E76-476D-A019-6AE78CC1E235",
             "rev": 0
           }
         },
@@ -6142,7 +6416,7 @@
           "key": "defaultTriggerStyle",
           "value": {
             "__ref__": true,
-            "id": "5F67B349-30C3-42D5-B9EB-B6583E779089",
+            "id": "A26B7B36-2279-4703-8F40-6DC52E50BC9E",
             "rev": 0
           }
         },
@@ -6150,7 +6424,7 @@
           "key": "triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "44542FFC-52F6-4A18-9653-DDC09398A011",
+            "id": "49CF7A77-BFA0-4243-940E-6C663FA2284E",
             "rev": 0
           }
         },
@@ -6173,8 +6447,8 @@
         }
       }
     },
-    "Morph_6BC87958_8FBE_43FB_BBDB_69220660ABDA": {
-      "rev": 464480,
+    "Morph_6571DEE2_9D98_45C6_A7AE_27396F5D413C": {
+      "rev": 1654496,
       "props": {
         "extent": {
           "key": "extent",
@@ -6191,10 +6465,6 @@
         "nativeCursor": {
           "key": "nativeCursor",
           "value": "pointer"
-        },
-        "opacity": {
-          "key": "opacity",
-          "value": 0.5
         },
         "origin": {
           "key": "origin",
@@ -6219,7 +6489,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "5FDE5076-3327-432D-92CA-61AB2052B113",
+            "id": "FB84E0E3-0B46-4CE4-A305-5944263699FF",
             "rev": 0
           }
         },
@@ -6228,13 +6498,13 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_26A26682_69CE_4513_87D4_3000E5A681C8",
-              "rev": 464478
+              "id": "Label_97D5D26B_ABF1_4342_9842_C729FB18ABBB",
+              "rev": 1654498
             },
             {
               "__ref__": true,
-              "id": "Text_7B5E32CA_A771_4DF2_8D30_54A456056A05",
-              "rev": 464479
+              "id": "Text_A3CC1951_5BC5_439B_B3EC_7294F66D33AD",
+              "rev": 1654500
             }
           ]
         },
@@ -6257,7 +6527,7 @@
         }
       }
     },
-    "5FDE5076-3327-432D-92CA-61AB2052B113": {
+    "FB84E0E3-0B46-4CE4-A305-5944263699FF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6268,7 +6538,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "608FC70D-DA5C-4221-A751-84313A426808",
+            "id": "E96C1328-5E7B-42D4-8D35-3AC03303D4D9",
             "rev": 0
           }
         },
@@ -6292,8 +6562,8 @@
           "key": "container",
           "value": {
             "__ref__": true,
-            "id": "Morph_6BC87958_8FBE_43FB_BBDB_69220660ABDA",
-            "rev": 464480
+            "id": "Morph_6571DEE2_9D98_45C6_A7AE_27396F5D413C",
+            "rev": 1654496
           }
         },
         "_autoResize": {
@@ -6320,7 +6590,7 @@
         }
       }
     },
-    "608FC70D-DA5C-4221-A751-84313A426808": {
+    "E96C1328-5E7B-42D4-8D35-3AC03303D4D9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6345,9 +6615,13 @@
         }
       }
     },
-    "Label_26A26682_69CE_4513_87D4_3000E5A681C8": {
-      "rev": 464478,
+    "Label_97D5D26B_ABF1_4342_9842_C729FB18ABBB": {
+      "rev": 1654498,
       "props": {
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(42.0,42.0)"
@@ -6372,6 +6646,10 @@
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
@@ -6391,15 +6669,23 @@
               "",
               {
                 "__ref__": true,
-                "id": "5717F52A-BA7D-4C4C-B174-673D1971F8F2",
+                "id": "E780113B-8586-493E-A5E6-1C50D5EDE020",
                 "rev": 0
               }
             ]
           ]
         },
+        "autofit": {
+          "key": "autofit",
+          "value": true
+        },
         "padding": {
           "key": "padding",
           "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(3,3,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
         },
         "fontSize": {
           "key": "fontSize",
@@ -6408,6 +6694,18 @@
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -6428,7 +6726,7 @@
         }
       }
     },
-    "5717F52A-BA7D-4C4C-B174-673D1971F8F2": {
+    "E780113B-8586-493E-A5E6-1C50D5EDE020": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6447,8 +6745,8 @@
         }
       }
     },
-    "Text_7B5E32CA_A771_4DF2_8D30_54A456056A05": {
-      "rev": 464479,
+    "Text_A3CC1951_5BC5_439B_B3EC_7294F66D33AD": {
+      "rev": 1654500,
       "props": {
         "draggable": {
           "key": "draggable",
@@ -6558,7 +6856,7 @@
           "key": "selection",
           "value": {
             "__ref__": true,
-            "id": "95E3A9E6-407A-4569-8426-1B763FFF3026",
+            "id": "C3CDEAFA-CA47-4964-BC32-9CACE8181BFB",
             "rev": 0
           }
         },
@@ -6566,7 +6864,7 @@
           "key": "defaultTextStyle",
           "value": {
             "__ref__": true,
-            "id": "DC6249FB-D025-4BAC-97EC-2C4FE1502BD4",
+            "id": "1D243FA6-75C1-4D30-A6A6-D2FC75B56DFF",
             "rev": 0
           }
         },
@@ -6575,12 +6873,12 @@
           "value": [
             {
               "__ref__": true,
-              "id": "29D2753C-3B0B-4614-957D-2F10978CA8FA",
+              "id": "EE56E710-6078-4912-9F57-3FF077851D68",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "96EDDE32-CD8B-4C68-9E0F-C444108273D4",
+              "id": "E4602A76-AB97-4201-A270-24E2E0DE76A8",
               "rev": 0
             }
           ]
@@ -6747,7 +7045,7 @@
         }
       }
     },
-    "95E3A9E6-407A-4569-8426-1B763FFF3026": {
+    "C3CDEAFA-CA47-4964-BC32-9CACE8181BFB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6758,8 +7056,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_7B5E32CA_A771_4DF2_8D30_54A456056A05",
-            "rev": 464479
+            "id": "Text_A3CC1951_5BC5_439B_B3EC_7294F66D33AD",
+            "rev": 1654500
           }
         },
         "selections": {
@@ -6767,7 +7065,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "D6A9E5F7-D64E-4CE4-9536-6BCACECEF2CF",
+              "id": "830B4959-A3E2-481F-B7A1-8FC43A48A200",
               "rev": 0
             }
           ]
@@ -6792,7 +7090,7 @@
         }
       }
     },
-    "D6A9E5F7-D64E-4CE4-9536-6BCACECEF2CF": {
+    "830B4959-A3E2-481F-B7A1-8FC43A48A200": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6803,8 +7101,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_7B5E32CA_A771_4DF2_8D30_54A456056A05",
-            "rev": 464479
+            "id": "Text_A3CC1951_5BC5_439B_B3EC_7294F66D33AD",
+            "rev": 1654500
           }
         },
         "_goalColumn": {
@@ -6819,7 +7117,7 @@
           "key": "startAnchor",
           "value": {
             "__ref__": true,
-            "id": "29D2753C-3B0B-4614-957D-2F10978CA8FA",
+            "id": "EE56E710-6078-4912-9F57-3FF077851D68",
             "rev": 0
           }
         },
@@ -6827,7 +7125,7 @@
           "key": "endAnchor",
           "value": {
             "__ref__": true,
-            "id": "96EDDE32-CD8B-4C68-9E0F-C444108273D4",
+            "id": "E4602A76-AB97-4201-A270-24E2E0DE76A8",
             "rev": 0
           }
         },
@@ -6835,7 +7133,7 @@
           "key": "_range",
           "value": {
             "__ref__": true,
-            "id": "5E71CF17-5CED-41E9-A4B5-B30CFF7F7DD4",
+            "id": "1EAEAA2C-446A-4392-B975-0868180F35A0",
             "rev": 0
           }
         },
@@ -6859,7 +7157,7 @@
         }
       }
     },
-    "29D2753C-3B0B-4614-957D-2F10978CA8FA": {
+    "EE56E710-6078-4912-9F57-3FF077851D68": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6874,7 +7172,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "EB48D51B-98C9-48D9-AE9E-8B3652D68DE5",
+            "id": "235AB07E-42B2-4B77-8D3E-5F1A60AA2702",
             "rev": 0
           }
         },
@@ -6894,12 +7192,12 @@
         }
       }
     },
-    "EB48D51B-98C9-48D9-AE9E-8B3652D68DE5": {
+    "235AB07E-42B2-4B77-8D3E-5F1A60AA2702": {
       "rev": 0,
       "props": {
         "column": {
           "key": "column",
-          "value": 36
+          "value": 40
         },
         "row": {
           "key": "row",
@@ -6907,7 +7205,7 @@
         }
       }
     },
-    "96EDDE32-CD8B-4C68-9E0F-C444108273D4": {
+    "E4602A76-AB97-4201-A270-24E2E0DE76A8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6922,7 +7220,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "B2B836B2-00A5-4BA8-B83E-BA3673F58A18",
+            "id": "1DFABF4E-C17B-4F11-B832-7E105465D9C3",
             "rev": 0
           }
         },
@@ -6942,12 +7240,12 @@
         }
       }
     },
-    "B2B836B2-00A5-4BA8-B83E-BA3673F58A18": {
+    "1DFABF4E-C17B-4F11-B832-7E105465D9C3": {
       "rev": 0,
       "props": {
         "column": {
           "key": "column",
-          "value": 36
+          "value": 40
         },
         "row": {
           "key": "row",
@@ -6955,7 +7253,7 @@
         }
       }
     },
-    "5E71CF17-5CED-41E9-A4B5-B30CFF7F7DD4": {
+    "1EAEAA2C-446A-4392-B975-0868180F35A0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6966,7 +7264,7 @@
           "key": "start",
           "value": {
             "__ref__": true,
-            "id": "0A944F9A-DFD0-4C38-8CFC-9DFED1D058A1",
+            "id": "A746C6AB-E378-4B3C-B03C-C39E94CCBD22",
             "rev": 0
           }
         },
@@ -6974,7 +7272,7 @@
           "key": "end",
           "value": {
             "__ref__": true,
-            "id": "4D28DAA3-668E-49A8-9FBB-83F8B152A906",
+            "id": "4DF03F98-F36B-4BA8-8AEE-01396E6ECD05",
             "rev": 0
           }
         }
@@ -6990,7 +7288,7 @@
         }
       }
     },
-    "0A944F9A-DFD0-4C38-8CFC-9DFED1D058A1": {
+    "A746C6AB-E378-4B3C-B03C-C39E94CCBD22": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7007,7 +7305,7 @@
         }
       }
     },
-    "4D28DAA3-668E-49A8-9FBB-83F8B152A906": {
+    "4DF03F98-F36B-4BA8-8AEE-01396E6ECD05": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7024,7 +7322,7 @@
         }
       }
     },
-    "DC6249FB-D025-4BAC-97EC-2C4FE1502BD4": {
+    "1D243FA6-75C1-4D30-A6A6-D2FC75B56DFF": {
       "rev": 0,
       "props": {
         "fontFamily": {
@@ -7073,7 +7371,7 @@
         }
       }
     },
-    "4CC17B8A-34DA-4801-985D-439B04806D2C": {
+    "77065A53-023F-4E0B-8F82-A26BCAD3A75C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7098,7 +7396,7 @@
         }
       }
     },
-    "7972AE19-D7A4-47F4-92DF-600C45321035": {
+    "F8EF388B-5034-4804-8EDB-3AAF6B3669C6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7205,8 +7503,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_6BC87958_8FBE_43FB_BBDB_69220660ABDA",
-              "rev": 464480
+              "id": "Morph_6571DEE2_9D98_45C6_A7AE_27396F5D413C",
+              "rev": 1654496
             }
           ]
         },
@@ -7278,7 +7576,7 @@
           "key": "borderLeft",
           "value": {
             "__ref__": true,
-            "id": "0AA98071-1EB0-477B-8EFF-BE6B9652D948",
+            "id": "F788F3A7-08DC-4BF9-A05A-1509DE266902",
             "rev": 0
           }
         },
@@ -7286,7 +7584,7 @@
           "key": "borderRight",
           "value": {
             "__ref__": true,
-            "id": "F925EF53-C253-4318-858E-4A40AA1ED71D",
+            "id": "24FBF0C0-1863-4BDD-AF37-84AE59BB9D54",
             "rev": 0
           }
         },
@@ -7294,7 +7592,7 @@
           "key": "borderBottom",
           "value": {
             "__ref__": true,
-            "id": "11B6C906-B7BE-4016-AF67-93C95BA16710",
+            "id": "82CCDB0E-04F7-4BE2-8595-502E903A987D",
             "rev": 0
           }
         },
@@ -7302,7 +7600,7 @@
           "key": "borderTop",
           "value": {
             "__ref__": true,
-            "id": "E463BC45-846B-4FB8-969A-34A509181402",
+            "id": "13BDCDAA-7A22-4D84-9D65-6F5BFF2675A4",
             "rev": 0
           }
         },
@@ -7322,7 +7620,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "E13F090E-0753-4E3B-BFBD-F326ED8DCD76",
+            "id": "1F7015A5-C9E7-4D41-99CC-CE2D7266CB0A",
             "rev": 0
           }
         },
@@ -7334,7 +7632,7 @@
         }
       }
     },
-    "0AA98071-1EB0-477B-8EFF-BE6B9652D948": {
+    "F788F3A7-08DC-4BF9-A05A-1509DE266902": {
       "rev": 0,
       "props": {
         "style": {
@@ -7351,7 +7649,7 @@
         }
       }
     },
-    "F925EF53-C253-4318-858E-4A40AA1ED71D": {
+    "24FBF0C0-1863-4BDD-AF37-84AE59BB9D54": {
       "rev": 0,
       "props": {
         "style": {
@@ -7368,7 +7666,7 @@
         }
       }
     },
-    "11B6C906-B7BE-4016-AF67-93C95BA16710": {
+    "82CCDB0E-04F7-4BE2-8595-502E903A987D": {
       "rev": 0,
       "props": {
         "style": {
@@ -7385,7 +7683,7 @@
         }
       }
     },
-    "E463BC45-846B-4FB8-969A-34A509181402": {
+    "13BDCDAA-7A22-4D84-9D65-6F5BFF2675A4": {
       "rev": 0,
       "props": {
         "style": {
@@ -7402,7 +7700,7 @@
         }
       }
     },
-    "E13F090E-0753-4E3B-BFBD-F326ED8DCD76": {
+    "1F7015A5-C9E7-4D41-99CC-CE2D7266CB0A": {
       "rev": 0,
       "props": {
         "style": {
@@ -7419,7 +7717,7 @@
         }
       }
     },
-    "7A96959E-1DBB-4558-B785-C3F7A916F5FB": {
+    "FB8D02D9-5CF0-447F-8F7D-764C9B89C0CB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7444,7 +7742,7 @@
         }
       }
     },
-    "23123F59-F9CC-4793-8A7A-0AC943460C01": {
+    "01ED92E6-0E76-476D-A019-6AE78CC1E235": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7554,8 +7852,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_6BC87958_8FBE_43FB_BBDB_69220660ABDA",
-              "rev": 464480
+              "id": "Morph_6571DEE2_9D98_45C6_A7AE_27396F5D413C",
+              "rev": 1654496
             }
           ]
         },
@@ -7627,7 +7925,7 @@
           "key": "borderLeft",
           "value": {
             "__ref__": true,
-            "id": "6284F639-4D2E-4D00-AE30-3E06011CBC8A",
+            "id": "5E9B1FE2-3D73-4B40-A6B4-E47C6B1CAEDF",
             "rev": 0
           }
         },
@@ -7635,7 +7933,7 @@
           "key": "borderRight",
           "value": {
             "__ref__": true,
-            "id": "214B5EE1-4857-4EB3-85B3-5996EA95B570",
+            "id": "A22F8150-6FD9-41CA-8C8E-D1238004727A",
             "rev": 0
           }
         },
@@ -7643,7 +7941,7 @@
           "key": "borderBottom",
           "value": {
             "__ref__": true,
-            "id": "16B4D958-28B2-47E2-B15B-0FDC77DD6092",
+            "id": "9EDC5A6B-85C1-4787-9E03-5C7659A73A27",
             "rev": 0
           }
         },
@@ -7651,7 +7949,7 @@
           "key": "borderTop",
           "value": {
             "__ref__": true,
-            "id": "7A53533E-4938-4DC2-8E8A-1933B6F736C3",
+            "id": "9934DDA6-31F9-44EF-A351-3E9BEF3C211B",
             "rev": 0
           }
         },
@@ -7671,7 +7969,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "5FD8BB95-398A-4C68-9F88-93C6968F9364",
+            "id": "12A0604A-A87F-475B-B8AD-3A58F6EFBE27",
             "rev": 0
           }
         },
@@ -7683,7 +7981,7 @@
         }
       }
     },
-    "6284F639-4D2E-4D00-AE30-3E06011CBC8A": {
+    "5E9B1FE2-3D73-4B40-A6B4-E47C6B1CAEDF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7704,7 +8002,7 @@
         }
       }
     },
-    "214B5EE1-4857-4EB3-85B3-5996EA95B570": {
+    "A22F8150-6FD9-41CA-8C8E-D1238004727A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7725,7 +8023,7 @@
         }
       }
     },
-    "16B4D958-28B2-47E2-B15B-0FDC77DD6092": {
+    "9EDC5A6B-85C1-4787-9E03-5C7659A73A27": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7746,7 +8044,7 @@
         }
       }
     },
-    "7A53533E-4938-4DC2-8E8A-1933B6F736C3": {
+    "9934DDA6-31F9-44EF-A351-3E9BEF3C211B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7767,7 +8065,7 @@
         }
       }
     },
-    "5FD8BB95-398A-4C68-9F88-93C6968F9364": {
+    "12A0604A-A87F-475B-B8AD-3A58F6EFBE27": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7788,7 +8086,7 @@
         }
       }
     },
-    "5F67B349-30C3-42D5-B9EB-B6583E779089": {
+    "A26B7B36-2279-4703-8F40-6DC52E50BC9E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7801,7 +8099,7 @@
         }
       }
     },
-    "44542FFC-52F6-4A18-9653-DDC09398A011": {
+    "49CF7A77-BFA0-4243-940E-6C663FA2284E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -7907,8 +8205,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Morph_6BC87958_8FBE_43FB_BBDB_69220660ABDA",
-              "rev": 464480
+              "id": "Morph_6571DEE2_9D98_45C6_A7AE_27396F5D413C",
+              "rev": 1654496
             }
           ]
         },
@@ -7980,7 +8278,7 @@
           "key": "borderLeft",
           "value": {
             "__ref__": true,
-            "id": "9EB4CFDE-B2AF-46E1-9CF6-49F142CB6802",
+            "id": "A3BD92CB-F474-4603-985A-DE49AF8B2649",
             "rev": 0
           }
         },
@@ -7988,7 +8286,7 @@
           "key": "borderRight",
           "value": {
             "__ref__": true,
-            "id": "B419CF8E-0B96-4DF7-9D62-6DD6A242ED61",
+            "id": "EF301AD8-8962-4A5C-B218-33B717B82B64",
             "rev": 0
           }
         },
@@ -7996,7 +8294,7 @@
           "key": "borderBottom",
           "value": {
             "__ref__": true,
-            "id": "3EDA6707-4565-4B0F-B608-3A30BF9EA8F8",
+            "id": "481C67DD-E836-4831-9611-4AAD3C01AD56",
             "rev": 0
           }
         },
@@ -8004,7 +8302,7 @@
           "key": "borderTop",
           "value": {
             "__ref__": true,
-            "id": "37F168D1-753B-413B-A406-CFC22B5F873C",
+            "id": "61C5E0A0-0A67-49C8-992C-E503BEF81AB5",
             "rev": 0
           }
         },
@@ -8028,7 +8326,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "67BCAB00-C887-4C41-BB4C-650B56D7E198",
+            "id": "A1B46953-40A8-43AE-8787-5CF3D7052269",
             "rev": 0
           }
         },
@@ -8040,13 +8338,9 @@
         }
       }
     },
-    "9EB4CFDE-B2AF-46E1-9CF6-49F142CB6802": {
+    "A3BD92CB-F474-4603-985A-DE49AF8B2649": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "style": {
           "key": "style",
           "value": "solid"
@@ -8061,13 +8355,9 @@
         }
       }
     },
-    "B419CF8E-0B96-4DF7-9D62-6DD6A242ED61": {
+    "EF301AD8-8962-4A5C-B218-33B717B82B64": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "style": {
           "key": "style",
           "value": "solid"
@@ -8082,13 +8372,9 @@
         }
       }
     },
-    "3EDA6707-4565-4B0F-B608-3A30BF9EA8F8": {
+    "481C67DD-E836-4831-9611-4AAD3C01AD56": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "style": {
           "key": "style",
           "value": "solid"
@@ -8103,13 +8389,9 @@
         }
       }
     },
-    "37F168D1-753B-413B-A406-CFC22B5F873C": {
+    "61C5E0A0-0A67-49C8-992C-E503BEF81AB5": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "style": {
           "key": "style",
           "value": "solid"
@@ -8124,13 +8406,9 @@
         }
       }
     },
-    "67BCAB00-C887-4C41-BB4C-650B56D7E198": {
+    "A1B46953-40A8-43AE-8787-5CF3D7052269": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "style": {
           "key": "style",
           "value": "solid"
@@ -8145,8 +8423,8 @@
         }
       }
     },
-    "Text_4C410EE1_5A24_4002_9F3D_CBD4BD53C691": {
-      "rev": 464486,
+    "Text_2FE6ACAD_1D17_4350_9069_230CDF0A1917": {
+      "rev": 1808941,
       "props": {
         "draggable": {
           "key": "draggable",
@@ -8154,7 +8432,7 @@
         },
         "extent": {
           "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(90.6,25.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(125.8,25.0)"
         },
         "fill": {
           "key": "fill",
@@ -8163,6 +8441,10 @@
         "name": {
           "key": "name",
           "value": "date"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "default"
         },
         "origin": {
           "key": "origin",
@@ -8238,7 +8520,7 @@
         },
         "readOnly": {
           "key": "readOnly",
-          "value": false
+          "value": true
         },
         "selectable": {
           "key": "selectable",
@@ -8252,7 +8534,7 @@
           "key": "selection",
           "value": {
             "__ref__": true,
-            "id": "70468368-0D45-4B70-AA72-894A8CDB0AB8",
+            "id": "F740FF6D-72DC-4443-9B52-B530DC7E41C9",
             "rev": 0
           }
         },
@@ -8260,7 +8542,7 @@
           "key": "defaultTextStyle",
           "value": {
             "__ref__": true,
-            "id": "F28F71C2-37D1-420D-8DBF-114968904C36",
+            "id": "7969DBFC-BA3C-4EB2-AB65-BA291032858F",
             "rev": 0
           }
         },
@@ -8269,12 +8551,12 @@
           "value": [
             {
               "__ref__": true,
-              "id": "AB4DDA72-27E7-46C8-BDE6-D8D57FA050DC",
+              "id": "EBA439B4-FF5F-4503-979D-8F3B0C7AA53D",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "E3D10D05-CAE3-422D-AEC4-DA28A3D50FCD",
+              "id": "84655D18-04B4-4755-9671-6E96F46925D6",
               "rev": 0
             }
           ]
@@ -8292,68 +8574,15 @@
           "value": []
         },
         "attributeConnections": {
-          "key": "attributeConnections",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "A74FFD05-6A39-4359-AF11-72A9F27ECA48",
-              "rev": 0
-            }
-          ]
+          "key": "attributeConnections"
         },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "verbatim": true,
           "value": [
             [
-              "22 Jan 2017",
-              [
-                {
-                  "fontFamily": "Helvetica Neue, Arial, sans-serif",
-                  "fontSize": 15,
-                  "fontColor": {
-                    "r": 0.4,
-                    "g": 0.4,
-                    "b": 0.4,
-                    "a": 1
-                  },
-                  "fontWeight": "normal",
-                  "fontStyle": "normal",
-                  "textDecoration": "none",
-                  "fixedCharacterSpacing": false,
-                  "_rev": 0
-                },
-                {
-                  "fontFamily": "Helvetica Neue, Arial, sans-serif",
-                  "fontSize": 15,
-                  "fontColor": {
-                    "r": 0.4,
-                    "g": 0.4,
-                    "b": 0.4,
-                    "a": 1
-                  },
-                  "fontWeight": "normal",
-                  "fontStyle": "normal",
-                  "textDecoration": "none",
-                  "fixedCharacterSpacing": false,
-                  "_rev": 0
-                },
-                {
-                  "fontFamily": "Helvetica Neue, Arial, sans-serif",
-                  "fontSize": 15,
-                  "fontColor": {
-                    "r": 0.4,
-                    "g": 0.4,
-                    "b": 0.4,
-                    "a": 1
-                  },
-                  "fontWeight": "normal",
-                  "fontStyle": "normal",
-                  "textDecoration": "none",
-                  "fixedCharacterSpacing": false,
-                  "_rev": 0
-                }
-              ]
+              "28 February 2017",
+              []
             ],
             [
               "",
@@ -8373,7 +8602,7 @@
         }
       }
     },
-    "70468368-0D45-4B70-AA72-894A8CDB0AB8": {
+    "F740FF6D-72DC-4443-9B52-B530DC7E41C9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -8384,8 +8613,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_4C410EE1_5A24_4002_9F3D_CBD4BD53C691",
-            "rev": 464486
+            "id": "Text_2FE6ACAD_1D17_4350_9069_230CDF0A1917",
+            "rev": 1808941
           }
         },
         "selections": {
@@ -8393,7 +8622,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "89905031-1F4B-40B8-B7C4-E8E9F20E9F74",
+              "id": "4D97BF69-9E8D-4587-B720-1154EB09EB1E",
               "rev": 0
             }
           ]
@@ -8418,7 +8647,7 @@
         }
       }
     },
-    "89905031-1F4B-40B8-B7C4-E8E9F20E9F74": {
+    "4D97BF69-9E8D-4587-B720-1154EB09EB1E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -8429,13 +8658,13 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_4C410EE1_5A24_4002_9F3D_CBD4BD53C691",
-            "rev": 464486
+            "id": "Text_2FE6ACAD_1D17_4350_9069_230CDF0A1917",
+            "rev": 1808941
           }
         },
         "_goalColumn": {
           "key": "_goalColumn",
-          "value": 11
+          "value": 16
         },
         "_isReverse": {
           "key": "_isReverse",
@@ -8445,7 +8674,7 @@
           "key": "startAnchor",
           "value": {
             "__ref__": true,
-            "id": "AB4DDA72-27E7-46C8-BDE6-D8D57FA050DC",
+            "id": "EBA439B4-FF5F-4503-979D-8F3B0C7AA53D",
             "rev": 0
           }
         },
@@ -8453,7 +8682,7 @@
           "key": "endAnchor",
           "value": {
             "__ref__": true,
-            "id": "E3D10D05-CAE3-422D-AEC4-DA28A3D50FCD",
+            "id": "84655D18-04B4-4755-9671-6E96F46925D6",
             "rev": 0
           }
         },
@@ -8461,7 +8690,7 @@
           "key": "_range",
           "value": {
             "__ref__": true,
-            "id": "49AA7435-626E-4BDC-AEDA-E027BA4D3F8F",
+            "id": "AC1BB8AA-9D81-48EC-92CA-A46F08804A2C",
             "rev": 0
           }
         },
@@ -8485,7 +8714,7 @@
         }
       }
     },
-    "AB4DDA72-27E7-46C8-BDE6-D8D57FA050DC": {
+    "EBA439B4-FF5F-4503-979D-8F3B0C7AA53D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -8500,7 +8729,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "16290BE3-98FE-4A6B-9AF2-EEF5B7C7374C",
+            "id": "7BF74792-A49F-4248-B891-C0BAF92304FD",
             "rev": 0
           }
         },
@@ -8520,20 +8749,20 @@
         }
       }
     },
-    "16290BE3-98FE-4A6B-9AF2-EEF5B7C7374C": {
+    "7BF74792-A49F-4248-B891-C0BAF92304FD": {
       "rev": 0,
       "props": {
-        "column": {
-          "key": "column",
-          "value": 22
-        },
         "row": {
           "key": "row",
           "value": 0
+        },
+        "column": {
+          "key": "column",
+          "value": 16
         }
       }
     },
-    "E3D10D05-CAE3-422D-AEC4-DA28A3D50FCD": {
+    "84655D18-04B4-4755-9671-6E96F46925D6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -8548,7 +8777,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "074AC6F8-1311-4C28-B466-AC5C510971B4",
+            "id": "BBE5F13A-CD98-496D-9158-7BF19E65F9DC",
             "rev": 0
           }
         },
@@ -8568,31 +8797,27 @@
         }
       }
     },
-    "074AC6F8-1311-4C28-B466-AC5C510971B4": {
+    "BBE5F13A-CD98-496D-9158-7BF19E65F9DC": {
       "rev": 0,
       "props": {
-        "column": {
-          "key": "column",
-          "value": 22
-        },
         "row": {
           "key": "row",
           "value": 0
+        },
+        "column": {
+          "key": "column",
+          "value": 16
         }
       }
     },
-    "49AA7435-626E-4BDC-AEDA-E027BA4D3F8F": {
+    "AC1BB8AA-9D81-48EC-92CA-A46F08804A2C": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "start": {
           "key": "start",
           "value": {
             "__ref__": true,
-            "id": "1F1B1965-05D5-4E68-8D4F-758E3D8A4D91",
+            "id": "7BF74792-A49F-4248-B891-C0BAF92304FD",
             "rev": 0
           }
         },
@@ -8600,7 +8825,7 @@
           "key": "end",
           "value": {
             "__ref__": true,
-            "id": "2994F3F6-29CF-4DFD-A9DF-55851F0E5796",
+            "id": "BBE5F13A-CD98-496D-9158-7BF19E65F9DC",
             "rev": 0
           }
         }
@@ -8616,41 +8841,7 @@
         }
       }
     },
-    "1F1B1965-05D5-4E68-8D4F-758E3D8A4D91": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "row": {
-          "key": "row",
-          "value": 0
-        },
-        "column": {
-          "key": "column",
-          "value": 11
-        }
-      }
-    },
-    "2994F3F6-29CF-4DFD-A9DF-55851F0E5796": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "row": {
-          "key": "row",
-          "value": 0
-        },
-        "column": {
-          "key": "column",
-          "value": 11
-        }
-      }
-    },
-    "F28F71C2-37D1-420D-8DBF-114968904C36": {
+    "7969DBFC-BA3C-4EB2-AB65-BA291032858F": {
       "rev": 0,
       "props": {
         "fontFamily": {
@@ -8699,96 +8890,7 @@
         }
       }
     },
-    "A74FFD05-6A39-4359-AF11-72A9F27ECA48": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Text_4C410EE1_5A24_4002_9F3D_CBD4BD53C691",
-            "rev": 464486
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "selectionChange"
-        },
-        "targetObj": {
-          "key": "targetObj"
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "openDebouncedFor"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "30B7DF54-B10D-4E1B-B9F1-E4027F0CF42F",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        },
-        "converterString": {
-          "key": "converterString",
-          "value": "sel => sel.textMorph"
-        },
-        "converter": {
-          "key": "converter"
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "30B7DF54-B10D-4E1B-B9F1-E4027F0CF42F": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Text_4C410EE1_5A24_4002_9F3D_CBD4BD53C691",
-            "rev": 464486
-          }
-        },
-        "target": {
-          "key": "target"
-        }
-      }
-    },
-    "A77012D2-B1F0-4568-A2F8-13B751DC978A": {
+    "A9C49946-B431-490C-A7F4-737D5F0D6B47": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -8805,7 +8907,7 @@
         }
       }
     },
-    "5AB95484-5955-4605-B3D4-D7FC79FF09A1": {
+    "D4C506DB-3B68-4C50-B86B-398114123EAF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -8816,7 +8918,7 @@
           "key": "state",
           "value": {
             "__ref__": true,
-            "id": "88863F6A-27F0-44CA-BF4F-2A9DAA33AC23",
+            "id": "341FA4EF-7755-4F18-BF42-F07C905DA7FF",
             "rev": 0
           }
         }
@@ -8832,7 +8934,7 @@
         }
       }
     },
-    "88863F6A-27F0-44CA-BF4F-2A9DAA33AC23": {
+    "341FA4EF-7755-4F18-BF42-F07C905DA7FF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -8844,7 +8946,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "CFABCD0D-E1E2-4546-8C36-19EF15ED3E16",
+              "id": "4CB90C10-E260-4FF3-937E-2AF86A8244A4",
               "rev": 0
             }
           ]
@@ -8853,7 +8955,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "AF5514A6-6A98-488B-BE72-3517E0072633",
+            "id": "AE62B9D3-6690-4DD0-BC1F-3A52532E176E",
             "rev": 0
           }
         },
@@ -8868,14 +8970,14 @@
           "key": "morph",
           "value": {
             "__ref__": true,
-            "id": "Text_EE796EC6_69BC_4741_A6A2_66E1004048B7",
-            "rev": 709033
+            "id": "Text_9169A3B8_A92B_402E_B900_FF3B95EEDB39",
+            "rev": 1595093
           }
         }
       }
     },
-    "Text_EE796EC6_69BC_4741_A6A2_66E1004048B7": {
-      "rev": 709033,
+    "Text_9169A3B8_A92B_402E_B900_FF3B95EEDB39": {
+      "rev": 1595093,
       "props": {
         "draggable": {
           "key": "draggable",
@@ -8985,7 +9087,7 @@
           "key": "selection",
           "value": {
             "__ref__": true,
-            "id": "EC02EB6D-8B62-43FE-86D6-252B0518961D",
+            "id": "2ACC1C0B-29F4-48C9-8154-E65EA50AA948",
             "rev": 0
           }
         },
@@ -8993,7 +9095,7 @@
           "key": "defaultTextStyle",
           "value": {
             "__ref__": true,
-            "id": "9234DA1E-D05C-4DE4-B0B8-C912DE1F78CF",
+            "id": "67544BBF-F320-4493-A72D-9AB04E6C2DBC",
             "rev": 0
           }
         },
@@ -9002,12 +9104,12 @@
           "value": [
             {
               "__ref__": true,
-              "id": "503C8F31-3763-4C91-88EF-FE6F9480AC70",
+              "id": "7A08A636-B8E9-4B6B-A70C-EF0589782406",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "14AB0DBF-9319-4D52-A151-D48359E1382D",
+              "id": "BE344AAD-C79B-4E34-9EC9-8FCA8460EDAE",
               "rev": 0
             }
           ]
@@ -9299,7 +9401,7 @@
         }
       }
     },
-    "EC02EB6D-8B62-43FE-86D6-252B0518961D": {
+    "2ACC1C0B-29F4-48C9-8154-E65EA50AA948": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -9310,8 +9412,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_EE796EC6_69BC_4741_A6A2_66E1004048B7",
-            "rev": 709033
+            "id": "Text_9169A3B8_A92B_402E_B900_FF3B95EEDB39",
+            "rev": 1595093
           }
         },
         "selections": {
@@ -9319,7 +9421,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "258F9982-3BFB-4D23-8A69-B4624293A095",
+              "id": "F2F05F2F-3394-4DE1-8BD2-BC3D338E8D9C",
               "rev": 0
             }
           ]
@@ -9344,7 +9446,7 @@
         }
       }
     },
-    "258F9982-3BFB-4D23-8A69-B4624293A095": {
+    "F2F05F2F-3394-4DE1-8BD2-BC3D338E8D9C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -9355,8 +9457,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_EE796EC6_69BC_4741_A6A2_66E1004048B7",
-            "rev": 709033
+            "id": "Text_9169A3B8_A92B_402E_B900_FF3B95EEDB39",
+            "rev": 1595093
           }
         },
         "_goalColumn": {
@@ -9371,7 +9473,7 @@
           "key": "startAnchor",
           "value": {
             "__ref__": true,
-            "id": "503C8F31-3763-4C91-88EF-FE6F9480AC70",
+            "id": "7A08A636-B8E9-4B6B-A70C-EF0589782406",
             "rev": 0
           }
         },
@@ -9379,7 +9481,7 @@
           "key": "endAnchor",
           "value": {
             "__ref__": true,
-            "id": "14AB0DBF-9319-4D52-A151-D48359E1382D",
+            "id": "BE344AAD-C79B-4E34-9EC9-8FCA8460EDAE",
             "rev": 0
           }
         },
@@ -9387,7 +9489,7 @@
           "key": "_range",
           "value": {
             "__ref__": true,
-            "id": "8FCE1451-09F0-4BDC-8F5B-A98CFD6D6926",
+            "id": "4B52BD75-5237-499F-8CB2-F8203939A88F",
             "rev": 0
           }
         },
@@ -9411,7 +9513,7 @@
         }
       }
     },
-    "503C8F31-3763-4C91-88EF-FE6F9480AC70": {
+    "7A08A636-B8E9-4B6B-A70C-EF0589782406": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -9426,7 +9528,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "B806385A-E09D-48C4-A154-13D64FE2505D",
+            "id": "8AE339FC-B785-4FF6-A300-238B32FC68AF",
             "rev": 0
           }
         },
@@ -9446,7 +9548,7 @@
         }
       }
     },
-    "B806385A-E09D-48C4-A154-13D64FE2505D": {
+    "8AE339FC-B785-4FF6-A300-238B32FC68AF": {
       "rev": 0,
       "props": {
         "row": {
@@ -9459,7 +9561,7 @@
         }
       }
     },
-    "14AB0DBF-9319-4D52-A151-D48359E1382D": {
+    "BE344AAD-C79B-4E34-9EC9-8FCA8460EDAE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -9474,7 +9576,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "A61600ED-5E58-4CF9-A1BB-BF10A421E99E",
+            "id": "D6F976B8-1A96-4827-8C23-D19F5103391C",
             "rev": 0
           }
         },
@@ -9494,7 +9596,7 @@
         }
       }
     },
-    "A61600ED-5E58-4CF9-A1BB-BF10A421E99E": {
+    "D6F976B8-1A96-4827-8C23-D19F5103391C": {
       "rev": 0,
       "props": {
         "row": {
@@ -9507,14 +9609,14 @@
         }
       }
     },
-    "8FCE1451-09F0-4BDC-8F5B-A98CFD6D6926": {
+    "4B52BD75-5237-499F-8CB2-F8203939A88F": {
       "rev": 0,
       "props": {
         "start": {
           "key": "start",
           "value": {
             "__ref__": true,
-            "id": "B806385A-E09D-48C4-A154-13D64FE2505D",
+            "id": "8AE339FC-B785-4FF6-A300-238B32FC68AF",
             "rev": 0
           }
         },
@@ -9522,7 +9624,7 @@
           "key": "end",
           "value": {
             "__ref__": true,
-            "id": "A61600ED-5E58-4CF9-A1BB-BF10A421E99E",
+            "id": "D6F976B8-1A96-4827-8C23-D19F5103391C",
             "rev": 0
           }
         }
@@ -9538,7 +9640,7 @@
         }
       }
     },
-    "9234DA1E-D05C-4DE4-B0B8-C912DE1F78CF": {
+    "67544BBF-F320-4493-A72D-9AB04E6C2DBC": {
       "rev": 0,
       "props": {
         "fontFamily": {
@@ -9587,7 +9689,7 @@
         }
       }
     },
-    "CDA85E97-6CB1-4A36-A98D-2235C5F7183F": {
+    "D3BA3F83-8C04-4F43-BDEF-CEB87C11C000": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -9604,8 +9706,8 @@
         }
       }
     },
-    "Text_C66E65E4_F92F_4560_A363_D88EA092B2AD": {
-      "rev": 709031,
+    "Text_F919C3BA_E26F_4123_B2D1_B55DF7083059": {
+      "rev": 1595091,
       "props": {
         "draggable": {
           "key": "draggable",
@@ -9711,7 +9813,7 @@
           "key": "selection",
           "value": {
             "__ref__": true,
-            "id": "E89761C9-ED14-4DC8-BBF9-2B11699F9BC3",
+            "id": "8B755843-6E0E-4A6E-A6E9-1AB70DFE640E",
             "rev": 0
           }
         },
@@ -9719,7 +9821,7 @@
           "key": "defaultTextStyle",
           "value": {
             "__ref__": true,
-            "id": "D498E90B-C018-4B74-B361-4CC6E5C55DB9",
+            "id": "F4936317-4B96-408E-B87F-98D83B462E21",
             "rev": 0
           }
         },
@@ -9728,12 +9830,12 @@
           "value": [
             {
               "__ref__": true,
-              "id": "77AE0DD3-B41E-4F79-9BFE-F8129C6F7BB0",
+              "id": "F7CC5C06-26F2-49D0-903C-A2DD2F802819",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "1573CB11-E346-4F17-B205-6CF4167590F5",
+              "id": "CC999110-938C-47DC-8E19-D80BA9630ED6",
               "rev": 0
             }
           ]
@@ -9885,7 +9987,7 @@
         }
       }
     },
-    "E89761C9-ED14-4DC8-BBF9-2B11699F9BC3": {
+    "8B755843-6E0E-4A6E-A6E9-1AB70DFE640E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -9896,8 +9998,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_C66E65E4_F92F_4560_A363_D88EA092B2AD",
-            "rev": 709031
+            "id": "Text_F919C3BA_E26F_4123_B2D1_B55DF7083059",
+            "rev": 1595091
           }
         },
         "selections": {
@@ -9905,7 +10007,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "72CDA529-E33E-46EA-8112-30A8233D31D4",
+              "id": "79D6171D-72B2-4D30-A4BE-8DAC48F16C7C",
               "rev": 0
             }
           ]
@@ -9930,7 +10032,7 @@
         }
       }
     },
-    "72CDA529-E33E-46EA-8112-30A8233D31D4": {
+    "79D6171D-72B2-4D30-A4BE-8DAC48F16C7C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -9941,8 +10043,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_C66E65E4_F92F_4560_A363_D88EA092B2AD",
-            "rev": 709031
+            "id": "Text_F919C3BA_E26F_4123_B2D1_B55DF7083059",
+            "rev": 1595091
           }
         },
         "_goalColumn": {
@@ -9957,7 +10059,7 @@
           "key": "startAnchor",
           "value": {
             "__ref__": true,
-            "id": "77AE0DD3-B41E-4F79-9BFE-F8129C6F7BB0",
+            "id": "F7CC5C06-26F2-49D0-903C-A2DD2F802819",
             "rev": 0
           }
         },
@@ -9965,7 +10067,7 @@
           "key": "endAnchor",
           "value": {
             "__ref__": true,
-            "id": "1573CB11-E346-4F17-B205-6CF4167590F5",
+            "id": "CC999110-938C-47DC-8E19-D80BA9630ED6",
             "rev": 0
           }
         },
@@ -9973,7 +10075,7 @@
           "key": "_range",
           "value": {
             "__ref__": true,
-            "id": "D33EB0A2-9A05-4799-A72E-3CF6D6BE257F",
+            "id": "D2FB0FED-C230-49BF-A688-31679B554D56",
             "rev": 0
           }
         },
@@ -9997,7 +10099,7 @@
         }
       }
     },
-    "77AE0DD3-B41E-4F79-9BFE-F8129C6F7BB0": {
+    "F7CC5C06-26F2-49D0-903C-A2DD2F802819": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -10012,7 +10114,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "E7FC48B2-400B-43F6-9DEA-4E14EF3E14DC",
+            "id": "9E3CEEBD-7285-400E-819A-302E5D08A605",
             "rev": 0
           }
         },
@@ -10032,12 +10134,12 @@
         }
       }
     },
-    "E7FC48B2-400B-43F6-9DEA-4E14EF3E14DC": {
+    "9E3CEEBD-7285-400E-819A-302E5D08A605": {
       "rev": 0,
       "props": {
         "column": {
           "key": "column",
-          "value": 105
+          "value": 120
         },
         "row": {
           "key": "row",
@@ -10045,7 +10147,7 @@
         }
       }
     },
-    "1573CB11-E346-4F17-B205-6CF4167590F5": {
+    "CC999110-938C-47DC-8E19-D80BA9630ED6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -10060,7 +10162,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "0BFA5CA6-F94E-482C-A824-0E1C70386427",
+            "id": "25883182-C836-467F-B10D-022E74118D1E",
             "rev": 0
           }
         },
@@ -10080,12 +10182,12 @@
         }
       }
     },
-    "0BFA5CA6-F94E-482C-A824-0E1C70386427": {
+    "25883182-C836-467F-B10D-022E74118D1E": {
       "rev": 0,
       "props": {
         "column": {
           "key": "column",
-          "value": 105
+          "value": 120
         },
         "row": {
           "key": "row",
@@ -10093,7 +10195,7 @@
         }
       }
     },
-    "D33EB0A2-9A05-4799-A72E-3CF6D6BE257F": {
+    "D2FB0FED-C230-49BF-A688-31679B554D56": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -10104,7 +10206,7 @@
           "key": "start",
           "value": {
             "__ref__": true,
-            "id": "99293B3A-6E34-4C33-A785-4DF933A21F8B",
+            "id": "B53CC766-D4C7-4F11-85B3-5C9E373C136E",
             "rev": 0
           }
         },
@@ -10112,7 +10214,7 @@
           "key": "end",
           "value": {
             "__ref__": true,
-            "id": "24FDCC6D-EC0E-4987-A144-2E84900CE392",
+            "id": "D0B6DC78-710D-4BC5-960F-AA761654C550",
             "rev": 0
           }
         }
@@ -10128,7 +10230,7 @@
         }
       }
     },
-    "99293B3A-6E34-4C33-A785-4DF933A21F8B": {
+    "B53CC766-D4C7-4F11-85B3-5C9E373C136E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -10145,7 +10247,7 @@
         }
       }
     },
-    "24FDCC6D-EC0E-4987-A144-2E84900CE392": {
+    "D0B6DC78-710D-4BC5-960F-AA761654C550": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -10162,7 +10264,7 @@
         }
       }
     },
-    "D498E90B-C018-4B74-B361-4CC6E5C55DB9": {
+    "F4936317-4B96-408E-B87F-98D83B462E21": {
       "rev": 0,
       "props": {
         "fontFamily": {
@@ -10211,7 +10313,7 @@
         }
       }
     },
-    "CA022E7B-4117-454E-99F2-3A0770649512": {
+    "7A779EBC-E6DB-4FA3-B239-5B34A4FAD5BD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -10242,7 +10344,7 @@
         }
       }
     },
-    "E41CDCBF-7E06-4C79-829F-9DC391C555AB": {
+    "9ED3361E-576C-4599-8F3E-081AC83F650D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -10273,8 +10375,8 @@
         }
       }
     },
-    "Morph_33D30C51_7944_400D_BA49_978992BD1D80": {
-      "rev": 611272,
+    "Morph_3B7FD096_E97C_40D6_9666_AB2AEA839C10": {
+      "rev": 1879345,
       "props": {
         "clipMode": {
           "key": "clipMode",
@@ -10291,6 +10393,10 @@
         "name": {
           "key": "name",
           "value": "reply container"
+        },
+        "opacity": {
+          "key": "opacity",
+          "value": 0
         },
         "origin": {
           "key": "origin",
@@ -10311,7 +10417,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "3E4F64C0-9D22-4A66-8104-C1071D488C10",
+            "id": "A11D2F3E-DD25-41D4-B27D-8098C5B3BB3D",
             "rev": 0
           }
         },
@@ -10338,7 +10444,7 @@
         }
       }
     },
-    "3E4F64C0-9D22-4A66-8104-C1071D488C10": {
+    "A11D2F3E-DD25-41D4-B27D-8098C5B3BB3D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -10349,7 +10455,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "06BDA43B-27BE-4B8C-9F0D-503AF2A9F4AF",
+            "id": "BA8D4765-911A-4924-AF95-90DF201201DC",
             "rev": 0
           }
         },
@@ -10363,7 +10469,7 @@
         },
         "lastBounds": {
           "key": "lastBounds",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(75.9,134,512.4429267042542,0)"
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(75.9,104,512.4,0)"
         },
         "active": {
           "key": "active",
@@ -10373,8 +10479,8 @@
           "key": "container",
           "value": {
             "__ref__": true,
-            "id": "Morph_33D30C51_7944_400D_BA49_978992BD1D80",
-            "rev": 611272
+            "id": "Morph_3B7FD096_E97C_40D6_9666_AB2AEA839C10",
+            "rev": 1879345
           }
         },
         "_autoResize": {
@@ -10393,7 +10499,7 @@
         }
       }
     },
-    "06BDA43B-27BE-4B8C-9F0D-503AF2A9F4AF": {
+    "BA8D4765-911A-4924-AF95-90DF201201DC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -10424,7 +10530,7 @@
     "local://lively-object-modules/": {
       "4314E66B-7587-4077-9BC7-14DDCE1B22F2": {
         "package.json": "{\n  \"name\": \"4314E66B-7587-4077-9BC7-14DDCE1B22F2\",\n  \"version\": \"0.1.0\"\n}",
-        "index.js": "import { Morph } from \"lively.morphic\";\nimport { disconnect, connect } from \"lively.bindings/index.js\";\nimport Comment from \"AC691B51-9CA6-4277-9186-00CCF95B0FAB/index.js\";\n\nexport default class Reply extends Morph {\n  relayout() {\n    const replies = this.get('reply container'),\n          content = this.get('content'),\n          replyBox = this.get('reply box');\n    //replyBox.height = content.textBounds().height + 100\n    //replies.position = replyBox.bottomLeft;\n    //replies.width = replyBox.width;\n  }\n}\n\n"
+        "index.js": "import { Morph, Text } from \"lively.morphic\";\nimport { disconnect, disconnectAll, connect } from \"lively.bindings/index.js\";\n\nimport { loadObjectFromPartsbinFolder } from \"lively.morphic/partsbin.js\";\nimport { date } from \"lively.lang/index.js\";\n\nexport default class Reply extends Morph {\n\n  static get properties() {\n    return {\n      replies: {defaultValue: []},\n      date: {\n        after: ['submorphs'],\n        get() { return this.get('date').textString },\n        set(d) {\n          this.get('date').textString = date.format(d, \"d mmmm yyyy\")\n        }\n      }\n    }\n  }\n\n  beforePublish() {\n    this.replies.forEach(r => r.remove());\n    this.replies = []\n  }\n\n  relayout() {\n    const replies = this.get('reply container'),\n          content = this.get('content'),\n          replyBox = this.get('reply box');\n    replyBox.height = content.textBounds().height + 100\n    replies.position = replyBox.bottomLeft;\n    replies.width = replyBox.width;\n  }\n\n  setContent(textMorph) {\n    var content = this.get('content'),\n        replyBox = this.get('reply box');\n    if (content) {\n      content.remove();\n      disconnectAll(content);\n    }\n    content = textMorph;\n    content.name = 'content';\n    content.borderWidth = 0;\n    replyBox.addMorph(content);\n    replyBox.layout.col(0).row(1).group.morph = content;\n    connect(content, 'extent', this, 'relayout');\n  }\n\n  async addReply(content = new Text({textString: 'Write something...'})) {\n    var reply;\n    this.replies.push(\n      this.get('reply container').addMorph(\n        reply = await loadObjectFromPartsbinFolder('Reply')));\n    debugger;\n    reply.setContent(content);\n    reply.date = new Date();\n    this.showReplies()\n  }\n\n  toggleReplies(active) {\n    this.repliesVisible ? this.hideReplies() : this.showReplies();\n  }\n\n  showReplies() {\n    const replies = this.get('reply container');\n    this.repliesVisible = true;\n    replies.animate({\n      height: replies.submorphBounds().height + 10,\n      opacity: 1, duration: 300\n    });\n  }\n\n  hideReplies() {\n    this.repliesVisible = false;\n    this.get('reply container').animate({height: 0, opacity: 0, duration: 300});\n  }\n\n}\n\n\n"
       },
       "309A36E9-4FA1-46DF-9DCF-E20EE807ADEA": {
         "package.json": "{\n  \"name\": \"309A36E9-4FA1-46DF-9DCF-E20EE807ADEA\",\n  \"version\": \"0.1.0\"\n}",
@@ -10432,5 +10538,5 @@
       }
     }
   },
-  "preview": "<div   draggable=\"false\" style=\"background: rgba(248, 246, 14, 0); transform: translate(0.339963px, 41.4159px) rotate(0deg) scale(0.169981, 0.169981); transform-origin: 0px 0px 0px; display: inline; width: 584.3px; height: 101px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgb(235, 237, 239); transform: translate3d(71.86px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 512.443px; height: 101px; border-style: solid; border-width: 1px; border-color: rgb(189, 195, 199); border-radius: 4px; box-shadow: none; opacity: 1; position: absolute;  cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 512.443px; height: 22.6667px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute;  cursor: text;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div><div  style=\" position: absolute; left: 74.875px; top: 4px; width: 2px; height: 12px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 12px; padding: 4px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 12px; line-height: 12px;\"><span style=\"font-size: 10px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">Robin Schreiber</span></div><div style=\"height: 0px; width: 71.875px;\"></div></div></div><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(0px, 22.67px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 512.443px; height: 45.6667px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute;  cursor: default;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div><div  style=\" position: absolute; left: 38.7969px; top: 25px; width: 3px; height: 17px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 34px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 17px; line-height: 17px;\"><span style=\"font-size: 15px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">A response to the comment. </span></div><div style=\"height: 17px; line-height: 17px;\"><span style=\"font-size: 15px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">aber.</span></div><div style=\"height: 0px; width: 194.25px;\"></div></div></div><div   draggable=\"false\" style=\"background: rgba(147, 100, 184, 0); transform: translate3d(0px, 68.33px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 512.443px; height: 32.6667px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgb(240, 240, 240); transform: translate3d(3px, 3px, 0px) rotate(0deg) scale(0.5, 0.5); transform-origin: 0px 0px 0px; display: inline; width: 53.4px; height: 51.3px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; overflow: hidden; overflow-anchor: none; position: absolute;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgba(204, 205, 95, 0); transform: translate3d(8px, 4.6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 185.594px; height: 41px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgba(216, 115, 236, 0); transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 20px 20px 0px; display: inline; width: 40px; height: 40px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; overflow: hidden; overflow-anchor: none; position: absolute;  cursor: auto;\"><div style=\"position: absolute; transform: translate(20px, 20px);\"><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(-15.4px, -20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px -2px 0px; display: inline; width: 30.8594px; height: 36px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute;  cursor: pointer; font-family: sans-serif; font-size: 36px; color: rgb(64, 64, 64); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, -2px);\"></div></div><div   draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(-15.4px, -18px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px -4px 0px; display: inline; width: 30.8594px; height: 36px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0; position: absolute;  cursor: pointer; font-family: FontAwesome; font-size: 36px; color: rgb(68, 138, 255); padding: 0px;\"><span></span><div style=\"position: absolute; transform: translate(0px, -4px);\"></div></div></div></div><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(40px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 145.594px; height: 41px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute;  cursor: text;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div><div  style=\" position: absolute; left: 135.594px; top: 8px; width: 3px; height: 25px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 25px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 25px; line-height: 25px;\"><span style=\"font-size: 20px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: bold; font-style: normal; text-decoration: none;\">Show Replies</span></div><div style=\"height: 0px; width: 129.594px;\"></div></div></div></div></div></div></div><div   draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(32.7px, 3px, 0px) rotate(0deg) scale(0.5, 0.5); transform-origin: 0px 0px 0px; display: inline; width: 61.4px; height: 51.3px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; overflow: hidden; overflow-anchor: none; position: absolute;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgba(204, 205, 95, 0); transform: translate3d(9.9px, 4.6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 111.688px; height: 42px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 42px; height: 42px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute;  cursor: pointer; font-family: sans-serif; font-size: 36px; color: rgb(64, 64, 64); padding: 3px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(42px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 69.6875px; height: 41px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute;  cursor: text;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div><div  style=\" position: absolute; left: 59.6875px; top: 8px; width: 3px; height: 25px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 25px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 25px; line-height: 25px;\"><span style=\"font-size: 20px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: bold; font-style: normal; text-decoration: none;\">Reply</span></div><div style=\"height: 0px; width: 53.6875px;\"></div></div></div></div></div></div></div><div   draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(66.4px, 3px, 0px) rotate(0deg) scale(0.5, 0.5); transform-origin: 0px 0px 0px; display: inline; width: 51.4px; height: 51.3px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; overflow: hidden; overflow-anchor: none; position: absolute;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgba(204, 205, 95, 0); transform: translate3d(8px, 4.6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 95.3906px; height: 42px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0.5; position: absolute;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 42px; height: 42px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute;  cursor: pointer; font-family: sans-serif; font-size: 36px; color: rgb(64, 64, 64); padding: 3px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(42px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 53.3906px; height: 41px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute;  cursor: text;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div><div  style=\" position: absolute; left: 43.3906px; top: 8px; width: 3px; height: 25px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 25px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 25px; line-height: 25px;\"><span style=\"font-size: 20px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: bold; font-style: normal; text-decoration: none;\">Edit</span></div><div style=\"height: 0px; width: 37.3906px;\"></div></div></div></div></div></div></div><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0.0392157); transform: translate3d(95.1px, 3px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 90.5625px; height: 25px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute;  cursor: text;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div><div  style=\" position: absolute; left: 84.5625px; top: 4px; width: 3px; height: 17px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 17px; padding: 4px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 17px; line-height: 17px;\"><span style=\"font-size: 15px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">22 Jan 2017</span></div><div style=\"height: 0px; width: 82.5625px;\"></div></div></div></div></div></div></div><div   draggable=\"false\" style=\"background: rgba(220, 224, 78, 0); transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 71.8571px; height: 101px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgba(203, 106, 136, 0); transform: translate3d(20.9px, 9.3px, 0px) rotate(0deg) scale(0.21, 0.21); transform-origin: 0px 0px 0px; display: inline; width: 144.3px; height: 130.4px; border-style: solid; border-width: 7px; border-color: rgb(215, 219, 221); border-radius: 144.3px 130.4px; box-shadow: none; opacity: 1; overflow: hidden; overflow-anchor: none; position: absolute;  cursor: auto;\"><div style=\"position: absolute; transform: translate(-7px, -7px);\"><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(16.3px, 5.5px, 0px) rotate(0deg) scale(3.64, 3.64); transform-origin: 0px 0px 0px; display: inline; width: 29.0781px; height: 37px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0.62; position: absolute;  cursor: pointer; font-family: sans-serif; font-size: 37px; color: rgb(204, 204, 204); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div><div   draggable=\"false\" style=\"background: rgba(0, 203, 62, 0); transform: translate3d(75.86px, 104px, 0px) rotate(0deg) scale(1, 1); transform-origin: -4px 0px 0px; display: inline; width: 512.443px; height: 0px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; overflow: hidden; overflow-anchor: none; position: absolute;  cursor: auto;\"><div style=\"position: absolute; transform: translate(-4px, 0px);\"></div></div></div></div>"
+  "preview": "<div   draggable=\"false\" style=\"background: rgba(248, 246, 14, 0); transform: translate(0.339963px, 41.4159px) rotate(0deg) scale(0.169981, 0.169981); transform-origin: 0px 0px 0px; display: inline; width: 584.3px; height: 101px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgb(235, 237, 239); transform: translate3d(71.86px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 512.443px; height: 101px; border-style: solid; border-width: 1px; border-color: rgb(189, 195, 199); border-radius: 4px; box-shadow: none; opacity: 1; position: absolute;  cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 512.443px; height: 22.6667px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute;  cursor: text;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div><div  style=\" position: absolute; left: 74.875px; top: 4px; width: 2px; height: 12px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 12px; padding: 4px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 12px; line-height: 12px;\"><span style=\"font-size: 10px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">Robin Schreiber</span></div><div style=\"height: 0px; width: 71.875px;\"></div></div></div><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(0px, 22.67px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 512.443px; height: 45.6667px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute;  cursor: default;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div><div  style=\" position: absolute; left: 38.7969px; top: 25px; width: 3px; height: 17px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 34px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 17px; line-height: 17px;\"><span style=\"font-size: 15px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">A response to the comment. </span></div><div style=\"height: 17px; line-height: 17px;\"><span style=\"font-size: 15px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: normal; font-style: normal; text-decoration: none;\">aber.</span></div><div style=\"height: 0px; width: 194.25px;\"></div></div></div><div   draggable=\"false\" style=\"background: rgba(147, 100, 184, 0); transform: translate3d(0px, 68.33px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 512.443px; height: 32.6667px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgb(240, 240, 240); transform: translate3d(3px, 3px, 0px) rotate(0deg) scale(0.5, 0.5); transform-origin: 0px 0px 0px; display: inline; width: 53.4px; height: 51.3px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; overflow: hidden; overflow-anchor: none; position: absolute;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgba(204, 205, 95, 0); transform: translate3d(8px, 4.6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 185.594px; height: 41px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgba(216, 115, 236, 0); transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 20px 20px 0px; display: inline; width: 40px; height: 40px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; overflow: hidden; overflow-anchor: none; position: absolute;  cursor: auto;\"><div style=\"position: absolute; transform: translate(20px, 20px);\"><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(-15.4px, -20px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px -2px 0px; display: inline; width: 30.8594px; height: 36px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute;  cursor: pointer; font-family: sans-serif; font-size: 36px; color: rgb(64, 64, 64); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, -2px);\"></div></div><div   draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(-15.4px, -18px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px -4px 0px; display: inline; width: 30.8594px; height: 36px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0; position: absolute;  cursor: pointer; font-family: FontAwesome; font-size: 36px; color: rgb(68, 138, 255); padding: 0px;\"><span></span><div style=\"position: absolute; transform: translate(0px, -4px);\"></div></div></div></div><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(40px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 145.594px; height: 41px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute;  cursor: text;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div><div  style=\" position: absolute; left: 135.594px; top: 8px; width: 3px; height: 25px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 25px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 25px; line-height: 25px;\"><span style=\"font-size: 20px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: bold; font-style: normal; text-decoration: none;\">Show Replies</span></div><div style=\"height: 0px; width: 129.594px;\"></div></div></div></div></div></div></div><div   draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(32.7px, 3px, 0px) rotate(0deg) scale(0.5, 0.5); transform-origin: 0px 0px 0px; display: inline; width: 61.4px; height: 51.3px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; overflow: hidden; overflow-anchor: none; position: absolute;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgba(204, 205, 95, 0); transform: translate3d(9.9px, 4.6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 111.688px; height: 42px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 42px; height: 42px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute;  cursor: pointer; font-family: sans-serif; font-size: 36px; color: rgb(64, 64, 64); padding: 3px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(42px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 69.6875px; height: 41px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute;  cursor: text;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div><div  style=\" position: absolute; left: 59.6875px; top: 8px; width: 3px; height: 25px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 25px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 25px; line-height: 25px;\"><span style=\"font-size: 20px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: bold; font-style: normal; text-decoration: none;\">Reply</span></div><div style=\"height: 0px; width: 53.6875px;\"></div></div></div></div></div></div></div><div   draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(66.4px, 3px, 0px) rotate(0deg) scale(0.5, 0.5); transform-origin: 0px 0px 0px; display: inline; width: 51.4px; height: 51.3px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 15px; box-shadow: none; opacity: 1; overflow: hidden; overflow-anchor: none; position: absolute;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgba(204, 205, 95, 0); transform: translate3d(8px, 4.6px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 95.3906px; height: 42px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute;  cursor: pointer;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 42px; height: 42px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute;  cursor: pointer; font-family: sans-serif; font-size: 36px; color: rgb(64, 64, 64); padding: 3px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(42px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 53.3906px; height: 41px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute;  cursor: text;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div><div  style=\" position: absolute; left: 43.3906px; top: 8px; width: 3px; height: 25px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 25px; padding: 8px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 25px; line-height: 25px;\"><span style=\"font-size: 20px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: bold; font-style: normal; text-decoration: none;\">Edit</span></div><div style=\"height: 0px; width: 37.3906px;\"></div></div></div></div></div></div></div><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0.0392157); transform: translate3d(95.1px, 3px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 125.828px; height: 25px; border-style: solid; border-width: 0px; border-color: rgb(204, 204, 204); border-radius: 3px; box-shadow: none; opacity: 1; position: absolute;  cursor: default;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div><div  style=\" position: absolute; left: 119.828px; top: 4px; width: 3px; height: 17px; background-color: black; z-index: 5; display: none;\"></div><div  style=\"white-space: pre; width: 100%; z-index: 3; position: absolute; height: 17px; padding: 4px;\"><div style=\"height: 0px; width: 0px;\"></div><div style=\"height: 17px; line-height: 17px;\"><span style=\"font-size: 15px; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif; font-weight: normal; font-style: normal; text-decoration: none; color: rgb(102, 102, 102);\">28 February 2017</span></div><div style=\"height: 0px; width: 117.828px;\"></div></div></div></div></div></div></div><div   draggable=\"false\" style=\"background: rgba(220, 224, 78, 0); transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 71.8571px; height: 101px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute;  cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div   draggable=\"false\" style=\"background: rgba(203, 106, 136, 0); transform: translate3d(20.9px, 9.3px, 0px) rotate(0deg) scale(0.21, 0.21); transform-origin: 0px 0px 0px; display: inline; width: 144.3px; height: 130.4px; border-style: solid; border-width: 7px; border-color: rgb(215, 219, 221); border-radius: 144.3px 130.4px; box-shadow: none; opacity: 1; overflow: hidden; overflow-anchor: none; position: absolute;  cursor: auto;\"><div style=\"position: absolute; transform: translate(-7px, -7px);\"><div   draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate3d(16.3px, 5.5px, 0px) rotate(0deg) scale(3.64, 3.64); transform-origin: 0px 0px 0px; display: inline; width: 29.0781px; height: 37px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0.62; position: absolute;  cursor: pointer; font-family: sans-serif; font-size: 37px; color: rgb(204, 204, 204); padding: 0px;\"><span ></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div><div   draggable=\"false\" style=\"background: rgba(0, 203, 62, 0); transform: translate3d(75.9px, 104px, 0px) rotate(0deg) scale(1, 1); transform-origin: -4px 0px 0px; display: inline; width: 512.4px; height: 0px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 0; overflow: hidden; overflow-anchor: none; position: absolute;  cursor: auto;\"><div style=\"position: absolute; transform: translate(-4px, 0px);\"></div></div></div></div>"
 }
