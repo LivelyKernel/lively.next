@@ -245,6 +245,11 @@ export class PropertyAnimation {
   }
 
   convertGradients(config) {
+    // FIXME: Support proper gradient animation for svg morphs
+    if (this.morph.isSvgMorph && config.fill) {
+      this.morph.fill = config.fill;
+      return obj.dissoc(config, ['fill']);
+    }
     if (config.fill && config.fill.isGradient && this.morph.fill.isGradient) {
       // linear -> radial
         var fillBefore = this.morph.fill,
