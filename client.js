@@ -190,6 +190,12 @@ export default class L2LClient extends L2LConnection {
       var {data: {trackerId, messageNumber}} = answer
 
       this.trackerId = trackerId;
+
+      var response = await this.sendToAndWait(this.trackerId,'newUser',{})
+      if (!response.data)
+        throw new Error(`User answer is empty!`);
+      this.user = response.data
+      
       this._incomingOrderNumberingBySenders.set(trackerId, messageNumber || 0);
     } catch (e) {
       this.unregister();
@@ -223,6 +229,16 @@ export default class L2LClient extends L2LConnection {
         socket.emit(action, msg, ackFn) :
         socket.emit(action, msg);
     });
+  }
+
+
+  async authenticate(options){
+    console.log(options)
+    var response = await this.sendToAndWait(this.trackerId,'newUser',options)
+    if (!response.data)
+      throw new Error(`User answer is empty!`);
+    this.user = response.data
+    console.log(response.data)
   }
 
   toString() {

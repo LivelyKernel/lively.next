@@ -1,6 +1,7 @@
 /*global Map*/
 import L2LConnection from "./interface.js";
 import { defaultActions, defaultTrackerActions } from "./default-actions.js";
+import user from "lively.user/user.js"
 
 // Array.from(L2LTracker._trackers.keys());
 // Array.from(L2LTracker._trackers.values())[1].remove()
@@ -200,4 +201,12 @@ export default class L2LTracker extends L2LConnection {
   toString() {
     return `L2LTracker(${this.namespace}, open: ${this.isOnline()})`
   }
+
+  async makeUser(options){
+    console.log('hit')
+    var newUser = new user(options);
+    await newUser.authenticated(300)    
+    return newUser;
+  }
+  
 }

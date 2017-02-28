@@ -103,6 +103,9 @@ export var defaultTrackerActions = {
       }
                
       
+  },
+  async "newUser": (tracker, {sender, data}, ackFn, socket) => {    
+    ackFn(await tracker.makeUser(data))
   }
 }
 
