@@ -480,6 +480,7 @@ export class ModeSelector extends Morph {
       tooltips,
       morphClasses: ["root"],
       layout: new GridLayout({
+        rows: [0, {paddingBottom: 10}],
         grid: [[...arr.interpose(keys.map(k => k + "Label"), null)]],
         autoAssign: false,
         align: 'center',
@@ -500,7 +501,8 @@ export class ModeSelector extends Morph {
           ea._cachedTextBounds = null;
           ea.fit();
         }
-      })
+      });
+      this.layout.apply();
     })
   }
 
@@ -512,7 +514,6 @@ export class ModeSelector extends Morph {
     this.layout.row(0).items.forEach(c => {
       c.group.align = 'center';
     })
-    this.layout.row(0).paddingBottom = 10;
     this.applyStyler();
   }
 
