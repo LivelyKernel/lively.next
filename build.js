@@ -6,10 +6,13 @@ var rollup = require('rollup');
 var babel = require('rollup-plugin-babel');
 var targetFile = "dist/lively.graphics.js";
 
+livelyLangSource = fs.readFileSync(require.resolve("lively.lang/dist/lively.lang.js"))
+
 module.exports = Promise.resolve()
   .then(() => rollup.rollup({
     entry: "index.js",
-    plugins: [babel({    
+    //external: ['lively.lang'],
+    plugins: [babel({
       exclude: 'node_modules/**', sourceMap: false,
       "presets": [["es2015", {modules: false}]],
       "plugins": ['transform-async-to-generator', "syntax-object-rest-spread", "transform-object-rest-spread", "external-helpers"],
@@ -31,6 +34,7 @@ module.exports = Promise.resolve()
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
+  ${livelyLangSource}
   ${bundled.code}
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.graphics;
 })();`;
