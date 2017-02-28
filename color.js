@@ -374,17 +374,17 @@ export class Color {
 class Gradient {
   
   constructor(stops) {
-    this.stops = stops || [];
+    this.stops = stops.map(s => s) || [];
   }
   
   getStopsLighter(n) {
-      return this.stops.collect(function(ea) {
+      return arr.collect(this.stops, function(ea) {
           return {offset: ea.offset, color: ea.color.lighter(n)};
       });
   }
   
   getStopsDarker(n) {
-      return this.stops.collect(function(ea) {
+      return arr.collect(this.stops, function(ea) {
           return {offset: ea.offset, color: ea.color.darker(n)};
       });
   }
@@ -434,8 +434,8 @@ export class LinearGradient extends Gradient {
     else this._vector = value;
   }
   
-  lighter(n) { return new this.constructor(this.getStopsLighter(n), this.vector) }
-  darker() { return new this.constructor(this.getStopsDarker(), this.vector) }
+  lighter(n) { return new this.constructor({stops: this.getStopsLighter(n), vector: this.vector}) }
+  darker() { return new this.constructor({stops: this.getStopsDarker(), vector: this.vector}) }
   
   toCSSString() {
     // default webkit way of defining gradients
@@ -459,8 +459,8 @@ export class RadialGradient extends Gradient {
   
   toString() { return this.toCSSString() }
   
-  lighter(n) { return new this.constructor(this.getStopsLighter(n), this.focus) }
-  darker() { return new this.constructor(this.getStopsDarker(), this.focus) }
+  lighter(n) { return new this.constructor({stops: this.getStopsLighter(n), focus: this.focus, bounds: this.bounds}) }
+  darker() { return new this.constructor({stops: this.getStopsDarker(), focus: this.focus, bounds: this.bounds}) }
   
   toCSSString() {
     const innerCircle = this.focus.scaleBy(100.0),
