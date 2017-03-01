@@ -118,7 +118,7 @@ export class ObjectRef {
 
     if (typeof realObj.__additionally_serialize__ === "function")
       realObj.__additionally_serialize__(
-        snapshot, this,
+        snapshot, this, pool,
         (key, value, verbatim = false) =>
           props[key] = verbatim ? {key, value, verbatim} :
             {key, value: this.snapshotProperty(

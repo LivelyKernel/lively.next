@@ -64,7 +64,7 @@ describe("snapshots", () => {
     var o1 = {id: "o1"}, o2 = {id: "o2"}
 
     o1.bar = [o2];
-    o2.o1 = o1;    
+    o2.o1 = o1;
 
     objPool.add(o1);
 
@@ -116,12 +116,12 @@ describe("marshalling", () => {
       expect(foo).not.equals(obj.foo);
       expect(foo).stringEquals(obj.foo);
     });
-    
+
     it("property symbols are ignored", () => {
       var obj = {[Symbol.for("test")]: 23, foo: 24};
       expect(serializationRoundtrip(obj)).deep.equals({foo: 24, _rev: 0});
     });
-    
+
     it("serializes symbol directly", () => {
       var obj = {foo: Symbol("test")},
           obj2 = serializationRoundtrip(Symbol("test"));
@@ -186,7 +186,7 @@ describe("marshalling", () => {
           obj2 = ObjectPool.fromSnapshot(objPool.snapshot()).objects()[0];
       expect(obj2).property("n", 2);
     });
-    
+
     it("finds required modules", async () => {
       // lively.modules.module("lively.serializer2/tests/test-resources/module1.js").unload()
       await System.import("lively.serializer2/tests/test-resources/module1.js");
@@ -250,7 +250,7 @@ describe("marshalling", () => {
     });
 
   });
-  
+
   describe("__additionally_serialize__ hook", () => {
 
     it("gets called and has access to serialized obj", () => {
@@ -259,10 +259,10 @@ describe("marshalling", () => {
       }, {id} = objPool.add(obj);
       expect(objPool.snapshot()).containSubset({[id]: {"rev": 0, "props": {"foo": 23}}});
     });
-    
+
     it("can register new objects", () => {
       var obj1 = {bar: 99}, obj2 = {
-        __additionally_serialize__: (snapshot, objRef, add) => add("other", [obj1])
+        __additionally_serialize__: (snapshot, objRef, pool, add) => add("other", [obj1])
       }, {id} = objPool.add(obj2);
 
       expect(obj.values(objPool.snapshot())).containSubset([
@@ -276,7 +276,7 @@ describe("marshalling", () => {
 
     it("verbatim properties", () => {
       var obj = {
-        __additionally_serialize__(snapshot, _, add) { add("foo", [{xxx: 23}], true); }
+        __additionally_serialize__(snapshot, _, _2, add) { add("foo", [{xxx: 23}], true); }
       }, {id} = objPool.add(obj);
 
       expect(objPool.snapshot())
@@ -284,7 +284,7 @@ describe("marshalling", () => {
 
       expect(ObjectPool.fromSnapshot(objPool.snapshot()).resolveToObj(id))
         .containSubset({foo: [{xxx: 23}]});
-    
+
     })
   });
 
