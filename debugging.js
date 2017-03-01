@@ -1,6 +1,7 @@
 import { fun, obj, arr, num, string, graph, Path } from "lively.lang";
 
 import { ObjectPool } from "lively.serializer2";
+import { lookupPath, referenceGraph, findPathFromToId } from "./snapshot-navigation.js";
 import ClassHelper from "./class-helper.js";
 import { HTMLMorph, inspect } from "lively.morphic";
 
@@ -39,14 +40,15 @@ export class SnapshotInspector {
   }
 
   processSnapshot() {
-    var {snapshot, classes, expressions} = this,
-        pool = ObjectPool.fromSnapshot(snapshot);
+    var {classes, snapshot, expressions} = this;
+    if (snapshot.snapshot) snapshot = snapshot.snapshot;
+    let pool = ObjectPool.fromSnapshot(snapshot);
 
     pool.objectRefs().forEach(ref => {
-      var snap = ref.currentSnapshot,
+      let snap = ref.currentSnapshot,
           {className} = snap[ClassHelper.classMetaForSerializationProp] || {};
 
-      var propNames = Object.keys(snap.props);
+      let propNames = Object.keys(snap.props);
       if (className == null) {
         if (propNames.length > 3) className = "{" + propNames.slice(0, 3).join(", ") + ", ...}";
         else className = "{" + propNames.join(", ") + "}";
@@ -59,12 +61,12 @@ export class SnapshotInspector {
       classes[className].objects.push([ref.id, snap]);
 
       propNames.forEach(key => {
-        var value = snap.props[key].value;
+        let value = snap.props[key].value;
         if (!value || typeof value !== "string"
          || !pool.expressionSerializer.isSerializedExpression(value)) return;
 
-        var {__expr__} = pool.expressionSerializer.exprStringDecode(value);
-        var expr = expressions[__expr__]
+        let {__expr__} = pool.expressionSerializer.exprStringDecode(value),
+            expr = expressions[__expr__];
         if (!expr)
           expr = expressions[__expr__] = {count: 0, bytes: 0, name: __expr__, objects: []};
         expr.count++;
@@ -78,7 +80,10 @@ export class SnapshotInspector {
   }
 
   explainId(id) {
-    var ref = this.snapshot[id];
+    let s = this.snapshot;
+    if (s.snapshot) s = s.snapshot;
+
+    var ref = s[id];
     if (!ref) return null;
     var {className} = ref[ClassHelper.classMetaForSerializationProp] || {className: "Object"};
     var propNames = Object.keys(ref.props)
@@ -138,17 +143,19 @@ export class SnapshotInspector {
   findPathFromToId(fromId, toId, options = {}) {
     // findPathFromToId(snapshot, id, "A9E157AB-E863-400C-A15C-677CE90098B0")
     // findPathFromToId(snapshot, id, "A9E157AB-E863-400C-A15C-677CE90098B0", {hideId: false, showClassNames: true})
-    return findPathFromToId(this.snapshot, fromId, toId, options);
+    let s = this.snapshot;
+    if (s.snapshot) s = s.snapshot;
+    return findPathFromToId(s, fromId, toId, options)
   }
 
   referenceGraph() {
-    return Object.keys(this.snapshot).reduce((g, id) =>
-      Object.assign(g, {[id]: referencesOfId(this.snapshot, id)}), {})
+    let s = this.snapshot;
+    if (s.snapshot) s = s.snapshot;
+    return referenceGraph(s);
   }
 
-  referenceCouncts() {
-    var invertedG = graph.invert(this.referenceGraph()),
-        counts = {};
+  referenceCounts() {
+    var invertedG = graph.invert(this.referenceGraph()), counts = {};
     Object.keys(invertedG).forEach(key => counts[key] = invertedG[key].length);
     return counts;
   }
@@ -157,146 +164,14 @@ export class SnapshotInspector {
     // given a path like "submorphs.1.submorphs.0" and a starting id (root
     // object), try to resolve the path, returning the serialized object of
     // this.snapshot
-
-    path = path.replace(/^\./, "");
-    // foo[0].baz => foo.0.baz
-    path = path.replace(/\[([^\]])+\]/g, ".$1")
-
-    var parts = Path(path).parts(),
-        current = this.snapshot[fromId],
-        counter = 0;
-
-    while (true) {
-      if (counter++ > 1000) throw "stop";
-      var key = parts.shift();
-      if (!key) return current;
-
-      if (!current.props || !current.props[key])
-        throw new Error(`Property ${key} not found for ref ${JSON.stringify(current)}`);
-
-      var {value} = current.props[key];
-      if (!value)
-        throw new Error(`Property ${key} has no value`);
-
-      while (Array.isArray(value))
-        value = value[parts.shift()];
-
-      if (!value || !value.__ref__) return value;
-
-      current = this.snapshot[value.id];
-    }
-    return current;
+    let s = this.snapshot;
+    if (s.snapshot) s = s.snapshot;
+    return lookupPath(s, fromId, path);
   }
 
 }
-
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-
-function isReference(value) { return value && value.__ref__; }
-
-function referencesOfId(snapshot, id, withPath) {
-  // all the ids an regObj (given by id) points to
-  var ref = snapshot[id], result = [];
-  Object.keys(ref.props).forEach(key => {
-    var {value, verbatim} = ref.props[key];
-    if (Array.isArray(value)) {
-      result = result.concat(referencesInArray(snapshot, value, withPath && key));
-      return;
-    };
-    if (verbatim || !value || !isReference(value)) return;
-    result.push(withPath ? {key: key, id: value.id} : value.id);
-  });
-  return result;
-}
-
-function referencesInArray(snapshot, arr, optPath) {
-  // helper for referencesOfId
-  var result = [];
-  arr.forEach((value, idx) => {
-    if (Array.isArray(value)) {
-      var path = optPath ? optPath + '[' + idx + ']' : undefined;
-      result = result.concat(referencesInArray(snapshot, value, path));
-      return;
-    };
-    if (!value || !isReference(value)) return;
-    result.push(optPath ? {key: optPath + '[' + idx + ']', id: value.id} : value.id);
-  })
-  return result;
-}
-
-function referencesAndClassNamesOfId(snapshot, id) {
-  // given an id, the regObj behind it is taken and for all its references a list is assembled
-  // [id:ClassName]
-  return referencesOfId(snapshot, id).map(id =>
-    id + ':' + classNameOfId(snapshot, id));
-}
-
-function classNameOfId(snapshot, id) {
-  var ref = snapshot[id],
-      {className} = ref[ClassHelper.classMetaForSerializationProp] || {};
-  return className || "Object";
-}
-
-
-
-function findPathFromToId(snapshot, fromId, toId, options = {}) {
-  // prints path:
-  //   findIdReferencePathFromToId(snapshot, 0, 10);
-  // prints ids, classNames, property names:
-  //   findIdReferencePathFromToId(snapshot, id, "A9E157AB-E863-400C-A15C-677CE90098B0", {hideId: false, showClassNames: true})
-  var showPath = options.showPath === undefined ?  true : options.showPath,
-      showClassNames = options.hasOwnProperty('showClassNames') ? options.showClassNames : !showPath,
-      showPropNames = options.hasOwnProperty('showPropNames') ? options.showPropNames : showPath,
-      hideId = options.hasOwnProperty('hideId') ? options.hideId : showPath;
-
-  // how can one get from obj behind fromId to obj behind toId
-  // returns an array of ids
-  // findIdReferencePathFromToId(snapshot, 0, 1548)
-  var stack = [], visited = {}, found;
-
-  function pathFromIdToId(fromId, toId, depth) {
-    if (found) return;
-    if (depth > 50) { alert('' + stack); return; }
-    if (fromId === toId) { stack.push(fromId); found = stack.slice(); return };
-    if (visited[fromId]) return;
-    visited[fromId] = true;
-    stack.push(fromId);
-    var refs = referencesOfId(snapshot, fromId);
-    for (var i = 0; i < refs.length; i++)
-      pathFromIdToId(refs[i], toId, depth + 1);
-    stack.pop();
-  }
-  pathFromIdToId(fromId, toId, 0);
-
-  if (!found) return null;
-
-  if (!showClassNames && !showPropNames) return found;
-
-  var result = [];
-  for (var i = 0; i < found.length-1; i++) {
-    var currId = found[i],
-        nextId = found[i+1],
-        strings = [];
-    if (!hideId) strings.push(currId);
-    if (showClassNames) {
-      var {className} = snapshot[currId][ClassHelper.classMetaForSerializationProp] || {}
-      strings.push(className || "Object");
-    }
-    if (showPropNames) {
-      console.log(referencesOfId(snapshot, currId, true))
-      var ref = referencesOfId(snapshot, currId, true).find(ea => ea.id === nextId) || {key: "????"};
-      strings.push(ref.key);
-    }
-    result.push(strings.join(':'));
-  }
-  if (showPath)
-    result = '.' + result.join('.');
-  return result;
-}
-
-
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -524,6 +399,5 @@ export class ObjectGraphVisualizer extends HTMLMorph {
 
     return this;
   }
-
 
 }

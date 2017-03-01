@@ -91,7 +91,6 @@ describe('class serialization', function() {
   });
 
   it("raise no error when class not found when overridden", function() {
-
     var objPool = new ObjectPool(),
         klass = class Dummy_testDontRaiseErrorWhenClassNotFound {},
         instance = new klass(),
