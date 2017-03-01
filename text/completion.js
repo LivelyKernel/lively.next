@@ -94,7 +94,7 @@ export class CompletionController {
 
   positionForMenu() {
     var m = this.textMorph,
-        cursorBounds = m.charBoundsFromTextPosition(m.cursorPosition).translatedBy(m.scroll.negated()),
+        cursorBounds = m.charBoundsFromTextPosition(m.cursorPosition),
         globalCursorBounds = m.getGlobalTransform().transformRectToRect(cursorBounds);
     return globalCursorBounds.topLeft().addXY(m.padding.left()-1, -m.padding.top());
   }
