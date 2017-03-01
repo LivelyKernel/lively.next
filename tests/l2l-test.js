@@ -11,6 +11,7 @@ import CorsPlugin from "lively.server/plugins/cors.js";
 import SocketioPlugin from "lively.server/plugins/socketio.js";
 import L2lPlugin from "lively.server/plugins/l2l.js";
 
+import * as authserver from "lively.user/authserver.js"
 
 var hostname = "localhost", port = 9009, namespace = "l2l-test", url;
 var testServer, tracker, client1;
@@ -437,17 +438,41 @@ describe('l2l', function() {
       client1.trackerId
       await client1.whenRegistered(300);
     });
-    describe("user integration", () => {
+    
+  });
+
+
+
+describe("user integration", () => {
+
+  before(async () =>{
+     await authserver.addUser("testUser1", "testuser1@lively-next.org", "test",'adminpassword')
+  })
+
+  after(async () =>{
+    await authserver.removeUser("testUser1", "testuser1@lively-next.org", 'adminpassword')    
+  })
+
 
       it('Ensure anonymous user is created on init without options', async ()=>{
           console.log(client1)
+          await promise.delay(100);
           expect(client1.user).to.be.an('object',"user object not present");
           expect(client1.user.name).equals('anonymous',"Username not created as anonymous")
           expect(client1.user.email).equals(null,"null email for anonymous user not present")
           expect(client1.user.token).to.be.an('object','failed token object not present')
       })
-    })
-  });
 
+      it('Determine that a user can be authenticated after creation', async ()=>{
+          await promise.delay(100);
+          expect(client1.user.token).to.be.an('object','failed token object not present')
+          expect(client1.user.token.status).equals('error','token not showing error state before authentication')          
+          await client1.authenticate({name: "testUser1", email: "testuser1@lively-next.org", password: "test"})
+          var response = await authserver.verify(client1.user)          
+          expect(response.type).equals('success')
+          
+      })
+      
+    })
 
 });

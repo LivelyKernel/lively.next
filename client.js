@@ -232,13 +232,11 @@ export default class L2LClient extends L2LConnection {
   }
 
 
-  async authenticate(options){
-    console.log(options)
+  async authenticate(options){    
     var response = await this.sendToAndWait(this.trackerId,'newUser',options)
     if (!response.data)
       throw new Error(`User answer is empty!`);
-    this.user = response.data
-    console.log(response.data)
+    this.user = response.data    
   }
 
   toString() {

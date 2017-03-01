@@ -202,10 +202,9 @@ export default class L2LTracker extends L2LConnection {
     return `L2LTracker(${this.namespace}, open: ${this.isOnline()})`
   }
 
-  async makeUser(options){
-    console.log('hit')
+  async makeUser(options){    
     var newUser = new user(options);
-    await newUser.authenticated(300)    
+    await newUser.authenticated(300)
     return newUser;
   }
   
