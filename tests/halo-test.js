@@ -32,7 +32,7 @@ function closeToPoint(p1,p2) {
 
 describe("halos", function() {
 
-  this.timeout(6000);
+  this.timeout(10*1000);
 
   beforeEach(async () =>
     MorphicEnv.pushDefault(
