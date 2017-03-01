@@ -675,12 +675,15 @@ export default class Browser extends Window {
   }
 
   updateCodeEntities(mod) {
-    var {codeEntityTree} = this.ui;
+    let {editorPlugin, ui: {codeEntityTree}} = this;
 
-    if (!mod) { codeEntityTree.treeData = new CodeDefTreeData([]); return; }
+    if (!mod || !editorPlugin || !editorPlugin.isJSEditorPlugin) {
+      codeEntityTree.treeData = new CodeDefTreeData([]);
+      return;
+    }
 
-    var decls = findDecls(lively.ast.parse(this.get("sourceEditor").textString));
-
+    let parsed = editorPlugin.getNavigator().ensureAST(editorPlugin.textMorph),
+        decls = findDecls(parsed);
     codeEntityTree.treeData = new CodeDefTreeData(decls);
   }
 
