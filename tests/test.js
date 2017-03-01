@@ -1,7 +1,7 @@
 /*global describe, it, beforeEach, afterEach*/
 import { expect, chai } from "mocha-es6";
 
-import { obj } from "lively.lang";
+import { obj, arr } from "lively.lang";
 import { ObjectPool, ObjectRef, serialize } from "../index.js";
 
 function serializationRoundtrip(obj) {
@@ -272,6 +272,30 @@ describe("marshalling", () => {
 
       expect(serializationRoundtrip(obj2))
         .containSubset({other: [{bar: 99}]});
+    });
+
+    it("can remove registered objects", () => {
+      var obj1 = {bar: 99},
+          obj2 = {zork: 33},
+          obj3 = {
+            other1: obj1,
+            other2: obj2,
+            __additionally_serialize__: function(snapshot, objRef, pool, add) {
+              delete snapshot.props.other1;
+            }
+          },
+          {id} = objPool.add(obj3),
+          ids = Object.keys(objPool.snapshot()),
+          otherId = arr.without(ids, id)[0];
+
+      var expected = [{
+          rev: 0,
+          props: {other2: {key: "other2", value: {__ref__: true, id: otherId, rev: 0}}},
+        },
+        {props: {zork: {key: "zork", value: 33}}, rev: 0}
+      ]
+
+      expect(obj.values(objPool.snapshot())).containSubset(expected);
     });
 
     it("verbatim properties", () => {
