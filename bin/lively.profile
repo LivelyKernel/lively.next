@@ -12,3 +12,5 @@ function cd {
     $LIVELY_COMMAND_OWNER > /dev/null;
   builtin cd "${DIR}"
 }
+
+alias em="lively-as-editor.sh"
