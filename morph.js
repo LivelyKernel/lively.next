@@ -513,9 +513,19 @@ export class Morph {
 
   isClip() { return this.clipMode !== "visible"; }
   get scrollExtent() {
+    /*
+     Since the DOM will always include the scrollbar area to the scrollable
+     are of the div, we need to allow the morphic scroll to take that
+     area into account as well. If not, we get weird jiggle effects when morphic
+     and the DOM fight over how much the scroll is actually allowed to be.
+     rms: I tried fixing this entirely in CSS, but failed. My idea was to add invisible margins
+          to the rendered div container of a scrollable morph, such that HTML will end up with the
+          same scrollable area as morphic, but that somehow does not work.
+    */
+    const HTMLScrollbarOffset = pt(15, 15);
     return (this.submorphs.length ?
       this.innerBounds().union(this.submorphBounds()) :
-      this.innerBounds()).extent();
+      this.innerBounds()).extent().addPt(HTMLScrollbarOffset);
   }
 
   scrollDown(n) { this.scroll = this.scroll.addXY(0, n); }
@@ -595,6 +605,7 @@ export class Morph {
   }
 
   submorphBounds() {
+    if (this.submorphs.length < 1) return this.innerBounds();
     return this.submorphs.map(submorph => submorph.bounds())
                          .reduce((a,b) => a.union(b));
   }
@@ -765,7 +776,7 @@ export class Morph {
 
     return submorph;
   }
-
+ 
   addMorph(submorph, insertBeforeMorph) {
     // insert at right position in submorph list, according to insertBeforeMorph
     var submorphs = this.submorphs,
@@ -950,7 +961,7 @@ export class Morph {
     for (var morph = this; (morph != other) && (morph != undefined); morph = morph.owner) {
        tfm.preConcatenate(new Transform(morph.origin))
           .preConcatenate(morph.getTransform())
-          .preConcatenate(new Transform(morph.scroll.negated()));
+          .preConcatenate(morph != this ? new Transform(morph.scroll.negated()) : new Transform());
     }
     return tfm;
   }
@@ -969,7 +980,8 @@ export class Morph {
   transformToMorph(other) {
     var tfm = this.getGlobalTransform(),
         inv = other.getGlobalTransform().inverse();
-    tfm.preConcatenate(inv);
+    tfm.preConcatenate(inv)
+    tfm.preConcatenate(new Transform(other.scroll));
     return tfm;
   }
 
