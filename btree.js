@@ -92,7 +92,7 @@ class BTreeNode {
     return printTree(this,
       (node) => node.elements.map(ea => ea.value).join(", "),
       (node) => node.nodes,
-      {padding: [2,1,2,1]})
+      {padding: [2,1,2,1]});
   }
 
 }

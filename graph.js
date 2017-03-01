@@ -14,7 +14,7 @@ var testGraph = {
 ```
 */
 
-import { withoutAll, flatten, uniq } from "./array.js";
+import { range, shuffle, withoutAll, flatten, uniq } from "./array.js";
 import { values } from "./object.js";
 
 // show-in-doc
@@ -30,14 +30,19 @@ function without(graph, ids) {
   // return a copy of graph map with ids removed
   var cloned = {};
   for (var id in graph) {
-    if (ids.indexOf(id) > -1) continue;
-    cloned[id] = graph[id].filter(function(id) {
-      return ids.indexOf(id) === -1; });
+    if (ids.includes(id)) continue;
+    cloned[id] = [];
+    let refs = graph[id];
+    for (let i = 0; i < refs.length; i++) {
+      let ref = refs[i];
+      if (!ids.includes(ref))
+        cloned[id].push(ref)
+    }
   }
   return cloned;
 }
 
-function hull(graphMap, id, ignore, maxDepth) {
+function hull(g, id, ignoredKeyList = [], maxDepth = Infinity) {
   // Takes a graph in object format and a start id and then traverses the
   // graph and gathers all nodes that can be reached from that start id.
   // Returns a list of those nodes.
@@ -54,28 +59,69 @@ function hull(graphMap, id, ignore, maxDepth) {
   // }
   // hull(testGraph, "d") // => ["c", "f"]
   // hull(testGraph, "e") // => ['a', 'f', 'b', 'c', 'd', 'e']
-  // hull(testGraph, "e", ["b"]) // =? ["a", "f", "c"]
-  return uniq(
-          flatten(
-            values(
-              subgraphReachableBy(
-                graphMap, id, ignore, maxDepth))))
+  // hull(testGraph, "e", ["b"]) // => ["a", "f", "c"]
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // below is an optimized variant, the functional but slow version:
+  // return uniq(
+  //         flatten(
+  //           values(
+  //             subgraphReachableBy(
+  //               graphMap, id, ignore, maxDepth))));
+
+  if (!Array.isArray(g[id])) return [];
+
+  let hull = [],
+      visited = {};
+
+  let ignoredKeys = {};
+  for (let i = 0; i < ignoredKeyList.length; i++)
+    ignoredKeys[ignoredKeyList[i]] = true;
+  let toVisitList = g[id].slice(),
+      toVisitMapAndDistFromRoot = {};
+  for (let i = toVisitList.length; i--; ) {
+    let key = toVisitList[i];
+    if (key in ignoredKeys) toVisitList.splice(i, 1);
+    else toVisitMapAndDistFromRoot[key] = 1;
+  }
+
+  if (ignoredKeyList)
+  while (true) {
+    if (toVisitList.length === 0) break;
+    for (let i = 0; i < toVisitList.length; i++) {
+      let key = toVisitList.shift();
+      if (key in visited || key in ignoredKeys) continue;
+      let dist = toVisitMapAndDistFromRoot[key] || 0;
+      if (dist > maxDepth) continue;
+      hull.push(key);
+      visited[key] = true;
+      let refs = g[key];
+      if (!refs) continue;
+      for (let j = 0; j < refs.length; j++) {
+        let refKey = refs[j];
+        if (refKey in visited || refKey in toVisitMapAndDistFromRoot) continue;
+        toVisitMapAndDistFromRoot[refKey] = dist + 1;
+        toVisitList.push(refKey);
+      }
+    }
+  }
+  return hull;
 }
 
-function subgraphReachableBy(graphMap, id, ignore, maxDepth) {
+function subgraphReachableBy(graphMap, startId, ignore, maxDepth = Infinity) {
   // show-in-doc
   // Like hull but returns subgraph map of `graphMap`
   // Example:
   // subgraphReachableBy(testGraph, "e", [], 2);
   // // => {e: [ 'a', 'f' ], a: [ 'b', 'c' ], f: []}
-  maxDepth = maxDepth || 10;
   if (ignore) graphMap = without(graphMap, ignore);
-  var ids = [id], step = 0, subgraph = {};
+  let ids = [startId], step = 0, subgraph = {};
   while (ids.length && step++ < maxDepth) {
-    ids = ids.reduce(function(ids, id) {
-      return subgraph[id] ?
-        ids : ids.concat(subgraph[id] = graphMap[id] || []);
-    }, []);
+    let id = ids.shift();
+    if (subgraph[id]) continue;
+    let newIds = graphMap[id] || [];
+    subgraph[id] = newIds;
+    ids.push(...newIds);
   }
   return subgraph;
 }
@@ -85,13 +131,16 @@ function invert(g) {
   // Example:
   // invert({a: ["b"], b: ["a", "c"]})
   //   // => {a: ["b"], b: ["a"], c: ["b"]}
-  return Object.keys(g).reduce(function(inverted, k) {
-    g[k].forEach(function (k2) {
-      if (!inverted[k2]) inverted[k2] = [k];
-      else inverted[k2].push(k);
-    });
-    return inverted;
-  }, {});
+  let inverted = {};
+  for (let key in g) {
+    let refs = g[key];
+    for (let i = 0; i < refs.length; i++) {
+      let key2 = refs[i];
+      if (!inverted[key2]) inverted[key2] = [key];
+      else inverted[key2].push(key);
+    }
+  }
+  return inverted;
 }
 
 
@@ -151,6 +200,17 @@ function reduce(doFunc, graph, rootNode, carryOver, ignore, context) {
   }
 }
 
+function random(nKeys = 10) {
+  var g = {}, keys = range(1, nKeys).map(String);  
+  for (let i = 0; i < keys.length; i++) {
+    var r = Math.floor(Math.random() * nKeys);
+    g[keys[i]] = shuffle(keys).slice(0, r);
+  }
+  return g;
+}
+
+
 export {
-  clone, without, hull, subgraphReachableBy, invert, sortByReference, reduce
+  clone, without, hull, subgraphReachableBy, invert, sortByReference, reduce,
+  random
 }

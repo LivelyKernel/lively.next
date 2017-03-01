@@ -3,30 +3,30 @@
 import { expect } from "mocha-es6";
 import { sortByReference, hull, reduce, invert, subgraphReachableBy } from "../graph.js";
 
+var testGraph = {
+  "a": ["b", "c"],
+  "b": ["c", "d", "e", "f"],
+  "d": ["c", "f"],
+  "e": ["a", "f"],
+  "f": []
+}
 
 describe('graph', function() {
 
-  var testGraph = {
-    "a": ["b", "c"],
-    "b": ["c", "d", "e", "f"],
-    "d": ["c", "f"],
-    "e": ["a", "f"],
-    "f": []
-  }
 
   describe('hull', function() {
 
     it("can be computed", function() {
-      expect(hull(testGraph, "d")).to.eql(["c", "f"]);
-      expect(hull(testGraph, "e")).to.eql(['a', 'f', 'b', 'c', 'd', 'e']);
-      expect(hull(testGraph, "e", ["b"])).to.eql(["a", "f", "c"]);
-      expect(hull(testGraph, "e", [], 2)).to.eql(['a', 'f', 'b', 'c']);
+      expect(hull(testGraph, "d")).to.eql(["c", "f"], "1");
+      expect(hull(testGraph, "e")).to.eql(['a', 'f', 'b', 'c', 'd', 'e'], "2");
+      expect(hull(testGraph, "e", ["b"])).to.eql(["a", "f", "c"], "ignore issue");
+      expect(hull(testGraph, "e", [], 2)).to.eql(['a', 'f', 'b', 'c'], "max depth issue");
     });
 
-    it("reachable subgraph", function() {
+    it("reachable subgraph", function() {      
       expect(subgraphReachableBy(testGraph, "d", []))
         .to.eql({"d": ["c", "f"], "c": [], "f": []});
-      expect(subgraphReachableBy(testGraph, "e", [], 2))
+      expect(subgraphReachableBy(testGraph, "e", [], 3))
         .to.eql({e: [ 'a', 'f' ], a: [ 'b', 'c' ], f: []});
       expect(subgraphReachableBy(testGraph, "e", ["a"], 2))
         .to.eql({e: ['f' ], f: []});
