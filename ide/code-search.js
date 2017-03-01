@@ -73,8 +73,8 @@ export class CodeSearcher extends FilterableList {
           this.submorphs = [
             Text.makeInputLine({
               name: "input",
-              borderBottom: {width: 1, color: Color.gray},
               fixedHeight: false,
+              padding: 5,
               autofit: true,
             }),
             new List({
@@ -114,7 +114,7 @@ export class CodeSearcher extends FilterableList {
       },
 
       searchInUnloadedModulesCheckbox: {
-        after: ["submorphs"], dderived: true,
+        after: ["submorphs"], derived: true,
         get() {
           return this.getSubmorphNamed("searchInUnloadedModulesCheckbox") ||
             this.addMorph(new LabeledCheckBox({
@@ -133,6 +133,7 @@ export class CodeSearcher extends FilterableList {
   constructor(props = {}) {
     if (props.targetBrowser) props.browser = props.targetBrowser;
     super(props);
+    this.layout.row(1).paddingTop = 0;
     connect(this, "accepted", this, "openBrowserForSelection");
     connect(this.searchInUnloadedModulesCheckbox, "checked", this, "searchAgain");
   }

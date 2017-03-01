@@ -821,9 +821,12 @@ export class FilterableList extends Morph {
       grid: [[this.inputMorph],
              [this.listMorph]]
     });
+    connect(this, 'extent', this, 'relayout');
   }
 
   get isList() { return true; }
+
+  relayout() { }
 
   inputStyle(theme) {
    if (theme == "dark") {
