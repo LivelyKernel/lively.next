@@ -1,6 +1,3 @@
-// import "./object-extensions.js";
-// 
-// import { arr, obj, num, string } from "lively.lang";
 import ClassHelper from "./class-helper.js";
 import ExpressionSerializer from "./plugins/expression-serializer.js";
 import { ObjectRef } from "./object-ref.js";

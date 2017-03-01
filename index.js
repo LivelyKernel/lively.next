@@ -8,18 +8,18 @@ import { version as serializerVersion } from "./package.json";
 
 function normalizeOptions(options) {
   options = {reinitializeIds: false, ...options}
-
   if (options.reinitializeIds && typeof options.reinitializeIds !== "function")
     throw new Error(`serializer option 'reinitializeIds' needs to be a function(id, ref) => id`)
-
   return options;
 }
+
+const majorAndMinorVersionRe = /\.[^\.]+$/; // x.y.z => x.y
 
 export function serialize(obj, options) {
   options = normalizeOptions(options);
   let objPool = options.objPool || new ObjectPool(options),
       ref = objPool.add(obj),
-      requiredVersion = "~" + serializerVersion.replace(/\.[^\.]+$/, ""); // semver
+      requiredVersion = "~" + serializerVersion.replace(majorAndMinorVersionRe, ""); // semver
   return {id: ref.id, snapshot: objPool.snapshot(), requiredVersion};
 }
 
