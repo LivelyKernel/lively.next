@@ -1475,10 +1475,19 @@ return ;
   }
 
   needsRerender() { return this._dirty; }
+
   aboutToRender(renderer) { this._dirty = false; this._rendering = true; }
-  whenRendered() { return promise.waitFor(() => !this._dirty && !this._rendering).then(() => this); }
+
+  whenRendered() {
+    return promise
+      .waitFor(() => !this._dirty && !this._rendering)
+      .then(() => this);
+  }
+
   render(renderer) { return renderer.renderMorph(this); }
+
   renderAsRoot(renderer) { return renderRootMorph(this, renderer); }
+
   renderPreview(opts) {
     // Creates a DOM node that is a "preview" of he morph, i.e. a
     // representation that looks like the morph but doesn't morphic behavior
@@ -1513,12 +1522,22 @@ return ;
     node.style.transform = tfm.toCSSTransformString();
     node.style.pointerEvents = "";
 
-    var html = node.outerHTML;
+    // preview nodes must not appear like nodes of real morphs otherwise we
+    // mistaken them for morphs and do wrong stuff in event dispatch etc.
+    tree.prewalk(node, (node) => {
+      if (typeof node.className !== "string") return;
+        let cssClasses = node.className
+              .split(" ")
+              .map(ea => ea.trim())
+              .filter(Boolean),
+            isMorph = cssClasses.includes("Morph");
+      if (!isMorph) return;
+      node.className = arr.withoutAll(cssClasses, ["morph", "Morph"]).join(" ");
+      node.id = "";
+    },
+    node => Array.from(node.childNodes));
 
-    html = html.replace(/(id|class)=\"[^\"]+\"/g, "")
-               .replace(/pointer-events: [^;]+;/g, "");
-
-    return html;
+    return node.outerHTML;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
