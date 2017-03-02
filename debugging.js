@@ -11,9 +11,35 @@ import { serializeMorph } from "lively.morphic/serialization.js";
 
 var snap = serializeMorph($world.get("browser"))
 
+
+var t = Date.now(); var snap = serializeMorph($world); Date.now() - t;
+var t = Date.now(); var snap = serializeMorph($world.get("browser")); Date.now() - t;
+var i = SnapshotInspector.forSnapshot(snap);
+
+var t = Date.now(); var g = referenceGraph(snap.snapshot); Date.now() - t;
+var t = Date.now(); var g = referenceGraph(snap.snapshot); Date.now() - t;
+var t = Date.now(); graph.hull(g, snap.id); Date.now() - t;
+var t = Date.now(); graph.subgraphReachableBy(g, snap.id); Date.now() - t;
+
+graph.hull(g2, snap.id).length
+Object.keys(g).length
+Object.keys(g2).length
+
+obj.equals(Object.keys(g), Object.keys(g2))
+var diff = Object.keys(g).map(key => !obj.equals(g[key], g2[key]) && key).filter(Boolean);
+
+referencesOfId(snap.snapshot, "0002972B-C7FE-4765-A806-D90E11E44654", true)
+referencesOfId(snap.snapshot, "0002972B-C7FE-4765-A806-D90E11E44654", true)
+snap.snapshot[snap.id]
+
+i.findPathFromToId(snap.id, "0002972B-C7FE-4765-A806-D90E11E44654")
+
+g
+
+$world.execCommand("diff and open in window", {a: x1, b: g})
+
 lively.lang.num.humanReadableByteSize(JSON.stringify(snap).length)
 
-var i = SnapshotInspector.forSnapshot(snap.snapshot)
 
 var a = {bar: 15}; a.b = {foo: 23};
 var p = new ObjectPool(); p.add(a)

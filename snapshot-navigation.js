@@ -1,5 +1,5 @@
 import ClassHelper from "./class-helper.js";
-import { Path } from "lively.lang";
+import { Path, arr, graph } from "lively.lang";
 
 export function referenceGraph(snapshot) {
   let ids = Object.keys(snapshot),
@@ -148,4 +148,19 @@ export function lookupPath(snapshot, fromId, path) {
     current = snapshot[value.id];
   }
   return current;
+}
+
+export function removeUnreachableObjects(rootIds, snapshot) {
+  let idsToRemove = arr.withoutAll(Object.keys(snapshot), rootIds),
+      refGraph = referenceGraph(snapshot);
+  rootIds.forEach(rootId => {
+    let subGraph = graph.subgraphReachableBy(refGraph, rootId);
+    for (let i = idsToRemove.length; i--; ) {
+      let id = idsToRemove[i];
+      if (id in subGraph) idsToRemove.splice(i, 1);
+    }
+  });
+
+  idsToRemove.forEach(id => delete snapshot[id]);
+  return snapshot;
 }
