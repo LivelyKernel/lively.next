@@ -93,10 +93,12 @@ export class CompletionController {
   }
 
   positionForMenu() {
-    var m = this.textMorph,
+    let m = this.textMorph,
         cursorBounds = m.charBoundsFromTextPosition(m.cursorPosition),
         globalCursorBounds = m.getGlobalTransform().transformRectToRect(cursorBounds);
-    return globalCursorBounds.topLeft().addXY(m.padding.left()-1, -m.padding.top());
+    return globalCursorBounds.topLeft()
+      .addXY(m.padding.left()-1, -m.padding.top())
+      .addXY(0, -m.scroll.y);
   }
 
   async completionListSpec() {
