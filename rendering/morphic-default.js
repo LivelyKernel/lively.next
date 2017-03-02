@@ -505,8 +505,8 @@ MorphAfterRenderHook.prototype.updateScroll = function(morph, node) {
   if (node) {
     const {x, y} = morph.scroll;
     // prevent interference with bounce back animation
-    node.scrollTop !== y && (morph.submorphBounds().height - morph.height - node.scrollTop >= 0) && (node.scrollTop = y);
-    node.scrollLeft !== x && (morph.submorphBounds().width - morph.width - node.scrollLeft >= 0) && (node.scrollLeft = x);
+    node.scrollTop !== y && (node.scrollTop = y);
+    node.scrollLeft !== x && (node.scrollLeft = x);
   }
 }
 MorphAfterRenderHook.prototype.updateScrollOfSubmorphs = function(morph, renderer) {

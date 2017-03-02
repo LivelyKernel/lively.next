@@ -647,9 +647,12 @@ export class Text extends Morph {
   }
 
   get scrollExtent() {
+    // rms: See: morph>>scrollExtent
+    const HTMLScrollbarOffset = pt(15,15);
     return this.textBounds().extent()
       .addPt(this.padding.topLeft())
       .addPt(this.padding.bottomRight())
+      .addPt(HTMLScrollbarOffset)
       .maxPt(super.scrollExtent);
   }
 
