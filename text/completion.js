@@ -97,8 +97,9 @@ export class CompletionController {
         cursorBounds = m.charBoundsFromTextPosition(m.cursorPosition),
         globalCursorBounds = m.getGlobalTransform().transformRectToRect(cursorBounds);
     return globalCursorBounds.topLeft()
-      .addXY(m.padding.left()-1, -m.padding.top())
-      .addXY(0, -m.scroll.y);
+      .addXY(m.padding.left()-2, -m.padding.top())
+      .addXY(0, -m.scroll.y)
+      .addPt(pt(m.borderWidth-2, m.borderWidth-2));
   }
 
   async completionListSpec() {
@@ -136,10 +137,9 @@ export class CompletionController {
       items, input: prefix,
       name: "text completion menu",
       historyId: "lively.morphic-text completion",
-      fill: Color.white,
-      border: {width: 1, color: Color.gray},
-      inputPadding: Rectangle.inset(2,1),
-
+      fill: Color.transparent,
+      border: {width: 0, color: Color.gray},
+      inputPadding: Rectangle.inset(0, 4),
       filterFunction: (parsedInput, item) => {
         var tokens = parsedInput.lowercasedTokens;
         if (tokens.every(token => item.string.toLowerCase().includes(token))) return true;
@@ -194,7 +194,15 @@ export class CompletionController {
     world.addMorph(menu);
 
     menu.selectedIndex = 0;
-    prefix.length && menu.get("input").gotoDocumentEnd();
+    menu.layout.row(1).paddingTop = 0;
+    menu.layout.row(0).height = 20;
+    if (prefix.length) {
+      menu.get("input").gotoDocumentEnd();
+      menu.moveBy(pt(-menu.get("input").textBounds().width, 0))
+    }
+    menu.get("list").dropShadow = true;
+    menu.get("list").fill = Color.white.withA(.85);
+    menu.get("input").fill = this.textMorph.fill;
     menu.get("input").focus();
   }
 
