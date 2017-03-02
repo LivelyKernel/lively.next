@@ -67,10 +67,11 @@ export async function tokenize(username,email,date){
   return token
 }
 
-export async function verify(user){  
+export async function verify(user){
   var response = await new Promise((resolve,reject)=>{
       jwt.verify(user.token,key,(err,decode)=>{        
         if (err){
+          console.log(err)
           if (err.name == 'TokenExpiredError'){
             reject ({
               type: 'failed',
