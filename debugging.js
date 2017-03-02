@@ -7,14 +7,24 @@ import { HTMLMorph, inspect } from "lively.morphic";
 
 /*
 
-import { serializeMorph } from "lively.morphic/serialization.js";
+import { serializeMorph, deserializeMorph } from "lively.morphic/serialization.js";
+
+$world.get("browser").show()
 
 var snap = serializeMorph($world.get("browser"))
+num.humanReadableByteSize(JSON.stringify(snap).length)
+that.fontFamily = "monospace"
+that.textString = JSON.stringify(snap, null, 2)
 
+
+var b2 = deserializeMorph(snap, {reinitializeIds: true});
 
 var t = Date.now(); var snap = serializeMorph($world); Date.now() - t;
 var t = Date.now(); var snap = serializeMorph($world.get("browser")); Date.now() - t;
-var i = SnapshotInspector.forSnapshot(snap);
+
+var i = SnapshotInspector.forSnapshot(snap.snapshot);
+i.findPathFromToId(snap.id, "BF4B7B7B-DEE0-4971-ACEA-9F8A6A02941A")
+i
 
 var t = Date.now(); var g = referenceGraph(snap.snapshot); Date.now() - t;
 var t = Date.now(); var g = referenceGraph(snap.snapshot); Date.now() - t;
@@ -38,7 +48,7 @@ g
 
 $world.execCommand("diff and open in window", {a: x1, b: g})
 
-lively.lang.num.humanReadableByteSize(JSON.stringify(snap).length)
+
 
 
 var a = {bar: 15}; a.b = {foo: 23};
