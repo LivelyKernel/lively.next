@@ -50,7 +50,7 @@ i.findIdReferencePathFromToId(ids[0], ids[1]);
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-// var viz = await ObjectGraphVisualizer.renderSnapshotAndOpen(window.snapshot)
+// var viz = await ObjectGraphVisualizer.renderSnapshotAndOpen(snap.snapshot)
 */
 
 export class SnapshotInspector {
@@ -207,13 +207,12 @@ import coseBilkentLayout from "https://cdn.rawgit.com/cytoscape/cytoscape.js-cos
 import { connect } from "lively.bindings";
 coseBilkentLayout(cytoscape);
 
-
 export class ObjectGraphVisualizer extends HTMLMorph {
 
   static renderSnapshotAndOpen(snapshot) {
     var viz = this.renderSnapshot(snapshot);
     viz.openInWindow({title: "object graph visualizer"});
-    return viz
+    return viz;
   }
 
   static renderSnapshot(snapshot) {
@@ -226,7 +225,7 @@ export class ObjectGraphVisualizer extends HTMLMorph {
       ...obj.dissoc(props, ["snapshot"])
     });
     this.state = {cy: null, snapshot: props.snapshot};
-    connect(this, 'extent', this, 'updateDebounced', {updater: ($upd, x, y) => window.inspect({x,y}) && $upd()});
+    connect(this, 'extent', this, 'updateDebounced', {updater: ($upd, x, y) => $upd()});
     this.update();
   }
 
