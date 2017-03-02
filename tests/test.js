@@ -284,8 +284,8 @@ describe("marshalling", () => {
               delete snapshot.props.other1;
             }
           },
-          {id} = objPool.add(obj3),
-          ids = Object.keys(objPool.snapshot()),
+          {id, snapshot} = serialize(obj3),
+          ids = Object.keys(snapshot),
           otherId = arr.without(ids, id)[0];
 
       var expected = [{
@@ -295,7 +295,7 @@ describe("marshalling", () => {
         {props: {zork: {key: "zork", value: 33}}, rev: 0}
       ]
 
-      expect(obj.values(objPool.snapshot())).containSubset(expected);
+      expect(obj.values(snapshot)).containSubset(expected);
     });
 
     it("verbatim properties", () => {

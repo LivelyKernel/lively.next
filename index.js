@@ -1,10 +1,10 @@
-import "./object-extensions.js";
 export { ObjectRef } from "./object-ref.js";
 export { ObjectPool } from "./object-pool.js";
 
+import "./object-extensions.js";
 import { ObjectPool } from "./object-pool.js";
-
 import { version as serializerVersion } from "./package.json";
+import { removeUnreachableObjects } from "./snapshot-navigation.js";
 
 function normalizeOptions(options) {
   options = {reinitializeIds: false, ...options}
@@ -19,8 +19,13 @@ export function serialize(obj, options) {
   options = normalizeOptions(options);
   let objPool = options.objPool || new ObjectPool(options),
       ref = objPool.add(obj),
-      requiredVersion = "~" + serializerVersion.replace(majorAndMinorVersionRe, ""); // semver
-  return {id: ref.id, snapshot: objPool.snapshot(), requiredVersion};
+      requiredVersion = "~" + serializerVersion.replace(majorAndMinorVersionRe, ""), // semver
+      snapshot = objPool.snapshot();
+  // object hooks are allowed to modify the snapshot graph and remove
+  // references. To only serialize what's needed we cleanup the graph after all
+  // hooks are done.
+  removeUnreachableObjects([ref.id], snapshot);
+  return {id: ref.id, snapshot, requiredVersion};
 }
 
 export function deserialize(idAndSnapshot, options) {
