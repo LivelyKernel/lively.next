@@ -445,8 +445,8 @@ describe('l2l', function() {
 
 describe("user integration", () => {
 
-  before(async () =>{
-     await authserver.addUser("testUser1", "testuser1@lively-next.org", "test",'adminpassword')
+  before(async () =>{    
+    await authserver.addUser("testUser1", "testuser1@lively-next.org", "test",'adminpassword')
   })
 
   after(async () =>{
@@ -466,13 +466,16 @@ describe("user integration", () => {
       it('Determine that a user can be authenticated after creation', async ()=>{
           await promise.delay(100);
           expect(client1.user.token).to.be.an('object','failed token object not present')
-          expect(client1.user.token.status).equals('error','token not showing error state before authentication')          
+          expect(client1.user.token.status).equals('error','token not showing error state before authentication')
           await client1.authenticate({name: "testUser1", email: "testuser1@lively-next.org", password: "test"})
-          var response = await authserver.verify(client1.user)          
+          var response = await authserver.verify(client1.user)
           expect(response.type).equals('success')
-          
       })
-      
+      it('Ensure token can be validated', async()=>{
+         await promise.delay(100);
+         await client1.authenticate({name: "testUser1", email: "testuser1@lively-next.org", password: "test"})
+         var response = await client1.validateToken(client1.user)
+         expect(response.data.type).equals('success')
+      })
     })
-
 });

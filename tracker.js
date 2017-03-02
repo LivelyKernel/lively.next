@@ -2,6 +2,7 @@
 import L2LConnection from "./interface.js";
 import { defaultActions, defaultTrackerActions } from "./default-actions.js";
 import user from "lively.user/user.js"
+import * as authserver from "lively.user/authserver.js"
 
 // Array.from(L2LTracker._trackers.keys());
 // Array.from(L2LTracker._trackers.values())[1].remove()
@@ -202,10 +203,18 @@ export default class L2LTracker extends L2LConnection {
     return `L2LTracker(${this.namespace}, open: ${this.isOnline()})`
   }
 
+  async validateToken(user){    
+    var response = await authserver.verify(user)    
+    return response  
+  }
+
   async makeUser(options){    
     var newUser = new user(options);
     await newUser.authenticated(300)
     return newUser;
   }
+
+
+
   
 }

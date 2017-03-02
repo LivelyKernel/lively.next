@@ -231,12 +231,19 @@ export default class L2LClient extends L2LConnection {
     });
   }
 
-
   async authenticate(options){    
     var response = await this.sendToAndWait(this.trackerId,'newUser',options)
     if (!response.data)
       throw new Error(`User answer is empty!`);
     this.user = response.data    
+  }
+
+  async validateToken(user){    
+    //Shorthand method for temporarily authenticating user tokens
+    var response = await this.sendToAndWait(this.trackerId,'validate',user)
+    if (!response.data)
+      throw new Error(`Validation answer is empty!`);
+    return response
   }
 
   toString() {
