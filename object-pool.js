@@ -78,15 +78,17 @@ export class ObjectPool {
   }
 
   snapshot() {
-    var snapshot = {};
-    for (var i = 0, ids = Object.keys(this._id_ref_map); i < ids.length; i++) {
-      var ref = this._id_ref_map[ids[i]];
+    // traverses the object graph and create serialized representation => snapshot
+    let snapshot = {};
+    for (let i = 0, ids = Object.keys(this._id_ref_map); i < ids.length; i++) {
+      let ref = this._id_ref_map[ids[i]];
       ref.snapshotObject(snapshot, this);
-    }
+    }    
     return snapshot;
   }
 
   readSnapshot(snapshot) {
+    // populates object pool with object refs read from the dead snapshot
     for (var i = 0, ids = Object.keys(snapshot); i < ids.length; i++)
       if (!this.resolveToObj(ids[i]))
         ObjectRef.fromSnapshot(ids[i], snapshot, this, [], this.idPropertyName);
@@ -96,6 +98,9 @@ export class ObjectPool {
   jsonSnapshot() { return JSON.stringify(this.snapshot(), null, 2); }
 
   requiredModulesOfSnapshot(snapshot) {
+    // knows how to extract lively.modules packages/modules from __expr__ and
+    // class data
+
     var modules = [];
 
     for (var i = 0, ids = Object.keys(snapshot); i < ids.length; i++) {
@@ -128,4 +133,5 @@ export class ObjectPool {
 
     return modules;
   }
+
 }

@@ -74,6 +74,7 @@ export class ObjectRef {
         onlyKeys = realObj.__only_serialize__,
         exceptKeys = realObj.__dont_serialize__ ?
           obj.mergePropertyInHierarchy(realObj, "__dont_serialize__") : [];
+
     if (classProperties) {
       let {properties, propertySettings} = classProperties,
           valueStoreProperty = propertySettings.valueStoreProperty || "_state",
@@ -82,7 +83,6 @@ export class ObjectRef {
       if (valueStore) {
         // don't save the store property as well - we are already saving the
         // managed properties directly
-
         for (let key in properties) {
           if (exceptKeys.includes(key) || (onlyKeys && !onlyKeys.includes(key))) continue;
           let spec = properties[key];
@@ -91,12 +91,11 @@ export class ObjectRef {
           props[key] = {
             key,
             value: this.snapshotProperty(
-                      realObj[key], path.concat([key]),
+                      id, realObj[key], path.concat([key]),
                       serializedObjMap, pool)
           };
           exceptKeys.push(key);
         }
-
         exceptKeys.push(valueStoreProperty);
       }
     }
@@ -104,16 +103,16 @@ export class ObjectRef {
     // do the generic serialization, i.e. enumerate all properties and
     let keys = onlyKeys || Object.getOwnPropertyNames(realObj);
     if (exceptKeys.length) keys = arr.withoutAll(keys, exceptKeys);
-
     for (let i = 0; i < keys.length; i++) {
       let key = keys[i];
       props[key] = {
         key,
         value: this.snapshotProperty(
-                  realObj[key], path.concat([key]),
+                  id, realObj[key], path.concat([key]),
                   serializedObjMap, pool)
       };
     }
+
     pool.classHelper.addClassInfo(this, realObj, snapshots[rev]);
 
     if (typeof realObj.__additionally_serialize__ === "function")
@@ -122,12 +121,12 @@ export class ObjectRef {
         (key, value, verbatim = false) =>
           props[key] = verbatim ? {key, value, verbatim} :
             {key, value: this.snapshotProperty(
-              value, path.concat([key]), serializedObjMap, pool)});
+              id, value, path.concat([key]), serializedObjMap, pool)});
 
     return ref;
   }
 
-  snapshotProperty(value, path, serializedObjMap, pool) {
+  snapshotProperty(sourceObjId, value, path, serializedObjMap, pool) {
     // returns the value to serialize, i.e. what to put into the snapshot object
 
     if (typeof value === "function") return undefined; // FIXME
@@ -143,12 +142,12 @@ export class ObjectRef {
 
     if (Array.isArray(value))
       return value.map((ea, i) =>
-        this.snapshotProperty(ea, path.concat(i), serializedObjMap, pool));
+        this.snapshotProperty(sourceObjId, ea, path.concat(i), serializedObjMap, pool));
 
-    let ref = pool.add(value);
-
-    return ref && ref.isObjectRef ?
-      ref.snapshotObject(serializedObjMap, pool, path) : ref;
+    let objectRef = pool.add(value);
+    return !objectRef || !objectRef.isObjectRef ?
+      objectRef :
+      objectRef.snapshotObject(serializedObjMap, pool, path);
   }
 
 
