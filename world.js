@@ -821,7 +821,7 @@ export class World extends Morph {
            if (c.isSelectionElement || c.isHand) return;
            const candidateBounds = c.bounds(),
                  included = selectionBounds.containsRect(candidateBounds);
-  
+
            if (!this.selectedMorphs[c.id] && included) {
               this.selectedMorphs[c.id] = this.addMorph({
                   isSelectionElement: true,
@@ -1183,21 +1183,17 @@ export class Hand extends Morph {
 
   grab(morph) {
     if (obj.isArray(morph)) return morph.forEach(m => this.grab(m));
-    morph.withAllSubmorphsDo(ea => {
-      this.prevMorphProps.set(ea, obj.select(ea, ["dropShadow", "reactsToPointer"]))
-      // So that the morphs doesn't steal events
-      ea.reactsToPointer = false;
-      ea.dropShadow = true;
-    });
+    this.prevMorphProps.set(morph, obj.select(morph, ["dropShadow", "reactsToPointer"]))
+    // So that the morphs doesn't steal events
+    morph.reactsToPointer = false;
+    morph.dropShadow = true;
     this.addMorph(morph);
   }
 
   dropMorphsOn(dropTarget) {
     this.grabbedMorphs.forEach(morph => {
-      dropTarget.addMorph(morph)
-      morph.withAllSubmorphsDo(ea => {
-        Object.assign(ea, this.prevMorphProps.get(ea))
-      });
+      dropTarget.addMorph(morph);
+      Object.assign(morph, this.prevMorphProps.get(morph))
     });
   }
 
