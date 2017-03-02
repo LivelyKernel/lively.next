@@ -171,6 +171,7 @@ export class CompletionController {
   async openCompletionList() {
     var spec = await this.completionListSpec(),
         menu = new FilterableList(spec),
+        input = menu.get("input"),
         prefix = spec.input;
     connect(menu, "accepted", this, "insertCompletion", {
       updater: function($upd) {
@@ -202,8 +203,9 @@ export class CompletionController {
     }
     menu.get("list").dropShadow = true;
     menu.get("list").fill = Color.white.withA(.85);
-    menu.get("input").fill = this.textMorph.fill;
-    menu.get("input").focus();
+    input.fill = Color.transparent;
+    input.defaultTextStyle = {backgroundColor: this.textMorph.fill};
+    input.focus();
   }
 
   insertCompletion(completion, prefix, customInsertionFn) {
