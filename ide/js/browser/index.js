@@ -55,47 +55,13 @@ class CodeDefTreeData extends TreeData {
 // Browser.browse({moduleName: "lively.morphic/morph.js", codeEntity: {name: "Morph"}});
 export default class Browser extends Window {
 
-  static async browse(
-    browseSpec = {},
-    browserOrProps = {}, optBackend
-  ) {
+  static async browse(browseSpec = {}, browserOrProps = {}, optBackend) {
     // browse spec:
-    // packageName, moduleName, textPosition like {row: 0, column: 0}
-    var {packageName, moduleName, textPosition, codeEntity} = browseSpec;
-
+    // packageName, moduleName, codeEntity, scroll, textPosition like {row: 0, column: 0}
     var browser = browserOrProps instanceof Browser ?
       browserOrProps : new this(browserOrProps);
-
-    if (!browser.world())
-      browser.openInWorldNearHand();
-    await browser.whenRendered();
-
-    if (packageName) {
-      await browser.selectPackageNamed(packageName)
-      if (moduleName) await browser.selectModuleNamed(moduleName);
-
-    } else if (moduleName) {
-      var system = await browser.systemInterface(),
-          m = await system.getModule(moduleName);
-      if (m) {
-        moduleName = m.id;
-        var p = await system.getPackageForModule(m.id);
-        await browser.selectPackageNamed(p.url);
-        await browser.selectModuleNamed(moduleName);
-      }
-    }
-
-    if (textPosition) {
-      var text = browser.getSubmorphNamed("sourceEditor");
-      text.cursorPosition = textPosition;
-      text.centerRow(textPosition.row);
-
-    } else if (codeEntity) {
-      await browser.selectCodeEntity(codeEntity);
-    }
-
-    if (optBackend) browser.backend = optBackend;
-    return browser;
+    if (!browser.world()) browser.openInWorldNearHand();
+    return browser.browse(browseSpec, optBackend);
   }
 
 
@@ -109,21 +75,13 @@ export default class Browser extends Window {
       extent: pt(700,600),
       ...props
     });
-    this._inLayout = true;
     this.targetMorph = this.build();
-    this.state = {
-      packageUpdateInProgress: null,
-      moduleUpdateInProgress: null,
-      selectedPackage: null,
-      sourceHash: null,
-      moduleChangeWarning: null,
-      isSaving: false,
-      history: {left: [], right: [], navigationInProgress: null}
-    };
     this.onLoad();
   }
 
   reset() {
+    this._inLayout = true;
+
     connect(this, 'extent', this, 'relayout');
 
     var {
@@ -168,13 +126,88 @@ export default class Browser extends Window {
     this._inLayout = false;
   }
 
+  __additionally_serialize__(snapshot, objRef, pool, addFn) {
+    // remove unncessary stuff
+    // FIXME offer option in object ref or pool or removeFn to automate this stuff!
+    var ref = pool.ref(this);
+    ref.currentSnapshot.props.attributeConnections.value
+
+    var ref = pool.ref(this.ui.moduleList);
+    ref.currentSnapshot.props.items.value = [];
+    if (ref.currentSnapshot.props.selection)
+      ref.currentSnapshot.props.selection.value = null;
+
+
+    var ref = pool.ref(this.ui.codeEntityTree);
+    if (ref.currentSnapshot.props.selection)
+      ref.currentSnapshot.props.selection.value = null;
+
+    var ref = pool.ref(this.ui.codeEntityTree.nodeItemContainer);
+    ref.currentSnapshot.props.submorphs.value = [];
+
+    var ref = pool.ref(this.ui.codeEntityTree.treeData);
+    ref.currentSnapshot.props.defs.value = [];
+    ref.currentSnapshot.props.root.value = {};
+    ref.currentSnapshot.props.root.verbatim = true;
+
+    var ref = pool.ref(this.ui.sourceEditor);
+    ref.currentSnapshot.props.textAndAttributes.value = [];
+    ref.currentSnapshot.props.attributeConnections.value = [];
+    ref.currentSnapshot.props.plugins.value = [];
+    ref.currentSnapshot.props.anchors.value = [];
+    ref.currentSnapshot.props.savedMarks.value = [];
+
+    // remember browse state
+    var {
+      ui: {sourceEditor, codeEntityTree, codeEntityTree, moduleList},
+      backend,
+      selectedPackage,
+      selectedModule,
+      selectedCodeEntity
+    } = this;
+
+    snapshot.props._serializedState = {
+      verbatim: true,
+      value: {
+        packageName: selectedPackage ? selectedPackage.name : null,
+        moduleName: selectedModule ? selectedModule.nameInPackage : null,
+        codeEntity: selectedCodeEntity ? selectedCodeEntity.name : null,
+        textPosition: sourceEditor.textPosition,
+        scroll: sourceEditor.scroll,
+        codeEntityTreeScroll: codeEntityTree.scroll,
+        moduleListScroll: moduleList.scroll,
+        backend
+      }
+    }
+  }
+
   async onLoad() {
+    this.state = {
+      packageUpdateInProgress: null,
+      moduleUpdateInProgress: null,
+      selectedPackage: null,
+      sourceHash: null,
+      moduleChangeWarning: null,
+      isSaving: false,
+      history: {left: [], right: [], navigationInProgress: null}
+    };
     this.reset();
+    var ed = this.ui.sourceEditor
+    if (!ed.plugins.length)
+      ed.addPlugin(new JavaScriptEditorPlugin(config.codeEditor.defaultTheme));
+      
+    if (this._serializedState) {
+      var s = this._serializedState;
+      delete this._serializedState;
+      await this.browse(s);
+    }
   }
 
   build() {
     // this.targetMorph = this.build();
     // this.relayout();
+
+    this._inLayout = true;
 
     this.targetMorph && this.targetMorph.remove();
 
@@ -185,8 +218,7 @@ export default class Browser extends Window {
         textStyle = {
           borderWidth: 1, borderColor: Color.gray,
           type: "text",
-          ...config.codeEditor.defaultStyle,
-          plugins: [new JavaScriptEditorPlugin(config.codeEditor.defaultTheme)]
+          ...config.codeEditor.defaultStyle
         },
 
         btnStyle = {
@@ -295,6 +327,8 @@ export default class Browser extends Window {
     hresizer.addFixed(codeEntityCommands);
     hresizer.addScalingBelow(sourceEditor);
 
+    this._inLayout = false;
+
     return container;
   }
 
@@ -337,6 +371,7 @@ export default class Browser extends Window {
       sourceEditor.width = browserCommands.width - 2
     } finally { this._inLayout = false; }
   }
+
 
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -459,6 +494,61 @@ export default class Browser extends Window {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // browser actions
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  async browse(browseSpec = {}, optBackend) {
+    // browse spec:
+    // packageName, moduleName, codeEntity, scroll, textPosition like {row: 0, column: 0}
+    let {
+      packageName,
+      moduleName,
+      textPosition,
+      codeEntity,
+      scroll,
+      codeEntityTreeScroll,
+      moduleListScroll,
+      backend
+    } = browseSpec,
+      {sourceEditor, codeEntityTree, moduleList} = this.ui;
+
+    if (this.world()) await this.whenRendered();
+
+    if (optBackend || backend) this.backend = optBackend || backend;
+
+    if (packageName) {
+      await this.selectPackageNamed(packageName);
+      if (moduleName) await this.selectModuleNamed(moduleName);
+
+    } else if (moduleName) {
+      let system = await this.systemInterface(),
+          m = await system.getModule(moduleName);
+      if (m) {
+        moduleName = m.id;
+        let p = await system.getPackageForModule(m.id);
+        await this.selectPackageNamed(p.url);
+        await this.selectModuleNamed(moduleName);
+      }
+    }
+
+    if (codeEntity) {
+      await this.selectCodeEntity(codeEntity);
+    }
+
+    if (textPosition) {
+      let text = sourceEditor;
+      text.cursorPosition = textPosition;
+      text.centerRow(textPosition.row);
+    }
+
+    if (scroll) {
+      sourceEditor.scroll = scroll;
+      if (this.world()) await sourceEditor.whenRendered();
+    }
+
+    if (moduleListScroll) moduleList.scroll = moduleListScroll;
+    if (codeEntityTreeScroll) codeEntityTree.scroll = codeEntityTreeScroll;
+
+    return this;
+  }
 
   whenPackageUpdated() { return this.state.packageUpdateInProgress || Promise.resolve(); }
   whenModuleUpdated() { return this.state.moduleUpdateInProgress || Promise.resolve(); }
