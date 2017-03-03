@@ -463,7 +463,11 @@ var worldCommands = [
   {
     name: "open browser",
     progressIndicator: "opening browser...",
-    exec: async (world, args = {packageName: "lively.morphic", moduleName: "morph.js"}) => {
+    exec: async (world, args = {packageName: "lively.morphic", moduleName: "morph.js"}, _, evt) => {
+      // in case there is another morph implementing open browser...
+      var relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
+      if (relayed) return relayed;
+
       var { default: Browser } = await System.import("lively.morphic/ide/js/browser/index.js"),
           loc = obj.select(args, ["packageName", "moduleName", "textPosition", "codeEntity"]),
           browser = await Browser.browse(loc, {extent: pt(700, 600)});
@@ -475,7 +479,10 @@ var worldCommands = [
   {
     name: "choose and browse package resources",
     progressIndicator: "browsing resources...",
-    exec: async (world, opts = {browser: null, backend: null}) => {
+    exec: async (world, opts = {browser: null, backend: null}, _, evt) => {
+      var relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
+      if (relayed) return relayed;
+
       var browser = opts.browser
            || (world.focusedMorph && world.focusedMorph.ownerChain().find(ea => ea.isBrowser));
 
