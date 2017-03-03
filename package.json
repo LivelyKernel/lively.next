@@ -5,11 +5,11 @@
     "lively.resources": "*",
     "lively.lang": "*",
     "socket.io-client": "^1.5.1",
-    "lively.user": "https://github.com/LivelyKernel/lively.user.git"
+    "lively.user": "git://github.com/LivelyKernel/lively.user.git"
   },
   "devDependencies": {
     "mocha-es6": "^0.4",
-    "lively.server": "https://github.com/LivelyKernel/lively.server.git"
+    "lively.server": "git://github.com/LivelyKernel/lively.server.git"
   },
   "scripts": {
     "test": "mocha-es6 tests/*-test.js --pre-script ./tests/node-pre.js"
