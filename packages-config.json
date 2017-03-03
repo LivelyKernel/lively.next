@@ -82,6 +82,9 @@
   {
     "name": "lively.2lively",
     "repoURL": "https://github.com/LivelyKernel/lively.2lively"
+  },
+  {
+    "name": "lively.user",
+    "repoURL": "https://github.com/LivelyKernel/lively.user"
   }
-
 ]

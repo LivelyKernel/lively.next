@@ -98,12 +98,12 @@ export class Package {
 
   findDependenciesIn(packages) {
     var deps = Object.keys(this.dependencies);
-    return packages.filter((p) => deps.indexOf(p.name) > -1);
+    return packages.filter((p) => deps.includes(p.name));
   }
 
   findDependentPackages(packages) {
     var deps = Object.keys(this.dependencies);
-    return packages.filter((p) => deps.indexOf(p.name) > -1);
+    return packages.filter((p) => deps.includes(p.name));
   }
 
   async symlinkTo(localDir, toPackage) {
