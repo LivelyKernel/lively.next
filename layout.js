@@ -24,7 +24,11 @@ class Layout {
   name() { return "Name presented to the user."; }
 
   disable() { this.active = true; }
-  enable(animation) { this.active = false; this.apply(animation); }
+  enable(animation) { 
+    this.active = false; 
+    this.refreshBoundsCache();
+    this.apply(animation);
+  }
 
   get boundsChanged() { return !this.container.bounds().equals(this.lastBounds); }
 
@@ -32,12 +36,35 @@ class Layout {
     return this.container.submorphs.filter(m => m.isLayoutable && !this.ignore.includes(m.name));
   }
 
+  get submorphBoundsChanged() {
+    if (!this.layoutableSubmorphBounds) this.refreshBoundsCache()
+    return arr.any(arr.zip(this.layoutableSubmorphs, this.layoutableSubmorphBounds), ([m, b], i) => {
+      let nb;
+      if (!b.equals(nb = m.submorphBounds())) {
+        this.layoutableSubmorphBounds[i] = nb;
+        return true;
+      }
+    });
+  }
+
+  refreshBoundsCache() { 
+    this.layoutableSubmorphBounds = this.layoutableSubmorphs.map(m => m.submorphBounds())
+  }
+
   onSubmorphResized(submorph, change) {
-    if (this.container.submorphs.includes(submorph) || this.boundsChanged)
+    if (this.container.submorphs.includes(submorph)
+        || this.submorphBoundsChanged
+        || this.boundsChanged)
       this.apply(change.meta.animation);
   }
-  onSubmorphAdded(submorph, anim) { this.apply(anim); }
-  onSubmorphRemoved(submorph, anim) { this.apply(anim); }
+  onSubmorphAdded(submorph, anim) { 
+    this.refreshBoundsCache();
+    this.apply(anim); 
+  }
+  onSubmorphRemoved(submorph, anim) { 
+    this.refreshBoundsCache();
+    this.apply(anim); 
+  }
 
   onChange({selector, args, prop, value, prevValue, meta}) {
     const anim = meta && meta.animation;
