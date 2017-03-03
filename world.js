@@ -905,6 +905,22 @@ export class World extends Morph {
     this.execCommand("resize to fit window");
   }
 
+  relayCommandExecutionToFocusedMorph(evt) {
+    // can be called from exec method of commands with 4. argument (evt)
+    // Will try to invoke mapped a command triggered by evt in the focused
+    // morph or one of its owners. This provides optional "bubble" semantics
+    // for command invocation
+    if (!evt) return null;
+    let focused = this.focusedMorph,
+        {command, morph} = arr.findAndGet(
+      arr.without(focused.ownerChain(), this),
+      morph => arr.findAndGet(morph.keyhandlers, kh => {
+        let command = kh.eventCommandLookup(morph, evt);
+        return command ? {command, morph} : null;
+      })) || {};
+    return command ? morph.execCommand(command) : null;
+  }
+
   get commands() { return worldCommands.concat(super.commands); }
   get keybindings() { return super.keybindings.concat(config.globalKeyBindings); }
   set keybindings(x) { super.keybindings = x }
