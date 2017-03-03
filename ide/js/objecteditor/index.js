@@ -98,7 +98,6 @@ export class ObjectEditor extends Morph {
     var ed = new this(options),
         winOpts = {name: "ObjectEditor window", title: options.title || "ObjectEditor"},
         win = (await ed.openInWindow(winOpts)).activate();
-
     return win;
   }
 
@@ -106,97 +105,114 @@ export class ObjectEditor extends Morph {
   // initializing
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  constructor(props = {}) {
-    super({
-      extent: pt(800, 500), 
-      fill: Color.transparent,
-      reactsToPointer: false,
-      name: "object-editor",
-      ...obj.dissoc(props, ["target"])
-    });
+  static get properties() {
+
+    return {
+      extent: {defaultValue: pt(800, 500)},
+      fill: {defaultValue: Color.transparent},
+      reactsToPointer: {defaultValue: false},
+      name: {defaultValue: "object-editor"},
+
+      state: {
+        serialize: false,
+        defaultValue: {
+          isSaving: false,
+          target: null,
+          selectedClass: null,
+          selectedMethod: null
+        }
+      },
+
+      backend: {
+        after: ["editorPlugin"], derived: true,
+        get() { return this.editorPlugin.evalEnvironment.remote || "local"; },
+        set(remote) { this.editorPlugin.evalEnvironment.remote = remote; }
+
+      },
+
+      editorPlugin: {
+        readOnly: true, derived: true, after: ["submorphs"],
+        get() {
+          let ed = this.get("sourceEditor"),
+              p = ed.pluginFind(p => p.isEditorPlugin);
+          if (!p) p = ed.addPlugin(new JavaScriptEditorPlugin(config.codeEditor.defaultTheme));
+          return p;
+        }
+      },
+
+      target: {
+        derived: true, after: ["editorPlugin", "state"], after: ["submorphs"],
+        set(obj) {
+          this.setProperty("target", obj);
+          this.state.selectedClass = null;
+          this.state.selectedMethod = null;
+          this.ui.classTree.treeData = new ClassTreeData(obj.constructor);
+
+          Object.assign(this.editorPlugin.evalEnvironment, {
+            context: this.target,
+            format: "esm"
+          });
+
+          if (isObjectClassFor(obj.constructor, obj)) {
+            this.selectClass(obj.constructor);
+          } else {
+            this.updateSource(
+                `// No object-specific behavior exists yet for ${obj}\n`
+              + `// Use the "+" button to add new behaviors\n`);
+          }
+        }
+      },
+
+      selectedModule: {
+        derived: true, readOnly: true, after: ["target"],
+        get() {
+          var mid = this.editorPlugin.evalEnvironment.targetModule;
+          return mid ? module(mid) : null;
+        }
+      },
+
+      selectedClass: {
+        derived: true, readOnly: true, after: ["state"],
+        get() { return this.state.selectedClass; }
+      },
+
+      selectedMethod: {
+        derived: true, readOnly: true, after: ["state"],
+        get() { return this.state.selectedMethod; }
+      }
+
+    }
+
+  }
+
+  constructor(props) {
+    super({...props, submorphs: this.build()});
     this.reset();
     if (props.target) this.target = props.target;
   }
 
-  reset() {
-    this.state = {
-      isSaving: false,
-      target: null,
-      selectedClass: null,
-      selectedMethod: null
-    };
-    this.build();
+  get ui() {
+    return {    
+      addImportButton:     this.getSubmorphNamed("addImportButton"),
+      addMethodButton:     this.getSubmorphNamed("addMethodButton"),
+      classTree:           this.getSubmorphNamed("classTree"),
+      chooseTargetButton:  this.getSubmorphNamed("chooseTargetButton"),
+      cleanupButton:       this.getSubmorphNamed("cleanupButton"),
+      importController:    this.getSubmorphNamed("importController"),
+      importsList:         this.getSubmorphNamed("importsList"),
+      inspectObjectButton: this.getSubmorphNamed("inspectObjectButton"),
+      openInBrowserButton: this.getSubmorphNamed("openInBrowserButton"),
+      publishButton:       this.getSubmorphNamed("publishButton"),
+      removeImportButton:  this.getSubmorphNamed("removeImportButton"),
+      removeMethodButton:  this.getSubmorphNamed("removeMethodButton"),
+      runMethodButton:     this.getSubmorphNamed("runMethodButton"),
+      saveButton:          this.getSubmorphNamed("saveButton"),
+      sourceEditor:        this.getSubmorphNamed("sourceEditor"),
+      toggleImportsButton: this.getSubmorphNamed("toggleImportsButton"),
+    }
   }
 
-  build() {
-    this.removeAllMorphs();
-
-    var listStyle = {
-          // borderWidth: 1, borderColor: Color.gray,
-          fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"
-        },
-
-        textStyle = {
-          borderLeft: {width: 1, color: Color.gray},
-          borderRight: {width: 1, color: Color.gray},
-          borderBottom: {width: 1, color: Color.gray},
-          type: "text",
-          ...config.codeEditor.defaultStyle,
-          plugins: [new JavaScriptEditorPlugin(config.codeEditor.defaultTheme)]
-        },
-
-        btnStyle = {
-          type: "button",
-          activeStyle: {
-            fill: Color.white,
-            border: {color: Color.lightGray, style: "solid", radius: 5},
-            nativeCursor: "pointer"
-          },
-          extent: pt(26,24),
-        };
-
-    this.submorphs = [
-      {name: "objectCommands",
-       fill: Color.transparent, reactsToPointer: false,
-       layout: new HorizontalLayout({direction: "centered", spacing: 2}),
-       submorphs: [
-         {...btnStyle, name: "inspectObjectButton", fontSize: 18, label: Icon.makeLabel("gears"), tooltip: "open object inspector"},
-         {...btnStyle, name: "publishButton", fontSize: 18, label: Icon.makeLabel("cloud-upload"), tooltip: "publish object to PartsBin"},
-       ]},
-
-      {type: Tree, name: "classTree", treeData: new ClassTreeData(null),
-       borderTop: {width: 1, color: Color.gray},
-       borderBottom: {width: 1, color: Color.gray}},
-
-      {name: "classAndMethodControls",
-       layout: new HorizontalLayout({direction: "centered", spacing: 2}), submorphs: [
-         {...btnStyle, name: "addMethodButton", label: Icon.makeLabel("plus"), tooltip: "add a new method"},
-         {...btnStyle, name: "removeMethodButton", label: Icon.makeLabel("minus"), tooltip: "remove selected method"},
-         {...btnStyle, name: "openInBrowserButton", fontSize: 14, label: Icon.makeLabel("external-link"), tooltip: "open selected class in system browser"},
-       ]},
-       
-      {name: "sourceEditor", ...textStyle},
-
-      {name: "sourceEditorControls",
-       borderLeft: {width: 1, color: Color.gray},
-       borderRight: {width: 1, color: Color.gray},
-       layout: new GridLayout({
-          rows: [0, {paddingTop: 2, paddingBottom: 2}],
-          columns: [
-            1, {paddingRight: 1, fixed: 30}, 
-            2, {paddingLeft: 1, fixed: 30},
-            4, {paddingRight: 2, fixed: 74}
-           ],
-          grid: [[null, 'saveButton', 'runMethodButton', null, 'toggleImportsButton']]}), 
-       submorphs: [
-          {...btnStyle, name: "saveButton", fontSize: 18, label: Icon.makeLabel("save"), tooltip: "save"},
-          {...btnStyle, name: "runMethodButton", fontSize: 18, label: Icon.makeLabel("play-circle-o"), tooltip: "execute selected method"},
-          {...btnStyle, name: "toggleImportsButton", label: "imports", tooltip: "toggle showing imports", isLayoutable: false, bottomRight: pt(1000, 50)}
-        ]},
-
-      new ImportController({name: "importController"})
-    ];
-    
+  reset() {
     var l = this.layout = new GridLayout({
       grid: [
         ["objectCommands", "objectCommands", "objectCommands"],
@@ -211,28 +227,175 @@ export class ObjectEditor extends Morph {
 
     // l.col(2).fixed = 100; l.row(0).paddingTop = 1; l.row(0).paddingBottom = 1;
 
-    connect(this.get("inspectObjectButton"), "fire", this, "execCommand", {converter: () => "open object inspector for target"});
-    connect(this.get("publishButton"), "fire", this, "execCommand", {converter: () => "publish target to PartsBin"});
+    let {
+      addImportButton,
+      addMethodButton,
+      chooseTargetButton,
+      classTree,
+      cleanupButton,
+      inspectObjectButton,
+      openInBrowserButton,
+      publishButton,
+      removeImportButton,
+      removeMethodButton,
+      runMethodButton,
+      saveButton,
+      sourceEditor,
+      toggleImportsButton
+    } = this.ui;
 
-    connect(this.get("classTree"), "selection", this, "onClassTreeSelection");
-    connect(this.get("addMethodButton"), "fire", this, "interactivelyAddMethod");
-    connect(this.get("removeMethodButton"), "fire", this, "interactivelyRemoveMethod");
-    connect(this.get("openInBrowserButton"), "fire", this, "execCommand",
+    connect(inspectObjectButton, "fire", this, "execCommand", {converter: () => "open object inspector for target"});
+    connect(publishButton, "fire", this, "execCommand", {converter: () => "publish target to PartsBin"});
+    connect(chooseTargetButton, "fire", this, "execCommand", {converter: () => "choose target"});
+
+    connect(classTree, "selection", this, "onClassTreeSelection");
+    connect(addMethodButton, "fire", this, "interactivelyAddMethod");
+    connect(removeMethodButton, "fire", this, "interactivelyRemoveMethod");
+    connect(openInBrowserButton, "fire", this, "execCommand",
       {updater: function($upd) { $upd("open class in system browser", {klass: this.targetObj.selectedClass}); }});
 
-    connect(this.get("addImportButton"), "fire", this, "interactivelyAddImport");
-    connect(this.get("removeImportButton"), "fire", this, "interactivelyRemoveImport");
-    connect(this.get("cleanupButton"), "fire", this, "execCommand", {converter: () => "[javascript] removed unused imports"});
+    connect(addImportButton, "fire", this, "interactivelyAddImport");
+    connect(removeImportButton, "fire", this, "interactivelyRemoveImport");
+    connect(cleanupButton, "fire", this, "execCommand", {converter: () => "[javascript] removed unused imports"});
 
-    connect(this.get("saveButton"), "fire", this, "execCommand", {converter: () => "save source"});
-    connect(this.get("runMethodButton"), "fire", this, "execCommand", {converter: () => "run selected method"});
+    connect(saveButton, "fire", this, "execCommand", {converter: () => "save source"});
+    connect(runMethodButton, "fire", this, "execCommand", {converter: () => "run selected method"});
 
-    connect(this.get("toggleImportsButton"), "fire", this, "toggleShowingImports");
-    connect(this.get("sourceEditor"), "textChange", this, "updateUnsavedChangeIndicatorDebounced");
+    connect(toggleImportsButton, "fire", this, "toggleShowingImports");
+    connect(sourceEditor, "textChange", this, "updateUnsavedChangeIndicatorDebounced");
 
-    connect(this.get("classTree"), "contextMenuRequested", this, "contextMenuForClassTree");
+    connect(classTree, "contextMenuRequested", this, "contextMenuForClassTree");
+  }
 
-    // this.build(); this.refresh();
+  __additionally_serialize__(snapshot, objRef, pool, addFn) {
+    // remove unncessary stuff
+    // FIXME offer option in object ref or pool or removeFn to automate this stuff!
+    // var ref = pool.ref(this);
+    // ref.currentSnapshot.props.attributeConnections.value
+    // 
+    // var ref = pool.ref(this.ui.moduleList);
+    // ref.currentSnapshot.props.items.value = [];
+    // if (ref.currentSnapshot.props.selection)
+    //   ref.currentSnapshot.props.selection.value = null;
+    // 
+    // 
+    // var ref = pool.ref(this.ui.codeEntityTree);
+    // if (ref.currentSnapshot.props.selection)
+    //   ref.currentSnapshot.props.selection.value = null;
+    // 
+    // var ref = pool.ref(this.ui.codeEntityTree.nodeItemContainer);
+    // ref.currentSnapshot.props.submorphs.value = [];
+    // 
+    // var ref = pool.ref(this.ui.codeEntityTree.treeData);
+    // ref.currentSnapshot.props.defs.value = [];
+    // ref.currentSnapshot.props.root.value = {};
+    // ref.currentSnapshot.props.root.verbatim = true;
+    // 
+    // var ref = pool.ref(this.ui.sourceEditor);
+    // ref.currentSnapshot.props.textAndAttributes.value = [];
+    // ref.currentSnapshot.props.attributeConnections.value = [];
+    // ref.currentSnapshot.props.plugins.value = [];
+    // ref.currentSnapshot.props.anchors.value = [];
+    // ref.currentSnapshot.props.savedMarks.value = [];
+
+    // remember browse state
+    var {
+      ui: {sourceEditor, importController, classTree},
+      backend,
+      selectedClass,
+      selectedMethod,
+      target
+    } = this;
+
+    snapshot.props._serializedState = {
+      verbatim: true,
+      value: {
+        selectedClass: selectedClass ? selectedClass.name : null,
+        selectedMethod: selectedMethod ? selectedMethod.name : null,
+        textPosition: sourceEditor.textPosition,
+        scroll: sourceEditor.scroll,
+        classTreeScroll: classTree.scroll,
+        backend
+      }
+    }
+  }
+
+  async onLoad() {
+    this.reset();
+    
+    if (this._serializedState) {
+      var s = this._serializedState;
+      delete this._serializedState;
+      await this.browse(s);
+    }
+  }
+
+  build() {
+    var listStyle = {
+          // borderWidth: 1, borderColor: Color.gray,
+          fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"
+        },
+
+        textStyle = {
+          borderLeft: {width: 1, color: Color.gray},
+          borderRight: {width: 1, color: Color.gray},
+          borderBottom: {width: 1, color: Color.gray},
+          type: "text",
+          ...config.codeEditor.defaultStyle,
+        },
+
+        btnStyle = {
+          type: "button",
+          activeStyle: {
+            fill: Color.white,
+            border: {color: Color.lightGray, style: "solid", radius: 5},
+            nativeCursor: "pointer"
+          },
+          extent: pt(26,24),
+        };
+
+    return [
+      {name: "objectCommands",
+       fill: Color.transparent, reactsToPointer: false,
+       layout: new HorizontalLayout({direction: "centered", spacing: 2}),
+       submorphs: [
+         {...btnStyle, name: "inspectObjectButton", fontSize: 18, label: Icon.makeLabel("gears"), tooltip: "open object inspector"},
+         {...btnStyle, name: "publishButton", fontSize: 18, label: Icon.makeLabel("cloud-upload"), tooltip: "publish object to PartsBin"},
+         {...btnStyle, name: "chooseTargetButton", fontSize: 18, label: Icon.makeLabel("crosshairs"), tooltip: "select another target"},
+       ]},
+
+      {type: Tree, name: "classTree", treeData: new ClassTreeData(null),
+       borderTop: {width: 1, color: Color.gray},
+       borderBottom: {width: 1, color: Color.gray}},
+
+      {name: "classAndMethodControls",
+       layout: new HorizontalLayout({direction: "centered", spacing: 2}), submorphs: [
+         {...btnStyle, name: "addMethodButton", label: Icon.makeLabel("plus"), tooltip: "add a new method"},
+         {...btnStyle, name: "removeMethodButton", label: Icon.makeLabel("minus"), tooltip: "remove selected method"},
+         {...btnStyle, name: "openInBrowserButton", fontSize: 14, label: Icon.makeLabel("external-link"), tooltip: "open selected class in system browser"},
+       ]},
+
+      {name: "sourceEditor", ...textStyle},
+
+      {name: "sourceEditorControls",
+       borderLeft: {width: 1, color: Color.gray},
+       borderRight: {width: 1, color: Color.gray},
+       layout: new GridLayout({
+          rows: [0, {paddingTop: 2, paddingBottom: 2}],
+          columns: [
+            1, {paddingRight: 1, fixed: 30},
+            2, {paddingLeft: 1, fixed: 30},
+            4, {paddingRight: 2, fixed: 74}
+           ],
+          grid: [[null, 'saveButton', 'runMethodButton', null, 'toggleImportsButton']]}),
+       submorphs: [
+          {...btnStyle, name: "saveButton", fontSize: 18, label: Icon.makeLabel("save"), tooltip: "save"},
+          {...btnStyle, name: "runMethodButton", fontSize: 18, label: Icon.makeLabel("play-circle-o"), tooltip: "execute selected method"},
+          {...btnStyle, name: "toggleImportsButton", label: "imports", tooltip: "toggle showing imports", isLayoutable: false, bottomRight: pt(1000, 50)}
+        ]},
+
+      new ImportController({name: "importController"})
+    ];
   }
 
   isShowingImports() { return this.get("importsList").width > 10; }
@@ -254,36 +417,6 @@ export class ObjectEditor extends Morph {
 
   get isObjectEditor() { return true }
 
-  get target() { return this.state.target; }
-  set target(obj) {
-    this.state.target = obj;
-    this.state.selectedClass = null;
-    this.state.selectedMethod = null;
-    var tree = this.get("classTree");
-    tree.treeData = new ClassTreeData(obj.constructor);
-
-    Object.assign(this.editorPlugin.evalEnvironment, {
-      context: this.target,
-      format: "esm"
-    });
-
-    if (isObjectClassFor(obj.constructor, obj)) {
-      this.selectClass(obj.constructor);
-    } else {
-      this.updateSource(
-          `// No object-specific behavior exists yet for ${obj}\n`
-        + `// Use the "+" button to add new behaviors\n`);
-    }
-  }
-
-  get selectedModule() {
-    var mid = this.editorPlugin.evalEnvironment.targetModule;
-    return mid ? module(mid) : null;
-  }
-
-  get selectedClass() { return this.state.selectedClass; }
-  get selectedMethod() { return this.state.selectedMethod; }
-
   async systemInterface() {
     var livelySystem = await System.import("lively-system-interface"),
         remote = this.backend;
@@ -292,13 +425,6 @@ export class ObjectEditor extends Morph {
       livelySystem.serverInterfaceFor(remote);
   }
 
-  get backend() { return this.editorPlugin.evalEnvironment.remote || "local"; }
-  set backend(remote) {
-    this.editorPlugin.evalEnvironment.remote = remote;
-  }
-
-  get editorPlugin() { return this.get("sourceEditor").pluginFind(p => p.isEditorPlugin); }
-
   sourceDescriptorFor(klass) { return RuntimeSourceDescriptor.for(klass); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -306,18 +432,19 @@ export class ObjectEditor extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async refresh(keepCursor = false) {
-    var {selectedClass, selectedMethod} = this.state,
-        tree = this.get("classTree"),
-        ed = this.get("sourceEditor"),
-        oldPos = ed.cursorPosition;
+    var {
+        state: {selectedClass, selectedMethod},
+        ui: {sourceEditor: ed, classTree: tree}
+      } = this,
+      oldPos = ed.cursorPosition;
 
-    await tree.maintainViewStateWhile(async () => {
-      this.target = this.target;
-    }, node => node.target ?
-                  node.target.name
-                    + node.target.kind
-                    + (node.target.owner ? "." + node.target.owner.name : "") :
-                  node.name);
+    await tree.maintainViewStateWhile(
+      async () => { this.target = this.target; },
+      node => node.target ?
+                node.target.name
+                  + node.target.kind
+                  + (node.target.owner ? `.${node.target.owner.name}` : "") :
+                node.name);
 
     if (selectedClass && selectedMethod && !tree.selection) {
       // method rename, old selectedMethod does no longer exist
@@ -420,6 +547,22 @@ export class ObjectEditor extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // classes and method ui
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  async browse(spec) {
+    let {
+      target,
+      selectedClass,
+      selectedMethod,
+      textPosition,
+      scroll,
+      classTreeScroll,
+      backend
+    } = spec;
+
+    if (target) this.target = target;
+
+    return this;
+  }
 
   onClassTreeSelection(node) {
     if (!node) { return; }
@@ -701,6 +844,8 @@ localStorage["oe helper"] = JSON.stringify(store);
       {keys: {mac: "Command-Shift--", win: "Ctrl-Shift--"}, command: "remove method"},
       {keys: "Ctrl-Shift-R", command: "run selected method"},
       {keys: "Alt-R", command: "refresh"},
+      {keys: {win: "Ctrl-B", mac: "Meta-B"}, command: "open class in system browser"},
+      {keys: "Alt-Shift-T", command: "choose target"},
       {keys: "Alt-J", command: "jump to definition"},
       {keys: "Ctrl-C I", command: "[javascript] inject import"},
     ].concat(super.keybindings);
@@ -849,6 +994,15 @@ localStorage["oe helper"] = JSON.stringify(store);
             if (e === "canceled") this.setStatusMessage("canceled");
             else this.showError(e);
           }
+        }
+      },
+      
+      {
+        name: "choose target",
+        exec: async ed => {
+          var [selected] = await $world.execCommand("select morph", {justReturn: true});
+          if (selected) ed.target = selected;
+          return true;
         }
       }
     ];
