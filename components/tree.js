@@ -271,6 +271,10 @@ export class Tree extends Morph {
       clipMode: {defaultValue: "auto"},
       padding: {defaultValue: Rectangle.inset(2)},
 
+      additionalRenderSpace: { // render a little more than is seen
+        defaultValue: 140
+      },
+
       resizeNodes: {
         defaultValue: false,
         set(val) { this.setProperty("resizeNodes", val); this.resetCache(); this.update(); }
@@ -397,9 +401,11 @@ export class Tree extends Morph {
 
   update() {
     if (!this.treeData || !this.nodeItemContainer) return;
-    var {
+
+    let {
           treeData,
-          padding, scroll: {y: visibleTop}, extent,
+          padding, scroll: {y: scrollY}, extent,
+          additionalRenderSpace,
           defaultNodeMorphTextBounds, resizeNodes,
           nodeMorphs, nodeItemContainer: container, selection
         } = this,
@@ -408,15 +414,15 @@ export class Tree extends Morph {
           height: defaultNodeHeight,
           toggleWidth
         } = defaultNodeMorphTextBounds,
-        visibleBottom = visibleTop + extent.y,
+        visibleBottom = scrollY + extent.y + additionalRenderSpace,
+        visibleTop = scrollY - additionalRenderSpace,
         nodes = treeData.asListWithIndexAndDepth(),
         i = 1, y = padding.top(), x = padding.left(),
         goalWidth = resizeNodes ? extent.x - (padding.left() + padding.right()) : null,
         maxWidth = 0;
 
-    var dummyNodeMorph = new TreeNode(this.nodeStyle);
-
-    var lineHeightCache = this._lineHeightCache || (this._lineHeightCache = [0/*root*/]);
+    let dummyNodeMorph = new TreeNode(this.nodeStyle),
+        lineHeightCache = this._lineHeightCache || (this._lineHeightCache = [0/*root*/]);
 
     // skip not visible notes out of scroll bounds
     for (; i < nodes.length; i++) {

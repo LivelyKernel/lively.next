@@ -66,6 +66,7 @@ describe("tree", function() {
     expect(arr.pluck(tree.nodeMorphs, "labelValue"))
       .equals(["child 1", "child 2", "child 3", "child 3 - 1", "child 3 - 2", "child 4"]);
     var h = tree.lineBounds(1).height;
+    tree.additionalRenderSpace = 0;
     tree.height = h*3;
     tree.scroll = pt(0, 2*h-3);
     tree.update();

@@ -493,7 +493,6 @@ export class List extends Morph {
           maxWidth = 0,
           goalWidth = this.width - (padLeft + padRight);
 
-
       for (var i = 0; i < lastItemIndex-firstItemIndex; i++) {
         var itemIndex = firstItemIndex+i,
             item = items[itemIndex];
