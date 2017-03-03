@@ -755,7 +755,7 @@ export class FlexLayoutHalo extends Morph {
   updateResizePolicy(auto) {
       if (auto) this.originalExtent = this.container.extent;
       this.target.autoResize = auto;
-      if (!auto) this.container.extent = this.originalExtent;
+      if (!auto) this.container.extent = this.originalExtent || this.container.extent;
       this.alignWithTarget()
   }
 
