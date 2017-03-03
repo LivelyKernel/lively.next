@@ -82,8 +82,17 @@ var worldCommands = [
       var filterFn = opts.filterFn || (() => true),
           i = 0,
           items = arr.compact(tree.map(opts.root || world,
-            (m, depth) => filterFn(m) ?
-              {isListItem: true, string: `${++i} ${"  ".repeat(depth)}${m}`, value: m} : null,
+            (m, depth) => {
+              if (!filterFn(m)) return null;
+              return {
+                isListItem: true,
+                label: [
+                  [`${String(++i)}${"\u2003".repeat(depth)}`, {fontSize: "70%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"}],
+                  [`${m}`]
+                ],
+                value: m
+              }
+            },
             m => filterFn(m) ? m.submorphs : [])),
           {selected: morphs} = await world.filterableListPrompt(
             opts.prompt || "Choose morph",
