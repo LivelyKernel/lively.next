@@ -8,25 +8,78 @@ import Terminal from "./terminal.js";
 
 export default class Workspace extends Window {
 
-  constructor(props = {}) {
-    super({
-      title: "Shell Workspace",
+  static get properties() {
+    return {
+
+      title: {defaultValue: "Shell Workspace"},
+
       targetMorph: {
-        type: "text", name: "editor",
-        textString: props.content || "",
-        lineWrapping: false,
-        ...config.codeEditor.defaultStyle,
-        plugins: [new ShellEditorPlugin()]
+        initialize() {
+          this.targetMorph = {
+            type: "text", name: "editor",
+            lineWrapping: false,
+            textString: "// Enter and evaluate JavaScript code here",
+            ...config.codeEditor.defaultStyle,
+            // plugins: [new ShellEditorPlugin()]
+          };
+        }
       },
-      extent: pt(400,300),
-      ...obj.dissoc(props, ["content", "cwd"])
-    });
+
+      content: {
+        derived: true, after: ["targetMorph"],
+        get() { return this.targetMorph.textString; },
+        set(content) { return this.targetMorph.textString = content; }
+      },
+
+      cwd: {
+        derived: true, after: ["shellPlugin"],
+        get() { return this.shellPlugin.cwd; },
+        set(cwd) { return this.shellPlugin.cwd = cwd; }
+      },
+
+      extent: {defaultValue: pt(400,300)},
+
+      shellPlugin: {
+        derived: true, readOnly: true, after: ["targetMorph"],
+        get() {
+          return this.targetMorph.pluginFind(p => p.isShellEditorPlugin)
+              || this.targetMorph.addPlugin(new ShellEditorPlugin());
+        }
+      }
+    }
+  }
+
+  constructor(props) {
+    super(props);
     var btn = this.addMorph(this.ensureCwdButton(this.shellPlugin.cwd));
     connect(this.shellPlugin, 'cwd', btn, 'label',
       {converter: cwd => lively.lang.string.truncateLeft(cwd, 50)});
   }
 
-  get shellPlugin() { return this.targetMorph.pluginFind(p => p.isShellEditorPlugin); }
+  onLoad(_, snapshot) {
+    if (this._serializedState) {
+      this.cwd = this._serializedState.cwd;
+      delete this._serializedState;
+    }
+  }
+
+  __additionally_serialize__(snapshot, objRef, pool, addFn) {
+    // remove unncessary state    
+    var ref = pool.ref(this.targetMorph);
+    ref.currentSnapshot.props.attributeConnections.value = [];
+    ref.currentSnapshot.props.plugins.value =
+      ref.currentSnapshot.props.plugins.value.filter(({id}) =>
+        id.startsWith("selection-"));
+    ref.currentSnapshot.props.savedMarks.value = [];
+
+    // save essential state
+    snapshot.props._serializedState = {
+      verbatim: true,
+      value: {
+        cwd: this.cwd
+      }
+    }
+  }
 
   ensureCwdButton(cwd) {
     var btn = this.getSubmorphNamed("changeCwdButton")
