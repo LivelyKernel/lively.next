@@ -46,17 +46,153 @@ export default class Terminal extends Morph {
     return existing || this.forCommand(cmd);
   }
 
-  constructor(props = {}) {
-    super({
-      extent: pt(600, 300),
-      ...obj.dissoc(props, ["command", "cwd"])
-    });
-    this.state = {command: null, lastFocused: null};
-    this.build(props);
-    if (props.command)
-      this.command = props.command;
-    if (props.cwd) this.cwd = props.cwd;
-    else Promise.resolve(() => this.cwd = defaultDirectory());
+
+  static get properties() {
+    return {
+
+      title: {defaultValue: "Terminal"},
+      name: {defaultValue: "terminal"},
+      extent: {defaultValue: pt(600, 300)},
+      lastFocused: {defaultValue: "input"},
+
+      submorphs: {
+      
+        initialize() {
+          this.submorphs = [
+            {
+              type: "text", name: "output",
+              lineWrapping: false, textString: "",
+              ...this.defaultStyle,
+              // ...props
+            },
+
+            Text.makeInputLine({
+              ...this.defaultStyle,
+              name: "input",
+              textString: "",
+              clearOnInput: true,
+              historyId: "lively.shell-terminal-input-history",
+              border: {width: 1, color: Color.gray},
+              plugins: [new ShellEditorPlugin()],
+              clipMode: "hidden",
+              // ...props
+            }),
+
+            {
+              type: "button", name: "changeCwdButton",
+              label: "cwd...", extent: pt(60,20), borderRadius: 3,
+              padding: Rectangle.inset(4, 2)
+            }
+          ];
+
+          var {input, changeCwdButton} = this.ui;
+
+          connect(input, "inputAccepted", this, "execCommand",
+            {updater: ($upd, command) => $upd("[shell terminal] run command or send input", {command})});
+
+          connect(this, 'extent', changeCwdButton, 'topRight', {converter: ext => ext.withY(0)});
+          connect(changeCwdButton, 'fire', this, 'execCommand', {converter: () => "[shell] change working directory"});
+
+          this.layout = new GridLayout({grid: [["output"], ["input"]]});
+          this.layout.row(1).fixed = 25;
+        }
+      },
+
+      ui: {
+        derived: true, readOnly: true, after: ["submorphs"],
+        get() {
+          var [output, input, changeCwdButton] = this.submorphs;
+          return {output, input, changeCwdButton};
+        }
+      },
+
+      command: {
+        derived: true, after: ["shellPlugin"],
+        get() { return this.shellPlugin.command; },
+
+        set(cmd) {
+          if (this.command && this.command.isRunning())
+            throw new Error(`${this.command} still running`);
+          this.shellPlugin.command = cmd;
+          cmd.stdout && this.addOutput(cmd.stdout);
+          cmd.stdout && this.addOutput(cmd.stderr);
+          connect(cmd, 'stdout', this, 'addOutput');
+          connect(cmd, 'stderr', this, 'addOutput');
+          connect(cmd, 'error', this, 'addOutput');
+          connect(cmd, 'pid', this, 'updateWindowTitle');
+          connect(cmd, 'close', this, 'updateWindowTitle');
+          connect(cmd, 'close', this, 'updateTextMode');
+          this.updateWindowTitle();
+          this.updateTextMode();
+        }
+      },
+
+      cwd: {
+        derived: true, after: ["shellPlugin"],
+        get() { return this.shellPlugin.cwd; },
+        set(cwd) { return this.shellPlugin.cwd = cwd; }
+      },
+
+      shellPlugin: {
+        derived: true, readOnly: true, after: ["submorphs"],
+        get() {
+          var i = this.ui.input,
+              p = i.pluginFind(ea => ea.isShellEditorPlugin);
+          if (p) return p;
+          p = i.addPlugin(new ShellEditorPlugin());
+          connect(p, 'cwd', this.ui.changeCwdButton, 'label');
+          return p;
+        }
+      },
+
+      input: {
+        derived: true, after: ["submorphs"],
+        set(val) { this.ui.input.input = val; },
+        get() { return this.ui.input.input; }
+      }
+    }
+  }
+
+  constructor(props) {
+    super(props);
+    if (!props.cwd) Promise.resolve(() => this.cwd = defaultDirectory());
+  }
+
+
+  __additionally_serialize__(snapshot, objRef, pool, addFn) {
+    // remove unncessary state    
+    var ref = pool.ref(this.ui.output);
+    ref.currentSnapshot.props.attributeConnections.value = [];
+    ref.currentSnapshot.props.plugins.value = [];
+    ref.currentSnapshot.props.anchors.value =
+      ref.currentSnapshot.props.anchors.value.filter(({id}) =>
+        id.startsWith("selection-"));
+    ref.currentSnapshot.props.savedMarks.value = [];
+
+    var ref = pool.ref(this.ui.input);
+    ref.currentSnapshot.props.attributeConnections.value = [];
+    ref.currentSnapshot.props.plugins.value = [];
+    ref.currentSnapshot.props.anchors.value =
+      ref.currentSnapshot.props.anchors.value.filter(({id}) =>
+        id.startsWith("selection-"));
+    ref.currentSnapshot.props.savedMarks.value = [];
+
+    // save essential state
+    snapshot.props._serializedState = {
+      verbatim: true,
+      value: {
+        cwd: this.cwd
+      }
+    }
+  }
+
+  onLoad(_, snapshot) {
+    if (this._serializedState) {
+      this.cwd = this._serializedState.cwd;
+      delete this._serializedState;
+    }
+    connect(this.ui.input, "inputAccepted", this, "execCommand",
+      {updater: ($upd, command) => $upd("[shell terminal] run command or send input", {command})});
   }
 
   get defaultStyle() {
@@ -65,51 +201,11 @@ export default class Terminal extends Morph {
     }
   }
 
-  build(props) {
-    var output = this.addMorph({
-      type: "text", name: "output",
-      lineWrapping: false, textString: "",
-      ...this.defaultStyle,
-      ...props
-    });
-
-    var input = this.addMorph(Text.makeInputLine({
-      ...this.defaultStyle,
-      name: "input",
-      textString: input,
-      clearOnInput: true,
-      historyId: "lively.shell-terminal-input-history",
-      border: {width: 1, color: Color.gray},
-      plugins: [new ShellEditorPlugin()],
-      clipMode: "hidden",
-      ...props
-    }));
-    connect(input, "inputAccepted", this, "execCommand",
-      {updater: ($upd, command) => $upd("[shell terminal] run command or send input", {command})});
-
-
-    var btn = this.addMorph({
-      type: "button", name: "changeCwdButton",
-      label: "cwd...", extent: pt(60,20), borderRadius: 3,
-      padding: Rectangle.inset(4, 2)
-    });
-    connect(this.shellPlugin, 'cwd', btn, 'label');
-    connect(this, 'extent', btn, 'topRight', {converter: ext => ext.withY(0)});
-    connect(btn, 'fire', this, 'execCommand', {converter: () => "[shell] change working directory"});
-
-
-    this.layout = new GridLayout({grid: [["output"], ["input"]]});
-    this.layout.row(1).fixed = 25;
-    // this.layout.row(1).paddingBottom = 5;
-
-  }
-
   focus() {
-    var target = this.state.lastFocused || "input";
-    this.getSubmorphNamed(target).focus();
+    this.ui[this.lastFocused].focus();
   }
 
-  clear() { this.getSubmorphNamed("output").textString = ""; }
+  clear() { this.ui.output.textString = ""; }
 
   updateWindowTitle() {
     var win = this.getWindow();
@@ -124,7 +220,7 @@ export default class Terminal extends Morph {
   }
 
   updateTextMode() {
-    var ed = this.getSubmorphNamed('output'),
+    var ed = this.ui.output,
         mode = guessTextModeName(ed),
         pluginsToRemove = ed.plugins.filter(ea => ea.isEditorPlugin),
         pluginsToAdd = [];
@@ -134,7 +230,7 @@ export default class Terminal extends Morph {
       if (plugin) arr.remove(pluginsToRemove, plugin);
       else pluginsToAdd.push(new DiffEditorPlugin());
     }
-    
+
     ed.plugins = arr.withoutAll(ed.plugins, pluginsToRemove).concat(pluginsToAdd);
   }
 
@@ -153,8 +249,8 @@ export default class Terminal extends Morph {
       {
         name: "focus input",
         exec: term => {
-          term.state.lastFocused = "input"
-          var m = term.getSubmorphNamed("input");
+          term.lastFocused = "input"
+          var m = term.ui.input;
           m.show(); m.focus(); return true;
         }
       },
@@ -162,12 +258,12 @@ export default class Terminal extends Morph {
       {
         name: "focus output",
         exec: term => {
-          term.state.lastFocused = "output";
-          var m = term.getSubmorphNamed("output");
+          term.lastFocused = "output";
+          var m = term.ui.output;
           m.show(); m.focus(); return true;
         }
       },
-      
+
       {
         name: "[shell terminal] run command or send input",
         exec: (term, opts = {command: ""}) => {
@@ -210,33 +306,8 @@ export default class Terminal extends Morph {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  get shellPlugin() {
-    return this.getSubmorphNamed("input")
-      .pluginFind(ea => ea.isShellEditorPlugin);
-  }
-  get cwd() { return this.shellPlugin.cwd; }
-  set cwd(cwd) { this.shellPlugin.cwd = cwd; }
-
-  get command() { return this.shellPlugin.command; }
-  set command(cmd) {
-    if (this.command && this.command.isRunning())
-      throw new Error(`${this.command} still running`);
-
-    this.shellPlugin.command = cmd;
-    cmd.stdout && this.addOutput(cmd.stdout);
-    cmd.stdout && this.addOutput(cmd.stderr);
-    connect(cmd, 'stdout', this, 'addOutput');
-    connect(cmd, 'stderr', this, 'addOutput');
-    connect(cmd, 'error', this, 'addOutput');
-    connect(cmd, 'pid', this, 'updateWindowTitle');
-    connect(cmd, 'close', this, 'updateWindowTitle');
-    connect(cmd, 'close', this, 'updateTextMode');
-    this.updateWindowTitle();
-    this.updateTextMode();
-  }
-
   addOutput(text) {
-    var ed = this.getSubmorphNamed('output'),
+    var ed = this.ui.output,
         isAtFileEnd = ed.isAtDocumentEnd();
     ed.append(text);
 
