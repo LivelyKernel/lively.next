@@ -263,8 +263,8 @@ export class ObjectEditor extends Morph {
     ref.currentSnapshot.props.textAndAttributes.value = [];
     ref.currentSnapshot.props.attributeConnections.value = [];
     ref.currentSnapshot.props.plugins.value = [];
-    ref.currentSnapshot.props.plugins.value =
-      ref.currentSnapshot.props.plugins.value.filter(({id}) =>
+    ref.currentSnapshot.props.anchors.value =
+      ref.currentSnapshot.props.anchors.value.filter(({id}) =>
         id.startsWith("selection-"));
     ref.currentSnapshot.props.savedMarks.value = [];
 

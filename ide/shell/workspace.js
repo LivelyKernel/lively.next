@@ -12,6 +12,7 @@ export default class Workspace extends Window {
     return {
 
       title: {defaultValue: "Shell Workspace"},
+      name: {defaultValue: "shell-workspace"},
 
       targetMorph: {
         initialize() {
@@ -67,8 +68,9 @@ export default class Workspace extends Window {
     // remove unncessary state    
     var ref = pool.ref(this.targetMorph);
     ref.currentSnapshot.props.attributeConnections.value = [];
-    ref.currentSnapshot.props.plugins.value =
-      ref.currentSnapshot.props.plugins.value.filter(({id}) =>
+    ref.currentSnapshot.props.plugins.value = [];
+    ref.currentSnapshot.props.anchors.value =
+      ref.currentSnapshot.props.anchors.value.filter(({id}) =>
         id.startsWith("selection-"));
     ref.currentSnapshot.props.savedMarks.value = [];
 
