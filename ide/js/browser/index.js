@@ -129,14 +129,10 @@ export default class Browser extends Window {
   __additionally_serialize__(snapshot, objRef, pool, addFn) {
     // remove unncessary stuff
     // FIXME offer option in object ref or pool or removeFn to automate this stuff!
-    var ref = pool.ref(this);
-    ref.currentSnapshot.props.attributeConnections.value
-
     var ref = pool.ref(this.ui.moduleList);
     ref.currentSnapshot.props.items.value = [];
     if (ref.currentSnapshot.props.selection)
       ref.currentSnapshot.props.selection.value = null;
-
 
     var ref = pool.ref(this.ui.codeEntityTree);
     if (ref.currentSnapshot.props.selection)

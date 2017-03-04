@@ -1,4 +1,4 @@
-import { arr, obj, Path, string, fun } from "lively.lang";
+import { arr, t, Path, string, fun } from "lively.lang";
 import { Morph, HorizontalLayout, GridLayout, config } from "lively.morphic";
 import { pt, Color } from "lively.graphics";
 import { JavaScriptEditorPlugin } from "../editor-plugin.js";
@@ -141,26 +141,8 @@ export class ObjectEditor extends Morph {
       },
 
       target: {
-        derived: true, after: ["editorPlugin", "state"], after: ["submorphs"],
-        set(obj) {
-          this.setProperty("target", obj);
-          this.state.selectedClass = null;
-          this.state.selectedMethod = null;
-          this.ui.classTree.treeData = new ClassTreeData(obj.constructor);
-
-          Object.assign(this.editorPlugin.evalEnvironment, {
-            context: this.target,
-            format: "esm"
-          });
-
-          if (isObjectClassFor(obj.constructor, obj)) {
-            this.selectClass(obj.constructor);
-          } else {
-            this.updateSource(
-                `// No object-specific behavior exists yet for ${obj}\n`
-              + `// Use the "+" button to add new behaviors\n`);
-          }
-        }
+        after: ["editorPlugin", "state"], after: ["submorphs"],
+        set(obj) { this.selectTarget(obj); }
       },
 
       selectedModule: {
@@ -268,56 +250,49 @@ export class ObjectEditor extends Morph {
   }
 
   __additionally_serialize__(snapshot, objRef, pool, addFn) {
-    // remove unncessary stuff
-    // FIXME offer option in object ref or pool or removeFn to automate this stuff!
-    // var ref = pool.ref(this);
-    // ref.currentSnapshot.props.attributeConnections.value
-    // 
-    // var ref = pool.ref(this.ui.moduleList);
-    // ref.currentSnapshot.props.items.value = [];
-    // if (ref.currentSnapshot.props.selection)
-    //   ref.currentSnapshot.props.selection.value = null;
-    // 
-    // 
-    // var ref = pool.ref(this.ui.codeEntityTree);
-    // if (ref.currentSnapshot.props.selection)
-    //   ref.currentSnapshot.props.selection.value = null;
-    // 
-    // var ref = pool.ref(this.ui.codeEntityTree.nodeItemContainer);
-    // ref.currentSnapshot.props.submorphs.value = [];
-    // 
-    // var ref = pool.ref(this.ui.codeEntityTree.treeData);
-    // ref.currentSnapshot.props.defs.value = [];
-    // ref.currentSnapshot.props.root.value = {};
-    // ref.currentSnapshot.props.root.verbatim = true;
-    // 
-    // var ref = pool.ref(this.ui.sourceEditor);
-    // ref.currentSnapshot.props.textAndAttributes.value = [];
-    // ref.currentSnapshot.props.attributeConnections.value = [];
-    // ref.currentSnapshot.props.plugins.value = [];
-    // ref.currentSnapshot.props.anchors.value = [];
-    // ref.currentSnapshot.props.savedMarks.value = [];
-
-    // remember browse state
     var {
-      ui: {sourceEditor, importController, classTree},
+      ui: {sourceEditor, importsList, classTree},
       backend,
       selectedClass,
       selectedMethod,
       target
     } = this;
 
+    // remove unncessary state    
+    var ref = pool.ref(sourceEditor);
+    ref.currentSnapshot.props.textAndAttributes.value = [];
+    ref.currentSnapshot.props.attributeConnections.value = [];
+    ref.currentSnapshot.props.plugins.value = [];
+    ref.currentSnapshot.props.anchors.value = [];
+    ref.currentSnapshot.props.savedMarks.value = [];
+
+    var ref = pool.ref(classTree);
+    if (ref.currentSnapshot.props.selection)
+      ref.currentSnapshot.props.selection.value = null;
+    var ref = pool.ref(classTree.nodeItemContainer);
+    ref.currentSnapshot.props.submorphs.value = [];
+    var ref = pool.ref(classTree.treeData);
+    ref.currentSnapshot.props.root.value = {};
+    ref.currentSnapshot.props.root.verbatim = true;
+
+    var ref = pool.ref(importsList);
+    ref.currentSnapshot.props.items.value = [];
+    if (ref.currentSnapshot.props.selection)
+      ref.currentSnapshot.props.selection.value = null;
+
+    // save essential state
     snapshot.props._serializedState = {
       verbatim: true,
       value: {
         selectedClass: selectedClass ? selectedClass.name : null,
         selectedMethod: selectedMethod ? selectedMethod.name : null,
-        textPosition: sourceEditor.textPosition,
+        textPosition: sourceEditor.cursorPosition,
         scroll: sourceEditor.scroll,
         classTreeScroll: classTree.scroll,
         backend
       }
     }
+
   }
 
   async onLoad() {
@@ -426,6 +401,30 @@ export class ObjectEditor extends Morph {
   }
 
   sourceDescriptorFor(klass) { return RuntimeSourceDescriptor.for(klass); }
+
+  classChainOfTarget() {
+    return withSuperclasses(this.target.constructor);
+  }
+
+  async selectTarget(t) {
+    this.setProperty("target", t);
+    this.state.selectedClass = null;
+    this.state.selectedMethod = null;
+    this.ui.classTree.treeData = new ClassTreeData(t.constructor);
+
+    Object.assign(this.editorPlugin.evalEnvironment, {
+      context: this.target,
+      format: "esm"
+    });
+
+    if (isObjectClassFor(t.constructor, t)) {
+      await this.selectClass(t.constructor);
+    } else {
+      await this.updateSource(
+          `// No object-specific behavior exists yet for ${t}\n`
+        + `// Use the "+" button to add new behaviors\n`);
+    }
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // update
@@ -559,7 +558,17 @@ export class ObjectEditor extends Morph {
       backend
     } = spec;
 
-    if (target) this.target = target;
+    if (backend !== this.backend) this.backend = backend;
+
+    if (target) await this.selectTarget(this.target);
+
+    if (selectedClass && selectedMethod) await this.selectMethod(selectedClass, selectedMethod, false);
+    else if (selectedClass) await this.selectClass(selectedClass);
+
+    var {classTree, sourceEditor} = this.ui
+    if (scroll) sourceEditor.scroll = scroll;
+    if (textPosition) sourceEditor.cursorPosition = textPosition;
+    if (classTreeScroll) classTree.scroll = classTreeScroll;
 
     return this;
   }
@@ -599,6 +608,11 @@ export class ObjectEditor extends Morph {
 
   async selectClass(klass) {
     let tree = this.get("classTree");
+
+    if (typeof klass === "string") {
+      klass = this.classChainOfTarget().find(ea => ea.name === klass);
+    }
+
     if (!tree.selection || tree.selection.target !== klass) {
       var node = tree.nodes.find(ea => !ea.isRoot && ea.target === klass);
       tree.selection = node;
@@ -615,6 +629,8 @@ export class ObjectEditor extends Morph {
   }
 
   async selectMethod(klass, methodSpec, highlight = true, putCursorInBody = false) {
+    if (typeof methodSpec === "string") methodSpec = {name: methodSpec};
+
     if (klass && !methodSpec && isClass(klass.owner)) {
       methodSpec = klass;
       klass = klass.owner
@@ -1024,7 +1040,6 @@ class ImportController extends Morph {
   }
 
   build() {
-
     var listStyle = {
           borderWidthTop: 1, borderWidthBottom: 1,
           borderColor: Color.gray,
@@ -1081,11 +1096,6 @@ class ImportController extends Morph {
   set module(moduleOrId) {
     var id = !moduleOrId ? null : typeof moduleOrId === "string" ? moduleOrId : moduleOrId.id;
     this.setProperty("module", id);
-  }
-
-  save() {
-    // import { serializeMorph } from "lively.morphic/serialization.js";
-    window.snapshot = serializeMorph(this).snapshot;
   }
 
 
