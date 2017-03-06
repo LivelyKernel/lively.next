@@ -131,6 +131,40 @@ describe("marshalling", () => {
 
   });
 
+  describe("built-in js objects", () => {
+
+    it("Map", () => {
+      let obj = {}, obj2 = {bar: 23},
+          map = new Map([["a", 1], [obj2, 2], ["c", obj]]);
+      obj.map = map;
+      obj.obj2 = obj2;
+      objPool = ObjectPool.withObject(obj);
+
+      let objCopy = serializationRoundtrip(obj),
+          copiedMap = objCopy.map;
+      expect(copiedMap).instanceof(Map);
+      expect(copiedMap.get("a")).equals(1);
+      expect(copiedMap.get(objCopy.obj2)).equals(2);
+      expect(copiedMap.get("c")).equals(objCopy);
+    });
+
+    it("Set", () => {
+      let obj = {}, obj2 = {bar: 23},
+          set = new Set(["a", obj, obj2]);
+      obj.set = set;
+      obj.obj2 = obj2;
+      objPool = ObjectPool.withObject(obj);
+
+      let objCopy = serializationRoundtrip(obj),
+          entries = Array.from(objCopy.set.values());
+      expect(entries).to.have.length(3);
+      expect(entries[0]).equals("a");
+      expect(entries[1]).equals(objCopy);
+      expect(entries[2]).equals(objCopy.obj2);
+    });
+
+  });
+
   describe("serialized expressions", () => {
 
     it("simple", () => {

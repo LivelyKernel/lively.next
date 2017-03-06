@@ -49,7 +49,9 @@ export default class ClassHelper {
       return {isClassPlaceHolder: true, className: meta.className};
     }
 
-    return new klass(this);
+    // non-lively classes don't understand our instance restorer arg...!'
+    var isLivelyClass = klass.hasOwnProperty(Symbol.for("lively-instance-superclass"));
+    return isLivelyClass ? new klass(this) : new klass();
   }
 
   locateClass(meta) {
