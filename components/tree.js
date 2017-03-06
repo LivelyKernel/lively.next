@@ -690,6 +690,7 @@ export class TreeData {
   }
 
   get __dont_serialize__() { return ["parentMap"]; }
+  __deserialize__() { this.parentMap = new WeakMap(); }
 
   display(node) { throw new Error("Not yet implemented"); }
   isCollapsed(node) { throw new Error("Not yet implemented"); }
