@@ -1,8 +1,18 @@
 import { arr, obj, num, string } from "lively.lang";
 import { isPrimitive } from "./util.js";
 
-var debugSerialization = false,
-    debugDeserialization = false;
+const debugSerialization = false,
+      debugDeserialization = false;
+
+function __additionally_serialize__addObjectFunction(objRef, snapshot, serializedObjMap, pool, path = []) {
+  // passed into __additionally_serialize__ as a parameter to allow object to add
+  // other objects to serialization
+
+  return (key, value, verbatim = false) =>
+    snapshot.props[key] = verbatim ? {key, value, verbatim} :
+      {key, value: objRef.snapshotProperty(
+        objRef.id, value, path.concat([key]), serializedObjMap, pool)}
+}
 
 export class ObjectRef {
 
@@ -26,7 +36,19 @@ export class ObjectRef {
 
   get isObjectRef() { return true; }
 
-  get currentSnapshot() { return this.snapshots[arr.last(this.snapshotVersions)]}
+  get currentSnapshot() {
+    if (!this.snapshotVersions.length) {
+      var rev = 0;
+      this.snapshotVersions.push(rev);
+      this.snapshots[rev] = {rev, props: {}};
+    }
+    return this.snapshots[arr.last(this.snapshotVersions)]
+  }
+
+  get currentRev() {
+    return this.snapshotVersions.length ?
+      arr.last(this.snapshotVersions) : 0;
+  }
 
   asRefForSerializedObjMap(rev = "????") {
     return {__ref__: true, id: this.id, rev}
@@ -60,7 +82,7 @@ export class ObjectRef {
 
     // can realObj be manually serialized, e.g. into an expression?
     if (typeof realObj.__serialize__ === "function") {
-      let serialized = realObj.__serialize__(this, serializedObjMap, pool);
+      let serialized = realObj.__serialize__(pool, serializedObjMap, path, this);
       if (serialized.hasOwnProperty("__expr__"))
         serialized = {__expr__: pool.expressionSerializer.exprStringEncode(serialized)};
       snapshots[rev] = serializedObjMap[id] = serialized;
@@ -118,10 +140,8 @@ export class ObjectRef {
     if (typeof realObj.__additionally_serialize__ === "function")
       realObj.__additionally_serialize__(
         snapshot, this, pool,
-        (key, value, verbatim = false) =>
-          props[key] = verbatim ? {key, value, verbatim} :
-            {key, value: this.snapshotProperty(
-              id, value, path.concat([key]), serializedObjMap, pool)});
+        __additionally_serialize__addObjectFunction(
+          this, snapshot, serializedObjMap, pool, path));
 
     return ref;
   }
@@ -134,7 +154,7 @@ export class ObjectRef {
     if (isPrimitive(value)) return value; // stored as is
 
     if (typeof value.__serialize__ === "function") {
-      var serialized = value.__serialize__(this, serializedObjMap, pool);
+      var serialized = value.__serialize__(pool, serializedObjMap, path, undefined);
       if (serialized.hasOwnProperty("__expr__"))
         serialized = pool.expressionSerializer.exprStringEncode(serialized);
       return serialized;
@@ -188,7 +208,7 @@ export class ObjectRef {
     if (!newObj) return this;
 
     if (typeof newObj.__deserialize__ === "function")
-      newObj.__deserialize__(snapshot, this);
+      newObj.__deserialize__(snapshot, this, serializedObjMap, pool, path);
 
     let {props} = snapshot,
         deserializedKeys = {};
