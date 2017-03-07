@@ -327,24 +327,52 @@ export default class InputLine extends Text {
 
 import { HTMLMorph } from "../html-morph.js"
 
+// var i = new PasswordInputLine().openInWorld();
+// i.remove();
+
 export class PasswordInputLine extends HTMLMorph {
+
+  static get properties() {
+    return {
+      extent: {defaultValue: pt(100,20)},
+      html: {
+        initialize() {
+          this.html = `<input style="height: calc(100% - 6px); width: calc(100% - 6px);" type="password" value="">`;
+        }
+      },
+
+      inputNode: {
+        readOnly: true, derived: true, after: ["domNode"],
+        get() { return this.domNode.childNodes[0]; }
+      },
+
+      input: {
+        derived: true, after: ["inputNode"],
+        get() { return this.inputNode.value || ""; },
+        set(val) { this.ensureInputNode().then(n => n.value = val); }
+      },
+
+      placeholder: {
+        derived: true, after: ["inputNode"],
+        get() { return this.inputNode.placeholder; },
+        set(val) { this.ensureInputNode().then(n => n.placeholder = val); }
+      }
+
+    }
+  }
 
   constructor(opts = {}) {
     super(opts);
-    this.html = `<input style="height: calc(100% - 6px); width: calc(100% - 6px);" type="password" value="">`;
+    this.onLoad();
+  }
+
+  onLoad() {
     // hmm key events aren't dispatched by default...
     this.ensureInputNode().then(node =>
       node.onkeydown = evt => this.env.eventDispatcher.dispatchDOMEvent(evt, this, "onKeyDown"));
   }
 
-  get inputNode() { return this.domNode.childNodes[0]; }
   ensureInputNode() { return this.whenRendered().then(() => this.inputNode); }
-
-  get input() { return this.inputNode.value || ""; }
-  set input(val) { this.ensureInputNode().then(n => n.value = val); }
-
-  get placeholder() { return this.inputNode.placeholder; }
-  set placeholder(val) { this.ensureInputNode().then(n => n.placeholder = val); }
 
   focus() { this.ensureInputNode().then(n => n.focus()); }
 
