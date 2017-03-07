@@ -8,70 +8,72 @@ import { resource } from "lively.resources";
 
 const editorCommands = [
 
-{
-  name: "focus url input",
-  exec: fileBrowser => { fileBrowser.get("urlInput").focus(); return true; }
-},
+  {
+    name: "focus url input",
+    exec: fileBrowser => { fileBrowser.ui.urlInput.focus(); return true; }
+  },
 
-{
-  name: "focus content text",
-  exec: fileBrowser => { fileBrowser.get("contentText").focus(); return true; }
-},
+  {
+    name: "focus content text",
+    exec: fileBrowser => { fileBrowser.ui.contentText.focus(); return true; }
+  },
 
-{
-  name: "load file",
-  exec: async fileBrowser => {
-    fileBrowser.location = fileBrowser.get("urlInput").input;
-    return true;
-  }
-},
-
-{
-  name: "save file",
-  exec: async textEditor => {
-    var f = textEditor.state.currentFile
-    if (!f) {
-      textEditor.setStatusMessage("No file selected");
+  {
+    name: "load file",
+    exec: async fileBrowser => {
+      fileBrowser.location = fileBrowser.ui.urlInput.input;
       return true;
     }
+  },
 
-    try {
-      await f.write(textEditor.get("contentText").textString);
-      textEditor.setStatusMessage(`${f.url} saved`, Color.green);
-      signal(textEditor, "contentSaved");
-    } catch (e) {
-      textEditor.showError(`Error writing ${f.url}: ${e.stack || e}`);
-    }
-
-    return true;
-  }
-},
-
-{
-  name: "remove file",
-  exec: async fileBrowser => {
-    var f = fileBrowser.state.currentFile
-    if (!f) {
-      fileBrowser.setStatusMessage("No file selected");
-      return true;
-    }
-
-    try {
-      if (await fileBrowser.world().confirm(`Really remove ${f.url}?`)) {
-        await f.remove();
-        fileBrowser.setStatusMessage(`${f.url} removed!`);
-        fileBrowser.reload();
-      } else {
-        await fileBrowser.world().inform("delete file canceled");
+  {
+    name: "save file",
+    exec: async textEditor => {
+      var l = textEditor.location
+      if (!l) {
+        textEditor.setStatusMessage("No file selected");
+        return true;
       }
 
-    } catch (e) {
-      fileBrowser.showError(`Error writing ${f.url}: ${e.stack || e}`);
-    }
+      var f = resource(l);
+      try {
+        await f.write(textEditor.ui.contentText.textString);
+        textEditor.setStatusMessage(`${f.url} saved`, Color.green);
+        signal(textEditor, "contentSaved");
+      } catch (e) {
+        textEditor.showError(`Error writing ${f.url}: ${e.stack || e}`);
+      }
 
-    return true;
-  }
-},
+      return true;
+    }
+  },
+
+  {
+    name: "remove file",
+    exec: async textEditor => {
+      var l = textEditor.location
+      if (!l) {
+        textEditor.setStatusMessage("No file selected");
+        return true;
+      }
+
+      var f = resource(l);
+      try {
+        if (await textEditor.world().confirm(`Really remove ${f.url}?`)) {
+          await f.remove();
+          textEditor.setStatusMessage(`${f.url} removed!`);
+          textEditor.reload();
+        } else {
+          await textEditor.world().inform("delete file canceled");
+        }
+
+      } catch (e) {
+        textEditor.showError(`Error writing ${f.url}: ${e.stack || e}`);
+      }
+
+      return true;
+    }
+  },
 
 ];
 
@@ -98,97 +100,93 @@ export default class TextEditor extends Morph {
     return ed;
   }
 
-  constructor(props = {}) {
-    var location = props.location;
-    super({
-      name: "text editor",
-      fill: Color.white,
-      border: {width: 1, color: Color.black},
-      // clipMode: "auto",
-      extent: pt(700,600),
-      ...obj.dissoc(props, ["location"])
-      });
+  static get properties() {
+    return {
+      name: {defaultValue: "text editor"},
+      fill: {defaultValue: Color.white},
+      border: {defaultValue: {width: 1, color: Color.black}},
+      extent: {defaultValue: pt(700,600)},
 
-    this.state = {
-      currentFile: null,
-      loadPromise: null
-    }
+      submorphs: {
+        initialize() {
+          this.submorphs = [
+            Text.makeInputLine({name: "urlInput", historyId: "lively.morphic-text editor url"}),
+            {name: "loadButton", type: "button", label: "reload"},
+            {name: "saveButton", type: "button", label: "save"},
+            {name: "removeButton", type: "button", label: "remove"},
+            {
+              ...config.codeEditor.defaultStyle,
+              name: "contentText", type: "text",
+              lineWrapping: false
+            }
+          ]
+          var {urlInput, loadButton, saveButton, removeButton} = this.ui;
+          connect(this, 'extent', this, 'relayout');
+          connect(urlInput, 'inputAccepted', this, 'location');
+          connect(loadButton, 'fire', this, 'execCommand', {converter: () => "load file"});
+          connect(saveButton, 'fire', this, 'execCommand', {converter: () => "save file"});
+          connect(removeButton, 'fire', this, 'execCommand', {converter: () => "remove file"});
+        }
+      },
 
-    this.build();
+      ui: {
+        readOnly: true, derived: true, after: ["submorphs"],
+        get() {
+          var [urlInput, loadButton, saveButton, removeButton, contentText] = this.submorphs;
+          return {urlInput, loadButton, saveButton, removeButton, contentText};
+        }
+      },
 
-    if (location) this.location = location;
-  }
+      location: {
+        derived: true, after: ["submorphs"],
 
-  build() {
-    this.removeAllMorphs()
+        get() { return this.ui.urlInput.input; },
 
-    this.submorphs = [
-      Text.makeInputLine({name: "urlInput", historyId: "lively.morphic-text editor url"}),
-      {name: "loadButton", type: "button", label: "reload"},
-      {name: "saveButton", type: "button", label: "save"},
-      {name: "removeButton", type: "button", label: "remove"},
-      {
-        ...config.codeEditor.defaultStyle,
-        name: "contentText", type: "text",
-        lineWrapping: false
+        set(val) {
+          var url = val,
+              lineNumber = null,
+              colonIndex = val.lastIndexOf(":");
+
+          if (colonIndex > -1 && val.slice(colonIndex+1).match(/^[0-9]+$/)) {
+            lineNumber = Number(val.slice(colonIndex+1));
+            url = val.slice(0, colonIndex);
+          }
+
+          var {contentText, urlInput} = this.ui;
+          urlInput.input = val || "";
+          urlInput.acceptInput();
+          if (urlInput.isFocused()) contentText.focus();
+          this.showFileContent(resource(url));
+          if (lineNumber) this.lineNumber = lineNumber;
+        }
+      },
+
+      lineNumber: {
+        derived: true, after: ["location"],
+        get() { return this.ui.contentText.cursorPosition.row; },
+        set(val) {
+          var row = Number(val);
+          if (isNaN(row)) return;
+          this.whenLoaded().then(() => {
+            var ed = this.ui.contentText;
+            ed.cursorPosition = {row, column: 0};
+            ed.centerRow(row);
+          })
+        }
       }
-    ]
-
-    var [input, loadButton, saveButton, removeButton, contentText] = this.submorphs;
-    connect(this, 'extent', this, 'relayout');
-    connect(input, 'inputAccepted', this, 'location');
-    connect(loadButton, 'fire', this, 'execCommand', {converter: () => "load file"});
-    connect(saveButton, 'fire', this, 'execCommand', {converter: () => "save file"});
-    connect(removeButton, 'fire', this, 'execCommand', {converter: () => "remove file"});
-
-    this.relayout();
-  }
-
-  get location() {
-    return this.state.currentFile ? this.state.currentFile.url : null;
-  }
-
-  set location(val) {
-    var url = val,
-        lineNumber = null,
-        colonIndex = val.lastIndexOf(":");
-
-    if (colonIndex > -1 && val.slice(colonIndex+1).match(/^[0-9]+$/)) {
-      lineNumber = Number(val.slice(colonIndex+1));
-      url = val.slice(0, colonIndex);
     }
-
-    this.get("urlInput").input = val || "";
-    this.get("urlInput").acceptInput();
-    if (this.get("urlInput").isFocused())
-      this.get("contentText").focus();
-    this.showFileContent(resource(url));
-    if (lineNumber) this.lineNumber = lineNumber;
   }
 
-  get lineNumber() {
-    return this.getSubmorphNamed("contentText").cursorPosition.row;
-  }
-
-  set lineNumber(val) {
-    var row = Number(val);
-    if (isNaN(row)) return;
-    this.whenLoaded().then(() => {
-
-      var ed = this.getSubmorphNamed("contentText");
-      ed.cursorPosition = {row, column: 0};
-      ed.centerRow(row);
-    })
+  constructor(props) {
+    super(props);
+    this.relayout();
+    this._loadPromise = null;
   }
 
   reload() { this.location = this.location; }
 
   relayout() {
-    var urlInput = this.get("urlInput"),
-        loadButton = this.get("loadButton"),
-        saveButton = this.get("saveButton"),
-        removeButton = this.get("removeButton"),
-        contentText = this.get("contentText");
+    var {urlInput, loadButton, saveButton, removeButton, contentText} = this.ui;
 
     urlInput.width = contentText.width = this.width;
     urlInput.top = 0;
@@ -203,28 +201,26 @@ export default class TextEditor extends Morph {
   }
 
   async whenLoaded() {
-    if (!this.state) await promise.waitFor(1000, () => this.state);
-    return this.state.loadPromise || Promise.resolve(this);
+    return this._loadPromise || Promise.resolve(this);
   }
 
   async showFileContent(resource) {
     var deferred = promise.deferred();
-    this.state.loadPromise = deferred.promise;
+    this._loadPromise = deferred.promise;
     try {
-      this.state.currentFile = resource;
       var content = await resource.read();
       await this.prepareEditorForFile(resource, content);
       var win = this.getWindow();
       if (win) win.title = resource.name();
       deferred.resolve(this);
     } catch (e) { this.showError(e); deferred.reject(e); }
-    return this.state.loadPromise;
+    return this._loadPromise;
   }
 
   async prepareEditorForFile(resource, content = "") {
-    var ed = this.get("contentText");
+    var ed = this.ui.contentText;
 
-    var {editorPlugin} = this.state;
+    var {_editorPlugin: editorPlugin} = this;
     if (editorPlugin) ed.removePlugin(editorPlugin);
     editorPlugin = null;
 
@@ -242,7 +238,7 @@ export default class TextEditor extends Morph {
       switch (ext) {
 
         case 'js':
-          var { JavaScriptEditorPlugin } = await System.import("lively.morphic/ide/js/editor-plugin.js")
+          var { JavaScriptEditorPlugin } = await System.import("lively.morphic/ide/js/editor-plugin.js");
           editorPlugin = new JavaScriptEditorPlugin(config.codeEditor.defaultTheme);
           editorPlugin.evalEnvironment = {
             get targetModule() { return url; },
@@ -252,12 +248,12 @@ export default class TextEditor extends Morph {
           break;
 
         case 'json':
-          var { JSONEditorPlugin } = await System.import("lively.morphic/ide/json/editor-plugin.js")
+          var { JSONEditorPlugin } = await System.import("lively.morphic/ide/json/editor-plugin.js");
           editorPlugin = new JSONEditorPlugin(config.codeEditor.defaultTheme);
           break;
 
         case 'md':
-          var { MarkdownEditorPlugin } = await System.import("lively.morphic/ide/md/editor-plugin.js")
+          var { MarkdownEditorPlugin } = await System.import("lively.morphic/ide/md/editor-plugin.js");
           editorPlugin = new MarkdownEditorPlugin(config.codeEditor.defaultTheme);
           break;
 
@@ -272,7 +268,7 @@ export default class TextEditor extends Morph {
     }
 
     if (editorPlugin) ed.addPlugin(editorPlugin);
-    this.state.editorPlugin = editorPlugin;
+    this._editorPlugin = editorPlugin;
 
     ed.textString = content
     ed.gotoDocumentStart();
@@ -280,7 +276,7 @@ export default class TextEditor extends Morph {
   }
 
   focus() {
-    this.get("contentText").focus();
+    this.ui.contentText.focus();
   }
 
   close() {
