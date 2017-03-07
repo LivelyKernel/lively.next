@@ -231,7 +231,9 @@ export class Button extends Morph {
 
   get buttonStyleProps() {
     return ["fontStyle", "fontColor", "fontSize", "fontFamily", 
-            ...Object.keys(obj.dissoc(Morph.properties, ['position', 'extent', 'scale', 'rotation', 'visible']))]
+            ...Object.keys(obj.dissoc(Morph.properties, [
+              'name', 'position', 'extent', 'scale', 'rotation', 'visible'
+            ]))]
   }
 
   cacheStyle() {
