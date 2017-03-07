@@ -381,17 +381,29 @@ class StyleEditor extends Morph {
             target: value,
             property: "rotation"
           }),
+          insetToggle = new CheckBox({
+            name: 'insetToggle',
+            checked: value.inset
+          }),
           blurInspector = new PropertyInspector({
             name: "blurSlider",
             min: 0,
             target: value,
             property: "blur"
           });
+        connect(insetToggle, 'toggle', value, 'inset');
         const control = new Morph({
           width: 150,
-          height: 120,
+          height: 155,
           fill: Color.transparent,
           submorphs: [
+            {
+              type: "label",
+              value: "Inset: ",
+              padding: Rectangle.inset(4),
+              name: "insetLabel"
+            },
+            insetToggle, 
             {
               type: "label",
               value: "Distance: ",
@@ -427,15 +439,18 @@ class StyleEditor extends Morph {
           autoAssign: false,
           fitToCell: false,
           grid: [
+            ["insetLabel", null, "insetToggle"],
             ["distanceLabel", null, "distanceSlider"],
             ["blurLabel", null, "blurSlider"],
             ["angleLabel", null, "angleSlider"],
             ["colorLabel", null, "colorPicker"]
           ]
-        }), control.layout.col(0).paddingLeft = 1;
+        });
+        control.layout.col(0).paddingLeft = 1;
         control.layout.row(0).paddingBottom = 5;
         control.layout.row(1).paddingBottom = 5;
         control.layout.row(2).paddingBottom = 5;
+        control.layout.row(3).paddingBottom = 5;
         return control;
       }
     });

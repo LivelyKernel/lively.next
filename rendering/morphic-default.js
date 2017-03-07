@@ -15,10 +15,11 @@ export class ShadowObject {
 
     constructor(args) {
         if (obj.isBoolean(args)) args = config.defaultShadow;
-        const {rotation, distance, blur, color, morph} = args;
+        const {rotation, distance, blur, color, morph, inset} = args;
         this.rotation = obj.isNumber(rotation) ? rotation : 45; // in degrees
         this.distance = obj.isNumber(distance) ? distance : 2;
         this.blur = obj.isNumber(blur) ? blur : 6;
+        this.inset = inset || false;
         this.color = color || Color.gray.darker();
         this.morph = morph;
     }
@@ -27,6 +28,20 @@ export class ShadowObject {
     get blur() { return this._blur }
     get rotation() { return this._rotation }
     get color() { return this._color }
+    get inset() { return this._inset }
+
+    /*rms 5.3.17: This is a problem in general: mutating properties of
+      morph properties that are themselves objects will not be tracked
+      correctly by the change recording, since the reference does not change.
+      Recreating a new property object on every set seems costly also.
+      Maybe we should allow properties to communicate with the change recording
+      to let it know when things about it (i.e. dropShadow.blur, vertices.at(0), gradient.stops....)
+      have changed.*/
+
+    set inset(v) {
+      this._inset = v;
+      if (this.morph) this.morph.dropShadow = this;
+    }
 
     set distance(d) {
        this._distance = d;
@@ -52,7 +67,7 @@ export class ShadowObject {
 
     toCss() {
        const {x, y} = Point.polar(this.distance, num.toRadians(this.rotation));
-       return `${this.color.toString()} ${x}px ${y}px ${this.blur}px`
+       return `${this.inset ? 'inset' : ''} ${this.color.toString()} ${x}px ${y}px ${this.blur}px`
     }
 
     toFilterCss() {
