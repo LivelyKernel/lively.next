@@ -138,6 +138,7 @@ export class Slider extends Morph {
         super({
            height: 20,
            fill: Color.transparent,
+           draggable: false,
            ...props
         });
         const slider = this;
