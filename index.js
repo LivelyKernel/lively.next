@@ -13,6 +13,7 @@ export { Button } from "./components/buttons.js";
 export { Menu } from "./components/menus.js";
 export * from "./components/tooltips.js";
 export { Icon } from "./components/icons.js";
+export { Canvas } from "./components/canvas.js";
 export * from "./components/list.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -46,6 +47,7 @@ export function morph(props = {}, opts = {restore: false}) {
         case 'button':   klass = Button; break;
         case 'checkbox': klass = CheckBox; break;
         case 'polygon':  klass = Polygon; break;
+        case 'canvas':   klass = Canvas; break;
         case 'html':     klass = HTMLMorph; break;
       }
   }

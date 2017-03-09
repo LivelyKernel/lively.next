@@ -238,6 +238,29 @@ export class Renderer {
       ]);
   }
   
+  renderCanvas(canvas) {
+    const CanvasHook = function(){}
+    CanvasHook.prototype.hook = function(node, prop, prev) {
+      canvas._canvas = node;    // remember HTML canvas node for drawing
+    }
+    return h("div", {
+      ...defaultAttributes(canvas, this),
+        style: defaultStyle(canvas),
+      }, [
+        h("canvas", {
+          width: canvas.width,
+          height: canvas.height,
+          style: {
+            "pointer-events": "none",
+            position: "absolute",
+            width: "100%", height: "100%"
+          },
+          canvasHook: new CanvasHook(),
+        }),
+        this.renderSubmorphs(canvas)
+      ]);
+  }
+ 
   renderCheckBox(checkbox) {
     return h("div", {
       ...defaultAttributes(checkbox, this),
