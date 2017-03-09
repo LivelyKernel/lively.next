@@ -616,6 +616,7 @@ export class Morph {
   }
   rotateBy(delta) { this.rotation += delta; }
   resizeBy(delta) { this.extent = this.extent.addPt(delta); }
+  snap(grid) { this.position = this.position.roundTo(grid || 1); }
 
   get width()         { return this.extent.x; }
   set width(v)        { return this.extent = pt(v, this.extent.y); }
@@ -912,7 +913,10 @@ export class Morph {
     }
     world.addMorph(this);
     if (pos) this.position = pos;
-    else this.center = world.visibleBounds().center();
+    else {
+      this.center = world.visibleBounds().center();
+      this.snap();
+    }
     return this;
   }
 
