@@ -10,7 +10,18 @@ import {
    ReplaceManyVisitor, ReplaceVisitor 
 } from "lively.ast";
 
-var { member, prop, varDecl, assign, id, literal, exprStmt, funcCall } = nodes;
+var {
+  member,
+  prop,
+  varDecl,
+  assign,
+  id,
+  literal,
+  exprStmt,
+  conditional,
+  binaryExpr,
+  funcCall
+} = nodes;
 var { topLevelDeclsAndRefs, helpers: queryHelpers } = query;
 var { transformSingleExpression, wrapInStartEndCall } = transform;
 
@@ -734,9 +745,9 @@ function transformPattern(pattern, transformState) {
   // ObjectPattern) and transforms it into a set of var declarations that will
   // "pull out" the nested properties
   // Example:
-  // var parsed = ast.parse("var [{b: {c: [a]}}] = foo;");
+  // var parsed = parse("var [{b: {c: [a]}}] = foo;");
   // var state = {parent: {type: "Identifier", name: "arg"}, declaredNames: ["foo"]}
-  // transformPattern(parsed.body[0].declarations[0].id, state).map(ast.stringify).join("\n");
+  // transformPattern(parsed.body[0].declarations[0].id, state).map(stringify).join("\n");
   // // => "var arg$0 = arg[0];\n"
   // //  + "var arg$0$b = arg$0.b;\n"
   // //  + "var arg$0$b$c = arg$0$b.c;\n"
@@ -770,14 +781,25 @@ function transformArrayPattern(pattern, transformState) {
       decl[p] = {capture: true};
       transformed.push(decl)
 
+    } else if (el.type == "AssignmentPattern") {
+      // like [x = 23]
+      var decl = varDecl(
+        el.left/*id*/,        
+        conditional(
+          binaryExpr(member(transformState.parent, id(i), true), "===", id("undefined")),
+          el.right,
+          member(transformState.parent, id(i), true)));
+      decl[p] = {capture: true};
+      transformed.push(decl);
+
     // like [{x}]
     } else {
       var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
           helperVar = varDecl(helperVarId, member(transformState.parent, i));
-      helperVar[p] = {capture: true};
+      // helperVar[p] = {capture: true};
       declaredNames.push(helperVarId.name);
       transformed.push(helperVar);
-      transformed.push(...transformPattern(el, {parent: helperVarId, declaredNames: declaredNames}));
+      transformed.push(...transformPattern(el, {parent: helperVarId, declaredNames}));
     }
   }
   return transformed;
@@ -791,14 +813,25 @@ function transformObjectPattern(pattern, transformState) {
   for (var i = 0; i < pattern.properties.length; i++) {
     var prop = pattern.properties[i];
 
-    // like {x: y}
     if (prop.value.type == "Identifier") {
+      // like {x: y}
       var decl = varDecl(prop.value, member(transformState.parent, prop.key));
       decl[p] = {capture: true};
       transformed.push(decl);
 
-    // like {x: {z}} or {x: [a]}
+    } else if (prop.value.type == "AssignmentPattern") {
+      // like {x = 23}
+      var decl = varDecl(
+        prop.value.left/*id*/,        
+        conditional(
+          binaryExpr(member(transformState.parent, prop.key), "===", id("undefined")),
+          prop.value.right,
+          member(transformState.parent, prop.key)));
+      decl[p] = {capture: true};
+      transformed.push(decl);
+
     } else {
+      // like {x: {z}} or {x: [a]}
       var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
           helperVar = varDecl(helperVarId, member(transformState.parent, prop.key));
       helperVar[p] = {capture: false};

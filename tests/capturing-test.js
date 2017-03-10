@@ -258,6 +258,11 @@ describe("ast.capturing", function() {
                  "var destructured_1 = { x: 3 };\n"
                + "_rec.x = destructured_1.x;");
 
+      testVarTfm("captures destructured obj var with init",
+                 "var {x = 4} = {x: 3};",
+                 "var destructured_1 = { x: 3 };\n"
+               + "_rec.x = destructured_1.x === undefined ? 4 : destructured_1.x;");
+
       testVarTfm("captures destructured obj var with list",
                  "var {x: [y]} = foo, z = 23;",
                  "var destructured_1 = _rec.foo;\n"
@@ -290,13 +295,30 @@ describe("ast.capturing", function() {
       testVarTfm("captures destructured list with obj",
                  "var [{b}] = foo;",
                  "var destructured_1 = _rec.foo;\n"
-               + "_rec.destructured_1$0 = destructured_1[0];\n"
+               + "var destructured_1$0 = destructured_1[0];\n"
                + "_rec.b = destructured_1$0.b;");
+
+      testVarTfm("captures destructured list nested",
+                 "var [[b]] = foo;",
+                 "var destructured_1 = _rec.foo;\n"
+               + "var destructured_1$0 = destructured_1[0];\n"
+               + "_rec.b = destructured_1$0[0];");
+
+      testVarTfm("captures destructured list with obj with default",
+                 "var [a = 3] = foo;",
+                 "var destructured_1 = _rec.foo;\n"
+               + "_rec.a = destructured_1[0] === undefined ? 3 : destructured_1[0];");
+
+      testVarTfm("captures destructured list with obj with nested default",
+                 "var [[a = 3]] = foo;",
+                 "var destructured_1 = _rec.foo;\n"
+               + "var destructured_1$0 = destructured_1[0];\n"
+               + "_rec.a = destructured_1$0[0] === undefined ? 3 : destructured_1$0[0];");
 
       testVarTfm("captures destructured list with obj deep",
                  "var [{b: {c: [a]}}] = foo;",
                  "var destructured_1 = _rec.foo;\n"
-               + "_rec.destructured_1$0 = destructured_1[0];\n"
+               + "var destructured_1$0 = destructured_1[0];\n"
                + "var destructured_1$0$b = destructured_1$0.b;\n"
                + "var destructured_1$0$b$c = destructured_1$0$b.c;\n"
                + "_rec.a = destructured_1$0$b$c[0];");
@@ -654,7 +676,7 @@ describe("declarations", () => {
   it("wraps destructuring", () => {
     expect(rewriteWithWrapper("var [{x}, y] = foo")).equals(
 `var destructured_1 = _rec.foo;
-_rec.destructured_1$0 = _define(\"destructured_1$0\", \"var\", destructured_1[0], _rec);
+var destructured_1$0 = destructured_1[0];
 _rec.x = _define(\"x\", \"var\", destructured_1$0.x, _rec);
 _rec.y = _define(\"y\", \"var\", destructured_1[1], _rec);`);
   });
