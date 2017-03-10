@@ -58,15 +58,25 @@ describe("package loading", function() {
 
     it("registers and loads a package", async () => {
       await getPackage(S, project1aDir).register();
-      var mod = await S.import("some-project");
+      let mod = await S.import("some-project");
       expect(mod).to.have.property("x", 2);
-      expect(getPackages(S)).to.containSubset([{
+      let p = getPackages(S);
+      expect(p).to.containSubset([{
         address: noTrailingSlash(project1aDir),
         main: "entry-a.js",
         meta: {"package.json": {format: "json"}},
         map: {},
         referencedAs: ["some-project"]
       }]);
+    });
+
+    it("tracks package config", async () => {
+      await getPackage(S, project1aDir).register();
+      let p = getPackage(S, "some-project");
+      expect(p.config).to.deep.equal({"name": "some-project", "main": "entry-a.js"});
+      applyConfig(S, {lively: {foo: "bar"}}, "some-project")
+      expect(p.config).to.deep.equal(
+        {"name": "some-project", "main": "entry-a.js", "lively": {"foo": "bar"}});
     });
 
     it("registers and loads dependent packages", async () => {

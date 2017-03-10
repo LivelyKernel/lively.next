@@ -3452,13 +3452,15 @@ var PackageConfiguration = function () {
 
       var System = this.System,
           packageURL = this.packageURL,
-          pkg = this.pkg,
-          name = config.name || packageURL.split("/").slice(-1)[0],
+          pkg = this.pkg;
+
+      config = lively_lang.obj.deepMerge(pkg.config, config);
+
+      var name = config.name || packageURL.split("/").slice(-1)[0],
           version = config.version,
           sysConfig = config.systemjs || {},
           livelyConfig = config.lively,
           main = config.main || "index.js";
-
 
       System.config({
         map: defineProperty({}, name, packageURL),
@@ -3481,6 +3483,7 @@ var PackageConfiguration = function () {
 
       // System.packages doesn't allow us to store our own properties
       pkg.version = version;
+      pkg.config = config;
       pkg.mergeWithConfig(packageInSystem);
 
       return livelyConfig ? this.applyLivelyConfig(livelyConfig) : { subPackages: [] };
@@ -3587,15 +3590,15 @@ var PackageConfiguration = function () {
 
 
       if (preferLoadedPackages) {
-        var subpackageURL,
+        var _subpackageURL = void 0,
             existing = findPackageNamed(System, subPackageName);
 
-        if (existing) subpackageURL = existing.url;else if (pkg.map[subPackageName]) subpackageURL = normalizeInsidePackage(System, pkg.map[subPackageName], packageURL);else if (System.map[subPackageName]) subpackageURL = normalizeInsidePackage(System, System.map[subPackageName], packageURL);else if (System.get(normalized)) subpackageURL = System.decanonicalize(subPackageName, packageURL + "/");
+        if (existing) _subpackageURL = existing.url;else if (pkg.map[subPackageName]) _subpackageURL = normalizeInsidePackage(System, pkg.map[subPackageName], packageURL);else if (System.map[subPackageName]) _subpackageURL = normalizeInsidePackage(System, System.map[subPackageName], packageURL);else if (System.get(normalized)) _subpackageURL = System.decanonicalize(subPackageName, packageURL + "/");
 
-        if (subpackageURL) {
-          if (System.get(subpackageURL)) subpackageURL = subpackageURL.split("/").slice(0, -1).join("/"); // force to be dir
-          System.debug && console.log("[lively.module package] Package %s required by %s already in system as %s", subPackageName, pkg, subpackageURL);
-          return getPackage$1(System, subpackageURL);
+        if (_subpackageURL) {
+          if (System.get(_subpackageURL)) _subpackageURL = _subpackageURL.split("/").slice(0, -1).join("/"); // force to be dir
+          System.debug && console.log("[lively.module package] Package %s required by %s already in system as %s", subPackageName, pkg, _subpackageURL);
+          return getPackage$1(System, _subpackageURL);
         }
       }
 
@@ -3652,6 +3655,7 @@ var Package = function () {
     this.version = null;
     this.registerProcess = null;
     this.map = {};
+    this.config = {};
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -4064,6 +4068,7 @@ var Package = function () {
       });
       delete System.meta[packageConfigURL];
       delete System.packages[url];
+      this.config = {};
       lively_notifications.emit("lively.modules/packageremoved", { "package": this.url }, Date.now(), System);
     }
   }, {

@@ -236,8 +236,10 @@ class PackageConfiguration {
     // In particular uses the "systemjs" section as described in https://github.com/systemjs/systemjs/blob/master/docs/config-api.md
     // and uses the "lively" section as described in `applyLivelyConfig`
 
-    var {System, packageURL, pkg} = this,
-        name                      = config.name || packageURL.split("/").slice(-1)[0],
+    let {System, packageURL, pkg} = this;
+    config = obj.deepMerge(pkg.config, config);
+
+    let name                      = config.name || packageURL.split("/").slice(-1)[0],
         version                   = config.version,
         sysConfig                 = config.systemjs || {},
         livelyConfig              = config.lively,
@@ -248,7 +250,7 @@ class PackageConfiguration {
       packages: {[packageURL]: sysConfig}
     });
 
-    var packageInSystem = System.getConfig().packages[packageURL] || {};
+    let packageInSystem = System.getConfig().packages[packageURL] || {};
     if (!packageInSystem.map) packageInSystem.map = {};
 
     if (sysConfig) {
@@ -265,13 +267,14 @@ class PackageConfiguration {
 
     // System.packages doesn't allow us to store our own properties
     pkg.version = version;
+    pkg.config = config;
     pkg.mergeWithConfig(packageInSystem);
 
     return livelyConfig ? this.applyLivelyConfig(livelyConfig) : {subPackages: []};
   }
 
   applySystemJSConfig(sysConfig) {
-    var {System} = this;
+    let {System} = this;
     // System.debug && console.log("[lively.modules package configuration] applying SystemJS config of %s", pkg);
     if (sysConfig.packageConfigPaths)
       System.packageConfigPaths = arr.uniq(System.packageConfigPaths.concat(sysConfig.packageConfigPaths));
@@ -349,13 +352,13 @@ class PackageConfiguration {
   subpackageNameAndAddress(livelyConfig, subPackageName) {
     // find out what other packages are dependencies of this.pkg
 
-    var {System, packageURL, pkg} = this,
+    let {System, packageURL, pkg} = this,
         preferLoadedPackages = livelyConfig.hasOwnProperty("preferLoadedPackages") ?
           livelyConfig.preferLoadedPackages : true,
         normalized = System.decanonicalize(subPackageName, packageURL);
 
     if (preferLoadedPackages) {
-      var subpackageURL,
+      let subpackageURL,
           existing = findPackageNamed(System, subPackageName);
 
       if (existing)                        subpackageURL = existing.url;
@@ -406,6 +409,7 @@ class Package {
     this.version = null;
     this.registerProcess = null;
     this.map = {};
+    this.config = {};
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -578,10 +582,10 @@ class Package {
 
   remove(opts) {
     opts = {forgetEnv: true, forgetDeps: false, ...opts};
-    var {System, url} = this;
+    let {System, url} = this;
 
     url = url.replace(/\/$/, "");
-    var conf = System.getConfig(),
+    let conf = System.getConfig(),
         packageConfigURL = url + "/package.json",
         p = getPackages(System).find(ea => ea.address === url);
 
@@ -600,6 +604,7 @@ class Package {
     });
     delete System.meta[packageConfigURL];
     delete System.packages[url];
+    this.config = {};
     emit("lively.modules/packageremoved", {"package": this.url}, Date.now(), System);
   }
 
