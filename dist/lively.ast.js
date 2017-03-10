@@ -5445,7 +5445,7 @@ module.exports = function(acorn) {
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v4.4.5',
+        version: 'v7.7.0',
         browser: true,
         env: {},
         argv: [],
@@ -13378,6 +13378,16 @@ function ifStmt(test) {
   };
 }
 
+function conditional(test) {
+  var consequent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : id("undefined");
+  var alternate = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : id("undefined");
+
+  return {
+    consequent: consequent, alternate: alternate, test: test,
+    type: "ConditionalExpression"
+  };
+}
+
 function logical(op, left, right) {
   return {
     operator: op, left: left, right: right,
@@ -13407,6 +13417,7 @@ var nodes = Object.freeze({
 	program: program,
 	tryStmt: tryStmt,
 	ifStmt: ifStmt,
+	conditional: conditional,
 	logical: logical
 });
 

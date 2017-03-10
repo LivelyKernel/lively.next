@@ -1,6 +1,6 @@
 {
   "name": "lively.ast",
-  "version": "0.9.11",
+  "version": "0.9.12",
   "description": "Parsing JS code into ASTs and tools to query and transform these trees.",
   "main": "dist/lively.ast.js",
   "scripts": {
