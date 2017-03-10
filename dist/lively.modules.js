@@ -13900,7 +13900,7 @@ module.exports = function(acorn) {
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v4.4.5',
+        version: 'v7.7.0',
         browser: true,
         env: {},
         argv: [],
@@ -21833,6 +21833,16 @@ function ifStmt(test) {
   };
 }
 
+function conditional(test) {
+  var consequent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : id("undefined");
+  var alternate = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : id("undefined");
+
+  return {
+    consequent: consequent, alternate: alternate, test: test,
+    type: "ConditionalExpression"
+  };
+}
+
 function logical(op, left, right) {
   return {
     operator: op, left: left, right: right,
@@ -21862,6 +21872,7 @@ var nodes = Object.freeze({
 	program: program,
 	tryStmt: tryStmt,
 	ifStmt: ifStmt,
+	conditional: conditional,
 	logical: logical
 });
 
@@ -24506,6 +24517,8 @@ var assign = lively_ast.nodes.assign;
 var id = lively_ast.nodes.id;
 var literal = lively_ast.nodes.literal;
 var exprStmt = lively_ast.nodes.exprStmt;
+var conditional = lively_ast.nodes.conditional;
+var binaryExpr = lively_ast.nodes.binaryExpr;
 var funcCall = lively_ast.nodes.funcCall;
 var topLevelDeclsAndRefs = lively_ast.query.topLevelDeclsAndRefs;
 var queryHelpers = lively_ast.query.helpers;
@@ -25129,9 +25142,9 @@ function transformPattern(pattern, transformState) {
   // ObjectPattern) and transforms it into a set of var declarations that will
   // "pull out" the nested properties
   // Example:
-  // var parsed = ast.parse("var [{b: {c: [a]}}] = foo;");
+  // var parsed = parse("var [{b: {c: [a]}}] = foo;");
   // var state = {parent: {type: "Identifier", name: "arg"}, declaredNames: ["foo"]}
-  // transformPattern(parsed.body[0].declarations[0].id, state).map(ast.stringify).join("\n");
+  // transformPattern(parsed.body[0].declarations[0].id, state).map(stringify).join("\n");
   // // => "var arg$0 = arg[0];\n"
   // //  + "var arg$0$b = arg$0.b;\n"
   // //  + "var arg$0$b$c = arg$0$b.c;\n"
@@ -25161,12 +25174,18 @@ function transformArrayPattern(pattern, transformState) {
         callee: member(transformState.parent, id("slice"), false) });
       decl[p] = { capture: true };
       transformed.push(decl);
+    } else if (el.type == "AssignmentPattern") {
+      // like [x = 23]
+      var decl = varDecl(el.left /*id*/
+      , conditional(binaryExpr(member(transformState.parent, id(i), true), "===", id("undefined")), el.right, member(transformState.parent, id(i), true)));
+      decl[p] = { capture: true };
+      transformed.push(decl);
 
       // like [{x}]
     } else {
       var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
           helperVar = varDecl(helperVarId, member(transformState.parent, i));
-      helperVar[p] = { capture: true };
+      // helperVar[p] = {capture: true};
       declaredNames.push(helperVarId.name);
       transformed.push(helperVar);
       transformed.push.apply(transformed, toConsumableArray(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames })));
@@ -25183,14 +25202,19 @@ function transformObjectPattern(pattern, transformState) {
   for (var i = 0; i < pattern.properties.length; i++) {
     var prop = pattern.properties[i];
 
-    // like {x: y}
     if (prop.value.type == "Identifier") {
+      // like {x: y}
       var decl = varDecl(prop.value, member(transformState.parent, prop.key));
       decl[p] = { capture: true };
       transformed.push(decl);
-
-      // like {x: {z}} or {x: [a]}
+    } else if (prop.value.type == "AssignmentPattern") {
+      // like {x = 23}
+      var decl = varDecl(prop.value.left /*id*/
+      , conditional(binaryExpr(member(transformState.parent, prop.key), "===", id("undefined")), prop.value.right, member(transformState.parent, prop.key)));
+      decl[p] = { capture: true };
+      transformed.push(decl);
     } else {
+      // like {x: {z}} or {x: [a]}
       var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
           helperVar = varDecl(helperVarId, member(transformState.parent, prop.key));
       helperVar[p] = { capture: false };
