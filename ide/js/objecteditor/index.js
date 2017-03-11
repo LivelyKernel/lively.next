@@ -689,13 +689,28 @@ export class ObjectEditor extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async doSave() {
-    var {selectedModule, selectedClass, selectedMethod} = this;
+    let {selectedModule, selectedClass, selectedMethod} = this;
 
     if (!selectedClass) throw new Error("No class selected");
 
-    var editor = this.get("sourceEditor"),
+    let editor = this.get("sourceEditor"),
         descr = RuntimeSourceDescriptor.for(selectedClass),
-        content = editor.textString;
+        content = editor.textString,
+        parsed = lively.ast.parse(content);
+
+    // ensure that the source is a class declaration
+    if (parsed.body.length !== 1 || parsed.body[0].type !== "ClassDeclaration") {
+      let err = new Error(`Code is expected to contain the class definition of ${selectedClass}, aborting save.`);
+      this.showError(err);
+      return;
+    }
+
+    // we do not support renaming classes by changing the source (yet?)
+    let classDecl = parsed.body[0],
+        className = content.slice(classDecl.id.start, classDecl.id.end);
+    if (className !== selectedClass.name) {
+      content = content.slice(0, classDecl.id.start) + selectedClass.name + content.slice(classDecl.id.end);
+    }
 
     // moduleChangeWarning is set when this browser gets notified that the
     // current module was changed elsewhere (onModuleChanged) and it also has
