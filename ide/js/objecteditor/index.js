@@ -115,11 +115,13 @@ export class ObjectEditor extends Morph {
 
       state: {
         serialize: false,
-        defaultValue: {
-          isSaving: false,
-          target: null,
-          selectedClass: null,
-          selectedMethod: null
+        initialize() {
+          this.state = {
+            isSaving: false,
+            target: null,
+            selectedClass: null,
+            selectedMethod: null
+          }
         }
       },
 
