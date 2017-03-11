@@ -12,7 +12,9 @@ export class AbstractPrompt extends Morph {
 
   constructor(props = {}) {
     super({
-      fill: Color.black.withA(0.6), extent: pt(300,80), borderRadius: 5,
+      fill: Color.black.withA(0.6),
+      extent: pt(300,80),
+      borderRadius: 5,
       dropShadow: true,
       ...obj.dissoc(props, ["label", "autoRemove", "commands", "keybindings"])});
 
@@ -30,10 +32,8 @@ export class AbstractPrompt extends Morph {
   get isEpiMorph() { return true }
   get isPrompt() { return true }
 
-  get label() { return this.get("label").textString; }
-  set label(label) {
-    this.get("label").textString = label;
-  }
+  get label() { return this.getSubmorphNamed("label").textString; }
+  set label(label) { this.getSubmorphNamed("label").textString = label; }
 
   resolve(arg) { this.state.answer.resolve(arg); }
   reject(reason) { this.state.answer.resolve(undefined); }
@@ -116,12 +116,12 @@ export class InformPrompt extends AbstractPrompt {
       name: "ok button", type: "button", label: "OK",
       ...this.okButtonStyle
     });
-    connect(this.get("ok button"), 'fire', this, 'resolve');
+    connect(this.getSubmorphNamed("ok button"), 'fire', this, 'resolve');
     this.initLayout();
   }
 
   initLayout() {
-     const label = this.get("label");
+     const label = this.getSubmorphNamed("label");
      label.fit();
      this.width = label.width + 10;
      this.height = label.height + 30;
@@ -164,8 +164,8 @@ export class ConfirmPrompt extends AbstractPrompt {
       name: "cancel button", type: "button",
       label: "Cancel", ...this.cancelButtonStyle
     });
-    connect(this.get("ok button"), 'fire', this, 'resolve');
-    connect(this.get("cancel button"), 'fire', this, 'reject');
+    connect(this.getSubmorphNamed("ok button"), 'fire', this, 'resolve');
+    connect(this.getSubmorphNamed("cancel button"), 'fire', this, 'reject');
     this.initLayout();
   }
 
@@ -175,7 +175,7 @@ export class ConfirmPrompt extends AbstractPrompt {
   initLayout() {
      // fixme: layout should be able to let one morph
      //         define the overall width of the container
-     const label = this.get("label");
+     const label = this.getSubmorphNamed("label");
      label.fit();
      this.width = label.width + 10;
      this.height = label.height + 30;
@@ -185,7 +185,7 @@ export class ConfirmPrompt extends AbstractPrompt {
          1, {paddingRight: 2.5, fixed: 60},
          2, {paddingLeft: 2.5, fixed: 60},
          3, {paddingRIght: 5}
-       ], 
+       ],
        rows: [
          1, {paddingBottom: 5, fixed: 30}
        ],
@@ -222,7 +222,7 @@ export class MultipleChoicePrompt extends AbstractPrompt {
   initLayout() {
     // fixme: layout should be able to let one morph
     //         define the overall width of the container
-    var label = this.get("label");
+    var label = this.getSubmorphNamed("label");
     label && label.fit();
     var buttons = this.submorphs.filter(({isButton}) => isButton);
     buttons.forEach(ea => ea.fit())
@@ -249,7 +249,7 @@ export class MultipleChoicePrompt extends AbstractPrompt {
   onKeyDown(evt) {
     if (/^[0-9]$/.test(evt.keyCombo)) {
       var n = Number(evt.keyCombo)-1;
-      var btn = this.get("button " + n);
+      var btn = this.getSubmorphNamed("button " + n);
       if (btn) {
         btn.trigger()
         return evt.stop();
@@ -262,6 +262,10 @@ export class MultipleChoicePrompt extends AbstractPrompt {
 }
 
 export class TextPrompt extends AbstractPrompt {
+
+  static async example() {
+    await $world.prompt("enter\nsomething", {input: "???"});
+  }
 
   get maxWidth() { return this.env.world.visibleBounds().width - 20; }
 
@@ -295,18 +299,21 @@ export class TextPrompt extends AbstractPrompt {
     this.addMorph({name: "ok button", type: "button", label: "OK", ...this.okButtonStyle});
     this.addMorph({name: "cancel button", type: "button", label: "Cancel", ...this.cancelButtonStyle});
 
-    connect(this.get("ok button"), 'fire', this, 'resolve');
-    connect(this.get("cancel button"), 'fire', this, 'reject');
+    connect(this.getSubmorphNamed("ok button"), 'fire', this, 'resolve');
+    connect(this.getSubmorphNamed("cancel button"), 'fire', this, 'reject');
 
     this.initLayout();
   }
 
-  resolve() { super.resolve(this.get("input").acceptInput()); }
+  resolve() { super.resolve(this.getSubmorphNamed("input").acceptInput()); }
 
   initLayout() {
-    const label = this.get("label"), input = this.get("input");
+    // this.initLayout();
+    const label = this.getSubmorphNamed("label"),
+          input = this.getSubmorphNamed("input");
     label.fit();
-    var goalWidth = Math.max(input.textBounds().width+20, label.width);
+
+    const goalWidth = Math.max(input.textBounds().width+20, label.width);
     this.width = Math.min(this.maxWidth, goalWidth + 10);
 
     const l = this.layout = new GridLayout({
@@ -316,8 +323,8 @@ export class TextPrompt extends AbstractPrompt {
         2, {paddingRight: 2.5, fixed: 100}
       ],
       rows: [
-        2, {paddingTop: 2.5},
-        2, {paddingBottom: 2.5}
+        0, {fixed: label.height, paddingBottom: 2.5},
+        2, {paddingTop: 2.5, paddingBottom: 2.5},
       ],
       grid: [
         ["label", "label", "label"],
@@ -327,7 +334,7 @@ export class TextPrompt extends AbstractPrompt {
     });
   }
 
-  focus() { this.get("input").focus(); }
+  focus() { this.getSubmorphNamed("input").focus(); }
 }
 
 export class PasswordPrompt extends AbstractPrompt {
