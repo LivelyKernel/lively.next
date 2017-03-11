@@ -261,6 +261,10 @@ export class Button extends Morph {
     this.updateButtonStyle(this.triggerStyle)
   }
 
+  enable() { this.activeMode = "active"; }
+
+  disable() { this.activeMode = "inactive"; }
+
   trigger() {
     try {
       signal(this, "fire");
