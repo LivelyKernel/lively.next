@@ -129,7 +129,6 @@ export class ObjectEditor extends Morph {
         after: ["editorPlugin"], derived: true,
         get() { return this.editorPlugin.evalEnvironment.remote || "local"; },
         set(remote) { this.editorPlugin.evalEnvironment.remote = remote; }
-
       },
 
       editorPlugin: {
@@ -188,7 +187,7 @@ export class ObjectEditor extends Morph {
       openInBrowserButton: this.getSubmorphNamed("openInBrowserButton"),
       publishButton:       this.getSubmorphNamed("publishButton"),
       removeImportButton:  this.getSubmorphNamed("removeImportButton"),
-      removeMethodButton:  this.getSubmorphNamed("removeMethodButton"),
+      forkPackageButton:   this.getSubmorphNamed("forkPackageButton"),
       runMethodButton:     this.getSubmorphNamed("runMethodButton"),
       saveButton:          this.getSubmorphNamed("saveButton"),
       sourceEditor:        this.getSubmorphNamed("sourceEditor"),
@@ -221,7 +220,7 @@ export class ObjectEditor extends Morph {
       openInBrowserButton,
       publishButton,
       removeImportButton,
-      removeMethodButton,
+      forkPackageButton,
       runMethodButton,
       saveButton,
       sourceEditor,
@@ -234,7 +233,7 @@ export class ObjectEditor extends Morph {
 
     connect(classTree, "selection", this, "onClassTreeSelection");
     connect(addMethodButton, "fire", this, "interactivelyAddMethod");
-    connect(removeMethodButton, "fire", this, "interactivelyRemoveMethod");
+    connect(forkPackageButton, "fire", this, "interactivelyForkPackage");
     connect(openInBrowserButton, "fire", this, "execCommand",
       {updater: function($upd) { $upd("open class in system browser", {klass: this.targetObj.selectedClass}); }});
 
@@ -350,7 +349,7 @@ export class ObjectEditor extends Morph {
       {name: "classAndMethodControls",
        layout: new HorizontalLayout({direction: "centered", spacing: 2}), submorphs: [
          {...btnStyle, name: "addMethodButton", label: Icon.makeLabel("plus"), tooltip: "add a new method"},
-         {...btnStyle, name: "removeMethodButton", label: Icon.makeLabel("minus"), tooltip: "remove selected method"},
+         {...btnStyle, name: "forkPackageButton", fontSize: 14, label: Icon.makeLabel("code-fork"), tooltip: "fork package"},
          {...btnStyle, name: "openInBrowserButton", fontSize: 14, label: Icon.makeLabel("external-link"), tooltip: "open selected class in system browser"},
        ]},
 
@@ -421,7 +420,7 @@ export class ObjectEditor extends Morph {
       format: "esm"
     });
 
-    if (isObjectClassFor(t.constructor, t)) {
+    if (isObjectClass(t.constructor)) {
       await this.selectClass(t.constructor);
     } else {
       await this.updateSource(
@@ -585,10 +584,9 @@ export class ObjectEditor extends Morph {
       return;
     }
 
-    var tree = this.get("classTree"),
-        parentNode = tree.treeData.parentNode(node);
-
-    var isClick = !!this.env.eventDispatcher.eventState.clickedOnMorph;
+    let tree = this.ui.classTree,
+        parentNode = tree.treeData.parentNode(node),
+        isClick = !!this.env.eventDispatcher.eventState.clickedOnMorph;
     this.selectMethod(parentNode.target, node.target, isClick);
   }
 
@@ -611,14 +609,14 @@ export class ObjectEditor extends Morph {
   }
 
   async selectClass(klass) {
-    let tree = this.get("classTree");
+    let tree = this.ui.classTree;
 
     if (typeof klass === "string") {
       klass = this.classChainOfTarget().find(ea => ea.name === klass);
     }
 
     if (!tree.selection || tree.selection.target !== klass) {
-      var node = tree.nodes.find(ea => !ea.isRoot && ea.target === klass);
+      let node = tree.nodes.find(ea => !ea.isRoot && ea.target === klass);
       tree.selection = node;
     }
 
@@ -628,8 +626,11 @@ export class ObjectEditor extends Morph {
     this.state.selectedMethod = null;
     this.state.selectedClass = klass;
 
-    this.get("importController").module = descr.module;
+    this.ui.importController.module = descr.module;
     await this.updateKnownGlobals();
+
+    if (isObjectClass(klass)) this.ui.forkPackageButton.enable();
+    else this.ui.forkPackageButton.disable();
   }
 
   async selectMethod(klass, methodSpec, highlight = true, putCursorInBody = false) {
@@ -694,7 +695,7 @@ export class ObjectEditor extends Morph {
     if (!selectedClass) throw new Error("No class selected");
 
     let editor = this.get("sourceEditor"),
-        descr = RuntimeSourceDescriptor.for(selectedClass),
+        descr = this.sourceDescriptorFor(selectedClass),
         content = editor.textString,
         parsed = lively.ast.parse(content);
 
