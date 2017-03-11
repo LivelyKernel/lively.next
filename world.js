@@ -693,7 +693,16 @@ var worldCommands = [
       window.open("https://github.com/LivelyKernel/lively.morphic/issues/new", "_blank");
       return true;
     }
+  },
+
+  {
+    name: "save world",
+    exec: async world => {
+      world.prompt("Please give this world a name")
+      return true;
+    }
   }
+
 ]
 
 export class World extends Morph {
@@ -708,6 +717,7 @@ export class World extends Morph {
 
   __deserialize__(snapshot, objRef) {
     super.__deserialize__(snapshot, objRef);
+    this._renderer = null;
     this._tooltipViewer = new TooltipViewer(this);
   }
 
@@ -872,11 +882,6 @@ export class World extends Morph {
       {command: "undo",                     target: this},
       {command: "redo",                     target: this},
       {isDivider: true},
-      {command: "run command",              target: this},
-      {command: "select morph",             target: this},
-      {command: "resize to fit window",     target: this},
-      {command: "window switcher",          target: this},
-      {isDivider: true},
       ["Debugging", [
         ["delete change history", () => {
           var status = this.env.printStatus();
@@ -898,10 +903,15 @@ export class World extends Morph {
         {command: "open code search",         target: this},
         {command: "open file browser",         target: this},
         {command: "open shell workspace",     target: this}
-      ]
-      ],
+      ]],
+      {isDivider: true},
+      {command: "run command",              target: this},
+      {command: "select morph",             target: this},
+      // {command: "resize to fit window",     target: this},
+      {command: "window switcher",          target: this},
       {command: "report a bug",          target: this},
-      ];
+      {command: "save world",          target: this},
+    ];
   }
 
   openWorldMenu(evt, items) {
