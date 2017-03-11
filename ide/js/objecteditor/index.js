@@ -749,10 +749,30 @@ localStorage["oe helper"] = JSON.stringify(store);
       // let input = await this.world().prompt("Enter method name",
       //                   {historyId: "object-editor-method-name-hist"});
       // if (!input) return;
-      var input = "newMethod";
-      let {methodName} = await addScript(this.target, "function() {}", input);
+      let t = this.target,
+          pkg = ObjectPackage.lookupPackageForObject(t);
+
+      if (!pkg) {
+        let objPkgName = await this.world()
+          .prompt(
+            `No object package exists yet for object ${t}.\n` +
+              `Enter a name for a new package:`,
+            {
+              historyId: "object-package-name-hist",
+              input: string.capitalize(t.name).replace(/\s/g, "-")
+            }
+          );
+        if (!objPkgName) {
+          this.setStatusMessage("Canceled");
+          return;
+        }
+        pkg = ObjectPackage.withId(objPkgName);
+        await pkg.adoptObject(t);
+      }
+
+      let {methodName} = await addScript(t, "function() {}", "newMethod");
       await this.refresh();
-      await this.selectMethod(this.target.constructor, {name: methodName}, true, true);
+      await this.selectMethod(t.constructor, {name: methodName}, true, true);
       this.focus();
     } catch (e) {
       this.showError(e);
