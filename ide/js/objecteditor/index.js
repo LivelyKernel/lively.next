@@ -7,7 +7,7 @@ import { Icon } from "lively.morphic/components/icons.js";
 import { TreeData, Tree } from "lively.morphic/components/tree.js";
 import { connect } from "lively.bindings";
 import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
-import { addScript, isObjectClassFor } from "lively.classes/object-classes.js";
+import ObjectPackage, { addScript, isObjectClass, isObjectClassFor } from "lively.classes/object-classes.js";
 import { chooseUnusedImports, interactivelyChooseImports } from "../import-helper.js";
 import { module } from "lively.modules";
 import { interactivelySaveObjectToPartsBinFolder } from "../../../partsbin.js";
@@ -782,6 +782,9 @@ localStorage["oe helper"] = JSON.stringify(store);
 
   async interactivelyRemoveMethod() {
     this.setStatusMessage("Not yet implemented")
+  }
+
+  async interactivelyForkPackage() {
   }
 
   async interactivelyAddImport() {
