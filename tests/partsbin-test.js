@@ -73,7 +73,6 @@ describe("partsbin", function () {
     var m3 = await loadObjectFromPartsbinFolder(m.name, {partsbinFolder});
     expect(m3.fill).equals(Color.red, "state not that of version 1");
     expect(m3.foo()).equals(23, "behavior not that of version 1");
-
   });
 
 });

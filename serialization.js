@@ -34,7 +34,7 @@ export async function loadWorldFromResource(fromResource) {
   return deserializeMorph(data);
 }
 
-export function saveWorldToResource(world = World.defaultWorld(), toResource) {
+export async function saveWorldToResource(world = World.defaultWorld(), toResource) {
 
   if (!toResource) {
     var htmlResource = resource(document.location.href),
@@ -48,7 +48,7 @@ export function saveWorldToResource(world = World.defaultWorld(), toResource) {
     toResource = resource(toResource);
 
   // pretty printing bloats 2x!
-  return toResource.write(JSON.stringify(serializeMorph(world), null, 2));
+  return toResource.write(JSON.stringify(await createMorphSnapshot(world), null, 2));
   // return toResource.write(JSON.stringify(serializeMorph(world)));
 }
 
@@ -57,4 +57,63 @@ export function saveWorldToResource(world = World.defaultWorld(), toResource) {
 
 export function copyMorph(morph) {
   return deserializeMorph(serializeMorph(morph), {reinitializeIds: true});
+}
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+import { createFiles } from "lively.resources";
+import { reloadPackage } from "lively.modules";
+
+export async function createMorphSnapshot(aMorph) {
+  var snapshot = serializeMorph(aMorph),
+      packages = snapshot.packages = {},
+      // 1. save object packages
+      packagesToSave = aMorph.withAllSubmorphsDo(m => {
+        let klass = m.constructor,
+            moduleMeta = klass[Symbol.for("lively-module-meta")];
+        // if it's a "local" object package then save that as part of the snapshot
+        if (!moduleMeta) return null;
+        var p = lively.modules.getPackage(moduleMeta.package.name);
+        return p && p.address.startsWith("local://") ? p : null
+      }).filter(Boolean);
+
+  await Promise.all(
+    packagesToSave.map(async p => {
+      var root = resource(p.address).asDirectory(),
+          packageJSON = await resourceToJSON(root, {});
+      if (!packages[root.parent().url]) packages[root.parent().url] = {};
+      Object.assign(packages[root.parent().url], packageJSON);
+    }));
+
+  // add preview
+  snapshot.preview = aMorph.renderPreview();
+
+  return snapshot;
+}
+
+export async function loadMorphFromSnapshot(snapshot) {
+  for (var baseURL in snapshot.packages) {
+    var r = await createFiles(baseURL, snapshot.packages[baseURL]);
+    for (var pName in snapshot.packages[baseURL]) {
+      await reloadPackage(r.join(pName).url, {forgetEnv: false, forgetDeps: false});
+    }
+  }
+  return deserializeMorph(snapshot, {reinitializeIds: true, ignoreClassNotFound: false});
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// helper
+async function resourceToJSON(currentResource, base) {
+  if (!currentResource.isDirectory()) {
+    base[currentResource.name()] = await currentResource.read();
+    return base;
+  } else {
+    var subBase = base[currentResource.name()] = {};
+    var files = await currentResource.dirList();
+    for (let f of files) {
+      await resourceToJSON(f, subBase);
+    }
+    return base;
+  }
 }

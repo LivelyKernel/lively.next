@@ -260,7 +260,7 @@ export class ObjectEditor extends Morph {
       target
     } = this;
 
-    // remove unncessary state    
+    // remove unncessary state
     var ref = pool.ref(sourceEditor);
     ref.currentSnapshot.props.textAndAttributes.value = [];
     ref.currentSnapshot.props.attributeConnections.value = [];
@@ -301,7 +301,7 @@ export class ObjectEditor extends Morph {
 
   async onLoad() {
     this.reset();
-    
+
     if (this._serializedState) {
       var s = this._serializedState;
       delete this._serializedState;
