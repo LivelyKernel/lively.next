@@ -176,7 +176,7 @@ export class ObjectEditor extends Morph {
   }
 
   get ui() {
-    return {    
+    return {
       addImportButton:     this.getSubmorphNamed("addImportButton"),
       addMethodButton:     this.getSubmorphNamed("addMethodButton"),
       classTree:           this.getSubmorphNamed("classTree"),
@@ -1031,7 +1031,7 @@ localStorage["oe helper"] = JSON.stringify(store);
           }
         }
       },
-      
+
       {
         name: "choose target",
         exec: async ed => {

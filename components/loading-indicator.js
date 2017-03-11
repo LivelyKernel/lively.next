@@ -8,6 +8,8 @@ import { connect } from "lively.bindings";
 // var i = LoadingIndicator.open("test")
 // i.remove()
 
+const imageUrl = System.decanonicalize("lively.morphic/") + "lively-web-logo-small-animate.svg";
+
 export default class LoadingIndicator extends Morph {
 
   static open(label, props) {
@@ -56,7 +58,7 @@ export default class LoadingIndicator extends Morph {
           this.submorphs = [
 
             new Image({
-              imageUrl: System.decanonicalize("lively.morphic/") + "lively-web-logo-small-animate.svg",
+              imageUrl,
               name: "spinner", fill: Color.transparent,
               extent: pt(100,104),
               topLeft: pt(0,0),
