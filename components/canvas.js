@@ -12,18 +12,36 @@ export class Canvas extends Morph {
     return {
       extent:       {defaultValue: pt(200,200)},
       fill:         {defaultValue: Color.transparent},
- 
-      canvasBounds: {
-        get() { return this._canvas && this.canvasExtent.extentAsRectangle() }
-      },
+
+      preserveContents: {defaultValue: true},
+
       canvasExtent: {
-        get() { return this._canvas && pt(this._canvas.width, this._canvas.height) }
+        get() { return this._canvas && pt(this._canvas.width, this._canvas.height); },
+        // set(ext) { this.pixelRatio = ... }
       },
-      context: {
-        get() { return this._canvas && this._canvas.getContext("2d"); }
+      canvasBounds: {
+        readOnly: true,
+        get() { return this._canvas && this.canvasExtent.extentAsRectangle(); }
+       },
+
+      _serializedContents: {
+        get() { return this.preserveContents && this.toDataURI(); },
+        set(s) { this.withCanvasDo(() => this.fromDataURI(s)); },
       },
+     }
+  }
+
+  //get canvasBounds() { return this._canvas && this.canvasExtent.extentAsRectangle(); }
+  get context() { return this._canvas && this._canvas.getContext("2d"); }
+  set _canvas(c) { 
+    this.__canvas__ = c;
+    console.log(`_canvas = ${c}, __canvas_init__=${this.__canvas_init__}`)
+    if (this.__canvas_init__) {
+      this.__canvas_init__(c);
+      delete this.__canvas_init__;
     }
   }
+  get _canvas() { return this.__canvas__; }
 
   clear() {
     const ctx = this.context;
@@ -39,4 +57,25 @@ export class Canvas extends Morph {
   }
 
   render(renderer) { return renderer.renderCanvas(this); }
+
+  withCanvasDo(func) {
+    if (this._canvas) func(this._canvas);
+    else this.__canvas_init__ = func;
+    console.log(`withCanvasDo(${this._canvas}) => __canvas_init__=${this.__canvas_init__}`);
+  }
+
+  toDataURI() { return this._canvas && this._canvas.toDataURL(); }
+  
+  fromDataURI(uri) {
+    console.log(`fromDataURI(${uri && uri.length})`)
+    const img = new Image();
+    img.onload = () => {
+        console.log(`img.onload(), _canvas=${this._canvas}`)
+        debugger
+        this._canvas.width = img.width;
+        this._canvas.height = img.height;
+        this.context.drawImage(img, 0, 0);
+    }
+    img.src = uri;
+  }
 }
