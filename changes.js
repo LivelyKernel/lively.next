@@ -10,8 +10,6 @@ function signalBindings(obj, name, change) {
   for (var i = 0; i < conns.length; i++) {
     if (conns[i].sourceAttrName === name)
       conns[i].update(change);
-    if (change.prop && conns[i].sourceAttrName === change.prop)
-      conns[i].update(change.value);
   }
 }
 
