@@ -37,14 +37,7 @@ class Layout {
   }
 
   get submorphBoundsChanged() {
-    if (!this.layoutableSubmorphBounds) this.refreshBoundsCache()
-    return arr.any(arr.zip(this.layoutableSubmorphs, this.layoutableSubmorphBounds), ([m, b], i) => {
-      let nb;
-      if (!b.equals(nb = m.submorphBounds())) {
-        this.layoutableSubmorphBounds[i] = nb;
-        return true;
-      }
-    });
+    return false;
   }
 
   refreshBoundsCache() { 
@@ -170,7 +163,24 @@ export class FillLayout extends Layout {
 
 }
 
-export class VerticalLayout extends Layout {
+class FloatLayout extends Layout {
+
+  get submorphBoundsChanged() {
+    if (!this.layoutableSubmorphBounds
+          || this.layoutableSubmorphs.length != this.layoutableSubmorphBounds.length) 
+          this.refreshBoundsCache();
+    return arr.any(arr.zip(this.layoutableSubmorphs, this.layoutableSubmorphBounds), ([m, b], i) => {
+      let nb;
+      if (!b.equals(nb = m.submorphBounds())) {
+        this.layoutableSubmorphBounds[i] = nb;
+        return true;
+      }
+    });
+  }
+  
+}
+
+export class VerticalLayout extends FloatLayout {
 
   name() { return "Vertical" }
   description() { return "Assemble the submorphs in a vertically growing list." }
@@ -217,7 +227,7 @@ export class VerticalLayout extends Layout {
 
 }
 
-export class HorizontalLayout extends Layout {
+export class HorizontalLayout extends FloatLayout {
 
   constructor(props = {}) {
     super(props);
