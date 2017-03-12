@@ -41,7 +41,7 @@ class Layout {
   }
 
   refreshBoundsCache() { 
-    this.layoutableSubmorphBounds = this.layoutableSubmorphs.map(m => m.submorphBounds())
+    this.layoutableSubmorphBounds = this.layoutableSubmorphs.map(m => m.submorphBounds());
   }
 
   onSubmorphResized(submorph, change) {
