@@ -21,7 +21,7 @@ export class Button extends Morph {
       borderRadius: {defaultValue: 15},
       borderColor:  {defaultValue: Color.rgb(204,204,204)},
       draggable:    {defaultValue: false},
- 
+
       activeMode: {
         after: ["labelMorph", "activeStyle", "inactiveStyle"],
         get() {
@@ -129,14 +129,15 @@ export class Button extends Morph {
           nativeCursor: "pointer"
         }
       },
+
       activeStyle: {
         after: ["labelMorph", "fontSize", "fontColor", "fontFamily"],
-        initialize() { this.activeStyle = obj.clone(this.defaultActiveStyle); },
+        initialize() { this.activeStyle = {...this.defaultActiveStyle}; },
         set(value) {
           this.setProperty("activeStyle", {
             ...this.defaultActiveStyle,
             ...obj.select(this, ["fontSize", "fontFamily", "fontColor"]),
-            ...value,
+            ...value
           });
           if (this.isActive) this.updateButtonStyle(this.activeStyle);
         }
@@ -150,16 +151,18 @@ export class Button extends Morph {
           nativeCursor: "not-allowed"
         }
       },
+
       inactiveStyle: {
         after: ["labelMorph", "fontSize", "fontColor", "fontFamily"],
-        initialize() { this.inactiveStyle = obj.clone(this.defaultInactiveStyle); },
+        initialize() { this.inactiveStyle = {...this.defaultInactiveStyle}; },
         set(value) {
           this.setProperty("inactiveStyle", {
             ...this.defaultInactiveStyle,
             ...obj.select(this, ["fontSize", "fontFamily", "fontColor"]),
             ...value,
           });
-          if (this.activeMode == 'inactive') this.updateButtonStyle(this.inactiveStyle);
+          if (this.activeMode == 'inactive')
+            this.updateButtonStyle(this.inactiveStyle);
         }
       },
 

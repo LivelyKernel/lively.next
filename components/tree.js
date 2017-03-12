@@ -45,6 +45,11 @@ export class TreeNode extends Morph {
 
       myNode: {},
 
+      tree: {
+        derived: true, readOnly: true,
+        get() { var o = this.owner; return o ? o.owner : null; }
+      },
+
       toggle: {
         after: ["submorphs"], derived: true, readOnly: true,
         get() {
@@ -145,12 +150,15 @@ export class TreeNode extends Morph {
       isCollapsed: {
         defaultValue: false,
         set(bool) {
-          if (this.isCollapsed === bool) return;
+          let {isCollapsed, tree, myNode} = this;
+          if (isCollapsed === bool) return;
           this.setProperty("isCollapsed", bool);
           var toggle = this.getSubmorphNamed("toggle");
           toggle && (toggle.textString = bool ? "\uf196" : "\uf147");
-          if (this.myNode) {
-            signal(this, "collapseChanged", {node: this.myNode, isCollapsed: bool});
+          if (myNode) {
+            let payload = {node: myNode, isCollapsed: bool};
+            signal(this, "collapseChanged", payload);
+            tree && tree.onNodeCollapseChanged(payload);
           }
         }
       },
@@ -257,7 +265,9 @@ export class TreeNode extends Morph {
   toggleCollapse() { this.isCollapsed = !this.isCollapsed; }
 
   select() {
-    signal(this, "selected", this.myNode);
+    let {tree, myNode} = this;
+    tree && (tree.selection = myNode)
+    signal(this, "selected", myNode);
   }
 
 }
@@ -459,8 +469,6 @@ export class Tree extends Morph {
         var nodeMorph = nodeMorphs.shift();
         if (!nodeMorph) {
           nodeMorph = container.addMorph(new TreeNode(this.nodeStyle));
-          connect(nodeMorph, 'collapseChanged', this, 'onNodeCollapseChanged');
-          connect(nodeMorph, 'selected', this, 'selection');
         }
 
         var node = nodes[i].node;
