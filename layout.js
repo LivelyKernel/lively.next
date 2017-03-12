@@ -166,16 +166,21 @@ export class FillLayout extends Layout {
 class FloatLayout extends Layout {
 
   get submorphBoundsChanged() {
-    if (!this.layoutableSubmorphBounds
-          || this.layoutableSubmorphs.length != this.layoutableSubmorphBounds.length) 
-          this.refreshBoundsCache();
-    return arr.any(arr.zip(this.layoutableSubmorphs, this.layoutableSubmorphBounds), ([m, b], i) => {
-      let nb;
+    let {layoutableSubmorphs, layoutableSubmorphBounds} = this;
+    if (!layoutableSubmorphBounds
+     || layoutableSubmorphs.length != layoutableSubmorphBounds.length) {
+        this.refreshBoundsCache();
+        layoutableSubmorphBounds = this.layoutableSubmorphBounds;
+    }
+    for (let i = 0; i < layoutableSubmorphs.length; i++) {
+      let m = layoutableSubmorphs[i],
+          b = layoutableSubmorphBounds[i], nb;
       if (!b.equals(nb = m.submorphBounds())) {
-        this.layoutableSubmorphBounds[i] = nb;
+        layoutableSubmorphBounds[i] = nb;
         return true;
       }
-    });
+    }
+    return false;
   }
   
 }
