@@ -22,7 +22,7 @@ export class Canvas extends Morph {
       canvasBounds: {
         readOnly: true,
         get() { return this._canvas && this.canvasExtent.extentAsRectangle(); }
-       },
+      },
 
       _serializedContents: {
         get() { return this.preserveContents && this.toDataURI(); },
@@ -33,7 +33,7 @@ export class Canvas extends Morph {
 
   //get canvasBounds() { return this._canvas && this.canvasExtent.extentAsRectangle(); }
   get context() { return this._canvas && this._canvas.getContext("2d"); }
-  set _canvas(c) { 
+  set _canvas(c) {
     this.__canvas__ = c;
     if (this.__canvas_init__) {
       this.__canvas_init__(c);
@@ -67,13 +67,13 @@ export class Canvas extends Morph {
   }
 
   toDataURI() { return this._canvas && this._canvas.toDataURL(); }
-  
+
   fromDataURI(uri) {
     const img = new Image();
     img.onload = () => {
-        this._canvas.width = img.width;
-        this._canvas.height = img.height;
-        this.context.drawImage(img, 0, 0);
+      this._canvas.width = img.width;
+      this._canvas.height = img.height;
+      this.context.drawImage(img, 0, 0);
     }
     img.src = uri;
   }

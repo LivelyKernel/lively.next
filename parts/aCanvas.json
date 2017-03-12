@@ -1,8 +1,8 @@
 {
-  "id": "canvas_B703A67D_966B_40D7_8D6D_50B39E9316BC",
+  "id": "ACanvas_1AC867B9_1040_4203_B6E6_DDB076A3A6B3",
   "snapshot": {
-    "canvas_B703A67D_966B_40D7_8D6D_50B39E9316BC": {
-      "rev": 593431,
+    "ACanvas_1AC867B9_1040_4203_B6E6_DDB076A3A6B3": {
+      "rev": 90868,
       "props": {
         "extent": {
           "key": "extent",
@@ -22,7 +22,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(84.0,180.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(1022.5,246.0)"
         },
         "scroll": {
           "key": "scroll",
@@ -40,10 +40,6 @@
         "submorphs": {
           "key": "submorphs",
           "value": []
-        },
-        "preserveContents": {
-          "key": "preserveContents",
-          "value": true
         },
         "canvasExtent": {
           "key": "canvasExtent",
@@ -78,7 +74,7 @@
     "local://lively-object-modules/": {
       "EA2406AD-F8CE-414C-9C75-8F8B1D57D1D0": {
         "package.json": "{\n  \"name\": \"EA2406AD-F8CE-414C-9C75-8F8B1D57D1D0\",\n  \"version\": \"0.1.0\"\n}",
-        "index.js": "import { Canvas } from \"lively.morphic/components/canvas.js\";\nimport { Color, Point } from \"lively.graphics/index.js\";\n\nexport default class ACanvas extends Canvas {\n\n  line(from, to, style = {}) {\n    let c = this.context,\n        color = style.color || \"rgba(0,0,0,0.6)\",\n        width = style.width || 4;\n    if (color.toCSSString) color = color.toCSSString();\n    c.strokeStyle = color;\n    c.beginPath();\n    c.lineWidth = width;\n    c.moveTo(from.x, from.y);\n    c.lineTo(to.x, to.y);\n    c.stroke();\n    c.closePath();\n  }\n\n  spiral() {\n    this.clear(Color.white);\n    let start = this.innerBounds().center(),\n        rotation = 0, stepSize = 1;\n    for (let i = 0; i < 150; i++) {\n        let end = start.addPt(Point.polar(stepSize, rotation));\n        this.line(start, end, {color: Color.random()});\n        start = end;\n        rotation += Math.PI/10;\n        stepSize += 0.3;\n    }  \n  }\n\n  onDrag(evt) {\n    this.line(evt.state.lastDragPosition, evt.position);\n  }\n}\n\n"
+        "index.js": "import { Canvas } from \"lively.morphic/components/canvas.js\";\nimport { Color, pt, Point } from \"lively.graphics/index.js\";\nimport { show, inspect } from \"lively.morphic/index.js\";\n\nexport default class ACanvas extends Canvas {\n\n  line(from, to, style = {}) {\n    let c = this.context,\n        color = style.color || \"rgba(0,0,0,0.6)\",\n        width = style.width || 4;\n    if (color.toCSSString) color = color.toCSSString();\n    c.strokeStyle = color;\n    c.beginPath();\n    c.lineWidth = width;\n    c.moveTo(from.x, from.y);\n    c.lineTo(to.x, to.y);\n    c.stroke();\n    c.closePath();\n  }\n\n  spiral() {\n    this.clear(Color.white);\n    let start = this.innerBounds().center(),\n        rotation = 0, stepSize = 1;\n    for (let i = 0; i < 150; i++) {\n      let end = start.addPt(Point.polar(stepSize, rotation));\n      this.line(start, end, {color: Color.random()});\n      start = end;\n      rotation += Math.PI/10;\n      stepSize += 0.3;\n    }  \n  }\n\n  onDrag(evt) {\n    this.line(this.localize(evt.state.lastDragPosition), evt.positionIn(this));\n  }\n}\n\n"
       }
     }
   },
