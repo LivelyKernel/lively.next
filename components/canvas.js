@@ -35,7 +35,6 @@ export class Canvas extends Morph {
   get context() { return this._canvas && this._canvas.getContext("2d"); }
   set _canvas(c) { 
     this.__canvas__ = c;
-    console.log(`_canvas = ${c}, __canvas_init__=${this.__canvas_init__}`)
     if (this.__canvas_init__) {
       this.__canvas_init__(c);
       delete this.__canvas_init__;
@@ -43,15 +42,19 @@ export class Canvas extends Morph {
   }
   get _canvas() { return this.__canvas__; }
 
-  clear() {
+  clear(color) {
     const ctx = this.context;
     if (ctx) {
-        const extent = this.canvasExtent,
-              height = extent.y,
-              width = extent.x;
+        const {x, y} = this.canvasExtent;
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, width, height);
+        if (color) {
+          if (color.toCSSString) color = color.toCSSString();
+          ctx.fillStyle = color;
+          ctx.fillRect(0, 0, x, y);
+        } else {
+          ctx.clearRect(0, 0, x, y);
+        }
         ctx.restore();
     }
   }
@@ -61,17 +64,13 @@ export class Canvas extends Morph {
   withCanvasDo(func) {
     if (this._canvas) func(this._canvas);
     else this.__canvas_init__ = func;
-    console.log(`withCanvasDo(${this._canvas}) => __canvas_init__=${this.__canvas_init__}`);
   }
 
   toDataURI() { return this._canvas && this._canvas.toDataURL(); }
   
   fromDataURI(uri) {
-    console.log(`fromDataURI(${uri && uri.length})`)
     const img = new Image();
     img.onload = () => {
-        console.log(`img.onload(), _canvas=${this._canvas}`)
-        debugger
         this._canvas.width = img.width;
         this._canvas.height = img.height;
         this.context.drawImage(img, 0, 0);
