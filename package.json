@@ -14,7 +14,8 @@
     "pepjs": "^0.4.1",
     "virtual-dom": "^2.1.1",
     "svg-intersections": "0.2.5",
-    "gsap": "^1.19.0"
+    "gsap": "^1.19.0",
+    "three": "^0.84.0"
   }, 
   "devDependencies": {
     "jsdom": "^9.4.0",
@@ -36,6 +37,7 @@
   "systemjs": {
     "main": "index.js",
     "map": {
+      "three.js": "./node_modules/three/build/three.js",
       "svg-intersections": "./dist/svg-intersections.js",
       "virtual-dom": "./node_modules/virtual-dom/dist/virtual-dom.js",
       "bowser": "./node_modules/bowser/bowser.js",
