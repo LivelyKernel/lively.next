@@ -1,5 +1,7 @@
 import { pt, Color } from "lively.graphics";
 import { Morph } from "lively.morphic";
+import { connect } from "lively.bindings/index.js";
+
 
 /*
 
@@ -33,14 +35,32 @@ export class Canvas extends Morph {
 
   //get canvasBounds() { return this._canvas && this.canvasExtent.extentAsRectangle(); }
   get context() { return this._canvas && this._canvas.getContext("2d"); }
-  set _canvas(c) {
-    this.__canvas__ = c;
+  set _canvas(new_canvas) {
+    const old_canvas = this.__canvas__;
+    this.__canvas__ = new_canvas;
     if (this.__canvas_init__) {
-      this.__canvas_init__(c);
+      this.__canvas_init__(new_canvas);
       delete this.__canvas_init__;
+    } else if (old_canvas && old_canvas !== new_canvas) {
+      new_canvas.getContext("2d").drawImage(old_canvas, 0, 0);
     }
   }
   get _canvas() { return this.__canvas__; }
+
+  constructor(props = {}) {
+    super(props);
+    connect(this, 'extent', this, 'onExtentChanged');
+  }
+
+  onExtentChanged() {
+    if (this.preserveContents) {
+      const {x, y} = this.canvasExtent,
+          contents = this.context.getImageData(0, 0, x, y);
+      this.__canvas_init__ = () => {
+        this.context.putImageData(contents, 0, 0);
+      }
+    }
+  }
 
   clear(color) {
     const ctx = this.context;
