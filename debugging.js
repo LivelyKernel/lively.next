@@ -9,9 +9,12 @@ import { HTMLMorph, inspect } from "lively.morphic";
 
 import { serializeMorph, deserializeMorph } from "lively.morphic/serialization.js";
 
-$world.get("browser").show()
 
-var snap = serializeMorph($world.get("browser"))
+var snap = serializeMorph($world)
+num.humanReadableByteSize(JSON.stringify(snap).length)
+that.textString = JSON.stringify(snap, null, 2)
+
+var snap = serializeMorph($world.get("text editor").getWindow())
 num.humanReadableByteSize(JSON.stringify(snap).length)
 that.fontFamily = "monospace"
 that.textString = JSON.stringify(snap, null, 2)

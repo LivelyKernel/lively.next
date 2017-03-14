@@ -34,6 +34,18 @@ describe("expression serializer format", () => {
       expect(sut.exprStringDecode("_prefix:{foo}:package/foo.js:foo()"))
         .deep.equals({__expr__: "foo()", bindings: {"package/foo.js": ["foo"]}}));
 
+    it("with alias binding", () =>
+      expect(sut.exprStringDecode("_prefix:{foo:bar,bar:zork}:package/foo.js:bar() + zork()"))
+        .deep.equals({
+          __expr__: "bar() + zork()",
+          bindings: {
+            "package/foo.js": [
+              {exported: "foo", local: "bar"},
+              {exported: "bar", local: "zork"}
+            ]
+          }
+        }));
+
     it("with 3 vars and 2 bindings", () =>
       expect(sut.exprStringDecode("_prefix:{xxx}:package/zork.js:{foo,bar}:package/foo.js:foo()"))
         .deep.equals({__expr__: "foo()", bindings: {"package/foo.js": ["foo", "bar"], "package/zork.js": ["xxx"]}}));
@@ -63,12 +75,25 @@ describe("expression serializer deserialize", () => {
     System.get(System.decanonicalize("foo-package"))
     
     try {
-      sut.exprStringDecode("_prefix:{foo}:foo-package:foo()")
       expect(sut.deserializeExpr("_prefix:{foo}:foo-package:foo()")).deep.equals(23);
     } finally {
       var map = System.getConfig().map;
       delete map["foo-package"];
       System.config({map})
+    }
+  });
+
+  it("evals expression with alias bindings", () => {
+    System.config({map: {"foo-package": "lively://foo-package/index.js"}})
+    System.set("lively://foo-package/index.js", System.newModule({foo: () => 23}))
+    System.get(System.decanonicalize("foo-package"))
+    
+    try {
+      expect(sut.deserializeExpr("_prefix:{foo:bar}:foo-package:bar()")).deep.equals(23);
+    } finally {
+      var map = System.getConfig().map;
+      delete map["foo-package"];
+      System.config({map});
     }
   });
 });

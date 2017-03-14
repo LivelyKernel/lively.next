@@ -27,21 +27,27 @@ export default class ExpressionSerializer {
     // string = "_prefix:{foo}:package/foo.js:foo()"
     // => {expr: "foo()", bindings: {"package/foo.js": ["foo"]}}
 
-    var idx, prefix, rest;
+    let idx = string.indexOf(":"),
+        prefix = string.slice(0, idx),
+        rest = string.slice(idx+1),
+        bindings = {},
+        hasBindings = false;
 
-    idx = string.indexOf(":"),
-    prefix = string.slice(0, idx),
-    rest = string.slice(idx+1);
-
-    var bindings = {}, hasBindings = false;
     // 2. bindings?
     while (rest && rest.startsWith("{") && (idx = rest.indexOf("}:")) >= 0) {
       hasBindings = true;
       let importedVars = rest.slice(1,idx);
       rest = rest.slice(idx+2); // skip }:
       idx = rest.indexOf(":"); // end of package
-      let from = rest.slice(0, idx);
-      bindings[from] = importedVars.split(",");
+      let from = rest.slice(0, idx),
+          imports = importedVars.split(",")
+            .filter(ea => Boolean(ea.trim()))
+            .map(ea => {
+              if (!ea.includes(":")) return ea;
+              let [exported, local] = ea.split(":");
+              return {exported, local};
+            })
+      bindings[from] = imports;
       rest = rest.slice(idx+1); // skip :
     }
 
@@ -90,23 +96,29 @@ export default class ExpressionSerializer {
 
   deserializeExprObj({__expr__: source, bindings}) {
 
+    let __boundValues__ = {};
+
     if (bindings) {
-      var __boundValues__ = {},
-          mods = bindings ? Object.keys(bindings) : [];
+      let mods = bindings ? Object.keys(bindings) : [];
 
       // synchronously get modules specified in bindings object and pull out
       // the vars needed for evaluating source. Add those to __boundValues__
-      for (var i = 0; i < mods.length; i++) {
-        var modName = mods[i],
+      for (let i = 0; i < mods.length; i++) {
+        let modName = mods[i],
             vars = bindings[modName],
-            module = System.get(System.decanonicalize(modName));
-        if (!module)
+            exports = System.get(System.decanonicalize(modName));
+        if (!exports)
           throw new Error(`[lively.serializer] expression eval: bindings specify to import ${modName} but this module is not loaded!`);
 
-        for (var j = 0; j < vars.length; j++) {
-          var varName = vars[j];
-          __boundValues__[varName] = module[varName]
-          source = `var ${varName} = __boundValues__.${varName};\n${source}`;
+        for (let j = 0; j < vars.length; j++) {
+          let varName = vars[j], local, exported;
+          if (typeof varName === "string") {
+            local = varName; exported = varName;
+          } else if (typeof varName === "object") { // alias
+            ({local, exported}) = varName;
+          }
+          __boundValues__[local] = exports[exported];
+          source = `var ${local} = __boundValues__.${local};\n${source}`;
         }
       }
     }
