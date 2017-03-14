@@ -183,16 +183,16 @@ export default class Window extends Morph {
   }
 
   toggleMinimize() {
-    var cache = this.propertyCache,
+    let {propertyCache: cache, minimized, width} = this,
         bounds = this.bounds(),
         duration = 200,
         easing = Expo.easeOut;
-    if (this.minimized) {
+    if (minimized) {
       cache.minimizedBounds = bounds;
       this.animate({bounds: cache.nonMinizedBounds || bounds, duration, easing});
     } else {
       cache.nonMinizedBounds = bounds;
-      var minimizedBounds = cache.minimizedBounds || bounds.withExtent(pt(this.width, 25)),
+      var minimizedBounds = cache.minimizedBounds || bounds.withExtent(pt(width, 25)),
           labelBounds = this.titleLabel().textBounds(),
           buttonOffset = arr.last(this.buttons()).bounds().right() + 3;
       if (labelBounds.width + 2*buttonOffset < minimizedBounds.width)
@@ -200,7 +200,7 @@ export default class Window extends Morph {
       cache.minimizedBounds = minimizedBounds;
       this.animate({bounds: cache.minimizedBounds, duration, easing});
     }
-    this.minimized = !this.minimized;
+    this.minimized = !minimized;
     this.resizer().visible = !this.minimized;
   }
 

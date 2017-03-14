@@ -337,7 +337,7 @@ export default class Browser extends Window {
 
   relayout() {
     if (this._inLayout) return;
-
+    
     this._inLayout = true;
 
     var {
@@ -362,14 +362,13 @@ export default class Browser extends Window {
         .forEach(ea => ea.height = hresizer.top-moduleList.bottom);
 
       codeEntityCommands.left = codeEntityTree.left = moduleList.right;
-      sourceEditor.top = hresizer.bottom + 1;
-      sourceEditor.left = 1;
-      sourceEditor.height = container.height - hresizer.bottom - 2;
       browserCommands.width = hresizer.width = container.width;
-      sourceEditor.width = browserCommands.width - 2
+      sourceEditor.setBounds(
+        new Rectangle(
+          1, hresizer.bottom + 1,
+          browserCommands.width - 2, container.height - hresizer.bottom - 2));
     } finally { this._inLayout = false; }
   }
-
 
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
