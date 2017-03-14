@@ -63,7 +63,8 @@ export function copyMorph(morph) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import { createFiles } from "lively.resources";
-import { reloadPackage } from "lively.modules";
+import { reloadPackage, getPackage } from "lively.modules";
+import ObjectPackage from "lively.classes/object-classes.js";
 
 export async function createMorphSnapshot(aMorph) {
   var snapshot = serializeMorph(aMorph),
@@ -74,13 +75,13 @@ export async function createMorphSnapshot(aMorph) {
             moduleMeta = klass[Symbol.for("lively-module-meta")];
         // if it's a "local" object package then save that as part of the snapshot
         if (!moduleMeta) return null;
-        var p = lively.modules.getPackage(moduleMeta.package.name);
+        let p = lively.modules.getPackage(moduleMeta.package.name);
         return p && p.address.startsWith("local://") ? p : null
       }).filter(Boolean);
 
   await Promise.all(
     packagesToSave.map(async p => {
-      var root = resource(p.address).asDirectory(),
+      let root = resource(p.address).asDirectory(),
           packageJSON = await resourceToJSON(root, {});
       if (!packages[root.parent().url]) packages[root.parent().url] = {};
       Object.assign(packages[root.parent().url], packageJSON);
@@ -93,10 +94,13 @@ export async function createMorphSnapshot(aMorph) {
 }
 
 export async function loadMorphFromSnapshot(snapshot) {
-  for (var baseURL in snapshot.packages) {
-    var r = await createFiles(baseURL, snapshot.packages[baseURL]);
-    for (var pName in snapshot.packages[baseURL]) {
-      await reloadPackage(r.join(pName).url, {forgetEnv: false, forgetDeps: false});
+  if (snapshot.packages) {
+    let packages = findPackagesInFileSpec(snapshot.packages);
+    for (let {files, url} of packages) {
+      let r = await createFiles(url, files);
+      await reloadPackage(url, {forgetEnv: false, forgetDeps: false});      
+      // ensure object package instance
+      ObjectPackage.withId(getPackage(url).name);
     }
   }
   return deserializeMorph(snapshot, {reinitializeIds: true, ignoreClassNotFound: false});
@@ -109,11 +113,27 @@ async function resourceToJSON(currentResource, base) {
     base[currentResource.name()] = await currentResource.read();
     return base;
   } else {
-    var subBase = base[currentResource.name()] = {};
-    var files = await currentResource.dirList();
+    let subBase = base[currentResource.name()] = {},
+        files = await currentResource.dirList();
     for (let f of files) {
       await resourceToJSON(f, subBase);
     }
     return base;
   }
+}
+
+export function findPackagesInFileSpec(files, path = []) {
+  // is a serialized json blob we store packages into a package field that
+  // refers to a file spec object. This method extracts all the package file
+  // specs from the file tree.
+  let result = [];
+  if (files.hasOwnProperty("package.json")) {
+    let url = path.slice(1).reduceRight((r, name) => r.join(name), resource(path[0])).url;
+    result.push({files, url})
+  }
+  for (let name in files) {
+    if (typeof files[name] !== "object") continue;
+    result.push(...findPackagesInFileSpec(files[name], path.concat(name)));
+  }
+  return result;
 }

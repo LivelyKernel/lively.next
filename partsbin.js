@@ -1,9 +1,9 @@
 // This is a prototype implementation of a file-system based partsbin...
 
 import { resource } from "lively.resources";
-import { createMorphSnapshot, loadMorphFromSnapshot } from "lively.morphic/serialization.js";
+import { createMorphSnapshot, findPackagesInFileSpec, loadMorphFromSnapshot } from "lively.morphic/serialization.js";
 
-var defaultPartsbinFolder = System.decanonicalize("lively.morphic/parts/")
+export const defaultPartsbinFolder = System.decanonicalize("lively.morphic/parts/");
 
 export async function saveObjectToPartsbinFolder(obj, partName, options = {}) {
 
@@ -85,7 +85,23 @@ export async function createNewObjectPackage(object, packageName, options) {
       other = await getAllPartResources(options),
       existing = other.find(ea => ea.name() === packageName);
   if (existing)
-    throw new Error(`An object package with the name ${packageName} already exists in the PartsBin directory ${partsbinFolder}`);
+    throw new Error(`An object package with the name ${packageName} already exists in the PartsBin directory ${partsbinFolder}`);  
+}
 
-  
+export async function findPackagesInParts(options) {
+  let parts = await getAllPartResources(options),
+      packages = [];
+  for (let p of parts) {
+    try {
+      let content = JSON.parse(await p.read()),
+          partName = p.name().replace(/\.json/, "");
+      if (content.packages)
+        packages.push(
+          ...findPackagesInFileSpec(content.packages)
+            .map(ea => Object.assign(ea, {partName})));
+    } catch (e) {
+      console.error(`Error readin part resource ${p}`);
+    }
+  }
+  return packages;
 }
