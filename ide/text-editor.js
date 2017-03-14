@@ -29,13 +29,12 @@ const editorCommands = [
   {
     name: "save file",
     exec: async textEditor => {
-      var l = textEditor.location
-      if (!l) {
+      let f = textEditor.locationResource;
+      if (!f) {
         textEditor.setStatusMessage("No file selected");
         return true;
       }
 
-      var f = resource(l);
       try {
         await f.write(textEditor.ui.contentText.textString);
         textEditor.setStatusMessage(`${f.url} saved`, Color.green);
@@ -51,13 +50,12 @@ const editorCommands = [
   {
     name: "remove file",
     exec: async textEditor => {
-      var l = textEditor.location
-      if (!l) {
+      let f = textEditor.location
+      if (!f) {
         textEditor.setStatusMessage("No file selected");
         return true;
       }
 
-      var f = resource(l);
       try {
         if (await textEditor.world().confirm(`Really remove ${f.url}?`)) {
           await f.remove();
@@ -143,22 +141,23 @@ export default class TextEditor extends Morph {
         get() { return this.ui.urlInput.input; },
 
         set(val) {
-          var url = val,
-              lineNumber = null,
-              colonIndex = val.lastIndexOf(":");
-
-          if (colonIndex > -1 && val.slice(colonIndex+1).match(/^[0-9]+$/)) {
-            lineNumber = Number(val.slice(colonIndex+1));
-            url = val.slice(0, colonIndex);
-          }
-
-          var {contentText, urlInput} = this.ui;
+          let {url, lineNumber} = this.parseFileNameInput(val),
+              {contentText, urlInput} = this.ui;
           urlInput.input = val || "";
           urlInput.acceptInput();
           if (urlInput.isFocused()) contentText.focus();
           this.showFileContent(resource(url));
-          if (lineNumber) this.lineNumber = lineNumber;
+          if (typeof lineNumber !== "undefined") this.lineNumber = lineNumber;
         }
+      },
+
+      locationResource: {
+        derived: true, after: ["location"],
+        get() {
+          let {url} = this.parseFileNameInput(this.location);
+          return resource(url);
+        },
+        set(resource) { this.location = resource.url; }
       },
 
       lineNumber: {
@@ -202,6 +201,19 @@ export default class TextEditor extends Morph {
 
   async whenLoaded() {
     return this._loadPromise || Promise.resolve(this);
+  }
+
+  parseFileNameInput(input) {
+    let url = input,
+        lineNumber = undefined,
+        colonIndex = input.lastIndexOf(":");
+
+    if (colonIndex > -1 && input.slice(colonIndex+1).match(/^[0-9]+$/)) {
+      lineNumber = Number(input.slice(colonIndex+1));
+      url = input.slice(0, colonIndex);
+    }
+
+    return {lineNumber, url}
   }
 
   async showFileContent(resource) {
