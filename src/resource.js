@@ -110,7 +110,7 @@ export default class Resource {
   }
 
   withRelativePartsResolved() {
-    var path = this.path(),
+    let path = this.path(),
         result = path;
     // /foo/../bar --> /bar
     do {
@@ -122,7 +122,9 @@ export default class Resource {
     result = result.replace(/(^|[^:])[\/]+/g, '$1/');
     // foo/./bar --> foo/bar
     result = result.replace(/\/\.\//g, '/');
-    return result === this.path() ? this : this.root().join(result);
+    if (result === this.path()) return this;
+    if (result.startsWith("/")) result = result.slice(1);
+    return this.newResource(this.root().url + result);
   }
 
   relativePathFrom(fromResource) {
