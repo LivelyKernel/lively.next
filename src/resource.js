@@ -241,4 +241,12 @@ export default class Resource {
   async dirList(depth, opts) { nyi(this, "dirList"); }
   async readProperties(opts) { nyi(this, "readProperties"); }
 
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // serialization
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  __serialize__() {
+    return {__expr__: `resource("${this.url}")`, bindings: {"lively.resources": ["resource"]}}
+  }
+
 }

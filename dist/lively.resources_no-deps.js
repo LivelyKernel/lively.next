@@ -680,6 +680,16 @@ var Resource = function () {
 
       return readProperties;
     }()
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // serialization
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  }, {
+    key: "__serialize__",
+    value: function __serialize__() {
+      return { __expr__: "resource(\"" + this.url + "\")", bindings: { "lively.resources": ["resource"] } };
+    }
   }, {
     key: "isResource",
     get: function get() {
