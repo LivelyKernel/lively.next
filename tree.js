@@ -14,7 +14,7 @@ function prewalk (treeNode, iterator, childGetter, counter = {i: 0}, depth = 0) 
 function postwalk(treeNode, iterator, childGetter, counter = {i: 0}, depth = 0) {
   var i = counter.i++;
   (childGetter(treeNode, i, depth) || [])
-    .forEach(ea => postwalk(ea, iterator, childGetter));
+    .forEach(ea => postwalk(ea, iterator, childGetter, counter, depth));
   iterator(treeNode, i, depth);
 }
 
@@ -50,14 +50,14 @@ function map(treeNode, mapFunc, childGetter, depth = 0) {
   // function to retrieve the children from a node.
   return [mapFunc(treeNode, depth)].concat(
           flatten((childGetter(treeNode) || [])
-            .map(n => map(n, mapFunc, childGetter, depth))));
+            .map(n => map(n, mapFunc, childGetter, depth+1))));
 }
 
 function mapTree(treeNode, mapFunc, childGetter, depth = 0) {
   // Traverses the tree and creates a structurally identical tree but with
   // mapped nodes
   var mappedNodes = (childGetter(treeNode) || [])
-    .map(n => mapTree(n, mapFunc, childGetter, depth))
+    .map(n => mapTree(n, mapFunc, childGetter, depth+1))
   return mapFunc(treeNode, mappedNodes, depth);
 }
 

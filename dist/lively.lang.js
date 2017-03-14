@@ -6231,7 +6231,7 @@ function postwalk(treeNode, iterator, childGetter) {
 
   var i = counter.i++;
   (childGetter(treeNode, i, depth) || []).forEach(function (ea) {
-    return postwalk(ea, iterator, childGetter);
+    return postwalk(ea, iterator, childGetter, counter, depth);
   });
   iterator(treeNode, i, depth);
 }
@@ -6269,7 +6269,7 @@ function map$3(treeNode, mapFunc, childGetter) {
   // return values of all mapFunc calls is the result. `childGetter` is a
   // function to retrieve the children from a node.
   return [mapFunc(treeNode, depth)].concat(flatten((childGetter(treeNode) || []).map(function (n) {
-    return map$3(n, mapFunc, childGetter, depth);
+    return map$3(n, mapFunc, childGetter, depth + 1);
   })));
 }
 
@@ -6279,7 +6279,7 @@ function mapTree(treeNode, mapFunc, childGetter) {
   // Traverses the tree and creates a structurally identical tree but with
   // mapped nodes
   var mappedNodes = (childGetter(treeNode) || []).map(function (n) {
-    return mapTree(n, mapFunc, childGetter, depth);
+    return mapTree(n, mapFunc, childGetter, depth + 1);
   });
   return mapFunc(treeNode, mappedNodes, depth);
 }
