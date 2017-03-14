@@ -70,6 +70,34 @@ describe("module loading", () => {
     expect(scope).to.not.property('_referencesResolved');
   });
 
+  it("rename module", async () => {
+    await registerPackage(System, testDir);
+    await System.import(module1);
+    let m = await module(System, module1),
+        module1New = testDir + "renamed-file1.js";
+    await m.renameTo(module1New);
+    expect().assert(!await resource(module1).exists(), `file ${module1} still exists`);
+    expect().assert(await resource(module1New).exists(), `file ${module1New} does not exists`);
+    expect().assert(!loadedModules(System).hasOwnProperty(module1), `${module1} still in loadedModules exists`);
+    expect().assert(loadedModules(System).hasOwnProperty(module1New), `${module1New} not in loadedModules`);
+    let {x} = System.get(module1New);
+    expect(x).equals(3);
+  });
+
+  it("copy module", async () => {
+    await registerPackage(System, testDir);
+    await System.import(module1);
+    let m = await module(System, module1),
+        module1New = testDir + "copied-file1.js";
+    await m.copyTo(module1New);
+    expect().assert(await resource(module1).exists(), `file ${module1} does not exist anymore`);
+    expect().assert(await resource(module1New).exists(), `file ${module1New} does not exists`);
+    expect().assert(loadedModules(System).hasOwnProperty(module1), `${module1} not in runtime anymore`);
+    expect().assert(loadedModules(System).hasOwnProperty(module1New), `${module1New} not in loadedModules`);
+    let {x} = System.get(module1New);
+    expect(x).equals(3);
+  });
+
   describe("imports", () => {
 
     it("adds import", async () => {
@@ -84,10 +112,10 @@ describe("module loading", () => {
 
     it("removes import", async () => {
       await importPackage(System, testDir);
-      var m = await module(System, testDir + "file1.js");
+      let m = await module(System, testDir + "file1.js");
       await m.removeImports([{local: "y"}]);
       expect(await m.source()).equals(" export var x = y + 1;");
-      expect(m.recorder.y).equals(undefined);
+      expect().assert(!m.recorder.hasOwnProperty("y"), "var y not removed from module internals");
     });
 
   });

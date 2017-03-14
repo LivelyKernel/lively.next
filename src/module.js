@@ -198,6 +198,47 @@ class ModuleInterface {
     await this.load();
   }
 
+  async copyTo(newId) {
+    await this.System.resource(newId).write(await this.source());
+    let {
+          System,
+          recorderName,
+          sourceAccessorName,
+          _recorder,
+          _source,
+          _ast,
+          _scope,
+          _observersOfTopLevelState
+        } = this,
+        newM = module(System, newId),
+        state = obj.select(this, [
+          "_observersOfTopLevelState",
+          "_scope",
+          "_ast",
+          "_source",
+          "_recorder",
+          "sourceAccessorName",
+          "recorderName"
+        ]);
+
+    Object.assign(newM, state);
+    System.set(newId, System.newModule(System.get(this.id)));
+    return newM;
+  }
+
+  async renameTo(newId, opts = {}) {
+    let {unload = true, removeFile = true} = opts,
+        newM = await this.copyTo(newId);
+
+    if (unload)
+      await this.unload({reset: true, forgetDeps: false, forgetEnv: true});
+
+    if (removeFile)
+      await this.System.resource(this.id).remove();
+
+    return newM;
+  }
+
   whenLoaded(cb) {
     if (this.isLoaded()) {
       try { cb(this); } catch (e) { console.error(e); }
@@ -511,8 +552,8 @@ class ModuleInterface {
 
   async removeImports(specs) {
     if (!specs.length) return;
-    var source = await this.source(),
-        { source, removedImports } = await ImportRemover.removeImports(source, specs);
+    let oldSource = await this.source(),
+        { source, removedImports } = await ImportRemover.removeImports(oldSource, specs);
     await this.changeSource(source);
     removedImports.forEach(ea => delete this.recorder[ea.local]);
   }
