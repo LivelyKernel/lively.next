@@ -1,0 +1,127 @@
+{
+  "id": "Label_8E306D58_39D4_4FFC_BBC6_96A2ABAFA7D3",
+  "snapshot": {
+    "Label_8E306D58_39D4_4FFC_BBC6_96A2ABAFA7D3": {
+      "rev": 191126,
+      "props": {
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(47.2,18.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(255,255,255,0)"
+        },
+        "name": {
+          "key": "name",
+          "value": "label"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(84.0,264.0)"
+        },
+        "reactsToPointer": {
+          "key": "reactsToPointer",
+          "value": false
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            [
+              "a label",
+              {
+                "__ref__": true,
+                "id": "349B7B8E-3385-4D99-BD7E-28493EAD7275",
+                "rev": 0
+              }
+            ]
+          ]
+        },
+        "autofit": {
+          "key": "autofit",
+          "value": true
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 16
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
+        },
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Label",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/label.js"
+        }
+      }
+    },
+    "349B7B8E-3385-4D99-BD7E-28493EAD7275": {
+      "rev": 0,
+      "props": {}
+    }
+  },
+  "requiredVersion": "~0.1",
+  "packages": {},
+  "preview": "<div id=\"\" class=\"Label\" draggable=\"false\" style=\"background: rgba(255, 255, 255, 0); transform: translate(0.014375px, 30.92px) rotate(0deg) scale(2.12, 2.12); transform-origin: 0px 0px 0px; display: inline; width: 47.1562px; height: 18px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; cursor: pointer; font-family: sans-serif; font-size: 16px; color: rgb(64, 64, 64); padding: 0px;\"><span>a label</span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div>"
+}
