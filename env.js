@@ -107,30 +107,35 @@ export class MorphicEnv {
 
   installSystemChangeHandlers() {
     if (this.systemChangeHandlers) return;
-    var handlers = this.systemChangeHandlers = {};
-    handlers["lively.modules/moduleloaded"] = [
+
+    var systemChangeHandlers = this.systemChangeHandlers = {};
+    systemChangeHandlers["lively.modules/moduleloaded"] = [
       subscribe("lively.modules/moduleloaded", (evt) =>
-        this.getSystemChangeTargets().forEach(ea => ea.onModuleLoaded(evt)))];
-    handlers["lively.modules/modulechanged"] = [
+        this.getTargetsFor("onModuleLoaded").forEach(ea => ea.onModuleLoaded(evt)))];
+    systemChangeHandlers["lively.modules/modulechanged"] = [
       subscribe("lively.modules/modulechanged", (evt) =>
-        this.getSystemChangeTargets().forEach(ea => ea.onModuleChanged(evt)))];
+        this.getTargetsFor("onModuleChanged").forEach(ea => ea.onModuleChanged(evt)))];
+    systemChangeHandlers["lively.partsbin/partpublished"] = [
+      subscribe("lively.partsbin/partpublished", (evt) =>
+        this.getTargetsFor("onPartPublished").forEach(ea => ea.onPartPublished(evt)))];
   }
 
   uninstallSystemChangeHandlers() {
-    if (!this.systemChangeHandlers) return;
-    var handlers = this.systemChangeHandlers;
+    var {systemChangeHandlers} = this;
+    if (!systemChangeHandlers) return;
     this.systemChangeHandlers = null;
-    Object.keys(handlers).forEach(name =>
-      handlers[name].forEach(handler =>
+    Object.keys(systemChangeHandlers).forEach(name =>
+      systemChangeHandlers[name].forEach(handler =>
         unsubscribe(name, handler)))
   }
 
-  getSystemChangeTargets() {
-    var world = this.world, targets = [];
+  getTargetsFor(selector) {
+    let world = this.world, targets = [];
     if (!world || typeof world.getWindows !== "function") return targets;
     for (let win of world.getWindows()) {
-      win.isBrowser && targets.push(win);
-      win.targetMorph && win.targetMorph.isObjectEditor &&
+      if (typeof win[selector] === "function")
+        targets.push(win);
+      if (win.targetMorph && typeof win.targetMorph[selector] === "function")
         targets.push(win.targetMorph);
     }
     return targets;
