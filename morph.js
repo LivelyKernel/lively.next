@@ -308,11 +308,11 @@ export class Morph {
   }
 
   get __only_serialize__() {
-    var defaults = this.defaultProperties;
-    var properties = this.propertiesAndPropertySettings().properties;
-    var propsToSerialize = ["_tickingScripts", "attributeConnections"];
-    for (var key in properties) {
-      var descr = properties[key];
+    let defaults = this.defaultProperties,
+        properties = this.propertiesAndPropertySettings().properties,
+        propsToSerialize = ["_tickingScripts", "attributeConnections"];
+    for (let key in properties) {
+      let descr = properties[key];
       if (descr.readOnly || descr.derived || this[key] === defaults[key]) continue;
       propsToSerialize.push(key);
     }
@@ -506,9 +506,9 @@ export class Morph {
     const anim = this._animationQueue.registerAnimation(config);
     if (!this._animationQueue.animationsActive) {
       anim && anim.finish();
-      return this;
+      return Promise.resolve(this);
     }
-    return anim ? anim.asPromise() : this;
+    return anim ? anim.asPromise() : Promise.resolve(this);
   }
 
   isClip() { return this.clipMode !== "visible"; }
