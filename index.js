@@ -219,17 +219,17 @@ class AttributeConnection {
     }
 
     var targetMethod = target[propName],
-        callOrSetTarget = function(newValue, oldValue) {
+        callOrSetTarget = function(arg1/*newValue*/, arg2/*oldValue*/, arg3, arg4, arg5, arg6) {
           // use a function and not a method to capture this in self and so
           // that no bind is necessary and oldValue is accessible. Note that
           // when updater calls this method arguments can be more than just
           // the new value
-          var args = arr.from(arguments);
+          let args = [arg1, arg2, arg3, arg4, arg5, arg6];
           if (converter) {
             newValue = converter.call(connection, newValue, oldValue);
             args[0] = newValue;
           }
-          var result = (typeof targetMethod === 'function') ?
+          let result = (typeof targetMethod === 'function') ?
             targetMethod.apply(target, args) :
             target[propName] = newValue;
           if (connection.removeAfterUpdate) connection.disconnect();
