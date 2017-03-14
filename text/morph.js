@@ -468,13 +468,13 @@ export class Text extends Morph {
 
 
   get __only_serialize__() {
-    var propNames = super.__only_serialize__;
+    let propNames = super.__only_serialize__;
     return arr.withoutAll(propNames,
       ["document", "textLayout", "undoManager", "textRenderer", "textAttributes", "markers"]);
   }
 
   __additionally_serialize__(snapshot, objRef) {
-    var {defaultTextStyleAttribute} = this;
+    let {defaultTextStyleAttribute} = this;
     snapshot.props.textAndAttributes = {
       key: "textAndAttributes",
       verbatim: true,
@@ -487,7 +487,7 @@ export class Text extends Morph {
   get isText() { return true }
 
   onChange(change) {
-    var textChange = change.selector === "insertText"
+    let textChange = change.selector === "insertText"
                   || change.selector === "deleteText";
 
     if (textChange
@@ -612,6 +612,7 @@ export class Text extends Morph {
   addPlugin(plugin) {
     if (!this.plugins.includes(plugin)) {
       this.plugins.push(plugin);
+      this._cachedKeyhandlers = null;
       typeof plugin.attach === "function" && plugin.attach(this);
     }
     return plugin;
@@ -619,6 +620,7 @@ export class Text extends Morph {
 
   removePlugin(plugin) {
     if (!this.plugins.includes(plugin)) return false;
+    this._cachedKeyhandlers = null;
     arr.remove(this.plugins, plugin);
     typeof plugin.detach === "function" && plugin.detach(this);
     return true
@@ -737,7 +739,7 @@ export class Text extends Morph {
       var scrollCursorIntoView = command.hasOwnProperty("scrollCursorIntoView") ?
         command.scrollCursorIntoView : true;
       if (scrollCursorIntoView)
-        fun.throttleNamed("execCommand-scrollCursorIntoView-" + morph.id,
+        fun.debounceNamed("execCommand-scrollCursorIntoView-" + morph.id,
           100, () => morph.scrollCursorIntoView())();
     }
 
@@ -1446,7 +1448,8 @@ export class Text extends Morph {
   }
   set keybindings(x) { super.keybindings = x }
   get keyhandlers() {
-    return this.pluginCollect("getKeyHandlers", super.keyhandlers.concat(this._keyhandlers || []));
+    return this._cachedKeyhandlers
+       || (this._cachedKeyhandlers = this.pluginCollect("getKeyHandlers", super.keyhandlers.concat(this._keyhandlers || [])));
   }
 
   get snippets() {

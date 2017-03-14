@@ -42,6 +42,7 @@ class IyGotoCharKeyHandler extends KeyHandler {
 
   static installInto(textMorph, backwards = false) {
     textMorph.keyhandlers.filter(h => h.isIyGoToChar).forEach(ea => ea.uninstallFrom(textMorph));
+    textMorph._cachedKeyhandlers = null;
     textMorph._keyhandlers = (textMorph._keyhandlers || []).concat(new this(backwards));
   }
 
@@ -53,8 +54,9 @@ class IyGotoCharKeyHandler extends KeyHandler {
 
   get isIyGoToChar() { return true; }
 
-  uninstallFrom(morph) {
-    arr.remove(morph._keyhandlers || [], this);
+  uninstallFrom(textMorph) {
+    textMorph._cachedKeyhandlers = null;
+    arr.remove(textMorph._keyhandlers || [], this);
   }
 
   eventCommandLookup(morph, evt) {

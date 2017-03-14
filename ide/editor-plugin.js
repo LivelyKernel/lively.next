@@ -76,7 +76,7 @@ export default class EditorPlugin {
 
   requestHighlight(immediate = false) {
     if (immediate) this.highlight();
-    else fun.throttleNamed(this.id + "-requestHighlight", 500, () => this.highlight())();
+    else fun.debounceNamed(this.id + "-requestHighlight", 300, () => this.highlight())();
   }
 
   highlight() { throw new Error("not yet implemented"); }
