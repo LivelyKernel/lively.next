@@ -5,6 +5,7 @@ import { JavaScriptEditorPlugin } from "./editor-plugin.js";
 import EvalBackendChooser from "./eval-backend-ui.js";
 import InputLine from "../../text/input-line.js";
 import { connect, once, noUpdate } from "lively.bindings";
+import { resource } from "lively.resources";
 
 export default class Workspace extends Window {
 
@@ -47,8 +48,15 @@ export default class Workspace extends Window {
           }
           this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(this, this.getEvalBackend()));
         }
-      }
+      },
 
+      file: {
+        get() { let f = this.getProperty("file"); return f ? resource(f) : f; },
+        set(file) {
+          if (file && file.isResource) file = file.url;
+          this.setProperty("file", file);
+        }
+      }
     }
   }
 
@@ -67,13 +75,55 @@ export default class Workspace extends Window {
 
   get commands() {
     return [
-      EvalBackendChooser.default.activateEvalBackendCommand(this)
+      EvalBackendChooser.default.activateEvalBackendCommand(this),
+
+      {
+        name: "[workspace] query for file",
+        async exec(workspace) {
+          let historyId = "lively.ide-workspace-file-hist",
+              {items: hist} = InputLine.getHistory(historyId),
+              f = await workspace.world().prompt(
+                "Enter a file to save the workspace contents to",
+                {
+                  input: workspace.file ? workspace.file.url :
+                    hist.length ? arr.last(hist) :
+                      resource(System.baseURL).join("workspace.js").url,
+                  requester: workspace,
+                  historyId
+                });
+          workspace.file = f;
+          if (!f) {
+            workspace.setStatusMessage("workspace file cleared");
+            return;
+          }
+          workspace.setStatusMessage(`workspace saves content to ${workspace.file.url}`);
+          if (await workspace.world().confirm(`Load content from ${f}?`, {requester: workspace}))
+            workspace.content = await workspace.file.read();
+        }
+      },
+      
+      {
+        name: "[workspace] save content",
+        async exec(workspace) {
+          if (!workspace.file) {
+            workspace.setStatusMessage("Cannot save: no workspace file set");
+            return workspace;
+          }
+          try {
+            await workspace.file.write(workspace.content);
+          } catch (e) { workspace.showError(e); throw e; }
+          workspace.setStatusMessage(`Saved to ${workspace.file.url}`, Color.green);
+          return workspace;
+        }
+      }
     ].concat(super.commands);
   }
 
   get keybindings() {
     return super.keybindings.concat([
-      {keys: "Meta-Shift-L b a c k e n d", command: "activate eval backend dropdown list"}
+      {keys: "Meta-Shift-L b a c k e n d", command: "activate eval backend dropdown list"},
+      {keys: "Alt-L", command: "[workspace] query for file"},
+      {keys: {mac: "Command-S", win: "Ctrl-S"}, command: "[workspace] save content"}
     ]);
   }
 
