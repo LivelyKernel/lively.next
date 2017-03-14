@@ -6894,7 +6894,7 @@ function postwalk(treeNode, iterator, childGetter) {
 
   var i = counter.i++;
   (childGetter(treeNode, i, depth) || []).forEach(function (ea) {
-    return postwalk(ea, iterator, childGetter);
+    return postwalk(ea, iterator, childGetter, counter, depth);
   });
   iterator(treeNode, i, depth);
 }
@@ -6932,7 +6932,7 @@ function map$3(treeNode, mapFunc, childGetter) {
   // return values of all mapFunc calls is the result. `childGetter` is a
   // function to retrieve the children from a node.
   return [mapFunc(treeNode, depth)].concat(flatten((childGetter(treeNode) || []).map(function (n) {
-    return map$3(n, mapFunc, childGetter, depth);
+    return map$3(n, mapFunc, childGetter, depth + 1);
   })));
 }
 
@@ -6942,7 +6942,7 @@ function mapTree(treeNode, mapFunc, childGetter) {
   // Traverses the tree and creates a structurally identical tree but with
   // mapped nodes
   var mappedNodes = (childGetter(treeNode) || []).map(function (n) {
-    return mapTree(n, mapFunc, childGetter, depth);
+    return mapTree(n, mapFunc, childGetter, depth + 1);
   });
   return mapFunc(treeNode, mappedNodes, depth);
 }
@@ -23400,8 +23400,10 @@ exports.fuzzyParse = fuzzyParse;
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   this.lively = this.lively || {};
-(function (exports,lively_lang,lively_ast) {
+(function (exports,lively_lang,module$1,lively_ast,lively_vm) {
 'use strict';
+
+module$1 = 'default' in module$1 ? module$1['default'] : module$1;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj$$1) {
   return typeof obj$$1;
@@ -23417,7 +23419,34 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 
 
+var asyncToGenerator = function (fn) {
+  return function () {
+    var gen = fn.apply(this, arguments);
+    return new Promise(function (resolve, reject) {
+      function step(key, arg) {
+        try {
+          var info = gen[key](arg);
+          var value = info.value;
+        } catch (error) {
+          reject(error);
+          return;
+        }
 
+        if (info.done) {
+          resolve(value);
+        } else {
+          return Promise.resolve(value).then(function (value) {
+            step("next", value);
+          }, function (err) {
+            step("throw", err);
+          });
+        }
+      }
+
+      return step("next");
+    });
+  };
+};
 
 var classCallCheck = function (instance, Constructor) {
   if (!(instance instanceof Constructor)) {
@@ -23476,7 +23505,7 @@ var _extends = Object.assign || function (target) {
   return target;
 };
 
-var get = function get(object, property, receiver) {
+var get$1 = function get$1(object, property, receiver) {
   if (object === null) object = Function.prototype;
   var desc = Object.getOwnPropertyDescriptor(object, property);
 
@@ -23486,7 +23515,7 @@ var get = function get(object, property, receiver) {
     if (parent === null) {
       return undefined;
     } else {
-      return get(parent, property, receiver);
+      return get$1(parent, property, receiver);
     }
   } else if ("value" in desc) {
     return desc.value;
@@ -23537,14 +23566,14 @@ var possibleConstructorReturn = function (self, call) {
 
 
 
-var set = function set(object, property, value, receiver) {
+var set$1 = function set$1(object, property, value, receiver) {
   var desc = Object.getOwnPropertyDescriptor(object, property);
 
   if (desc === undefined) {
     var parent = Object.getPrototypeOf(object);
 
     if (parent !== null) {
-      set(parent, property, value, receiver);
+      set$1(parent, property, value, receiver);
     }
   } else if ("value" in desc && desc.writable) {
     desc.value = value;
@@ -23560,14 +23589,14 @@ var set = function set(object, property, value, receiver) {
 };
 
 var slicedToArray = function () {
-  function sliceIterator(arr, i) {
+  function sliceIterator(arr$$1, i) {
     var _arr = [];
     var _n = true;
     var _d = false;
     var _e = undefined;
 
     try {
-      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+      for (var _i = arr$$1[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
         _arr.push(_s.value);
 
         if (i && _arr.length === i) break;
@@ -23586,11 +23615,11 @@ var slicedToArray = function () {
     return _arr;
   }
 
-  return function (arr, i) {
-    if (Array.isArray(arr)) {
-      return arr;
-    } else if (Symbol.iterator in Object(arr)) {
-      return sliceIterator(arr, i);
+  return function (arr$$1, i) {
+    if (Array.isArray(arr$$1)) {
+      return arr$$1;
+    } else if (Symbol.iterator in Object(arr$$1)) {
+      return sliceIterator(arr$$1, i);
     } else {
       throw new TypeError("Invalid attempt to destructure non-iterable instance");
     }
@@ -23609,13 +23638,13 @@ var slicedToArray = function () {
 
 
 
-var toConsumableArray = function (arr) {
-  if (Array.isArray(arr)) {
-    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+var toConsumableArray = function (arr$$1) {
+  if (Array.isArray(arr$$1)) {
+    for (var i = 0, arr2 = Array(arr$$1.length); i < arr$$1.length; i++) arr2[i] = arr$$1[i];
 
     return arr2;
   } else {
-    return Array.from(arr);
+    return Array.from(arr$$1);
   }
 };
 
@@ -23862,6 +23891,443 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
   }
 }
 
+var objMetaSym = Symbol.for("lively-object-meta");
+var moduleSym = Symbol.for("lively-module-meta");
+var descriptorCache = new Map();
+
+// SourceDescriptor: Represents a code object specified by a {start, end}
+// sourceLocation inside source code (moduleSource).
+// Can derive useful things from it and modify the code objects source.
+var SourceDescriptor = function () {
+  function SourceDescriptor(sourceLocation, moduleSource) {
+    classCallCheck(this, SourceDescriptor);
+
+    if (sourceLocation && moduleSource) this.update(moduleSource, sourceLocation);else this.reset();
+  }
+
+  createClass(SourceDescriptor, [{
+    key: "reset",
+    value: function reset() {
+      this._sourceLocation = null;
+      this._source = "";
+      this._ast = null;
+      this._moduleSource = "";
+      this._moduleAst = null;
+      this._moduleScope = null;
+      this._moduleImports = null;
+      this._declaredAndUndeclaredNames = null;
+    }
+  }, {
+    key: "update",
+    value: function update(moduleSource, sourceLocation) {
+      if (this._moduleSource === moduleSource && sourceLocation && this._sourceLocation && sourceLocation.start === this._sourceLocation.start && sourceLocation.end === this._sourceLocation.end) return;
+      this.reset();
+      this._moduleSource = moduleSource;
+      this._sourceLocation = sourceLocation;
+    }
+  }, {
+    key: "changeSource",
+    value: function changeSource(newSource) {
+      var moduleSource = this.moduleSource,
+          _sourceLocation = this.sourceLocation,
+          start = _sourceLocation.start,
+          end = _sourceLocation.end,
+          newModuleSource = moduleSource.slice(0, start) + newSource + moduleSource.slice(end),
+          newSourceLocation = { start: start, end: start + newSource.length };
+
+      this.update(newModuleSource, newSourceLocation);
+      this._source = newSource;
+      return this;
+    }
+  }, {
+    key: "toString",
+    value: function toString() {
+      var objString = lively_lang.string.truncate(this._source || "NO SOURCE", 35).replace(/\n/g, "");
+      return this.constructor.name + "(" + objString + ")";
+    }
+  }, {
+    key: "sourceLocation",
+    get: function get() {
+      if (!this._sourceLocation) throw new Error("_sourceLocation not defined");
+      return this._sourceLocation;
+    }
+  }, {
+    key: "moduleSource",
+    get: function get() {
+      if (!this._moduleSource) throw new Error("_moduleSource not defined!");
+      return this._moduleSource;
+    }
+  }, {
+    key: "moduleAst",
+    get: function get() {
+      return this._moduleAst || (this._moduleAst = lively_ast.parse(this.moduleSource));
+    }
+  }, {
+    key: "moduleScope",
+    get: function get() {
+      return this._moduleScope || (this._moduleScope = lively_ast.query.topLevelDeclsAndRefs(this.ast).scope);
+    }
+  }, {
+    key: "moduleImports",
+    get: function get() {
+      return this._moduleImports || (this._moduleImports = lively_ast.query.imports(this.moduleScope));
+    }
+  }, {
+    key: "ast",
+    get: function get() {
+      if (this._ast) return this._ast;
+      // be as concrete as possible
+      var parsed = lively_ast.parse(this.source),
+          node = parsed.body[0];
+      if (node.type === "ExpressionStatement") node = node.expression;
+      return this._ast = node;
+    }
+  }, {
+    key: "source",
+    get: function get() {
+      if (this._source) return this._source;
+      var moduleSource = this.moduleSource,
+          _sourceLocation2 = this.sourceLocation,
+          start = _sourceLocation2.start,
+          end = _sourceLocation2.end;
+
+      return this._source = moduleSource.slice(start, end);
+    }
+  }, {
+    key: "type",
+    get: function get() {
+      return this.ast.type;
+    }
+  }, {
+    key: "declaredAndUndeclaredNames",
+    get: function get() {
+      if (this._declaredAndUndeclaredNames) return this._declaredAndUndeclaredNames;
+
+      var parsed = this.ast,
+          declaredNames = lively_ast.query.topLevelDeclsAndRefs(this.moduleAst).declaredNames,
+          declaredImports = lively_lang.arr.uniq(this.moduleImports.map(function (_ref) {
+        var local = _ref.local;
+        return local;
+      })),
+          localDeclaredNames = lively_lang.arr.withoutAll(declaredNames, declaredImports),
+          undeclaredNames = lively_lang.arr.withoutAll(lively_ast.query.findGlobalVarRefs(parsed).map(function (ea) {
+        return ea.name;
+      }), declaredNames);
+
+      return this._declaredAndUndeclaredNames = {
+        declaredNames: declaredNames,
+        declaredImports: declaredImports,
+        localDeclaredNames: localDeclaredNames,
+        undeclaredNames: undeclaredNames
+      };
+    }
+  }]);
+  return SourceDescriptor;
+}();
+
+// RuntimeSourceDescriptor: Binding between a runtime object such as an actual
+// class or function and it's source code representation. The runtime object is
+// expected to have two property symbols:
+// - Symbol.for("lively-module-meta"): {package: {name, version}, pathInPackage}
+// - Symbol.for("lively-object-meta"): value {start, end} indexes into code
+// Via those the RuntimeSourceDescriptor can retrieve code and other
+// code-related things of a runtime object and change its definition
+
+var RuntimeSourceDescriptor = function () {
+  createClass(RuntimeSourceDescriptor, null, [{
+    key: "forObjectWithModuleSource",
+    value: function forObjectWithModuleSource(obj$$1, moduleSource, optSystem) {
+      var descr = this.for(obj$$1, optSystem);
+      descr.ensureSourceDescriptor(descr.sourceLocation, moduleSource);
+      return descr;
+    }
+  }, {
+    key: "for",
+    value: function _for(obj$$1, optSystem) {
+      var descr = descriptorCache.get(obj$$1);
+      if (!descr) {
+        descr = new this(obj$$1, optSystem);
+        descriptorCache.set(obj$$1, descr);
+      }
+      return descr;
+    }
+  }]);
+
+  function RuntimeSourceDescriptor(obj$$1, System) {
+    classCallCheck(this, RuntimeSourceDescriptor);
+
+    this.obj = obj$$1;
+    this.System = System;
+    this.reset();
+  }
+
+  createClass(RuntimeSourceDescriptor, [{
+    key: "reset",
+    value: function reset() {
+      this._source = "";
+      this._sourceLocation = null;
+      this._ast = null;
+      this._moduleSource = "";
+      this._moduleAst = null;
+      this._moduleScope = null;
+      this._moduleImports = null;
+      this._declaredAndUndeclaredNames = null;
+    }
+  }, {
+    key: "resetIfChanged",
+    value: function resetIfChanged() {
+      var moduleSource = this.meta.moduleSource;
+
+      if (this._moduleSource && moduleSource && this._moduleSource !== moduleSource) this.reset();
+    }
+  }, {
+    key: "changeSourceSync",
+
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    value: function changeSourceSync(newSource) {
+      var module = this.module,
+          System = this.System;
+
+      this._basicChangeSource(newSource);
+      this.module.changeSource(this.moduleSource, { doSave: true });
+      var result = lively_vm.runEval(newSource, { sync: true, targetModule: this.module.id, System: System });
+      if (result.isError) throw result.value;
+      return this;
+    }
+  }, {
+    key: "changeSource",
+    value: function () {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee(newSource) {
+        var _this = this;
+
+        var module;
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                module = this.module;
+                _context.next = 3;
+                return module.changeSourceAction(function (oldSource) {
+                  if (oldSource !== _this.moduleSource) throw new Error("source of module " + module.id + " and source of " + _this + " don't match");
+                  _this._basicChangeSource(newSource);
+                  return _this.moduleSource;
+                });
+
+              case 3:
+                return _context.abrupt("return", this);
+
+              case 4:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function changeSource(_x) {
+        return _ref2.apply(this, arguments);
+      }
+
+      return changeSource;
+    }()
+  }, {
+    key: "_basicChangeSource",
+    value: function _basicChangeSource(newSource) {
+      var meta = this.meta,
+          moduleSource = this.moduleSource,
+          _sourceLocation3 = this.sourceLocation,
+          start = _sourceLocation3.start,
+          end = _sourceLocation3.end,
+          newModuleSource = moduleSource.slice(0, start) + newSource + moduleSource.slice(end),
+          newSourceLocation = { start: start, end: start + newSource.length };
+
+
+      this.reset();
+      this.meta = _extends({}, meta, { moduleSource: newModuleSource }, newSourceLocation);
+      this._sourceLocation = newSourceLocation;
+      this._moduleSource = newModuleSource;
+      this._source = newSource;
+      return this;
+    }
+  }, {
+    key: "toString",
+    value: function toString() {
+      var source = this.source || String(this.obj),
+          objString = lively_lang.string.truncate(source, 35).replace(/\n/g, ""),
+          modName;try {
+        modName = this.module.shortName();
+      } catch (e) {
+        modName = "NO MODULE!";
+      }
+      return this.constructor.name + "(" + objString + " in " + modName + ")";
+    }
+  }, {
+    key: "System",
+    get: function get() {
+      return this._System || System;
+    },
+    set: function set(S) {
+      this._System = S;
+    }
+  }, {
+    key: "module",
+    get: function get() {
+      var obj$$1 = this.obj,
+          System = this.System;
+
+      if (!obj$$1[moduleSym]) throw new Error("runtime object of source descriptor has no module data");
+
+      var _obj$moduleSym = obj$$1[moduleSym],
+          pName = _obj$moduleSym.package.name,
+          mName = _obj$moduleSym.pathInPackage,
+          mId = mName.includes("://") ? mName : pName + "/" + mName,
+          m = module$1(System, mId);
+
+
+      if (!m._source && this.moduleSource) m.setSource(this.moduleSource);
+      return m;
+    }
+  }, {
+    key: "meta",
+    get: function get() {
+      var obj$$1 = this.obj;
+
+      if (!obj$$1[objMetaSym]) throw new Error("runtime object of source descriptor has no lively meta data");
+      return obj$$1[objMetaSym];
+    },
+    set: function set(meta) {
+      this.obj[objMetaSym] = meta;
+      if (meta.hasOwnProperty("start") && meta.hasOwnProperty("end")) this._sourceLocation = { start: meta.start, end: meta.end };
+      if (meta.hasOwnProperty("moduleSource")) this._moduleSource = meta.moduleSource;
+    }
+  }, {
+    key: "sourceLocation",
+    get: function get() {
+      this.resetIfChanged();
+      if (this._sourceLocation) return this._sourceLocation;
+      var _meta = this.meta,
+          start = _meta.start,
+          end = _meta.end;
+
+      if (start === undefined || end === undefined) throw new Error("lively meta data has no start/end");
+      return this._sourceLocation = { start: start, end: end };
+    }
+  }, {
+    key: "moduleSource",
+    get: function get() {
+      this.resetIfChanged();
+      if (this._moduleSource) return this._moduleSource;
+      var moduleSource = this.meta.moduleSource;
+
+      if (moduleSource === undefined) throw new Error("lively meta data has no moduleSource");
+      return this._moduleSource = moduleSource;
+    }
+  }, {
+    key: "moduleAst",
+    get: function get() {
+      this.resetIfChanged();
+      return this._moduleAst || (this._moduleAst = lively_ast.parse(this.moduleSource));
+    }
+  }, {
+    key: "moduleScope",
+    get: function get() {
+      this.resetIfChanged();
+      return this._moduleScope || (this._moduleScope = lively_ast.query.topLevelDeclsAndRefs(this.moduleAst).scope);
+    }
+  }, {
+    key: "moduleImports",
+    get: function get() {
+      this.resetIfChanged();
+      return this._moduleImports || (this._moduleImports = lively_ast.query.imports(this.moduleScope));
+    }
+  }, {
+    key: "declaredAndUndeclaredNames",
+    get: function get() {
+      this.resetIfChanged();
+      if (this._declaredAndUndeclaredNames) return this._declaredAndUndeclaredNames;
+
+      var parsed = this.ast,
+          declaredNames = lively_ast.query.topLevelDeclsAndRefs(this.moduleAst).declaredNames,
+          declaredImports = lively_lang.arr.uniq(this.moduleImports.map(function (_ref3) {
+        var local = _ref3.local;
+        return local;
+      })),
+          localDeclaredNames = lively_lang.arr.withoutAll(declaredNames, declaredImports),
+          undeclaredNames = lively_lang.arr.withoutAll(lively_ast.query.findGlobalVarRefs(parsed).map(function (ea) {
+        return ea.name;
+      }), declaredNames);
+
+      return this._declaredAndUndeclaredNames = {
+        declaredNames: declaredNames,
+        declaredImports: declaredImports,
+        localDeclaredNames: localDeclaredNames,
+        undeclaredNames: undeclaredNames
+      };
+    }
+  }, {
+    key: "source",
+    get: function get() {
+      this.resetIfChanged();
+      if (this._source) return this._source;
+      var _sourceLocation4 = this.sourceLocation,
+          start = _sourceLocation4.start,
+          end = _sourceLocation4.end,
+          moduleSource = this.moduleSource;
+
+      return this._source = moduleSource.slice(start, end);
+    }
+  }, {
+    key: "ast",
+    get: function get() {
+      this.resetIfChanged();
+      if (this._ast) return this._ast;
+      // be as concrete as possible
+      var parsed = lively_ast.parse(this.source),
+          node = parsed.body[0];
+      if (node.type === "ExpressionStatement") node = node.expression;
+      return this._ast = node;
+    }
+  }, {
+    key: "type",
+    get: function get() {
+      return this.ast.type;
+    }
+  }]);
+  return RuntimeSourceDescriptor;
+}();
+
+/*
+
+class Foo {
+  static foooo() {}
+  x() { return 23; }
+  y() { return 24; }
+}
+
+class Bar extends Foo {
+  x() { return 22 }
+  z() { return 42; }
+  get xxxx() { return 42; }
+  set xxxx(f) { ; }
+}
+
+runtimeClassMembers(Bar)[0]
+runtimeClassMembersInProtoChain(Bar)
+
+*/
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+
+
+var setPrototypeOf = typeof Object.setPrototypeOf === "function" ? function (obj$$1, proto) {
+  return Object.setPrototypeOf(obj$$1, proto);
+} : function (obj$$1, proto) {
+  return obj$$1.__proto__ = proto;
+};
+
 var initializeSymbol = Symbol.for("lively-instance-initialize");
 var instanceRestorerSymbol = Symbol.for("lively-instance-restorer");
 var superclassSymbol = Symbol.for("lively-instance-superclass");
@@ -23892,7 +24358,7 @@ function setSuperclass(klass, superclassOrSpec) {
     klass[superclassSymbol] = superclass;
     klass.prototype = Object.create(superclass.prototype);
     klass.prototype.constructor = klass;
-    if (superclass !== Object) Object.setPrototypeOf ? Object.setPrototypeOf(klass, superclass) : klass.__proto__ = superclass;
+    if (superclass !== Object) setPrototypeOf(klass, superclass);
   }
   return superclass;
 }
@@ -24092,6 +24558,7 @@ var runtime = Object.freeze({
 	moduleMetaSymbol: moduleMetaSymbol,
 	objMetaSymbol: objMetaSymbol,
 	moduleSubscribeToToplevelChangesSym: moduleSubscribeToToplevelChangesSym,
+	setSuperclass: setSuperclass,
 	initializeClass: initializeClass
 });
 
@@ -24167,7 +24634,7 @@ var ClassReplaceVisitor = function (_Visitor) {
 
       if (node.type === "CallExpression" && node.callee.object && node.callee.object.type === "Super") node = replaceSuperMethodCall(node, state, path, state.options);
 
-      node = get(ClassReplaceVisitor.prototype.__proto__ || Object.getPrototypeOf(ClassReplaceVisitor.prototype), "accept", this).call(this, node, state, path);
+      node = get$1(ClassReplaceVisitor.prototype.__proto__ || Object.getPrototypeOf(ClassReplaceVisitor.prototype), "accept", this).call(this, node, state, path);
 
       if (node.type === "ExportDefaultDeclaration") return splitExportDefaultWithClass(node, state, path, state.options);
 
@@ -24387,7 +24854,7 @@ function classToFunctionTransform(sourceOrAst, options) {
 exports.runtime = runtime;
 exports.classToFunctionTransform = classToFunctionTransform;
 
-}((this.lively.classes = this.lively.classes || {}),lively.lang,lively.ast));
+}((this.lively.classes = this.lively.classes || {}),lively.lang,module$1,lively.ast,lively_vm));
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
@@ -27889,6 +28356,16 @@ var Resource = function () {
 
       return readProperties;
     }()
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // serialization
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  }, {
+    key: "__serialize__",
+    value: function __serialize__() {
+      return { __expr__: "resource(\"" + this.url + "\")", bindings: { "lively.resources": ["resource"] } };
+    }
   }, {
     key: "isResource",
     get: function get() {
@@ -33540,6 +34017,339 @@ var Package = function () {
     value: function reload(opts) {
       this.remove(opts);return this.import();
     }
+  }, {
+    key: "fork",
+    value: function () {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(newName, newURL) {
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                if (!newURL) {
+                  newURL = lively_resources.resource(this.url).join("../" + newName).withRelativePartsResolved().url;
+                }
+                _context5.next = 3;
+                return this.changeAddress(newURL, newName, false /*removeOriginal*/);
+
+              case 3:
+                return _context5.abrupt("return", _context5.sent);
+
+              case 4:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+
+      function fork(_x6, _x7) {
+        return _ref5.apply(this, arguments);
+      }
+
+      return fork;
+    }()
+  }, {
+    key: "rename",
+    value: function () {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(newName) {
+        var newURL;
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                newURL = lively_resources.resource(this.url).join("../" + newName).withRelativePartsResolved().url;
+                _context6.next = 3;
+                return this.changeAddress(newURL, newName, true /*removeOriginal*/);
+
+              case 3:
+                return _context6.abrupt("return", _context6.sent);
+
+              case 4:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, this);
+      }));
+
+      function rename(_x8) {
+        return _ref6.apply(this, arguments);
+      }
+
+      return rename;
+    }()
+  }, {
+    key: "changeAddress",
+    value: function () {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(newURL) {
+        var newName = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var removeOriginal = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+        var System, oldURL, oldPackageDir, newP, newPackageDir, resourceURLs, modules, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, m, newId, resourceIndex, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, url, r, localName, configFile, c, runtimeC;
+
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+                newURL = newURL.replace(/\/?/, "");
+
+                System = this.System;
+                oldURL = this.url;
+                oldPackageDir = lively_resources.resource(oldURL).asDirectory();
+                newP = new Package(System, newURL);
+                _context7.next = 7;
+                return lively_resources.resource(newURL).asDirectory();
+
+              case 7:
+                newPackageDir = _context7.sent;
+
+
+                ModulePackageMapping.forSystem(System).clearCache();
+                packageStore(System)[newURL] = newP;
+                if (System.packages[oldURL]) {
+                  System.packages[newURL] = System.packages[oldURL];
+                  if (removeOriginal) delete System.packages[oldURL];
+                }
+
+                Object.assign(newP, lively_lang.obj.select(this, ["_name", "referencedAs", "map", "config"]));
+                _context7.next = 14;
+                return newPackageDir.ensureExistance();
+
+              case 14:
+                _context7.next = 16;
+                return this.resources(undefined, []);
+
+              case 16:
+                _context7.t0 = function (ea) {
+                  return ea.url;
+                };
+
+                resourceURLs = _context7.sent.map(_context7.t0);
+                modules = this.modules();
+
+
+                // first move modules loaded in runtime, those now how to rename
+                // themselves...
+                _iteratorNormalCompletion2 = true;
+                _didIteratorError2 = false;
+                _iteratorError2 = undefined;
+                _context7.prev = 22;
+                _iterator2 = modules[Symbol.iterator]();
+
+              case 24:
+                if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
+                  _context7.next = 39;
+                  break;
+                }
+
+                m = _step2.value;
+                newId = newPackageDir.join(m.pathInPackage()).url;
+
+                if (!removeOriginal) {
+                  _context7.next = 32;
+                  break;
+                }
+
+                _context7.next = 30;
+                return m.renameTo(newId);
+
+              case 30:
+                _context7.next = 34;
+                break;
+
+              case 32:
+                _context7.next = 34;
+                return m.copyTo(newId);
+
+              case 34:
+                // keep track of resources
+                resourceIndex = resourceURLs.indexOf(m.id);
+
+                if (resourceIndex > -1) {
+                  resourceURLs.splice(resourceIndex, 1);
+                }
+
+              case 36:
+                _iteratorNormalCompletion2 = true;
+                _context7.next = 24;
+                break;
+
+              case 39:
+                _context7.next = 45;
+                break;
+
+              case 41:
+                _context7.prev = 41;
+                _context7.t1 = _context7["catch"](22);
+                _didIteratorError2 = true;
+                _iteratorError2 = _context7.t1;
+
+              case 45:
+                _context7.prev = 45;
+                _context7.prev = 46;
+
+                if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                  _iterator2.return();
+                }
+
+              case 48:
+                _context7.prev = 48;
+
+                if (!_didIteratorError2) {
+                  _context7.next = 51;
+                  break;
+                }
+
+                throw _iteratorError2;
+
+              case 51:
+                return _context7.finish(48);
+
+              case 52:
+                return _context7.finish(45);
+
+              case 53:
+
+                // ensure the existance of the remaining resources
+                _iteratorNormalCompletion3 = true;
+                _didIteratorError3 = false;
+                _iteratorError3 = undefined;
+                _context7.prev = 56;
+                _iterator3 = resourceURLs[Symbol.iterator]();
+
+              case 58:
+                if (_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done) {
+                  _context7.next = 66;
+                  break;
+                }
+
+                url = _step3.value;
+                r = lively_resources.resource(url), localName = r.relativePathFrom(oldPackageDir);
+                _context7.next = 63;
+                return r.copyTo(newPackageDir.join(localName));
+
+              case 63:
+                _iteratorNormalCompletion3 = true;
+                _context7.next = 58;
+                break;
+
+              case 66:
+                _context7.next = 72;
+                break;
+
+              case 68:
+                _context7.prev = 68;
+                _context7.t2 = _context7["catch"](56);
+                _didIteratorError3 = true;
+                _iteratorError3 = _context7.t2;
+
+              case 72:
+                _context7.prev = 72;
+                _context7.prev = 73;
+
+                if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                  _iterator3.return();
+                }
+
+              case 75:
+                _context7.prev = 75;
+
+                if (!_didIteratorError3) {
+                  _context7.next = 78;
+                  break;
+                }
+
+                throw _iteratorError3;
+
+              case 78:
+                return _context7.finish(75);
+
+              case 79:
+                return _context7.finish(72);
+
+              case 80:
+                if (!removeOriginal) {
+                  _context7.next = 85;
+                  break;
+                }
+
+                _context7.next = 83;
+                return this.remove({ forgetEnv: true, forgetDeps: false });
+
+              case 83:
+                _context7.next = 85;
+                return oldPackageDir.remove();
+
+              case 85:
+                if (!newName) {
+                  _context7.next = 109;
+                  break;
+                }
+
+                newP.name = newName;
+                newP.referencedAs = lively_lang.arr.without(newP.referencedAs, this.name).concat(newName);
+
+                newP.config.name = newName;
+                configFile = lively_resources.resource(newURL).join("package.json");
+                _context7.prev = 90;
+                _context7.next = 93;
+                return configFile.exists();
+
+              case 93:
+                if (!_context7.sent) {
+                  _context7.next = 105;
+                  break;
+                }
+
+                _context7.t3 = JSON;
+                _context7.next = 97;
+                return configFile.read();
+
+              case 97:
+                _context7.t4 = _context7.sent;
+                c = _context7.t3.parse.call(_context7.t3, _context7.t4);
+
+                if (!(c.name === this.name)) {
+                  _context7.next = 103;
+                  break;
+                }
+
+                c.name = newName;
+                _context7.next = 103;
+                return configFile.write(JSON.stringify(c, null, 2));
+
+              case 103:
+                runtimeC = System.get(configFile.url);
+
+                if (runtimeC) {
+                  System.set(configFile.url, System.newModule(_extends({}, runtimeC, { name: newName })));
+                }
+
+              case 105:
+                _context7.next = 109;
+                break;
+
+              case 107:
+                _context7.prev = 107;
+                _context7.t5 = _context7["catch"](90);
+
+              case 109:
+                return _context7.abrupt("return", newP);
+
+              case 110:
+              case "end":
+                return _context7.stop();
+            }
+          }
+        }, _callee7, this, [[22, 41, 45, 53], [46,, 48, 52], [56, 68, 72, 80], [73,, 75, 79], [90, 107]]);
+      }));
+
+      function changeAddress(_x9) {
+        return _ref7.apply(this, arguments);
+      }
+
+      return changeAddress;
+    }()
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // searching
@@ -33548,43 +34358,43 @@ var Package = function () {
   }, {
     key: "search",
     value: function () {
-      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(needle) {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(needle) {
         var _this7 = this;
 
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         var modules;
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
-            switch (_context5.prev = _context5.next) {
+            switch (_context8.prev = _context8.next) {
               case 0:
                 if (!options.includeUnloaded) {
-                  _context5.next = 7;
+                  _context8.next = 7;
                   break;
                 }
 
-                _context5.next = 3;
+                _context8.next = 3;
                 return this.resources(function (url) {
                   return url.endsWith(".js");
                 }, [".git", "node_modules", "dist", ".module_cache"]);
 
               case 3:
-                _context5.t1 = function (_ref6) {
-                  var url = _ref6.url;
+                _context8.t1 = function (_ref9) {
+                  var url = _ref9.url;
                   return module$2(_this7.System, url);
                 };
 
-                _context5.t0 = _context5.sent.map(_context5.t1);
-                _context5.next = 8;
+                _context8.t0 = _context8.sent.map(_context8.t1);
+                _context8.next = 8;
                 break;
 
               case 7:
-                _context5.t0 = this.modules().filter(function (ea) {
+                _context8.t0 = this.modules().filter(function (ea) {
                   return ea.isLoaded();
                 });
 
               case 8:
-                modules = _context5.t0;
-                return _context5.abrupt("return", Promise.all(modules.map(function (m) {
+                modules = _context8.t0;
+                return _context8.abrupt("return", Promise.all(modules.map(function (m) {
                   return m.search(needle, options).catch(function (err) {
                     console.error("Error searching module " + m.name + ":\n" + err.stack);
                     return [];
@@ -33595,14 +34405,14 @@ var Package = function () {
 
               case 10:
               case "end":
-                return _context5.stop();
+                return _context8.stop();
             }
           }
-        }, _callee5, this);
+        }, _callee8, this);
       }));
 
-      function search(_x6) {
-        return _ref5.apply(this, arguments);
+      function search(_x12) {
+        return _ref8.apply(this, arguments);
       }
 
       return search;
@@ -34443,6 +35253,103 @@ var ModuleInterface = function () {
       return reload;
     }()
   }, {
+    key: "copyTo",
+    value: function () {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(newId) {
+        var System, recorderName, sourceAccessorName, _recorder, _source, _ast, _scope, _observersOfTopLevelState, newM, state;
+
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                _context6.t0 = this.System.resource(newId);
+                _context6.next = 3;
+                return this.source();
+
+              case 3:
+                _context6.t1 = _context6.sent;
+                _context6.next = 6;
+                return _context6.t0.write.call(_context6.t0, _context6.t1);
+
+              case 6:
+                System = this.System, recorderName = this.recorderName, sourceAccessorName = this.sourceAccessorName, _recorder = this._recorder, _source = this._source, _ast = this._ast, _scope = this._scope, _observersOfTopLevelState = this._observersOfTopLevelState, newM = module$2(System, newId), state = lively_lang.obj.select(this, ["_observersOfTopLevelState", "_scope", "_ast", "_source", "_recorder", "sourceAccessorName", "recorderName"]);
+
+
+                Object.assign(newM, state);
+                System.set(newId, System.newModule(System.get(this.id)));
+                return _context6.abrupt("return", newM);
+
+              case 10:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, this);
+      }));
+
+      function copyTo(_x2) {
+        return _ref6.apply(this, arguments);
+      }
+
+      return copyTo;
+    }()
+  }, {
+    key: "renameTo",
+    value: function () {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(newId) {
+        var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+        var _opts$unload, unload, _opts$removeFile, removeFile, newM;
+
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+                _opts$unload = opts.unload;
+                unload = _opts$unload === undefined ? true : _opts$unload;
+                _opts$removeFile = opts.removeFile;
+                removeFile = _opts$removeFile === undefined ? true : _opts$removeFile;
+                _context7.next = 6;
+                return this.copyTo(newId);
+
+              case 6:
+                newM = _context7.sent;
+
+                if (!unload) {
+                  _context7.next = 10;
+                  break;
+                }
+
+                _context7.next = 10;
+                return this.unload({ reset: true, forgetDeps: false, forgetEnv: true });
+
+              case 10:
+                if (!removeFile) {
+                  _context7.next = 13;
+                  break;
+                }
+
+                _context7.next = 13;
+                return this.System.resource(this.id).remove();
+
+              case 13:
+                return _context7.abrupt("return", newM);
+
+              case 14:
+              case "end":
+                return _context7.stop();
+            }
+          }
+        }, _callee7, this);
+      }));
+
+      function renameTo(_x3) {
+        return _ref7.apply(this, arguments);
+      }
+
+      return renameTo;
+    }()
+  }, {
     key: "whenLoaded",
     value: function whenLoaded(cb) {
       if (this.isLoaded()) {
@@ -34716,29 +35623,29 @@ var ModuleInterface = function () {
   }, {
     key: "imports",
     value: function () {
-      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
-        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
-            switch (_context6.prev = _context6.next) {
+            switch (_context8.prev = _context8.next) {
               case 0:
-                _context6.t0 = lively_ast.query;
-                _context6.next = 3;
+                _context8.t0 = lively_ast.query;
+                _context8.next = 3;
                 return this.scope();
 
               case 3:
-                _context6.t1 = _context6.sent;
-                return _context6.abrupt("return", _context6.t0.imports.call(_context6.t0, _context6.t1));
+                _context8.t1 = _context8.sent;
+                return _context8.abrupt("return", _context8.t0.imports.call(_context8.t0, _context8.t1));
 
               case 5:
               case "end":
-                return _context6.stop();
+                return _context8.stop();
             }
           }
-        }, _callee6, this);
+        }, _callee8, this);
       }));
 
       function imports() {
-        return _ref6.apply(this, arguments);
+        return _ref8.apply(this, arguments);
       }
 
       return imports;
@@ -34746,29 +35653,29 @@ var ModuleInterface = function () {
   }, {
     key: "exports",
     value: function () {
-      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
-        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
           while (1) {
-            switch (_context7.prev = _context7.next) {
+            switch (_context9.prev = _context9.next) {
               case 0:
-                _context7.t0 = lively_ast.query;
-                _context7.next = 3;
+                _context9.t0 = lively_ast.query;
+                _context9.next = 3;
                 return this.scope();
 
               case 3:
-                _context7.t1 = _context7.sent;
-                return _context7.abrupt("return", _context7.t0.exports.call(_context7.t0, _context7.t1));
+                _context9.t1 = _context9.sent;
+                return _context9.abrupt("return", _context9.t0.exports.call(_context9.t0, _context9.t1));
 
               case 5:
               case "end":
-                return _context7.stop();
+                return _context9.stop();
             }
           }
-        }, _callee7, this);
+        }, _callee9, this);
       }));
 
       function exports() {
-        return _ref7.apply(this, arguments);
+        return _ref9.apply(this, arguments);
       }
 
       return exports;
@@ -34776,22 +35683,22 @@ var ModuleInterface = function () {
   }, {
     key: "addImports",
     value: function () {
-      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(specs) {
+      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(specs) {
         var source, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, spec, fromModule, fromPackage, importData, alias, _ImportInjector$run, standAloneImport;
 
-        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
-            switch (_context8.prev = _context8.next) {
+            switch (_context10.prev = _context10.next) {
               case 0:
-                _context8.next = 2;
+                _context10.next = 2;
                 return this.source();
 
               case 2:
-                source = _context8.sent;
+                source = _context10.sent;
                 _iteratorNormalCompletion = true;
                 _didIteratorError = false;
                 _iteratorError = undefined;
-                _context8.prev = 6;
+                _context10.prev = 6;
 
 
                 for (_iterator = specs[Symbol.iterator](); !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
@@ -34805,53 +35712,53 @@ var ModuleInterface = function () {
                   }, alias = spec.local, _ImportInjector$run = ImportInjector.run(this.System, this.id, this.package(), source, importData, alias), source = _ImportInjector$run.newSource, standAloneImport = _ImportInjector$run.standAloneImport;
                 }
 
-                _context8.next = 14;
+                _context10.next = 14;
                 break;
 
               case 10:
-                _context8.prev = 10;
-                _context8.t0 = _context8["catch"](6);
+                _context10.prev = 10;
+                _context10.t0 = _context10["catch"](6);
                 _didIteratorError = true;
-                _iteratorError = _context8.t0;
+                _iteratorError = _context10.t0;
 
               case 14:
-                _context8.prev = 14;
-                _context8.prev = 15;
+                _context10.prev = 14;
+                _context10.prev = 15;
 
                 if (!_iteratorNormalCompletion && _iterator.return) {
                   _iterator.return();
                 }
 
               case 17:
-                _context8.prev = 17;
+                _context10.prev = 17;
 
                 if (!_didIteratorError) {
-                  _context8.next = 20;
+                  _context10.next = 20;
                   break;
                 }
 
                 throw _iteratorError;
 
               case 20:
-                return _context8.finish(17);
+                return _context10.finish(17);
 
               case 21:
-                return _context8.finish(14);
+                return _context10.finish(14);
 
               case 22:
-                _context8.next = 24;
+                _context10.next = 24;
                 return this.changeSource(source);
 
               case 24:
               case "end":
-                return _context8.stop();
+                return _context10.stop();
             }
           }
-        }, _callee8, this, [[6, 10, 14, 22], [15,, 17, 21]]);
+        }, _callee10, this, [[6, 10, 14, 22], [15,, 17, 21]]);
       }));
 
-      function addImports(_x4) {
-        return _ref8.apply(this, arguments);
+      function addImports(_x7) {
+        return _ref10.apply(this, arguments);
       }
 
       return addImports;
@@ -34859,36 +35766,36 @@ var ModuleInterface = function () {
   }, {
     key: "removeImports",
     value: function () {
-      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(specs) {
+      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(specs) {
         var _this10 = this;
 
-        var source, _ref10, removedImports;
+        var oldSource, _ref12, source, removedImports;
 
-        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
-            switch (_context9.prev = _context9.next) {
+            switch (_context11.prev = _context11.next) {
               case 0:
                 if (specs.length) {
-                  _context9.next = 2;
+                  _context11.next = 2;
                   break;
                 }
 
-                return _context9.abrupt("return");
+                return _context11.abrupt("return");
 
               case 2:
-                _context9.next = 4;
+                _context11.next = 4;
                 return this.source();
 
               case 4:
-                source = _context9.sent;
-                _context9.next = 7;
-                return ImportRemover.removeImports(source, specs);
+                oldSource = _context11.sent;
+                _context11.next = 7;
+                return ImportRemover.removeImports(oldSource, specs);
 
               case 7:
-                _ref10 = _context9.sent;
-                source = _ref10.source;
-                removedImports = _ref10.removedImports;
-                _context9.next = 12;
+                _ref12 = _context11.sent;
+                source = _ref12.source;
+                removedImports = _ref12.removedImports;
+                _context11.next = 12;
                 return this.changeSource(source);
 
               case 12:
@@ -34898,14 +35805,14 @@ var ModuleInterface = function () {
 
               case 13:
               case "end":
-                return _context9.stop();
+                return _context11.stop();
             }
           }
-        }, _callee9, this);
+        }, _callee11, this);
       }));
 
-      function removeImports(_x5) {
-        return _ref9.apply(this, arguments);
+      function removeImports(_x8) {
+        return _ref11.apply(this, arguments);
       }
 
       return removeImports;
@@ -34918,148 +35825,21 @@ var ModuleInterface = function () {
   }, {
     key: "_localDeclForRefAt",
     value: function () {
-      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(pos) {
+      var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(pos) {
         var scope, ref;
-        return regeneratorRuntime.wrap(function _callee10$(_context10) {
-          while (1) {
-            switch (_context10.prev = _context10.next) {
-              case 0:
-                _context10.next = 2;
-                return this.resolvedScope();
-
-              case 2:
-                scope = _context10.sent;
-                ref = lively_ast.query.refWithDeclAt(pos, scope);
-                return _context10.abrupt("return", ref && { decl: ref.decl, id: ref.declId, declModule: this });
-
-              case 5:
-              case "end":
-                return _context10.stop();
-            }
-          }
-        }, _callee10, this);
-      }));
-
-      function _localDeclForRefAt(_x6) {
-        return _ref11.apply(this, arguments);
-      }
-
-      return _localDeclForRefAt;
-    }()
-  }, {
-    key: "_importForNSRefAt",
-    value: function () {
-      var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(pos) {
-        var scope, ast, nodes$$1, id, member, _ref13, decl, name, spec;
-
-        return regeneratorRuntime.wrap(function _callee11$(_context11) {
-          while (1) {
-            switch (_context11.prev = _context11.next) {
-              case 0:
-                _context11.next = 2;
-                return this.resolvedScope();
-
-              case 2:
-                scope = _context11.sent;
-                ast = scope.node;
-                nodes$$1 = lively_ast.query.nodesAtIndex(ast, pos);
-
-                if (!(nodes$$1.length < 2)) {
-                  _context11.next = 7;
-                  break;
-                }
-
-                return _context11.abrupt("return", [null, null]);
-
-              case 7:
-                id = nodes$$1[nodes$$1.length - 1], member = nodes$$1[nodes$$1.length - 2];
-
-                if (!(id.type != "Identifier" || member.type != "MemberExpression" || member.computed || member.object.type !== "Identifier")) {
-                  _context11.next = 10;
-                  break;
-                }
-
-                return _context11.abrupt("return", [null, null]);
-
-              case 10:
-                _ref13 = scope.resolvedRefMap.get(member.object) || {}, decl = _ref13.decl;
-
-                if (!(!decl || decl.type !== "ImportDeclaration")) {
-                  _context11.next = 13;
-                  break;
-                }
-
-                return _context11.abrupt("return", [null, null]);
-
-              case 13:
-                name = member.object.name, spec = decl.specifiers.find(function (s) {
-                  return s.local.name === name;
-                });
-                return _context11.abrupt("return", spec.type !== "ImportNamespaceSpecifier" ? [null, null] : [decl, spec.local, id.name]);
-
-              case 15:
-              case "end":
-                return _context11.stop();
-            }
-          }
-        }, _callee11, this);
-      }));
-
-      function _importForNSRefAt(_x7) {
-        return _ref12.apply(this, arguments);
-      }
-
-      return _importForNSRefAt;
-    }()
-  }, {
-    key: "_resolveImportedDecl",
-    value: function () {
-      var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(decl) {
-        var _decl$id, start, name, type, imports, im, imM;
-
         return regeneratorRuntime.wrap(function _callee12$(_context12) {
           while (1) {
             switch (_context12.prev = _context12.next) {
               case 0:
-                if (decl) {
-                  _context12.next = 2;
-                  break;
-                }
-
-                return _context12.abrupt("return", []);
+                _context12.next = 2;
+                return this.resolvedScope();
 
               case 2:
-                _decl$id = decl.id;
-                start = _decl$id.start;
-                name = _decl$id.name;
-                type = _decl$id.type;
-                _context12.next = 8;
-                return this.imports();
+                scope = _context12.sent;
+                ref = lively_ast.query.refWithDeclAt(pos, scope);
+                return _context12.abrupt("return", ref && { decl: ref.decl, id: ref.declId, declModule: this });
 
-              case 8:
-                imports = _context12.sent;
-                im = imports.find(function (i) {
-                  return i.local == name;
-                });
-
-                if (!im) {
-                  _context12.next = 17;
-                  break;
-                }
-
-                imM = module$2(this.System, im.fromModule, this.id);
-                _context12.t0 = [decl];
-                _context12.next = 15;
-                return imM.bindingPathForExport(im.imported);
-
-              case 15:
-                _context12.t1 = _context12.sent;
-                return _context12.abrupt("return", _context12.t0.concat.call(_context12.t0, _context12.t1));
-
-              case 17:
-                return _context12.abrupt("return", [decl]);
-
-              case 18:
+              case 5:
               case "end":
                 return _context12.stop();
             }
@@ -35067,17 +35847,18 @@ var ModuleInterface = function () {
         }, _callee12, this);
       }));
 
-      function _resolveImportedDecl(_x8) {
-        return _ref14.apply(this, arguments);
+      function _localDeclForRefAt(_x9) {
+        return _ref13.apply(this, arguments);
       }
 
-      return _resolveImportedDecl;
+      return _localDeclForRefAt;
     }()
   }, {
-    key: "bindingPathForExport",
+    key: "_importForNSRefAt",
     value: function () {
-      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(name) {
-        var exports, ex, imM, decl;
+      var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(pos) {
+        var scope, ast, nodes$$1, id, member, _ref15, decl, name, spec;
+
         return regeneratorRuntime.wrap(function _callee13$(_context13) {
           while (1) {
             switch (_context13.prev = _context13.next) {
@@ -35086,40 +35867,44 @@ var ModuleInterface = function () {
                 return this.resolvedScope();
 
               case 2:
-                _context13.next = 4;
-                return this.exports();
+                scope = _context13.sent;
+                ast = scope.node;
+                nodes$$1 = lively_ast.query.nodesAtIndex(ast, pos);
 
-              case 4:
-                exports = _context13.sent;
-                ex = exports.find(function (e) {
-                  return e.exported === name;
-                });
-
-                if (!ex.fromModule) {
-                  _context13.next = 17;
+                if (!(nodes$$1.length < 2)) {
+                  _context13.next = 7;
                   break;
                 }
 
-                imM = module$2(this.System, ex.fromModule, this.id);
-                decl = { decl: ex.node, id: ex.declId };
+                return _context13.abrupt("return", [null, null]);
 
-                decl.declModule = this;
-                _context13.t0 = [decl];
-                _context13.next = 13;
-                return imM.bindingPathForExport(ex.imported);
+              case 7:
+                id = nodes$$1[nodes$$1.length - 1], member = nodes$$1[nodes$$1.length - 2];
+
+                if (!(id.type != "Identifier" || member.type != "MemberExpression" || member.computed || member.object.type !== "Identifier")) {
+                  _context13.next = 10;
+                  break;
+                }
+
+                return _context13.abrupt("return", [null, null]);
+
+              case 10:
+                _ref15 = scope.resolvedRefMap.get(member.object) || {}, decl = _ref15.decl;
+
+                if (!(!decl || decl.type !== "ImportDeclaration")) {
+                  _context13.next = 13;
+                  break;
+                }
+
+                return _context13.abrupt("return", [null, null]);
 
               case 13:
-                _context13.t1 = _context13.sent;
-                return _context13.abrupt("return", _context13.t0.concat.call(_context13.t0, _context13.t1));
+                name = member.object.name, spec = decl.specifiers.find(function (s) {
+                  return s.local.name === name;
+                });
+                return _context13.abrupt("return", spec.type !== "ImportNamespaceSpecifier" ? [null, null] : [decl, spec.local, id.name]);
 
-              case 17:
-                return _context13.abrupt("return", this._resolveImportedDecl({
-                  decl: ex.decl,
-                  id: ex.declId,
-                  declModule: ex && ex.decl ? this : null
-                }));
-
-              case 18:
+              case 15:
               case "end":
                 return _context13.stop();
             }
@@ -35127,68 +35912,61 @@ var ModuleInterface = function () {
         }, _callee13, this);
       }));
 
-      function bindingPathForExport(_x9) {
-        return _ref15.apply(this, arguments);
+      function _importForNSRefAt(_x10) {
+        return _ref14.apply(this, arguments);
       }
 
-      return bindingPathForExport;
+      return _importForNSRefAt;
     }()
   }, {
-    key: "bindingPathForRefAt",
+    key: "_resolveImportedDecl",
     value: function () {
-      var _ref16 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(pos) {
-        var decl, _ref17, _ref18, imDecl, id, name, imM;
+      var _ref16 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(decl) {
+        var _decl$id, start, name, type, imports, im, imM;
 
         return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
             switch (_context14.prev = _context14.next) {
               case 0:
-                _context14.next = 2;
-                return this._localDeclForRefAt(pos);
-
-              case 2:
-                decl = _context14.sent;
-
-                if (!decl) {
-                  _context14.next = 7;
-                  break;
-                }
-
-                _context14.next = 6;
-                return this._resolveImportedDecl(decl);
-
-              case 6:
-                return _context14.abrupt("return", _context14.sent);
-
-              case 7:
-                _context14.next = 9;
-                return this._importForNSRefAt(pos);
-
-              case 9:
-                _ref17 = _context14.sent;
-                _ref18 = slicedToArray(_ref17, 3);
-                imDecl = _ref18[0];
-                id = _ref18[1];
-                name = _ref18[2];
-
-                if (imDecl) {
-                  _context14.next = 16;
+                if (decl) {
+                  _context14.next = 2;
                   break;
                 }
 
                 return _context14.abrupt("return", []);
 
-              case 16:
-                imM = module$2(this.System, imDecl.source.value, this.id);
-                _context14.t0 = [{ decl: imDecl, declModule: this, id: id }];
-                _context14.next = 20;
-                return imM.bindingPathForExport(name);
+              case 2:
+                _decl$id = decl.id;
+                start = _decl$id.start;
+                name = _decl$id.name;
+                type = _decl$id.type;
+                _context14.next = 8;
+                return this.imports();
 
-              case 20:
+              case 8:
+                imports = _context14.sent;
+                im = imports.find(function (i) {
+                  return i.local == name;
+                });
+
+                if (!im) {
+                  _context14.next = 17;
+                  break;
+                }
+
+                imM = module$2(this.System, im.fromModule, this.id);
+                _context14.t0 = [decl];
+                _context14.next = 15;
+                return imM.bindingPathForExport(im.imported);
+
+              case 15:
                 _context14.t1 = _context14.sent;
                 return _context14.abrupt("return", _context14.t0.concat.call(_context14.t0, _context14.t1));
 
-              case 22:
+              case 17:
+                return _context14.abrupt("return", [decl]);
+
+              case 18:
               case "end":
                 return _context14.stop();
             }
@@ -35196,29 +35974,59 @@ var ModuleInterface = function () {
         }, _callee14, this);
       }));
 
-      function bindingPathForRefAt(_x10) {
+      function _resolveImportedDecl(_x11) {
         return _ref16.apply(this, arguments);
       }
 
-      return bindingPathForRefAt;
+      return _resolveImportedDecl;
     }()
   }, {
-    key: "definitionForRefAt",
+    key: "bindingPathForExport",
     value: function () {
-      var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee15(pos) {
-        var path;
+      var _ref17 = asyncToGenerator(regeneratorRuntime.mark(function _callee15(name) {
+        var exports, ex, imM, decl;
         return regeneratorRuntime.wrap(function _callee15$(_context15) {
           while (1) {
             switch (_context15.prev = _context15.next) {
               case 0:
                 _context15.next = 2;
-                return this.bindingPathForRefAt(pos);
+                return this.resolvedScope();
 
               case 2:
-                path = _context15.sent;
-                return _context15.abrupt("return", path.length < 1 ? null : path[path.length - 1].decl);
+                _context15.next = 4;
+                return this.exports();
 
               case 4:
+                exports = _context15.sent;
+                ex = exports.find(function (e) {
+                  return e.exported === name;
+                });
+
+                if (!ex.fromModule) {
+                  _context15.next = 17;
+                  break;
+                }
+
+                imM = module$2(this.System, ex.fromModule, this.id);
+                decl = { decl: ex.node, id: ex.declId };
+
+                decl.declModule = this;
+                _context15.t0 = [decl];
+                _context15.next = 13;
+                return imM.bindingPathForExport(ex.imported);
+
+              case 13:
+                _context15.t1 = _context15.sent;
+                return _context15.abrupt("return", _context15.t0.concat.call(_context15.t0, _context15.t1));
+
+              case 17:
+                return _context15.abrupt("return", this._resolveImportedDecl({
+                  decl: ex.decl,
+                  id: ex.declId,
+                  declModule: ex && ex.decl ? this : null
+                }));
+
+              case 18:
               case "end":
                 return _context15.stop();
             }
@@ -35226,8 +36034,107 @@ var ModuleInterface = function () {
         }, _callee15, this);
       }));
 
-      function definitionForRefAt(_x11) {
-        return _ref19.apply(this, arguments);
+      function bindingPathForExport(_x12) {
+        return _ref17.apply(this, arguments);
+      }
+
+      return bindingPathForExport;
+    }()
+  }, {
+    key: "bindingPathForRefAt",
+    value: function () {
+      var _ref18 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(pos) {
+        var decl, _ref19, _ref20, imDecl, id, name, imM;
+
+        return regeneratorRuntime.wrap(function _callee16$(_context16) {
+          while (1) {
+            switch (_context16.prev = _context16.next) {
+              case 0:
+                _context16.next = 2;
+                return this._localDeclForRefAt(pos);
+
+              case 2:
+                decl = _context16.sent;
+
+                if (!decl) {
+                  _context16.next = 7;
+                  break;
+                }
+
+                _context16.next = 6;
+                return this._resolveImportedDecl(decl);
+
+              case 6:
+                return _context16.abrupt("return", _context16.sent);
+
+              case 7:
+                _context16.next = 9;
+                return this._importForNSRefAt(pos);
+
+              case 9:
+                _ref19 = _context16.sent;
+                _ref20 = slicedToArray(_ref19, 3);
+                imDecl = _ref20[0];
+                id = _ref20[1];
+                name = _ref20[2];
+
+                if (imDecl) {
+                  _context16.next = 16;
+                  break;
+                }
+
+                return _context16.abrupt("return", []);
+
+              case 16:
+                imM = module$2(this.System, imDecl.source.value, this.id);
+                _context16.t0 = [{ decl: imDecl, declModule: this, id: id }];
+                _context16.next = 20;
+                return imM.bindingPathForExport(name);
+
+              case 20:
+                _context16.t1 = _context16.sent;
+                return _context16.abrupt("return", _context16.t0.concat.call(_context16.t0, _context16.t1));
+
+              case 22:
+              case "end":
+                return _context16.stop();
+            }
+          }
+        }, _callee16, this);
+      }));
+
+      function bindingPathForRefAt(_x13) {
+        return _ref18.apply(this, arguments);
+      }
+
+      return bindingPathForRefAt;
+    }()
+  }, {
+    key: "definitionForRefAt",
+    value: function () {
+      var _ref21 = asyncToGenerator(regeneratorRuntime.mark(function _callee17(pos) {
+        var path;
+        return regeneratorRuntime.wrap(function _callee17$(_context17) {
+          while (1) {
+            switch (_context17.prev = _context17.next) {
+              case 0:
+                _context17.next = 2;
+                return this.bindingPathForRefAt(pos);
+
+              case 2:
+                path = _context17.sent;
+                return _context17.abrupt("return", path.length < 1 ? null : path[path.length - 1].decl);
+
+              case 4:
+              case "end":
+                return _context17.stop();
+            }
+          }
+        }, _callee17, this);
+      }));
+
+      function definitionForRefAt(_x14) {
+        return _ref21.apply(this, arguments);
       }
 
       return definitionForRefAt;
@@ -35281,14 +36188,14 @@ var ModuleInterface = function () {
   }, {
     key: "search",
     value: function () {
-      var _ref20 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(searchStr, options) {
+      var _ref22 = asyncToGenerator(regeneratorRuntime.mark(function _callee18(searchStr, options) {
         var _this11 = this;
 
         var src, re, flags, match, res, i, j, line, lineStart, _res$j, idx, length, lineEnd, p;
 
-        return regeneratorRuntime.wrap(function _callee16$(_context16) {
+        return regeneratorRuntime.wrap(function _callee18$(_context18) {
           while (1) {
-            switch (_context16.prev = _context16.next) {
+            switch (_context18.prev = _context18.next) {
               case 0:
                 options = _extends({ excludedModules: [] }, options);
 
@@ -35298,18 +36205,18 @@ var ModuleInterface = function () {
                   if (typeof ex === "function") return ex(_this11.id);
                   return false;
                 })) {
-                  _context16.next = 3;
+                  _context18.next = 3;
                   break;
                 }
 
-                return _context16.abrupt("return", []);
+                return _context18.abrupt("return", []);
 
               case 3:
-                _context16.next = 5;
+                _context18.next = 5;
                 return this.source();
 
               case 5:
-                src = _context16.sent;
+                src = _context18.sent;
                 re = void 0;
 
                 if (searchStr instanceof RegExp) {
@@ -35330,7 +36237,7 @@ var ModuleInterface = function () {
 
               case 11:
                 if (!(i < src.length && j < res.length)) {
-                  _context16.next = 24;
+                  _context18.next = 24;
                   break;
                 }
 
@@ -35341,11 +36248,11 @@ var ModuleInterface = function () {
                 _res$j = slicedToArray(res[j], 2), idx = _res$j[0], length = _res$j[1];
 
                 if (!(i !== idx)) {
-                  _context16.next = 16;
+                  _context18.next = 16;
                   break;
                 }
 
-                return _context16.abrupt("continue", 21);
+                return _context18.abrupt("continue", 21);
 
               case 16:
                 lineEnd = src.slice(lineStart).indexOf("\n");
@@ -35366,22 +36273,22 @@ var ModuleInterface = function () {
 
               case 21:
                 i++;
-                _context16.next = 11;
+                _context18.next = 11;
                 break;
 
               case 24:
-                return _context16.abrupt("return", res);
+                return _context18.abrupt("return", res);
 
               case 25:
               case "end":
-                return _context16.stop();
+                return _context18.stop();
             }
           }
-        }, _callee16, this);
+        }, _callee18, this);
       }));
 
-      function search(_x12, _x13) {
-        return _ref20.apply(this, arguments);
+      function search(_x15, _x16) {
+        return _ref22.apply(this, arguments);
       }
 
       return search;
