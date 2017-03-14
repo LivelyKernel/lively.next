@@ -10,21 +10,22 @@ import { connect } from 'lively.bindings';
 
 export class AbstractPrompt extends Morph {
 
+  static get properties() {
+    return {
+      fill: {defaultValue: Color.black.withA(0.6)},
+      extent: {defaultValue: pt(300,80)},
+      borderRadius: {defaultValue: 5},
+      dropShadow: {initialize() { this.dopShadow = true; }},
+
+      _isActive: {defaultValue: false},
+      autoRemove: {defaultValue: true},
+      answer: {defaultValue: null, derived: true},
+    }
+  }
+
   constructor(props = {}) {
-    super({
-      fill: Color.black.withA(0.6),
-      extent: pt(300,80),
-      borderRadius: 5,
-      dropShadow: true,
-      ...obj.dissoc(props, ["label", "autoRemove", "commands", "keybindings"])});
-
+    super(obj.dissoc(props, ["label", "commands", "keybindings"]));
     this.build(props);
-    this.state = {
-      answer: null,
-      isActive: false,
-      autoRemove: props.hasOwnProperty("autoRemove") ? props.autoRemove : true
-    };
-
     if (props.commands) this.addCommands(props.commands);
     if (props.keybindings) this.addKeyBindings(props.keybindings);
   }
@@ -35,20 +36,20 @@ export class AbstractPrompt extends Morph {
   get label() { return this.getSubmorphNamed("label").textString; }
   set label(label) { this.getSubmorphNamed("label").textString = label; }
 
-  resolve(arg) { this.state.answer.resolve(arg); }
-  reject(reason) { this.state.answer.resolve(undefined); }
+  resolve(arg) { this.answer.resolve(arg); }
+  reject(reason) { this.answer.resolve(undefined); }
 
   async activate() {
     this.focus();
-    this.state.answer = promise.deferred();
-    this.state.isActive = true;
-    promise.finally(this.state.answer.promise, () => this.state.isActive = false);
-    if (this.state.autoRemove)
-      promise.finally(this.state.answer.promise, () => this.fadeOut(500));
-    return this.state.answer.promise;
+    this.answer = promise.deferred();
+    this._isActive = true;
+    promise.finally(this.answer.promise, () => this._isActive = false);
+    if (this.autoRemove)
+      promise.finally(this.answer.promise, () => this.fadeOut(500));
+    return this.answer.promise;
   }
 
-  isActive() { return !!this.world() && this.state.isActive; }
+  isActive() { return !!this.world() && this._isActive; }
 
   build() { throw new Error("Not yet implemented"); }
   applyLayout() { throw new Error("Not yet implemented"); }
@@ -469,11 +470,11 @@ export class ListPrompt extends AbstractPrompt {
     var answer = this.get("list") instanceof FilterableList ?
       this.get("list").acceptInput() :
       {selected: this.get("list").selections, status: "accepted"};
-    return this.state.answer.resolve(answer);
+    return this.answer.resolve(answer);
   }
 
   reject() {
-    return this.state.answer.resolve({
+    return this.answer.resolve({
       prompt: this, selected: [],
       filtered: [], status: "canceled"
     });
@@ -556,8 +557,8 @@ export class EditListPrompt extends ListPrompt {
 
   resolve() {
     var {values: list, selections} = this.get("list");
-    return this.state.answer.resolve({list, selections});
+    return this.answer.resolve({list, selections});
   }
 
-  reject() { return this.state.answer.resolve({list: [], selections: [], status: "canceled"}); }
+  reject() { return this.answer.resolve({list: [], selections: [], status: "canceled"}); }
 }
