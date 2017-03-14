@@ -110,7 +110,7 @@ export default class Resource {
   }
 
   withRelativePartsResolved() {
-    var path = this.path(),
+    let path = this.path(),
         result = path;
     // /foo/../bar --> /bar
     do {
@@ -154,7 +154,9 @@ export default class Resource {
   }
 
   join(path) {
-    return this.newResource(this.url.replace(slashEndRe, "") + "/" + path.replace(slashStartRe, ""));
+    let url = this.url;
+    if (!this.isRoot()) url = url.replace(slashEndRe, "") + "/";
+    return this.newResource(url + path.replace(slashStartRe, ""));
   }
 
   withPath(path) {

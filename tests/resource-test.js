@@ -255,6 +255,8 @@ describe("url operations", () => {
   
     expect(resource('http://localhost/foo/./bar').withRelativePartsResolved().url)
       .equals('http://localhost/foo/bar');
+      
+    expect(resource('file:///z/y/../x').withRelativePartsResolved().url).equals('file:///z/x');
   });
 
   it("relative path from-to", () => {
