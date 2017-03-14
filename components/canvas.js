@@ -33,7 +33,6 @@ export class Canvas extends Morph {
      }
   }
 
-  //get canvasBounds() { return this._canvas && this.canvasExtent.extentAsRectangle(); }
   get context() { return this._canvas && this._canvas.getContext("2d"); }
   set _canvas(new_canvas) {
     const old_canvas = this.__canvas__;
@@ -41,7 +40,7 @@ export class Canvas extends Morph {
     if (this.__canvas_init__) {
       this.__canvas_init__(new_canvas);
       delete this.__canvas_init__;
-    } else if (old_canvas && old_canvas !== new_canvas) {
+    } else if (this.preserveContents && old_canvas && old_canvas !== new_canvas) {
       new_canvas.getContext("2d").drawImage(old_canvas, 0, 0);
     }
   }
@@ -54,8 +53,8 @@ export class Canvas extends Morph {
 
   onExtentChanged() {
     if (this.preserveContents) {
-      const {x, y} = this.canvasExtent,
-          contents = this.context.getImageData(0, 0, x, y);
+      const {width: w, height: h} = this._canvas;
+      const contents = this.context.getImageData(0, 0, w, h);
       this.__canvas_init__ = () => {
         this.context.putImageData(contents, 0, 0);
       }
@@ -65,15 +64,15 @@ export class Canvas extends Morph {
   clear(color) {
     const ctx = this.context;
     if (ctx) {
-        const {x, y} = this.canvasExtent;
+        const {width: w, height: h} = this._canvas;
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         if (color) {
           if (color.toCSSString) color = color.toCSSString();
           ctx.fillStyle = color;
-          ctx.fillRect(0, 0, x, y);
+          ctx.fillRect(0, 0, w, h);
         } else {
-          ctx.clearRect(0, 0, x, y);
+          ctx.clearRect(0, 0, w, h);
         }
         ctx.restore();
     }
