@@ -264,13 +264,12 @@ describe("package loading", function() {
       expect(S.get(newURL + "/package.json")).containSubset({main: "entry-a.js", name: "some-project"});
     });
 
-    it("renameTo changes package name and address", async () => {
+    it.only("renameTo changes package name and address", async () => {
       await getPackage(S, project1aDir).register();
       await S.import("some-project");
       let p = getPackage(S, "some-project"),
           newURL = testDir + "some-project-renamed",
           newP = await p.rename("some-project-renamed");
-
       expect(newP).equals(getPackage(S, newURL), "getPAckage not working with renamed package");
       expect(newP.name).equals("some-project-renamed");
       expect(await resource(project1aDir).exists()).equals(false, "original project dir still exists");
