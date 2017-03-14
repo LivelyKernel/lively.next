@@ -204,14 +204,3 @@ export var toJsIdentifier = (function() {
   }
 
 })();
-
-export const setPrototypeOf = typeof Object.setPrototypeOf === "function" ?
-  (obj, proto) => Object.setPrototypeOf(obj, proto) :
-  (obj, proto) => obj.__proto__ = proto;
-
-export function adoptObject(object, newClass) {
-  // change the class of object to newClass
-  if (newClass === object.constructor) return;
-  object.constructor = newClass;
-  setPrototypeOf(object, newClass.prototype)
-}

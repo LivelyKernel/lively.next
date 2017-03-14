@@ -5,9 +5,10 @@ import { runEval } from "lively.vm";
 import { RuntimeSourceDescriptor } from "./source-descriptors.js";
 import { registerPackage, importPackage, getPackage } from "lively.modules/src/packages.js";
 import module from "lively.modules/src/module.js";
-import { toJsIdentifier, adoptObject } from "./util.js";
+import { toJsIdentifier } from "./util.js";
 import { ImportInjector } from "lively.modules/src/import-modification.js";
 import ExportLookup from "lively.modules/src/export-lookup.js";
+import { adoptObject } from "./runtime.js";
 
 const objectPackageSym = Symbol.for("lively-object-package-data"),
       // defaultBaseURL = System.normalizeSync("lively.morphic/parts/packages/"),

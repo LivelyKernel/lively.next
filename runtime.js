@@ -1,6 +1,5 @@
 import { arr, obj } from "lively.lang";
 import { prepareClassForManagedPropertiesAfterCreation } from "./properties.js";
-import { setPrototypeOf } from "./util.js";
 
 export const initializeSymbol       = Symbol.for("lively-instance-initialize"),
              instanceRestorerSymbol = Symbol.for("lively-instance-restorer"),
@@ -20,6 +19,17 @@ const defaultPropertyDescriptorForValue = {
   enumerable: false,
   configurable: true,
   writable: true
+}
+
+export const setPrototypeOf = typeof Object.setPrototypeOf === "function" ?
+  (obj, proto) => Object.setPrototypeOf(obj, proto) :
+  (obj, proto) => obj.__proto__ = proto;
+
+export function adoptObject(object, newClass) {
+  // change the class of object to newClass
+  if (newClass === object.constructor) return;
+  object.constructor = newClass;
+  setPrototypeOf(object, newClass.prototype)
 }
 
 export function setSuperclass(klass, superclassOrSpec) {
