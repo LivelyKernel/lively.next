@@ -114,6 +114,11 @@ describe('object', function() {
     it("works with objects nested in arrays", function() {
       expect(equals([{}], [{}])).to.equal(true);
     });
+    
+    it("null equality", function() {
+      expect(equals(0, null)).equals(false, `0 and null`);
+      expect(equals({ foo: 0 }, { foo: null })).equals(false, `{ foo: 0 }, { foo: null }`);
+    });
 
   });
 

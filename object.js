@@ -77,8 +77,7 @@ function isEmpty(object) {
 function equals(a, b) {
   // Is object `a` structurally equivalent to object `b`? Deep comparison.
   if (a === b) return true;
-  if (!a && !b) return true;
-  if (!a || !b) return false;
+  if (!a || !b) return a == b;
   if (Array.isArray(a)) return arrayDeepEquals(a, b);
   switch (a.constructor) {
     case String:
