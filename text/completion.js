@@ -98,7 +98,7 @@ export class CompletionController {
         globalCursorBounds = m.getGlobalTransform().transformRectToRect(cursorBounds);
     return globalCursorBounds.topLeft()
       .addXY(m.padding.left()-2, -m.padding.top())
-      .addXY(0, -m.scroll.y)
+      .addXY(-m.scroll.x, -m.scroll.y)
       .addPt(pt(m.borderWidth-2, m.borderWidth-2));
   }
 
