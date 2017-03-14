@@ -122,6 +122,7 @@ export class ChangeManager {
 
   reset() {
     this.changes = [];
+    this.changeRecordedListeners = [];
     this.revision = 0;
 
     this.changeRecordersPerMorph = new WeakMap();
@@ -214,24 +215,16 @@ export class ChangeManager {
   }
 
   addChangeListener(listenFn) {
-    connect(this, 'changeRecorded', listenFn, 'call', {
-      updater: ($upd, change) => $upd(null, change)});
+    arr.pushIfNotIncluded(this.changeRecordedListeners, listenFn);
   }
 
   removeChangeListener(listenFn) {
-    disconnect(this, 'changeRecorded', listenFn, 'call');
+    arr.remove(this.changeRecordedListeners, listenFn);
   }
 
   informChangeListeners(change) {
     // optimized version if lively.binings.signal
-    var conns = this.attributeConnections;
-    if (!conns) return;
-    conns = conns.slice();
-    for (var i = 0; i < conns.length; i++) {
-      var c = conns[i];
-      if (c.sourceAttrName === "changeRecorded")
-        c.update(change);
-    }
+    this.changeRecordedListeners.forEach(fn => fn(change));
   }
 
   recordChangesStart(optFilter, optName = "") {
