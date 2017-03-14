@@ -1,5 +1,5 @@
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -658,9 +658,9 @@
   typeof self === "object" ? self : this
 );
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.lang/dist/lively.lang.js
 
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -8290,9 +8290,9 @@ exports.uninstallGlobals = uninstallGlobals;
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.lang;
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.lang/dist/lively.lang.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.notifications/dist/lively.notifications.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -8450,9 +8450,9 @@ exports.stopLogging = stopLogging;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.notifications/dist/lively.notifications.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.ast/dist/lively.ast.js
 
 (function() {
   var module = undefined, require = undefined;
@@ -23385,9 +23385,9 @@ exports.fuzzyParse = fuzzyParse;
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.ast;
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.ast/dist/lively.ast.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.classes/dist/lively.classes.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -24407,9 +24407,9 @@ exports.classToFunctionTransform = classToFunctionTransform;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.classes/dist/lively.classes.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.source-transform/dist/lively.source-transform.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -25359,9 +25359,9 @@ exports.stringifyFunctionWithoutToplevelRecorder = stringifyFunctionWithoutTople
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.sourceTransform;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.source-transform/dist/lively.source-transform.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.vm/dist/lively.vm.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -27220,9 +27220,9 @@ exports.evalCodeTransformOfSystemRegisterSetters = evalCodeTransformOfSystemRegi
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.vm/dist/lively.vm.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.resources/dist/lively.resources_no-deps.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -27537,7 +27537,9 @@ var Resource = function () {
       result = result.replace(/(^|[^:])[\/]+/g, '$1/');
       // foo/./bar --> foo/bar
       result = result.replace(/\/\.\//g, '/');
-      return result === this.path() ? this : this.root().join(result);
+      if (result === this.path()) return this;
+      if (result.startsWith("/")) result = result.slice(1);
+      return this.newResource(this.root().url + result);
     }
   }, {
     key: "relativePathFrom",
@@ -27568,9 +27570,7 @@ var Resource = function () {
   }, {
     key: "join",
     value: function join(path) {
-      var url = this.url;
-      if (!this.isRoot()) url = url.replace(slashEndRe, "") + "/";
-      return this.newResource(url + path.replace(slashStartRe, ""));
+      return this.newResource(this.url.replace(slashEndRe, "") + "/" + path.replace(slashStartRe, ""));
     }
   }, {
     key: "withPath",
@@ -28387,20 +28387,16 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "dirList",
     value: function () {
-      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
-        var _this2 = this;
-
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
         var depth = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
         var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-        var exclude, resources, self, _ret;
-
-        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+        var exclude, resources, self, subResources, subCollections;
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
-            switch (_context8.prev = _context8.next) {
+            switch (_context7.prev = _context7.next) {
               case 0:
                 if (!(typeof depth !== "number" && depth !== 'infinity')) {
-                  _context8.next = 2;
+                  _context7.next = 2;
                   break;
                 }
 
@@ -28413,72 +28409,46 @@ var WebDAVResource = function (_Resource) {
                 if (depth <= 0) depth = 1;
 
                 if (!(depth === 1)) {
-                  _context8.next = 13;
+                  _context7.next = 13;
                   break;
                 }
 
-                _context8.next = 7;
+                _context7.next = 7;
                 return this._propfind();
 
               case 7:
-                resources = _context8.sent;
+                resources = _context7.sent;
                 self = resources.shift();
 
                 if (exclude) resources = applyExclude(exclude, resources);
-                return _context8.abrupt("return", resources);
+                return _context7.abrupt("return", resources);
 
               case 13:
-                return _context8.delegateYield(regeneratorRuntime.mark(function _callee7() {
-                  var subResources, subCollections;
-                  return regeneratorRuntime.wrap(function _callee7$(_context7) {
-                    while (1) {
-                      switch (_context7.prev = _context7.next) {
-                        case 0:
-                          _context7.next = 2;
-                          return _this2.dirList(1, opts);
+                _context7.next = 15;
+                return this.dirList(1, opts);
 
-                        case 2:
-                          subResources = _context7.sent;
-                          subCollections = subResources.filter(function (ea) {
-                            return ea.isDirectory();
-                          });
-                          return _context7.abrupt("return", {
-                            v: Promise.all(subCollections.map(function (col) {
-                              return col.dirList(typeof depth === "number" ? depth - 1 : depth, opts);
-                            })).then(function (recursiveResult) {
-                              return recursiveResult.reduce(function (all, ea) {
-                                return all.concat(ea);
-                              }, subResources);
-                            })
-                          });
+              case 15:
+                subResources = _context7.sent;
+                subCollections = subResources.filter(function (ea) {
+                  return ea.isDirectory();
+                });
+                return _context7.abrupt("return", Promise.all(subCollections.map(function (col) {
+                  return col.dirList(typeof depth === "number" ? depth - 1 : depth, opts);
+                })).then(function (recursiveResult) {
+                  return recursiveResult.reduce(function (all, ea) {
+                    return all.concat(ea);
+                  }, subResources);
+                }));
 
-                        case 5:
-                        case "end":
-                          return _context7.stop();
-                      }
-                    }
-                  }, _callee7, _this2);
-                })(), "t0", 14);
-
-              case 14:
-                _ret = _context8.t0;
-
-                if (!((typeof _ret === "undefined" ? "undefined" : _typeof(_ret)) === "object")) {
-                  _context8.next = 17;
-                  break;
-                }
-
-                return _context8.abrupt("return", _ret.v);
-
-              case 17:
+              case 18:
               case "end":
-                return _context8.stop();
+                return _context7.stop();
             }
           }
-        }, _callee8, this);
+        }, _callee7, this);
       }));
 
-      function dirList(_x6, _x7) {
+      function dirList() {
         return _ref7.apply(this, arguments);
       }
 
@@ -28487,28 +28457,28 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "readProperties",
     value: function () {
-      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(opts) {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(opts) {
         var props;
-        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
-            switch (_context9.prev = _context9.next) {
+            switch (_context8.prev = _context8.next) {
               case 0:
-                _context9.next = 2;
+                _context8.next = 2;
                 return this._propfind();
 
               case 2:
-                props = _context9.sent[0];
-                return _context9.abrupt("return", this.assignProperties(props));
+                props = _context8.sent[0];
+                return _context8.abrupt("return", this.assignProperties(props));
 
               case 4:
               case "end":
-                return _context9.stop();
+                return _context8.stop();
             }
           }
-        }, _callee9, this);
+        }, _callee8, this);
       }));
 
-      function readProperties(_x10) {
+      function readProperties(_x8) {
         return _ref8.apply(this, arguments);
       }
 
@@ -28841,7 +28811,7 @@ var NodeJSFileResource = function (_Resource) {
         }, _callee6, this, [[9, 28, 32, 40], [33,, 35, 39]]);
       }));
 
-      function dirList(_x3, _x4) {
+      function dirList() {
         return _ref6.apply(this, arguments);
       }
 
@@ -29017,7 +28987,7 @@ var NodeJSFileResource = function (_Resource) {
         }, _callee9, this);
       }));
 
-      function readProperties(_x7) {
+      function readProperties(_x5) {
         return _ref9.apply(this, arguments);
       }
 
@@ -29489,9 +29459,9 @@ exports.unregisterExtension = unregisterExtension;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.resources;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.resources/dist/lively.resources_no-deps.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -29698,12 +29668,12 @@ exports.unregisterExtension = unregisterExtension;
   }
 
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
-// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.modules/node_modules/semver/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -30908,7 +30878,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.modules/node_modules/semver/semver.js
 semver = exports;
 })({}, {});
 
