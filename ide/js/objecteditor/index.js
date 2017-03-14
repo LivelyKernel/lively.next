@@ -11,6 +11,7 @@ import ObjectPackage, { addScript, isObjectClass, isObjectClassFor } from "livel
 import { chooseUnusedImports, interactivelyChooseImports } from "../import-helper.js";
 import { module } from "lively.modules";
 import { interactivelySaveObjectToPartsBinFolder } from "../../../partsbin.js";
+import { emit } from "lively.notifications/index.js";
 
 
 // var oe = ObjectEditor.open({target: this})
@@ -172,6 +173,7 @@ export class ObjectEditor extends Morph {
     super({...props, submorphs: this.build()});
     this.reset();
     if (props.target) this.target = props.target;
+    this.ui.forkPackageButton.disable();
   }
 
   get ui() {
@@ -780,6 +782,21 @@ localStorage["oe helper"] = JSON.stringify(store);
     }
   }
 
+  async interactivelyCreateObjectPackage() {
+    try {
+      let input = await this.world().prompt(`Creating an package definition for ${this.target}.\nPlease enter a name for the package:`,
+                    {historyId: "object-package-creation-name-hist"});
+      // if (!input) return;
+      // let input = "newMethod",
+      //     {methodName} = await addScript(this.target, "function() {}", input);
+      // await this.refresh();
+      // await this.selectMethod(this.target.constructor, {name: methodName}, true, true);
+      // this.focus();
+    } catch (e) {
+      this.showError(e);
+    }
+  }
+
   async interactivelyRemoveMethod() {
     this.setStatusMessage("Not yet implemented")
   }
@@ -1047,7 +1064,8 @@ localStorage["oe helper"] = JSON.stringify(store);
         name: "publish target to PartsBin",
         exec: async ed => {
           try {
-            var {partName} = await interactivelySaveObjectToPartsBinFolder(ed.target);
+            let {partName, url} = await interactivelySaveObjectToPartsBinFolder(ed.target);
+            emit("lively.partsbin/partpublished", {partName, url});
             this.setStatusMessage(`Published ${this.target} as ${partName}`, Color.green);
           } catch (e) {
             if (e === "canceled") this.setStatusMessage("canceled");
