@@ -101,7 +101,7 @@ export default class InputLine extends Text {
       },
 
       label: {
-        derived: true, after: ["textString"], defaultValue: "",
+        after: ["textString", "textAttributes"], defaultValue: "",
         set(value) {
           disconnect(this, 'textChange', this, 'onInputChanged');
           this.textString = value + this.input;
@@ -113,12 +113,12 @@ export default class InputLine extends Text {
       input: {
         after: ["label"], derived: true,
         get() {
-          var input = this.textString;
-          if (this.label && input.startsWith(this.label))
-            input = input.slice(this.label.length);
-          return input;
+          return this.textString.slice(this.label.length);
         },
-        set(val) { this.textString = this.label + (val ? String(val) : ""); }
+        set(val) {
+          this.textString = this.label + (val ? String(val) : "");
+          this.updatePlaceholder();
+        }
       },
 
       placeholder: {
@@ -142,23 +142,9 @@ export default class InputLine extends Text {
                 reactsToPointer: false,
                 fontColor: Color.gray
               }));
-              placeholder.onInputChange = () => {
-                placeholder.visible = !this.input.length;
-              }
-              placeholder.onLabelChange = () => {
-                let fm = this.env.fontMetric,
-                    style = this.defaultTextStyle,
-                    w = fm.sizeFor(style, this.label || "").width;
-                placeholder.leftCenter = this.leftCenter.addXY(w + this.padding.left(), 0);
-                if (this.wdith < placeholder.right)
-                  this.wdith = placeholder.right;
-              }
-              connect(this, "inputChanged", placeholder, "onInputChange");
-              connect(this, "label", placeholder, "onLabelChange")
-              placeholder.onInputChange();
-              placeholder.onLabelChange();
-            }
+            } else placeholder.value = val;
           }
+          this.updatePlaceholder();
         }
       }
     }
@@ -168,6 +154,7 @@ export default class InputLine extends Text {
     super(props);
     connect(this, 'textChange', this, 'onInputChanged');
     connect(this, 'selectionChange', this, 'fixCursor');
+    this.updatePlaceholder();
   }
 
   get isInputLine() { return true; }
@@ -195,6 +182,23 @@ export default class InputLine extends Text {
   focus() {
     this.fixCursor();
     return super.focus();
+  }
+
+  updatePlaceholder() {
+    let placeholder = this.getSubmorphNamed("placeholder");
+    if (!placeholder) return;
+    if (this.input.length) {
+      placeholder.visible = false;
+      return;
+    }
+    placeholder.visible = true;
+    placeholder.height = this.height;
+    placeholder.padding = this.padding;
+    placeholder.defaultTextStyle = this.defaultTextStyle;
+    if (this.label.length)
+      placeholder.leftCenter = this.textBounds().rightCenter().addXY(0, this.borderWidth);
+    else
+      placeholder.leftCenter = pt(0, this.height/2);
   }
 
   fixCursor() {
