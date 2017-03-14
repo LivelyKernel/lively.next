@@ -343,9 +343,7 @@ var Resource = function () {
   }, {
     key: "join",
     value: function join(path) {
-      var url = this.url;
-      if (!this.isRoot()) url = url.replace(slashEndRe, "") + "/";
-      return this.newResource(url + path.replace(slashStartRe, ""));
+      return this.newResource(this.url.replace(slashEndRe, "") + "/" + path.replace(slashStartRe, ""));
     }
   }, {
     key: "withPath",
