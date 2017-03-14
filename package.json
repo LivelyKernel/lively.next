@@ -1,6 +1,6 @@
 {
   "name": "lively.classes",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "EcmaScript 6 classes for live development",
   "main": "dist/lively.classes.js",
   "lively": {
