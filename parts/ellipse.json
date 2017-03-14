@@ -1,24 +1,32 @@
 {
-  "id": "Ellipse_3459978D_549D_4158_A332_398F09476B47",
+  "id": "Ellipse_9C768724_7195_4B01_95E9_C44717CB7B63",
   "snapshot": {
-    "Ellipse_3459978D_549D_4158_A332_398F09476B47": {
-      "rev": 218362,
+    "Ellipse_9C768724_7195_4B01_95E9_C44717CB7B63": {
+      "rev": 137241,
       "props": {
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 146.3
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.3,130.0)"
         },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 130
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(52,152,219)"
         },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 130
+        "name": {
+          "key": "name",
+          "value": "ellipse"
         },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 146.3
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(122.9,552.5)"
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -28,25 +36,25 @@
             "morph"
           ]
         },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(21.0,488.0)"
-        },
-        "name": {
-          "key": "name",
-          "value": "ellipse"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(15,205,112)"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.3,130.0)"
-        },
         "submorphs": {
           "key": "submorphs",
           "value": []
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 146.3
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 130
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 130
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 146.3
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -68,6 +76,7 @@
       }
     }
   },
+  "requiredVersion": "~0.1",
   "packages": {},
-  "preview": "<div   draggable=\"false\" style=\"background: rgb(15, 205, 112); transform: translate(0px, 5.57075px) rotate(0deg) scale(0.683527, 0.683527); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 146.3px 130px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div>"
+  "preview": "<div id=\"\" class=\"Ellipse\" draggable=\"false\" style=\"background: rgb(52, 152, 219); transform: translate(0px, 5.57075px) rotate(0deg) scale(0.683527, 0.683527); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 146.3px 130px; box-shadow: none; opacity: 1; position: absolute; cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div>"
 }

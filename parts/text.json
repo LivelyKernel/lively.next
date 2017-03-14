@@ -565,7 +565,7 @@
   "packages": {
     "local://lively-object-modules/": {
       "E8C6C421-4AC5-4D5B-8468-89C51C7CD4D0": {
-        "package.json": "{\n  \"name\": \"E8C6C421-4AC5-4D5B-8468-89C51C7CD4D0\",\n  \"version\": \"0.1.0\"\n}",
+        "package.json": "{\n  \"name\": \"E8C6C421-4AC5-4D5B-8468-89C51C7CD4D0\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
         "index.js": "import { Text } from \"lively.morphic\";\n\nexport default class A_text_1 extends Text {\n  resete() {\n\n\n// No object-specific behavior exists yet for <Text - a text 1>\n// Use the \"+\" button to add new behaviors\nthis.document._textAttributes\nthis.document.textAttributes\nthis.textAttributes\nthis.document.textAndAttributes[0][1]\nthis.document.textAttributesChunkedByLine(0, 1, true)\nthis.document.textAndAttributes.map(([text, attrs]) => `\"${text}\"\\n${attrs.join(\"\\n\")}\\n`).join(\"\\n\")\nthis.document.lines.length\n\narr.flatmap(this.textAttributesChunkedByLine(0, maxRow, true), (chunked, row) => {\n      if (row === maxRow) newline = \"\";\n      return arr.toTuples(chunked, 3).map(\n        ([startCol, endCol, attrs]) =>\n          [(this.lines[row] + newline).slice(startCol, endCol), attrs]);\n    })\n\n\n\n  }\n}\n\n"
       }
     }

@@ -32358,11 +32358,11 @@
   "packages": {
     "local://lively-object-modules/": {
       "81CC1EB0-0DAA-4E35-8C37-8AA38968CAC4": {
-        "package.json": "{\n  \"name\": \"81CC1EB0-0DAA-4E35-8C37-8AA38968CAC4\",\n  \"version\": \"0.1.0\"\n}",
+        "package.json": "{\n  \"name\": \"81CC1EB0-0DAA-4E35-8C37-8AA38968CAC4\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
         "index.js": "import { Morph } from \"lively.morphic\";\nimport { connect, disconnectAll } from \"lively.bindings/index.js\";\n\nexport default class Discussion extends Morph {\n\n  reset() {\n    connect(this.get(\"comment-text\"), \"selectionChange\", this.get(\"comment-text\"), \"openRichTextControl\");\n  }\n\n  relayout() {\n    this.get('connect icon').bottomRight = this.innerBounds().bottomRight()\n  }\n  \n}\n\n\n"
       },
       "2553C5C1-1F44-4579-A797-1BABF0C573C0": {
-        "package.json": "{\n  \"name\": \"2553C5C1-1F44-4579-A797-1BABF0C573C0\",\n  \"version\": \"0.1.0\"\n}",
+        "package.json": "{\n  \"name\": \"2553C5C1-1F44-4579-A797-1BABF0C573C0\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
         "index.js": "import { Morph } from \"lively.morphic\";\nimport { connect } from \"lively.bindings/index.js\";\n\nexport default class Topic extends Morph {\n\n  async open() {\n    const title = this.get('title bar'),\n          backButton = this.get('back button');\n    title.layout.disable()\n    title.layout.col(0).width = 40;\n    title.layout.col(0).row(0).group.morph = backButton;\n    title.layout.enable({duration: 300})\n    backButton.animate({opacity: 1, visible: true, duration: 300});\n    await this.animate({\n      height: this.owner.height + 30,\n      duration: 300\n    })\n    this.clipMode = 'scroll';\n  }\n\n  async collapse() {\n    const title = this.get('title bar');\n    this.animate({\n      clipMode: 'hidden',\n      height: 42,\n      duration: 300\n    })\n    this.get('back button').animate({opacity: 0, visible: false, duration: 300});\n    title.layout.disable()\n    title.layout.col(0).width = 0;\n    title.layout.col(0).row(0).group.morph = null;\n    title.layout.enable({duration: 300})\n  }\n  \n}\n\n"
       }
     }

@@ -3280,7 +3280,7 @@
   "packages": {
     "local://lively-object-modules/": {
       "8A44B717-D49A-4BBE-8341-DDBCAB59BB70": {
-        "package.json": "{\n  \"name\": \"8A44B717-D49A-4BBE-8341-DDBCAB59BB70\",\n  \"version\": \"0.1.0\"\n}",
+        "package.json": "{\n  \"name\": \"8A44B717-D49A-4BBE-8341-DDBCAB59BB70\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
         "index.js": "import { Tree, TreeData } from \"lively.morphic/components/tree.js\";\n\nclass DummyTreeData extends TreeData {\n  display(node) { return node.name }\n  isCollapsed(node) { return node.isCollapsed }\n  collapse(node, bool) { node.isCollapsed = bool; }\n  getChildren(node) { return node.isLeaf ? null : node.isCollapsed ? [] : node.children }\n  isLeaf(node) { return node.isLeaf }\n}\n\n\nexport default class A_tree_2 extends Tree {\n  reset() {\n    this.treeData = new DummyTreeData({\n      name: \"root\",\n      isCollapsed: false,\n      isLeaf: false,\n      children: [\n        {name: \"child 1\", isLeaf: true},\n        {name: \"child 2\", isLeaf: false, isCollapsed: true, children: [{name: \"child 2 - 1\", isLeaf: true}]},\n        {name: \"child 3\", isLeaf: false,\n         isCollapsed: false,\n         children: [\n           {name: \"child 3 - 1\", isLeaf: true},\n           {name: \"child 3 - 2\", isLeaf: true}\n         ]},\n        {name: \"child 4\", isLeaf: true},\n      ]\n    })\n  }\n}\n\n"
       }
     }
