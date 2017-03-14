@@ -107,10 +107,15 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   }
 
   async resourcesOfPackage(packageOrAddress, exclude = [".git", "node_modules", ".module_cache"]) {
-    var url = packageOrAddress.address ? packageOrAddress.address : packageOrAddress,
-        p = modules.getPackage(url);
-    return (await p.resources(undefined, exclude))
-      .map(ea => Object.assign(ea, {package: ea.package.url}));
+    try {
+      var url = packageOrAddress.address ? packageOrAddress.address : packageOrAddress,
+          p = modules.getPackage(url);
+      return (await p.resources(undefined, exclude))
+              .map(ea => Object.assign(ea, {package: ea.package.url}))
+    } catch (e) {
+      console.warn(`resourcesOfPackage error for ${packageOrAddress}: ${e}`);
+      return [];
+    }
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
