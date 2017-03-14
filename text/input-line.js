@@ -4,7 +4,7 @@ import { obj, arr, num } from "lively.lang";
 import { Rectangle, Color, pt } from "lively.graphics";
 import { connect, signal, disconnect } from "lively.bindings"; // for makeInputLine
 import { Text } from "./morph.js"
-
+import { Range } from "./range.js";
 
 export default class InputLine extends Text {
 
@@ -217,7 +217,20 @@ export default class InputLine extends Text {
     this.clearOnInput && this.clear();
     signal(this, "inputAccepted", input);
   }
-  onInputChanged(change) { signal(this, "inputChanged", change); }
+  onInputChanged(change) {
+    signal(this, "inputChanged", change);
+    this.updatePlaceholder();
+  }
+
+  deleteText(range) {
+    range = range.isRange ? range : new Range(range);
+    if (range.isEmpty()) return;    
+    range = range.subtract({
+      start: {row: 0, column: 0},
+      end: {row: 0, column: this.label.length}
+    })[0];
+    return super.deleteText(range);
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // history
