@@ -34,10 +34,7 @@ export function setSuperclass(klass, superclassOrSpec) {
     klass[superclassSymbol] = superclass;
     klass.prototype = Object.create(superclass.prototype);
     klass.prototype.constructor = klass;
-    if (superclass !== Object)
-      Object.setPrototypeOf ?
-        Object.setPrototypeOf(klass, superclass) :
-        klass.__proto__ = superclass;
+    if (superclass !== Object) setPrototypeOf(klass, superclass);
   }
   return superclass
 }

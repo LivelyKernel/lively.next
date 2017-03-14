@@ -150,7 +150,6 @@ export var toJsIdentifier = (function() {
     "*":  "_asterisk_",
     "(":  "_leftparen_",
     ")":  "_rightparen_",
-    "-":  "_dash_",
     "+":  "_plus_",
     "=":  "_equals_",
     "{":  "_leftcurly_",
@@ -158,6 +157,7 @@ export var toJsIdentifier = (function() {
     "[":  "_leftsquare_",
     "]":  "_rightsquare_",
     "|":  "_pipe_",
+    "-":  "_dash_",
     "\\": "_backslash_",
     "\"": "_doublequote_",
     "'":  "_singlequote_",
@@ -169,7 +169,6 @@ export var toJsIdentifier = (function() {
     ".":  "_period_",
     "?":  "_questionmark_",
     "/":  "_forwardslash_",
-    " ":  "_",
     "\t": "_tab_",
     "\n": "_newline_",
     "\r": "_carriagereturn_"
@@ -189,9 +188,15 @@ export var toJsIdentifier = (function() {
   }
 
   var wrapper = text => text,
-      charWrapper = char => wrapper(illegalChars[char] || "ASCII_" + (char.charCodeAt(0)))
+      charWrapper = char => wrapper(illegalChars[char] || "ASCII_" + (char.charCodeAt(0))),
+      dedashRe = /([\s-]+.)/g;
+
+  function dedash(string) {
+    return string.replace(dedashRe, (_, m) => m[m.length-1].toUpperCase());
+  }
 
   return function toJsIdentifier(text) {
+    text = dedash(text);
     if ((keywords.indexOf(text)) >= 0) return wrapper(text);
     if (text.length === 0) return wrapper("_null_");
     return text.replace(/^\d/, n => wrapper(nums[n]))

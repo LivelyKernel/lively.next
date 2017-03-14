@@ -1,46 +1,41 @@
 import { string, Path, arr } from "lively.lang";
-import { parse, stringify, parseFunction } from "lively.ast";
+import { parse, isValidIdentifier, stringify, parseFunction } from "lively.ast";
 import { resource } from "lively.resources";
 import { runEval } from "lively.vm";
 import { RuntimeSourceDescriptor } from "./source-descriptors.js";
 import { registerPackage, importPackage, getPackage } from "lively.modules/src/packages.js";
 import module from "lively.modules/src/module.js";
-import { toJsIdentifier } from "./util.js";
+import { toJsIdentifier, adoptObject } from "./util.js";
 import { ImportInjector } from "lively.modules/src/import-modification.js";
 import ExportLookup from "lively.modules/src/export-lookup.js";
 
 const objectPackageSym = Symbol.for("lively-object-package-data"),
+      // defaultBaseURL = System.normalizeSync("lively.morphic/parts/packages/"),
       defaultBaseURL = "local://lively-object-modules",
       globalClasses = Object.keys(System.global).map(ea => {
-        var val = System.global[ea];
+        let val = System.global[ea];
         return typeof val === "function" && val.name && val;
       }).filter(Boolean);
 
 
-function getObjectPackageId(obj) {
-  return obj[objectPackageSym] ? obj[objectPackageSym].packageId : null;
-}
-
-function addNewPackageIdTo(obj) {
-  let packageId = string.newUUID(),
-      parentPackageId = null,
-      meta = obj[objectPackageSym];
-  if (!meta) meta = obj[objectPackageSym] = {};
-  else parentPackageId = meta.packageId;
-  Object.assign(meta, {packageId, parentPackageId});
-  return packageId;
+function normalizeOptions(options) {
+  options = { baseURL: defaultBaseURL, System: System, ...options };
+  options.baseURL = options.baseURL.replace(/\/$/, "");
+  return options;
 }
 
 export function addScript(object, funcSource, name, options = {}) {
-  return ObjectPackage.forObject(object, options).addScript(funcSource, name);
+  var p = ObjectPackage.lookupPackageForObject(object, options)
+  if (!p) throw new Error(`Object is not part of an object package: ${object}`);
+  return p.addScript(object, funcSource, name);
 }
 
-export function isObjectClassFor(klass, obj) {
-  let packageId = getObjectPackageId(obj);
-  if (!packageId) return false;
-  var modMeta = klass[Symbol.for("lively-module-meta")];
-  var packageName = modMeta && modMeta.package && modMeta.package.name || null;
-  return packageName === packageId;
+export function isObjectClass(klass, options) {
+  let {System} = normalizeOptions(options),
+      modMeta = klass[Symbol.for("lively-module-meta")],
+      pname = modMeta ? modMeta.package.name : null,
+      pkg = pname ? getPackage(System, pname) : null;
+  return pkg ? !!ObjectPackage.forSystemPackage(pkg) : false
 }
 
 export default class ObjectPackage {
@@ -49,44 +44,44 @@ export default class ObjectPackage {
     return this._packageStore || (this._packageStore = {});
   }
 
-  static forObject(object, options) {
-    var id = getObjectPackageId(object) || addNewPackageIdTo(object);
-    return this.withIdAndObject(id, object, options);
+  static lookupPackageForObject(object, options) {
+    return this.lookupPackageForClass(object.constructor, options);
   }
 
-  static fork(object, options) {
-    var id = addNewPackageIdTo(object);
-    return this.withIdAndObject(id, object, options);
+  static lookupPackageForClass(klass, options) {
+    let {System} = normalizeOptions(options),
+        modMeta = klass[Symbol.for("lively-module-meta")],
+        pname = modMeta ? modMeta.package.name : null,
+        pkg = pname ? getPackage(System, pname) : null;
+    return pkg ? ObjectPackage.forSystemPackage(pkg) : null;
   }
 
-  static withIdAndObject(id, object, options) {
+  static forSystemPackage(systemPackage) {
+    return this.packageStore[systemPackage.name];
+  }
+
+  static withId(id, options) {
     return this.packageStore[id]
-        || (this.packageStore[id] = new this(id, object, options));
+        || (this.packageStore[id] = new this(id, options));
   }
 
-  constructor(id, object, options) {
+  constructor(id, options) {
     this._id = id;
-    this._object = object;
-    this.options = this.normalizeOptions(options);
-  }
-
-  normalizeOptions(options) {
-    options = { baseURL: defaultBaseURL, System: System, ...options };
-    options.baseURL = options.baseURL.replace(/\/$/, "");
-    return options;
+    this.options = normalizeOptions(options);
   }
 
   get id() { return this._id; }
   get name() { return this.id; }
-  get object() { return this._object; }
   get System() { return this.options.System; }
   get baseURL() { return this.options.baseURL; }
   get packageURL() { return this.baseURL + `/${this.id}`; }
-  get config() { return {name: this.name, version: "0.1.0"}; }
+  get config() { return {name: this.name, version: "0.1.0", lively: {isObjectPackage: true}}; }
+  get systemPackage() { return getPackage(this.System, this.packageURL, true); }
   get objectModule() {
     return this._objectModule
         || (this._objectModule = new ObjectModule("index.js", this));
   }
+  get objectClass() { return this.objectModule.objectClass; }
   resource(path = "") { return resource(this.packageURL).join(path); }
 
   load() { return importPackage(this.System, this.packageURL); }
@@ -105,27 +100,69 @@ export default class ObjectPackage {
             content: JSON.stringify(this.config, null, 2)}];
 
     await Promise.all(dirs.map(ea => ea.resource.mkdir()));
-    await Promise.all(files.map(async ea => {
-      if (!(await ea.resource.exists())) await ea.resource.write(ea.content);
-    }));
+    await Promise.all(files.map(async ea =>
+      !(await ea.resource.exists()) && await ea.resource.write(ea.content)));
     await this.objectModule.ensureExistance();
 
-    await registerPackage(this.System, this.packageURL, this.config);
-    
-    console.log(`${this.packageURL} REGISTERED`)
+    let {System, packageURL, config} = this;
+    await registerPackage(System, packageURL, config);
+
+    console.log(`${this.packageURL} REGISTERED`);
 
     return this;
   }
 
-  async ensureObjectClass() {
+  async ensureObjectClass(superClass) {
     await this.ensureExistance();
-    return this.objectModule.ensureObjectClass();
+    return this.objectModule.ensureObjectClass(superClass);
   }
 
-  async addScript(funcSource, name) {
-    await this.ensureObjectClass();
-    return this.objectModule.addScript(funcSource, name);
+  async adoptObject(object) {
+    if (this.objectClass === object.constructor) return;
+    var klass = await this.ensureObjectClass(object.constructor);
+    adoptObject(object, klass);
   }
+
+  addScript(object, funcSource, name) {
+    return this.objectModule.addScript(object, funcSource, name);
+  }
+
+  remove() {
+    this.systemPackage.remove();
+    delete ObjectPackage.packageStore[this.id];
+    return this.resource().remove();
+  }
+
+  async renameObjectClass(newName, objects = []) {
+    let {objectClass: klass, System} = this;
+
+    if (!klass || klass.name === newName) return klass;
+
+    if (!isValidIdentifier(newName))
+      throw new Error(`${newName} is not a valid name for a class`);
+
+    let descr = RuntimeSourceDescriptor.for(klass, System),
+        {source, ast: {id: {start, end}}} = descr;
+
+    await descr.changeSource(source.slice(0, start) + newName + source.slice(end));
+
+    let newKlass = this.objectClass;
+    objects.forEach(ea => {
+      ea.constructor = newKlass;
+      ea.__proto__ = newKlass.prototype;
+    });
+
+    return newKlass;
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // forking
+  // fork(opts) {
+  //   var {System, baseURL, object} = this;
+  //   opts = {System, baseURL, ...opts};
+  //   var newPackage = ObjectPackage.forObject(object, opts);
+  //   return newPackage;
+  // }
 
 }
 
@@ -140,8 +177,11 @@ class ObjectModule {
   }
 
   get objectPackage() { return this._objectPackage; }
+  get objectClass() {
+    let m = this.systemModule;
+    return m.isLoaded() ? m.System.get(m.id).default : null;
+  }
   get moduleName() { return this._moduleName; }
-  get object() { return this.objectPackage.object; }
   get systemModule() { return module(this.System, this.url); }
   get System() { return this.objectPackage.System; }
   get resource() { return this.objectPackage.resource(this.moduleName); }
@@ -152,7 +192,7 @@ class ObjectModule {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  async ensureExistance() {  
+  async ensureExistance() {
     let r = this.resource;
     if (!(await r.exists())) {
       await r.write("'format esm';\n");
@@ -161,66 +201,48 @@ class ObjectModule {
     return this;
   }
 
-  async ensureObjectClass() {
-    var { object, System } = this;
+  ensureObjectClass(superClass) {
+    let klass = this.objectClass;
+    if (klass && klass.prototype.__proto__ === superClass.prototype)
+      return klass;
 
-    if (isObjectClassFor(object.constructor, object))
-      return object.constructor;
+    return Promise.resolve(this.ensureObjectClassSource(superClass)).then(ensured => {
+      let {source, moduleId, className, bindings} = ensured,
+          { System } = this,
+          mod = module(System, moduleId);
 
-    var {source, moduleId, className, bindings} = await this.ensureObjectClassSource(),
-        mod = module(System, moduleId);
+      if (bindings) for (var key in bindings) mod.define(key, bindings[key]);
 
-    if (className === object.constructor.name)
-      throw new Error(`Name of new object class equals name of existing class: ${className}`);
+      let evalResult = runEval(source, {sync: true, targetModule: moduleId, System});
+      if (evalResult.isError)
+        throw evalResult.value;
 
-    if (bindings) for (var key in bindings) mod.define(key, bindings[key]);
+      // load the class and change the objects inheritance
+      let klass = mod.recorder[className];
 
-    var evalResult = runEval(source, {sync: true, targetModule: moduleId, System});
-    if (evalResult.isError)
-      throw evalResult.value;
+      if (!klass)
+        throw new Error(`Failed to define class ${className} in ${moduleId}`);
 
-  // load the class and change the objects inheritance
-    let klass = mod.recorder[className];
-
-    if (!klass)
-      throw new Error(`Failed to define class ${className} in ${moduleId}`);
-
-    if (object.constructor !== klass) {
-      object.constructor = klass;
-      object.__proto__ = klass.prototype;
-    }
-
-    return klass;
+      return klass;
+    });
   }
 
-  ensureObjectClassSource() {
+  ensureObjectClassSource(superClass) {
     // If object is instance of a lively object class already then we just
     // need to access its module via a source descriptor
-    let klass = this.object.constructor;
-    if (!isObjectClassFor(klass, this.object))
-      return this.createDefaultClassDeclarationForObject();
-
-    var descr = RuntimeSourceDescriptor.for(klass, this.System);
-    return {
-      source: descr.source,
-      className: klass.name,
-      moduleId: descr.module.id,
-      bindings: null
-    };
+    return this.createDefaultClassDeclaration(superClass);
   }
 
-  async createDefaultClassDeclarationForObject() {
-    // ensure that there exist a local package definition with an object class
+  async createDefaultClassDeclaration(superClass = Object) {
+    // ensure that there exist an object package definition with an object class
 
-    let { System, object, systemModule: module } = this,
-        className = object.name ? string.capitalize(toJsIdentifier(object.name)) : "ObjectClass",
-        superClass = object.constructor,
+    let { System, systemModule: module, objectPackage } = this,
+        className = string.capitalize(toJsIdentifier(objectPackage.id)),
         superClassName = superClass.name,
         isAnonymousSuperclass = !superClassName,
         globalSuperClass = globalClasses.includes(superClass),
         source = "",
         bindings = null;
-
 
     if (isAnonymousSuperclass) {
       superClassName = "__anonymous_superclass__";
@@ -249,14 +271,43 @@ class ObjectModule {
     return {source, className, moduleId: this.url, bindings};
   }
 
+  // async renameObjectClass(object, newName) {
+  //   var { System } = this;
+  // 
+  //   if (!isObjectClassFor(object.constructor, object))
+  //     throw new Error(`cannot renameObjectClass b/c class of ${object} is not an object class`);
+  // 
+  //   let oldClass = await this.ensureObjectClass(),
+  //       descr = RuntimeSourceDescriptor.for(oldClass, this.System),
+  //       {source, ast, module} = descr,
+  //       classId = ast.id,
+  //       newSource = source.slice(0, ast.id.start) + newName + source.slice(ast.id.end);
+  // 
+  //   await descr.changeSource(newSource);
+  // 
+  //   let newClass = module.recorder[newName];
+  // 
+  //   if (!newClass)
+  //     throw new Error(`Failed to define class ${newName} in ${module.id}`);
+  // 
+  //   if (object.constructor !== newClass) {
+  //     object.constructor = newClass;
+  //     object.__proto__ = newClass.prototype;
+  //   }
+  // 
+  //   return newClass;
+  // }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // object scripting
 
-  async addScript(functionOrSource, name) {
-    let funcSource = typeof functionOrSource === "function" ?
+  async addScript(object, functionOrSource, name) {
+    let klass = object.constructor === this.objectClass ?
+                  object.constructor :
+                  await this.ensureObjectClass(object.constructor),
+        funcSource = typeof functionOrSource === "function" ?
           String(functionOrSource) : functionOrSource,
         parsedFunction = parseFunction(funcSource),
-        klass = await this.ensureObjectClass(),
         descr = RuntimeSourceDescriptor.for(klass, this.System);
 
     if (!name) name = Path("id.name").get(parsedFunction);
