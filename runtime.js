@@ -1,5 +1,6 @@
 import { arr, obj } from "lively.lang";
 import { prepareClassForManagedPropertiesAfterCreation } from "./properties.js";
+import { setPrototypeOf } from "./util.js";
 
 export const initializeSymbol       = Symbol.for("lively-instance-initialize"),
              instanceRestorerSymbol = Symbol.for("lively-instance-restorer"),
@@ -21,7 +22,7 @@ const defaultPropertyDescriptorForValue = {
   writable: true
 }
 
-function setSuperclass(klass, superclassOrSpec) {
+export function setSuperclass(klass, superclassOrSpec) {
   // define klass.prototype, klass.prototype[constructor], klass[superclassSymbol]
   var superclass = !superclassOrSpec ? Object :
     typeof superclassOrSpec === "function" ? superclassOrSpec :
