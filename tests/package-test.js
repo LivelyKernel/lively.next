@@ -150,13 +150,13 @@ describe("package loading", function() {
 
       expect(arr.pluck(p.modules(), "id"))
         .equals(["package.json", "entry-a.js", "other.js"].map(ea => project1aDir + ea), "import")
-      
+
       var innerDir = project1aDir + "my-projects/sub-project/",
           p2 = getPackage(S, innerDir);
       await p2.import();
       expect(arr.pluck(p2.modules(), "id"))
         .equals(["package.json", "index.js"].map(ea => innerDir + ea), "import inner")
-      
+
       expect(arr.pluck(p.modules(), "id"))
         .equals(["package.json", "entry-a.js", "other.js"].map(ea => project1aDir + ea), "after sub-project loaded")
     });
@@ -239,6 +239,64 @@ describe("package loading", function() {
       var packageCounts = arr.groupByKey(getPackages(S), "name").count();
       Object.keys(packageCounts).forEach(name =>
         expect(packageCounts[name]).equals(1, `package ${name} loaded mutiple times`));
+    });
+
+  });
+
+  describe("package copying and renaming", () => {
+
+    it("changeAddress renames resources and affects runtime", async () => {
+      await getPackage(S, project1aDir).register();
+      await S.import("some-project");
+      let p = getPackage(S, "some-project"),
+          newURL = testDir + "some-project-renamed",
+          newP = await p.changeAddress(newURL, null/*name*/, true/*delete old*/);
+
+      expect(newP).equals(getPackage(S, newURL), "getPAckage not working with renamed package");
+      expect(newP.name).equals("some-project");
+      expect(await resource(project1aDir).exists()).equals(false, "original project dir still exists");
+      expect(await resource(newURL).exists()).equals(true, "new project dir does not exist");
+      expect(await resource(newURL + "/other.js").exists()).equals(true, "other.js does not exist");
+      expect(await resource(newURL + "/entry-a.js").exists()).equals(true, "entry-a.js does not exist");
+      expect(await resource(newURL + "/package.json").exists()).equals(true, "package.json does not exist");
+
+      expect(S.get(newURL + "/entry-a.js")).deep.equals({version: "a",x: 2});
+      expect(S.get(newURL + "/package.json")).containSubset({main: "entry-a.js", name: "some-project"});
+    });
+
+    it("renameTo changes package name and address", async () => {
+      await getPackage(S, project1aDir).register();
+      await S.import("some-project");
+      let p = getPackage(S, "some-project"),
+          newURL = testDir + "some-project-renamed",
+          newP = await p.rename("some-project-renamed");
+
+      expect(newP).equals(getPackage(S, newURL), "getPAckage not working with renamed package");
+      expect(newP.name).equals("some-project-renamed");
+      expect(await resource(project1aDir).exists()).equals(false, "original project dir still exists");
+      expect(await resource(newURL).exists()).equals(true, "new project dir does not exist");
+      expect(JSON.parse(await resource(newURL + "/package.json").read())).containSubset({main: "entry-a.js", name: "some-project-renamed"});
+      expect(S.get(newURL + "/package.json")).containSubset({main: "entry-a.js", name: "some-project-renamed"});
+    });
+
+    it("fork creates a new similar package with a changed name", async () => {
+      await getPackage(S, project1aDir).register();
+      await S.import("some-project");
+      let p = getPackage(S, "some-project"),
+          newURL = testDir + "some-project-copied",
+          newP = await p.fork("some-project-copied");
+
+      expect(newP).equals(getPackage(S, newURL), "getPAckage not working with renamed package");
+      expect(newP.name).equals("some-project-copied");
+      expect(await resource(project1aDir).exists()).equals(true, "original project does not exist anymore");
+      expect(await resource(newURL).exists()).equals(true, "new project dir does not exist");
+      expect(await resource(newURL + "/other.js").exists()).equals(true, "other.js does not exist");
+      expect(await resource(newURL + "/entry-a.js").exists()).equals(true, "entry-a.js does not exist");
+      expect(await resource(newURL + "/package.json").exists()).equals(true, "package.json does not exist");
+      expect(JSON.parse(await resource(newURL + "/package.json").read())).containSubset({main: "entry-a.js", name: "some-project-copied"});
+
+      expect(S.get(newURL + "/entry-a.js")).deep.equals({version: "a",x: 2});
+      expect(S.get(newURL + "/package.json")).containSubset({main: "entry-a.js", name: "some-project-copied"});
     });
 
   });

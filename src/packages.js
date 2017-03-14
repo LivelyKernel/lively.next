@@ -610,6 +610,90 @@ class Package {
 
   reload(opts) { this.remove(opts); return this.import(); }
 
+  async fork(newName, newURL) {
+    if (!newURL) {
+      newURL = resource(this.url).join(`../${newName}`).withRelativePartsResolved().url;
+    }
+    return await this.changeAddress(newURL, newName, false/*removeOriginal*/);
+  }
+
+  async rename(newName) {
+    let newURL = resource(this.url).join(`../${newName}`).withRelativePartsResolved().url;
+    return await this.changeAddress(newURL, newName, true/*removeOriginal*/);
+  }
+
+  async changeAddress(newURL, newName = null, removeOriginal = true) {
+    newURL = newURL.replace(/\/?/, "");
+
+    let {System, url: oldURL} = this,
+        oldPackageDir = resource(oldURL).asDirectory(),
+        newP = new Package(System, newURL),
+        newPackageDir = await resource(newURL).asDirectory();
+
+    ModulePackageMapping.forSystem(System).clearCache();
+    packageStore(System)[newURL] = newP;
+    if (System.packages[oldURL]) {
+      System.packages[newURL] = System.packages[oldURL];
+      if (removeOriginal)
+        delete System.packages[oldURL];
+    }
+
+    Object.assign(newP, obj.select(this, ["_name", "referencedAs", "map", "config"]))
+    await newPackageDir.ensureExistance();
+
+    let resourceURLs = (await this.resources(undefined, [])).map(ea => ea.url),
+        modules = this.modules();
+
+    // first move modules loaded in runtime, those now how to rename
+    // themselves...
+    for (let m of modules) {
+      let newId = newPackageDir.join(m.pathInPackage()).url;
+      if (removeOriginal) await m.renameTo(newId);
+      else await m.copyTo(newId);
+      // keep track of resources
+      let resourceIndex = resourceURLs.indexOf(m.id);
+      if (resourceIndex > -1) {
+        resourceURLs.splice(resourceIndex, 1);
+      }
+    }
+
+    // ensure the existance of the remaining resources
+    for (let url of resourceURLs) {
+      let r = resource(url),
+          localName = r.relativePathFrom(oldPackageDir);
+      await r.copyTo(newPackageDir.join(localName));
+    }
+
+    if (removeOriginal) {
+      await this.remove({forgetEnv: true, forgetDeps: false});
+      await oldPackageDir.remove();
+    }
+
+    // name change if necessary
+    if (newName) {
+      newP.name = newName;
+      newP.referencedAs = arr.without(newP.referencedAs, this.name).concat(newName);
+
+      newP.config.name = newName;
+      var configFile = resource(newURL).join("package.json");
+      try {
+        if (await configFile.exists()) {
+          let c = JSON.parse(await configFile.read());
+          if (c.name === this.name) {
+            c.name = newName;
+            await configFile.write(JSON.stringify(c, null, 2));
+          }
+          let runtimeC = System.get(configFile.url)
+          if (runtimeC) {
+            System.set(configFile.url, System.newModule({...runtimeC, name: newName}));
+          }
+        }
+      } catch (e) {}
+    }
+
+    return newP;
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // searching
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
