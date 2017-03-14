@@ -384,6 +384,7 @@ export class PasswordInputLine extends HTMLMorph {
   }
 
   onLoad() {
+    this.updateHtml();
     // hmm key events aren't dispatched by default...
     this.ensureInputNode().then(node =>
       node.onkeydown = evt => this.env.eventDispatcher.dispatchDOMEvent(evt, this, "onKeyDown"));
@@ -391,10 +392,46 @@ export class PasswordInputLine extends HTMLMorph {
 
   ensureInputNode() { return this.whenRendered().then(() => this.inputNode); }
 
+  static get properties() {
+    return {
+      fontSize: {
+        defaultValue: 12,
+        set(value) {
+          this.setProperty("fontSize", value);
+          this.updateHtml();
+        }
+      }
+    }
+  }
+
+  onKeyDown(evt) {
+    super.onKeyDown(evt);
+    // at that point in time the input has not changed to the most recent value yet
+    if (this.input != this.lastInput) {
+      this.onInputChanged(this.input);
+    }
+    this.lastInput = this.input
+  }
+
+  get inputNode() { return this.domNode.childNodes[0]; }
+  ensureInputNode() { return this.whenRendered().then(() => this.inputNode); }
+
+  get input() { return this.inputNode.value || ""; }
+  set input(val) { 
+    this.ensureInputNode().then(n => n.value = val);
+  }
+
+  get placeholder() { return this.inputNode.placeholder; }
+  set placeholder(val) { this.ensureInputNode().then(n => n.placeholder = val); }
+
   focus() { this.ensureInputNode().then(n => n.focus()); }
 
   acceptInput() { var i = this.input; signal(this, "inputAccepted", i);; return i; }
   onInputChanged(change) { signal(this, "inputChanged", change); }
+
+  updateHtml() {
+    this.html = `<input style="height: calc(100% - 6px); width: calc(100% - 6px); font-size: ${this.fontSize}pt" type="password" value="${this.input}">`;
+  }
 
   get commands() {
     return [
