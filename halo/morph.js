@@ -22,6 +22,7 @@ export default class Halo extends Morph {
   static get properties() {
     return {
       fill: {defaultValue: Color.transparent},
+      resizeOnly: {defaultValue: false},
       target: {},
       pointerId: {},
       submorphs: {after: ["target"], initialize() { this.initButtons(); }},
@@ -59,16 +60,19 @@ export default class Halo extends Morph {
   initButtons() {
     this.submorphs = [
       ...this.ensureResizeHandles(),
-      this.closeHalo(),
-      this.dragHalo(),
-      this.grabHalo(),
-      this.inspectHalo(),
-      this.editHalo(),
-      this.copyHalo(),
-      this.rotateHalo(),
-      this.styleHalo(),
-      this.nameHalo(),
-      this.originHalo()]
+      ...this.resizeOnly ? [] : [
+        this.closeHalo(),
+        this.dragHalo(),
+        this.grabHalo(),
+        this.inspectHalo(),
+        this.editHalo(),
+        this.copyHalo(),
+        this.rotateHalo(),
+        this.styleHalo(),
+        this.nameHalo(),
+        this.originHalo()
+      ]
+    ]
   }
 
   get isEpiMorph() { return true; }
@@ -146,7 +150,7 @@ export default class Halo extends Morph {
       this.propertyDisplay.disable();
     }
     this.ensureResizeHandles().forEach(h => h.alignInHalo());
-    this.originHalo().alignInHalo();
+    !this.resizeOnly && this.originHalo().alignInHalo();
     this.layout && this.layout.enable();
     return this;
   }
