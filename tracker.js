@@ -214,6 +214,16 @@ export default class L2LTracker extends L2LConnection {
     return newUser;
   }
 
+  async createUser(options){
+     if (!options.name || !options.email || !options.password){
+       var errMsg = 'Insufficient options specified: Requires name, email, password'
+       throw new Error(errMsg)
+     }
+     var {name,email,password} = options
+     await authserver.addUser(name,email,password,'adminpassword')
+     return {name: name, status: 'created ' + name  + 'successfully'}
+  }
+
 
 
   

@@ -110,6 +110,9 @@ export var defaultTrackerActions = {
   async "validate": (tracker, {sender, data}, ackFn, socket) => {
     console.log(data)    
     ackFn(await tracker.validateToken(data))
+  },
+  async 'createUser': (tracker, {sender, data}, ackFn, socket) => {    
+    ackFn(await tracker.createUser(data))
   }
 }
 
