@@ -386,8 +386,10 @@ export class PasswordInputLine extends HTMLMorph {
   onLoad() {
     this.updateHtml();
     // hmm key events aren't dispatched by default...
-    this.ensureInputNode().then(node =>
-      node.onkeydown = evt => this.env.eventDispatcher.dispatchDOMEvent(evt, this, "onKeyDown"));
+    this.ensureInputNode().then(node => {
+      node.onkeydown = evt => this.env.eventDispatcher.dispatchDOMEvent(evt, this, "onKeyDown");
+      node.onkeyup = evt => this.env.eventDispatcher.dispatchDOMEvent(evt, this, "onKeyUp");
+    });
   }
 
   ensureInputNode() { return this.whenRendered().then(() => this.inputNode); }
