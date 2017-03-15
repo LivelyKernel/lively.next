@@ -57,12 +57,10 @@ export async function getAllPartResources(options) {
   return await resource(partsbinFolder).dirList(1, {exclude: ea => !ea.name().endsWith(".json")});
 }
 
-export async function interactivelyLoadObjectFromPartsBinFolder() {
-  await resource(defaultPartsbinFolder).ensureExistance();
-  var files = await resource(defaultPartsbinFolder).dirList(1),
-      partFiles = files.filter(ea => ea.name().endsWith(".json")),
-      items = partFiles.map(ea => {
-        var partName = ea.name().replace(/\.json$/, "");
+export async function interactivelyLoadObjectFromPartsBinFolder(options) {
+  let partResources = await getAllPartResources(options),
+      items = partResources.map(ea => {
+        let partName = ea.name().replace(/\.json$/, "");
         return {
           isListItem: true, string: partName, value: partName
         }
@@ -72,13 +70,6 @@ export async function interactivelyLoadObjectFromPartsBinFolder() {
   if (!choice) throw "canceled";
   return await loadObjectFromPartsbinFolder(choice);
 }
-
-// await saveObjectToPartsbinFolder(that, "PartsBin")
-// await interactivelySaveObjectToPartsBinFolder(that)
-// var obj = (await loadObjectFromPartsbinFolder("star")).openInWorld();
-// var obj = (await loadObjectFromPartsbinFolder("foo")).openInWorld();
-// var obj = (await interactivelyLoadObjectFromPartsBinFolder()).openInWorld();
-
 
 export async function createNewObjectPackage(object, packageName, options) {
   let {partsbinFolder} = {partsbinFolder: defaultPartsbinFolder, ...options},

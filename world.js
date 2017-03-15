@@ -1,6 +1,7 @@
 /*global System*/
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, arr, string, obj, promise } from "lively.lang";
+import { once } from "lively.bindings";
 import { StatusMessage, StatusMessageForMorph } from './components/markers.js';
 import { Morph, inspect, Text, config, MorphicEnv, Window, Menu } from "./index.js";
 import { TooltipViewer } from "./components/tooltips.js";
@@ -15,7 +16,6 @@ import {
   ListPrompt,
   EditListPrompt
 } from "./components/prompts.js";
-import { once } from "lively.bindings";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--
 
