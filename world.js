@@ -707,6 +707,15 @@ var worldCommands = [
   },
 
   {
+    name: "fix font metric",
+    exec: async world => {
+      world.env.fontMetric.reset();
+      world.withAllSubmorphsDo(ea => ea.isText && ea.textLayout && ea.textLayout.reset());
+      return true;
+    }
+  },
+
+  {
     name: "save world",
     exec: async world => {
       world.prompt("Please give this world a name")
@@ -900,10 +909,7 @@ export class World extends Morph {
           this.setStatusMessage(status);
         }],
 
-        ["fix font metric", () => {
-          this.env.fontMetric.reset();
-          this.withAllSubmorphsDo(ea => ea.isText && ea.textLayout && ea.textLayout.reset());
-        }]
+        {command: "fix font metric", target: this}
       ]],
       ["Tools", [
         {command: "open PartsBin",            target: this},
