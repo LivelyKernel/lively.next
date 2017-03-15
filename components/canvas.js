@@ -14,6 +14,7 @@ export class Canvas extends Morph {
     return {
       extent:       {defaultValue: pt(200,200)},
       fill:         {defaultValue: Color.transparent},
+      contextType:  {defaultValue: '2d'},
 
       preserveContents: {defaultValue: true},
 
@@ -33,15 +34,16 @@ export class Canvas extends Morph {
      }
   }
 
-  get context() { return this._canvas && this._canvas.getContext("2d"); }
-  set _canvas(new_canvas) {
+  //get canvasBounds() { return this._canvas && this.canvasExtent.extentAsRectangle(); }
+  get context() { return this._canvas && this._canvas.getContext(this.contextType); }
+  set _canvas(new_canvas) { 
     const old_canvas = this.__canvas__;
     this.__canvas__ = new_canvas;
     if (this.__canvas_init__) {
       this.__canvas_init__(new_canvas);
       delete this.__canvas_init__;
-    } else if (this.preserveContents && old_canvas && old_canvas !== new_canvas) {
-      new_canvas.getContext("2d").drawImage(old_canvas, 0, 0);
+    } else if (this.preserveContents && this.contextType == "2d" && old_canvas && old_canvas !== new_canvas) {
+      new_canvas.getContext(this.contextType).drawImage(old_canvas, 0, 0);
     }
   }
   get _canvas() { return this.__canvas__; }
