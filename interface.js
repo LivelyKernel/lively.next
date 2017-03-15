@@ -1,6 +1,6 @@
 import L2LClient from "lively.2lively/client.js";
 
-export async function getUser(options){
+export async function createUser(options){
   var opts = {
     name: 'anonymous',
     email: null,
