@@ -438,6 +438,17 @@ var worldCommands = [
   },
 
   {
+    name: "load object from PartsBin",
+    exec: async world => {
+      let { interactivelyLoadObjectFromPartsBinFolder } = await System.import("lively.morphic/partsbin.js"),
+          part = await interactivelyLoadObjectFromPartsBinFolder();
+      if (part) part.openInWorldNearHand();
+      return part;
+    }
+  },
+
+  
+  {
     name: "open object drawer",
     exec: async world => {
       var { default: ObjectDrawer } = await System.import("lively.morphic/components/object-drawer.js")
