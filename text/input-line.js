@@ -124,11 +124,11 @@ export default class InputLine extends Text {
       placeholder: {
         after: ["submorphs", "textAttributes", "textString", "extent"], dervied: true,
         get() {
-          var placeholder = this.getSubmorphNamed("placeholder");
+          let placeholder = this.getSubmorphNamed("placeholder");
           return placeholder ? placeholder.value : null;
         },
         set(val) {
-          var placeholder = this.getSubmorphNamed("placeholder");
+          let placeholder = this.getSubmorphNamed("placeholder");
           if (!val) {
             if (placeholder) {
               placeholder.remove();
@@ -142,7 +142,10 @@ export default class InputLine extends Text {
                 reactsToPointer: false,
                 fontColor: Color.gray
               }));
-            } else placeholder.value = val;
+            } else {
+              placeholder.defaultTextStyle = {...this.defaultTextStyle, fontColor: Color.gray};
+              placeholder.value = val;
+            }            
           }
           this.updatePlaceholder();
         }
