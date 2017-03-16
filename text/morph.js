@@ -1388,16 +1388,17 @@ export class Text extends Morph {
   }
 
   callTextAttributeDoitFromMouseEvent(evt, clickPos) {
-    var attributes = this.textAttributesAt(clickPos) || [], doit;
+    let attributes = this.textAttributesAt(clickPos) || [], doit;
     // if (this === that) inspect([evt.positionIn(this), clickPos])
-    for (var i = attributes.length; i--; ) {
-      var ea = attributes[i];
+
+    for (let i = attributes.length; i--; ) {
+      let ea = attributes[i];
       if (ea.data && ea.data.doit) { doit = ea.data.doit; break; }
     }
     if (!doit || !doit.code) return false;
 
-  // FIXME move this to somewhere else?
-    var moduleId = `lively://text-doit/${this.id}`,
+    // FIXME move this to somewhere else?
+    let moduleId = `lively://text-doit/${this.id}`,
         mod = lively.modules.module(moduleId);
     mod.recorder.evt = evt;
     lively.vm.runEval(doit.code, {
@@ -1405,8 +1406,8 @@ export class Text extends Morph {
       format: "esm",
       targetModule: moduleId
     })
-    .catch(err => this.world().logError(new Error(`Error in text doit: ${err.stack}`)));
-    // .then(() => mod.recorder.evt = null)
+    .catch(err => this.world().logError(new Error(`Error in text doit: ${err.stack}`)))
+    .then(() => mod.recorder.evt = null)
 
     return true;
   }

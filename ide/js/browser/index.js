@@ -202,14 +202,14 @@ export default class Browser extends Window {
   }
 
   build() {
-    // this.targetMorph = this.build();
     // this.relayout();
+    // this.removeAllMorphs(); this.targetMorph = this.build();
 
     this._inLayout = true;
 
     this.targetMorph && this.targetMorph.remove();
 
-    var style = {
+    let style = {
           // borderWidth: 1, borderColor: Color.gray,
           fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"
         },
@@ -239,14 +239,16 @@ export default class Browser extends Window {
           moduleCommandBoxBounds,
           codeEntityCommandBoxBounds,
           resizerBounds,
+          metaInfoBounds,
           sourceEditorBounds
         ] = bounds.extent().extentAsRectangle().divide([
           new Rectangle(0,   0,    1,   0.04),
-          new Rectangle(0,   0.04, 0.5, 0.33),
-          new Rectangle(0.5, 0.04, 0.5, 0.33),
-          new Rectangle(0,   0.37, 0.5, 0.04),
-          new Rectangle(0.5, 0.37, 0.5, 0.04),
-          new Rectangle(0,   0.41,  1,   0.01),
+          new Rectangle(0,   0.04, 0.5, 0.30),
+          new Rectangle(0.5, 0.04, 0.5, 0.30),
+          new Rectangle(0,   0.34, 0.5, 0.04),
+          new Rectangle(0.5, 0.34, 0.5, 0.04),
+          new Rectangle(0,   0.38,  1,   0.01),
+          new Rectangle(0,   0.39,  1,   0.03),
           new Rectangle(0,   0.42, 1,   0.57)]),
 
         container = morph({
@@ -278,7 +280,16 @@ export default class Browser extends Window {
 
             new HorizontalResizer({name: "hresizer", bounds: resizerBounds}),
 
-            {name: "sourceEditor", bounds: sourceEditorBounds, ...textStyle, doSave: () => { this.save(); }},
+            {
+              name: "metaInfoText",
+              bounds: metaInfoBounds,
+              ...textStyle,
+              fontSize: config.codeEditor.defaultStyle.fontSize - 2,
+              clipMode: "hidden",
+              borderWidth: 0,
+              readOnly: true
+            },
+            {name: "sourceEditor", bounds: sourceEditorBounds, ...textStyle},
 
             {name: "browserCommands", bounds: browserCommandsBounds,
              layout: new GridLayout({grid:[["commands", null, "eval backend list"]]}),
@@ -309,21 +320,25 @@ export default class Browser extends Window {
         });
 
 
-    var browserCommands = container.get("browserCommands"),
-        hresizer =        container.get("hresizer"),
-        moduleList =      container.get("moduleList"),
-        moduleCommands =  container.get("moduleCommands"),
-        codeEntityCommands = container.get("codeEntityCommands"),
-        codeEntityTree =  container.get("codeEntityTree"),
-        sourceEditor =    container.get("sourceEditor"),
-        l =               browserCommands.layout;
+    let browserCommands =    container.getSubmorphNamed("browserCommands"),
+        hresizer =           container.getSubmorphNamed("hresizer"),
+        moduleList =         container.getSubmorphNamed("moduleList"),
+        moduleCommands =     container.getSubmorphNamed("moduleCommands"),
+        codeEntityCommands = container.getSubmorphNamed("codeEntityCommands"),
+        codeEntityTree =     container.getSubmorphNamed("codeEntityTree"),
+        sourceEditor =       container.getSubmorphNamed("sourceEditor"),
+        metaInfoText =       container.getSubmorphNamed("metaInfoText"),
+        l =                  browserCommands.layout;
     l.col(2).fixed = 100; l.row(0).paddingTop = 1; l.row(0).paddingBottom = 1;
 
     hresizer.addScalingAbove(moduleList);
     hresizer.addScalingAbove(codeEntityTree);
     hresizer.addFixed(moduleCommands);
     hresizer.addFixed(codeEntityCommands);
+    hresizer.addFixed(metaInfoText);
     hresizer.addScalingBelow(sourceEditor);
+
+    connect(sourceEditor, 'doSave', this, 'save');
 
     this._inLayout = false;
 
@@ -347,6 +362,7 @@ export default class Browser extends Window {
       browserCommands,
       moduleCommands,
       codeEntityCommands,
+      metaInfoText,
       sourceEditor,
       hresizer
     } = this.ui;
@@ -363,10 +379,12 @@ export default class Browser extends Window {
 
       codeEntityCommands.left = codeEntityTree.left = moduleList.right;
       browserCommands.width = hresizer.width = container.width;
+      metaInfoText.top = hresizer.bottom + 1;
+      metaInfoText.width = browserCommands.width + 1;
       sourceEditor.setBounds(
         new Rectangle(
-          1, hresizer.bottom + 1,
-          browserCommands.width - 2, container.height - hresizer.bottom - 2));
+          0, metaInfoText.bottom,
+          metaInfoText.width, container.height - metaInfoText.bottom));
     } finally { this._inLayout = false; }
   }
 
@@ -400,6 +418,7 @@ export default class Browser extends Window {
       runTestsInModuleButton:this.getSubmorphNamed("runTestsInModuleButton"),
       codeEntityJumpButton:  this.getSubmorphNamed("codeEntityJumpButton"),
       searchButton:          this.getSubmorphNamed("searchButton"),
+      metaInfoText:          this.getSubmorphNamed("metaInfoText"),
       sourceEditor:          this.getSubmorphNamed("sourceEditor"),
       evalBackendList:       this.getSubmorphNamed("eval backend list")
     }
@@ -585,7 +604,7 @@ export default class Browser extends Window {
   }
 
   async selectModuleNamed(mName) {
-    var list = this.get("moduleList"),
+    let list = this.get("moduleList"),
         m = list.selection = list.values.find(({nameInPackage, name}) =>
           mName === name || mName === nameInPackage);
     await this.whenModuleUpdated();
@@ -613,13 +632,14 @@ export default class Browser extends Window {
 
   async onModuleSelected(m) {
 
-    var pack = this.state.selectedPackage;
+    let pack = this.state.selectedPackage;
     this.state.moduleChangeWarning = null;
 
     if (!m) {
       this.updateSource("");
       this.title = "browser - " + (pack && pack.name || "");
       this.updateCodeEntities(null);
+      this.ui.metaInfoText.textString = "";
       return;
     }
 
@@ -661,7 +681,7 @@ export default class Browser extends Window {
       }
 
       this.get("moduleList").scrollSelectionIntoView();
-      this.title = "browser - " + pack.name + "/" + m.nameInPackage;
+      this.title = `browser - [${pack.name}] ${m.nameInPackage}`;
       var source = await system.moduleRead(m.name);
       this.updateSource(source, {row: 0, column: 0});
 
@@ -671,6 +691,20 @@ export default class Browser extends Window {
 
       await this.updateCodeEntities(m);
       await this.updateTestUI(m);
+
+      this.ui.metaInfoText.textString = `[${pack.name}] ${m.nameInPackage} (${pack.url})`;
+      this.ui.metaInfoText.textAndAttributes = [
+        [
+          `[${pack.name}]`,
+          {
+            nativeCursor: "pointer",
+            textDecoration: "underline",
+            doit: {code: `$world.execCommand("open file browser", {location: "${pack.url}"})`}
+          }
+        ],
+        [" "],
+        [m.nameInPackage, {}]
+      ];
 
     } finally {
       if (deferred) {
