@@ -1,4 +1,6 @@
 import L2LClient from "lively.2lively/client.js";
+import * as bcrypt from "lively.user/node_modules/bcryptjs/index.js";
+
 
 var defaultClient = L2LClient.default()
 
@@ -12,6 +14,12 @@ export async function getUser(options){
   
   var defaultUser = (await defaultClient.sendToAndWait(defaultClient.trackerId,'newUser',opts)).data
   return defaultUser
+}
+
+export function getHash(aString){
+    var salt = bcrypt.genSaltSync(10);
+    var hash = bcrypt.hashSync(aString, salt);
+    return hash
 }
 
 export async function createUser(options,ackFn){
