@@ -669,14 +669,14 @@ export class Morph {
     // Transforms / submorphs of this and other are also replaced so that the
     // replace operation seems to not have any other effects on the scene graph
 
-    if (this === other || !other) return this;
+    if (this === other || !other) return other;
 
     if (this === other.owner) {
       other.replaceWith(this);
-      return this
+      return other;
     }
 
-    var myOwner = this.owner,
+    let myOwner = this.owner,
         mySubmorphs = this.submorphs,
         myTfm = this.getTransform().copy(),
         myIndex = typeof indexForOtherMorph === "number" ? indexForOtherMorph :
@@ -707,7 +707,7 @@ export class Morph {
     other.setTransform(myTfm);
     this.setTransform(otherTfm);
 
-    return this;
+    return other;
    }
 
   addMorphAt(submorph, index) {
