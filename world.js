@@ -439,10 +439,16 @@ var worldCommands = [
 
   {
     name: "load object from PartsBin",
-    exec: async world => {
-      let { interactivelyLoadObjectFromPartsBinFolder } = await System.import("lively.morphic/partsbin.js"),
-          part = await interactivelyLoadObjectFromPartsBinFolder();
-      if (part) part.openInWorldNearHand();
+    exec: async (world, opts = {}) => {
+      let part, {name, open = true} = opts;
+      if (name) {
+        let {loadObjectFromPartsbinFolder} = await System.import("lively.morphic/partsbin.js");
+        part = await loadObjectFromPartsbinFolder(name);
+      } else {
+        let { interactivelyLoadObjectFromPartsBinFolder } = await System.import("lively.morphic/partsbin.js");
+        part = await interactivelyLoadObjectFromPartsBinFolder();
+      }          
+      if (part && open) part.openInWorldNearHand();
       return part;
     }
   },
