@@ -1,6 +1,6 @@
 import { arr, obj } from "lively.lang";
 import { pt, Point, Color, Rectangle } from "lively.graphics";
-import { config, Window, DropDownList } from "../../index.js";
+import { config, Icon, Window, DropDownList } from "../../index.js";
 import { JavaScriptEditorPlugin } from "./editor-plugin.js";
 import EvalBackendChooser from "./eval-backend-ui.js";
 import InputLine from "../../text/input-line.js";
@@ -30,7 +30,7 @@ export default class Workspace extends Window {
           };
         }
       },
-
+      
       content: {
         derived: true, after: ["targetMorph"],
         get() { return this.targetMorph.textString; },
@@ -71,6 +71,25 @@ export default class Workspace extends Window {
       list.topRight = this.innerBounds().topRight().addXY(-5, 2);
       if (list.left < title.right + 3) list.left = title.right + 3;
     }
+  }
+
+  buttons() {
+    let buttons = super.buttons(),
+        label = this.getSubmorphNamed("pickFileButton");
+    if (!label) {
+      label = this.addMorph(
+        Object.assign(Icon.makeLabel("file-o"), {
+          name: "pickFileButton",
+          nativeCursor: "pointer",
+          fontSize: 14,
+          fill: Color.rgbHex("#DDD"),
+          leftCenter: arr.last(buttons).rightCenter.addXY(6, -2)
+        }));
+      connect(label, 'onHoverIn', label, 'fontSize', {converter: () => 16});
+      connect(label, 'onHoverOut', label, 'fontSize', {converter: () => 14});
+      connect(label, 'onMouseDown', this, 'execCommand', {converter: () => "[workspace] query for file"});
+    }
+    return buttons.concat(label);
   }
 
   get commands() {

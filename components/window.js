@@ -20,7 +20,7 @@ export default class Window extends Morph {
         after: ["submorphs"], derived: true,
         get() { return this.titleLabel().textString; },
         set(title) {
-          var textAndAttrs = typeof title === "string" ? [[title, {}]] : title,
+          let textAndAttrs = typeof title === "string" ? [[title, {}]] : title,
               maxLength = 100, length = 0, truncated = [];
           for (let ea of textAndAttrs) {
             let [string, attr] = ea;
@@ -38,7 +38,7 @@ export default class Window extends Morph {
         after: ["submorphs"], derived: true,
         get() { return arr.withoutAll(this.submorphs, this.controls())[0]; },
         set(morph) {
-          var ctrls = this.controls();
+          let ctrls = this.controls();
           arr.withoutAll(this.submorphs, ctrls).forEach(ea => ea.remove());
           if (morph) this.addMorph(morph, ctrls[0]);
           this.whenRendered().then(() => this.relayoutWindowControls());
@@ -95,11 +95,12 @@ export default class Window extends Morph {
   }
 
   controls() {
-    return this.buttons().concat(this.titleLabel()).concat(this.resizable ? this.resizer() : []);
+    return this.buttons()
+              .concat(this.titleLabel())
+              .concat(this.resizable ? this.resizer() : []);
   }
 
   buttons() {
-
     let defaultStyle = {type: "ellipse", extent: pt(14,14)};
 
     var closeButton = this.getSubmorphNamed("close") || morph({
