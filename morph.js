@@ -1497,18 +1497,22 @@ return ;
 
   renderAsRoot(renderer) { return renderRootMorph(this, renderer); }
 
-  renderPreview(opts) {
+  renderPreview(opts = {}) {
     // Creates a DOM node that is a "preview" of he morph, i.e. a
     // representation that looks like the morph but doesn't morphic behavior
     // attached
 
     // FIXME doesn't work with scale yet...!
 
-    opts = {width: 100, height: 100, center: true, ...opts};
-
-    var goalWidth = opts.width,
-        goalHeight = opts.height,
-        { scale, position, origin, rotation } = this,
+    let {width = 100, height = 100, center = true, asNode = false} = opts,
+        {
+          borderWidthLeft, borderWidthTop, borderWidthBottom, borderWidthRight,
+          scale, position, origin, rotation
+        } = this,
+        // goalWidth = width - (borderWidthLeft + borderWidthRight),
+        // goalHeight = height - (borderWidthTop + borderWidthBottom),
+        goalWidth = width,
+        goalHeight = height,
         invTfm = new Transform(position.negated(), 0, pt(1/this.scale,1/scale)),
         bbox = invTfm.transformRectToRect(this.bounds()),
         w = bbox.width, h = bbox.height,
@@ -1518,7 +1522,7 @@ return ;
           bbox.topLeft().negated().scaleBy(ratio).subPt(origin),
           rotation, pt(ratio, ratio));
 
-    if (opts.center) {
+    if (center) {
       var previewBounds = tfm.transformRectToRect(
             this.extent.extentAsRectangle()),
           offsetX = previewBounds.width < goalWidth ?
@@ -1546,7 +1550,7 @@ return ;
     },
     node => Array.from(node.childNodes));
 
-    return node.outerHTML;
+    return asNode ? node : node.outerHTML;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
