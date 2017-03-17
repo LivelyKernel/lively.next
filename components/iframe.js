@@ -7,6 +7,7 @@ import { HTMLMorph } from "lively.morphic";
 // var im = IFrameMorph.open({src: "http://localhost:9011/test.html"})
 // var im = IFrameMorph.open({src: "http://spiegel.de"})
 // var im = IFrameMorph.open({src: "http://localhost:9011/proxy/www.spiegel.de"})
+// var im = IFrameMorph.open({srcdoc: that.env.renderer.getNodeForMorph(that).innerHTML})
 // await im.whenLoaded()
 // Array.from(im.innerWindow.document.querySelectorAll(".article-title"))
 //   .map(ea => ea.textContent).join("\n")
@@ -51,7 +52,7 @@ export class IFrameMorph extends HTMLMorph {
   }
 
   static open(props = {}) {
-    return new this(props).openInWindow({title: props.title}).targetMorph;
+    return new this(props).openInWindow({title: props.title || "iframe"}).targetMorph;
   }
 
   static get properties() {
