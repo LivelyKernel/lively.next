@@ -6,8 +6,8 @@ export async function doSQL(queryString){
   var db = new sqlite3.Database(dbPath);
   try {
     var response = await new Promise((resolve, reject) => {        
-        var stmnt = queryString
-        db.run(stmnt, (err,resp) => {
+        var stmnt = queryString        
+        db.all(stmnt, (err,resp) => {          
           if (err) {            
               reject(err)
           }
