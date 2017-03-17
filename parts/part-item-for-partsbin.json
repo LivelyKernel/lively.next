@@ -1,8 +1,8 @@
 {
-  "id": "Part_dash_item_dash_for_dash_partsbin_B082BB4E_5FE3_4524_8BAF_8C5CF7116857",
+  "id": "Part_dash_item_dash_for_dash_partsbin_63941050_2BFB_40B6_80E8_FF93CADB32AE",
   "snapshot": {
-    "Part_dash_item_dash_for_dash_partsbin_B082BB4E_5FE3_4524_8BAF_8C5CF7116857": {
-      "rev": 80812,
+    "Part_dash_item_dash_for_dash_partsbin_63941050_2BFB_40B6_80E8_FF93CADB32AE": {
+      "rev": 472396,
       "props": {
         "extent": {
           "key": "extent",
@@ -22,7 +22,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(647.0,334.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(478.9,610.0)"
         },
         "scroll": {
           "key": "scroll",
@@ -41,13 +41,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "HTMLMorph_4F46AB3B_AC6D_4B72_B2AE_FFEE85868778",
-              "rev": 71723
-            },
-            {
-              "__ref__": true,
-              "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-              "rev": 71992
+              "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+              "rev": 471138
             }
           ]
         },
@@ -130,80 +125,18 @@
         }
       }
     },
-    "HTMLMorph_4F46AB3B_AC6D_4B72_B2AE_FFEE85868778": {
-      "rev": 71723,
+    "Button_3954E02C_4F63_409F_B004_AE12D642795C": {
+      "rev": 471138,
       "props": {
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.3,130.0)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": null
-        },
-        "name": {
-          "key": "name",
-          "value": "html-preview"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "-webkit-grab"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "reactsToPointer": {
-          "key": "reactsToPointer",
+        "draggable": {
+          "key": "draggable",
           "value": false
         },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "HTMLMorph",
-            "Morph",
-            "morph"
-          ]
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
-        },
-        "html": {
-          "key": "html",
-          "value": "\n  <div style=\"display: flex;\n              align-items: center;\n              justify-content: center;\n              height: 100%;\n              background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))\">\n    <p style=\"font: bold 20pt Inconsolata, monospace; color: lightgray;\">Loading</p>\n  </div>"
-        },
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections"
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "HTMLMorph",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "html-morph.js"
-        }
-      }
-    },
-    "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639": {
-      "rev": 71992,
-      "props": {
         "dropShadow": {
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "DE484B0E-010E-4B36-A8A1-1EC18550283B",
+            "id": "6AA8131D-320F-4C5E-988D-5E841FE24CDD",
             "rev": 0
           }
         },
@@ -231,6 +164,10 @@
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(112.7,7.0)"
         },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
@@ -239,13 +176,17 @@
             "morph"
           ]
         },
+        "visible": {
+          "key": "visible",
+          "value": false
+        },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
-              "id": "Label_B0AA4FB5_808E_4313_9A68_45D8CC641745",
-              "rev": 71993
+              "id": "Label_42235925_4563_4104_9EBD_9F66E94B3019",
+              "rev": 349505
             }
           ]
         },
@@ -293,7 +234,7 @@
           "key": "defaultActiveStyle",
           "value": {
             "__ref__": true,
-            "id": "EF97A0ED-4AEF-4D09-9263-E3B462D7F36E",
+            "id": "4BDE16D0-B63F-42EA-A3D9-53D9DDB55A42",
             "rev": 0
           }
         },
@@ -301,7 +242,7 @@
           "key": "activeStyle",
           "value": {
             "__ref__": true,
-            "id": "D6765F2A-5C6A-4280-A352-049A506A4601",
+            "id": "44DDBCDE-F172-4C5A-95EF-D98C2ED0A388",
             "rev": 0
           }
         },
@@ -309,7 +250,7 @@
           "key": "defaultInactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "BA3D8E44-8ED5-47F3-85C3-165BC781BF35",
+            "id": "A2E0FE44-03CD-45F5-B900-F4BF5AE1D163",
             "rev": 0
           }
         },
@@ -317,7 +258,7 @@
           "key": "inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "ECA42A1A-9A83-4A52-855C-5C896BD968E4",
+            "id": "E71D0C1D-744E-433A-BDC4-98B135F9A6B2",
             "rev": 0
           }
         },
@@ -325,7 +266,7 @@
           "key": "defaultTriggerStyle",
           "value": {
             "__ref__": true,
-            "id": "23F54AC5-22E1-4218-A520-E4FB61FD78B4",
+            "id": "70D4C8C1-C632-4DBD-8713-844C3641819D",
             "rev": 0
           }
         },
@@ -333,7 +274,7 @@
           "key": "triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "EB875B60-3199-4AF9-8D2E-B25F5B05864D",
+            "id": "6B14B698-E44F-4C1E-9B69-08F1B46622D1",
             "rev": 0
           }
         },
@@ -346,52 +287,52 @@
           "value": [
             {
               "__ref__": true,
-              "id": "21001CF0-9EE8-4669-9A13-700E3C778B41",
+              "id": "E728B29F-48C8-47A7-BE0C-47A1F6E95DEF",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "B783A76A-0E58-4DA8-BB93-D4AB107EC62F",
+              "id": "2328C1EB-B9AF-4CD7-B376-F822FEC3B648",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "E9B01CCE-DE34-4FFF-85E8-5781D2535662",
+              "id": "6B93EE38-5218-4D89-9250-E6C0E83C1227",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "8101C72F-2B17-4B10-9B9E-8A33916525EE",
+              "id": "7744A656-7CEF-4AAA-85F8-E8182E9727AB",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "66B9530D-32A2-4667-9299-6449A681D7B0",
+              "id": "4F19891E-3A2F-4A2A-89CA-0CDEA9718D7E",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "376645AC-DF9E-41D5-B45F-DB3B0659B901",
+              "id": "65AD32A5-D17A-4E02-86CF-CA7F493D14F8",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "CD1BDFDE-B5D4-41F2-8C88-CB4872C99417",
+              "id": "1C899A98-B56C-48A7-AEDF-34AF6D5DB179",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "5EDF2BA9-4F44-4A9C-B889-E2030011BFCE",
+              "id": "151421AF-F120-447C-8061-1C8DB0AE6D40",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "9E8C884F-97A2-4557-99FC-75C297E7A3E9",
+              "id": "B80AD751-867A-4F51-A775-58CA48F988F0",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "487803DA-AE91-4968-8CA5-9512F0B86914",
+              "id": "297790C3-E362-42C2-8111-99CE6F763DB6",
               "rev": 0
             }
           ]
@@ -408,7 +349,7 @@
         }
       }
     },
-    "DE484B0E-010E-4B36-A8A1-1EC18550283B": {
+    "6AA8131D-320F-4C5E-988D-5E841FE24CDD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -435,8 +376,8 @@
           "key": "morph",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "onChange": {
@@ -454,9 +395,13 @@
         }
       }
     },
-    "Label_B0AA4FB5_808E_4313_9A68_45D8CC641745": {
-      "rev": 71993,
+    "Label_42235925_4563_4104_9EBD_9F66E94B3019": {
+      "rev": 349505,
       "props": {
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,12.0)"
@@ -481,6 +426,10 @@
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(7.8,6.5)"
         },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
@@ -500,19 +449,43 @@
               "",
               {
                 "__ref__": true,
-                "id": "B2AE0F74-227F-4267-A7A0-2F54CBF96218",
+                "id": "3329185B-DDCB-4087-86FD-4A8803FDDBF3",
                 "rev": 0
               }
             ]
           ]
         },
+        "autofit": {
+          "key": "autofit",
+          "value": true
+        },
         "padding": {
           "key": "padding",
           "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
         },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 12
+        },
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -523,7 +496,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "B404B3FE-087D-436C-B4A3-6AE391E08425",
+              "id": "83DD05A0-7138-42A1-BC94-030915C1D625",
               "rev": 0
             }
           ]
@@ -540,7 +513,7 @@
         }
       }
     },
-    "B2AE0F74-227F-4267-A7A0-2F54CBF96218": {
+    "3329185B-DDCB-4087-86FD-4A8803FDDBF3": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -559,7 +532,7 @@
         }
       }
     },
-    "B404B3FE-087D-436C-B4A3-6AE391E08425": {
+    "83DD05A0-7138-42A1-BC94-030915C1D625": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -578,8 +551,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_B0AA4FB5_808E_4313_9A68_45D8CC641745",
-            "rev": 71993
+            "id": "Label_42235925_4563_4104_9EBD_9F66E94B3019",
+            "rev": 349505
           }
         },
         "sourceAttrName": {
@@ -590,8 +563,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "targetMethodName": {
@@ -602,7 +575,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "12699605-FC26-4755-8625-348F5C30748F",
+            "id": "DFF8AB6E-7572-45F3-A67A-689BAAC82A16",
             "rev": 0
           }
         },
@@ -626,7 +599,7 @@
         }
       }
     },
-    "12699605-FC26-4755-8625-348F5C30748F": {
+    "DFF8AB6E-7572-45F3-A67A-689BAAC82A16": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -637,21 +610,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_B0AA4FB5_808E_4313_9A68_45D8CC641745",
-            "rev": 71993
+            "id": "Label_42235925_4563_4104_9EBD_9F66E94B3019",
+            "rev": 349505
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         }
       }
     },
-    "EF97A0ED-4AEF-4D09-9263-E3B462D7F36E": {
+    "4BDE16D0-B63F-42EA-A3D9-53D9DDB55A42": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -676,7 +649,7 @@
         }
       }
     },
-    "D6765F2A-5C6A-4280-A352-049A506A4601": {
+    "44DDBCDE-F172-4C5A-95EF-D98C2ED0A388": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -723,7 +696,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "DE484B0E-010E-4B36-A8A1-1EC18550283B",
+            "id": "6AA8131D-320F-4C5E-988D-5E841FE24CDD",
             "rev": 0
           }
         },
@@ -783,14 +756,14 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_B0AA4FB5_808E_4313_9A68_45D8CC641745",
-              "rev": 71993
+              "id": "Label_42235925_4563_4104_9EBD_9F66E94B3019",
+              "rev": 349505
             }
           ]
         },
         "borderColorBottom": {
           "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
         },
         "borderColorLeft": {
           "key": "borderColorLeft",
@@ -856,7 +829,7 @@
           "key": "borderLeft",
           "value": {
             "__ref__": true,
-            "id": "345259EF-9959-4540-A9C4-31B6BFA7A480",
+            "id": "1C28FD00-1AD4-4DB3-876A-EB9305E2CE26",
             "rev": 0
           }
         },
@@ -864,7 +837,7 @@
           "key": "borderRight",
           "value": {
             "__ref__": true,
-            "id": "F1808DAD-D88B-45A1-95F6-9713CDEF0186",
+            "id": "146ED56A-B89B-487D-B89B-FED3D53C7DEB",
             "rev": 0
           }
         },
@@ -872,7 +845,7 @@
           "key": "borderBottom",
           "value": {
             "__ref__": true,
-            "id": "08536B01-9865-48AD-BF0C-D3C508D15085",
+            "id": "E4E359AA-4A50-4ED5-A8BB-880A64C78836",
             "rev": 0
           }
         },
@@ -880,7 +853,7 @@
           "key": "borderTop",
           "value": {
             "__ref__": true,
-            "id": "BDC5C03B-08DC-445A-80B9-939BDAA2DC2A",
+            "id": "A674DC12-FFE8-488C-B7DD-F76CF8F66D8F",
             "rev": 0
           }
         },
@@ -900,7 +873,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "2C90B87D-267B-4644-9433-EDE6E3032119",
+            "id": "2078F254-9F46-4BC9-970F-436170B29095",
             "rev": 0
           }
         },
@@ -912,7 +885,7 @@
         }
       }
     },
-    "345259EF-9959-4540-A9C4-31B6BFA7A480": {
+    "1C28FD00-1AD4-4DB3-876A-EB9305E2CE26": {
       "rev": 0,
       "props": {
         "style": {
@@ -929,7 +902,7 @@
         }
       }
     },
-    "F1808DAD-D88B-45A1-95F6-9713CDEF0186": {
+    "146ED56A-B89B-487D-B89B-FED3D53C7DEB": {
       "rev": 0,
       "props": {
         "style": {
@@ -946,24 +919,7 @@
         }
       }
     },
-    "08536B01-9865-48AD-BF0C-D3C508D15085": {
-      "rev": 0,
-      "props": {
-        "style": {
-          "key": "style",
-          "value": "solid"
-        },
-        "width": {
-          "key": "width",
-          "value": 0
-        },
-        "color": {
-          "key": "color",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        }
-      }
-    },
-    "BDC5C03B-08DC-445A-80B9-939BDAA2DC2A": {
+    "E4E359AA-4A50-4ED5-A8BB-880A64C78836": {
       "rev": 0,
       "props": {
         "style": {
@@ -980,7 +936,7 @@
         }
       }
     },
-    "2C90B87D-267B-4644-9433-EDE6E3032119": {
+    "A674DC12-FFE8-488C-B7DD-F76CF8F66D8F": {
       "rev": 0,
       "props": {
         "style": {
@@ -997,7 +953,24 @@
         }
       }
     },
-    "BA3D8E44-8ED5-47F3-85C3-165BC781BF35": {
+    "2078F254-9F46-4BC9-970F-436170B29095": {
+      "rev": 0,
+      "props": {
+        "style": {
+          "key": "style",
+          "value": "solid"
+        },
+        "width": {
+          "key": "width",
+          "value": 0
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        }
+      }
+    },
+    "A2E0FE44-03CD-45F5-B900-F4BF5AE1D163": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1022,7 +995,7 @@
         }
       }
     },
-    "ECA42A1A-9A83-4A52-855C-5C896BD968E4": {
+    "E71D0C1D-744E-433A-BDC4-98B135F9A6B2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1055,7 +1028,7 @@
         }
       }
     },
-    "23F54AC5-22E1-4218-A520-E4FB61FD78B4": {
+    "70D4C8C1-C632-4DBD-8713-844C3641819D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1068,7 +1041,7 @@
         }
       }
     },
-    "EB875B60-3199-4AF9-8D2E-B25F5B05864D": {
+    "6B14B698-E44F-4C1E-9B69-08F1B46622D1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1093,7 +1066,7 @@
         }
       }
     },
-    "21001CF0-9EE8-4669-9A13-700E3C778B41": {
+    "E728B29F-48C8-47A7-BE0C-47A1F6E95DEF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1112,8 +1085,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "sourceAttrName": {
@@ -1124,8 +1097,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "targetMethodName": {
@@ -1136,7 +1109,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "15CB8729-0C6D-46EF-807D-CED91679AF47",
+            "id": "4223A061-D680-433F-8209-6317BB516ED0",
             "rev": 0
           }
         },
@@ -1160,7 +1133,7 @@
         }
       }
     },
-    "15CB8729-0C6D-46EF-807D-CED91679AF47": {
+    "4223A061-D680-433F-8209-6317BB516ED0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1171,21 +1144,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         }
       }
     },
-    "B783A76A-0E58-4DA8-BB93-D4AB107EC62F": {
+    "2328C1EB-B9AF-4CD7-B376-F822FEC3B648": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1204,8 +1177,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "sourceAttrName": {
@@ -1216,8 +1189,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "targetMethodName": {
@@ -1228,7 +1201,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "1DC735B7-2574-43B0-99FA-5279B345D4BA",
+            "id": "FDF70656-FF27-48B9-9A58-EC97C84B4310",
             "rev": 0
           }
         },
@@ -1252,7 +1225,7 @@
         }
       }
     },
-    "1DC735B7-2574-43B0-99FA-5279B345D4BA": {
+    "FDF70656-FF27-48B9-9A58-EC97C84B4310": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1263,21 +1236,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         }
       }
     },
-    "E9B01CCE-DE34-4FFF-85E8-5781D2535662": {
+    "6B93EE38-5218-4D89-9250-E6C0E83C1227": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1296,8 +1269,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "sourceAttrName": {
@@ -1308,8 +1281,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "targetMethodName": {
@@ -1320,7 +1293,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "9611C912-4E45-4993-832B-545AFDD2F4F4",
+            "id": "FC9D0B06-A66C-49FA-9556-69204AF77C4D",
             "rev": 0
           }
         },
@@ -1344,7 +1317,7 @@
         }
       }
     },
-    "9611C912-4E45-4993-832B-545AFDD2F4F4": {
+    "FC9D0B06-A66C-49FA-9556-69204AF77C4D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1355,21 +1328,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         }
       }
     },
-    "8101C72F-2B17-4B10-9B9E-8A33916525EE": {
+    "7744A656-7CEF-4AAA-85F8-E8182E9727AB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1388,8 +1361,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "sourceAttrName": {
@@ -1400,8 +1373,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "targetMethodName": {
@@ -1412,7 +1385,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "970CDDF2-61CA-4FAF-8E3A-12184C8D7082",
+            "id": "373C9061-147B-45C6-98EB-0F5B198FE456",
             "rev": 0
           }
         },
@@ -1436,7 +1409,7 @@
         }
       }
     },
-    "970CDDF2-61CA-4FAF-8E3A-12184C8D7082": {
+    "373C9061-147B-45C6-98EB-0F5B198FE456": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1447,21 +1420,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         }
       }
     },
-    "66B9530D-32A2-4667-9299-6449A681D7B0": {
+    "4F19891E-3A2F-4A2A-89CA-0CDEA9718D7E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1480,8 +1453,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "sourceAttrName": {
@@ -1492,8 +1465,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "targetMethodName": {
@@ -1504,7 +1477,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "E6FEF8E4-CD29-47F3-BAAD-31C613975DD5",
+            "id": "9553151F-2243-4BC0-BAC1-87B4033DAC6C",
             "rev": 0
           }
         },
@@ -1528,7 +1501,7 @@
         }
       }
     },
-    "E6FEF8E4-CD29-47F3-BAAD-31C613975DD5": {
+    "9553151F-2243-4BC0-BAC1-87B4033DAC6C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1539,21 +1512,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         }
       }
     },
-    "376645AC-DF9E-41D5-B45F-DB3B0659B901": {
+    "65AD32A5-D17A-4E02-86CF-CA7F493D14F8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1572,8 +1545,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "sourceAttrName": {
@@ -1584,8 +1557,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "targetMethodName": {
@@ -1596,7 +1569,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "8F961518-3BAD-4303-9814-57878DD05298",
+            "id": "787B87BC-E6D9-4155-8D17-7F6C347DB529",
             "rev": 0
           }
         },
@@ -1620,7 +1593,7 @@
         }
       }
     },
-    "8F961518-3BAD-4303-9814-57878DD05298": {
+    "787B87BC-E6D9-4155-8D17-7F6C347DB529": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1631,21 +1604,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         }
       }
     },
-    "CD1BDFDE-B5D4-41F2-8C88-CB4872C99417": {
+    "1C899A98-B56C-48A7-AEDF-34AF6D5DB179": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1664,8 +1637,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "sourceAttrName": {
@@ -1676,8 +1649,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "targetMethodName": {
@@ -1688,7 +1661,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "D16D08D9-50A4-46A3-B8AF-8758B58BB2EC",
+            "id": "19D41A65-5031-4529-8A18-87AFA586E295",
             "rev": 0
           }
         },
@@ -1712,7 +1685,7 @@
         }
       }
     },
-    "D16D08D9-50A4-46A3-B8AF-8758B58BB2EC": {
+    "19D41A65-5031-4529-8A18-87AFA586E295": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1723,21 +1696,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         }
       }
     },
-    "5EDF2BA9-4F44-4A9C-B889-E2030011BFCE": {
+    "151421AF-F120-447C-8061-1C8DB0AE6D40": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1756,8 +1729,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "sourceAttrName": {
@@ -1768,8 +1741,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_B6BE670A_8C59_434C_A65E_295F6A265514",
-            "rev": 72032
+            "id": "Part_dash_item_dash_for_dash_partsbin_8DA5600C_7F89_48CF_93C3_853D33AF5E46",
+            "rev": 346221
           }
         },
         "targetMethodName": {
@@ -1780,7 +1753,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "F56EF3EC-22F1-428D-85A0-C4E0A4465E2A",
+            "id": "A56121FF-4389-427A-8FF3-1FF8922CFD79",
             "rev": 0
           }
         },
@@ -1804,8 +1777,8 @@
         }
       }
     },
-    "Part_dash_item_dash_for_dash_partsbin_B6BE670A_8C59_434C_A65E_295F6A265514": {
-      "rev": 72032,
+    "Part_dash_item_dash_for_dash_partsbin_8DA5600C_7F89_48CF_93C3_853D33AF5E46": {
+      "rev": 346221,
       "props": {
         "extent": {
           "key": "extent",
@@ -1844,13 +1817,13 @@
           "value": [
             {
               "__ref__": true,
-              "id": "HTMLMorph_D0520ED4_201D_43C3_A7DF_0E7C3DAC436F",
-              "rev": 72019
+              "id": "HTMLMorph_CA81F572_F0CC_4C83_9E4D_145CE291CBE1",
+              "rev": 346208
             },
             {
               "__ref__": true,
-              "id": "Label_86CC271A_15CB_4760_9526_ECADA733F20C",
-              "rev": 72030
+              "id": "Label_DEDA8212_725C_47CC_AA7B_4B7D00F7DB2F",
+              "rev": 346219
             }
           ]
         },
@@ -1921,8 +1894,8 @@
         }
       }
     },
-    "HTMLMorph_D0520ED4_201D_43C3_A7DF_0E7C3DAC436F": {
-      "rev": 72019,
+    "HTMLMorph_CA81F572_F0CC_4C83_9E4D_145CE291CBE1": {
+      "rev": 346208,
       "props": {
         "extent": {
           "key": "extent",
@@ -1951,6 +1924,10 @@
         "reactsToPointer": {
           "key": "reactsToPointer",
           "value": false
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -1987,9 +1964,13 @@
         }
       }
     },
-    "Label_86CC271A_15CB_4760_9526_ECADA733F20C": {
-      "rev": 72030,
+    "Label_DEDA8212_725C_47CC_AA7B_4B7D00F7DB2F": {
+      "rev": 346219,
       "props": {
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(70.0,17.0)"
@@ -2002,6 +1983,10 @@
           "key": "name",
           "value": "preview-label"
         },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "default"
+        },
         "origin": {
           "key": "origin",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
@@ -2009,6 +1994,10 @@
         "position": {
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(38.1,113.0)"
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -2029,15 +2018,23 @@
               "IconPicker",
               {
                 "__ref__": true,
-                "id": "A0988135-9BF6-4F0F-B218-A15D682115BF",
+                "id": "CFB7ACC9-2046-4351-A1AD-DDD10F2EAE90",
                 "rev": 0
               }
             ]
           ]
         },
+        "autofit": {
+          "key": "autofit",
+          "value": true
+        },
         "padding": {
           "key": "padding",
           "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
         },
         "fontSize": {
           "key": "fontSize",
@@ -2046,6 +2043,18 @@
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -2066,7 +2075,7 @@
         }
       }
     },
-    "A0988135-9BF6-4F0F-B218-A15D682115BF": {
+    "CFB7ACC9-2046-4351-A1AD-DDD10F2EAE90": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2075,7 +2084,7 @@
         }
       }
     },
-    "F56EF3EC-22F1-428D-85A0-C4E0A4465E2A": {
+    "A56121FF-4389-427A-8FF3-1FF8922CFD79": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2086,21 +2095,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_B6BE670A_8C59_434C_A65E_295F6A265514",
-            "rev": 72032
+            "id": "Part_dash_item_dash_for_dash_partsbin_8DA5600C_7F89_48CF_93C3_853D33AF5E46",
+            "rev": 346221
           }
         }
       }
     },
-    "9E8C884F-97A2-4557-99FC-75C297E7A3E9": {
+    "B80AD751-867A-4F51-A775-58CA48F988F0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2119,8 +2128,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "sourceAttrName": {
@@ -2131,8 +2140,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_DF335E8D_12B4_48C9_97D4_EB054179F3A8",
-            "rev": 72071
+            "id": "Part_dash_item_dash_for_dash_partsbin_B1BC4E9A_C912_4A95_A81E_3D603775B5EB",
+            "rev": 346260
           }
         },
         "targetMethodName": {
@@ -2143,7 +2152,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "BA1D8A9C-0E8E-4360-ACB5-3125FB289C73",
+            "id": "6EFBD7A9-3377-464F-83A4-9367ECB95F20",
             "rev": 0
           }
         },
@@ -2167,8 +2176,8 @@
         }
       }
     },
-    "Part_dash_item_dash_for_dash_partsbin_DF335E8D_12B4_48C9_97D4_EB054179F3A8": {
-      "rev": 72071,
+    "Part_dash_item_dash_for_dash_partsbin_B1BC4E9A_C912_4A95_A81E_3D603775B5EB": {
+      "rev": 346260,
       "props": {
         "extent": {
           "key": "extent",
@@ -2207,13 +2216,13 @@
           "value": [
             {
               "__ref__": true,
-              "id": "HTMLMorph_D72E58E3_F917_4149_9AB1_BFC7E5E87695",
-              "rev": 72058
+              "id": "HTMLMorph_3EC5702C_4949_447A_A9CF_F0459DEAF7AD",
+              "rev": 346247
             },
             {
               "__ref__": true,
-              "id": "Label_1337EED4_387B_4FB2_9C0D_9B5826006F1F",
-              "rev": 72069
+              "id": "Label_193E1D53_3046_4390_B37C_5ACFE6F3AA0F",
+              "rev": 346258
             }
           ]
         },
@@ -2284,8 +2293,8 @@
         }
       }
     },
-    "HTMLMorph_D72E58E3_F917_4149_9AB1_BFC7E5E87695": {
-      "rev": 72058,
+    "HTMLMorph_3EC5702C_4949_447A_A9CF_F0459DEAF7AD": {
+      "rev": 346247,
       "props": {
         "extent": {
           "key": "extent",
@@ -2314,6 +2323,10 @@
         "reactsToPointer": {
           "key": "reactsToPointer",
           "value": false
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -2350,9 +2363,13 @@
         }
       }
     },
-    "Label_1337EED4_387B_4FB2_9C0D_9B5826006F1F": {
-      "rev": 72069,
+    "Label_193E1D53_3046_4390_B37C_5ACFE6F3AA0F": {
+      "rev": 346258,
       "props": {
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(70.0,17.0)"
@@ -2365,6 +2382,10 @@
           "key": "name",
           "value": "preview-label"
         },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "default"
+        },
         "origin": {
           "key": "origin",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
@@ -2372,6 +2393,10 @@
         "position": {
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(38.1,113.0)"
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -2392,15 +2417,23 @@
               "IconPicker",
               {
                 "__ref__": true,
-                "id": "28AD4DE1-7697-4A34-B2B6-EB286758A590",
+                "id": "B3570EAC-99D7-4972-8500-667878E18234",
                 "rev": 0
               }
             ]
           ]
         },
+        "autofit": {
+          "key": "autofit",
+          "value": true
+        },
         "padding": {
           "key": "padding",
           "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
         },
         "fontSize": {
           "key": "fontSize",
@@ -2409,6 +2442,18 @@
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -2429,7 +2474,7 @@
         }
       }
     },
-    "28AD4DE1-7697-4A34-B2B6-EB286758A590": {
+    "B3570EAC-99D7-4972-8500-667878E18234": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2438,7 +2483,7 @@
         }
       }
     },
-    "BA1D8A9C-0E8E-4360-ACB5-3125FB289C73": {
+    "6EFBD7A9-3377-464F-83A4-9367ECB95F20": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2449,21 +2494,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_DF335E8D_12B4_48C9_97D4_EB054179F3A8",
-            "rev": 72071
+            "id": "Part_dash_item_dash_for_dash_partsbin_B1BC4E9A_C912_4A95_A81E_3D603775B5EB",
+            "rev": 346260
           }
         }
       }
     },
-    "487803DA-AE91-4968-8CA5-9512F0B86914": {
+    "297790C3-E362-42C2-8111-99CE6F763DB6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2482,8 +2527,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "sourceAttrName": {
@@ -2494,8 +2539,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_B082BB4E_5FE3_4524_8BAF_8C5CF7116857",
-            "rev": 80812
+            "id": "Part_dash_item_dash_for_dash_partsbin_63941050_2BFB_40B6_80E8_FF93CADB32AE",
+            "rev": 472396
           }
         },
         "targetMethodName": {
@@ -2506,7 +2551,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "8627F731-0FB4-4253-AE0D-292C5B35BC6C",
+            "id": "77DBD41E-4AA6-4882-BF12-6D8011645CCC",
             "rev": 0
           }
         },
@@ -2530,7 +2575,7 @@
         }
       }
     },
-    "8627F731-0FB4-4253-AE0D-292C5B35BC6C": {
+    "77DBD41E-4AA6-4882-BF12-6D8011645CCC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2541,16 +2586,16 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_C2BB6B71_1948_4BCE_A2A0_023F4108A639",
-            "rev": 71992
+            "id": "Button_3954E02C_4F63_409F_B004_AE12D642795C",
+            "rev": 471138
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Part_dash_item_dash_for_dash_partsbin_B082BB4E_5FE3_4524_8BAF_8C5CF7116857",
-            "rev": 80812
+            "id": "Part_dash_item_dash_for_dash_partsbin_63941050_2BFB_40B6_80E8_FF93CADB32AE",
+            "rev": 472396
           }
         }
       }
@@ -2561,9 +2606,9 @@
     "local://lively-object-modules/": {
       "38C79579-61C1-46DE-A025-FF870C3DA84F": {
         "package.json": "{\n  \"name\": \"38C79579-61C1-46DE-A025-FF870C3DA84F\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
-        "index.js": "import { Morph, morph, Icon, HTMLMorph } from \"lively.morphic\";\nimport { Color, pt } from \"lively.graphics/index.js\";\nimport { connect, once, disconnect } from \"lively.bindings/index.js\";\nimport { resource } from \"lively.resources/index.js\";\nimport { loadMorphFromSnapshot } from \"lively.morphic/serialization.js\";\nimport LoadingIndicator from \"lively.morphic/components/loading-indicator.js\";\n\nexport default class Part_dash_item_dash_for_dash_partsbin extends Morph {\n\n  static get properties() {\n    return {\n      partName: {},\n      partResource: {},\n      snapshot: {}\n    }\n  }\n\n  reset() {\n    connect(this.getSubmorphNamed(\"remove-button\"), 'fire', this, 'interactivelyRemovePart');\n  }\n\n  beforePublish() {\n    this.clear()\n  }\n\n  clear() {\n    this.snapshot = null;\n    this.partResource = null;\n    this.partName = \"\";\n    let label = this.getSubmorphNamed('preview-label'),\n         preview = this.getSubmorphNamed('html-preview')\n    label && label.remove();\n    if (preview)\n      preview.html = `\n  <div style=\"display: flex;\n              align-items: center;\n              justify-content: center;\n              height: 100%;\n              background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))\">\n    <p style=\"font: bold 20pt Inconsolata, monospace; color: lightgray;\">Loading</p>\n  </div>`;\n  }\n\n  async showPart(partResource) {\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/star.json\")\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/button.json\")\n    // await this.showPart()\n    this.clear();\n    this.partName = partResource.name().replace(/\\.json$/, \"\");\n    this.snapshot = JSON.parse(await partResource.read());\n    this.partResource = partResource;\n    this.addPreviewMorph();\n  }\n\n  addPreviewMorph() {\n    let {extent, partName, snapshot} = this,\n        margin = 10,\n        previewWidth = 100+2*margin,\n        previewHeight = 100+2*margin,\n        {x: w, y: h} = extent,\n        borderWidth = 1,\n        previewHTML = `<div style=\"width: 100%;\">`\n                    + `<div style=\"position: absolute; top: ${margin}px;`\n                    + `            left: ${margin + (w-previewWidth) / 2}px\">`\n                    + snapshot.preview\n                    + `</div>`,\n      previewSpec = {\n        name: \"html-preview\",\n        fill: null,\n        reactsToPointer: false,\n        html: previewHTML,\n        extent: pt(w, h),\n        // border: {width: 1, color: Color.gray, radius: 5},\n        nativeCursor: \"-webkit-grab\"\n      };\n\n    var preview = this.getSubmorphNamed(\"html-preview\") || this.addMorph(new HTMLMorph());\n    this.addMorph({\n      bottomCenter: preview.bottomCenter.addPt(pt(0,-5)),\n      type: 'label', fontSize: 12, fontColor: Color.gray.darker(),\n      fill: Color.gray.withA(.7), borderRadius: 10, padding: 4,\n      value: partName, name: 'preview-label'\n    })\n    Object.assign(preview, previewSpec);\n\n    preview.domNode.style.pointerEvents = \"none\";\n    // disconnect(preview, 'onDragStart', this, 'createAndGrabNewInstance',\n    //   {converter: function() { return this.sourceObj; }});\n    return preview;\n  }\n\n  onDragStart(evt) {\n    this.createAndGrabNewInstance();\n  }\n\n  async createAndGrabNewInstance() {\n    // FIXME\n    var hand = this.world().firstHand;\n    this.draggable = false;\n    this.env.eventDispatcher.eventState.draggedMorph = null;\n    try {\n      let {snapshot} = this,\n          preview = this.getSubmorphNamed('html-preview'),\n          newMorph = preview.copy(),\n          positionInHand = hand.localize(preview.globalPosition);\n      hand.grab(newMorph);\n      newMorph.dropShadow = false;\n      newMorph.origin = newMorph.extent.scaleBy(.5);\n      newMorph.topLeft = positionInHand;\n      var previewDiv = preview.domNode.childNodes[0].childNodes[0].childNodes[0],\n          scale = 1 / (previewDiv.getBoundingClientRect().width / previewDiv.offsetWidth)\n      newMorph.animate({scale, duration: 400});\n      newMorph.loadPart = async () => {\n         newMorph.addMorph({\n           fill: Color.black.withA(.7), scale: 1 / scale,\n           extent: pt(100,100), borderRadius: 5,\n           submorphs: [{\n              type: 'text',\n              fontFamily: 'FontAwesome',\n              extent: pt(60,60),\n              padding: 10,\n              fontSize: 60,\n              textStyleClasses: ['fa', 'fa-spin', 'fa-fw'],\n              textString: Icon.makeLabel('refresh').textString,\n              fill: Color.transparent,\n              fontColor: Color.white,\n           }, {\n             type: 'label', value: 'Loading Part...',\n             fontColor: Color.white, fontSize: 13,\n             bottomCenter: pt(50,95)\n           }]\n         }).center = pt(0,0);\n         var part = await loadMorphFromSnapshot(snapshot);\n         newMorph.owner.addMorph(part)\n         part.center = newMorph.center;\n         newMorph.remove();\n      };\n      once(newMorph, 'remove', newMorph, 'loadPart');\n    } catch (e) {\n      this.showError(e)\n    } finally {\n      this.draggable = true;\n    }\n  }\n\n  async interactivelyRemovePart() {\n    let {partName, partResource} = this,\n        really = await this.world().confirm(`Do you really want to remove part ${partName}?`);\n    if (!really) return;\n    await partResource.remove();\n    if (this.owner.isPartsBin) { this.remove(); }\n  }\n\n}\n\n"
+        "index.js": "import { Morph, Image, morph, Icon, HTMLMorph } from \"lively.morphic\";\nimport { Color, pt } from \"lively.graphics/index.js\";\nimport { connect, once, disconnect } from \"lively.bindings/index.js\";\nimport { resource } from \"lively.resources/index.js\";\nimport { loadMorphFromSnapshot } from \"lively.morphic/serialization.js\";\nimport LoadingIndicator from \"lively.morphic/components/loading-indicator.js\";\n\nexport default class Part_dash_item_dash_for_dash_partsbin extends Morph {\n\n  static get properties() {\n    return {\n      partName: {},\n      partResource: {},\n      snapshot: {}\n    }\n  }\n\n  reset() {\n    connect(this.getSubmorphNamed(\"remove-button\"), 'fire', this, 'interactivelyRemovePart');\n  }\n\n  beforePublish() {\n    this.clear()\n  }\n\n  clear() {\n    this.snapshot = null;\n    this.partResource = null;\n    this.partName = \"\";\n    let label = this.getSubmorphNamed('preview-label'),\n        preview = this.getSubmorphNamed('html-preview'),\n        imagePreview = this.getSubmorphNamed('image-preview');\n    label && label.remove();\n    imagePreview && imagePreview.remove();\n    if (preview)\n      preview.html = `\n  <div style=\"display: flex;\n              align-items: center;\n              justify-content: center;\n              height: 100%;\n              background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))\">\n    <p style=\"font: bold 20pt Inconsolata, monospace; color: lightgray;\">Loading</p>\n  </div>`;\n  }\n\n  async showPart(partResource) {\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/star.json\")\n    // partResource = resource(System.decanonicalize(\"lively.morphic/\")).join(\"parts/button.json\")\n    // await this.showPart(partResource)\n    this.clear();\n    this.partName = partResource.name().replace(/\\.json$/, \"\");\n    this.snapshot = JSON.parse(await partResource.read());\n    this.partResource = partResource;\n    this.addPreviewMorph();\n    this.addLabel();\n    this.getSubmorphNamed(\"remove-button\").visible = false;\n  }\n\n  addPreviewMorph() {\n    let {snapshot: {preview}} = this;\n    if (typeof preview !== \"string\" || !preview) preview = \"no preview\";\n    return preview.startsWith(\"data:image/\") ?\n      this.addImagePreviewMorph(preview) :\n      this.addHTMLPreviewMorph(preview);\n  }\n\n  addImagePreviewMorph(dataURI) {\n    let {extent, partName} = this,\n        margin = 10,\n        {x: w, y: h} = extent,\n        edgeLength = Math.min(w-2*margin, h-2*margin),\n        borderWidth = 1,\n        previewSpec = {\n          name: \"image-preview\",\n          fill: null,\n          reactsToPointer: false,\n          imageUrl: dataURI,\n          extent: pt(edgeLength, edgeLength),\n          topCenter: pt(w/2, margin),\n          nativeCursor: \"-webkit-grab\"\n        },\n        htmlPreview = this.getSubmorphNamed(\"html-preview\"),\n        preview = htmlPreview ? htmlPreview.replaceWith(new Image()) : this.addMorphBack(new Image());\n    Object.assign(preview, previewSpec);\n    return preview;\n  }\n\n  addHTMLPreviewMorph(html) {\n    let {extent, partName} = this,\n        margin = 10,\n        previewWidth = 100+2*margin,\n        previewHeight = 100+2*margin,\n        {x: w, y: h} = extent,\n        borderWidth = 1,\n        previewHTML = `<div style=\"width: 100%;\">`\n                    + `<div style=\"position: absolute; top: ${margin}px;`\n                    + `            left: ${margin + (w-previewWidth) / 2}px\">`\n                    + html\n                    + `</div>`,\n      previewSpec = {\n        name: \"html-preview\",\n        fill: null,\n        reactsToPointer: false,\n        html: previewHTML,\n        extent: pt(w, h),\n        // border: {width: 1, color: Color.gray, radius: 5},\n        nativeCursor: \"-webkit-grab\"\n      };\n    var preview = this.getSubmorphNamed(\"html-preview\") || this.addMorphBack(new HTMLMorph());\n    Object.assign(preview, previewSpec);\n    preview.domNode.style.pointerEvents = \"none\";\n    return preview;\n  }\n\n  addLabel() {\n    let {partName, width, height} = this\n    if (this.getSubmorphNamed('preview-label'))\n      this.getSubmorphNamed('preview-label').remove();\n    this.addMorph({\n      bottomCenter: pt(width/2, height-5),\n      type: 'label', fontSize: 12, fontColor: Color.gray.darker(),\n      fill: Color.gray.withA(.7), borderRadius: 10, padding: 4,\n      value: partName, name: 'preview-label'\n    });\n  }\n\n  onDragStart(evt) {\n    this.createAndGrabNewInstance();\n  }\n\n  async createAndGrabNewInstance() {\n    // FIXME\n    var hand = this.world().firstHand;\n    this.draggable = false;\n    this.env.eventDispatcher.eventState.draggedMorph = null;\n    try {\n      let {snapshot} = this,\n          preview = this.getSubmorphNamed('html-preview') || this.getSubmorphNamed('image-preview'),\n          newMorph = preview.copy(),\n          positionInHand = hand.localize(preview.globalPosition);\n      hand.grab(newMorph);\n      newMorph.dropShadow = false;\n      newMorph.origin = newMorph.extent.scaleBy(.5);\n      newMorph.topLeft = positionInHand;\n      if (!preview.isImage) {\n        var previewDiv = preview.domNode.childNodes[0].childNodes[0].childNodes[0],\n            scale = 1 / (previewDiv.getBoundingClientRect().width / previewDiv.offsetWidth)\n      } else var scale = 1;\n      newMorph.animate({scale, duration: 400});\n      newMorph.loadPart = async () => {\n         newMorph.addMorph({\n           fill: Color.black.withA(.7), scale: 1 / scale,\n           extent: pt(100,100), borderRadius: 5,\n           submorphs: [\n             Object.assign(Icon.makeLabel('refresh'), {\n              extent: pt(60,60),\n              padding: 10,\n              fontSize: 60,\n              fill: Color.transparent,\n              fontColor: Color.white,\n             }),\n             {\n               type: 'label', value: 'Loading Part...',\n               fontColor: Color.white, fontSize: 13,\n               bottomCenter: pt(50,95)\n             }\n           ]\n         }).center = pt(0,0);\n         let part = await loadMorphFromSnapshot(snapshot);\n         newMorph.owner.addMorph(part)\n         part.center = newMorph.center;\n         newMorph.remove();\n      };\n      once(newMorph, 'remove', newMorph, 'loadPart');\n    } catch (e) {\n      this.showError(e)\n    } finally {\n      this.draggable = true;\n    }\n  }\n\n  async interactivelyRemovePart() {\n    let {partName, partResource} = this,\n        really = await this.world().confirm(`Do you really want to remove part ${partName}?`);\n    if (!really) return;\n    await partResource.remove();\n    if (this.owner.isPartsBin) { this.remove(); }\n  }\n\n  onHoverIn(evt) {\n    let btn = this.getSubmorphNamed(\"remove-button\");\n    btn.bringToFront();\n    btn.visible = true;\n  }\n  \n  onHoverOut(evt) {\n    let btn = this.getSubmorphNamed(\"remove-button\");\n    btn.visible = false;\n  }\n}\n\n"
       }
     }
   },
-  "preview": "<div id=\"\" class=\"Part_dash_item_dash_for_dash_partsbin\" draggable=\"false\" style=\"background: rgb(253, 254, 254); transform: translate(0px, 5.57075px) rotate(0deg) scale(0.683527, 0.683527); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 1px; border-color: rgb(189, 195, 199); border-radius: 4px; box-shadow: none; opacity: 1; position: absolute; cursor: auto;\"><div style=\"position: absolute; transform: translate(-1px, -1px);\"><div id=\"\" class=\"HTMLMorph\" draggable=\"false\" style=\"transform: translate3d(0px, 0px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; pointer-events: none; cursor: -webkit-grab;\"><div style=\"position: absolute; width: 100%; height: 100%;\">\n  <div style=\"display: flex;\n              align-items: center;\n              justify-content: center;\n              height: 100%;\n              background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))\">\n    <p style=\"font: bold 20pt Inconsolata, monospace; color: lightgray;\">Loading</p>\n  </div></div><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div><div id=\"\" class=\"Button\" draggable=\"false\" style=\"background: rgba(0, 0, 0, 0.654902); transform: translate3d(112.7px, 7px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 25px; height: 25px; border-style: solid; border-width: 0px; border-color: rgb(230, 230, 230); border-radius: 14px; box-shadow: rgb(102, 102, 102) 1.41421px 1.41421px 6px; opacity: 1; position: absolute; pointer-events: auto; cursor: pointer;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"><div id=\"\" class=\"Label\" draggable=\"false\" style=\"background: rgba(0, 0, 0, 0); transform: translate3d(7.78px, 6.5px, 0px) rotate(0deg) scale(1, 1); transform-origin: 0px 0px 0px; display: inline; width: 9.4375px; height: 12px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; pointer-events: auto; cursor: pointer; font-family: sans-serif; font-size: 12px; color: rgb(255, 255, 255); padding: 0px;\"><span class=\"fa\"></span><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div></div></div></div></div>"
+  "preview": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAACGklEQVR4Xu2TO0pDURgGz7m5CsFGMASFoAEfGBTRxtLK1mW4Czu34VoMFiJqCPGBBgUbS19guoTkCG4iA2fuBu78M+eLwQ9lIKJohAkGgT0CgxgEZgCG87+QdvuqmYrxfijKeRhfNjhFmAxGk9iLt93uYTlbPWss1ldipZKNANyhKYWPz89BvO7eXexutw7KssQx5ggU+y9vT+trzVaOxxNvjo/91/fWxmqDCJcjk0Fg1Q1iEJgBGI4LMQjMAAzHhRgEZgCG40IMAjMAw3EhBoEZgOG4EIPADMBwXIhBYAZgOC7EIDADMBwXYhCYARiOCzEIzAAMx4UYBGYAhuNCDAIzAMNxIQaBGYDhuBCDwAzAcFyIQWAGYDguxCAwAzAcF2IQmAEYjgsxCMwADMeFGARmAIbjQgwCMwDDcSEGgRmA4bgQg8AMwHBciEFgBmA4LsQgMAMwHBdiEJgBGI4LMQjMAAzHhRgEZgCG40IMAjMAw3EhBoEZgOG4EIPADMBwXIhBYAZgOC7EIDADMBwXYhCYARiOCzEIzAAMx4UYBGYAhuNCDAIzAMNxIQaBGYDhuBCDwAzAcFyIQWAGYDguxCAwAzAcF2IQmAEYTuz0Hp73drY2YVzZ4sRO7/60Vls4WarXQ1HEbEVM+/CUUvj6/gkxpVRc3nSOq9W5o8lkvDxtsFz/P1OWv8Ph6NxJwF6AQQwCMwDDcSGwIH/2k4RLkNdzJQAAAABJRU5ErkJggg=="
 }

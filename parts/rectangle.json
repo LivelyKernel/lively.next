@@ -1,31 +1,31 @@
 {
-  "id": "Morph_0C658181_3291_4741_ADB6_2C141B49EB1C",
+  "id": "Morph_5D47D1BD_3075_4993_9703_FDECA8DBDAAF",
   "snapshot": {
-    "Morph_0C658181_3291_4741_ADB6_2C141B49EB1C": {
-      "rev": 516288,
+    "Morph_5D47D1BD_3075_4993_9703_FDECA8DBDAAF": {
+      "rev": 442896,
       "props": {
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.3,130.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(76,223,46)"
+        },
+        "name": {
+          "key": "name",
+          "value": "rectangle"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(806.8,757.5)"
+        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
             "Morph",
             "morph"
           ]
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(154.3,490.0)"
-        },
-        "name": {
-          "key": "name",
-          "value": "rectangle"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(76,223,46)"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.3,130.0)"
         },
         "submorphs": {
           "key": "submorphs",
@@ -51,6 +51,7 @@
       }
     }
   },
+  "requiredVersion": "~0.1",
   "packages": {},
-  "preview": "<div   draggable=\"false\" style=\"background: rgb(76, 223, 46); transform: translate(0px, 5.57075px) rotate(0deg) scale(0.683527, 0.683527); transform-origin: 0px 0px 0px; display: inline; width: 146.3px; height: 130px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255); border-radius: 0px; box-shadow: none; opacity: 1; position: absolute; overflow: visible; cursor: auto;\"><div style=\"position: absolute; transform: translate(0px, 0px);\"></div></div>"
+  "preview": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAABjElEQVR4Xu3TUQ3DMBTF0KR4qgGphqVMi6HfRdFpLI4UB4GfnTtHjzIwKZpgRkGwT1CQgmAGMJx53PuJMS2Ls43xzO/9eZc1gB3+jvcqCBSlIFCMP0pBCoIZwHBaSEEwAxhOCykIZgDDaSEFwQxgOC2kIJgBDKeFFAQzgOG0kIJgBjCcFlIQzACG00IKghnAcFpIQTADGE4LKQhmAMNpIQXBDGA4LaQgmAEMp4UUBDOA4bSQgmAGMJwWUhDMAIbTQgqCGcBwWkhBMAMYTgspCGYAw2khBcEMYDgtpCCYAQynhRQEM4DhtJCCYAYwnBZSEMwAhtNCCoIZwHBaSEEwAxhOCykIZgDDaSEFwQxgOC2kIJgBDKeFFAQzgOG0kIJgBjCcFlIQzACG00IKghnAcFpIQTADGE4LKQhmAMNpIQXBDGA4LaQgmAEMp4UUBDOA4bSQgmAGMJwWUhDMAIbTQgqCGcBwWkhBMAMYTgsRgxz3fmJcy+JsYzxz2evRwwuChSlIQTADGE4LwYL8ABkzydiCYjrBAAAAAElFTkSuQmCC"
 }
