@@ -1,7 +1,7 @@
 /*global System*/
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, arr, string, obj, promise } from "lively.lang";
-import { once } from "lively.bindings";
+import { once, signal } from "lively.bindings";
 import { StatusMessage, StatusMessageForMorph } from './components/markers.js';
 import { Morph, inspect, Text, config, MorphicEnv, Window, Menu } from "./index.js";
 import { TooltipViewer } from "./components/tooltips.js";
@@ -1253,12 +1253,14 @@ export class Hand extends Morph {
     morph.reactsToPointer = false;
     morph.dropShadow = true;
     this.addMorph(morph);
+    signal(this, "grab", morph);
   }
 
   dropMorphsOn(dropTarget) {
     this.grabbedMorphs.forEach(morph => {
       dropTarget.addMorph(morph);
-      Object.assign(morph, this.prevMorphProps.get(morph))
+      Object.assign(morph, this.prevMorphProps.get(morph));
+      signal(this, "drop", morph);
     });
   }
 
