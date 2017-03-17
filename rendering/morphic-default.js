@@ -81,7 +81,7 @@ class StyleMapper {
 
   static getTransform({position, origin, scale, rotation}) {
     return {
-       transform: `translate3d(${(position.x - origin.x).toFixed(2)}px, ${(position.y - origin.y).toFixed(2)}px, 0px) rotate(${num.toDegrees(rotation).toFixed(2)}deg) scale(${scale.toFixed(2)},${scale.toFixed(2)})`}
+       transform: `translate3d(${Math.round(position.x - origin.x)}px, ${Math.round(position.y - origin.y)}px, 0px) rotate(${rotation.toFixed(2)}rad) scale(${scale.toFixed(2)},${scale.toFixed(2)})`}
   }
 
   static getTransformOrigin({origin}) {
