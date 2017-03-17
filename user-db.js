@@ -2,6 +2,27 @@ var sqlite3Path = System.decanonicalize("lively.user/node_modules/sqlite3/lib/sq
 var sqlite3 = System._nodeRequire(sqlite3Path).verbose();
 var dbPath = System.decanonicalize("lively.user/userdb.db").replace(/^file:\/\//, "");
 
+export async function doSQL(queryString){
+  var db = new sqlite3.Database(dbPath);
+  try {
+    var response = await new Promise((resolve, reject) => {        
+        var stmnt = queryString
+        db.run(stmnt, (err,resp) => {
+          if (err) {            
+              reject(err)
+          }
+          else resolve(resp)
+        });
+    }).catch(err => {      
+      return (err)
+    })
+  } finally {  
+    db.close();    
+  }
+  console.log(response)
+  return response
+}
+
 export async function remove(user){
   var {username, email} = user  
   
