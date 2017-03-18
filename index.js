@@ -31,7 +31,7 @@ export function serialize(obj, options) {
 export function deserialize(idAndSnapshot, options) {
   options = normalizeOptions(options);
   let {id, snapshot, requiredVersion} = idAndSnapshot;
-  if (!lively.modules.semver.satisfies(serializerVersion, requiredVersion))
+  if (requiredVersion && !lively.modules.semver.satisfies(serializerVersion, requiredVersion))
     console.warn(`[lively.serializer deserialization] snapshot requires version `
                + `${requiredVersion} but serializer has incompatible version `
                + `${serializerVersion}. Deserialization might fail...!`);
