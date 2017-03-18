@@ -31,10 +31,12 @@ class Package {
   static allPackages(System) { return obj.values(packageStore(System)); }
 
   static forModule(System, module) {
-    var pAddress = ModulePackageMapping.forSystem(System).getPackageURLForModuleId(module.id);
-    if (!pAddress)
-      throw new Error(`Cannot find package URL of module ${module.id}`);
-    return getPackage(System, pAddress, true/*normalized*/);
+    return this.forModuleId(System, module.id);
+  }
+
+  static forModuleId(System, moduleId) {
+    let pAddress = ModulePackageMapping.forSystem(System).getPackageURLForModuleId(moduleId);
+    return pAddress ? getPackage(System, pAddress, true/*normalized*/) : null;
   }
 
   constructor(System, packageURL) {
@@ -100,6 +102,13 @@ class Package {
           isLoaded = loadedModules.includes(resourceURL);
       return {isLoaded, url: resourceURL, nameInPackage, package: this};
     });
+  }
+
+  hasResource(urlOrLocalName) {
+    let {System, url: packageURL} = this,
+        res = urlOrLocalName.startsWith(packageURL) ?
+          resource(urlOrLocalName) : resource(packageURL).join(urlOrLocalName);
+    return res.exists();
   }
 
   toString() { return `Package(${this.name} - ${this.path()}/)`; }

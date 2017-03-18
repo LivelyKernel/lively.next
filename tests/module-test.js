@@ -3,7 +3,7 @@
 import { expect } from "mocha-es6";
 import { promise } from "lively.lang";
 
-import module from "../src/module.js";
+import module, { isModuleLoaded, doesModuleExist } from "../src/module.js";
 import { getSystem, removeSystem, loadedModules, whenLoaded } from "../src/system.js";
 import { registerPackage, importPackage } from "../src/packages.js";
 import { createFiles, resource } from "lively.resources";
@@ -96,6 +96,42 @@ describe("module loading", () => {
     expect().assert(loadedModules(System).hasOwnProperty(module1New), `${module1New} not in loadedModules`);
     let {x} = System.get(module1New);
     expect(x).equals(3);
+  });
+
+  describe("module exists", () => {
+
+    it("when loaded", async () => {
+      await registerPackage(System, testDir);
+      await System.import(module1);
+      expect(isModuleLoaded(System, module1)).equals(true, "isLoaded");
+      expect(await doesModuleExist(System, module1)).equals(true, "exists");
+    });
+
+    it("when not loaded", async () => {
+      await registerPackage(System, testDir);
+      expect(isModuleLoaded(System, module1)).equals(false, "isLoaded");
+      expect(await doesModuleExist(System, module1)).equals(true, "exists");
+      expect(module1 in loadedModules(System)).equals(false, "listed in loadedModules");
+    });
+
+    it("not existint", async () => {
+      let uri = testDir + "foo.js";
+      await registerPackage(System, testDir);
+      expect(isModuleLoaded(System, uri)).equals(false, "isLoaded");
+      expect(await doesModuleExist(System, uri)).equals(false, "exists");
+      expect(uri in loadedModules(System)).equals(false, "listed in loadedModules");
+    });
+
+    it("without package", async () => {
+      expect(isModuleLoaded(System, module1)).equals(false, "isLoaded");
+      expect(await doesModuleExist(System, module1)).equals(true, "exists");
+      expect(module1 in loadedModules(System)).equals(false, "listed in loadedModules");
+      let uri = testDir + "foo.js";
+      expect(isModuleLoaded(System, uri)).equals(false, "isLoaded");
+      expect(await doesModuleExist(System, uri)).equals(false, "exists");
+      expect(uri in loadedModules(System)).equals(false, "listed in loadedModules");
+    });
+
   });
 
   describe("imports", () => {

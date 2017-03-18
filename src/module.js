@@ -37,6 +37,20 @@ export default function module(System, moduleName, parent) {
   return sysEnv.loadedModules[id] || (sysEnv.loadedModules[id] = new ModuleInterface(System, id));
 }
 
+export function isModuleLoaded(System, name, isNormalized = false) {
+  let sysEnv = livelySystemEnv(System),
+      id = isNormalized ? name : System.normalizeSync(name);
+  return id in sysEnv.loadedModules;
+}
+
+export async function doesModuleExist(System, name, isNormalized = false) {
+  let sysEnv = livelySystemEnv(System),
+      id = isNormalized ? name : System.normalizeSync(name);
+  if (isModuleLoaded(System, id, true)) return true;
+  let p = Package.forModuleId(System, id);
+  return !p || p.name === "no group"/*FIXME*/ ?
+    System.resource(id).exists() : await p.hasResource(id);
+}
 
 // ModuleInterface is primarily used to provide an API that integrates the System
 // loader state with lively.modules extensions.

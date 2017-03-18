@@ -248,7 +248,9 @@
 import {
   getSystem, removeSystem, prepareSystem,
   printSystemConfig as _printSystemConfig,
-  whenLoaded as _whenLoaded
+  whenLoaded as _whenLoaded,
+  doesModuleExist as _doesModuleExist,
+  isModuleLoaded as _isModuleLoaded
 } from "./src/system.js";
 import _module from "./src/module.js";
 
@@ -264,6 +266,12 @@ function changeSystem(newSystem, makeGlobal) {
 }
 function loadedModules() { return Object.keys(requireMap()); }
 function module(id) { return _module(defaultSystem, id); }
+function isModuleLoaded(name, isNormalized) {
+  return _isModuleLoaded(defaultSystem, name, isNormalized)
+}
+function doesModuleExist(name, isNormalized) {
+  return _doesModuleExist(defaultSystem, name, isNormalized);
+}
 function printSystemConfig() { return _printSystemConfig(defaultSystem); }
 function whenLoaded(moduleName, callback) { return _whenLoaded(defaultSystem, moduleName, callback); }
 export {
@@ -274,7 +282,9 @@ export {
   printSystemConfig,
   whenLoaded,
   changeSystem,
-  module
+  module,
+  doesModuleExist,
+  isModuleLoaded
 };
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
