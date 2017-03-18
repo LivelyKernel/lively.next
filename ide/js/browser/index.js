@@ -570,7 +570,7 @@ export default class Browser extends Window {
   whenModuleUpdated() { return this.state.moduleUpdateInProgress || Promise.resolve(); }
 
   async selectPackageNamed(pName) {
-    var system = await this.systemInterface(),
+    let system = await this.systemInterface(),
         p = await system.getPackage(pName);
     this.onPackageSelected(p);
     await this.whenPackageUpdated();
@@ -585,13 +585,14 @@ export default class Browser extends Window {
     }
 
     try {
+      let {moduleList} = this.ui;
       if (!p) {
-        this.get("moduleList").items = [];
+        moduleList.items = [];
         this.updateSource("");
         this.title = "browser";
       } else {
         this.title = "browser - " + p.name;
-        this.get("moduleList").selection = null;
+        moduleList.selection = null;
         await this.updateModuleList(p);
       }
 
@@ -604,9 +605,41 @@ export default class Browser extends Window {
   }
 
   async selectModuleNamed(mName) {
-    let list = this.get("moduleList"),
+    let list = this.ui.moduleList,
         m = list.selection = list.values.find(({nameInPackage, name}) =>
           mName === name || mName === nameInPackage);
+
+    if (!m) {
+      let system = await this.systemInterface(),
+          p = this.state.selectedPackage,
+          url, nameInPackage;
+
+      if (await system.doesModuleExist(mName)) {
+        if (p && !mName.startsWith(p.url)) {
+          nameInPackage = mName;
+          url = p.url + "/" + mName;
+        } else url = nameInPackage = mName;
+
+      } else if (p && await system.doesModuleExist(p.url + "/" + mName, true)) {
+        url = p.url + "/" + mName;
+        nameInPackage = mName;
+      }
+
+      if (url) {
+        let isLoaded = await system.isModuleLoaded(url, true),
+            item = {
+              isListItem: true,
+              string: nameInPackage,
+              value: {
+                isLoaded, name: url, nameInPackage, url,
+                package: p ? p.url : null,
+              }
+            }
+        list.addItem(item);  
+        m = list.selection = item.value;
+      }
+    }
+
     await this.whenModuleUpdated();
     return m;
   }
@@ -631,7 +664,6 @@ export default class Browser extends Window {
   }
 
   async onModuleSelected(m) {
-
     let pack = this.state.selectedPackage;
     this.state.moduleChangeWarning = null;
 
@@ -780,17 +812,16 @@ export default class Browser extends Window {
 
   async updateModuleList(p = this.selectedPackage) {
     if (!p) return;
-    var mods = await this.packageResources(p);
+    let mods = await this.packageResources(p);
 
-    this.get("moduleList").items = mods
-      .sort((a, b) => {
-        if (a.isLoaded && !b.isLoaded) return -1;
-        if (!a.isLoaded && b.isLoaded) return 1;
-        if (a.nameInPackage.toLowerCase() < b.nameInPackage.toLowerCase()) return -1;
-        if (a.nameInPackage.toLowerCase() == b.nameInPackage.toLowerCase()) return 0;
-        return 1
-      })
-      .map(m => ({string: m.nameInPackage + (m.isLoaded ? "" : " [not loaded]"), value: m, isListItem: true}));
+    this.ui.moduleList.items = mods.sort((a, b) => {
+      if (a.isLoaded && !b.isLoaded) return -1;
+      if (!a.isLoaded && b.isLoaded) return 1;
+      if (a.nameInPackage.toLowerCase() < b.nameInPackage.toLowerCase()) return -1;
+      if (a.nameInPackage.toLowerCase() == b.nameInPackage.toLowerCase()) return 0;
+      return 1
+    })
+    .map(m => ({string: m.nameInPackage + (m.isLoaded ? "" : " [not loaded]"), value: m, isListItem: true}));
 
     await this.get("moduleList").whenRendered();
   }
