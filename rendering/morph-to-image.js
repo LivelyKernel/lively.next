@@ -57,7 +57,7 @@ export async function renderMorphToDataURI(morph, opts = {}) {
     canvas.style.width = width + "px";
     canvas.style.height = height + "px";
 
-    return await domToImage.toPng(canvas); // returns data URI
+    return await domToImage.toSvg(canvas); // returns data URI
   } finally {
     wrapper.parentNode && wrapper.parentNode.removeChild(wrapper);
   }

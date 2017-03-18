@@ -89,7 +89,7 @@ export async function createMorphSnapshot(aMorph) {
 
   // add preview
   let {renderMorphToDataURI} = await System.import("lively.morphic/rendering/morph-to-image.js");
-  snapshot.preview = await renderMorphToDataURI(aMorph, {width: 100, height: 100});
+  snapshot.preview = await renderMorphToDataURI(aMorph, {width: aMorph.width, height: aMorph.height});
 
   return snapshot;
 }
