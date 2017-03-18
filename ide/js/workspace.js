@@ -83,7 +83,8 @@ export default class Workspace extends Window {
           nativeCursor: "pointer",
           fontSize: 14,
           fill: Color.rgbHex("#DDD"),
-          leftCenter: arr.last(buttons).rightCenter.addXY(6, -2)
+          tooltip: "set file for workspace",
+          leftCenter: arr.last(buttons).rightCenter.addXY(6, -1)
         }));
       connect(label, 'onHoverIn', label, 'fontSize', {converter: () => 16});
       connect(label, 'onHoverOut', label, 'fontSize', {converter: () => 14});
@@ -113,9 +114,11 @@ export default class Workspace extends Window {
           workspace.file = f;
           if (!f) {
             workspace.setStatusMessage("workspace file cleared");
+            workspace.getSubmorphNamed("pickFileButton").tooltip = "set file for workspace";
             return;
           }
           workspace.setStatusMessage(`workspace saves content to ${workspace.file.url}`);
+          workspace.getSubmorphNamed("pickFileButton").tooltip = `workspace file; ${workspace.file.url}`;
           if (await workspace.world().confirm(`Load content from ${f}?`, {requester: workspace}))
             workspace.content = await workspace.file.read();
         }
