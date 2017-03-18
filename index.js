@@ -249,10 +249,11 @@ import {
   getSystem, removeSystem, prepareSystem,
   printSystemConfig as _printSystemConfig,
   whenLoaded as _whenLoaded,
+} from "./src/system.js";
+import _module, {
   doesModuleExist as _doesModuleExist,
   isModuleLoaded as _isModuleLoaded
-} from "./src/system.js";
-import _module from "./src/module.js";
+} from "./src/module.js";
 
 var GLOBAL = typeof window !== "undefined" ? window :
               (typeof global !== "undefined" ? global :
