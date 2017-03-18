@@ -287,7 +287,7 @@ export default class Browser extends Window {
               fontSize: config.codeEditor.defaultStyle.fontSize - 2,
               clipMode: "hidden",
               borderWidth: 0,
-              readOnly: true
+              readOnly: false
             },
             {name: "sourceEditor", bounds: sourceEditorBounds, ...textStyle},
 
@@ -1086,11 +1086,16 @@ export default class Browser extends Window {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   setStatusMessage() {
-    var ed = this.getSubmorphNamed("sourceEditor");
+    let ed = this.ui.sourceEditor;
     return ed.setStatusMessage.apply(ed, arguments);
   }
 
-  focus() { this.getSubmorphNamed("sourceEditor").focus(); }
+  focus(evt) {
+    let {metaInfoText, sourceEditor} = this.ui,
+        t = evt && evt.targetMorph === metaInfoText ?
+          metaInfoText : sourceEditor;
+    t.focus();
+  }
 
   get keybindings() {
     return [
