@@ -122,6 +122,14 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   // module related
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  isModuleLoaded(name, isNormalized) {
+    return modules.isModuleLoaded(name, isNormalized);
+  }
+
+  doesModuleExist(name, isNormalized) {
+    return modules.isModuleLoaded(name, isNormalized);
+  }
+
   getModule(name) {
     return modules.module(name);
   }

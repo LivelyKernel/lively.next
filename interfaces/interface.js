@@ -42,7 +42,10 @@ export class AbstractCoreInterface {
   getPackages(options)                      { todo("getPackages") }
   
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
+
+  isModuleLoaded(name, isNormalized) { todo("isModuleLoaded"); }
+  doesModuleExist(name, isNormalized) { todo("doesModuleExist"); }
+
   async getModules() {
     return arr.flatmap(await this.getPackages(), ea => ea.modules);
   }
@@ -226,6 +229,14 @@ try {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // package related
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  isModuleLoaded(name, isNormalized) {
+    return this.runEvalAndStringify(`lively.modules.isModuleLoaded("${name}", ${isNormalized})`);
+  }
+
+  doesModuleExist(name, isNormalized) {
+    return this.runEvalAndStringify(`lively.modules.doesModuleExist("${name}", ${isNormalized})`);
+  }
 
   async registerPackage(packageURL) {
     return this.runEvalAndStringify(`lively.modules.registerPackage(${JSON.stringify(packageURL)})`);

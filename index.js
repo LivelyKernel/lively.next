@@ -51,6 +51,8 @@ export class Interface {
   interactivelyUnloadPackage(vmEditor, packageURL, world) { return interactivelyUnloadPackage(this.coreInterface, vmEditor, packageURL, world); }
   interactivelyRemovePackage(requester, pkgURL) { return interactivelyRemovePackage(this.coreInterface, requester, pkgURL); }
 
+  isModuleLoaded(name, isNormalized) { return this.coreInterface.isModuleLoaded(name, isNormalized); }
+  doesModuleExist(name, isNormalized) { return this.coreInterface.doesModuleExist(name, isNormalized); }
   importModule(name)         { return this.coreInterface.importModule(name); }
   forgetModule(name, opts)   { return this.coreInterface.forgetModule(name, opts); }
   reloadModule(name, opts)   { return this.coreInterface.reloadModule(name, opts); }
