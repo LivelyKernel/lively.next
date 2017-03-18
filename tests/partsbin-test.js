@@ -38,13 +38,13 @@ describe("partsbin", function () {
         {partName, url} = await saveObjectToPartsbinFolder(m, m.name, {partsbinFolder});
     expect(partName).equals(m.name);
     expect(url).equals(`${partsbinFolder}${m.name}.json`);
-    var files = await resource(partsbinFolder).dirList();
+    let files = await resource(partsbinFolder).dirList();
     expect(arr.pluck(files, "url")).equals([url]);
   });
 
   it("loads a part", async () => {
     let p = ObjectPackage.withId("package-for-loads-a-part-test");
-    packagesToRemove.push(p);    
+    packagesToRemove.push(p);
 
     var m = morph({name: "test-morph"}),
         _ = await p.adoptObject(m),
@@ -58,7 +58,7 @@ describe("partsbin", function () {
   it("loads most recent part state from file", async () => {
     // publish version 1
     let p = ObjectPackage.withId("package-for-loads-a-part-test");
-    packagesToRemove.push(p);    
+    packagesToRemove.push(p);
 
     var m = morph({name: "test-morph", fill: Color.red});
     await p.adoptObject(m);
