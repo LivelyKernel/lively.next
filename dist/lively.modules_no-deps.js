@@ -3210,17 +3210,13 @@ function urlResolve(url) {
   return protocol + result;
 }
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// internal
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
 function normalizeInsidePackage(System, urlOrName, packageURL) {
   return isURL(urlOrName) ? urlOrName : // absolute
   urlResolve(join(urlOrName[0] === "." ? packageURL : System.baseURL, urlOrName)); // relative to either the package or the system:
 }
 
 function normalizePackageURL(System, packageURL) {
-  if (allPackageNames(System).some(function (ea) {
+  if (allPackageNames$1(System).some(function (ea) {
     return ea === packageURL;
   })) return packageURL;
 
@@ -3236,10 +3232,42 @@ function normalizePackageURL(System, packageURL) {
   return String(url).replace(/\/$/, "");
 }
 
-function allPackageNames(System) {
+function allPackageNames$1(System) {
   var sysPackages = System.packages,
       livelyPackages = packageStore(System);
   return lively_lang.arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages)));
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// We add instances of Package to the System which basically serves as
+// "database" for all module / package related state.
+// This also makes it easy to completely replace the module / package state by
+// simply replacing the System instance
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+// System.get("@lively-env").packages["http://localhost:9011/lively-system-interface/node_modules/lively.vm"] = new Package(System, System.decanonicalize("lively.vm/"))
+
+function packageStore(System) {
+  return System.get("@lively-env").packages;
+}
+
+function addToPackageStore(System, p) {
+  var pInSystem = System.getConfig().packages[p.url] || {};
+  p.mergeWithConfig(pInSystem);
+  var store = packageStore(System);
+  store[p.url] = p;
+  return p;
+}
+
+function removeFromPackageStore(System, o) {
+  var store = packageStore(System);
+  delete store[o.url];
+}
+
+function findPackageNamed(System, name) {
+  return lively_lang.obj.values(packageStore(System)).find(function (ea) {
+    return ea.name === name;
+  });
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -3317,7 +3345,7 @@ var ModulePackageMapping = function () {
 
       if (_cacheInitialized) return this;
 
-      var packageNames = allPackageNames(System);
+      var packageNames = allPackageNames$1(System);
       if (!packageNames.includes("no group")) packageNames.push("no group");
 
       for (var j = 0; j < packageNames.length; j++) {
@@ -3387,52 +3415,6 @@ var ModulePackageMapping = function () {
   }]);
   return ModulePackageMapping;
 }();
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// We add instances of Package to the System which basically serves as
-// "database" for all module / package related state.
-// This also makes it easy to completely replace the module / package state by
-// simply replacing the System instance
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-// System.get("@lively-env").packages["http://localhost:9011/lively-system-interface/node_modules/lively.vm"] = new Package(System, System.decanonicalize("lively.vm/"))
-
-function packageStore(System) {
-  return System.get("@lively-env").packages;
-}
-
-function addToPackageStore(System, p) {
-  var pInSystem = System.getConfig().packages[p.url] || {};
-  p.mergeWithConfig(pInSystem);
-  var store = packageStore(System);
-  store[p.url] = p;
-  return p;
-}
-
-function removeFromPackageStore(System, o) {
-  var store = packageStore(System);
-  delete store[o.url];
-}
-
-function findPackageNamed(System, name) {
-  return lively_lang.obj.values(packageStore(System)).find(function (ea) {
-    return ea.name === name;
-  });
-}
-
-function getPackage$1(System, packageURL) {
-  var isNormalized = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-
-  var url = isNormalized ? packageURL : normalizePackageURL(System, packageURL);
-  return packageStore(System).hasOwnProperty(url) ? packageStore(System)[url] : addToPackageStore(System, new Package(System, url));
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// config
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 var PackageConfiguration = function () {
   function PackageConfiguration(pkg) {
@@ -3512,7 +3494,7 @@ var PackageConfiguration = function () {
       // - installs hook from {hooks: [{name, source}]}
       // - merges livelyConfig.packageMap into System.package[pkg.url].map
       //   entries in packageMap are specifically meant to be sub-packages!
-      // Will return a {subPackages: [{name, address},...]} object
+      // Will return a {subPackages: [packageURL,...]} object
 
       this.applyLivelyConfigMeta(livelyConfig);
       this.applyLivelyConfigHooks(livelyConfig);
@@ -3522,27 +3504,27 @@ var PackageConfiguration = function () {
   }, {
     key: "applyLivelyConfigHooks",
     value: function applyLivelyConfigHooks(livelyConfig) {
-      var _this2 = this;
+      var _this = this;
 
       (livelyConfig.hooks || []).forEach(function (h) {
         try {
           var f = eval("(" + h.source + ")");
-          if (!f.name || !isInstalled(_this2.System, h.target, f.name)) install(_this2.System, h.target, f);
+          if (!f.name || !isInstalled(_this.System, h.target, f.name)) install(_this.System, h.target, f);
         } catch (e) {
-          console.error("Error installing hook for %s: %s", _this2.packageURL, e, h);
+          console.error("Error installing hook for %s: %s", _this.packageURL, e, h);
         }
       });
     }
   }, {
     key: "applyLivelyConfigBundles",
     value: function applyLivelyConfigBundles(livelyConfig) {
-      var _this3 = this;
+      var _this2 = this;
 
       if (!livelyConfig.bundles) return Promise.resolve();
       var normalized = Object.keys(livelyConfig.bundles).reduce(function (bundles, name) {
-        var absName = _this3.packageURL + "/" + name,
+        var absName = _this2.packageURL + "/" + name,
             files = livelyConfig.bundles[name].map(function (f) {
-          return _this3.System.decanonicalize(f, _this3.packageURL + "/");
+          return _this2.System.decanonicalize(f, _this2.packageURL + "/");
         });
         bundles[absName] = files;
         return bundles;
@@ -3570,16 +3552,16 @@ var PackageConfiguration = function () {
   }, {
     key: "applyLivelyConfigPackageMap",
     value: function applyLivelyConfigPackageMap(livelyConfig) {
-      var _this4 = this;
+      var _this3 = this;
 
       var subPackages = livelyConfig.packageMap ? Object.keys(livelyConfig.packageMap).map(function (name) {
-        return _this4.subpackageNameAndAddress(livelyConfig, name);
+        return _this3.subpackageURLs(livelyConfig, name);
       }) : [];
       return { subPackages: subPackages };
     }
   }, {
-    key: "subpackageNameAndAddress",
-    value: function subpackageNameAndAddress(livelyConfig, subPackageName) {
+    key: "subpackageURLs",
+    value: function subpackageURLs(livelyConfig, subPackageName) {
       // find out what other packages are dependencies of this.pkg
 
       var System = this.System,
@@ -3598,7 +3580,7 @@ var PackageConfiguration = function () {
         if (_subpackageURL) {
           if (System.get(_subpackageURL)) _subpackageURL = _subpackageURL.split("/").slice(0, -1).join("/"); // force to be dir
           System.debug && console.log("[lively.module package] Package %s required by %s already in system as %s", subPackageName, pkg, _subpackageURL);
-          return getPackage$1(System, _subpackageURL);
+          return _subpackageURL;
         }
       }
 
@@ -3608,7 +3590,7 @@ var PackageConfiguration = function () {
       var subpackageURL = normalizeInsidePackage(System, livelyConfig.packageMap[subPackageName], pkg.url);
       System.debug && console.log("[lively.module package] Package %s required by %s NOT in system, will be loaded as %s", subPackageName, pkg, subpackageURL);
 
-      return getPackage$1(System, subpackageURL);
+      return subpackageURL;
     }
   }, {
     key: "System",
@@ -3623,6 +3605,19 @@ var PackageConfiguration = function () {
   }]);
   return PackageConfiguration;
 }();
+
+function allPackageNames$$1(System) {
+  var sysPackages = System.packages,
+      livelyPackages = packageStore(System);
+  return lively_lang.arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages)));
+}
+
+function getPackage$1(System, packageURL) {
+  var isNormalized = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+
+  var url = isNormalized ? packageURL : normalizePackageURL(System, packageURL);
+  return packageStore(System).hasOwnProperty(url) ? packageStore(System)[url] : addToPackageStore(System, new Package(System, url));
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // package object
@@ -3671,13 +3666,11 @@ var Package = function () {
   }, {
     key: "modules",
     value: function modules() {
-      var _this5 = this;
-
       var url = this.url,
           System = this.System;
 
-      return ModulePackageMapping.forSystem(System).getModuleIdsForPackageURL(this.url).map(function (id) {
-        return module$2(_this5.System, id);
+      return ModulePackageMapping.forSystem(System).getModuleIdsForPackageURL(url).map(function (id) {
+        return module$2(System, id);
       });
     }
   }, {
@@ -3685,22 +3678,24 @@ var Package = function () {
     value: function () {
       var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(matches /*= url => url.match(/\.js$/)*/
       ) {
-        var _this6 = this;
+        var _this = this;
 
         var exclude = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [".git", "node_modules", ".module_cache"];
-        var allPackages, packagesToIgnore, dirList, resourceURLs, loadedModules$$1;
+        var System, url, allPackages, packagesToIgnore, dirList, resourceURLs, loadedModules;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                allPackages = allPackageNames(this.System);
+                System = this.System;
+                url = this.url;
+                allPackages = allPackageNames$$1(System);
                 packagesToIgnore = allPackages.filter(function (purl) {
-                  return purl !== _this6.url && !_this6.url.startsWith(purl); /*parent packages*/
-                });
-                _context.next = 4;
-                return lively_resources.resource(this.address).dirList('infinity', { exclude: exclude });
+                  return purl !== url && !url.startsWith(purl);
+                } /*parent packages*/);
+                _context.next = 6;
+                return lively_resources.resource(url).dirList('infinity', { exclude: exclude });
 
-              case 4:
+              case 6:
                 dirList = _context.sent;
                 resourceURLs = dirList.filter(function (ea) {
                   return !ea.isDirectory() && !packagesToIgnore.some(function (purl) {
@@ -3709,18 +3704,18 @@ var Package = function () {
                 }).map(function (ea) {
                   return ea.url;
                 });
-                loadedModules$$1 = lively_lang.arr.pluck(this.modules(), "id");
+                loadedModules = lively_lang.arr.pluck(this.modules(), "id");
 
 
                 if (matches) resourceURLs = resourceURLs.filter(matches);
 
-                return _context.abrupt("return", resourceURLs.map(function (url) {
-                  var nameInPackage = url.replace(_this6.address, "").replace(/^\//, ""),
-                      isLoaded = loadedModules$$1.includes(url);
-                  return { isLoaded: isLoaded, url: url, nameInPackage: nameInPackage, package: _this6 };
+                return _context.abrupt("return", resourceURLs.map(function (resourceURL) {
+                  var nameInPackage = resourceURL.replace(url, "").replace(/^\//, ""),
+                      isLoaded = loadedModules.includes(resourceURL);
+                  return { isLoaded: isLoaded, url: resourceURL, nameInPackage: nameInPackage, package: _this };
                 }));
 
-              case 9:
+              case 11:
               case "end":
                 return _context.stop();
             }
@@ -3906,7 +3901,7 @@ var Package = function () {
       var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(optPkgConfig) {
         var packageLoadStack = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [this.url];
 
-        var System, url, cfg, packageConfigResult, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, supPkg, shortStack, registerP;
+        var System, url, cfg, packageConfigResult, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, supPkgURL, supPkg, shortStack, registerP;
 
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
@@ -3950,14 +3945,17 @@ var Package = function () {
 
               case 17:
                 if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-                  _context4.next = 29;
+                  _context4.next = 30;
                   break;
                 }
 
-                supPkg = _step.value;
+                supPkgURL = _step.value;
+
+                // stop here to support circular deps
+                supPkg = getPackage$1(System, supPkgURL);
 
                 if (!packageLoadStack.includes(supPkg.url)) {
-                  _context4.next = 23;
+                  _context4.next = 24;
                   break;
                 }
 
@@ -3968,54 +3966,54 @@ var Package = function () {
 
                   System.debug && console.log("[lively.modules package register]" + (" " + url + " is a circular dependency, stopping registering ") + ("subpackages, stack: " + shortStack));
                 }
-                _context4.next = 26;
+                _context4.next = 27;
                 break;
 
-              case 23:
+              case 24:
                 packageLoadStack.push(supPkg.url);
-                _context4.next = 26;
+                _context4.next = 27;
                 return supPkg.register(null, packageLoadStack);
 
-              case 26:
+              case 27:
                 _iteratorNormalCompletion = true;
                 _context4.next = 17;
                 break;
 
-              case 29:
-                _context4.next = 35;
+              case 30:
+                _context4.next = 36;
                 break;
 
-              case 31:
-                _context4.prev = 31;
+              case 32:
+                _context4.prev = 32;
                 _context4.t1 = _context4["catch"](15);
                 _didIteratorError = true;
                 _iteratorError = _context4.t1;
 
-              case 35:
-                _context4.prev = 35;
+              case 36:
                 _context4.prev = 36;
+                _context4.prev = 37;
 
                 if (!_iteratorNormalCompletion && _iterator.return) {
                   _iterator.return();
                 }
 
-              case 38:
-                _context4.prev = 38;
+              case 39:
+                _context4.prev = 39;
 
                 if (!_didIteratorError) {
-                  _context4.next = 41;
+                  _context4.next = 42;
                   break;
                 }
 
                 throw _iteratorError;
 
-              case 41:
-                return _context4.finish(38);
-
               case 42:
-                return _context4.finish(35);
+                return _context4.finish(39);
 
               case 43:
+                return _context4.finish(36);
+
+              case 44:
                 registerP = this.registerProcess.promise;
 
                 this.registerProcess.resolve(cfg);
@@ -4024,12 +4022,12 @@ var Package = function () {
 
                 return _context4.abrupt("return", registerP);
 
-              case 48:
+              case 49:
               case "end":
                 return _context4.stop();
             }
           }
-        }, _callee4, this, [[15, 31, 35, 43], [36,, 38, 42]]);
+        }, _callee4, this, [[15, 32, 36, 44], [37,, 39, 43]]);
       }));
 
       function register(_x4) {
@@ -4418,7 +4416,7 @@ var Package = function () {
     key: "search",
     value: function () {
       var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(needle) {
-        var _this7 = this;
+        var _this2 = this;
 
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         var modules;
@@ -4439,7 +4437,7 @@ var Package = function () {
               case 3:
                 _context8.t1 = function (_ref9) {
                   var url = _ref9.url;
-                  return module$2(_this7.System, url);
+                  return module$2(_this2.System, url);
                 };
 
                 _context8.t0 = _context8.sent.map(_context8.t1);
@@ -4540,8 +4538,12 @@ function getPackages$1(System) {
   });
 }
 
-function applyConfig(System, packageConfig, packageURL) {
-  return new PackageConfiguration(getPackage$1(System, packageURL)).applyConfig(packageConfig);
+function applyConfig$1(System, packageConfig, packageURL) {
+  var configResult = new PackageConfiguration(getPackage$1(System, packageURL)).applyConfig(packageConfig);
+  configResult.subPackages = configResult.subPackages.map(function (url) {
+    return getPackage$1(System, url);
+  });
+  return configResult;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -7454,7 +7456,7 @@ function getPackage$$1(packageURL) {
   return getPackage$1(exports.System, packageURL);
 }
 function applyPackageConfig(packageConfig, packageURL) {
-  return applyConfig(exports.System, packageConfig, packageURL);
+  return applyConfig$1(exports.System, packageConfig, packageURL);
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
