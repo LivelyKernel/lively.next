@@ -173,7 +173,7 @@ export default class Window extends Morph {
 
   resizer() {
     var win = this, resizer = this.getSubmorphNamed("resizer");
-    if (resizer) return resizer;    
+    if (resizer) return resizer;
     resizer = morph({
       name: "resizer",
       nativeCursor: "nwse-resize",
@@ -242,7 +242,7 @@ export default class Window extends Morph {
   }
 
   onMouseDown(evt) {
-    this.activate();
+    this.activate(evt);
   }
 
   focus() {
@@ -259,22 +259,19 @@ export default class Window extends Morph {
     return arr.last(w.getWindows()) === this;
   }
 
-  activate() {
-    if (this.isActive()) { this.focus(); return this; }
+  activate(evt) {
+    if (this.isActive()) { this.focus(evt); return this; }
 
-    if (!this.world()) {
-      this.openInWorldNearHand()
-    } else this.bringToFront();
-    var w = this.world() || this.env.world;
+    if (!this.world()) this.openInWorldNearHand()
+    else this.bringToFront();
+    let w = this.world() || this.env.world;
 
     arr.without(w.getWindows(), this).forEach(ea => ea.deactivate());
     this.titleLabel().fontWeight = "bold";
-    this.focus();
+    this.focus(evt);
 
     signal(this, "windowActivated", this);
-    setTimeout(() => {
-      this.relayoutWindowControls();
-    }, 0)
+    setTimeout(() => this.relayoutWindowControls(), 0);
 
     return this;
   }
