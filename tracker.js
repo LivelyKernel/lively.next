@@ -67,7 +67,7 @@ export default class L2LTracker extends L2LConnection {
   }
 
   getSocketForClientId(clientId) {
-    var clientData = this.clients.get(clientId);
+    let clientData = this.clients.get(clientId);
     return clientData ? this.ioNamespace.sockets[clientData.socketId] : null;
   }
 
@@ -160,7 +160,6 @@ export default class L2LTracker extends L2LConnection {
   }
 
   receive(msg, socket, ackFn) {
-
     // 1. is the message for the tracker itself?
     if (!msg.target || msg.target === this.id || msg.target === "tracker") {
       this.dispatchL2LMessageToSelf(msg, socket, ackFn);
@@ -214,17 +213,14 @@ export default class L2LTracker extends L2LConnection {
     return newUser;
   }
 
-  async createUser(options){
-     if (!options.name || !options.email || !options.password){
-       var errMsg = 'Insufficient options specified: Requires name, email, password'
-       throw new Error(errMsg)
-     }
-     var {name,email,password} = options
-     await authserver.addUser(name,email,password,'adminpassword')
-     return {name: name, status: 'created ' + name  + 'successfully'}
+  async createUser(options) {
+    if (!options.name || !options.email || !options.password) {
+      let errMsg = 'Insufficient options specified: Requires name, email, password'
+      throw new Error(errMsg)
+    }
+		let {name,email,password} = options;
+		await authserver.addUser(name,email,password,'adminpassword');
+		return {name: name, status: 'created ' + name  + 'successfully'};
   }
-
-
-
   
 }
