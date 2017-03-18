@@ -103,9 +103,10 @@ export default class Window extends Morph {
   buttons() {
     let defaultStyle = {type: "ellipse", extent: pt(14,14)};
 
-    var closeButton = this.getSubmorphNamed("close") || morph({
+    let closeButton = this.getSubmorphNamed("close") || morph({
       ...defaultStyle,
       name: "close",
+      tooltip: "close window",
       center: pt(15,13),
       borderColor: Color.darkRed,
       fill: Color.rgb(255,96,82),
@@ -119,10 +120,11 @@ export default class Window extends Morph {
     connect(closeButton, 'onHoverIn', closeButton.submorphs[0], 'visible', {converter: () => true});
     connect(closeButton, 'onHoverOut', closeButton.submorphs[0], 'visible', {converter: () => false});
 
-    var minimizeButton = this.getSubmorphNamed("minimize") || morph({
+    let minimizeButton = this.getSubmorphNamed("minimize") || morph({
       ...defaultStyle,
       center: pt(35,13),
       name: "minimize",
+      tooltip: "collapse window",
       borderColor: Color.brown,
       fill: Color.rgb(255,190,6),
       submorphs: [
@@ -139,6 +141,7 @@ export default class Window extends Morph {
       var maximizeButton =  (this.getSubmorphNamed("maximize") || morph({
         ...defaultStyle,
         name: "maximize",
+        tooltip: "maximize window",
         center: pt(55,13),
         borderColor: Color.darkGreen,
         fill: Color.green,
@@ -187,10 +190,12 @@ export default class Window extends Morph {
     let {propertyCache: cache, minimized, width} = this,
         bounds = this.bounds(),
         duration = 200,
+        collapseButton = this.getSubmorphNamed("minimize"),
         easing = Expo.easeOut;
     if (minimized) {
       cache.minimizedBounds = bounds;
       this.animate({bounds: cache.nonMinizedBounds || bounds, duration, easing});
+      collapseButton.tooltip = "collapse window";
     } else {
       cache.nonMinizedBounds = bounds;
       var minimizedBounds = cache.minimizedBounds || bounds.withExtent(pt(width, 25)),
@@ -199,6 +204,7 @@ export default class Window extends Morph {
       if (labelBounds.width + 2*buttonOffset < minimizedBounds.width)
         minimizedBounds = minimizedBounds.withWidth(labelBounds.width + buttonOffset + 3);
       cache.minimizedBounds = minimizedBounds;
+      collapseButton.tooltip = "uncollapse window";
       this.animate({bounds: cache.minimizedBounds, duration, easing});
     }
     this.minimized = !minimized;
