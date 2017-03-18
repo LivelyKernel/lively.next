@@ -65,11 +65,15 @@ export default class Workspace extends Window {
 
   relayoutWindowControls() {
     super.relayoutWindowControls();
-    var list = this.getSubmorphNamed("eval backend list");
+    var list = this.getSubmorphNamed("eval backend list"),
+        title = this.titleLabel();
     if (list) {
-      var title = this.titleLabel();
       list.topRight = this.innerBounds().topRight().addXY(-5, 2);
       if (list.left < title.right + 3) list.left = title.right + 3;
+    }
+    var fileButton = this.getSubmorphNamed("pickFileButton");
+    if (fileButton) {
+      fileButton.leftCenter = title.rightCenter.addXY(6,0);
     }
   }
 
@@ -90,7 +94,7 @@ export default class Workspace extends Window {
       connect(label, 'onHoverOut', label, 'fontSize', {converter: () => 14});
       connect(label, 'onMouseDown', this, 'execCommand', {converter: () => "[workspace] query for file"});
     }
-    return buttons.concat(label);
+    return buttons;
   }
 
   get commands() {
