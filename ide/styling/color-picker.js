@@ -92,7 +92,7 @@ export class ColorPickerField extends Morph {
 
    async openPicker(evt) {
       const p = this.picker || new ColorPicker({color: this.targetProperty});
-      p.position = pt(0,0);
+      p.position = pt(0, -p.height / 2);
       connect(p, "color", this.target, this.property);
       connect(p, "color", this, "update");
       this.picker = await p.fadeIntoWorld(this.globalBounds().bottomCenter());

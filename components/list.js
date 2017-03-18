@@ -1,5 +1,5 @@
 import { Morph, GridLayout, Text, StyleRules, Label, Button } from "lively.morphic";
-import { pt, Color, Rectangle, rect } from "lively.graphics";
+import { pt, LinearGradient, Color, Rectangle, rect } from "lively.graphics";
 import { arr, Path, string, obj } from "lively.lang";
 import { signal } from "lively.bindings";
 import { Icon } from "./icons.js"
@@ -960,7 +960,7 @@ export class DropDownList extends Button {
   static get properties() {
     return {
 
-      borderRadius: {defaultValue: 2},
+      borderRadius: {defaultValue: 5},
       padding:      {defaultValue: Rectangle.inset(3,2)},
 
       list: {
@@ -1006,6 +1006,12 @@ export class DropDownList extends Button {
 
   constructor(props = {}) {
     super(props);
+    this.activeStyle = {
+        fill: new LinearGradient({stops: [
+               {offset: 0, color: Color.white},
+               {offset: 1, color: new Color.rgb(236,240,241)}
+            ]})
+    }
     connect(this, "fire", this, "toggleList");
   }
 

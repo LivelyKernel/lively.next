@@ -1,4 +1,4 @@
-import { Color, pt, Rectangle } from "lively.graphics";
+import { Color, LinearGradient, pt, Rectangle } from "lively.graphics";
 import { arr, obj, fun, promise, string } from "lively.lang";
 import { connect, disconnect, noUpdate } from "lively.bindings";
 import { morph, show, Label, HorizontalLayout, GridLayout,
@@ -223,8 +223,23 @@ export default class Browser extends Window {
           type: "button",
           fontSize: 10,
           activeStyle: {
-            fill: Color.white,
-            border: {color: Color.lightGray, style: "solid", radius: 5},
+            fill: new LinearGradient({stops: [
+               {offset: 0, color: Color.white},
+               {offset: 1, color: new Color.rgb(236,240,241)}
+            ]}),
+            border: {color: Color.gray, style: "solid", radius: 5},
+            nativeCursor: "pointer"
+          },
+          extent: pt(20,18),
+        },
+
+        btnDarkStyle = {
+          type: "button",
+          fontSize: 10,
+          activeStyle: {
+            fill: Color.black.withA(.5),
+            fontColor: Color.white,
+            border: {width: 0, radius: 5},
             nativeCursor: "pointer"
           },
           extent: pt(20,18),
@@ -243,8 +258,8 @@ export default class Browser extends Window {
           sourceEditorBounds
         ] = bounds.extent().extentAsRectangle().divide([
           new Rectangle(0,   0,    1,   0.04),
-          new Rectangle(0,   0.04, 0.5, 0.30),
-          new Rectangle(0.5, 0.04, 0.5, 0.30),
+          new Rectangle(0,   0.04, 0.5, 0.34),
+          new Rectangle(0.5, 0.04, 0.5, 0.34),
           new Rectangle(0,   0.34, 0.5, 0.04),
           new Rectangle(0.5, 0.34, 0.5, 0.04),
           new Rectangle(0,   0.38,  1,   0.01),
@@ -253,6 +268,8 @@ export default class Browser extends Window {
 
         container = morph({
           ...style,
+          fill: Color.transparent,
+          reactsToPointer: false,
           bounds,
           submorphs: [
 
@@ -264,18 +281,19 @@ export default class Browser extends Window {
 
             {name: "moduleCommands", bounds: moduleCommandBoxBounds,
              layout: new HorizontalLayout({spacing: 2, autoResize: false}),
-             borderRight: {color: Color.gray, width: 1}, borderTop: {color: Color.gray, width: 1},
+             borderRight: {color: Color.gray, width: 1}, 
+             fill: Color.transparent,
               submorphs: [
-               {...btnStyle, name: "addModuleButton", label: Icon.makeLabel("plus"), tooltip: "add module"},
-               {...btnStyle, name: "removeModuleButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
-               {...btnStyle, name: "runTestsInModuleButton", label: "run tests", tooltip: "run tests", visible: false}
+               {...btnDarkStyle, name: "addModuleButton", label: Icon.makeLabel("plus"), tooltip: "add module"},
+               {...btnDarkStyle, name: "removeModuleButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
+               {...btnDarkStyle, name: "runTestsInModuleButton", label: "run tests", tooltip: "run tests", visible: false}
              ]},
 
              {name: "codeEntityCommands", bounds: codeEntityCommandBoxBounds,
               layout: new HorizontalLayout({spacing: 2, autoResize: false}),
-              borderTop: {color: Color.gray, width: 1},
+              fill: Color.transparent,
               submorphs: [
-               {...btnStyle, name: "codeEntityJumpButton", label: Icon.makeLabel("search"), tooltip: "search for code entity"},
+               {...btnDarkStyle, name: "codeEntityJumpButton", label: Icon.makeLabel("search"), tooltip: "search for code entity"},
              ]},
 
             new HorizontalResizer({name: "hresizer", bounds: resizerBounds}),
@@ -293,8 +311,9 @@ export default class Browser extends Window {
 
             {name: "browserCommands", bounds: browserCommandsBounds,
              layout: new GridLayout({grid:[["commands", null, "eval backend list"]]}),
-             draggable: false, fill: Color.white,
-             borderTop: {color: Color.gray, width: 1}, borderBottom: {color: Color.gray, width: 1},
+             fill: Color.transparent,
+             reactsToPointer: false,
+             borderBottom: {color: Color.gray, width: 1},
              submorphs: [
                {name: "commands", layout: new HorizontalLayout({spacing: 2, autoResize: false}),
                 fill: Color.transparent,
@@ -303,12 +322,12 @@ export default class Browser extends Window {
                  {...btnStyle, name: "browseHistoryButton", label: Icon.makeLabel("history"), tooltip: "show browse history"},
                  {...btnStyle, name: "historyForwardButton", label: Icon.makeLabel("step-forward"), tooltip: "forward in browse history"},
 
-                 {extent: pt(10,18), fill: Color.white},
+                 {extent: pt(10,18), fill: Color.transparent},
 
                  {...btnStyle, name: "searchButton", label: Icon.makeLabel("search"), tooltip: "code search"},
                  {...btnStyle, name: "browseModulesButton", label: Icon.makeLabel("navicon"), tooltip: "list all modules"},
 
-                 {extent: pt(10,18), fill: Color.white},
+                 {extent: pt(10,18), fill: Color.transparent},
 
                  {...btnStyle, name: "addPackageButton", label: Icon.makeLabel("plus"), tooltip: "add package"},
                  {...btnStyle, name: "removePackageButton", label: Icon.makeLabel("minus"), tooltip: "remove package"},
@@ -364,7 +383,8 @@ export default class Browser extends Window {
       codeEntityCommands,
       metaInfoText,
       sourceEditor,
-      hresizer
+      hresizer,
+      evalBackendList
     } = this.ui;
 
     var listEditorRatio = moduleList.height / (container.height - hresizer.height);
@@ -378,6 +398,7 @@ export default class Browser extends Window {
         .forEach(ea => ea.height = hresizer.top-moduleList.bottom);
 
       codeEntityCommands.left = codeEntityTree.left = moduleList.right;
+      browserCommands.layout.col(2).width = evalBackendList.width;
       browserCommands.width = hresizer.width = container.width;
       metaInfoText.top = hresizer.bottom + 1;
       metaInfoText.width = browserCommands.width + 1;

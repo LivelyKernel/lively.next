@@ -118,7 +118,7 @@ export class SearchWidget extends Morph {
       borderWidth:  {defaultValue: 1},
       borderColor:  {defaultValue: Color.gray},
       borderRadius: {defaultValue: 3},
-      fill:         {defaultValue: Color.white.withA(.8)},
+      fill:         {defaultValue: Color.black.withA(.6)},
 
       target: {},
 
@@ -153,10 +153,14 @@ export class SearchWidget extends Morph {
         after: ["extent"],
         initialize() {
           let btnStyle = {extent: pt(24,24), 
-                          triggerStyle: {fontSize: 18},
+                          triggerStyle: {
+                            fontSize: 18,
+                            fill: Color.transparent
+                          },
+                          opacity: .9,
                           activeStyle: {
                              fontSize: 18, borderWidth: 0, 
-                             fill: Color.transparent, fontColor: Color.gray.darker()}},
+                             fill: Color.transparent, fontColor: Color.white}},
               fontSize = 14, fontFamily = "Inconsolata, monospace";
 
           this.submorphs = [
@@ -167,8 +171,9 @@ export class SearchWidget extends Morph {
             Text.makeInputLine({
               name: "searchInput",
               width: this.width,
-              fill: Color.white,
+              fill: Color.gray.withA(.2),
               fontSize, fontFamily,
+              fontColor: Color.white,
               borderWidth: 1, borderColor: Color.gray,
               padding: Rectangle.inset(2),
               placeholder: "search input",
@@ -177,14 +182,21 @@ export class SearchWidget extends Morph {
             Text.makeInputLine({
               name: "replaceInput",
               width: this.width,
-              fill: Color.white,
+              fill: Color.gray.withA(.2),
               fontSize, fontFamily,
+              fontColor: Color.white,
               borderWidth: 1, borderColor: Color.gray,
               padding: Rectangle.inset(2),
               placeholder: "replace input",
               historyId: "lively.morphic-text replace"
             }),
-            new Button({name: "replaceButton", label: "replace", extent: pt(80, 20), fontColor: Color.gray.darker(), activeStyle: {border: {width: 2, color: Color.gray.darker()}, fill: null}})
+            new Button({
+                name: "replaceButton", label: "replace", 
+                extent: pt(80, 20), fontColor: Color.white, 
+                activeStyle: {
+                   border: {width: 2, color: Color.white}, 
+                   fontColor: Color.white,
+                   fill: null}})
           ];
         }
       }
@@ -259,7 +271,7 @@ export class SearchWidget extends Morph {
     replaceButton.center = pt(nextButton.left + (cancelButton.right - nextButton.left)/2, replaceInput.center.y);
 
     // inputMorph.topCenter = this.innerBounds().topCenter().withY(cancelButton.bottom+3);
-    this.height = replaceInput.bottom + 3;
+    this.height = replaceInput.bottom + 5;
   }
 
   focus() {
@@ -375,7 +387,7 @@ export class SearchWidget extends Morph {
         world = text.world(),
         state = this.state;
     world.addMorph(this);
-    this.topRight = text.globalBounds().topRight();
+    this.topRight = text.globalBounds().insetBy(5).topRight();
     this.whenRendered().then(() => this.relayout());
 
     var {scroll, selection: sel} = text;
