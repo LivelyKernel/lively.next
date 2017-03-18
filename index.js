@@ -1,1 +1,1 @@
-'format esm';
+export * from 'lively.user/interface.js';
