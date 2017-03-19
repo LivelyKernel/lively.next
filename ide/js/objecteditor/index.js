@@ -12,6 +12,7 @@ import { chooseUnusedImports, interactivelyChooseImports } from "../import-helpe
 import { module } from "lively.modules";
 import { interactivelySaveObjectToPartsBinFolder } from "../../../partsbin.js";
 import { emit } from "lively.notifications/index.js";
+import { LinearGradient } from "lively.graphics/index.js";
 
 
 // var oe = ObjectEditor.open({target: this})
@@ -324,6 +325,19 @@ export class ObjectEditor extends Morph {
           ...config.codeEditor.defaultStyle,
         },
 
+        topBtnStyle = {
+          type: "button",
+          activeStyle: {
+            fill: new LinearGradient({stops: [
+               {offset: 0, color: Color.white},
+               {offset: 1, color: new Color.rgb(236,240,241)}
+            ]}),
+            border: {color: Color.gray, style: "solid", radius: 5},
+            nativeCursor: "pointer"
+          },
+          extent: pt(26,24),
+        },
+
         btnStyle = {
           type: "button",
           activeStyle: {
@@ -339,9 +353,9 @@ export class ObjectEditor extends Morph {
        fill: Color.transparent, reactsToPointer: false,
        layout: new HorizontalLayout({direction: "centered", spacing: 2}),
        submorphs: [
-         {...btnStyle, name: "inspectObjectButton", fontSize: 18, label: Icon.makeLabel("gears"), tooltip: "open object inspector"},
-         {...btnStyle, name: "publishButton", fontSize: 18, label: Icon.makeLabel("cloud-upload"), tooltip: "publish object to PartsBin"},
-         {...btnStyle, name: "chooseTargetButton", fontSize: 18, label: Icon.makeLabel("crosshairs"), tooltip: "select another target"},
+         {...topBtnStyle, name: "inspectObjectButton", fontSize: 18, label: Icon.makeLabel("gears"), tooltip: "open object inspector"},
+         {...topBtnStyle, name: "publishButton", fontSize: 18, label: Icon.makeLabel("cloud-upload"), tooltip: "publish object to PartsBin"},
+         {...topBtnStyle, name: "chooseTargetButton", fontSize: 18, label: Icon.makeLabel("crosshairs"), tooltip: "select another target"},
        ]},
 
       {type: Tree, name: "classTree", treeData: new ClassTreeData(null),
