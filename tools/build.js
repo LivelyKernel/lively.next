@@ -5,7 +5,7 @@ var fs = require("fs"),
     rollup = require('rollup'),
     babel = require('rollup-plugin-babel'),
     targetFile = "dist/lively.storage.js",
-    pouchdbSource = fs.readFileSync(require.resolve('pouchdb/dist/pouchdb.min.js')).toString(),
+    pouchdbSource = fs.readFileSync(require.resolve('pouchdb/dist/pouchdb.js')).toString(),
     pouchdbFindSource = fs.readFileSync(require.resolve('pouchdb-find/dist/pouchdb.find.min.js')).toString();
 
 
@@ -17,7 +17,10 @@ module.exports = Promise.resolve()
         exclude: 'node_modules/**',
         sourceMap: false,
         "presets": [["es2015", {modules: false}]],
-        "plugins": ["syntax-object-rest-spread", "transform-object-rest-spread", "external-helpers"]
+        "plugins": ["transform-async-to-generator",
+                    "syntax-object-rest-spread",
+                    "transform-object-rest-spread",
+                    "external-helpers"]
     })]
   }))
 

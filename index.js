@@ -1,9 +1,51 @@
-import PouchDB from "pouchdb";
+import _PouchDB from "pouchdb";
 import pouchdbFind from "pouchdb-find";
+
+const isNode = System.get("@system-env").node;
+var PouchDB = _PouchDB;
+
+if (isNode) {
+  let {join} = System._nodeRequire("path"),
+      storageMain = System.normalizeSync("lively.storage/index.js"),
+      pouchDBMain = System.normalizeSync("pouchdb", storageMain).replace(/file:\/\//, ""),
+      pouchDBNodeMain = join(pouchDBMain, "../../lib/index.js");
+  PouchDB = System._nodeRequire(pouchDBNodeMain);
+}
 PouchDB.plugin(pouchdbFind);
 
-// System.get(System.normalizeSync("pouchdb-find", "http://localhost:9011/lively.storage/index.js"))
-// await lively.modules.module(System.normalizeSync("pouchdb", "http://localhost:9011/lively.storage/index.js")).reload()
+// leveldbPath("test")
+function leveldbPath(dbName) {
+  if (!isNode) throw new Error(`leveldbPath called under non-nodejs environment`);
+  let serverPath = System.global.process.cwd();
+  // are we in a typical lively.next env? Meaning serverPath points to
+  // lively.next-dir/lively.server. If so, use parent dir of lively.server
+  let {join} = System._nodeRequire("path"),
+      {mkdirSync, existsSync, readdirSync, readFileSync} = System._nodeRequire("fs");
+
+  try {
+    let parentPackage = readFileSync(join(serverPath, "../package.json")),
+        conf = JSON.parse(parentPackage)
+    if (conf.name === "lively.web" || conf.name === "lively.next") {
+      let dbDir = join(serverPath, "../.livelydbs")
+      if (!existsSync(dbDir)) mkdirSync(dbDir);
+      return join(dbDir, dbName);
+    }
+  } catch (e) {}
+
+  let dbDir = join(serverPath, ".livelydbs")
+  if (!existsSync(dbDir)) mkdirSync(dbDir);
+  return join(dbDir, dbName);
+}
+
+// var pouch = createPouchDB("test-db");
+function createPouchDB(name, options) {
+  if (isNode) {
+    name = leveldbPath(name);
+    options = {adapter: "leveldb", ...options};
+  }
+  options = {name, ...options};
+  return new PouchDB(options);
+}
 
 export default class Database {
 
@@ -24,8 +66,127 @@ export default class Database {
   get pouchdb() {
     if (this._pouchdb) return this._pouchdb;
     let {name, options} = this;
-    return this._pouchdb = new PouchDB(name, options);
+    return this._pouchdb = createPouchDB(name, options);
   }
+
+  async update(_id, updateFn, options = {}, updateAttempt = 0) {
+    // Will try to fetch document _id and feed it to updateFn. The result value
+    // (promise supported) of updateFn will be used as the next version of
+    // document.  If updateFn returns a falsy value the update will be canceled.
+    // options: {
+    //   ensure: BOOL, // if no document exists, create one, default true
+    //   retryOnConflict: BOOL, // if update conflicts retry maxUpdateAttempts
+    //                          // times to update doc, default true
+    //   maxUpdateAttempts: NUMBER // default 10
+    // }
+    // returns created document
+
+    let {ensure = true, retryOnConflict = true, maxUpdateAttempts = 10} = options,
+        getOpts = {latest: true},
+        {pouchdb: db} = this, lastDoc, newDoc;
+
+    // 1. get the old doc
+    try {
+      lastDoc = await db.get(_id, getOpts);
+    } catch (e) {
+      if (e.name !== "not_found" || !ensure) throw e;
+    }
+
+    // 2. retrieve new doc via updateFn
+    newDoc = await updateFn(lastDoc);
+    if (!newDoc || typeof newDoc !== "object")
+      return null; // canceled!
+
+    // ensure _id, _rev props
+    if (newDoc._id !== _id) newDoc._id = _id;
+    if (lastDoc && newDoc._rev !== lastDoc._rev) newDoc._rev = lastDoc._rev;
+
+    // 3. try writing new doc
+    try {
+      let {id, rev} = await db.put(newDoc);
+      return Object.assign(newDoc, {_rev: rev});
+    } catch (e) {
+      if (e.name === "conflict" && retryOnConflict && updateAttempt < maxUpdateAttempts)
+        return this.update(_id, updateFn, options, updateAttempt+1);
+      throw e;
+    }
+  }
+
+  async mixin(_id, mixin, options) {
+    return this.update(_id, oldDoc => Object.assign(oldDoc || {_id}, mixin), options);
+  }
+
+  async set(_id, value, options) {
+    return this.update(_id, _ => value, options);
+  }
+
+  async get(id) {
+    try { return await this.pouchdb.get(id); } catch (e) {
+      if (e.name === "not_found") return undefined;
+      throw e;
+    }
+  }
+
+  async docList() {
+    // returns object with {total_rows: NUMBER, offset: NUMBER, rows: [OBJECT]}
+    let {rows} = await this.pouchdb.allDocs(),
+        docs = {};
+    for (let i = 0; i < rows.length; i++) {
+      let {id, value: {rev}} = rows[i];
+      docs[id] = rev;
+    }
+    return docs;
+  }
+
+  async getAll(options = {}) {
+    let {rows} = await this.pouchdb.allDocs({...options, include_docs: true});
+    return rows.map(ea => ea.doc);
+  }
+
+  async setDocuments(documents) {
+    // documents = [{_id, _rev?}, ...]
+    let results =  await this.pouchdb.bulkDocs(documents);
+    for (let i = 0; i < results.length; i++) {
+      let d = documents[i], result = results[i];
+      // if a conflict happens and document does not specify the exact revision
+      // then just overwrite old doc
+      if (!result.ok && result.name === "conflict" && !d._rev) {
+        let {_id: id, _rev: rev} = await this.set(d._id, d);
+        results[i] = {ok: true, id, rev};
+      }
+    }
+    return results;
+  }
+
+  async getDocuments(idsAndRevs, options = {}) {
+    // idsAndRevs = [{id, rev?}]
+    let {ignoreErrors = true} = options,
+        {results} = await this.pouchdb.bulkGet({docs: idsAndRevs}),
+        result = [];
+    for (let i = 0; i < results.length; i++) {
+      let {docs, id} = results[i];
+      console.assert(docs.length === 1, `getDocuments: expected only one doc for ${id}`);
+      for (let j = 0; j < docs.length; j++) {
+        let d = docs[j];
+        if (ignoreErrors && !d.ok) continue;
+        result.push(d.ok || d.error || d);
+      }
+    }
+    return result;
+  }
+  
+  async remove(_id, _rev, options) {
+    let arg = typeof _rev !== "undefined" ? {_id, _rev} : await this.get(_id);
+    return arg ? this.pouchdb.remove(arg) : undefined;
+  }
+
+  async removeAll() {
+    let db = this.pouchdb,
+        docs = await db.allDocs();
+    return await Promise.all(docs.rows.map(row => db.remove(row.id, row.value.rev)));
+  }
+
+  close() { return this.pouchdb ? this.pouchdb.close() : null; }
 
   isDestroyed() { return !!this.pouchdb._destroyed; }
 
