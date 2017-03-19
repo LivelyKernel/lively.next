@@ -349,6 +349,7 @@ export default class Browser extends Window {
         codeEntityTree =     container.getSubmorphNamed("codeEntityTree"),
         sourceEditor =       container.getSubmorphNamed("sourceEditor"),
         metaInfoText =       container.getSubmorphNamed("metaInfoText"),
+        evalBackendList =    container.getSubmorphNamed('eval backend list'),
         l =                  browserCommands.layout;
     l.col(2).fixed = 100; l.row(0).paddingTop = 1; l.row(0).paddingBottom = 1;
 
@@ -359,6 +360,7 @@ export default class Browser extends Window {
     hresizer.addFixed(metaInfoText);
     hresizer.addScalingBelow(sourceEditor);
 
+    connect(evalBackendList, 'width', this, 'relayout');
     connect(sourceEditor, 'doSave', this, 'save');
 
     this._inLayout = false;
