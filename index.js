@@ -73,11 +73,33 @@ export default class Database {
     this._pouchdb = null;
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // initialize / release
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   get pouchdb() {
+    // lazy pouch db accessor
     if (this._pouchdb) return this._pouchdb;
     let {name, options} = this;
     return this._pouchdb = createPouchDB(name, options);
   }
+
+  close() {
+    // close database to free mem
+    return this.pouchdb ? this.pouchdb.close() : null;
+  }
+
+  isDestroyed() { return !!this.pouchdb._destroyed; }
+
+  destroy(opts) {
+    // completely get rid of database
+    this.constructor.databases.delete(this.name);
+    return this.isDestroyed() ? {ok: true} : this.pouchdb.destroy(opts);
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // accessing and updating
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async update(_id, updateFn, options = {}, updateAttempt = 0) {
     // Will try to fetch document _id and feed it to updateFn. The result value
@@ -123,14 +145,18 @@ export default class Database {
   }
 
   async mixin(_id, mixin, options) {
+    // updates or creates document with _id by mixing in all properties of
+    // `mixin`
     return this.update(_id, oldDoc => Object.assign(oldDoc || {_id}, mixin), options);
   }
 
-  async set(_id, value, options) {
-    return this.update(_id, _ => value, options);
+  async set(id, value, options) {
+    // creates or overwrites document with id
+    return this.update(id, _ => value, options);
   }
 
   async get(id) {
+    // returns document with id
     try { return await this.pouchdb.get(id); } catch (e) {
       if (e.name === "not_found") return undefined;
       throw e;
@@ -138,6 +164,8 @@ export default class Database {
   }
 
   async docList() {
+    // a list of ids and revs of current docs in the database.
+    // does not return full document!
     // returns [{id, rev}]
     let {rows} = await this.pouchdb.allDocs(),
         result = [];
@@ -149,11 +177,15 @@ export default class Database {
   }
 
   async revList(id) {
+    // get a list of all revision ids in form ["2-xxx", "1-yyy", ...] of doc
+    // with id
     let {_id, _revisions: {start, ids}} = await this.pouchdb.get(id, {revs: true});
     return ids.map(ea => `${start--}-${ea}`);
   }
 
   async getAllRevisions(id, options = {}) {
+    // retrieve documents of all revisions of doc with id
+    // use options.skip and options.limit to select a subset
     let {skip = 0, limit = 0} = options,
         revs = await this.revList(id);
     if (skip > 0) revs = revs.slice(skip);
@@ -163,11 +195,13 @@ export default class Database {
   }
 
   async getAll(options = {}) {
+    // retrieve all documents, also design docs!
     let {rows} = await this.pouchdb.allDocs({...options, include_docs: true});
     return rows.map(ea => ea.doc);
   }
 
   async setDocuments(documents) {
+    // bulk set multiple documents at once
     // documents = [{_id, _rev?}, ...]
     let results =  await this.pouchdb.bulkDocs(documents);
     for (let i = 0; i < results.length; i++) {
@@ -183,6 +217,7 @@ export default class Database {
   }
 
   async getDocuments(idsAndRevs, options = {}) {
+    // bulk get multiple documents at once
     // idsAndRevs = [{id, rev?}]
     let {ignoreErrors = true} = options,
         {results} = await this.pouchdb.bulkGet({docs: idsAndRevs}),
@@ -198,7 +233,11 @@ export default class Database {
     }
     return result;
   }
-  
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // removal
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   async remove(_id, _rev, options) {
     let arg = typeof _rev !== "undefined" ? {_id, _rev} : await this.get(_id);
     return arg ? this.pouchdb.remove(arg) : undefined;
@@ -210,13 +249,50 @@ export default class Database {
     return await Promise.all(docs.rows.map(row => db.remove(row.id, row.value.rev)));
   }
 
-  close() { return this.pouchdb ? this.pouchdb.close() : null; }
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // replication + conflicts
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  isDestroyed() { return !!this.pouchdb._destroyed; }
+  replicateTo(otherDB, opts) {
+    // opts: {live, retry}
+    if (otherDB instanceof Database)
+      otherDB = otherDB.pouchdb;
+    return this.pouchdb.replicate.to(otherDB, opts);
+  }
 
-  destroy(opts) {
-    this.constructor.databases.delete(this.name);
-    return this.isDestroyed() ? {ok: true} : this.pouchdb.destroy(opts);
+  replicateFrom(otherDB, opts) {
+    // opts: {live, retry}
+    if (otherDB instanceof Database)
+      otherDB = otherDB.pouchdb;
+    return this.pouchdb.replicate.from(otherDB, opts);
+  }
+
+  sync(otherDB, opts) {
+    // opts: {live, retry}
+    if (otherDB instanceof Database)
+      otherDB = otherDB.pouchdb;
+    return this.pouchdb.sync(otherDB, opts);
+  }
+
+  async getConflicts() {
+    let {rows} = await this.pouchdb.query(
+      {map: `function(doc) { if (doc._conflicts) emit(doc._id); }`},
+      {reduce: false, include_docs: true, conflicts: true})
+    return rows.map(ea => ea.doc);
+  }
+
+  async resolveConflicts(id, resolveFn) {
+    let doc = await this.pouchdb.get("doc", {conflicts: true}),
+        query = doc._conflicts.map(rev => ({id, rev})),
+        conflicted = await this.getDocuments(query),
+        resolved = doc;
+    for (let conflictedDoc of conflicted) {
+      resolved = await resolveFn(resolved, conflictedDoc);
+      if (!resolved) return null;
+      resolved = await this.set(id, resolved);
+      await this.pouchdb.remove(conflictedDoc);
+    }
+    return resolved;
   }
 
 }

@@ -5,9 +5,9 @@ import Database from "lively.storage";
 
 let db;
 
-describe("lively.storage", () => {
+describe("database access", () => {
 
-  beforeEach(() => db = new Database("lively.storage-test"));
+  beforeEach(() => db = Database.ensureDB("lively.storage-test"));
   afterEach(async () => expect(await db.destroy()).deep.equals({ok: true}));
 
   it("is empty", async () => expect(await db.getAll()).equals([]));
@@ -143,4 +143,62 @@ describe("lively.storage", () => {
     });
 
   });
+
+});
+
+
+let db1, db2;
+describe("database replication", () => {
+  
+  beforeEach(() => {
+    db1 = Database.ensureDB("lively.storage-replication-test-1");
+    db2 = Database.ensureDB("lively.storage-replication-test-2");
+  });
+
+  afterEach(async () => {
+    expect(await db1.destroy()).deep.equals({ok: true})
+    expect(await db2.destroy()).deep.equals({ok: true})
+  });
+
+  describe("conflicts", () => {
+
+    let commit1, commit2;
+    beforeEach(async () => {
+      commit1 = await db1.set("doc", {foo: 23});
+      commit2 = await db2.set("doc", {foo: 24});
+      let r = await db1.replicateTo(db2);
+      expect(r.status).equals("complete");
+    });
+
+    it("finds conflicts", async () => {
+      expect(await db1.getConflicts()).equals([]);
+      let conflicts = await db2.getConflicts();
+      expect(conflicts).length(1);
+      let expected = conflicts[0]._rev === commit1._rev ?
+        {_conflicts: [commit2._rev],_id: "doc",_rev: commit1._rev} :
+        {_conflicts: [commit1._rev],_id: "doc",_rev: commit2._rev};
+      expect(conflicts).containSubset([expected])
+    });
+
+    it("resolves conflicts", async () => {
+      let seen = [];
+      let {foo: oldFoo} = await db2.get("doc");
+      await db2.resolveConflicts("doc",
+        (a, b) => { seen.push(a, b); return Object.assign({}, a, b, {foo: 99})});
+      expect(await db2.getConflicts()).equals([]);
+      let {_rev, foo} = await db2.get("doc");
+      expect(_rev).match(/^2-/);
+      expect(foo).equals(99);
+      expect(seen[0].foo).equals(oldFoo);
+      expect(seen[1].foo).equals(oldFoo === 23 ? 24 : 23);
+    });
+
+    it("cancels conflict resolving", async () => {
+      let seen = [];
+      await db2.resolveConflicts("doc", (a, b) => null);
+      expect(await db2.getConflicts()).length(1);
+    });
+
+  });
+  
 });
