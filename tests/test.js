@@ -15,18 +15,6 @@ describe("lively.storage", () => {
   it("returns undefined on non-exisiting get", async () =>
     expect(await db.get("non exisiting")).equals(undefined));
 
-
-  // describe("set", () => {
-  //
-  //   it("ensures doc", async () => {
-  //     let doc = await db.set("some-doc", {x: 23});
-  //     expect(doc).containSubset({_id: "some-doc", x: 23});
-  //     expect(doc._rev).match(/^1-/);
-  //     expect(await db.docList()).keys("some-doc");
-  //   });
-  //
-  // });
-
   describe("update", () => {
 
     it("gets prev doc as arg and sets value", async () => {
@@ -95,16 +83,19 @@ describe("lively.storage", () => {
     it("ensures doc", async () => {
       let doc = await db.mixin("some-doc", {x: 23});
       expect(doc).containSubset({_id: "some-doc", x: 23});
-      expect(doc._rev).match(/^1-/);
-      expect(await db.docList()).keys("some-doc");
+      let {_id: id, _rev: rev} = doc;
+      expect(rev).match(/^1-/);
+      expect(await db.docList()).deep.equals([{id, rev}]);
     });
 
     it("mixes properties into doc", async () => {
       await db.mixin("some-doc", {x: 23});
       await db.mixin("some-doc", {y: 24});
-      expect(await db.get("some-doc")).containSubset({x: 23, y: 24});
-      expect(await db.docList()).keys("some-doc");
-      expect(await db.docList()).property("some-doc").match(/^2-/);
+      let doc = await db.get("some-doc");
+      expect(doc).containSubset({x: 23, y: 24});
+      let {_id: id, _rev: rev} = doc;
+      expect(rev).match(/^2-/);
+      expect(await db.docList()).deep.equals([{id, rev}]);
     });
 
   });
@@ -140,4 +131,16 @@ describe("lively.storage", () => {
 
   });
 
+  describe("revisions", () => {
+  
+    it("reads revision list", async () => {
+      let doc1_1 = await db.set("some-doc-1", {x: 23}),
+          doc2_1 = await db.set("some-doc-2", {a: "heelo"}),
+          doc2_2 = await db.set("some-doc-2", {a: "world"}),
+          doc1_2 = await db.set("some-doc-1", {x: 24});
+      expect(await db.revList("some-doc-1")).equals([doc1_2, doc1_1].map(ea => ea._rev));
+      expect(await db.revList("some-doc-2")).equals([doc2_2, doc2_1].map(ea => ea._rev));
+    });
+
+  });
 });

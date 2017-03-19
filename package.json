@@ -4,7 +4,7 @@
   "description": "Database interface for lively.next",
   "main": "dist/lively.storage.js",
   "scripts": {
-    "test": "mocha-es6 tests/*-test.js",
+    "test": "mocha-es6 tests/test.js",
     "build": "node ./tools/build.js"
   },
   "repository": {

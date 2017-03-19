@@ -14,7 +14,17 @@ if (isNode) {
 PouchDB.plugin(pouchdbFind);
 
 // leveldbPath("test")
+// leveldbPath("file:///Users/robert/Downloads/hackernews-data")
+
 function leveldbPath(dbName) {
+  // absolute path?
+  if (dbName.startsWith("/")) return dbName;
+  if (dbName.match(/[^\/]+:\/\//)) {
+    if (dbName.startsWith("file:"))
+      dbName = dbName.replace(/^file:\/\//, "");
+    return dbName;
+  }
+  
   if (!isNode) throw new Error(`leveldbPath called under non-nodejs environment`);
   let serverPath = System.global.process.cwd();
   // are we in a typical lively.next env? Meaning serverPath points to
@@ -128,14 +138,28 @@ export default class Database {
   }
 
   async docList() {
-    // returns object with {total_rows: NUMBER, offset: NUMBER, rows: [OBJECT]}
+    // returns [{id, rev}]
     let {rows} = await this.pouchdb.allDocs(),
-        docs = {};
+        result = [];
     for (let i = 0; i < rows.length; i++) {
       let {id, value: {rev}} = rows[i];
-      docs[id] = rev;
+      result.push({id, rev});
     }
-    return docs;
+    return result;
+  }
+
+  async revList(id) {
+    let {_id, _revisions: {start, ids}} = await this.pouchdb.get(id, {revs: true});
+    return ids.map(ea => `${start--}-${ea}`);
+  }
+
+  async getAllRevisions(id, options = {}) {
+    let {skip = 0, limit = 0} = options,
+        revs = await this.revList(id);
+    if (skip > 0) revs = revs.slice(skip);
+    if (limit > 0) revs = revs.slice(0, limit);
+    let query = revs.map(rev => ({rev, id}))
+    return await this.getDocuments(query);
   }
 
   async getAll(options = {}) {
