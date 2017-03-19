@@ -280,7 +280,7 @@ export class Button extends Morph {
   }
 
   onMouseDown(evt) {
-    if (this.isActive)
+    if (this.isActive && this.innerBoundsContainsPoint(evt.positionIn(this)))
       this.activeMode = 'triggered'
   }
 

@@ -1,7 +1,7 @@
 import { Morph, GridLayout, Text, StyleRules, Label, Button } from "lively.morphic";
 import { pt, LinearGradient, Color, Rectangle, rect } from "lively.graphics";
 import { arr, Path, string, obj } from "lively.lang";
-import { signal } from "lively.bindings";
+import { signal, once } from "lively.bindings";
 import { Icon } from "./icons.js"
 
 function asItem(obj) {
@@ -984,8 +984,8 @@ export class DropDownList extends Button {
       },
 
       selection: {
-        after: ["list"],
-        set selection(value) {
+        after: ["list", 'items'],
+        set(value) {
           this.setProperty("selection", value);
           if (!value) {
             this.list.selection = null;
@@ -1026,6 +1026,7 @@ export class DropDownList extends Button {
     } else {
       signal(this, "activated");
       this.addMorph(list);
+      once(list, 'onItemMorphClicked', this, 'toggleList');
       list.topLeft = this.innerBounds().bottomLeft();
       list.extent = pt(this.width, 100);
       list.focus();
