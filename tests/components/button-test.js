@@ -83,7 +83,7 @@ describe("buttons", function() {
      })
 
      it ('leaving button on press releases', () => {
-        env.eventDispatcher.simulateDOMEvents({type: "pointerdown", target: button});
+        env.eventDispatcher.simulateDOMEvents({type: "pointerdown", position: button.center, target: button});
         expect(button.activeMode).equals('triggered');
         env.eventDispatcher.simulateDOMEvents({type: "hoverout", target: button});
         expect(button.activeMode).equals('active');
