@@ -367,7 +367,7 @@ export class Morph {
     properties.push(...wellKnown
       .map(key => { seen[key] = true; return {key, value: this[key]}; })
       .sort((a, b) => {
-        var aK = a.key.toLowerCase(),
+        let aK = a.key.toLowerCase(),
             bK = b.key.toLowerCase();
         return aK < bK ? -1 : aK === bK ? 0 : 1
       }))

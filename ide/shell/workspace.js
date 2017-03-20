@@ -116,9 +116,9 @@ export default class Workspace extends Window {
         name: "[shell] change working directory",
         async exec(workspace) {
           await workspace.targetMorph.execCommand("[shell] change working directory");
-          var [front, back] = workspace.title.split("–");
+          var [front, back] = workspace.title.split("-");
           workspace.title = workspace.shellPlugin.cwd ?
-            `${front.trim()} – ${workspace.shellPlugin.cwd}` :
+            `${front.trim()} - ${workspace.shellPlugin.cwd}` :
             `${front.trim()}`
         }
       },
