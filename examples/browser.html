@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>lively.storage test</title>
+  </head>
+  <body style="margin: 0;">
+    <script src="/lively.storage/dist/lively.storage.js"></script>
+
+    <div id="log"></div>
+
+    <script>
+      function log(msg) {
+        document.body.insertAdjacentHTML("beforeend", `<pre>${msg}</pre>`);
+      }
+    </script>
+
+    <script>
+      var origin = document.location.origin;
+      Promise.resolve()
+        .then(function() {
+          log("...loaded");
+        
+          let Database = lively.storage;
+          let db = Database.ensureDB("test-db", {adapter: 'memory'});
+          // let db = Database.ensureDB("test-db");
+          log(db.pouchdb.adapter)
+          return db.set("test-pouchdb", {time: JSON.stringify(new Date())})
+            .then(function(doc) { log(JSON.stringify(doc)); })
+
+        })
+        .catch(function(err) {
+          if (err.originalErr) err = err.originalErr;
+          console.error(err);
+          var printed = err.message;
+          printed += err.stack.includes(err.message) ? err.stack.replace(err.message, "\n") : err.stack;
+          console.error(printed);
+          log(printed);
+        });
+
+    </script>
+  </body>
+</html>
