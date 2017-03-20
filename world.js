@@ -16,6 +16,8 @@ import {
   ListPrompt,
   EditListPrompt
 } from "./components/prompts.js";
+import { saveWorldToResource, loadWorldFromResource } from "./serialization.js";
+import InputLine from "./text/input-line.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--
 
@@ -724,8 +726,40 @@ var worldCommands = [
   {
     name: "save world",
     exec: async world => {
-      world.prompt("Please give this world a name")
-      return true;
+      let name = await world.prompt(
+        "Please give this world a name",
+        {historyId: "lively.morphic-save-world-names", useLastInput: true});
+      if (!name) return null;      
+      arr.invoke(world.submorphs.filter(ea => ea.isEpiMorph), "remove");
+      let url = System.decanonicalize(`lively.morphic/worlds/${name}.json`);
+      await saveWorldToResource(world, url);
+      world.setStatusMessage(`saved world to ${url}`);
+    }
+  },
+  
+  {
+    name: "load world",
+    exec: async world => {
+      let exclude = ea => !ea.name().endsWith(".json") || ea.name() === "package.json",
+          baseURL = System.decanonicalize(`lively.morphic/worlds/`),
+          files = await lively.resources.resource(baseURL).dirList(1, {exclude}),
+          items = files.map(ea =>
+            ({isListItem: true, value: ea, string: ea.name().replace(".json", "")})),
+          lastSaved = arr.last(InputLine.getHistory("lively.morphic-save-world-names").items),
+          preselect = lastSaved ? files.findIndex(ea => ea.name().replace(".json", "") === lastSaved) : 0,
+          {selected: [toLoad]} = await world.listPrompt("Which world to load", items, {preselect});
+
+      if (!toLoad) return;
+
+      try {
+        let newWorld = await loadWorldFromResource(toLoad);
+        await world.env.setWorld(newWorld);
+        newWorld.setStatusMessage("loaded!");
+        return newWorld;
+      } catch (e) {
+        console.error(`Error loading world: `, e);
+        throw e;
+      }
     }
   }
 

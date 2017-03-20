@@ -23,15 +23,15 @@ export function deserializeMorph(idAndSnapshot, options) {
 }
 
 export async function loadWorldFromResource(fromResource) {
-  var data = JSON.parse(await fromResource.read());
+  // fromResource = resource(location.origin).join("test-world.json");
+  let data = JSON.parse(await fromResource.read());
   // load required modules
   await Promise.all(
     ObjectPool.requiredModulesOfSnapshot(data.snapshot)
       .map(modId =>
         (System.get(modId) ? null : System.import(modId))
                 .catch(e => console.error(`Error loading ${modId}`, e))));
-
-  return deserializeMorph(data);
+  return loadMorphFromSnapshot(data);
 }
 
 export async function saveWorldToResource(world = World.defaultWorld(), toResource) {

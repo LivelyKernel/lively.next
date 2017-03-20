@@ -60,6 +60,10 @@ export class MorphicEnv {
     }
   }
 
+  isDefault() {
+    return this.constructor.default() === this;
+  }
+
   initWithDOMEnv(domEnv) {
     this.domEnv = domEnv;
     this.fontMetric = FontMetric.forDOMEnv(domEnv);
@@ -68,6 +72,7 @@ export class MorphicEnv {
   uninstallWorldRelated() {
     this.renderer && this.renderer.clear();
     this.eventDispatcher && this.eventDispatcher.uninstall();
+    this.world && this.world.suspendSteppingAll();
   }
 
   uninstall() {
@@ -101,6 +106,8 @@ export class MorphicEnv {
     this.renderer = new Renderer(world, rootNode, this.domEnv).startRenderWorldLoop();
     this.eventDispatcher = new EventDispatcher(this.domEnv.window, world).install(rootNode);
     world.makeDirty();
+    world.resumeSteppingAll();
+    if (this.isDefault()) this.domEnv.window.$world = world;
 
     return world.whenRendered().then(() => this);
   }
