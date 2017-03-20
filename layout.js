@@ -23,6 +23,7 @@ class Layout {
   description() { return "Describe the layout behavior here."; }
   name() { return "Name presented to the user."; }
 
+  isEnabled() { /*FIXME!*/ return !this.active; }
   disable() { this.active = true; }
   enable(animation) { 
     this.active = false; 

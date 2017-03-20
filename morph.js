@@ -103,12 +103,14 @@ export class Morph {
         after: ["isLayoutable", "origin", "position", "rotation", "scale"],
         get() { return (this.getProperty("submorphs") || []).slice(); },
         set(newSubmorphs) {
-          this.layout && this.layout.disable();
+          let {layout} = this,
+              activateLayout = layout && layout.isEnabled();
+          if (activateLayout) layout.disable();
           this.submorphs.forEach(m => newSubmorphs.includes(m) || m.remove());
           newSubmorphs.forEach(
             (m, i) => this.submorphs[i] !== m &&
               this.addMorph(m, this.submorphs[i]));
-          this.layout && this.layout.enable();
+          if (activateLayout) layout.enable();
         }
       },
 
