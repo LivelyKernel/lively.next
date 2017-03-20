@@ -1748,10 +1748,12 @@ export class Image extends Morph {
   get isImage() { return true }
 
   async naturalExtent() {
-    var image = document.createElement("img"), width, height;
+    let document = this.env.domEnv.document,
+        image = document.createElement("img"),
+        width, height;
     return new Promise(resolve => {
       image.onload = function() {
-        var {width, height} = this;
+        let {width, height} = this;
         resolve(pt(width, height));
       };
       image.src = this.imageUrl;
