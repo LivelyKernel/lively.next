@@ -160,6 +160,8 @@ export default class Terminal extends Morph {
 
 
   __additionally_serialize__(snapshot, objRef, pool, addFn) {
+    super.__additionally_serialize__(snapshot, objRef, pool, addFn);
+
     // remove unncessary state    
     var ref = pool.ref(this.ui.output);
     ref.currentSnapshot.props.attributeConnections.value = [];

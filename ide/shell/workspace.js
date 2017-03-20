@@ -65,6 +65,8 @@ export default class Workspace extends Window {
   }
 
   __additionally_serialize__(snapshot, objRef, pool, addFn) {
+    super.__additionally_serialize__(snapshot, objRef, pool, addFn);
+
     // remove unncessary state    
     var ref = pool.ref(this.targetMorph);
     ref.currentSnapshot.props.attributeConnections.value = [];

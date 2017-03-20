@@ -321,6 +321,19 @@ export class Morph {
     return propsToSerialize;
   }
 
+  __additionally_serialize__(snapshot, ref, pool, addFn) {
+    // remove epi morphs
+    if (!this.isEpiMorph) {
+      let submorphs = snapshot.props.submorphs.value;
+      for (let i = submorphs.length; i--; ) {
+        let {id} = submorphs[i];
+        if (pool.refForId(id).realObj.isEpiMorph)
+          arr.removeAt(submorphs, i);
+      }
+    }
+  }
+
+
   get isMorph() { return true; }
   get id() { return this._id; }
 
@@ -779,7 +792,7 @@ export class Morph {
 
     return submorph;
   }
- 
+
   addMorph(submorph, insertBeforeMorph) {
     // insert at right position in submorph list, according to insertBeforeMorph
     var submorphs = this.submorphs,

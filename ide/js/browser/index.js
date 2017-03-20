@@ -127,6 +127,8 @@ export default class Browser extends Window {
   }
 
   __additionally_serialize__(snapshot, objRef, pool, addFn) {
+    super.__additionally_serialize__(snapshot, objRef, pool, addFn);
+
     // remove unncessary stuff
     // FIXME offer option in object ref or pool or removeFn to automate this stuff!
     var ref = pool.ref(this.ui.moduleList);

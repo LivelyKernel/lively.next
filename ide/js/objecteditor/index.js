@@ -255,6 +255,8 @@ export class ObjectEditor extends Morph {
   }
 
   __additionally_serialize__(snapshot, objRef, pool, addFn) {
+    super.__additionally_serialize__(snapshot, objRef, pool, addFn);
+
     var {
       ui: {sourceEditor, importsList, classTree},
       backend,

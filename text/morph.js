@@ -473,7 +473,8 @@ export class Text extends Morph {
       ["document", "textLayout", "undoManager", "textRenderer", "textAttributes", "markers"]);
   }
 
-  __additionally_serialize__(snapshot, objRef) {
+  __additionally_serialize__(snapshot, objRef, pool, addFn) {
+    super.__additionally_serialize__(snapshot, objRef, pool, addFn);
     let {defaultTextStyleAttribute} = this;
     snapshot.props.textAndAttributes = {
       key: "textAndAttributes",
