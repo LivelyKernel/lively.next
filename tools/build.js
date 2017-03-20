@@ -34,7 +34,8 @@ module.exports = Promise.resolve()
       globals: {
         "lively.lang": "lively.lang",
         "pouchdb": "PouchDB",
-        "pouchdb-find": "pouchdbFind"
+        "pouchdb-find": "pouchdbFind",
+        "pouchdb-adapter-mem": "pouchdbAdapterMem"
       }
     }))
 
@@ -50,6 +51,10 @@ function fixSource(source) {
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
 ${regeneratorRuntimeSource}
+if (typeof btoa === "undefined")
+  GLOBAL.btoa = function(str) { return new Buffer(str).toString('base64'); };
+if (typeof atob === "undefined")
+  GLOBAL.atob = function(str) { return new Buffer(str, 'base64').toString() };
 var PouchDB = (function() {
   var exports = {}, module = {exports: exports};
 ${pouchdbSource}
