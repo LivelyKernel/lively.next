@@ -5,13 +5,24 @@ import { createMorphSnapshot, findPackagesInFileSpec, loadMorphFromSnapshot } fr
 
 export const defaultPartsbinFolder = System.decanonicalize("lively.morphic/parts/");
 
+function normalizePartsBinFolder(options = {}) {
+  let {partsbinFolder} = options;
+  if (!partsbinFolder || typeof partsbinFolder !== "string") {
+    options.partsbinFolder = defaultPartsbinFolder;
+    return;
+  }
+  if (!partsbinFolder.endsWith("/")) partsbinFolder += "/";
+  options.partsbinFolder = System.decanonicalize(partsbinFolder);
+  return options;
+}
+
 export async function saveObjectToPartsbinFolder(obj, partName, options = {}) {
 
-  options = {
+  options = normalizePartsBinFolder({
     preferWindow: true,
     partsbinFolder: defaultPartsbinFolder,
     ...options
-  }
+  });
 
   if (options.preferWindow) {
     var win = obj.getWindow();
@@ -36,7 +47,7 @@ export async function saveObjectToPartsbinFolder(obj, partName, options = {}) {
 }
 
 export async function loadObjectFromPartsbinFolder(partName, options) {
-  let {partsbinFolder} = {partsbinFolder: defaultPartsbinFolder, ...options}
+  let {partsbinFolder} = normalizePartsBinFolder({partsbinFolder: defaultPartsbinFolder, ...options})
 
   var rawContent = await resource(partsbinFolder).join(partName + ".json").read(),
       deserialized = loadMorphFromSnapshot(JSON.parse(rawContent));
@@ -53,7 +64,7 @@ export async function interactivelySaveObjectToPartsBinFolder(obj) {
 }
 
 export async function getAllPartResources(options) {
-  let {partsbinFolder} = {partsbinFolder: defaultPartsbinFolder, ...options};
+  let {partsbinFolder} = normalizePartsBinFolder({partsbinFolder: defaultPartsbinFolder, ...options});
   return await resource(partsbinFolder).dirList(1, {exclude: ea => !ea.name().endsWith(".json")});
 }
 
@@ -72,7 +83,7 @@ export async function interactivelyLoadObjectFromPartsBinFolder(options) {
 }
 
 export async function createNewObjectPackage(object, packageName, options) {
-  let {partsbinFolder} = {partsbinFolder: defaultPartsbinFolder, ...options},
+  let {partsbinFolder} = normalizePartsBinFolder({partsbinFolder: defaultPartsbinFolder, ...options}),
       other = await getAllPartResources(options),
       existing = other.find(ea => ea.name() === packageName);
   if (existing)
