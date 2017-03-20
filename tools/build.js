@@ -6,22 +6,25 @@ var fs = require("fs"),
     babel = require('rollup-plugin-babel'),
     targetFile = "dist/lively.storage.js",
     pouchdbSource = fs.readFileSync(require.resolve('pouchdb/dist/pouchdb.js')).toString(),
-    pouchdbFindSource = fs.readFileSync(require.resolve('pouchdb-find/dist/pouchdb.find.min.js')).toString();
+    pouchdbFindSource = fs.readFileSync(require.resolve('pouchdb-find/dist/pouchdb.find.min.js')).toString(),
+    regeneratorRuntimeSource = fs.readFileSync(require.resolve('regenerator-runtime/runtime.js')).toString(),
+    pouchdbAdapterMemSource,
+    pouchdbAdapterFsSource;
 
 
 module.exports = Promise.resolve()
+  // .then(() => require("./build-pouchdb-adapter-fs.js").then(src => pouchdbAdapterFsSource = src))
+  .then(() => require("./build-pouchdb-adapter-mem.js").then(src => pouchdbAdapterMemSource = src))
   .then(() => rollup.rollup({
     entry: "index.js",
     plugins: [
       babel({
-        exclude: 'node_modules/**',
-        sourceMap: false,
+        exclude: 'node_modules/**', sourceMap: false,
         "presets": [["es2015", {modules: false}]],
-        "plugins": ["transform-async-to-generator",
-                    "syntax-object-rest-spread",
-                    "transform-object-rest-spread",
-                    "external-helpers"]
-    })]
+        "plugins": ['transform-async-to-generator', "syntax-object-rest-spread", "transform-object-rest-spread", "external-helpers"],
+        babelrc: false
+      })
+    ]
   }))
 
   .then(bundle =>
@@ -46,6 +49,7 @@ function fixSource(source) {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
+${regeneratorRuntimeSource}
 var PouchDB = (function() {
   var exports = {}, module = {exports: exports};
 ${pouchdbSource}
@@ -56,6 +60,14 @@ var pouchdbFind = (function() {
 ${pouchdbFindSource}
   return module.exports;
 })();
+
+var pouchdbAdapterMem = (function() {
+  var exports = {}, module = {exports: exports};
+${pouchdbAdapterMemSource}
+  return module.exports;
+})();
+PouchDB.plugin(pouchdbAdapterMem);
+
   if (typeof GLOBAL.lively === "undefined") GLOBAL.lively = {};
   (function() {
     ${source}

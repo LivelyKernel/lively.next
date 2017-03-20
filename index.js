@@ -1,15 +1,28 @@
 import _PouchDB from "pouchdb";
 import pouchdbFind from "pouchdb-find";
 
-const isNode = System.get("@system-env").node;
+const GLOBAL = typeof window !== "undefined" ? window :
+    typeof global !== "undefined" ? global :
+      typeof self !== "undefined" ? self : this;
+
+const isNode = typeof global !== "undefined" && typeof process !== "undefined";
 var PouchDB = _PouchDB;
 
-if (isNode) {
+function nodejsRequire(name) {
+  if (!isNode) throw new Error("nodejsRequire can only be used in nodejs!");
+  if (typeof System !== "undefined") return System._nodeRequire(name);
+  let Module = require("module");
+  return Module._load(name)
+}
+
+if (isNode && typeof System !== "undefined") {
   let {join} = System._nodeRequire("path"),
       storageMain = System.normalizeSync("lively.storage/index.js"),
       pouchDBMain = System.normalizeSync("pouchdb", storageMain).replace(/file:\/\//, ""),
       pouchDBNodeMain = join(pouchDBMain, "../../lib/index.js");
-  PouchDB = System._nodeRequire(pouchDBNodeMain);
+  try {
+    PouchDB = System._nodeRequire(pouchDBMain);
+  } catch(e) { console.log('nodejs pouchdb is not available'); }
 }
 PouchDB.plugin(pouchdbFind);
 
@@ -24,13 +37,13 @@ function leveldbPath(dbName) {
       dbName = dbName.replace(/^file:\/\//, "");
     return dbName;
   }
-  
+
   if (!isNode) throw new Error(`leveldbPath called under non-nodejs environment`);
-  let serverPath = System.global.process.cwd();
+  let serverPath = GLOBAL.process.cwd();
   // are we in a typical lively.next env? Meaning serverPath points to
   // lively.next-dir/lively.server. If so, use parent dir of lively.server
-  let {join} = System._nodeRequire("path"),
-      {mkdirSync, existsSync, readdirSync, readFileSync} = System._nodeRequire("fs");
+  let {join} = nodejsRequire("path"),
+      {mkdirSync, existsSync, readdirSync, readFileSync} = nodejsRequire("fs");
 
   try {
     let parentPackage = readFileSync(join(serverPath, "../package.json")),
@@ -54,6 +67,7 @@ function createPouchDB(name, options) {
     options = {adapter: "leveldb", ...options};
   }
   options = {name, ...options};
+  console.log(options)
   return new PouchDB(options);
 }
 
@@ -65,7 +79,7 @@ export default class Database {
 
   static findDB(name) { return this.databases.get(name); }
 
-  static ensureDB(name) { return this.findDB(name) || new this(name); }
+  static ensureDB(name, options) { return this.findDB(name) || new this(name, options); }
 
   constructor(name, options = {}) {
     this.name = name;
