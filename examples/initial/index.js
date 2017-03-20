@@ -1,6 +1,6 @@
 export async function run() {
 
-  var l2lClient = await setupLively2Lively();
+  let l2lClient = await setupLively2Lively();
   await setupLivelyShell({l2lClient})
 
   window.addEventListener('beforeunload', function(evt) {
@@ -9,51 +9,26 @@ export async function run() {
     return msg;
   }, true);
 
-  var {loadWorldFrom} = urlQuery();
+  let {loadWorldFrom} = urlQuery();
 
-  if (loadWorldFrom) loadWorld(loadWorldFrom)
-  else createNewWorld();
+  if (!loadWorldFrom)
+    loadWorldFrom = resource(System.decanonicalize("lively.morphic/worlds/default.json"));
+
+  await loadWorld(loadWorldFrom);
 }
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import { loadWorldFromResource } from 'lively.morphic/serialization.js';
+import { MorphicEnv } from "lively.morphic";
 
 async function loadWorld(from) {
-  var fromLocation = resource(document.location.origin).join(from),
+  let fromLocation = typeof from === "string" ?
+        resource(document.location.origin).join(from) : from,
       world = await loadWorldFromResource(fromLocation);
   MorphicEnv.default().setWorld(world);
-  return window.$$world = world;
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-
-import { pt } from 'lively.graphics';
-import { World, MorphicEnv, show } from 'lively.morphic';
-import ObjectDrawer from "lively.morphic/components/object-drawer.js";
-import Workspace from "lively.morphic/ide/js/workspace.js";
-
-function createNewWorld() {
-  var world = window.$world = window.$$world = new World({
-    name: "world",
-    extent: pt(window.innerWidth, window.innerHeight)
-  });
-
-  MorphicEnv.default().setWorld(world);
-
-  new ObjectDrawer().openInWorld(pt(20,20));
-  new Workspace({name: "workspace", extent: pt(500, 600)}).openInWorld();
-
-  world.get("workspace").targetMorph.doSave = function() {
-    show("saved!");
-    localStorage.setItem('lively workspace', this.textString)
-  }
-  var code = localStorage.getItem('lively workspace');
-  if (code) world.get("workspace").targetMorph.textString = code;
-
-  return world
+  return world;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
