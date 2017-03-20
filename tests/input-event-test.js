@@ -26,7 +26,7 @@ function installEventLogger(morph, log) {
   });
 }
 
-var env, world, submorph1, submorph2, submorph3, submorph4, eventLog;
+var env, world, submorph1, submorph2, submorph3, submorph4, eventLog = [];
 function createDummyWorld() {
   world = new World({name: "world", extent: pt(300,300)})
   world.submorphs = [{
@@ -41,7 +41,6 @@ function createDummyWorld() {
   submorph3 = world.submorphs[1];
   submorph4 = world.submorphs[2];
 
-  eventLog = [];
   [world,submorph1,submorph2,submorph3,submorph4].forEach(ea => installEventLogger(ea, eventLog));
 
   return world;
@@ -49,7 +48,9 @@ function createDummyWorld() {
 
 async function setup() {
   env = MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment()));
-  await env.setWorld(createDummyWorld());
+  let world = await env.setWorld(createDummyWorld());
+  env.eventDispatcher.eventState.focusedMorph = null
+  eventLog.length = 0;
 }
 
 function teardown() {

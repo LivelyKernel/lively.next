@@ -1,15 +1,13 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
 import { expect } from "mocha-es6";
-import { createDOMEnvironment } from "../rendering/dom-helper.js";
-import { Morph, VerticalLayout, HorizontalLayout, TilingLayout, GridLayout, MorphicEnv } from "../index.js";
-import { LayoutCell } from "../layout.js";
-import { pt, Color, Rectangle, rect } from "lively.graphics";
-import { num, arr } from "lively.lang";
+import { Morph, morph, VerticalLayout, HorizontalLayout, TilingLayout, GridLayout, MorphicEnv } from "../index.js";
+import { pt, Color, rect } from "lively.graphics";
+import { arr } from "lively.lang";
 
 var world, m, env, grid, layout;
 
 function createDummyWorld() {
-  world = new Morph({
+  world = morph({
     type: "world", name: "world", extent: pt(300,300),
     submorphs: [new Morph({
       layout: new VerticalLayout(),
@@ -27,7 +25,7 @@ function createDummyWorld() {
 }
 
 function closeToPoint(p1,p2) {
-  var {x,y} = p1;
+  let {x,y} = p1;
   expect(x).closeTo(p2.x, 0.1, "x");
   expect(y).closeTo(p2.y, 0.1, "y");
 }
