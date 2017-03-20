@@ -1,5 +1,10 @@
 import { Rectangle } from "lively.graphics";
 
+if (typeof $world !== "undefined") {
+  $world.withAllSubmorphsDo(ea =>
+    ea.hasOwnProperty("_cachedKeyhandlers") && (ea._cachedKeyhandlers = null));
+}
+
 var config = {
 
   defaultShadow: {distance: 2, blur: 6},
@@ -22,6 +27,7 @@ var config = {
     {keys: {mac: 'Meta-Z', win: 'Ctrl-Z'},             command: "undo"},
     {keys: {mac: 'Meta-Shift-Z', win: 'Ctrl-Shift-Z'}, command: "redo"},
     {keys: "Alt-X", command: "run command"},
+    {keys: {mac: 'Meta-S', win: 'Ctrl-S'}, command: "save world"},
 
     {keys: "Meta-H", command: "show halo for focused morph"},
     {keys: "Alt-M", command: "select morph"},

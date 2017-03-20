@@ -249,6 +249,7 @@ export class ObjectEditor extends Morph {
 
     connect(toggleImportsButton, "fire", this, "toggleShowingImports");
     connect(sourceEditor, "textChange", this, "updateUnsavedChangeIndicatorDebounced");
+    connect(sourceEditor, "doSave", this, "execCommand", {converter: () => "save source"});
 
     connect(classTree, "contextMenuRequested", this, "contextMenuForClassTree");
   }

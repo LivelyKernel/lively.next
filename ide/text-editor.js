@@ -118,12 +118,13 @@ export default class TextEditor extends Morph {
               lineWrapping: false
             }
           ]
-          var {urlInput, loadButton, saveButton, removeButton} = this.ui;
+          var {urlInput, loadButton, saveButton, removeButton, contentText} = this.ui;
           connect(this, 'extent', this, 'relayout');
           connect(urlInput, 'inputAccepted', this, 'location');
           connect(loadButton, 'fire', this, 'execCommand', {converter: () => "load file"});
           connect(saveButton, 'fire', this, 'execCommand', {converter: () => "save file"});
           connect(removeButton, 'fire', this, 'execCommand', {converter: () => "remove file"});
+          connect(contentText, 'doSave', this, 'execCommand', {converter: () => "save file"});
         }
       },
 
