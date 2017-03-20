@@ -40,6 +40,8 @@ export class Morph {
       },
 
       draggable:          {defaultValue: true},
+      acceptsDrops:       {defaultValue: true},
+
       dropShadow: {
         defaultValue: false,
         set(value) {

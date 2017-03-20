@@ -332,7 +332,7 @@ export default class EventDispatcher {
           // of the hand
           if (hand.isAncestorOf(targetMorph)) {
             targetMorph = this.world.morphsContainingPoint(defaultEvent.position)
-              .filter(m => !hand.isAncestorOf(m))[0] || this.world;
+              .filter(m => !hand.isAncestorOf(m) && m.acceptsDrops)[0] || this.world;
           }
           events.push(new Event("drop", domEvt, this, [targetMorph], hand, halo, layoutHalo));
           defaultEvent.targetMorphs = [this.world];
