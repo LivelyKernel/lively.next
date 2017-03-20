@@ -4,14 +4,14 @@ Currently only FontAwesome icons are supported
 
 Resources are here
 
-$$world.execCommand("open file browser", {
+$world.execCommand("open file browser", {
   file: "assets/font-awesome/",
   location: lively.modules.getPackage("lively.morphic").url
 });
 
 Show all icons:
 
-$$world.openInWindow(morph({
+$world.openInWindow(morph({
   extent: pt(300,800), clipMode: "auto", type: "text", fontSize: 20, padding: Rectangle.inset(4),
   textAndAttributes: Object.keys(Icons).map(name =>
     [`${Icons[name].code} ${name}\n`, {fontFamily: "", textStyleClasses: ["fa"]}])

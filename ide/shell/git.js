@@ -297,7 +297,7 @@ export async function stageOrUnstageOrDiscardFiles(action, fileObjects, options 
 export async function commit(opts) {
   opts = {askForCommitInLively: false, ...opts};
 
-  var world = $$world; // FIXME
+  var world = $world; // FIXME
 
   var {user, email} = await checkForUserNameAndEmail(opts),
       {cmdCommit: {exitCode, stderr, output}} = await doCommit(opts, user, email);
