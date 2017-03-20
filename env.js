@@ -97,10 +97,14 @@ export class MorphicEnv {
   }
 
   setWorldRenderedOn(world, rootNode) {
+    if (!world || !world.isWorld)
+      throw new Error(`world object does not look like a morphic world`);
+
     if (this._waitForDOMEnv) {
       return this._waitForDOMEnv.then(() => this.setWorldRenderedOn(world, rootNode));
     }
 
+    this.deleteHistory();
     this.uninstallWorldRelated();
     this.world = world;
     this.renderer = new Renderer(world, rootNode, this.domEnv).startRenderWorldLoop();
@@ -108,6 +112,7 @@ export class MorphicEnv {
     world.makeDirty();
     world.resumeSteppingAll();
     if (this.isDefault()) this.domEnv.window.$world = world;
+    world.focus();
 
     return world.whenRendered().then(() => this);
   }
