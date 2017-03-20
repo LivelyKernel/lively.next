@@ -60,6 +60,10 @@ export default class Workspace extends Window {
     }
   }
 
+  onLoad() {
+    this.jsPlugin.requestHighlight();
+  }
+
   setEvalBackend(choice) { this.jsPlugin.evalEnvironment.remote = choice; }
   getEvalBackend() { this.jsPlugin.evalEnvironment.remote; }
 
