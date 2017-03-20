@@ -725,7 +725,11 @@ var worldCommands = [
 
   {
     name: "save world",
-    exec: async world => {
+    exec: async (world, args, _, evt) => {
+      // in case there is another morph implementing save...
+      var relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
+      if (relayed) return relayed;
+
       let name = await world.prompt(
         "Please give this world a name",
         {historyId: "lively.morphic-save-world-names", useLastInput: true});
@@ -996,7 +1000,7 @@ export class World extends Morph {
     if (!evt) return null;
     let focused = this.focusedMorph,
         {command, morph} = arr.findAndGet(
-      arr.without(focused.ownerChain(), this),
+      arr.without([focused, ...focused.ownerChain()], this),
       morph => arr.findAndGet(morph.keyhandlers, kh => {
         let command = kh.eventCommandLookup(morph, evt);
         return command ? {command, morph} : null;
