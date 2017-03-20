@@ -238,7 +238,7 @@ export class Text extends Morph {
             [this.insertText(text, this.documentEndPosition), attrs]);
           // 3. From the ranges we get from the text insertion we now where to
           // install the attributes
-          rangesAndAttrs.forEach(([range, attrs]) =>
+          rangesAndAttrs.forEach(([range, attrs = []]) =>
             (Array.isArray(attrs) ? attrs : [attrs]).forEach(attr =>
               this.addTextAttribute(attr, range)));
           return {start: {row: 0, column: 0}, end: this.documentEndPosition};
