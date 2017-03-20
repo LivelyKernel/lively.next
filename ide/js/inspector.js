@@ -82,21 +82,22 @@ function propertyNamesOf(obj) {
   return keys;
 }
 
+function defaultSort(a, b) {
+  if (a.hasOwnProperty("priority") || b.hasOwnProperty("priority")) {
+    let aP = a.priority || 0, bP = b.priority || 0;
+    if (aP < bP) return -1;
+    if (aP > bP) return 1;
+  }
+  let aK = (a.keyString || a.key).toLowerCase(),
+      bK = (b.keyString || b.key).toLowerCase();
+  return aK < bK ? -1 : aK === bK ? 0 : 1;
+}
+
 var defaultPropertyOptions = {
   includeDefault: true,
   includeSymbols: true,
   sort: true,
-  sortFunction: (a, b) => {
-    if (a.hasOwnProperty("priority") || b.hasOwnProperty("priority")) {
-      var aP = a.priority || 0, bP = b.priority || 0;
-      if (aP < bP) return -1;
-      if (aP > bP) return 1;
-    }
-
-    var aK = (a.keyString || a.key).toLowerCase(),
-        bK = (b.keyString || b.key).toLowerCase();
-    return aK < bK ? -1 : aK === bK ? 0 : 1;
-  }
+  sortFunction: (target, props) => Array.isArray(target) ? props : props.sort(defaultSort)
 }
 
 function propertiesOf(target) {
@@ -139,7 +140,7 @@ function propertiesOf(target) {
     }
   }
 
-  if (options.sort) props = props.sort(options.sortFunction);
+  if (options.sort) props = options.sortFunction(target, props);
 
   return props;
 }
