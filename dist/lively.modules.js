@@ -64010,11 +64010,12 @@ PouchDB.plugin(pouchdbAdapterMem);
   if (typeof GLOBAL.lively === "undefined") GLOBAL.lively = {};
   (function() {
     this.lively = this.lively || {};
-this.lively.storage = (function (_PouchDB,pouchdbFind) {
+this.lively.storage = (function (_PouchDB,pouchdbFind,pouchdbAdapterMem) {
 'use strict';
 
 _PouchDB = 'default' in _PouchDB ? _PouchDB['default'] : _PouchDB;
 pouchdbFind = 'default' in pouchdbFind ? pouchdbFind['default'] : pouchdbFind;
+pouchdbAdapterMem = 'default' in pouchdbAdapterMem ? pouchdbAdapterMem['default'] : pouchdbAdapterMem;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
   return typeof obj;
@@ -64166,6 +64167,9 @@ var set = function set(object, property, value, receiver) {
   return value;
 };
 
+// await System.normalize("pouchdb-adapter-mem", "http://localhost:9011/lively.storage")
+
+
 var GLOBAL = typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : undefined;
 
 var isNode = typeof global !== "undefined" && typeof process !== "undefined";
@@ -64192,6 +64196,7 @@ if (isNode && typeof System !== "undefined") {
   }
 }
 PouchDB.plugin(pouchdbFind);
+PouchDB.plugin(pouchdbAdapterMem);
 
 // leveldbPath("test")
 // leveldbPath("file:///Users/robert/Downloads/hackernews-data")
@@ -64253,6 +64258,11 @@ var Database = function () {
     key: "ensureDB",
     value: function ensureDB(name, options) {
       return this.findDB(name) || new this(name, options);
+    }
+  }, {
+    key: "_PouchDB",
+    get: function get() {
+      return PouchDB;
     }
   }, {
     key: "databases",
@@ -65078,7 +65088,7 @@ var Database = function () {
 
 return Database;
 
-}(PouchDB,pouchdbFind));
+}(PouchDB,pouchdbFind,pouchdbAdapterMem));
 
   }).call(GLOBAL);
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.storage;
