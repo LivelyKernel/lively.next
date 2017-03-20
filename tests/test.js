@@ -3,11 +3,19 @@
 import { expect } from "mocha-es6";
 import Database from "lively.storage";
 
+let dbOpts = (function() {
+  let opts = {adapter: "memory"};
+  try {
+    let db = new Database._PouchDB("adapter-tester")
+    db.destroy();
+    return {adapter: db.adapter};
+  } catch (e) { return {adapter: "memory"}; }
+})();
 let db;
 
 describe("database access", () => {
 
-  beforeEach(() => db = Database.ensureDB("lively.storage-test"));
+  beforeEach(() => db = Database.ensureDB("lively.storage-test", dbOpts));
   afterEach(async () => expect(await db.destroy()).deep.equals({ok: true}));
 
   it("is empty", async () => expect(await db.getAll()).equals([]));
@@ -151,8 +159,8 @@ let db1, db2;
 describe("database replication", () => {
   
   beforeEach(() => {
-    db1 = Database.ensureDB("lively.storage-replication-test-1");
-    db2 = Database.ensureDB("lively.storage-replication-test-2");
+    db1 = Database.ensureDB("lively.storage-replication-test-1", dbOpts);
+    db2 = Database.ensureDB("lively.storage-replication-test-2", dbOpts);
   });
 
   afterEach(async () => {

@@ -73,6 +73,8 @@ function createPouchDB(name, options) {
 
 export default class Database {
 
+  static get _PouchDB() { return PouchDB; }
+
   static get databases() {
     return this._databases || (this._databases = new Map());
   }
