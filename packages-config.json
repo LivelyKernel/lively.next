@@ -36,6 +36,10 @@
     "repoURL": "https://github.com/LivelyKernel/lively.resources"
   },
   {
+    "name": "lively.storage",
+    "repoURL": "https://github.com/LivelyKernel/lively.storage"
+  },
+  {
     "name": "lively-system-interface",
     "repoURL": "https://github.com/LivelyKernel/lively-system-interface"
   },
