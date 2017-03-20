@@ -44,6 +44,7 @@
     "main": "index.js",
     "map": {
       "pouchdb": "./node_modules/pouchdb/dist/pouchdb.js",
+      "pouchdb-adapter-mem": "./dist/pouchdb-adapter-mem.js",
       "pouchdb-find": "./node_modules/pouchdb-find/dist/pouchdb.find.js"
     }
   },

@@ -8,7 +8,7 @@ var fs = require("fs"),
     pouchdbSource = fs.readFileSync(require.resolve('pouchdb/dist/pouchdb.js')).toString(),
     pouchdbFindSource = fs.readFileSync(require.resolve('pouchdb-find/dist/pouchdb.find.min.js')).toString(),
     regeneratorRuntimeSource = fs.readFileSync(require.resolve('regenerator-runtime/runtime.js')).toString(),
-    pouchdbAdapterMemSource,
+    pouchdbAdapterMemSource = "",
     pouchdbAdapterFsSource;
 
 

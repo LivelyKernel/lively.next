@@ -1,5 +1,9 @@
 import _PouchDB from "pouchdb";
 import pouchdbFind from "pouchdb-find";
+import pouchdbAdapterMem from "pouchdb-adapter-mem";
+
+// await System.normalize("pouchdb-adapter-mem", "http://localhost:9011/lively.storage")
+
 
 const GLOBAL = typeof window !== "undefined" ? window :
     typeof global !== "undefined" ? global :
@@ -25,6 +29,7 @@ if (isNode && typeof System !== "undefined") {
   } catch(e) { console.log('nodejs pouchdb is not available'); }
 }
 PouchDB.plugin(pouchdbFind);
+PouchDB.plugin(pouchdbAdapterMem);
 
 // leveldbPath("test")
 // leveldbPath("file:///Users/robert/Downloads/hackernews-data")
