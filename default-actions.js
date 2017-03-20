@@ -1,7 +1,7 @@
 export var defaultActions = {
 
   "l2l-ping": (tracker, {sender, data: {timestamp}}, ackFn, socket) => {
-    var t = Date.now();
+    let t = Date.now();
     typeof ackFn === "function" && ackFn({timestamp: t});
     tracker.debug && console.log(`[${this}] got ping from ${sender}, time: ${t-timestamp}ms`);
   },
@@ -20,7 +20,7 @@ export var defaultActions = {
 
   "remote-eval-2": (tracker, {sender, data: {source}}, ackFn, socket) => {
     Promise.resolve().then(() => {
-      var result = eval(source);
+      let result = eval(source);
       if (!(result instanceof Promise)) {
         console.error("unexpected eval result:" + result)
         throw new Error("unexpected eval result:" + result);
@@ -40,39 +40,37 @@ export var defaultActions = {
 
 export var defaultTrackerActions = {
 
-  async "broadcast": (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) => { 
+  async "broadcast": (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) => {
     socket.broadcast.to(roomName).emit(broadcastMessage)
-    if(ackFn && typeof ackFn === 'function'){ackFn({status: 'Message delivered to ' + roomName})}    
+    if(ackFn && typeof ackFn === 'function'){ackFn({status: 'Message delivered to ' + roomName})}
   },
   async "systemBroadcast": (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) => {
-     var io = tracker.io;     
+    let io = tracker.io;
     io.nsps["/" + tracker.namespace].to(roomName).emit(broadcastMessage)
     if(ackFn && typeof ackFn === 'function'){ackFn({status: 'System Broadcast Message delivered to ' + roomName})}
   },
   async "multiServerBroadcast": (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) =>{
-      
-      var id = tracker.id
-      var trackers = tracker.getTrackerList()
-      trackers.forEach(function(tracker){
-        var io = tracker.io;
-        if (tracker.id != id){
-            io.nsps["/" + tracker.namespace].to(roomName).emit(broadcastMessage)
-        } else {
-            socket.broadcast.to(roomName).emit(broadcastMessage)
-        }
-        if(ackFn && typeof ackFn === 'function'){ackFn({status: 'System Broadcast Message delivered to ' + roomName})}
-      })
-  
-  },  
+    let id = tracker.id,
+        trackers = tracker.getTrackerList()
+    trackers.forEach(function(tracker){
+      var io = tracker.io;
+      if (tracker.id != id){
+        io.nsps["/" + tracker.namespace].to(roomName).emit(broadcastMessage)
+      } else {
+        socket.broadcast.to(roomName).emit(broadcastMessage)
+      }
+      if (ackFn && typeof ackFn === 'function'){ackFn({status: 'System Broadcast Message delivered to ' + roomName})}
+    })
+  },
 
-  async "getClients": (tracker, {trackerId},ackFn) => {    
+  async "getClients": (tracker, {trackerId},ackFn) => {
     tracker.removeDisconnectedClients();
     ackFn(Array.from(tracker.clients));
   },
 
    async "joinRoom": (tracker, {sender, data: {roomName}}, ackFn, socket) => {
       await socket.join(roomName)
-      if(ackFn && typeof ackFn === 'function'){ackFn({status: 'Joined ' + roomName})}      
+      if(ackFn && typeof ackFn === 'function'){ackFn({status: 'Joined ' + roomName})}
       console.log(sender + ' joined room ' + roomName)
   },
   async "leaveRoom": (tracker, {sender, data: {roomName}}, ackFn, socket) => {
@@ -80,9 +78,9 @@ export var defaultTrackerActions = {
       if(ackFn && typeof ackFn === 'function'){ackFn({status: 'Left ' + roomName})}
       console.log(sender + ' left room ' + roomName)
   },
-  async "clientRoomList": (tracker, {}, ackFn, socket) => {    
+  async "clientRoomList": (tracker, {}, ackFn, socket) => {
    (ackFn && (typeof ackFn == 'function')) ? ackFn(socket.rooms) : console.log('Error: missing or invalid ack function')
-    
+
   },
   async "listRoom": (tracker, {sender, data: {roomName}}, ackFn, socket) => {
       var io = tracker.io
@@ -95,23 +93,23 @@ export var defaultTrackerActions = {
           } else {
             ackFn({roomName: null, sockets: null, length: 0})
           }
-        }        
-        
+        }
+
       } else {
         contents = io.nsps["/" + tracker.namespace].adapter.rooms
-        if(ackFn && typeof ackFn === 'function'){ackFn({roomList: contents})}        
+        if(ackFn && typeof ackFn === 'function'){ackFn({roomList: contents})}
       }
-               
-      
+
+
   },
-  async "newUser": (tracker, {sender, data}, ackFn, socket) => {    
+  async "newUser": (tracker, {sender, data}, ackFn, socket) => {
     ackFn(await tracker.makeUser(data))
   },
   async "validate": (tracker, {sender, data}, ackFn, socket) => {
-    console.log(data)    
+    console.log(data)
     ackFn(await tracker.validateToken(data))
   },
-  async 'createUser': (tracker, {sender, data}, ackFn, socket) => {    
+  async 'createUser': (tracker, {sender, data}, ackFn, socket) => {
     ackFn(await tracker.createUser(data))
   }
 }
@@ -132,9 +130,10 @@ export var defaultClientActions = {
     var result = client._socketioClient.rooms
     ackFn(result)
   },
+
   async "ask for": (tracker, {sender, data: {query}}, ackFn, socket) => {
     var promptMethod = query.match(/password|sudo/i) ? 'passwordPrompt' : 'prompt',
-        answer = await $$world[promptMethod](query);
+        answer = await $world[promptMethod](query);
     typeof ackFn === "function" && ackFn({answer});
     tracker.debug && console.log(`[${this}] message 'ask for' from ${sender}, query: ${query}`);
   },
@@ -145,7 +144,7 @@ export var defaultClientActions = {
       return;
     }
     // "saved" || "aborted"
-    var status = await $$world.execCommand("open file for EDITOR", {url: args[0]});
+    var status = await $world.execCommand("open file for EDITOR", {url: args[0]});
     typeof ackFn === "function" && ackFn(status === "aborted" ? {error: String(status)} : {status})
   },
 
@@ -153,11 +152,11 @@ export var defaultClientActions = {
     var [dir, commandMorphId] = args || [];
     var status = "OK";
 
-    try {  
+    try {
       if (!dir) status = "[changeWorkingDirectory] No directory received";
       else if (!commandMorphId) status = "[changeWorkingDirectory] No command morph";
       else {
-        var morph = $$world.getMorphWithId(commandMorphId);
+        var morph = $world.getMorphWithId(commandMorphId);
         if (morph) {
           if (morph.__lookupSetter__("cwd")) morph.cwd = dir;
           else if (typeof morph.changeWorkingDirectory === "function") morph.changeWorkingDirectory(dir);
@@ -167,7 +166,7 @@ export var defaultClientActions = {
           } else {
             status = "[changeWorkingDirectory] cannot figure pout how to set dir";
           }
-        
+
         }
       }
     } catch (e) { status = String(e); }
