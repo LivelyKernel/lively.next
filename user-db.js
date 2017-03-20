@@ -86,3 +86,22 @@ export async function getfromDB(username,email){
   }
   return results;
 }
+
+export async function getByEmail(email){
+  
+  var db = new sqlite3.Database(dbPath);
+  try {
+    var results = await new Promise((resolve, reject) => {  
+      db.serialize(function() { 
+        db.all("SELECT * FROM users where email='" + email + "'", function(err, rows) {
+          if (err) reject(err)
+          else resolve(rows);
+        });
+      });
+    })  
+  } finally {  
+    db.close();
+    
+  }
+  return results;
+}
