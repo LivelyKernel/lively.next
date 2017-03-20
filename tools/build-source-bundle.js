@@ -19,6 +19,7 @@ var parts = {
   "lively.vm":               {source: placeholderSrc, path: require.resolve("lively.vm/dist/lively.vm.js")},
   "lively.source-transform": {source: placeholderSrc, path: require.resolve("lively.source-transform/dist/lively.source-transform.js")},
   "lively.resources":        {source: placeholderSrc, path: require.resolve("lively.resources/dist/lively.resources_no-deps.js")},
+  "lively.storage":          {source: placeholderSrc, path: require.resolve("lively.storage/dist/lively.storage.js")},
   "systemjs-init":           {source: placeholderSrc, path: path.join(__dirname, "../systemjs-init.js")},
   "babel-regenerator":       {source: placeholderSrc, path: require.resolve("babel-regenerator-runtime/runtime.js")}
 }
@@ -51,7 +52,8 @@ module.exports = Promise.resolve()
         "lively.ast": "lively.ast",
         "lively.vm": "lively.vm",
         "lively.notifications": "lively.notifications",
-        "lively.resources": "lively.resources"
+        "lively.resources": "lively.resources",
+        "lively.storage": "lively.storage"
       }
     }))
 
@@ -94,6 +96,7 @@ var complete = [
  "lively.source-transform",
  "lively.vm",
  "lively.resources",
+ "lively.storage"
 ].map(key => {
   return `
 // INLINED ${parts[key].path}
@@ -107,4 +110,4 @@ ${parts[key].source}
   .then(sources => {
     fs.writeFileSync(targetFile1, sources.noDeps);
     fs.writeFileSync(targetFile2, sources.complete);
-  })
+  });
