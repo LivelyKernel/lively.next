@@ -734,7 +734,6 @@ var worldCommands = [
         "Please give this world a name",
         {historyId: "lively.morphic-save-world-names", useLastInput: true});
       if (!name) return null;      
-      arr.invoke(world.submorphs.filter(ea => ea.isEpiMorph), "remove");
       let url = System.decanonicalize(`lively.morphic/worlds/${name}.json`);
       await saveWorldToResource(world, url);
       world.setStatusMessage(`saved world to ${url}`);
@@ -762,6 +761,8 @@ var worldCommands = [
         return newWorld;
       } catch (e) {
         console.error(`Error loading world: `, e);
+        await world.env.setWorld(world);
+        world.showError(e);
         throw e;
       }
     }
