@@ -1072,14 +1072,31 @@ class CopyHaloItem extends HaloItem {
   get styleClasses() { return [...super.styleClasses, "fa", "fa-clone"]; }
 
   init(hand) {
-    var {halo} = this, {target} = halo, world = halo.world();
+    let {halo} = this, {target} = halo, world = halo.world(),
+        isMultiSelection = target instanceof MultiSelectionTarget;
     halo.remove();
-    var pos = target.globalPosition, copy = world.addMorph(target.copy());
-    copy.undoStart("copy-halo");
-    hand.grab(copy);
-    copy.globalPosition = pos;
-    world.addMorph(halo);
-    halo.refocus(copy);
+
+
+    if (isMultiSelection) {
+      // FIXME! haaaaack
+      let copies = target.selectedMorphs.map(ea => world.addMorph(ea.copy())),
+          positions = copies.map(ea => ea.position);
+      copies[0].undoStart("copy-halo");
+      world.addMorph(halo);
+      halo.refocus(copies);
+      hand.grab(halo.target);
+      halo.target.onGrab({hand});
+      positions.forEach((pos,i) => copies[i].globalPosition = pos);
+      halo.alignWithTarget();
+
+    } else {
+      let pos = target.globalPosition,
+          copy = world.addMorph(target.copy());
+      copy.undoStart("copy-halo");
+      hand.grab(copy);
+      world.addMorph(halo);
+      halo.refocus(copy);
+    }
   }
 
   stop(hand) {
