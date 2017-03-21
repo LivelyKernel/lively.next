@@ -66,37 +66,43 @@ import { createFiles } from "lively.resources";
 import { reloadPackage, getPackage } from "lively.modules";
 import ObjectPackage from "lively.classes/object-classes.js";
 
-export async function createMorphSnapshot(aMorph) {
-  var snapshot = serializeMorph(aMorph),
-      packages = snapshot.packages = {},
-      // 1. save object packages
-      packagesToSave = aMorph.withAllSubmorphsDo(m => {
-        let klass = m.constructor,
-            moduleMeta = klass[Symbol.for("lively-module-meta")];
-        // if it's a "local" object package then save that as part of the snapshot
-        if (!moduleMeta) return null;
-        let p = lively.modules.getPackage(moduleMeta.package.name);
-        return p && p.address.startsWith("local://") ? p : null
-      }).filter(Boolean);
+export async function createMorphSnapshot(aMorph, options = {}) {
+  let {addPreview = true, testLoad = true, addPackages = true} = options,
+      snapshot = serializeMorph(aMorph);
 
-  await Promise.all(
-    packagesToSave.map(async p => {
-      let root = resource(p.address).asDirectory(),
-          packageJSON = await resourceToJSON(root, {});
-      if (!packages[root.parent().url]) packages[root.parent().url] = {};
-      Object.assign(packages[root.parent().url], packageJSON);
-    }));
+  if (addPackages) {
+    let packages = snapshot.packages = {},
+        // 1. save object packages
+        packagesToSave = aMorph.withAllSubmorphsDo(m => {
+          let klass = m.constructor,
+              moduleMeta = klass[Symbol.for("lively-module-meta")];
+          // if it's a "local" object package then save that as part of the snapshot
+          if (!moduleMeta) return null;
+          let p = lively.modules.getPackage(moduleMeta.package.name);
+          return p && p.address.startsWith("local://") ? p : null
+        }).filter(Boolean);
+    await Promise.all(
+      packagesToSave.map(async p => {
+        let root = resource(p.address).asDirectory(),
+            packageJSON = await resourceToJSON(root, {});
+        if (!packages[root.parent().url]) packages[root.parent().url] = {};
+        Object.assign(packages[root.parent().url], packageJSON);
+      }));
+  }
 
-  // add preview
-  let {renderMorphToDataURI} = await System.import("lively.morphic/rendering/morph-to-image.js");
-  snapshot.preview = await renderMorphToDataURI(aMorph, {width: aMorph.width, height: aMorph.height});
+  if (addPreview) {
+    let {renderMorphToDataURI} = await System.import("lively.morphic/rendering/morph-to-image.js");
+    snapshot.preview = await renderMorphToDataURI(aMorph, {width: aMorph.width, height: aMorph.height});
+  } else snapshot.preview = ""
 
-  try {
-    let testLoad = await loadMorphFromSnapshot(snapshot);
-    if (!testLoad || !testLoad.isMorph)
-      throw new Error("reloading snapshot does not create a morph!")
-  } catch (e) {
-    throw new Error("Error snapshotting morph: Cannot recreate morph from snapshot!\n" + e.stack);
+  if (testLoad) {
+    try {
+      let testLoad = await loadMorphFromSnapshot(snapshot);
+      if (!testLoad || !testLoad.isMorph)
+        throw new Error("reloading snapshot does not create a morph!")
+    } catch (e) {
+      throw new Error("Error snapshotting morph: Cannot recreate morph from snapshot!\n" + e.stack);
+    }
   }
 
   return snapshot;
