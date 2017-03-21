@@ -46,12 +46,12 @@ export async function remove(user){
   return response
 }
 export async function push(user){  
-  var {username, email, hash} = user  
+  var {username, email, hash, avatar} = user  
   
   var db = new sqlite3.Database(dbPath);
   try {
     var response = await new Promise((resolve, reject) => {        
-        var stmnt = "INSERT INTO users(username, email, hash) VALUES ('" + username + "','" + email + "','" + hash + "');"
+        var stmnt = "INSERT INTO users(username, email, hash, avatar) VALUES ('" + username + "','" + email + "','" + hash + "','" + JSON.stringify(avatar) + "');"
         db.run(stmnt, (err) => {
           if (err) {            
               reject(err)
@@ -69,7 +69,6 @@ export async function push(user){
 
 
 export async function getfromDB(username,email){
-  
   var db = new sqlite3.Database(dbPath);
   try {
     var results = await new Promise((resolve, reject) => {  
