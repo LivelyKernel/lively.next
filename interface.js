@@ -4,16 +4,22 @@ import * as bcrypt from "lively.user/node_modules/bcryptjs/index.js";
 
 var defaultClient = L2LClient.default()
 
-export async function getUser(options){
+export async function emailAvailable(email) {
+   return (await getUser({email})).email == null;
+}
+
+export async function getUser({name='anonymous', email=null, password=null, avatar=false}){
   var opts = {
-    name: 'anonymous',
-    email: null,
-    password: null,
-    ...options
+    name,
+    email,
+    password,
+    avatar: avatar ? JSON.stringify(avatar) : avatar
   }
-  
-  var defaultUser = (await defaultClient.sendToAndWait(defaultClient.trackerId,'newUser',opts)).data
-  return defaultUser
+  return (await defaultClient.sendToAndWait(defaultClient.trackerId,'userInfo',opts)).data
+}
+
+export async function authenticateUser(opts){
+  return (await defaultClient.sendToAndWait(defaultClient.trackerId,'authenticateUser',opts)).data
 }
 
 export function getHash(aString){

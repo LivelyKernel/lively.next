@@ -10,24 +10,36 @@ var key = "mysecret"
 
 // var adminpassword = 'adminpassword'
 
-export async function authenticate(username,email,password){
+export async function authenticate(user){
   
-  var users = await userdb.getfromDB(username,email)
+  var users = await userdb.getfromDB(user.name,user.email)
   //check 0-th record, as both username and email are PKs  
-  var user = users[0]  
-  if(!user){
-    return {status: 'error', body: {data: 'No such username'}}
+  console.log(user)
+  var authUser = users[0]  
+  if(!authUser){
+    return {status: 'error', body: {data: 'No such username ' + user.name}}
   }
-  var hash = user.hash
-  if (bcrypt.compareSync(password,hash)){
-    var result = await tokenize(username,email,Date.now())    
+
+  if (bcrypt.compareSync(user.password,authUser.hash)){
+    var result = await tokenize(user.name, user.email,Date.now())    
     return result
   } else {
     return {error: "User Not Authenticated"}
   }
 }
 
-export async function removeUser(username,email,adminpassword){  
+export async function getUserInfo(email){
+  
+  var users = await userdb.getByEmail(email)
+  //check 0-th record, as both username and email are PKs  
+  var user = users[0]  
+  if(!user){
+    return {status: 'error', body: {data: 'No user for email ' + email }}
+  }
+  return user;
+}
+
+export async function removeUser({name: username,email},adminpassword){  
   var users = await userdb.getfromDB('admin','admin@lively-next.org')
   
   //check 0-th record, as both username and email are PKs  
@@ -44,7 +56,7 @@ export async function removeUser(username,email,adminpassword){
   
 }
 
-export async function addUser(username,email,password,adminpassword){  
+export async function addUser({name: username,email,password,avatar},adminpassword){  
   var users = await userdb.getfromDB('admin','admin@lively-next.org')
   
   //check 0-th record, as both username and email are PKs  
@@ -58,7 +70,7 @@ export async function addUser(username,email,password,adminpassword){
   }
   var salt = bcrypt.genSaltSync(10);
   var hash = bcrypt.hashSync(password, salt);
-  return await userdb.push({username,email,hash})
+  return await userdb.push({username,email,hash,avatar})
 }
 
 //Export temporarily while testing function. Export to be removed.
