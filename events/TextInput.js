@@ -158,6 +158,23 @@ export default class TextInput {
     node && node.blur();
   }
 
+  doCopyWithMimeTypes(dataAndTypes) {
+    // dataAndTypes [{data: STRING, type: mime-type-STRING}]
+    return this.execCommand("manualCopy", () => {
+      var el = this.domState.textareaNode;
+      let h = evt => {
+        el.removeEventListener('copy', h);
+        evt.preventDefault();
+        dataAndTypes.forEach(({data, type}) => evt.clipboardData.setData(type, data));
+      }
+      setTimeout(() => el.removeEventListener('copy', h), 300);
+      el.addEventListener('copy', h);
+      el.value = "";
+      el.select();
+      el.ownerDocument.execCommand("copy")
+    });
+  }
+
   doCopy(content) {
     // attempt to manually copy to the clipboard
     // this might fail for various strange browser reasons
@@ -204,7 +221,7 @@ export default class TextInput {
     execFn();
 
     try {
-      await promise.waitFor(800, () => isDone);
+      await promise.waitFor(1000, () => isDone);
     } catch (e) {
       state[stateName] = null;
       isDone = true;

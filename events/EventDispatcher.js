@@ -570,6 +570,12 @@ export default class EventDispatcher {
     return this.keyInputHelper.doCopy(content);
   }
 
+  doCopyWithMimeTypes(dataAndTypes) {
+    // usage:
+    //   await $world.env.eventDispatcher.doCopyWithMimeTypes([{type: 'text/html', data: '<h1>fooo?</h1>'}]);
+    return this.keyInputHelper.doCopyWithMimeTypes(dataAndTypes);
+  }
+
   doPaste() { return this.keyInputHelper.doPaste(); }
 
 }
