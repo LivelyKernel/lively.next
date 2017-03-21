@@ -18,6 +18,7 @@ import {
 } from "./components/prompts.js";
 import { saveWorldToResource, loadMorphFromSnapshot, loadWorldFromResource } from "./serialization.js";
 import InputLine from "./text/input-line.js";
+import { loadObjectFromPartsbinFolder } from "./partsbin.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--
 
@@ -737,20 +738,32 @@ var worldCommands = [
       let url = System.decanonicalize(`lively.morphic/worlds/${name}.json`);
       await saveWorldToResource(world, url);
       world.setStatusMessage(`saved world to ${url}`);
+
+      world.get("world-list") && world.get("world-list").onWorldSaved(name);
     }
   },
   
   {
     name: "load world",
-    exec: async world => {
-      let exclude = ea => !ea.name().endsWith(".json") || ea.name() === "package.json",
-          baseURL = System.decanonicalize(`lively.morphic/worlds/`),
-          files = await lively.resources.resource(baseURL).dirList(1, {exclude}),
-          items = files.map(ea =>
-            ({isListItem: true, value: ea, string: ea.name().replace(".json", "")})),
-          lastSaved = arr.last(InputLine.getHistory("lively.morphic-save-world-names").items),
-          preselect = lastSaved ? files.findIndex(ea => ea.name().replace(".json", "") === lastSaved) : 0,
-          {selected: [toLoad]} = await world.listPrompt("Which world to load", items, {preselect});
+    exec: async (world, args = {}) => {
+      let toLoad = args.resource;
+
+      if (false && !toLoad) { // old world selection
+        let exclude = ea => !ea.name().endsWith(".json") || ea.name() === "package.json",
+            baseURL = System.decanonicalize(`lively.morphic/worlds/`),
+            files = await lively.resources.resource(baseURL).dirList(1, {exclude}),
+            items = files.map(ea =>
+              ({isListItem: true, value: ea, string: ea.name().replace(".json", "")})),
+            lastSaved = arr.last(InputLine.getHistory("lively.morphic-save-world-names").items),
+            preselect = lastSaved ? files.findIndex(ea => ea.name().replace(".json", "") === lastSaved) : 0,
+            {selected: [selected]} = await world.listPrompt("Which world to load", items, {preselect});
+        toLoad = selected;
+      }
+
+      if (!toLoad) { // old world selection
+        let worldList = world.get("world-list") || await loadObjectFromPartsbinFolder("world-list");
+        return await worldList.bringToFront().alignInWorld(world).update();
+      }
 
       if (!toLoad) return;
 
