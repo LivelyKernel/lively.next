@@ -1,14 +1,21 @@
 import { fun, obj, arr, num, string, graph, Path } from "lively.lang";
 
 import { ObjectPool } from "lively.serializer2";
-import { lookupPath, referenceGraph, findPathFromToId } from "./snapshot-navigation.js";
+import { lookupPath, removeUnreachableObjects, referenceGraph, findPathFromToId } from "./snapshot-navigation.js";
 import ClassHelper from "./class-helper.js";
 import { HTMLMorph, inspect } from "lively.morphic";
 
 /*
 
+let r = resource(System.decanonicalize("lively.morphic/parts/IconPicker.json"))
+let snap = JSON.parse(await r.read());
+let idsRemoved = removeUnreachableObjects([snap.id], snap.snapshot)
+await r.write(JSON.stringify(snap, null, 2));
+
 import { serializeMorph, deserializeMorph } from "lively.morphic/serialization.js";
 
+let r = resource(System.decanonicalize("lively.morphic/worlds/default.json"))
+let snap = JSON.parse(await r.read())
 
 var snap = serializeMorph($world)
 num.humanReadableByteSize(JSON.stringify(snap).length)
