@@ -9,12 +9,13 @@ export async function run() {
     return msg;
   }, true);
 
-  let {loadWorldFrom} = urlQuery();
+  let {loadWorldFrom} = urlQuery(),
+      showWorldLoadDialog = !loadWorldFrom;
 
   if (!loadWorldFrom)
     loadWorldFrom = resource(System.decanonicalize("lively.morphic/worlds/default.json"));
 
-  await loadWorld(loadWorldFrom);
+  await loadWorld(loadWorldFrom, showWorldLoadDialog);
 }
 
 
@@ -23,11 +24,12 @@ export async function run() {
 import { loadWorldFromResource } from 'lively.morphic/serialization.js';
 import { MorphicEnv } from "lively.morphic";
 
-async function loadWorld(from) {
+async function loadWorld(from, showWorldLoadDialog) {
   let fromLocation = typeof from === "string" ?
         resource(document.location.origin).join(from) : from,
       world = await loadWorldFromResource(fromLocation);
   MorphicEnv.default().setWorld(world);
+  showWorldLoadDialog && world.execCommand("load world");
   return world;
 }
 
