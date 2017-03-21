@@ -1742,7 +1742,22 @@ export class Image extends Morph {
 
   static get properties() {
     return {
-      imageUrl: {defaultValue: System.decanonicalize("lively.morphic/lively-web-logo-small.png")}
+      imageUrl: {
+        defaultValue: System.decanonicalize("lively.morphic/lively-web-logo-small.svg"),
+      
+        // set(url) {
+        //   this.setProperty("imageUrl", url);
+        // 
+        //   console.time(url.slice(0, 160));
+        //   let document = this.env.domEnv.document,
+        //       image = document.createElement("img");
+        //   image.onload = function() {
+        //     console.timeEnd(url.slice(0, 160));
+        //   };
+        //   image.src = url;
+        // }
+      
+      }
     }
   }
 
