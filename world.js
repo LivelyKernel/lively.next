@@ -16,7 +16,7 @@ import {
   ListPrompt,
   EditListPrompt
 } from "./components/prompts.js";
-import { saveWorldToResource, loadWorldFromResource } from "./serialization.js";
+import { saveWorldToResource, loadMorphFromSnapshot, loadWorldFromResource } from "./serialization.js";
 import InputLine from "./text/input-line.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--
@@ -1002,6 +1002,31 @@ export class World extends Morph {
   onWindowResize(evt) {
     this._cachedWindowBounds = null;
     this.execCommand("resize to fit window");
+  }
+
+  async onPaste(evt) {
+    try {
+      let data = evt.domEvt.clipboardData;
+      if (data.types.includes("application/morphic")) {
+        evt.stop();
+        let snapshots = JSON.parse(data.getData("application/morphic")),
+            morphs = [];
+        data.clearData()
+        if (!Array.isArray(snapshots)) snapshots = [snapshots];
+        for (let s of snapshots) {
+          let morph = await loadMorphFromSnapshot(s);
+          morph.openInWorld(evt.hand.position);
+          if (s.copyMeta && s.copyMeta.offset) {
+            let {x,y} = s.copyMeta.offset;
+            morph.moveBy(pt(x,y));
+          }
+          morphs.push(morph);
+        }
+        this.showHaloFor(morphs);
+      }
+    } catch (e) {
+      this.showError(e)
+    }
   }
 
   relayCommandExecutionToFocusedMorph(evt) {

@@ -11,6 +11,7 @@ import { obj, properties, num, arr } from "lively.lang";
 import { connect, signal, disconnect, disconnectAll, once } from "lively.bindings";
 import { Icon } from "lively.morphic/components/icons.js";
 import { styleHaloFor } from "./stylization.js";
+import { createMorphSnapshot } from "../serialization.js";
 
 
 
@@ -1092,6 +1093,46 @@ class CopyHaloItem extends HaloItem {
 
   onDragStart(evt) { this.init(evt.hand) }
   onDragEnd(evt) { this.stop(evt.hand); }
+
+  async onMouseDown(evt) {
+    evt.stop();
+    let t = this.halo.target;
+    this.halo.remove();
+
+    let isMultiSelection = t instanceof MultiSelectionTarget,
+        origin = t.globalBounds().topLeft(),
+        morphsToCopy = isMultiSelection ? t.selectedMorphs : [t],
+        snapshots = [],
+        html = `<!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            ${document.querySelector("#lively-morphic-css").outerHTML}
+          </head>
+          <body>`;
+
+    try {
+      for (let m of morphsToCopy) {
+        let snap = await createMorphSnapshot(m, {addPreview: false, testLoad: true});
+        snap.copyMeta = {offset: m.worldPoint(pt(0,0)).subPt(origin)};
+        snapshots.push(snap)
+        html += m.renderPreview();
+      }
+
+      html += "</body></html>"
+
+      let data = JSON.stringify(snapshots);
+
+      await evt.dispatcher.doCopyWithMimeTypes([
+        {type: 'text/html', data: html},
+        {type: 'application/morphic', data}
+      ]);
+
+      (isMultiSelection ? $world : t).setStatusMessage("copied");
+    } catch (e) {
+      $world.logError(e);
+    }
+  }
 }
 
 
