@@ -375,6 +375,51 @@ export class TilingLayout extends Layout {
   }
 }
 
+export class CenteredTilingLayout extends TilingLayout {
+
+  name() { return "CenteredTiling" }
+  description() { return "Similar to TilingLayout but center the rows." }
+
+  apply(animate = false) {
+    if (this.active) return;
+
+    this.active = true;
+    super.apply(animate);
+
+    var width = this.getOptimalWidth(),
+        {spacing, layoutableSubmorphs} = this,
+        y = spacing + this.border.top;
+
+    layoutableSubmorphs = layoutableSubmorphs.slice();
+
+    while (layoutableSubmorphs.length) {
+
+      let remainingWidth = width;
+      let rowMorphs = arr.takeWhile(layoutableSubmorphs, m => {
+        let newWidth = remainingWidth - (m.width + 2*spacing);
+        if (newWidth < 0) return false;
+        remainingWidth = newWidth;
+        return true;
+      })
+
+      if (rowMorphs.length) layoutableSubmorphs = arr.withoutAll(layoutableSubmorphs, rowMorphs);
+      else rowMorphs = [layoutableSubmorphs.shift()];
+
+      let pos = pt(remainingWidth/2 + spacing + this.border.left, y);
+      for (let m of rowMorphs) {
+        m.position = pos;
+        pos = pos.addXY(2*spacing + m.width, 0);
+        y = Math.max(y, m.bottom)
+      }
+
+      y += 2*spacing;
+    }
+
+    this.active = false;
+  }
+
+}
+
 export class CellGroup {
 
   constructor({cell, morph, layout, align}) {
