@@ -984,6 +984,7 @@ export class World extends Morph {
       {command: "window switcher",          target: this},
       {command: "report a bug",          target: this},
       {command: "save world",          target: this},
+      {command: "load world",          target: this},
     ];
   }
 
