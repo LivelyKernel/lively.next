@@ -60,6 +60,14 @@ function fixNodejs(document, window) {
   }
 }
 
+const typeMethodMap = {
+  "blob": "toBlob",
+  "jpeg": "toJpeg",
+  "pixeldata": "toPixelData",
+  "png": "toPng",
+  "svg": "toSvg",
+}
+
 export async function renderMorphToDataURI(morph, opts = {}) {
   // Takes a morph and options like opts = {width: NUMBER, height: NUMBER,
   // center: BOOL}, then calls morph.renderPreview() which creates a DOM node
@@ -71,7 +79,7 @@ export async function renderMorphToDataURI(morph, opts = {}) {
       node = morph.renderPreview({...opts, asNode: true}), dataURI,
       wrapper = document.createElement("div"),
       canvas = document.createElement("div"),
-      {width, height} = opts;
+      {width, height, type = 'svg'} = opts;
 
   if (System.get("@system-env").node)
     fixNodejs(document, window);
@@ -101,7 +109,9 @@ export async function renderMorphToDataURI(morph, opts = {}) {
     canvas.style.width = width + "px";
     canvas.style.height = height + "px";
 
-    return await domToImage.toSvg(canvas); // returns data URI
+    let method = typeMethodMap[type] || "toSvg";
+    return await domToImage[method](canvas); // returns data URI
+
   } finally {
     wrapper.parentNode && wrapper.parentNode.removeChild(wrapper);
   }
