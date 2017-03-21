@@ -1111,10 +1111,13 @@ class CopyHaloItem extends HaloItem {
   onDragStart(evt) { this.init(evt.hand) }
   onDragEnd(evt) { this.stop(evt.hand); }
 
-  async onMouseDown(evt) {
+  async onMouseUp(evt) {
     evt.stop();
-    let t = this.halo.target;
-    this.halo.remove();
+    let {halo} = this,
+        t = halo.target,
+        world = halo.world();
+
+    halo.remove();
 
     let isMultiSelection = t instanceof MultiSelectionTarget,
         origin = t.globalBounds().topLeft(),
@@ -1145,10 +1148,11 @@ class CopyHaloItem extends HaloItem {
         {type: 'application/morphic', data}
       ]);
 
-      (isMultiSelection ? $world : t).setStatusMessage("copied");
-    } catch (e) {
-      $world.logError(e);
-    }
+    } catch (e) { world.logError(e); return; }
+
+    world.addMorph(halo);
+    halo.refocus(morphsToCopy);
+    halo.setStatusMessage("copied");
   }
 }
 
