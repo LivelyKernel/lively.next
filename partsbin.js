@@ -30,17 +30,25 @@ export async function saveObjectToPartsbinFolder(obj, partName, options = {}) {
   }
 
   try {
-    if (typeof obj.beforePublish === "function")
-      obj.beforePublish(partName);
+    if (obj.isMorph) {
+      obj.withAllSubmorphsDo(ea => {
+        if (typeof ea.beforePublish === "function")
+          ea.beforePublish(partName, obj);
+      });
+    } else {
+      if (typeof obj.beforePublish === "function")
+        obj.beforePublish(partName, obj);
+    }
   } catch (e) {
-    var msg = `Error in beforePublish of ${obj}\n${e.stack}`;
+    let msg = `Error in beforePublish of ${obj}\n${e.stack}`;
     if (typeof obj.world === "function" && obj.world()) obj.world().logError(new Error(msg));
     else console.error(msg);
   }
 
   await resource(options.partsbinFolder).ensureExistance();
-  var partResource = resource(options.partsbinFolder).join(partName + ".json"),
+  let partResource = resource(options.partsbinFolder).join(partName + ".json"),
       snapshot = await createMorphSnapshot(obj);
+
   await partResource.write(JSON.stringify(snapshot, null, 2))
 
   return {partName, url: partResource.url}
