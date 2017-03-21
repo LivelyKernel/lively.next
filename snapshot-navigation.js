@@ -15,7 +15,7 @@ function referencesOfId(snapshot, id, withPath) {
   // all the ids an regObj (given by id) points to
   let ref = snapshot[id], result = [];
   for (let key in ref.props) {
-    let {value, verbatim} = ref.props[key];
+    let {value, verbatim} = ref.props[key] || {};
     if (Array.isArray(value)) {
       result.push(...referencesInArray(snapshot, value, withPath && key));
       continue;
@@ -162,5 +162,5 @@ export function removeUnreachableObjects(rootIds, snapshot) {
   });
 
   idsToRemove.forEach(id => delete snapshot[id]);
-  return snapshot;
+  return idsToRemove;
 }

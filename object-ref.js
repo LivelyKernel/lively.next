@@ -80,6 +80,13 @@ export class ObjectRef {
       return ref;
     }
 
+    if (typeof id !== "string") {
+      let msg = `Error snapshoting ${realObj}: `
+              + `id is not a string but ${id} `
+              + `(serialization path: ${path.join(".")})`;
+      throw new Error(msg)
+    }
+
     // can realObj be manually serialized, e.g. into an expression?
     if (typeof realObj.__serialize__ === "function") {
       let serialized = realObj.__serialize__(pool, serializedObjMap, path, this);
@@ -255,8 +262,8 @@ export class ObjectRef {
   }
 
   recreatePropertyAndSetProperty(newObj, props, key, serializedObjMap, pool, path) {
-    var {verbatim, value} = props[key];
     try {
+      var {verbatim, value} = props[key] || {value: "NON EXISTING"};
       newObj[key] = verbatim ? value :
         this.recreateProperty(key, value, serializedObjMap, pool, path.concat(key));
     } catch (e) {
