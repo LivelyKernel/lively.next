@@ -317,7 +317,8 @@ export class Morph {
         propsToSerialize = ["_tickingScripts", "attributeConnections"];
     for (let key in properties) {
       let descr = properties[key];
-      if (descr.readOnly || descr.derived || this[key] === defaults[key]) continue;
+      if (descr.readOnly || descr.derived || this[key] === defaults[key]
+       || (descr.hasOwnProperty("serialize") && !descr.serialize)) continue;
       propsToSerialize.push(key);
     }
     return propsToSerialize;
