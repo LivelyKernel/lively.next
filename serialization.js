@@ -91,6 +91,14 @@ export async function createMorphSnapshot(aMorph) {
   let {renderMorphToDataURI} = await System.import("lively.morphic/rendering/morph-to-image.js");
   snapshot.preview = await renderMorphToDataURI(aMorph, {width: aMorph.width, height: aMorph.height});
 
+  try {
+    let testLoad = await loadMorphFromSnapshot(snapshot);
+    if (!testLoad || !testLoad.isMorph)
+      throw new Error("reloading snapshot does not create a morph!")
+  } catch (e) {
+    throw new Error("Error snapshotting morph: Cannot recreate morph from snapshot!\n" + e.stack);
+  }
+
   return snapshot;
 }
 
