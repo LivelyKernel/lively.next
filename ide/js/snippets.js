@@ -53,7 +53,8 @@ var _snippets = [
     \${1:// code}
 }`],
 
-  ["try", "try {${0:/* code */}} catch (e) {}"],
+  ["tryf", "try {${0:/* code */}} finally {}"],
+  ["try", "try {${0:/* code */}} catch (err) {}"],
 
   ["do", "do {${1:/* code */}} while (${0:/* condition */});"],
   
