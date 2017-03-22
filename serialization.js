@@ -34,7 +34,9 @@ export async function loadWorldFromResource(fromResource) {
   return loadMorphFromSnapshot(data);
 }
 
-export async function saveWorldToResource(world = World.defaultWorld(), toResource) {
+export async function saveWorldToResource(world = World.defaultWorld(), toResource, options) {
+
+  let {prettyPrint = true, showIndicator = true} = options || {};
 
   if (!toResource) {
     var htmlResource = resource(document.location.href),
@@ -48,8 +50,16 @@ export async function saveWorldToResource(world = World.defaultWorld(), toResour
     toResource = resource(toResource);
 
   // pretty printing bloats 2x!
-  return toResource.write(JSON.stringify(await createMorphSnapshot(world), null, 2));
-  // return toResource.write(JSON.stringify(serializeMorph(world)));
+  let i;
+  if (showIndicator) {
+    i = LoadingIndicator.open(typeof showIndicator === "string" ? showIndicator : "Saving world");
+    await promise.delay(10);
+  }
+
+  try {
+    let snap = await createMorphSnapshot(world, options);
+    return toResource.write(prettyPrint ? JSON.stringify(snap, null, 2) : JSON.stringify(snap));
+  } finally { i && i.remove() }
 }
 
 // await saveWorldToResource();
@@ -65,6 +75,8 @@ export function copyMorph(morph) {
 import { createFiles } from "lively.resources";
 import { reloadPackage, getPackage } from "lively.modules";
 import ObjectPackage from "lively.classes/object-classes.js";
+import LoadingIndicator from "./components/loading-indicator.js";
+import { promise } from "lively.lang";
 
 export async function createMorphSnapshot(aMorph, options = {}) {
   let {addPreview = true, testLoad = true, addPackages = true} = options,
