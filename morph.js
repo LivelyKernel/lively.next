@@ -1422,6 +1422,14 @@ return ;
     evt.state.scroll.interactiveScrollInProgress.debounce();
   }
 
+  // access to the HTML 5 drag'n'drop API
+  onNativeDrop(evt) {}
+  onNativeDragleave(evt) {}
+  onNativeDragenter(evt) {}
+  onNativeDragover(evt) {}
+  onNativeDragend(evt) {}
+  onNativeDragstart(evt) {}
+  onNativeDrag(evt) {}
 
   focus() {
     var eventDispatcher = this.env.eventDispatcher;

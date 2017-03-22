@@ -20,7 +20,15 @@ const domEventsWeListenTo = [
   {type: 'pointerout',  capturing: false},
   {type: 'contextmenu', capturing: false},
   {type: 'scroll',      capturing: true},
-  {type: 'wheel',       capturing: false}
+  {type: 'wheel',       capturing: false},
+
+  {type: "drag",      capturing: false},
+  {type: "dragstart", capturing: false},
+  {type: "dragend",   capturing: false},
+  {type: "dragover",  capturing: false},
+  {type: "dragenter", capturing: false},
+  {type: "dragleave", capturing: false},
+  {type: "drop",      capturing: false}
 ];
 
 const globalDomEventsWeListenTo = [
@@ -35,9 +43,9 @@ const typeToMethodMap = {
   "pointermove":       "onMouseMove",
   "hoverin":           "onHoverIn",
   "hoverout":          "onHoverOut",
-  "drag":              "onDrag",
-  "dragstart":         "onDragStart",
-  "dragend":           "onDragEnd",
+  "morphicdrag":       "onDrag",
+  "morphicdragstart":  "onDragStart",
+  "morphicdragend":    "onDragEnd",
   "grab":              "onGrab",
   "drop":              "onDrop",
   "keydown":           "onKeyDown",
@@ -53,7 +61,15 @@ const typeToMethodMap = {
   "copy":              "onCopy",
   "paste":             "onPaste",
   "scroll":            "onScroll",
-  "wheel" :            "onMouseWheel"
+  "wheel" :            "onMouseWheel",
+
+  "drag":              "onNativeDrag",
+  "dragstart":         "onNativeDragstart",
+  "dragend":           "onNativeDragend",
+  "dragover":          "onNativeDragover",
+  "dragenter":         "onNativeDragenter",
+  "dragleave":         "onNativeDragleave",
+  "drop":              "onNativeDrop"
 }
 
 const focusTargetingEvents = [
@@ -70,7 +86,7 @@ const textOnlyEvents = [
 // helpers
 
 function dragStartEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layoutHalo) {
-  var evt = new Event("dragstart", domEvt, dispatcher, [targetMorph], hand, halo, layoutHalo)
+  var evt = new Event("morphicdragstart", domEvt, dispatcher, [targetMorph], hand, halo, layoutHalo)
     .onDispatch(() => {
       state.draggedMorph = targetMorph;
       state.lastDragPosition = evt.position;
@@ -84,7 +100,7 @@ function dragStartEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layo
 }
 
 function dragEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layoutHalo) {
-  var evt = new Event("drag", domEvt, dispatcher, [state.draggedMorph], hand, halo, layoutHalo)
+  var evt = new Event("morphicdrag", domEvt, dispatcher, [state.draggedMorph], hand, halo, layoutHalo)
     .onDispatch(() => {
       state.dragDelta = (state.draggedMorph.owner || dispatcher.world)
                              .getInverseTransform()
@@ -102,7 +118,7 @@ function dragEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layoutHal
 
 function dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layoutHalo) {
   var ctx = state.draggedMorph || targetMorph,
-      evt = new Event("dragend", domEvt, dispatcher, [ctx], hand, halo, layoutHalo)
+      evt = new Event("morphicdragend", domEvt, dispatcher, [ctx], hand, halo, layoutHalo)
     .onDispatch(() => state.dragDelta = (ctx.owner || dispatcher.world)
                                              .getInverseTransform()
                                              .transformDirection(
@@ -184,7 +200,8 @@ export default class EventDispatcher {
       lastDragPosition: null,
       hover: {hoveredOverMorphs: [], unresolvedPointerOut: false},
       scroll: {interactiveScrollInProgress: null},
-      keyInputState: null
+      keyInputState: null,
+      html5Drag: {}
     };
     this.resetKeyInputState()
   }
@@ -444,6 +461,21 @@ export default class EventDispatcher {
         // text only
         if (!targetMorph.isText) events = [];
         else defaultEvent.targetMorphs = [targetMorph];
+        break;
+
+
+      case "drag":
+      case "dragstart":
+      case "dragend":
+      case "dragover":
+      case "dragenter":
+      case "dragleave":
+      case "drop":
+        if (type === "drop" || type === "dragover") {
+          // prevent default to allow drop and to prevent action (open as link
+          // for some elements)
+          domEvt.preventDefault();
+        }
         break;
     }
 
