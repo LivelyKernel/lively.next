@@ -725,6 +725,17 @@ var worldCommands = [
   },
 
   {
+    name: "delete change history",
+    exec: world => {
+      let {env} = world,
+          status = env.printStatus();
+      env.deleteHistory()
+      world.setStatusMessage(status);
+      return true;
+    }
+  },
+
+  {
     name: "save world",
     exec: async (world, args, _, evt) => {
       // in case there is another morph implementing save...
@@ -771,6 +782,7 @@ var worldCommands = [
         let newWorld = await loadWorldFromResource(toLoad);
         await world.env.setWorld(newWorld);
         newWorld.setStatusMessage("loaded!");
+        newWorld.execCommand("fix font metric");
         return newWorld;
       } catch (e) {
         console.error(`Error loading world: `, e);
@@ -972,12 +984,7 @@ export class World extends Morph {
       {command: "redo",                     target: this},
       {isDivider: true},
       ["Debugging", [
-        ["delete change history", () => {
-          var status = this.env.printStatus();
-          this.env.deleteHistory()
-          this.setStatusMessage(status);
-        }],
-
+        {command: "delete change history", target: this},
         {command: "fix font metric", target: this}
       ]],
       ["Tools", [
