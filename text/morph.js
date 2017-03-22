@@ -660,7 +660,7 @@ export class Text extends Morph {
   }
 
   get commands() {
-    return this.pluginCollect("getCommands", (this._commands || []).concat(commands))
+    return this.pluginCollect("getCommands", (this._commands || []).concat(commands));
   }
 
 

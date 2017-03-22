@@ -5,7 +5,6 @@ import { pt } from "lively.graphics";
 import { Range } from "./range.js"
 import { eqPosition } from "./position.js";
 
-
 var commands = [
 
   {
@@ -999,7 +998,7 @@ var usefulEditorCommands = [
   },
 
   {
-    name: 'sort lines',
+    name: 'selected lines: sort',
     exec: function(text) {
       var {start: {row: startRow}, end: {row: endRow}} = text.selection,
           lines = [];
@@ -1017,7 +1016,22 @@ var usefulEditorCommands = [
   },
 
   {
-    name: 'remove duplicate lines (uniq)',
+    name: 'selected lines: reverse',
+    exec: function(text) {
+      var {start: {row: startRow}, end: {row: endRow}} = text.selection,
+          lines = [];
+      text.withLinesDo(startRow, endRow, line => lines.push(line));
+      text.undoManager.group();
+      text.replace(
+        {start: {row: startRow, column: 0}, end: {row: endRow+1, column: 0}},
+        lines.reverse().join("\n") + "\n");
+      text.undoManager.group();
+      return true;
+    }
+  },
+
+  {
+    name: 'selected lines: remove duplicates (uniq)',
     exec: function(text) {
       var {start: {row: startRow}, end: {row: endRow}} = text.selection,
           lines = [];
