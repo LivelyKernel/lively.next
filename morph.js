@@ -1796,6 +1796,7 @@ export class Image extends Morph {
     return {
 
       imageUrl: {
+        after: ['extent'],
         defaultValue: System.decanonicalize("lively.morphic/lively-web-logo-small.svg"),
 
         set(url) {
@@ -1811,8 +1812,8 @@ export class Image extends Morph {
       },
 
       naturalExtent: {defaultValue: null},
-      autoResize: {defaultValue: true},
       isLoaded: {defaultValue: false, serialize: false}
+      autoResize: {defaultValue: true}
     }
   }
 
