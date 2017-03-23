@@ -79,6 +79,7 @@ export class Button extends Morph {
       },
 
       fontFamily: {
+        isStyleProp: true,
         after: ["label"],
         derived: true,
         get() { return this.labelMorph.fontFamily; },
@@ -88,6 +89,7 @@ export class Button extends Morph {
       },
 
       fontSize: {
+        isStyleProp: true,
         after: ["label"],
         derived: true,
         get() { return this.labelMorph.fontSize; },
@@ -97,6 +99,7 @@ export class Button extends Morph {
       },
 
       fontStyle: {
+        isStyleProp: true,
         after: ["label"],
         derived: true,
         get() { return this.labelMorph.fontStyle; },
@@ -106,6 +109,7 @@ export class Button extends Morph {
       },
 
       fontColor: {
+        isStyleProp: true,
         after: ["label"],
         derived: true,
         get() { return this.labelMorph.fontColor; },
@@ -232,20 +236,14 @@ export class Button extends Morph {
     return this.activeMode == 'active'
   }
 
-  get buttonStyleProps() {
-    return ["fontStyle", "fontColor", "fontSize", "fontFamily", 
-            ...Object.keys(obj.dissoc(Morph.properties, [
-              'name', 'position', 'extent', 'scale', 'rotation', 'visible'
-            ]))]
-  }
-
   cacheStyle() {
+    // rk 2017-03-22 FIXME! why is that necessary!?
      const modeToCache = {
              inactive: 'inactiveStyle',
              active: 'activeStyle',
              triggered: 'triggerStyle'
            },
-           cachedStyle = obj.select(this, this.buttonStyleProps);
+           cachedStyle = obj.select(this, this.styleProperties);
     this[modeToCache[this.activeMode]] = cachedStyle;
   }
 

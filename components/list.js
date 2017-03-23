@@ -227,6 +227,7 @@ export class List extends Morph {
       clipMode:        {defaultValue: "auto"},
 
       theme: {
+        isStyleProp: true,
         after: ["styleRules"],
         set(val) {
           this.setProperty("theme", val);
@@ -243,6 +244,7 @@ export class List extends Morph {
       },
 
       fontFamily: {
+        isStyleProp: true,
         defaultValue: "Helvetica Neue, Arial, sans-serif",
         set(value) {
           this.setProperty("fontFamily", value);
@@ -251,6 +253,7 @@ export class List extends Morph {
       },
 
       fontSize: {
+        isStyleProp: true,
         defaultValue: 12,
         set(value) {
           this.setProperty("fontSize", value);
@@ -259,10 +262,12 @@ export class List extends Morph {
       },
 
       padding: {
+        isStyleProp: true,
         defaultValue: Rectangle.inset(3)
       },
 
       itemPadding: {
+        isStyleProp: true,
         defaultValue: Rectangle.inset(1),
         set(value) {
           this.setProperty("itemPadding", value);
@@ -362,7 +367,7 @@ export class List extends Morph {
     if (theme == "dark") {
       return new StyleRules({
         list: {
-          fill: Color.transparent,
+          fill: null,
           hideScrollbars: true,
           nonSelectionFontColor: Color.gray,
           selectionFontColor: Color.black,
@@ -640,6 +645,7 @@ export class FilterableList extends Morph {
       },
 
       theme: {
+        isStyleProp: true,
         after: ["submorphs"],
         get() { return this.listMorph.theme; },
         set(val) {
@@ -649,6 +655,7 @@ export class FilterableList extends Morph {
       },
 
       fontFamily: {
+        isStyleProp: true,
         derived: true, after: ["submorphs"], defaultValue: "Helvetica Neue, Arial, sans-serif",
         get() { return this.listMorph.fontFamily; },
         set(val) {
@@ -658,6 +665,7 @@ export class FilterableList extends Morph {
       },
 
       padding: {
+        isStyleProp: true,
         derived: true, after: ["submorphs"],
         defaultValue: Rectangle.inset(2,0),
         get() { return this.listMorph.padding; },
@@ -668,6 +676,7 @@ export class FilterableList extends Morph {
       },
 
       fontSize: {
+        isStyleProp: true,
         derived: true, after: ["submorphs"], defaultValue: 11,
         get() { return this.listMorph.fontSize; },
         set(val) {
@@ -677,12 +686,14 @@ export class FilterableList extends Morph {
       },
 
       itemPadding: {
+        isStyleProp: true,
         derived: true, after: ["submorphs"],
         get() { return this.listMorph.itemPadding; },
         set(val) { this.listMorph.itemPadding = val; }
       },
 
       inputPadding: {
+        isStyleProp: true,
         derived: true, after: ["submorphs", "padding"],
         defaultValue: Rectangle.inset(2),
         get() { return this.inputMorph.padding; },

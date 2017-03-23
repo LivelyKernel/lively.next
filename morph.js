@@ -32,6 +32,7 @@ export class Morph {
     return {
 
       clipMode: {
+        isStyleProp: true,
         defaultValue: "visible",
         set(value) {
           this.setProperty("clipMode", value);
@@ -39,10 +40,11 @@ export class Morph {
         }
       },
 
-      draggable:          {defaultValue: true},
-      acceptsDrops:       {defaultValue: true},
+      draggable:          {isStyleProp: true, defaultValue: true},
+      acceptsDrops:       {isStyleProp: true, defaultValue: true},
 
       dropShadow: {
+        isStyleProp: true,
         defaultValue: false,
         set(value) {
           if (value && !value.isShadowObject) {
@@ -54,15 +56,21 @@ export class Morph {
       },
 
       epiMorph:           {defaultValue: false},
-      extent:             {defaultValue: pt(10, 10)},
-      fill:               {defaultValue: Color.white},
+      extent:             {isStyleProp: true, defaultValue: pt(10, 10)},
+      fill:               {isStyleProp: true, defaultValue: Color.white},
       focusable:          {defaultValue: true},
-      grabbable:          {defaultValue: false},
-      halosEnabled:       {defaultValue: !!config.halosEnabled},
-      isLayoutable:       {defaultValue: true},
-      name:               {defaultValue: "aMorph"},
-      nativeCursor:       {defaultValue: "auto"},
-      opacity:            {defaultValue: 1},
+      grabbable:          {isStyleProp: true, defaultValue: false},
+      halosEnabled:       {isStyleProp: true, defaultValue: !!config.halosEnabled},
+      isLayoutable:       {isStyleProp: true, defaultValue: true},
+      name:               {
+        initialize() {
+          let className = this.constructor.name;
+          this.name = (string.startsWithVowel(className) ? "an" : "a") + className;
+        }
+      },
+
+      nativeCursor:       {isStyleProp: true, defaultValue: "auto"},
+      opacity:            {isStyleProp: true, defaultValue: 1},
       origin:             {defaultValue: pt(0,0)},
       position:           {defaultValue: pt(0,0)},
       reactsToPointer:    {defaultValue: true},
@@ -80,6 +88,7 @@ export class Morph {
         }
       },
       styleClasses: {
+        isStyleProp: true,
         defaultValue: ["morph"],
         get() {
           return this.constructor.styleClasses.concat(this.getProperty("styleClasses"));
@@ -89,7 +98,7 @@ export class Morph {
         }
       },
       tooltip:            {defaultValue: null},
-      visible:            {defaultValue: true},
+      visible:            {isStyleProp: true, defaultValue: true},
       layout: {
         after: ["submorphs", "extent", "origin", "position", "isLayoutable"],
         set(value) {
@@ -114,25 +123,26 @@ export class Morph {
         }
       },
 
-      borderColorBottom:  {defaultValue: Color.white},
-      borderColorLeft:    {defaultValue: Color.white},
-      borderColorRight:   {defaultValue: Color.white},
-      borderColorTop:     {defaultValue: Color.white},
-      borderRadiusBottom: {defaultValue: 0},
-      borderRadiusLeft:   {defaultValue: 0},
-      borderRadiusRight:  {defaultValue: 0},
-      borderRadiusTop:    {defaultValue: 0},
-      borderStyleBottom:  {defaultValue: "solid"},
-      borderStyleLeft:    {defaultValue: "solid"},
-      borderStyleRight:   {defaultValue: "solid"},
-      borderStyleTop:     {defaultValue: "solid"},
-      borderWidthBottom:  {defaultValue: 0},
-      borderWidthLeft:    {defaultValue: 0},
-      borderWidthRight:   {defaultValue: 0},
-      borderWidthTop:     {defaultValue: 0},
+      borderColorBottom:  {isStyleProp: true, defaultValue: Color.white},
+      borderColorLeft:    {isStyleProp: true, defaultValue: Color.white},
+      borderColorRight:   {isStyleProp: true, defaultValue: Color.white},
+      borderColorTop:     {isStyleProp: true, defaultValue: Color.white},
+      borderRadiusBottom: {isStyleProp: true, defaultValue: 0},
+      borderRadiusLeft:   {isStyleProp: true, defaultValue: 0},
+      borderRadiusRight:  {isStyleProp: true, defaultValue: 0},
+      borderRadiusTop:    {isStyleProp: true, defaultValue: 0},
+      borderStyleBottom:  {isStyleProp: true, defaultValue: "solid"},
+      borderStyleLeft:    {isStyleProp: true, defaultValue: "solid"},
+      borderStyleRight:   {isStyleProp: true, defaultValue: "solid"},
+      borderStyleTop:     {isStyleProp: true, defaultValue: "solid"},
+      borderWidthBottom:  {isStyleProp: true, defaultValue: 0},
+      borderWidthLeft:    {isStyleProp: true, defaultValue: 0},
+      borderWidthRight:   {isStyleProp: true, defaultValue: 0},
+      borderWidthTop:     {isStyleProp: true, defaultValue: 0},
 
 
       borderLeft: {
+        isStyleProp: true,
         derived: true,
         after:   ["borderStyleLeft", "borderWidthLeft", "borderColorLeft"],
         get()    { return {style: this.borderStyleLeft, width: this.borderWidthLeft, color: this.borderColorLeft} },
@@ -145,6 +155,7 @@ export class Morph {
       },
 
       borderRight: {
+        isStyleProp: true,
         derived: true,
         after:  ["borderStyleRight", "borderWidthRight", "borderColorRight"],
         get()   { return {style: this.borderStyleRight, width: this.borderWidthRight, color: this.borderColorRight} },
@@ -157,6 +168,7 @@ export class Morph {
       },
 
       borderBottom: {
+        isStyleProp: true,
         derived: true,
         after: ["borderStyleBottom", "borderWidthBottom", "borderColorBottom"],
         get()  { return {style: this.borderStyleBottom, width: this.borderWidthBottom, color: this.borderColorBottom} },
@@ -169,6 +181,7 @@ export class Morph {
       },
 
       borderTop: {
+        isStyleProp: true,
         derived: true,
         after: ["borderStyleTop", "borderWidthTop", "borderColorTop"],
         get()     { return {style: this.borderStyleTop, width: this.borderWidthTop, color: this.borderColorTop} },
@@ -182,6 +195,7 @@ export class Morph {
 
 
       borderWidth: {
+        isStyleProp: true,
         derived: true,
         after:      ["borderWidthLeft", "borderWidthRight", "borderWidthTop", "borderWidthBottom"],
         get()       { return this.borderWidthLeft; },
@@ -192,6 +206,7 @@ export class Morph {
       },
 
       borderRadius: {
+        isStyleProp: true,
         derived: true,
         after: ["borderRadiusLeft","borderRadiusRight","borderRadiusTop","borderRadiusBottom"],
         get()      { return this.borderRadiusLeft; },
@@ -212,6 +227,7 @@ export class Morph {
       },
 
       borderStyle: {
+        isStyleProp: true,
         derived: true,
         after:      ["borderStyleLeft", "borderStyleRight", "borderStyleTop", "borderStyleBottom"],
         get()       { return this.borderStyleLeft; },
@@ -222,6 +238,7 @@ export class Morph {
       },
 
       borderColor: {
+        isStyleProp: true,
         derived: true,
         after:      ["borderColorLeft", "borderColorRight", "borderColorTop", "borderColorBottom"],
         get()       { return this.borderColorLeft; },
@@ -232,6 +249,7 @@ export class Morph {
       },
 
       border: {
+        isStyleProp: true,
         derived: true,
         after: ["borderStyle", "borderWidth", "borderColor"],
         get()    { return {style: this.borderStyle, width: this.borderWidth, color: this.borderColor} },
@@ -243,15 +261,39 @@ export class Morph {
         }
       },
 
-      morphClasses: {}, //2017-01-31 rk: What is this????
+      morphClasses: {isStyleProp: true}, //2017-01-31 rk: What is this????
 
       styleRules: {
+        isStyleProp: true,
         set(rules) {
           this.setProperty("styleRules", rules);
           if (rules) rules.applyToAll(this);
         }
-      }
+      },
 
+      styleProperties: {
+        derived: true, readOnly: true,
+        get() {
+          let p = this.propertiesAndPropertySettings().properties,
+              styleProps = [];
+          for (let prop in p)
+            if (p[prop].isStyleProp)
+              styleProps.push(prop);
+          return styleProps;
+        }
+      },
+
+      style: {
+        derived: true, readOnly: true,
+        get() {
+          let styleProperties = this.styleProperties, style = {};
+          for (let i = 0; i < styleProperties.length; i++) {
+            let prop = styleProperties[i];
+            style[prop] = this[prop]
+          }
+          return style;
+        }
+      }
     }
   }
 
@@ -277,7 +319,7 @@ export class Morph {
     // transitioned to properties. Properties themselves set their default or
     // constructor value in initializeProperties
     var dontAssign = ["env", "type", "submorphs", "bounds", "layout"],
-        properties = this.propertiesAndPropertySettings().properties
+        properties = this.propertiesAndPropertySettings().properties;
     for (var key in properties) dontAssign.push(key);
     Object.assign(this, obj.dissoc(props, dontAssign));
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
