@@ -811,8 +811,13 @@ export class FilterableList extends Morph {
                     string.levenshtein(fuzzyValue, token))) <= 3;
           });
         }
-      }
+      },
 
+      selectedAction: {
+        get() { return this.getProperty("selectedAction") || "default"; }
+      },
+
+      actions: {}
     }
 
   }
@@ -820,23 +825,34 @@ export class FilterableList extends Morph {
   constructor(props = {}) {
     if (!props.bounds && !props.extent) props.extent = pt(400, 360);
     super(props);
-    connect(this.get("input"), "inputChanged", this, "updateFilter");
+    connect(this.inputMorph, "inputChanged", this, "updateFilter");
     connect(this.listMorph, "selection", this, "selectionChanged");
     this.updateFilter();
-    this.layout = new GridLayout({
-      rows: [
-        0, {fixed: 25},
-        1, {paddingTop: 5}
-      ],
-      grid: [[this.inputMorph],
-             [this.listMorph]]
-    });
-    connect(this, 'extent', this, 'relayout');
+    connect(this, 'items', this, "relayout");
+    connect(this, 'extent', this, "relayout");
+    connect(this, "padding", this, "relayout");
+    connect(this, "fontSize", this, "relayout");
+    connect(this, "itemPadding", this, "relayout");
+    connect(this, "inputPadding", this, "relayout");
+  }
+
+  resetConnections() {
+    let cs = this.attributeConnections;
+    if (!cs) return;
+    let props = ["accepted", "canceled", "remove"];
+    cs.filter(c => props.includes(c.sourceAttrName) && c.targetObj !== this)
+      .forEach(c => c.disconnect());
   }
 
   get isList() { return true; }
 
-  relayout() { }
+  relayout() {
+    let {listMorph, inputMorph, borderWidth: offset} = this;
+    inputMorph.topLeft = pt(offset, offset);
+    inputMorph.width = listMorph.width = this.width - 2*offset;
+    listMorph.topLeft = inputMorph.bottomLeft;
+    listMorph.height = this.height -listMorph.top - offset;
+  }
 
   inputStyle(theme) {
    if (theme == "dark") {
@@ -910,6 +926,7 @@ export class FilterableList extends Morph {
 
     list.items = filteredItems;
     list.selectedIndexes = newSelectedIndexes.length ? newSelectedIndexes : filteredItems.length ? [0] : [];
+    this.relayout();
     this.scrollSelectionIntoView();
   }
 
@@ -919,7 +936,8 @@ export class FilterableList extends Morph {
     var result = {
       filtered: this.items,
       selected: list.selections,
-      status: "accepted"
+      action: this.selectedAction,
+      status: "accepted",
     }
     signal(this, "accepted", result);
     return result;
@@ -937,7 +955,13 @@ export class FilterableList extends Morph {
       {keys: "Alt-Shift-,",                  command: "goto first item"},
       {keys: "Alt-Shift-.",                  command: "goto last item"},
       {keys: "Enter",                        command: "accept input"},
-      {keys: "Escape|Ctrl-G",                command: "cancel"}
+      {keys: "Escape|Ctrl-G",                command: "cancel"},
+      {keys: "Tab",                          command: "choose action"},
+      ...arr.range(0, 8).map(n => {
+        return {
+          keys: "Alt-" + (n+1),
+          command: {command: "choose action and accept input", args: {actionNo: n}}}
+      })
     ].concat(super.keybindings);
   }
 
@@ -952,6 +976,51 @@ export class FilterableList extends Morph {
         name: "cancel",
         exec: (morph) => {
           signal(morph, "canceled");
+          return true;
+        }
+      },
+
+      {
+        name: "choose action and accept input",
+        exec: (flist, args = {}) => {
+          let {actionNo = 0} = args;
+          flist.selectedAction = (flist.actions || [])[actionNo];
+          return flist.execCommand("accept input");
+        }
+      },
+
+      {
+        name: "choose action",
+        exec: async (morph) => {
+          if (!morph.actions) return true;
+        
+          let similarStyle = morph.style;
+          if (similarStyle.theme === "dark")
+            similarStyle.fill = Color.gray.darker();
+          let chooser = new FilterableList(similarStyle);
+          chooser.openInWorld(morph.globalPosition);
+          chooser.items = morph.actions;
+          let preselect = morph.actions.indexOf(morph.selectedAction);
+          if (preselect === -1) preselect = 0;
+          chooser.selectedIndex = preselect;
+          connect(chooser, 'accepted', morph, 'selectedAction', {
+            converter: function(result) {
+              this.targetObj.focus();
+              this.disconnect();
+              this.sourceObj.remove();
+              return result.selected[0]
+            }
+          });
+          connect(chooser, 'canceled', morph, 'selectedAction', {
+            converter: function(result) {                
+              this.targetObj.focus();
+              this.disconnect();
+              this.sourceObj.remove();
+              return this.targetObj.selectedAction
+            }
+          });
+          chooser.focus();
+
           return true;
         }
       },

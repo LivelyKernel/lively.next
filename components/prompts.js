@@ -405,7 +405,8 @@ export class ListPrompt extends AbstractPrompt {
          multiSelect,
          historyId,
          useLastInput,
-         fuzzy, filterFunction, sortFunction
+         fuzzy, filterFunction, sortFunction,
+         actions, selectedAction
    }) {
 
     this.extent = extent || pt(500,400);
@@ -436,6 +437,10 @@ export class ListPrompt extends AbstractPrompt {
       listProps.filterFunction = filterFunction;
     if (filterable && typeof sortFunction === "function")
       listProps.sortFunction = sortFunction;
+    if (filterable && actions)
+      listProps.actions = actions;
+    if (filterable && selectedAction)
+      listProps.selectedAction = selectedAction;
     this.addMorph(morph(listProps));
 
     this.addMorph({
@@ -464,12 +469,17 @@ export class ListPrompt extends AbstractPrompt {
               ["list", "list", "list"],
               [null,"ok button", "cancel button"]]
      });
+
+     if (filterable) {
+       connect(this.get("list"), 'accepted', this, 'resolve');
+       connect(this.get("list"), 'canceled', this, 'reject');
+     }
   }
 
-  resolve() {
-    var answer = this.get("list") instanceof FilterableList ?
+  resolve(arg) {
+    var answer = arg || this.get("list") instanceof FilterableList ?
       this.get("list").acceptInput() :
-      {selected: this.get("list").selections, status: "accepted"};
+      {selected: this.get("list").selections, status: "accepted", actions: "default"};
     return this.answer.resolve(answer);
   }
 

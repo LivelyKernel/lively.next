@@ -55,9 +55,9 @@ var worldCommands = [
             return {
               isListItem: true,
               label: [
-                [`${targetName}`, {fontSize: "70%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"}],
+                [`${targetName}`, {fontSize: "80%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"}],
                 [`${name}`, {}]],
-              annotation: [keysPrinted, {fontSize: "70%", textStyleClasses: ["truncated-text"], maxWidth: 140}],
+              annotation: [keysPrinted, {fontSize: "80%", textStyleClasses: ["truncated-text"], maxWidth: 140}],
               value: ea
             };
           }),
@@ -90,20 +90,30 @@ var worldCommands = [
               return {
                 isListItem: true,
                 label: [
-                  [`${String(++i)}${"\u2003".repeat(depth)}`, {fontSize: "70%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"}],
+                  [`${String(++i)}${"\u2003".repeat(depth)}`, {fontSize: "60%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"}],
                   [`${m}`]
                 ],
                 value: m
               }
             },
             m => filterFn(m) ? m.submorphs : [])),
-          {selected: morphs} = await world.filterableListPrompt(
+          actions = ["show halo", "open object editor", "open object inspector"],
+          {selected: morphs, action} = await world.filterableListPrompt(
             opts.prompt || "Choose morph",
             (opts.prependItems || []).concat(items),
             {historyId: "lively.morphic-select morph",
-             onSelection: sel => sel && sel.show && sel.show()});
-      if (!opts.justReturn)
-        morphs[0] && world.showHaloFor(morphs[0]);
+             onSelection: sel => sel && sel.show && sel.show(),
+             selectedAction: "show halo",
+             actions});
+
+      if (opts.justReturn) return morphs;
+
+      morphs.forEach(m => {
+        if (action === actions[0]) world.showHaloFor(m);
+        else if (action === actions[1]) world.execCommand("open object editor", {target: m});
+        else if (action === actions[2]) world.execCommand("open object inspector", {target: m});
+      });
+
       return morphs;
     }
   },
@@ -159,7 +169,7 @@ var worldCommands = [
         return p.get("list").execCommand("select down");
       }
 
-      var wins = world.submorphs.filter(({isWindow}) => isWindow).reverse()
+      let wins = world.submorphs.filter(({isWindow}) => isWindow).reverse()
             .map(win => ({isListItem: true, string: win.title || String(win), value: win})),
           answer = await world.filterableListPrompt(
             "Choose window", wins, {
@@ -167,8 +177,6 @@ var worldCommands = [
               historyId: "lively.morphic-window switcher",
               onSelection: sel => sel && sel.show(),
               width: world.visibleBounds().extent().x * 1/3,
-              labelFontSize: 16,
-              listFontSize: 16,
               itemPadding: Rectangle.inset(4)
             }),
           {selected: [win]} = answer;
