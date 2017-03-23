@@ -994,7 +994,7 @@ export class FilterableList extends Morph {
         exec: async (morph) => {
           if (!morph.actions) return true;
         
-          let similarStyle = morph.style;
+          let similarStyle = {...morph.style, extent: morph.extent};
           if (similarStyle.theme === "dark")
             similarStyle.fill = Color.gray.darker();
           let chooser = new FilterableList(similarStyle);

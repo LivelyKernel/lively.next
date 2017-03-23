@@ -56,7 +56,7 @@ export class Morph {
       },
 
       epiMorph:           {defaultValue: false},
-      extent:             {isStyleProp: true, defaultValue: pt(10, 10)},
+      extent:             {defaultValue: pt(10, 10)},
       fill:               {isStyleProp: true, defaultValue: Color.white},
       focusable:          {defaultValue: true},
       grabbable:          {isStyleProp: true, defaultValue: false},

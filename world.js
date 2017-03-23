@@ -91,7 +91,7 @@ var worldCommands = [
               return {
                 isListItem: true,
                 label: [
-                  [`${String(++i)}${"\u2003".repeat(depth)}`, {fontSize: "60%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"}],
+                  [`${String(++i)}${"\u2003".repeat(depth)}`, {fontSize: "80%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"}],
                   [`${m}`]
                 ],
                 value: m
