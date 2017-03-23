@@ -47,7 +47,7 @@ const typeToMethodMap = {
   "morphicdragstart":  "onDragStart",
   "morphicdragend":    "onDragEnd",
   "grab":              "onGrab",
-  "drop":              "onDrop",
+  "morphicdrop":       "onDrop",
   "keydown":           "onKeyDown",
   "keyup":             "onKeyUp",
   "input":             "onTextInput",
@@ -351,7 +351,7 @@ export default class EventDispatcher {
             targetMorph = this.world.morphsContainingPoint(defaultEvent.position)
               .filter(m => !hand.isAncestorOf(m) && m.acceptsDrops)[0] || this.world;
           }
-          events.push(new Event("drop", domEvt, this, [targetMorph], hand, halo, layoutHalo));
+          events.push(new Event("morphicdrop", domEvt, this, [targetMorph], hand, halo, layoutHalo));
           defaultEvent.targetMorphs = [this.world];
         }
         break;
