@@ -403,7 +403,10 @@ export class CenteredTilingLayout extends TilingLayout {
       })
 
       if (rowMorphs.length) layoutableSubmorphs = arr.withoutAll(layoutableSubmorphs, rowMorphs);
-      else rowMorphs = [layoutableSubmorphs.shift()];
+      else {
+        rowMorphs = [layoutableSubmorphs.shift()]
+        remainingWidth = 0;
+      };
 
       let pos = pt(remainingWidth/2 + spacing + this.border.left, y);
       for (let m of rowMorphs) {
