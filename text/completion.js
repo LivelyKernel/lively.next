@@ -103,7 +103,7 @@ export class CompletionController {
   }
 
   async completionListSpec() {
-    var m = this.textMorph,
+    let m = this.textMorph,
         {fontSize, fontFamily} = m,
         position = this.positionForMenu(),
         prefix = this.prefix(),
@@ -118,11 +118,11 @@ export class CompletionController {
         bounds = position.extent(pt(width, height));
 
     // ensure menu is visible
-    var world = m.world();
+    let world = m.world();
     if (world) {
-      var visibleBounds = world.visibleBounds().insetBy(5);
+      let visibleBounds = world.visibleBounds().insetBy(5);
       if (bounds.bottom() > visibleBounds.bottom()) {
-        var delta = bounds.bottom() - visibleBounds.bottom();
+        let delta = bounds.bottom() - visibleBounds.bottom();
         if (delta > bounds.height-50) delta = bounds.height-50;
         bounds.height -= delta;
       }
@@ -169,13 +169,13 @@ export class CompletionController {
   }
 
   async openCompletionList() {
-    var spec = await this.completionListSpec(),
+    let spec = await this.completionListSpec(),
         menu = new FilterableList(spec),
         input = menu.get("input"),
         prefix = spec.input;
     connect(menu, "accepted", this, "insertCompletion", {
       updater: function($upd) {
-        var textToInsert,
+        let textToInsert,
             customInsertionFn = null,
             completion = this.sourceObj.selection;
         if (completion) {
@@ -195,8 +195,6 @@ export class CompletionController {
     world.addMorph(menu);
 
     menu.selectedIndex = 0;
-    menu.layout.row(1).paddingTop = 0;
-    menu.layout.row(0).height = 20;
     if (prefix.length) {
       menu.get("input").gotoDocumentEnd();
       menu.moveBy(pt(-menu.get("input").textBounds().width, 0))
