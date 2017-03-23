@@ -19,6 +19,7 @@ import {
 import { saveWorldToResource, loadMorphFromSnapshot, loadWorldFromResource } from "./serialization.js";
 import InputLine from "./text/input-line.js";
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
+import { uploadFile } from "./events/html-drop-handler.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--
 
@@ -791,6 +792,7 @@ var worldCommands = [
         await world.env.setWorld(newWorld);
         newWorld.setStatusMessage("loaded!");
         newWorld.execCommand("fix font metric");
+        setTimeout(() => newWorld.execCommand("fix font metric"), 1000);
         return newWorld;
       } catch (e) {
         console.error(`Error loading world: `, e);
@@ -985,6 +987,43 @@ export class World extends Morph {
      }
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // html5 drag - drop
+  
+  async onNativeDragover(evt) {
+    if (!this._cachedDragIndicator)
+      this._cachedDragIndicator = loadObjectFromPartsbinFolder("upload-indicator");
+    let i = await this._cachedDragIndicator;
+    if (!i.world()) i.openInWorld();
+  }
+
+  async onNativeDrop(evt) {
+    if (this._cachedDragIndicator)
+      this._cachedDragIndicator.then(i => i.remove());
+
+    let {domEvt} = evt;
+    // show(`
+    //   ${domEvt.dataTransfer.files.length}
+    //   ${domEvt.dataTransfer.items.length}
+    //   ${domEvt.target}
+    //   ${domEvt.dataTransfer.types}
+    // `)
+
+    for (let i = 0; i < domEvt.dataTransfer.items.length; i++) {
+      let item = domEvt.dataTransfer.items[i];
+      console.log(`${item.kind} - ${item.type}`)
+      if (item.kind === "file") {
+        let uploadedMorph = await uploadFile(item.getAsFile(), item.type);
+        uploadedMorph && uploadedMorph.openInWorld();
+
+      } else if (item.kind === "string") {
+        item.getAsString((s) => inspect(s))
+      }
+    }
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // menu
   menuItems() {
     return [
       {title: "World menu"},
