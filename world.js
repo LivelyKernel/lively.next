@@ -1284,7 +1284,9 @@ export class World extends Morph {
       requester: null, onSelection: null,
       preselect: 0, multiSelect: false,
       historyId: null,
-      fuzzy: false
+      fuzzy: false,
+      actions: ["default"],
+      selectedAction: "default"
       // sortFunction: (parsedInput, item) => ...
       // filterFunction: (parsedInput, item) => ...
     }) {
