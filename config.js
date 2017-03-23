@@ -1,4 +1,4 @@
-import { Rectangle } from "lively.graphics";
+import { Rectangle, Color } from "lively.graphics";
 
 if (typeof $world !== "undefined") {
   $world.withAllSubmorphsDo(ea =>
@@ -7,7 +7,7 @@ if (typeof $world !== "undefined") {
 
 var config = {
 
-  defaultShadow: {distance: 2, blur: 6},
+  defaultShadow: {distance: 2, blur: 6, color: Color.black.withA(.6)},
   undoLevels: 20,
   halosEnabled: true,
   altClickDefinesThat: true,
