@@ -77,6 +77,7 @@ var _snippets = [
   ["forE", "forEach(${0:ea} => $1)"],
   ["map", "map(${0:ea} => $1)"],
   ["reduce", "reduce((${1:all}, ${2:ea}) => {$3}, ${0:init})"],
+  ["from", "Array.from(${0:list})"],
   ["last", "arr.last(${0:list})"],
   ["pluck", "arr.pluck(${0:list}, \"${1:key}\")"],
   ["sortBy", "arr.sortBy(${0:list}, ($1) => $2)"],
