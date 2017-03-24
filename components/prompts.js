@@ -265,6 +265,7 @@ export class MultipleChoicePrompt extends AbstractPrompt {
 export class TextPrompt extends AbstractPrompt {
 
   static async example() {
+    await $world.prompt("enter", {input: "a little longer text"});
     await $world.prompt("enter\nsomething", {input: "???"});
   }
 
@@ -289,9 +290,6 @@ export class TextPrompt extends AbstractPrompt {
       if (lastInput) inputLine.textString = lastInput;
     }
 
-    inputLine.gotoDocumentEnd();
-    inputLine.scrollCursorIntoView();
-
     var inputWidth = inputLine.textBounds().width;
     // if the input string we pre-fill is wide than we try to make it fit
     if (inputWidth > this.width-25)
@@ -304,6 +302,9 @@ export class TextPrompt extends AbstractPrompt {
     connect(this.getSubmorphNamed("cancel button"), 'fire', this, 'reject');
 
     this.initLayout();
+    
+    inputLine.gotoDocumentEnd();
+    inputLine.scrollCursorIntoView();
   }
 
   resolve() { super.resolve(this.getSubmorphNamed("input").acceptInput()); }
