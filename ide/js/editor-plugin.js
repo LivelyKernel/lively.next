@@ -18,6 +18,7 @@ import {
 } from "./commands.js";
 
 import EditorPlugin from "../editor-plugin.js";
+import { Snippet } from "../../text/snippets.js";
 
 
 // FIXME! We don't want to create a dependency from lively.morphic to
@@ -116,8 +117,11 @@ export class JavaScriptEditorPlugin extends EditorPlugin {
     return items;
   }
 
-  getSnippets() { return jsSnippets; }
-  
+  getSnippets() {
+    return jsSnippets.map(([trigger, expansion]) =>
+      new Snippet({trigger, expansion}));
+  }
+
   getComment() {
     return {lineCommentStart: "//", blockCommentStart: "/*", blockCommentEnd: "*/"}
   }

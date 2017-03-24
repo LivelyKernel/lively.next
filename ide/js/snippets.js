@@ -1,7 +1,6 @@
 import { Snippet } from "../../text/snippets.js";
 
-
-var _snippets = [
+export var snippets = [
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // # typeof tests
@@ -133,8 +132,6 @@ var _snippets = [
   ["aw", "await $0"],
 
 ]
-
-export var snippets = _snippets.map(([trigger, expansion]) => new Snippet({trigger, expansion}));
 
 // # setTimeout function
 // snippet setTimeout
