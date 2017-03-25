@@ -15,7 +15,7 @@ export function newMorphId(classOrClassName) {
   var prefix = typeof classOrClassName === "function" ?
     classOrClassName.name : typeof classOrClassName === "string" ?
       classOrClassName.toLowerCase() : "";
-  return prefix + "_" + string.newUUID().replace(/-/g, "_")
+  return prefix + "_" + string.newUUID().replace(/-/g, "_");
 }
 
 export class Morph {
@@ -62,7 +62,8 @@ export class Morph {
       grabbable:          {isStyleProp: true, defaultValue: false},
       halosEnabled:       {isStyleProp: true, defaultValue: !!config.halosEnabled},
       isLayoutable:       {isStyleProp: true, defaultValue: true},
-      name:               {
+
+      name: {
         initialize() {
           let className = this.constructor.name;
           this.name = (string.startsWithVowel(className) ? "an" : "a") + className;
@@ -76,6 +77,7 @@ export class Morph {
       reactsToPointer:    {defaultValue: true},
       rotation:           {defaultValue:  0},
       scale:              {defaultValue:  1},
+
       scroll: {
         defaultValue: pt(0, 0),
         set({x, y}) {
@@ -1792,31 +1794,38 @@ export class Image extends Morph {
 
   static get properties() {
     return {
+
       imageUrl: {
         defaultValue: System.decanonicalize("lively.morphic/lively-web-logo-small.svg"),
 
         set(url) {
           this.setProperty("imageUrl", url);
+          this.setProperty("naturalExtent", null);
           if (this.autoResize)
-            this.naturalExtent().then(ext => this.extent = ext);
+            this.determineNaturalExtent().then(ext => this.extent = ext);
         }
-
       },
 
+      naturalExtent: {defaultValue: null},
       autoResize: {defaultValue: true}
     }
   }
 
   get isImage() { return true }
 
-  async naturalExtent() {
-    let document = this.env.domEnv.document,
-        image = document.createElement("img"),
-        width, height;
-    return new Promise(resolve => {
-      image.onload = function() {
-        let {width, height} = this;
-        resolve(pt(width, height));
+  determineNaturalExtent() {
+    if (this.naturalExtent) return this.naturalExtent;
+    return new Promise((resolve, reject) => {
+      let doc = this.env.domEnv.document,
+          image = doc.createElement("img"),
+          url = this.imageUrl;
+      image.onload = () => {
+        if (url !== this.imageUrl) {
+          // if url changed
+          reject(new Error("url changed"));
+        } else {
+          resolve(this.naturalExtent = pt(image.width, image.height));
+        }
       };
       image.src = this.imageUrl;
     });
