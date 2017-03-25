@@ -30,6 +30,9 @@ async function loadWorld(from, showWorldLoadDialog) {
       world = await loadWorldFromResource(fromLocation);
   MorphicEnv.default().setWorld(world);
   showWorldLoadDialog && world.execCommand("load world");
+  world.execCommand("fix font metric");
+  setTimeout(() => world.execCommand("fix font metric"), 1000);
+  setTimeout(() => world.execCommand("fix font metric"), 5000);
   return world;
 }
 
