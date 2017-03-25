@@ -875,6 +875,10 @@ export class Morph {
       morph.suspendSteppingAll();
       morph._owner = null;
     });
+
+    morph.withAllSubmorphsDo(m => {
+      arr.remove(this._pathDependants, m)
+    })
   }
 
   remove() {
