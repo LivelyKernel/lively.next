@@ -151,6 +151,10 @@ function rm(path) {
     return exec("npm link", {log: this._log, cwd: this.directory});
   }
 
+  async npmUnlinkFromGlobal() {
+    return exec("npm rm -g " + this.name, {log: this._log, cwd: this.directory});
+  }
+
   async npmLinkOtherPackageIntoNodeModulesFolder(otherPackage) {
     return exec("npm link " + otherPackage.name, {log: this._log, cwd: this.directory});
   }
