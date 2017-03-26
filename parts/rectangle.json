@@ -1,8 +1,8 @@
 {
-  "id": "Morph_5D47D1BD_3075_4993_9703_FDECA8DBDAAF",
+  "id": "Rectangle_80E7ABB4_BA43_4C3F_9BB3_2B1B86591BAD",
   "snapshot": {
-    "Morph_5D47D1BD_3075_4993_9703_FDECA8DBDAAF": {
-      "rev": 442896,
+    "Rectangle_80E7ABB4_BA43_4C3F_9BB3_2B1B86591BAD": {
+      "rev": 812736,
       "props": {
         "extent": {
           "key": "extent",
@@ -18,7 +18,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(806.8,757.5)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(418.0,436.4)"
         },
         "styleClasses": {
           "key": "styleClasses",
