@@ -19,7 +19,7 @@ var parts = {
   "lively.vm":               {source: placeholderSrc, path: require.resolve("lively.vm/dist/lively.vm.js")},
   "lively.source-transform": {source: placeholderSrc, path: require.resolve("lively.source-transform/dist/lively.source-transform.js")},
   "lively.resources":        {source: placeholderSrc, path: require.resolve("lively.resources/dist/lively.resources_no-deps.js")},
-  "lively.storage":          {source: placeholderSrc, path: require.resolve("lively.storage/dist/lively.storage.js")},
+  "lively.storage":          {source: placeholderSrc, path: require.resolve("lively.storage/dist/lively.storage.js_with-pouch")},
   "systemjs-init":           {source: placeholderSrc, path: path.join(__dirname, "../systemjs-init.js")},
   "babel-regenerator":       {source: placeholderSrc, path: require.resolve("babel-regenerator-runtime/runtime.js")}
 }
@@ -110,4 +110,5 @@ ${parts[key].source}
   .then(sources => {
     fs.writeFileSync(targetFile1, sources.noDeps);
     fs.writeFileSync(targetFile2, sources.complete);
-  });
+  })
+  .catch(err => { console.error(err.stack || err); throw err; });

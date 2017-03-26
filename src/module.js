@@ -274,7 +274,7 @@ class ModuleInterface {
 
   changeSource(newSource, options) {
     options = {doSave: true, doEval: true, ...options};
-    var {System, id} = this, format = this.format(), result;
+    let {System, id} = this, format = this.format(), result;
     this.reset();
     return Promise.all([
       options.doSave && this.System.resource(id).write(newSource),
