@@ -1,10 +1,9 @@
-require("../../lively.modules/node_modules/systemjs")
-// require("../../lively.modules/dist/lively.modules.js")
 require("../dist/lively.storage.js")
 
 var Database = lively.storage,
-    db = Database.ensureDB("test-db", {adapter: 'memory'});
+    db = Database.ensureDB("test-db");
 console.log(db.pouchdb.adapter);
+console.log(db.pouchdb.name);
 
 db.set("test", {name: "some-doc"}).then(function() {
   return db.get("test").then(function(result) {

@@ -10,30 +10,18 @@ const GLOBAL = typeof window !== "undefined" ? window :
 
 const isNode = typeof global !== "undefined" && typeof process !== "undefined";
 var PouchDB = _PouchDB;
+PouchDB.plugin(pouchdbAdapterMem);
 
 function nodejsRequire(name) {
   if (!isNode) throw new Error("nodejsRequire can only be used in nodejs!");
   if (typeof System !== "undefined") return System._nodeRequire(name);
-  let Module = require("module");
-  return Module._load(name)
+  return require("module")._load(name)
 }
 
-if (isNode && typeof System !== "undefined") {
-  console.log("Loading proper nodejs pouchdb module");
-  let {join} = System._nodeRequire("path"),
-      storageMain = System.normalizeSync("lively.storage/index.js"),
-      pouchDBMain = System.normalizeSync("pouchdb", storageMain).replace(/file:\/\//, ""),
-      pouchDBNodeMain = join(pouchDBMain, "../../lib/index.js");
-  try {
-    PouchDB = System._nodeRequire(pouchDBMain);
-  } catch(e) { console.log('nodejs pouchdb is not available'); }
-}
-PouchDB.plugin(pouchdbAdapterMem);
 
-// leveldbPath("test")
-// leveldbPath("file:///Users/robert/Downloads/hackernews-data")
-
-function leveldbPath(dbName) {
+// nodejs_leveldbPath("test")
+// nodejs_leveldbPath("file:///Users/robert/Downloads/hackernews-data")
+function nodejs_leveldbPath(dbName) {
   // absolute path?
   if (dbName.startsWith("/")) return dbName;
   if (dbName.match(/[^\/]+:\/\//)) {
@@ -42,7 +30,7 @@ function leveldbPath(dbName) {
     return dbName;
   }
 
-  if (!isNode) throw new Error(`leveldbPath called under non-nodejs environment`);
+  if (!isNode) throw new Error(`nodejs_leveldbPath called under non-nodejs environment`);
   let serverPath = GLOBAL.process.cwd();
   // are we in a typical lively.next env? Meaning serverPath points to
   // lively.next-dir/lively.server. If so, use parent dir of lively.server
@@ -64,16 +52,53 @@ function leveldbPath(dbName) {
   return join(dbDir, dbName);
 }
 
-// var pouch = createPouchDB("test-db");
-function createPouchDB(name, options) {
-  if (isNode) {
-    name = leveldbPath(name);
-    options = {adapter: "leveldb", ...options};
+
+function nodejs_attemptToLoadProperPouchDB() {
+  // We ship lively.storage with a PouchDB dist version that runs everywhere.
+  // This version does not support leveldb, the adapter backend that is needed in
+  // nodejs for persistence storage.  Here we try to lazily switch to a PouchDB
+  // required via node's require.
+
+  if (!isNode) throw new Error(`nodejs_attemptToLoadProperPouchDB called under non-nodejs environment`);
+
+  if (typeof System !== "undefined") {
+    let {join} = System._nodeRequire("path"),
+        storageMain = System.normalizeSync("lively.storage/index.js"),
+        pouchDBMain = System.normalizeSync("pouchdb", storageMain).replace(/file:\/\//, ""),
+        pouchDBNodeMain = join(pouchDBMain, "../../lib/index.js");
+    try {
+      PouchDB = System._nodeRequire(pouchDBNodeMain);
+      PouchDB.plugin(pouchdbAdapterMem);
+      return true;
+    } catch(e) { console.error(e); }
   }
-  options = {name, ...options};
-  return new PouchDB(options);
+
+  try {
+    PouchDB = require("pouchdb");
+    PouchDB.plugin(pouchdbAdapterMem);
+    return true;
+  } catch (err) {}
 }
 
+
+// var pouch = createPouchDB("test-db"); pouch.adapter;
+let createPouchDB = !isNode ?
+  (name, options) => new PouchDB({name, ...options}) :
+  (function() {
+    let properLoadAttempted = false,
+        nodejsCouchDBLoaded = false;
+    return function createPouchDB(name, options = {}) {
+      if (!properLoadAttempted) {
+        properLoadAttempted = true;
+        nodejsCouchDBLoaded = nodejs_attemptToLoadProperPouchDB();
+      }
+      let adapter = options.adapter || (nodejsCouchDBLoaded ? "leveldb" : "memory")
+      options = {adapter, ...options}
+      if (options.adapter == "leveldb") name = nodejs_leveldbPath(name);
+      options = {...options, name};
+      return new PouchDB(options);
+    }
+  })();
 
 
 export default class Database {
