@@ -13,6 +13,7 @@ import { module } from "lively.modules";
 import { interactivelySaveObjectToPartsBinFolder } from "../../../partsbin.js";
 import { emit } from "lively.notifications/index.js";
 import { LinearGradient } from "lively.graphics/index.js";
+import { adoptObject } from "lively.classes/runtime.js";
 
 
 // var oe = ObjectEditor.open({target: this})
@@ -611,17 +612,26 @@ export class ObjectEditor extends Morph {
 
   contextMenuForClassTree({nodeMorph, evt}) {
     evt.stop();
-    var node = nodeMorph && nodeMorph.state.node;
+    let node = nodeMorph && nodeMorph.myNode;
     if (!node || !node.target) return;
-    var klass = isClass(node.target) ? node.target :
+    let klass = isClass(node.target) ? node.target :
       node.target.owner && isClass(node.target.owner) ? node.target.owner :
         null;
 
-    var items = [];
+    let items = [], t = this.target;
     if (klass) {
-      items.push([`open ${klass.name} in system browser`, () => {
-        this.execCommand("open class in system browser", {klass});
-      }]);
+      // FIXME!!!!
+      if (t.constructor === klass && klass.name !== "Morph") {
+        items.push([`remove ${klass.name}`, async () => {
+          let nextClass = withSuperclasses(t.constructor)[1],
+              {package: {name: packageName}} = klass[Symbol.for("lively-module-meta")],
+              really = await $world.confirm(`Do you really want to make ${t} an instance of ${nextClass.name} and remove class ${klass.name} and its package ${packageName}?`)
+          if (!really) return;
+          adoptObject(t, nextClass);
+          this.refresh();
+        }]);
+      
+      }
     }
 
     return this.world().openWorldMenu(evt, items);
