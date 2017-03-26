@@ -63491,39 +63491,25 @@ var set$1 = function set$1(object, property, value, receiver) {
 };
 
 // await System.normalize("pouchdb-adapter-mem", "http://localhost:9011/lively.storage")
+// await System.normalize("pouchdb", "http://localhost:9011/lively.storage")
+// await System.normalize("pouchdb", "file:///Users/robert/Lively/lively-dev2/lively.server/node_modules/lively.modules/node_modules/lively.storage/index.js")
 
 
 var GLOBAL = typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : undefined;
 
 var isNode = typeof global !== "undefined" && typeof process !== "undefined";
 var PouchDB = _PouchDB;
+PouchDB.plugin(pouchdbAdapterMem);
 
 function nodejsRequire(name) {
   if (!isNode) throw new Error("nodejsRequire can only be used in nodejs!");
   if (typeof System !== "undefined") return System._nodeRequire(name);
-  var Module = require("module");
-  return Module._load(name);
+  return require("module")._load(name);
 }
 
-if (isNode && typeof System !== "undefined") {
-  var _System$_nodeRequire = System._nodeRequire("path"),
-      join = _System$_nodeRequire.join,
-      storageMain = System.normalizeSync("lively.storage/index.js"),
-      pouchDBMain = System.normalizeSync("pouchdb", storageMain).replace(/file:\/\//, ""),
-      pouchDBNodeMain = join(pouchDBMain, "../../lib/index.js");
-
-  try {
-    PouchDB = System._nodeRequire(pouchDBMain);
-  } catch (e) {
-    console.log('nodejs pouchdb is not available');
-  }
-}
-PouchDB.plugin(pouchdbAdapterMem);
-
-// leveldbPath("test")
-// leveldbPath("file:///Users/robert/Downloads/hackernews-data")
-
-function leveldbPath(dbName) {
+// nodejs_leveldbPath("test")
+// nodejs_leveldbPath("file:///Users/robert/Downloads/hackernews-data")
+function nodejs_leveldbPath(dbName) {
   // absolute path?
   if (dbName.startsWith("/")) return dbName;
   if (dbName.match(/[^\/]+:\/\//)) {
@@ -63531,7 +63517,7 @@ function leveldbPath(dbName) {
     return dbName;
   }
 
-  if (!isNode) throw new Error("leveldbPath called under non-nodejs environment");
+  if (!isNode) throw new Error("nodejs_leveldbPath called under non-nodejs environment");
   var serverPath = GLOBAL.process.cwd();
   // are we in a typical lively.next env? Meaning serverPath points to
   // lively.next-dir/lively.server. If so, use parent dir of lively.server
@@ -63559,16 +63545,57 @@ function leveldbPath(dbName) {
   return join(dbDir, dbName);
 }
 
-// var pouch = createPouchDB("test-db");
-function createPouchDB(name, options) {
-  if (isNode) {
-    name = leveldbPath(name);
-    options = _extends({ adapter: "leveldb" }, options);
+function nodejs_attemptToLoadProperPouchDB() {
+  // We ship lively.storage with a PouchDB dist version that runs everywhere.
+  // This version does not support leveldb, the adapter backend that is needed in
+  // nodejs for persistence storage.  Here we try to lazily switch to a PouchDB
+  // required via node's require.
+
+  if (!isNode) throw new Error("nodejs_attemptToLoadProperPouchDB called under non-nodejs environment");
+
+  if (typeof System !== "undefined") {
+    var _System$_nodeRequire = System._nodeRequire("path"),
+        join = _System$_nodeRequire.join,
+        storageMain = System.normalizeSync("lively.storage/index.js"),
+        pouchDBMain = System.normalizeSync("pouchdb", storageMain).replace(/file:\/\//, ""),
+        pouchDBNodeMain = join(pouchDBMain, "../../lib/index.js");
+
+    try {
+      PouchDB = System._nodeRequire(pouchDBNodeMain);
+      PouchDB.plugin(pouchdbAdapterMem);
+      return true;
+    } catch (e) {
+      console.error(e);
+    }
   }
-  options = _extends({ name: name }, options);
-  console.log(options);
-  return new PouchDB(options);
+
+  try {
+    PouchDB = require("pouchdb");
+    PouchDB.plugin(pouchdbAdapterMem);
+    return true;
+  } catch (err) {}
 }
+
+// var pouch = createPouchDB("test-db"); pouch.adapter;
+var createPouchDB = !isNode ? function (name, options) {
+  return new PouchDB(_extends({ name: name }, options));
+} : function () {
+  var properLoadAttempted = false,
+      nodejsCouchDBLoaded = false;
+  return function createPouchDB(name) {
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+    if (!properLoadAttempted) {
+      properLoadAttempted = true;
+      nodejsCouchDBLoaded = nodejs_attemptToLoadProperPouchDB();
+    }
+    var adapter = options.adapter || (nodejsCouchDBLoaded ? "leveldb" : "memory");
+    options = _extends({ adapter: adapter }, options);
+    if (options.adapter == "leveldb") name = nodejs_leveldbPath(name);
+    options = _extends({}, options, { name: name });
+    return new PouchDB(options);
+  };
+}();
 
 var Database = function () {
   createClass(Database, null, [{
@@ -63641,11 +63668,10 @@ var Database = function () {
   }, {
     key: "update",
     value: function () {
-      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(_id, updateFn) {
-        var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(_id, updateFn, options) {
         var updateAttempt = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
 
-        var _options$ensure, ensure, _options$retryOnConfl, retryOnConflict, _options$maxUpdateAtt, maxUpdateAttempts, getOpts, db, lastDoc, newDoc, _ref2, id, rev;
+        var _options, _options$ensure, ensure, _options$retryOnConfl, retryOnConflict, _options$maxUpdateAtt, maxUpdateAttempts, getOpts, db, lastDoc, newDoc, _ref2, id, rev;
 
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -63661,46 +63687,47 @@ var Database = function () {
                 //   maxUpdateAttempts: NUMBER // default 10
                 // }
                 // returns created document
+                options = options || {};
 
-                _options$ensure = options.ensure, ensure = _options$ensure === undefined ? true : _options$ensure, _options$retryOnConfl = options.retryOnConflict, retryOnConflict = _options$retryOnConfl === undefined ? true : _options$retryOnConfl, _options$maxUpdateAtt = options.maxUpdateAttempts, maxUpdateAttempts = _options$maxUpdateAtt === undefined ? 10 : _options$maxUpdateAtt, getOpts = { latest: true }, db = this.pouchdb, lastDoc = void 0, newDoc = void 0;
+                _options = options, _options$ensure = _options.ensure, ensure = _options$ensure === undefined ? true : _options$ensure, _options$retryOnConfl = _options.retryOnConflict, retryOnConflict = _options$retryOnConfl === undefined ? true : _options$retryOnConfl, _options$maxUpdateAtt = _options.maxUpdateAttempts, maxUpdateAttempts = _options$maxUpdateAtt === undefined ? 10 : _options$maxUpdateAtt, getOpts = { latest: true }, db = this.pouchdb, lastDoc = void 0, newDoc = void 0;
 
                 // 1. get the old doc
 
-                _context.prev = 1;
-                _context.next = 4;
+                _context.prev = 2;
+                _context.next = 5;
                 return db.get(_id, getOpts);
 
-              case 4:
+              case 5:
                 lastDoc = _context.sent;
-                _context.next = 11;
+                _context.next = 12;
                 break;
 
-              case 7:
-                _context.prev = 7;
-                _context.t0 = _context["catch"](1);
+              case 8:
+                _context.prev = 8;
+                _context.t0 = _context["catch"](2);
 
                 if (!(_context.t0.name !== "not_found" || !ensure)) {
-                  _context.next = 11;
+                  _context.next = 12;
                   break;
                 }
 
                 throw _context.t0;
 
-              case 11:
-                _context.next = 13;
+              case 12:
+                _context.next = 14;
                 return updateFn(lastDoc);
 
-              case 13:
+              case 14:
                 newDoc = _context.sent;
 
                 if (!(!newDoc || (typeof newDoc === "undefined" ? "undefined" : _typeof(newDoc)) !== "object")) {
-                  _context.next = 16;
+                  _context.next = 17;
                   break;
                 }
 
                 return _context.abrupt("return", null);
 
-              case 16:
+              case 17:
                 // canceled!
 
                 // ensure _id, _rev props
@@ -63708,39 +63735,39 @@ var Database = function () {
                 if (lastDoc && newDoc._rev !== lastDoc._rev) newDoc._rev = lastDoc._rev;
 
                 // 3. try writing new doc
-                _context.prev = 18;
-                _context.next = 21;
+                _context.prev = 19;
+                _context.next = 22;
                 return db.put(newDoc);
 
-              case 21:
+              case 22:
                 _ref2 = _context.sent;
                 id = _ref2.id;
                 rev = _ref2.rev;
                 return _context.abrupt("return", Object.assign(newDoc, { _rev: rev }));
 
-              case 27:
-                _context.prev = 27;
-                _context.t1 = _context["catch"](18);
+              case 28:
+                _context.prev = 28;
+                _context.t1 = _context["catch"](19);
 
                 if (!(_context.t1.name === "conflict" && retryOnConflict && updateAttempt < maxUpdateAttempts)) {
-                  _context.next = 31;
+                  _context.next = 32;
                   break;
                 }
 
                 return _context.abrupt("return", this.update(_id, updateFn, options, updateAttempt + 1));
 
-              case 31:
+              case 32:
                 throw _context.t1;
 
-              case 32:
+              case 33:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, this, [[1, 7], [18, 27]]);
+        }, _callee, this, [[2, 8], [19, 28]]);
       }));
 
-      function update(_x2, _x3) {
+      function update(_x3, _x4, _x5) {
         return _ref.apply(this, arguments);
       }
 
@@ -63766,7 +63793,7 @@ var Database = function () {
         }, _callee2, this);
       }));
 
-      function mixin(_x6, _x7, _x8) {
+      function mixin(_x7, _x8, _x9) {
         return _ref3.apply(this, arguments);
       }
 
@@ -63792,7 +63819,7 @@ var Database = function () {
         }, _callee3, this);
       }));
 
-      function set$$1(_x9, _x10, _x11) {
+      function set$$1(_x10, _x11, _x12) {
         return _ref4.apply(this, arguments);
       }
 
@@ -63835,7 +63862,7 @@ var Database = function () {
         }, _callee4, this, [[0, 6]]);
       }));
 
-      function get$$1(_x12) {
+      function get$$1(_x13) {
         return _ref5.apply(this, arguments);
       }
 
@@ -63844,7 +63871,9 @@ var Database = function () {
   }, {
     key: "docList",
     value: function () {
-      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(opts) {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+        var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
         var _ref7, rows, result, i, _rows$i, id, rev;
 
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
@@ -63874,7 +63903,7 @@ var Database = function () {
         }, _callee5, this);
       }));
 
-      function docList(_x13) {
+      function docList() {
         return _ref6.apply(this, arguments);
       }
 
@@ -63911,7 +63940,7 @@ var Database = function () {
         }, _callee6, this);
       }));
 
-      function revList(_x14) {
+      function revList(_x15) {
         return _ref8.apply(this, arguments);
       }
 
@@ -63958,7 +63987,7 @@ var Database = function () {
         }, _callee7, this);
       }));
 
-      function getAllRevisions(_x15) {
+      function getAllRevisions(_x16) {
         return _ref10.apply(this, arguments);
       }
 
@@ -64058,7 +64087,7 @@ var Database = function () {
         }, _callee9, this);
       }));
 
-      function setDocuments(_x18) {
+      function setDocuments(_x19) {
         return _ref13.apply(this, arguments);
       }
 
@@ -64137,7 +64166,7 @@ var Database = function () {
         }, _callee10, this);
       }));
 
-      function getDocuments(_x19) {
+      function getDocuments(_x20) {
         return _ref15.apply(this, arguments);
       }
 
@@ -64185,7 +64214,7 @@ var Database = function () {
         }, _callee11, this);
       }));
 
-      function remove(_x21, _x22, _x23) {
+      function remove(_x22, _x23, _x24) {
         return _ref17.apply(this, arguments);
       }
 
@@ -64397,7 +64426,7 @@ var Database = function () {
         }, _callee14, this, [[11, 30, 34, 42], [35,, 37, 41]]);
       }));
 
-      function resolveConflicts(_x24, _x25) {
+      function resolveConflicts(_x25, _x26) {
         return _ref21.apply(this, arguments);
       }
 
