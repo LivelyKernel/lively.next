@@ -2,7 +2,7 @@
 
 import { expect } from "mocha-es6";
 
-import { resource } from "lively.resources";
+import { resource, ensureFetch } from "lively.resources";
 import ioClient from "socket.io-client";
 import LivelyServer from "../server.js";
 
@@ -22,6 +22,7 @@ import ShellPlugin from "../plugins/remote-shell.js";
 describe('lively.server', function() {
 
   before(async () => {
+    await ensureFetch();
     testServer = LivelyServer.ensure({port, hostname});
     await testServer.whenStarted();
   });
