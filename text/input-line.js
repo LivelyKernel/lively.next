@@ -93,6 +93,16 @@ export default class InputLine extends Text {
       historyId:    {defaultValue: null},
       clearOnInput: {defaultValue: false},
 
+      haloShadow: {
+        defaultValue: {
+          blur: 6,
+          color: Color.rgb(52,152,219),
+          distance: 0,
+          rotation: 45
+        }
+      },
+      highlightWhenFocused: {defaultValue: false},
+
       height: {
         after: ["padding", "textAttributes"],
         initialize() {
@@ -101,12 +111,13 @@ export default class InputLine extends Text {
       },
 
       label: {
-        after: ["textString", "textAttributes"], defaultValue: "",
+        after: ["textAndAttributes", "extent", "padding", "submorphs"], defaultValue: "",
         set(value) {
+          this.setProperty("label", value);
+          if (this.textString.startsWith(value)) return;
           disconnect(this, 'textChange', this, 'onInputChanged');
           this.textString = value + this.input;
           connect(this, 'textChange', this, 'onInputChanged');
-          this.setProperty("label", value);
         }
       },
 
@@ -122,7 +133,7 @@ export default class InputLine extends Text {
       },
 
       placeholder: {
-        after: ["submorphs", "textAttributes", "textString", "extent"], dervied: true,
+        after: ["submorphs", "label", "defaultTextStyle"], dervied: true,
         get() {
           let placeholder = this.getSubmorphNamed("placeholder");
           return placeholder ? placeholder.value : null;
@@ -340,6 +351,21 @@ export default class InputLine extends Text {
       {keys: "Alt-H", command: "browse history"},
       {keys: "Alt-Shift-H", command: "remove items from history"}
     ]);
+  }
+  
+
+  onFocus() {
+     this.highlightWhenFocused && this.animate({
+      dropShadow: this.haloShadow,
+      duration: 200
+    });
+  }
+
+  onBlur() {
+   this.highlightWhenFocused && this.animate({
+     dropShadow: false,
+     duration: 200
+   });
   }
 }
 
