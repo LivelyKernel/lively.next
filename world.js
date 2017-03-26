@@ -751,14 +751,23 @@ var worldCommands = [
       var relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
       if (relayed) return relayed;
 
-      let name = await world.prompt(
-        "Please give this world a name",
-        {historyId: "lively.morphic-save-world-names", useLastInput: true});
-      if (!name) return null;      
-      let url = System.decanonicalize(`lively.morphic/worlds/${name}.json`);
-      await saveWorldToResource(world, url);
-      world.setStatusMessage(`saved world to ${url}`);
+      let dialog = await loadObjectFromPartsbinFolder("save world dialog"),
+          {destination, name} = await world.openPrompt(dialog);
 
+      if (!name) return null;      
+
+      let url;
+      if (destination === "server")
+        url = System.decanonicalize(`lively.morphic/worlds/${name}.json`);
+      else if (destination === "local storage")
+        url = System.decanonicalize(`lively.storage://worlds/${name}.json`);
+      else {
+        world.showError(new Error("Invalid destination: " + destination));
+        return null;
+      }
+
+      await saveWorldToResource(world, url, {previewWidth: 200, previewHeight: 200, previewType: "png"});
+      world.setStatusMessage(`saved world to ${url}`);
       world.get("world-list") && world.get("world-list").onWorldSaved(name);
     }
   },
