@@ -919,18 +919,18 @@ var treeCommands = [
 
   {
     name: "collapse or uncollapse all siblings",
-    exec: async (tree, opts = {what: "collapse"}) => {
+    exec: async (treeMorph, opts = {what: "collapse"}) => {
 
       var doCollapse = opts.what === "collapse";
-      var td = tree.treeData;
+      var td = treeMorph.treeData;
       var nodesToChange
 
       if (doCollapse) {
         // find all the parent nodes of the nodes deepest in the tree below the
         // selected node and collapse those
-        if (td.isCollapsed(tree.selection)) return true;
+        if (td.isCollapsed(treeMorph.selection)) return true;
 
-        var startNode = td.parentNode(tree.selection)
+        var startNode = td.parentNode(treeMorph.selection)
         var maxDepth = -1;
         tree.prewalk(startNode,
           (node, i, depth) => {
@@ -948,7 +948,7 @@ var treeCommands = [
         // find the non-leaf nodes below the selection that are at the same
         // depth and at least one of those non-leaf nodes is collapsed:
         // uncollapse all collapsed of this set
-        var parents = arr.compact([td.parentNode(tree.selection)]);
+        var parents = arr.compact([td.parentNode(treeMorph.selection)]);
         while (true) {
           if (!parents.length) break;
           nodesToChange = arr.flatmap(parents, n => allNonLeafChildren(n));
@@ -960,7 +960,7 @@ var treeCommands = [
 
       await collapseOrUncollapse(nodesToChange, doCollapse)
 
-      tree.scrollSelectionIntoView();
+      treeMorph.scrollSelectionIntoView();
 
       return true;
 
@@ -969,7 +969,7 @@ var treeCommands = [
       }
 
       function collapseOrUncollapse(nodes, doCollapse) {
-        return Promise.all(nodes.map(node => tree.onNodeCollapseChanged({node, isCollapsed: doCollapse})));
+        return Promise.all(nodes.map(node => treeMorph.onNodeCollapseChanged({node, isCollapsed: doCollapse})));
       }
 
     }
@@ -977,12 +977,12 @@ var treeCommands = [
 
   {
     name: "select node above",
-    exec: tree => {
-      var nodes = tree.nodes,
-          index = tree.selectedIndex;
+    exec: treeMorph => {
+      var nodes = treeMorph.nodes,
+          index = treeMorph.selectedIndex;
       if (index <= 1) index = nodes.length;
-      tree.selection = nodes[index-1];
-      tree.scrollSelectionIntoView();
+      treeMorph.selection = nodes[index-1];
+      treeMorph.scrollSelectionIntoView();
       return true;
     }
   },
