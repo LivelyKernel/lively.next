@@ -95,12 +95,14 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   }
 
   async packageConfChange(source, confFile) {
-    var S = modules.System,
-        config = parseJsonLikeObj(source);
-    await this.resourceWrite(confFile, JSON.stringify(config, null, 2));
+    let S = modules.System,
+        config = parseJsonLikeObj(source),
+        newSource = JSON.stringify(config, null, 2);
+
+    await modules.module(confFile).changeSource(newSource, {doEval: false});
+    S.set(confFile, S.newModule(config)); // FIXME, do this in lively.modules
 
     var p = await this.getPackageForModule(confFile);
-    S.set(confFile, S.newModule(config));
     if (p && config.systemjs) S.packages[p.address] = config.systemjs;
     if (p && config.systemjs) S.config({packages: {[p.address]: config.systemjs}})
     if (p) modules.applyPackageConfig(config, p.address);
