@@ -32,8 +32,11 @@ describe('lively.server', function() {
   });
 
   it("runs and accepts requests", async () => {
-    expect(async () => await resource(`http://${hostname}:${port}`).read())
-      .not.to.throw();
+    try {
+      await resource(`http://${hostname}:${port}`).read()
+    } catch (err) {
+      expect().assert(false, `HTTP request to http://${hostname}:${port} failed: ${err}`)
+    }
   });
 
   it("has socket.io server", async () => {
