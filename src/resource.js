@@ -2,7 +2,7 @@ import { resource } from "../index.js";
 
 const slashEndRe = /\/+$/,
       slashStartRe = /^\/+/,
-      protocolRe = /^[a-z0-9-_]+:/,
+      protocolRe = /^[a-z0-9-_\.]+:/,
       slashslashRe = /^\/\/[^\/]+/;
 
 function nyi(obj, name) {
@@ -238,6 +238,7 @@ export default class Resource {
 
   async read()               { nyi(this, "read"); }
   async write()              { nyi(this, "write"); }
+  async mkdir()              { nyi(this, "mkdir"); }
   async exists()             { nyi(this, "exists"); }
   async remove()             { nyi(this, "remove"); }
   async dirList(depth, opts) { nyi(this, "dirList"); }

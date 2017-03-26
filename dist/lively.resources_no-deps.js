@@ -164,15 +164,15 @@ var set$1 = function set$1(object, property, value, receiver) {
 
 var slashEndRe = /\/+$/;
 var slashStartRe = /^\/+/;
-var protocolRe = /^[a-z0-9-_]+:/;
+var protocolRe = /^[a-z0-9-_\.]+:/;
 var slashslashRe = /^\/\/[^\/]+/;
 
 function nyi(obj, name) {
   throw new Error(name + " for " + obj.constructor.name + " not yet implemented");
 }
 
-var Resource = function () {
-  createClass(Resource, null, [{
+var Resource$$1 = function () {
+  createClass(Resource$$1, null, [{
     key: "fromProps",
     value: function fromProps() {
       var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
@@ -183,9 +183,9 @@ var Resource = function () {
     }
   }]);
 
-  function Resource(url) {
+  function Resource$$1(url) {
     var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-    classCallCheck(this, Resource);
+    classCallCheck(this, Resource$$1);
 
     if (!url) throw new Error("Cannot create resource without url");
     this.url = String(url);
@@ -203,7 +203,7 @@ var Resource = function () {
     this.linkCount = undefined;
   }
 
-  createClass(Resource, [{
+  createClass(Resource$$1, [{
     key: "equals",
     value: function equals(otherResource) {
       if (!otherResource || this.constructor !== otherResource.constructor) return false;
@@ -591,14 +591,14 @@ var Resource = function () {
       return write;
     }()
   }, {
-    key: "exists",
+    key: "mkdir",
     value: function () {
       var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
-                nyi(this, "exists");
+                nyi(this, "mkdir");
               case 1:
               case "end":
                 return _context5.stop();
@@ -607,21 +607,21 @@ var Resource = function () {
         }, _callee5, this);
       }));
 
-      function exists() {
+      function mkdir() {
         return _ref5.apply(this, arguments);
       }
 
-      return exists;
+      return mkdir;
     }()
   }, {
-    key: "remove",
+    key: "exists",
     value: function () {
       var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
               case 0:
-                nyi(this, "remove");
+                nyi(this, "exists");
               case 1:
               case "end":
                 return _context6.stop();
@@ -630,21 +630,21 @@ var Resource = function () {
         }, _callee6, this);
       }));
 
-      function remove() {
+      function exists() {
         return _ref6.apply(this, arguments);
       }
 
-      return remove;
+      return exists;
     }()
   }, {
-    key: "dirList",
+    key: "remove",
     value: function () {
-      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(depth, opts) {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
               case 0:
-                nyi(this, "dirList");
+                nyi(this, "remove");
               case 1:
               case "end":
                 return _context7.stop();
@@ -653,21 +653,21 @@ var Resource = function () {
         }, _callee7, this);
       }));
 
-      function dirList(_x5, _x6) {
+      function remove() {
         return _ref7.apply(this, arguments);
       }
 
-      return dirList;
+      return remove;
     }()
   }, {
-    key: "readProperties",
+    key: "dirList",
     value: function () {
-      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(opts) {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(depth, opts) {
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
             switch (_context8.prev = _context8.next) {
               case 0:
-                nyi(this, "readProperties");
+                nyi(this, "dirList");
               case 1:
               case "end":
                 return _context8.stop();
@@ -676,8 +676,31 @@ var Resource = function () {
         }, _callee8, this);
       }));
 
-      function readProperties(_x7) {
+      function dirList(_x5, _x6) {
         return _ref8.apply(this, arguments);
+      }
+
+      return dirList;
+    }()
+  }, {
+    key: "readProperties",
+    value: function () {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(opts) {
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+          while (1) {
+            switch (_context9.prev = _context9.next) {
+              case 0:
+                nyi(this, "readProperties");
+              case 1:
+              case "end":
+                return _context9.stop();
+            }
+          }
+        }, _callee9, this);
+      }));
+
+      function readProperties(_x7) {
+        return _ref9.apply(this, arguments);
       }
 
       return readProperties;
@@ -698,7 +721,7 @@ var Resource = function () {
       return true;
     }
   }]);
-  return Resource;
+  return Resource$$1;
 }();
 
 function applyExclude(exclude, resources) {
@@ -1162,16 +1185,20 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "dirList",
     value: function () {
-      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
+        var _this2 = this;
+
         var depth = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
         var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-        var exclude, resources, self, subResources, subCollections;
-        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+
+        var exclude, resources, self, _ret;
+
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
-            switch (_context7.prev = _context7.next) {
+            switch (_context8.prev = _context8.next) {
               case 0:
                 if (!(typeof depth !== "number" && depth !== 'infinity')) {
-                  _context7.next = 2;
+                  _context8.next = 2;
                   break;
                 }
 
@@ -1184,46 +1211,72 @@ var WebDAVResource = function (_Resource) {
                 if (depth <= 0) depth = 1;
 
                 if (!(depth === 1)) {
-                  _context7.next = 13;
+                  _context8.next = 13;
                   break;
                 }
 
-                _context7.next = 7;
+                _context8.next = 7;
                 return this._propfind();
 
               case 7:
-                resources = _context7.sent;
+                resources = _context8.sent;
                 self = resources.shift();
 
                 if (exclude) resources = applyExclude(exclude, resources);
-                return _context7.abrupt("return", resources);
+                return _context8.abrupt("return", resources);
 
               case 13:
-                _context7.next = 15;
-                return this.dirList(1, opts);
+                return _context8.delegateYield(regeneratorRuntime.mark(function _callee7() {
+                  var subResources, subCollections;
+                  return regeneratorRuntime.wrap(function _callee7$(_context7) {
+                    while (1) {
+                      switch (_context7.prev = _context7.next) {
+                        case 0:
+                          _context7.next = 2;
+                          return _this2.dirList(1, opts);
 
-              case 15:
-                subResources = _context7.sent;
-                subCollections = subResources.filter(function (ea) {
-                  return ea.isDirectory();
-                });
-                return _context7.abrupt("return", Promise.all(subCollections.map(function (col) {
-                  return col.dirList(typeof depth === "number" ? depth - 1 : depth, opts);
-                })).then(function (recursiveResult) {
-                  return recursiveResult.reduce(function (all, ea) {
-                    return all.concat(ea);
-                  }, subResources);
-                }));
+                        case 2:
+                          subResources = _context7.sent;
+                          subCollections = subResources.filter(function (ea) {
+                            return ea.isDirectory();
+                          });
+                          return _context7.abrupt("return", {
+                            v: Promise.all(subCollections.map(function (col) {
+                              return col.dirList(typeof depth === "number" ? depth - 1 : depth, opts);
+                            })).then(function (recursiveResult) {
+                              return recursiveResult.reduce(function (all, ea) {
+                                return all.concat(ea);
+                              }, subResources);
+                            })
+                          });
 
-              case 18:
+                        case 5:
+                        case "end":
+                          return _context7.stop();
+                      }
+                    }
+                  }, _callee7, _this2);
+                })(), "t0", 14);
+
+              case 14:
+                _ret = _context8.t0;
+
+                if (!((typeof _ret === "undefined" ? "undefined" : _typeof(_ret)) === "object")) {
+                  _context8.next = 17;
+                  break;
+                }
+
+                return _context8.abrupt("return", _ret.v);
+
+              case 17:
               case "end":
-                return _context7.stop();
+                return _context8.stop();
             }
           }
-        }, _callee7, this);
+        }, _callee8, this);
       }));
 
-      function dirList() {
+      function dirList(_x6, _x7) {
         return _ref7.apply(this, arguments);
       }
 
@@ -1232,28 +1285,28 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "readProperties",
     value: function () {
-      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(opts) {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(opts) {
         var props;
-        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
           while (1) {
-            switch (_context8.prev = _context8.next) {
+            switch (_context9.prev = _context9.next) {
               case 0:
-                _context8.next = 2;
+                _context9.next = 2;
                 return this._propfind();
 
               case 2:
-                props = _context8.sent[0];
-                return _context8.abrupt("return", this.assignProperties(props));
+                props = _context9.sent[0];
+                return _context9.abrupt("return", this.assignProperties(props));
 
               case 4:
               case "end":
-                return _context8.stop();
+                return _context9.stop();
             }
           }
-        }, _callee8, this);
+        }, _callee9, this);
       }));
 
-      function readProperties(_x8) {
+      function readProperties(_x10) {
         return _ref8.apply(this, arguments);
       }
 
@@ -1261,7 +1314,7 @@ var WebDAVResource = function (_Resource) {
     }()
   }]);
   return WebDAVResource;
-}(Resource);
+}(Resource$$1);
 
 var resourceExtension = {
   name: "http-webdav-resource",
@@ -1586,7 +1639,7 @@ var NodeJSFileResource = function (_Resource) {
         }, _callee6, this, [[9, 28, 32, 40], [33,, 35, 39]]);
       }));
 
-      function dirList() {
+      function dirList(_x3, _x4) {
         return _ref6.apply(this, arguments);
       }
 
@@ -1762,7 +1815,7 @@ var NodeJSFileResource = function (_Resource) {
         }, _callee9, this);
       }));
 
-      function readProperties(_x5) {
+      function readProperties(_x7) {
         return _ref9.apply(this, arguments);
       }
 
@@ -1781,7 +1834,7 @@ var NodeJSFileResource = function (_Resource) {
     }
   }]);
   return NodeJSFileResource;
-}(Resource);
+}(Resource$$1);
 
 var resourceExtension$1 = {
   name: "nodejs-file-resource",
@@ -2017,7 +2070,7 @@ var LocalResource = function (_Resource) {
     }
   }]);
   return LocalResource;
-}(Resource);
+}(Resource$$1);
 
 var resourceExtension$2 = {
   name: "local-resource",
@@ -2229,6 +2282,7 @@ exports.loadViaScript = loadViaScript;
 exports.ensureFetch = ensureFetch;
 exports.registerExtension = registerExtension;
 exports.unregisterExtension = unregisterExtension;
+exports.Resource = Resource$$1;
 
 }((this.lively.resources = this.lively.resources || {}),typeof module !== 'undefined' && typeof module.require === 'function' ? module.require('fs') : {readFile: function() { throw new Error('fs module not available'); }}));
 
