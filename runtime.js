@@ -42,8 +42,7 @@ export function setSuperclass(klass, superclassOrSpec) {
   if (!existingSuperclass || existingSuperclass !== superclass) {
     ensureInitializeStub(superclass);
     klass[superclassSymbol] = superclass;
-    klass.prototype = Object.create(superclass.prototype);
-    klass.prototype.constructor = klass;
+    setPrototypeOf(klass.prototype, superclass.prototype);
     if (superclass !== Object) setPrototypeOf(klass, superclass);
   }
   return superclass

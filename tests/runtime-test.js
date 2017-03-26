@@ -119,11 +119,13 @@ describe("create or extend classes", function() {
     expect(foo.m()).equals(23);
   });
 
-  it("changing the superclass will leave existing instances stale", async function() {
-    await evalClass("class Foo {m() { return 23 } }")
+  it("changing the superclass will change instances", async function() {
+    var Foo = await evalClass("class Foo {m() { return 23 } }")
     var Foo2 = await evalClass("class Foo2 extends Object {}")
     var foo = new Foo2();
     expect(foo).to.not.have.property("m");
+    expect(foo).instanceOf(Foo2);
+    expect(foo).not.instanceOf(Foo);
     await evalClass("class Foo2 extends Foo {}")
 
     // Changing the superclass currently means changing the prototype, the
@@ -131,9 +133,12 @@ describe("create or extend classes", function() {
     // the instances are orphaned. That's not a feature but to change that we
     // would have to a) add another prototype indirection or b) track all
     // instances. Neither option seems to be worthwhile...
-    expect(foo).to.not.have.property("m");
+    expect(foo).instanceOf(Foo2)
+    expect(foo).instanceOf(Foo)
+    expect(foo).to.have.property("m");
     var anotherFoo = new Foo2();
     expect(anotherFoo).to.have.property("m");
+    expect(anotherFoo.constructor).to.equal(foo.constructor);
   });
 
   it("works with anonymous classes", async () => {
