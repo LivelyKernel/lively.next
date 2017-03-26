@@ -6,13 +6,15 @@ import ClassHelper from "./class-helper.js";
 import { HTMLMorph, inspect } from "lively.morphic";
 
 /*
+import { serializeMorph, deserializeMorph } from "lively.morphic/serialization.js";
+import { resource } from "lively.resources";
 
+let snap = await resource("lively.storage://worlds/convert image previews.json").readJson()
 let r = resource(System.decanonicalize("lively.morphic/parts/IconPicker.json"))
 let snap = JSON.parse(await r.read());
 let idsRemoved = removeUnreachableObjects([snap.id], snap.snapshot)
 await r.write(JSON.stringify(snap, null, 2));
 
-import { serializeMorph, deserializeMorph } from "lively.morphic/serialization.js";
 
 let r = resource(System.decanonicalize("lively.morphic/worlds/default.json"))
 let snap = JSON.parse(await r.read())
@@ -34,7 +36,20 @@ var t = Date.now(); var snap = serializeMorph($world.get("browser")); Date.now()
 
 var i = SnapshotInspector.forSnapshot(snap.snapshot);
 i.findPathFromToId(snap.id, "BF4B7B7B-DEE0-4971-ACEA-9F8A6A02941A")
-i
+
+let report = "";
+for (let [id, o] of i.classes.AttributeConnection.objects) {
+  // let [id, o] = i.classes.AttributeConnection.objects[0]  
+  let sourceId = o.props.sourceObj.value.id;
+  let source = i.explainId(sourceId);
+  let targetId = o.props.targetObj.value.id;
+  let target = i.explainId(targetId);
+  let fromAttr = o.props.sourceAttrName.value
+  let toAttr = o.props.targetMethodName.value
+  report += `${source}.${fromAttr} => ${target}.${toAttr} (${sourceId} => ${targetId})\n`
+}
+report
+
 
 var t = Date.now(); var g = referenceGraph(snap.snapshot); Date.now() - t;
 var t = Date.now(); var g = referenceGraph(snap.snapshot); Date.now() - t;

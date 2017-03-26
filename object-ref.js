@@ -238,7 +238,7 @@ export class ObjectRef {
           for (let i = 0; i < sortedKeys.length; i++) {
             let key = sortedKeys[i],
                 spec = properties[key];
-            if (spec.derived || !(key in props)) continue;
+            if (!(key in props)) continue;
             this.recreatePropertyAndSetProperty(newObj, props, key, serializedObjMap, pool, path);
             deserializedKeys[key] = true;
           }
