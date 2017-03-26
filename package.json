@@ -1,6 +1,6 @@
 {
   "name": "lively.storage",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Database interface for lively.next",
   "main": "dist/lively.storage.js",
   "scripts": {

@@ -2,7 +2,7 @@
 
 import { expect } from "mocha-es6";
 
-import StorageResource, { StorageResourceBackend, StorageDatabase } from "../storage-resource.js";
+import { StorageDatabase } from "../storage-resource.js";
 import { resource, createFiles } from "lively.resources";
 
 var dbName = "test-storage-db", db;
@@ -200,6 +200,20 @@ describe("lively.storage resource", () => {
       expect(+lastModified).greaterThan(Date.now() - 1000);
       expect(size).equals(4);
     });
+
+  });
+
+  describe("json handling", () => {
+
+    it("directly stores json", async () => {
+      let r = resource(`lively.storage://${dbName}/test.json`),
+          json = {foo: 23, bar: {baz: "zork"}};
+      await r.writeJson(json);
+      let doc = await r.db.get(r.path());
+      expect(doc.content).deep.equals(json);
+      expect(await r.readJson()).deep.equals(json);
+      expect(typeof await r.read()).equals("string");
+    })
 
   });
 

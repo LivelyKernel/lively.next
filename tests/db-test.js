@@ -1,7 +1,7 @@
 /*global it, describe, beforeEach, afterEach*/
 
 import { expect } from "mocha-es6";
-import Database from "lively.storage";
+import { Database } from "lively.storage";
 
 let dbOpts = (function() {
   let opts = {adapter: "memory"};

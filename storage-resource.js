@@ -1,5 +1,5 @@
-import { registerExtension, Resource } from "lively.resources";
-import Database from "./index.js";
+import { Resource } from "lively.resources";
+import Database from "./database.js";
 
 const debug = false,
       slashRe = /\//g;
@@ -12,6 +12,7 @@ function applyExclude(resource, exclude) {
   return true;
 }
 
+// await StorageDatabase.databases.get("lively.storage-worlds").destroy()
 export class StorageDatabase extends Database {
 
   static ensureDB(name, options) {
@@ -28,14 +29,21 @@ export default class LivelyStorageResource extends Resource {
 
   async read() {
     debug && console.log(`[${this}] read`);
-    let file = await this.db.get(this.path());
-    return file ? file.content : "";
+    let file = await this.db.get(this.path()),
+        content = file && file.content;
+    return !content ? "" :
+      typeof content === "string" ? content :
+        JSON.stringify(content);
+  }
+
+  async readJson() {
+    let content = await this.read();
+    return typeof content === "string" ? JSON.parse(content) : content;
   }
 
   async write(content) {
     debug && console.log(`[${this}] write`);
     if (!content) content = "";
-    else content = String(content);
 
     if (this.isDirectory())
       throw new Error(`Cannot write into a directory! (${this.url})`);
@@ -54,7 +62,7 @@ export default class LivelyStorageResource extends Resource {
           mode: undefined,
           lastModified: t,
           created: t,
-          size: content.length,
+          size: typeof content === "string" ? content.length : 0,
           content
         }
       }
@@ -69,6 +77,8 @@ export default class LivelyStorageResource extends Resource {
 
     return this;
   }
+  
+  writeJson(obj) { return this.write(obj); }
 
   async mkdir() {
     debug && console.log(`[${this}] mkdir`);
@@ -152,10 +162,12 @@ export default class LivelyStorageResource extends Resource {
 }
 
 
-const resourceExtension = {
+export const resourceExtension = {
   name: "lively.storage",
   matches: (url) => url.startsWith("lively.storage:"),
   resourceClass: LivelyStorageResource
 }
 
+// will install resource extension:
+import { registerExtension } from "lively.resources";
 registerExtension(resourceExtension);
