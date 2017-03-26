@@ -44,8 +44,21 @@ export async function install(baseDir) {
     i = 0; for (let p of packages) {
       if (pBar) pBar.setLabel(`updating ${p.name}`);
       else console.log(`${p.name}`);
-      await p.installOrUpdate(packages);
+      await p.installOrUpdate();
       pBar && pBar.setValue(++i / packages.length);
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // npm install
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    console.log(`=> npm link`);
+    for (let p of packages) {
+      console.log(`npm linking of ${p.name} into global node_modules`);
+      await p.npmLinkIntoGlobal();
+    }
+    for (let p of packages) {
+      console.log(`npm linking dependencies of ${p.name} into its node_modules`);
+      await p.linkToDependenciesWithNpm(packages);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -55,7 +68,7 @@ export async function install(baseDir) {
 
     pBar && pBar.setValue(0)
     i = 0; for (let p of packages) {
-      pBar && pBar.setLabel(`npm install ${p.name}`)
+      pBar && pBar.setLabel(`npm setup ${p.name}`);
       if (await p.npmInstallNeeded()) {
         console.log(`npm install of ${p.name}...`);
         await p.npmInstallOrFix();

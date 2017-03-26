@@ -25,6 +25,12 @@ export class Package {
   get dependencies() {
     return Object.assign({}, this.config.dependencies, this.config.devDependencies);
   }
+  get peerDependencies() {
+    return Object.assign({}, this.config.peerDependencies);
+  }
+  get allDependencies() {
+    return Object.assign({}, this.config.dependencies, this.config.devDependencies, this.config.peerDependencies);
+  }
 
   async readConfig() {
     var url = this.directory.startsWith("/") ? "file://" + this.directory : this.directory,
@@ -66,7 +72,7 @@ export class Package {
     return (await exec(`node -e 'process.exit(require("fs").existsSync(require("path").join("${this.directory}", ".git")) ? 0 : 1);'`, {cwd: this.directory})).code === 0;
   }
 
-  async ensure(packages) {
+  async ensure() {
     if (!await this.existsInFileSystem()) {
       console.log(`  cloning git repo from ${this.config.repoURL}`);
       await this.repo.clone(this.config.repoURL, this.config.branch);
@@ -78,32 +84,29 @@ export class Package {
       await helperRepo.clone(this.config.repoURL, this.config.branch);
       await exec(`mv .temp-lively-clone-helper/.git .git; rm -rf .temp-lively-clone-helper`, {cwd: this.directory});
     }
-    packages && await this.linkToDependencies(packages);
     var {output} = await exec(`git status`, {cwd: this.directory})
     return output;
   }
 
-  async update(packages) {
+  async update() {
     if (await this.existsInFileSystem())
       var output = await this.repo.interactivelyUpdate(this.config.branch, undefined);
-    packages && await this.linkToDependencies(packages);
     return output;
   }
 
-  async installOrUpdate(packages) {
+  async installOrUpdate() {
     return !await this.existsInFileSystem() || !await this.isGitRepo() ?
-      await this.ensure(packages) :
-      await this.update(packages);
+      this.ensure() : this.update();
+    // packages && await this.linkToDependencies(packages);
   }
 
   findDependenciesIn(packages) {
-    var deps = Object.keys(this.dependencies);
+    var deps = Object.keys(this.allDependencies);
     return packages.filter((p) => deps.includes(p.name));
   }
 
-  findDependentPackages(packages) {
-    var deps = Object.keys(this.dependencies);
-    return packages.filter((p) => deps.includes(p.name));
+  findDependentsIn(packages) {
+    return packages.filter(p => Object.keys(p.allDependencies).indexOf(this.name) !== -1);
   }
 
   async symlinkTo(localDir, toPackage) {
@@ -134,8 +137,22 @@ function rm(path) {
     for (let dep of dependents) await this.symlinkTo("node_modules", dep);
   }
 
+  async linkToDependenciesWithNpm(packages) {
+    await this.readConfig();
+    for (let dep of await this.findDependenciesIn(packages))
+      await this.npmLinkOtherPackageIntoNodeModulesFolder(dep);
+  }
+
   async npmInstall() {
     return exec("npm install", {log: this._log, cwd: this.directory});
+  }
+
+  async npmLinkIntoGlobal() {
+    return exec("npm link", {log: this._log, cwd: this.directory});
+  }
+
+  async npmLinkOtherPackageIntoNodeModulesFolder(otherPackage) {
+    return exec("npm link " + otherPackage.name, {log: this._log, cwd: this.directory});
   }
 
   async npmInstallOrFix() {
@@ -162,7 +179,7 @@ function rm(path) {
   }
 
   async npmInstallNeeded() {
-    var toFix = await this.npmPackagesThatNeedFixing()
+    var toFix = await this.npmPackagesThatNeedFixing();
     return toFix.length && toFix.length > 0;
   }
 
@@ -177,7 +194,7 @@ function rm(path) {
       if (code) {
         var msg = `npm install of ${p}failed:\n${output}`;
         this._log.push(msg)
-        if (typeof $$world !== "undefined") await $$world.inform(msg);
+        if (typeof $world !== "undefined") await $world.inform(msg);
         else console.error(msg);
       }
     }
