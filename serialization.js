@@ -24,7 +24,7 @@ export function deserializeMorph(idAndSnapshot, options) {
 
 export async function loadWorldFromResource(fromResource) {
   // fromResource = resource(location.origin).join("test-world.json");
-  let data = JSON.parse(await fromResource.read());
+  let data = await fromResource.readJson();
   // load required modules
   await Promise.all(
     ObjectPool.requiredModulesOfSnapshot(data.snapshot)
@@ -58,7 +58,7 @@ export async function saveWorldToResource(world = World.defaultWorld(), toResour
 
   try {
     let snap = await createMorphSnapshot(world, options);
-    return toResource.write(prettyPrint ? JSON.stringify(snap, null, 2) : JSON.stringify(snap));
+    return toResource.writeJson(snap);
   } finally { i && i.remove() }
 }
 
@@ -79,7 +79,11 @@ import LoadingIndicator from "./components/loading-indicator.js";
 import { promise } from "lively.lang";
 
 export async function createMorphSnapshot(aMorph, options = {}) {
-  let {addPreview = true, testLoad = true, addPackages = true} = options,
+  let {
+        addPreview = true, previewWidth = 100, previewHeight = 100, previewType = "png",
+        testLoad = true,
+        addPackages = true
+      } = options,
       snapshot = serializeMorph(aMorph);
 
   if (addPackages) {
@@ -103,8 +107,11 @@ export async function createMorphSnapshot(aMorph, options = {}) {
   }
 
   if (addPreview) {
-    let {renderMorphToDataURI} = await System.import("lively.morphic/rendering/morph-to-image.js");
-    snapshot.preview = await renderMorphToDataURI(aMorph, {width: aMorph.width, height: aMorph.height});
+    let {renderMorphToDataURI} = await System.import("lively.morphic/rendering/morph-to-image.js"),
+        width = previewWidth || aMorph.width,
+        height = previewHeight || aMorph.height,
+        type = previewType || "png";
+    snapshot.preview = await renderMorphToDataURI(aMorph, {width, height, type});
   } else snapshot.preview = ""
 
   if (testLoad) {
