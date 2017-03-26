@@ -1,5 +1,4 @@
 import _PouchDB from "pouchdb";
-import pouchdbFind from "pouchdb-find";
 import pouchdbAdapterMem from "pouchdb-adapter-mem";
 
 // await System.normalize("pouchdb-adapter-mem", "http://localhost:9011/lively.storage")
@@ -28,7 +27,6 @@ if (isNode && typeof System !== "undefined") {
     PouchDB = System._nodeRequire(pouchDBMain);
   } catch(e) { console.log('nodejs pouchdb is not available'); }
 }
-PouchDB.plugin(pouchdbFind);
 PouchDB.plugin(pouchdbAdapterMem);
 
 // leveldbPath("test")
@@ -76,6 +74,8 @@ function createPouchDB(name, options) {
   return new PouchDB(options);
 }
 
+
+
 export default class Database {
 
   static get _PouchDB() { return PouchDB; }
@@ -86,7 +86,13 @@ export default class Database {
 
   static findDB(name) { return this.databases.get(name); }
 
-  static ensureDB(name, options) { return this.findDB(name) || new this(name, options); }
+  static ensureDB(name, options) {
+    let db = this.findDB(name);
+    if (db) return db;
+    db = new this(name, options);
+    this.databases.set(name, db);
+    return db;
+  }
 
   constructor(name, options = {}) {
     this.name = name;
@@ -184,11 +190,11 @@ export default class Database {
     }
   }
 
-  async docList() {
+  async docList(opts) {
     // a list of ids and revs of current docs in the database.
     // does not return full document!
     // returns [{id, rev}]
-    let {rows} = await this.pouchdb.allDocs(),
+    let {rows} = await this.pouchdb.allDocs(opts),
         result = [];
     for (let i = 0; i < rows.length; i++) {
       let {id, value: {rev}} = rows[i];

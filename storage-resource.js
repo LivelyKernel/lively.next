@@ -1,175 +1,161 @@
-import Resource from "lively.resources/src/resource.js";
-import { createFiles } from 'lively.resources';
+import { registerExtension, Resource } from "lively.resources";
+import Database from "./index.js";
 
-// var debug = false;
-// const slashRe = /\//g;
-// 
-// function applyExclude(resource, exclude) {
-//   if (!exclude) return true;
-//   if (typeof exclude === "string") return !resource.url.includes(exclude);
-//   if (typeof exclude === "function") return !exclude(resource);
-//   if (exclude instanceof RegExp) return !exclude.test(resource.url);
-//   return true;
-// }
+const debug = false,
+      slashRe = /\//g;
 
-export class StorageResourceBackend {
+function applyExclude(resource, exclude) {
+  if (!exclude) return true;
+  if (typeof exclude === "string") return !resource.url.includes(exclude);
+  if (typeof exclude === "function") return !exclude(resource);
+  if (exclude instanceof RegExp) return !exclude.test(resource.url);
+  return true;
+}
 
-  static get hosts() {
-    return this._hosts || (this._hosts = {});
-  }
+export class StorageDatabase extends Database {
 
-  static removeHost(name) {
-    delete this.hosts[name];
-  }
-
-  static ensure(filespec, options = {}) {
-    var host = this.named(options.host);
-    return Promise.resolve()
-      .then(() => filespec ? createFiles(`local-storage://${host.name}`, filespec) : null)
-      .then(() => this)
-  }
-
-  static named(name) {
-    if (!name) name = "default";
-    return this.hosts[name] || (this.hosts[name] = new this(name));
-  }
-
-  constructor(name, filespec = {}) {
-    if (!name || typeof name !== "string")
-      throw new Error("LocalResourceInMemoryBackend needs name!");
-    this.name = name;
-    this._filespec = filespec;
-  }
-
-  get filespec() { return this._filespec; }
-  set filespec(filespec) { this._filespec = filespec; }
-
-  get(path) { return this._filespec[path]; }
-  set(path, spec) { this._filespec[path] = spec; }
-  
-  write(path, content) {
-    var spec = this._filespec[path];
-    if (!spec) spec = this._filespec[path] = {created: new Date()};
-    spec.content = content;
-    spec.isDirectory = false;
-    spec.lastModified = new Date();
-  }
-
-  read(path) {
-    var spec = this._filespec[path];
-    return !spec || !spec.content ? "" : spec.content;
-  }
-
-  mkdir(path) {
-    var spec = this._filespec[path];
-    if (spec && spec.isDirectory) return;
-    if (!spec) spec = this._filespec[path] = {created: new Date()};
-    if (spec.content) delete spec.content;
-    spec.isDirectory = true;
-    spec.lastModified = new Date();
-  }
-
-  partialFilespec(path = "/", depth = Infinity) {
-    var result = {},
-        filespec = this.filespec,
-        paths = Object.keys(filespec);
-
-    for (let i = 0; i < paths.length; i++) {
-      let childPath = paths[i];
-      if (!childPath.startsWith(path) || path === childPath) continue;
-      let trailing = childPath.slice(path.length),
-          childDepth = trailing.includes("/") ? trailing.match(slashRe).length+1 : 1;
-      if (childDepth > depth) continue;
-      result[childPath] = filespec[childPath]
-    }
-    return result;
+  static ensureDB(name, options) {
+    return super.ensureDB("lively.storage-" + name, options);
   }
 
 }
 
-export default class StorageResource extends Resource {
+export default class LivelyStorageResource extends Resource {
 
-  get localBackend() {
-    return LocalResourceInMemoryBackend.named(this.host());
+  get db() {
+    return this._db || (this._db = StorageDatabase.ensureDB(this.host()));
   }
 
-  read() { return Promise.resolve(this.localBackend.read(this.path())); }
+  async read() {
+    debug && console.log(`[${this}] read`);
+    let file = await this.db.get(this.path());
+    return file ? file.content : "";
+  }
 
-  write(content) {
+  async write(content) {
     debug && console.log(`[${this}] write`);
+    if (!content) content = "";
+    else content = String(content);
+
     if (this.isDirectory())
       throw new Error(`Cannot write into a directory! (${this.url})`);
-    var spec = this.localBackend.get(this.path());
-    if (spec && spec.isDirectory)
-      throw new Error(`${this.url} already exists and is a directory (cannot write into it!)`);
-    this.localBackend.write(this.path(), content);
-    return Promise.resolve(this);
+
+    await this.db.update(this.path(), spec => {
+      if (spec && spec.isDirectory)
+        throw new Error(`${this.url} already exists and is a directory (cannot write into it!)`);
+      let t = Date.now();
+      if (!spec) {
+        return {
+          etag: undefined,
+          type: undefined,
+          contentType: undefined,
+          user: undefined,
+          group: undefined,
+          mode: undefined,
+          lastModified: t,
+          created: t,
+          size: content.length,
+          content
+        }
+      }
+
+      return {
+        ...spec,
+        lastModified: t,
+        size: content.length,
+        content
+      }
+    });
+
+    return this;
   }
 
-  mkdir() {
+  async mkdir() {
     debug && console.log(`[${this}] mkdir`);
     if (!this.isDirectory())
       throw new Error(`Cannot mkdir a file! (${this.url})`);
-    var spec = this.localBackend.get(this.path());
-    if (spec && spec.isDirectory) return Promise.resolve(this);
-    if (spec && !spec.isDirectory)
-      throw new Error(`${this.url} already exists and is a file (cannot mkdir it!)`);
-    this.localBackend.mkdir(this.path());
-    return Promise.resolve(this);
+    let spec = await this.db.get(this.path());
+    if (spec) {
+      if (!spec.isDirectory)
+        throw new Error(`${this.url} already exists and is a file (cannot mkdir it!)`);
+      return this;
+    }
+    let t = Date.now();
+    await this.db.set(this.path(), {
+      etag: undefined,
+      type: undefined,
+      contentType: undefined,
+      user: undefined,
+      group: undefined,
+      mode: undefined,
+      lastModified: t,
+      created: t,
+      isDirectory: true
+    })
+    return this;
   }
 
-  exists() {
+  async exists() {
     debug && console.log(`[${this}] exists`);
-    return Promise.resolve(this.isRoot() || this.path() in this.localBackend.filespec);
+    return this.isRoot() || !!await this.db.get(this.path());
   }
 
-  remove() {
+  async remove() {
     debug && console.log(`[${this}] remove`);
-    var thisPath = this.path();
-    Object.keys(this.localBackend.filespec).forEach(path =>
-      path.startsWith(thisPath) && delete this.localBackend.filespec[path]);
-    return Promise.resolve(this);
+    let thisPath = this.path(),
+        db = this.db,
+        matching = await db.docList({startkey: thisPath, endkey: thisPath + "\uffff"});
+    await db.setDocuments(matching.map(({id: _id, rev: _rev}) => ({_id, _rev, _deleted: true})));
+    return this;
   }
 
   readProperties() {
     debug && console.log(`[${this}] readProperties`);
-    throw new Error("not yet implemented");
+    return this.db.get(this.path());
   }
 
-  dirList(depth = 1, opts = {}) {
+  async dirList(depth = 1, opts = {}) {
     debug && console.log(`[${this}] dirList`);
     if (!this.isDirectory()) return this.asDirectory().dirList(depth, opts);
-
-    var {exclude} = opts,
+  
+    let {exclude} = opts,
         prefix = this.path(),
         children = [],
-        paths = Object.keys(this.localBackend.filespec);
+        docs = await this.db.getAll({startkey: prefix, endkey: prefix + "\uffff"})
 
     if (depth === "infinity") depth = Infinity;
 
-    for (let i = 0; i < paths.length; i++) {
-      let childPath = paths[i];
-      if (!childPath.startsWith(prefix) || prefix === childPath) continue;
-      let trailing = childPath.slice(prefix.length),
+    for (let i = 0; i < docs.length; i++) {
+      let doc = docs[i],
+          {_id: path, isDirectory} = doc;
+      if (!path.startsWith(prefix) || prefix === path) continue;
+      let trailing = path.slice(prefix.length),
           childDepth = trailing.includes("/") ? trailing.match(slashRe).length+1 : 1;
       if (childDepth > depth) {
-        // add the dir pointing to child
+        // add the dirs pointing to child
         let dirToChild = this.join(trailing.split("/").slice(0, depth).join("/") + "/");
         if (!children.some(ea => ea.equals(dirToChild))) children.push(dirToChild);
         continue;
       }
+
       let child = this.join(trailing);
-      if (!exclude || applyExclude(child, exclude))
-        children.push(child);
+      if (exclude && !applyExclude(child, exclude)) continue;
+      children.push(child);
+      let propNames = ["created","lastModified","mode","group","user","contentType","type","etag","size"],
+          props = {};
+      for (let i = 0; i < propNames.length; i++) child[propNames[i]] = doc[propNames[i]];
     }
-    return Promise.resolve(children);
+
+    return children;
   }
 
 }
 
 
-// export var resourceExtension = {
-//   name: "local-resource",
-//   matches: (url) => url.startsWith("local-storage:"),
-//   resourceClass: LocalResource
-// }
+const resourceExtension = {
+  name: "lively.storage",
+  matches: (url) => url.startsWith("lively.storage:"),
+  resourceClass: LivelyStorageResource
+}
+
+registerExtension(resourceExtension);
