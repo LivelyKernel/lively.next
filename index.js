@@ -78,7 +78,8 @@ function createPouchDB(name, options) {
 
 export default class Database {
 
-  static get _PouchDB() { return PouchDB; }
+  static get PouchDB() { return PouchDB; }
+  static set PouchDB(klass) { PouchDB = klass; }
 
   static get databases() {
     return this._databases || (this._databases = new Map());
@@ -113,7 +114,9 @@ export default class Database {
 
   close() {
     // close database to free mem
-    return this.pouchdb ? this.pouchdb.close() : null;
+    if (!this._pouchdb) return;
+    this._pouchdb.close();
+    delete this._pouchdb;
   }
 
   isDestroyed() { return !!this.pouchdb._destroyed; }

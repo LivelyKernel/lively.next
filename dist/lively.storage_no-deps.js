@@ -144,14 +144,14 @@ var get$1 = function get$1(object, property, receiver) {
 
 
 
-var set = function set(object, property, value, receiver) {
+var set$1 = function set$1(object, property, value, receiver) {
   var desc = Object.getOwnPropertyDescriptor(object, property);
 
   if (desc === undefined) {
     var parent = Object.getPrototypeOf(object);
 
     if (parent !== null) {
-      set(parent, property, value, receiver);
+      set$1(parent, property, value, receiver);
     }
   } else if ("value" in desc && desc.writable) {
     desc.value = value;
@@ -262,9 +262,12 @@ var Database = function () {
       return db;
     }
   }, {
-    key: "_PouchDB",
+    key: "PouchDB",
     get: function get() {
       return PouchDB;
+    },
+    set: function set(klass) {
+      PouchDB = klass;
     }
   }, {
     key: "databases",
@@ -290,7 +293,9 @@ var Database = function () {
     key: "close",
     value: function close() {
       // close database to free mem
-      return this.pouchdb ? this.pouchdb.close() : null;
+      if (!this._pouchdb) return;
+      this._pouchdb.close();
+      delete this._pouchdb;
     }
   }, {
     key: "isDestroyed",
