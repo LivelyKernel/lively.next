@@ -660,7 +660,7 @@
 
 // INLINED END /Users/robert/Lively/lively-dev2/lively.storage/node_modules/babel-regenerator-runtime/runtime.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.storage/node_modules/lively.resources/dist/lively.resources_no-deps.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -2942,7 +2942,7 @@ exports.Resource = Resource$$1;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.resources;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.storage/node_modules/lively.resources/dist/lively.resources_no-deps.js
 
 
 (function() {
@@ -36944,6 +36944,8 @@ function nodejsRequire(name) {
 }
 
 if (isNode && typeof System !== "undefined") {
+  console.log("Loading proper nodejs pouchdb module");
+
   var _System$_nodeRequire = System._nodeRequire("path"),
       join = _System$_nodeRequire.join,
       storageMain = System.normalizeSync("lively.storage/index.js"),
@@ -37004,7 +37006,6 @@ function createPouchDB(name, options) {
     options = _extends({ adapter: "leveldb" }, options);
   }
   options = _extends({ name: name }, options);
-  console.log(options);
   return new PouchDB(options);
 }
 
@@ -37079,11 +37080,10 @@ var Database = function () {
   }, {
     key: "update",
     value: function () {
-      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(_id, updateFn) {
-        var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(_id, updateFn, options) {
         var updateAttempt = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
 
-        var _options$ensure, ensure, _options$retryOnConfl, retryOnConflict, _options$maxUpdateAtt, maxUpdateAttempts, getOpts, db, lastDoc, newDoc, _ref2, id, rev;
+        var _options, _options$ensure, ensure, _options$retryOnConfl, retryOnConflict, _options$maxUpdateAtt, maxUpdateAttempts, getOpts, db, lastDoc, newDoc, _ref2, id, rev;
 
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -37099,46 +37099,47 @@ var Database = function () {
                 //   maxUpdateAttempts: NUMBER // default 10
                 // }
                 // returns created document
+                options = options || {};
 
-                _options$ensure = options.ensure, ensure = _options$ensure === undefined ? true : _options$ensure, _options$retryOnConfl = options.retryOnConflict, retryOnConflict = _options$retryOnConfl === undefined ? true : _options$retryOnConfl, _options$maxUpdateAtt = options.maxUpdateAttempts, maxUpdateAttempts = _options$maxUpdateAtt === undefined ? 10 : _options$maxUpdateAtt, getOpts = { latest: true }, db = this.pouchdb, lastDoc = void 0, newDoc = void 0;
+                _options = options, _options$ensure = _options.ensure, ensure = _options$ensure === undefined ? true : _options$ensure, _options$retryOnConfl = _options.retryOnConflict, retryOnConflict = _options$retryOnConfl === undefined ? true : _options$retryOnConfl, _options$maxUpdateAtt = _options.maxUpdateAttempts, maxUpdateAttempts = _options$maxUpdateAtt === undefined ? 10 : _options$maxUpdateAtt, getOpts = { latest: true }, db = this.pouchdb, lastDoc = void 0, newDoc = void 0;
 
                 // 1. get the old doc
 
-                _context.prev = 1;
-                _context.next = 4;
+                _context.prev = 2;
+                _context.next = 5;
                 return db.get(_id, getOpts);
 
-              case 4:
+              case 5:
                 lastDoc = _context.sent;
-                _context.next = 11;
+                _context.next = 12;
                 break;
 
-              case 7:
-                _context.prev = 7;
-                _context.t0 = _context["catch"](1);
+              case 8:
+                _context.prev = 8;
+                _context.t0 = _context["catch"](2);
 
                 if (!(_context.t0.name !== "not_found" || !ensure)) {
-                  _context.next = 11;
+                  _context.next = 12;
                   break;
                 }
 
                 throw _context.t0;
 
-              case 11:
-                _context.next = 13;
+              case 12:
+                _context.next = 14;
                 return updateFn(lastDoc);
 
-              case 13:
+              case 14:
                 newDoc = _context.sent;
 
                 if (!(!newDoc || (typeof newDoc === "undefined" ? "undefined" : _typeof(newDoc)) !== "object")) {
-                  _context.next = 16;
+                  _context.next = 17;
                   break;
                 }
 
                 return _context.abrupt("return", null);
 
-              case 16:
+              case 17:
                 // canceled!
 
                 // ensure _id, _rev props
@@ -37146,39 +37147,39 @@ var Database = function () {
                 if (lastDoc && newDoc._rev !== lastDoc._rev) newDoc._rev = lastDoc._rev;
 
                 // 3. try writing new doc
-                _context.prev = 18;
-                _context.next = 21;
+                _context.prev = 19;
+                _context.next = 22;
                 return db.put(newDoc);
 
-              case 21:
+              case 22:
                 _ref2 = _context.sent;
                 id = _ref2.id;
                 rev = _ref2.rev;
                 return _context.abrupt("return", Object.assign(newDoc, { _rev: rev }));
 
-              case 27:
-                _context.prev = 27;
-                _context.t1 = _context["catch"](18);
+              case 28:
+                _context.prev = 28;
+                _context.t1 = _context["catch"](19);
 
                 if (!(_context.t1.name === "conflict" && retryOnConflict && updateAttempt < maxUpdateAttempts)) {
-                  _context.next = 31;
+                  _context.next = 32;
                   break;
                 }
 
                 return _context.abrupt("return", this.update(_id, updateFn, options, updateAttempt + 1));
 
-              case 31:
+              case 32:
                 throw _context.t1;
 
-              case 32:
+              case 33:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, this, [[1, 7], [18, 27]]);
+        }, _callee, this, [[2, 8], [19, 28]]);
       }));
 
-      function update(_x2, _x3) {
+      function update(_x2, _x3, _x4) {
         return _ref.apply(this, arguments);
       }
 
@@ -37282,7 +37283,9 @@ var Database = function () {
   }, {
     key: "docList",
     value: function () {
-      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(opts) {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+        var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
         var _ref7, rows, result, i, _rows$i, id, rev;
 
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
@@ -37312,7 +37315,7 @@ var Database = function () {
         }, _callee5, this);
       }));
 
-      function docList(_x13) {
+      function docList() {
         return _ref6.apply(this, arguments);
       }
 

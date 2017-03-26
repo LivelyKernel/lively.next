@@ -19,6 +19,7 @@ function nodejsRequire(name) {
 }
 
 if (isNode && typeof System !== "undefined") {
+  console.log("Loading proper nodejs pouchdb module");
   let {join} = System._nodeRequire("path"),
       storageMain = System.normalizeSync("lively.storage/index.js"),
       pouchDBMain = System.normalizeSync("pouchdb", storageMain).replace(/file:\/\//, ""),
@@ -70,7 +71,6 @@ function createPouchDB(name, options) {
     options = {adapter: "leveldb", ...options};
   }
   options = {name, ...options};
-  console.log(options)
   return new PouchDB(options);
 }
 
@@ -131,7 +131,7 @@ export default class Database {
   // accessing and updating
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  async update(_id, updateFn, options = {}, updateAttempt = 0) {
+  async update(_id, updateFn, options, updateAttempt = 0) {
     // Will try to fetch document _id and feed it to updateFn. The result value
     // (promise supported) of updateFn will be used as the next version of
     // document.  If updateFn returns a falsy value the update will be canceled.
@@ -142,6 +142,7 @@ export default class Database {
     //   maxUpdateAttempts: NUMBER // default 10
     // }
     // returns created document
+    options = options || {};
 
     let {ensure = true, retryOnConflict = true, maxUpdateAttempts = 10} = options,
         getOpts = {latest: true},
@@ -193,7 +194,7 @@ export default class Database {
     }
   }
 
-  async docList(opts) {
+  async docList(opts = {}) {
     // a list of ids and revs of current docs in the database.
     // does not return full document!
     // returns [{id, rev}]
