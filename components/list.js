@@ -616,7 +616,7 @@ export class FilterableList extends Morph {
 
     return {
 
-      fill: {defaultValue: Color.transparent,},
+      fill: {defaultValue: Color.transparent},
       borderWidth: {defaultValue: 1},
       borderColor: {defaultValue: 1},
       updateSelectionsAfterFilter: {defaultValue: false},
@@ -626,6 +626,7 @@ export class FilterableList extends Morph {
           this.submorphs = [
             Text.makeInputLine({
               name: "input",
+              highlightWhenFocused: false,
               fixedHeight: false,
               autofit: false
             }),
@@ -1043,38 +1044,47 @@ export class DropDownList extends Button {
       borderRadius: {defaultValue: 5},
       padding:      {defaultValue: Rectangle.inset(3,2)},
 
-      list: {
-        readOnly: true, after: ["submorphs"],
+      listHeight: {defaultValue: 100},
+
+      listMorph: {
         get() {
-          if (this._list) return this._list;
-          return this._list = new List({
+          let list = this.getProperty("listMorph");
+          if (list) return list;
+          list = new List({
             name: "list",
             fontSize: this.fontSize,
             fontFamily: this.fontFamily,
             fontColor: this.fontColor,
             border: this.border
           });
+          this.setProperty("listMorph", list);
+          return list;
         }
       },
 
+      label: {
+        readOnly: true, after: ["submorphs"],
+        get() { return this.getSubmorphNamed("label"); }
+      },
+
       items: {
-        derived: true, after: ["list"],
-        get() { return this.list.items; },
-        set(value) { this.list.items = value; }
+        derived: true, after: ["listMoph"],
+        get() { return this.listMorph.items; },
+        set(value) { this.listMorph.items = value; }
       },
 
       selection: {
-        after: ["list", 'items'],
+        after: ["listMoph", 'items'],
         set(value) {
           this.setProperty("selection", value);
           if (!value) {
-            this.list.selection = null;
+            this.listMorph.selection = null;
             this.label = "";
           } else {
-            var item = this.list.find(value);
+            var item = this.listMorph.find(value);
             if (!item) return;
             this.label = [[item.string || String(item), {}], [" ", {}], Icon.textAttribute("caret-down")];
-            this.list.selection = value;
+            this.listMorph.selection = value;
           }
         }
       }
@@ -1094,10 +1104,10 @@ export class DropDownList extends Button {
     connect(this, "fire", this, "toggleList");
   }
 
-  isListVisible() { return this.list.owner === this; }
+  isListVisible() { return this.listMorph.owner === this; }
 
   toggleList() {
-    var list = this.list;
+    var list = this.listMorph;
     if (this.isListVisible()) {
       signal(this, "deactivated");
       this.selection = list.selection;
@@ -1107,7 +1117,7 @@ export class DropDownList extends Button {
       this.addMorph(list);
       once(list, 'onItemMorphClicked', this, 'toggleList');
       list.topLeft = this.innerBounds().bottomLeft();
-      list.extent = pt(this.width, 100);
+      list.extent = pt(this.width, this.listHeight);
       list.focus();
     }
   }
@@ -1125,7 +1135,7 @@ export class DropDownList extends Button {
       {
         name: "cancel",
         exec: () => {
-          if (this.isListVisible()) this.list.remove();
+          if (this.isListVisible()) this.listMorph.remove();
           return true;
         }
       }
