@@ -129,7 +129,7 @@ function defaultOrigin() {
 
 function makeRequest(resource, method = "GET", body, headers = {}) {
   var url = resource.url,
-      {useCors, useProxy} = resource,
+      {useCors, useProxy, headers: moreHeaders} = resource,
       useCors = typeof useCors !== "undefined" ? useCors : true,
       useProxy = typeof useProxy !== "undefined" ? useProxy : true,
       fetchOpts = {method};
@@ -147,7 +147,7 @@ function makeRequest(resource, method = "GET", body, headers = {}) {
   if (useCors) fetchOpts.mode = "cors"
   if (body) fetchOpts.body = body;
   fetchOpts.redirect = 'follow';
-  fetchOpts.headers = headers;
+  fetchOpts.headers = {...headers, ...moreHeaders};
 
   return fetch(url, fetchOpts);
 }
@@ -158,11 +158,18 @@ export default class WebDAVResource extends Resource {
     super(url, opts);
     this.useProxy = opts.hasOwnProperty("useProxy") ? opts.useProxy : false;
     this.useCors = opts.hasOwnProperty("useCors") ? opts.useCors : false;
+    this.headers = opts.headers || {};
+  }
+
+  join(path) {
+    return Object.assign(
+      super.join(path),
+      {headers: this.headers, useCors: this.useCors, useProxy: this.useProxy});
   }
 
   makeProxied() {
     return this.useProxy ? this :
-      new this.constructor(this.url, {useCors: this.useCors, useProxy: true})
+      new this.constructor(this.url, {headers: this.headers, useCors: this.useCors, useProxy: true})
   }
 
   async read() {

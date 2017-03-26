@@ -737,6 +737,20 @@ var createClass = function () {
 
 
 
+var _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
 var get$1 = function get$1(object, property, receiver) {
   if (object === null) object = Function.prototype;
   var desc = Object.getOwnPropertyDescriptor(object, property);
@@ -1546,6 +1560,7 @@ function makeRequest(resource) {
   var url = resource.url,
       useCors = resource.useCors,
       useProxy = resource.useProxy,
+      moreHeaders = resource.headers,
       useCors = typeof useCors !== "undefined" ? useCors : true,
       useProxy = typeof useProxy !== "undefined" ? useProxy : true,
       fetchOpts = { method: method };
@@ -1564,7 +1579,7 @@ function makeRequest(resource) {
   if (useCors) fetchOpts.mode = "cors";
   if (body) fetchOpts.body = body;
   fetchOpts.redirect = 'follow';
-  fetchOpts.headers = headers;
+  fetchOpts.headers = _extends({}, headers, moreHeaders);
 
   return fetch(url, fetchOpts);
 }
@@ -1580,13 +1595,19 @@ var WebDAVResource = function (_Resource) {
 
     _this.useProxy = opts.hasOwnProperty("useProxy") ? opts.useProxy : false;
     _this.useCors = opts.hasOwnProperty("useCors") ? opts.useCors : false;
+    _this.headers = opts.headers || {};
     return _this;
   }
 
   createClass(WebDAVResource, [{
+    key: "join",
+    value: function join(path) {
+      return Object.assign(get$1(WebDAVResource.prototype.__proto__ || Object.getPrototypeOf(WebDAVResource.prototype), "join", this).call(this, path), { headers: this.headers, useCors: this.useCors, useProxy: this.useProxy });
+    }
+  }, {
     key: "makeProxied",
     value: function makeProxied() {
-      return this.useProxy ? this : new this.constructor(this.url, { useCors: this.useCors, useProxy: true });
+      return this.useProxy ? this : new this.constructor(this.url, { headers: this.headers, useCors: this.useCors, useProxy: true });
     }
   }, {
     key: "read",
@@ -1843,20 +1864,16 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "dirList",
     value: function () {
-      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
-        var _this2 = this;
-
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
         var depth = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
         var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-        var exclude, resources, self, _ret;
-
-        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+        var exclude, resources, self, subResources, subCollections;
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
-            switch (_context8.prev = _context8.next) {
+            switch (_context7.prev = _context7.next) {
               case 0:
                 if (!(typeof depth !== "number" && depth !== 'infinity')) {
-                  _context8.next = 2;
+                  _context7.next = 2;
                   break;
                 }
 
@@ -1869,72 +1886,46 @@ var WebDAVResource = function (_Resource) {
                 if (depth <= 0) depth = 1;
 
                 if (!(depth === 1)) {
-                  _context8.next = 13;
+                  _context7.next = 13;
                   break;
                 }
 
-                _context8.next = 7;
+                _context7.next = 7;
                 return this._propfind();
 
               case 7:
-                resources = _context8.sent;
+                resources = _context7.sent;
                 self = resources.shift();
 
                 if (exclude) resources = applyExclude(exclude, resources);
-                return _context8.abrupt("return", resources);
+                return _context7.abrupt("return", resources);
 
               case 13:
-                return _context8.delegateYield(regeneratorRuntime.mark(function _callee7() {
-                  var subResources, subCollections;
-                  return regeneratorRuntime.wrap(function _callee7$(_context7) {
-                    while (1) {
-                      switch (_context7.prev = _context7.next) {
-                        case 0:
-                          _context7.next = 2;
-                          return _this2.dirList(1, opts);
+                _context7.next = 15;
+                return this.dirList(1, opts);
 
-                        case 2:
-                          subResources = _context7.sent;
-                          subCollections = subResources.filter(function (ea) {
-                            return ea.isDirectory();
-                          });
-                          return _context7.abrupt("return", {
-                            v: Promise.all(subCollections.map(function (col) {
-                              return col.dirList(typeof depth === "number" ? depth - 1 : depth, opts);
-                            })).then(function (recursiveResult) {
-                              return recursiveResult.reduce(function (all, ea) {
-                                return all.concat(ea);
-                              }, subResources);
-                            })
-                          });
+              case 15:
+                subResources = _context7.sent;
+                subCollections = subResources.filter(function (ea) {
+                  return ea.isDirectory();
+                });
+                return _context7.abrupt("return", Promise.all(subCollections.map(function (col) {
+                  return col.dirList(typeof depth === "number" ? depth - 1 : depth, opts);
+                })).then(function (recursiveResult) {
+                  return recursiveResult.reduce(function (all, ea) {
+                    return all.concat(ea);
+                  }, subResources);
+                }));
 
-                        case 5:
-                        case "end":
-                          return _context7.stop();
-                      }
-                    }
-                  }, _callee7, _this2);
-                })(), "t0", 14);
-
-              case 14:
-                _ret = _context8.t0;
-
-                if (!((typeof _ret === "undefined" ? "undefined" : _typeof(_ret)) === "object")) {
-                  _context8.next = 17;
-                  break;
-                }
-
-                return _context8.abrupt("return", _ret.v);
-
-              case 17:
+              case 18:
               case "end":
-                return _context8.stop();
+                return _context7.stop();
             }
           }
-        }, _callee8, this);
+        }, _callee7, this);
       }));
 
-      function dirList(_x6, _x7) {
+      function dirList() {
         return _ref7.apply(this, arguments);
       }
 
@@ -1943,28 +1934,28 @@ var WebDAVResource = function (_Resource) {
   }, {
     key: "readProperties",
     value: function () {
-      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(opts) {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(opts) {
         var props;
-        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
-            switch (_context9.prev = _context9.next) {
+            switch (_context8.prev = _context8.next) {
               case 0:
-                _context9.next = 2;
+                _context8.next = 2;
                 return this._propfind();
 
               case 2:
-                props = _context9.sent[0];
-                return _context9.abrupt("return", this.assignProperties(props));
+                props = _context8.sent[0];
+                return _context8.abrupt("return", this.assignProperties(props));
 
               case 4:
               case "end":
-                return _context9.stop();
+                return _context8.stop();
             }
           }
-        }, _callee9, this);
+        }, _callee8, this);
       }));
 
-      function readProperties(_x10) {
+      function readProperties(_x8) {
         return _ref8.apply(this, arguments);
       }
 
@@ -2297,7 +2288,7 @@ var NodeJSFileResource = function (_Resource) {
         }, _callee6, this, [[9, 28, 32, 40], [33,, 35, 39]]);
       }));
 
-      function dirList(_x3, _x4) {
+      function dirList() {
         return _ref6.apply(this, arguments);
       }
 
@@ -2473,7 +2464,7 @@ var NodeJSFileResource = function (_Resource) {
         }, _callee9, this);
       }));
 
-      function readProperties(_x7) {
+      function readProperties(_x5) {
         return _ref9.apply(this, arguments);
       }
 
