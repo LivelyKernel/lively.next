@@ -93,7 +93,16 @@
           .then(function() {
             return importPackageAndDo(
               "lively.modules",
-              function(m) { lively.modules = m; lively.modules.unwrapModuleLoad(); lively.modules.wrapModuleLoad(); })})
+              function(m) {
+                lively.modules = m;
+                lively.modules.unwrapModuleLoad();
+                lively.modules.wrapModuleLoad();
+              })})
+
+          .then(function() {
+            return importPackageAndDo(
+              "lively.storage",
+              function(m) { lively.storage = m; })})
 
           .then(function() { return importPackageAndDo(origin + "/lively.2lively"); })
           .then(function() { console.log("...lively.system bootstrapped!"); });

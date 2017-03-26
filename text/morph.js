@@ -470,7 +470,8 @@ export class Text extends Morph {
   get __only_serialize__() {
     let propNames = super.__only_serialize__;
     return arr.withoutAll(propNames,
-      ["document", "textLayout", "undoManager", "textRenderer", "textAttributes", "markers"]);
+      ["document", "textLayout", "undoManager", "textRenderer",
+       "textAttributes", "markers"]);
   }
 
   __additionally_serialize__(snapshot, objRef, pool, addFn) {
