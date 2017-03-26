@@ -36,8 +36,8 @@ export class AbstractPrompt extends Morph {
   get label() { return this.getSubmorphNamed("label").textString; }
   set label(label) { this.getSubmorphNamed("label").textString = label; }
 
-  resolve(arg) { this.answer.resolve(arg); }
-  reject(reason) { this.answer.resolve(undefined); }
+  resolve(arg) { return this.answer.resolve(arg); }
+  reject(reason = undefined) { return this.answer.resolve(reason); }
 
   async activate() {
     this.focus();
@@ -279,6 +279,7 @@ export class TextPrompt extends AbstractPrompt {
 
     var inputLine = this.addMorph(Text.makeInputLine({
       historyId,
+      highlightWhenFocused: false,
       name: "input", textString: input || "",
       borderWidth: 0, borderRadius: 20, fill: Color.rgbHex("#DDD"),
       fontSize: 14, fontColor: Color.rgbHex("#666"),
