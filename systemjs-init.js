@@ -19,8 +19,7 @@
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function decideAboutTranspiler(features) {
-    if (features.supportsAsyncAwait && features.isBrowser) return "lively.transpiler";
-    return "plugin-babel";
+    return features.supportsAsyncAwait ? "lively.transpiler" : "plugin-babel";
   }
 
   function setupLivelyTranspiler(features) {
@@ -127,8 +126,13 @@
   }
 
   function loadBabel_node() {
-    var parent = require.cache[require.resolve("lively.modules")],
-        babelPath = require("module").Module._resolveFilename("babel-standalone", parent);
+    if (global.Babel && !global.babel) global.babel = global.Babel;
+    if (global.babel) return global.babel;
+		var parent;
+		try { parent = require.cache[require.resolve("lively.modules")]; } catch(err) {};
+		try { parent = require.cache[require.resolve(__dirname + "/../")]; } catch(err) {};
+		if (!parent) throw new Error("Cannot find batch to babel-standalone module")
+    var babelPath = require("module").Module._resolveFilename("babel-standalone", parent);
     global.window = global;
     global.navigator = {};
     var babel = require(babelPath);
@@ -190,6 +194,7 @@
   }
 
   function findSystemJSPluginBabel_node() {
+    if (global.systemjsPluginBabel) return global.systemjsPluginBabel;
     try {
       var parent = require.cache[require.resolve("lively.modules")];
       pluginBabelPath = require("module").Module._resolveFilename("systemjs-plugin-babel", parent)
