@@ -1072,9 +1072,8 @@ export class DropDownList extends Button {
             this.label = "";
           } else {
             var item = this.list.find(value);
-            this.label = item ?
-              [[item.string || String(item), {}], [" ", {}], Icon.textAttribute("caret-down")] :
-              "selection not found in list";
+            if (!item) return;
+            this.label = [[item.string || String(item), {}], [" ", {}], Icon.textAttribute("caret-down")];
             this.list.selection = value;
           }
         }

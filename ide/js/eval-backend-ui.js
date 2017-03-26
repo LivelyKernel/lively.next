@@ -5,6 +5,17 @@ import { arr } from "lively.lang";
 import { connect, noUpdate } from "lively.bindings";
 import { DropDownList } from "lively.morphic";
 
+class EvalBackendList extends DropDownList {
+  static get properties() {
+    return {
+      fontSize: {defaultValue: 10},
+      extent: {defaultValue: pt(120, 20)},
+      target: {},
+    }
+  }
+}
+
+
 export default class EvalBackendChooser {
 
   static get default() {
@@ -33,18 +44,10 @@ export default class EvalBackendChooser {
   }
 
   buildEvalBackendDropdownFor(morph) {
-    var list = new DropDownList({
-      fontSize: 10,
-      name: "eval backend list",
-      extent: pt(120, 20)
-    });
-    list.requesterId = morph.id;
+    var list = new EvalBackendList({name: "eval backend list", target: morph});
 
     connect(list, 'selection', this, 'interactivelyChangeEvalBackend', {
-      updater: function($upd, choice) {
-        var requester = this.sourceObj.world().getMorphWithId(this.sourceObj.requesterId);
-        $upd(choice, requester);
-      }
+      updater: function($upd, choice) { $upd(choice, this.sourceObj.target); }
     });
 
     // for updating the list items when list is opened:
