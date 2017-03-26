@@ -4,8 +4,11 @@ import { resourceExtension as httpResourceExtension } from "./src/http-resource.
 import { resourceExtension as fileResourceExtension } from "./src/fs-resource.js";
 import { resourceExtension as localResourceExtension } from "./src/local-resource.js";
 
-// var extensions = []
-var extensions = []; // [{name, matches, resourceClass}]
+var extensions = extensions || []; // [{name, matches, resourceClass}]
+
+registerExtension(localResourceExtension);
+registerExtension(httpResourceExtension);
+registerExtension(fileResourceExtension);
 
 export function resource(url, opts) {
   if (!url) throw new Error("lively.resource resource constructor: expects url but got " + url);
@@ -56,7 +59,7 @@ export function loadViaScript(url, onLoadCb) {
     script.setAttributeNS(null, 'id', url);
 
     script.namespaceURI === SVGNamespace ?
-      script.setAttributeNS(this.XLINKNamespace, 'href', url) :
+      script.setAttributeNS(XLINKNamespace, 'href', url) :
       script.setAttribute('src', url);
 
     script.onload = resolve;
@@ -106,7 +109,3 @@ export function unregisterExtension(extension) {
   var name = typeof extension === "string" ? extension : extension.name;
   extensions = extensions.filter(ea => ea.name !== name);
 }
-
-registerExtension(localResourceExtension);
-registerExtension(httpResourceExtension);
-registerExtension(fileResourceExtension);

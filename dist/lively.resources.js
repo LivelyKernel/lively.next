@@ -1377,6 +1377,41 @@ var Resource$$1 = function () {
 
       return readProperties;
     }()
+  }, {
+    key: "writeJson",
+    value: function writeJson(obj) {
+      return this.write(JSON.stringify(obj));
+    }
+  }, {
+    key: "readJson",
+    value: function () {
+      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(obj) {
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+          while (1) {
+            switch (_context10.prev = _context10.next) {
+              case 0:
+                _context10.t0 = JSON;
+                _context10.next = 3;
+                return this.read();
+
+              case 3:
+                _context10.t1 = _context10.sent;
+                return _context10.abrupt("return", _context10.t0.parse.call(_context10.t0, _context10.t1));
+
+              case 5:
+              case "end":
+                return _context10.stop();
+            }
+          }
+        }, _callee10, this);
+      }));
+
+      function readJson(_x8) {
+        return _ref10.apply(this, arguments);
+      }
+
+      return readJson;
+    }()
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // serialization
@@ -2730,8 +2765,11 @@ var resourceExtension$2 = {
 };
 
 /*global System*/
-// var extensions = []
-var extensions = []; // [{name, matches, resourceClass}]
+var extensions = extensions || []; // [{name, matches, resourceClass}]
+
+registerExtension(resourceExtension$2);
+registerExtension(resourceExtension);
+registerExtension(resourceExtension$1);
 
 function resource(url, opts) {
   if (!url) throw new Error("lively.resource resource constructor: expects url but got " + url);
@@ -2815,8 +2853,6 @@ var createFiles = function () {
 }();
 
 function loadViaScript(url, onLoadCb) {
-  var _this = this;
-
   // load JS code by inserting a <script src="..." /> tag into the
   // DOM. This allows cross domain script loading and JSONP
 
@@ -2838,7 +2874,7 @@ function loadViaScript(url, onLoadCb) {
     parentNode.appendChild(script);
     script.setAttributeNS(null, 'id', url);
 
-    script.namespaceURI === SVGNamespace ? script.setAttributeNS(_this.XLINKNamespace, 'href', url) : script.setAttribute('src', url);
+    script.namespaceURI === SVGNamespace ? script.setAttributeNS(XLINKNamespace, 'href', url) : script.setAttribute('src', url);
 
     script.onload = resolve;
     script.onerror = reject;
@@ -2920,10 +2956,6 @@ function unregisterExtension(extension) {
     return ea.name !== name;
   });
 }
-
-registerExtension(resourceExtension$2);
-registerExtension(resourceExtension);
-registerExtension(resourceExtension$1);
 
 exports.resource = resource;
 exports.createFiles = createFiles;

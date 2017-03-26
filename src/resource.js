@@ -244,6 +244,8 @@ export default class Resource {
   async dirList(depth, opts) { nyi(this, "dirList"); }
   async readProperties(opts) { nyi(this, "readProperties"); }
 
+  writeJson(obj) { return this.write(JSON.stringify(obj)); }
+  async readJson(obj) { return JSON.parse(await this.read()); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // serialization
