@@ -795,35 +795,26 @@ class GrabHaloItem extends HaloItem {
     }
   }
 
- morphBeneath(position) {
-    var dropTarget = super.morphBeneath(position);
-    while (dropTarget && dropTarget.isHaloItem)
-       dropTarget = dropTarget.morphBeneath(position);
-    return dropTarget;
- }
-
   valueForPropertyDisplay() {
-    var dropTarget = this.morphBeneath(this.hand.position),
-        belongsToHalo = dropTarget && (
-              dropTarget.isHaloItem || 
-              dropTarget.ownerChain().find(m => m.isHaloItem));
-    if (!belongsToHalo) {
-      this.halo.toggleMorphHighlighter(
-        dropTarget && dropTarget != this.world(),
-        dropTarget, true);
-      this.prevDropTarget && this.prevDropTarget != dropTarget &&
-        this.halo.toggleMorphHighlighter(false, this.prevDropTarget);
-        this.prevDropTarget = dropTarget;
-    }
+    let {hand, halo, prevDropTarget} = this,
+        world = hand.world(),
+        dropTarget = hand.findDropTarget(hand.position, m =>
+          !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem));
+
+    halo.toggleMorphHighlighter(dropTarget && dropTarget != world, dropTarget, true);
+    if (prevDropTarget && prevDropTarget != dropTarget)
+      halo.toggleMorphHighlighter(false, prevDropTarget);
+    this.prevDropTarget = dropTarget;
     return dropTarget && dropTarget.name;
   }
 
   init(hand) {
-    var undo = this.halo.target.undoStart("grab-halo");
-    undo.addTarget(this.halo.target.owner);
+    let {halo} = this;
+    var undo = halo.target.undoStart("grab-halo");
+    undo.addTarget(halo.target.owner);
     this.hand = hand;
-    this.halo.target.onGrab({hand});
-    this.halo.state.activeButton = this;
+    halo.target.onGrab({hand});
+    halo.state.activeButton = this;
   }
 
   update() {
@@ -831,16 +822,18 @@ class GrabHaloItem extends HaloItem {
   }
 
   stop(hand) {
-    var undo = this.halo.target.undoInProgress,
-        dropTarget = this.morphBeneath(hand.position);
-    MorphHighlighterForHalo.interceptDrop(this.halo, dropTarget, this.halo.target);
+    let {halo, prevDropTarget} = this,
+        undo = halo.target.undoInProgress,
+        dropTarget = hand.findDropTarget(hand.position, m =>
+          !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem));
+    MorphHighlighterForHalo.interceptDrop(halo, dropTarget, halo.target);
     undo.addTarget(dropTarget);
     dropTarget.onDrop({hand});
-    this.halo.state.activeButton = null;
-    this.halo.alignWithTarget();
-    this.halo.toggleMorphHighlighter(false, this.prevDropTarget);
-    MorphHighlighterForHalo.removeHighlightersFromHalo(this.halo);
-    this.halo.target.undoStop("grab-halo");
+    halo.state.activeButton = null;
+    halo.alignWithTarget();
+    halo.toggleMorphHighlighter(false, prevDropTarget);
+    MorphHighlighterForHalo.removeHighlightersFromHalo(halo);
+    halo.target.undoStop("grab-halo");
   }
 
   onDragStart(evt) {
@@ -1100,12 +1093,14 @@ class CopyHaloItem extends HaloItem {
   }
 
   stop(hand) {
-    var dropTarget = this.morphBeneath(hand.position),
-        undo = this.halo.target.undoInProgress;
+    var dropTarget = hand.findDropTarget(hand.position, m =>
+          !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem)),
+        {halo} = this,
+        undo = halo.target.undoInProgress;
     undo.addTarget(dropTarget);
     hand.dropMorphsOn(dropTarget);
-    this.halo.target.undoStop("copy-halo");
-    this.halo.alignWithTarget();
+    halo.target.undoStop("copy-halo");
+    halo.alignWithTarget();
   }
 
   onDragStart(evt) { this.init(evt.hand) }
@@ -1370,13 +1365,24 @@ class MorphHighlighterForHalo extends Morph {
   static get properties() {
     return {
       draggable: {defaultValue: false},
-      fill:      {defaultValue: Color.transparent}
+      fill:      {defaultValue: Color.transparent},
+      name: {defaultValue: "morphHighlighter"},
+      halo: {},
+      showLayout: {},
+      targetId: {},
+      target: {
+        readOnly: true, derived: true,
+        get() {
+          var w = this.world() || this.halo.world() || this.env.world;
+          return w ? w.getMorphWithId(this.targetId) : null;
+        }
+      }
     }
   }
 
   static removeHighlightersFromHalo(halo) {
-    var store = halo.state.morphHighlighters;
-    for (var id in store) { store[id].remove(); delete store[id]; }
+    let store = halo.state.morphHighlighters;
+    for (let id in store) { store[id].remove(); delete store[id]; }
   }
 
   static for(halo, morph, showLayout) {
@@ -1391,21 +1397,6 @@ class MorphHighlighterForHalo extends Morph {
      var store = halo.state.morphHighlighters = halo.state.morphHighlighters || {};
      store && store[target.id].handleDrop(morph)
   }
-
-  get halo() { return this.getProperty("halo"); }
-  set halo(val) { this.setProperty("halo", val); }
-
-  get showLayout() { return this.getProperty("showLayout"); }
-  set showLayout(val) { this.setProperty("showLayout", val); }
-
-  get targetId() { return this.getProperty("targetId"); }
-  set targetId(val) { this.setProperty("targetId", val); }
-  get target() {
-    var w = this.world() || this.halo.world();
-    return w ? w.getMorphWithId(this.targetId) : null;
-  }
-
-  get name() { return "morphHighlighter"; }
 
   alignWithHalo() {
     if (this.target) {

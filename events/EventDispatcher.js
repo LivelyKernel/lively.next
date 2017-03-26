@@ -348,8 +348,7 @@ export default class EventDispatcher {
           // grabbed morph itself, i.e. the drop target must not be a child morph
           // of the hand
           if (hand.isAncestorOf(targetMorph)) {
-            targetMorph = this.world.morphsContainingPoint(defaultEvent.position)
-              .filter(m => !hand.isAncestorOf(m) && m.acceptsDrops)[0] || this.world;
+            targetMorph = hand.findDropTarget(defaultEvent.position) || this.world;
           }
           events.push(new Event("morphicdrop", domEvt, this, [targetMorph], hand, halo, layoutHalo));
           defaultEvent.targetMorphs = [this.world];

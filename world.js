@@ -1413,4 +1413,12 @@ export class Hand extends Morph {
     });
   }
 
+  findDropTarget(position = this.position, optFilterFn) {
+    let morphs = this.world().morphsContainingPoint(position),
+        filterFn = typeof optFilterFn === "function" ?
+          (m, i) => !this.isAncestorOf(m) && m.acceptsDrops && optFilterFn(m, i) :
+          m => !this.isAncestorOf(m) && m.acceptsDrops;
+    return morphs.find(filterFn);
+  }
+
 }
