@@ -1799,39 +1799,182 @@ export class Image extends Morph {
         defaultValue: System.decanonicalize("lively.morphic/lively-web-logo-small.svg"),
 
         set(url) {
+          this.isLoaded = false;
           this.setProperty("imageUrl", url);
           this.setProperty("naturalExtent", null);
-          if (this.autoResize)
-            this.determineNaturalExtent().then(ext => this.extent = ext);
+          this.whenLoaded().then(() => {
+            if (this.imageUrl !== url) return;
+            this.isLoaded = true;
+            this.autoResize && (this.extent = this.naturalExtent);
+          });
         }
       },
 
       naturalExtent: {defaultValue: null},
-      autoResize: {defaultValue: true}
+      autoResize: {defaultValue: true},
+      isLoaded: {defaultValue: false, serialize: false}
     }
   }
 
   get isImage() { return true }
 
-  determineNaturalExtent() {
-    if (this.naturalExtent) return this.naturalExtent;
+  loadUrl(url, autoResize = this.autoResize) {
+    let prevAutoResize = this.autoResize;
+    this.autoResize = autoResize;
+    this.imageUrl = url;
+    return promise.finally(this.whenLoaded(), () => this.autoResize = prevAutoResize)
+  }
+
+  whenLoaded() {
+    if (this.isLoaded) return Promise.resolve(this);
     return new Promise((resolve, reject) => {
-      let doc = this.env.domEnv.document,
-          image = doc.createElement("img"),
-          url = this.imageUrl;
-      image.onload = () => {
-        if (url !== this.imageUrl) {
-          // if url changed
-          reject(new Error("url changed"));
-        } else {
-          resolve(this.naturalExtent = pt(image.width, image.height));
-        }
-      };
-      image.src = this.imageUrl;
+      let url = this.imageUrl;
+      let image = this.imageElement(image => {
+        if (this.imageUrl !== url) reject(new Error(`url changed (${url} => ${this.imageUrl})`));
+        this.naturalExtent = pt(image.width, image.height);
+        this.isLoaded = true;
+        resolve(this);
+      });
     });
   }
 
+  determineNaturalExtent() { return this.whenLoaded().then(() => this.naturalExtent); }
+
   render(renderer) { return renderer.renderImage(this); }
+
+  
+  clear() {
+    // transparent gif:
+    return this.loadUrl("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", false);
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // accessing DOM related things
+
+  imageElement(onloadFn) {
+    let doc = this.env.domEnv.document,
+        image = doc.createElement("img");
+    if (typeof onloadFn === "function")
+      image.onload = () => onloadFn(image);
+    image.src = this.imageUrl;
+    return image;
+  }
+
+  canvasElementAndContext() {
+    let doc = this.env.domEnv.document,
+        image = this.imageElement(),
+        canvas = doc.createElement('canvas'),
+        ctx = canvas.getContext('2d');
+    return {canvas, ctx, image};
+  }
+
+
+  imageData() {
+    // this.arrayBuffer();
+    let {ctx, canvas, image} = this.canvasElementAndContext();
+    return ctx.getImageData(0,0, image.width, image.height);
+  }
+
+  arrayBuffer() { return this.imageData().data.buffer; }
+
+  async convertToBase64() {
+    // this.imageUrl = "http://www.amir.ninja/content/images/2015/12/Hello-World.png"
+    // await this.convertToBase64();
+    var urlString = this.imageUrl,
+        type = urlString.slice(urlString.lastIndexOf('.') + 1, urlString.length).toLowerCase();
+    if (type == 'jpg') type = 'jpeg';
+    if (!['gif', 'jpeg', 'png', 'tiff'].includes(type)) type = 'gif';
+    if (!urlString.startsWith('http'))
+      urlString = location.origin + "/" + urlString;
+    let {runCommand} = await System.import("lively.morphic/ide/shell/shell-interface"),
+        cmd = 'curl --silent "' + urlString + '" | openssl base64',
+        {stdout} = await runCommand(cmd).whenDone();
+    return this.loadUrl('data:image/' + type + ';base64,' + stdout, false);
+  }
+
+  downloadImage() {
+    // This doesn't work in all browsers. Alternative would be:
+    // var dataDownloadURL = url.replace(/^data:image\/[^;]/, 'data:application/octet-stream')
+    // window.open(dataDownloadURL);
+    // however this wouldn't allow to set a file name...  
+    // this.downloadImage();
+    var url = this.imageUrl, name;
+    if (url.match(/^data:image/)) { // data url
+      name = this.name || "image-from-lively";
+      var typeMatch = url.match(/image\/([^;]+)/)
+      if (typeMatch && typeMatch[1]) name += "." + typeMatch[1];
+    } else {
+      if (!name) name = arr.last(url.split('/'));
+    }
+    var link = document.createElement('a');
+    link.download = name;
+    link.href = url;
+    link.click();
+  }
+  
+  convertTo(type, quality) {
+    // this.convertTo("image/jpeg", 0.8)
+    // this.convertTo(); 123
+    if (!quality) quality = 1;
+    let {ctx, canvas, image} = this.canvasElementAndContext(),
+        {width, height} = this;
+    canvas.width = image.width;
+    canvas.height = image.height;
+    ctx.drawImage(image, 0, 0, width, height);
+    return this.loadUrl(canvas.toDataURL(type, quality), false);
+  }
+
+  async resampleImageToFitBounds() {
+    // changes the image resolution so that it fits 1:1 to the current extent
+    // of the image;
+
+    // Example:
+    /*
+    await this.loadUrl("http://www.amir.ninja/content/images/2015/12/Hello-World.png", false)
+    let from = this.naturalExtent;
+    await this.convertToBase64();
+    this.extent = pt(300,300)
+    await this.resampleImageToFitBounds();
+    let to = this.naturalExtent;
+    `${from} => ${to}`;
+    */
+    let {ctx, canvas, image} = this.canvasElementAndContext(),
+        {width: newWidth, height: newHeight} = this,
+        {width: imageWidth, height: imageHeight} = image,
+        pixelratio = window.devicePixelRatio || 1;
+
+    canvas.width = imageWidth; canvas.height = imageHeight;
+    ctx.drawImage(image, 0, 0, newWidth, newHeight);
+    let data = ctx.getImageData(0, 0, imageWidth, imageHeight);
+    canvas.width = newWidth * pixelratio | 0;
+    canvas.height = newHeight * pixelratio | 0;
+    ctx.putImageData(data, 0,0);
+    return this.loadUrl(canvas.toDataURL(), false);
+  }
+
+  crop(cropBounds) {
+    let {ctx, canvas, image} = this.canvasElementAndContext(),
+        {width, height} = this,
+        innerBounds = this.innerBounds(),
+        {width: imageWidth, height: imageHeight} = image,
+        intersection = innerBounds.intersection(cropBounds),
+        relativeCrop = new Rectangle(
+          intersection.x / innerBounds.width,
+          intersection.y / innerBounds.height,
+          intersection.width / innerBounds.width,
+          intersection.height / innerBounds.height),
+        [unscaledCropBounds] = new Rectangle(0, 0, imageWidth, imageHeight).divide([relativeCrop]);
+
+    canvas.width = imageWidth; canvas.height = imageHeight;
+    ctx.drawImage(image, 0, 0, imageWidth, imageHeight);
+
+    let data = ctx.getImageData(unscaledCropBounds.x, unscaledCropBounds.y, unscaledCropBounds.width, unscaledCropBounds.height);
+    canvas.width = unscaledCropBounds.width;
+    canvas.height = unscaledCropBounds.height;
+    ctx.putImageData(data, 0,0);
+
+    return this.loadUrl(canvas.toDataURL(), false);
+  }
 }
 
 class PathPoint {
