@@ -198,7 +198,7 @@ export default class Browser extends Window {
     var ed = this.ui.sourceEditor
     if (!ed.plugins.length)
       ed.addPlugin(new JavaScriptEditorPlugin(config.codeEditor.defaultTheme));
-      
+
     if (this._serializedState) {
       var s = this._serializedState;
       delete this._serializedState;
@@ -286,7 +286,7 @@ export default class Browser extends Window {
 
             {name: "moduleCommands", bounds: moduleCommandBoxBounds,
              layout: new HorizontalLayout({spacing: 2, autoResize: false}),
-             borderRight: {color: Color.gray, width: 1}, 
+             borderRight: {color: Color.gray, width: 1},
              fill: Color.transparent,
               submorphs: [
                {...btnDarkStyle, name: "addModuleButton", label: Icon.makeLabel("plus"), tooltip: "add module"},
@@ -375,7 +375,7 @@ export default class Browser extends Window {
 
   relayout() {
     if (this._inLayout) return;
-    
+
     this._inLayout = true;
 
     var {
@@ -660,7 +660,7 @@ export default class Browser extends Window {
                 package: p ? p.url : null,
               }
             }
-        list.addItem(item);  
+        list.addItem(item);
         m = list.selection = item.value;
       }
     }
@@ -877,40 +877,45 @@ export default class Browser extends Window {
   }
 
   async save() {
-    var module = this.get("moduleList").selection;
+    let {ui: {moduleList, sourceEditor}, state} = this,
+        module = this.ui.moduleList.selection;
+
     if (!module) return this.setStatusMessage("Cannot save, no module selected", Color.red);
 
-    var content = this.get("sourceEditor").textString,
+    let content = this.ui.sourceEditor.textString,
         system = await this.systemInterface();
 
     // moduleChangeWarning is set when this browser gets notified that the
     // current module was changed elsewhere (onModuleChanged) and it also has
     // unsaved changes
-    if (this.state.sourceHash !== string.hashCode(content)
-     && this.state.moduleChangeWarning && this.state.moduleChangeWarning === module.name) {
-      var really = await this.world().confirm(
+    if (state.sourceHash !== string.hashCode(content)
+     && state.moduleChangeWarning && state.moduleChangeWarning === module.name) {
+      let really = await this.world().confirm(
         `The module ${module.name} you are trying to save changed elsewhere!\nOverwrite those changes?`);
       if (!really) {
         this.setStatusMessage("Save canceled");
         return;
       }
-      this.state.moduleChangeWarning = null;
+      state.moduleChangeWarning = null;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // FIXME!!!!!! redundant with module load / prepare "mode" code!
-    var format = (await system.moduleFormat(module.name)) || "esm",
+    let format = (await system.moduleFormat(module.name)) || "esm",
         [_, ext] = module.name.match(/\.([^\.]+)$/) || [];
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    this.state.isSaving = true;
+    state.isSaving = true;
     try {
       // deal with non-js code, this needs to be cleaned up as well!
       if (ext !== "js") {
-        await system.coreInterface.resourceWrite(module.name, content);
-        if (arr.last(module.name.split("/")) === "package.json") {
+        if (module.nameInPackage === "package.json") {
           await system.packageConfChange(content, module.name);
           this.setStatusMessage("updated package config", Color.green);
+
+        } else {
+          await system.coreInterface.resourceWrite(module.name, content);
+          this.setStatusMessage(`saved ${module.nameInPackage}`, Color.green);
         }
 
       // js save
@@ -977,7 +982,7 @@ export default class Browser extends Window {
   }
 
   historyGetLocation() {
-    var ed = this.get("sourceEditor");
+    var ed = this.ui.sourceEditor;
     return {
       package: this.selectedPackage,
       module: this.selectedModule,

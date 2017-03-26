@@ -1018,7 +1018,7 @@ export class World extends Morph {
         if (upload) {
           let uploadedMorph = await uploadFile(f, item.type);
           uploadedMorph && uploadedMorph.openInWorld();
-          // inspect({item, file: f});
+          inspect({item, file: f});
         }
       } else if (item.kind === "string") {
         item.getAsString((s) => inspect(s))
