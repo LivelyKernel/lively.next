@@ -16,11 +16,13 @@ export async function exec(cmdString, opts) {
       stdout: stdout };
     opts.log.push(cmd.output);
   } else {
-    var cmd = lively.shell.run(cmdString, {cwd: opts.cwd});
+    let { runCommand } = await System.import("lively.morphic/ide/shell/shell-interface.js");
+    var cmd = await runCommand(cmdString, {cwd: opts.cwd});
     if (opts.log) {
-      lively.bindings.connect(cmd, 'stdout', opts.log, 'push', {updater: function ($upd, x) { return $upd(this.targetObj, x); }});
-      lively.bindings.connect(cmd, 'stderr', opts.log, 'push', {updater: function ($upd, x) { return $upd(this.targetObj, x); }});
+      cmd.on("stdout", out => opts.log.push(out));
+      cmd.on("stderr", out => opts.log.push(out));
     }
+    await cmd.whenDone();
   }
   return cmd;
 }
