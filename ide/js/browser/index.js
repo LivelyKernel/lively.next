@@ -98,8 +98,7 @@ export default class Browser extends Window {
       runTestsInModuleButton,
       runTestsInPackageButton,
       codeEntityJumpButton,
-      codeEntityTree,
-      evalBackendList
+      codeEntityTree
     } = this.ui;
 
     connect(searchButton,          'fire', this, 'execCommand', {converter: () => "open code search"});
@@ -119,8 +118,6 @@ export default class Browser extends Window {
     connect(codeEntityTree, 'selection', this, 'onCodeEntitySelected');
 
     connect(sourceEditor, "textChange", this, "updateUnsavedChangeIndicatorDebounced");
-    connect(evalBackendList, 'width', this, 'relayout');
-    connect(sourceEditor, 'doSave', this, 'save');
 
     moduleList.selection = null;
     moduleList.items = [];
@@ -285,8 +282,8 @@ export default class Browser extends Window {
              bounds: codeEntityTreeBounds, ...style}),
 
             {name: "moduleCommands", bounds: moduleCommandBoxBounds,
-             layout: new HorizontalLayout({spacing: 2, autoResize: false}),
-             borderRight: {color: Color.gray, width: 1},
+             layout: new HorizontalLayout({spacing: 2, autoResize: false, direction: "rightToLeft"}),
+             borderRight: {color: Color.gray, width: 1}, 
              fill: Color.transparent,
               submorphs: [
                {...btnDarkStyle, name: "addModuleButton", label: Icon.makeLabel("plus"), tooltip: "add module"},
@@ -295,7 +292,7 @@ export default class Browser extends Window {
              ]},
 
              {name: "codeEntityCommands", bounds: codeEntityCommandBoxBounds,
-              layout: new HorizontalLayout({spacing: 2, autoResize: false}),
+              layout: new HorizontalLayout({spacing: 2, autoResize: false, direction: "rightToLeft"}),
               fill: Color.transparent,
               submorphs: [
                {...btnDarkStyle, name: "codeEntityJumpButton", label: Icon.makeLabel("search"), tooltip: "search for code entity"},
@@ -352,7 +349,6 @@ export default class Browser extends Window {
         codeEntityTree =     container.getSubmorphNamed("codeEntityTree"),
         sourceEditor =       container.getSubmorphNamed("sourceEditor"),
         metaInfoText =       container.getSubmorphNamed("metaInfoText"),
-        evalBackendList =    container.getSubmorphNamed('eval backend list'),
         l =                  browserCommands.layout;
     l.col(2).fixed = 100; l.row(0).paddingTop = 1; l.row(0).paddingBottom = 1;
 
@@ -362,6 +358,8 @@ export default class Browser extends Window {
     hresizer.addFixed(codeEntityCommands);
     hresizer.addFixed(metaInfoText);
     hresizer.addScalingBelow(sourceEditor);
+
+    connect(sourceEditor, 'doSave', this, 'save');
 
     this._inLayout = false;
 
@@ -865,7 +863,7 @@ export default class Browser extends Window {
   }
 
   updateTestUI(mod) {
-    var { runTestsInModuleButton, sourceEditor } = this.ui,
+    var { runTestsInModuleButton, sourceEditor, moduleCommands } = this.ui,
         hasTests = false;
     if (this.editorPlugin.isJSEditorPlugin) {
       var ast = this.editorPlugin.getNavigator().ensureAST(sourceEditor),
@@ -873,7 +871,8 @@ export default class Browser extends Window {
       hasTests = tests && tests.length;
     }
 
-    runTestsInModuleButton.visible = hasTests;
+    runTestsInModuleButton.visible = runTestsInModuleButton.isLayoutable = hasTests;
+    moduleCommands.layout.apply();
   }
 
   async save() {
