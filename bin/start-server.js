@@ -31,6 +31,7 @@ lively.modules.registerPackage(".")
   // 1. This loads the lively system
   .then(() => System.import("lively.resources"))
   .then(resources => resources.ensureFetch())
+  .then(() => System.import("lively.storage"))
   .then(() => lively.modules.importPackage("lively-system-interface"))
 
   // 2. this loads and starts the server
