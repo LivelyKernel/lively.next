@@ -226,12 +226,12 @@ class AttributeConnection {
           // the new value
           let args = [arg1, arg2, arg3, arg4, arg5, arg6];
           if (converter) {
-            newValue = converter.call(connection, newValue, oldValue);
-            args[0] = newValue;
+            newValue = converter.call(connection, arg1, arg2);
+            arg1 = args[0] = newValue;
           }
           let result = (typeof targetMethod === 'function') ?
             targetMethod.apply(target, args) :
-            target[propName] = newValue;
+            target[propName] = arg1;
           if (connection.removeAfterUpdate) connection.disconnect();
           return result;
         };
