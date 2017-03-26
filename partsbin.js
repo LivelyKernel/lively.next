@@ -28,7 +28,6 @@ export async function saveObjectToPartsbinFolder(obj, partName, options = {}) {
     var win = obj.getWindow();
     obj = win && win.targetMorph === obj ? win : obj;
   }
-
   try {
     if (obj.isMorph) {
       obj.withAllSubmorphsDo(ea => {
@@ -44,13 +43,10 @@ export async function saveObjectToPartsbinFolder(obj, partName, options = {}) {
     if (typeof obj.world === "function" && obj.world()) obj.world().logError(new Error(msg));
     else console.error(msg);
   }
-
   await resource(options.partsbinFolder).ensureExistance();
   let partResource = resource(options.partsbinFolder).join(partName + ".json"),
-      snapshot = await createMorphSnapshot(obj);
-
+      snapshot = await createMorphSnapshot(obj, options);
   await partResource.write(JSON.stringify(snapshot, null, 2))
-
   return {partName, url: partResource.url}
 }
 
