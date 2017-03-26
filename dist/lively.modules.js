@@ -23902,8 +23902,9 @@ function setSuperclass(klass, superclassOrSpec) {
   if (!existingSuperclass || existingSuperclass !== superclass) {
     ensureInitializeStub(superclass);
     klass[superclassSymbol] = superclass;
-    klass.prototype = Object.create(superclass.prototype);
-    klass.prototype.constructor = klass;
+    setPrototypeOf(klass.prototype, superclass.prototype);
+    // klass.prototype = Object.create(superclass.prototype);
+    // klass.prototype.constructor = klass;
     if (superclass !== Object) setPrototypeOf(klass, superclass);
   }
   return superclass;
@@ -27943,6 +27944,41 @@ var Resource$$1 = function () {
 
       return readProperties;
     }()
+  }, {
+    key: "writeJson",
+    value: function writeJson(obj) {
+      return this.write(JSON.stringify(obj));
+    }
+  }, {
+    key: "readJson",
+    value: function () {
+      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(obj) {
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+          while (1) {
+            switch (_context10.prev = _context10.next) {
+              case 0:
+                _context10.t0 = JSON;
+                _context10.next = 3;
+                return this.read();
+
+              case 3:
+                _context10.t1 = _context10.sent;
+                return _context10.abrupt("return", _context10.t0.parse.call(_context10.t0, _context10.t1));
+
+              case 5:
+              case "end":
+                return _context10.stop();
+            }
+          }
+        }, _callee10, this);
+      }));
+
+      function readJson(_x8) {
+        return _ref10.apply(this, arguments);
+      }
+
+      return readJson;
+    }()
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // serialization
@@ -29296,8 +29332,11 @@ var resourceExtension$2 = {
 };
 
 /*global System*/
-// var extensions = []
-var extensions = []; // [{name, matches, resourceClass}]
+var extensions = extensions || []; // [{name, matches, resourceClass}]
+
+registerExtension(resourceExtension$2);
+registerExtension(resourceExtension);
+registerExtension(resourceExtension$1);
 
 function resource(url, opts) {
   if (!url) throw new Error("lively.resource resource constructor: expects url but got " + url);
@@ -29381,8 +29420,6 @@ var createFiles = function () {
 }();
 
 function loadViaScript(url, onLoadCb) {
-  var _this = this;
-
   // load JS code by inserting a <script src="..." /> tag into the
   // DOM. This allows cross domain script loading and JSONP
 
@@ -29404,7 +29441,7 @@ function loadViaScript(url, onLoadCb) {
     parentNode.appendChild(script);
     script.setAttributeNS(null, 'id', url);
 
-    script.namespaceURI === SVGNamespace ? script.setAttributeNS(_this.XLINKNamespace, 'href', url) : script.setAttribute('src', url);
+    script.namespaceURI === SVGNamespace ? script.setAttributeNS(XLINKNamespace, 'href', url) : script.setAttribute('src', url);
 
     script.onload = resolve;
     script.onerror = reject;
@@ -29486,10 +29523,6 @@ function unregisterExtension(extension) {
     return ea.name !== name;
   });
 }
-
-registerExtension(resourceExtension$2);
-registerExtension(resourceExtension);
-registerExtension(resourceExtension$1);
 
 exports.resource = resource;
 exports.createFiles = createFiles;
@@ -63334,7 +63367,7 @@ function extend() {
     GLOBAL.atob = function(str) { return new Buffer(str, 'base64').toString() };
   (function() {
     this.lively = this.lively || {};
-this.lively.storage = (function (_PouchDB,pouchdbAdapterMem) {
+(function (exports,_PouchDB,pouchdbAdapterMem,lively_resources) {
 'use strict';
 
 _PouchDB = 'default' in _PouchDB ? _PouchDB['default'] : _PouchDB;
@@ -63452,6 +63485,21 @@ var get$1 = function get$1(object, property, receiver) {
   }
 };
 
+var inherits = function (subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+  }
+
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+};
 
 
 
@@ -63463,8 +63511,13 @@ var get$1 = function get$1(object, property, receiver) {
 
 
 
+var possibleConstructorReturn = function (self, call) {
+  if (!self) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
 
-
+  return call && (typeof call === "object" || typeof call === "function") ? call : self;
+};
 
 
 
@@ -63490,10 +63543,8 @@ var set$1 = function set$1(object, property, value, receiver) {
   return value;
 };
 
-// await System.normalize("pouchdb-adapter-mem", "http://localhost:9011/lively.storage")
-// await System.normalize("pouchdb", "http://localhost:9011/lively.storage")
-// await System.normalize("pouchdb", "file:///Users/robert/Lively/lively-dev2/lively.server/node_modules/lively.modules/node_modules/lively.storage/index.js")
-
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// PouchDB setup
 
 var GLOBAL = typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : undefined;
 
@@ -63565,7 +63616,7 @@ function nodejs_attemptToLoadProperPouchDB() {
       PouchDB.plugin(pouchdbAdapterMem);
       return true;
     } catch (e) {
-      console.error(e);
+      return false;
     }
   }
 
@@ -63573,7 +63624,9 @@ function nodejs_attemptToLoadProperPouchDB() {
     PouchDB = require("pouchdb");
     PouchDB.plugin(pouchdbAdapterMem);
     return true;
-  } catch (err) {}
+  } catch (err) {
+    return false;
+  }
 }
 
 // var pouch = createPouchDB("test-db"); pouch.adapter;
@@ -63589,13 +63642,17 @@ var createPouchDB = !isNode ? function (name, options) {
       properLoadAttempted = true;
       nodejsCouchDBLoaded = nodejs_attemptToLoadProperPouchDB();
     }
-    var adapter = options.adapter || (nodejsCouchDBLoaded ? "leveldb" : "memory");
-    options = _extends({ adapter: adapter }, options);
+    if (!options.adapter) {
+      options.adapter = name.startsWith("http") ? "http" : nodejsCouchDBLoaded ? "leveldb" : "memory";
+    }
     if (options.adapter == "leveldb") name = nodejs_leveldbPath(name);
     options = _extends({}, options, { name: name });
     return new PouchDB(options);
   };
 }();
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// main database interface
 
 var Database = function () {
   createClass(Database, null, [{
@@ -64446,9 +64503,475 @@ var Database = function () {
   return Database;
 }();
 
-return Database;
+var debug = false;
+var slashRe = /\//g;
 
-}(PouchDB,pouchdbAdapterMem));
+function applyExclude(resource, exclude) {
+  if (!exclude) return true;
+  if (typeof exclude === "string") return !resource.url.includes(exclude);
+  if (typeof exclude === "function") return !exclude(resource);
+  if (exclude instanceof RegExp) return !exclude.test(resource.url);
+  return true;
+}
+
+// await StorageDatabase.databases.get("lively.storage-worlds").destroy()
+var StorageDatabase = function (_Database) {
+  inherits(StorageDatabase, _Database);
+
+  function StorageDatabase() {
+    classCallCheck(this, StorageDatabase);
+    return possibleConstructorReturn(this, (StorageDatabase.__proto__ || Object.getPrototypeOf(StorageDatabase)).apply(this, arguments));
+  }
+
+  createClass(StorageDatabase, null, [{
+    key: "ensureDB",
+    value: function ensureDB(name, options) {
+      return get$1(StorageDatabase.__proto__ || Object.getPrototypeOf(StorageDatabase), "ensureDB", this).call(this, "lively.storage-" + name, options);
+    }
+  }]);
+  return StorageDatabase;
+}(Database);
+
+var LivelyStorageResource = function (_Resource) {
+  inherits(LivelyStorageResource, _Resource);
+
+  function LivelyStorageResource() {
+    classCallCheck(this, LivelyStorageResource);
+    return possibleConstructorReturn(this, (LivelyStorageResource.__proto__ || Object.getPrototypeOf(LivelyStorageResource)).apply(this, arguments));
+  }
+
+  createClass(LivelyStorageResource, [{
+    key: "read",
+    value: function () {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+        var file, content;
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                debug && console.log("[" + this + "] read");
+                _context.next = 3;
+                return this.db.get(this.path());
+
+              case 3:
+                file = _context.sent;
+                content = file && file.content;
+                return _context.abrupt("return", !content ? "" : typeof content === "string" ? content : JSON.stringify(content));
+
+              case 6:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function read() {
+        return _ref.apply(this, arguments);
+      }
+
+      return read;
+    }()
+  }, {
+    key: "readJson",
+    value: function () {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+        var content;
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                _context2.next = 2;
+                return this.read();
+
+              case 2:
+                content = _context2.sent;
+                return _context2.abrupt("return", typeof content === "string" ? JSON.parse(content) : content);
+
+              case 4:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function readJson() {
+        return _ref2.apply(this, arguments);
+      }
+
+      return readJson;
+    }()
+  }, {
+    key: "write",
+    value: function () {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(content) {
+        var _this3 = this;
+
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                debug && console.log("[" + this + "] write");
+                if (!content) content = "";
+
+                if (!this.isDirectory()) {
+                  _context3.next = 4;
+                  break;
+                }
+
+                throw new Error("Cannot write into a directory! (" + this.url + ")");
+
+              case 4:
+                _context3.next = 6;
+                return this.db.update(this.path(), function (spec) {
+                  if (spec && spec.isDirectory) throw new Error(_this3.url + " already exists and is a directory (cannot write into it!)");
+                  var t = Date.now();
+                  if (!spec) {
+                    return {
+                      etag: undefined,
+                      type: undefined,
+                      contentType: undefined,
+                      user: undefined,
+                      group: undefined,
+                      mode: undefined,
+                      lastModified: t,
+                      created: t,
+                      size: typeof content === "string" ? content.length : 0,
+                      content: content
+                    };
+                  }
+
+                  return _extends({}, spec, {
+                    lastModified: t,
+                    size: content.length,
+                    content: content
+                  });
+                });
+
+              case 6:
+                return _context3.abrupt("return", this);
+
+              case 7:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function write(_x) {
+        return _ref3.apply(this, arguments);
+      }
+
+      return write;
+    }()
+  }, {
+    key: "writeJson",
+    value: function writeJson(obj) {
+      return this.write(obj);
+    }
+  }, {
+    key: "mkdir",
+    value: function () {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
+        var spec, t;
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                debug && console.log("[" + this + "] mkdir");
+
+                if (this.isDirectory()) {
+                  _context4.next = 3;
+                  break;
+                }
+
+                throw new Error("Cannot mkdir a file! (" + this.url + ")");
+
+              case 3:
+                _context4.next = 5;
+                return this.db.get(this.path());
+
+              case 5:
+                spec = _context4.sent;
+
+                if (!spec) {
+                  _context4.next = 10;
+                  break;
+                }
+
+                if (spec.isDirectory) {
+                  _context4.next = 9;
+                  break;
+                }
+
+                throw new Error(this.url + " already exists and is a file (cannot mkdir it!)");
+
+              case 9:
+                return _context4.abrupt("return", this);
+
+              case 10:
+                t = Date.now();
+                _context4.next = 13;
+                return this.db.set(this.path(), {
+                  etag: undefined,
+                  type: undefined,
+                  contentType: undefined,
+                  user: undefined,
+                  group: undefined,
+                  mode: undefined,
+                  lastModified: t,
+                  created: t,
+                  isDirectory: true
+                });
+
+              case 13:
+                return _context4.abrupt("return", this);
+
+              case 14:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+
+      function mkdir() {
+        return _ref4.apply(this, arguments);
+      }
+
+      return mkdir;
+    }()
+  }, {
+    key: "exists",
+    value: function () {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                debug && console.log("[" + this + "] exists");
+                _context5.t0 = this.isRoot();
+
+                if (_context5.t0) {
+                  _context5.next = 6;
+                  break;
+                }
+
+                _context5.next = 5;
+                return this.db.get(this.path());
+
+              case 5:
+                _context5.t0 = !!_context5.sent;
+
+              case 6:
+                return _context5.abrupt("return", _context5.t0);
+
+              case 7:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+
+      function exists() {
+        return _ref5.apply(this, arguments);
+      }
+
+      return exists;
+    }()
+  }, {
+    key: "remove",
+    value: function () {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
+        var thisPath, db, matching;
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                debug && console.log("[" + this + "] remove");
+                thisPath = this.path();
+                db = this.db;
+                _context6.next = 5;
+                return db.docList({ startkey: thisPath, endkey: thisPath + "\uFFFF" });
+
+              case 5:
+                matching = _context6.sent;
+                _context6.next = 8;
+                return db.setDocuments(matching.map(function (_ref7) {
+                  var _id = _ref7.id,
+                      _rev = _ref7.rev;
+                  return { _id: _id, _rev: _rev, _deleted: true };
+                }));
+
+              case 8:
+                return _context6.abrupt("return", this);
+
+              case 9:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, this);
+      }));
+
+      function remove() {
+        return _ref6.apply(this, arguments);
+      }
+
+      return remove;
+    }()
+  }, {
+    key: "readProperties",
+    value: function readProperties() {
+      debug && console.log("[" + this + "] readProperties");
+      return this.db.get(this.path());
+    }
+  }, {
+    key: "dirList",
+    value: function () {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
+        var _this4 = this;
+
+        var depth = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+        var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+        var exclude, prefix, children, docs, i, doc, path, isDirectory, trailing, childDepth, _ret, child, propNames, props, _i;
+
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+                debug && console.log("[" + this + "] dirList");
+
+                if (this.isDirectory()) {
+                  _context7.next = 3;
+                  break;
+                }
+
+                return _context7.abrupt("return", this.asDirectory().dirList(depth, opts));
+
+              case 3:
+                exclude = opts.exclude;
+                prefix = this.path();
+                children = [];
+                _context7.next = 8;
+                return this.db.getAll({ startkey: prefix, endkey: prefix + "\uFFFF" });
+
+              case 8:
+                docs = _context7.sent;
+
+
+                if (depth === "infinity") depth = Infinity;
+
+                i = 0;
+
+              case 11:
+                if (!(i < docs.length)) {
+                  _context7.next = 29;
+                  break;
+                }
+
+                doc = docs[i], path = doc._id, isDirectory = doc.isDirectory;
+
+                if (!(!path.startsWith(prefix) || prefix === path)) {
+                  _context7.next = 15;
+                  break;
+                }
+
+                return _context7.abrupt("continue", 26);
+
+              case 15:
+                trailing = path.slice(prefix.length), childDepth = trailing.includes("/") ? trailing.match(slashRe).length + 1 : 1;
+
+                if (!(childDepth > depth)) {
+                  _context7.next = 20;
+                  break;
+                }
+
+                _ret = function () {
+                  // add the dirs pointing to child
+                  var dirToChild = _this4.join(trailing.split("/").slice(0, depth).join("/") + "/");
+                  if (!children.some(function (ea) {
+                    return ea.equals(dirToChild);
+                  })) children.push(dirToChild);
+                  return "continue";
+                }();
+
+                if (!(_ret === "continue")) {
+                  _context7.next = 20;
+                  break;
+                }
+
+                return _context7.abrupt("continue", 26);
+
+              case 20:
+                child = this.join(trailing);
+
+                if (!(exclude && !applyExclude(child, exclude))) {
+                  _context7.next = 23;
+                  break;
+                }
+
+                return _context7.abrupt("continue", 26);
+
+              case 23:
+                children.push(child);
+                propNames = ["created", "lastModified", "mode", "group", "user", "contentType", "type", "etag", "size"], props = {};
+
+                for (_i = 0; _i < propNames.length; _i++) {
+                  child[propNames[_i]] = doc[propNames[_i]];
+                }
+
+              case 26:
+                i++;
+                _context7.next = 11;
+                break;
+
+              case 29:
+                return _context7.abrupt("return", children);
+
+              case 30:
+              case "end":
+                return _context7.stop();
+            }
+          }
+        }, _callee7, this);
+      }));
+
+      function dirList() {
+        return _ref8.apply(this, arguments);
+      }
+
+      return dirList;
+    }()
+  }, {
+    key: "db",
+    get: function get() {
+      return this._db || (this._db = StorageDatabase.ensureDB(this.host()));
+    }
+  }]);
+  return LivelyStorageResource;
+}(lively_resources.Resource);
+
+var resourceExtension = {
+  name: "lively.storage",
+  matches: function matches(url) {
+    return url.startsWith("lively.storage:");
+  },
+  resourceClass: LivelyStorageResource
+};
+
+// will install resource extension:
+lively_resources.registerExtension(resourceExtension);
+
+// to trigger resource extension
+
+exports.Database = Database;
+
+}((this.lively.storage = this.lively.storage || {}),PouchDB,pouchdbAdapterMem,lively.resources));
 
   }).call(GLOBAL);
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.storage;
