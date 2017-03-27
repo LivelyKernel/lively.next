@@ -43,36 +43,25 @@ export default class Window extends Morph {
           if (morph) this.addMorph(morph, ctrls[0]);
           this.whenRendered().then(() => this.relayoutWindowControls());
         }
-      }
+      },
+
+      nonMinizedBounds: {},
+      nonMaximizedBounds: {},
+      minimizedBounds: {}
 
     }
   }
 
   constructor(props = {}) {
     super(props);
-    this.resetPropertyCache();
     this.relayoutWindowControls();
     connect(this, "extent", this, "relayoutWindowControls");
     connect(this.titleLabel(), "value", this, "relayoutWindowControls");
   }
 
-  __deserialize__(snapshot, ref) {
-    super.__deserialize__(snapshot, ref)
-    this.resetPropertyCache();
-  }
-
   get isWindow() { return true }
 
   targetMorphBounds() { return new Rectangle(0, 25, this.width, this.height - 25); }
-
-  resetPropertyCache() {
-    // For remembering the position and extents of the window states
-    this.propertyCache = {
-      nonMinizedBounds: null,
-      nonMaximizedBounds: null,
-      minimizedBounds: null
-    };
-  }
 
   relayoutWindowControls() {
     var innerB = this.innerBounds(),
@@ -187,40 +176,40 @@ export default class Window extends Morph {
   }
 
   toggleMinimize() {
-    let {propertyCache: cache, minimized, width} = this,
+    let {nonMinizedBounds, minimized, width} = this,
         bounds = this.bounds(),
         duration = 200,
         collapseButton = this.getSubmorphNamed("minimize"),
         easing = Expo.easeOut;
+
     if (minimized) {
-      cache.minimizedBounds = bounds;
-      this.animate({bounds: cache.nonMinizedBounds || bounds, duration, easing});
+      this.minimizedBounds = bounds;
+      this.animate({bounds: nonMinizedBounds || bounds, duration, easing});
       collapseButton.tooltip = "collapse window";
     } else {
-      cache.nonMinizedBounds = bounds;
-      var minimizedBounds = cache.minimizedBounds || bounds.withExtent(pt(width, 25)),
+      this.nonMinizedBounds = bounds;
+      var minimizedBounds = this.minimizedBounds || bounds.withExtent(pt(width, 25)),
           labelBounds = this.titleLabel().textBounds(),
           buttonOffset = arr.last(this.buttons()).bounds().right() + 3;
       if (labelBounds.width + 2*buttonOffset < minimizedBounds.width)
         minimizedBounds = minimizedBounds.withWidth(labelBounds.width + buttonOffset + 3);
-      cache.minimizedBounds = minimizedBounds;
+      this.minimizedBounds = minimizedBounds;
       collapseButton.tooltip = "uncollapse window";
-      this.animate({bounds: cache.minimizedBounds, duration, easing});
+      this.animate({bounds: minimizedBounds, duration, easing});
     }
     this.minimized = !minimized;
     this.resizer().visible = !this.minimized;
   }
 
   toggleMaximize() {
-    var cache = this.propertyCache,
-        easing = Expo.easeOut,
+    var easing = Expo.easeOut,
         duration = 200;
     if (this.maximized) {
-      this.animate({bounds: cache.nonMaximizedBounds, duration, easing});
+      this.animate({bounds: this.nonMaximizedBounds, duration, easing});
       this.resizer().bottomRight = this.extent;
       this.maximized = false;
     } else {
-      cache.nonMaximizedBounds = this.bounds();
+      this.nonMaximizedBounds = this.bounds();
       this.animate({bounds: this.world().visibleBounds().insetBy(5), duration, easing});
       this.resizer().visible = true;
       this.maximized = true;
