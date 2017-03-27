@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "dependencies": {
     "lively.resources": "*",
+    "lively.storage": "*",      
     "lively.lang": "*",
     "socket.io-client": "^1.5.1",
     "lively.user": "git://github.com/LivelyKernel/lively.user.git"
@@ -25,6 +26,8 @@
   "lively": {
     "packageMap": {
       "lively.user": "./node_modules/lively.user",
+      "lively.lang": "./node_modules/lively.lang",
+      "lively.storage": "./node_modules/lively.storage",
       "lively.server": "./node_modules/lively.server",
       "socket.io-client": "./node_modules/socket.io-client",
       "mocha-es6": "./node_modules/mocha-es6"

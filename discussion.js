@@ -1,7 +1,6 @@
 import Database from "lively.storage";
 import {date, arr, obj} from 'lively.lang';
 import { hashCode } from "lively.lang/string.js";
-import { signal } from 'lively.bindings';
 import { newUUID } from "lively.lang/string.js";
 
 let dbOpts = (function() {
