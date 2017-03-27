@@ -54,12 +54,17 @@ export function guessTextModeName(editor, filename = "", hint) {
 export default class EditorPlugin {
 
   constructor(theme = "chrome") {
-    this.theme = typeof theme === "string" ? new themes[theme]() : theme;
+    this.theme = theme;
     this._ast = null;
     this._tokens = [];
   }
 
   get isEditorPlugin() { return true }
+
+  get theme() { return this._theme }
+  set theme(t) {
+    this._theme = typeof t === "string" ? new themes[t]() : t;
+  }
 
   attach(editor) {
     this.textMorph = editor;
