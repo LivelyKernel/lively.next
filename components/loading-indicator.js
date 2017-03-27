@@ -30,7 +30,7 @@ export default class LoadingIndicator extends Morph {
 
   static get properties() {
     return {
-      fill:       {defaultValue: Color.rgbHex("#555").withA(.9)},
+      fill:       {defaultValue: Color.black.withA(.6)},
       fontSize:   {defaultValue: 16},
       fontFamily: {defaultValue: "Arial"},
       name:       {defaultValue: "LoadingIndicator"},
