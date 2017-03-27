@@ -57,7 +57,7 @@ export class ColorPickerField extends Morph {
          onHoverIn() { this.fill = Color.black.withA(.2); },
          onHoverOut() { this.fill = Color.transparent; },
          submorphs: [{
-          type: "image", imageUrl: WHEEL_URL, extent: pt(20,20), nativeCursor: "pointer",
+          type: "image", autoResize: false, imageUrl: WHEEL_URL, extent: pt(20,20), nativeCursor: "pointer",
           fill: Color.transparent, position: pt(3,3), onMouseDown: (evt) => this.openPicker(evt)}]}];
       this.update();
       connect(this.target, "onChange", this, "update");
@@ -252,16 +252,12 @@ export class ColorPicker extends Window {
     return {
        name: "alphaSlider",
        fill: Color.transparent, layout: new HorizontalLayout({spacing: 3}),
-       update(colorPicker) {
-          this.get("alphaDisplay").value = (colorPicker.color.a * 100).toFixed();
-       },
        submorphs: [
         {type: "label", padding: Rectangle.inset(3), value: "Alpha", fontColor: Color.gray, fontWeight: 'bold'},
         new Slider({
              target: this, min: 0, max: 1,
              property: "alpha", width: 170
-      }), {type: "label", padding: Rectangle.inset(3), value: (this.alpha * 100).toFixed(),
-           fontSize: 12, fontColor: Color.gray, name: "alphaDisplay"}]
+      })]
     }
   }
 
