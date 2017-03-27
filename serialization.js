@@ -52,12 +52,14 @@ export async function saveWorldToResource(world = World.defaultWorld(), toResour
   // pretty printing bloats 2x!
   let i;
   if (showIndicator) {
-    i = LoadingIndicator.open(typeof showIndicator === "string" ? showIndicator : "Saving world");
-    await promise.delay(10);
+    i = LoadingIndicator.open(typeof showIndicator === "string" ? showIndicator : "Snapshotting...");
+    await i.whenRendered(); await promise.delay(100);
   }
 
   try {
     let snap = await createMorphSnapshot(world, options);
+    i.label = "Uploading..."
+    await i.whenRendered();
     return toResource.writeJson(snap);
   } finally { i && i.remove() }
 }
