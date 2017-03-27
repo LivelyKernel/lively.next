@@ -1,0 +1,22 @@
+{
+  "name": "lively.git",
+  "version": "1.0.0",
+  "description": "git in your Lively!",
+  "author": "Robert Krahn <robert.krahn@gmail.com>",
+  "license": "MIT",
+  "main": "index.js",
+  "systemjs": {},
+  "lively": {},
+  "scripts": {
+    "build": "tools/build.js"
+  },
+  "devDependencies": {
+    "browserify": "^13.0.1",
+    "minimist": "^1.2.0",
+    "bodec": "^1.1.0",
+    "js-git": "^0.7.7",
+    "js-github": "^1.0.0"
+  },
+  "dependencies": {
+  }
+}
