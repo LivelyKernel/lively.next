@@ -90,5 +90,9 @@
   {
     "name": "lively.user",
     "repoURL": "https://github.com/LivelyKernel/lively.user"
+  },
+  {
+    "name": "lively.git",
+    "repoURL": "https://github.com/LivelyKernel/lively.js-git"
   }
 ]
