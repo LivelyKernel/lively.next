@@ -56,7 +56,9 @@ export class JavaScriptEditorPlugin extends EditorPlugin {
     let textMorph = this.textMorph;
 
     if (!this.theme || !textMorph || !textMorph.document) return;
-
+    
+    textMorph.fill = this.theme.background();
+    
     let tokens = this._tokens = this.highlighter.tokenize(textMorph.textString);
     textMorph.setSortedTextAttributes(
       [textMorph.defaultTextStyleAttribute].concat(tokens.map(({token, start, end}) =>
