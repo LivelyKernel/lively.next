@@ -94,5 +94,9 @@
   {
     "name": "lively.git",
     "repoURL": "https://github.com/LivelyKernel/lively.js-git"
+  },
+  {
+    "name": "lively.traits",
+    "repoURL": "https://github.com/LivelyKernel/lively.traits"
   }
 ]
