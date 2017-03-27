@@ -1,4 +1,4 @@
-import Database from "lively.storage";
+import { Database } from "lively.storage";
 import {date, arr, obj} from 'lively.lang';
 import { hashCode } from "lively.lang/string.js";
 import { newUUID } from "lively.lang/string.js";
