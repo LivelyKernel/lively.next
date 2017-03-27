@@ -1,4 +1,4 @@
-import { Morph, GridLayout, Text, StyleRules, Label, Button } from "lively.morphic";
+import { Morph, GridLayout, Text, StyleRules, Label, Button, morph } from "lively.morphic";
 import { pt, LinearGradient, Color, Rectangle, rect } from "lively.graphics";
 import { arr, Path, string, obj } from "lively.lang";
 import { signal, once } from "lively.bindings";
@@ -628,9 +628,15 @@ export class FilterableList extends Morph {
               fixedHeight: false,
               autofit: false
             }),
+            new morph({name: 'padding', fill: Color.transparent, height: 5}),
             new List({name: "list", items: [], clipMode: "auto"})
           ]
         }
+      },
+
+      paddingMorph: {
+        defived: true, readOnly: true, after: ['submorphs'],
+        get() { return this.getSubmorphNamed('padding') }
       },
 
       listMorph: {
@@ -846,10 +852,11 @@ export class FilterableList extends Morph {
   get isList() { return true; }
 
   relayout() {
-    let {listMorph, inputMorph, borderWidth: offset} = this;
+    let {listMorph, inputMorph, paddingMorph, borderWidth: offset} = this;
     inputMorph.topLeft = pt(offset, offset);
     inputMorph.width = listMorph.width = this.width - 2*offset;
-    listMorph.topLeft = inputMorph.bottomLeft;
+    if (paddingMorph) paddingMorph.topLeft = inputMorph.bottomLeft;
+    listMorph.topLeft = paddingMorph ? paddingMorph.bottomLeft : inputMorph.bottomLeft;
     listMorph.height = this.height -listMorph.top - offset;
   }
 
