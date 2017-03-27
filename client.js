@@ -191,7 +191,7 @@ export default class L2LClient extends L2LConnection {
 
       this.trackerId = trackerId;
 
-      var response = await this.sendToAndWait(this.trackerId,'newUser',{})
+      var response = await this.sendToAndWait(this.trackerId,'userInfo',{})
       if (!response.data)
         throw new Error(`User answer is empty!`);
       this.user = response.data
@@ -232,7 +232,7 @@ export default class L2LClient extends L2LConnection {
   }
 
   async authenticate(options){    
-    var response = await this.sendToAndWait(this.trackerId,'newUser',options)
+    var response = await this.sendToAndWait(this.trackerId,'authenticateUser',options)
     if (!response.data)
       throw new Error(`User answer is empty!`);
     this.user = response.data    
