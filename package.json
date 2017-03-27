@@ -1,6 +1,10 @@
 {
   "name": "lively.git",
   "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LivelyKernel/lively.js-git"
+  },
   "description": "git in your Lively!",
   "author": "Robert Krahn <robert.krahn@gmail.com>",
   "license": "MIT",
