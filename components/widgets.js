@@ -4,6 +4,7 @@ import { signal, connect, disconnect } from "lively.bindings";
 import { Morph, Button, List, Text, GridLayout, HorizontalLayout,
          StyleRules, Path, Ellipse, config, Label, Tooltip, Icon } from "lively.morphic";
 import { intersect, shape } from 'svg-intersections';
+import { roundTo } from "lively.lang/number.js";
 
 export class Leash extends Path {
 
@@ -151,10 +152,23 @@ export class Slider extends Morph {
               }),
               {type: "ellipse", fill: Color.gray, name: "slideHandle",
                borderColor: Color.gray.darker(), borderWidth: 1, dropShadow: {blur: 5},
-               extent: pt(15,15), nativeCursor: "grab",
-               onDrag(evt) {
+               extent: pt(15,15), nativeCursor: "-webkit-grab",
+               getValue: () => {
+                 return roundTo(this.target[this.property], .01)
+               },
+               onDragStart(evt) {
+                  this.valueView = new Tooltip({description: this.getValue()})
+                                                 .openInWorld(evt.hand.position.addXY(10,10));
+               },
+               onDrag(evt) { 
                   slider.onSlide(this, evt.state.dragDelta);
-               }}
+                  this.valueView.description = this.getValue();
+                  this.valueView.position = evt.hand.position.addXY(10,10);
+               },
+               onDragEnd(evt) {
+                 this.valueView.remove();
+               }
+             }
          ];
          connect(this, "extent", this, "update");
          this.update();
@@ -166,7 +180,7 @@ export class Slider extends Morph {
 
     update() {
         const x = (this.width - 15) * this.normalize(this.target[this.property]);
-        this.get("slideHandle").center = pt(x + 7.5, 12);
+        this.get("slideHandle").center = pt(x + 7.5, 10);
     }
 
     onSlide(slideHandle, delta) {
