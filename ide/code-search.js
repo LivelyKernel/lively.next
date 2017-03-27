@@ -1,5 +1,5 @@
 import { fun, arr, obj, string } from 'lively.lang';
-import { pt, Color, Rectangle } from "lively.graphics";
+import { pt, LinearGradient, Color, Rectangle } from "lively.graphics";
 import { config, Text, show, Window } from '../index.js';
 import { FilterableList, List } from "lively.morphic/components/list.js";
 import { LabeledCheckBox } from "lively.morphic/components/widgets.js";
@@ -58,7 +58,7 @@ export class CodeSearcher extends FilterableList {
   static get properties() {
     return {
 
-      fill:       {defaultValue: Color.white},
+      fill:       {defaultValue: Color.transparent},
       extent:     {defaultValue: pt(800,500)},
       fontFamily: {defaultValue: "Inconsolata, monospace"},
       fontSize:   {defaultValue: 14},
@@ -74,8 +74,21 @@ export class CodeSearcher extends FilterableList {
             Text.makeInputLine({
               name: "input",
               fixedHeight: false,
+              placeholder: 'Search Source Files',
               padding: 5,
+              fontColor: Color.gray.darker(),
+              defaultTextStyle: {fontSize: 20},
               autofit: true,
+              fill: new LinearGradient({
+                vector: Math.PI,
+                stops: [{
+                  color: Color.white.withA(0),
+                  offset: 0
+                }, {
+                  color: Color.white.withA(.5),
+                  offset: .4,
+                }]
+              })
             }),
             new List({
               name: "list",
@@ -83,7 +96,7 @@ export class CodeSearcher extends FilterableList {
               clipMode: "auto",
               borderTop: {width: 1, color: Color.gray}
             })
-          ]
+          ];
         }
       },
 
@@ -118,7 +131,7 @@ export class CodeSearcher extends FilterableList {
         get() {
           return this.getSubmorphNamed("searchInUnloadedModulesCheckbox") ||
             this.addMorph(new LabeledCheckBox({
-                  checked: false,
+                  checked: false, fill: Color.transparent,
                   name: "searchInUnloadedModulesCheckbox",
                   label: "search in unloaded modules"}))
         }
@@ -141,6 +154,8 @@ export class CodeSearcher extends FilterableList {
     super.relayout();
     var input = this.getSubmorphNamed("input"),
         cb = this.getSubmorphNamed("searchInUnloadedModulesCheckbox");
+    input.fontSize = 20;
+    input.extent = pt(this.width, 27);
     cb && (cb.rightCenter = input.rightCenter);
   }
 
