@@ -1813,7 +1813,7 @@ export class Image extends Morph {
       },
 
       naturalExtent: {defaultValue: null},
-      isLoaded: {defaultValue: false, serialize: false}
+      isLoaded: {defaultValue: false, serialize: false},
       autoResize: {defaultValue: true}
     }
   }
