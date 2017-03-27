@@ -231,11 +231,9 @@ export default class TextEditor extends Morph {
   }
 
   async prepareEditorForFile(resource, content = "") {
-    var ed = this.ui.contentText;
+    var ed = this.ui.contentText, editorPlugin;
 
-    var {_editorPlugin: editorPlugin} = this;
-    if (editorPlugin) ed.removePlugin(editorPlugin);
-    editorPlugin = null;
+    ed.plugins = [];
 
     var url = (resource || {}).url,
         fileType = "plain text";
@@ -281,9 +279,8 @@ export default class TextEditor extends Morph {
     }
 
     if (editorPlugin) ed.addPlugin(editorPlugin);
-    this._editorPlugin = editorPlugin;
 
-    ed.textString = content
+    ed.textString = content;
     ed.gotoDocumentStart();
     ed.scroll = pt(0,0);
   }
