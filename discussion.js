@@ -3,16 +3,7 @@ import {date, arr, obj} from 'lively.lang';
 import { hashCode } from "lively.lang/string.js";
 import { newUUID } from "lively.lang/string.js";
 
-let dbOpts = (function() {
-  let opts = {adapter: "memory"};
-  try {
-    let db = new Database._PouchDB("adapter-tester")
-    db.destroy();
-    return {adapter: db.adapter};
-  } catch (e) { return {adapter: "memory"}; }
-})();
-
-const topicDB = Database.ensureDB("lively.discussion.storage", dbOpts);
+const topicDB = Database.ensureDB("lively.discussion.storage", {adapter: "memory"});
 
 export class CommentData {
   constructor({
@@ -24,6 +15,19 @@ export class CommentData {
     this.content = content;
     this.lastChanged = lastChanged;
     this.comments = comments.map(c => new CommentData(c));
+  }
+
+  update({hash, author, date, lastChanged, content, comments}) {
+    this.hash = hash;
+    this.author = author;
+    this.date = date;
+    this.content = content;
+    this.lastChanged = lastChanged;
+    arr.zip(this.comments, comments).forEach(([o, n]) => {
+      if (n) o.update(n);
+    })
+    let remainingComments = arr.drop(comments, this.comments.length);
+    this.comments = [...this.comments, ...remainingComments.map(c => new CommentData(c))];
   }
 
   mergeUpdated(updatedComment, user) {
@@ -74,13 +78,9 @@ export class TopicData extends CommentData {
        this.tracker.trackerId, name, payload)).data;
   }
 
-  update({title, hash, author, content, date, comments}) {
-     this.content = content;
-     this.title = title;
-     this.author = author;
-     this.date = date;
-     // not really in place. 
-     this.comments = comments.map(c => new CommentData(c));
+  update(opts) {
+     super.update(opts);
+     this.title = opts.title;
   }
 
   mergeUpdated(updatedTopic, user) {
@@ -124,8 +124,6 @@ export async function fetchTopic(data) {
 
 export async function createTopic(topicData) {
   topicData.hash = newUUID();
-  while (await topicDB.get(topicData.hash)) 
-    topicData.hash = newUUID(); // ensure no collisions
   await topicDB.set(topicData.hash, topicData);
   return topicData.hash;
 }
