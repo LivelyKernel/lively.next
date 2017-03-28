@@ -446,11 +446,15 @@ describe('l2l', function() {
 describe("user integration", () => {
 
   before(async () =>{    
-    await authserver.addUser("testUser1", "testuser1@lively-next.org", "test",'adminpassword')
+    await authserver.addUser({
+        name: "testUser1", 
+        email: "testuser1@lively-next.org", 
+        password: "test"},
+        'adminpassword')
   })
 
   after(async () =>{
-    await authserver.removeUser("testUser1", "testuser1@lively-next.org", 'adminpassword')    
+    await authserver.removeUser({name: "testUser1", email: "testuser1@lively-next.org"}, 'adminpassword')    
   })
 
 
