@@ -5,9 +5,10 @@ import * as authserver from "lively.user/authserver.js"
 export default class user {
   constructor({name, username, password, email, avatar} ) {  
     this.name = name || username || 'anonymous';
-    this.email = email
+    this.email = email || null;
     this.avatar = avatar;
     this.password = password;
+    this.token = {status: 'error'};
   }
 
   isReady() {
