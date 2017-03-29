@@ -1,5 +1,5 @@
 import { ObjectPool, serialize, deserialize } from "lively.serializer2";
-import { World } from "./index.js";
+import { World, Morph } from "./index.js";
 import { resource } from "lively.resources";
 import { newMorphId } from "./morph.js";
 
@@ -113,8 +113,15 @@ export async function createMorphSnapshot(aMorph, options = {}) {
         width = previewWidth || aMorph.width,
         height = previewHeight || aMorph.height,
         type = previewType || "png";
-    snapshot.preview = await renderMorphToDataURI(aMorph, {width, height, type});
-  } else snapshot.preview = ""
+    try {
+      snapshot.preview = await renderMorphToDataURI(aMorph, {width, height, type});
+    } catch (err) {
+      console.error(`Error generating morph preview: ${err}`);
+      snapshot.preview = await renderMorphToDataURI(new Morph({fill: aMorph.fill, width, height}), {width, height, type})
+    }
+  }
+
+  if (!snapshot.preview) snapshot.preview = "";
 
   if (testLoad) {
     try {
