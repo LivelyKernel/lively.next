@@ -47,7 +47,9 @@ export default class Window extends Morph {
 
       nonMinizedBounds: {},
       nonMaximizedBounds: {},
-      minimizedBounds: {}
+      minimizedBounds: {},
+      minimized: {},
+      maximized: {}
 
     }
   }
