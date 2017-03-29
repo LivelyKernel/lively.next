@@ -400,12 +400,14 @@ export class ObjectEditor extends Morph {
 
   toggleShowingImports(timeout = 300/*ms*/) {
     var expandedWidth = Math.min(300, Math.max(150, this.get("importsList").listItemContainer.width)),
-        newWidth = this.isShowingImports() ? -expandedWidth : expandedWidth,
+        enable = !this.isShowingImports(),
+        newWidth = enable ? expandedWidth : -expandedWidth,
         column = this.layout.grid.col(2)
     this.layout.disable();
     column.width += newWidth;
     column.before.width -= newWidth;
     this.layout.enable(timeout ? {duration: timeout} : null);
+    (enable ? this.ui.importsList : this.ui.sourceEditor).focus();
     return lively.lang.promise.delay(timeout);
   }
 
@@ -429,7 +431,7 @@ export class ObjectEditor extends Morph {
     return withSuperclasses(this.target.constructor);
   }
 
-  async selectTarget(t) {
+  selectTarget(t) {
     this.setProperty("target", t);
     this.state.selectedClass = null;
     this.state.selectedMethod = null;
@@ -440,13 +442,7 @@ export class ObjectEditor extends Morph {
       format: "esm"
     });
 
-    if (isObjectClass(t.constructor)) {
-      await this.selectClass(t.constructor);
-    } else {
-      await this.updateSource(
-          `// No object-specific behavior exists yet for ${t}\n`
-        + `// Use the "+" button to add new behaviors\n`);
-    }
+    this.whenRendered().then(() => this.selectClass(t.constructor));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -935,7 +931,10 @@ localStorage["oe helper"] = JSON.stringify(store);
   // events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  focus() { this.get("sourceEditor").focus(); }
+  focus() {
+    let {importsList, sourceEditor} = this.ui;
+    (this.isShowingImports() ? importsList : sourceEditor).focus();
+  }
 
   get keybindings() {
     return [
