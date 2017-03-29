@@ -118,6 +118,7 @@ export default class Browser extends Window {
     connect(codeEntityTree, 'selection', this, 'onCodeEntitySelected');
 
     connect(sourceEditor, "textChange", this, "updateUnsavedChangeIndicatorDebounced");
+    connect(sourceEditor, 'doSave', this, 'save');
 
     moduleList.selection = null;
     moduleList.items = [];
@@ -358,8 +359,6 @@ export default class Browser extends Window {
     hresizer.addFixed(codeEntityCommands);
     hresizer.addFixed(metaInfoText);
     hresizer.addScalingBelow(sourceEditor);
-
-    connect(sourceEditor, 'doSave', this, 'save');
 
     this._inLayout = false;
 
