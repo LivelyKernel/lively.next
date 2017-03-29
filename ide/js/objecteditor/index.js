@@ -1118,13 +1118,29 @@ localStorage["oe helper"] = JSON.stringify(store);
 // new ImportController().openInWorld()
 class ImportController extends Morph {
 
+  static get properties() {
+    return {
+      extent: {defaultValue: pt(300,600)},
+      
+      module: {
+        get() {
+          let id = this.getProperty("module");
+          return id ? lively.modules.module(id) : null;
+        },
+        set(moduleOrId) {
+          var id = !moduleOrId ? null : typeof moduleOrId === "string" ? moduleOrId : moduleOrId.id;
+          this.setProperty("module", id);
+        }
+      }
+    }
+  }
+
   constructor(props) {
-    super({
-      extent: pt(300,600),
-      ...props
-    });
+    super(props);
     this.build();
     connect(this, "module", this, "updateImports");
+    connect(this.getSubmorphNamed("openButton"), "fire", this, "execCommand", {
+      converter: () => "open selected module in system browser"});
   }
 
   build() {
@@ -1152,7 +1168,8 @@ class ImportController extends Morph {
         submorphs: [
         {...btnStyle, name: "addImportButton", label: Icon.makeLabel("plus"), tooltip: "add new import"},
         {...btnStyle, name: "removeImportButton", label: Icon.makeLabel("minus"), tooltip: "remove selected import(s)"},
-        {...btnStyle, name: "cleanupButton", label: "cleanup", tooltip: "remove unused imports"}
+        {...btnStyle, name: "cleanupButton", label: "cleanup", tooltip: "remove unused imports"},
+        {...btnStyle, name: "openButton", label: "open", tooltip: "open selected module"}
       ]},
     ]
 
@@ -1165,9 +1182,13 @@ class ImportController extends Morph {
   }
 
   async updateImports() {
-    if (!this.module) return;
-    var m = lively.modules.module(this.module),
-        imports = await m.imports(),
+    let {module} = this;
+    if (!module) {
+      this.getSubmorphNamed("importsList").items = [];
+      return;
+    }
+
+    let imports = await module.imports(),
         items = imports.map(ea => {
           var label = [];
           var alias = ea.local !== ea.imported && ea.imported !== "default" ? ea.local : null;
@@ -1177,14 +1198,29 @@ class ImportController extends Morph {
           return {isListItem: true, value: ea, label}
         });
 
-    this.get("importsList").items = items;
+    this.getSubmorphNamed("importsList").items = items;
   }
 
-  get module() { return this.getProperty("module"); }
-  set module(moduleOrId) {
-    var id = !moduleOrId ? null : typeof moduleOrId === "string" ? moduleOrId : moduleOrId.id;
-    this.setProperty("module", id);
+  get keybindings() {
+    return [
+      {keys: "Enter", command: "open selected module in system browser"}
+    ].concat(super.keybindings);
   }
 
+  get commands() {
+    return [{
+      name: "open selected module in system browser",
+      exec: async importController => {
+        let importSpec = this.getSubmorphNamed("importsList").selection;
+        if (!importSpec) {
+          this.setStatusMessage("no module selected");
+          return null;
+        }
+        let {fromModule, local} = importSpec || {};
+        return this.world().execCommand("open browser",
+          {moduleName: fromModule, codeEntity: {name: local}});
+      }
+    }]
+  }
 
 }

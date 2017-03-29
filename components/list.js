@@ -595,8 +595,6 @@ export class List extends Morph {
       {keys: "Ctrl-V|PageDown",              command: "page down"},
       {keys: "Alt-Shift-,",                  command: "goto first item"},
       {keys: "Alt-Shift-.",                  command: "goto last item"},
-      {keys: "Enter",                        command: "accept input"},
-      {keys: "Escape|Ctrl-G",                command: "cancel"},
       {keys: "Alt-Space",                    command: "select via filter"},
       {keys: "Ctrl-L",                       command: "realign top-bottom-center"}
     ].concat(super.keybindings);
