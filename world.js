@@ -766,9 +766,13 @@ var worldCommands = [
         return null;
       }
 
-      await saveWorldToResource(world, url, {previewWidth: 200, previewHeight: 200, previewType: "png"});
-      world.setStatusMessage(`saved world to ${url}`);
-      world.get("world-list") && world.get("world-list").onWorldSaved(name);
+      try {
+        await saveWorldToResource(world, url, {previewWidth: 200, previewHeight: 200, previewType: "png"});
+        world.setStatusMessage(`saved world to ${url}`);
+        world.get("world-list") && world.get("world-list").onWorldSaved(name);
+      } catch (err) {
+        $world.logError("Error saving world: " + err.stack);
+      }
     }
   },
   
