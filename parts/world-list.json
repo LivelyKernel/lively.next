@@ -1,8 +1,8 @@
 {
-  "id": "WorldList_4B5BA75F_8F95_40CC_A106_28D786D5C267",
+  "id": "WorldList_0C3117D9_BC92_42C9_A67E_D1F93E6BF293",
   "snapshot": {
-    "WorldList_4B5BA75F_8F95_40CC_A106_28D786D5C267": {
-      "rev": 260335,
+    "WorldList_0C3117D9_BC92_42C9_A67E_D1F93E6BF293": {
+      "rev": 1226140,
       "props": {
         "clipMode": {
           "key": "clipMode",
@@ -10,7 +10,7 @@
         },
         "extent": {
           "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(1275.0,659.5)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(715.0,389.5)"
         },
         "fill": {
           "key": "fill",
@@ -26,7 +26,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(642.5,339.8)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(-115.5,246.8)"
         },
         "scroll": {
           "key": "scroll",
@@ -49,23 +49,23 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_EFA2140B_32E4_42D9_BD4B_6C0B7BFD7D22",
-              "rev": 260340
+              "id": "Label_D86054CE_D9D2_4F39_B5B6_87A0DE5E5EDA",
+              "rev": 1226244
             },
             {
               "__ref__": true,
-              "id": "Morph_410870AC_C8A1_403B_BC81_5B30F073B771",
-              "rev": 260375
+              "id": "Morph_17142E1E_FB95_417C_8756_BF238FB4BE91",
+              "rev": 1226248
             },
             {
               "__ref__": true,
-              "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-              "rev": 260372
+              "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+              "rev": 1226265
             },
             {
               "__ref__": true,
-              "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-              "rev": 260373
+              "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+              "rev": 1226236
             }
           ]
         },
@@ -98,22 +98,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "9CCD0942-9DDC-41A6-BA0E-16DBE33A4F98",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "35ADB7CE-6161-4CCA-A26C-BA1F74CCE7B7",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "41381613-4BF0-442F-805B-5307EB3ADDC5",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "F81EC943-91B4-476E-8B71-E1DC83D09CFA",
+              "id": "59969731-BB3E-40CD-B8A7-D354C229D44C",
               "rev": 0
             }
           ]
@@ -130,12 +115,16 @@
         }
       }
     },
-    "Label_EFA2140B_32E4_42D9_BD4B_6C0B7BFD7D22": {
-      "rev": 260340,
+    "Label_D86054CE_D9D2_4F39_B5B6_87A0DE5E5EDA": {
+      "rev": 1226244,
       "props": {
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
         "extent": {
           "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(286.8,35.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(248.6,30.0)"
         },
         "fill": {
           "key": "fill",
@@ -145,13 +134,21 @@
           "key": "name",
           "value": "world-list-label"
         },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "default"
+        },
         "origin": {
           "key": "origin",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(494.1,12.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(233.2,5.0)"
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -172,23 +169,43 @@
               "Select a world to load",
               {
                 "__ref__": true,
-                "id": "7AEF36EB-08C2-4205-94D9-A437891CB747",
+                "id": "9DCBE796-1AEF-4C79-84BE-D8FD4DD0D49D",
                 "rev": 0
               }
             ]
           ]
         },
+        "autofit": {
+          "key": "autofit",
+          "value": true
+        },
         "padding": {
           "key": "padding",
           "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
         },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
+        },
         "fontSize": {
           "key": "fontSize",
-          "value": 30
+          "value": 26
         },
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -209,12 +226,12 @@
         }
       }
     },
-    "7AEF36EB-08C2-4205-94D9-A437891CB747": {
+    "9DCBE796-1AEF-4C79-84BE-D8FD4DD0D49D": {
       "rev": 0,
       "props": {}
     },
-    "Morph_410870AC_C8A1_403B_BC81_5B30F073B771": {
-      "rev": 260375,
+    "Morph_17142E1E_FB95_417C_8756_BF238FB4BE91": {
+      "rev": 1226248,
       "props": {
         "clipMode": {
           "key": "clipMode",
@@ -226,11 +243,11 @@
         },
         "extent": {
           "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(1275.0,540.5)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(715.0,287.5)"
         },
         "fill": {
           "key": "fill",
-          "value": null
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(119,119,119)"
         },
         "name": {
           "key": "name",
@@ -242,7 +259,11 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,47.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,68.0)"
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -255,7 +276,7 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "CC4913AD-9A4A-47BA-BC37-029C295689FC",
+            "id": "05DADDA8-3779-4610-BF20-1FE4A0ABF2E8",
             "rev": 0
           }
         },
@@ -282,14 +303,14 @@
         }
       }
     },
-    "CC4913AD-9A4A-47BA-BC37-029C295689FC": {
+    "05DADDA8-3779-4610-BF20-1FE4A0ABF2E8": {
       "rev": 0,
       "props": {
         "border": {
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "E26C17FC-1967-4F3F-B86D-7CFB62809E1D",
+            "id": "6E44FBB3-C32F-4DA3-BD0B-068C44225486",
             "rev": 0
           }
         },
@@ -312,8 +333,8 @@
           "key": "container",
           "value": {
             "__ref__": true,
-            "id": "Morph_410870AC_C8A1_403B_BC81_5B30F073B771",
-            "rev": 260375
+            "id": "Morph_17142E1E_FB95_417C_8756_BF238FB4BE91",
+            "rev": 1226248
           }
         },
         "autoResize": {
@@ -332,7 +353,7 @@
         }
       }
     },
-    "E26C17FC-1967-4F3F-B86D-7CFB62809E1D": {
+    "6E44FBB3-C32F-4DA3-BD0B-068C44225486": {
       "rev": 0,
       "props": {
         "top": {
@@ -353,9 +374,13 @@
         }
       }
     },
-    "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C": {
-      "rev": 260372,
+    "Button_E595F035_251B_47CA_8FD4_C051D54D34B7": {
+      "rev": 1226265,
       "props": {
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(100.0,24.0)"
@@ -378,7 +403,11 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(587.5,625.5)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(307.5,360.5)"
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -393,8 +422,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_3DA21B89_E287_4D96_8CAD_AA126D088788",
-              "rev": 260377
+              "id": "Label_D32E560F_4E5C_4DD0_8B48_81E1542A31F8",
+              "rev": 1226269
             }
           ]
         },
@@ -458,7 +487,7 @@
           "key": "defaultActiveStyle",
           "value": {
             "__ref__": true,
-            "id": "AE644514-9971-4599-B3EB-230965D47CF7",
+            "id": "EABFEB51-F38F-4BE1-8E10-2A0B0CBDA1B0",
             "rev": 0
           }
         },
@@ -466,7 +495,7 @@
           "key": "activeStyle",
           "value": {
             "__ref__": true,
-            "id": "6F9F7F5D-81B6-4DD2-A969-DD2BFC39CD8D",
+            "id": "4BA8217E-9A39-423A-8A7D-C9BC8F80727F",
             "rev": 0
           }
         },
@@ -474,7 +503,7 @@
           "key": "defaultInactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "07AB24B8-1D74-466B-A57C-80A1A35F737F",
+            "id": "AA2CE102-FF4D-4690-A46F-31818238BCF8",
             "rev": 0
           }
         },
@@ -482,7 +511,7 @@
           "key": "inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "1F6BC9F1-BE48-4A9C-86CB-07719005CE23",
+            "id": "5D117C23-83F2-4CDD-9FFA-318DE1200FF0",
             "rev": 0
           }
         },
@@ -490,7 +519,7 @@
           "key": "defaultTriggerStyle",
           "value": {
             "__ref__": true,
-            "id": "C629FF2E-5242-4F7B-B9F1-09A98B81AE84",
+            "id": "5553A65E-0B67-42C3-90C0-5452CBADA13C",
             "rev": 0
           }
         },
@@ -498,7 +527,7 @@
           "key": "triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "D988C89B-02FF-492E-884D-81BEC690DD1A",
+            "id": "C5DF47CD-1ED8-463F-AAFA-D179CF568E79",
             "rev": 0
           }
         },
@@ -511,27 +540,27 @@
           "value": [
             {
               "__ref__": true,
-              "id": "6F995736-CD9A-460D-A79B-83B3913ADEDD",
+              "id": "37C7D055-48C6-4BD9-BB1F-164BF9B91667",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "0A9675F2-BFC4-4A7E-9334-C3FA851A8F03",
+              "id": "6F071124-8E00-427F-9E3B-AF5005C17E6A",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "749AA2FF-16B5-46A2-9C14-A3B8E742810F",
+              "id": "ED0B2ECB-1A69-4D55-8AAC-C7D07AB302D2",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "C10EC2E3-25F5-4231-AE80-0BCE1DE38F54",
+              "id": "A582012B-95A3-44A6-B022-975EFB38AD73",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "267AE8FD-F3E8-46AC-B3E1-81F6C3F3FCFD",
+              "id": "D981932D-5059-4AE4-B86A-2983E06FDF22",
               "rev": 0
             }
           ]
@@ -548,9 +577,13 @@
         }
       }
     },
-    "Label_3DA21B89_E287_4D96_8CAD_AA126D088788": {
-      "rev": 260377,
+    "Label_D32E560F_4E5C_4DD0_8B48_81E1542A31F8": {
+      "rev": 1226269,
       "props": {
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(28.0,14.0)"
@@ -579,6 +612,10 @@
           "key": "reactsToPointer",
           "value": false
         },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
@@ -598,23 +635,43 @@
               "close",
               {
                 "__ref__": true,
-                "id": "C1BF58B0-A5A8-4BDC-B182-B8521D27C42D",
+                "id": "78C3D9DF-948F-4F8A-96D9-54A8E0E441D6",
                 "rev": 0
               }
             ]
           ]
         },
+        "autofit": {
+          "key": "autofit",
+          "value": true
+        },
         "padding": {
           "key": "padding",
           "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 12
         },
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,127,127)"
         },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
         "fontStyle": {
           "key": "fontStyle",
           "value": "bold"
+        },
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -625,7 +682,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "E4F06BAB-709A-4862-BEA5-8681A668A38F",
+              "id": "91F53892-961A-4227-8328-D4F8CCFCF887",
               "rev": 0
             }
           ]
@@ -642,11 +699,11 @@
         }
       }
     },
-    "C1BF58B0-A5A8-4BDC-B182-B8521D27C42D": {
+    "78C3D9DF-948F-4F8A-96D9-54A8E0E441D6": {
       "rev": 0,
       "props": {}
     },
-    "E4F06BAB-709A-4862-BEA5-8681A668A38F": {
+    "91F53892-961A-4227-8328-D4F8CCFCF887": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -665,8 +722,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_3DA21B89_E287_4D96_8CAD_AA126D088788",
-            "rev": 260377
+            "id": "Label_D32E560F_4E5C_4DD0_8B48_81E1542A31F8",
+            "rev": 1226269
           }
         },
         "sourceAttrName": {
@@ -677,8 +734,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         },
         "targetMethodName": {
@@ -689,7 +746,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "8DF5F49B-22A2-40C6-8ECD-6EDE1BA69521",
+            "id": "A9575C1A-3594-40C9-B349-859AEF4EBBFC",
             "rev": 0
           }
         },
@@ -713,7 +770,7 @@
         }
       }
     },
-    "8DF5F49B-22A2-40C6-8ECD-6EDE1BA69521": {
+    "A9575C1A-3594-40C9-B349-859AEF4EBBFC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -724,21 +781,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_3DA21B89_E287_4D96_8CAD_AA126D088788",
-            "rev": 260377
+            "id": "Label_D32E560F_4E5C_4DD0_8B48_81E1542A31F8",
+            "rev": 1226269
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         }
       }
     },
-    "AE644514-9971-4599-B3EB-230965D47CF7": {
+    "EABFEB51-F38F-4BE1-8E10-2A0B0CBDA1B0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -763,7 +820,7 @@
         }
       }
     },
-    "6F9F7F5D-81B6-4DD2-A969-DD2BFC39CD8D": {
+    "4BA8217E-9A39-423A-8A7D-C9BC8F80727F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -804,7 +861,7 @@
         }
       }
     },
-    "07AB24B8-1D74-466B-A57C-80A1A35F737F": {
+    "AA2CE102-FF4D-4690-A46F-31818238BCF8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -829,7 +886,7 @@
         }
       }
     },
-    "1F6BC9F1-BE48-4A9C-86CB-07719005CE23": {
+    "5D117C23-83F2-4CDD-9FFA-318DE1200FF0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -862,7 +919,7 @@
         }
       }
     },
-    "C629FF2E-5242-4F7B-B9F1-09A98B81AE84": {
+    "5553A65E-0B67-42C3-90C0-5452CBADA13C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -875,7 +932,7 @@
         }
       }
     },
-    "D988C89B-02FF-492E-884D-81BEC690DD1A": {
+    "C5DF47CD-1ED8-463F-AAFA-D179CF568E79": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1014,7 +1071,7 @@
           "key": "borderLeft",
           "value": {
             "__ref__": true,
-            "id": "CE0C03EF-3C6F-47B3-9A9C-E9EC529D111F",
+            "id": "5875D29E-CBEB-4DD0-AB33-D8463FD75731",
             "rev": 0
           }
         },
@@ -1022,7 +1079,7 @@
           "key": "borderRight",
           "value": {
             "__ref__": true,
-            "id": "E68EA5D1-5821-4FDC-BF08-63F4287E81F9",
+            "id": "E368D682-F4C8-4F17-BD2E-F8E229163D36",
             "rev": 0
           }
         },
@@ -1030,7 +1087,7 @@
           "key": "borderBottom",
           "value": {
             "__ref__": true,
-            "id": "C30913F4-7C32-4C31-B0FB-6F606006A5EA",
+            "id": "3E4D99B7-4EFE-4F38-AEAB-A848AC6CDE16",
             "rev": 0
           }
         },
@@ -1038,7 +1095,7 @@
           "key": "borderTop",
           "value": {
             "__ref__": true,
-            "id": "5400E084-F3F4-4B75-98E4-9BC8EFE75017",
+            "id": "7F3185DB-0C2C-4DD3-AAC5-0BB28317AE05",
             "rev": 0
           }
         },
@@ -1062,7 +1119,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "D3D011AC-D251-4C81-8D14-601E24CBC68D",
+            "id": "C0F3365F-3187-45C9-899A-898AF9F178BB",
             "rev": 0
           }
         },
@@ -1078,7 +1135,7 @@
         }
       }
     },
-    "CE0C03EF-3C6F-47B3-9A9C-E9EC529D111F": {
+    "5875D29E-CBEB-4DD0-AB33-D8463FD75731": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1099,7 +1156,7 @@
         }
       }
     },
-    "E68EA5D1-5821-4FDC-BF08-63F4287E81F9": {
+    "E368D682-F4C8-4F17-BD2E-F8E229163D36": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1120,7 +1177,7 @@
         }
       }
     },
-    "C30913F4-7C32-4C31-B0FB-6F606006A5EA": {
+    "3E4D99B7-4EFE-4F38-AEAB-A848AC6CDE16": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1141,7 +1198,7 @@
         }
       }
     },
-    "5400E084-F3F4-4B75-98E4-9BC8EFE75017": {
+    "7F3185DB-0C2C-4DD3-AAC5-0BB28317AE05": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1162,7 +1219,7 @@
         }
       }
     },
-    "D3D011AC-D251-4C81-8D14-601E24CBC68D": {
+    "C0F3365F-3187-45C9-899A-898AF9F178BB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1183,7 +1240,7 @@
         }
       }
     },
-    "6F995736-CD9A-460D-A79B-83B3913ADEDD": {
+    "37C7D055-48C6-4BD9-BB1F-164BF9B91667": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1202,8 +1259,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         },
         "sourceAttrName": {
@@ -1214,8 +1271,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         },
         "targetMethodName": {
@@ -1226,7 +1283,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "7C155281-708A-4EE4-AC0E-58CE5032642F",
+            "id": "E47C3E98-5974-49D2-BBEC-6A3078513ECE",
             "rev": 0
           }
         },
@@ -1250,7 +1307,7 @@
         }
       }
     },
-    "7C155281-708A-4EE4-AC0E-58CE5032642F": {
+    "E47C3E98-5974-49D2-BBEC-6A3078513ECE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1261,21 +1318,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         }
       }
     },
-    "0A9675F2-BFC4-4A7E-9334-C3FA851A8F03": {
+    "6F071124-8E00-427F-9E3B-AF5005C17E6A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1294,8 +1351,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         },
         "sourceAttrName": {
@@ -1306,8 +1363,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         },
         "targetMethodName": {
@@ -1318,7 +1375,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "5A6E6D41-60F6-4BF4-AFFB-6B0A127B849C",
+            "id": "CF3F1B2A-679D-41DE-8815-1E1EFE142169",
             "rev": 0
           }
         },
@@ -1342,7 +1399,7 @@
         }
       }
     },
-    "5A6E6D41-60F6-4BF4-AFFB-6B0A127B849C": {
+    "CF3F1B2A-679D-41DE-8815-1E1EFE142169": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1353,21 +1410,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         }
       }
     },
-    "749AA2FF-16B5-46A2-9C14-A3B8E742810F": {
+    "ED0B2ECB-1A69-4D55-8AAC-C7D07AB302D2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1386,8 +1443,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         },
         "sourceAttrName": {
@@ -1398,8 +1455,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         },
         "targetMethodName": {
@@ -1410,7 +1467,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "D1A0833B-7E8B-4DFC-916E-730EC97B687E",
+            "id": "64C236AB-08FC-4332-B075-408AB113017B",
             "rev": 0
           }
         },
@@ -1434,7 +1491,7 @@
         }
       }
     },
-    "D1A0833B-7E8B-4DFC-916E-730EC97B687E": {
+    "64C236AB-08FC-4332-B075-408AB113017B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1445,21 +1502,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         }
       }
     },
-    "C10EC2E3-25F5-4231-AE80-0BCE1DE38F54": {
+    "A582012B-95A3-44A6-B022-975EFB38AD73": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1478,8 +1535,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         },
         "sourceAttrName": {
@@ -1490,8 +1547,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         },
         "targetMethodName": {
@@ -1502,7 +1559,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "68852458-4065-442F-8D31-8B777B700980",
+            "id": "2288C32B-024E-4C28-9E82-FF63D94970A1",
             "rev": 0
           }
         },
@@ -1526,7 +1583,7 @@
         }
       }
     },
-    "68852458-4065-442F-8D31-8B777B700980": {
+    "2288C32B-024E-4C28-9E82-FF63D94970A1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1537,21 +1594,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         }
       }
     },
-    "267AE8FD-F3E8-46AC-B3E1-81F6C3F3FCFD": {
+    "D981932D-5059-4AE4-B86A-2983E06FDF22": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1570,8 +1627,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         },
         "sourceAttrName": {
@@ -1582,8 +1639,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "WorldList_4B5BA75F_8F95_40CC_A106_28D786D5C267",
-            "rev": 260335
+            "id": "WorldList_0C3117D9_BC92_42C9_A67E_D1F93E6BF293",
+            "rev": 1226140
           }
         },
         "targetMethodName": {
@@ -1594,7 +1651,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "0EBCC9B7-BED4-42D8-9AB1-4A2F9F75471A",
+            "id": "9D8BCB6C-73C9-4E1B-97D0-88032E3B6D60",
             "rev": 0
           }
         },
@@ -1618,41 +1675,192 @@
         }
       }
     },
-    "0EBCC9B7-BED4-42D8-9AB1-4A2F9F75471A": {
+    "9D8BCB6C-73C9-4E1B-97D0-88032E3B6D60": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "Button_E595F035_251B_47CA_8FD4_C051D54D34B7",
+            "rev": 1226265
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "WorldList_4B5BA75F_8F95_40CC_A106_28D786D5C267",
-            "rev": 260335
+            "id": "WorldList_0C3117D9_BC92_42C9_A67E_D1F93E6BF293",
+            "rev": 1226140
           }
         }
       }
     },
-    "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96": {
-      "rev": 260373,
+    "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF": {
+      "rev": 1226236,
       "props": {
         "extent": {
           "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(59.0,30.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(98.0,26.0)"
         },
         "fill": {
           "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(255,255,255,0)"
+          "value": null
         },
         "name": {
           "key": "name",
-          "value": "refresh button"
+          "value": "location tabs"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(308.5,42.0)"
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "TabButtons",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Label_30FF0FDB_20BF_4907_8404_AB4AEA807585",
+              "rev": 1226234
+            },
+            {
+              "__ref__": true,
+              "id": "Label_1F1C467F_ED5C_40EC_9AA2_D2838183C918",
+              "rev": 1226235
+            }
+          ]
+        },
+        "equalWidth": {
+          "key": "equalWidth",
+          "value": false
+        },
+        "tabs": {
+          "key": "tabs",
+          "value": [
+            "public",
+            "local"
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,5,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "sans-serif"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 14
+        },
+        "activeTab": {
+          "key": "activeTab",
+          "value": null
+        },
+        "theme": {
+          "key": "theme",
+          "value": "dark"
+        },
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "72DB0950-BE27-4F80-83B9-7164A41D5C6D",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "63FA5299-ED53-49EB-88D2-B206E204D72A",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "51E6E505-E3E1-4387-9C3B-223B629C4F1B",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "013D6C8E-B31B-4183-B072-81ED57726435",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "8CE3C3BE-6B10-49CE-B051-78C7DF1CE584",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "696DF0F7-44C6-4721-8D10-9E80AEB69923",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "BB3F5612-796E-4D47-96A5-06085BDA4FD6",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "236E40E9-AED1-4C7F-81D0-494B002E85E1",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "7C07455B-BA10-4277-8D1B-C8598AB6846B",
+              "rev": 0
+            }
+          ]
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "TabButtons",
+        "module": {
+          "package": {
+            "name": "tab-buttons",
+            "version": null
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "Label_30FF0FDB_20BF_4907_8404_AB4AEA807585": {
+      "rev": 1226234,
+      "props": {
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(52.6,26.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(119,119,119)"
+        },
+        "name": {
+          "key": "name",
+          "value": "aLabel"
         },
         "nativeCursor": {
           "key": "nativeCursor",
@@ -1664,185 +1872,11 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(1176.0,20.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Button",
-            "Morph",
-            "morph"
-          ]
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Label_6BC5EBD0_F29B_4B61_A584_0979CFEE8225",
-              "rev": 258721
-            }
-          ]
-        },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 26
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 26
-        },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 26
-        },
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 26
-        },
-        "borderWidthBottom": {
-          "key": "borderWidthBottom",
-          "value": 2
-        },
-        "borderWidthLeft": {
-          "key": "borderWidthLeft",
-          "value": 2
-        },
-        "borderWidthRight": {
-          "key": "borderWidthRight",
-          "value": 2
-        },
-        "borderWidthTop": {
-          "key": "borderWidthTop",
-          "value": 2
-        },
-        "activeMode": {
-          "key": "activeMode",
-          "value": "active"
-        },
-        "activeStyle": {
-          "key": "activeStyle",
-          "value": {
-            "__ref__": true,
-            "id": "52C6B837-3DAD-43C7-B24F-709FC3E8C212",
-            "rev": 0
-          }
-        },
-        "inactiveStyle": {
-          "key": "inactiveStyle",
-          "value": {
-            "__ref__": true,
-            "id": "4C2B69A8-3163-403E-A527-39E3D6A7A908",
-            "rev": 0
-          }
-        },
-        "triggerStyle": {
-          "key": "triggerStyle",
-          "value": {
-            "__ref__": true,
-            "id": "71DFACC0-5987-44CE-A62D-803CD7FAE67B",
-            "rev": 0
-          }
-        },
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "45E7CFF2-5C5C-440D-8308-500EB9E8E1EB",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "D0707969-57C9-4A23-BD64-88FF47B1BDBD",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "90E33E56-7FBF-48AA-A55C-9C06C30EF0B8",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "F7245468-D678-4244-A696-0419FF4E551C",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "2D7CA139-C11A-40D6-AB62-5959B5D8FE08",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "E68DE7B7-75F7-4EF9-9387-E86185CC95C4",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "5396A0EA-3B0F-47A5-96C9-FEB73DAD8225",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "9F4D3A0E-793B-44B2-A38A-B8C0E6D45157",
-              "rev": 0
-            }
-          ]
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "Button",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "components/buttons.js"
-        }
-      }
-    },
-    "Label_6BC5EBD0_F29B_4B61_A584_0979CFEE8225": {
-      "rev": 258721,
-      "props": {
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(17.2,20.0)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(255,255,255,0)"
-        },
-        "name": {
-          "key": "name",
-          "value": "label"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "pointer"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(20.9,5.0)"
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -1856,30 +1890,74 @@
           "key": "submorphs",
           "value": []
         },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(242,133,0)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 10
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 10
+        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "value": [
             [
-              "",
+              "public",
               {
                 "__ref__": true,
-                "id": "2560CD6B-FC3B-4F56-9561-7912DA724AF9",
+                "id": "EA6B5F44-38A5-4DB8-AC29-6FB7A28BAAC4",
                 "rev": 0
               }
             ]
           ]
         },
+        "autofit": {
+          "key": "autofit",
+          "value": true
+        },
         "padding": {
           "key": "padding",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,5,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "sans-serif"
         },
         "fontSize": {
           "key": "fontSize",
-          "value": 20
+          "value": 14
         },
         "fontColor": {
           "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1890,7 +1968,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "3B687798-4CC6-425B-820A-BA3281F3A848",
+              "id": "560AD79C-12B8-455C-90CB-5AD9EAA6DE5A",
               "rev": 0
             }
           ]
@@ -1907,22 +1985,11 @@
         }
       }
     },
-    "2560CD6B-FC3B-4F56-9561-7912DA724AF9": {
+    "EA6B5F44-38A5-4DB8-AC29-6FB7A28BAAC4": {
       "rev": 0,
-      "props": {
-        "fontFamily": {
-          "key": "fontFamily",
-          "value": ""
-        },
-        "textStyleClasses": {
-          "key": "textStyleClasses",
-          "value": [
-            "fa"
-          ]
-        }
-      }
+      "props": {}
     },
-    "3B687798-4CC6-425B-820A-BA3281F3A848": {
+    "560AD79C-12B8-455C-90CB-5AD9EAA6DE5A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1941,31 +2008,31 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_6BC5EBD0_F29B_4B61_A584_0979CFEE8225",
-            "rev": 258721
+            "id": "Label_30FF0FDB_20BF_4907_8404_AB4AEA807585",
+            "rev": 1226234
           }
         },
         "sourceAttrName": {
           "key": "sourceAttrName",
-          "value": "extent"
+          "value": "onMouseUp"
         },
         "targetObj": {
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         },
         "targetMethodName": {
           "key": "targetMethodName",
-          "value": "relayout"
+          "value": "onTabClicked"
         },
         "varMapping": {
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "2AC0CFE1-FD30-4198-9239-DF83A6E4F0EB",
+            "id": "DBB99EB2-10DB-4354-B195-EED94B2BD639",
             "rev": 0
           }
         },
@@ -1976,6 +2043,13 @@
         "signalOnAssignment": {
           "key": "signalOnAssignment",
           "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "function () {\n                      return this.sourceObj;\n                    }"
+        },
+        "converter": {
+          "key": "converter"
         }
       },
       "lively.serializer-class-info": {
@@ -1989,7 +2063,7 @@
         }
       }
     },
-    "2AC0CFE1-FD30-4198-9239-DF83A6E4F0EB": {
+    "DBB99EB2-10DB-4354-B195-EED94B2BD639": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2000,622 +2074,167 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_6BC5EBD0_F29B_4B61_A584_0979CFEE8225",
-            "rev": 258721
+            "id": "Label_30FF0FDB_20BF_4907_8404_AB4AEA807585",
+            "rev": 1226234
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         }
       }
     },
-    "52C6B837-3DAD-43C7-B24F-709FC3E8C212": {
-      "rev": 0,
+    "Label_1F1C467F_ED5C_40EC_9AA2_D2838183C918": {
+      "rev": 1226235,
       "props": {
-        "borderColor": {
-          "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(44.8,26.0)"
         },
         "fill": {
           "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(255,255,255,0)"
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(119,119,119)"
         },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+        "name": {
+          "key": "name",
+          "value": "aLabel"
         },
         "nativeCursor": {
           "key": "nativeCursor",
           "value": "pointer"
         },
-        "fontSize": {
-          "key": "fontSize",
-          "value": 20
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
-        "fontFamily": {
-          "key": "fontFamily",
-          "value": "Sans-Serif"
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(53.0,0.0)"
         },
-        "clipMode": {
-          "key": "clipMode",
-          "value": "visible"
-        },
-        "draggable": {
-          "key": "draggable",
-          "value": false
-        },
-        "acceptsDrops": {
-          "key": "acceptsDrops",
-          "value": true
-        },
-        "dropShadow": {
-          "key": "dropShadow",
-          "value": false
-        },
-        "grabbable": {
-          "key": "grabbable",
-          "value": false
-        },
-        "halosEnabled": {
-          "key": "halosEnabled",
-          "value": true
-        },
-        "isLayoutable": {
-          "key": "isLayoutable",
-          "value": true
-        },
-        "opacity": {
-          "key": "opacity",
-          "value": 1
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
-            "Button",
+            "Label",
             "Morph",
             "morph"
           ]
         },
-        "visible": {
-          "key": "visible",
-          "value": true
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
         },
         "borderColorBottom": {
           "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(242,133,0)"
         },
         "borderColorLeft": {
           "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
         },
         "borderColorRight": {
           "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
         },
         "borderColorTop": {
           "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 26
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 26
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
         },
         "borderRadiusRight": {
           "key": "borderRadiusRight",
-          "value": 26
+          "value": 10
         },
         "borderRadiusTop": {
           "key": "borderRadiusTop",
-          "value": 26
+          "value": 10
         },
-        "borderStyleBottom": {
-          "key": "borderStyleBottom",
-          "value": "solid"
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            [
+              "local",
+              {
+                "__ref__": true,
+                "id": "31BC435B-F6D5-41B9-97BA-BCD3670613C5",
+                "rev": 0
+              }
+            ]
+          ]
         },
-        "borderStyleLeft": {
-          "key": "borderStyleLeft",
-          "value": "solid"
+        "autofit": {
+          "key": "autofit",
+          "value": true
         },
-        "borderStyleRight": {
-          "key": "borderStyleRight",
-          "value": "solid"
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,5,0,0)"
         },
-        "borderStyleTop": {
-          "key": "borderStyleTop",
-          "value": "solid"
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "sans-serif"
         },
-        "borderWidthBottom": {
-          "key": "borderWidthBottom",
-          "value": 2
+        "fontSize": {
+          "key": "fontSize",
+          "value": 14
         },
-        "borderWidthLeft": {
-          "key": "borderWidthLeft",
-          "value": 2
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
         },
-        "borderWidthRight": {
-          "key": "borderWidthRight",
-          "value": 2
-        },
-        "borderWidthTop": {
-          "key": "borderWidthTop",
-          "value": 2
-        },
-        "borderLeft": {
-          "key": "borderLeft",
-          "value": {
-            "__ref__": true,
-            "id": "EE52AFD5-B4E9-4719-AC20-89151FC91245",
-            "rev": 0
-          }
-        },
-        "borderRight": {
-          "key": "borderRight",
-          "value": {
-            "__ref__": true,
-            "id": "16F18FA4-DD88-4488-B5C5-A68063901C5B",
-            "rev": 0
-          }
-        },
-        "borderBottom": {
-          "key": "borderBottom",
-          "value": {
-            "__ref__": true,
-            "id": "A4A9FCEC-B718-41F6-82CA-3B6109CAE6C4",
-            "rev": 0
-          }
-        },
-        "borderTop": {
-          "key": "borderTop",
-          "value": {
-            "__ref__": true,
-            "id": "5CF36D11-9356-4977-B4D5-009F2B65EC10",
-            "rev": 0
-          }
-        },
-        "borderWidth": {
-          "key": "borderWidth",
-          "value": 2
-        },
-        "borderRadius": {
-          "key": "borderRadius",
-          "value": 26
-        },
-        "borderStyle": {
-          "key": "borderStyle",
-          "value": "solid"
-        },
-        "border": {
-          "key": "border",
-          "value": {
-            "__ref__": true,
-            "id": "0E6D3288-2178-4B43-803E-FD1F7783F51E",
-            "rev": 0
-          }
-        },
-        "morphClasses": {
-          "key": "morphClasses"
-        },
-        "styleRules": {
-          "key": "styleRules"
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
         },
         "fontStyle": {
           "key": "fontStyle",
           "value": "normal"
-        }
-      }
-    },
-    "EE52AFD5-B4E9-4719-AC20-89151FC91245": {
-      "rev": 0,
-      "props": {
-        "style": {
-          "key": "style",
-          "value": "solid"
         },
-        "width": {
-          "key": "width",
-          "value": 2
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
         },
-        "color": {
-          "key": "color",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        }
-      }
-    },
-    "16F18FA4-DD88-4488-B5C5-A68063901C5B": {
-      "rev": 0,
-      "props": {
-        "style": {
-          "key": "style",
-          "value": "solid"
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
         },
-        "width": {
-          "key": "width",
-          "value": 2
-        },
-        "color": {
-          "key": "color",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        }
-      }
-    },
-    "A4A9FCEC-B718-41F6-82CA-3B6109CAE6C4": {
-      "rev": 0,
-      "props": {
-        "style": {
-          "key": "style",
-          "value": "solid"
-        },
-        "width": {
-          "key": "width",
-          "value": 2
-        },
-        "color": {
-          "key": "color",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        }
-      }
-    },
-    "5CF36D11-9356-4977-B4D5-009F2B65EC10": {
-      "rev": 0,
-      "props": {
-        "style": {
-          "key": "style",
-          "value": "solid"
-        },
-        "width": {
-          "key": "width",
-          "value": 2
-        },
-        "color": {
-          "key": "color",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        }
-      }
-    },
-    "0E6D3288-2178-4B43-803E-FD1F7783F51E": {
-      "rev": 0,
-      "props": {
-        "style": {
-          "key": "style",
-          "value": "solid"
-        },
-        "width": {
-          "key": "width",
-          "value": 2
-        },
-        "color": {
-          "key": "color",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        }
-      }
-    },
-    "4C2B69A8-3163-403E-A527-39E3D6A7A908": {
-      "rev": 0,
-      "props": {
-        "borderColor": {
-          "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(204,204,204,0.5)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(240,240,240,0.5)"
-        },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(64,64,64,0.5)"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "not-allowed"
-        },
-        "fontSize": {
-          "key": "fontSize",
-          "value": 12
-        },
-        "fontFamily": {
-          "key": "fontFamily",
-          "value": "Sans-Serif"
-        },
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        }
-      }
-    },
-    "71DFACC0-5987-44CE-A62D-803CD7FAE67B": {
-      "rev": 0,
-      "props": {
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(161,161,161)"
-        },
-        "fontSize": {
-          "key": "fontSize",
-          "value": 12
-        },
-        "fontFamily": {
-          "key": "fontFamily",
-          "value": "Sans-Serif"
-        },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
-        },
-        "clipMode": {
-          "key": "clipMode",
-          "value": "visible"
-        },
-        "draggable": {
-          "key": "draggable",
-          "value": false
-        },
-        "acceptsDrops": {
-          "key": "acceptsDrops",
-          "value": true
-        },
-        "dropShadow": {
-          "key": "dropShadow",
-          "value": false
-        },
-        "grabbable": {
-          "key": "grabbable",
-          "value": false
-        },
-        "halosEnabled": {
-          "key": "halosEnabled",
-          "value": true
-        },
-        "isLayoutable": {
-          "key": "isLayoutable",
-          "value": true
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "pointer"
-        },
-        "opacity": {
-          "key": "opacity",
-          "value": 1
-        },
-        "styleClasses": {
-          "key": "styleClasses",
+        "attributeConnections": {
+          "key": "attributeConnections",
           "value": [
-            "Button",
-            "Morph",
-            "morph"
+            {
+              "__ref__": true,
+              "id": "CF0F13D8-EF21-444F-AB04-548E842C0D77",
+              "rev": 0
+            }
           ]
-        },
-        "visible": {
-          "key": "visible",
-          "value": true
-        },
-        "borderColorBottom": {
-          "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderColorLeft": {
-          "key": "borderColorLeft",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderColorRight": {
-          "key": "borderColorRight",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderColorTop": {
-          "key": "borderColorTop",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "borderRadiusBottom": {
-          "key": "borderRadiusBottom",
-          "value": 26
-        },
-        "borderRadiusLeft": {
-          "key": "borderRadiusLeft",
-          "value": 26
-        },
-        "borderRadiusRight": {
-          "key": "borderRadiusRight",
-          "value": 26
-        },
-        "borderRadiusTop": {
-          "key": "borderRadiusTop",
-          "value": 26
-        },
-        "borderStyleBottom": {
-          "key": "borderStyleBottom",
-          "value": "solid"
-        },
-        "borderStyleLeft": {
-          "key": "borderStyleLeft",
-          "value": "solid"
-        },
-        "borderStyleRight": {
-          "key": "borderStyleRight",
-          "value": "solid"
-        },
-        "borderStyleTop": {
-          "key": "borderStyleTop",
-          "value": "solid"
-        },
-        "borderWidthBottom": {
-          "key": "borderWidthBottom",
-          "value": 2
-        },
-        "borderWidthLeft": {
-          "key": "borderWidthLeft",
-          "value": 2
-        },
-        "borderWidthRight": {
-          "key": "borderWidthRight",
-          "value": 2
-        },
-        "borderWidthTop": {
-          "key": "borderWidthTop",
-          "value": 2
-        },
-        "borderLeft": {
-          "key": "borderLeft",
-          "value": {
-            "__ref__": true,
-            "id": "76126678-F240-4EE3-A016-C7833D8622DD",
-            "rev": 0
-          }
-        },
-        "borderRight": {
-          "key": "borderRight",
-          "value": {
-            "__ref__": true,
-            "id": "77502222-D600-4C86-BD4A-879B57A1B0DB",
-            "rev": 0
-          }
-        },
-        "borderBottom": {
-          "key": "borderBottom",
-          "value": {
-            "__ref__": true,
-            "id": "8DAFF916-892C-4B6C-A5B9-FFF386BB0049",
-            "rev": 0
-          }
-        },
-        "borderTop": {
-          "key": "borderTop",
-          "value": {
-            "__ref__": true,
-            "id": "D15AEA5D-204C-47AE-A5C0-6BAE02C61ABE",
-            "rev": 0
-          }
-        },
-        "borderWidth": {
-          "key": "borderWidth",
-          "value": 2
-        },
-        "borderRadius": {
-          "key": "borderRadius",
-          "value": 26
-        },
-        "borderStyle": {
-          "key": "borderStyle",
-          "value": "solid"
-        },
-        "borderColor": {
-          "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        },
-        "border": {
-          "key": "border",
-          "value": {
-            "__ref__": true,
-            "id": "0898BB25-460C-4420-BF6F-12D1DAE8AA59",
-            "rev": 0
-          }
-        },
-        "morphClasses": {
-          "key": "morphClasses"
-        },
-        "styleRules": {
-          "key": "styleRules"
-        },
-        "fontStyle": {
-          "key": "fontStyle",
-          "value": "normal"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Label",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/label.js"
         }
       }
     },
-    "76126678-F240-4EE3-A016-C7833D8622DD": {
+    "31BC435B-F6D5-41B9-97BA-BCD3670613C5": {
       "rev": 0,
-      "props": {
-        "style": {
-          "key": "style",
-          "value": "solid"
-        },
-        "width": {
-          "key": "width",
-          "value": 2
-        },
-        "color": {
-          "key": "color",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        }
-      }
+      "props": {}
     },
-    "77502222-D600-4C86-BD4A-879B57A1B0DB": {
-      "rev": 0,
-      "props": {
-        "style": {
-          "key": "style",
-          "value": "solid"
-        },
-        "width": {
-          "key": "width",
-          "value": 2
-        },
-        "color": {
-          "key": "color",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        }
-      }
-    },
-    "8DAFF916-892C-4B6C-A5B9-FFF386BB0049": {
-      "rev": 0,
-      "props": {
-        "style": {
-          "key": "style",
-          "value": "solid"
-        },
-        "width": {
-          "key": "width",
-          "value": 2
-        },
-        "color": {
-          "key": "color",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        }
-      }
-    },
-    "D15AEA5D-204C-47AE-A5C0-6BAE02C61ABE": {
-      "rev": 0,
-      "props": {
-        "style": {
-          "key": "style",
-          "value": "solid"
-        },
-        "width": {
-          "key": "width",
-          "value": 2
-        },
-        "color": {
-          "key": "color",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        }
-      }
-    },
-    "0898BB25-460C-4420-BF6F-12D1DAE8AA59": {
-      "rev": 0,
-      "props": {
-        "style": {
-          "key": "style",
-          "value": "solid"
-        },
-        "width": {
-          "key": "width",
-          "value": 2
-        },
-        "color": {
-          "key": "color",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
-        }
-      }
-    },
-    "45E7CFF2-5C5C-440D-8308-500EB9E8E1EB": {
+    "CF0F13D8-EF21-444F-AB04-548E842C0D77": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2634,31 +2253,31 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
+            "id": "Label_1F1C467F_ED5C_40EC_9AA2_D2838183C918",
+            "rev": 1226235
           }
         },
         "sourceAttrName": {
           "key": "sourceAttrName",
-          "value": "extent"
+          "value": "onMouseUp"
         },
         "targetObj": {
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         },
         "targetMethodName": {
           "key": "targetMethodName",
-          "value": "relayout"
+          "value": "onTabClicked"
         },
         "varMapping": {
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "4A54E190-D01F-4DF4-87BC-A251867FC0BE",
+            "id": "8F04AFB2-621A-461C-8F6E-AEFBCF3304D7",
             "rev": 0
           }
         },
@@ -2669,6 +2288,13 @@
         "signalOnAssignment": {
           "key": "signalOnAssignment",
           "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "function () {\n                      return this.sourceObj;\n                    }"
+        },
+        "converter": {
+          "key": "converter"
         }
       },
       "lively.serializer-class-info": {
@@ -2682,7 +2308,7 @@
         }
       }
     },
-    "4A54E190-D01F-4DF4-87BC-A251867FC0BE": {
+    "8F04AFB2-621A-461C-8F6E-AEFBCF3304D7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2693,21 +2319,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
+            "id": "Label_1F1C467F_ED5C_40EC_9AA2_D2838183C918",
+            "rev": 1226235
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         }
       }
     },
-    "D0707969-57C9-4A23-BD64-88FF47B1BDBD": {
+    "72DB0950-BE27-4F80-83B9-7164A41D5C6D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2726,568 +2352,20 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         },
         "sourceAttrName": {
           "key": "sourceAttrName",
-          "value": "padding"
+          "value": "tabs"
         },
         "targetObj": {
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "0ED053A3-7736-4278-AB87-45ECA420FF83",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.1"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "0ED053A3-7736-4278-AB87-45ECA420FF83": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        }
-      }
-    },
-    "90E33E56-7FBF-48AA-A55C-9C06C30EF0B8": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "fontSize"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "87CBDB86-D1A3-40E7-9089-A44AC403C1A4",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.1"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "87CBDB86-D1A3-40E7-9089-A44AC403C1A4": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        }
-      }
-    },
-    "F7245468-D678-4244-A696-0419FF4E551C": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "fontFamily"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "relayout"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "1DE683FD-8F39-4D31-A981-0AA9C252E6C7",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.1"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "1DE683FD-8F39-4D31-A981-0AA9C252E6C7": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        }
-      }
-    },
-    "2D7CA139-C11A-40D6-AB62-5959B5D8FE08": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "active"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "updateButtonStyle"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "C50508DF-2566-440C-91EF-7B8E2CC27C03",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.1"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "C50508DF-2566-440C-91EF-7B8E2CC27C03": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        }
-      }
-    },
-    "E68DE7B7-75F7-4EF9-9387-E86185CC95C4": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "activeStyle"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "updateButtonStyle"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "6F16B1BB-7188-4A62-8D63-085644542EB5",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.1"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "6F16B1BB-7188-4A62-8D63-085644542EB5": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        }
-      }
-    },
-    "5396A0EA-3B0F-47A5-96C9-FEB73DAD8225": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "inactiveStyle"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "targetMethodName": {
-          "key": "targetMethodName",
-          "value": "updateButtonStyle"
-        },
-        "varMapping": {
-          "key": "varMapping",
-          "value": {
-            "__ref__": true,
-            "id": "43B3A060-E79C-4DFE-A24D-F1FAF82E22A3",
-            "rev": 0
-          }
-        },
-        "garbageCollect": {
-          "key": "garbageCollect",
-          "value": true
-        },
-        "signalOnAssignment": {
-          "key": "signalOnAssignment",
-          "value": true
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "AttributeConnection",
-        "module": {
-          "package": {
-            "name": "lively.bindings",
-            "version": "0.1.1"
-          },
-          "pathInPackage": "index.js"
-        }
-      }
-    },
-    "43B3A060-E79C-4DFE-A24D-F1FAF82E22A3": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "source": {
-          "key": "source",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "target": {
-          "key": "target",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        }
-      }
-    },
-    "9F4D3A0E-793B-44B2-A38A-B8C0E6D45157": {
-      "rev": 0,
-      "props": {
-        "doNotSerialize": {
-          "key": "doNotSerialize",
-          "value": [
-            "isActive",
-            "converter",
-            "updater"
-          ]
-        },
-        "sourceObj": {
-          "key": "sourceObj",
-          "value": {
-            "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
-          }
-        },
-        "sourceAttrName": {
-          "key": "sourceAttrName",
-          "value": "fire"
-        },
-        "targetObj": {
-          "key": "targetObj",
-          "value": {
-            "__ref__": true,
-            "id": "WorldList_4B5BA75F_8F95_40CC_A106_28D786D5C267",
-            "rev": 260335
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         },
         "targetMethodName": {
@@ -3298,7 +2376,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "E3691EC5-2D54-4905-8626-B42ED0E70F32",
+            "id": "6FF0CE95-167A-47B9-8072-DED571080D45",
             "rev": 0
           }
         },
@@ -3322,28 +2400,32 @@
         }
       }
     },
-    "E3691EC5-2D54-4905-8626-B42ED0E70F32": {
+    "6FF0CE95-167A-47B9-8072-DED571080D45": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "WorldList_4B5BA75F_8F95_40CC_A106_28D786D5C267",
-            "rev": 260335
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         }
       }
     },
-    "9CCD0942-9DDC-41A6-BA0E-16DBE33A4F98": {
+    "63FA5299-ED53-49EB-88D2-B206E204D72A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3362,31 +2444,31 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "WorldList_4B5BA75F_8F95_40CC_A106_28D786D5C267",
-            "rev": 260335
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         },
         "sourceAttrName": {
           "key": "sourceAttrName",
-          "value": "extent"
+          "value": "equalWidth"
         },
         "targetObj": {
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_EFA2140B_32E4_42D9_BD4B_6C0B7BFD7D22",
-            "rev": 260340
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         },
         "targetMethodName": {
           "key": "targetMethodName",
-          "value": "topCenter"
+          "value": "update"
         },
         "varMapping": {
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "25D87E67-8A29-4437-96F3-B55FDA31FF2F",
+            "id": "E22D051A-1336-4C36-96A7-377A10C4B8EF",
             "rev": 0
           }
         },
@@ -3397,13 +2479,6 @@
         "signalOnAssignment": {
           "key": "signalOnAssignment",
           "value": true
-        },
-        "converterString": {
-          "key": "converterString",
-          "value": "function (val) {\n                  return val.addXY(-val.x / 2, -val.y + 12);\n                }"
-        },
-        "converter": {
-          "key": "converter"
         }
       },
       "lively.serializer-class-info": {
@@ -3417,28 +2492,32 @@
         }
       }
     },
-    "25D87E67-8A29-4437-96F3-B55FDA31FF2F": {
+    "E22D051A-1336-4C36-96A7-377A10C4B8EF": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "WorldList_4B5BA75F_8F95_40CC_A106_28D786D5C267",
-            "rev": 260335
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_EFA2140B_32E4_42D9_BD4B_6C0B7BFD7D22",
-            "rev": 260340
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         }
       }
     },
-    "35ADB7CE-6161-4CCA-A26C-BA1F74CCE7B7": {
+    "51E6E505-E3E1-4387-9C3B-223B629C4F1B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3457,31 +2536,31 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "WorldList_4B5BA75F_8F95_40CC_A106_28D786D5C267",
-            "rev": 260335
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         },
         "sourceAttrName": {
           "key": "sourceAttrName",
-          "value": "extent"
+          "value": "fontFamily"
         },
         "targetObj": {
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         },
         "targetMethodName": {
           "key": "targetMethodName",
-          "value": "bottomCenter"
+          "value": "update"
         },
         "varMapping": {
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "996FD52A-9B17-4C95-A520-8C33540AD4D4",
+            "id": "473914E5-1B49-4E27-9035-393D6B43401C",
             "rev": 0
           }
         },
@@ -3492,13 +2571,6 @@
         "signalOnAssignment": {
           "key": "signalOnAssignment",
           "value": true
-        },
-        "converterString": {
-          "key": "converterString",
-          "value": "function (val) {\n                  return val.addXY(-val.x / 2, -10);\n                }"
-        },
-        "converter": {
-          "key": "converter"
         }
       },
       "lively.serializer-class-info": {
@@ -3512,28 +2584,32 @@
         }
       }
     },
-    "996FD52A-9B17-4C95-A520-8C33540AD4D4": {
+    "473914E5-1B49-4E27-9035-393D6B43401C": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "WorldList_4B5BA75F_8F95_40CC_A106_28D786D5C267",
-            "rev": 260335
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_A4848313_E12B_41A3_AB02_FAB0248E1D9C",
-            "rev": 260372
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         }
       }
     },
-    "41381613-4BF0-442F-805B-5307EB3ADDC5": {
+    "013D6C8E-B31B-4183-B072-81ED57726435": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3552,31 +2628,31 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "WorldList_4B5BA75F_8F95_40CC_A106_28D786D5C267",
-            "rev": 260335
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         },
         "sourceAttrName": {
           "key": "sourceAttrName",
-          "value": "extent"
+          "value": "fontSize"
         },
         "targetObj": {
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_410870AC_C8A1_403B_BC81_5B30F073B771",
-            "rev": 260375
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         },
         "targetMethodName": {
           "key": "targetMethodName",
-          "value": "setBounds"
+          "value": "update"
         },
         "varMapping": {
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "920137B5-27FA-4E56-851E-DADFEA37232D",
+            "id": "BF457DBD-C9A7-4292-A0E7-B2CAEC4AF0AE",
             "rev": 0
           }
         },
@@ -3587,13 +2663,6 @@
         "signalOnAssignment": {
           "key": "signalOnAssignment",
           "value": true
-        },
-        "converterString": {
-          "key": "converterString",
-          "value": "function (val) {\n                  let Point = val.constructor;\n                  let {label, cancelButton} = this.sourceObj;\n                  return new Point(0, label.bottom).extent(new Point(val.x, val.y - (60 + cancelButton.height + label.height)));\n                }"
-        },
-        "converter": {
-          "key": "converter"
         }
       },
       "lively.serializer-class-info": {
@@ -3607,30 +2676,38 @@
         }
       }
     },
-    "920137B5-27FA-4E56-851E-DADFEA37232D": {
+    "BF457DBD-C9A7-4292-A0E7-B2CAEC4AF0AE": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "WorldList_4B5BA75F_8F95_40CC_A106_28D786D5C267",
-            "rev": 260335
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Morph_410870AC_C8A1_403B_BC81_5B30F073B771",
-            "rev": 260375
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         }
       }
     },
-    "F81EC943-91B4-476E-8B71-E1DC83D09CFA": {
+    "8CE3C3BE-6B10-49CE-B051-78C7DF1CE584": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -3643,31 +2720,31 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "WorldList_4B5BA75F_8F95_40CC_A106_28D786D5C267",
-            "rev": 260335
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         },
         "sourceAttrName": {
           "key": "sourceAttrName",
-          "value": "extent"
+          "value": "padding"
         },
         "targetObj": {
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         },
         "targetMethodName": {
           "key": "targetMethodName",
-          "value": "topRight"
+          "value": "update"
         },
         "varMapping": {
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "45885C08-4FC5-46E6-8F01-FA918EA38714",
+            "id": "A761915D-D778-4B6D-AB76-2549B09F09B9",
             "rev": 0
           }
         },
@@ -3678,13 +2755,6 @@
         "signalOnAssignment": {
           "key": "signalOnAssignment",
           "value": true
-        },
-        "converterString": {
-          "key": "converterString",
-          "value": "function (val) {\n                  return val.addXY(-40, -val.y + 20);\n                }"
-        },
-        "converter": {
-          "key": "converter"
         }
       },
       "lively.serializer-class-info": {
@@ -3698,23 +2768,479 @@
         }
       }
     },
-    "45885C08-4FC5-46E6-8F01-FA918EA38714": {
+    "A761915D-D778-4B6D-AB76-2549B09F09B9": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "WorldList_4B5BA75F_8F95_40CC_A106_28D786D5C267",
-            "rev": 260335
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_3C3F75D3_5BD0_416B_9FD4_32A00E3EBE96",
-            "rev": 260373
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
+          }
+        }
+      }
+    },
+    "696DF0F7-44C6-4721-8D10-9E80AEB69923": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "activeTab"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "activateTab"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "436B78C5-5F21-4860-ABC9-15C73DA16263",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "436B78C5-5F21-4860-ABC9-15C73DA16263": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
+          }
+        }
+      }
+    },
+    "BB3F5612-796E-4D47-96A5-06085BDA4FD6": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "theme"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "update"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "4237FC06-AA34-420E-B904-195CE0EB2B60",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "4237FC06-AA34-420E-B904-195CE0EB2B60": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
+          }
+        }
+      }
+    },
+    "236E40E9-AED1-4C7F-81D0-494B002E85E1": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "activeTab"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "WorldList_0C3117D9_BC92_42C9_A67E_D1F93E6BF293",
+            "rev": 1226140
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "update"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "CC322F82-8D4D-4AB2-BAE0-4DADDE8B5E91",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "CC322F82-8D4D-4AB2-BAE0-4DADDE8B5E91": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "WorldList_0C3117D9_BC92_42C9_A67E_D1F93E6BF293",
+            "rev": 1226140
+          }
+        }
+      }
+    },
+    "7C07455B-BA10-4277-8D1B-C8598AB6846B": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "activeTab"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "WorldList_0C3117D9_BC92_42C9_A67E_D1F93E6BF293",
+            "rev": 1226140
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "saveLocationChoice"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "B269EBBE-BD33-4953-A8FC-44E6DF6C853C",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "B269EBBE-BD33-4953-A8FC-44E6DF6C853C": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_6AE13C42_1A41_40C0_A014_BF7EEB7B0BCF",
+            "rev": 1226236
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "WorldList_0C3117D9_BC92_42C9_A67E_D1F93E6BF293",
+            "rev": 1226140
+          }
+        }
+      }
+    },
+    "59969731-BB3E-40CD-B8A7-D354C229D44C": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "WorldList_0C3117D9_BC92_42C9_A67E_D1F93E6BF293",
+            "rev": 1226140
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "extent"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "WorldList_0C3117D9_BC92_42C9_A67E_D1F93E6BF293",
+            "rev": 1226140
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "4DCAFED1-D8C4-4B0B-B9DC-EABC723ACE87",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "4DCAFED1-D8C4-4B0B-B9DC-EABC723ACE87": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "WorldList_0C3117D9_BC92_42C9_A67E_D1F93E6BF293",
+            "rev": 1226140
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "WorldList_0C3117D9_BC92_42C9_A67E_D1F93E6BF293",
+            "rev": 1226140
           }
         }
       }
@@ -3725,9 +3251,13 @@
     "local://lively-object-modules/": {
       "world-list": {
         "package.json": "{\n  \"name\": \"world-list\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
-        "index.js": "import { Morph, show, CenteredTilingLayout } from \"lively.morphic\";\nimport { resource } from \"lively.resources/index.js\";\nimport { connect, disconnectAll } from \"lively.bindings/index.js\";\nimport { pt, Color } from \"lively.graphics/index.js\";\nimport LoadingIndicator from \"lively.morphic/components/loading-indicator.js\";\nimport { promise } from \"lively.lang/index.js\";\n\nexport default class WorldList extends Morph {\n\n  static get properties() {\n\n    return {\n\n      isEpiMorph: {get() { return true}},\n\n      label: {\n        derived: true, readOnly: true, after: [\"submorphs\"],\n        get() {\n          let l = this.getSubmorphNamed(\"world-list-label\");\n          if (l) return l;\n          return this.addMorph({\n            type: \"label\", name: \"world-list-label\"\n          });\n        }\n      },\n\n      cancelButton: {\n        derived: true, readOnly: true, after: [\"submorphs\"],\n        get() {\n          let l = this.getSubmorphNamed(\"cancelButton\");\n          if (l) return l;\n          return this.addMorph({\n            type: \"button\", name: \"cancelButton\",\n            label: \"cancel\"\n          });\n        }\n      },\n      \n      refreshButton: {\n        derived: true, readOnly: true, after: [\"submorphs\"],\n        get() { return this.getSubmorphNamed(\"refresh button\"); }\n      },\n      \n      worldList: {\n        derived: true, readOnly: true, after: [\"submorphs\"],\n        get() {\n          let l = this.getSubmorphNamed(\"worldList\");\n          if (l) return l;\n          return this.addMorph({\n            name: \"worldList\"\n          });\n        }\n      },\n\n      previews: {\n        derived: true, readOnly: true, after: [\"worldList\"],\n        get() { return this.worldList.submorphs; }\n      }\n    }\n\n  }\n\n  alignInWorld(world = this.world()) {\n    world.addMorph(this);\n    let {width, height} = world.visibleBounds();\n    this.width = (width*1/2) - 5;\n    this.height = (height*1/2) - 10\n    this.center = world.visibleBounds().center();\n    return this;\n  }\n\n  reset() {\n    // this.reset();\n    // this.update();\n\n    // this.submorphs = [];\n\n    this.layout = null;\n    this.clipMode = \"hidden\";\n\n    this.label.fontColor = Color.white\n    this.label.fontSize = 30;\n    this.label.value = \"Select a world to load\";\n    this.label.fit()\n\n    connect(this, 'extent', this.label, 'topCenter', {\n      converter: function(val) { return val.addXY(-val.x/2, -val.y + 12); }\n    }).update(this.extent);\n\n    this.worldList.submorphs = [];\n    this.worldList.layout = new CenteredTilingLayout({spacing: 15});    \n    this.worldList.layout.border.top = 10;\n    this.worldList.layout.border.bottom = 10;\n    this.worldList.layout.apply()\n    this.worldList.extent = pt(300,300)\n    this.worldList.clipMode = \"auto\";\n    this.worldList.fill = null;\n    this.worldList.draggable = false;\n\n    this.cancelButton.label = \"close\"\n    this.cancelButton.activeStyle = {\n      borderWidth: 2,\n      fill: Color.transparent,\n      borderColor: Color.red.lighter(),\n      fontColor: Color.red.lighter(),\n      fontStyle: \"bold\",\n      nativeCursor: \"pointer\"\n    }\n\n    connect(this, 'extent', this.cancelButton, 'bottomCenter', {\n      converter: function(val) { return val.addXY(-val.x/2, -10); }\n    }).update(this.extent);\n\n    connect(this, 'extent', this.refreshButton, 'topRight', {\n      converter: function(val) { return val.addXY(-40, -val.y + 20); }\n    }).update(this.extent);\n\n    connect(this.cancelButton, 'fire', this, 'remove');\n    \n    connect(this, 'extent', this.worldList, 'setBounds', {\n      converter: function(val) {\n        let Point = val.constructor;\n        let {label, cancelButton} = this.sourceObj;\n        return new Point(0, label.bottom)\n          .extent(new Point(val.x, val.y - (60+cancelButton.height+label.height)))\n      }\n    }).update(this.extent);\n\n    connect(this.refreshButton, 'fire', this, 'update');\n  }\n\n  beforePublish() {\n    // disconnectAll(this);\n    this.reset();\n  }\n\n  async update() {\n    // await this.update()\n    this.reset();\n    let i = LoadingIndicator.open(\"fetching worlds...\");\n    let rs = await this.worldResources();\n    promise.finally(\n      Promise.all(\n        rs.map(r => this.addPreviewMorph(r)\n          .catch(err => $world.showError(err)))),\n      () => i.remove())\n    return this;\n  }\n\n  worldResources() {\n    let urls = [\n      \"lively.storage://worlds/\",\n      System.decanonicalize(\"lively.morphic/worlds/\")\n    ];\n    return Promise.all(urls.map(ea => resource(ea).dirList(1, {exclude: ea => !ea.name().endsWith(\".json\")})))\n      .then(results => [].concat.apply([], results));\n  }\n\n  async resourceFor(name) {\n    var r = resource(System.decanonicalize(`lively.morphic/worlds/${name}.json`))\n    if (await r.exists()) return r;\n    r = resource(System.decanonicalize(`lively.storage://worlds/${name}.json`))\n    if (await r.exists()) return r;\n    return null;\n  }\n\n  async addPreviewMorph(resource) {\n    // let resource = (await this.worldResources())[0]\n\n    let snapshot = await resource.readJson(),\n        name = resource.name().replace(/\\.json$/, \"\");\n\n    let preview = this.previewFor(name) || this.worldList.addMorph({\n      name: \"preview\", extent: pt(200,200),\n      nativeCursor: \"pointer\",\n      submorphs: [\n        {type: \"image\", reactsToPointer: false, autoResize: true},\n        {type: \"label\", value: name, reactsToPointer: false}\n      ]\n    });\n\n    let [image, label] = preview.submorphs;\n\n    image.imageUrl = snapshot.preview;\n    // await image.loadPromise();\n    await promise.waitFor(1000, () => image.naturalExtent);\n    image.scale = Math.min((preview.width-10) / image.width, (preview.height-10) / image.height);\n    \n    image.topCenter = preview.innerBounds().topCenter().addXY(0, 5);\n    label.bottomCenter = preview.innerBounds().bottomCenter().addXY(0, -5);\n\n    connect(preview, 'onHoverIn', this, 'onHoverInOverPreview');\n    connect(preview, 'onHoverOut', this, 'onHoverOutOfPreview');\n    connect(preview, 'onMouseUp', this, 'onPreviewClicked');\n    \n  }\n\n  previewFor(name) {\n    return this.previews.find(ea => ea.submorphs[1].textString === name);\n  }\n\n  async onPreviewClicked(evt) {\n    let p = evt.targetMorph,\n        name = p.submorphs[1].textString,\n        r = await this.resourceFor(name);\n    \n    let newWorld = await this.world().execCommand(\"load world\", {resource: r});\n    this.alignInWorld(newWorld);\n  }\n\n  onHoverOutOfPreview(evt) {\n    let p = evt.targetMorph;\n    p.borderWidth = 0\n  }\n\n  onHoverInOverPreview(evt) {\n    this.previews.forEach(ea => ea.borderWidth = 0);\n    let p = evt.targetMorph;\n    p.border = {width: 3, color: Color.orange.withA(0.7)}\n  }\n\n  async onWorldSaved(name) {\n    let i = LoadingIndicator.open(\"updating...\");\n    let r = await this.resourceFor(name);\n    await this.addPreviewMorph(r);\n    i.remove();\n  }\n}\n\n"
+        "index.js": "import { Morph, show, CenteredTilingLayout } from \"lively.morphic\";\nimport { resource } from \"lively.resources/index.js\";\nimport { connect, noUpdate, disconnect, disconnectAll } from \"lively.bindings/index.js\";\nimport { pt, rect, Rectangle, Color } from \"lively.graphics/index.js\";\nimport LoadingIndicator from \"lively.morphic/components/loading-indicator.js\";\nimport { promise } from \"lively.lang/index.js\";\n\nexport default class WorldList extends Morph {\n\n  static get properties() {\n\n    return {\n\n      isEpiMorph: {get() { return true}},\n\n      ui: {\n        derived: true, readOnly: true, after: [\"submorphs\"],\n        get() {\n          return {\n            label: this.getSubmorphNamed(\"world-list-label\"),\n            cancelButton: this.getSubmorphNamed(\"cancelButton\"),\n            worldList: this.getSubmorphNamed(\"worldList\"),\n            locationTabs: this.getSubmorphNamed(\"location tabs\"),\n          }\n        }\n      },\n\n      location:{\n        derived: true, after: [\"ui\"],\n        get() { return this.ui.locationTabs.activeTab; },\n        set(location) { this.ui.locationTabs.activeTab = location; }\n      },\n\n      previews: {\n        derived: true, after: [\"worldList\"],\n        get() { return this.ui.worldList.submorphs; },\n        set(val) { return this.ui.worldList.submorphs = val; }\n      }\n    }\n\n  }\n\n  relayout() {\n    let bounds = this.innerBounds(),\n        {\n          label,\n          cancelButton,\n          worldList,\n          locationTabs\n        } = this.ui;\n\n    label.topCenter = bounds.topCenter().addXY(0, 5)\n    locationTabs.topCenter = label.bottomCenter.addXY(0, 7)\n    cancelButton.bottomCenter = bounds.bottomCenter().addXY(0, -5);\n    worldList.setBounds(\n      rect(pt(0, locationTabs.bottom), pt(bounds.width, cancelButton.top-5)));\n  }\n\n  alignInWorld(world = this.world()) {\n    world.addMorph(this);\n    let {width, height} = world.visibleBounds();\n    this.width = (width*1/2) - 5;\n    this.height = (height*1/2) - 10\n    this.center = world.visibleBounds().center();\n    return this;\n  }\n\n  reset() {\n    // this.reset();\n    // this.update();\n\n    // this.submorphs = [];\n    // connect(this, 'extent', this, 'relayout');\n\n    this.clipMode = \"hidden\";\n\n    let {ui: {label, worldList, cancelButton, locationTabs}} = this;\n\n    locationTabs.tabs = [\"public\", \"local\"];\n    locationTabs.theme = \"dark\";\n    noUpdate({\n      sourceObj: locationTabs, sourceAttribute: \"activeTab\",\n      targetObj: this,  targetAttribute: \"saveLocationChoice\"\n    }, () => this.location = null);\n\n    label.fontColor = Color.white\n    label.fontSize = 26;\n    label.value = \"Select a world to load\";\n    label.fit()\n\n\n    worldList.layout = new CenteredTilingLayout({spacing: 15, border:{top: 10, bottom: 10}});\n    worldList.clipMode = \"auto\";\n    worldList.fill = Color.rgbHex(\"777\");\n    worldList.draggable = false;\n\n    cancelButton.label = \"close\"\n    cancelButton.activeStyle = {\n      borderWidth: 2,\n      fill: Color.transparent,\n      borderColor: Color.red.lighter(),\n      fontColor: Color.red.lighter(),\n      fontStyle: \"bold\",\n      nativeCursor: \"pointer\"\n    }\n\n    connect(locationTabs, 'activeTab', this, 'saveLocationChoice');\n    connect(locationTabs, 'activeTab', this, 'update');\n    connect(cancelButton, 'fire', this, 'remove');\n  }\n\n  beforePublish() {\n    // disconnectAll(this);\n    this.reset();\n  }\n\n  async update() {\n    // await this.update()\n\n    this.previews = [];\n\n    let location = this.location;\n    if (!location) return;\n\n    let i = LoadingIndicator.open(\"fetching worlds...\"),\n        rs = await this.worldResources(location);\n    promise.finally(\n      Promise.all(\n        rs.map(r => this.addPreviewMorph(r)\n          .catch(err => this.world().showError(err)))),\n      () => i.remove());\n    return this;\n  }\n\n  worldResources(location) {\n    let urls = location === \"public\" ?\n      [System.decanonicalize(\"lively.morphic/worlds/\")] :\n      location === \"local\" ? [\"lively.storage://worlds/\"] : []\n    return Promise.all(urls.map(ea => resource(ea).dirList(1, {exclude: ea => !ea.name().endsWith(\".json\")})))\n      .then(results => [].concat.apply([], results));\n  }\n\n  async resourceFor(location, name) {\n    let url = location === \"public\" ?\n      System.decanonicalize(\"lively.morphic/worlds/\") :\n      location === \"local\" ? \"lively.storage://worlds/\" : \"UNNNNKNOWNNNN\"\n    return resource(url).join(`${name}.json`)\n  }\n\n  async addPreviewMorph(resource) {\n    // let resource = (await this.worldResources())[0]\n\n    let snapshot = await resource.readJson(),\n        name = resource.name().replace(/\\.json$/, \"\");\n\n    let preview = this.previewFor(name) || this.ui.worldList.addMorph({\n      name: \"preview\", extent: pt(200,200),\n      nativeCursor: \"pointer\",\n      submorphs: [\n        {type: \"image\", reactsToPointer: false, autoResize: true},\n        {type: \"label\", value: name, reactsToPointer: false}\n      ]\n    });\n\n    let [image, label] = preview.submorphs;\n\n    image.imageUrl = snapshot.preview;\n    // await image.loadPromise();\n    await promise.waitFor(1000, () => image.naturalExtent);\n    image.scale = Math.min((preview.width-10) / image.width, (preview.height-10) / image.height);\n\n    image.topCenter = preview.innerBounds().topCenter().addXY(0, 5);\n    label.bottomCenter = preview.innerBounds().bottomCenter().addXY(0, -5);\n\n    connect(preview, 'onHoverIn', this, 'onHoverInOverPreview');\n    connect(preview, 'onHoverOut', this, 'onHoverOutOfPreview');\n    connect(preview, 'onMouseUp', this, 'onPreviewClicked');\n  }\n\n  previewFor(name) {\n    return this.previews.find(ea => ea.submorphs[1].textString === name);\n  }\n\n  saveLocationChoice(loc) {\n    localStorage[\"lively.morphic-load-world-list-last-location\"] = loc;\n  }\n\n  setLocationToLastChoiceOr(altLocation) {\n    let location = localStorage[\"lively.morphic-load-world-list-last-location\"] || altLocation;\n    if (this.location !== location) this.location = location;\n  }\n\n  async onPreviewClicked(evt) {\n    let p = evt.targetMorph,\n        name = p.submorphs[1].textString,\n        r = await this.resourceFor(this.location, name);\n\n    let newWorld = await this.world().execCommand(\"load world\", {resource: r});\n    this.alignInWorld(newWorld);\n  }\n\n  onHoverOutOfPreview(evt) {\n    let p = evt.targetMorph;\n    p.borderWidth = 0\n  }\n\n  onHoverInOverPreview(evt) {\n    this.previews.forEach(ea => ea.borderWidth = 0);\n    let p = evt.targetMorph;\n    p.border = {width: 3, color: Color.orange.withA(0.7)}\n  }\n\n  async onWorldSaved(name) {\n    let i = LoadingIndicator.open(\"updating...\"),\n        r = await this.resourceFor(this.location, name);\n    await this.addPreviewMorph(r);\n    i.remove();\n  }\n}\n\n"
+      },
+      "tab-buttons": {
+        "package.json": "{\n  \"name\": \"tab-buttons\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
+        "index.js": "import { Morph } from \"lively.morphic/morph.js\";\nimport { pt, Color, Rectangle } from \"lively.graphics/index.js\";\nimport { disconnect, connect, signal } from \"lively.bindings/index.js\";\nimport { arr } from \"lively.lang/index.js\";\nimport { show } from \"lively.morphic/index.js\";\n\nexport default class TabButtons extends Morph {\n\n  static get properties() {\n    return {\n      equalWidth: {defaultValue: true},\n      tabs: {defaultValue: []},\n      padding: {defaultValue: Rectangle.inset(8, 5)},\n      fontFamily: {defaultValue: \"sans-serif\"},\n      fontSize: {defaultValue: \"14\"},\n      activeTab: {},\n      theme: {defaultValue: \"light\"},\n      buttons: {\n        derived: true, after: [\"submorphs\"],\n        get() { return this.submorphs; },\n        set() {\n          this.buttons.forEach(ea => {\n            disconnect(ea, \"onMouseUp\", this, \"onTabClicked\");\n          });\n          this.submorphs = [];\n        }\n      }\n    }\n  }\n\n  reset() {\n    this.fill = null;\n    this.fontSize = 14\n    this.theme = \"light\";\n\n    // let props = this.constructor.properties, keys = Object.keys(props);\n    // keys.forEach(key => typeof this[key] === \"undefined\" && (this[key] = props[key].defaultValue))\n\n    this.buttons = [];\n    connect(this, 'activeTab', this, 'activateTab');\n    connect(this, 'tabs', this, 'update');\n    connect(this, 'theme', this, 'update');\n    connect(this, 'equalWidth', this, 'update');\n    connect(this, 'fontFamily', this, 'update');\n    connect(this, 'fontSize', this, 'update');\n    connect(this, 'padding', this, 'update');\n    this.tabs = [\"tab 1\", \"tab 2\", \"tab 3\"]\n  }\n\n  styleForTheme(theme = \"light\") {\n    let {padding, fontFamily, fontSize} = this,\n        base = {\n          padding, fontSize, fontFamily, borderRadius: 0,\n          nativeCursor: \"pointer\",\n          border: {width: 1, color: Color.gray}\n        };\n    if (theme === \"light\") {\n      return {\n        ...base,\n        fontColor: Color.rgbHex(\"666\"),\n        fill: Color.white\n      }\n    }\n    if (theme === \"dark\") {\n      return {\n        ...base,\n        fontColor: Color.white,\n        fill: Color.rgbHex(\"777\"),\n        border: {width: 0}\n      }\n    }\n    return base;\n  }\n\n  update() {\n    let {tabs} = this;\n    \n\n    if (!tabs.length) {\n      this.extent = pt(20, 20);\n      this.buttons = [];\n      return;\n    }\n\n    let {buttons, padding, fontFamily, fontSize} = this;\n\n    buttons.slice(tabs.length).forEach(ea => {\n      disconnect(ea, \"onMouseUp\", this, \"onTabClicked\");\n      ea.remove();\n    });\n\n    let x = 0, maxWidth = 0, maxHeight = 0;\n\n    tabs.forEach((tabName, i) => {\n      let btn = buttons[i],\n          props = {...this.styleForTheme(this.theme), value: tabName, left: x};\n      if (btn) {\n        Object.assign(buttons[i], props);\n      } else {\n        btn = this.addMorph({type: \"label\", ...props});\n        connect(btn, \"onMouseUp\", this, \"onTabClicked\",\n          {converter: function() { return this.sourceObj; }});\n      }\n      btn.fit();\n      x += Math.round(btn.width);\n      maxWidth = Math.round(Math.max(maxWidth, btn.width));\n      maxHeight = Math.round(Math.max(maxHeight, btn.height));\n    });\n\n    this.height = maxHeight;\n    if (this.equalWidth) {\n      this.width = this.submorphs.reduce((left, ea) => {\n        ea.left = left;\n        ea.width = maxWidth\n        return ea.right;\n      }, 0);\n    } else {\n      this.width = x;\n    }\n\n    \n    let first = this.buttons[0],\n        last = arr.last(this.buttons);\n\n    first.borderRadiusLeft = 10;\n    first.borderRadiusTop = 10;\n    first.borderRadiusBottom = 0;\n    first.borderRadiusRight = 0;\n    last.borderRadiusLeft = 0;\n    last.borderRadiusTop = 10;\n    last.borderRadiusBottom = 0;\n    last.borderRadiusRight = 10;\n\n    this.setProperty(\"activeTab\", null);\n  }\n\n  onTabClicked(tabButton) {\n    this.activateTab(tabButton);\n  }\n\n  activateTab(tab) {\n    let {buttons} = this,\n        tabButton = !tab ? null : tab.isMorph ?\n          tab : buttons.find(ea => ea.textString === tab),\n        baseBorder = this.styleForTheme(this.theme).border;\n    arr.without(buttons, tabButton).forEach(ea => {\n      ea.borderBottom = baseBorder;\n    });\n    if (tabButton) {\n      this.activeTab = tabButton.textString;\n      tabButton.borderBottom = {width: 4, color: Color.tangerine};\n    } else {\n      this.activeTab = null\n    }\n  }\n\n}\n\n"
       }
     }
   },
-  "preview": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAADXUlEQVR4Xu2dvU5aYQCG3+8c8UAwYOOAi5pGJh1oF9a2VwB30MlIvAqvwsWpd9BeQdPBkJgYGlYGY+Jgwk8xRYHz853mOzo1RN14jS8TAspznseXyXwa6EZlwFDRCAYKQvZLoCAKQmaADEcLURAyA2Q4WoiCkBkgw9FCFITMABmOFqIgZAbIcLQQBSEzQIajhSgImQEyHC1EQcgMkOFoIQpCZoAMRwtREDIDZDhaCGOQo6OjzSRJvgLYJON7Kzg3vu9/Ozk5uTEHBwcffN/vsF351tYWGo0Grq6uUC6XcX19jTRNsb29nT3mbt1uF3t7e9jY2MBoNEK1Ws1eMx6PUSgUMBwOMRgMste4+5PJJHttv99Hu91eyiUbz0M+yAPGZH+DFUURoijMWJIk+WgODw+/G2MaS6F74k13dnbQbDZRKpUQxzGstfB9H7PZDL1eD7VaDZ1OB/v7+ygWi5l4z/Oy+5eXl6hUKgiCABcXF6jX69n3u+en0ynOz89xdna2lEsulddxdzfBWnEN99N7rOYCzMMZ4ihyv0w/XJA/xpj1pdC9wTd1QdxS3+/uYjQYYD6fI45ChGHogoxNq9VK36CXpV2yW2mQL2All0MSx9nHVRQ+fGS5m4IsLc3iN1YQBSEzQIajhSgImQEyHC1EQcgMkOFoIQpCZoAMRwtREDIDZDhaiIKQGSDD0UIUhMwAGY4WoiBkBshwtBAFITNAhqOFKAiZATIcLURByAyQ4WghCkJmgAxHC1EQMgNkOFqIgpAZIMPRQhSEzAAZjhaiIGQGyHC0EAUhM0CGo4UoCJkBMhwtREHIDJDhaCEKQmaADEcLURAyA2Q47vCZsTGmTMb1IpwVAIsOanGP2Rf9BK4XpWl6S3s803Oq3vk+bPqQIwCQNwa3j1+7UGNrkTz3Q8iez45narVanwH8JGN7EmfVGBRdAGsX/iNGF8gdFHZnX91OvmRnLrpT5TzPO348N+vTa4hTMAarj+L/53WHlf1N04UfZ4TX9sudk2WtPT49Pf2tQzDJCimIgpAZIMPRQhSEzAAZjhaiIGQGyHC0EAUhM0CGo4UoCJkBMhwtREHIDJDhaCEKQmaADEcLURAyA2Q4WoiCkBkgw9FCFITMABmOFqIgZAbIcLQQsiD/ABWsKdJoNC44AAAAAElFTkSuQmCC"
+  "preview": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAFi0lEQVR4Xu2cy0trVxTG18o5UZPr40qhqAWNFLnipPgYqAi1gkNtHTlw4gXRoBQCgg6b/gW9tKIhKPU/aDsoIgjagQNBcSC+ocZ2YAWfQaMnidmXtSGpXqIm92JckbUhkJOzz97f/n7nWyeTsxGksXIAWakRMSBAmN0EAkSAMHOAmRxJiABh5gAzOZIQAcLMAWZyJCEChJkDzORIQgQIMweYyZGECBBmDjCTIwkRIMwcYCZHEiJAmDnATI4kRIAwc4CZHElItgDxer1mIBDIZ6b3RchxuVwXXq83mmwxdxLidrtdSqmfAKAVEV+/iNUzXYRS6gwAFizLejs9PU3fdUsA6e/v/w4Rf800iNraWmhra4OzszOYmpqCgoIC6O7uhsnJSS2wpKQEHA4HuFwumJ+fv9feN2/ewPb2NnR1dcHp6SnEYjEoKyvTv5mmCefn57Czs5M4f3BwoM/FG815eHgICwsLGUVIYJRSb/1+/+8JIG63uxUA7l/tE0psbm6GlpYWODo60gba7XZARP2JRCL6c3JyAkopmJ2dhZ6eHri8vISlpSVobW0Fm80Gubm5+jfqU1xcrMdyOp3a4OPjY6iqqoKbmxt9TONWVlbC1dWV7p+fn6+/0xiLi4swNzf3hKt9cOhvfD7fAvb29r7Ozc3dy3Qy4tI6OjqgvLwcCgsLdRLInLy8PG10KBTS3fb29vTx1tYWdHZ2gmVZMDY2Bh6PBwzDgIuLC32eDI43OiaQy8vL0N7erhNDQAgMAaJ5aD5KD0Gn3wnyMwIJXF9f16Lb7fYCwA/PdVvQvHV1dbC+vq6NrqiogP39fV2qqPRQqQoEAvrcQ626uloDi7eamhrY2NhIHFNpXF1dTRx/2P/D42fy40cCQkXz62cSkNa0hmEom82W9K86IibO0d2erIXDYYVUs/i2v3BgYOD0ucpVur44nU5lt9u1oXTHFxUV6Yc13flKKVVaWor0p2B3d1cPXV9fDysrK4lpgsEgdeMMJEAJ+b/wputQhvsTkL6+PqRnDH2o0bNic3MTZmZmVENDAzY1Nd35UzAxMZFNQCDrgDQ2NuLa2hqEw+E7t4O+9R8pR1mQEECPx5M1CTFNUxmGkbTkpALEsixaK+eSBTg6Opo1QB4yPX4ulT4ZrrRpTZdVQNJaWZZ2FiDMwAkQAcLMAWZyJCEChJkDzORIQgQIMweYyZGECBBmDjCTIwkRIMwcYCZHEiJAmDnATI4kRIAwc4CZHEmIAGHmADM5khABwswBZnIkIQKEmQPM5EhCBAgzB5jJkYQIEGYOMJMjCREgzBxgJkcSIkCYOcBMjiREgDBzgJkcSYgAYeYAMzmSEAHCzAFmcnBkZCT22OvEzDS/WDn6hdXh4eFT0zRlbywGmKPR6BkODQ39jIjfM9CTsgQj5Z4AyXc9SWOADHZVSv0S354pgIhFGZz7o6Z6ZbPB56apTU7l7f+oUmACwD+RCHB/GV8pdW5Zlkuvi3aTs9lsv32USxm6iIR+mZMDf4fDEIvPqRR85XBoSJFYDApNE/4MBu+kotAw4BUiHESTbnGYIfWPTxOLxbpoV7nbW/x5ENHLNSl5iFBsmnAQiTy+uls9qLyV2e3wb5rXpTXJJ3SmZCilvH6//x0Nk2wTzHeI+O0nzPFkl35ht8ONUnCtVEoli5L0mWHAf5EIhG7tNvdkAtMcWCn1ByJ6fD5fIH7pvaV4cHAwPxQKUQlm1RzhMOY5HKk8QiAYDEKO3a6ucnJYPUKcTmd0fHz8IpmxKS2MFZEXLkaAMAMsQAQIMweYyZGECBBmDjCTIwkRIMwcYCZHEiJAmDnATI4kRIAwc4CZHEmIAGHmADM5khABwswBZnIkIQKEmQPM5EhCBAgzB5jJkYQIEGYOMJPzHve/MFbuHXOHAAAAAElFTkSuQmCC"
 }

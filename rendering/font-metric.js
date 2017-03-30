@@ -76,17 +76,17 @@ export default class FontMetric {
 
   measure(style, text) {
     var { fontFamily, fontSize, fontWeight, fontStyle, textDecoration, textStyleClasses } = style,
+        el = this.element,
         rect = null;
-    this.element.textContent = text;
-    this.element.style.fontFamily = fontFamily;
-    this.element.style.fontSize = fontSize + "px";
-    this.element.style.fontWeight = fontWeight,
-    this.element.style.fontStyle = fontStyle,
-    this.element.style.textDecoration = textDecoration;
-    this.element.className = textStyleClasses ? textStyleClasses.join(" ") : "";
+    el.textContent = text;
+    Object.assign(el.style, {
+      fontFamily, fontWeight, fontStyle, textDecoration,
+      fontSize: fontSize + "px",
+    })
+    el.className = textStyleClasses ? textStyleClasses.join(" ") : "";
     var width, height;
     try {
-      ({width, height} = this.element.getBoundingClientRect());
+      ({width, height} = el.getBoundingClientRect());
     } catch(e) { return {width: 0, height:0}; };
 
     return {height, width}
@@ -105,8 +105,6 @@ export default class FontMetric {
           width = double.width - single.width,
           height = single.height, x = 0;
       for (var i = 0; i < nCols; i++) {
-        // if (i % 10 === 0) x = this.sizeFor(style, "x".repeat(i), true).width;
-        // else x = width*i;
         x = width*i;
         bounds[i]= {x, y: 0, width, height};
       }
