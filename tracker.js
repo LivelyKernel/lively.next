@@ -27,6 +27,8 @@ export default class L2LTracker extends L2LConnection {
       tracker = new this(namespace, io);
       this._trackers.set(key, tracker);
       if (autoOpen || autoOpen === undefined) tracker.open();
+    } else {
+      tracker.changeIo(io);
     }
     return tracker;
   }
@@ -54,6 +56,15 @@ export default class L2LTracker extends L2LConnection {
   }
 
   get ioNamespace() { return this.io.of(this.namespace); }
+
+  changeIo(io) {
+    if (this.io === io) return;
+    let isOnline = this.isOnline;
+    return this.close().then(() => {
+      this.io = io; // ensure io instance is up-to-date
+      if (isOnline) return this.open();
+    });
+  }
 
   getTrackerList() {
     return Array.from(this.constructor._trackers).map(ea => ea[1])

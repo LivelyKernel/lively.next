@@ -4,6 +4,7 @@ import { resource } from "lively.resources";
 import ioClient from "socket.io-client";
 import L2LConnection from "./interface.js";
 import { defaultActions, defaultClientActions } from "./default-actions.js";
+import { makeEmitter } from "lively.lang/events.js";
 // import L2LTracker from "lively.2lively/tracker.js";
 // import LivelyServer from "lively.server";
 
@@ -11,58 +12,47 @@ export default class L2LClient extends L2LConnection {
 
   static clientKey(origin, path, namespace) {
     origin = origin.replace(/\/$/, "");
-    path = path.replace(/^\//, "");    
-    namespace = namespace.replace(/^\//, "");    
+    path = path.replace(/^\//, "");
+    namespace = namespace.replace(/^\//, "");
     return `${origin}-${path}-${namespace}`
+  }
+
+  static get clients() {
+    return this._clients || (this._clients = new Map())
   }
 
   static default() {
     // FIXME
-    var key = L2LClient._clients.keys().next().value;
-    return L2LClient._clients.get(key);
+    let key = L2LClient.clients.keys().next().value;
+    return L2LClient.clients.get(key);
   }
-  static forceNew(options){   
-    var {hostname,port,io,namespace}  = {
-      hostname: 'localhost',
-      port: 9011,      
-      namespace: '/l2l',
-      ...options
-    }
-    var path = '/lively-socket.io'
-    var origin = `http://${hostname}:${port}`,
-    client = new this(origin,path,namespace);
-    client.open();
-    client.register();    
-    return client;
-  
-  }
+
   static ensure(options = {url: null, namespace: null}) {
     // url specifies hostname + port + io path
     // namespace is io namespace
 
-    var {url, namespace, autoOpen} = options;
+    let {url, namespace, autoOpen = true} = options;
 
     if (!url) throw new Error("L2LClient needs server url!")
 
-    if (!this._clients) this._clients = new Map();
-
-    var res = resource(url),
+    let res = resource(url),
         origin = res.root().url.replace(/\/+$/, ""),
         path = res.path(),
-        namespace = namespace ? namespace : "",
-        key = this.clientKey(origin, path, namespace),
-        client = this._clients.get(key);
-    if (client) return client;
+        key = this.clientKey(origin, path, namespace || ""),
+        client = this.clients.get(key);
 
-    client = new this(origin, path, namespace);
-    if (autoOpen || autoOpen === undefined) { client.open(); client.register(); }
+    if (!client) {
+      client = new this(origin, path, namespace || "");
+      if (autoOpen) { client.open(); client.register(); }
+      this.clients.set(key, client);
+    }
 
-    this._clients.set(key, client);
     return client;
   }
 
   constructor(origin, path, namespace) {
     super();
+    makeEmitter(this);
     this.origin = origin;
     this.path = path;
     this.namespace = namespace.replace(/^\/?/, "/");
@@ -76,7 +66,7 @@ export default class L2LClient extends L2LConnection {
       isReconnecting: false,
       isReconnectingViaSocketio: false
     };
-    
+
     Object.keys(defaultActions).forEach(name =>
       this.addService(name, defaultActions[name]));
 
@@ -114,12 +104,15 @@ export default class L2LClient extends L2LConnection {
 
     socket.on("connect", () => {
       this.debug && console.log(`[${this}] connected`);
+      this.emit("connected", this);
       this._reconnectState.isReconnecting = false;
       this._reconnectState.isReconnectingViaSocketio = false;
     })
 
     socket.on("disconnect", () => {
       this.debug && console.log(`[${this}] disconnected`)
+      this.emit("disconnected", this);
+
       if (!this.trackerId) return;
       this.renameTarget(this.trackerId, "tracker");
       this.trackerId = null;
@@ -159,44 +152,50 @@ export default class L2LClient extends L2LConnection {
     if (this.isRegistered()) await this.unregister();
     if (!this.isOnline() && !this.socket) return;
     var socket = this.socket;
-    this._socketioClient = null;
+    // this._socketioClient = null;
     socket.close();
     if (!socket.connected) return;
     return Promise.race([
-      promise.delay(500).then(() => socket.removeAllListeners("disconnect")),
+      promise.delay(2000).then(() => socket.removeAllListeners("disconnect")),
       new Promise(resolve => socket.once("disconnect", resolve))
     ]);
   }
 
   remove() {
-    if (this.constructor._clients) {
-      var {origin, path, namespace} = this,
-          key = this.constructor.clientKey(origin, path, namespace);
-      this.constructor._clients.delete(key);
-    }
+    var {origin, path, namespace} = this,
+        key = this.constructor.clientKey(origin, path, namespace);
+    this.constructor.clients.delete(key);
     return this.close();
   }
 
   async register() {
     if (this.isRegistered()) return;
 
-    this.debug && console.log(`[${this}] register`)
-
     try {
+
+      this.debug && console.log(`[${this}] register`)
       var answer = await this.sendToAndWait("tracker", "register", {});
-      if (!answer.data)
-        throw new Error(`Register answer is empty!`);
+      if (!answer.data) {
+        let err = new Error(`Register answer is empty!`);
+        this.emit("error", err);
+        throw err;
+      }
 
-      var {data: {trackerId, messageNumber}} = answer
-
+      var {data: {trackerId, messageNumber}} = answer;
       this.trackerId = trackerId;
-
-      var response = await this.sendToAndWait(this.trackerId,'userInfo',{})
-      if (!response.data)
-        throw new Error(`User answer is empty!`);
-      this.user = response.data
-      
       this._incomingOrderNumberingBySenders.set(trackerId, messageNumber || 0);
+      this.emit("registered", {trackerId, user: this.user});
+
+      // rk 2017-03-29: FIXME why do we need a second roundtrip????
+      this.debug && console.log(`[${this}] requesting user info`)
+      var response = await this.sendToAndWait(this.trackerId, 'userInfo', {});
+      if (!response.data) {
+        let err = new Error(`User answer is empty!`);
+        this.emit("error", err);
+        throw err;
+      }
+
+      this.user = response.data
     } catch (e) {
       this.unregister();
       throw new Error(`Error in register request of ${this}: ${e}`);
@@ -210,6 +209,7 @@ export default class L2LClient extends L2LConnection {
     try { await this.sendToAndWait(this.trackerId, "unregister", {}); } catch (e) {}
     this.renameTarget(trackerId, "tracker");
     this.trackerId = null;
+    this.emit("unregistered", this);
   }
 
   whenRegistered(timeout) {
@@ -231,14 +231,14 @@ export default class L2LClient extends L2LConnection {
     });
   }
 
-  async authenticate(options){    
+  async authenticate(options){
     var response = await this.sendToAndWait(this.trackerId,'authenticateUser',options)
     if (!response.data)
       throw new Error(`User answer is empty!`);
-    this.user = response.data    
+    this.user = response.data
   }
 
-  async validateToken(user){    
+  async validateToken(user){
     //Shorthand method for temporarily authenticating user tokens
     var response = await this.sendToAndWait(this.trackerId,'validate',user)
     if (!response.data)
