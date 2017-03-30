@@ -1,10 +1,9 @@
 /*global Map*/
-import { promise, string } from "lively.lang";
+import { promise, string, events } from "lively.lang";
 import { resource } from "lively.resources";
 import ioClient from "socket.io-client";
 import L2LConnection from "./interface.js";
 import { defaultActions, defaultClientActions } from "./default-actions.js";
-import { makeEmitter } from "lively.lang/events.js";
 // import L2LTracker from "lively.2lively/tracker.js";
 // import LivelyServer from "lively.server";
 
@@ -52,7 +51,7 @@ export default class L2LClient extends L2LConnection {
 
   constructor(origin, path, namespace) {
     super();
-    makeEmitter(this);
+    events.makeEmitter(this);
     this.origin = origin;
     this.path = path;
     this.namespace = namespace.replace(/^\/?/, "/");
