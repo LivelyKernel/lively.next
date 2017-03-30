@@ -1,0 +1,878 @@
+{
+  "id": "Morph_6D4706E3_3CF1_4005_91BB_2225D4502951",
+  "snapshot": {
+    "Morph_6D4706E3_3CF1_4005_91BB_2225D4502951": {
+      "rev": 1362587,
+      "props": {
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(252.3,154.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(76,223,46)"
+        },
+        "name": {
+          "key": "name",
+          "value": "text-expt"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(961.8,10.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "AnotherText",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "lineData": {
+          "key": "lineData",
+          "value": {
+            "__ref__": true,
+            "id": "2043BAE2-0422-4B71-9415-91586653D21D",
+            "rev": 0
+          }
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Georgia,Times,serif"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 20
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "black"
+        },
+        "textScroll": {
+          "key": "textScroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AnotherText",
+        "module": {
+          "package": {
+            "name": "AnotherText",
+            "version": null
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "2043BAE2-0422-4B71-9415-91586653D21D": {
+      "rev": 0,
+      "props": {
+        "options": {
+          "key": "options",
+          "value": {
+            "__ref__": true,
+            "id": "85A2C822-AE10-4A28-8004-58C5579750BA",
+            "rev": 0
+          }
+        },
+        "root": {
+          "key": "root",
+          "value": {
+            "__ref__": true,
+            "id": "3AC48190-1150-4F4A-9836-1557241DB481",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "TextTree",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text2/document-tree.js"
+        }
+      }
+    },
+    "85A2C822-AE10-4A28-8004-58C5579750BA": {
+      "rev": 0,
+      "props": {
+        "maxLeafSize": {
+          "key": "maxLeafSize",
+          "value": 3
+        },
+        "minLeafSize": {
+          "key": "minLeafSize",
+          "value": 2
+        },
+        "leafSplit": {
+          "key": "leafSplit",
+          "value": 0.5
+        },
+        "maxNodeSize": {
+          "key": "maxNodeSize",
+          "value": 10
+        },
+        "minNodeSize": {
+          "key": "minNodeSize",
+          "value": 5
+        },
+        "nodeSplit": {
+          "key": "nodeSplit",
+          "value": 0.5
+        }
+      }
+    },
+    "3AC48190-1150-4F4A-9836-1557241DB481": {
+      "rev": 0,
+      "props": {
+        "parent": {
+          "key": "parent",
+          "value": null
+        },
+        "options": {
+          "key": "options",
+          "value": {
+            "__ref__": true,
+            "id": "85A2C822-AE10-4A28-8004-58C5579750BA",
+            "rev": 0
+          }
+        },
+        "children": {
+          "key": "children",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "4E4D57B9-E501-4042-AD42-A33A32A75009",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "11FD2884-33AC-4CED-B1D6-B3A9AD6F51C8",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "2893AD96-D577-47A5-9487-DDAA9B89C4D3",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "852A985F-7488-4BE8-AAFC-EE93E0B2F584",
+              "rev": 0
+            }
+          ]
+        },
+        "size": {
+          "key": "size",
+          "value": 9
+        },
+        "height": {
+          "key": "height",
+          "value": 242
+        },
+        "isLeaf": {
+          "key": "isLeaf",
+          "value": false
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "InnerTreeNode",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text2/document-tree.js"
+        }
+      }
+    },
+    "4E4D57B9-E501-4042-AD42-A33A32A75009": {
+      "rev": 0,
+      "props": {
+        "parent": {
+          "key": "parent",
+          "value": {
+            "__ref__": true,
+            "id": "3AC48190-1150-4F4A-9836-1557241DB481",
+            "rev": 0
+          }
+        },
+        "options": {
+          "key": "options",
+          "value": {
+            "__ref__": true,
+            "id": "85A2C822-AE10-4A28-8004-58C5579750BA",
+            "rev": 0
+          }
+        },
+        "children": {
+          "key": "children",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "091C72BE-65D9-4AD6-9DDA-409DB84CAA46",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "422F1062-CE57-4E95-876F-B337FF70992C",
+              "rev": 0
+            }
+          ]
+        },
+        "size": {
+          "key": "size",
+          "value": 2
+        },
+        "height": {
+          "key": "height",
+          "value": 66
+        },
+        "isLeaf": {
+          "key": "isLeaf",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "InnerTreeNode",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text2/document-tree.js"
+        }
+      }
+    },
+    "091C72BE-65D9-4AD6-9DDA-409DB84CAA46": {
+      "rev": 0,
+      "props": {
+        "parent": {
+          "key": "parent",
+          "value": {
+            "__ref__": true,
+            "id": "4E4D57B9-E501-4042-AD42-A33A32A75009",
+            "rev": 0
+          }
+        },
+        "_text": {
+          "key": "_text",
+          "value": "This is line 1. And this is still line 1."
+        },
+        "_propsWithOffsets": {
+          "key": "_propsWithOffsets",
+          "value": null
+        },
+        "_props": {
+          "key": "_props",
+          "value": null
+        },
+        "_propOffsets": {
+          "key": "_propOffsets",
+          "value": null
+        },
+        "_textAndProps": {
+          "key": "_textAndProps",
+          "value": null
+        },
+        "height": {
+          "key": "height",
+          "value": 44
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Line",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text2/document-tree.js"
+        }
+      }
+    },
+    "422F1062-CE57-4E95-876F-B337FF70992C": {
+      "rev": 0,
+      "props": {
+        "parent": {
+          "key": "parent",
+          "value": {
+            "__ref__": true,
+            "id": "4E4D57B9-E501-4042-AD42-A33A32A75009",
+            "rev": 0
+          }
+        },
+        "_text": {
+          "key": "_text",
+          "value": "This is line 2."
+        },
+        "_propsWithOffsets": {
+          "key": "_propsWithOffsets",
+          "value": null
+        },
+        "_props": {
+          "key": "_props",
+          "value": null
+        },
+        "_propOffsets": {
+          "key": "_propOffsets",
+          "value": null
+        },
+        "_textAndProps": {
+          "key": "_textAndProps",
+          "value": null
+        },
+        "height": {
+          "key": "height",
+          "value": 22
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Line",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text2/document-tree.js"
+        }
+      }
+    },
+    "11FD2884-33AC-4CED-B1D6-B3A9AD6F51C8": {
+      "rev": 0,
+      "props": {
+        "parent": {
+          "key": "parent",
+          "value": {
+            "__ref__": true,
+            "id": "3AC48190-1150-4F4A-9836-1557241DB481",
+            "rev": 0
+          }
+        },
+        "options": {
+          "key": "options",
+          "value": {
+            "__ref__": true,
+            "id": "85A2C822-AE10-4A28-8004-58C5579750BA",
+            "rev": 0
+          }
+        },
+        "children": {
+          "key": "children",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "9C5EFABA-A226-435C-B86F-1760230E527E",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "C0136761-5D48-45C2-AABF-7DEA521D569A",
+              "rev": 0
+            }
+          ]
+        },
+        "size": {
+          "key": "size",
+          "value": 2
+        },
+        "height": {
+          "key": "height",
+          "value": 66
+        },
+        "isLeaf": {
+          "key": "isLeaf",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "InnerTreeNode",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text2/document-tree.js"
+        }
+      }
+    },
+    "9C5EFABA-A226-435C-B86F-1760230E527E": {
+      "rev": 0,
+      "props": {
+        "parent": {
+          "key": "parent",
+          "value": {
+            "__ref__": true,
+            "id": "11FD2884-33AC-4CED-B1D6-B3A9AD6F51C8",
+            "rev": 0
+          }
+        },
+        "_text": {
+          "key": "_text",
+          "value": ""
+        },
+        "_propsWithOffsets": {
+          "key": "_propsWithOffsets",
+          "value": null
+        },
+        "_props": {
+          "key": "_props",
+          "value": null
+        },
+        "_propOffsets": {
+          "key": "_propOffsets",
+          "value": null
+        },
+        "_textAndProps": {
+          "key": "_textAndProps",
+          "value": null
+        },
+        "height": {
+          "key": "height",
+          "value": 22
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Line",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text2/document-tree.js"
+        }
+      }
+    },
+    "C0136761-5D48-45C2-AABF-7DEA521D569A": {
+      "rev": 0,
+      "props": {
+        "parent": {
+          "key": "parent",
+          "value": {
+            "__ref__": true,
+            "id": "11FD2884-33AC-4CED-B1D6-B3A9AD6F51C8",
+            "rev": 0
+          }
+        },
+        "_text": {
+          "key": "_text",
+          "value": "This is line 4, line 4, line 4, still 4."
+        },
+        "_propsWithOffsets": {
+          "key": "_propsWithOffsets",
+          "value": null
+        },
+        "_props": {
+          "key": "_props",
+          "value": null
+        },
+        "_propOffsets": {
+          "key": "_propOffsets",
+          "value": null
+        },
+        "_textAndProps": {
+          "key": "_textAndProps",
+          "value": null
+        },
+        "height": {
+          "key": "height",
+          "value": 44
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Line",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text2/document-tree.js"
+        }
+      }
+    },
+    "2893AD96-D577-47A5-9487-DDAA9B89C4D3": {
+      "rev": 0,
+      "props": {
+        "parent": {
+          "key": "parent",
+          "value": {
+            "__ref__": true,
+            "id": "3AC48190-1150-4F4A-9836-1557241DB481",
+            "rev": 0
+          }
+        },
+        "options": {
+          "key": "options",
+          "value": {
+            "__ref__": true,
+            "id": "85A2C822-AE10-4A28-8004-58C5579750BA",
+            "rev": 0
+          }
+        },
+        "children": {
+          "key": "children",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "5E53CCA0-2339-4B0D-B6F4-02AF9DFF99CE",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "889DE541-FACA-48E1-B5BF-41697223B9DC",
+              "rev": 0
+            }
+          ]
+        },
+        "size": {
+          "key": "size",
+          "value": 2
+        },
+        "height": {
+          "key": "height",
+          "value": 44
+        },
+        "isLeaf": {
+          "key": "isLeaf",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "InnerTreeNode",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text2/document-tree.js"
+        }
+      }
+    },
+    "5E53CCA0-2339-4B0D-B6F4-02AF9DFF99CE": {
+      "rev": 0,
+      "props": {
+        "parent": {
+          "key": "parent",
+          "value": {
+            "__ref__": true,
+            "id": "2893AD96-D577-47A5-9487-DDAA9B89C4D3",
+            "rev": 0
+          }
+        },
+        "_text": {
+          "key": "_text",
+          "value": "5"
+        },
+        "_propsWithOffsets": {
+          "key": "_propsWithOffsets",
+          "value": null
+        },
+        "_props": {
+          "key": "_props",
+          "value": null
+        },
+        "_propOffsets": {
+          "key": "_propOffsets",
+          "value": null
+        },
+        "_textAndProps": {
+          "key": "_textAndProps",
+          "value": null
+        },
+        "height": {
+          "key": "height",
+          "value": 22
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Line",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text2/document-tree.js"
+        }
+      }
+    },
+    "889DE541-FACA-48E1-B5BF-41697223B9DC": {
+      "rev": 0,
+      "props": {
+        "parent": {
+          "key": "parent",
+          "value": {
+            "__ref__": true,
+            "id": "2893AD96-D577-47A5-9487-DDAA9B89C4D3",
+            "rev": 0
+          }
+        },
+        "_text": {
+          "key": "_text",
+          "value": "6"
+        },
+        "_propsWithOffsets": {
+          "key": "_propsWithOffsets",
+          "value": null
+        },
+        "_props": {
+          "key": "_props",
+          "value": null
+        },
+        "_propOffsets": {
+          "key": "_propOffsets",
+          "value": null
+        },
+        "_textAndProps": {
+          "key": "_textAndProps",
+          "value": null
+        },
+        "height": {
+          "key": "height",
+          "value": 22
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Line",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text2/document-tree.js"
+        }
+      }
+    },
+    "852A985F-7488-4BE8-AAFC-EE93E0B2F584": {
+      "rev": 0,
+      "props": {
+        "parent": {
+          "key": "parent",
+          "value": {
+            "__ref__": true,
+            "id": "3AC48190-1150-4F4A-9836-1557241DB481",
+            "rev": 0
+          }
+        },
+        "options": {
+          "key": "options",
+          "value": {
+            "__ref__": true,
+            "id": "85A2C822-AE10-4A28-8004-58C5579750BA",
+            "rev": 0
+          }
+        },
+        "children": {
+          "key": "children",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "1946E05B-A468-4830-98F7-E4B1D26F68EA",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "07D1321C-1074-45E5-9532-1F3315CEC854",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "8D021E14-819C-4DEE-B734-9A4161795D13",
+              "rev": 0
+            }
+          ]
+        },
+        "size": {
+          "key": "size",
+          "value": 3
+        },
+        "height": {
+          "key": "height",
+          "value": 66
+        },
+        "isLeaf": {
+          "key": "isLeaf",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "InnerTreeNode",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text2/document-tree.js"
+        }
+      }
+    },
+    "1946E05B-A468-4830-98F7-E4B1D26F68EA": {
+      "rev": 0,
+      "props": {
+        "parent": {
+          "key": "parent",
+          "value": {
+            "__ref__": true,
+            "id": "852A985F-7488-4BE8-AAFC-EE93E0B2F584",
+            "rev": 0
+          }
+        },
+        "_text": {
+          "key": "_text",
+          "value": "7"
+        },
+        "_propsWithOffsets": {
+          "key": "_propsWithOffsets",
+          "value": null
+        },
+        "_props": {
+          "key": "_props",
+          "value": null
+        },
+        "_propOffsets": {
+          "key": "_propOffsets",
+          "value": null
+        },
+        "_textAndProps": {
+          "key": "_textAndProps",
+          "value": null
+        },
+        "height": {
+          "key": "height",
+          "value": 22
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Line",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text2/document-tree.js"
+        }
+      }
+    },
+    "07D1321C-1074-45E5-9532-1F3315CEC854": {
+      "rev": 0,
+      "props": {
+        "parent": {
+          "key": "parent",
+          "value": {
+            "__ref__": true,
+            "id": "852A985F-7488-4BE8-AAFC-EE93E0B2F584",
+            "rev": 0
+          }
+        },
+        "_text": {
+          "key": "_text",
+          "value": "8"
+        },
+        "_propsWithOffsets": {
+          "key": "_propsWithOffsets",
+          "value": null
+        },
+        "_props": {
+          "key": "_props",
+          "value": null
+        },
+        "_propOffsets": {
+          "key": "_propOffsets",
+          "value": null
+        },
+        "_textAndProps": {
+          "key": "_textAndProps",
+          "value": null
+        },
+        "height": {
+          "key": "height",
+          "value": 22
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Line",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text2/document-tree.js"
+        }
+      }
+    },
+    "8D021E14-819C-4DEE-B734-9A4161795D13": {
+      "rev": 0,
+      "props": {
+        "parent": {
+          "key": "parent",
+          "value": {
+            "__ref__": true,
+            "id": "852A985F-7488-4BE8-AAFC-EE93E0B2F584",
+            "rev": 0
+          }
+        },
+        "_text": {
+          "key": "_text",
+          "value": "9"
+        },
+        "_propsWithOffsets": {
+          "key": "_propsWithOffsets",
+          "value": null
+        },
+        "_props": {
+          "key": "_props",
+          "value": null
+        },
+        "_propOffsets": {
+          "key": "_propOffsets",
+          "value": null
+        },
+        "_textAndProps": {
+          "key": "_textAndProps",
+          "value": null
+        },
+        "height": {
+          "key": "height",
+          "value": 22
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Line",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text2/document-tree.js"
+        }
+      }
+    }
+  },
+  "requiredVersion": "~0.1",
+  "packages": {
+    "local://lively-object-modules/": {
+      "AnotherText": {
+        "package.json": "{\n  \"name\": \"AnotherText\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
+        "index.js": "import { Morph } from \"lively.morphic/morph.js\";\nimport { h } from \"lively.morphic/node_modules/virtual-dom/dist/virtual-dom.js\";\nimport { defaultAttributes, defaultStyle } from \"lively.morphic/rendering/morphic-default.js\";\nimport TextTree from \"lively.morphic/text2/document-tree.js\";\nimport { addOrChangeCSSDeclaration } from \"lively.morphic/rendering/dom-helper.js\";\nimport { show, inspect } from \"lively.morphic/index.js\";\nimport { DOMMeasure, DOMTextMeasure } from \"./measuring.js\";\nimport { obj, num, arr } from \"lively.lang/index.js\";\nimport { pt } from \"lively.graphics/index.js\";\n\nexport default class AnotherText extends Morph {\n\n  static get properties() {\n    return {\n      lineData: {},\n\n      fontFamily: {defaultValue: \"Georgia,Times,serif\"},\n      fontSize: {defaultValue: 14},\n      fontColor: {defaultValue: \"darkgray\"},\n\n      textScroll: {defaultValue: pt(0,0)},\n\n      content: {\n        derived: true, after: [\"lineData\"],\n        get() {\n          return this.lineData.lines.map(ea => ea.text).join(\"\\n\");\n        },\n        set(content) {\n          let {lines} = this.lineData = new TextTree(content.split(\"\\n\"));\n          this.estimateLineHeights(lines);\n          this.makeDirty();\n        }\n      }\n    }\n  }\n\n  reset() {\n    let props = this.constructor.properties;\n    let keys = Object.keys(props);\n    keys.forEach(key =>\n      typeof this[key] === \"undefined\" && (this[key] = props.defaultValue[key]))\n\n    this.fontSize = 20;\n    this.updateCSS();\n    this.content = `This is line 1. And this is still line 1.\nThis is line 2.\n\nThis is line 4, line 4, line 4, still 4.\n5\n6\n7\n8\n9`\n  }\n\n  updateCSS() {\n    addOrChangeCSSDeclaration(\"new-text-css\", `\n      .newtext-scroller {\n          -moz-box-sizing: content-box;\n          box-sizing: content-box;\n          overflow: auto !important;\n          height: 100%;\n          outline: none;\n          position: relative;\n      }\n\n      .newtext-wrap .line>span {\n        word-wrap: break-word;\n        white-space: wrap;\n        word-break: normal;\n        word-break: break-all;\n      }\n\n      .newtext .line>span {\n        -moz-border-radius: 0;\n        -webkit-border-radius: 0;\n        border-radius: 0;\n        border-width: 0;\n        background: transparent;\n        font-family: inherit;\n        font-size: inherit;\n        margin: 0;\n        word-wrap: normal;\n        line-height: inherit;\n        color: inherit;\n        z-index: 2;\n        position: relative;\n        overflow: visible;\n        -webkit-tap-highlight-color: transparent;\n        -webkit-font-variant-ligatures: contextual;\n        font-variant-ligatures: contextual;\n      }\n    `);\n  }\n\n  renderTextStuff(renderer) {\n    let {\n      height: scrollHeight,\n      lineData: {lines},\n      textScroll: {x: scrollLeft, y: scrollTop}\n    } = this;\n\n    let scrollBottom = scrollTop + scrollHeight,\n        textHeight = 0,\n        y = 0,\n        row = 0,\n        firstVisibleRow = 0,\n        lastVisibleRow = 0;\n\n    for (; row < lines.length; row++) {\n      let lineHeight = lines[row].height;\n      if (y + lineHeight > scrollTop) { firstVisibleRow = row; break; }\n      y += lineHeight;\n    }\n\n    for (; row < lines.length; row++) {\n      if (y > scrollBottom) { lastVisibleRow = row; break; }\n      y += lines[row].height;\n    }\n\n    for (; row < lines.length; row++) {\n      y += lines[row].height;\n    }\n\n    textHeight = y;\n\nshow(`first: ${firstVisibleRow}, last: ${lastVisibleRow}, textH: ${textHeight}`);\n\n    let attrs = {\n      style: {\n        fontFamily: this.fontFamily,\n        fontSize: this.fontSize + \"px\",\n        color: this.fontColor,\n      }\n    };\n\n    return h(\"div.newtext.newtext-scroller\",\n             {\n               scrollLeft, scrollTop,\n               onscroll: evt => {\n                 let dirty = this._dirty;\n                 let {scrollLeft, scrollTop} = evt.target;\n                 this.setProperty(\"textScroll\", pt(scrollLeft, scrollTop));\n                 this._dirty = dirty;\n\n               }\n             },\n             h(\"div.newtext.newtext-wrap\", attrs,\n               lines.map(ea =>\n                 h(\"div.line\", h(\"span\", ea.text || h(\"br\"))))));\n  }\n\n  render(renderer) {\n    function AfterTextRenderHook() {}\n    AfterTextRenderHook.prototype.hook = (node, propName, prevValue) => {\n      // inspect({node, propName, prevValue})\n      // let {scrollLeft, scrollTop} = node.querySelector(\".newtext-scroller\");\n      // show(\"\"+scrollLeft +scrollTop)\n      // let dirty = this._dirty;\n      // this.setProperty(\"textScroll\", pt(scrollLeft, scrollTop));\n      // this._dirty = dirty;\n    }\n\n    return h(\"div\", {\n      ...defaultAttributes(this, renderer),\n      style: defaultStyle(this),\n      \"after-text-render-hook\": new AfterTextRenderHook()\n    }, [\n      renderer.renderSubmorphs(this), this.renderTextStuff(renderer)]);\n  }\n\n  actualLineHeights(morphNode) {\n    // this.actualLineHeights(this.env.renderer.getNodeForMorph(this))\n    let spans = morphNode.querySelectorAll(\".newtext .line\");\n    return Array.from(spans).map(ea => ea.getBoundingClientRect().height);\n  }\n\n  estimateLineHeights(lines) {\n    // this.reset()\n    // this.estimateLineHeights(this.lineData.lines);\n    // \n    // let chars = arr.range(64, 125).map(ea => String.fromCharCode(ea))\n    // while(chars.length < 300) chars.push(...chars)\n    // let lines = arr.range(0, 1000).map(_ => ({height: 0, text: arr.shuffle(chars).slice(0, num.random(0, 300)).join(\"\")}))\n    // lines.forEach(ea => ea.height=0)\n    // this.estimateLineHeights(lines);\n    // let t = Date.now(); this.estimateLineHeights(lines); Date.now()-t;\n    // this.content = lines.map(ea => ea.text).join(\"\\n\")\n\n    // arr.pluck(this.lineData.lines, \"height\")\n\n    let measure = DOMTextMeasure.initDefault().reset(),\n        defaultStyle = obj.select(this, [\"fontFamily\", \"fontSize\", \"fontWeight\", \"fontStyle\", \"textDecoration\", \"textStyleClasses\"]),\n        {width: textWidth, height: textHeight} = this,\n        wraps = true;\n\n    for (let i = 0; i < lines.length; i++) {\n      let line = lines[i];\n      if (line.height > 0) continue;\n      let props = line.props,\n          styles = [];\n\n      // find all styles that apply to line\n      if (!props) styles.push(defaultStyle);\n      else for (let j = 0; j < props.length; j++)\n        styles.push({...defaultStyle, ...props[j]});\n\n      // measure default char widths and heights\n      let charWidthN = 0, charWidthSum = 0, charHeight = 0;\n      for (let h = 0; h < styles.length; h++) {\n        let {width, height} = measure.defaultCharExtent(styles[h]);\n        charHeight = Math.max(height, charHeight);\n        if (wraps) { charWidthSum += width; charWidthN++; }\n      }\n\n      let estimatedHeight = charHeight;\n      if (wraps) {\n        let charWidth = (charWidthSum/charWidthN),\n            charsPerline = Math.max(3, textWidth / charWidth);\n        estimatedHeight = (Math.ceil(line.text.length / charsPerline) || 1) * charHeight;\n      }\n      line.changeHeight(estimatedHeight);\n    }\n\n    return arr.pluck(lines, \"height\")\n  }\n\n  onMouseMove(evt) {\n    show(evt.position);\n  }\n}\n\n",
+        "measuring.js": "// Unicode characters that are considered \"extending\", i.e. treated as a single\n// unit. The list below is based on\n// https://github.com/codemirror/CodeMirror/blob/master/src/util/misc.js#L122\nconst extendingChars = /[\\u0300-\\u036f\\u0483-\\u0489\\u0591-\\u05bd\\u05bf\\u05c1\\u05c2\\u05c4\\u05c5\\u05c7\\u0610-\\u061a\\u064b-\\u065e\\u0670\\u06d6-\\u06dc\\u06de-\\u06e4\\u06e7\\u06e8\\u06ea-\\u06ed\\u0711\\u0730-\\u074a\\u07a6-\\u07b0\\u07eb-\\u07f3\\u0816-\\u0819\\u081b-\\u0823\\u0825-\\u0827\\u0829-\\u082d\\u0900-\\u0902\\u093c\\u0941-\\u0948\\u094d\\u0951-\\u0955\\u0962\\u0963\\u0981\\u09bc\\u09be\\u09c1-\\u09c4\\u09cd\\u09d7\\u09e2\\u09e3\\u0a01\\u0a02\\u0a3c\\u0a41\\u0a42\\u0a47\\u0a48\\u0a4b-\\u0a4d\\u0a51\\u0a70\\u0a71\\u0a75\\u0a81\\u0a82\\u0abc\\u0ac1-\\u0ac5\\u0ac7\\u0ac8\\u0acd\\u0ae2\\u0ae3\\u0b01\\u0b3c\\u0b3e\\u0b3f\\u0b41-\\u0b44\\u0b4d\\u0b56\\u0b57\\u0b62\\u0b63\\u0b82\\u0bbe\\u0bc0\\u0bcd\\u0bd7\\u0c3e-\\u0c40\\u0c46-\\u0c48\\u0c4a-\\u0c4d\\u0c55\\u0c56\\u0c62\\u0c63\\u0cbc\\u0cbf\\u0cc2\\u0cc6\\u0ccc\\u0ccd\\u0cd5\\u0cd6\\u0ce2\\u0ce3\\u0d3e\\u0d41-\\u0d44\\u0d4d\\u0d57\\u0d62\\u0d63\\u0dca\\u0dcf\\u0dd2-\\u0dd4\\u0dd6\\u0ddf\\u0e31\\u0e34-\\u0e3a\\u0e47-\\u0e4e\\u0eb1\\u0eb4-\\u0eb9\\u0ebb\\u0ebc\\u0ec8-\\u0ecd\\u0f18\\u0f19\\u0f35\\u0f37\\u0f39\\u0f71-\\u0f7e\\u0f80-\\u0f84\\u0f86\\u0f87\\u0f90-\\u0f97\\u0f99-\\u0fbc\\u0fc6\\u102d-\\u1030\\u1032-\\u1037\\u1039\\u103a\\u103d\\u103e\\u1058\\u1059\\u105e-\\u1060\\u1071-\\u1074\\u1082\\u1085\\u1086\\u108d\\u109d\\u135f\\u1712-\\u1714\\u1732-\\u1734\\u1752\\u1753\\u1772\\u1773\\u17b7-\\u17bd\\u17c6\\u17c9-\\u17d3\\u17dd\\u180b-\\u180d\\u18a9\\u1920-\\u1922\\u1927\\u1928\\u1932\\u1939-\\u193b\\u1a17\\u1a18\\u1a56\\u1a58-\\u1a5e\\u1a60\\u1a62\\u1a65-\\u1a6c\\u1a73-\\u1a7c\\u1a7f\\u1b00-\\u1b03\\u1b34\\u1b36-\\u1b3a\\u1b3c\\u1b42\\u1b6b-\\u1b73\\u1b80\\u1b81\\u1ba2-\\u1ba5\\u1ba8\\u1ba9\\u1c2c-\\u1c33\\u1c36\\u1c37\\u1cd0-\\u1cd2\\u1cd4-\\u1ce0\\u1ce2-\\u1ce8\\u1ced\\u1dc0-\\u1de6\\u1dfd-\\u1dff\\u200c\\u200d\\u20d0-\\u20f0\\u2cef-\\u2cf1\\u2de0-\\u2dff\\u302a-\\u302f\\u3099\\u309a\\ua66f-\\ua672\\ua67c\\ua67d\\ua6f0\\ua6f1\\ua802\\ua806\\ua80b\\ua825\\ua826\\ua8c4\\ua8e0-\\ua8f1\\ua926-\\ua92d\\ua947-\\ua951\\ua980-\\ua982\\ua9b3\\ua9b6-\\ua9b9\\ua9bc\\uaa29-\\uaa2e\\uaa31\\uaa32\\uaa35\\uaa36\\uaa43\\uaa4c\\uaab0\\uaab2-\\uaab4\\uaab7\\uaab8\\uaabe\\uaabf\\uaac1\\uabe5\\uabe8\\uabed\\udc00-\\udfff\\ufb1e\\ufe00-\\ufe0f\\ufe20-\\ufe26\\uff9e\\uff9f]/\nexport function isExtendingChar(ch) { return ch.charCodeAt(0) >= 768 && extendingChars.test(ch) }\n\n// Returns a number from the range [`0`; `str.length`] unless `pos` is outside that range.\nexport function skipExtendingChars(str, pos, dir) {\n  while ((dir < 0 ? pos > 0 : pos < str.length) && isExtendingChar(str.charAt(pos)))\n    pos += dir;\n  return pos\n}\n\nfunction lineHeights(textMorph) {\n\n}\n\nfunction test() {\n  let measure = DOMTextMeasure.initDefault().reset();\n  measure.defaultCharExtent({fontSize: 12, fontFamily: \"serif\"});\n}\n\nexport class DOMTextMeasure {\n\n  static default() {\n    if (!this._default)\n      throw new Error(\"DOMMeasure has not yet been initialized!\")\n    return this._default;\n  }\n\n  static initDefault(domEnv) {\n    if (!this._default) {\n      if (!domEnv && typeof document === \"undefined\")\n        throw new Error(\"Cannot initialize DOMMeasure without document\");\n      if (!domEnv) domEnv = {document}\n      this._default = this.forDOMEnv(domEnv);\n    }\n    return this._default;\n  }\n\n  static removeDefault() {\n    if (this._default) {\n      this._default.uninstall();\n      this._default = null;\n    }\n  }\n\n  static forDOMEnv({document}) {\n    var fontMetric = new DOMTextMeasure();\n    fontMetric.install(document, document.body);\n    return fontMetric;\n  }\n\n\n  reset() {\n    var doc, parentNode;\n    if (this.element) {\n      parentNode = this.element.parentNode;\n      doc = this.element.ownerDocument;\n    }\n    this.uninstall();\n    // this.charMap = {};\n    // this.cachedBoundsInfo = {};\n    if (doc && parentNode)\n      this.install(doc, parentNode);\n    return this;\n  }\n\n  install(doc, parentEl) {\n    this.maxElementsWithStyleCacheCount = 50;\n    this.elementsWithStyleCache = {};\n    this.elementsWithStyleCacheCount = 0;\n    this.defaultCharWidthHeightCache = {};\n    this.doc = doc;\n    let el = this.element = doc.createElement(\"div\");\n    el.id = \"domMeasure\";\n    this.setMeasureNodeStyles(el.style, true);\n    parentEl.appendChild(el);\n  }\n\n  uninstall() {\n    let el = this.element;\n    if (!el) return\n    if (el.parentNode) el.parentNode.removeChild(el);\n    this.element = null;\n  }\n\n  setMeasureNodeStyles(style, isRoot) {\n    style.width = style.height = \"auto\";\n    style.left = style.top = \"0px\";\n    style.visibility = \"hidden\";\n    style.position = \"absolute\";\n    style.whiteSpace = \"pre\";\n    style.font = \"inherit\";\n    style.overflow = isRoot ? \"hidden\" : \"visible\";\n  }\n\n  generateStyleKey(fontFamily, fontSize, fontWeight, fontStyle, textDecoration, textStyleClasses) {\n    return `${fontFamily}-${fontSize}-${fontWeight}-${fontStyle}-${textDecoration}-${textStyleClasses}`;\n  }\n\n  prepareMeasureForLineSimpleStyle(styleKey, style) {\n    // returns an existing or new node with style\n    let {doc, element: root, elementsWithStyleCache: cache} = this;\n    if (cache[styleKey]) return cache[styleKey];\n    let el = cache[styleKey] = document.createElement(\"div\");\n    el.id = styleKey;\n    root.appendChild(el);\n    this.elementsWithStyleCacheCount++;\n    Object.assign(el.style, style);\n    el.style.fontSize = style.fontSize + \"px\";\n    if (style.textStyleClasses)\n      el.className = style.textStyleClasses.join(\" \");\n    if (this.elementsWithStyleCacheCount > this.maxElementsWithStyleCacheCount) {\n      let rmCacheEl = root.childNodes[0];\n      root.removeChild(rmCacheEl);\n      cache[rmCacheEl.id] = null;\n    }\n    return el;\n  }\n\n  defaultCharExtent(style, styleKey) {  \n    if (!styleKey) {\n      let {fontFamily, fontSize, fontWeight, fontStyle, textDecoration, textStyleClasses} = style;\n      styleKey = this.generateStyleKey(fontFamily, fontSize, fontWeight, fontStyle, textDecoration, textStyleClasses);\n    }\n    let {defaultCharWidthHeightCache} = this,\n        found = defaultCharWidthHeightCache[styleKey];\n    if (found) return found;\n    let node = this.prepareMeasureForLineSimpleStyle(styleKey, style);\n    node.textContent = \"Hello World!\";\n    let {width, height} = node.getBoundingClientRect();\n    return defaultCharWidthHeightCache[styleKey] = {width: width/12, height};\n  }\n\n}\n"
+      }
+    }
+  },
+  "preview": "data:image/png;base64,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"
+}
