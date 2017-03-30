@@ -76,20 +76,21 @@ class TreeNode {
 
 class InnerTreeNode extends TreeNode {
 
-  constructor(parent = null, children = [], size = 0, options) {
+  constructor(parent = null, children = [], size = 0, height = 0, options) {
     super(parent);
     this.options = options;
     this.children = children;
     this.size = size;
-    this.height = 0;
+    this.height = height;
     this.isLeaf = true;
   }
 
   get isNode() { return true; }
 
-  resize(n) {
+  resize(n, height) {
     this.size = this.size + n;
-    this.parent && this.parent.resize(n);
+    this.height = this.height + height;
+    this.parent && this.parent.resize(n, height);
     // if (n > 0) this.balanceAfterGrowth(n);
   }
 
@@ -111,27 +112,43 @@ class InnerTreeNode extends TreeNode {
     return null;
   }
 
-  insert(lines, atIndex = this.size) {
+  ensureLine(lineSpec) {
+    if (!lineSpec) lineSpec = "";
+    if (typeof lineSpec === "string")
+      return new Line(this, 0, lineSpec);
+    if (lineSpec.isLine) {
+      lineSpec.parent = this;
+      return lineSpec;
+    }
+    return new Line(this, lineSpec.height || 0, lineSpec.text || "", lineSpec.propsWithOffsets);
+  }
+
+  insert(lineSpecs, atIndex = this.size) {
     if (this.isLeaf) {
-      lines = lines.map(text => new Line(this, text));
+      let lines = [], height = 0;
+      for (let i = 0; i < lineSpecs.length; i++) {
+        let line = this.ensureLine(lineSpecs[i]);
+        lines.push(line);
+        height += line.height;
+      }
       this.children.splice(atIndex, 0, ...lines);
-      this.resize(lines.length);
+      this.resize(lines.length, height);
       this.balanceAfterGrowth();
       return lines;
     }
 
     if (this.children.length === 0)
-      this.children.push(new InnerTreeNode(this, [], 0, this.options));
+      this.children.push(new InnerTreeNode(this, [], 0, 0, this.options));
 
     var i = 0;
     for (; i < this.children.length; i++) {
       var child = this.children[i], childSize = child.size;
-      if (atIndex <= childSize) return child.insert(lines, atIndex);
+      if (atIndex <= childSize) return child.insert(lineSpecs, atIndex);
       atIndex = atIndex - childSize;
     }
 
     var last = this.children[i-1];
-    return last.insert(lines, last.size);
+    return last.insert(lineSpecs, last.size);
   }
 
   withParentChainsUpToCommonParentDo(otherNode, otherNodeAndParentsDoFunc, thisNodeAndParentsDoFunc) {
@@ -239,10 +256,15 @@ class InnerTreeNode extends TreeNode {
     // remove the nodes inbetween first/last + first if "full" and last if "full"
     for (let i = 0; i < toRemove.length; i++) {
       var node = toRemove[i].node,
-          n = node.children.length;
-      node.children.forEach(ea => ea.parent = null);
+          n = node.children.length,
+          height = 0;
+      for (let j = 0; j < n; j++) {
+        let ea = node.children[j];
+        height += ea.height;
+        ea.parent = null;
+      }
       node.children.length = 0;
-      node.resize(-n);
+      node.resize(-n, -height);
       var p = node.parent;
       if (p) {
         node.parent = null;
@@ -256,9 +278,14 @@ class InnerTreeNode extends TreeNode {
       let {lastLine, firstLine, node} = first,
           {children, options} = node,
           n = (lastLine - firstLine)+1,
-          removedLines = children.splice(firstLine, n);
-      removedLines.forEach(ea => ea.parent = null);
-      node.resize(-n);
+          removedLines = children.splice(firstLine, n),
+          height = 0;
+      for (let j = 0; j < removedLines.length; j++) {
+        let ea = removedLines[j];
+        height += ea.height;
+        ea.parent = null;
+      }
+      node.resize(-n, -height);
     }
 
     // ...same for last
@@ -266,9 +293,14 @@ class InnerTreeNode extends TreeNode {
       let {lastLine, firstLine, node} = last,
           {children} = node,
           n = (lastLine - firstLine)+1,
-          removedLines = children.splice(firstLine, n);
-      removedLines.forEach(ea => ea.parent = null);
-      node.resize(-n);
+          removedLines = children.splice(firstLine, n),
+          height = 0;
+      for (let j = 0; j < removedLines.length; j++) {
+        let ea = removedLines[j];
+        height += ea.height;
+        ea.parent = null;
+      }
+      node.resize(-n, -height);
     }
 
     // merge if needed
@@ -308,10 +340,16 @@ class InnerTreeNode extends TreeNode {
     if (mergeTarget) {
       // update size of sibling and parents up to common parent and
       // subtract my size from self and all parents up to common parent with sibling
-      var mySize = this.size;
+      var mySize = this.size, myHeight = this.height;
       this.withParentChainsUpToCommonParentDo(mergeTarget,
-        (mergeNodeOrParent) => mergeNodeOrParent.size += mySize,
-        (thisOrParent => thisOrParent.size -= mySize));
+        mergeNodeOrParent => {
+          mergeNodeOrParent.size += mySize;
+          mergeNodeOrParent.height += myHeight;
+        },
+        (thisOrParent => {
+          thisOrParent.size -= mySize
+          thisOrParent.height -= myHeight
+        }));
 
       // move children over
       children.forEach(ea => ea.parent = mergeTarget);
@@ -332,10 +370,19 @@ class InnerTreeNode extends TreeNode {
               leftSibling.children.splice(leftSibling.children.length - stealLeftN, stealLeftN) :
               rightSibling.children.splice(0, stealRightN),
             stealTarget = stealLeft ? leftSibling : rightSibling,
-            stealN = stealLeft ? stealLeftN : stealRightN;
+            stealN = stealLeft ? stealLeftN : stealRightN,
+            stealHeight = 0;
+        for (let i = 0; i < newChildren.length; i++) stealHeight += newChildren[i].height;
+
         this.withParentChainsUpToCommonParentDo(stealTarget,
-          (mergeNodeOrParent) => mergeNodeOrParent.size -= stealN,
-          (thisOrParent => thisOrParent.size += stealN));
+          mergeNodeOrParent => {
+            mergeNodeOrParent.size -= stealN
+            mergeNodeOrParent.height -= stealHeight;
+          },
+          (thisOrParent => {
+            thisOrParent.size += stealN;
+            thisOrParent.height += stealHeight;
+          }));
         newChildren.forEach(ea => ea.parent = this);
         if (stealLeft) this.children.unshift(...newChildren);
         else this.children.push(...newChildren);
@@ -355,28 +402,30 @@ class InnerTreeNode extends TreeNode {
   }
 
   balanceAfterGrowth() {
-    var {isLeaf, size, parent, children, options} = this,
+    var {isLeaf, size, parent, children, height, options} = this,
         maxChildren = isLeaf ? options.maxLeafSize : options.maxNodeSize,
         split = children.length > maxChildren;
 
     if (!split) return;
 
     if (!parent) {
-      parent = this.parent = new InnerTreeNode(null, [this], size, options);
+      parent = this.parent = new InnerTreeNode(null, [this], size, height, options);
       parent.isLeaf = false;
     }
 
     var splitIndex = Math.floor(children.length / 2),
-        i = 0, mySize = 0, otherSize = 0;
-    for (; i < splitIndex; i++) mySize = mySize+ children[i].size;
-    for (; i < children.length; i++) otherSize = otherSize + children[i].size;
+        i = 0, mySize = 0, otherSize = 0,
+        myHeight  = 0, otherHeight = 0;
+    for (; i < splitIndex; i++) { mySize += children[i].size; myHeight += children[i].height; };
+    for (; i < children.length; i++) { otherSize += children[i].size; otherHeight += children[i].height; }
 
     this.children = children.slice(0, splitIndex);
     this.size = mySize;
+    this.height = myHeight;
 
     var indexInParent = parent.children.indexOf(this),
         otherChildren = children.slice(splitIndex),
-        otherNode = new InnerTreeNode(parent, otherChildren, otherSize, options);
+        otherNode = new InnerTreeNode(parent, otherChildren, otherSize, otherHeight, options);
     otherNode.isLeaf = isLeaf;
     otherChildren.forEach(ea => ea.parent = otherNode);
     parent.children.splice(indexInParent + 1, 0, otherNode);
@@ -445,10 +494,10 @@ class InnerTreeNode extends TreeNode {
   }
 
   print(index = 0, depth = 0, optName) {
-    var {isLeaf, size, children} = this,
+    var {isLeaf, size, height, children} = this,
         name = optName ? optName : isLeaf ? "leaf" : "node",
         indent = " ".repeat(depth),
-        printed = `${indent}${name} (size: ${size})`;
+        printed = `${indent}${name} (size: ${size}, height: ${height})`;
 
     if (children.length) {
       var childrenPrinted = "",

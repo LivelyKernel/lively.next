@@ -8,28 +8,44 @@ var opts = {maxLeafSize: 3, minLeafSize: 2, maxNodeSize: 5, minNodeSize: 2};
 describe("text tree", () => {
 
   it("finds lines by row", () => {
-    var textTree = new TextTree(["a", "b", "c", "d"]);
+    var textTree = new TextTree([{text: "a", height: 10}, {text: "b", height: 20}, {text: "c", height: 5}, {text: "d", height: 15}]);
+    textTree.print()
     textTree.consistencyCheck();
-    
-    var lines = [0,1,2,3,4].map(n => textTree.root.findRow(n));
+
+    var lines = [0,1,2,3].map(n => textTree.root.findRow(n));
     expect().assert(lines[0], "line 0 not found");
     expect().assert(lines[1], "line 1 not found");
     expect().assert(lines[2], "line 2 not found");
     expect().assert(lines[3], "line 3 not found");
-    expect(lines[0]).containSubset({text: "a"});
-    expect(lines[1]).containSubset({text: "b"});
-    expect(lines[2]).containSubset({text: "c"});
-    expect(lines[3]).containSubset({text: "d"});
+    expect(lines[0]).containSubset({text: "a", height: 10});
+    expect(lines[1]).containSubset({text: "b", height: 20});
+    expect(lines[2]).containSubset({text: "c", height: 5});
+    expect(lines[3]).containSubset({text: "d", height: 15});
 
     expect(lines[0].parent).equals(textTree.root.children[0], "parent line 0");
     expect(lines[1].parent).equals(textTree.root.children[0], "parent line 1");
     expect(lines[2].parent).equals(textTree.root.children[1], "parent line 2");
     expect(lines[3].parent).equals(textTree.root.children[1], "parent line 3");
 
+    expect(textTree.root.children[0].height).equals(30, "height parent[0]");
+    expect(textTree.root.children[1].height).equals(20, "height parent[1]");
+    expect(textTree.root.height).equals(50, "height root");
+
     expect(lines[0].row).equals(0);
     expect(lines[1].row).equals(1);
     expect(lines[2].row).equals(2);
     expect(lines[3].row).equals(3);
+
+    expect(textTree.lines).equals(lines);
+  });
+
+  it("updates height", () => {
+    let textTree = new TextTree([{text: "a", height: 10}, {text: "b", height: 20}, {text: "c", height: 5}, {text: "d", height: 15}]),
+        lines = textTree.lines;
+    lines[2].changeHeight(12);
+    expect(lines[2]).containSubset({text: "c", height: 12});
+    expect(textTree.root.children[1].height).equals(15+12, "height parent[1]");
+    expect(textTree.root.height).equals(30+15+12, "height root");
   });
 
 
@@ -37,11 +53,11 @@ describe("text tree", () => {
     var textTree = new TextTree(["a", "b", "c", "d"], opts);
     textTree.balance();
     expect(textTree.print()).equals(
-      `root (size: 4)\n`
-    + ` leaf (size: 2)\n`
+      `root (size: 4, height: 0)\n`
+    + ` leaf (size: 2, height: 0)\n`
     + `  line 0 (height: 0, text: "a")\n`
     + `  line 1 (height: 0, text: "b")\n`
-    + ` leaf (size: 2)\n`
+    + ` leaf (size: 2, height: 0)\n`
     + `  line 2 (height: 0, text: "c")\n`
     + `  line 3 (height: 0, text: "d")`);
   });
@@ -51,7 +67,7 @@ describe("text tree", () => {
     it("appends", () => {
       var textTree = new TextTree();
       textTree.insertLine("hello world");
-      expect(textTree.print()).equals(`root (size: 1)\n line 0 (height: 0, text: "hello world")`)
+      expect(textTree.print()).equals(`root (size: 1, height: 0)\n line 0 (height: 0, text: "hello world")`)
     });
 
     it("inserts", () => {
@@ -60,7 +76,7 @@ describe("text tree", () => {
       textTree.insertLine("a", 0);
       textTree.insertLine("b", 1);
       expect(textTree.print()).equals(
-        `root (size: 3)\n`
+        `root (size: 3, height: 0)\n`
       + ` line 0 (height: 0, text: "a")\n`
       + ` line 1 (height: 0, text: "b")\n`
       + ` line 2 (height: 0, text: "c")`);
@@ -71,11 +87,11 @@ describe("text tree", () => {
       textTree.insertLine("x", 0);
       textTree.insertLine("y", 3);
       expect(textTree.print()).equals(
-        `root (size: 4)\n`
-      + ` leaf (size: 2)\n`
+        `root (size: 4, height: 0)\n`
+      + ` leaf (size: 2, height: 0)\n`
       + `  line 0 (height: 0, text: "x")\n`
       + `  line 1 (height: 0, text: "a")\n`
-      + ` leaf (size: 2)\n`
+      + ` leaf (size: 2, height: 0)\n`
       + `  line 2 (height: 0, text: "b")\n`
       + `  line 3 (height: 0, text: "y")`);
     });
@@ -104,26 +120,26 @@ describe("text tree", () => {
     it("removes line", () => {
       var textTree = new TextTree(["a", "b", "c"]);
       textTree.removeLine(1);
-      expect(textTree.print()).equals(`root (size: 2)\n line 0 (height: 0, text: "a")\n line 1 (height: 0, text: "c")`);
+      expect(textTree.print()).equals(`root (size: 2, height: 0)\n line 0 (height: 0, text: "a")\n line 1 (height: 0, text: "c")`);
       textTree.removeLine(1);
       textTree.print2()
 
-      expect(textTree.print()).equals(`root (size: 1)\n line 0 (height: 0, text: "a")`);
+      expect(textTree.print()).equals(`root (size: 1, height: 0)\n line 0 (height: 0, text: "a")`);
       textTree.removeLine(0);
-      expect(textTree.print()).equals(`root (size: 0)`);
+      expect(textTree.print()).equals(`root (size: 0, height: 0)`);
     });
 
     it("balances leaf nodes after remove 1", () => {
       var textTree = new TextTree(["a", "b", "c", "d"], opts);
       textTree.removeLine(3);
       expect(textTree.print()).equals(
-          `root (size: 3)\n`
+          `root (size: 3, height: 0)\n`
         + ` line 0 (height: 0, text: "a")\n`
         + ` line 1 (height: 0, text: "b")\n`
         + ` line 2 (height: 0, text: "c")`);
       textTree.removeLine(1);
       expect(textTree.print()).equals(
-          `root (size: 2)\n`
+          `root (size: 2, height: 0)\n`
         + ` line 0 (height: 0, text: "a")\n`
         + ` line 1 (height: 0, text: "c")`);
     });
@@ -132,13 +148,13 @@ describe("text tree", () => {
       var textTree = new TextTree(["a", "b", "c", "d"], opts);
       textTree.removeLine(1);
       expect(textTree.print()).equals(
-          `root (size: 3)\n`
+          `root (size: 3, height: 0)\n`
         + ` line 0 (height: 0, text: "a")\n`
         + ` line 1 (height: 0, text: "c")\n`
         + ` line 2 (height: 0, text: "d")`);
       textTree.removeLine(1);
       expect(textTree.print()).equals(
-          `root (size: 2)\n`
+          `root (size: 2, height: 0)\n`
         + ` line 0 (height: 0, text: "a")\n`
         + ` line 1 (height: 0, text: "d")`);
     });
@@ -160,7 +176,7 @@ describe("text tree", () => {
       textTree.removeLines(1, 2);
       textTree.consistencyCheck();
       expect(textTree.print()).equals(
-          `root (size: 2)\n`
+          `root (size: 2, height: 0)\n`
         + ` line 0 (height: 0, text: "a")\n`
         + ` line 1 (height: 0, text: "d")`);
     });
