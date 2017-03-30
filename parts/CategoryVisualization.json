@@ -1,14 +1,14 @@
 {
-  "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
+  "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
   "snapshot": {
-    "Window_56C4E501_6986_405D_A208_453E8BD3196B": {
-      "rev": 468068,
+    "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9": {
+      "rev": 22818,
       "props": {
         "dropShadow": {
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "213764CD-552F-469C-A073-559A051C7874",
+            "id": "88711CE9-EE75-4FF9-BE43-C88A04C5733F",
             "rev": 0
           }
         },
@@ -30,7 +30,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(39.4,23.4)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(-2.6,357.4)"
         },
         "scroll": {
           "key": "scroll",
@@ -49,33 +49,33 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Ellipse_36E6A54B_623E_4F3A_A913_CFD1460A35A2",
-              "rev": 467341
+              "id": "Ellipse_205F7AB6_09D5_4930_8E40_1E19DAE1D7CA",
+              "rev": 22089
             },
             {
               "__ref__": true,
-              "id": "Ellipse_3E933345_E37F_45DE_A676_1AF9FC12B13D",
-              "rev": 467367
+              "id": "Ellipse_337DE9D1_169F_4108_BAEF_4DBD0A30E3B6",
+              "rev": 22115
             },
             {
               "__ref__": true,
-              "id": "Ellipse_F0B6CCB4_808B_4643_B7E2_132CB0141CB5",
-              "rev": 467392
+              "id": "Ellipse_A2018E91_B789_44CE_9EAF_4383B723A0A3",
+              "rev": 22140
             },
             {
               "__ref__": true,
-              "id": "Label_2BB48E72_3BA7_4A55_AA00_674C0918C9EB",
-              "rev": 513494
+              "id": "Label_F077DA10_D863_4C5D_9C89_AB4B34C52596",
+              "rev": 57314
             },
             {
               "__ref__": true,
-              "id": "Morph_E6A105CC_B178_4D71_A74F_DC43185AFDC5",
-              "rev": 513309
+              "id": "Morph_14C3A737_FE01_4D4D_82BF_E49E9E1E9300",
+              "rev": 57132
             },
             {
               "__ref__": true,
-              "id": "VisjsMorph_2459DBA6_A32E_4C63_A706_241714F46415",
-              "rev": 513311
+              "id": "VisjsMorph_7FBAB813_1CC4_45CF_8506_9EDE8A9FC5D3",
+              "rev": 57134
             }
           ]
         },
@@ -148,12 +148,12 @@
           "value": [
             {
               "__ref__": true,
-              "id": "67E95439-0265-4AB8-8EC9-FF9A23C6AFFE",
+              "id": "8B4CAFA7-3A0F-4C95-A09C-47E1204DD0DE",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "C4C05387-7390-4836-887D-B06767428D73",
+              "id": "3051186E-D1B2-46F1-9E60-E57CEBF15481",
               "rev": 0
             }
           ]
@@ -170,7 +170,7 @@
         }
       }
     },
-    "213764CD-552F-469C-A073-559A051C7874": {
+    "88711CE9-EE75-4FF9-BE43-C88A04C5733F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -201,8 +201,8 @@
           "key": "morph",
           "value": {
             "__ref__": true,
-            "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
-            "rev": 468068
+            "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
+            "rev": 22818
           }
         }
       },
@@ -217,8 +217,8 @@
         }
       }
     },
-    "Ellipse_36E6A54B_623E_4F3A_A913_CFD1460A35A2": {
-      "rev": 467341,
+    "Ellipse_205F7AB6_09D5_4930_8E40_1E19DAE1D7CA": {
+      "rev": 22089,
       "props": {
         "extent": {
           "key": "extent",
@@ -240,10 +240,6 @@
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(8.0,6.0)"
         },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
@@ -257,8 +253,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_3F31607B_1DF7_4D4A_94A3_53D9C6139621",
-              "rev": 468514
+              "id": "Label_172C4C2F_E734_459E_91F3_9D8D1C15C7FD",
+              "rev": 22821
             }
           ]
         },
@@ -299,17 +295,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "3CF1DC81-E9B6-4ADC-88EC-1F367A584284",
+              "id": "88EF27C4-2682-4410-8D9F-A638E55E683E",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "993AEFCB-DE96-4C6A-9A32-F7641DAB767B",
+              "id": "95C40F90-A08D-48DC-AD89-4C60ED3B1608",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "8BDB9D6C-BF9D-4102-9287-67045B694CF5",
+              "id": "499FD4D4-BE87-41DE-8104-28FF13C192A3",
               "rev": 0
             }
           ]
@@ -326,8 +322,8 @@
         }
       }
     },
-    "Label_3F31607B_1DF7_4D4A_94A3_53D9C6139621": {
-      "rev": 468514,
+    "Label_172C4C2F_E734_459E_91F3_9D8D1C15C7FD": {
+      "rev": 22821,
       "props": {
         "extent": {
           "key": "extent",
@@ -376,7 +372,7 @@
               "",
               {
                 "__ref__": true,
-                "id": "B95EEE4B-BD6F-46CC-B823-8676DA96A99C",
+                "id": "E41FBFC3-5E1D-4388-8DCD-C8BE365FA3AC",
                 "rev": 0
               }
             ]
@@ -409,7 +405,7 @@
         }
       }
     },
-    "B95EEE4B-BD6F-46CC-B823-8676DA96A99C": {
+    "E41FBFC3-5E1D-4388-8DCD-C8BE365FA3AC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -428,7 +424,7 @@
         }
       }
     },
-    "3CF1DC81-E9B6-4ADC-88EC-1F367A584284": {
+    "88EF27C4-2682-4410-8D9F-A638E55E683E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -447,8 +443,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_36E6A54B_623E_4F3A_A913_CFD1460A35A2",
-            "rev": 467341
+            "id": "Ellipse_205F7AB6_09D5_4930_8E40_1E19DAE1D7CA",
+            "rev": 22089
           }
         },
         "sourceAttrName": {
@@ -459,8 +455,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
-            "rev": 468068
+            "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
+            "rev": 22818
           }
         },
         "targetMethodName": {
@@ -471,7 +467,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "8D9A9CA5-B60B-49D1-A66B-AE65D39189F5",
+            "id": "E39D0B84-73A9-44CF-9976-BAC9783B56D1",
             "rev": 0
           }
         },
@@ -495,28 +491,28 @@
         }
       }
     },
-    "8D9A9CA5-B60B-49D1-A66B-AE65D39189F5": {
+    "E39D0B84-73A9-44CF-9976-BAC9783B56D1": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_36E6A54B_623E_4F3A_A913_CFD1460A35A2",
-            "rev": 467341
+            "id": "Ellipse_205F7AB6_09D5_4930_8E40_1E19DAE1D7CA",
+            "rev": 22089
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
-            "rev": 468068
+            "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
+            "rev": 22818
           }
         }
       }
     },
-    "993AEFCB-DE96-4C6A-9A32-F7641DAB767B": {
+    "95C40F90-A08D-48DC-AD89-4C60ED3B1608": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -535,8 +531,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_36E6A54B_623E_4F3A_A913_CFD1460A35A2",
-            "rev": 467341
+            "id": "Ellipse_205F7AB6_09D5_4930_8E40_1E19DAE1D7CA",
+            "rev": 22089
           }
         },
         "sourceAttrName": {
@@ -547,8 +543,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_3F31607B_1DF7_4D4A_94A3_53D9C6139621",
-            "rev": 468514
+            "id": "Label_172C4C2F_E734_459E_91F3_9D8D1C15C7FD",
+            "rev": 22821
           }
         },
         "targetMethodName": {
@@ -559,7 +555,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "3E96A7F7-C013-4123-AD18-8D9FF1DC7151",
+            "id": "E54FE9AB-667F-4A95-85DF-94F0B17ECA72",
             "rev": 0
           }
         },
@@ -587,28 +583,28 @@
         }
       }
     },
-    "3E96A7F7-C013-4123-AD18-8D9FF1DC7151": {
+    "E54FE9AB-667F-4A95-85DF-94F0B17ECA72": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_36E6A54B_623E_4F3A_A913_CFD1460A35A2",
-            "rev": 467341
+            "id": "Ellipse_205F7AB6_09D5_4930_8E40_1E19DAE1D7CA",
+            "rev": 22089
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_3F31607B_1DF7_4D4A_94A3_53D9C6139621",
-            "rev": 468514
+            "id": "Label_172C4C2F_E734_459E_91F3_9D8D1C15C7FD",
+            "rev": 22821
           }
         }
       }
     },
-    "8BDB9D6C-BF9D-4102-9287-67045B694CF5": {
+    "499FD4D4-BE87-41DE-8104-28FF13C192A3": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -627,8 +623,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_36E6A54B_623E_4F3A_A913_CFD1460A35A2",
-            "rev": 467341
+            "id": "Ellipse_205F7AB6_09D5_4930_8E40_1E19DAE1D7CA",
+            "rev": 22089
           }
         },
         "sourceAttrName": {
@@ -639,8 +635,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_3F31607B_1DF7_4D4A_94A3_53D9C6139621",
-            "rev": 468514
+            "id": "Label_172C4C2F_E734_459E_91F3_9D8D1C15C7FD",
+            "rev": 22821
           }
         },
         "targetMethodName": {
@@ -651,7 +647,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "DB95C054-A067-413B-9530-15A7673983BD",
+            "id": "410107F4-2CBB-47E9-A8C0-471318FD3748",
             "rev": 0
           }
         },
@@ -679,29 +675,29 @@
         }
       }
     },
-    "DB95C054-A067-413B-9530-15A7673983BD": {
+    "410107F4-2CBB-47E9-A8C0-471318FD3748": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_36E6A54B_623E_4F3A_A913_CFD1460A35A2",
-            "rev": 467341
+            "id": "Ellipse_205F7AB6_09D5_4930_8E40_1E19DAE1D7CA",
+            "rev": 22089
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_3F31607B_1DF7_4D4A_94A3_53D9C6139621",
-            "rev": 468514
+            "id": "Label_172C4C2F_E734_459E_91F3_9D8D1C15C7FD",
+            "rev": 22821
           }
         }
       }
     },
-    "Ellipse_3E933345_E37F_45DE_A676_1AF9FC12B13D": {
-      "rev": 467367,
+    "Ellipse_337DE9D1_169F_4108_BAEF_4DBD0A30E3B6": {
+      "rev": 22115,
       "props": {
         "extent": {
           "key": "extent",
@@ -723,10 +719,6 @@
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(28.0,6.0)"
         },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
@@ -744,8 +736,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_EAAD1215_549D_4B4D_A382_FBBA0C446CF3",
-              "rev": 468515
+              "id": "Label_3E93047A_69A4_4EE5_958D_E70835BAE808",
+              "rev": 22822
             }
           ]
         },
@@ -790,17 +782,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "EC81910C-D7B7-44A5-B204-83A08D7193B7",
+              "id": "A3BD1E34-137C-4CC7-B00F-AEF07B58EA10",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "007569D2-C6A4-48A8-87D3-9ABD393FB61C",
+              "id": "26C829C9-A8B4-4004-8DF0-458D68EAC79F",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "716D2161-400F-40CA-8797-7BD934D3C980",
+              "id": "19D28651-16C4-4A74-A31B-17206F840F38",
               "rev": 0
             }
           ]
@@ -817,8 +809,8 @@
         }
       }
     },
-    "Label_EAAD1215_549D_4B4D_A382_FBBA0C446CF3": {
-      "rev": 468515,
+    "Label_3E93047A_69A4_4EE5_958D_E70835BAE808": {
+      "rev": 22822,
       "props": {
         "extent": {
           "key": "extent",
@@ -867,7 +859,7 @@
               "",
               {
                 "__ref__": true,
-                "id": "70000ED0-3D5C-4027-B110-EF637649EE89",
+                "id": "1C183F25-93E0-4E39-9AB8-D7A09AE1F410",
                 "rev": 0
               }
             ]
@@ -900,7 +892,7 @@
         }
       }
     },
-    "70000ED0-3D5C-4027-B110-EF637649EE89": {
+    "1C183F25-93E0-4E39-9AB8-D7A09AE1F410": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -919,7 +911,7 @@
         }
       }
     },
-    "EC81910C-D7B7-44A5-B204-83A08D7193B7": {
+    "A3BD1E34-137C-4CC7-B00F-AEF07B58EA10": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -938,8 +930,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_3E933345_E37F_45DE_A676_1AF9FC12B13D",
-            "rev": 467367
+            "id": "Ellipse_337DE9D1_169F_4108_BAEF_4DBD0A30E3B6",
+            "rev": 22115
           }
         },
         "sourceAttrName": {
@@ -950,8 +942,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
-            "rev": 468068
+            "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
+            "rev": 22818
           }
         },
         "targetMethodName": {
@@ -962,7 +954,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "77345EAC-1AB5-42AF-BEA2-953BA650FE48",
+            "id": "C49DFC9B-7D2B-4D96-9190-A8FEFD3001A0",
             "rev": 0
           }
         },
@@ -986,28 +978,28 @@
         }
       }
     },
-    "77345EAC-1AB5-42AF-BEA2-953BA650FE48": {
+    "C49DFC9B-7D2B-4D96-9190-A8FEFD3001A0": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_3E933345_E37F_45DE_A676_1AF9FC12B13D",
-            "rev": 467367
+            "id": "Ellipse_337DE9D1_169F_4108_BAEF_4DBD0A30E3B6",
+            "rev": 22115
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
-            "rev": 468068
+            "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
+            "rev": 22818
           }
         }
       }
     },
-    "007569D2-C6A4-48A8-87D3-9ABD393FB61C": {
+    "26C829C9-A8B4-4004-8DF0-458D68EAC79F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1026,8 +1018,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_3E933345_E37F_45DE_A676_1AF9FC12B13D",
-            "rev": 467367
+            "id": "Ellipse_337DE9D1_169F_4108_BAEF_4DBD0A30E3B6",
+            "rev": 22115
           }
         },
         "sourceAttrName": {
@@ -1038,8 +1030,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_EAAD1215_549D_4B4D_A382_FBBA0C446CF3",
-            "rev": 468515
+            "id": "Label_3E93047A_69A4_4EE5_958D_E70835BAE808",
+            "rev": 22822
           }
         },
         "targetMethodName": {
@@ -1050,7 +1042,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "EC07DE39-6CDC-4836-8E35-6FE43EC60C6C",
+            "id": "F323271C-B899-4774-BB84-38549A950142",
             "rev": 0
           }
         },
@@ -1078,28 +1070,28 @@
         }
       }
     },
-    "EC07DE39-6CDC-4836-8E35-6FE43EC60C6C": {
+    "F323271C-B899-4774-BB84-38549A950142": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_3E933345_E37F_45DE_A676_1AF9FC12B13D",
-            "rev": 467367
+            "id": "Ellipse_337DE9D1_169F_4108_BAEF_4DBD0A30E3B6",
+            "rev": 22115
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_EAAD1215_549D_4B4D_A382_FBBA0C446CF3",
-            "rev": 468515
+            "id": "Label_3E93047A_69A4_4EE5_958D_E70835BAE808",
+            "rev": 22822
           }
         }
       }
     },
-    "716D2161-400F-40CA-8797-7BD934D3C980": {
+    "19D28651-16C4-4A74-A31B-17206F840F38": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1118,8 +1110,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_3E933345_E37F_45DE_A676_1AF9FC12B13D",
-            "rev": 467367
+            "id": "Ellipse_337DE9D1_169F_4108_BAEF_4DBD0A30E3B6",
+            "rev": 22115
           }
         },
         "sourceAttrName": {
@@ -1130,8 +1122,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_EAAD1215_549D_4B4D_A382_FBBA0C446CF3",
-            "rev": 468515
+            "id": "Label_3E93047A_69A4_4EE5_958D_E70835BAE808",
+            "rev": 22822
           }
         },
         "targetMethodName": {
@@ -1142,7 +1134,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "812471A7-C5A9-4734-90B9-98E62E751A43",
+            "id": "1D5E1C4B-396E-4135-B385-5C21B6BF9E02",
             "rev": 0
           }
         },
@@ -1170,29 +1162,29 @@
         }
       }
     },
-    "812471A7-C5A9-4734-90B9-98E62E751A43": {
+    "1D5E1C4B-396E-4135-B385-5C21B6BF9E02": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_3E933345_E37F_45DE_A676_1AF9FC12B13D",
-            "rev": 467367
+            "id": "Ellipse_337DE9D1_169F_4108_BAEF_4DBD0A30E3B6",
+            "rev": 22115
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_EAAD1215_549D_4B4D_A382_FBBA0C446CF3",
-            "rev": 468515
+            "id": "Label_3E93047A_69A4_4EE5_958D_E70835BAE808",
+            "rev": 22822
           }
         }
       }
     },
-    "Ellipse_F0B6CCB4_808B_4643_B7E2_132CB0141CB5": {
-      "rev": 467392,
+    "Ellipse_A2018E91_B789_44CE_9EAF_4383B723A0A3": {
+      "rev": 22140,
       "props": {
         "extent": {
           "key": "extent",
@@ -1214,10 +1206,6 @@
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(48.0,6.0)"
         },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
@@ -1231,8 +1219,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_4CB8C5F3_5260_413F_BEE9_5FDE3DF8E37A",
-              "rev": 468516
+              "id": "Label_4BA7F0DF_1B72_4E20_96CA_4124F6F09F12",
+              "rev": 22823
             }
           ]
         },
@@ -1273,17 +1261,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "7BEE1827-CE60-42C4-9C63-FE7F5F333FC7",
+              "id": "378B1548-474D-4472-BFEC-DB4C90F210BD",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "22BE65A2-B0D3-4ACD-97DC-CA8D1F05CC50",
+              "id": "1D392452-EC92-4C16-9701-FC7D34EBB6C4",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "610492D5-DAE4-4029-9480-6F79D58882CE",
+              "id": "2005D645-C672-4286-BF8F-E482F18334ED",
               "rev": 0
             }
           ]
@@ -1300,8 +1288,8 @@
         }
       }
     },
-    "Label_4CB8C5F3_5260_413F_BEE9_5FDE3DF8E37A": {
-      "rev": 468516,
+    "Label_4BA7F0DF_1B72_4E20_96CA_4124F6F09F12": {
+      "rev": 22823,
       "props": {
         "extent": {
           "key": "extent",
@@ -1350,7 +1338,7 @@
               "",
               {
                 "__ref__": true,
-                "id": "39E4ABC0-8789-441C-B3C8-BF1709681C1F",
+                "id": "9DEA529F-EC74-4D7D-A68A-53F8627EBC95",
                 "rev": 0
               }
             ]
@@ -1383,7 +1371,7 @@
         }
       }
     },
-    "39E4ABC0-8789-441C-B3C8-BF1709681C1F": {
+    "9DEA529F-EC74-4D7D-A68A-53F8627EBC95": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1402,7 +1390,7 @@
         }
       }
     },
-    "7BEE1827-CE60-42C4-9C63-FE7F5F333FC7": {
+    "378B1548-474D-4472-BFEC-DB4C90F210BD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1421,8 +1409,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_F0B6CCB4_808B_4643_B7E2_132CB0141CB5",
-            "rev": 467392
+            "id": "Ellipse_A2018E91_B789_44CE_9EAF_4383B723A0A3",
+            "rev": 22140
           }
         },
         "sourceAttrName": {
@@ -1433,8 +1421,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
-            "rev": 468068
+            "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
+            "rev": 22818
           }
         },
         "targetMethodName": {
@@ -1445,7 +1433,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "A6EEF9F9-021D-4A51-8831-5FC0E8A22DA4",
+            "id": "2301F28A-B269-4ACC-B67F-00B952C98901",
             "rev": 0
           }
         },
@@ -1469,28 +1457,28 @@
         }
       }
     },
-    "A6EEF9F9-021D-4A51-8831-5FC0E8A22DA4": {
+    "2301F28A-B269-4ACC-B67F-00B952C98901": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_F0B6CCB4_808B_4643_B7E2_132CB0141CB5",
-            "rev": 467392
+            "id": "Ellipse_A2018E91_B789_44CE_9EAF_4383B723A0A3",
+            "rev": 22140
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
-            "rev": 468068
+            "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
+            "rev": 22818
           }
         }
       }
     },
-    "22BE65A2-B0D3-4ACD-97DC-CA8D1F05CC50": {
+    "1D392452-EC92-4C16-9701-FC7D34EBB6C4": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1509,8 +1497,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_F0B6CCB4_808B_4643_B7E2_132CB0141CB5",
-            "rev": 467392
+            "id": "Ellipse_A2018E91_B789_44CE_9EAF_4383B723A0A3",
+            "rev": 22140
           }
         },
         "sourceAttrName": {
@@ -1521,8 +1509,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_4CB8C5F3_5260_413F_BEE9_5FDE3DF8E37A",
-            "rev": 468516
+            "id": "Label_4BA7F0DF_1B72_4E20_96CA_4124F6F09F12",
+            "rev": 22823
           }
         },
         "targetMethodName": {
@@ -1533,7 +1521,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "E002577D-FC12-42A4-80EA-AD0D2A49F3F2",
+            "id": "3819B0F3-0701-4652-A168-9B172F93039A",
             "rev": 0
           }
         },
@@ -1561,28 +1549,28 @@
         }
       }
     },
-    "E002577D-FC12-42A4-80EA-AD0D2A49F3F2": {
+    "3819B0F3-0701-4652-A168-9B172F93039A": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_F0B6CCB4_808B_4643_B7E2_132CB0141CB5",
-            "rev": 467392
+            "id": "Ellipse_A2018E91_B789_44CE_9EAF_4383B723A0A3",
+            "rev": 22140
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_4CB8C5F3_5260_413F_BEE9_5FDE3DF8E37A",
-            "rev": 468516
+            "id": "Label_4BA7F0DF_1B72_4E20_96CA_4124F6F09F12",
+            "rev": 22823
           }
         }
       }
     },
-    "610492D5-DAE4-4029-9480-6F79D58882CE": {
+    "2005D645-C672-4286-BF8F-E482F18334ED": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1601,8 +1589,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_F0B6CCB4_808B_4643_B7E2_132CB0141CB5",
-            "rev": 467392
+            "id": "Ellipse_A2018E91_B789_44CE_9EAF_4383B723A0A3",
+            "rev": 22140
           }
         },
         "sourceAttrName": {
@@ -1613,8 +1601,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_4CB8C5F3_5260_413F_BEE9_5FDE3DF8E37A",
-            "rev": 468516
+            "id": "Label_4BA7F0DF_1B72_4E20_96CA_4124F6F09F12",
+            "rev": 22823
           }
         },
         "targetMethodName": {
@@ -1625,7 +1613,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "30B89C91-95EF-404A-9BA6-5376CD8CF6D7",
+            "id": "22088034-A192-4926-AFD0-4307CFD5F3BC",
             "rev": 0
           }
         },
@@ -1653,29 +1641,29 @@
         }
       }
     },
-    "30B89C91-95EF-404A-9BA6-5376CD8CF6D7": {
+    "22088034-A192-4926-AFD0-4307CFD5F3BC": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_F0B6CCB4_808B_4643_B7E2_132CB0141CB5",
-            "rev": 467392
+            "id": "Ellipse_A2018E91_B789_44CE_9EAF_4383B723A0A3",
+            "rev": 22140
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_4CB8C5F3_5260_413F_BEE9_5FDE3DF8E37A",
-            "rev": 468516
+            "id": "Label_4BA7F0DF_1B72_4E20_96CA_4124F6F09F12",
+            "rev": 22823
           }
         }
       }
     },
-    "Label_2BB48E72_3BA7_4A55_AA00_674C0918C9EB": {
-      "rev": 513494,
+    "Label_F077DA10_D863_4C5D_9C89_AB4B34C52596": {
+      "rev": 57314,
       "props": {
         "extent": {
           "key": "extent",
@@ -1720,7 +1708,7 @@
               "Category Visualization",
               {
                 "__ref__": true,
-                "id": "98194275-D614-4416-9B1B-88EC6CE08734",
+                "id": "2157BF66-5E46-4915-8D69-179D0B078355",
                 "rev": 0
               }
             ]
@@ -1743,7 +1731,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "5E83DDD2-6141-4525-9989-05B18E36466D",
+              "id": "F53807EA-97AB-465D-A442-076D27E4854E",
               "rev": 0
             }
           ]
@@ -1760,7 +1748,7 @@
         }
       }
     },
-    "98194275-D614-4416-9B1B-88EC6CE08734": {
+    "2157BF66-5E46-4915-8D69-179D0B078355": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1769,7 +1757,7 @@
         }
       }
     },
-    "5E83DDD2-6141-4525-9989-05B18E36466D": {
+    "F53807EA-97AB-465D-A442-076D27E4854E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1788,8 +1776,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_2BB48E72_3BA7_4A55_AA00_674C0918C9EB",
-            "rev": 513494
+            "id": "Label_F077DA10_D863_4C5D_9C89_AB4B34C52596",
+            "rev": 57314
           }
         },
         "sourceAttrName": {
@@ -1800,8 +1788,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
-            "rev": 468068
+            "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
+            "rev": 22818
           }
         },
         "targetMethodName": {
@@ -1812,7 +1800,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "034618F9-E2F0-4E08-B26B-105BB9808125",
+            "id": "0FE953CA-0813-4F47-BDF9-B2C357BB182F",
             "rev": 0
           }
         },
@@ -1836,7 +1824,7 @@
         }
       }
     },
-    "034618F9-E2F0-4E08-B26B-105BB9808125": {
+    "0FE953CA-0813-4F47-BDF9-B2C357BB182F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1847,22 +1835,22 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_2BB48E72_3BA7_4A55_AA00_674C0918C9EB",
-            "rev": 513494
+            "id": "Label_F077DA10_D863_4C5D_9C89_AB4B34C52596",
+            "rev": 57314
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
-            "rev": 468068
+            "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
+            "rev": 22818
           }
         }
       }
     },
-    "Morph_E6A105CC_B178_4D71_A74F_DC43185AFDC5": {
-      "rev": 513309,
+    "Morph_14C3A737_FE01_4D4D_82BF_E49E9E1E9300": {
+      "rev": 57132,
       "props": {
         "extent": {
           "key": "extent",
@@ -1904,7 +1892,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "C69D57D8-51B1-4140-A91D-9A5815751276",
+              "id": "4CC789EB-2AED-42DD-8E2C-F743A4A17643",
               "rev": 0
             }
           ]
@@ -1921,7 +1909,7 @@
         }
       }
     },
-    "C69D57D8-51B1-4140-A91D-9A5815751276": {
+    "4CC789EB-2AED-42DD-8E2C-F743A4A17643": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1940,8 +1928,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_E6A105CC_B178_4D71_A74F_DC43185AFDC5",
-            "rev": 513309
+            "id": "Morph_14C3A737_FE01_4D4D_82BF_E49E9E1E9300",
+            "rev": 57132
           }
         },
         "sourceAttrName": {
@@ -1952,8 +1940,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
-            "rev": 468068
+            "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
+            "rev": 22818
           }
         },
         "targetMethodName": {
@@ -1964,7 +1952,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "ED03470A-EAA1-41DE-9535-B93D765EB7A8",
+            "id": "1B8B8C1F-44B3-4469-B9E4-072F9D9D9307",
             "rev": 0
           }
         },
@@ -1995,7 +1983,7 @@
         }
       }
     },
-    "ED03470A-EAA1-41DE-9535-B93D765EB7A8": {
+    "1B8B8C1F-44B3-4469-B9E4-072F9D9D9307": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2006,22 +1994,22 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Morph_E6A105CC_B178_4D71_A74F_DC43185AFDC5",
-            "rev": 513309
+            "id": "Morph_14C3A737_FE01_4D4D_82BF_E49E9E1E9300",
+            "rev": 57132
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
-            "rev": 468068
+            "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
+            "rev": 22818
           }
         }
       }
     },
-    "VisjsMorph_2459DBA6_A32E_4C63_A706_241714F46415": {
-      "rev": 513311,
+    "VisjsMorph_7FBAB813_1CC4_45CF_8506_9EDE8A9FC5D3": {
+      "rev": 57134,
       "props": {
         "draggable": {
           "key": "draggable",
@@ -2058,18 +2046,18 @@
           "value": [
             {
               "__ref__": true,
-              "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-              "rev": 467727
+              "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+              "rev": 22475
             },
             {
               "__ref__": true,
-              "id": "CancelButton_34BB9C4A_AB8D_4F90_A41A_A59B76D0CDF8",
-              "rev": 467751
+              "id": "CancelButton_D19B6E11_8746_4F36_A02B_F4C2C3A30B20",
+              "rev": 22499
             },
             {
               "__ref__": true,
-              "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-              "rev": 468052
+              "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+              "rev": 22800
             }
           ]
         },
@@ -2107,7 +2095,7 @@
         },
         "html": {
           "key": "html",
-          "value": "<div style=\"height:100%\" id=\"vis-canvas-VisjsMorph_2459DBA6_A32E_4C63_A706_241714F46415\"><div class=\"vis-network\" tabindex=\"900\" style=\"position: relative; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width: 100%; height: 100%;\"><canvas width=\"1379\" height=\"1053\" style=\"position: relative; touch-action: none; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width: 100%; height: 100%;\"></canvas><div class=\"vis-manipulation\" style=\"display: none;\"></div><div class=\"vis-edit-mode\" style=\"display: block;\"><div class=\"vis-button vis-edit vis-edit-mode\" style=\"touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);\"><div class=\"vis-label\">Edit</div></div></div><div class=\"vis-close\" style=\"display: none;\"></div></div></div>"
+          "value": "<div style=\"height:100%\" id=\"vis-canvas-VisjsMorph_7FBAB813_1CC4_45CF_8506_9EDE8A9FC5D3\"><div class=\"vis-network\" tabindex=\"900\" style=\"position: relative; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width: 100%; height: 100%;\"><canvas width=\"1379\" height=\"1053\" style=\"position: relative; touch-action: none; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width: 100%; height: 100%;\"></canvas><div class=\"vis-manipulation\" style=\"display: none;\"></div><div class=\"vis-edit-mode\" style=\"display: block;\"><div class=\"vis-button vis-edit vis-edit-mode\" style=\"touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);\"><div class=\"vis-label\">Edit</div></div></div><div class=\"vis-close\" style=\"display: none;\"></div></div></div>"
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -2128,8 +2116,8 @@
         }
       }
     },
-    "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE": {
-      "rev": 467727,
+    "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6": {
+      "rev": 22475,
       "props": {
         "extent": {
           "key": "extent",
@@ -2169,8 +2157,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_A765CF7F_6B13_45CE_8F2C_DC6B2A1D2903",
-              "rev": 468532
+              "id": "Label_8EC70955_6D7B_4B23_AB6D_929B4D8BEEEA",
+              "rev": 22826
             }
           ]
         },
@@ -2234,7 +2222,7 @@
           "key": "defaultActiveStyle",
           "value": {
             "__ref__": true,
-            "id": "A366029F-E508-46A8-93A8-1EEB91CB97B6",
+            "id": "7E76438D-50CC-43EB-8CBF-BB917EB33EC7",
             "rev": 0
           }
         },
@@ -2242,7 +2230,7 @@
           "key": "activeStyle",
           "value": {
             "__ref__": true,
-            "id": "4BCD75CB-2A51-4AA6-8718-CCE68B973397",
+            "id": "574E5BCD-EC65-4F5B-AD3B-7FA371DB4E6D",
             "rev": 0
           }
         },
@@ -2250,7 +2238,7 @@
           "key": "defaultInactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "922D0137-1086-4372-88B9-89AC3495D878",
+            "id": "8C0C6C82-7673-46B5-BD73-5098FCC398E6",
             "rev": 0
           }
         },
@@ -2258,7 +2246,7 @@
           "key": "inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "ED9F14E8-191F-4A5F-9A11-7C8E77809009",
+            "id": "282A4113-86D2-4577-90A5-21BE17117C24",
             "rev": 0
           }
         },
@@ -2266,7 +2254,7 @@
           "key": "defaultTriggerStyle",
           "value": {
             "__ref__": true,
-            "id": "6E8B8B46-FC84-4206-A4B8-F366E95E8FEC",
+            "id": "F7577AB5-F8CF-467C-AF30-4D44979B1E8A",
             "rev": 0
           }
         },
@@ -2274,7 +2262,7 @@
           "key": "triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "F48F4405-A734-4F15-BE2B-68B290805B83",
+            "id": "8A1A5A02-FE4E-4A0F-8EC4-859A3235B656",
             "rev": 0
           }
         },
@@ -2287,37 +2275,37 @@
           "value": [
             {
               "__ref__": true,
-              "id": "E375C6E5-8582-499C-A04A-FD874671F89F",
+              "id": "154E4708-8DE7-4E62-A6AE-2BB23FBA9515",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "B0DA5B53-8651-4A83-9F38-B2A9341AA908",
+              "id": "8B923082-C23B-4354-9777-0B05E54D9AAC",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "29ABDBDE-40F4-4935-B23F-E93BD744E3CB",
+              "id": "38C45A50-9ABB-4538-A404-B0AD9E38DD6B",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "DF4DC2ED-83BD-43B4-AA2A-54E6506C856B",
+              "id": "3BBE4F0B-A5A6-4762-B7C4-E253AD999DF6",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "E7D243F8-67D2-4450-BBE6-4BFDF4472368",
+              "id": "EBE19A89-E2C3-45BA-8508-D87331FEFFAA",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "00D88206-C243-4966-A3C2-0676EAEF9A58",
+              "id": "DFAB8E62-70B1-4335-BC83-F13FC193265A",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "5CACAC29-8139-47F9-8633-D878AB813D35",
+              "id": "6FD51F85-FE3D-41E3-8C0A-642C6A67E759",
               "rev": 0
             }
           ]
@@ -2334,8 +2322,8 @@
         }
       }
     },
-    "Label_A765CF7F_6B13_45CE_8F2C_DC6B2A1D2903": {
-      "rev": 468532,
+    "Label_8EC70955_6D7B_4B23_AB6D_929B4D8BEEEA": {
+      "rev": 22826,
       "props": {
         "extent": {
           "key": "extent",
@@ -2376,7 +2364,7 @@
               "Add Edge",
               {
                 "__ref__": true,
-                "id": "80045238-A7B9-4E9E-8895-12F8E3D3225E",
+                "id": "1870336F-F39A-4500-9E63-D895306D591A",
                 "rev": 0
               }
             ]
@@ -2399,7 +2387,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "66518BB1-D1B2-453C-AEC6-66C1AC16DDD8",
+              "id": "DDC4CA06-EFBA-420C-A791-415592AD90F8",
               "rev": 0
             }
           ]
@@ -2416,7 +2404,7 @@
         }
       }
     },
-    "80045238-A7B9-4E9E-8895-12F8E3D3225E": {
+    "1870336F-F39A-4500-9E63-D895306D591A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2425,7 +2413,7 @@
         }
       }
     },
-    "66518BB1-D1B2-453C-AEC6-66C1AC16DDD8": {
+    "DDC4CA06-EFBA-420C-A791-415592AD90F8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2444,8 +2432,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_A765CF7F_6B13_45CE_8F2C_DC6B2A1D2903",
-            "rev": 468532
+            "id": "Label_8EC70955_6D7B_4B23_AB6D_929B4D8BEEEA",
+            "rev": 22826
           }
         },
         "sourceAttrName": {
@@ -2456,8 +2444,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "targetMethodName": {
@@ -2468,7 +2456,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "1CE73478-0302-4ED3-9726-D3E324EF2B5D",
+            "id": "056F7F08-44BE-455E-9023-1EC57B1231FF",
             "rev": 0
           }
         },
@@ -2492,7 +2480,7 @@
         }
       }
     },
-    "1CE73478-0302-4ED3-9726-D3E324EF2B5D": {
+    "056F7F08-44BE-455E-9023-1EC57B1231FF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2503,21 +2491,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_A765CF7F_6B13_45CE_8F2C_DC6B2A1D2903",
-            "rev": 468532
+            "id": "Label_8EC70955_6D7B_4B23_AB6D_929B4D8BEEEA",
+            "rev": 22826
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         }
       }
     },
-    "A366029F-E508-46A8-93A8-1EEB91CB97B6": {
+    "7E76438D-50CC-43EB-8CBF-BB917EB33EC7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2542,7 +2530,7 @@
         }
       }
     },
-    "4BCD75CB-2A51-4AA6-8718-CCE68B973397": {
+    "574E5BCD-EC65-4F5B-AD3B-7FA371DB4E6D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2686,7 +2674,7 @@
           "key": "borderLeft",
           "value": {
             "__ref__": true,
-            "id": "DF11F287-193F-4FC3-812F-557AF4BFBE31",
+            "id": "CA7CFF63-AD6A-43C7-8EFB-377C6B9DBB26",
             "rev": 0
           }
         },
@@ -2694,7 +2682,7 @@
           "key": "borderRight",
           "value": {
             "__ref__": true,
-            "id": "2643B257-F930-4D67-8E60-2896AD93E679",
+            "id": "527F8E70-7914-4FCA-B641-F020F12A66A2",
             "rev": 0
           }
         },
@@ -2702,7 +2690,7 @@
           "key": "borderBottom",
           "value": {
             "__ref__": true,
-            "id": "1B1CAAF1-E3C5-4887-96E5-A62F8A9B2D8B",
+            "id": "778FF990-30DD-40E0-8A08-4458341D5A0E",
             "rev": 0
           }
         },
@@ -2710,7 +2698,7 @@
           "key": "borderTop",
           "value": {
             "__ref__": true,
-            "id": "5E67F1CB-997E-4CD4-A182-B01ACF175B46",
+            "id": "6467762E-67EB-4FB5-A28B-0497A8EC0D7D",
             "rev": 0
           }
         },
@@ -2730,7 +2718,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "42DAB76F-9AAE-4003-B26C-EDE860EA60A5",
+            "id": "4E5A443A-2FAF-4173-9B02-8B2576990D8C",
             "rev": 0
           }
         },
@@ -2746,7 +2734,7 @@
         }
       }
     },
-    "DF11F287-193F-4FC3-812F-557AF4BFBE31": {
+    "CA7CFF63-AD6A-43C7-8EFB-377C6B9DBB26": {
       "rev": 0,
       "props": {
         "style": {
@@ -2763,7 +2751,7 @@
         }
       }
     },
-    "2643B257-F930-4D67-8E60-2896AD93E679": {
+    "527F8E70-7914-4FCA-B641-F020F12A66A2": {
       "rev": 0,
       "props": {
         "style": {
@@ -2780,7 +2768,7 @@
         }
       }
     },
-    "1B1CAAF1-E3C5-4887-96E5-A62F8A9B2D8B": {
+    "778FF990-30DD-40E0-8A08-4458341D5A0E": {
       "rev": 0,
       "props": {
         "style": {
@@ -2797,7 +2785,7 @@
         }
       }
     },
-    "5E67F1CB-997E-4CD4-A182-B01ACF175B46": {
+    "6467762E-67EB-4FB5-A28B-0497A8EC0D7D": {
       "rev": 0,
       "props": {
         "style": {
@@ -2814,7 +2802,7 @@
         }
       }
     },
-    "42DAB76F-9AAE-4003-B26C-EDE860EA60A5": {
+    "4E5A443A-2FAF-4173-9B02-8B2576990D8C": {
       "rev": 0,
       "props": {
         "style": {
@@ -2831,7 +2819,7 @@
         }
       }
     },
-    "922D0137-1086-4372-88B9-89AC3495D878": {
+    "8C0C6C82-7673-46B5-BD73-5098FCC398E6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2856,7 +2844,7 @@
         }
       }
     },
-    "ED9F14E8-191F-4A5F-9A11-7C8E77809009": {
+    "282A4113-86D2-4577-90A5-21BE17117C24": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2889,7 +2877,7 @@
         }
       }
     },
-    "6E8B8B46-FC84-4206-A4B8-F366E95E8FEC": {
+    "F7577AB5-F8CF-467C-AF30-4D44979B1E8A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2902,7 +2890,7 @@
         }
       }
     },
-    "F48F4405-A734-4F15-BE2B-68B290805B83": {
+    "8A1A5A02-FE4E-4A0F-8EC4-859A3235B656": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3042,7 +3030,7 @@
           "key": "borderLeft",
           "value": {
             "__ref__": true,
-            "id": "70F888BE-9C78-4700-82F1-59082CE2634C",
+            "id": "74D45FF2-2FF2-4346-BFAC-CAC208EBE565",
             "rev": 0
           }
         },
@@ -3050,7 +3038,7 @@
           "key": "borderRight",
           "value": {
             "__ref__": true,
-            "id": "98846000-A50F-461D-A3B4-9A4B6B2F551E",
+            "id": "3407EECF-71C5-4B21-9D39-29317F7821FA",
             "rev": 0
           }
         },
@@ -3058,7 +3046,7 @@
           "key": "borderBottom",
           "value": {
             "__ref__": true,
-            "id": "B17AE732-A0A5-4386-967E-35BEB47707F6",
+            "id": "F9EACFE4-9263-4C27-BB36-FB875F5C2156",
             "rev": 0
           }
         },
@@ -3066,7 +3054,7 @@
           "key": "borderTop",
           "value": {
             "__ref__": true,
-            "id": "684953DD-6977-4EE4-9A06-2E9B4434E00C",
+            "id": "34E4A434-FCCA-4EFB-8173-3CD1536D7B0E",
             "rev": 0
           }
         },
@@ -3090,7 +3078,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "D4353224-6380-4384-9BC3-20A1ED3CAD11",
+            "id": "A8712B10-EA26-4907-8B33-093EB01ACADF",
             "rev": 0
           }
         },
@@ -3106,7 +3094,7 @@
         }
       }
     },
-    "70F888BE-9C78-4700-82F1-59082CE2634C": {
+    "74D45FF2-2FF2-4346-BFAC-CAC208EBE565": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3127,7 +3115,7 @@
         }
       }
     },
-    "98846000-A50F-461D-A3B4-9A4B6B2F551E": {
+    "3407EECF-71C5-4B21-9D39-29317F7821FA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3148,7 +3136,7 @@
         }
       }
     },
-    "B17AE732-A0A5-4386-967E-35BEB47707F6": {
+    "F9EACFE4-9263-4C27-BB36-FB875F5C2156": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3169,7 +3157,7 @@
         }
       }
     },
-    "684953DD-6977-4EE4-9A06-2E9B4434E00C": {
+    "34E4A434-FCCA-4EFB-8173-3CD1536D7B0E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3190,7 +3178,7 @@
         }
       }
     },
-    "D4353224-6380-4384-9BC3-20A1ED3CAD11": {
+    "A8712B10-EA26-4907-8B33-093EB01ACADF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3211,7 +3199,7 @@
         }
       }
     },
-    "E375C6E5-8582-499C-A04A-FD874671F89F": {
+    "154E4708-8DE7-4E62-A6AE-2BB23FBA9515": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3230,8 +3218,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "sourceAttrName": {
@@ -3242,8 +3230,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "targetMethodName": {
@@ -3254,7 +3242,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "24CF2CF7-82F3-452C-9E0D-AFDEA18F51D0",
+            "id": "18AF42E4-4486-4B66-9BAC-A4C6B23B6348",
             "rev": 0
           }
         },
@@ -3278,7 +3266,7 @@
         }
       }
     },
-    "24CF2CF7-82F3-452C-9E0D-AFDEA18F51D0": {
+    "18AF42E4-4486-4B66-9BAC-A4C6B23B6348": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3289,21 +3277,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         }
       }
     },
-    "B0DA5B53-8651-4A83-9F38-B2A9341AA908": {
+    "8B923082-C23B-4354-9777-0B05E54D9AAC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3322,8 +3310,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "sourceAttrName": {
@@ -3334,8 +3322,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "targetMethodName": {
@@ -3346,7 +3334,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "AFDBE4D2-C2A1-4B4C-9892-37FD7017B29C",
+            "id": "21314B60-70DD-4728-9E1F-10C2304CA5E6",
             "rev": 0
           }
         },
@@ -3370,7 +3358,7 @@
         }
       }
     },
-    "AFDBE4D2-C2A1-4B4C-9892-37FD7017B29C": {
+    "21314B60-70DD-4728-9E1F-10C2304CA5E6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3381,21 +3369,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         }
       }
     },
-    "29ABDBDE-40F4-4935-B23F-E93BD744E3CB": {
+    "38C45A50-9ABB-4538-A404-B0AD9E38DD6B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3414,8 +3402,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "sourceAttrName": {
@@ -3426,8 +3414,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "targetMethodName": {
@@ -3438,7 +3426,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "8870AE21-9C75-4922-85BD-81C40325437B",
+            "id": "84FE48E0-B80D-48E4-847A-023F9CBFC1E1",
             "rev": 0
           }
         },
@@ -3462,7 +3450,7 @@
         }
       }
     },
-    "8870AE21-9C75-4922-85BD-81C40325437B": {
+    "84FE48E0-B80D-48E4-847A-023F9CBFC1E1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3473,21 +3461,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         }
       }
     },
-    "DF4DC2ED-83BD-43B4-AA2A-54E6506C856B": {
+    "3BBE4F0B-A5A6-4762-B7C4-E253AD999DF6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3506,8 +3494,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "sourceAttrName": {
@@ -3518,8 +3506,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "targetMethodName": {
@@ -3530,7 +3518,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "8FD25808-3872-47E3-BFE0-71158D0578AE",
+            "id": "F1B2D7A8-D7B5-4A92-9A0B-9E9E5C839100",
             "rev": 0
           }
         },
@@ -3554,7 +3542,7 @@
         }
       }
     },
-    "8FD25808-3872-47E3-BFE0-71158D0578AE": {
+    "F1B2D7A8-D7B5-4A92-9A0B-9E9E5C839100": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3565,21 +3553,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         }
       }
     },
-    "E7D243F8-67D2-4450-BBE6-4BFDF4472368": {
+    "EBE19A89-E2C3-45BA-8508-D87331FEFFAA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3598,8 +3586,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "sourceAttrName": {
@@ -3610,8 +3598,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "targetMethodName": {
@@ -3622,7 +3610,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "FE7BA10B-9ACA-48A0-B407-8ADB65F3CEA9",
+            "id": "48ED575B-F5EA-448F-A3C0-E50FD55A9473",
             "rev": 0
           }
         },
@@ -3646,7 +3634,7 @@
         }
       }
     },
-    "FE7BA10B-9ACA-48A0-B407-8ADB65F3CEA9": {
+    "48ED575B-F5EA-448F-A3C0-E50FD55A9473": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3657,21 +3645,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         }
       }
     },
-    "00D88206-C243-4966-A3C2-0676EAEF9A58": {
+    "DFAB8E62-70B1-4335-BC83-F13FC193265A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3690,8 +3678,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "sourceAttrName": {
@@ -3702,8 +3690,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "targetMethodName": {
@@ -3714,7 +3702,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "FC2CD4AF-6C3A-4C65-843E-4E4342682D27",
+            "id": "07ECB920-AF14-49EE-90F1-02456E974822",
             "rev": 0
           }
         },
@@ -3738,7 +3726,7 @@
         }
       }
     },
-    "FC2CD4AF-6C3A-4C65-843E-4E4342682D27": {
+    "07ECB920-AF14-49EE-90F1-02456E974822": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3749,21 +3737,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         }
       }
     },
-    "5CACAC29-8139-47F9-8633-D878AB813D35": {
+    "6FD51F85-FE3D-41E3-8C0A-642C6A67E759": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3782,8 +3770,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "sourceAttrName": {
@@ -3794,8 +3782,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "targetMethodName": {
@@ -3806,7 +3794,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "32F5DC1F-105A-4BA2-B392-018A68B79ECA",
+            "id": "3DF68286-2B1F-4664-B532-81DD2DC48D47",
             "rev": 0
           }
         },
@@ -3830,7 +3818,7 @@
         }
       }
     },
-    "32F5DC1F-105A-4BA2-B392-018A68B79ECA": {
+    "3DF68286-2B1F-4664-B532-81DD2DC48D47": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3841,22 +3829,22 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_431F71F1_E52C_4984_8D9C_00A6F4B42EFE",
-            "rev": 467727
+            "id": "AddEdgeButton_01ADA6DA_74A1_43E1_8337_DBB0362EEBC6",
+            "rev": 22475
           }
         }
       }
     },
-    "CancelButton_34BB9C4A_AB8D_4F90_A41A_A59B76D0CDF8": {
-      "rev": 467751,
+    "CancelButton_D19B6E11_8746_4F36_A02B_F4C2C3A30B20": {
+      "rev": 22499,
       "props": {
         "draggable": {
           "key": "draggable",
@@ -3882,10 +3870,6 @@
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(839.0,23.0)"
         },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
@@ -3904,8 +3888,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_EE2928C4_E716_4C5D_AEDB_464DE1466D26",
-              "rev": 468533
+              "id": "Label_76374431_0CCA_408F_9BA7_D97104AA67BC",
+              "rev": 22827
             }
           ]
         },
@@ -3944,8 +3928,8 @@
         }
       }
     },
-    "Label_EE2928C4_E716_4C5D_AEDB_464DE1466D26": {
-      "rev": 468533,
+    "Label_76374431_0CCA_408F_9BA7_D97104AA67BC": {
+      "rev": 22827,
       "props": {
         "extent": {
           "key": "extent",
@@ -3986,7 +3970,7 @@
               "",
               {
                 "__ref__": true,
-                "id": "1D350E23-80F9-4B6E-A809-15FCA42DB7E4",
+                "id": "100A2D34-D479-4762-A282-0BF53E3F7338",
                 "rev": 0
               }
             ]
@@ -4023,7 +4007,7 @@
         }
       }
     },
-    "1D350E23-80F9-4B6E-A809-15FCA42DB7E4": {
+    "100A2D34-D479-4762-A282-0BF53E3F7338": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4042,8 +4026,8 @@
         }
       }
     },
-    "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959": {
-      "rev": 468052,
+    "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D": {
+      "rev": 22800,
       "props": {
         "extent": {
           "key": "extent",
@@ -4083,8 +4067,8 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_2E021B34_56A1_43C2_87B4_20C2D2090EDE",
-              "rev": 468535
+              "id": "Label_3BF94874_AB36_4024_ADA1_6BA257C8C3EE",
+              "rev": 22829
             }
           ]
         },
@@ -4148,7 +4132,7 @@
           "key": "defaultActiveStyle",
           "value": {
             "__ref__": true,
-            "id": "67260904-A978-4A37-BBE9-E237832F9C58",
+            "id": "768EE2A9-143C-4F73-B7EC-022EE9F00523",
             "rev": 0
           }
         },
@@ -4156,7 +4140,7 @@
           "key": "activeStyle",
           "value": {
             "__ref__": true,
-            "id": "46156FB5-9533-4CCD-B2C4-0119D2A48937",
+            "id": "6CA9A9FA-A90F-4F50-B51A-6FB5689FB38C",
             "rev": 0
           }
         },
@@ -4164,7 +4148,7 @@
           "key": "defaultInactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "BE6C7785-281B-4DC8-B505-E53342D90553",
+            "id": "77DADB75-06BC-40F3-AB05-44D8A590D7AC",
             "rev": 0
           }
         },
@@ -4172,7 +4156,7 @@
           "key": "inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "6C7E7BAD-34D2-4973-ABC3-8FAF48FCD1E0",
+            "id": "09824796-AE68-441F-9A50-C801C669AB3A",
             "rev": 0
           }
         },
@@ -4180,7 +4164,7 @@
           "key": "defaultTriggerStyle",
           "value": {
             "__ref__": true,
-            "id": "DE2F2AF5-BFBC-47BC-B2F4-DE3DD16CA2C5",
+            "id": "EE697909-FDD6-4CC8-A36B-F48FDF176594",
             "rev": 0
           }
         },
@@ -4188,7 +4172,7 @@
           "key": "triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "0E78464D-0068-4585-BFF5-01B80184076C",
+            "id": "1794B740-D3DF-4C45-A046-129D2717228C",
             "rev": 0
           }
         },
@@ -4201,37 +4185,37 @@
           "value": [
             {
               "__ref__": true,
-              "id": "59291C38-D0AD-4511-90E7-3845A684F1B9",
+              "id": "F43A6E00-7429-463B-A065-9A969066969F",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "14A81C94-B69B-4C7A-AE8B-88020095A285",
+              "id": "8691D648-E04F-4A8D-BD03-C499B1A68FF6",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "25803D0A-E559-42F6-84EF-9935502C5971",
+              "id": "0677E4F0-6655-499C-996E-19E301765EAB",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "15A6CAB7-1F7E-4907-A40B-23D1147FE681",
+              "id": "B6CF35FB-DE2A-4E95-ABBF-DF3D1716EC1A",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "EC07C3A5-424C-456B-813E-B29C3F51E3A6",
+              "id": "94C3512E-DA96-4D7C-B606-474CE685D740",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "58AF5DD1-B92C-45CF-96A1-E81F9F36E507",
+              "id": "C30714E0-0978-4C33-A51D-797B1C580433",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "150D0986-E7E0-46F7-B139-43FFE95161DA",
+              "id": "388214FD-B8B8-48E3-B522-C86CE158841D",
               "rev": 0
             }
           ]
@@ -4248,8 +4232,8 @@
         }
       }
     },
-    "Label_2E021B34_56A1_43C2_87B4_20C2D2090EDE": {
-      "rev": 468535,
+    "Label_3BF94874_AB36_4024_ADA1_6BA257C8C3EE": {
+      "rev": 22829,
       "props": {
         "extent": {
           "key": "extent",
@@ -4290,7 +4274,7 @@
               "Edit Edge",
               {
                 "__ref__": true,
-                "id": "5AC396DF-F422-4CF6-8D75-0D9E597A6E17",
+                "id": "3E99664C-1ED4-48A9-A261-9DF4734552AE",
                 "rev": 0
               }
             ]
@@ -4313,7 +4297,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "C3EED270-8F5F-4313-A469-3D9C1CE99D44",
+              "id": "95AE4A10-BE9A-4333-8F43-7A234C458028",
               "rev": 0
             }
           ]
@@ -4330,7 +4314,7 @@
         }
       }
     },
-    "5AC396DF-F422-4CF6-8D75-0D9E597A6E17": {
+    "3E99664C-1ED4-48A9-A261-9DF4734552AE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4339,7 +4323,7 @@
         }
       }
     },
-    "C3EED270-8F5F-4313-A469-3D9C1CE99D44": {
+    "95AE4A10-BE9A-4333-8F43-7A234C458028": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4358,8 +4342,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_2E021B34_56A1_43C2_87B4_20C2D2090EDE",
-            "rev": 468535
+            "id": "Label_3BF94874_AB36_4024_ADA1_6BA257C8C3EE",
+            "rev": 22829
           }
         },
         "sourceAttrName": {
@@ -4370,8 +4354,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "targetMethodName": {
@@ -4382,7 +4366,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "A0D7EA75-F91C-4DC1-BD39-5B14A290D30A",
+            "id": "F08319B1-9CA0-4A8D-A487-E13B5A56D4B5",
             "rev": 0
           }
         },
@@ -4406,7 +4390,7 @@
         }
       }
     },
-    "A0D7EA75-F91C-4DC1-BD39-5B14A290D30A": {
+    "F08319B1-9CA0-4A8D-A487-E13B5A56D4B5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4417,21 +4401,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_2E021B34_56A1_43C2_87B4_20C2D2090EDE",
-            "rev": 468535
+            "id": "Label_3BF94874_AB36_4024_ADA1_6BA257C8C3EE",
+            "rev": 22829
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         }
       }
     },
-    "67260904-A978-4A37-BBE9-E237832F9C58": {
+    "768EE2A9-143C-4F73-B7EC-022EE9F00523": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4456,7 +4440,7 @@
         }
       }
     },
-    "46156FB5-9533-4CCD-B2C4-0119D2A48937": {
+    "6CA9A9FA-A90F-4F50-B51A-6FB5689FB38C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4600,7 +4584,7 @@
           "key": "borderLeft",
           "value": {
             "__ref__": true,
-            "id": "2847B5D8-A928-442B-9086-CDFBE3314FCD",
+            "id": "2CB62A31-3D29-485E-9D02-6967BAE16753",
             "rev": 0
           }
         },
@@ -4608,7 +4592,7 @@
           "key": "borderRight",
           "value": {
             "__ref__": true,
-            "id": "6D2691FD-2148-4432-8680-7A1009E8B63E",
+            "id": "097603B5-B10B-4873-A37B-46FCC440DEBE",
             "rev": 0
           }
         },
@@ -4616,7 +4600,7 @@
           "key": "borderBottom",
           "value": {
             "__ref__": true,
-            "id": "B49D3B2D-8158-4C1C-8C0F-D2BBD0F577C1",
+            "id": "60774BEE-CE56-4485-BF87-245F691BE63D",
             "rev": 0
           }
         },
@@ -4624,7 +4608,7 @@
           "key": "borderTop",
           "value": {
             "__ref__": true,
-            "id": "56840059-505F-430E-B76A-5A1F3FBA67F7",
+            "id": "A05BC2CE-3CB4-469C-97F8-7543E6D6ED75",
             "rev": 0
           }
         },
@@ -4644,7 +4628,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "26AE405C-46E1-422E-8748-7BE6DA465B43",
+            "id": "AC9A2F6C-3909-4A8C-936B-534EFF3C479D",
             "rev": 0
           }
         },
@@ -4660,7 +4644,7 @@
         }
       }
     },
-    "2847B5D8-A928-442B-9086-CDFBE3314FCD": {
+    "2CB62A31-3D29-485E-9D02-6967BAE16753": {
       "rev": 0,
       "props": {
         "style": {
@@ -4677,7 +4661,7 @@
         }
       }
     },
-    "6D2691FD-2148-4432-8680-7A1009E8B63E": {
+    "097603B5-B10B-4873-A37B-46FCC440DEBE": {
       "rev": 0,
       "props": {
         "style": {
@@ -4694,7 +4678,7 @@
         }
       }
     },
-    "B49D3B2D-8158-4C1C-8C0F-D2BBD0F577C1": {
+    "60774BEE-CE56-4485-BF87-245F691BE63D": {
       "rev": 0,
       "props": {
         "style": {
@@ -4711,7 +4695,7 @@
         }
       }
     },
-    "56840059-505F-430E-B76A-5A1F3FBA67F7": {
+    "A05BC2CE-3CB4-469C-97F8-7543E6D6ED75": {
       "rev": 0,
       "props": {
         "style": {
@@ -4728,7 +4712,7 @@
         }
       }
     },
-    "26AE405C-46E1-422E-8748-7BE6DA465B43": {
+    "AC9A2F6C-3909-4A8C-936B-534EFF3C479D": {
       "rev": 0,
       "props": {
         "style": {
@@ -4745,7 +4729,7 @@
         }
       }
     },
-    "BE6C7785-281B-4DC8-B505-E53342D90553": {
+    "77DADB75-06BC-40F3-AB05-44D8A590D7AC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4770,7 +4754,7 @@
         }
       }
     },
-    "6C7E7BAD-34D2-4973-ABC3-8FAF48FCD1E0": {
+    "09824796-AE68-441F-9A50-C801C669AB3A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4803,7 +4787,7 @@
         }
       }
     },
-    "DE2F2AF5-BFBC-47BC-B2F4-DE3DD16CA2C5": {
+    "EE697909-FDD6-4CC8-A36B-F48FDF176594": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4816,7 +4800,7 @@
         }
       }
     },
-    "0E78464D-0068-4585-BFF5-01B80184076C": {
+    "1794B740-D3DF-4C45-A046-129D2717228C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4957,7 +4941,7 @@
           "key": "borderLeft",
           "value": {
             "__ref__": true,
-            "id": "58F5F5C5-DACC-4E8C-B85C-8C560FB8B846",
+            "id": "1DC5E5F6-8C25-40E1-B65F-A111DDC579CA",
             "rev": 0
           }
         },
@@ -4965,7 +4949,7 @@
           "key": "borderRight",
           "value": {
             "__ref__": true,
-            "id": "95EA102C-C69D-40C0-976F-FCB16E00DFE9",
+            "id": "805D5061-EE36-4CBF-A04F-6A57DA302AB9",
             "rev": 0
           }
         },
@@ -4973,7 +4957,7 @@
           "key": "borderBottom",
           "value": {
             "__ref__": true,
-            "id": "74E5C6F8-D431-4B2E-94A1-886B5E824A68",
+            "id": "0DA857B9-9308-49E5-8A97-3F2890C97E93",
             "rev": 0
           }
         },
@@ -4981,7 +4965,7 @@
           "key": "borderTop",
           "value": {
             "__ref__": true,
-            "id": "6DD99E16-E162-4D57-8F53-762E8F16389E",
+            "id": "1A663162-4460-41AA-BDA2-9E131D87FCEA",
             "rev": 0
           }
         },
@@ -5005,7 +4989,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "7C8F9FF3-9D54-473D-8A17-77485685C6B3",
+            "id": "6C8AEA0F-9018-449D-ADA0-055BBDF98ADD",
             "rev": 0
           }
         },
@@ -5021,7 +5005,7 @@
         }
       }
     },
-    "58F5F5C5-DACC-4E8C-B85C-8C560FB8B846": {
+    "1DC5E5F6-8C25-40E1-B65F-A111DDC579CA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5042,7 +5026,7 @@
         }
       }
     },
-    "95EA102C-C69D-40C0-976F-FCB16E00DFE9": {
+    "805D5061-EE36-4CBF-A04F-6A57DA302AB9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5063,7 +5047,7 @@
         }
       }
     },
-    "74E5C6F8-D431-4B2E-94A1-886B5E824A68": {
+    "0DA857B9-9308-49E5-8A97-3F2890C97E93": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5084,7 +5068,7 @@
         }
       }
     },
-    "6DD99E16-E162-4D57-8F53-762E8F16389E": {
+    "1A663162-4460-41AA-BDA2-9E131D87FCEA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5105,7 +5089,7 @@
         }
       }
     },
-    "7C8F9FF3-9D54-473D-8A17-77485685C6B3": {
+    "6C8AEA0F-9018-449D-ADA0-055BBDF98ADD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5126,7 +5110,7 @@
         }
       }
     },
-    "59291C38-D0AD-4511-90E7-3845A684F1B9": {
+    "F43A6E00-7429-463B-A065-9A969066969F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5145,8 +5129,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "sourceAttrName": {
@@ -5157,8 +5141,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "targetMethodName": {
@@ -5169,7 +5153,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "AFEF3907-52F8-411A-9A5A-4A35E92BDF7D",
+            "id": "6B399177-9CCA-4427-B2E8-95EEA32DEFBD",
             "rev": 0
           }
         },
@@ -5193,7 +5177,7 @@
         }
       }
     },
-    "AFEF3907-52F8-411A-9A5A-4A35E92BDF7D": {
+    "6B399177-9CCA-4427-B2E8-95EEA32DEFBD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5204,21 +5188,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         }
       }
     },
-    "14A81C94-B69B-4C7A-AE8B-88020095A285": {
+    "8691D648-E04F-4A8D-BD03-C499B1A68FF6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5237,8 +5221,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "sourceAttrName": {
@@ -5249,8 +5233,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "targetMethodName": {
@@ -5261,7 +5245,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "C12E38CA-B829-4C6D-9506-E231646C3F4E",
+            "id": "941E4CA8-0576-4D15-9928-EDABE7550BCB",
             "rev": 0
           }
         },
@@ -5285,7 +5269,7 @@
         }
       }
     },
-    "C12E38CA-B829-4C6D-9506-E231646C3F4E": {
+    "941E4CA8-0576-4D15-9928-EDABE7550BCB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5296,21 +5280,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         }
       }
     },
-    "25803D0A-E559-42F6-84EF-9935502C5971": {
+    "0677E4F0-6655-499C-996E-19E301765EAB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5329,8 +5313,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "sourceAttrName": {
@@ -5341,8 +5325,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "targetMethodName": {
@@ -5353,7 +5337,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "D7AD2595-8C56-4DD6-9F3F-65080138F521",
+            "id": "6BD70757-5802-48C6-B157-DE9C4C9292A1",
             "rev": 0
           }
         },
@@ -5377,7 +5361,7 @@
         }
       }
     },
-    "D7AD2595-8C56-4DD6-9F3F-65080138F521": {
+    "6BD70757-5802-48C6-B157-DE9C4C9292A1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5388,21 +5372,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         }
       }
     },
-    "15A6CAB7-1F7E-4907-A40B-23D1147FE681": {
+    "B6CF35FB-DE2A-4E95-ABBF-DF3D1716EC1A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5421,8 +5405,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "sourceAttrName": {
@@ -5433,8 +5417,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "targetMethodName": {
@@ -5445,7 +5429,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "E9CB8B85-26D8-4FBB-A6AD-99C3D5026F2D",
+            "id": "9453302C-330A-4DDB-974C-DA74CF66D915",
             "rev": 0
           }
         },
@@ -5469,7 +5453,7 @@
         }
       }
     },
-    "E9CB8B85-26D8-4FBB-A6AD-99C3D5026F2D": {
+    "9453302C-330A-4DDB-974C-DA74CF66D915": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5480,21 +5464,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         }
       }
     },
-    "EC07C3A5-424C-456B-813E-B29C3F51E3A6": {
+    "94C3512E-DA96-4D7C-B606-474CE685D740": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5513,8 +5497,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "sourceAttrName": {
@@ -5525,8 +5509,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "targetMethodName": {
@@ -5537,7 +5521,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "2354A9D0-B26D-42CB-BBEE-DC060ECE3EA7",
+            "id": "F7AD8558-A418-4E2B-98BB-74E70F8F7D01",
             "rev": 0
           }
         },
@@ -5561,7 +5545,7 @@
         }
       }
     },
-    "2354A9D0-B26D-42CB-BBEE-DC060ECE3EA7": {
+    "F7AD8558-A418-4E2B-98BB-74E70F8F7D01": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5572,21 +5556,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         }
       }
     },
-    "58AF5DD1-B92C-45CF-96A1-E81F9F36E507": {
+    "C30714E0-0978-4C33-A51D-797B1C580433": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5605,8 +5589,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "sourceAttrName": {
@@ -5617,8 +5601,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "targetMethodName": {
@@ -5629,7 +5613,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "F74B7EAE-CB34-4674-8AFA-8822538B5D7B",
+            "id": "4FECD8AF-2A7F-49EE-8397-D553E463A5E8",
             "rev": 0
           }
         },
@@ -5653,7 +5637,7 @@
         }
       }
     },
-    "F74B7EAE-CB34-4674-8AFA-8822538B5D7B": {
+    "4FECD8AF-2A7F-49EE-8397-D553E463A5E8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5664,21 +5648,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         }
       }
     },
-    "150D0986-E7E0-46F7-B139-43FFE95161DA": {
+    "388214FD-B8B8-48E3-B522-C86CE158841D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5697,8 +5681,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "sourceAttrName": {
@@ -5709,8 +5693,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "targetMethodName": {
@@ -5721,7 +5705,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "4AB9C394-AF44-4476-A9F3-0082D2BF8594",
+            "id": "2871CE4B-B86C-44ED-9991-F5EBE8BBF96C",
             "rev": 0
           }
         },
@@ -5745,7 +5729,7 @@
         }
       }
     },
-    "4AB9C394-AF44-4476-A9F3-0082D2BF8594": {
+    "2871CE4B-B86C-44ED-9991-F5EBE8BBF96C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5756,21 +5740,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_07D4E928_4870_4BB1_8282_2022AF317959",
-            "rev": 468052
+            "id": "EditEdgeButton_DBC34C16_0DC3_4006_BE26_20CF107CCC6D",
+            "rev": 22800
           }
         }
       }
     },
-    "67E95439-0265-4AB8-8EC9-FF9A23C6AFFE": {
+    "8B4CAFA7-3A0F-4C95-A09C-47E1204DD0DE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5789,8 +5773,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
-            "rev": 468068
+            "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
+            "rev": 22818
           }
         },
         "sourceAttrName": {
@@ -5801,8 +5785,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_E6A105CC_B178_4D71_A74F_DC43185AFDC5",
-            "rev": 513309
+            "id": "Morph_14C3A737_FE01_4D4D_82BF_E49E9E1E9300",
+            "rev": 57132
           }
         },
         "targetMethodName": {
@@ -5813,7 +5797,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "D59CCB29-782F-49D2-BBDF-BC1E40BE4AE7",
+            "id": "F370842F-4B80-471B-B4F0-AFE0B7ACDE9D",
             "rev": 0
           }
         },
@@ -5837,7 +5821,7 @@
         }
       }
     },
-    "D59CCB29-782F-49D2-BBDF-BC1E40BE4AE7": {
+    "F370842F-4B80-471B-B4F0-AFE0B7ACDE9D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5848,21 +5832,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
-            "rev": 468068
+            "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
+            "rev": 22818
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Morph_E6A105CC_B178_4D71_A74F_DC43185AFDC5",
-            "rev": 513309
+            "id": "Morph_14C3A737_FE01_4D4D_82BF_E49E9E1E9300",
+            "rev": 57132
           }
         }
       }
     },
-    "C4C05387-7390-4836-887D-B06767428D73": {
+    "3051186E-D1B2-46F1-9E60-E57CEBF15481": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5881,8 +5865,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
-            "rev": 468068
+            "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
+            "rev": 22818
           }
         },
         "sourceAttrName": {
@@ -5893,8 +5877,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
-            "rev": 468068
+            "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
+            "rev": 22818
           }
         },
         "targetMethodName": {
@@ -5905,7 +5889,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "3399352E-BED1-4848-B51B-B73D9D9DA9B6",
+            "id": "9668E7BB-BCAC-43CB-A8C3-0CFC2CC1ECB8",
             "rev": 0
           }
         },
@@ -5929,7 +5913,7 @@
         }
       }
     },
-    "3399352E-BED1-4848-B51B-B73D9D9DA9B6": {
+    "9668E7BB-BCAC-43CB-A8C3-0CFC2CC1ECB8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5940,16 +5924,16 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
-            "rev": 468068
+            "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
+            "rev": 22818
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_56C4E501_6986_405D_A208_453E8BD3196B",
-            "rev": 468068
+            "id": "Window_E987B6A7_9937_41F7_A72C_C6572C95E2E9",
+            "rev": 22818
           }
         }
       }
@@ -5960,7 +5944,7 @@
     "local://lively-object-modules/": {
       "VisjsMorph": {
         "package.json": "{\n  \"name\": \"VisjsMorph\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
-        "index.js": "import { HTMLMorph } from \"lively.morphic\";\nimport * as vis from \"https://lively-web.org/users/MattH/uploads/vis.js\"\nimport { deepCopy } from \"lively.lang/object.js\";\n\nexport default class VisjsMorph extends HTMLMorph {\n  onLoad(){\n  this.loadGraph();\n  }\n  async loadGraph() {     \n     this.viscanvasId = 'vis-canvas-' + this.id\n     var htmlString = '<div style=\"height:100%\" id=\"' + this.viscanvasId + '\"/>'\n     this.html = htmlString;\n  var nodeArray = []\n  var nodeCount = 3\n  for(var i = 0;i<nodeCount;i++){\n    nodeArray.push({id: i, label: 'Node ' + i, tt: 'Node ' + i})\n  }\n  var nodes = new vis.DataSet(nodeArray)\n  var edgeArray = []\n  nodeArray.forEach(function(ea){\n    for(var j = ea.id; j<= nodeCount;j++){\n      if(ea.id != j){\n        edgeArray.push({from: ea.id, to: j})\n      }\n    }\n  })\n  var edges = new vis.DataSet(edgeArray)\n  \n  var container = this.domNode.querySelector('#' + this.viscanvasId)\n  this.data = {\n    nodes: nodes,\n    edges: edges\n  };\n  \n  var options = {\n  interaction:{hover:true},\n\n  manipulation: {\n    addEdge: this.addEdge\n  },\n  \n  physics:{\n    enabled: true,\n    repulsion: {\n      centralGravity: 0.5,\n      springLength: 200,\n      springConstant: 0.05,\n      nodeDistance: 100,\n      damping: 0.09\n    },\n    maxVelocity: 50,\n    minVelocity: 0.1,\n    solver: 'repulsion',\n    stabilization: {\n      enabled: true,\n      iterations: 1000,\n      updateInterval: 100,\n      onlyDynamicEdges: false,\n      fit: true\n    },\n        timestep: 0.5,\n        adaptiveTimestep: true\n  },\n  layout: {\n    randomSeed: 1,\n    improvedLayout:true\n  }\n}\n\n  this.network = new vis.Network(container, this.data, options);\n  this.singleClickListener(this)\n  this.doubleClickListener(this)\n  this.longClickListener(this)\n  this.hoverListener(this)\n  this.blurListener(this)\n  this.rightClickListener(this)\n  this.dragStartListener(this)\n  this.dragListener(this)\n  this.dragEndListener(this)\n  }\n   singleClickListener(self) {\n    var network = this.network;\n    var hand = $world.hands[0]\n    network.on(\"click\", function (params) {\n      var node = params.nodes[0]\n      if(!node){\n        return\n      }\n    })\n  }\n  showTooltip(obj, blur) {\n    var container = this.domNode.querySelector('#' + this.viscanvasId)\n    var nodeDelete = this.domNode.querySelector('#tooltipNode');\n    if(nodeDelete){\n       container.removeChild(nodeDelete);   \n       if(blur){\n           return;\n       }\n    }\n    var tt = document.createElement(\"div\");\n    tt.setAttribute(\"id\", \"tooltipNode\");\n    tt.setAttribute(\"class\", \"tooltipNode\");\n    this.setTTStyle(tt)\n    \n    var title = ( obj.tt == undefined ) ? \"\"  : obj.tt;\n    tt.innerHTML = title;\n    container.appendChild(tt);\n  }\n  hoverListener(self) {\n     this.network.on(\"hoverNode\", function (params) {         \n        var HOVER_SIZE_ICON = 50;\n        var nodeId = params.node;\n        var node = self.data.nodes.get(nodeId);\n        self.showTooltip(node); \n        \n    });\n  }  \n  setTTStyle(tt) {  \n    tt.setAttribute(\"style\",\"position: absolute;\\\n\t   text-align: center;\\\n\t   top: 5%;\\\n    left: 20px;\\\n    background-color: #FFFFFF;\\\n    font-family: Roboto, Ubuntu, Verdana, Arial;\\\n    font-size: 0.65em;\\\n    padding: 5px;\\\n    border-radius: 5px;\\\n    border: solid 4px;\\\n    min-width: 0px;\\\n    max-width: 50%;\\\n    min-height: 0px;\\\n    max-height: 50%;\")\n  }\n  blurListener(self){\n    var network = this.network;\n    network.on(\"blurNode\", function (params) {      \n      var node = self.data.nodes.get(params.node);\n      self.hideTooltip();\n    });\n  }\n  hideTooltip(){\n    var container = this.domNode.querySelector('#' + this.viscanvasId)\n    var nodeDelete = this.domNode.querySelector('#tooltipNode');\n    if(nodeDelete){\n        container.removeChild(nodeDelete);    \n    }\n  }\n  longClickListener(self) {\n    var network = this.network;\n    network.on(\"hold\", function (params) {      \n      var node = params.nodes[0]\n      if(node){\n        //duplicate node here\n        var nodeObj = self.data.nodes.get(node)\n        var tempNode = deepCopy(nodeObj)\n        tempNode.label = nodeObj.label + '_1'\n        tempNode.id = nodeObj.id + '_1'\n        self.data.nodes.update(tempNode)\n      } else {\n        //create node here\n        var nodeCount = self.data.nodes.length + 1\n        var {x,y} = params.pointer.canvas\n        var nodeObj = {id: nodeCount, label: 'Node ' + nodeCount, tt: 'Node ' + nodeCount, x: x, y: y}\n        console.log(params)\n        self.data.nodes.update(nodeObj)\n      }\n      \n    })\n  }\n  doubleClickListener(self) {\n    var network = this.network;\n    network.on(\"doubleClick\", function (params) {\n        var node = self.data.nodes.get(params.nodes[0])\n        if (node){\n          var editor = $world.get('NodeEditor')\n          editor.get('container').makeFields(node)\n          editor.bringToFront();\n        }\n        \n     })\n  }\n  rightClickListener(self) {\n    var network = this.network;\n    network.on(\"oncontext\", function (params) { })\n  }\n  dragStartListener(self){\n    var network = this.network;\n    network.on(\"dragStart\", function (params) {\n      var node = self.data.nodes.get(params.nodes[0])\n      \n      console.log(params)\n      if (node){\n        node.physics = false;\n        node.shadow = true;\n        params.edges.forEach(function(ea){\n          var edge = self.data.edges.get(ea)\n          console.log(edge)\n          edge.physics = false\n        })\n      }\n    })\n  }\n  dragListener(self){\n    var network = this.network;\n    network.on(\"dragging\", function (params) { })\n  }\n  dragEndListener(self){\n    var network = this.network;\n    network.on(\"dragEnd\", function (params) {\n      var node = self.data.nodes.get(params.nodes[0])\n      if (node){\n        node.physics = false;\n        node.shadow = true;\n        params.edges.forEach(function(ea){      \n          var edge = self.data.edges.get(ea)\n          console.log(edge)\n          edge.physics = true\n        })\n      }\n    })\n  }\n  addEdge(data,callback) {\n    $world.get('cancelButton').visible = false    \n    callback(data);\n    \n  }\n  addNode(data,callback){\n  }\n  onResize(evt) {\n    console.log(evt)\n  }\n  makeTextField(k,v) {\n    console.log({k,v})\n  }\n}\n\n\n\n"
+        "index.js": "import { HTMLMorph } from \"lively.morphic\";\nimport * as vis from \"https://lively-web.org/users/MattH/uploads/vis.js\"\nimport { deepCopy } from \"lively.lang/object.js\";\n\nexport default class VisjsMorph extends HTMLMorph {\n  onLoad(){\n  this.loadGraph();\n  }\n  async loadGraph() {     \n     this.viscanvasId = 'vis-canvas-' + this.id\n     var htmlString = '<div style=\"height:100%\" id=\"' + this.viscanvasId + '\"/>'\n     this.html = htmlString;\n  var nodeArray = []\n  var nodeCount = 3\n  for(var i = 1;i<=nodeCount;i++){\n    nodeArray.push({id: i, label: 'Node ' + i, tt: 'Node ' + i})\n  }\n  var nodes = new vis.DataSet(nodeArray)\n  var edgeArray = []\n  nodeArray.forEach(function(ea){\n    for(var j = ea.id; j<= nodeCount;j++){\n      if(ea.id != j){\n        edgeArray.push({from: ea.id, to: j})\n      }\n    }\n  })\n  var edges = new vis.DataSet(edgeArray)\n  \n  var container = this.domNode.querySelector('#' + this.viscanvasId)\n  this.data = {\n    nodes: nodes,\n    edges: edges\n  };\n  \n  var options = {\n  interaction:{hover:true},\n\n  manipulation: {\n    addEdge: this.addEdge\n  },\n  \n  physics:{\n    enabled: true,\n    repulsion: {\n      centralGravity: 0.5,\n      springLength: 200,\n      springConstant: 0.05,\n      nodeDistance: 100,\n      damping: 0.09\n    },\n    maxVelocity: 50,\n    minVelocity: 0.1,\n    solver: 'repulsion',\n    stabilization: {\n      enabled: true,\n      iterations: 1000,\n      updateInterval: 100,\n      onlyDynamicEdges: false,\n      fit: true\n    },\n        timestep: 0.5,\n        adaptiveTimestep: true\n  },\n  layout: {\n    randomSeed: 1,\n    improvedLayout:true\n  }\n}\n\n  this.network = new vis.Network(container, this.data, options);\n  this.singleClickListener(this)\n  this.doubleClickListener(this)\n  this.longClickListener(this)\n  this.hoverListener(this)\n  this.blurListener(this)\n  this.rightClickListener(this)\n  this.dragStartListener(this)\n  this.dragListener(this)\n  this.dragEndListener(this)\n  }\n   singleClickListener(self) {\n    var network = this.network;\n    var hand = $world.hands[0]\n    network.on(\"click\", function (params) {\n      var node = params.nodes[0]\n      if(!node){\n        return\n      }\n    })\n  }\n  showTooltip(obj, blur) {\n    var container = this.domNode.querySelector('#' + this.viscanvasId)\n    var nodeDelete = this.domNode.querySelector('#tooltipNode');\n    if(nodeDelete){\n       container.removeChild(nodeDelete);   \n       if(blur){\n           return;\n       }\n    }\n    var tt = document.createElement(\"div\");\n    tt.setAttribute(\"id\", \"tooltipNode\");\n    tt.setAttribute(\"class\", \"tooltipNode\");\n    this.setTTStyle(tt)\n    \n    var title = ( obj.tt == undefined ) ? \"\"  : obj.tt;\n    tt.innerHTML = title;\n    container.appendChild(tt);\n  }\n  hoverListener(self) {\n     this.network.on(\"hoverNode\", function (params) {         \n        var HOVER_SIZE_ICON = 50;\n        var nodeId = params.node;\n        var node = self.data.nodes.get(nodeId);\n        self.showTooltip(node); \n        \n    });\n  }  \n  setTTStyle(tt) {  \n    tt.setAttribute(\"style\",\"position: absolute;\\\n\t   text-align: center;\\\n\t   top: 5%;\\\n    left: 20px;\\\n    background-color: #FFFFFF;\\\n    font-family: Roboto, Ubuntu, Verdana, Arial;\\\n    font-size: 0.65em;\\\n    padding: 5px;\\\n    border-radius: 5px;\\\n    border: solid 4px;\\\n    min-width: 0px;\\\n    max-width: 50%;\\\n    min-height: 0px;\\\n    max-height: 50%;\")\n  }\n  blurListener(self){\n    var network = this.network;\n    network.on(\"blurNode\", function (params) {      \n      var node = self.data.nodes.get(params.node);\n      self.hideTooltip();\n    });\n  }\n  hideTooltip(){\n    var container = this.domNode.querySelector('#' + this.viscanvasId)\n    var nodeDelete = this.domNode.querySelector('#tooltipNode');\n    if(nodeDelete){\n        container.removeChild(nodeDelete);    \n    }\n  }\n  longClickListener(self) {\n    var network = this.network;\n    network.on(\"hold\", function (params) {      \n      var node = params.nodes[0]\n      if(node){\n        //duplicate node here\n        var nodeObj = self.data.nodes.get(node)\n        var tempNode = deepCopy(nodeObj)\n        tempNode.label = nodeObj.label + '_1'\n        tempNode.id = nodeObj.id + '_1'\n        self.data.nodes.update(tempNode)\n      } else {\n        //create node here\n        var nodeCount = self.data.nodes.length + 1\n        var {x,y} = params.pointer.canvas\n        var nodeObj = {id: nodeCount, label: 'Node ' + nodeCount, tt: 'Node ' + nodeCount, x: x, y: y}\n        console.log(params)\n        self.data.nodes.update(nodeObj)\n      }\n      \n    })\n  }\n  doubleClickListener(self) {\n    var network = this.network;\n    network.on(\"doubleClick\", function (params) {\n        var node = self.data.nodes.get(params.nodes[0])\n        if (node){\n          var editor = $world.get('NodeEditor')\n          editor.get('container').makeFields(node)\n          editor.bringToFront();\n        }\n        \n     })\n  }\n  rightClickListener(self) {\n    var network = this.network;\n    network.on(\"oncontext\", function (params) { })\n  }\n  dragStartListener(self){\n    var network = this.network;\n    network.on(\"dragStart\", function (params) {\n      var node = self.data.nodes.get(params.nodes[0])\n      \n      console.log(params)\n      if (node){\n        node.physics = false;\n        node.shadow = true;\n        params.edges.forEach(function(ea){\n          var edge = self.data.edges.get(ea)\n          console.log(edge)\n          edge.physics = false\n        })\n      }\n    })\n  }\n  dragListener(self){\n    var network = this.network;\n    network.on(\"dragging\", function (params) { })\n  }\n  dragEndListener(self){\n    var network = this.network;\n    network.on(\"dragEnd\", function (params) {\n      var node = self.data.nodes.get(params.nodes[0])\n      if (node){\n        node.physics = false;\n        node.shadow = true;\n        params.edges.forEach(function(ea){      \n          var edge = self.data.edges.get(ea)\n          console.log(edge)\n          edge.physics = true\n        })\n      }\n    })\n  }\n  addEdge(data,callback) {\n    $world.get('cancelButton').visible = false    \n    callback(data);\n    \n  }\n  addNode(data,callback){\n  }\n  onResize(evt) {\n    console.log(evt)\n  }\n  makeTextField(k,v) {\n    console.log({k,v})\n  }\n}\n\n\n\n"
       },
       "AddEdgeButton": {
         "package.json": "{\n  \"name\": \"AddEdgeButton\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
