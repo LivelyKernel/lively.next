@@ -471,32 +471,81 @@ class InnerTreeNode extends TreeNode {
 }
 
 
-class Line extends TreeNode {
+export class Line extends TreeNode {
 
-  constructor(parent, text = "") {
+  constructor(parent, height = 0, text = "", propsWithOffsets = null) {
     super(parent);
-    this.text = text;
-    this.height = 0;
+    this.changeText(text, propsWithOffsets);
+    this.height = height;
   }
 
   get isLine() { return true; }
 
   get size() { return 1; }
 
+  get text() { return this._text; }
+
+  get propsWithOffsets() { return this._propsWithOffsets; }
+
+  get props() {
+    let {_props, _propsWithOffsets} = this;
+    if (_props) return _props;
+    if (!_propsWithOffsets) return null;
+    let _propOffsets = this._propOffsets = [];
+    _props = this._props = [];
+    for (let i = 0; i < _propsWithOffsets.length; i+=3) {
+      let start = _propsWithOffsets[i],
+          end = _propsWithOffsets[i+1],
+          prop = _propsWithOffsets[i+2];
+      _propOffsets.push(start, end);
+      _props.push(prop);
+    }
+    return _props;
+  }
+
+  get textAndProps() {
+    // returns a list with 4-tuples that matches text slices to props
+    // [startIndex, endIndex, text, props, ....]
+    let {_textAndProps, _propsWithOffsets, _text} = this;
+    if (_textAndProps) // cached
+      return _textAndProps;
+
+    if (!_propsWithOffsets) // no props
+      return this._textAndProps = [0, _text.length, _text, null];
+
+    let textAndProps = this._textAndProps = [],
+        index = 0, indexIntoProps = 0;
+    while (true) {
+      if (indexIntoProps >= _propsWithOffsets.length) break;
+      let start = _propsWithOffsets[indexIntoProps],
+          end =  _propsWithOffsets[indexIntoProps+1],
+          prop =  _propsWithOffsets[indexIntoProps+2];
+      if (index < start)
+        textAndProps.push(index, start, _text.slice(index, start), null);
+      textAndProps.push(start, end, _text.slice(start, end), prop);
+      indexIntoProps += 3;
+      index = end;
+    }
+    if (index < _text.length)
+      textAndProps.push(index, _text.length, _text.slice(index, _text.length), null);
+    return textAndProps;
+  }
+
   get row() {
     var p = this.parent;
     if (!p) return 0;
 
-    var parents = this.withParents().reverse();
+    var parents = this.withParents();
     if (parents.length === 1)
       return parents.children.indexOf(this);
 
+    // closest parent is last
     var index = 0;
-    for (var i = 0; i < parents.length-1; i++) {
-      var parent = parents[i],
-          node = parents[i + 1],
-          nodeIndex = parent.children.indexOf(node);
-      for (var j = 0; j < nodeIndex; j++) {
+    for (let i = parents.length-1; i >= 1; i--) {
+      let parent = parents[i],
+          itsParent = parents[i - 1],
+          nodeIndex = parent.children.indexOf(itsParent);
+      for (let j = 0; j < nodeIndex; j++) {
         index = index + parent.children[j].size;
       }
     }
@@ -516,13 +565,33 @@ class Line extends TreeNode {
     return root.findRow(row+1);
   }
 
+  changeHeight(newHeight) {
+    let {height, parent} = this,
+        delta = newHeight - height;
+    this.height = newHeight;
+    while (parent) {
+      parent.height += delta;
+      parent = parent.parent;
+    }
+    return this;
+  }
+
+  changeText(text, propsWithOffsets = null) {
+    this._text = text;
+    this._propsWithOffsets = propsWithOffsets;
+    this._props = null;
+    this._propOffsets = null;
+    this._textAndProps = null;
+    return this;
+  }
+
   print(index = 0, depth = 0) {
     var indent = " ".repeat(depth);
-    return `${indent}line ${index} (height: ${this.height}, text: ${JSON.stringify(this.text)})`
+    return `${indent}line ${index} (height: ${this.height}, text: ${JSON.stringify(this._text)})`
   }
 
   toString() {
-    return `line (${string.truncate(this.text, 30)})`;
+    return `line (${string.truncate(this._text, 30)}, ${this.height})`;
   }
 
 }
@@ -537,7 +606,7 @@ export default class TextTree {
 
   get lines() { return this.root.lines(); }
   set lines(lines = []) {
-    this.root = new InnerTreeNode(null, [], 0, this.options);
+    this.root = new InnerTreeNode(null, [], 0, 0, this.options);
     this.insertLines(lines);
   }
 
@@ -554,8 +623,8 @@ export default class TextTree {
     this.root.removeFromToInRoot(fromRow, toRow);
   }
 
-  insertLines(lines, atIndex) {
-    var lines = this.root.insert(lines, atIndex);
+  insertLines(lineSpecs, atIndex) {
+    let lines = this.root.insert(lineSpecs, atIndex);
     this.fixRoot();
     return lines;
   }
