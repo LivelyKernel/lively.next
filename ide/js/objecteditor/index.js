@@ -174,7 +174,6 @@ export class ObjectEditor extends Morph {
   constructor(props) {
     super({...props, submorphs: this.build()});
     this.reset();
-    if (props.target) this.target = props.target;
     this.ui.forkPackageButton.disable();
   }
 
@@ -442,7 +441,7 @@ export class ObjectEditor extends Morph {
       format: "esm"
     });
 
-    this.whenRendered().then(() => this.selectClass(t.constructor));
+    return this.selectClass(t.constructor);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -457,7 +456,7 @@ export class ObjectEditor extends Morph {
       oldPos = ed.cursorPosition;
 
     await tree.maintainViewStateWhile(
-      async () => { this.target = this.target; },
+      () => this.selectTarget(this.target),
       node => node.target ?
                 node.target.name
                   + node.target.kind
@@ -760,7 +759,7 @@ localStorage["oe helper"] = JSON.stringify(store);
 
     this.state.isSaving = true;
     try {
-      await descr.changeSource(content)
+      await descr.changeSource(content);
       await editor.saveExcursion(async () => {
         await this.refresh();
         await this.updateSource(editor.textString, this.selectedModule.id);
