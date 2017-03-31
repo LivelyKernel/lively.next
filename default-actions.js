@@ -99,21 +99,6 @@ export var defaultTrackerActions = {
         contents = io.nsps["/" + tracker.namespace].adapter.rooms
         if(ackFn && typeof ackFn === 'function'){ackFn({roomList: contents})}
       }
-
-
-  },
-
-  async "userInfo": (tracker, {sender, data}, ackFn, socket) => {    
-    ackFn(await tracker.getUserInfo(data))
-  },
-  async "authenticateUser": (tracker, {sender, data}, ackFn, socket) => {    
-    ackFn(await tracker.authenticateUser(data))
-  },
-  async "validate": (tracker, {sender, data}, ackFn, socket) => {
-    ackFn(await tracker.validateToken(data))
-  },
-  async 'createUser': (tracker, {sender, data}, ackFn, socket) => {
-    ackFn(await tracker.createUser(data))
   }
 }
 

@@ -213,32 +213,4 @@ export default class L2LTracker extends L2LConnection {
     return `L2LTracker(${this.namespace}, open: ${this.isOnline()})`
   }
 
-  // lively.user
-
-  async validateToken(user){    
-    var response = await authserver.verify(user)    
-    return response  
-  }
-
-  async getUserInfo({email}) {
-    // returns the unauthenticated user object, if available
-    return new user(await authserver.getUserInfo(email));
-  }
-
-  async authenticateUser(options){    
-    var newUser = new user(options);
-    console.log(options);
-    await newUser.authenticate(300)
-    return newUser;
-  }
-
-  async createUser(options){
-     if (!options.name || !options.email || !options.password){
-       var errMsg = 'Insufficient options specified: Requires name, email, password'
-       throw new Error(errMsg)
-     }
-     console.log(options.avatar);
-     await authserver.addUser(options,'adminpassword')
-     return {name: options.name, status: 'created ' + options.name  + 'successfully'}
-  }
 }
