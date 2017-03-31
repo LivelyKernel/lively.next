@@ -48,6 +48,7 @@ lively.modules.registerPackage(".")
         "./plugins/remote-shell.js",
         "./plugins/dav.js",
         "./plugins/moduleBundler.js",
+        "./plugins/user.js",
         "./plugins/discussion.js"
       ].map(path => System.import(path).then(mod => opts.plugins.push(new mod.default(opts))))
     ).then(() => {
