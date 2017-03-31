@@ -1,4 +1,5 @@
-import * as userdb from "lively.user/user-db.js"
+import * as userdb from "lively.user/user-db.js";
+import user from 'lively.user/user.js';
 
 var bcryptPath = System.decanonicalize("lively.user/node_modules/bcryptjs/index.js").replace(/^file:\/\//, "");
 var bcrypt = System._nodeRequire(bcryptPath);
@@ -7,14 +8,12 @@ var jwt = System._nodeRequire(jwtpath);
 
 //replace with uuid, visible only to server
 var key = "mysecret"
-
 // var adminpassword = 'adminpassword'
 
 export async function authenticate(user){
   
-  var users = await userdb.getfromDB(user.name,user.email)
+  var users = await userdb.getfromDB(user.name, user.email)
   //check 0-th record, as both username and email are PKs  
-  console.log(user)
   var authUser = users[0]  
   if(!authUser){
     return {status: 'error', body: {data: 'No such username ' + user.name}}
@@ -37,6 +36,16 @@ export async function getUserInfo(email){
     return {status: 'error', body: {data: 'No user for email ' + email }}
   }
   return user;
+}
+
+export async function getAllUsers(){
+  
+  var users = await userdb.doSQL('select * from users'),
+      userDict = {};
+   for (var user of users) {
+     userDict[user.email] = user;
+   }
+  return userDict;
 }
 
 export async function removeUser({name: username,email},adminpassword){  
@@ -112,3 +121,35 @@ export async function verify(user){
   });
   return response 
 }
+
+export const UserServices = {
+  
+  async validate(tracker, {sender, data}, ackFn, socket){   
+    var response = await verify(data)    
+    ackFn(response);  
+  },
+
+  async userInfo(tracker, {sender, data}, ackFn, socket) {
+    // returns the unauthenticated user object, if available
+    ackFn(new user(await getUserInfo(data.email)));
+  },
+
+  async listUsers(tracker, {sender, data}, ackFn, socket) {
+    ackFn(await getAllUsers());
+  },
+
+  async authenticateUser(tracker, {sender, data}, ackFn, socket){    
+    var newUser = new user(data);
+    await newUser.authenticate(300);
+    ackFn(newUser);
+  },
+
+  async createUser(tracker, {sender, data}, ackFn, socket){
+     if (!data.name || !data.email || !data.password){
+       var errMsg = 'Insufficient options specified: Requires name, email, password'
+       throw new Error(errMsg)
+     }
+     await addUser(data,'adminpassword')
+     ackFn({name: data.name, status: 'created ' + data.name  + 'successfully'})
+  }
+} 
