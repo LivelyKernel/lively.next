@@ -2,6 +2,7 @@ import { Database } from "lively.storage";
 import {date, arr, obj} from 'lively.lang';
 import { hashCode } from "lively.lang/string.js";
 import { newUUID } from "lively.lang/string.js";
+import { verify } from "lively.user/authserver.js";
 
 const topicDB = Database.ensureDB("lively.discussion.storage", {adapter: "memory"});
 
@@ -65,17 +66,17 @@ export class TopicData extends CommentData {
   constructor(args) {
      super(args);
      this.title = args.title;
-     this.tracker = args.tracker;
+     this.client = args.tracker;
      this.user = args.user;
   }
 
   async sendRequest(name) {
     var payload = {
-      ...obj.dissoc(this, ['tracker', 'user']),
+      ...obj.dissoc(this, ['client', 'user']),
       user: {token: this.user.token, email: this.user.email}
     }
-    return (await this.tracker.sendToAndWait(
-       this.tracker.trackerId, name, payload)).data;
+    return (await this.client.sendToAndWait(
+       this.client.trackerId, name, payload)).data;
   }
 
   update(opts) {
@@ -104,12 +105,25 @@ export class TopicData extends CommentData {
     }
   }
 
+  broadcastUpdate() {
+    var ackFn, msg = {
+        target: this.client.id,
+        action: "updateTopic",
+        data: {hash: this.hash},
+        messageId: "update: " + this.hash
+    };
+    [msg, ackFn] = this.client.prepareSend(msg);
+    this.client.sendTo(this.client.trackerId,"systemBroadcast", {broadcastMessage: msg, roomName: 'defaultRoom'})       
+  }
+
   async pushUpdate() {
-    return await this.sendRequest('updateTopic');
+    await this.sendRequest('updateTopic');
+    this.broadcastUpdate();
   }
 
   async create() {
     this.hash = await this.sendRequest('createTopic');
+    this.broadcastUpdate();
     return this.hash;
   }
 }
@@ -145,12 +159,12 @@ export async function updateTopic(updatedTopic, user) {
    }
 }
 
-export var L2LServices = {
+export var DiscussionServices = {
 
   async updateTopic(tracker, {sender, data}, ackFn) {
      var answer;     
      data = new TopicData(data);
-     if (await tracker.validateToken(data.user)) {
+     if (await verify(data.user)) {
         if (await fetchTopic(data)) {
           await updateTopic(data, data.user);
           answer = {status: 'updated'};
