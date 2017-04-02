@@ -25,6 +25,13 @@ import {
   lessPosition,
   eqPosition
 } from "../text/position.js";
+import {
+  shallowEquals, concatLineTextAndAttributes, modifyAttributesInRange, convertLineTextAndAttributesIntoDocTextAndAttributes,
+  lineTextAndAttributesDo,
+  concatAttributePair,
+  splitTextAndAttributesAt,
+  splitLineTextAndAttributesAt
+} from "./attributes.js";
 
 var defaultOptions = {
   maxLeafSize: 3,
@@ -719,6 +726,21 @@ export class Line extends TreeNode {
     return this;
   }
 
+  changeTextAndAttributes(textAndAttributes) {
+    // textAndAttributes like [0, 3, "foo", {...}, ...]
+    let newText = "",
+        attrs = this.attributesWithOffsets;
+    if (attrs) attrs.length = 0;
+    else attrs = [];
+    lineTextAndAttributesDo(textAndAttributes, (from, to, text, attr) => {
+      attrs.push(from, to, attr);
+      newText = newText + text;
+    });
+    this.changeText(newText, attrs)
+    this._textAndAttributes = textAndAttributes;
+    return this;
+  }
+
   print(index = 0, depth = 0) {
     let indent = " ".repeat(depth),
         {height, stringSize, _text} = this;
@@ -733,82 +755,7 @@ export class Line extends TreeNode {
 }
 
 
-/*
 
-let t = Date.now()
-lively.lang.fun.timeToRunN(() => {
-  let attr1 = Math.random() < 0.5 ? {foo: 23} : null;
-  let attr2 = Math.random() < 0.5 ? {foo: 23} : null;
-  concatAttributePair("hello", attr1, "world", attr2)
-}, 500000);
-Date.now() - t;
-
-*/
-
-function shallowEquals(obj1, obj2) {
-  if (!obj1 || !obj2) return obj1 == obj2;
-  let areEqual = true, seen = {};
-  for (let key1 in obj1) {
-    seen[key1] = true;
-    if (!obj2.hasOwnProperty(key1)
-     || obj1[key1] !== obj2[key1])
-       { areEqual = false; break; }
-  }
-  if (areEqual) {
-    for (let key2 in obj2) {
-      if (seen[key2]) continue;
-      if (!obj1.hasOwnProperty(key2)
-       || obj1[key2] !== obj2[key2])
-         { areEqual = false; break; }
-    }
-  }
-  return areEqual;
-}
-
-function concatAttributePair(text1, attr1, text2, attr2) {
-  // concatAttributePair("hello", null, "world", null) => ["helloworld", null]
-  // concatAttributePair("hello", null, "world", {foo: 23}) => ["hello", null, "world", {foo: 23}]
-  // concatAttributePair("hello", {foo: 23}, "world", {foo: 23}) => ["helloworld", {foo: 23}]
-  if (!attr1 && !attr2) return [text1 + text2, attr1];
-  if (attr1 == attr2) return [text1 + text2, attr1];
-  if (!attr1 || !attr2) return [text1, attr1, text2, attr2];
-  return shallowEquals(attr1, attr2) ?
-    [text1 + text2, attr1] :
-    [text1, attr1, text2, attr2];
-}
-
-// let l = new Line(null, 0, "hello", [2,5, {foo: 23}]);
-
-// let split = splitLineTextAndAttributesAt(l, 0)
-// let split = splitLineTextAndAttributesAt(l, 2)
-// let split = splitLineTextAndAttributesAt(l, 1)
-// let split = splitLineTextAndAttributesAt(l, 3)
-// split[0].map((ea, i) => typeof ea === "string"?ea:null).filter(Boolean).join("")
-// split[1].map((ea, i) => typeof ea === "string"?ea:null).filter(Boolean).join("")
-function splitLineTextAndAttributesAt(line, column) {
-  // returns a two-item array: left everything that is before column, right trailing
-
-  let t = line.text, length = t.length;
-  if (!line.attributesWithOffsets)
-    return [[0, column, t.slice(0, column), null], [column, length, t.slice(column), null]];
-
-  let textAndAttributes = line.textAndAttributes;
-  for (let i = 0; i < textAndAttributes.length; i = i+4) {
-    let from = textAndAttributes[i+0],
-        to = textAndAttributes[i+1],
-        text = textAndAttributes[i+2],
-        attr = textAndAttributes[i+3];
-    if (to <= column) continue;
-    if (from === column)
-      return [textAndAttributes.slice(0, i), textAndAttributes.slice(i)];
-
-    return [
-      [...textAndAttributes.slice(0, i), from, column, text.slice(0, column-from), attr],
-      [column, to, text.slice(column-from), attr, ...textAndAttributes.slice(i+4)]];
-  }
-
-  return [textAndAttributes, [t.length, t.length, "", null]];
-}
 
 const newline = "\n",
       newlineLength = 1; /*fixme make work for cr lf windows...*/
@@ -916,9 +863,6 @@ export default class Document {
     return {row, column: line.stringSize-1}
   }
 
-  get textAttributes() {}
-  set textAttributes(attrs) {}
-
   get textAndAttributes() {
         // pairs the strings with attributes of the lines, merging text/attributes
     // between line ends of possible.
@@ -935,9 +879,10 @@ export default class Document {
         l1 = lines[0];
 
     // add first without concat
-    nextIndex = !l1.attributesWithOffsets ?
-      result.push(l1.text, null) :
-      result.push(...l1.textAndAttributes);
+    if (l1.attributesWithOffsets) {
+      lineTextAndAttributesDo(l1.textAndAttributes, (from, to, text, attr) =>
+        nextIndex = result.push(text, attr));
+    } else  nextIndex = result.push(l1.text, null);
 
     for (let row = 1; row <= lastRow; row++) {
 
@@ -962,8 +907,8 @@ export default class Document {
       let lastAttr = result.pop(),
           lastText = result.pop(),
           textAndAttributes = line.textAndAttributes,
-          firstText = textAndAttributes[3],
-          firstAttr = textAndAttributes[4];
+          firstText = textAndAttributes[2],
+          firstAttr = textAndAttributes[3];
 
       result.push(...concatAttributePair(lastText, lastAttr, firstText, firstAttr, nl));
       for (let i = 4; i < textAndAttributes.length; i = i+4)
@@ -974,38 +919,99 @@ export default class Document {
     return result;
   }
 
-  set textAndAttributes(attrs) {}
+  set textAndAttributes(attrs) {
+    let lines = [],
+        textAndAttributes = [],
+        attributesWithOffsets = [],
+        lineText = "",
+        col = 0;
 
-  getTextAndAttributesOfLine(row) {}
-  setTextAndAttributesOfLine(row, attrs) {}
-  getAttributesWithOffsetsOfLine(row) {}
-  setAttributesWithOffsetsOfLine(row, attrs) {}
+    for (var i = 0; i < attrs.length; i = i+2) {
+      let text = attrs[i], attr = attrs[i+1];
 
-  mixinTextAttribute(attr, range) {
-    // let {start, end} = range;
-    // if (lessPosition(end, start)) [start, end] = [end, start];
-    // let {row: startRow, column: startColumn} = start,
-    //     {row: endRow, column: endColumn} = end;
-    // let line = this.getLine(startRow),
-    //     textAndAttributes = line.textAndAttributes;
-    // for (let i = 0; i < textAndAttributes.length; i = i+3) {
-    //   let from = textAndAttributes[0],
-    //       to = textAndAttributes[1],
-    //       attr = textAndAttributes[2];
-    //   if (to <= startColumn) continue;
-    //   if (from === startColumn)
-    // }
-    // line.textAndAttributes
-    // [1,3, {foo: 23}, 3, 5, {foo: 23}]
-  }
-  mixoutTextAttribute(attr, range) {
+      while (text.length) {
+        let lineSplit = text.indexOf(newline);
+        if (lineSplit === -1) { record(text, attr); break; }
+
+        record(text.slice(0, lineSplit), attr);
+        addLine();
+
+        lineText = text = text.slice(lineSplit+1/*newlinelength!*/);
+        col = 0;
+        attributesWithOffsets = [];
+        textAndAttributes = [];
+      }
+    }
+
+    addLine();
+
+    return this.lines = lines;
+
+    function record(text, attr) {
+      lineText = lineText + text;
+      let nextCol = col + text.length;
+      attributesWithOffsets.push(col, nextCol, attr);
+      textAndAttributes.push(col, nextCol, text, attr);
+      col = nextCol;
+    }
     
+    function addLine() {
+      if (!lineText.length) return;
+      let line = new Line(null, 0, lineText, attributesWithOffsets);
+      line._textAndAttributes = textAndAttributes; /*optimized*/
+      lines.push(line);
+    }
   }
 
-  removeTextAttributes(attr, range) {}
-  resetTextAttributes() {}
+  getTextAndAttributesOfLine(row) {
+    convertLineTextAndAttributesIntoDocTextAndAttributes(this.getLine(row).textAndAttributes);
+  }
 
-  stylesChunked(range) {}
+  setTextAndAttributesOfLine(row, attrs) {
+    let textAndAttributes = [],
+        attributesWithOffsets = [],
+        lineString = "", column = 0;
+
+    for (var i = 0; i < attrs.length; i = i+2) {
+      let text = attrs[i], attr = attrs[i+1],
+          newColumn = column + text.length;
+      lineString = lineString + text;
+      textAndAttributes.push(column, newColumn, text, attr);
+      attributesWithOffsets.push(column, newColumn, attr);
+    }
+
+    let line = this.getLine(row);
+    line.changeText(lineString, attributesWithOffsets);
+    line._textAndAttributes = textAndAttributes;
+    return attrs;
+  }
+
+  mixinTextAttribute(mixinAttr, range) {
+    modifyAttributesInRange(this, range,
+      (line, from, to, attr) => Object.assign({}, attr, mixinAttr));
+  }
+
+  mixoutTextAttribute(attr, range = {start: {row: 0, column: 0}, end: this.endPosition}) {
+    if (!attr) return;
+    let keys = Object.keys(attr);
+    modifyAttributesInRange(this, range,
+      (line, from, to, attr) => {
+        if (!attr) return attr;
+        let mixout = {}, keyCount;
+        for (let key in attr) {
+          if (!keys.includes(key)) {
+            mixout[key] = attr[key];
+            keyCount++;
+          }
+        }
+        return keyCount === 0 ? null : mixout;
+      });
+  }
+
+  resetTextAttributes() {
+    let lines = this.lines;
+    lines.forEach(line => line.changeText(line.text));
+  }
 
   textInRange({start, end}) {
     start = this.clipPositionToLines(start);
@@ -1028,7 +1034,7 @@ export default class Document {
 
   setTextInRange(string, range) {
     this.remove(range);
-    return this.insert(string, range.start);
+    return this.insertString(string, range.start, false);
   }
 
   indexToPosition(index) {
@@ -1057,8 +1063,11 @@ export default class Document {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  insert(string, pos) {
-    if (!string) return {start: pos, end: pos};
+  insertString(text, pos, extendAttrs = false) {
+    // inserts string `text` into the document at text position `pos`.
+    // if `extendAttrs` is true then the attributes directly at pos will expand
+    // of the inserted text.
+    if (!text) return {start: pos, end: pos};
 
     let {row, column} = pos;
     if (row < 0) row = 0;
@@ -1067,7 +1076,7 @@ export default class Document {
     let line = this.getLine(row);
 
     if (!line) { // text empty
-      let lines = this.insertLines(string.split(newline));
+      let lines = this.insertLines(text.split(newline));
       return {
         start: {row: 0, column: 0},
         end: {row: lines.length, column: arr.last(lines).text.length}
@@ -1077,33 +1086,43 @@ export default class Document {
     // if insertion position comes after last row fill in new lines
     if (row >= this.size) {
       let docEndPos = this.endPosition;
-      string = "\n".repeat(row - docEndPos.row) + string;
+      text = "\n".repeat(row - docEndPos.row) + text;
       ({row, column} = docEndPos);
     }
 
-    let lineText = line.text,
-        insertionLines = string.split(newline),
-        firstLine = insertionLines.shift(),
-        nNewLines = insertionLines.length,
-        endPos = {row, column};
+    let insertionLines = text.split(newline),
+        firstInsertionLine = insertionLines.shift(),
+        nInsertionLines = insertionLines.length,
+        endPos = {row, column},
+        lineLength = line.stringSize-1;
 
-    if (column > lineText.length) {
-      firstLine = " ".repeat(column - line.text.length) + firstLine;
+    if (column > lineLength) {
+      firstInsertionLine = " ".repeat(column - lineLength) + firstInsertionLine;
     }
 
-    let firstLineText = lineText.slice(0, column) + firstLine;
-    if (nNewLines === 0) {
-      endPos.column = firstLineText.length;
-      firstLineText = firstLineText + lineText.slice(column);
-    }
-    line.changeText(firstLineText);
+// line.attributesWithOffsets
+// line.textAndAttributes
 
-    if (nNewLines > 0) {
-      endPos.row += nNewLines;
-      endPos.column = insertionLines[nNewLines-1].length;
-      insertionLines[nNewLines-1] = insertionLines[nNewLines-1] + lineText.slice(column);
-      this.insertLines(insertionLines, row+1);
+    let [before, after] = splitLineTextAndAttributesAt(line, column);
+    if (before[0] === before[1]) before = []; // empty prefix
+    let firstInsertionLineLength = firstInsertionLine.length,
+        attr = extendAttrs && before.length ? before[before.length-1] : null,
+        lineTextAndAttributes = concatLineTextAndAttributes(before, [0, firstInsertionLineLength, firstInsertionLine, attr], true);
+    if (nInsertionLines === 0) {
+      endPos.column = column + firstInsertionLineLength;
+      concatLineTextAndAttributes(lineTextAndAttributes, after, true);
     }
+    line.changeTextAndAttributes(lineTextAndAttributes);
+
+    if (nInsertionLines === 0) return {start: {row, column}, end: endPos};
+
+    endPos.row += nInsertionLines;
+    endPos.column = insertionLines[nInsertionLines-1].length;
+
+    let lines = this.insertLines(insertionLines, row+1),
+        lastLine = arr.last(lines);
+    lastLine.changeTextAndAttributes(
+      concatLineTextAndAttributes(lastLine.textAndAttributes, after, true));
 
     // // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // // text attribute updating...

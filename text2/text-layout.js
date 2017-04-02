@@ -1,4 +1,7 @@
 import { Rectangle } from "lively.graphics";
+
+function todo(name) { throw new Error("not yet implemented " + name)}
+
 export default class TextLayout {
 
   constructor() {
@@ -6,7 +9,9 @@ export default class TextLayout {
     this.fontMetric = null
   }
 
-  reset() {}
+  reset() {
+    // todo("reset");
+  }
 
   textBounds(morph) {
     let {
@@ -20,27 +25,28 @@ export default class TextLayout {
     return new Rectangle(0,0, width, document.height);
   }
 
-  wrappedLines(morph) {}
+  wrappedLines(morph) { todo("wrappedLines"); }
 
-  isFirstLineVisible() {}
-  isLastLineVisible() {}
-  isLineVisible(morph, row) {}
-  isLineFullyVisible(morph, row) {}
+  isFirstLineVisible() { todo("isFirstLineVisible"); }
+  isLastLineVisible() { todo("isLastLineVisible"); }
+  isLineVisible(morph, row) { todo("isLineVisible"); }
+  isLineFullyVisible(morph, row) { todo("isLineFullyVisible"); }
 
-  rangesOfWrappedLine(morph, row) {}
+  rangesOfWrappedLine(morph, row) { todo("rangesOfWrappedLine"); }
   
   shiftLinesIfNeeded(morph, range, action) {
     // action = "insertText"|"deleteText"
+    todo("shiftLinesIfNeeded");
   }
+
+  chunkAtPos(morph, pos) { todo("chunkAtPos"); }
+  chunkAtScreenPos(morph, pos) { todo("chunkAtScreenPos"); }
   
-  chunkAtPos(morph, pos) {}
-  chunkAtScreenPos(morph, pos) {}
+  screenToDocPos(morph, screenPos) { todo("screenToDocPos"); }
+  docToScreenPos(morph, docPos) { todo("docToScreenPos"); }
+  screenPosFor(morph, docPos) { todo("screenPosFor"); }
   
-  screenToDocPos(morph, screenPos) {}
-  docToScreenPos(morph, docPos) {}
-  screenPosFor(morph, docPos) {}
-  
-  boundsFor(morph, docPos) {}
-  pixelPositionFor(morph, docPos) {}
+  boundsFor(morph, docPos) { todo("boundsFor"); }
+  pixelPositionFor(morph, docPos) { todo("pixelPositionFor"); }
 
 }

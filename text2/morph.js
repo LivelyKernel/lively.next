@@ -922,16 +922,16 @@ export class Text extends Morph {
   }
 
   removeTextAttribute(attr) {
-    this.document.removeTextAttribute(attr);
+    this.document.mixoutTextAttribute(attr);
     this.onAttributesChanged();
   }
 
-  textAttributesAt(point) {
+  textAttributeAt(point) {
     var chunk = this.textLayout.chunkAtPos(this, point);
     return chunk ? chunk.textAttributes : [];
   }
 
-  textAttributesAtScreenPos(pos) {
+  textAttributeAtScreenPos(pos) {
     var chunk = this.textLayout.chunkAtScreenPos(this, pos);
     return chunk ? chunk.textAttributes : [];
   }
@@ -966,8 +966,7 @@ export class Text extends Morph {
   }
 
   setStyleInRange(style, range = this.selection) {
-    this.document.setStyleInRange(
-      style, range, this.document.textAttributes[0]);
+    this.document.setStyleInRange(style, range, this.defaultTextStyle);
     this.onAttributesChanged();
   }
 
@@ -1287,13 +1286,9 @@ export class Text extends Morph {
   }
 
   callTextAttributeDoitFromMouseEvent(evt, clickPos) {
-    let attributes = this.textAttributesAt(clickPos) || [], doit;
-    // if (this === that) inspect([evt.positionIn(this), clickPos])
+    let attribute = this.textAttributeAt(clickPos) || [],
+         doit = attribute && attribute.doit;
 
-    for (let i = attributes.length; i--; ) {
-      let ea = attributes[i];
-      if (ea.data && ea.data.doit) { doit = ea.data.doit; break; }
-    }
     if (!doit || !doit.code) return false;
 
     // FIXME move this to somewhere else?
