@@ -1073,13 +1073,13 @@ export class DropDownList extends Button {
       },
 
       items: {
-        derived: true, after: ["listMoph"],
+        derived: true, after: ["listMorph"],
         get() { return this.listMorph.items; },
         set(value) { this.listMorph.items = value; }
       },
 
       selection: {
-        after: ["listMoph", 'items'],
+        after: ["listMorph", 'items'],
         set(value) {
           this.setProperty("selection", value);
           if (!value) {
