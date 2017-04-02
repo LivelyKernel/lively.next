@@ -1,1 +1,648 @@
-{"id":"A_text_1_8D52AE66_57E4_49BD_A266_F5A78BB2A077","snapshot":{"A_text_1_8D52AE66_57E4_49BD_A266_F5A78BB2A077":{"rev":181695,"props":{"draggable":{"key":"draggable","value":false},"extent":{"key":"extent","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(181.0,51.0)"},"name":{"key":"name","value":"a text 1"},"origin":{"key":"origin","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"position":{"key":"position","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(285.7,407.0)"},"scroll":{"key":"scroll","value":"__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"},"styleClasses":{"key":"styleClasses","value":["A_text_1","Text","Morph","morph"]},"submorphs":{"key":"submorphs","value":[]},"borderColorBottom":{"key":"borderColorBottom","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"},"borderColorLeft":{"key":"borderColorLeft","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"},"borderColorRight":{"key":"borderColorRight","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"},"borderColorTop":{"key":"borderColorTop","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"},"borderRadiusBottom":{"key":"borderRadiusBottom","value":3},"borderRadiusLeft":{"key":"borderRadiusLeft","value":3},"borderRadiusRight":{"key":"borderRadiusRight","value":3},"borderRadiusTop":{"key":"borderRadiusTop","value":3},"borderWidthBottom":{"key":"borderWidthBottom","value":1},"borderWidthLeft":{"key":"borderWidthLeft","value":1},"borderWidthRight":{"key":"borderWidthRight","value":1},"borderWidthTop":{"key":"borderWidthTop","value":1},"useSoftTabs":{"key":"useSoftTabs","value":true},"tabWidth":{"key":"tabWidth","value":2},"fixedWidth":{"key":"fixedWidth","value":false},"fixedHeight":{"key":"fixedHeight","value":false},"readOnly":{"key":"readOnly","value":false},"selectable":{"key":"selectable","value":true},"padding":{"key":"padding","value":"__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,8,0,0)"},"selection":{"key":"selection","value":{"__ref__":true,"id":"D14701A4-71D8-4E9B-97C2-EB772F52BF89","rev":0}},"defaultTextStyle":{"key":"defaultTextStyle","value":{"__ref__":true,"id":"CA1418A2-9350-4C5F-8464-1DD740DE48D7","rev":0}},"anchors":{"key":"anchors","value":[{"__ref__":true,"id":"selection-start-389447EB-CC27-413B-B57F-A9193A86C05D","rev":0},{"__ref__":true,"id":"selection-end-389447EB-CC27-413B-B57F-A9193A86C05D","rev":0}]},"savedMarks":{"key":"savedMarks","value":[]},"plugins":{"key":"plugins","value":[]},"_tickingScripts":{"key":"_tickingScripts","value":[]},"attributeConnections":{"key":"attributeConnections","value":[{"__ref__":true,"id":"9AA659CD-099C-4A08-AB4F-9C68B584A2A2","rev":0}]},"textAndAttributes":{"key":"textAndAttributes","verbatim":true,"value":[["Lively rocks!",[]],["",[]]]}},"lively.serializer-class-info":{"className":"A_text_1","module":{"package":{"name":"E8C6C421-4AC5-4D5B-8468-89C51C7CD4D0","version":null},"pathInPackage":"index.js"}}},"D14701A4-71D8-4E9B-97C2-EB772F52BF89":{"rev":0,"props":{"_rev":{"key":"_rev","value":0},"textMorph":{"key":"textMorph","value":{"__ref__":true,"id":"A_text_1_8D52AE66_57E4_49BD_A266_F5A78BB2A077","rev":181695}},"selections":{"key":"selections","value":[{"__ref__":true,"id":"C1D2F577-0A69-477A-9765-6DFCC057F630","rev":0}]},"cursorBlinkProcess":{"key":"cursorBlinkProcess","value":null},"_cursorVisible":{"key":"_cursorVisible","value":true}},"lively.serializer-class-info":{"className":"MultiSelection","module":{"package":{"name":"lively.morphic","version":"0.1.0"},"pathInPackage":"text/selection.js"}}},"C1D2F577-0A69-477A-9765-6DFCC057F630":{"rev":0,"props":{"textMorph":{"key":"textMorph","value":{"__ref__":true,"id":"A_text_1_8D52AE66_57E4_49BD_A266_F5A78BB2A077","rev":181695}},"_goalColumn":{"key":"_goalColumn","value":8},"_isReverse":{"key":"_isReverse","value":false},"startAnchor":{"key":"startAnchor","value":{"__ref__":true,"id":"selection-start-389447EB-CC27-413B-B57F-A9193A86C05D","rev":0}},"endAnchor":{"key":"endAnchor","value":{"__ref__":true,"id":"selection-end-389447EB-CC27-413B-B57F-A9193A86C05D","rev":0}},"_range":{"key":"_range","value":{"__ref__":true,"id":"2D1BF99A-4B8D-443D-B6B2-2749CF548DAB","rev":0}},"_cursorVisible":{"key":"_cursorVisible","value":true},"cursorBlinkProcess":{"key":"cursorBlinkProcess","value":null}},"lively.serializer-class-info":{"className":"Selection","module":{"package":{"name":"lively.morphic","version":"0.1.0"},"pathInPackage":"text/selection.js"}}},"selection-start-389447EB-CC27-413B-B57F-A9193A86C05D":{"rev":0,"props":{"id":{"key":"id","value":"selection-start-389447EB-CC27-413B-B57F-A9193A86C05D"},"position":{"key":"position","value":{"__ref__":true,"id":"9CB23E97-5F38-42FA-91BF-00FABD9077CB","rev":0}},"insertBehavior":{"key":"insertBehavior","value":"move"}},"lively.serializer-class-info":{"className":"Anchor","module":{"package":{"name":"lively.morphic","version":"0.1.0"},"pathInPackage":"text/anchors.js"}}},"9CB23E97-5F38-42FA-91BF-00FABD9077CB":{"rev":0,"props":{"row":{"key":"row","value":0},"column":{"key":"column","value":8}}},"selection-end-389447EB-CC27-413B-B57F-A9193A86C05D":{"rev":0,"props":{"id":{"key":"id","value":"selection-end-389447EB-CC27-413B-B57F-A9193A86C05D"},"position":{"key":"position","value":{"__ref__":true,"id":"8AEA1185-1B57-45B3-A649-39354883B6ED","rev":0}},"insertBehavior":{"key":"insertBehavior","value":"move"}},"lively.serializer-class-info":{"className":"Anchor","module":{"package":{"name":"lively.morphic","version":"0.1.0"},"pathInPackage":"text/anchors.js"}}},"8AEA1185-1B57-45B3-A649-39354883B6ED":{"rev":0,"props":{"row":{"key":"row","value":0},"column":{"key":"column","value":8}}},"2D1BF99A-4B8D-443D-B6B2-2749CF548DAB":{"rev":0,"props":{"start":{"key":"start","value":{"__ref__":true,"id":"9CB23E97-5F38-42FA-91BF-00FABD9077CB","rev":0}},"end":{"key":"end","value":{"__ref__":true,"id":"8AEA1185-1B57-45B3-A649-39354883B6ED","rev":0}}},"lively.serializer-class-info":{"className":"Range","module":{"package":{"name":"lively.morphic","version":"0.1.0"},"pathInPackage":"text/range.js"}}},"CA1418A2-9350-4C5F-8464-1DD740DE48D7":{"rev":0,"props":{"fontFamily":{"key":"fontFamily","value":"Sans-Serif"},"fontSize":{"key":"fontSize","value":30},"fontColor":{"key":"fontColor","value":"__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"},"fontWeight":{"key":"fontWeight","value":"normal"},"fontStyle":{"key":"fontStyle","value":"normal"},"textDecoration":{"key":"textDecoration","value":"none"},"backgroundColor":{"key":"backgroundColor"},"fixedCharacterSpacing":{"key":"fixedCharacterSpacing","value":false},"textStyleClasses":{"key":"textStyleClasses"},"link":{"key":"link"},"nativeCursor":{"key":"nativeCursor"}}},"9AA659CD-099C-4A08-AB4F-9C68B584A2A2":{"rev":0,"props":{"_rev":{"key":"_rev","value":0},"doNotSerialize":{"key":"doNotSerialize","value":["isActive","converter","updater"]},"sourceObj":{"key":"sourceObj","value":{"__ref__":true,"id":"A_text_1_8D52AE66_57E4_49BD_A266_F5A78BB2A077","rev":181695}},"sourceAttrName":{"key":"sourceAttrName","value":"selectionChange"},"targetObj":{"key":"targetObj","value":{"__ref__":true,"id":"A_text_1_8D52AE66_57E4_49BD_A266_F5A78BB2A077","rev":181695}},"targetMethodName":{"key":"targetMethodName","value":"openRichTextControl"},"varMapping":{"key":"varMapping","value":{"__ref__":true,"id":"37F37C90-B9A8-4F03-AD24-59918CDD7945","rev":0}},"garbageCollect":{"key":"garbageCollect","value":true},"signalOnAssignment":{"key":"signalOnAssignment","value":true}},"lively.serializer-class-info":{"className":"AttributeConnection","module":{"package":{"name":"lively.bindings","version":"0.1.0"},"pathInPackage":"index.js"}}},"37F37C90-B9A8-4F03-AD24-59918CDD7945":{"rev":0,"props":{"_rev":{"key":"_rev","value":0},"source":{"key":"source","value":{"__ref__":true,"id":"A_text_1_8D52AE66_57E4_49BD_A266_F5A78BB2A077","rev":181695}},"target":{"key":"target","value":{"__ref__":true,"id":"A_text_1_8D52AE66_57E4_49BD_A266_F5A78BB2A077","rev":181695}}}}},"requiredVersion":"~0.1","packages":{"local://lively-object-modules/":{"E8C6C421-4AC5-4D5B-8468-89C51C7CD4D0":{"package.json":"{\n  \"name\": \"E8C6C421-4AC5-4D5B-8468-89C51C7CD4D0\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}","index.js":"import { Text } from \"lively.morphic\";\n\nexport default class A_text_1 extends Text {\n  resete() {\n\n\n// No object-specific behavior exists yet for <Text - a text 1>\n// Use the \"+\" button to add new behaviors\nthis.document._textAttributes\nthis.document.textAttributes\nthis.textAttributes\nthis.document.textAndAttributes[0][1]\nthis.document.textAttributesChunkedByLine(0, 1, true)\nthis.document.textAndAttributes.map(([text, attrs]) => `\"${text}\"\\n${attrs.join(\"\\n\")}\\n`).join(\"\\n\")\nthis.document.lines.length\n\narr.flatmap(this.textAttributesChunkedByLine(0, maxRow, true), (chunked, row) => {\n      if (row === maxRow) newline = \"\";\n      return arr.toTuples(chunked, 3).map(\n        ([startCol, endCol, attrs]) =>\n          [(this.lines[row] + newline).slice(startCol, endCol), attrs]);\n    })\n\n\n\n  }\n}\n\n"}}},"preview":"data:image/png;base64,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"}
+{
+  "id": "A_text_1_DB0B02F7_906F_43B5_B886_8DEEDB979B12",
+  "snapshot": {
+    "A_text_1_DB0B02F7_906F_43B5_B886_8DEEDB979B12": {
+      "rev": 43380,
+      "props": {
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(181.0,51.0)"
+        },
+        "name": {
+          "key": "name",
+          "value": "a text 1"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(458.3,843.9)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Text",
+            "Morph",
+            "morph"
+          ]
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 3
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 3
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 3
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 3
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 1
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,8,0,0)"
+        },
+        "selection": {
+          "key": "selection",
+          "value": {
+            "__ref__": true,
+            "id": "A7D028FE-FEBC-422B-A7A4-63D5A4114702",
+            "rev": 0
+          }
+        },
+        "defaultTextStyle": {
+          "key": "defaultTextStyle",
+          "value": {
+            "__ref__": true,
+            "id": "1BA8C67C-F540-4946-9D0E-E9B662F26DBD",
+            "rev": 0
+          }
+        },
+        "anchors": {
+          "key": "anchors",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "3D78196F-A347-4048-BD0A-897D7EADAA3F",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "637EDC62-DDE7-4CA6-A765-50D3CA901E41",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "selection-start-19C589B8-3FBC-4FA2-93E9-F19AD62DE648",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "selection-end-19C589B8-3FBC-4FA2-93E9-F19AD62DE648",
+              "rev": 0
+            }
+          ]
+        },
+        "savedMarks": {
+          "key": "savedMarks",
+          "value": []
+        },
+        "plugins": {
+          "key": "plugins",
+          "value": []
+        },
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "AC9BB6A6-9F53-4912-BB7E-FC8D48CF81D1",
+              "rev": 0
+            }
+          ]
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "verbatim": true,
+          "value": [
+            [
+              "Lively rocks!",
+              []
+            ],
+            [
+              "",
+              []
+            ]
+          ]
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Text",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/morph.js"
+        }
+      }
+    },
+    "A7D028FE-FEBC-422B-A7A4-63D5A4114702": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "textMorph": {
+          "key": "textMorph",
+          "value": {
+            "__ref__": true,
+            "id": "A_text_1_DB0B02F7_906F_43B5_B886_8DEEDB979B12",
+            "rev": 43380
+          }
+        },
+        "selections": {
+          "key": "selections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "07284548-6128-46B0-9B8F-4B649AC2BBFC",
+              "rev": 0
+            }
+          ]
+        },
+        "cursorBlinkProcess": {
+          "key": "cursorBlinkProcess",
+          "value": null
+        },
+        "_cursorVisible": {
+          "key": "_cursorVisible",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "MultiSelection",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/selection.js"
+        }
+      }
+    },
+    "07284548-6128-46B0-9B8F-4B649AC2BBFC": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "textMorph": {
+          "key": "textMorph",
+          "value": {
+            "__ref__": true,
+            "id": "A_text_1_DB0B02F7_906F_43B5_B886_8DEEDB979B12",
+            "rev": 43380
+          }
+        },
+        "_goalColumn": {
+          "key": "_goalColumn",
+          "value": 9
+        },
+        "_isReverse": {
+          "key": "_isReverse",
+          "value": false
+        },
+        "startAnchor": {
+          "key": "startAnchor",
+          "value": {
+            "__ref__": true,
+            "id": "3D78196F-A347-4048-BD0A-897D7EADAA3F",
+            "rev": 0
+          }
+        },
+        "endAnchor": {
+          "key": "endAnchor",
+          "value": {
+            "__ref__": true,
+            "id": "637EDC62-DDE7-4CA6-A765-50D3CA901E41",
+            "rev": 0
+          }
+        },
+        "_range": {
+          "key": "_range",
+          "value": {
+            "__ref__": true,
+            "id": "3B9EA7B7-70CE-42B3-9595-39028507BC2E",
+            "rev": 0
+          }
+        },
+        "_cursorVisible": {
+          "key": "_cursorVisible",
+          "value": true
+        },
+        "cursorBlinkProcess": {
+          "key": "cursorBlinkProcess",
+          "value": null
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Selection",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/selection.js"
+        }
+      }
+    },
+    "3D78196F-A347-4048-BD0A-897D7EADAA3F": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "id": {
+          "key": "id",
+          "value": null
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "7923CBC0-EB87-444E-9C0F-7676288038E3",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "7923CBC0-EB87-444E-9C0F-7676288038E3": {
+      "rev": 0,
+      "props": {
+        "row": {
+          "key": "row",
+          "value": 0
+        },
+        "column": {
+          "key": "column",
+          "value": 9
+        }
+      }
+    },
+    "637EDC62-DDE7-4CA6-A765-50D3CA901E41": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "id": {
+          "key": "id",
+          "value": null
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "216C8230-5D5E-4C9E-A784-3BBCBEF60B8F",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "216C8230-5D5E-4C9E-A784-3BBCBEF60B8F": {
+      "rev": 0,
+      "props": {
+        "row": {
+          "key": "row",
+          "value": 0
+        },
+        "column": {
+          "key": "column",
+          "value": 9
+        }
+      }
+    },
+    "3B9EA7B7-70CE-42B3-9595-39028507BC2E": {
+      "rev": 0,
+      "props": {
+        "start": {
+          "key": "start",
+          "value": {
+            "__ref__": true,
+            "id": "7923CBC0-EB87-444E-9C0F-7676288038E3",
+            "rev": 0
+          }
+        },
+        "end": {
+          "key": "end",
+          "value": {
+            "__ref__": true,
+            "id": "216C8230-5D5E-4C9E-A784-3BBCBEF60B8F",
+            "rev": 0
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Range",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/range.js"
+        }
+      }
+    },
+    "1BA8C67C-F540-4946-9D0E-E9B662F26DBD": {
+      "rev": 0,
+      "props": {
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Sans-Serif"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 30
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
+        },
+        "fontWeight": {
+          "key": "fontWeight",
+          "value": "normal"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
+        },
+        "textDecoration": {
+          "key": "textDecoration",
+          "value": "none"
+        },
+        "backgroundColor": {
+          "key": "backgroundColor"
+        },
+        "fixedCharacterSpacing": {
+          "key": "fixedCharacterSpacing",
+          "value": false
+        },
+        "textStyleClasses": {
+          "key": "textStyleClasses"
+        },
+        "link": {
+          "key": "link"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor"
+        },
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        }
+      }
+    },
+    "selection-start-19C589B8-3FBC-4FA2-93E9-F19AD62DE648": {
+      "rev": 0,
+      "props": {
+        "id": {
+          "key": "id",
+          "value": "selection-start-19C589B8-3FBC-4FA2-93E9-F19AD62DE648"
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "DEC13570-AA81-438D-8713-014B89C10DF9",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "DEC13570-AA81-438D-8713-014B89C10DF9": {
+      "rev": 0,
+      "props": {
+        "row": {
+          "key": "row",
+          "value": 0
+        },
+        "column": {
+          "key": "column",
+          "value": 0
+        }
+      }
+    },
+    "selection-end-19C589B8-3FBC-4FA2-93E9-F19AD62DE648": {
+      "rev": 0,
+      "props": {
+        "id": {
+          "key": "id",
+          "value": "selection-end-19C589B8-3FBC-4FA2-93E9-F19AD62DE648"
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "12286C84-F7C4-4329-B1D8-E9729FA632F1",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "12286C84-F7C4-4329-B1D8-E9729FA632F1": {
+      "rev": 0,
+      "props": {
+        "row": {
+          "key": "row",
+          "value": 0
+        },
+        "column": {
+          "key": "column",
+          "value": 0
+        }
+      }
+    },
+    "AC9BB6A6-9F53-4912-BB7E-FC8D48CF81D1": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "A_text_1_DB0B02F7_906F_43B5_B886_8DEEDB979B12",
+            "rev": 43380
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "selectionChange"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "A_text_1_DB0B02F7_906F_43B5_B886_8DEEDB979B12",
+            "rev": 43380
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "openRichTextControl"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "ADA114D8-013A-4D3B-998A-004E94BEE81E",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "ADA114D8-013A-4D3B-998A-004E94BEE81E": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "A_text_1_DB0B02F7_906F_43B5_B886_8DEEDB979B12",
+            "rev": 43380
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "A_text_1_DB0B02F7_906F_43B5_B886_8DEEDB979B12",
+            "rev": 43380
+          }
+        }
+      }
+    }
+  },
+  "requiredVersion": "~0.1",
+  "packages": {},
+  "preview": "data:image/png;base64,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"
+}
