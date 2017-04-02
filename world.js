@@ -760,7 +760,7 @@ var worldCommands = [
       if (destination === "server")
         url = System.decanonicalize(`lively.morphic/worlds/${name}.json`);
       else if (destination === "local storage")
-        url = System.decanonicalize(`lively.storage://worlds/${name}.json`);
+        url = `lively.storage://worlds/${name}.json`;
       else {
         world.showError(new Error("Invalid destination: " + destination));
         return null;

@@ -13,6 +13,7 @@ describe("text document", () => {
 
   it("line access", () => {
     var doc = TextDocument.fromString("hello\nworld");
+    // doc.root
     expect(doc.getLine(0)).equals("hello");
     expect(doc.getLine(1)).equals("world");
     expect(doc.getLine(3)).equals("world");
@@ -618,9 +619,5 @@ describe("text document", () => {
     });
 
   });
-
-});
-
-describe("attributes", () => {
 
 });
