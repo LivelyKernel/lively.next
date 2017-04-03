@@ -185,10 +185,14 @@ export default class FontMetric {
     return this.sizeFor(style, " ").height;
   }
 
+  isFontSupported(font) {
+    let fd = this.fontDetector || (this.fontDetector = new FontDetector(this.element.ownerDocument));
+    return fd.isFontSupported(font);
+  }
 }
 
 
-export const isFontSupported = (function() {
+class FontDetector {
   /**
    * JavaScript code to detect available availability of a
    * particular font in a browser using JavaScript and CSS.
@@ -200,40 +204,62 @@ export const isFontSupported = (function() {
    */
   // a font will be compared against all the three default fonts.
   // and if it doesn't match all 3 then that font is not available.
-  var baseFonts = ['monospace', 'sans-serif', 'serif'],
-      // we use m or w because these two characters take up the maximum width.
-      // And we use a LLi so that the same matching fonts can get separated
-      testString = "mmmmmmmmmmlli",
-      // we test using 72px font size, we may use any size. I guess larger the better.
-      testSize = '72px',
-      h = document.getElementsByTagName("body")[0],
-      // create a SPAN in the document to get the width of the text we use to test
-      s = document.createElement("span");
-  s.style.fontSize = testSize;
-  s.innerHTML = testString;
-  var defaultWidth = {}, defaultHeight = {};
-  for (var index in baseFonts) {
-    //get the default width for the three base fonts
-    s.style.fontFamily = baseFonts[index];
-    h.appendChild(s);
-    defaultWidth[baseFonts[index]] = s.offsetWidth; //width for the default font
-    defaultHeight[baseFonts[index]] = s.offsetHeight; //height for the defualt font
-    h.removeChild(s);
+
+  constructor(document) {
+    this.document = document;
+    this.prepared = false;
+    this.defaultWidth = {};
+    this.defaultHeight = {};
+    this.baseFonts = ['monospace', 'sans-serif', 'serif'];
+    this.span = null;
   }
 
-  return function detect(font) {
-    var detected = false;
-    for (var index in baseFonts) {
-      s.style.fontFamily = font + ',' + baseFonts[index]; // name of the font along with the base font for fallback.
+  prepare() {
+    var defaultWidth = this.defaultWidth,
+        defaultHeight = this.defaultHeight,
+        baseFonts = this.baseFonts,
+        // we use m or w because these two characters take up the maximum width.
+        // And we use a LLi so that the same matching fonts can get separated
+        testString = "mmmmmmmmmmlli",
+        // we test using 72px font size, we may use any size. I guess larger the better.
+        testSize = '72px',
+        h = this.document.getElementsByTagName("body")[0],
+        // create a SPAN in the document to get the width of the text we use to test
+        s = this.span = this.document.createElement("span");
+    s.style.fontSize = testSize;
+    s.innerHTML = testString;
+    for (let index in baseFonts) {
+      //get the default width for the three base fonts
+      s.style.fontFamily = baseFonts[index];
       h.appendChild(s);
-      var matched = (s.offsetWidth != defaultWidth[baseFonts[index]] || s.offsetHeight != defaultHeight[baseFonts[index]]);
+      defaultWidth[baseFonts[index]] = s.offsetWidth; //width for the default font
+      defaultHeight[baseFonts[index]] = s.offsetHeight; //height for the defualt font
       h.removeChild(s);
-      detected = detected || matched;
     }
-    return detected;
+    this.prepared = true;
   }
-})();
 
+  isFontSupported(font) {
+    if (!this.prepared) this.prepare();
+
+    let {
+      defaultWidth, defaultHeight,
+      baseFonts, span,
+      document: {body}
+    } = this;
+
+    try {
+      body.appendChild(span);
+      for (let index in baseFonts) {
+        span.style.fontFamily = font + ',' + baseFonts[index]; // name of the font along with the base font for fallback.
+        let matched = (span.offsetWidth != defaultWidth[baseFonts[index]]
+                    || span.offsetHeight != defaultHeight[baseFonts[index]]);
+        if (matched) return true;
+      }
+      return false;
+    } finally { body.removeChild(span); }
+  }
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // complete list of google fonts:
