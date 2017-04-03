@@ -136,7 +136,7 @@ var worldCommands = [
     name: "move or resize halo target",
     exec: (world, opts = {direction: "left", offset: 1, what: "move"}) => {
       var halo = world.halos()[0];
-      if (!halo) return false;
+      if (!halo || halo.changingName) return false;
 
       var {direction, offset, what} = opts,
           t = halo.target;
