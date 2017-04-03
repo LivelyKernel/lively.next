@@ -1090,6 +1090,7 @@ class CopyHaloItem extends HaloItem {
     } else {
       let pos = target.globalPosition,
           copy = world.addMorph(target.copy());
+      copy.globalPosition = pos;
       copy.undoStart("copy-halo");
       hand.grab(copy);
       world.addMorph(halo);
