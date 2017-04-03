@@ -1,6 +1,6 @@
 import { UserServices } from "lively.user/authserver.js";
 
-export default class DiscussionPlugin {
+export default class UserPlugin {
 
   get pluginId() { return "user" }
 
