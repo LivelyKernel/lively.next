@@ -8,6 +8,7 @@ import L2LClient from "../client.js";
 
 import LivelyServer from "lively.server/server.js";
 import CorsPlugin from "lively.server/plugins/cors.js";
+import UserPlugin from "lively.server/plugins/user.js";
 import SocketioPlugin from "lively.server/plugins/socketio.js";
 import L2lPlugin from "lively.server/plugins/l2l.js";
 
@@ -23,7 +24,7 @@ var testServer, tracker, client1, client2,
 
 async function startServer() {
   let server = LivelyServer.ensure({port, hostname});
-  await server.addPlugins([new CorsPlugin(), new SocketioPlugin()]);
+  await server.addPlugins([new CorsPlugin(), new SocketioPlugin(), new L2lPlugin()]);
   return await server.whenStarted();
 }
 
@@ -31,7 +32,11 @@ async function startTracker(server) {
   await server.whenStarted();
   io = server.findPlugin("socketio").io;
   url = `http://${hostname}:${port}${io.path()}`;
-  return await L2LTracker.ensure({namespace, hostname, port, io});
+  let tracker = await L2LTracker.ensure({namespace, hostname, port, io});
+  server.findPlugin('l2l').setOptions({l2lNamespace: namespace, l2lTracker: tracker})
+  await server.addPlugins([new UserPlugin()]);
+  await server.whenStarted();
+  return tracker;
 }
 
 describe('l2l', function() {
