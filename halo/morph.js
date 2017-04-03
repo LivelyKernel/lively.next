@@ -588,7 +588,8 @@ class NameHolder extends Morph {
             fill: Color.transparent,
             fontColor: Color.darkgray,
             active: true
-          }))
+          }));
+          connect(this.nameHolder, 'onBlur', this, 'accept');
         }
       }
     }
@@ -608,10 +609,14 @@ class NameHolder extends Morph {
     }
   }
 
+  accept() {
+    if (this.target.name !== this.nameHolder.textString)
+      this.updateName(this.nameHolder.textString);
+  }
+
   onKeyDown(evt) {
     if ("Enter" == evt.keyCombo) {
-      this.updateName(this.nameHolder.textString);
-      evt.stop();
+      this.accept(); evt.stop();
     } else {
       super.onKeyDown(evt);
     }
