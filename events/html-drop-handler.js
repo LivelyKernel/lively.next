@@ -9,7 +9,7 @@ export async function uploadFile(file, type, options) {
 
   if (type.startsWith("image/")) {
     // upload as inlined image    
-    return new Image({imageUrl: await fileReadAsDataURL(file), name: file.name});
+    return new Image({imageUrl: await fileReadAsDataURL(file), autoResize: true, name: file.name});
   }
 
   return null;

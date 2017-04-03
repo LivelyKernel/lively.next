@@ -3,6 +3,7 @@ import { pt, Rectangle, Color } from "lively.graphics";
 import { Label } from "lively.morphic/text/label.js";
 import { Morph } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
+import { zip } from "lively.lang/array.js";
 
 /*
 
@@ -183,6 +184,7 @@ export class TreeNode extends Morph {
   }
 
   displayNode(displayedNode, node, pos, defaultToggleWidth, goalWidth, isSelected, isCollapsable, isCollapsed) {
+    if (this.myNode) this.myNode.renderedNode = null;
     this.myNode = null;
 
     this.fill = isSelected ? this.selectionColor : null;
@@ -230,6 +232,7 @@ export class TreeNode extends Morph {
 // if (this.owner) this.width = this.owner.width;
 
     this.myNode = node;
+    if (this.myNode) this.myNode.renderedNode = this;
   }
 
   relayout() {
@@ -268,6 +271,13 @@ export class TreeNode extends Morph {
     let {tree, myNode} = this;
     tree && (tree.selection = myNode)
     signal(this, "selected", myNode);
+  }
+
+  highlight() {
+   if (this.highlighter) this.highlighter.remove();
+   const hl = this.highlighter = this.addMorph(this.label.copy());
+   hl.fontWeight = "bold", hl.fontColor = Color.orange;
+   hl.fadeOut(2000);
   }
 
 }
@@ -687,6 +697,13 @@ export class Tree extends Morph {
     return treeCommands;
   }
 
+  highlightChangedNodes(treeData) {
+    /* highlights all visible nodes that contain different information
+       to their (location-wise) counterparts in 'treeData'. */
+    let changedNodes = this.treeData.diff(treeData);
+    changedNodes.forEach(n => n.renderedNode && n.renderedNode.highlight());
+  }
+
 }
 
 
@@ -793,6 +810,19 @@ export class TreeData {
     }
 
     return currentNode;
+  }
+
+  diff(treeData) {
+    /* Returns the nodes that are different to the ones in 'treeData'.
+       Once a node has been determined different, it is no longer traversed further
+       which means that its children are not inspected for changes.  */
+    let changedNodes = []
+    for (var [a, b] of zip(
+           this.asListWithIndexAndDepth(), 
+           treeData.asListWithIndexAndDepth())) {
+      if (!obj.equals(a.node.value, b && b.node.value)) changedNodes.push(a.node);
+    }
+    return changedNodes;
   }
 
 }
