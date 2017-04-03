@@ -64,7 +64,7 @@ export async function interactivelySaveObjectToPartsBinFolder(obj) {
               historyId: "lively.partsbin-partname-publish-to-folder-input-hist",
             });
   if (!partName) throw "canceled";
-  return saveObjectToPartsbinFolder(obj, partName);
+  return saveObjectToPartsbinFolder(obj, partName, {previewWidth: obj.width, previewHeight: obj.height});
 }
 
 export async function getAllPartResources(options) {
