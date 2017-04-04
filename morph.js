@@ -1557,6 +1557,7 @@ return ;
   needsRerender() { return this._dirty; }
 
   aboutToRender(renderer) { this._dirty = false; this._rendering = true; }
+  onAfterRender(node) {}
 
   whenRendered() {
     return promise

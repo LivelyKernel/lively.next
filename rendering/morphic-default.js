@@ -509,6 +509,7 @@ MorphAfterRenderHook.prototype.hook = function(node, propertyName, previousValue
       } else if (this.morph.isClip()) this.updateScroll(this.morph, node);
     }
     this.morph._rendering = false; // see morph.makeDirty();
+    this.morph.onAfterRender(node);
   });
 }
 MorphAfterRenderHook.prototype.updateScroll = function(morph, node) {
