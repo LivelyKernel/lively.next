@@ -18,6 +18,7 @@ B-Tree related data.  Consider those to be "private".
 
 import { arr, num, string } from "lively.lang";
 import { printTree } from "lively.lang/text-graphics.js";
+
 import {
   lessEqPosition,
   minPosition,
@@ -25,12 +26,13 @@ import {
   lessPosition,
   eqPosition
 } from "../text/position.js";
+
 import {
-  shallowEquals, concatLineTextAndAttributes, modifyAttributesInRange, convertLineTextAndAttributesIntoDocTextAndAttributes,
-  lineTextAndAttributesDo,
+  concatTextAndAttributes, splitTextAndAttributesIntoLines,
+  joinTextAttributes,
+  modifyAttributesInRange,
   concatAttributePair,
-  splitTextAndAttributesAt,
-  splitLineTextAndAttributesAt
+  splitTextAndAttributesAt
 } from "./attributes.js";
 
 var defaultOptions = {
@@ -152,6 +154,41 @@ class InnerTreeNode extends TreeNode {
     }
     return null;
   }
+
+  findLineByVerticalOffset(y, lineY = 0) {
+    if (y < 0 || y > this.height) return null;
+    for (let i = 0; i < this.children.length; i++) {
+      let child = this.children[i],
+          childHeight = child.height;
+      if (y <= childHeight)
+        return this.isLeaf ? {line: child, offset: y, y: lineY} :
+          child.findLineByVerticalOffset(y, lineY);
+      y = y - childHeight;
+      lineY = lineY + childHeight;
+    }
+    return null;
+  }
+
+  computeVerticalOffsetOf(row, y = 0) {
+    if (row < 0 || row >= this.size) return null;
+    if (this.isLeaf) {
+      for (let i = 0; i < Math.min(row, this.children.length); i++)
+        y = y + this.children[i].height;
+      return y;
+    }
+    for (var i = 0; i < this.children.length; i++) {
+      var child = this.children[i], childSize = child.size;
+      if (row < childSize) {
+        y = y + child.height;
+        row = row - childSize;
+        continue;
+      }
+      if (row === childSize)
+        return child.computeVerticalOffsetOf(row, y);
+    }
+    return y;
+  }
+
 
   ensureLine(lineSpec) {
     if (!lineSpec) lineSpec = "";
@@ -810,6 +847,9 @@ export default class Document {
     return {row, column};
   }
 
+  findLineByVerticalOffset(height) { return this.root.findLineByVerticalOffset(height); }
+  computeVerticalOffsetOf(row) { return this.root.computeVerticalOffsetOf(row); }
+
   getLine(row) { return this.root.findRow(this.clipRow(row)); }
   getLineString(row) {
     let line = this.getLine(row);
@@ -851,8 +891,7 @@ export default class Document {
   get endPosition() {
     let {size} = this;
     if (size === 0) return {row: 0, column: 0};
-    let row = size-1;
-    let line = this.getLine(row);
+    let row = size-1, line = this.getLine(row);
     return {row, column: line.stringSize-1}
   }
 

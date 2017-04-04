@@ -11,14 +11,13 @@ export function skipExtendingChars(str, pos, dir) {
   return pos
 }
 
-function lineHeights(textMorph) {
-
-}
 
 function test() {
   let measure = DOMTextMeasure.initDefault().reset();
   measure.defaultCharExtent({fontSize: 12, fontFamily: "serif"});
 }
+
+
 
 export class DOMTextMeasure {
 
@@ -99,6 +98,76 @@ export class DOMTextMeasure {
     return `${fontFamily}-${fontSize}-${fontWeight}-${fontStyle}-${textDecoration}-${textStyleClasses}`;
   }
 
+  ensureMeasureNode(styleKey, style, className = "") {
+    // create a DOM node that would be a textlayer node in a normal text morph.
+    // In order to measure stuff this node gets line nodes appended later
+
+    // returns an existing or new node with style
+    let {doc, element: root, elementsWithStyleCache: cache} = this;
+    if (cache[styleKey]) return cache[styleKey];
+    let el = cache[styleKey] = document.createElement("div");
+    if (className) el.className = className;
+    el.id = styleKey;
+    root.appendChild(el);
+    this.elementsWithStyleCacheCount++;
+    Object.assign(el.style, style);
+    el.style.fontSize = style.fontSize + "px";
+    if (style.textStyleClasses)
+      el.className = style.textStyleClasses.join(" ");
+    if (this.elementsWithStyleCacheCount > this.maxElementsWithStyleCacheCount) {
+      let rmCacheEl = root.childNodes[0];
+      root.removeChild(rmCacheEl);
+      cache[rmCacheEl.id] = null;
+    }
+    return el;
+  }
+
+  ensureMeasureNodeForLine(line, defaultStyle, defaultStyleKey, textNodeClassName = "") {
+    let {doc: document} = this,
+        textNode = this.ensureMeasureNode(defaultStyleKey, defaultStyle, textNodeClassName);
+
+    let lineEl = document.createElement("div");
+    lineEl.className = "line";
+
+    // FIXME... TextRenderer>>renderLine...!
+    let { textAndAttributes } = line, renderedChunks = [];
+    for (let i = 0; i < textAndAttributes.length; i = i+2) {
+      let text = textAndAttributes[i], attr = textAndAttributes[i+1];
+      if (!attr) {
+        lineEl.appendChild(document.createTextNode(text));
+        continue;
+      }
+
+      let tagname = attr.link ? "a" : "span",
+          style = {}, attrs = {textContent: text};
+
+      if (attr.link) {
+        attrs.href = attr.link;
+        attrs.target = "_blank";
+      }
+
+      if (attr.fontSize) style.fontSize               = attr.fontSize + "px";
+      if (attr.fontFamily) style.fontFamily           = attr.fontFamily;
+      if (attr.fontWeight) style.fontWeight           = attr.fontWeight;
+      if (attr.fontStyle) style.fontStyle             = attr.fontStyle;
+      if (attr.textDecoration) style.textDecoration   = attr.textDecoration;
+      if (attr.fontColor) style.color                 = attr.fontColor ? String(attr.fontColor) : "";
+      if (attr.backgroundColor) style.backgroundColor = attr.backgroundColor ? String(attr.backgroundColor) : "";
+      if (attr.nativeCursor) attrs.style.cursor       = attr.nativeCursor; 
+
+      if (attr.textStyleClasses && attr.textStyleClasses.length)
+        attrs.className = attr.textStyleClasses.join(" ");
+
+      let el = document.createElement(tagname);
+      Object.assign(el, attrs);
+      Object.assign(el.style, style);
+      lineEl.appendChild(el);
+    }
+
+    textNode.appendChild(lineEl);
+    return lineEl;
+  }
+
   prepareMeasureForLineSimpleStyle(styleKey, style) {
     // returns an existing or new node with style
     let {doc, element: root, elementsWithStyleCache: cache} = this;
@@ -119,6 +188,8 @@ export class DOMTextMeasure {
     return el;
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   defaultCharExtent(style, styleKey) {  
     if (!styleKey) {
       let {fontFamily, fontSize, fontWeight, fontStyle, textDecoration, textStyleClasses} = style;
@@ -133,4 +204,114 @@ export class DOMTextMeasure {
     return defaultCharWidthHeightCache[styleKey] = {width: width/12, height};
   }
 
+  manuallyComputeCharBoundsOfLine(line, defaultStyle, offsetX = 0, offsetY = 0, styleKey, textNodeClassName = "newtext-text-layer") {
+// window.line = line
+// window.defaultStyle = defaultStyle
+
+    if (!styleKey) {
+      let {fontFamily, fontSize, fontWeight, fontStyle, textDecoration, textStyleClasses} = defaultStyle;
+      styleKey = this.generateStyleKey(fontFamily, fontSize, fontWeight, fontStyle, textDecoration, textStyleClasses);
+    }
+
+    let lineNode = this.ensureMeasureNodeForLine(line, defaultStyle, styleKey, textNodeClassName),
+        offset = cumulativeOffset(lineNode);
+
+    try {
+      return charBoundsOfLine(line, lineNode, offset.left + offsetX, offset.top + offsetY);
+    } finally { lineNode.parentNode.removeChild(lineNode); }
+  }
+}
+
+function cumulativeOffset(element) {
+  let top = 0, left = 0;
+  do {
+    top += element.offsetTop || 0;
+    left += element.offsetLeft || 0;
+    element = element.offsetParent;
+  } while(element);
+  return {top, left};
+};
+
+
+export function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
+  const {ELEMENT_NODE, TEXT_NODE, childNodes} = lineNode;
+
+  let node = childNodes[0],
+      result = [],
+      textLength = line.text.length,
+      index = 0;
+
+  while (node) {
+
+    let textNode = node.nodeType === ELEMENT_NODE && node.childNodes[0] ?
+      node.childNodes[0] : node;
+
+    if (textNode.nodeType === TEXT_NODE) {
+      let length = textNode.length;
+      for (let i = 0; i < length; i++) {
+        // let {left: x, top: y, width, height} =  measureCharInner(node, i);
+        // result[index++] = typeof height === "undefined" ?
+        //   null : {x: x - offsetX, y: y - offsetY, width, height};
+        let {left, top, width, height} = measureCharInner(textNode, i),
+            x = left - offsetX,
+            y = top - offsetY;
+        result[index++] = {x, y, width, height};
+      }
+
+    } else if (node.nodeType === ELEMENT_NODE) {
+      let {left, top, width, height} = node.getBoundingClientRect(),
+          x = left - offsetX,
+          y = top - offsetY;
+      result[index++] = {x,y,width,height};
+
+    } else throw new Error(`Cannot deal with node ${node}`);
+
+    node = node.nextSibling;
+  }
+  
+  return result;
+}
+
+
+
+function measureCharInner(node, index, bias = "left") {
+  let rect, start = index, end = index + 1;
+  if (node.nodeType == 3) { // If it is a text node, use a range to retrieve the coordinates.
+    for (let i = 0; i < 4; i++) { // Retry a maximum of 4 times when nonsense rectangles are returned
+      rect = getUsefulRect(range(node, start, end).getClientRects(), bias)
+      if (rect.left || rect.right || start == 0) break
+      end = start
+      start = start - 1
+    }
+  }
+  return rect;
+  // let {bottom, height, left, right, top, width} = rect;
+  // return {bottom, height, left, right, top, width};
+}
+
+function range(node, start, end, endNode) {
+    let r = document.createRange()
+    r.setEnd(endNode || node, end)
+    r.setStart(node, start)
+    return r
+
+  // range = function(node, start, end) {
+  //   let r = document.body.createTextRange()
+  //   try { r.moveToElementText(node.parentNode) }
+  //   catch(e) { return r }
+  //   r.collapse(true)
+  //   r.moveEnd("character", end)
+  //   r.moveStart("character", start)
+  //   return r
+  // }
+}
+
+function getUsefulRect(rects, bias) {
+  let rect = {left: 0, right: 0, top: 0, bottom: 0};
+  if (bias == "left") for (let i = 0; i < rects.length; i++) {
+    if ((rect = rects[i]).left != rect.right) break
+  } else for (let i = rects.length - 1; i >= 0; i--) {
+    if ((rect = rects[i]).left != rect.right) break
+  }
+  return rect
 }

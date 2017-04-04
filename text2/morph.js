@@ -1,10 +1,12 @@
+/*global System*/
+
 import { config, Morph } from "lively.morphic";
 import { Rectangle, rect, Color, pt } from "lively.graphics";
 import { Selection, MultiSelection } from "../text/selection.js";
 import { string, obj, fun, promise, arr } from "lively.lang";
 import Document from "./document-tree.js";
 import { signal } from "lively.bindings";
-import { TextStyleAttribute, TextAttribute } from "../text/attribute.js";
+import { TextStyleAttribute } from "../text/attribute.js";
 import { Anchor } from "../text/anchors.js";
 import { Range } from "../text/range.js";
 import { eqPosition } from "../text/position.js";
@@ -14,7 +16,7 @@ import { UndoManager } from "../undo.js";
 import { TextSearcher } from "../text/search.js";
 import TextLayout from "./text-layout.js";
 import Renderer from "./renderer.js";
-/*global System*/
+import commands from "../text/commands.js";
 
 const defaultTextStyle = {
   fontFamily: "Sans-Serif",
@@ -52,7 +54,17 @@ export class Text extends Morph {
         derived: true, readOnly: true,
         get() {
           return {
-            _textLayoutStale: true
+            _textLayoutStale: true,
+            _needsFit: true,
+            dom_nodes: [],
+            dom_nodeFirstRow: [],
+            scrollTop: 0,
+            scrollHeight: 0,
+            scrollBottom: 0,
+            textHeight: 0,
+            firstVisibleRow: 0,
+            lastVisibleRow: 0,
+            heightBefore: 0
           }
         }
       },
@@ -132,11 +144,6 @@ export class Text extends Morph {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // selection
 
-      cursorScreenPosition: {
-        derived: true, after: ["cursorPosition"],
-        get() { return this.toScreenPosition(this.cursorPosition); },
-        set(p) { return this.cursorPosition = this.toDocumentPosition(p); }
-      },
       cursorPosition: {
         derived: true, after: ["selection"],
         get() { return this.selection.lead; },
@@ -192,7 +199,7 @@ export class Text extends Morph {
       },
 
       value: {
-        after: ["textAttributes"], derived: true,
+        after: ["document"], derived: true,
         get() {
           var {textAndAttributes} = this;
           if (textAndAttributes.length === 1) {
@@ -303,7 +310,7 @@ export class Text extends Morph {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // plugins
       plugins: {
-        defaultValue: [], after: ["textAttributes", "value"],
+        defaultValue: [], after: ["value"],
         set(plugins) {
           var prevPlugins = this.getProperty("plugins"),
               removed = arr.withoutAll(prevPlugins, plugins);
@@ -359,7 +366,7 @@ export class Text extends Morph {
     let propNames = super.__only_serialize__;
     return arr.withoutAll(propNames,
       ["document", "textRenderer", "viewState",
-       "undoManager", "textAttributes", "markers"]);
+       "undoManager", "markers"]);
   }
 
   __additionally_serialize__(snapshot, objRef, pool, addFn) {
@@ -538,18 +545,7 @@ export class Text extends Morph {
       vs._needsFit = true;
   }
 
-  textBounds() {
-    let {
-      viewState,
-      defaultTextStyle,
-      width,
-      lineWrapping: wraps,
-      document,
-      textRenderer
-    } = this;
-    textRenderer.estimateLineHeights(viewState, document, defaultTextStyle, width, wraps, false/*force*/);
-    return this.padding.topLeft().extent(pt(width, document.height));
-  }
+  textBounds() { return this.textLayout.textBounds(this); }
 
   get scrollExtent() {
     // rms: See: morph>>scrollExtent
@@ -562,8 +558,7 @@ export class Text extends Morph {
   }
 
   get commands() {
-    // return this.pluginCollect("getCommands", (this._commands || []).concat(commands));
-    return [];
+    return this.pluginCollect("getCommands", (this._commands || []).concat(commands));
   }
 
 
@@ -669,21 +664,23 @@ export class Text extends Morph {
   indexToPosition(index) { return this.document.indexToPosition(index); }
   positionToIndex(position) { return this.document.positionToIndex(position); }
 
-  getVisibleLine(row = this.cursorScreenPosition.row) {
+  getVisibleLine(row = this.cursorPosition.row) {
     return this.textLayout.wrappedLines(this)[row].text
   }
 
-  isLineVisible(row = this.cursorScreenPosition.row) {
+  isLineVisible(row = this.cursorPosition.row) {
     return this.textLayout.isLineVisible(this, row);
   }
 
-  isLineFullyVisible(row = this.cursorScreenPosition.row) {
+  isLineFullyVisible(row = this.cursorPosition.row) {
     return this.textLayout.isLineFullyVisible(this, row);
   }
 
   getLine(row = this.cursorPosition.row) {
     return this.document.getLineString(row);
   }
+
+  lineCount() { return this.document.size; }
 
   isLineEmpty(row) { return !this.getLine(row).trim(); }
   isAtLineEnd(pos = this.cursorPosition) {
@@ -706,31 +703,8 @@ export class Text extends Morph {
     return new Range(range);
   }
 
-  rangesOfWrappedLine(row = this.cursorPosition.row) {
-    return this.textLayout.rangesOfWrappedLine(this, row);
-  }
-
   screenLineRange(pos = this.cursorPosition, ignoreLeadingWhitespace = true) {
-    var ranges = this.textLayout.rangesOfWrappedLine(this, pos.row),
-        range = ranges.slice().reverse().find(({start, end}) => start.column <= pos.column),
-        content = this.textInRange(range),
-        leadingSpace = content.match(/^\s*/);
-    if (leadingSpace[0].length && ignoreLeadingWhitespace)
-      range.start.column += leadingSpace[0].length;
-    if (range !== arr.last(ranges)) range.end.column--;
-    return new Range(range);
-  }
-
-  setTextWithTextAttributes(text, attributes) {
-     this.deleteText({start: {row: 0, column: 0}, end: this.documentEndPosition});
-     return this.insertTextWithTextAttributes(text, attributes, {row: 0, column: 0});
-  }
-
-  insertTextWithTextAttributes(text, attributes = [], pos) {
-    if (!Array.isArray(attributes)) attributes = [attributes];
-    var range = this.insertText(text, pos);
-    attributes.forEach(attr => this.addTextAttribute(attr, range));
-    return range;
+    return this.textLyout.screenLineRange(this, ignoreLeadingWhitespace)
   }
 
   insertTextAndSelect(text, pos = null) {
@@ -792,7 +766,7 @@ export class Text extends Morph {
     var {document: doc, textLayout} = this,
         text = doc.textInRange(range);
     doc.remove(range);
-    textLayout.shiftLinesIfNeeded(this, range, "deleteText");
+    // textLayout.shiftLinesIfNeeded(this, range, "deleteText");
 
     this.addMethodCallChangeDoing({
       target: this,
@@ -864,15 +838,7 @@ export class Text extends Morph {
     return {row, column: firstLine.length};
   }
 
-  get whatsVisible() {
-    var startRow = this.textLayout.isFirstLineVisible() || 0,
-        endRow = this.textLayout.isLastLineVisible(),
-        lines = this.lineWrapping ?
-          this.textLayout.wrappedLines(this).slice(startRow, endRow).map(ea => ea.text) :
-          this.document.lines.slice(startRow, endRow);
-    return {lines, startRow, endRow};
-  }
-
+  get whatsVisible() { return this.textLayout.whatsVisible(this); }
 
   flash(range = this.selection.range, options) {
     options = {time: 1000, fill: Color.orange, ...options};
@@ -972,6 +938,7 @@ export class Text extends Morph {
 
     if (n === 0) return pos;
 
+useScreenPosition = false; // FIXME
     if (!useScreenPosition) {
       if (goalColumn === undefined) goalColumn = pos.column
       return {
@@ -1174,21 +1141,7 @@ export class Text extends Morph {
   }
 
   textPositionFromPoint(point) {
-    // FIXME cleanup when text wrapping thing done!
-    return this.textLayout.screenToDocPos(this, this.screenPositionFromPoint(point));
-  }
-
-  screenPositionFromPoint(point) {
-    // FIXME cleanup when text wrapping thing done!
-    return this.textLayout.screenPosFor(this, point);
-  }
-
-  toScreenPosition(documentPosition) {
-    return this.textLayout.docToScreenPos(this, documentPosition);
-  }
-
-  toDocumentPosition(screenPosition) {
-    return this.textLayout.screenToDocPos(this, screenPosition);
+    return this.textLayout.textPositionFromPoint(this, point);
   }
 
   charBoundsFromTextPosition(pos) {
@@ -1204,12 +1157,14 @@ export class Text extends Morph {
     this.makeDirty();
   }
 
-  aboutToRender(renderer) {
-    super.aboutToRender(renderer);
+  onAfterRender(node) {
+    super.onAfterRender(node);
     this.fitIfNeeded();
   }
 
-  render(renderer) { return this.textRenderer.render(this, renderer); }
+  render(renderer) {
+    return this.textRenderer.renderMorph(this, renderer);
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // mouse events
