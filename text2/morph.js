@@ -212,36 +212,18 @@ export class Text extends Morph {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // default font styling
 
-      textAttributes: {
-        derived: true, after: ["document", "textString"],
-        get() { return this.document.textAttributes; },
-        set(attrs) {
-          // attrs.map(range => this.addTextAttribute(range));
-          this.document.textAttributes = attrs;
-          this.onAttributesChanged();
-        }
-      },
-
       textAndAttributes: {
         derived: true, after: ["document"],
         get() { return this.document.textAndAttributes; },
         set(textAndAttributes) {
           // 1. remove everything
           this.deleteText({start: {row: 0, column: 0}, end: this.documentEndPosition});
-          // 2. set text, don't set attributes yet so that attributes don't grow
-          // across their border when more text is subsequently inserted
-          var rangesAndAttrs = textAndAttributes.map(([text, attrs]) =>
-            [this.insertText(text, this.documentEndPosition), attrs]);
-          // 3. From the ranges we get from the text insertion we now where to
-          // install the attributes
-          rangesAndAttrs.forEach(([range, attrs = []]) =>
-            (Array.isArray(attrs) ? attrs : [attrs]).forEach(attr =>
-              this.addTextAttribute(attr, range)));
-          return {start: {row: 0, column: 0}, end: this.documentEndPosition};
+          this.insertTextAndAttributes(textAndAttributes, this.documentEndPosition);
         }
       },
 
       defaultTextStyle: {
+        after: ["viewState"],
         initialize() { this.defaultTextStyle = defaultTextStyle; },
         get() { return obj.select(this, TextStyleAttribute.styleProps); },
         set(style) { Object.assign(this, style); }
@@ -762,22 +744,19 @@ export class Text extends Morph {
       this.insertText(text, this.documentEndPosition));
   }
 
-  insertText(text, pos = this.cursorPosition) {
-    text = String(text);
-
-    if (!text.length) return Range.fromPositions(pos, pos);
+  insertTextAndAttributes(textAndAttributes, pos = this.cursorPosition) {
+    if (!textAndAttributes.length || textAndAttributes.length == 2 && !textAndAttributes[0])
+      return Range.fromPositions(pos, pos);
 
     // the document manages the actual content
-    var range = this.document.insert(text, pos);
+    var range = this.document.insertTextAndAttributes(textAndAttributes, pos);
 
-    this.textLayout.shiftLinesIfNeeded(this, range, "insertText");
-
-    this.undoManager.undoStart(this, "insertText");
+    this.undoManager.undoStart(this, "insertTextAndAttributes");
 
     this.addMethodCallChangeDoing({
       target: this,
-      selector: "insertText",
-      args: [text, pos],
+      selector: "insertTextAndAttributes",
+      args: [textAndAttributes, pos],
       undo: {
         target: this,
         selector: "deleteText",
@@ -795,6 +774,13 @@ export class Text extends Morph {
     this.undoManager.undoStop();
 
     return new Range(range);
+  }
+
+  insertText(text, pos = this.cursorPosition) {
+    text = String(text);
+    return text.length ?
+      this.insertTextAndAttributes([text, null], pos) :
+      Range.fromPositions(pos, pos);
   }
 
   deleteText(range) {
@@ -905,35 +891,20 @@ export class Text extends Morph {
   // TextAttributes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  setSortedTextAttributes(attrs) {
-    // see comment in document
-    this.document.setSortedTextAttributes(attrs);
-    this.onAttributesChanged();
-  }
-
-  addTextAttribute(attr, range/*optional, if attr doesn't specify*/) {
-    if (!attr.isTextAttribute)
-      attr = TextStyleAttribute.isStyleData(attr) ?
-        new TextStyleAttribute(attr) : new TextAttribute(attr);
-    if (range) attr.range = range;
-    var attr = this.document.addTextAttribute(attr);
+  addTextAttribute(attr, range) {
+    this.document.mixinTextAttribute(attr, range);
     this.onAttributesChanged();
     return attr;
   }
 
-  removeTextAttribute(attr) {
+  removeTextAttribute(attr, range) {
     this.document.mixoutTextAttribute(attr);
     this.onAttributesChanged();
   }
 
   textAttributeAt(point) {
-    var chunk = this.textLayout.chunkAtPos(this, point);
-    return chunk ? chunk.textAttributes : [];
-  }
-
-  textAttributeAtScreenPos(pos) {
-    var chunk = this.textLayout.chunkAtScreenPos(this, pos);
-    return chunk ? chunk.textAttributes : [];
+    let {document: d, textLayout: tl} = this;
+    return d.textAttributeAt(tl.textPositionFromPoint(this, point));
   }
 
   resetTextAttributes() {
@@ -948,11 +919,6 @@ export class Text extends Morph {
 
   styleAt(point) {
     var chunk = this.textLayout.chunkAtPos(this, point);
-    return chunk ? chunk.style : {...this.defaultTextStyle};
-  }
-
-  styleAtScreenPos(pos) {
-    var chunk = this.textLayout.chunkAtScreenPos(this, pos);
     return chunk ? chunk.style : {...this.defaultTextStyle};
   }
 

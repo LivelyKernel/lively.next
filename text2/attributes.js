@@ -43,78 +43,64 @@ export function concatAttributePair(text1, attr1, text2, attr2, seperator = "") 
     [text1 + seperator, attr1, text2, attr2];
 }
 
-export function lineTextAndAttributesDo(attrs, doFn) {
-  for (let i = 0; i < attrs.length; i = i+4) {
-    let from = attrs[i], to = attrs[i+1], text = attrs[i+2], attr = attrs[i+3];
-    doFn(from, to, text, attr);
+export function joinTextAttributes(textAttributes, seperator = "") {
+  // takes a list of textAttribtues like [text1, attr1, text2, attr2, ....] and
+  // "joins" each text using `seperator`.  Joining means: If `attr1` and `attr2`
+  // can be merged (see `concatAttributePair`) then do 
+  // text1 + seperator + text2, merge(attr1, attr2) as the text attribute text/attr pair
+  if (textAttributes.length <= 2) return textAttributes;
+  let result = [], [text, attr] = textAttributes;
+  for (let i = 2; i < textAttributes.length; i = i+2) {
+    let nextText = textAttributes[i],
+        nextAttr = textAttributes[i+1],
+        merged = concatAttributePair(text, attr, nextText, nextAttr, seperator);
+    if (merged.length === 2) {
+      text = merged[0]; attr = merged[1];
+    } else {
+      result.push(merged[0], merged[1]);
+      text = merged[2]; attr = merged[3];
+    }
   }
-}
-
-function convertLineTextAndAttributesIntoAttributesWithOffsets(attrs) {
-  // [0,3, "foo", {}] => [0,3, {}]
-  let result = []
-  for (let i = 0; i < attrs.length; i = i+4) {
-    let from = attrs[i], to = attrs[i+1], attr = attrs[i+3];
-    result.push(from, to, attr);
-  }
+  result.push(text, attr);
   return result;
 }
 
-export function convertLineTextAndAttributesIntoDocTextAndAttributes(attrs) {
-  // [0,3, "foo", {}] => ["foo", {}]
-  let result = []
-  for (let i = 0; i < attrs.length; i = i+4) {
-    let from = attrs[i], to = attrs[i+1], attr = attrs[i+3];
-    result.push(from, to, attr);
-  }
-  return result;
-}
-
-export function splitLineTextAndAttributesAt(line, column) {
-  // returns a two-item array: left everything that is before column, right trailing
-  let t = line.text, length = t.length;
-  return line.attributesWithOffsets ?
-    splitTextAndAttributesAt(line.textAndAttributes, column) :
-    [[0, column, t.slice(0, column), null], [column, length, t.slice(column), null]];
-}
 
 export function splitTextAndAttributesAt(textAndAttributes, column) {
   // returns a two-item array: left everything that is before column, right trailing
 
-  let textLength = 0;
+  let textPos = 0;
 
-  for (let i = 0; i < textAndAttributes.length; i = i+4) {
-    let from = textAndAttributes[i+0],
-        to = textAndAttributes[i+1],
-        text = textAndAttributes[i+2],
-        attr = textAndAttributes[i+3];
-    textLength = to;
-    if (to <= column) continue;
-    if (from === column)
+  for (let i = 0; i < textAndAttributes.length; i = i+2) {
+    let text = textAndAttributes[i],
+        textEndPos = textPos + text.length;
+    if (textEndPos < column) { textPos = textEndPos; continue; }
+
+    if (textPos === column)
       return [textAndAttributes.slice(0, i), textAndAttributes.slice(i)];
 
-    return [
-      [...textAndAttributes.slice(0, i), from, column, text.slice(0, column-from), attr],
-      [column, to, text.slice(column-from), attr, ...textAndAttributes.slice(i+4)]];
+    let attr = textAndAttributes[i+1],
+        sliceI = column - textPos,
+        before = [...textAndAttributes.slice(0, i), text.slice(0, sliceI), attr],
+        after = text.length === sliceI ? textAndAttributes.slice(i+2) :
+          [text.slice(column - textPos), attr, ...textAndAttributes.slice(i+2)]
+    return [before, after];
   }
 
-  return [textAndAttributes, [textLength, textLength, "", null]];
+  return [textAndAttributes, []];
 }
 
-export function concatLineTextAndAttributes(a, b, mutate = false) {
+export function concatTextAndAttributes(a, b, mutate = false) {
   // empty suffix?
-  if (!a.length || (a.length === 4 && a[0] === a[1]))
+  if (!a.length || (a.length === 2 && a[0] == ""))
     return mutate ? b : b.slice();
-  if (!b.length || (b.length === 4 && b[0] === b[1]))
+  if (!b.length || (b.length === 2 && b[0] == ""))
     return mutate ? a : a.slice();
 
-  let offset = a.length ? a[a.length-3] : 0,
-      result = mutate ? a : a.slice();
-  for (let i = 0; i < b.length; i=i+4) {
-    let text = b[i+2], attr = b[i+3],
-        newOffset = offset+text.length;
-    result.push(offset, newOffset, text, attr);
-    offset = newOffset;
+  let result = mutate ? a : a.slice();
+  for (let i = 0; i < b.length; i=i+2) {
+    let text = b[i], attr = b[i+1];
+    result.push(text, attr);
   }
   return result;
 }
@@ -131,32 +117,27 @@ export function modifyAttributesInRange(doc, range, modifyFn) {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // mixin into first line
   {
-    let attributesWithOffsets = (line.attributesWithOffsets || (line.attributesWithOffsets = [])),
-        textAndAttributes = line.textAndAttributes,
-        [before, attrs1] = splitLineTextAndAttributesAt(line, startColumn), after;
-    attributesWithOffsets.length = 0;
+    let textAndAttributes = line.textAndAttributes,
+        offset = 0,
+        [before, attrs1] = splitTextAndAttributesAt(textAndAttributes, startColumn), after;
+    // textAndAttributes = []
     textAndAttributes.length = 0;
 
-    lineTextAndAttributesDo(before, (from, to, text, attr) => {
-      textAndAttributes.push(from, to, text, attr);
-      attributesWithOffsets.push(from, to, attr);
+    textAndAttributesDo(before, (text, attr) => {
+      offset = offset + text.length;
+      textAndAttributes.push(text, attr);
     });
 
     if (startRow === endRow)
-      ([attrs1, after] = splitTextAndAttributesAt(attrs1, endColumn));
+      [attrs1, after] = splitTextAndAttributesAt(attrs1, endColumn-offset);
 
-    lineTextAndAttributesDo(attrs1, (from, to, text, attr) => {
-      let modifiedAttr = modifyFn(line, from, to, attr);
-      textAndAttributes.push(from, to, text, modifiedAttr);
-      attributesWithOffsets.push(from, to, modifiedAttr)
-    });
+    textAndAttributesDo(attrs1, (text, attr) =>
+      textAndAttributes.push(text, modifyFn(line, attr)));
 
     // if only one line is affected we return here....
     if (startRow === endRow) {
-      lineTextAndAttributesDo(after, (from, to, text, attr) => {
-        textAndAttributes.push(from, to, text, attr);
-        attributesWithOffsets.push(from, to, attr);
-      });
+      textAndAttributesDo(after, (text, attr) =>
+        textAndAttributes.push(text, attr));
       return;
     }
   }
@@ -165,42 +146,55 @@ export function modifyAttributesInRange(doc, range, modifyFn) {
   // modify lines between startRow and endRow, exclusive
   for (let i = startRow+1; i < endRow; i++) {
     line = line.nextLine();
-    let attributesWithOffsets = line.attributesWithOffsets;
-    if (!attributesWithOffsets) {
-      let modifiedAttr = modifyFn(line, 0, line.text.length, null);
-      line.attributesWithOffsets = [0, line.text.length, modifiedAttr];
-      continue;
-    }
     let textAndAttributes = line.textAndAttributes.slice();
-    attributesWithOffsets.length = 0;
     textAndAttributes.length = 0;
-    lineTextAndAttributesDo(textAndAttributes, (from, to, text, attr) => {
-      let modifiedAttr = modifyFn(line, from, to, attr);
-      textAndAttributes.push(from, to, text, modifiedAttr);
-      attributesWithOffsets.push(from, to, modifiedAttr);
-    });
+    textAndAttributesDo(textAndAttributes, (text, attr) =>
+      textAndAttributes.push(text, modifyFn(line, attr)));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // last row
   {
     line = line.nextLine();
-    let [attrsLast, after] = splitLineTextAndAttributesAt(line, endColumn),
-        textAndAttributes = line.textAndAttributes,
-        attributesWithOffsets = (line.attributesWithOffsets || (line.attributesWithOffsets = []));
-    attributesWithOffsets.length = 0;
+    let textAndAttributes = line.textAndAttributes,
+        [attrsLast, after] = splitTextAndAttributesAt(textAndAttributes, endColumn);
     textAndAttributes.length = 0;
 
-    lineTextAndAttributesDo(attrsLast, (from, to, text, attr) => {
-      let modifiedAttr = modifyFn(line, from, to, attr);
-      textAndAttributes.push(from, to, text, modifiedAttr);
-      attributesWithOffsets.push(from, to, modifiedAttr);
-    });
+    textAndAttributesDo(attrsLast, (text, attr) =>
+      textAndAttributes.push(text, modifyFn(line, attr)));
 
-    lineTextAndAttributesDo(after, (from, to, text, attr) => {
-      textAndAttributes.push(from, to, text, attr);
-      attributesWithOffsets.push(from, to, attr);
-    });
+    textAndAttributesDo(after, (text, attr) =>
+      textAndAttributes.push(text, attr));
   }
 
+}
+
+function textAndAttributesDo(textAndAttributes, doFn) {
+  for (let i = 0; i < textAndAttributes.length; i=i+2)
+    doFn(textAndAttributes[i], textAndAttributes[i+1]);
+}
+
+export function splitTextAndAttributesIntoLines(textAndAttributes, nl = "\n") {
+  // splitTextAndAttributesIntoLines(["fooo\nbar", {a: 1}, "ba\nz", {b: 1}])
+  // => [["fooo", {a: 1}],
+  //     ["bar", {a: 1}, "ba", {b: 1}],
+  //     ["z", {b: 1}]]
+  let lines = [], attrsSoFar = [];
+
+  for (var i = 0; i < textAndAttributes.length; i = i+2) {
+    let text = textAndAttributes[i], attr = textAndAttributes[i+1];
+    while (text.length) {
+      let lineSplit = text.indexOf(nl);
+      if (lineSplit === -1) { attrsSoFar.push(text, attr); break; }
+
+      attrsSoFar.push(text.slice(0, lineSplit), attr);
+      lines.push(attrsSoFar)
+
+      text = text.slice(lineSplit+1/*newlinelength!*/);
+      attrsSoFar = [];
+    }
+  }
+
+  attrsSoFar.length && lines.push(attrsSoFar);
+  return this.lines = lines;
 }

@@ -155,13 +155,17 @@ class InnerTreeNode extends TreeNode {
 
   ensureLine(lineSpec) {
     if (!lineSpec) lineSpec = "";
-    if (typeof lineSpec === "string")
-      return new Line(this, 0, lineSpec);
-    if (lineSpec.isLine) {
+    let isString = typeof lineSpec === "string";
+
+    if (!isString && lineSpec.isLine) {
       lineSpec.parent = this;
       return lineSpec;
     }
-    return new Line(this, lineSpec.height || 0, lineSpec.text || "", lineSpec.attributesWithOffsets);
+
+    let textAndAttributes = isString ?
+      [lineSpec, null] :
+      lineSpec.textAndAttributes || [lineSpec.text|| "", null];
+    return new Line(this, isString ? 0 : lineSpec.height || 0, textAndAttributes);
   }
 
   insert(lineSpecs, atIndex = this.size) {
@@ -615,13 +619,20 @@ class InnerTreeNode extends TreeNode {
 
 export class Line extends TreeNode {
 
-  constructor(parent, height = 0, text = "", attributesWithOffsets = null) {
+  constructor(parent, height = 0, textAndAttributes = []) {
     super(parent);
-    this._text = text;
-    this.attributesWithOffsets = attributesWithOffsets;
-    this._textAndAttributes = null;
+    this.textAndAttributes = joinTextAttributes(textAndAttributes);
+    this._text = "";
+    this._textAttributes = null;
     this.height = height;
     this.hasEstimatedHeight = false;
+    // The following is for caching:
+    this.charBounds = null;
+    // line text settings
+    this.textAlign = "left";
+    this.lineHeight = null;
+    this.marginTop = 0;
+    this.marginBottom = 0;
   }
 
   get isLine() { return true; }
@@ -630,36 +641,23 @@ export class Line extends TreeNode {
 
   get stringSize() { return this.text.length + 1/*newline*/;}
 
-  get text() { return this._text; }
+  get text() {
+    if (this._text) return this._text;
+    let text = "", attrs = this.textAndAttributes;
+    for (let i = 0; i < attrs.length; i = i+2)
+      text = text + attrs[i];
+    return this._text = text;
+  }
 
-  get textAndAttributes() {
-    // returns a list with 4-tuples that matches text slices to attributes
-    // [startIndex, endIndex, text, attributeObj, ....]
-    let {_textAndAttributes, attributesWithOffsets, _text} = this;
-    if (_textAndAttributes) // cached
-      return _textAndAttributes;
-
-    if (!attributesWithOffsets) // no attributes
-      return this._textAndAttributes = [0, _text.length, _text, null];
-
-    let textAndAttributes = this._textAndAttributes = [],
-        index = 0, indexIntoAttrs = 0;
-    while (true) {
-      if (indexIntoAttrs >= attributesWithOffsets.length) break;
-      let {
-        [indexIntoAttrs]: start,
-        [indexIntoAttrs+1]: end,
-        [indexIntoAttrs+2]: attr
-      } = attributesWithOffsets
-      if (index < start)
-        textAndAttributes.push(index, start, _text.slice(index, start), null);
-      textAndAttributes.push(start, end, _text.slice(start, end), attr);
-      indexIntoAttrs = indexIntoAttrs + 3;
-      index = end;
+  get textAttributes() {
+    if (this._textAttributes) return this._textAttributes;
+    let textAttributes = [], attrs = this.textAndAttributes;
+    for (let i = 0; i < attrs.length; i = i+2) {
+      let attr = attrs[i+1];
+      if (attr && !textAttributes.includes(attr))
+        textAttributes.push(attrs[i+1]);
     }
-    if (index < _text.length)
-      textAndAttributes.push(index, _text.length, _text.slice(index, _text.length), null);
-    return textAndAttributes;
+    return this._textAttributes = textAttributes;
   }
 
   get row() {
@@ -713,12 +711,13 @@ export class Line extends TreeNode {
     return this;
   }
 
-  changeText(newText, attributesWithOffsets = null) {
-    let {parent, _text} = this,
-        deltaLength = (newText.length+1) - (_text === undefined ? 0 : _text.length+1);
+  changeText(newText, textAndAttributes = null) {
+    let {parent, text} = this,
+        deltaLength = (newText.length+1) - (text.length+1);
+    this.charBounds = null;
     this._text = newText;
-    this.attributesWithOffsets = attributesWithOffsets;
-    this._textAndAttributes = null;
+    this._textAttributes = null;
+    this.textAndAttributes = textAndAttributes || [newText, null];
     while (parent) {
       parent.stringSize = parent.stringSize + deltaLength;
       parent = parent.parent;
@@ -728,17 +727,11 @@ export class Line extends TreeNode {
 
   changeTextAndAttributes(textAndAttributes) {
     // textAndAttributes like [0, 3, "foo", {...}, ...]
-    let newText = "",
-        attrs = this.attributesWithOffsets;
-    if (attrs) attrs.length = 0;
-    else attrs = [];
-    lineTextAndAttributesDo(textAndAttributes, (from, to, text, attr) => {
-      attrs.push(from, to, attr);
-      newText = newText + text;
-    });
-    this.changeText(newText, attrs)
-    this._textAndAttributes = textAndAttributes;
-    return this;
+    textAndAttributes = joinTextAttributes(textAndAttributes);
+    let text = "";
+    for (let i = 0; i < textAndAttributes.length; i = i+2)
+      text = text + textAndAttributes[i];
+    return this.changeText(text, textAndAttributes);
   }
 
   print(index = 0, depth = 0) {
@@ -864,7 +857,7 @@ export default class Document {
   }
 
   get textAndAttributes() {
-        // pairs the strings with attributes of the lines, merging text/attributes
+    // pairs the strings with attributes of the lines, merging text/attributes
     // between line ends of possible.
     // Returns a list of text/attribute pairs like
     //   ["hello", {bar: 23}, "wold", {foo: "..."}, ...]
@@ -874,128 +867,49 @@ export default class Document {
 
     let nl = newline,
         lastRow = lines.length-1,
-        result = [],
-        nextIndex = 0,
-        l1 = lines[0];
-
-    // add first without concat
-    if (l1.attributesWithOffsets) {
-      lineTextAndAttributesDo(l1.textAndAttributes, (from, to, text, attr) =>
-        nextIndex = result.push(text, attr));
-    } else  nextIndex = result.push(l1.text, null);
+        result = lines[0].textAndAttributes.slice();
 
     for (let row = 1; row <= lastRow; row++) {
-
-      let line = lines[row];
-
-      // no attributes? simple concat....
-      if (!line.attributesWithOffsets) {
-        let lastAttr = result[nextIndex-1],
-            lastText = result[nextIndex-2];
-        if (shallowEquals(lastAttr, null)) {
-          result[nextIndex-2] = lastText + nl + line.text;
-        } else {
-          result[nextIndex-2] = lastText + nl;
-          nextIndex = result.push(line.text, null)
-        }
-        continue;
-      }
-
       // add all the texts and attributes from line.textAndAttributes
-      // Note that line.textAndAttributes also includes start/end offset so a 4
       // tuple that we unpack here
-      let lastAttr = result.pop(),
-          lastText = result.pop(),
+      let line = lines[row],
+          lastAttr = result.pop() || null,
+          lastText = result.pop() || "",
           textAndAttributes = line.textAndAttributes,
-          firstText = textAndAttributes[2],
-          firstAttr = textAndAttributes[3];
+          firstText = textAndAttributes[0] || "",
+          firstAttr = textAndAttributes[1] || null;
 
       result.push(...concatAttributePair(lastText, lastAttr, firstText, firstAttr, nl));
-      for (let i = 4; i < textAndAttributes.length; i = i+4)
-        result.push(textAndAttributes[i+2], textAndAttributes[i+3]);
-      nextIndex = result.length;
+      for (let i = 2; i < textAndAttributes.length; i = i+2)
+        result.push(textAndAttributes[i], textAndAttributes[i+1]);
     }
 
     return result;
   }
 
   set textAndAttributes(attrs) {
-    let lines = [],
-        textAndAttributes = [],
-        attributesWithOffsets = [],
-        lineText = "",
-        col = 0;
-
-    for (var i = 0; i < attrs.length; i = i+2) {
-      let text = attrs[i], attr = attrs[i+1];
-
-      while (text.length) {
-        let lineSplit = text.indexOf(newline);
-        if (lineSplit === -1) { record(text, attr); break; }
-
-        record(text.slice(0, lineSplit), attr);
-        addLine();
-
-        lineText = text = text.slice(lineSplit+1/*newlinelength!*/);
-        col = 0;
-        attributesWithOffsets = [];
-        textAndAttributes = [];
-      }
-    }
-
-    addLine();
-
-    return this.lines = lines;
-
-    function record(text, attr) {
-      lineText = lineText + text;
-      let nextCol = col + text.length;
-      attributesWithOffsets.push(col, nextCol, attr);
-      textAndAttributes.push(col, nextCol, text, attr);
-      col = nextCol;
-    }
-    
-    function addLine() {
-      if (!lineText.length) return;
-      let line = new Line(null, 0, lineText, attributesWithOffsets);
-      line._textAndAttributes = textAndAttributes; /*optimized*/
-      lines.push(line);
-    }
+    this.lines = splitTextAndAttributesIntoLines(attrs, newline)
+                  .map(ea => new Line(null, 0, ea));
   }
 
-  getTextAndAttributesOfLine(row) {
-    convertLineTextAndAttributesIntoDocTextAndAttributes(this.getLine(row).textAndAttributes);
-  }
+  getTextAndAttributesOfLine(row) { return this.getLine(row).textAndAttributes; }
 
   setTextAndAttributesOfLine(row, attrs) {
-    let textAndAttributes = [],
-        attributesWithOffsets = [],
-        lineString = "", column = 0;
-
-    for (var i = 0; i < attrs.length; i = i+2) {
-      let text = attrs[i], attr = attrs[i+1],
-          newColumn = column + text.length;
-      lineString = lineString + text;
-      textAndAttributes.push(column, newColumn, text, attr);
-      attributesWithOffsets.push(column, newColumn, attr);
-    }
-
     let line = this.getLine(row);
-    line.changeText(lineString, attributesWithOffsets);
-    line._textAndAttributes = textAndAttributes;
+    line.changeTextAndAttributes(attrs);
     return attrs;
   }
 
   mixinTextAttribute(mixinAttr, range) {
     modifyAttributesInRange(this, range,
-      (line, from, to, attr) => Object.assign({}, attr, mixinAttr));
+      (line, attr) => Object.assign({}, attr, mixinAttr));
   }
 
   mixoutTextAttribute(attr, range = {start: {row: 0, column: 0}, end: this.endPosition}) {
     if (!attr) return;
     let keys = Object.keys(attr);
     modifyAttributesInRange(this, range,
-      (line, from, to, attr) => {
+      (line, attr) => {
         if (!attr) return attr;
         let mixout = {}, keyCount;
         for (let key in attr) {
@@ -1011,6 +925,19 @@ export default class Document {
   resetTextAttributes() {
     let lines = this.lines;
     lines.forEach(line => line.changeText(line.text));
+  }
+
+  textAttributeAt({row, column}) {
+    column = Math.max(0, column);
+    let line = this.getLine(row);
+    if (!line) return null;
+    let index = 0, attrs = line.textAndAttributes;
+    for (let i = 0; i < attrs.length; i + i+2) {
+      let text = attrs[i], attr = attrs[i+1];
+      index = index + text.length;
+      if (column < index) return attr;
+    }
+    return attrs[attrs.length-1];
   }
 
   textInRange({start, end}) {
@@ -1034,7 +961,7 @@ export default class Document {
 
   setTextInRange(string, range) {
     this.remove(range);
-    return this.insertString(string, range.start, false);
+    return this.insertText(string, range.start, false);
   }
 
   indexToPosition(index) {
@@ -1063,7 +990,80 @@ export default class Document {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  insertString(text, pos, extendAttrs = false) {
+  insertTextAndAttributes(textAndAttributes, pos) {
+    // inserts text and attribute pairs of `textAndAttributes` into the
+    // document at text position `pos`. if `extendAttrs` is true then the
+    // attributes directly at pos will expand of the inserted text.
+
+    if (!textAndAttributes || !textAndAttributes.length)
+      return {start: pos, end: pos};
+
+    let {row, column} = pos;
+    if (row < 0) row = 0;
+    if (column < 0) column = 0;
+
+    let line = this.getLine(row),
+        attrsForLines = splitTextAndAttributesIntoLines(textAndAttributes, newline);
+
+    if (!line) { // text empty
+      let lines = this.insertLines(attrsForLines.map(ea => new Line(null, 0, ea)));
+      return {
+        start: {row: 0, column: 0},
+        end: {row: lines.length, column: arr.last(lines).text.length}
+      };
+    }
+
+    // if insertion position comes after last row fill in new lines
+    if (row >= this.size) {
+      let docEndPos = this.endPosition;
+      for (let i = 0; i < row - docEndPos.row; i++)
+        attrsForLines.unshift(["", null]);
+      ({row, column} = docEndPos);
+    }
+
+    let firstInsertionLine = attrsForLines.shift(),
+        nInsertionLines = attrsForLines.length,
+        endPos = {row, column},
+        lineLength = line.stringSize-1;
+
+    if (column > lineLength) {
+      let fill = " ".repeat(column - lineLength);
+      if (firstInsertionLine.length)
+        firstInsertionLine[0] = fill + firstInsertionLine[0];
+      else
+        firstInsertionLine.push(fill, null);
+    }
+
+    let [before, after] = splitTextAndAttributesAt(line.textAndAttributes, column);
+    if (before[0] === "") before = []; // empty prefix
+    let lineTextAndAttributes = concatTextAndAttributes(before, firstInsertionLine, true);
+    if (nInsertionLines === 0) {
+      let firstInsertionLineLength = 0;
+      for (let i = 0; i < firstInsertionLine.length; i = i+2)
+        firstInsertionLineLength += firstInsertionLine[i].length;
+      endPos.column = column + firstInsertionLineLength;
+      concatTextAndAttributes(lineTextAndAttributes, after, true);
+    }
+    line.changeTextAndAttributes(lineTextAndAttributes);
+
+    if (nInsertionLines === 0) return {start: {row, column}, end: endPos};
+
+    let lastInsertionLine = attrsForLines[nInsertionLines-1],
+        lastInsertionLineLength = 0;
+    for (let i = 0; i < lastInsertionLine.length; i = i+2)
+      lastInsertionLineLength += lastInsertionLine[i].length;
+    endPos.row += nInsertionLines;
+    endPos.column = lastInsertionLineLength;
+
+    let lines = this.insertLines(attrsForLines.map(ea => new Line(null, 0, ea)), row+1),
+        lastLine = arr.last(lines);
+    lastLine.changeTextAndAttributes(
+      concatTextAndAttributes(lastLine.textAndAttributes, after, true));
+
+    return {start: {row, column}, end: endPos};
+  }
+
+  insertText(text, pos, extendAttrs = false) {
     // inserts string `text` into the document at text position `pos`.
     // if `extendAttrs` is true then the attributes directly at pos will expand
     // of the inserted text.
@@ -1100,17 +1100,13 @@ export default class Document {
       firstInsertionLine = " ".repeat(column - lineLength) + firstInsertionLine;
     }
 
-// line.attributesWithOffsets
-// line.textAndAttributes
-
-    let [before, after] = splitLineTextAndAttributesAt(line, column);
-    if (before[0] === before[1]) before = []; // empty prefix
-    let firstInsertionLineLength = firstInsertionLine.length,
-        attr = extendAttrs && before.length ? before[before.length-1] : null,
-        lineTextAndAttributes = concatLineTextAndAttributes(before, [0, firstInsertionLineLength, firstInsertionLine, attr], true);
+    let [before, after] = splitTextAndAttributesAt(line.textAndAttributes, column);
+    if (before[0] === "") before = []; // empty prefix
+    let attr = extendAttrs && before.length ? before[before.length-1] : null,
+        lineTextAndAttributes = concatTextAndAttributes(before, [firstInsertionLine, attr], true);
     if (nInsertionLines === 0) {
-      endPos.column = column + firstInsertionLineLength;
-      concatLineTextAndAttributes(lineTextAndAttributes, after, true);
+      endPos.column = column + firstInsertionLine.length;
+      concatTextAndAttributes(lineTextAndAttributes, after, true);
     }
     line.changeTextAndAttributes(lineTextAndAttributes);
 
@@ -1122,33 +1118,7 @@ export default class Document {
     let lines = this.insertLines(insertionLines, row+1),
         lastLine = arr.last(lines);
     lastLine.changeTextAndAttributes(
-      concatLineTextAndAttributes(lastLine.textAndAttributes, after, true));
-
-    // // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // // text attribute updating...
-    // // Note that the _textAttributesByLine index can include identical
-    // // TextAttribute objects on multiple lines so track which one where updated
-    // // already
-    // for (let i = this._textAttributes.length-1; i >= 0; i--) {
-    //   let attr = this._textAttributes[i];
-    //   // since the attributes are sorted we know that no other attr that needs
-    //   // update is in _textAttributes but not in _textAttributesByLine
-    //   if (attr.start.row <= row) break;
-    //   attr.onInsert(insertionRange);
-    // }
-    // var attrsSeen = [];
-    // (this._textAttributesByLine[row] || (this._textAttributesByLine[row] = [])).forEach(attr => {
-    //   if (attrsSeen.includes(attr)) return;
-    //   attrsSeen.push(attr);
-    //   if (!attr.onInsert(insertionRange)) return;
-    //   for (let j = 0; j < insertionLines.length; j++) {
-    //     let newRow = row+1+j,
-    //         attrsInNewRow = this._textAttributesByLine[newRow];
-    //     // need to maintain the sort order! ....
-    //     if (attr.end.row >= newRow) attrsInNewRow.push(attr);
-    //   }
-    // });
-    // // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      concatTextAndAttributes(lastLine.textAndAttributes, after, true));
 
     return {start: {row, column}, end: endPos};
   }
@@ -1175,55 +1145,12 @@ export default class Document {
         lines = [line];
     for (let i = 0; i < toRow - fromRow; i++)
       lines.push(line = line.nextLine());
-
     let lastLine = lines[lines.length-1],
-        textFront = firstLine.text.slice(0, fromCol),
-        textBack = lastLine.text.slice(toCol);
-    firstLine.changeText(textFront + textBack);
+        [before] = splitTextAndAttributesAt(firstLine.textAndAttributes, fromCol),
+        [_, after] = splitTextAndAttributesAt(lastLine.textAndAttributes, toCol);
+
+    firstLine.changeTextAndAttributes(concatTextAndAttributes(before, after, true));
     if (lines.length > 1) this.removeLines(fromRow+1, toRow);
-
-    // // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // // here we update and remove the text attributes that are affected by the
-    // // removal.
-    // var rangesToRemove = [],
-    //     currentRangeStart = undefined, currentRangeEnd = undefined,
-    //     textAttributes = this._textAttributes;
-    //
-    // // first lets find the indexes of the attributes that need to be removed.
-    // // Removing every one of them individually via splice or even filtering
-    // // them is slow for large attribute arrays. Instead of doing this we build
-    // // a list of start end indexes in the _textAttributes array that mark the
-    // // ranges to be removed. Those can be non-consecutive b/c text attributes
-    // // are sorted by Range.compare.
-    // // Given attributes a = range(0,0,0,1), b = range(0,1,0,4), c = range(0,2,0,3).
-    // // Sorted _textAttributes = [a,b,c]
-    // // If we remove range(0,0,0,3) attributes a and c would be both empty (range(0,0,0,0))
-    // // and would need to be removed. Attribute b however would be range(0,0,0,1) and stay.
-    // // The range intervals we will determine for this case are [[0,1], [1,2]]
-    // for (var i = 0; i < textAttributes.length; i++) {
-    //   var ea = textAttributes[i];
-    //   if (ea.onDelete(range) && ea.isEmpty()) {
-    //     if (currentRangeStart === undefined)
-    //       currentRangeStart = i;
-    //     currentRangeEnd = i + 1;
-    //   } else {
-    //     if (currentRangeStart !== undefined) {
-    //       rangesToRemove.push([currentRangeStart, currentRangeEnd]);
-    //       currentRangeStart = currentRangeEnd = undefined;
-    //     }
-    //   }
-    // }
-    //
-    // if (currentRangeStart !== undefined)
-    //   rangesToRemove.push([currentRangeStart, currentRangeEnd]);
-    //
-    // // build new textAttributes array
-    // rangesToRemove.reverse().forEach(([i,j]) =>
-    //   textAttributes = textAttributes.slice(0,i).concat(textAttributes.slice(j)));
-    // // set it, new _textAttributesByLine index will be build there
-    // this.setSortedTextAttributes(textAttributes);
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
