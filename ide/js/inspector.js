@@ -229,7 +229,7 @@ export default class Inspector extends Morph {
       await tree.onNodeCollapseChanged({node: td.root, isCollapsed: false});
       tree.selectedIndex = 1;
       await tree.execCommand("uncollapse selected node");
-      if (prevTd.asListWithIndexAndDepth().length > 1) tree.highlightChangedNodes(prevTd);
+      tree.highlightChangedNodes(prevTd);
     } catch (e) { this.showError(e); }
 
     this.state.updateInProgress = null;

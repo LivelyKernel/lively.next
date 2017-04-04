@@ -816,10 +816,11 @@ export class TreeData {
     /* Returns the nodes that are different to the ones in 'treeData'.
        Once a node has been determined different, it is no longer traversed further
        which means that its children are not inspected for changes.  */
-    let changedNodes = []
-    for (var [a, b] of zip(
-           this.asListWithIndexAndDepth(), 
-           treeData.asListWithIndexAndDepth())) {
+    let changedNodes = [],
+        aList = this.asListWithIndexAndDepth(),
+        bList = treeData.asListWithIndexAndDepth();
+    if (aList.length != bList.length) return [];
+    for (var [a, b] of zip(aList, bList)) {
       if (!obj.equals(a.node.value, b && b.node.value)) changedNodes.push(a.node);
     }
     return changedNodes;
