@@ -107,42 +107,40 @@ export class TreeNode extends Morph {
       },
 
       fontFamily: {
-        after: ["label", "toggle"],
+        after: ["label", "toggle", 'displayedMorph'],
         set(fontFamily) {
           this.setProperty("fontFamily", fontFamily);
-          this.label.fontFamily = fontFamily;
+          this.displayedMorph.fontFamily = fontFamily;
         }
       },
 
       fontSize: {
-        after: ["label", "toggle"],
+        after: ["label", "toggle", 'displayedMorph'],
         set(fontSize) {
           this.setProperty("fontSize", fontSize);
-          var l = this.label;
-          l.fontSize = fontSize;
+          this.displayedMorph.fontSize = fontSize;
           var toggle = this.getSubmorphNamed("toggle");
           if (toggle) toggle.fontSize = fontSize-3;
         }
       },
 
       fontColor: {
-        after: ["label", "toggle"],
+        after: ["label", "toggle", 'displayedMorph'],
         defaultValue: Color.rgbHex("333"),
         set(fontColor) {
           this.setProperty("fontColor", fontColor);
-          var l = this.label;
-          l.fontColor = fontColor;
+          this.displayedMorph.fontColor = fontColor;
           var toggle = this.getSubmorphNamed("toggle");
           if (toggle) toggle.fontColor = fontColor;
         }
       },
 
       fontWeight: {
-        after: ["label", "toggle"],
+        after: ['displayedMorph', "label", "toggle"],
         set(fontWeight) {
           this.setProperty("fontWeight", fontWeight);
-          var l = this.label;
-          l.fontWeight = fontWeight;
+          // rms: this still seems to be initialized before displayedMorph is set
+          (this.displayedMorph || this.label).fontWeight = fontWeight;
           var toggle = this.getSubmorphNamed("toggle");
           if (toggle) toggle.fontWeight = fontWeight;
         }
