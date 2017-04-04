@@ -1,10 +1,11 @@
 import { Color, pt, Rectangle } from "lively.graphics";
 import { obj, arr, promise, string } from "lively.lang";
-import { connect } from "lively.bindings";
+import { connect, disconnect } from "lively.bindings";
 import { Morph, config } from "lively.morphic";
 import { Tree, TreeData } from "lively.morphic/components/tree.js";
 import { HorizontalResizer } from "lively.morphic/components/resizers.js";
 import { JavaScriptEditorPlugin } from "./editor-plugin.js";
+import { debounce, throttle } from "lively.lang/function.js";
 
 
 var inspectorCommands = [
@@ -200,13 +201,18 @@ export default class Inspector extends Morph {
     this.build();
     this.state = {targetObject: undefined, updateInProgress: false};
     this.targetObject = targetObject || null;
+    this.refreshProperties = throttle(() => {
+      if(!this.getWindow().owner) disconnect(this.targetObject, 'onChange', this, 'refreshProperties')
+      this.prepareForNewTargetObject(this.targetObject)}, 50)
   }
 
   get isInspector() { return true; }
 
   get targetObject() { return this.state.targetObject; }
   set targetObject(obj) {
+    this.state.targetObject && disconnect(this.state.targetObject, 'onChange', this, 'refreshProperties');
     this.state.targetObject = obj;
+    connect(obj, 'onChange', this, 'refreshProperties');
     this.prepareForNewTargetObject(obj);
   }
 
@@ -215,14 +221,15 @@ export default class Inspector extends Morph {
 
     var {promise: p, resolve} = promise.deferred();
     this.state.updateInProgress = p;
-
     try {
       var td = InspectorTreeData.forObject(target),
-          tree = this.get("propertyTree");
+          tree = this.get("propertyTree"),
+          prevTd = tree.treeData;
       tree.treeData = td;
       await tree.onNodeCollapseChanged({node: td.root, isCollapsed: false});
       tree.selectedIndex = 1;
       await tree.execCommand("uncollapse selected node");
+      if (prevTd.asListWithIndexAndDepth().length > 1) tree.highlightChangedNodes(prevTd);
     } catch (e) { this.showError(e); }
 
     this.state.updateInProgress = null;
