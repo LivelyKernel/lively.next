@@ -169,6 +169,10 @@ class PropertyControl extends Morph {
     }
   }
 
+  toString() {
+    return `${this.keyString}: ${this.valueString}`
+  }
+
   highlight() {
    if (this.highlighter) this.highlighter.remove();
    const hl = this.highlighter = this.get('keyString').copy();
