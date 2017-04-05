@@ -350,6 +350,10 @@ export default class Inspector extends Morph {
     return i;
   }
 
+  onWindowClosed() {
+    disconnect(this.targetObject, 'onChange', this, 'refreshProperties');
+  }
+
   constructor(props = {}) {
     var {targetObject} = props;
     props = obj.dissoc(props, ["targetObject"])
@@ -362,7 +366,6 @@ export default class Inspector extends Morph {
     this.state = {targetObject: undefined, updateInProgress: false};
     this.targetObject = targetObject || null;
     this.refreshProperties = throttle(() => {
-      if(!this.getWindow().owner) disconnect(this.targetObject, 'onChange', this, 'refreshProperties')
       this.prepareForNewTargetObject(this.targetObject)}, 50)
   }
 
