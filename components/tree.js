@@ -272,9 +272,11 @@ export class TreeNode extends Morph {
   }
 
   highlight() {
+   if (this.displayedMorph.highlight) return this.displayedMorph.highlight();
    if (this.highlighter) this.highlighter.remove();
-   const hl = this.highlighter = this.addMorph(this.label.copy());
+   const hl = this.highlighter = this.addMorph(this.displayedMorph.copy());
    hl.fontWeight = "bold", hl.fontColor = Color.orange;
+   hl.reactsToPointer = false;
    hl.fadeOut(2000);
   }
 

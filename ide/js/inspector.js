@@ -1,11 +1,14 @@
-import { Color, pt, Rectangle } from "lively.graphics";
+import { Color, rect, pt, Rectangle } from "lively.graphics";
 import { obj, arr, promise, string } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
-import { Morph, config } from "lively.morphic";
+import { Morph, HorizontalLayout, morph, config } from "lively.morphic";
 import { Tree, TreeData } from "lively.morphic/components/tree.js";
 import { HorizontalResizer } from "lively.morphic/components/resizers.js";
 import { JavaScriptEditorPlugin } from "./editor-plugin.js";
 import { debounce, throttle } from "lively.lang/function.js";
+import { ColorPicker } from "../styling/color-picker.js";
+import { isBoolean, isString, isNumber } from "lively.lang/object.js";
+import { ValueScrubber } from "../../components/widgets.js";
 
 
 var inspectorCommands = [
@@ -146,7 +149,145 @@ function propertiesOf(target) {
   return props;
 }
 
+class PropertyControl extends Morph {
 
+  static get properties() {
+    return {
+      root: {},
+      keyString: {},
+      valueString: {},
+      value: {},
+      target: {},
+      layout: {initialize() {this.layout = new HorizontalLayout()}},
+      fill:  {defaultValue: Color.transparent},
+      fontColor: {
+        after: ['submorphs'],
+        set(c) {
+          this.get('keyString').fontColor = c;
+        }
+      },
+    }
+  }
+
+  highlight() {
+   if (this.highlighter) this.highlighter.remove();
+   const hl = this.highlighter = this.get('keyString').copy();
+   hl.isLayoutable = false;
+   hl.fontWeight = "bold", hl.fontColor = Color.orange;
+   hl.reactsToPointer = false;
+   this.addMorph(hl);
+   hl.fadeOut(2000);
+  }
+}
+
+class NumberPropertyControl extends PropertyControl {
+
+  static get properties() {
+    return {
+      submorphs: {
+        initialize() {
+          this.submorphs = [{
+            type: "label", value: this.keyString + ':', name: 'keyString',
+            padding: rect(0,0,10,0), fontSize: 14, 
+            fontFamily: config.codeEditor.defaultStyle.fontFamily},
+            new ValueScrubber({
+               fontSize: 14, name: 'valueString', nativeCursor: '-webkit-grab',
+               fontColor: Color.rgbHex("#0086b3"), fontFamily: config.codeEditor.defaultStyle.fontFamily,
+               target: this.target, extent: pt(20, 15),
+               value: this.target[this.property] || this.valueString, fill: Color.transparent,
+            })];
+           connect(this.get('valueString'), 'scrub', this, 'updateValue')
+        }
+      }
+    }
+  }
+  
+  updateValue(v) {
+    this.target[this.property] = v;
+  }
+}
+
+class BooleanPropertyControl extends PropertyControl {
+  
+  static get properties() {
+    return {
+      submorphs: {
+        initialize() {
+          this.submorphs = [{
+            type: "label", value: this.keyString + ':', name: 'keyString',
+            padding: rect(0,0,10,0), fontSize: 14, 
+            fontFamily: config.codeEditor.defaultStyle.fontFamily},
+            {type: "label", value: this.valueString, fontSize: 14, name: 'valueString',
+             nativeCursor: 'pointer', onMouseDown: (evt) => {
+               this.target[this.property] = !this.target[this.property];
+             },
+             fontColor: this.value ? Color.green : Color.red, fontFamily: config.codeEditor.defaultStyle.fontFamily}];
+        }
+      }
+    }
+  }
+
+}
+
+class StringPropertyControl extends PropertyControl {
+
+  static get properties() {
+    return {
+      submorphs: {
+        initialize() {
+          this.submorphs = [{
+            type: "label", value: this.keyString + ':', name: 'keyString',
+            padding: rect(0,0,10,0), fontSize: 14, 
+            fontFamily: config.codeEditor.defaultStyle.fontFamily},
+            {type: "text", value: this.valueString, fontSize: 14, name: 'valueString', fill: Color.white.withA(.7),
+             fontColor: Color.rgbHex("#183691"), fontFamily: config.codeEditor.defaultStyle.fontFamily}];
+        }
+      }
+    }
+  }
+  
+}
+
+class ColorPropertyControl extends PropertyControl {
+
+  static get properties() {
+    return {
+      fontColor: {
+        after: ['submorphs'],
+        set(c) {
+          this.get('keyString').fontColor = c;
+          this.get('valueString').fontColor = c.withA(.7);
+        }
+      },
+      submorphs: {
+        initialize() {
+          this.submorphs = [{
+            type: "label", value: this.keyString + ':', name: 'keyString',
+            padding: rect(0,0,10,0), fontSize: 14, 
+            fontFamily: config.codeEditor.defaultStyle.fontFamily},
+            {layout: new HorizontalLayout({direction: 'centered'}), 
+               fill: Color.transparent, submorphs: [
+               {extent: pt(15,15), fill: Color.transparent, submorphs: [
+                  {center: pt(5,7.5), fill: this.value, borderColor: Color.gray.darker(), 
+                   nativeCursor: 'pointer', borderWidth: 1, onMouseDown: (evt) => {
+                     evt.stop(); this.openPicker();
+                     }
+                   }]},
+               {type: "label", value: this.valueString, fontSize: 14, name: 'valueString',
+                fontColor: Color.black.withA(.6), fontFamily: config.codeEditor.defaultStyle.fontFamily}]}];
+        }
+      }
+    }
+  }
+
+  async openPicker(evt) {
+      const p = new ColorPicker({color: this.target[this.property]});
+      p.position = pt(0, -p.height / 2);
+      connect(p, "color", this.target, this.property);
+      connect(p, "color", this, "update");
+      await p.fadeIntoWorld($world.center);
+   }
+}
 
 
 class InspectorTreeData extends TreeData {
@@ -156,9 +297,24 @@ class InspectorTreeData extends TreeData {
   }
 
   display(node) {
+     /* Special display mode on certain data types:
+        color, numbers (float, int) */
      var keyString = node.keyString || node.key,
-         valueString = node.valueString || printValue(node.value);
-     return `${keyString}: ${valueString}`;
+         valueString = node.valueString || printValue(node.value),
+         target = this.root.value.inspectee,
+         property = node.key,
+         value = node.value,
+         controlClass;
+     if (node.value && node.value.isColor) {
+       controlClass = ColorPropertyControl;
+     } else if (isBoolean(node.value)) {
+       controlClass = BooleanPropertyControl;
+     } else if (isNumber(node.value)) {
+       controlClass = NumberPropertyControl;
+     } else if (isString(node.value)) {
+       controlClass = StringPropertyControl;
+     }
+     return controlClass ? new controlClass({target, property, keyString, valueString, value}) : `${keyString}: ${valueString}`;
   }
 
   isCollapsed(node) { return node.isCollapsed; }

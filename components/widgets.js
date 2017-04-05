@@ -185,7 +185,7 @@ export class Slider extends Morph {
 
     onSlide(slideHandle, delta) {
        const oldValue = this.target[this.property],
-             newValue = oldValue + delta.x / this.width;
+             newValue = roundTo(oldValue + delta.x / this.width, .01);
        this.target[this.property] = Math.max(this.min, Math.min(this.max, newValue));
        this.update();
     }
@@ -276,6 +276,7 @@ export class ValueScrubber extends Text {
 
   relayout() {
     const d = 5;
+    this.fit();
     if (this.width + d < this.textBounds().width) {
       this.squeezeLabel(this.width + d);
     } else if (this.width > this.textBounds().width) {
@@ -319,7 +320,7 @@ export class ValueScrubber extends Text {
 
   getScaleAndOffset(evt) {
      const {x, y} = evt.position.subPt(this.initPos),
-           scale = num.roundTo(Math.exp(-y / this.world().height * 4), 0.01);
+           scale = num.roundTo(Math.exp(-y / $world.height * 4), 0.01);
      return {offset: x, scale}
   }
 
