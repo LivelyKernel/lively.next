@@ -26,7 +26,6 @@ const defaultTextStyle = {
   fontStyle: "normal",
   textDecoration: "none",
   backgroundColor: undefined,
-  fixedCharacterSpacing: false,
   textStyleClasses: undefined,
   link: undefined,
   nativeCursor: undefined
@@ -55,11 +54,16 @@ export class Text extends Morph {
         initialize() { this.textRenderer = new Renderer(this); }
       },
 
+      debug: {
+        after: ["textRenderer", "textLayout"],
+        defaultValue: false,
+        doc: "For visualizing and debugging text layout and rendering"
+      },
+
       defaultViewState: {
         derived: true, readOnly: true,
         get() {
           return {
-            _textLayoutStale: true,
             _needsFit: true,
             dom_nodes: [],
             dom_nodeFirstRow: [],
@@ -67,6 +71,7 @@ export class Text extends Morph {
             scrollHeight: 0,
             scrollBottom: 0,
             textHeight: 0,
+            textWidth: 0,
             firstVisibleRow: 0,
             lastVisibleRow: 0,
             heightBefore: 0
@@ -107,18 +112,18 @@ export class Text extends Morph {
       },
 
       fixedWidth: {
-        after: ["clipMode"], defaultValue: false,
+        after: ["clipMode", "viewState"], defaultValue: false,
         set(value) {
           this.setProperty("fixedWidth", value);
-          this.invalidateTextLayout();
+          this.invalidateTextLayout(true);
         }
       },
 
       fixedHeight: {
-        after: ["clipMode"], defaultValue: false,
+        after: ["clipMode", "viewState"], defaultValue: false,
         set(value) {
           this.setProperty("fixedHeight", value);
-          this.invalidateTextLayout();
+          this.invalidateTextLayout(true);
         }
       },
 
@@ -139,7 +144,7 @@ export class Text extends Morph {
       },
 
       padding: {
-        after: ["textLayout"],
+        after: ["textLayout", "viewState"],
         defaultValue: Rectangle.inset(0),
         set(value) {
           this.setProperty("padding", typeof value === "number" ? Rectangle.inset(value) : value);
@@ -249,21 +254,21 @@ export class Text extends Morph {
       fontWeight: {           derived: true, after: ["defaultTextStyle"]},
       fontStyle: {            derived: true, after: ["defaultTextStyle"]},
       textDecoration: {       derived: true, after: ["defaultTextStyle"]},
-      fixedCharacterSpacing: {derived: true, after: ["defaultTextStyle"]},
       textStyleClasses: {     derived: true, after: ["defaultTextStyle"]},
       backgroundColor: {      derived: true, after: ["defaultTextStyle"]},
       textAlign: {
-        after: ["document", "defaultTextStyle"],
+        after: ["document", "defaultTextStyle", "viewState"],
         set(textAlign) {
           // values:
           // center, justify, left, right
           this.setProperty("textAlign", textAlign);
-          this.invalidateTextLayout();
+          this.invalidateTextLayout(true);
         }
       },
 
       lineWrapping: {
-        after: ["document"],
+        defaultValue: true,
+        after: ["document", "viewState"],
         set(lineWrapping) {
           // possible values:
           // false: no line wrapping, lines are as long as authored
@@ -273,7 +278,7 @@ export class Text extends Morph {
           // wider than text
           // by-chars: Break line whenever character sequence reaches text width
           this.setProperty("lineWrapping", lineWrapping);
-          this.invalidateTextLayout();
+          this.invalidateTextLayout(true);
         }
       },
 
@@ -399,21 +404,15 @@ export class Text extends Morph {
     let textChange = change.selector === "insertText"
                   || change.selector === "deleteText";
 
-    if (textChange
-     || (change.prop === "extent" && this.lineWrapping && this.isClip())
-     || (change.prop === "lineWrapping" && this.isClip())
-     || change.prop === "fixedWidth"
-     || change.prop === "fixedHeight"
+    if ((change.prop === "extent" && this.lineWrapping)
+     || change.prop === "textAlign"
      || change.prop === "fontFamily"
      || change.prop === "fontSize"
-     || change.prop === "backgroundColor"
-     || change.prop === "fontColor" // FIXME
      || change.prop === "fontWeight"
      || change.prop === "fontStyle"
      || change.prop === "textDecoration"
-     || change.prop === "fixedCharacterSpacing"
      || change.prop === "textStyleClasses"
-    ) this.invalidateTextLayout();
+    ) this.invalidateTextLayout(true);
 
     super.onChange(change);
     textChange && signal(this, "textChange", change);
@@ -553,11 +552,16 @@ export class Text extends Morph {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  invalidateTextLayout() {
+  invalidateTextLayout(resetCharBoundsCache = false) {
     let vs = this.viewState;
-    vs._textLayoutStale = true;
     if (!this.fixedWidth || !this.fixedHeight)
       vs._needsFit = true;
+    let tl = this.textLayout;
+    if (tl) {
+      if (resetCharBoundsCache)
+        tl.resetLineCharBoundsCache(this);
+      tl.estimateLineHeights(this, false);
+    }
   }
 
   textBounds() { return this.textLayout.textBounds(this); }
@@ -753,6 +757,7 @@ export class Text extends Morph {
       }
     }, () => {
       this.invalidateTextLayout();
+      this.textLayout.resetLineCharBoundsCacheOfRange(this, range);
       this.anchors.forEach(ea => ea.onInsert(range));
       // When auto multi select commands run, we replace the actual selection
       // with individual normal selections
@@ -794,6 +799,8 @@ export class Text extends Morph {
       }
     }, () => {
       this.invalidateTextLayout();
+      this.textLayout.resetLineCharBoundsCacheOfRow(this, range.start.row);
+      this.textLayout.resetLineCharBoundsCacheOfRow(this, range.end.row);
       this.anchors.forEach(ea => ea.onDelete(range));
       // When auto multi select commands run, we replace the actual selection
       // with individual normal selections
@@ -874,13 +881,13 @@ export class Text extends Morph {
 
   addTextAttribute(attr, range) {
     this.document.mixinTextAttribute(attr, range);
-    this.onAttributesChanged();
+    this.onAttributesChanged(range);
     return attr;
   }
 
   removeTextAttribute(attr, range) {
     this.document.mixoutTextAttribute(attr);
-    this.onAttributesChanged();
+    this.onAttributesChanged(range);
   }
 
   textAttributeAt(point) {
@@ -890,11 +897,15 @@ export class Text extends Morph {
 
   resetTextAttributes() {
     this.document.resetTextAttributes();
+    this.onAttributesChanged({start: {row: 0, column: 0}, end: this.documentEndPosition});
   }
 
-  onAttributesChanged() {
+  onAttributesChanged(range) {
     this.invalidateTextLayout();
-    this.textLayout && (this.textLayout.layoutComputed = false);
+    let tl = this.textLayout
+    if (tl) {
+      tl.resetLineCharBoundsCacheOfRange(this, range)
+    }
     this.makeDirty();
   }
 
@@ -914,7 +925,7 @@ export class Text extends Morph {
 
   setStyleInRange(style, range = this.selection) {
     this.document.setStyleInRange(style, range, this.defaultTextStyle);
-    this.onAttributesChanged();
+    this.onAttributesChanged(range);
   }
 
   resetStyleInRange(range = this.selection) {
@@ -1143,7 +1154,8 @@ export class Text extends Morph {
   // text layout related
 
   fit() {
-    let {fixedWidth, fixedHeight} = this;
+    let {viewState, fixedWidth, fixedHeight} = this;
+    viewState._needsFit = false;
     if ((fixedHeight && fixedWidth) || !this.textLayout/*not init'ed yet*/) return;
     let textBounds = this.textBounds().outsetByRect(this.padding);
     if (!fixedHeight) this.height = textBounds.height;
@@ -1152,7 +1164,7 @@ export class Text extends Morph {
   }
 
   fitIfNeeded() {
-    if (this.viewState._needsFit) { this.fit(); this.viewState._needsFit = false; }
+    if (this.viewState._needsFit) { this.fit(); }
   }
 
   get defaultLineHeight() {
@@ -1183,9 +1195,13 @@ export class Text extends Morph {
     this.makeDirty();
   }
 
+  aboutToRender(renderer) {
+    super.aboutToRender(renderer);
+    this.fitIfNeeded();
+  }
+
   onAfterRender(node) {
     super.onAfterRender(node);
-    this.fitIfNeeded();
   }
 
   render(renderer) {
@@ -1566,21 +1582,6 @@ export class Text extends Morph {
   openRichTextControl() {
     this.showError(new Error("TODO"))
     // return RichTextControl.openDebouncedFor(this);
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // serialization
-  exportToJSON(options) {
-    return Object.assign(super.exportToJSON(options), {
-      textString: this.textString
-    });
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // debugging
-
-  inspect() {
-    return `Text("${this.name}" <${this.selection}>)`
   }
 
 }
