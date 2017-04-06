@@ -2,128 +2,14 @@ import { promise, num } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
 import {
   defaultStyle,
+  renderGradient,
   defaultAttributes,
+  defaultCSS,
   pathAttributes,
   svgAttributes
 } from "./morphic-default.js";
 import { h } from "virtual-dom";
 
-
-const defaultCSS = `
-
-/*-=- html fixes -=-*/
-
-textarea.lively-text-input.debug {
-  z-index: 20 !important;
-  opacity: 1 !important;
-  background: rgba(0,255,0,0.5) !important;
-}
-
-.no-html-select {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-
-.hiddenScrollbar::-webkit-scrollbar { 
-  /* This is the magic bit */
-  display: none;
-}
-
-
-/*-=- generic morphic -=-*/
-
-.Morph {
-  outline: none;
-  /*for aliasing issue in chrome: http://stackoverflow.com/questions/6492027/css-transform-jagged-edges-in-chrome*/
-  -webkit-backface-visibility: hidden;
-
-  /*include border size in extent of element*/
-  box-sizing: border-box;
-
-  /*don't use dom selection on morphs*/
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  zIndex: 1010
-}
-
-.Tooltip {
-  z-index:  3;
-}
-
-.Hand {
-  z-index: 1;
-}
-
-/*-=- halos -=-*/
-
-.Halo {
-  z-index: 2;
-}
-
-.HaloItem {
-  /*FIXME: we shouldn't need to hardcode the size...*/
-	 line-height: 24px !important;
-	 text-align: center;
-	 vertical-align: middle;
-}
-
-.halo-mesh {
-  background-color:transparent;
-  background-image: linear-gradient(rgba(0,0,0,.1) 2px, transparent 2px),
-  linear-gradient(90deg, rgba(0,0,0,.1) 2px, transparent 2px),
-  linear-gradient(rgba(0,0,0,.1) 1px, transparent 1px),
-  linear-gradient(90deg, rgba(0,0,0,.1) 1px, transparent 1px);
-  background-size:100px 100px, 100px 100px, 10px 10px, 10px 10px;
-  background-position:-2px -2px, -2px -2px, -1px -1px, -1px -1px;
-}
-
-/*-=- text -=-*/
-
-.center-text {
-	 text-align: center;
-}
-
-.v-center-text {
-  position: relative;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-div.text-layer span {
-  line-height: normal;
-}
-
-/*-=- text -=-*/
-
-.Label span {
-  white-space: nowrap;
-}
-
-.Label .annotation {
-/*  vertical-align: middle;
-  height: 100%;*/
-  /*vertical align*/
-  float: right;
-  position: relative;
-  top: 50%;
-  transform: translateY(-50%);
-  text-align: right;
-}
-
-.truncated-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-`;
 
 export class Renderer {
 
@@ -147,6 +33,58 @@ export class Renderer {
     this.renderWorldLoopProcess = null;
     this.afterRenderCallTargets = [];
     this.requestAnimationFrame = domEnvironment.window.requestAnimationFrame.bind(domEnvironment.window);
+  }
+
+  h_dom(tagname, childrenOrAttrs, children) {
+    // h() function that renders directly to the DOM instead of virtual nodes
+    let attrs = childrenOrAttrs || undefined;
+    if (typeof children === "undefined") {
+      children = childrenOrAttrs;
+      attrs = undefined;
+    }
+
+    let cssClasses = [], id = null,
+        tokens = tagname.split(".");
+
+    if (tokens.length > 1) {
+      tagname = tokens.shift();
+      for (let i = 0; i < tokens.length; i++) {
+        let token = tokens[i], hashIndex;
+        if ((hashIndex = token.indexOf("#")) > -1) {
+          id = token.slice(hashIndex+1)
+          token = token.slice(0, hashIndex);
+        }
+        cssClasses.push(token);
+      }
+    }
+    let tagnameAndId = tagname.split("#");
+    if (tagnameAndId.length > 1) {
+      tagname = tagnameAndId[0];
+      id = tagnameAndId[1];
+    }
+
+    let el = document.createElement(tagname);
+
+    if (attrs) {
+      for (let key in attrs)
+        if (key !== "style" && key !== "dataset")
+          el[key] = attrs[key];
+      let style = attrs.style;
+      if (style) for (let key in style) el.style[key] = style[key];
+      let dataset = attrs.dataset;
+      if (dataset) for (let key in dataset) el.dataset[key] = dataset[key];
+    }
+
+    if (typeof children === "string") {
+      el.appendChild(document.createTextNode(children));
+    } else if (children && Array.isArray(children)) {
+      for (let i = 0; i < children.length; i++) {
+        let child = children[i];
+        el.appendChild(typeof child === "string" ? document.createTextNode(child) : child);
+      }
+    }
+
+    return el;
   }
 
   clear() {
@@ -237,7 +175,7 @@ export class Renderer {
         this.renderSubmorphs(image)
       ]);
   }
-  
+
   renderCanvas(canvas) {
     const CanvasHook = function(){}
     CanvasHook.prototype.hook = function(node, prop, prev) {
@@ -260,7 +198,7 @@ export class Renderer {
         this.renderSubmorphs(canvas)
       ]);
   }
- 
+
   renderCheckBox(checkbox) {
     return h("div", {
       ...defaultAttributes(checkbox, this),
@@ -346,25 +284,4 @@ export class Renderer {
       ]);
   }
 
-}
-
-function renderGradient(morph, prop) {
-  const gradient = morph[prop],
-        {bounds, focus, vector} = gradient;
-  return h(gradient.type, {
-               namespace: "http://www.w3.org/2000/svg",
-               attributes: {id: "gradient-" + prop + morph.id,
-                            gradientUnits: "userSpaceOnUse",
-                            r: "50%",
-                            ...(vector && {gradientTransform: `rotate(${num.toDegrees(vector.extent().theta())}, ${morph.width / 2}, ${morph.height / 2})`}),
-                            ...(focus && bounds && {gradientTransform: `matrix(
-                                    ${bounds.width / morph.width}, 0, 0, ${bounds.height / morph.height}, 
-                                    ${((morph.width / 2) - (bounds.width / morph.width) * (morph.width / 2)) + (focus.x * morph.width) - (morph.width / 2)},
-                                    ${((morph.height / 2) - (bounds.height / morph.height) * (morph.height / 2)) + (focus.y * morph.height) - (morph.height / 2)})`})}},
-               gradient.stops.map(({offset, color}) =>
-                        h("stop",
-                            {namespace: "http://www.w3.org/2000/svg",
-                              attributes:
-                                {offset: (offset * 100) + "%",
-                                 "stop-color": color.toString()}})));
 }
