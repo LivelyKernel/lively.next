@@ -34,8 +34,13 @@ export class TextSearcher {
     if (char !== needle[0]) return null;
 
     var {row, column} = pos,
-        chunk = lines[row].slice(column)
-                + (nLines > 1 ? "\n" + lines.slice(row+1, (row+1)+(nLines-1)).join("\n") : ""),
+        /*FIXME rk 2017-04-06 while transitioning to new text:*/
+        lineString = typeof lines[row] === "string" ? lines[row] : lines[row].text,
+        followingText = nLines <= 1 ? "" :
+          typeof lines[row] === "string" ?
+            "\n" + lines.slice(row+1, (row+1)+(nLines-1)).join("\n") :
+            "\n" + lines.slice(row+1, (row+1)+(nLines-1)).map(l => l.text).join("\n"),
+        chunk = lineString.slice(column) + followingText,
         chunkToTest = caseSensitive ? chunk : chunk.toLowerCase();
 
     return chunkToTest.indexOf(needle) !== 0 ?
