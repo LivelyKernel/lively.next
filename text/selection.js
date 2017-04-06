@@ -93,7 +93,7 @@ export class Selection {
 
     this._range = range;
     this._goalColumn = this.textMorph.lineWrapping ?
-      this.textMorph.toScreenPosition(this.lead).column :
+      this.textMorph.columnInWrappedLine(this.lead) :
       this.lead.column;
 
     this.startAnchor.position = range.start;

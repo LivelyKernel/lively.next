@@ -406,6 +406,12 @@ describe("text document", () => {
       expect(doc.lines).containSubset([{text: "hello"}, {text: "test"}, {text: ""}, {text: "world"}]);
     });
 
+    it("just new line", () => {
+      doc.insertText("\n", {row: 0, column: 2});
+      expect(doc.textString).equals("he\nllo\nworld");
+      expect(doc.lines).containSubset([{text: "he"}, {text: "llo"}, {text: "world"}]);
+    });
+
   });
 
   describe("remove", () => {
@@ -728,6 +734,19 @@ describe("text document", () => {
         ])
       });
 
+      it("newline behind char creates new line below", () => {
+        doc.textAndAttributes = [
+          "aax\n", {a: true},
+          "bb", {b: true},
+        ];
+        doc.insertText("\n", {row: 0, column: 2}, false);
+        expect(doc.lines.map(l => l.textAndAttributes)).deep.equals([
+          ["aa", { "a": true }],
+          ["x", { "a": true }],
+          ["bb", { "b": true }]
+        ])
+      });
+
     });
 
     describe("merging", () => {
@@ -747,7 +766,7 @@ describe("text document", () => {
     });
 
     describe("insert with attributes", () => {
-    
+
       it("works", () => {
         doc.textAndAttributes = ["hello", {a: 1}];
         doc.insertTextAndAttributes(["b", {b: 1}, "cc", {c: 1}], {row: 0, column: 2});
@@ -758,7 +777,36 @@ describe("text document", () => {
           "llo", {a: 1}
         ]);
       });
-    
+
+      it("just newline", () => {
+        doc.textAndAttributes = ["hello", {a: 1}];
+        doc.insertTextAndAttributes(["\n", null], {row: 0, column: 2});
+        expect(doc.textAndAttributes).deep.equals(["he\nllo", {a: 1}]);
+      });
+
+      it("leading newline", () => {
+        doc.textAndAttributes = ["hello", {a: 1}];
+        doc.insertTextAndAttributes(["\nfoo", null], {row: 0, column: 2});
+        expect(doc.textAndAttributes).deep.equals([
+          "he\n", {a: 1},
+          "foo", null,
+          "llo", {a: 1}
+        ]);
+      });
+
+      it("newline behind char creates new line below", () => {
+        doc.textAndAttributes = [
+          "aax\n", {a: true},
+          "bb", {b: true},
+        ];
+        doc.insertTextAndAttributes(["\n", null], {row: 0, column: 2});
+        expect(doc.lines.map(l => l.textAndAttributes)).deep.equals([
+          ["aa", { "a": true }],
+          ["x", { "a": true }],
+          ["bb", { "b": true }]
+        ])
+      });
+
     })
   });
 

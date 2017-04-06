@@ -38,7 +38,12 @@ export class Text extends Morph {
   static get properties() {
     return {
 
-      fontMetric: {},
+      fontMetric: {
+        serialize: false,
+        get() {
+          return this.getProperty("fontMetric") || this.env.fontMetric;
+        }
+      },
 
       undoManager: {
         before: ["document"],
@@ -134,6 +139,7 @@ export class Text extends Morph {
       },
 
       padding: {
+        after: ["textLayout"],
         defaultValue: Rectangle.inset(0),
         set(value) {
           this.setProperty("padding", typeof value === "number" ? Rectangle.inset(value) : value);
@@ -248,8 +254,10 @@ export class Text extends Morph {
       backgroundColor: {      derived: true, after: ["defaultTextStyle"]},
       textAlign: {
         after: ["document", "defaultTextStyle"],
-        set(lineWrapping) {
-          this.setProperty("textAlign", lineWrapping);
+        set(textAlign) {
+          // values:
+          // center, justify, left, right
+          this.setProperty("textAlign", textAlign);
           this.invalidateTextLayout();
         }
       },
@@ -257,6 +265,13 @@ export class Text extends Morph {
       lineWrapping: {
         after: ["document"],
         set(lineWrapping) {
+          // possible values:
+          // false: no line wrapping, lines are as long as authored
+          // true or "by-words": break lines at word boundaries. If not possible break line
+          // anywhere to enforce text width
+          // only-by-words: break lines at word boundaries. If not possible, line will be
+          // wider than text
+          // by-chars: Break line whenever character sequence reaches text width
           this.setProperty("lineWrapping", lineWrapping);
           this.invalidateTextLayout();
         }
@@ -704,7 +719,7 @@ export class Text extends Morph {
   }
 
   screenLineRange(pos = this.cursorPosition, ignoreLeadingWhitespace = true) {
-    return this.textLyout.screenLineRange(this, ignoreLeadingWhitespace)
+    return this.textLayout.screenLineRange(this, pos, ignoreLeadingWhitespace);
   }
 
   insertTextAndSelect(text, pos = null) {
@@ -933,12 +948,15 @@ export class Text extends Morph {
   cursorLeft(n = 1) { return this.selection.goLeft(n); }
   cursorRight(n = 1) { return this.selection.goRight(n); }
 
-  getPositionAboveOrBelow(n = 1, pos = this.cursorPosition, useScreenPosition = false, goalColumn) {
+  getPositionAboveOrBelow(
+    n = 1,
+    pos = this.cursorPosition,
+    useScreenPosition = false,
+    goalColumn/*already as wrapped column*/
+  ) {
     // n > 0 above, n < 0 below
-
     if (n === 0) return pos;
 
-useScreenPosition = false; // FIXME
     if (!useScreenPosition) {
       if (goalColumn === undefined) goalColumn = pos.column
       return {
@@ -958,25 +976,27 @@ useScreenPosition = false; // FIXME
     // be placed between). For actual line ends the last column value is after
     // the last char.
 
-    var ranges = this.rangesOfWrappedLine(pos.row)
+    var ranges = this.textLayout.rangesOfWrappedLine(this, pos.row);
+
     if (!ranges.length) return pos;
 
-    var currentRangeIndex = ranges.length -1 - ranges.slice().reverse().findIndex(({start, end}) =>
+    var currentRangeIndex = ranges.length-1 - ranges.slice().reverse().findIndex(({start, end}) =>
                                                   start.column <= pos.column),
+        currentRange = ranges[currentRangeIndex],
         nextRange, nextRangeIsAtLineEnd = false;
 
     if (n >= 1) {
       var isFirst = 0 === currentRangeIndex;
-      nextRange = isFirst ?
-        arr.last(this.rangesOfWrappedLine(pos.row-1)) :
+      nextRange = isFirst ? pos.row <= 0 ? null :
+        arr.last(this.textLayout.rangesOfWrappedLine(this, pos.row-1)) :
         ranges[currentRangeIndex-1];
       if (!nextRange) return pos;
       nextRangeIsAtLineEnd = isFirst;
 
     } else if (n <= -1) {
       var isLast = ranges.length-1 === currentRangeIndex,
-          nextRanges = isLast ?
-            this.rangesOfWrappedLine(pos.row+1) :
+          nextRanges = isLast ? pos.row >= this.lineCount()-1 ? [] :
+            this.textLayout.rangesOfWrappedLine(this, pos.row+1) :
             ranges.slice(currentRangeIndex+1);
       nextRange = nextRanges[0];
       if (!nextRange) return pos;
@@ -986,8 +1006,8 @@ useScreenPosition = false; // FIXME
     if (goalColumn === undefined)
       goalColumn = pos.column - ranges[currentRangeIndex].start.column
 
-    var columnOffset = Math.min(nextRange.end.column - nextRange.start.column, goalColumn),
-        column = nextRange.start.column + columnOffset;
+    
+    var column = nextRange.start.column + goalColumn;
     if (!nextRangeIsAtLineEnd && column >= nextRange.end.column) column--;
 
     var newPos = {row: nextRange.end.row, column};
@@ -1137,7 +1157,13 @@ useScreenPosition = false; // FIXME
 
   get defaultLineHeight() {
     var p = this.padding;
-    return p.top() + p.bottom() + this.textLayout.fontMetric.defaultLineHeight({fontSize: this.fontSize, fontFamily: this.fontFamily})
+    return p.top() + p.bottom() + this.fontMetric.defaultLineHeight({fontSize: this.fontSize, fontFamily: this.fontFamily})
+  }
+
+  columnInWrappedLine(textPos) {
+    if (!this.lineWrapping) return textPos.column;
+    let {start: {column: fromColumn}} = this.screenLineRange(textPos, true);
+    return textPos.column - fromColumn;
   }
 
   textPositionFromPoint(point) {

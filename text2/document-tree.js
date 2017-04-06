@@ -661,6 +661,7 @@ export class Line extends TreeNode {
     this._text = "";
     this._textAttributes = null;
     this.height = height;
+    this.isWrapped = false;
     this.hasEstimatedHeight = false;
     // The following is for caching:
     this.charBounds = null;
@@ -1094,7 +1095,6 @@ export default class Document {
     line.changeTextAndAttributes(lineTextAndAttributes);
 
     if (nInsertionLines === 0) return {start: {row, column}, end: endPos};
-
     let lastInsertionLine = attrsForLines[nInsertionLines-1],
         lastInsertionLineLength = 0;
     for (let i = 0; i < lastInsertionLine.length; i = i+2)
@@ -1111,6 +1111,8 @@ export default class Document {
   }
 
   insertText(text, pos, extendAttrs = false) {
+    // FIXME... imlement via insertTextAndAttributes???
+
     // inserts string `text` into the document at text position `pos`.
     // if `extendAttrs` is true then the attributes directly at pos will expand
     // of the inserted text.
@@ -1171,7 +1173,7 @@ export default class Document {
   }
 
   remove(range) {
-    if (this.size === 0) return;
+    if (this.rowCount === 0) return;
 
     var {start, end} = range;
 
