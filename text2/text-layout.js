@@ -8,11 +8,34 @@ function todo(name) { throw new Error("not yet implemented " + name)}
 export default class TextLayout {
 
   constructor() {
-    this.layoutComputed = false;
+    this.reset();
   }
 
   reset() {
-    // todo("reset");
+    this.resetLineCharBoundsCache();
+  }
+
+  resetLineCharBoundsCache(morph) {
+    this.lineCharBoundsCache = new WeakMap();
+    if (morph) {
+      this.estimateLineHeights(morph, true);
+      morph.makeDirty();
+    }
+  }
+
+  resetLineCharBoundsCacheOfLine(line) {
+    if (!line) return;
+    this.lineCharBoundsCache.set(line, null);
+  }
+
+  resetLineCharBoundsCacheOfRow(morph, row) {
+    let doc = morph.document;
+    doc && this.resetLineCharBoundsCacheOfLine(doc.getLine(row));
+  }
+
+  resetLineCharBoundsCacheOfRange(morph, range) {
+    for (let row = range.start.row; row <= range.end.row; row++)
+      this.resetLineCharBoundsCacheOfRow(morph, row);
   }
 
   estimateLineHeights(morph, force = false) {
@@ -29,6 +52,7 @@ export default class TextLayout {
     for (let i = 0; i < lines.length; i++) {
       let line = lines[i];
       if (!force && line.height > 0) continue;
+
       let textAttributes = line.textAttributes,
           styles = [];
 
@@ -49,25 +73,60 @@ export default class TextLayout {
       }
 
       let estimatedHeight = charHeight,
-          charCount = wraps && line.text.length,
-          isWrapped = false;
+          charCount = wraps && line.text.length;
       if (charCount) {
         let charWidth = (charWidthSum/charWidthN),
             charsPerline = Math.max(3, width / charWidth),
             wrappedLineCount = Math.ceil(charCount / charsPerline) || 1;
-        isWrapped = wrappedLineCount > 1;
         estimatedHeight = wrappedLineCount * charHeight;
       }
-      line.changeHeight(estimatedHeight, isWrapped, true);
+      line.changeHeight(estimatedHeight, true);
     }
 
     viewState._textLayoutStale = false;
   }
 
   textBounds(morph) {
-    this.estimateLineHeights(morph, false/*force*/)
-    let {width, document} = morph;
-    return morph.padding.topLeft().extent(pt(width, document.height));
+    let {document: doc, textLayout: tl, lineWrapping, padding} = morph,
+        pL = padding.left(),
+        pT = padding.top(),
+        rowY = pT, rowX = pL,
+        {rowCount} = doc,
+        textWidth = 0, textHeight = 0,
+        lastCharBounds;
+    if (rowCount === 0) return new Rectangle(pL, pT, 0, 0)
+
+    if (morph.isClip()) {
+      this.estimateLineHeights(morph, false);
+      let w = Math.max(morph.viewState.textWidth, morph.width),
+          h = doc.height;
+      return new Rectangle(pL, pT, w - padding.right(), h);
+    }
+
+    // for each line check the char bounds for max width...
+    for (let row = 0; row < rowCount; row++) {
+      let charBounds = tl.charBoundsOfRow(morph, row);
+      if (charBounds.length) lastCharBounds = charBounds;
+
+      // ...if we have lineWrapping enabled we need to check every char
+      if (lineWrapping) {
+        for (let column = 0; column < charBounds.length; column++) {
+          let {x, width} = charBounds[column];
+          textWidth = Math.max(textWidth, x + width + rowX);
+        }
+
+      // ...otherwise only the last
+      } else {
+        let {x, width} = charBounds[charBounds.length-1];
+        textWidth = Math.max(textWidth, x + width + rowX);
+      }
+    }
+
+    // We get the height of the last row
+    let {y, height} = lastCharBounds ? arr.last(lastCharBounds) : {height: 0, y: pT};
+    textHeight = y + height;
+
+    return new Rectangle(pL, pT, textWidth-pL, doc.height-pT);
   }
 
   isFirstLineVisible(morph) {
@@ -147,7 +206,9 @@ export default class TextLayout {
   charBoundsOfRow(morph, row) {
     let doc = morph.document,
         line = doc.getLine(row);
-    // if (line.charBounds) return line.charBounds; //cached
+
+    let cached = this.lineCharBoundsCache.get(line);
+    if (cached) return cached;
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // find char bounds via rendered nodes
@@ -164,36 +225,38 @@ export default class TextLayout {
       offsetX = offsetX - paddingLeft;
       offsetY = offsetY - paddingTop;
       charBounds = charBoundsOfLine(lineNode, line.text.length, offsetX, offsetY);
-    } else {
-      // this.estimateLineHeights(morph, false)
-      let {defaultTextStyle, extent: {x: width, y: height}, lineWrapping, clipMode} = morph,
-          offsetX = 0,
-          offsetY = -doc.computeVerticalOffsetOf(row);
 
-      offsetX = offsetX - paddingLeft;
-      offsetY = offsetY - paddingTop;
+
+    } else {
+      let {
+        defaultTextStyle,
+        extent: {x: width, y: height},
+        lineWrapping, clipMode, textAlign
+      } = morph;
+
       charBounds = fontMetric.manuallyComputeCharBoundsOfLine(
-        line, offsetX, offsetY, {
+        line, 0, 0, {
           defaultTextStyle,
           paddingLeft,paddingRight, paddingTop, paddingBottom,
-          width, height, lineWrapping, clipMode,
+          width, height, lineWrapping, clipMode, textAlign,
           cssClassName: "newtext-text-layer"
         },
       );
     }
 
-    if ((!line.height || line.hasEstimatedHeight) && charBounds.length) {
-      // FIXME: when computing height via charbounds... we need to consider
-      // line margings/paddings, custom line heights....!
-      let baseY = charBounds[0].y, lineHeight = 0;
-      for (let i = 0; i < charBounds.length; i++) {
-        let {y: charBoundsY, height: charBoundsHeight} = charBounds[i];
-        lineHeight = Math.max(lineHeight, (charBoundsY - baseY) + charBoundsHeight+1/*????*/);
-      }
-      line.changeHeight(lineHeight, false/*isWrapped*/, false/*not estimated*/)
-    }
+    // if ((!line.height || line.hasEstimatedHeight) && charBounds.length) {
+    //   // FIXME: when computing height via charbounds... we need to consider
+    //   // line margings/paddings, custom line heights....!
+    //   let baseY = charBounds[0].y, lineHeight = 0;
+    //   for (let i = 0; i < charBounds.length; i++) {
+    //     let {y: charBoundsY, height: charBoundsHeight} = charBounds[i];
+    //     lineHeight = Math.max(lineHeight, (charBoundsY - baseY) + charBoundsHeight+1/*????*/);
+    //   }
+    //   line.changeHeight(lineHeight, false/*not estimated*/)
+    // }
 
-    return line.charBounds = charBounds;
+    this.lineCharBoundsCache.set(line, charBounds);
+    return charBounds;
   }
 
   boundsFor(morph, docPos) {
@@ -217,6 +280,10 @@ export default class TextLayout {
       bounds = new Rectangle(0, 0, 0, 0);
     }
 
+    let {document: doc, padding} = morph;
+    bounds.x = bounds.x + padding.left();
+    bounds.y = bounds.y + padding.top() + doc.computeVerticalOffsetOf(row);
+
     return bounds;
   }
 
@@ -239,13 +306,17 @@ export default class TextLayout {
       else if (y <= padL) found = {line: {row: 0}}
       else return {row: 0, column: 0};/*????*/
     }
-
+    
     let {line: {row}} = found,
         charBounds = this.charBoundsOfRow(morph, row),
         nChars = charBounds.length,
         first = charBounds[0],
         last = charBounds[nChars-1],
         result = {row, column: 0};
+
+    // charBounds are in local line coordinates. Translate points x, y so that it fits
+    x = x - padL;
+    y = y - (padT + doc.computeVerticalOffsetOf(row));
 
     // everything to the left of the first char + half its width is col 0
     if (nChars === 0 || (x <= first.x + Math.round(first.width/2)
@@ -259,7 +330,7 @@ export default class TextLayout {
     // find col so that x between right side of char[col-1] and left side of char[col]
     // consider wrapped lines, i.e. charBounds.y <= y <= charBounds.y+charBounds.height
     let wrappedCharBoundsWithMatchingVerticalPos = [];
-    for (var i = nChars-2; i >= 0; i--) {
+    for (var i = nChars-1; i >= 0; i--) {
       let cb = charBounds[i],
           {x: cbX, width: cbWidth, y: cbY, height: cbHeight} = cb;
       if (y < cbY || y > cbY + cbHeight) continue;
