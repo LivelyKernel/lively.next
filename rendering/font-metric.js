@@ -56,12 +56,14 @@ export default class FontMetric {
     this.element.name = "fontMetric";
     this.setMeasureNodeStyles(this.element.style, true);
     parentEl.appendChild(this.element);
+    this._domMeasure = new DOMTextMeasure().install(doc, parentEl);
   }
 
   uninstall() {
     if (!this.element) return
     if (this.element.parentNode) this.element.parentNode.removeChild(this.element);
     this.element = null;
+    if (this._domMeasure) this._domMeasure.uninstall();
   }
 
   setMeasureNodeStyles(style, isRoot) {
@@ -189,8 +191,18 @@ export default class FontMetric {
     let fd = this.fontDetector || (this.fontDetector = new FontDetector(this.element.ownerDocument));
     return fd.isFontSupported(font);
   }
+
+  defaultCharExtent(styleOpts, styleKey) { return this._domMeasure.defaultCharExtent(styleOpts, styleKey); }
+
+  manuallyComputeCharBoundsOfLine(line, offsetX = 0, offsetY = 0, styleOpts, styleKey) {
+    return this._domMeasure.manuallyComputeCharBoundsOfLine(
+      line, offsetX, offsetY, styleOpts, styleKey);
+  }
 }
 
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// font detection
 
 class FontDetector {
   /**
@@ -784,3 +796,389 @@ export const fonts = [
   {name: "Luxi",     type: "misc"},
   {name: "System",   type: "misc"}
 ];
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// new text measure implementation
+
+// Unicode characters that are considered "extending", i.e. treated as a single
+// unit. The list below is based on
+// https://github.com/codemirror/CodeMirror/blob/master/src/util/misc.js#L122
+const extendingChars = /[\u0300-\u036f\u0483-\u0489\u0591-\u05bd\u05bf\u05c1\u05c2\u05c4\u05c5\u05c7\u0610-\u061a\u064b-\u065e\u0670\u06d6-\u06dc\u06de-\u06e4\u06e7\u06e8\u06ea-\u06ed\u0711\u0730-\u074a\u07a6-\u07b0\u07eb-\u07f3\u0816-\u0819\u081b-\u0823\u0825-\u0827\u0829-\u082d\u0900-\u0902\u093c\u0941-\u0948\u094d\u0951-\u0955\u0962\u0963\u0981\u09bc\u09be\u09c1-\u09c4\u09cd\u09d7\u09e2\u09e3\u0a01\u0a02\u0a3c\u0a41\u0a42\u0a47\u0a48\u0a4b-\u0a4d\u0a51\u0a70\u0a71\u0a75\u0a81\u0a82\u0abc\u0ac1-\u0ac5\u0ac7\u0ac8\u0acd\u0ae2\u0ae3\u0b01\u0b3c\u0b3e\u0b3f\u0b41-\u0b44\u0b4d\u0b56\u0b57\u0b62\u0b63\u0b82\u0bbe\u0bc0\u0bcd\u0bd7\u0c3e-\u0c40\u0c46-\u0c48\u0c4a-\u0c4d\u0c55\u0c56\u0c62\u0c63\u0cbc\u0cbf\u0cc2\u0cc6\u0ccc\u0ccd\u0cd5\u0cd6\u0ce2\u0ce3\u0d3e\u0d41-\u0d44\u0d4d\u0d57\u0d62\u0d63\u0dca\u0dcf\u0dd2-\u0dd4\u0dd6\u0ddf\u0e31\u0e34-\u0e3a\u0e47-\u0e4e\u0eb1\u0eb4-\u0eb9\u0ebb\u0ebc\u0ec8-\u0ecd\u0f18\u0f19\u0f35\u0f37\u0f39\u0f71-\u0f7e\u0f80-\u0f84\u0f86\u0f87\u0f90-\u0f97\u0f99-\u0fbc\u0fc6\u102d-\u1030\u1032-\u1037\u1039\u103a\u103d\u103e\u1058\u1059\u105e-\u1060\u1071-\u1074\u1082\u1085\u1086\u108d\u109d\u135f\u1712-\u1714\u1732-\u1734\u1752\u1753\u1772\u1773\u17b7-\u17bd\u17c6\u17c9-\u17d3\u17dd\u180b-\u180d\u18a9\u1920-\u1922\u1927\u1928\u1932\u1939-\u193b\u1a17\u1a18\u1a56\u1a58-\u1a5e\u1a60\u1a62\u1a65-\u1a6c\u1a73-\u1a7c\u1a7f\u1b00-\u1b03\u1b34\u1b36-\u1b3a\u1b3c\u1b42\u1b6b-\u1b73\u1b80\u1b81\u1ba2-\u1ba5\u1ba8\u1ba9\u1c2c-\u1c33\u1c36\u1c37\u1cd0-\u1cd2\u1cd4-\u1ce0\u1ce2-\u1ce8\u1ced\u1dc0-\u1de6\u1dfd-\u1dff\u200c\u200d\u20d0-\u20f0\u2cef-\u2cf1\u2de0-\u2dff\u302a-\u302f\u3099\u309a\ua66f-\ua672\ua67c\ua67d\ua6f0\ua6f1\ua802\ua806\ua80b\ua825\ua826\ua8c4\ua8e0-\ua8f1\ua926-\ua92d\ua947-\ua951\ua980-\ua982\ua9b3\ua9b6-\ua9b9\ua9bc\uaa29-\uaa2e\uaa31\uaa32\uaa35\uaa36\uaa43\uaa4c\uaab0\uaab2-\uaab4\uaab7\uaab8\uaabe\uaabf\uaac1\uabe5\uabe8\uabed\udc00-\udfff\ufb1e\ufe00-\ufe0f\ufe20-\ufe26\uff9e\uff9f]/
+function isExtendingChar(ch) { return ch.charCodeAt(0) >= 768 && extendingChars.test(ch) }
+
+// Returns a number from the range [`0`; `str.length`] unless `pos` is outside that range.
+function skipExtendingChars(str, pos, dir) {
+  while ((dir < 0 ? pos > 0 : pos < str.length) && isExtendingChar(str.charAt(pos)))
+    pos += dir;
+  return pos
+}
+
+
+function test() {
+  let measure = DOMTextMeasure.initDefault().reset();
+  measure.defaultCharExtent({defaultTextStyle: {fontSize: 12, fontFamily: "serif"}});
+}
+
+
+
+class DOMTextMeasure {
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // setup
+
+  reset() {
+    var doc, parentNode;
+    if (this.element) {
+      parentNode = this.element.parentNode;
+      doc = this.element.ownerDocument;
+    }
+    this.uninstall();
+    // this.charMap = {};
+    // this.cachedBoundsInfo = {};
+    if (doc && parentNode)
+      this.install(doc, parentNode);
+    return this;
+  }
+
+  install(doc, parentEl) {
+    this.maxElementsWithStyleCacheCount = 2;
+    this.elementsWithStyleCache = {};
+    this.elementsWithStyleCacheCount = 0;
+    this.defaultCharWidthHeightCache = {};
+    this.doc = doc;
+    let el = this.element = doc.createElement("div");
+    el.id = "domMeasure";
+    this.setMeasureNodeStyles(el.style, true);
+    parentEl.appendChild(el);
+    return this;
+  }
+
+  uninstall() {
+    let el = this.element;
+    if (!el) return
+    if (el.parentNode) el.parentNode.removeChild(el);
+    this.element = null;
+  }
+
+  setMeasureNodeStyles(style, isRoot) {
+    style.width = style.height = "auto";
+    style.left = style.top = "0px";
+    style.visibility = "hidden";
+    style.position = "absolute";
+    style.whiteSpace = "pre";
+    style.font = "inherit";
+    style.overflow = isRoot ? "hidden" : "visible";
+  }
+
+  generateStyleKey(styleOpts) {
+    let {
+      defaultTextStyle: {
+        fontFamily,
+        fontSize,
+        fontWeight,
+        fontStyle,
+        textDecoration,
+        textStyleClasses
+      },
+      paddingLeft, paddingRight, paddingTop, paddingBottom,
+      width, height, clipMode, lineWrapping,
+      cssClassName = "newtext-text-layer"
+    } = styleOpts;
+    return [
+      fontFamily,
+      fontSize,
+      fontWeight,
+      fontStyle,
+      textDecoration,
+      textStyleClasses,
+      paddingLeft, paddingRight, paddingTop, paddingBottom,
+      width, height, clipMode, lineWrapping,
+      cssClassName
+    ].join("-");
+  }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // interface
+
+  defaultCharExtent(styleOpts, styleKey) {
+    if (!styleKey)
+      styleKey = this.generateStyleKey(styleOpts);
+
+    let {defaultCharWidthHeightCache} = this,
+        found = defaultCharWidthHeightCache[styleKey];
+    if (found) return found;
+    let node = this._prepareMeasureForLineSimpleStyle(styleOpts, styleKey);
+    node.textContent = "Hello World!";
+    let {width, height} = node.getBoundingClientRect();
+    return defaultCharWidthHeightCache[styleKey] = {width: width/12, height};
+  }
+
+  manuallyComputeCharBoundsOfLine(line, offsetX = 0, offsetY = 0, styleOpts, styleKey) {
+    if (!styleKey)
+      styleKey = this.generateStyleKey(styleOpts);
+
+    let lineNode = this._ensureMeasureNodeForLine(line, styleOpts, styleKey),
+        offset = cumulativeOffset(lineNode);
+
+    try {
+      return charBoundsOfLine(line, lineNode, offset.left + offsetX, offset.top + offsetY);
+    } finally { lineNode.parentNode.removeChild(lineNode); }
+  }
+  
+  
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // implementation
+  _ensureMeasureNode(styleOpts, styleKey) {
+    // create a DOM node that would be a textlayer node in a normal text morph.
+    // In order to measure stuff this node gets line nodes appended later
+
+    // returns an existing or new node with style
+    let {doc, element: root, elementsWithStyleCache: cache} = this;
+    if (cache[styleKey]) return cache[styleKey];
+
+    let {
+      defaultTextStyle, lineWrapping,
+      width, height, clipMode,
+      paddingLeft = 0,
+      paddingRight = 0,
+      paddingTop = 0,
+      paddingBottom = 0,
+      cssClassName = "newtext-text-layer"
+    } = styleOpts;
+
+    switch (lineWrapping) {
+      case true:
+      case "by-words":      cssClassName = cssClassName + " wrap-by-words"; break;
+      case "only-by-words": cssClassName = cssClassName + " only-wrap-by-words"; break;
+      case "by-chars":      cssClassName = cssClassName + " wrap-by-chars"; break;
+      case false:           cssClassName = cssClassName + " no-wrapping"; break;
+    }
+
+    let el = cache[styleKey] = document.createElement("div");
+    el.className = cssClassName;
+    el.id = styleKey;
+    root.appendChild(el);
+    this.elementsWithStyleCacheCount++;
+    Object.assign(el.style, defaultTextStyle);
+    el.style.position = "absolute";
+    el.style.boxSizing = "border-box";
+    el.style.fontSize = defaultTextStyle.fontSize + "px";
+    el.style.paddingLeft = paddingLeft + "px";
+    el.style.paddingTop = paddingTop + "px";
+    el.style.paddingBottom = paddingBottom + "px";
+    el.style.paddingRight = paddingRight + "px";
+    if (defaultTextStyle.textStyleClasses)
+      el.className = el.className + " " + defaultTextStyle.textStyleClasses.join(" ");
+    if (typeof width === "number")
+      el.style.width = width + "px";
+    if (typeof height === "number")
+      el.style.height = height + "px";
+    if (clipMode)
+      el.style.overflow = clipMode;
+
+    if (this.elementsWithStyleCacheCount > this.maxElementsWithStyleCacheCount) {
+      let rmCacheEl = root.childNodes[0];
+      root.removeChild(rmCacheEl);
+      cache[rmCacheEl.id] = null;
+    }
+    return el;
+  }
+  
+  _ensureMeasureNodeForLine(line, styleOpts, styleKey) {
+    let {doc: document} = this,
+        textNode = this._ensureMeasureNode(styleOpts, styleKey);
+
+// while(textNode.childNodes.length)
+//   textNode.removeChild(textNode.childNodes[0]);
+
+    // this basically mirrors the renderLine method in text/renderer.js. For
+    // optimization we do not use virtual-dom here but construct the nodes by hand
+
+    let lineEl = document.createElement("div");
+    lineEl.className = "line";
+
+    // FIXME... TextRenderer>>renderLine...!
+    let { textAndAttributes } = line, renderedChunks = [];
+    for (let i = 0; i < textAndAttributes.length; i = i+2) {
+      let text = textAndAttributes[i], attr = textAndAttributes[i+1];
+      if (!attr) {
+        lineEl.appendChild(document.createTextNode(text));
+        continue;
+      }
+
+      let {
+        fontSize,
+        fontFamily,
+        fontWeight,
+        fontStyle,
+        textDecoration,
+        fontColor,
+        backgroundColor,
+        nativeCursor,
+        textStyleClasses,
+        link
+      } = attr;
+
+      let tagname = link ? "a" : "span",
+          style = {}, attrs = {textContent: text};
+
+      if (link) {
+        attrs.href = link;
+        attrs.target = "_blank";
+      }
+
+      if (fontSize) style.fontSize               = fontSize + "px";
+      if (fontFamily) style.fontFamily           = fontFamily;
+      if (fontWeight) style.fontWeight           = fontWeight;
+      if (fontStyle) style.fontStyle             = fontStyle;
+      if (textDecoration) style.textDecoration   = textDecoration;
+      if (fontColor) style.color                 = fontColor ? String(attr.fontColor) : "";
+      if (backgroundColor) style.backgroundColor = backgroundColor ? String(attr.backgroundColor) : "";
+      if (nativeCursor) attrs.style.cursor       = nativeCursor;
+
+      if (textStyleClasses && textStyleClasses.length)
+        attrs.className = textStyleClasses.join(" ");
+
+      let el = document.createElement(tagname);
+      Object.assign(el, attrs);
+      Object.assign(el.style, style);
+      lineEl.appendChild(el);
+    }
+
+    textNode.appendChild(lineEl);
+    return lineEl;
+  }
+
+  _prepareMeasureForLineSimpleStyle(styleOpts, styleKey) {
+    // returns an existing or new node with style
+    let {doc, element: root, elementsWithStyleCache: cache} = this;
+    if (cache[styleKey]) return cache[styleKey];
+    let el = cache[styleKey] = document.createElement("div"),
+        {defaultTextStyle, cssClassName} = styleOpts,
+        {fontSize, textStyleClasses} = defaultTextStyle;
+    el.id = styleKey;
+    el.className = cssClassName;
+    root.appendChild(el);
+    this.elementsWithStyleCacheCount++;
+    Object.assign(el.style, defaultTextStyle);
+    el.style.fontSize = fontSize + "px";
+    if (textStyleClasses)
+      el.className = el.className + " " + textStyleClasses.join(" ");
+    if (this.elementsWithStyleCacheCount > this.maxElementsWithStyleCacheCount) {
+      let rmCacheEl = root.childNodes[0];
+      root.removeChild(rmCacheEl);
+      cache[rmCacheEl.id] = null;
+    }
+    return el;
+  }
+
+}
+
+function cumulativeOffset(element) {
+  let top = 0, left = 0;
+  do {
+    top += element.offsetTop || 0;
+    left += element.offsetLeft || 0;
+    element = element.offsetParent;
+  } while(element);
+  return {top, left};
+};
+
+
+function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
+  const {ELEMENT_NODE, TEXT_NODE, childNodes} = lineNode;
+
+  let node = childNodes[0],
+      result = [],
+      textLength = line.text.length,
+      index = 0;
+
+  let emptyNodeFill;
+  if (!node) {
+    emptyNodeFill = node = lineNode.ownerDocument.createElement("br");
+    lineNode.appendChild(emptyNodeFill);
+    // let {left, top, width, height} = lineNode.getBoundingClientRect(),
+    //     x = left - offsetX,
+    //     y = top - offsetY;
+    // result[0] = {x,y,width,height};
+  }
+
+  while (node) {
+
+    let textNode = node.nodeType === ELEMENT_NODE && node.childNodes[0] ?
+      node.childNodes[0] : node;
+
+    if (textNode.nodeType === TEXT_NODE) {
+      let length = textNode.length;
+      for (let i = 0; i < length; i++) {
+        // let {left: x, top: y, width, height} =  measureCharInner(node, i);
+        // result[index++] = typeof height === "undefined" ?
+        //   null : {x: x - offsetX, y: y - offsetY, width, height};
+        let {left, top, width, height} = measureCharInner(textNode, i),
+            x = left - offsetX,
+            y = top - offsetY;
+        result[index++] = {x, y, width, height};
+      }
+
+    } else if (node.nodeType === ELEMENT_NODE) {
+      let {left, top, width, height} = node.getBoundingClientRect(),
+          x = left - offsetX,
+          y = top - offsetY;
+      result[index++] = {x,y,width,height};
+
+    } else throw new Error(`Cannot deal with node ${node}`);
+
+    node = node.nextSibling;
+  }
+
+  if (emptyNodeFill)
+    emptyNodeFill.parentNode.removeChild(emptyNodeFill);
+
+  return result;
+}
+
+
+
+function measureCharInner(node, index, bias = "left") {
+  let rect, start = index, end = index + 1;
+  if (node.nodeType == 3) { // If it is a text node, use a range to retrieve the coordinates.
+    for (let i = 0; i < 4; i++) { // Retry a maximum of 4 times when nonsense rectangles are returned
+      rect = getUsefulRect(range(node, start, end).getClientRects(), bias)
+      if (rect.left || rect.right || start == 0) break
+      end = start
+      start = start - 1
+    }
+  }
+  return rect;
+  // let {bottom, height, left, right, top, width} = rect;
+  // return {bottom, height, left, right, top, width};
+}
+
+function range(node, start, end, endNode) {
+    let r = document.createRange()
+    r.setEnd(endNode || node, end)
+    r.setStart(node, start)
+    return r
+
+  // range = function(node, start, end) {
+  //   let r = document.body.createTextRange()
+  //   try { r.moveToElementText(node.parentNode) }
+  //   catch(e) { return r }
+  //   r.collapse(true)
+  //   r.moveEnd("character", end)
+  //   r.moveStart("character", start)
+  //   return r
+  // }
+}
+
+function getUsefulRect(rects, bias) {
+  let rect = {left: 0, right: 0, top: 0, bottom: 0};
+  if (bias == "left") for (let i = 0; i < rects.length; i++) {
+    if ((rect = rects[i]).left != rect.right) break
+  } else for (let i = rects.length - 1; i >= 0; i--) {
+    if ((rect = rects[i]).left != rect.right) break
+  }
+  return rect
+}
