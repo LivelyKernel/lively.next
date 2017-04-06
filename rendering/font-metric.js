@@ -126,16 +126,7 @@ export default class FontMetric {
             width -= x;
           }
         } else {
-
-// if (window.debugCharBoundsFor) var start = Date.now();
-
           ({ width, height } = this.sizeFor(style, char));
-
-  // if (window.debugCharBoundsFor) {
-  //   var t = Date.now() - start;
-  //   window._debugCharBoundsFor.push(`${char} computed in ${t}ms`)
-  // }
-
         }
         bounds[col] = { x, y: 0, width, height };
         x += width;
@@ -882,7 +873,7 @@ class DOMTextMeasure {
         textStyleClasses
       },
       paddingLeft, paddingRight, paddingTop, paddingBottom,
-      width, height, clipMode, lineWrapping,
+      width, height, clipMode, lineWrapping, textAlign,
       cssClassName = "newtext-text-layer"
     } = styleOpts;
     return [
@@ -893,7 +884,7 @@ class DOMTextMeasure {
       textDecoration,
       textStyleClasses,
       paddingLeft, paddingRight, paddingTop, paddingBottom,
-      width, height, clipMode, lineWrapping,
+      width, height, clipMode, lineWrapping, textAlign,
       cssClassName
     ].join("-");
   }
@@ -923,7 +914,7 @@ class DOMTextMeasure {
         offset = cumulativeOffset(lineNode);
 
     try {
-      return charBoundsOfLine(line, lineNode, offset.left + offsetX, offset.top + offsetY);
+      return charBoundsOfLine(line, lineNode, -offset.left + offsetX, -offset.top + offsetY);
     } finally { lineNode.parentNode.removeChild(lineNode); }
   }
   
@@ -940,7 +931,7 @@ class DOMTextMeasure {
 
     let {
       defaultTextStyle, lineWrapping,
-      width, height, clipMode,
+      width, height, clipMode, textAlign,
       paddingLeft = 0,
       paddingRight = 0,
       paddingTop = 0,
@@ -977,6 +968,8 @@ class DOMTextMeasure {
       el.style.height = height + "px";
     if (clipMode)
       el.style.overflow = clipMode;
+    if (textAlign)
+      el.style.textAlign = textAlign;
 
     if (this.elementsWithStyleCacheCount > this.maxElementsWithStyleCacheCount) {
       let rmCacheEl = root.childNodes[0];
@@ -998,13 +991,14 @@ class DOMTextMeasure {
 
     let lineEl = document.createElement("div");
     lineEl.className = "line";
+    // lineEl.style.position = "absolute";
 
     // FIXME... TextRenderer>>renderLine...!
     let { textAndAttributes } = line, renderedChunks = [];
     for (let i = 0; i < textAndAttributes.length; i = i+2) {
       let text = textAndAttributes[i], attr = textAndAttributes[i+1];
       if (!attr) {
-        lineEl.appendChild(document.createTextNode(text));
+        lineEl.appendChild(text.length ? document.createTextNode(text) : document.createElement("br"));
         continue;
       }
 
@@ -1022,7 +1016,7 @@ class DOMTextMeasure {
       } = attr;
 
       let tagname = link ? "a" : "span",
-          style = {}, attrs = {textContent: text};
+          style = {}, attrs = {};
 
       if (link) {
         attrs.href = link;
@@ -1044,6 +1038,9 @@ class DOMTextMeasure {
       let el = document.createElement(tagname);
       Object.assign(el, attrs);
       Object.assign(el.style, style);
+      
+      if (text.length) el.textContent = text;
+      else el.appendChild(document.createElement("br"));
       lineEl.appendChild(el);
     }
 
@@ -1089,6 +1086,7 @@ function cumulativeOffset(element) {
 
 function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
   const {ELEMENT_NODE, TEXT_NODE, childNodes} = lineNode;
+  const maxLength = 20000;
 
   let node = childNodes[0],
       result = [],
@@ -1099,13 +1097,11 @@ function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
   if (!node) {
     emptyNodeFill = node = lineNode.ownerDocument.createElement("br");
     lineNode.appendChild(emptyNodeFill);
-    // let {left, top, width, height} = lineNode.getBoundingClientRect(),
-    //     x = left - offsetX,
-    //     y = top - offsetY;
-    // result[0] = {x,y,width,height};
   }
 
   while (node) {
+
+    if (index > maxLength) break;
 
     let textNode = node.nodeType === ELEMENT_NODE && node.childNodes[0] ?
       node.childNodes[0] : node;
@@ -1113,23 +1109,19 @@ function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
     if (textNode.nodeType === TEXT_NODE) {
       let length = textNode.length;
       for (let i = 0; i < length; i++) {
-        // let {left: x, top: y, width, height} =  measureCharInner(node, i);
-        // result[index++] = typeof height === "undefined" ?
-        //   null : {x: x - offsetX, y: y - offsetY, width, height};
         let {left, top, width, height} = measureCharInner(textNode, i),
-            x = left - offsetX,
-            y = top - offsetY;
+            x = left + offsetX,
+            y = top + offsetY;
         result[index++] = {x, y, width, height};
       }
 
     } else if (node.nodeType === ELEMENT_NODE) {
       let {left, top, width, height} = node.getBoundingClientRect(),
-          x = left - offsetX,
-          y = top - offsetY;
+          x = left + offsetX,
+          y = top + offsetY;
       result[index++] = {x,y,width,height};
 
     } else throw new Error(`Cannot deal with node ${node}`);
-
     node = node.nextSibling;
   }
 
