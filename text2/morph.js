@@ -4,7 +4,7 @@ import { config, Morph } from "lively.morphic";
 import { Rectangle, rect, Color, pt } from "lively.graphics";
 import { Selection, MultiSelection } from "../text/selection.js";
 import { string, obj, fun, promise, arr } from "lively.lang";
-import Document from "./document-tree.js";
+import Document from "./document.js";
 import { signal } from "lively.bindings";
 import { TextStyleAttribute } from "../text/attribute.js";
 import { Anchor } from "../text/anchors.js";
