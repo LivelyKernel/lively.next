@@ -1200,6 +1200,14 @@ export default class Document {
     if (lines.length > 1) this.removeLines(fromRow+1, toRow);
   }
 
+  splitLineAt({row, column}) {
+    let line = this.getLine(row),
+        [before, after] = splitTextAndAttributesAt(line.textAndAttributes, column);
+    line.changeTextAndAttributes(before);
+    this.insertLines([new Line(null, 0, after)], row+1);
+    return {start: {row, column}, end: {row: row+1, column: 0}};
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // word accessors
 
