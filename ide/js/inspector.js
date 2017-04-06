@@ -9,6 +9,7 @@ import { debounce, throttle } from "lively.lang/function.js";
 import { ColorPicker } from "../styling/color-picker.js";
 import { isBoolean, isString, isNumber } from "lively.lang/object.js";
 import { ValueScrubber } from "../../components/widgets.js";
+import { last } from "lively.lang/array.js";
 
 
 var inspectorCommands = [
@@ -351,7 +352,7 @@ export default class Inspector extends Morph {
   }
 
   onWindowClosed() {
-    disconnect(this.targetObject, 'onChange', this, 'refreshProperties');
+    this.stopStepping();
   }
 
   constructor(props = {}) {
@@ -365,17 +366,19 @@ export default class Inspector extends Morph {
     this.build();
     this.state = {targetObject: undefined, updateInProgress: false};
     this.targetObject = targetObject || null;
-    this.refreshProperties = throttle(() => {
-      this.prepareForNewTargetObject(this.targetObject)}, 50)
+    this.refreshProperties = () => {
+      let change = last(this.targetObject.env.changeManager.changesFor(this.targetObject));
+      if (change == this.lastChange) return;
+      this.lastChange = change;
+      this.prepareForNewTargetObject(this.targetObject)}
+    this.startStepping(50, 'refreshProperties');
   }
 
   get isInspector() { return true; }
 
   get targetObject() { return this.state.targetObject; }
   set targetObject(obj) {
-    this.state.targetObject && disconnect(this.state.targetObject, 'onChange', this, 'refreshProperties');
     this.state.targetObject = obj;
-    connect(obj, 'onChange', this, 'refreshProperties');
     this.prepareForNewTargetObject(obj);
   }
 
