@@ -170,7 +170,10 @@ class InnerTreeNode extends TreeNode {
   }
 
   computeVerticalOffsetOf(row, y = 0) {
-    if (row < 0 || row >= this.size) return null;
+    if (row < 0 || row >= this.size) {
+      console.warn(`strange row in computeVerticalOffsetOf: ${row}`);
+      return y;
+    }
     if (this.isLeaf) {
       for (let i = 0; i < Math.min(row, this.children.length); i++)
         y = y + this.children[i].height;
@@ -178,13 +181,9 @@ class InnerTreeNode extends TreeNode {
     }
     for (var i = 0; i < this.children.length; i++) {
       var child = this.children[i], childSize = child.size;
-      if (row < childSize) {
-        y = y + child.height;
-        row = row - childSize;
-        continue;
-      }
-      if (row === childSize)
-        return child.computeVerticalOffsetOf(row, y);
+      if (row < childSize) return child.computeVerticalOffsetOf(row, y);
+      row = row - childSize;
+      y = y + child.height;
     }
     return y;
   }
@@ -736,11 +735,12 @@ export class Line extends TreeNode {
     return root.findRow(row-1);
   }
 
-  changeHeight(newHeight, isEstimatedHeight = false) {
+  changeHeight(newHeight, isWrapped = false, isEstimatedHeight = false) {
     let {height, parent} = this,
         delta = newHeight - height;
     this.height = newHeight;
     this.hasEstimatedHeight = isEstimatedHeight;
+    this.isWrapped = isWrapped;
     while (parent) {
       parent.height = parent.height + delta;
       parent = parent.parent;
@@ -749,14 +749,19 @@ export class Line extends TreeNode {
   }
 
   changeText(newText, textAndAttributes = null) {
-    let {parent, text} = this,
-        deltaLength = (newText.length+1) - (text.length+1);
+    let {parent, text, height} = this,
+        deltaLength = (newText.length+1) - (text.length+1),
+        deltaHeight = -height;
     this.charBounds = null;
+    this.height = 0;
+    this.hasEstimatedHeight = false;
+    this.isWrapped = false;
     this._text = newText;
     this._textAttributes = null;
     this.textAndAttributes = textAndAttributes || [newText, null];
     while (parent) {
       parent.stringSize = parent.stringSize + deltaLength;
+      parent.height = parent.height + deltaHeight;
       parent = parent.parent;
     }
     return this;

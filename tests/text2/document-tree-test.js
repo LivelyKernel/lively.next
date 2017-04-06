@@ -61,16 +61,6 @@ describe("document as text tree", () => {
     expect(doc.lines).equals(lines);
   });
 
-  it("updates height", () => {
-    let doc = new Document([{text: "a", height: 10}, {text: "b", height: 20}, {text: "c", height: 5}, {text: "d", height: 15}]),
-        lines = doc.lines;
-    lines[2].changeHeight(12);
-    expect(lines[2]).containSubset({text: "c", height: 12});
-    expect(doc.root.children[1].height).equals(15+12, "height parent[1]");
-    expect(doc.root.height).equals(30+15+12, "height root");
-  });
-
-
   it("balances leaf nodes", () => {
     var doc = new Document(["a", "b", "c", "d"], opts);
     doc.balance();
@@ -149,7 +139,6 @@ describe("document as text tree", () => {
       + ` line 0 (height: 0, stringSize: 2, text: "a")\n`
       + ` line 1 (height: 0, stringSize: 2, text: "c")`);
       doc.removeLine(1);
-      doc.print2()
 
       expect(doc.print()).equals(`root (size: 1, height: 0, stringSize: 2)\n line 0 (height: 0, stringSize: 2, text: "a")`);
       doc.removeLine(0);
@@ -241,6 +230,27 @@ describe("document as text tree", () => {
   });
 
 });
+
+describe("geometry access", () => {
+
+  it("updates height", () => {
+    let doc = new Document([{text: "a", height: 10}, {text: "b", height: 20}, {text: "c", height: 5}, {text: "d", height: 15}]),
+        lines = doc.lines;
+    lines[2].changeHeight(12);
+    expect(lines[2]).containSubset({text: "c", height: 12});
+    expect(doc.root.children[1].height).equals(15+12, "height parent[1]");
+    expect(doc.root.height).equals(30+15+12, "height root");
+  });
+
+  it("computes y position", () => {
+    var doc = new Document([{text: "a", height: 10}, {text: "b", height: 20}, {text: "c", height: 5}, {text: "d", height: 15}]);
+    expect(doc.computeVerticalOffsetOf(0)).equals(0, "1");
+    expect(doc.computeVerticalOffsetOf(1)).equals(10, "2");
+    expect(doc.computeVerticalOffsetOf(2)).equals(30, "3");
+    expect(doc.computeVerticalOffsetOf(3)).equals(35, "4");
+  })
+
+})
 
 
 function range(startRow, startCol, endRow, endCol) {
