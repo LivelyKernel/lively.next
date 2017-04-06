@@ -152,12 +152,12 @@ function propertiesAndSettingsInHierarchyOf(klass) {
       allPropSettings = obj.valuesInPropertyHierarchy(klass, "propertySettings"),
       allProps = obj.valuesInPropertyHierarchy(klass, "properties");
 
-  for (let i = 0; i < allPropSettings.length; i++) {
+  for (var i = 0; i < allPropSettings.length; i++) {
     let current = allPropSettings[i];
     current && typeof current === "object" && Object.assign(propertySettings, current);
   }
 
-  for (let i = 0; i < allProps.length; i++) {
+  for (var i = 0; i < allProps.length; i++) {
     let current = allProps[i];
     if (typeof current !== "object") {
       console.error(
@@ -224,7 +224,7 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
   // 2. Run init code for properties
   // and if we have values we will initialize the properties from it. Values
   // is expected to be a JS object mapping property names to property values
-  for (let i = 0; i < propsNeedingInitialize.length; i++) {
+  for (var i = 0; i < propsNeedingInitialize.length; i++) {
     let key = propsNeedingInitialize[i],
         actions = initActions[key],
         hasValue = actions.hasOwnProperty("value");
