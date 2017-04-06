@@ -394,7 +394,7 @@ export class Text extends Morph {
     snapshot.props.textAndAttributes = {
       key: "textAndAttributes",
       verbatim: true,
-      value: this.textAndAttributes.map(([text, attr]) => [text, attr.data])
+      value: this.textAndAttributes
     };
   }
 
