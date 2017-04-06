@@ -11,7 +11,7 @@ function installCSS(document) {
   cssInstalled = true;
   addOrChangeCSSDeclaration("new-text-css", `
     .newtext-scroller {
-        overflow-anchor: none;˜ /*annoying chrome*/
+        overflow-anchor: none; /*annoying chrome*/
         -moz-box-sizing: content-box;
         box-sizing: content-box;
         height: 100%;
@@ -36,7 +36,7 @@ function installCSS(document) {
 
     .newtext-selection-layer {
       position: absolute;
-      z-index: -1;
+      z-index: 0;
     }
 
     .newtext-text-layer {
@@ -61,7 +61,7 @@ function installCSS(document) {
     .newtext-text-layer.no-wrapping {
     }
 
-    .newtext-text-layer .line>span {
+    .newtext-text-layer .line {
       -moz-border-radius: 0;
       -webkit-border-radius: 0;
       border-radius: 0;
@@ -87,48 +87,86 @@ function installCSS(document) {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+let nextTick = (function(window, prefixes, i, p, fnc, to) {
+    while (!fnc && i < prefixes.length) {
+        fnc = window[prefixes[i++] + 'equestAnimationFrame'];
+    }
+    return (fnc && fnc.bind(window)) || window.setImmediate || function(fnc) {window.setTimeout(fnc, 0);};
+})(typeof window !== 'undefined' ? window : global, 'r webkitR mozR msR oR'.split(' '), 0);
+
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// Render hook to update layout / size of text document lines once those are
+// rendered and DOM measuring can be used
 function AfterTextRenderHook(morph, lines) {
   this.morph = morph;
   this.lines = lines;
+  this.called = false;
 }
-AfterTextRenderHook.prototype.hook = function(node, propName, prevValue) {
-  let {morph: {viewState}, lines} = this;
+
+AfterTextRenderHook.prototype.updateLineHeightOfNode = function(morph, docLine, lineNode) {
+  if (docLine.height === 0 || docLine.hasEstimatedHeight) {
+    let {height: nodeHeight} = lineNode.getBoundingClientRect();
+    if (docLine.height !== nodeHeight) {
+      // console.log(`[${line.row}] ${nodeHeight} vs ${line.height}`)
+      docLine.changeHeight(nodeHeight, false);
+      morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
+      // force re-render in case text layout / line heights changed
+      morph.makeDirty();
+    }
+    return nodeHeight;
+  }
+  return docLine.height;
+}
+
+AfterTextRenderHook.prototype.updateLineHeightOfLines = function(textlayerNode) {
+  // figure out what lines are displayed in the text layer node and map those
+  // back to document lines.  Those are then updated via lineNode.getBoundingClientRect
+
+  let {morph, lines} = this,
+      {textLayout, viewState} = morph
 
   viewState.dom_nodes = [];
   viewState.dom_nodeFirstRow = 0;
 
-  if (!node || !node.parentNode) return;
+  viewState.textWidth = textlayerNode.scrollWidth;
+  let lineNode;
+  for (let i = 0; i < textlayerNode.childNodes.length; i++) {
+    if (textlayerNode.childNodes[i].className === "line") {
+      lineNode = textlayerNode.childNodes[i]; break;
+    }
+  }
+  let firstLineNode = lineNode,
+      lastLineNode = lineNode;
 
-  // let dirty = morph._dirty;
-  // if (dirty)
-  //   console.log(this.env.changeManager.changesFor(this).slice(-20));
-  // let {scrollLeft, scrollTop} = node.parentNode;
-  // this.setProperty("textScroll", pt(scrollLeft, scrollTop));
-  // this._dirty = dirty;
-  // let node = this.env.renderer.getNodeForMorph(this).querySelector(".newtext-text-layer");
-  // let lineNode = node.childNodes[1];
-
-  let lineNode = node.querySelector(".line");
   if (!lineNode) return;
 
   let row = Number(lineNode.dataset.row);
   if (typeof row !== "number" || isNaN(row)) return;
   viewState.dom_nodeFirstRow = row;
 
-  try {
-    while (lineNode) {
-      viewState.dom_nodes.push(lineNode);
-      let line = lines[row++];
-      if (line && (line.height === 0 || line.hasEstimatedHeight)) {
-        let {height} = lineNode.getBoundingClientRect();
-        line.changeHeight(height, false, false);
-      }
-      lineNode = lineNode.nextSibling;
-    }
-  } catch (err) { console.error(err); }
+  let actualTextHeight = 0;
 
-  viewState._textLayoutStale = false;
+  while (lineNode) {
+    lastLineNode = lineNode;
+    viewState.dom_nodes.push(lineNode);
+    let line = lines[row++];
+    if (line)
+      actualTextHeight += this.updateLineHeightOfNode(morph, line, lineNode);
+    lineNode = lineNode.nextSibling;
+  }
 }
+
+AfterTextRenderHook.prototype.hook = function(node, propName, prevValue) {
+  if (!node || !node.parentNode) return;
+  this.called = true;
+  // the childNodes = line nodes of node are updated after the hook was called,
+  // so delay...
+  nextTick(() => this.updateLineHeightOfLines(node));
+}
+
+
 
 export default class Renderer {
 
@@ -157,135 +195,77 @@ export default class Renderer {
             (morph.readOnly ? "default" : "text") :
             morph.nativeCursor
         }
-      },
-      [renderer.renderSubmorphs(morph)]
-        .concat(selectionLayer)
-        .concat(this.renderTextLayer(morph, renderer))
-        // .concat(morph.debug ? this.renderDebugLayer(textLayout, morph) : [])
-        // .concat(this.renderMarkerLayer(textLayout, morph))
-        // .concat(this.renderTextLayer(textLayout, morph))
+      }, [
+        renderer.renderSubmorphs(morph),
+       ...selectionLayer,
+       this.renderTextLayer(morph, renderer)
+        // this.renderMarkerLayer(textLayout, morph)
+      ]
     );
   }
 
 
-  // renderTextLayer(textLayouter, morph) {
-  //   let lines = textLayouter.wrappedLines(morph),
-  //       textWidth = 0, textHeight = 0,
-  //       {padding, scroll, height} = morph,
-  //       {y: visibleTop} = scroll.subPt(padding.topLeft()),
-  //       visibleBottom = visibleTop + height,
-  //       lastVisibleLineBottom = 0,
-  //       row = 0,
-  //       spacerBefore,
-  //       renderedLines = [],
-  //       spacerAfter,
-  //       lineLeft = padding.left(),
-  //       lineTop = padding.top();
-  //
-  //   for (;row < lines.length; row++) {
-  //     let {width, height} = lines[row],
-  //         newTextHeight = textHeight + height;
-  //     if (newTextHeight >= visibleTop) break;
-  //     textWidth = Math.max(width, textWidth);
-  //     textHeight += height;
-  //   }
-  //
-  //   textLayouter.firstVisibleLine = row;
-  //   spacerBefore = h("div", {style: {height: textHeight+"px", width: textWidth+"px"}});
-  //
-  //   for (;row < lines.length; row++) {
-  //     let {width, height} = lines[row],
-  //         newTextHeight = textHeight + height;
-  //
-  //     renderedLines.push(this.renderLine(lines[row], lineLeft, lineTop));
-  //
-  //     textWidth = Math.max(width, textWidth);
-  //     lineTop += height;
-  //     textHeight += height;
-  //
-  //     if (textHeight >= visibleBottom) break;
-  //   }
-  //
-  //   textLayouter.lastVisibleLine = row;
-  //   lastVisibleLineBottom = textHeight;
-  //
-  //   for (;row < lines.length; row++) {
-  //     let {width, height} = lines[row];
-  //     textWidth = Math.max(width, textWidth);
-  //     textHeight += height;
-  //   }
-  //
-  //   spacerAfter = h("div", {style: {height: textHeight-lastVisibleLineBottom+"px", width: textWidth+"px"}});
-  //
-  //   return h('div.text-layer', {
-  //     style: {
-  //       whiteSpace: "pre",
-  //       width: "100%",
-  //       zIndex: 3, position: "absolute",
-  //       // width: textWidth+"px",
-  //       height: textHeight+"px",
-  //       padding: `${padding.top()}px ${padding.right()}px ${padding.bottom()}px ${padding.left()}px`
-  //     }
-  //   }, [spacerBefore].concat(renderedLines).concat(spacerAfter));
-  // }
+  renderTextLayer(morph, renderer) {
+    // this method renders the text content = lines
 
-
-  renderTextLayer(morph) {
-    // this.estimateLineHeights(this.lineData.lines)
+    // 1. Make sure all lines have a height, at least estimated
+    morph.textLayout.estimateLineHeights(morph, false);
 
     let {
           height: scrollHeight,
           scroll: {x: scrollLeft, y: scrollTop},
-          document: doc,
+          padding,
+          document: doc
         } = morph,
-        lines = doc.lines;
-
-    if (morph.viewState._textLayoutStale) {
-      morph.textLayout.estimateLineHeights(morph, true/*force*/);
-      morph.viewState._textLayoutStale = false;
-    }
-
-    let scrollBottom = scrollTop + scrollHeight,
-        textHeight = 0,
-        y = 0,
-        row = 0,
-        firstVisibleRow = 0,
-        lastVisibleRow = lines.length,
-        heightBefore = 0;
-
-    for (; row < lines.length; row++) {
-      let lineHeight = lines[row].height;
-      if (y + lineHeight > scrollTop) { firstVisibleRow = row; break; }
-      y += lineHeight;
-    }
-    heightBefore = y;
-    for (; row < lines.length; row++) {
-      if (y > scrollBottom) { lastVisibleRow = row; break; }
-      y += lines[row].height;
-    }
-
-    for (; row < lines.length; row++) {
-      y += lines[row].height;
-    }
-
-    textHeight = y;
-
-    Object.assign(morph.viewState, {
-      scrollTop, scrollHeight, scrollBottom, textHeight,
-      firstVisibleRow, lastVisibleRow, heightBefore
-    });
-
-    // firstVisibleRow = Math.max(0, firstVisibleRow-3);
-    // lastVisibleRow = Math.min(lines.length-1, lastVisibleRow+3);
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    let {padding, clipMode} = morph,
+        lines = doc.lines,
         leftP = padding.left(),
         rightP = padding.right(),
         topP = padding.top(),
         bottomP = padding.bottom(),
-        textLayerClasses = "";
+        scrollBottom = scrollTop + scrollHeight,
+        textHeight = 0,
+        y = 0,
+        row = 0,
+        firstVisibleRow = 0,
+        firstFullyVisibleRow = firstVisibleRow,
+        lastVisibleRow = lines.length,
+        lastFullyVisibleRow = lastVisibleRow,
+        heightBefore = 0;
+
+    scrollTop -= topP;
+    scrollBottom += topP;
+
+
+    // 2. figure out what lines are visible
+
+    for (; row < lines.length; row++) {
+      let lineHeight = lines[row].height,
+          nextY = y + lineHeight;
+      if (nextY > scrollTop) { firstVisibleRow = row; break; }
+      y = nextY;
+    }
+
+    firstFullyVisibleRow = firstVisibleRow + 1;
+    heightBefore = y;
+
+    for (; row < lines.length; row++) {
+      if (y > scrollBottom) { lastVisibleRow = row; break; }
+      y = y + lines[row].height;
+    }
+    lastFullyVisibleRow = lastVisibleRow -1;
+
+    for (; row < lines.length; row++) {
+      y = y + lines[row].height;
+    }
+
+    textHeight = y;
+
+
+
+    // 3. assemble attributes of node
+
+    // start with lineWrapping
+    let textLayerClasses = "";
 
     switch (morph.lineWrapping) {
       case true:
@@ -295,75 +275,108 @@ export default class Renderer {
       case false:           textLayerClasses = textLayerClasses + ".no-wrapping"; break;
     }
 
+    // ...and now other attribues
     let textAttrs = {
       style: {
-        height: Math.max(textHeight, morph.height) + "px",
-        fontFamily: morph.fontFamily,
-        fontSize: morph.fontSize + "px",
-        textAlign: morph.textAlign,
-        color: morph.fontColor,
-        paddingLeft: leftP + "px",
-        paddingRight: rightP + "px",
-        paddingTop: topP + "px",
+        height:        Math.max(textHeight, morph.height) + "px",
+        fontFamily:    morph.fontFamily,
+        fontSize:      morph.fontSize + "px",
+        textAlign:     morph.textAlign,
+        color:         morph.fontColor,
+        paddingLeft:   leftP + "px",
+        paddingRight:  rightP + "px",
+        paddingTop:    topP + "px",
         paddingBottom: bottomP + "px"
       }
     };
 
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    // to update text layout from real DOM:
-    textAttrs["after-text-render-hook"] = new AfterTextRenderHook(morph, lines);
 
-    let visibleLines = lines.slice(firstVisibleRow, lastVisibleRow),
-        renderedLines = visibleLines.map((ea, i) => this.renderLine(morph, ea, i));
+    // 4. install hook so we can update text layout from real DOM once it is rendered
+    let hook = new AfterTextRenderHook(morph, lines);
+    textAttrs["after-text-render-hook"] = hook;
+    nextTick(() => {
+      // The hook only gets called on prop changes of textlayer node. We
+      // actually want to always trigger in order to update the lines, so run
+      // delayed
+      if (hook.called) return;
+      let node = renderer.getNodeForMorph(morph),
+          textlayerNode = node && node.querySelector(".newtext-text-layer");
+      textlayerNode && hook.hook(textlayerNode);
+    })
+
+
+
+    // 5. render text / lines via virtual-dom nodes
+
+    let visibleLines = [],
+        renderedLines = [];
 
     // spacer to push visible lines into the scrolled area
-    renderedLines.unshift(
+    renderedLines.push(
       h("div.newtext-before-filler", {
-        style: {
-          width: "20px", backgroundColor: "red",
-          height: heightBefore + "px"
-        }
+        style: {width: "1px", height: heightBefore + "px"}
       }));
 
-    let scrollerAttrs = {
-      scrollLeft, scrollTop,
-      style: {overflow: clipMode || ""},
-      onscroll: evt => {
-        let {scrollLeft, scrollTop} = evt.target;
-        morph.textScroll = pt(scrollLeft, scrollTop);
-        morph.makeDirty()
-      }
+    for (let i = firstVisibleRow; i < lastVisibleRow; i++) {
+      let line = lines[i];
+      visibleLines.push(line);
+      renderedLines.push(this.renderLine(h, morph, line, i));
     }
 
-    return h("div.newtext-scroller",
-             scrollerAttrs,
-             h("div.newtext-text-layer" + textLayerClasses,
-               textAttrs, [
-               ...this.renderDebugLayer(morph, visibleLines, scrollTop),
-               ...renderedLines
-             ]));
+    Object.assign(morph.viewState, {
+      scrollTop, scrollHeight, scrollBottom,
+      heightBefore, textHeight,
+      firstVisibleRow, lastVisibleRow,
+      firstFullyVisibleRow, lastFullyVisibleRow,
+      visibleLines
+    });
+
+    return h("div.newtext-text-layer" + textLayerClasses,
+             textAttrs, [
+             ...morph.debug ? this.renderDebugLayer(morph) : [],
+             ...renderedLines
+           ]);
   }
 
-  renderDebugLayer(morph, visibleLines, startY) {
-return [];
-    let debugHighlights = [],
+  renderDebugLayer(morph) {
+    let vs = morph.viewState,
+        debugHighlights = [],
         textWidth = 0,
-        rowY = startY;
-
-    let padding = morph.padding || Rectangle.inset(0),
+        {heightBefore: rowY, firstVisibleRow, lastVisibleRow, visibleLines} = vs,
+        {padding, scroll: {x: visibleLeft, y: visibleTop}} = morph,
         leftP = padding.left(),
         rightP = padding.right(),
         topP = padding.top(),
         bottomP = padding.bottom();
 
-    for (let row = 0; row < visibleLines.length; row++) {
-      let {height, charBounds} = visibleLines[row];
+    debugHighlights.push(h("div.debug-info", {
+      style: {
+        position: "absolute",
+        left: (visibleLeft+leftP) + "px",
+        top: visibleTop + "px",
+        width: (morph.width-rightP)+"px",
+        outline: "1px solid green",
+        pointerEvents: "none",
+        zIndex: 4,
+        textAlign: "center",
+        fontFamily: "monospace",
+        color: "green",
+        backgroundColor: "white",
+        fontSize: "small",
+        verticalAlign: "baseline"
+      }
+    }, h("span", `visible rows: ${firstVisibleRow} - ${lastVisibleRow}`)));
+
+    for (let i = 0, row = firstVisibleRow; row < lastVisibleRow; i++, row++) {
+      let line = visibleLines[i],
+          charBounds = morph.textLayout.lineCharBoundsCache.get(line),
+          {height} = line;
 
       debugHighlights.push(h("div.debug-line", {
         style: {
           position: "absolute",
-          left: leftP + "px",
+          left: (visibleLeft + leftP) + "px",
           top: (topP + rowY) + "px",
           width: (morph.width-rightP)+"px",
           height: height+"px",
@@ -376,7 +389,7 @@ return [];
           fontSize: "small",
           verticalAlign: "baseline"
         }
-      }, h("span", String(visibleLines[row].row))));
+      }, h("span", String(row))));
 
       if (!charBounds) {
         rowY += height;
@@ -388,8 +401,8 @@ return [];
         debugHighlights.push(h("div.debug-char", {
           style: {
             position: "absolute",
-            left: x+"px",
-            top: y+"px",
+            left: (leftP+x) +"px",
+            top: (topP + rowY + y) + "px",
             width: width+"px",
             height: height+"px",
             outline: "1px solid orange",
@@ -400,72 +413,71 @@ return [];
       }
 
       rowY += height;
-      // currentLineHeight += height;
     }
-
-    // debugHighlights.push(h("div", {
-    //   style: {
-    //     position: "absolute",
-    //     left: padding.left()+"px",
-    //     top: padding.top()+"px",
-    //     width: textWidth+"px",
-    //     height: textHeight+"px",
-    //     outline: "1px solid red",
-    //     pointerEvents: "none",
-    //     zIndex: 3
-    //   }
-    // }));
 
     return debugHighlights
   }
 
-  renderLine(morph, line, i) {
+  renderLine(h, morph, line, i) {
+    // Note: this function is being used in the font metric as well, with a
+    // non-virtual-dom "h" function
+
     // if (line._rendered)
     //   return line._rendered;
 
     let { textAndAttributes } = line,
         renderedChunks = [],
-        nAttrs = textAndAttributes.length;
-    if (nAttrs > 0) {
-      for (let i = 0; i < nAttrs; i = i+2) {
-        let text = textAndAttributes[i], attr = textAndAttributes[i+1];
-        renderedChunks.push(this.renderChunk(morph, line, text, attr));
+        size = textAndAttributes.length;
+
+    if (size > 0) {
+      for (let i = 0; i < size; i = i+2) {
+        let text = textAndAttributes[i] || "\u00a0",
+            attr = textAndAttributes[i+1];
+
+        // FIXME!
+        if (text.length > 1000) text = text.slice(0,1000);
+
+        if (!attr) { renderedChunks.push(text); continue; }
+
+        let {
+          fontSize,
+          fontFamily,
+          fontWeight,
+          fontStyle,
+          textDecoration,
+          fontColor,
+          backgroundColor,
+          nativeCursor,
+          textStyleClasses,
+          link
+        } = attr;
+
+        let tagname = "span", style = {}, attrs = {style};
+
+        if (link) {
+          tagname = "a";
+          attrs.href = link;
+          attrs.target = "_blank";
+        }
+
+        if (fontSize) style.fontSize               = fontSize + "px";
+        if (fontFamily) style.fontFamily           = fontFamily;
+        if (fontWeight) style.fontWeight           = fontWeight;
+        if (fontStyle) style.fontStyle             = fontStyle;
+        if (textDecoration) style.textDecoration   = textDecoration;
+        if (fontColor) style.color                 = fontColor ? String(fontColor) : "";
+        if (backgroundColor) style.backgroundColor = backgroundColor ? String(backgroundColor) : "";
+        if (nativeCursor) attrs.style.cursor       = nativeCursor;
+
+        if (textStyleClasses && textStyleClasses.length)
+          attrs.className = textStyleClasses.join(" ");
+
+        renderedChunks.push(h(tagname, attrs, text));
       }
+
     } else renderedChunks.push(h("br"));
 
     return line._rendered = h("div.line", {dataset: {row: line.row}}, renderedChunks);
-  }
-
-  renderChunk(morph, line, text, attr) {
-    // FIXME!
-    if (text.length > 1000) text = text.slice(0,1000);
-
-    // FIXME**2!!
-    // text = text.replace(/\t/g, " ");
-
-    if (!attr) return text || h("br");
-
-    let tagname = attr.link ? "a" : "span",
-        style = {}, attrs = {style};
-
-    if (attr.link) {
-      attrs.href = attr.link;
-      attrs.target = "_blank";
-    }
-
-    if (attr.fontSize) style.fontSize               = attr.fontSize + "px";
-    if (attr.fontFamily) style.fontFamily           = attr.fontFamily;
-    if (attr.fontWeight) style.fontWeight           = attr.fontWeight;
-    if (attr.fontStyle) style.fontStyle             = attr.fontStyle;
-    if (attr.textDecoration) style.textDecoration   = attr.textDecoration;
-    if (attr.fontColor) style.color                 = attr.fontColor ? String(attr.fontColor) : "";
-    if (attr.backgroundColor) style.backgroundColor = attr.backgroundColor ? String(attr.backgroundColor) : "";
-    if (attr.nativeCursor) attrs.style.cursor       = attr.nativeCursor;
-
-    if (attr.textStyleClasses && attr.textStyleClasses.length)
-      attrs.className = attr.textStyleClasses.join(" ");
-
-    return h(tagname, attrs, text);
   }
 
   renderSelectionLayer(morph, selection, diminished = false, cursorWidth = 2) {
