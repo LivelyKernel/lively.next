@@ -825,8 +825,8 @@ export default class Document {
   // line related
 
   get height() { return this.root.height; }
-  get size() { return this.root.size; }
-  get stringSize() { return this.size === 0 ? 0 : this.root.stringSize-1/*last newline*/; }
+  get rowCount() { return this.root.size; }
+  get stringSize() { return this.rowCount === 0 ? 0 : this.root.stringSize-1/*last newline*/; }
 
   get lines() { return this.root.lines(); }
   set lines(lines = []) {
@@ -834,9 +834,9 @@ export default class Document {
     this.insertLines(lines);
   }
 
-  clipRow(row) { return Math.max(0, Math.min(row, this.root.size-1)); }
+  clipRow(row) { return Math.max(0, Math.min(row, this.rowCount-1)); }
   clipPositionToLines({row, column}) {
-    let nLines = this.size;
+    let nLines = this.rowCount;
 
     if (nLines === 0) return {row: 0, column: 0};
 
@@ -861,7 +861,7 @@ export default class Document {
     return line ? line.text : "";
   }
 
-  insertLine(text, atRow = this.root.size) {
+  insertLine(text, atRow = this.root.rowCount) {
     return this.insertLines([text], atRow)[0];
   }
 
@@ -894,9 +894,9 @@ export default class Document {
   set textString(string) { this.lines = string.split(newline); }
 
   get endPosition() {
-    let {size} = this;
-    if (size === 0) return {row: 0, column: 0};
-    let row = size-1, line = this.getLine(row);
+    let {rowCount} = this;
+    if (rowCount === 0) return {row: 0, column: 0};
+    let row = rowCount-1, line = this.getLine(row);
     return {row, column: line.stringSize-1}
   }
 
@@ -1036,8 +1036,7 @@ export default class Document {
 
   insertTextAndAttributes(textAndAttributes, pos) {
     // inserts text and attribute pairs of `textAndAttributes` into the
-    // document at text position `pos`. if `extendAttrs` is true then the
-    // attributes directly at pos will expand of the inserted text.
+    // document at text position `pos`.
 
     if (!textAndAttributes || !textAndAttributes.length)
       return {start: pos, end: pos};
@@ -1058,12 +1057,16 @@ export default class Document {
     }
 
     // if insertion position comes after last row fill in new lines
-    if (row >= this.size) {
+    if (row >= this.rowCount) {
       let docEndPos = this.endPosition;
       for (let i = 0; i < row - docEndPos.row; i++)
         attrsForLines.unshift(["", null]);
       ({row, column} = docEndPos);
     }
+
+    // just a new line, split line row and column and be done
+    if (attrsForLines.length === 1 && attrsForLines[0][0] === "")
+      return this.splitLineAt({row, column});
 
     let firstInsertionLine = attrsForLines.shift(),
         nInsertionLines = attrsForLines.length,
@@ -1128,7 +1131,7 @@ export default class Document {
     }
 
     // if insertion position comes after last row fill in new lines
-    if (row >= this.size) {
+    if (row >= this.rowCount) {
       let docEndPos = this.endPosition;
       text = "\n".repeat(row - docEndPos.row) + text;
       ({row, column} = docEndPos);
@@ -1323,12 +1326,12 @@ export default class Document {
 
   copy() { return new this.constructor(this.lines.slice(), this.options); }
 
-  toString() { return `Document(${this.size} lines)`; }
+  toString() { return `Document(${this.rowCount} lines)`; }
 
 
   consistencyCheck() {
-    if (this.size !== this.lines.length)
-      throw new Error(`[consistency check] ${this} size: ${this.size} !== ${this.lines.length}`);
+    if (this.rowCount !== this.lines.length)
+      throw new Error(`[consistency check] ${this} row count: ${this.rowCount} !== ${this.lines.length}`);
     if (this.textString.length !== this.stringSize)
       throw new Error(`[consistency check] ${this} textString.length vs stringSize: ${this.textString.length} !== ${this.stringSize}`);
     this.root.consistencyCheck();

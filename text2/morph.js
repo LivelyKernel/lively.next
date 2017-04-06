@@ -680,7 +680,7 @@ export class Text extends Morph {
     return this.document.getLineString(row);
   }
 
-  lineCount() { return this.document.size; }
+  lineCount() { return this.document.rowCount; }
 
   isLineEmpty(row) { return !this.getLine(row).trim(); }
   isAtLineEnd(pos = this.cursorPosition) {
