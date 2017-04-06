@@ -657,14 +657,13 @@ export class Line extends TreeNode {
 
   constructor(parent, height = 0, textAndAttributes = []) {
     super(parent);
+
     this.textAndAttributes = joinTextAttributes(textAndAttributes);
     this._text = "";
     this._textAttributes = null;
     this.height = height;
-    this.isWrapped = false;
     this.hasEstimatedHeight = false;
-    // The following is for caching:
-    this.charBounds = null;
+
     // line text settings
     this.textAlign = "left";
     this.lineHeight = null;
@@ -736,12 +735,11 @@ export class Line extends TreeNode {
     return root.findRow(row-1);
   }
 
-  changeHeight(newHeight, isWrapped = false, isEstimatedHeight = false) {
+  changeHeight(newHeight, isEstimatedHeight = false) {
     let {height, parent} = this,
         delta = newHeight - height;
     this.height = newHeight;
     this.hasEstimatedHeight = isEstimatedHeight;
-    this.isWrapped = isWrapped;
     while (parent) {
       parent.height = parent.height + delta;
       parent = parent.parent;
@@ -753,10 +751,8 @@ export class Line extends TreeNode {
     let {parent, text, height} = this,
         deltaLength = (newText.length+1) - (text.length+1),
         deltaHeight = -height;
-    this.charBounds = null;
     this.height = 0;
     this.hasEstimatedHeight = false;
-    this.isWrapped = false;
     this._text = newText;
     this._textAttributes = null;
     this.textAndAttributes = textAndAttributes || [newText, null];
@@ -977,7 +973,7 @@ export default class Document {
     let line = this.getLine(row);
     if (!line) return null;
     let index = 0, attrs = line.textAndAttributes;
-    for (let i = 0; i < attrs.length; i + i+2) {
+    for (let i = 0; i < attrs.length; i = i+2) {
       let text = attrs[i], attr = attrs[i+1];
       index = index + text.length;
       if (column < index) return attr;
