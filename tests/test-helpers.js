@@ -6,13 +6,21 @@ export var dummyFontMetric = {
     return {width: this.width*text.length, height: this.height*text.split("\n").length}
   },
   charBoundsFor(style, text) {
+    let { width, height } = this;
+    if (!text.length) return [{ x: 0, y: 0, width, height }]
     var prevX = 0;
     return text.split('').map(function (char, col) {
-      let x = prevX,
-          { width, height } = this;
+      let x = prevX;
       prevX += width;
       return { x, y: 0, width, height };
     }, this);
+  },
+  defaultCharExtent() {
+    let { width, height } = this;
+    return { width, height };
+  },
+  manuallyComputeCharBoundsOfLine(line, offsetX = 0, offsetY = 0, styleOpts, styleKey) {
+    return this.charBoundsFor({}, line.text);
   },
   defaultLineHeight(style) { return this.height; },
   isProportional(fontFamily) { return true; },
