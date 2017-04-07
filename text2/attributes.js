@@ -68,6 +68,8 @@ export function joinTextAttributes(textAttributes, seperator = "") {
 
 export function splitTextAndAttributesAt(textAndAttributes, column) {
   // returns a two-item array: left everything that is before column, right trailing
+  // splitTextAndAttributesAt(["hel", {a: 1}, "lo", {a: 2}], 2)
+  //   => [["he", {a: 1}], ["l", {a: 1}, "lo", {a: 2}]]
 
   let textPos = 0;
 
@@ -88,6 +90,25 @@ export function splitTextAndAttributesAt(textAndAttributes, column) {
   }
 
   return [textAndAttributes, []];
+}
+
+export function splitTextAndAttributesAtColumns(textAndAttributes, columns) {
+  // splitTextAndAttributesAtColumns(["hel", {a: 1}, "lo", {a: 2}], [1,2])
+  //   => [["h", {a: 1}], ["e", {a: 1}], ["l", {a: 1}, "lo", {a: 2}]]
+  // splitTextAndAttributesAtColumns(["hel", {a: 1}, "lo", {a: 2}], [0,2])
+  // splitTextAndAttributesAtColumns(["hel", {a: 1}, "lo", {a: 2}], [1,5])
+  let current = textAndAttributes,
+      offset = 0,
+      result = [];
+  for (let i = 0; i < columns.length; i++) {
+    let [left, right] = splitTextAndAttributesAt(current, columns[i] - offset);
+    result.push(left);
+    for (let j = 0; j < left.length; j = j+2)
+      offset = offset + left[j].length;
+    current = right;
+  }
+  result.push(current);
+  return result;
 }
 
 export function concatTextAndAttributes(a, b, mutate = false) {
@@ -138,8 +159,12 @@ export function modifyAttributesInRange(doc, range, modifyFn) {
     if (startRow === endRow) {
       textAndAttributesDo(after, (text, attr) =>
         textAndAttributes.push(text, attr));
-      return;
     }
+
+    line._textAttributes = null; // reset cache;
+    line.textAndAttributes = joinTextAttributes(textAndAttributes);
+
+    if (startRow === endRow) return;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -150,6 +175,8 @@ export function modifyAttributesInRange(doc, range, modifyFn) {
     textAndAttributes.length = 0;
     textAndAttributesDo(textAndAttributes, (text, attr) =>
       textAndAttributes.push(text, modifyFn(line, attr)));
+    line._textAttributes = null; // reset cache;
+    line.textAndAttributes = joinTextAttributes(textAndAttributes);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -165,6 +192,9 @@ export function modifyAttributesInRange(doc, range, modifyFn) {
 
     textAndAttributesDo(after, (text, attr) =>
       textAndAttributes.push(text, attr));
+      
+    line._textAttributes = null; // reset cache;
+    line.textAndAttributes = joinTextAttributes(textAndAttributes);
   }
 
 }
@@ -179,8 +209,9 @@ export function splitTextAndAttributesIntoLines(textAndAttributes, nl = "\n") {
   // => [["fooo", {a: 1}],
   //     ["bar", {a: 1}, "ba", {b: 1}],
   //     ["z", {b: 1}]]
-  let lines = [], attrsSoFar = [];
+  if (!textAndAttributes.length) return [];
 
+  let lines = [], attrsSoFar = [];
   for (var i = 0; i < textAndAttributes.length; i = i+2) {
     let text = textAndAttributes[i], attr = textAndAttributes[i+1];
     while (text.length) {
@@ -195,6 +226,12 @@ export function splitTextAndAttributesIntoLines(textAndAttributes, nl = "\n") {
     }
   }
 
-  attrsSoFar.length && lines.push(attrsSoFar);
+  if (attrsSoFar.length) {
+    lines.push(attrsSoFar);
+  } else {
+    let [lastText, lastAttr] = textAndAttributes.slice(-2);
+    if (lastText.endsWith(nl)) lines.push(["", lastAttr]);
+  }
+
   return this.lines = lines;
 }
