@@ -1109,6 +1109,26 @@ export default class Document {
     return attrs[attrs.length-1];
   }
 
+  textAndAttributesInRange({start, end}) {
+    let line = this.getLine(start.row),
+        firstLine = line,
+        lines = [line];
+    for (let i = 0; i < end.row - start.row; i++)
+      lines.push(line = line.nextLine());
+
+    let lastLine = lines[lines.length-1],
+        [_, first] = splitTextAndAttributesAt(firstLine.textAndAttributes, start.column),
+        [last] = splitTextAndAttributesAt(lastLine.textAndAttributes, end.column);
+
+    if (lines.length === 1)
+      return concatTextAndAttributes(first, last, true);
+
+    let result = first;
+    for (let i = 0; i < lines.length; i++)
+      concatTextAndAttributes(result, lastLine.textAndAttributes, true);
+    return concatTextAndAttributes(result, last, true);
+  }
+
   textInRange({start, end}) {
     start = this.clipPositionToLines(start);
     end = this.clipPositionToLines(end);
