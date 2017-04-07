@@ -103,6 +103,7 @@ function AfterTextRenderHook(morph, lines) {
   this.morph = morph;
   this.lines = lines;
   this.called = false;
+  this.needsRerender = false;
 }
 
 AfterTextRenderHook.prototype.updateLineHeightOfNode = function(morph, docLine, lineNode) {
@@ -113,7 +114,7 @@ AfterTextRenderHook.prototype.updateLineHeightOfNode = function(morph, docLine, 
       docLine.changeHeight(nodeHeight, false);
       morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
       // force re-render in case text layout / line heights changed
-      morph.makeDirty();
+      this.needsRerender = true;
     }
     return nodeHeight;
   }
@@ -156,6 +157,9 @@ AfterTextRenderHook.prototype.updateLineHeightOfLines = function(textlayerNode) 
       actualTextHeight += this.updateLineHeightOfNode(morph, line, lineNode);
     lineNode = lineNode.nextSibling;
   }
+
+  if (this.needsRerender) morph.makeDirty();
+  else morph._dirty = false;
 }
 
 AfterTextRenderHook.prototype.hook = function(node, propName, prevValue) {
@@ -179,13 +183,19 @@ export default class Renderer {
     var cursorWidth = morph.fontSize <= 11 ? 2 : 3,
         selectionLayer = [];
 
+    // Make sure all lines have a height, at least estimated
+    // FIXME that's pretty expensive as it hits all lines but actually only
+    // those that have no height attached need to be updated... This can be
+    // probably solved better by immediately re-computing an estimated height on
+    // line changes... or in height getter...
+    morph.textLayout.estimateLineHeights(morph, false);
+
     if (morph.inMultiSelectMode()) {
       let sels = morph.selection.selections, i = 0;
       for (; i < sels.length-1; i++)
         selectionLayer.push(...this.renderSelectionLayer(morph, sels[i], true/*diminished*/, 2))
       selectionLayer.push(...this.renderSelectionLayer(morph, sels[i], false/*diminished*/, 4))
     } else selectionLayer = this.renderSelectionLayer(morph, morph.selection, false, cursorWidth);
-
 
     return h("div", {
         ...defaultAttributes(morph, renderer),
@@ -207,9 +217,6 @@ export default class Renderer {
 
   renderTextLayer(morph, renderer) {
     // this method renders the text content = lines
-
-    // 1. Make sure all lines have a height, at least estimated
-    morph.textLayout.estimateLineHeights(morph, false);
 
     let {
           height: scrollHeight,
@@ -235,24 +242,27 @@ export default class Renderer {
     scrollTop -= topP;
     scrollBottom += topP;
 
-
     // 2. figure out what lines are visible
-
     for (; row < lines.length; row++) {
       let lineHeight = lines[row].height,
           nextY = y + lineHeight;
-      if (nextY > scrollTop) { firstVisibleRow = row; break; }
+      if (nextY >= scrollTop) {
+        firstVisibleRow = row;
+        firstFullyVisibleRow = y < scrollTop ? row + 1 : row;
+        break;
+      }
       y = nextY;
     }
 
-    firstFullyVisibleRow = firstVisibleRow + 1;
     heightBefore = y;
 
     for (; row < lines.length; row++) {
-      if (y > scrollBottom) { lastVisibleRow = row; break; }
+      if (y >= scrollBottom) break;
       y = y + lines[row].height;
     }
-    lastFullyVisibleRow = lastVisibleRow -1;
+
+    lastVisibleRow = row;
+    lastFullyVisibleRow = row-1;
 
     for (; row < lines.length; row++) {
       y = y + lines[row].height;
