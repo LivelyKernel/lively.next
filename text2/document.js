@@ -28,7 +28,9 @@ import {
 } from "../text/position.js";
 
 import {
-  concatTextAndAttributes, splitTextAndAttributesIntoLines,
+  concatTextAndAttributes,
+  splitTextAndAttributesAtColumns,
+  splitTextAndAttributesIntoLines,
   joinTextAttributes,
   modifyAttributesInRange,
   concatAttributePair,
@@ -213,6 +215,7 @@ class InnerTreeNode extends TreeNode {
         height = height + line.height;
         stringSize = stringSize + line.stringSize;
       }
+
       this.children.splice(atIndex, 0, ...lines);
       this.resize(lines.length, height, stringSize);
       this.balanceAfterGrowth();
@@ -221,7 +224,7 @@ class InnerTreeNode extends TreeNode {
 
     if (this.children.length === 0)
       this.children.push(new InnerTreeNode(this, [], 0, 0, 0, this.options));
-
+    
     var i = 0;
     for (; i < this.children.length; i++) {
       var child = this.children[i], childSize = child.size;
@@ -229,7 +232,7 @@ class InnerTreeNode extends TreeNode {
         return child.insert(lineSpecs, atIndex);
       atIndex = atIndex - childSize;
     }
-
+    
     let last = this.children[i-1];
     return last.insert(lineSpecs, last.size);
   }

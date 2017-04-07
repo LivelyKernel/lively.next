@@ -90,7 +90,7 @@ export class Text extends Morph {
 
       document: {
         initialize() {
-          this.document = Document.fromString("");
+          this.document = Document.fromString("", {maxLeafSize: 50, minLeafSize: 25, maxNodeSize: 35, minNodeSize: 7});
         }
       },
 
