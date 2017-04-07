@@ -114,19 +114,18 @@ export default class TextLayout {
           let {x, width} = charBounds[column];
           textWidth = Math.max(textWidth, x + width + rowX);
         }
+        let {y, height} = charBounds[charBounds.length-1];
+        textHeight = textHeight + y + height;
 
       // ...otherwise only the last
       } else {
-        let {x, width} = charBounds[charBounds.length-1];
+        let {x, width, y, height} = charBounds[charBounds.length-1];
         textWidth = Math.max(textWidth, x + width + rowX);
+        textHeight = textHeight + y + height;
       }
     }
 
-    // We get the height of the last row
-    let {y, height} = lastCharBounds ? arr.last(lastCharBounds) : {height: 0, y: pT};
-    textHeight = y + height;
-
-    return new Rectangle(pL, pT, textWidth-pL, doc.height-pT);
+    return new Rectangle(pL, pT, textWidth-pL, doc.height);
   }
 
   isFirstLineVisible(morph) {
@@ -141,8 +140,7 @@ export default class TextLayout {
   }
 
   isLineFullyVisible(morph, row) {
-    // FIXME!!!!!
-    return this.isLineVisible(morph, row)
+    return row >= morph.viewState.firstFullyVisibleRow && row <= morph.viewState.lastFullyVisibleRow;
   }
 
   whatsVisible(morph) {
@@ -151,6 +149,9 @@ export default class TextLayout {
         lines = morph.document.lines.slice(startRow, endRow);
     return {lines, startRow, endRow};
   }
+
+  firstFullVisibleLine(morph) { return morph.viewState.firstFullyVisibleRow; }
+  lastFullVisibleLine(morph) { return morph.viewState.lastFullyVisibleRow; }
 
   screenLineRange(morph, textPos, ignoreLeadingWhitespace) {
     // find the range that includes textPos whose start and end chars are in a
@@ -172,7 +173,8 @@ export default class TextLayout {
       if (charBounds[i].y+charBounds[i].height > bounds.y+bounds.height) break;
       lastIndex = i;
     }
-    lastIndex++;
+    // For last range we go until end of line
+    if (lastIndex === charBounds.length-1) lastIndex++;
 
     for (let i = column-1; i >= 0; i--) {
       if (charBounds[i].y+charBounds[i].height < bounds.y+bounds.height) break;
@@ -195,8 +197,11 @@ export default class TextLayout {
       let range = this.screenLineRange(morph, {row, column}, false);
       ranges.push(range);
       if (range.end.column >= lineLength) break;
-      if (range.end.column <= column) throw new Error("should not happen");
-      column = range.end.column;
+      let nextColumn = range.end.column + 1;
+      if (nextColumn >= lineLength) break;
+      if (nextColumn <= column)
+        throw new Error(`should not happen ${range.end.column} vs ${column}`);
+      column = nextColumn;
     }
     return ranges;
   }
