@@ -78,32 +78,33 @@ describe("text layout", () => {
   });
 
 
-//   describe("fit", () => {
-// 
-//     it("computes size on construction", () => {
-//       var t = text("hello", {fixedWidth: false, fixedHeight: false}), {width, height} = t;
-//       expect(height).equals(h + padding.top()+ padding.bottom());
-//       expect(width).equals(5*w + padding.left()+ padding.right());
-//     });
-// 
-//     it("computes only width", () => {
-//       var {extent: {x: width, y: height}} = text("hello", {fixedWidth: false, fixedHeight: true});
-//       expect(height).equals(100);
-//       expect(width).equals(5*w + padding.top()+ padding.bottom());
-//     });
-// 
-//     it("computes only height", () => {
-//       var {extent: {x: width, y: height}} = text("hello", {fixedWidth: true, fixedHeight: false});
-//       expect(height).equals(h + padding.top()+ padding.bottom());
-//       expect(width).equals(100);
-//     });
-// 
-//     it("leaves extent as is with fixed sizing", () => {
-//       var {extent} = text("hello", {fixedWidth: true, fixedHeight: true});
-//       expect(extent).equals(pt(100,100));
-//     });
-// 
-//   });
+  describe("fit", () => {
+    
+    it("computes size on construction", () => {
+      var t = text("hello", {clipMode: "visible", fixedHeight: false, fixedWidth: false}),
+        {width, height} = t;
+      expect(height).equals(h + padding.top()+ padding.bottom());
+      expect(width).equals(5*w + padding.left()+ padding.right());
+    });
+
+    it("computes only width", () => {
+      var {extent: {x: width, y: height}} = text("hello", {clipMode: "visible", fixedWidth: false, fixedHeight: true});
+      expect(height).equals(100);
+      expect(width).equals(5*w + padding.top()+ padding.bottom());
+    });
+
+    it("computes only height", () => {
+      var {extent: {x: width, y: height}} = text("hello", {clipMode: "visible", fixedWidth: true, fixedHeight: false});
+      expect(height).equals(h + padding.top()+ padding.bottom());
+      expect(width).equals(100);
+    });
+
+    it("leaves extent as is with fixed sizing", () => {
+      var {extent} = text("hello", {clipMode: "visible", fixedWidth: true, fixedHeight: true});
+      expect(extent).equals(pt(100,100));
+    });
+
+  });
 
     
   describe("line wrapping", () => {
