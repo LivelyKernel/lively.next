@@ -691,7 +691,7 @@ export class Line extends TreeNode {
     for (let i = 0; i < attrs.length; i = i+2) {
       let attr = attrs[i+1];
       if (attr && !textAttributes.includes(attr))
-        textAttributes.push(attrs[i+1]);
+        textAttributes.push(attr);
     }
     return this._textAttributes = textAttributes;
   }
