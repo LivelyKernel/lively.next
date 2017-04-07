@@ -825,6 +825,8 @@ export default class Document {
   get rowCount() { return this.root.size; }
   get stringSize() { return this.rowCount === 0 ? 0 : this.root.stringSize-1/*last newline*/; }
 
+  get lineStrings() { return this.lines.map(ea => ea.text); }
+
   get lines() { return this.root.lines(); }
   set lines(lines = []) {
     this.root = new InnerTreeNode(null, [], 0, 0, 0, this.options);

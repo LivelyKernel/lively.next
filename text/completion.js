@@ -13,7 +13,7 @@ export class WordCompleter {
   compute(textMorph, prefix) {
     var words = [],
         completions = [],
-        lines = textMorph.document.lines,
+        lines = textMorph.document.lineStrings,
         row = textMorph.cursorPosition.row,
         basePriority = 1000;
 

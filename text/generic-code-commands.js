@@ -23,7 +23,7 @@ export var commands = [
         sel.growRight(-1);
 
       var startRow = sel.start.row,
-          lines = doc.lines.slice(sel.start.row, sel.end.row+1),
+          lines = doc.lineStrings.slice(sel.start.row, sel.end.row+1),
           // ignore leading empty lines
           lines = lines.some(l => !!l.trim()) ?
                     arr.dropWhile(lines, l => !l.trim() ? ++startRow && true : false) : lines,

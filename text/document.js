@@ -22,6 +22,8 @@ export default class TextDocument {
     textAttributes.map(range => this.addTextAttribute(range));
   }
 
+  get lineStrings() { return this.lines; }
+
   get textString() { return this.lines.join(this.constructor.newline); }
   set textString(string) { this.lines = this.constructor.parseIntoLines(string); }
   get stringLength() { return this.textString.length; }
