@@ -976,6 +976,7 @@ throw new Error("TODO");
 
   get documentEndPosition() { return this.document ? this.document.endPosition : {row: 0, column: 0}; }
   isAtDocumentEnd() { return eqPosition(this.cursorPosition, this.documentEndPosition); }
+  get documentRange() { return {start: {row: 0, column: 0}, end: this.documentEndPosition}; }
 
   cursorUp(n = 1) { return this.selection.goUp(n); }
   cursorDown(n = 1) { return this.selection.goDown(n); }
