@@ -1,5 +1,5 @@
 import {
-  Morph, Icon, Window,
+  Morph, Text, Icon, Window,
   VerticalLayout,
   GridLayout,
   HorizontalLayout
@@ -10,6 +10,7 @@ import {Slider} from "../../components/widgets.js";
 import { obj } from "lively.lang";
 import {ColorPalette} from "./color-palette.js";
 import { StyleRules } from '../../style-rules.js';
+import { zip } from "lively.lang/array.js";
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
 
@@ -129,36 +130,359 @@ export class ColorPickerField extends Morph {
 
 }
 
-export class ColorPicker extends Window {
+class FieldPicker extends Morph {
 
-  constructor(props) {
-    super({
-      title: "Color Picker",
-      name: "Color Picker",
-      extent: pt(400, 320),
-      fill: Color.black.withA(.7),
-      borderWidth: 0,
-      resizable: false,
-      isHaloItem: true,
-      ...props
-    });
-    this.color = props.color || Color.blue;
-    this.styleRules = this.styler,
-    this.targetMorph = this.colorPalette(),
-    this.titleLabel().fontColor = Color.gray;
-    this.update();
-    this.focus();
-    setTimeout(() => this.get('picker').update(this, true), 1000);
+   static get properties() {
+     return {
+       fill: {defaultValue: Color.transparent},
+       saturation: {defaultValue: 0},
+       brightness: {defaultValue: 0},
+       pickerPosition: {
+        derived: true,
+        after: ['submorphs', 'brightness', 'saturation'],
+        get() {
+          // translate the hsv of color to a position
+          const s = this.saturation, b = this.brightness;
+          if (s === undefined || b === undefined) return pt(0,0);
+          return pt(this.getSubmorphNamed("hue").width * s,
+                    this.getSubmorphNamed("hue").height * (1 - b))
+        },
+        set({x: light, y: dark}) {
+          // translate the pos to a new hsv value
+          var {width, height} = this.getSubmorphNamed("hue");
+          this.saturation = Math.max(0, Math.min(light / width, 1));
+          this.brightness = Math.max(0, Math.min(1 - (dark / height), 1));
+          signal(this, 'saturation', this.saturation);
+          signal(this, 'brightness', this.brightness);
+        }
+      },
+       submorphs: {
+         initialize() {
+           this.submorphs = [
+             {borderRadius: 3,
+              name: "hue",
+              reactsToPointer: false},
+             {borderRadius: 3,
+              name: "shade",
+              reactsToPointer: false,
+              fill: new LinearGradient({stops: [
+                                        {color: Color.white, offset: 0},
+                                        {color: Color.transparent, offset: 1}],
+                                        vector: "eastwest"})},
+             {borderRadius: 3,
+              name: "light",
+              reactsToPointer: false,
+              fill: new LinearGradient({stops: [
+                                        {color: Color.black, offset: 0},
+                                        {color: Color.transparent, offset: 1}],
+                                        vector: "southnorth"})},
+             {name: "picker",
+              type: "ellipse",
+              reactsToPointer: false,
+              fill: Color.transparent,
+              borderColor: Color.black,
+              borderWidth: 3,
+              extent: pt(18,18),
+              submorphs: [{
+                type: "ellipse",
+                fill: Color.transparent,
+                borderColor: Color.white,
+                reactsToPointer: false,
+                borderWidth: 3,
+                center: pt(9,9),
+                extent: pt(12,12)
+              }]
+            }];
+           connect(this, 'extent', this, 'relayout');
+         }
+       }
+     }
+   }
+
+   update(colorPicker) {
+     this.getSubmorphNamed("hue").fill = Color.hsb(colorPicker.hue, 1, 1);
+     this.brightness = colorPicker.brightness;
+     this.saturation = colorPicker.saturation;
+     this.get('picker').center = this.pickerPosition;
+   }
+
+   onMouseDown(evt) {
+     this.pickerPosition = evt.positionIn(this);
+     signal(this, 'pickerPosition', this.pickerPosition);
+   }
+   
+   onDrag(evt) {
+     this.pickerPosition = evt.positionIn(this);
+   }
+   
+   relayout() {
+     const bounds = this.innerBounds();
+     this.getSubmorphNamed('hue').setBounds(bounds);
+     this.getSubmorphNamed('shade').setBounds(bounds);
+     this.getSubmorphNamed('light').setBounds(bounds);
+   }
+}
+
+class ColorPropertyView extends Text {
+
+  static get properties() {
+    return {
+       update: {}, 
+       value: {
+         derived: [true],
+         set(v) {
+           this.textString = obj.safeToString(v);
+         },
+         get() {
+           return this.textString;
+         }
+       },
+       morphClasses: {
+         after: ['readOnly'],
+         initialize() {
+           this.morphClasses = [!this.readOnly && 'editable', 'value'];
+         }
+       },
+       selectionColor: {defaultValue: Color.gray.darker()}
+    }
+  }
+  
+  onFocus() {
+    this.get('keyLabel').morphClasses = ['key', ...!this.readOnly ? ['large', 'active'] : []];
+    this.morphClasses = [...!this.readOnly ? ['editable', 'active'] : [], 'value'];
+    this.selection.cursorBlinkStart();
+  }
+  
+  onBlur() {
+    this.get('keyLabel').morphClasses = [!this.readOnly && 'large', 'key'];
+    this.morphClasses = [!this.readOnly && 'editable', 'value'];
+    this.selection.uninstall();
+  }
+  
+  onKeyDown(evt) {
+    if ("Enter" == evt.keyCombo && !this.readOnly) {
+       this.owner.focus(); 
+       evt.stop();
+       signal(this, 'updateValue', this.value);
+    } else {
+       super.onKeyDown(evt);
+    }
+  }
+}
+
+class HuePicker extends Morph {
+
+  static get properties() {
+    return {
+      fill: {defaultValue: new LinearGradient({
+               stops: [{color: Color.rgb(255,0,0), offset: 0},
+                      {color: Color.rgb(255,255,0), offset: 0.17},
+                      {color: Color.limeGreen, offset: 0.33},
+                      {color: Color.cyan, offset: 0.50},
+                      {color: Color.blue, offset: 0.66},
+                      {color: Color.magenta, offset: 0.83},
+                      {color: Color.rgb(255,0,0), offset: 1}],
+               vector: "northsouth"})},
+      borderRadius: {defaultValue: 3},
+      hue: {defaultValue: 0},
+      sliderPosition: {
+          derived: true,
+          after: ['submorphs'],
+          get() {
+           return pt(this.width / 2, this.height * (this.hue / 360));
+          },
+          set(pos) {
+            this.hue = Math.max(0, Math.min((pos.y / this.height) * 360, 359));
+            signal(this, 'hue', this.hue);
+          }
+      },
+      submorphs: {
+        initialize() {
+          this.submorphs = [{
+            name: "slider",
+            height: 10,
+            width: 50,
+            borderRadius: 3,
+            reactsToPointer: false,
+            nativeCursor: "ns-resize",
+            borderColor: Color.black,
+            fill: Color.transparent,
+            borderWidth: 2
+          }];
+        }
+      }
+    }
+  } 
+
+  onMouseDown(evt) {
+     this.sliderPosition = pt(0, evt.positionIn(this).y);
+  }
+  
+  onDrag(evt) {
+     this.sliderPosition = pt(0, evt.positionIn(this).y);
   }
 
-  get styler() {
-     return new StyleRules({
-        key: {fill: Color.transparent, fontColor: Color.gray, fontWeight: 'bold'},
-        large: {fontSize: 20},
-        active: {fontColor: Color.orange, borderColor: Color.orange},
-        value: {fill: Color.transparent, fontColor: Color.gray.lighter()},
-        editable: {borderRadius: 4, borderWidth: 1, padding: rect(2,2,2,2), borderColor: Color.gray.lighter()}
-     })
+  update(colorPicker) {
+    this.hue = colorPicker.hue;
+    this.get('slider').center = this.sliderPosition;
+  }
+  
+}
+
+class ColorDetails extends Morph {
+
+  static get properties() {
+    return {
+      color: {defaultValue: Color.blue},
+      width: {defaultValue: 80},
+      fill: {defaultValue: Color.transparent},
+      layout: {initialize() {this.layout = new VerticalLayout({spacing: 9})}},
+      submorphs: {
+        after: ['color'],
+        initialize() {
+          this.submorphs = [{
+            type: "ellipse",
+            extent: pt(50,50),
+            name: "colorViewer",
+            fill: this.color,
+          },
+          this.hashViewer(),
+          this.rgbViewer(),
+          this.hsbViewer()];
+        }
+      }
+    }
+  }
+
+   update(colorPicker) { 
+     const color = colorPicker.color,
+           [r, g, b] = color.toTuple8Bit(),
+           [h, s, v] = color.toHSB();
+     this.get('colorViewer').fill = color;
+     this.get('hashViewer').value = color.toHexString();
+     for(let [l, [c, q]] of zip([this.get('R'), this.get('G'), this.get('B'),
+                                 this.get('H'), this.get('S'), this.get('V')],
+                            [[r, 0], [g, 0], [b, 0], [h, 0], [s, 2], [v, 2]])) {
+       l.value = c.toFixed(q);
+     }
+   }
+
+   keyValue({name, key, value, update, editable}) {
+    return new Morph({
+      fill: Color.transparent,
+      layout: new HorizontalLayout({spacing: 5}),
+      submorphs: [
+        {type: 'label', name: "keyLabel", morphClasses: [editable && 'large', 'key'], value: key},
+        new ColorPropertyView({name: name || key, readOnly: !editable, value, update})]
+    })
+  }
+
+  hashViewer() {
+    let hashViewer = this.keyValue({
+      name: "hashViewer",
+      key: "#",
+      editable: true,
+      value: this.color.toHexString()
+    });
+    connect(hashViewer.get('hashViewer'), 'updateValue', this, 'color', {
+       converter: (v) => Color.rgbHex(v), varMapping: {Color}})
+    return hashViewer;
+  }
+
+  rgbViewer() {
+    const [r, g, b] = this.color.toTuple8Bit();
+    return new Morph({
+      name: "rgbViewer",
+      layout: new VerticalLayout(),
+      fill: Color.transparent,
+      submorphs: [this.keyValue({key: "R", value: r.toFixed()}),
+                  this.keyValue({key: "G", value: g.toFixed()}),
+                  this.keyValue({key: "B", value: b.toFixed()})]
+    })
+  }
+
+  hsbViewer() {
+    const [h, s, b] = this.color.toHSB();
+    return new Morph({
+      name: "hsbViewer",
+      layout: new VerticalLayout(),
+      fill: Color.transparent,
+      submorphs: [this.keyValue({key: "H", value: h.toFixed()}),
+                  this.keyValue({key: "S", value: s.toFixed(2)}),
+                  this.keyValue({key: "V", value: b.toFixed(2)})]
+    })
+  }
+
+}
+
+export class ColorPicker extends Window {
+
+  static get properties() {
+    return {
+      name: {defaultValue: "Color Picker"},
+      extent: {defaultValue: pt(400, 320)},
+      fill: {defaultValue: Color.black.withA(.7)},
+      resizable: {defaultValue: false},
+      isHaloItem: {defaultValue: true},
+      borderWidth: {defaultValue: 0},
+      color: {
+        defaultValue: Color.blue,
+        derived: true,
+        after: ['submorphs', 'targetMorph'],
+        get() { return Color.hsb(this.hue, this.saturation, this.brightness).withA(this.alpha) },
+        set(c) {
+          const [h, s, b] = c.toHSB();
+          this.hue = h
+          this.saturation = s;
+          this.brightness = b;
+          this.alpha = c.a;
+        }
+      },
+      alpha: {
+        after: ['submorphs', 'targetMorph'],
+        set(a) {
+          this.setProperty("alpha", a);
+          this.update();
+        },
+      },
+      saturation: {
+      
+      },
+      brightness: {
+        set(b) {
+          this.setProperty('brightness', b);
+          this.update();
+        }
+      },
+      hue: {
+        after: ['targetMorph'],
+        set(h) {
+          this.setProperty('hue', h);
+          this.update();
+        }
+      },
+      targetMorph: {
+        initialize() {
+          this.targetMorph = this.colorPalette();
+          this.titleLabel().fontColor = Color.gray;
+        }
+      },
+      styleRules: {
+        initialize() {
+          this.styleRules = new StyleRules({
+            key: {fill: Color.transparent, 
+                  fontColor: Color.gray, 
+                  fontWeight: 'bold'},
+            large: {fontSize: 20},
+            active: {fontColor: Color.orange, borderColor: Color.orange},
+            value: {fill: Color.transparent, fontColor: Color.gray.lighter()},
+            editable: {borderRadius: 4, borderWidth: 1, 
+                       padding: rect(2,2,2,2), 
+                       borderColor: Color.gray.lighter()}
+         });
+        }
+      }
+    }
   }
 
   onKeyDown(evt) {
@@ -172,53 +496,6 @@ export class ColorPicker extends Window {
      signal(this, 'close');
   }
 
-  onMouseDown(evt) {
-     if (this.harmonyMenu) this.harmonyMenu.remove();
-  }
-
-  set color(c) {
-    const [h, s, b] = c.toHSB();
-    this.hue = h
-    this.saturation = s;
-    this.brightness = b;
-    this._alpha = c.a;
-  }
-
-  set alpha(a) {
-     this._alpha = a;
-     this.update();
-  }
-
-  get alpha() { return this._alpha}
-
-  get color() {
-    return Color.hsb(this.hue, this.saturation, this.brightness).withA(this.alpha);
-  }
-
-  get pickerPosition() {
-    // translate the hsv of color to a position
-    const s = this.saturation, b = this.brightness;
-    return pt(this.getSubmorphNamed("hue").width * s,
-              this.getSubmorphNamed("hue").height * (1 - b))
-  }
-
-  set pickerPosition({x: light, y: dark}) {
-    // translate the pos to a new hsv value
-    var {width, height} = this.getSubmorphNamed("hue");
-    this.saturation = Math.max(0, Math.min(light / width, 1));
-    this.brightness = Math.max(0, Math.min(1 - (dark / height), 1));
-    this.update();
-  }
-
-  get scalePosition() {
-    return pt(this.getSubmorphNamed("scale").width / 2, this.getSubmorphNamed("hueGradient").height * (this.hue / 360));
-  }
-
-  set scalePosition(pos) {
-    this.hue = Math.max(0, Math.min((pos.y / this.getSubmorphNamed("hueGradient").height) * 360, 359));
-    this.update();
-  }
-
   update() {
      this.targetMorph.withAllSubmorphsDo(p => p.update && p.update(this));
      // would be better if this.color is the canonical place
@@ -230,21 +507,31 @@ export class ColorPicker extends Window {
   }
 
   colorPalette() {
-    const colorPalette = this.getSubmorphNamed("colorPalette") || new Morph({
-      name: "colorPalette",
-      fill: Color.transparent,
-      draggable: false,
-      layout: new GridLayout({autoAssign: false,
-                              grid: [["field", "scale", "details"],
-                                     ["alphaSlider", "alphaSlider", "alphaSlider"]]}),
-      submorphs: [...this.fieldPicker(), this.scalePicker(), this.colorDetails(), this.alphaSlider()]
-    })
-    colorPalette.layout.col(0).paddingLeft = 10;
-    colorPalette.layout.col(1).fixed = 55;
-    colorPalette.layout.col(2).fixed = 100;
-    colorPalette.layout.row(0).fixed = this.colorDetails().height;
-    colorPalette.layout.row(1).fixed = 20;
-    connect(colorPalette.get('field'), 'extent', colorPalette.get('field'), 'relayout');
+    let colorDetails = this.colorDetails(),
+        fieldPicker = this.fieldPicker(),
+        huePicker = this.huePicker(),
+        alphaSlider = this.alphaSlider(),
+        colorPalette = new Morph({
+          name: "colorPalette",
+          width: this.width,
+          fill: Color.transparent,
+          draggable: false,
+          layout: new GridLayout({
+            autoAssign: false,
+            rows: [0, {fixed: colorDetails.height}, 
+                   1, {fixed: 20}],
+            columns: [0, {paddingLeft: 10}, 
+                      1, {fixed: 55, paddingLeft: 10, paddingRight: 5}, 
+                      2, {fixed: 100}],
+            groups: {field: {alignedProperty: 'position'},
+                     "hue picker": {alignedProperty: 'position'}},
+            grid: [["field", "hue picker", "details"],
+                   ["alphaSlider", "alphaSlider", "alphaSlider"]]}),
+            submorphs: [fieldPicker, huePicker, colorDetails, alphaSlider]
+        })
+    connect(fieldPicker, 'brightness', this, 'brightness');
+    connect(fieldPicker, 'saturation', this, 'saturation');
+    connect(huePicker, 'hue', this, 'hue');
     return colorPalette;
   }
 
@@ -262,211 +549,18 @@ export class ColorPicker extends Window {
   }
 
   fieldPicker() {
-    return [{
-      name: "field",
-      fill: Color.transparent,
-      relayout() {
-        const bounds = this.innerBounds().insetBy(5);
-        this.getSubmorphNamed('hue').setBounds(bounds);
-        this.getSubmorphNamed('shade').setBounds(bounds);
-        this.getSubmorphNamed('light').setBounds(bounds);
-      },
-      update(colorPicker) {
-        this.getSubmorphNamed("hue").fill = Color.hsb(colorPicker.hue, 1, 1);
-      },
-      submorphs: [{
-        borderRadius: 3,
-        name: "hue"
-      },{
-        borderRadius: 3,
-        name: "shade",
-        fill: new LinearGradient({stops: [
-                                  {color: Color.white, offset: 0},
-                                  {color: Color.transparent, offset: 1}],
-                                  vector: "eastwest"})
-      },{
-        borderRadius: 3,
-        name: "light",
-        fill: new LinearGradient({stops: [
-                                  {color: Color.black, offset: 0},
-                                  {color: Color.transparent, offset: 1}],
-                                  vector: "southnorth"}),
-        onMouseDown: (evt) => {
-          this.pickerPosition = evt.positionIn(this.getSubmorphNamed("light"));
-        },
-        onDrag: (evt) => {
-          this.pickerPosition = evt.positionIn(this.get('field'));
-        }
-     }]
-    },{
-        name: "picker",
-        type: "ellipse",
-        reactsToPointer: false,
-        fill: Color.transparent,
-        borderColor: Color.black,
-        borderWidth: 3,
-        extent: pt(18,18),
-        update(colorPicker, animated = false) {
-          const position = colorPicker.pickerPosition.addXY(5,-5);
-          if (animated) {
-             this.animate({position, duration: 300});
-          } else {
-             this.position = position
-           }
-        },
-        submorphs: [{
-          type: "ellipse",
-          fill: Color.transparent,
-          borderColor: Color.white,
-          reactsToPointer: false,
-          borderWidth: 3,
-          center: pt(9,9),
-          extent: pt(12,12)
-        }]
-      }];
+    return this.getSubmorphNamed('field') || new FieldPicker({
+        name: 'field', 
+        saturation: this.saturation,
+        brightness: this.brightness});
   }
 
-  scalePicker() {
-    return this.getSubmorphNamed("scale") || new Morph({
-      name: "scale",
-      fill: Color.transparent,
-      update() {
-         this.getSubmorphNamed('hueGradient').setBounds(this.innerBounds().insetBy(5));
-      },
-      submorphs: [{
-        name: "hueGradient",
-        borderRadius: 3,
-        fill: new LinearGradient({
-         stops: [{color: Color.rgb(255,0,0), offset: 0},
-                {color: Color.rgb(255,255,0), offset: 0.17},
-                {color: Color.limeGreen, offset: 0.33},
-                {color: Color.cyan, offset: 0.50},
-                {color: Color.blue, offset: 0.66},
-                {color: Color.magenta, offset: 0.83},
-                {color: Color.rgb(255,0,0), offset: 1}],
-         vector: "northsouth"}),
-        onMouseDown: (evt) => {
-          this.scalePosition = pt(0, evt.positionIn(this.getSubmorphNamed("hueGradient")).y);
-        },
-        onDrag: (evt) => {
-          this.scalePosition = this.scalePosition.addPt(pt(0, evt.state.dragDelta.y));
-        }
-      },{
-        name: "slider",
-        height: 10,
-        width: 50,
-        borderRadius: 3,
-        nativeCursor: "ns-resize",
-        borderColor: Color.black,
-        fill: Color.transparent,
-        borderWidth: 2,
-        update(colorPicker) {
-          this.center = colorPicker.scalePosition.addPt(pt(0,10));
-        },
-        onDrag: (evt) => {
-          this.scalePosition = this.scalePosition.addPt(pt(0, evt.state.dragDelta.y));
-        }
-      }]
-    });
-  }
-
-  keyValue({name, key, value, update, editable, setValue}) {
-    return new Morph({
-      update,
-      name: name || key,
-      fill: Color.transparent,
-      layout: new HorizontalLayout({spacing: 5}),
-      setValue(value) {
-        this.submorphs[1].textString = obj.safeToString(value);
-      },
-      submorphs: [
-        {type: 'label', name: "keyLabel", morphClasses: [editable && 'large', 'key'], value: key},
-        {type: editable ? 'text' : 'label', morphClasses: [editable && 'editable', 'value'],
-         readOnly: !editable,
-         selectionColor: Color.gray.darker(),
-         onFocus() {
-            this.get('keyLabel').morphClasses = ['key', ...editable ? ['large', 'active'] : []];
-            this.morphClasses = [...editable ? ['editable', 'active'] : [], 'value'];
-            this.selection.cursorBlinkStart();
-         },
-         onBlur() {
-            this.get('keyLabel').morphClasses = [editable && 'large', 'key'];
-            this.morphClasses = [editable && 'editable', 'value'];
-            this.selection.uninstall();
-         },
-         onKeyDown(evt) {
-            if ("Enter" == evt.keyCombo && editable && setValue) {
-               setValue(this.textString); this.owner.focus(); evt.stop();
-            } else {
-               super.onKeyDown(evt);
-            }
-         }, textString: obj.safeToString(value)}]
-    })
-  }
-
-  hashViewer() {
-    return this.getSubmorphNamed("hashViewer") || this.keyValue({
-      name: "hashViewer",
-      key: "#",
-      update(colorPicker) {
-        this.setValue(colorPicker.color.toHexString());
-      },
-      editable: true,
-      setValue: (v) => { this.color = Color.rgbHex(v) || this.color; this.update()},
-      value: this.color.toHexString()})
-  }
-
-  rgbViewer() {
-    const [r, g, b] = this.color.toTuple8Bit();
-    return this.getSubmorphNamed("rgbViewer") || new Morph({
-      name: "rgbViewer",
-      layout: new VerticalLayout(),
-      fill: Color.transparent,
-      update(colorPicker) {
-        const [r, g, b] = colorPicker.color.toTuple8Bit(),
-              [rv, gv, bv] = this.submorphs;
-        rv.setValue(r.toFixed()); gv.setValue(g.toFixed()); bv.setValue(b.toFixed());
-      },
-      submorphs: [this.keyValue({key: "R", value: r.toFixed()}),
-                  this.keyValue({key: "G", value: g.toFixed()}),
-                  this.keyValue({key: "B", value: b.toFixed()})]
-    })
-  }
-
-  hsbViewer() {
-    const [h, s, b] = this.color.toHSB();
-    return this.getSubmorphNamed("hsbViewer") || new Morph({
-      name: "hsbViewer",
-      layout: new VerticalLayout(),
-      fill: Color.transparent,
-      update(colorPicker) {
-        const [h, s, b] = colorPicker.color.toHSB(),
-              [hm, sm, bm] = this.submorphs;
-        hm.setValue(h.toFixed()); sm.setValue(s.toFixed(2)); bm.setValue(b.toFixed(2));
-      },
-      submorphs: [this.keyValue({key: "H", value: h.toFixed()}),
-                  this.keyValue({key: "S", value: s.toFixed(2)}),
-                  this.keyValue({key: "B", value: b.toFixed(2)})]
-    })
+  huePicker() {
+    return this.getSubmorphNamed("hue picker") || new HuePicker({name: 'hue picker', hue: this.hue});
   }
 
   colorDetails() {
-    return this.getSubmorphNamed("details") || new Morph({
-      name: "details",
-      width: 80,
-      fill: Color.transparent,
-      layout: new VerticalLayout({spacing: 9}),
-      submorphs: [{
-        type: "ellipse",
-        extent: pt(50,50),
-        name: "colorViewer",
-        fill: this.color,
-        update(colorPicker) { this.fill = colorPicker.color; }
-      },
-      this.hashViewer(),
-      this.rgbViewer(),
-      this.hsbViewer()]
-    })
+    return new ColorDetails({name: "details", color: this.color})
   }
 
 }
