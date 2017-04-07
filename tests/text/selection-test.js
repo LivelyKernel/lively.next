@@ -1,7 +1,6 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
 import { Selection, MultiSelection } from "../../text/selection.js";
-import TextDocument from "../../text/document.js";
-import { Text } from "../../text/morph.js";
+import { Text } from "../../text2/morph.js";
 import { expect, chai } from "mocha-es6";
 import { dummyFontMetric as fontMetric, expectSelection } from "../test-helpers.js";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";

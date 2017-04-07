@@ -1,7 +1,7 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
 import { promise } from "lively.lang";
 import { World, MorphicEnv } from "../../index.js";
-import { Text } from "../../text/morph.js";
+import { Text } from "../../text2/morph.js";
 import { pt, Rectangle } from "lively.graphics";
 import { CompletionController, WordCompleter } from "../../text/completion.js";
 import { DynamicJavaScriptCompleter } from "../../ide/js/completers.js";
@@ -17,7 +17,7 @@ var text;
 describe("completion controller", () => {
 
   beforeEach(() => text = new Text({textString: "abc\nafg\n", fontMetric}));
-  
+
   inBrowser("computes word completions", async () => {
     text.cursorPosition = {row: 2, column: 0}
     var controller = new CompletionController(text, [new WordCompleter()]),
@@ -73,7 +73,7 @@ describe("completion widget", () => {
   });
 
   inBrowser("is correct aligned", async () => {
-    text.cursorDown(2)
+    text.cursorDown(2);
     text.insertText("a");
     await text.simulateKeys("Alt-Space");
     await promise.delay(0);

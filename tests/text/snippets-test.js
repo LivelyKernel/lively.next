@@ -1,5 +1,5 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
-import { Text } from "../../text/morph.js";
+import { Text } from "../../text2/morph.js";
 import { Snippet } from "../../text/snippets.js";
 import { expect, chai } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";

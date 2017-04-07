@@ -6,6 +6,7 @@ import EvalBackendChooser from "./eval-backend-ui.js";
 import InputLine from "../../text/input-line.js";
 import { connect, once, noUpdate } from "lively.bindings";
 import { resource } from "lively.resources";
+import { Text } from "../../text2/morph.js";
 
 export default class Workspace extends Window {
 
@@ -22,12 +23,12 @@ export default class Workspace extends Window {
 
       targetMorph: {
         initialize() {
-          this.targetMorph = {
-            type: "text", name: "editor",
+          this.targetMorph = new Text({
+            name: "editor",
             textString: "// Enter and evaluate JavaScript code here",
             ...config.codeEditor.defaultStyle,
             plugins: [new JavaScriptEditorPlugin()]
-          };
+          });
           connect(this.targetMorph, 'doSave', this, 'execCommand', {
             converter: () => "[workspace] save content"});
         }
