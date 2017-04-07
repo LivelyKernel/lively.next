@@ -786,7 +786,6 @@ export class Text extends Morph {
     var {document: doc, textLayout} = this,
         text = doc.textInRange(range);
     doc.remove(range);
-    // textLayout.shiftLinesIfNeeded(this, range, "deleteText");
 
     this.addMethodCallChangeDoing({
       target: this,
@@ -890,14 +889,34 @@ export class Text extends Morph {
     this.onAttributesChanged(range);
   }
 
-  textAttributeAt(point) {
+  setTextAttributesWithSortedRanges(textAttributesAndRanges) {
+    // textAttributesAndRanges is expected to be a flat list of pairs,
+    // first element is a range {start: {row, column}, end: {row, column}} and
+    // second element is an attribute:
+    // [range1, attr1, range2, attr2, ...]
+    // ranges are expected to be sorted and non-overlapping!!!
+    // console.log(textAttributesAndRanges)
+    this.document.setTextAttributesWithSortedRanges(textAttributesAndRanges);
+    // FIXME only update affected range!
+    // this.onAttributesChanged({start: {row: 0, column: 0}, end: this.documentEndPosition});
+  }
+
+  textAttributeAt(textPos) {
     let {document: d, textLayout: tl} = this;
-    return d.textAttributeAt(tl.textPositionFromPoint(this, point));
+    return d.textAttributeAt(textPos);
+  }
+
+  textAttributeAtPoint(point) {
+    return this.textAttributeAt(this.textLayout.textPositionFromPoint(this, point));
+  }
+
+  textAndAttributesInRange(range = this.selection.range) {
+    return this.document.textAndAttributesInRange(range);
   }
 
   resetTextAttributes() {
     this.document.resetTextAttributes();
-    this.onAttributesChanged({start: {row: 0, column: 0}, end: this.documentEndPosition});
+    this.onAttributesChanged(this.documentRange);
   }
 
   onAttributesChanged(range) {
@@ -919,17 +938,21 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   getStyleInRange(range = this.selection) {
+throw new Error("TODO");
     var [[from, to, firstStyle]] = this.document.stylesChunked(range);
     return firstStyle;
   }
 
   setStyleInRange(style, range = this.selection) {
-    this.document.setStyleInRange(style, range, this.defaultTextStyle);
-    this.onAttributesChanged(range);
+    this.addTextAttribute(style, range);
   }
 
   resetStyleInRange(range = this.selection) {
-    this.setStyleInRange(this.defaultTextStyle, range);
+    let textAndAttrs = this.document.textAndAttributesInRange(range),
+        mixout = {};
+    for (let i = 0; i < textAndAttrs.length; i=i+2)
+      Object.assign(mixout, textAndAttrs[i+1]);
+    this.removeTextAttribute(mixout, range);
   }
 
 

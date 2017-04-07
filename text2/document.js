@@ -943,24 +943,150 @@ export default class Document {
 
   mixinTextAttribute(mixinAttr, range) {
     modifyAttributesInRange(this, range,
-      (line, attr) => Object.assign({}, attr, mixinAttr));
+      (line, attr) => {
+        line._textAttributes = null;
+        return Object.assign({}, attr, mixinAttr);
+      });
   }
 
-  mixoutTextAttribute(attr, range = {start: {row: 0, column: 0}, end: this.endPosition}) {
-    if (!attr) return;
-    let keys = Object.keys(attr);
+  mixoutTextAttribute(mixout, range = {start: {row: 0, column: 0}, end: this.endPosition}) {
+    if (!mixout) return;
+    let keys = Object.keys(mixout);
     modifyAttributesInRange(this, range,
       (line, attr) => {
         if (!attr) return attr;
-        let mixout = {}, keyCount;
+        line._textAttributes = null;
+        let remaining = 0, mixedout = {}
         for (let key in attr) {
           if (!keys.includes(key)) {
-            mixout[key] = attr[key];
-            keyCount++;
+            mixedout[key] = attr[key];
+            remaining++;
           }
         }
-        return keyCount === 0 ? null : mixout;
+        return remaining === 0 ? null : mixedout;
       });
+  }
+
+  setTextAttributesWithSortedRanges(textAttributesAndRanges) {
+    // textAttributesAndRanges is expected to be a flat list of pairs,
+    // first element is a range {start: {row, column}, end: {row, column}} and
+    // second element is an attribute:
+    // [range1, attr1, range2, attr2, ...]
+    // ranges are expected to be sorted and non-overlapping!!!
+
+    if (textAttributesAndRanges.length < 2) return;
+
+    let firstLineStart = textAttributesAndRanges[0].start,
+        lastLineEnd = textAttributesAndRanges.slice(-2)[0].end,
+        line = this.getLine(firstLineStart.row);
+
+    // just one line, split line into three parts, keep the ends and replace the middle
+    if (firstLineStart.row === lastLineEnd.row) {
+
+      if (firstLineStart.column >= lastLineEnd.column) return;
+
+      let {attributes: attrsForRow} = textAndAttributesFromRangedAttributesForRow(
+                                        firstLineStart.row, line.text, textAttributesAndRanges, 0),
+          [before, _, after] = splitTextAndAttributesAtColumns(
+                                line.textAndAttributes, [firstLineStart.column, lastLineEnd.column]),
+          [_2, inner, _3] = splitTextAndAttributesAtColumns(
+                              attrsForRow, [firstLineStart.column, lastLineEnd.column]);
+      line.changeTextAndAttributes([...before, ...inner, ...after]);
+      return;
+    }
+
+    // multiple lines.
+    let {row, column: firstLineColumn} = firstLineStart,
+        index = 0;
+
+    // start with first line and split into two parts. Keep the
+    // beginning, modify the end
+    let {attributes: attrsForFirstRow, index: firstLineOffset} =
+          textAndAttributesFromRangedAttributesForRow(
+            row, line.text, textAttributesAndRanges, index),
+        [firstLineBefore, _] = splitTextAndAttributesAt(line.textAndAttributes, firstLineColumn),
+        [_2, firstLineNewAttrs] = splitTextAndAttributesAt(attrsForFirstRow, firstLineColumn);
+    line.changeTextAndAttributes([...firstLineBefore, ...firstLineNewAttrs]);
+    index = firstLineOffset;
+
+    // replace attributes of lines between first and last row
+    while (line = line.nextLine()) {
+      row++;
+      if (row === lastLineEnd.row) break;
+      let {attributes: attrsForRow, index: nextIndex} =
+        textAndAttributesFromRangedAttributesForRow(
+          row, line.text, textAttributesAndRanges, index);
+      index = nextIndex;
+      line.changeTextAndAttributes(attrsForRow);
+    }
+
+    // replace everything left of end column of last line
+    if (line) {
+      let {column: lastLineColumn} = lastLineEnd,
+          {attributes: attrsForLastRow} =
+            textAndAttributesFromRangedAttributesForRow(
+              row, line.text, textAttributesAndRanges, index),
+          [_, lastLineAfter] = splitTextAndAttributesAt(line.textAndAttributes, lastLineColumn),
+          [lastLineNewAttrs] = splitTextAndAttributesAt(attrsForLastRow, lastLineColumn);
+      line.changeTextAndAttributes([...lastLineNewAttrs, ...lastLineAfter]);
+    }
+
+
+
+    function textAndAttributesFromRangedAttributesForRow(row, text, textAttributesAndRanges, startIndex = 0) {
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // helper  
+      // function range(sr, sc, er, ec) { return {start: {row: sr, column: sc}, end: {row: er, column: ec}}; }
+      // textAndAttributesFromRangedAttributesForRow(0, "hello", [], 0);
+      //   => {attributes: ["hello", null], index: 0}
+      // textAndAttributesFromRangedAttributesForRow(0, "hello", [range(0,0, 0, 10), {foo: 23}], 0);
+      //   => {attributes: ["hello", {foo: 23}],index: 2}
+      // textAndAttributesFromRangedAttributesForRow(0, "hello", [range(0,0, 0, 3), null, range(0,3, 0, 5), {foo: 23}], 0);
+      //   => {attributes: ["hel", null, "lo", {foo: 23}],index: 4}
+      // textAndAttributesFromRangedAttributesForRow(0, "hello", [range(0,3, 0, 5), {foo: 23}], 0);
+      //   => {attributes: ["hel", null, "lo", {foo: 23}],index: 2}
+      // textAndAttributesFromRangedAttributesForRow(0, "hello", [range(1,3, 1, 5), {foo: 23}], 0);
+      // {attributes: ["hello", null], index: 0}
+      // textAndAttributesFromRangedAttributesForRow(0, "hello", [range(0,3, 1, 5), {foo: 23}], 0);
+      //   => {attributes: ["hel", null, "lo", {foo: 23}],index: 0}
+      // textAndAttributesFromRangedAttributesForRow(1, "hello", [range(0,3, 1, 2), {foo: 23}], 0);
+      //   => {attributes: ["he", {foo: 23}, "llo", null],index: 2}
+
+      let col = 0, maxCol = text.length;
+      if (textAttributesAndRanges.length - startIndex <= 0)
+        return {attributes: [text, null], index: startIndex};
+
+      let result = [], i = startIndex;
+      for (; i < textAttributesAndRanges.length; i = i+2) {
+        if (col >= maxCol) break;
+
+        let {start, end} = textAttributesAndRanges[i],
+            attr = textAttributesAndRanges[i+1];
+
+        if (end.row < row) { col = 0; continue; }
+
+        if (start.row === row && col < start.column) {
+          result.push(text.slice(col, start.column), null);
+          col = start.column;
+        }
+
+        // console.assert(end.row >= row, `Strange range in attributesAndOffsetsForRow, end.row !== row ${end.row} !== ${row}`);
+        if (end.row > row) {
+          // range isn't done yet, and we break here so i doesn't get
+          // incremented since we need range again for the following row(s)
+          result.push(text.slice(col, maxCol), attr);
+          col = maxCol;
+          break;
+        }
+
+        col < end.column && result.push(text.slice(col, end.column), attr);
+        col = end.column;
+      }
+
+      if (col < maxCol) result.push(text.slice(col, maxCol), null);
+
+      return {attributes: result, index: i};
+    }
   }
 
   resetTextAttributes() {

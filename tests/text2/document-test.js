@@ -784,6 +784,12 @@ describe("text document", () => {
         expect(doc.textAndAttributes).deep.equals(["he\nllo", {a: 1}]);
       });
 
+      it("trailing newline", () => {
+        doc.textAndAttributes = ["hello", {a: 1}];
+        doc.insertTextAndAttributes(["foo\n", null], {row: 0, column: 2});
+        expect(doc.textAndAttributes).deep.equals(["he", {a: 1}, "foo\n", null, "llo", {a: 1}]);
+      });
+
       it("leading newline", () => {
         doc.textAndAttributes = ["hello", {a: 1}];
         doc.insertTextAndAttributes(["\nfoo", null], {row: 0, column: 2});
@@ -807,7 +813,33 @@ describe("text document", () => {
         ])
       });
 
-    })
+    });
+
+    describe("setting text attributes", () => {
+    
+      it("in a single line", () => {
+        doc.textAndAttributes = ["aax\n", {a: true}, "bb", {b: true}];
+        doc.setTextAttributesWithSortedRanges([range(0, 1, 0, 2), {c: true}]);
+        expect(doc.textAndAttributes).deep.equals([
+          "a", {"a": true},
+          "a", {"c": true},
+          "x\n", {a: true},
+          "bb", {"b": true}
+        ]);
+      });
+      
+      it("over two lines", () => {
+        doc.textAndAttributes = ["aax\n", {a: true}, "bb", {b: true}];
+        doc.setTextAttributesWithSortedRanges([range(0, 2, 1, 1), {c: true}]);
+        expect(doc.textAndAttributes).deep.equals([
+          "aa", {"a": true},
+          "x\nb", {c: true},
+          "b", {"b": true}
+        ]);
+      });
+    
+    });
+
   });
 
 });
