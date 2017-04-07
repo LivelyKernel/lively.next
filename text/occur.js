@@ -6,7 +6,6 @@
 
 import { arr } from "lively.lang";
 import { TextSearcher } from "./search.js";
-import Document from "./document.js";
 import KeyHandler from "../events/KeyHandler.js"
 
 const occurKeyHandler = Object.assign(
@@ -103,7 +102,7 @@ export class Occur {
 
   matchingLines(options = {needle: ""}) {
     if (!options.needle) return [];
-    var lines = this.textMorph.document.lines,
+    var lines = this.textMorph.document.lineStrings,
         search = new TextSearcher(this.textMorph),
         found = search.searchForAll({...options, start: {column: 0, row: 0}});
 
@@ -119,7 +118,8 @@ export class Occur {
 
   displayOccurContent(options) {
     this._originalDocument = this.textMorph.document;
-    var found = this.matchingLines(options),
+    var Document = this._originalDocument.constructor,
+        found = this.matchingLines(options),
         lines = found.map(({line}) => line),
         occurDocument = this._document = new Document(lines);
     occurDocument._occurMatchingLines = found;
