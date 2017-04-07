@@ -1273,7 +1273,7 @@ throw new Error("TODO");
   }
 
   callTextAttributeDoitFromMouseEvent(evt, clickPos) {
-    let attribute = this.textAttributeAt(clickPos) || [],
+    let attribute = this.textAttributeAtPoint(clickPos) || [],
          doit = attribute && attribute.doit;
 
     if (!doit || !doit.code) return false;
