@@ -185,7 +185,7 @@ export class ConfirmPrompt extends AbstractPrompt {
          0, {paddingLeft: 5},
          1, {paddingRight: 2.5, fixed: 60},
          2, {paddingLeft: 2.5, fixed: 60},
-         3, {paddingRIght: 5}
+         3, {paddingRight: 5}
        ],
        rows: [
          1, {paddingBottom: 5, fixed: 30}
