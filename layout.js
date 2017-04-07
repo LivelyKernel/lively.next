@@ -448,7 +448,6 @@ export class CellGroup {
   get align() { return this.state.align || "topLeft" }
   set align(orientation) {
       this.state.align = orientation;
-      this.resize = false;
       this.layout.apply();
   }
 
@@ -471,10 +470,10 @@ export class CellGroup {
       if (animate) {
         var extent = this.resize ? bounds.extent() : target.extent,
             {duration, easing} = animate;
-        target.animate({[this.align]: bounds[this.align]().addPt(offset), extent, duration, easing});
+        target.animate({[this.alignedProperty || this.align]: bounds[this.align]().addPt(offset), extent, duration, easing});
       } else {
         if (this.resize) target.extent = bounds.extent();
-        target[this.align] = bounds[this.align]().addPt(offset);
+        target[this.alignedProperty || this.align] = bounds[this.align]().addPt(offset);
       }
     }
   }
@@ -1057,6 +1056,20 @@ export class GridLayout extends Layout {
     this.col(0).equalizeDynamicAxis();
     this.row(0).equalizeDynamicAxis();
     this.initRowsAndColumns();
+    this.initGroups();
+  }
+
+  initGroups() {
+    const {groups} = this.config;
+    if (groups) {
+      for (let g in groups) {
+        let group = this.getCellGroupFor(this.container.getSubmorphNamed(g)),
+            {resize, align = 'topLeft', alignedProperty = 'topLeft'} = groups[g];
+        if (resize != undefined) group.resize = resize
+        group.align = align;
+        group.alignedProperty = alignedProperty;
+      }
+    }
   }
 
   initRowsAndColumns() {
