@@ -8,13 +8,14 @@ import { connect } from "lively.bindings";
 import EvalBackendChooser from "./js/eval-backend-ui.js";
 
 import "mocha-es6";
+import LoadingIndicator from "../components/loading-indicator.js";
 
 var jsDiff;
 (async function loadJsDiff() {
   jsDiff = await System.import("https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js");
 })();
 
-async function findTestModulesInPackage(livelySystem, packageOrUrl) {
+export async function findTestModulesInPackage(livelySystem, packageOrUrl) {
   var resources = await livelySystem.resourcesOfPackage(packageOrUrl)
   return Promise.all(
     resources.map(async ({url}) => {
@@ -498,6 +499,7 @@ export default class TestRunner extends HTMLMorph {
 
     this.html = `
        <div class="controls">
+         <input type="button" class="load-test-button" value="load test" onmousedown="${this.htmlRef}.interactivelyloadTests()"></input>
          <input type="button" class="run-button" value="run all" onmousedown="${this.htmlRef}.runAllTests()"></input>
          <input type="button" class="collapse-button" value="toggle collapse" onmousedown="${this.htmlRef}.collapseToggle()"></input>
          <span class="${runningTest ? "" : "hidden"}">Running: ${runningTest && runningTest.title}</span>
@@ -646,6 +648,43 @@ export default class TestRunner extends HTMLMorph {
     return Promise.resolve();
   }
 
+  async interactivelyloadTests() {
+    let sys = await this.getLivelySystem(),
+        packages = await sys.getPackages()
+          .map(({name, url}) => {
+            return {isListItem: true, string: name, value: {name, url}}; }),
+        {selected: [pkg]} = await $world.filterableListPrompt(
+          "Choose package", packages, {
+            requester: this,
+            multiSelect: true,
+            historyId: "lively.morphic-test-runner-load-tests-pkg-hist"
+          });
+
+    // if (!pkg) return null
+
+    let tests = await findTestModulesInPackage(sys, pkg.url),
+        testItems = tests.map(url => {
+          let nameInPackage = url.slice(pkg.url.length);
+          return {
+            string: nameInPackage,
+            value: {url, nameInPackage: url.slice(pkg.url.length)},
+            isListItem: true
+          }
+        }),
+        {selected} = await $world.filterableListPrompt("Load tests", testItems, {
+          requester: this,
+          multiSelect: true,
+          historyId: "lively.morphic-test-runner-load-tests-module-hist"
+        });
+
+    let i = LoadingIndicator.open("running tests");
+    try {
+      for (let {url, nameInPackage} of selected) {
+        i.label = `Running ${nameInPackage}`
+        await this.runTestFile(url);
+      }
+    } finally { i.remove(); }
+  }
 }
 
 
