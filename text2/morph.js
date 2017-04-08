@@ -11,13 +11,15 @@ import { Anchor } from "../text/anchors.js";
 import { Range } from "../text/range.js";
 import { eqPosition } from "../text/position.js";
 import KeyHandler from "../events/KeyHandler.js";
+import { Label } from "../text/label.js";
+import InputLine from "../text/input-line.js";
 import { Snippet } from "../text/snippets.js";
 import { UndoManager } from "../undo.js";
 import { TextSearcher } from "../text/search.js";
 import TextLayout from "./text-layout.js";
 import Renderer from "./renderer.js";
 import commands from "../text/commands.js";
-
+;;
 const defaultTextStyle = {
   fontFamily: "Sans-Serif",
   fontSize: 12,
@@ -33,6 +35,19 @@ const defaultTextStyle = {
 
 
 export class Text extends Morph {
+
+
+  static makeLabel(value, props) {
+    return new Label({
+      value,
+      fontFamily: "Helvetica Neue, Arial, sans-serif",
+      fontColor: Color.almostBlack,
+      fontSize: 11,
+      ...props
+    });
+  }
+
+  static makeInputLine(props) { return new InputLine(props); }
 
   static get properties() {
     return {
@@ -51,7 +66,7 @@ export class Text extends Morph {
 
       textRenderer: {
         after: ["viewState"],
-        initialize() { this.textRenderer = new Renderer(this); }
+        initialize() { this.textRenderer = new Renderer(this.env.domEnv); }
       },
 
       debug: {
@@ -236,7 +251,7 @@ export class Text extends Morph {
         set(textAndAttributes) {
           // 1. remove everything
           this.deleteText({start: {row: 0, column: 0}, end: this.documentEndPosition});
-          this.insertTextAndAttributes(textAndAttributes, this.documentEndPosition);
+          this.insertText(textAndAttributes, this.documentEndPosition);
         }
       },
 
@@ -737,18 +752,23 @@ export class Text extends Morph {
       this.insertText(text, this.documentEndPosition));
   }
 
-  insertTextAndAttributes(textAndAttributes, pos = this.cursorPosition) {
+  insertText(textOrtextAndAttributes, pos = this.cursorPosition) {
+    let textAndAttributes = typeof textOrtextAndAttributes === "string" ?
+      [textOrtextAndAttributes, null] :
+      Array.isArray(textOrtextAndAttributes) ?
+        textOrtextAndAttributes : [String(textOrtextAndAttributes || ""), null];
+
     if (!textAndAttributes.length || textAndAttributes.length == 2 && !textAndAttributes[0])
       return Range.fromPositions(pos, pos);
 
     // the document manages the actual content
     var range = this.document.insertTextAndAttributes(textAndAttributes, pos);
 
-    this.undoManager.undoStart(this, "insertTextAndAttributes");
+    this.undoManager.undoStart(this, "insertText");
 
     this.addMethodCallChangeDoing({
       target: this,
-      selector: "insertTextAndAttributes",
+      selector: "insertText",
       args: [textAndAttributes, pos],
       undo: {
         target: this,
@@ -768,13 +788,6 @@ export class Text extends Morph {
     this.undoManager.undoStop();
 
     return new Range(range);
-  }
-
-  insertText(text, pos = this.cursorPosition) {
-    text = String(text);
-    return text.length ?
-      this.insertTextAndAttributes([text, null], pos) :
-      Range.fromPositions(pos, pos);
   }
 
   deleteText(range) {
@@ -1510,15 +1523,16 @@ throw new Error("TODO");
   computeTextRangeForChanges(changes) {
     if (!changes.length) return Range.at(this.cursorPosition);
 
-    var change = changes[0],
+    var morph = this,
+        change = changes[0],
         range = change.selector === "insertText" ?
           insertRange(change.args[0], change.args[1]) :
           change.selector === "deleteText" ?
             Range.at(change.args[0].start) :
             Range.at(this.cursorPosition);
 
-    for (var i = 1; i < changes.length; i++) {
-      var change = changes[i];
+    for (let i = 1; i < changes.length; i++) {
+      let change = changes[i];
       range = change.selector === "deleteText" ?
         range.without(change.args[0]) :
         change.selector === "insertText" ?
@@ -1528,8 +1542,12 @@ throw new Error("TODO");
 
     return range;
 
-    function insertRange(text, pos) {
-      var lines = this.parseIntoLines(text), range;
+    function insertRange(textAndAttributes, pos) {
+      let text = "";
+      for (let i = 0; i < textAndAttributes.length; i = i+2)
+        text += textAndAttributes[i];
+
+      let lines = morph.parseIntoLines(text), range;
 
       if (lines.length === 1)
         return Range.fromPositions(
