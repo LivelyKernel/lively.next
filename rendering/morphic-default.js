@@ -736,7 +736,7 @@ function initDOMState(renderer, world) {
     .then(() => promise.delay(500))
     .then(() => world.env.fontMetric.reset())
     .then(() => world.withAllSubmorphsDo(ea => (ea.isText || ea.isLabel) && ea.forceRerender()))
-    .catch(err => console.error());
+    .catch(err => console.error(err));
 }
 
 export function renderMorph(morph, renderer = morph.env.renderer) {
