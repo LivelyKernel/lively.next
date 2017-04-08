@@ -819,6 +819,12 @@ export class Text extends Morph {
     return new Range(range);
   }
 
+  columnInWrappedLine(textPos) {
+    return this.lineWrapping ?
+      this.toScreenPosition(textPos).column :
+      textPos.column;
+  }
+
   setTextWithTextAttributes(text, attributes) {
      this.deleteText({start: {row: 0, column: 0}, end: this.documentEndPosition});
      return this.insertTextWithTextAttributes(text, attributes, {row: 0, column: 0});

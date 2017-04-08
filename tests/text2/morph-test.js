@@ -540,39 +540,61 @@ describe("text movement and selection commands", () => {
 
   });
 
-  inBrowser("get position above and below with line wrapping", async () => {
-    var padding = Rectangle.inset(3);
-    var t = text("a\ncdefg\n ", {
-      lineWrapping: "by-chars",
-      clipMode: "hidden",
-      fontMetric: $world.env.fontMetric/*FIXME*/
+  describe("get position above and below", () => {
+
+    let t;
+    before(() => {
+      t = text("a\ncdefg\n", {extent: pt(500,500), lineWrapping: "by-chars", fontFamily: "monospace"})
+      t.textString = "a\ncdefg\n"
+      t.textLayout.resetLineCharBoundsCache(t)
+      t.document.lines[0].__defineGetter__("height", () => 30);
+      t.document.lines[1].__defineGetter__("height", () => 60);
+      t.document.lines[2].__defineGetter__("height", () => 30);
+      t.debug = false;
+      let charBounds = [
+        [{height: 30, width: 10, x: 0, y: 0}],
+        [{height: 30, width: 10, x: 0, y: 0},
+         {height: 30, width: 10, x: 10,y: 0},
+         {height: 30, width: 10, x: 20,y: 0},
+         {height: 30, width: 10, x: 0, y: 30},
+         {height: 30, width: 10, x: 10,y: 30}],
+        [{height: 30, width: 10, x: 0, y: 0}]
+      ]
+      t.textLayout.charBoundsOfRow = function(morph, row) {
+        let result = charBounds[row] || [];
+        morph.textLayout.lineCharBoundsCache.set(morph.document.getLine(row), result);
+        return result;
+      }
+      // t.openInWorld();
+      // t=that
     });
-    let {width: charWidth} = t.env.fontMetric.defaultCharExtent(t);
-    t.extent = pt(3*charWidth + padding.left() + padding.right(), 200);
 
-    t.cursorPosition = {column: 5,row: 1};
-    expect(t.screenLineRange().start).deep.equals({row: 1, column: 3}, "before 1");
+    inBrowser("with line wrapping", async () => {  
+      t.cursorPosition = {column: 5,row: 1};
+      expect(t.screenLineRange().start).deep.equals({row: 1, column: 3}, "before 1");
 
-    t.selection.goUp(1, true);
-    expect(t.screenLineRange().start).deep.equals({row: 1, column: 0}, "up wrapped line 1");
-    expect(t.cursorPosition).deep.equals({row: 1, column: 2}, "up wrapped line 2");
+      t.selection.goUp(1, true);
+      expect(t.screenLineRange().start).deep.equals({row: 1, column: 0}, "up wrapped line 1");
+      expect(t.cursorPosition).deep.equals({row: 1, column: 2}, "up wrapped line 2");
+  
+      t.selection.goUp(1, true);
+      expect(t.screenLineRange().start).deep.equals({row: 0, column: 0}, "upped simple line ");
+      expect(t.cursorPosition).deep.equals({row: 0, column: 1}, "upped");
 
-    t.selection.goUp(1, true);
-    expect(t.screenLineRange().start).deep.equals({row: 0, column: 0}, "upped simple line ");
-    expect(t.cursorPosition).deep.equals({row: 0, column: 1}, "upped");
-
-    t.selection.goDown(3, true);
-    expect(t.cursorPosition).deep.equals({column: 1,row: 2}, "down into wrapped");
-    t.selection.goUp(1, true);
-    expect(t.cursorPosition).deep.equals({row: 1, column: 5}, "up again from empty line");
-
-    t.cursorPosition = {row: 3, column: 0}
-    t.selection.goUp(1, true);
-    expect(t.cursorPosition).deep.equals({row: 1, column: 2}, "up from empty line with goal column set to it");
-
-    t.cursorPosition = {row: 1, column: 1}
-    t.selection.goUp(1, true);
-    expect(t.cursorPosition).deep.equals({row: 0, column: 1}, "up from wrapped line with goal column set to it");
+      t.selection.goDown(3, true);
+      expect(t.cursorPosition).deep.equals({column: 0, row: 2}, "down into wrapped");
+      t.selection.goUp(1, true);
+      expect(t.cursorPosition).deep.equals({row: 1, column: 5}, "up again from empty line");
+  
+      t.cursorPosition = {row: 1, column: 5}
+      t.selection.goUp(1, true);
+      expect(t.cursorPosition).deep.equals({row: 1, column: 2}, "up from empty line with goal column set to it");
+  
+      t.cursorPosition = {row: 1, column: 1}
+      t.selection.goUp(1, true);
+      expect(t.cursorPosition).deep.equals({row: 0, column: 1}, "up from wrapped line with goal column set to it");
+    })
+  
   })
 
 });

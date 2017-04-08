@@ -1109,7 +1109,10 @@ function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
     if (textNode.nodeType === TEXT_NODE) {
       let length = textNode.length;
       for (let i = 0; i < length; i++) {
-        let {left, top, width, height} = measureCharInner(textNode, i),
+        // "right" bias for rect means that if we get multiple rects for a
+        // single char (if it comes after a line break caused by wrapping, we
+        // prefer the bounds on the next (the wrapped) line)
+        let {left, top, width, height} = measureCharInner(textNode, i, "right"),
             x = left + offsetX,
             y = top + offsetY;
         result[index++] = {x, y, width, height};

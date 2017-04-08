@@ -987,69 +987,94 @@ throw new Error("TODO");
     n = 1,
     pos = this.cursorPosition,
     useScreenPosition = false,
-    goalColumn/*already as wrapped column*/
+    goalColumn,/*already as wrapped column*/
+    goalX
   ) {
     // n > 0 above, n < 0 below
     if (n === 0) return pos;
 
-    if (!useScreenPosition) {
-      if (goalColumn === undefined) goalColumn = pos.column
-      return {
-        row: pos.row-n,
-        column: Math.min(this.getLine(pos.row-n).length, goalColumn)
-      }
-    }
-
-    // up / down in screen coordinates is a little difficult, there are a
-    // number of requirements to observe:
-    // When going up and down the "goalColumn" should be observed, that is
-    // the column offset from the (screen!) line start that the cursor should
-    // be placed on. If the (screen) line is shorter than that then the cursor
-    // should be placed at line end. Important here is that the line end for
-    // wrapped lines is actually not the column value after the last char but
-    // the column before the last char (b/c there is no newline the cursor could
-    // be placed between). For actual line ends the last column value is after
-    // the last char.
-
-    var ranges = this.textLayout.rangesOfWrappedLine(this, pos.row);
-
-    if (!ranges.length) return pos;
-
-    var currentRangeIndex = ranges.length-1 - ranges.slice().reverse().findIndex(({start, end}) =>
-                                                  start.column <= pos.column),
-        currentRange = ranges[currentRangeIndex],
-        nextRange, nextRangeIsAtLineEnd = false;
-
-    if (n >= 1) {
-      var isFirst = 0 === currentRangeIndex;
-      nextRange = isFirst ? pos.row <= 0 ? null :
-        arr.last(this.textLayout.rangesOfWrappedLine(this, pos.row-1)) :
-        ranges[currentRangeIndex-1];
-      if (!nextRange) return pos;
-      nextRangeIsAtLineEnd = isFirst;
-
-    } else if (n <= -1) {
-      var isLast = ranges.length-1 === currentRangeIndex,
-          nextRanges = isLast ? pos.row >= this.lineCount()-1 ? [] :
-            this.textLayout.rangesOfWrappedLine(this, pos.row+1) :
-            ranges.slice(currentRangeIndex+1);
-      nextRange = nextRanges[0];
-      if (!nextRange) return pos;
-      nextRangeIsAtLineEnd = nextRanges.length === 1;
-    }
-
-    if (goalColumn === undefined)
-      goalColumn = pos.column - ranges[currentRangeIndex].start.column
-
+    // raw char bounds are without text padding so subtract it from goalX as well
+    if (typeof goalX === "number") goalX -= this.padding.left();
     
-    var column = nextRange.start.column + goalColumn;
-    if (!nextRangeIsAtLineEnd && column >= nextRange.end.column) column--;
+    let nextRow = pos.row, nextCol = pos.column;
 
-    var newPos = {row: nextRange.end.row, column};
+    if (!useScreenPosition || !this.lineWrapping) {
+      nextRow = Math.min(Math.max(0, pos.row-n), this.lineCount()-1);
+      if (typeof goalX === "number") {
+        let charBounds = this.textLayout.charBoundsOfRow(this, nextRow);
+        nextCol = columnInCharBoundsClosestToX(charBounds, goalX);
+      }
 
+    } else {  
+      // up / down in screen coordinates is a little difficult, there are a
+      // number of requirements to observe:
+      // When going up and down "goalX" should be observed, that is
+      // the x offset from the (screen!) line start that the cursor should
+      // be placed at. If the (screen) line is shorter than that then the cursor
+      // should be placed at line end. Important here is that the line end for
+      // wrapped lines is actually not the column value after the last char but
+      // the column before the last char (b/c there is no newline the cursor could
+      // be placed between). For actual line ends the last column value is after
+      // the last char.
+  
+      let ranges = this.textLayout.rangesOfWrappedLine(this, pos.row);
+  
+      if (!ranges.length) return pos;
+  
+      var currentRangeIndex = ranges.length-1 - ranges.slice().reverse().findIndex(({start, end}) =>
+                                                    start.column <= pos.column),
+          currentRange = ranges[currentRangeIndex],
+          nextRange, nextRangeIsAtLineEnd = false;
+  
+      if (n >= 1) {
+        var isFirst = 0 === currentRangeIndex;
+        nextRange = isFirst ? pos.row <= 0 ? null :
+          arr.last(this.textLayout.rangesOfWrappedLine(this, pos.row-1)) :
+          ranges[currentRangeIndex-1];
+        if (!nextRange) return pos;
+        nextRangeIsAtLineEnd = isFirst;
+  
+      } else if (n <= -1) {
+        var isLast = ranges.length-1 === currentRangeIndex,
+            nextRanges = isLast ? pos.row >= this.lineCount()-1 ? [] :
+              this.textLayout.rangesOfWrappedLine(this, pos.row+1) :
+              ranges.slice(currentRangeIndex+1);
+        nextRange = nextRanges[0];
+        if (!nextRange) return pos;
+        nextRangeIsAtLineEnd = nextRanges.length === 1;
+      }
+  
+      nextRow = nextRange.start.row;
+      let charBounds = this.textLayout.charBoundsOfRow(this, nextRow).slice(nextRange.start.column, nextRange.end.column);
+      nextCol = nextRange.start.column + columnInCharBoundsClosestToX(charBounds, goalX);
+  
+    }
+
+    let newPos = {row: nextRow, column: nextCol};
     return Math.abs(n) > 1 ?
-      this.getPositionAboveOrBelow(n + (n > 1 ? -1 : 1), newPos, useScreenPosition, goalColumn) :
-      newPos
+      this.getPositionAboveOrBelow(n + (n > 1 ? -1 : 1), newPos, useScreenPosition, goalColumn, goalX) :
+      newPos;
+
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // helper
+    
+    function columnInCharBoundsClosestToX(charBounds, goalX) {
+      // find the index of the bounds in charBounds whose x offset is nearest to goalX
+      charBounds = charBounds.slice();
+      charBounds.push({x: arr.last(charBounds).x + arr.last(charBounds).width})
+      let closestColumn = 0,
+          distToGoalX = Infinity;
+      for (let i = 0; i < charBounds.length; i++) {
+        let {x} = charBounds[i],
+            dist = Math.abs(x - goalX);
+        if (dist < distToGoalX) {
+          distToGoalX = dist;
+          closestColumn = i
+        }
+      }
+      return closestColumn;
+    }
   }
 
   collapseSelection() {
