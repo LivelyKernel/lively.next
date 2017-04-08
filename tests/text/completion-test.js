@@ -80,7 +80,7 @@ describe("completion widget", () => {
     var menu = world.get("text completion menu");
     expect(menu.get("input").textString).equals("a", "input line content doesn't show prefix");
     var pos = text.charBoundsFromTextPosition(text.cursorPosition).topLeft();
-    expect(menu.position.x).closeTo(pos.x, 1, "menu position")
-    expect(menu.position.y).closeTo(pos.y, 1, "menu position")
+    expect(menu.position.x).closeTo(pos.x, 1, "menu position x")
+    expect(menu.position.y).closeTo(pos.y, 1, "menu position y")
   });
 })
