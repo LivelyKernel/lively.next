@@ -1,15 +1,8 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
 
 import { expect } from "mocha-es6";
-import TextLayout from "../../text2/text-layout.js";
-
-
 import { pt, rect, Color, Rectangle } from "lively.graphics";
-import { Text } from "../../text2/morph.js";
-
-// import { Range } from "../../text/range.js";
-// import { TextAttribute } from "../../text/attribute.js";
-// import { dummyFontMetric as fontMetric } from "../test-helpers.js";
+import { Text } from "../../text/morph.js";
 
 
 var padding = Rectangle.inset(5);

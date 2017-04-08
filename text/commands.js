@@ -1220,4 +1220,3 @@ commands.push(...codeCommands);
 export default commands;
 
 // lively.modules.module("lively.morphic/text/morph.js").reload({reloadDeps: false, resetEnv: false});
-// await lively.modules.module("lively.morphic/text2/morph.js").reload({reloadDeps: false, resetEnv: false});

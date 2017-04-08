@@ -1,7 +1,7 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
 import { promise } from "lively.lang";
 import { World, MorphicEnv } from "../../index.js";
-import { Text } from "../../text2/morph.js";
+import { Text } from "../../text/morph.js";
 import { pt, Rectangle } from "lively.graphics";
 import { CompletionController, WordCompleter } from "../../text/completion.js";
 import { DynamicJavaScriptCompleter } from "../../ide/js/completers.js";

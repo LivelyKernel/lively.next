@@ -1,5 +1,4 @@
 import { arr } from "lively.lang";
-import { TextStyleAttribute } from "../../text/attribute.js";
 import { JavaScriptEditorPlugin } from "../js/editor-plugin.js";
 
 import prism from "https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/prism.js";
@@ -50,12 +49,12 @@ export class JSONEditorPlugin extends JavaScriptEditorPlugin {
     let textMorph = this.textMorph;
     if (!this.theme || !textMorph || !textMorph.document) return;
 
-    var tokens = this._tokens = this.tokenizer.tokenize(textMorph.textString),
-        styles = tokens.map(({type, start, end}) => 
-          tokens.type !== "default" &&
-            TextStyleAttribute.fromPositions(this.theme.styleCached(type),start, end))
-              .filter(Boolean);
-    textMorph.setSortedTextAttributes([textMorph.defaultTextStyleAttribute].concat(styles));
+    let tokens = this._tokens = this.tokenizer.tokenize(textMorph.textString),
+        attributes = [];
+    for (let {token, start, end} of tokens)
+      if (tokens.type !== "default")
+        attributes.push({start, end}, this.theme.styleCached(token));
+    textMorph.setTextAttributesWithSortedRanges(attributes);
 
     try {
       JSON.parse(textMorph.textString);

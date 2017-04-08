@@ -1,4 +1,5 @@
-import { eqPosition, lessPosition } from "../text/position.js";
+import { eqPosition, lessPosition } from "./position.js";
+
 /*
 
 let t = Date.now()

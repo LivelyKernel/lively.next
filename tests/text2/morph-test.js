@@ -2,11 +2,10 @@
 import { createDOMEnvironment } from "../../rendering/dom-helper.js";
 import { MorphicEnv } from "../../index.js";
 import { World } from "../../index.js";
-import { Text } from "../../text2/morph.js";
+import { Text } from "../../text/morph.js";
 import { expect, chai } from "mocha-es6";
-import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
+import { pt, Color, Rectangle } from "lively.graphics";
 import { dummyFontMetric, expectSelection } from "../test-helpers.js";
-import { TextAttribute } from "../../text/attribute.js";
 import { Range } from "../../text/range.js";
 
 expectSelection(chai);
