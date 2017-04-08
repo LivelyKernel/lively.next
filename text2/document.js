@@ -157,16 +157,17 @@ class InnerTreeNode extends TreeNode {
     return null;
   }
 
-  findLineByVerticalOffset(y, lineY = 0) {
+  findLineByVerticalOffset(y, lineY = 0, row = 0) {
     if (y < 0 || y > this.height) return null;
     for (let i = 0; i < this.children.length; i++) {
       let child = this.children[i],
           childHeight = child.height;
       if (y <= childHeight)
-        return this.isLeaf ? {line: child, offset: y, y: lineY} :
-          child.findLineByVerticalOffset(y, lineY);
+        return this.isLeaf ? {line: child, offset: y, y: lineY, row} :
+          child.findLineByVerticalOffset(y, lineY, row);
       y = y - childHeight;
       lineY = lineY + childHeight;
+      row = row + child.size;
     }
     return null;
   }
