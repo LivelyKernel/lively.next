@@ -115,7 +115,7 @@ describe("text rendering", () => {
     var style_a = { fontSize: 12, fontStyle: "italic" },
         style_b = { fontSize: 14, fontWeight: "bold" };
 
-    it("renders styles", async () => {
+    inBrowser("renders styles", async () => {
       sut.setStyleInRange(style_a, Range.create(0, 1, 0, 3));
       sut.setStyleInRange(style_b, Range.create(0, 2, 0, 4));
   
@@ -153,7 +153,7 @@ describe("text rendering", () => {
       expect(strings).equals(["h", "e", "l", "l", "o"]);
     });
 
-    it("renders css classes", async () => {
+    inBrowser("renders css classes", async () => {
       sut.addTextAttribute({textStyleClasses: ["class1", "class2"]}, Range.create(0, 1, 0, 2));
       await promise.delay(20);
     
@@ -161,7 +161,7 @@ describe("text rendering", () => {
       expect(chunks[1].className).equals("class1 class2");
     });
     
-    it("links", async () => {
+    inBrowser("links", async () => {
       sut.addTextAttribute({link: "http://foo"}, Range.create(0, 0, 0, 5));
       await promise.delay(20);
       let chunks = getRenderedTextNodes(sut)[0].childNodes;
@@ -172,7 +172,7 @@ describe("text rendering", () => {
 
   describe("visible line detection", () => {
 
-    it("determines last and first full visible line based on padding and scroll", () => {
+    inBrowser("determines last and first full visible line based on padding and scroll", () => {
       var {width: w, height: h} = fontMetric;
       Object.assign(sut, {
         textString: "111111\n222222\n333333\n444444\n555555",
