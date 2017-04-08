@@ -926,7 +926,7 @@ class DOMTextMeasure {
     // In order to measure stuff this node gets line nodes appended later
 
     // returns an existing or new node with style
-    let {doc, element: root, elementsWithStyleCache: cache} = this;
+    let {doc: document, element: root, elementsWithStyleCache: cache} = this;
     if (cache[styleKey]) return cache[styleKey];
 
     let {
@@ -1050,7 +1050,7 @@ class DOMTextMeasure {
 
   _prepareMeasureForLineSimpleStyle(styleOpts, styleKey) {
     // returns an existing or new node with style
-    let {doc, element: root, elementsWithStyleCache: cache} = this;
+    let {doc: document, element: root, elementsWithStyleCache: cache} = this;
     if (cache[styleKey]) return cache[styleKey];
     let el = cache[styleKey] = document.createElement("div"),
         {defaultTextStyle, cssClassName} = styleOpts,
@@ -1088,14 +1088,15 @@ function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
   const {ELEMENT_NODE, TEXT_NODE, childNodes} = lineNode;
   const maxLength = 20000;
 
-  let node = childNodes[0],
+  let document = lineNode.ownerDocument,
+      node = childNodes[0],
       result = [],
       textLength = line.text.length,
       index = 0;
 
   let emptyNodeFill;
   if (!node) {
-    emptyNodeFill = node = lineNode.ownerDocument.createElement("br");
+    emptyNodeFill = node = document.createElement("br");
     lineNode.appendChild(emptyNodeFill);
   }
 
@@ -1112,7 +1113,7 @@ function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
         // "right" bias for rect means that if we get multiple rects for a
         // single char (if it comes after a line break caused by wrapping, we
         // prefer the bounds on the next (the wrapped) line)
-        let {left, top, width, height} = measureCharInner(textNode, i, "right"),
+        let {left, top, width, height} = measureCharInner(document, textNode, i, "right"),
             x = left + offsetX,
             y = top + offsetY;
         result[index++] = {x, y, width, height};
@@ -1136,11 +1137,11 @@ function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
 
 
 
-function measureCharInner(node, index, bias = "left") {
+function measureCharInner(document, node, index, bias = "left") {
   let rect, start = index, end = index + 1;
   if (node.nodeType == 3) { // If it is a text node, use a range to retrieve the coordinates.
     for (let i = 0; i < 4; i++) { // Retry a maximum of 4 times when nonsense rectangles are returned
-      rect = getUsefulRect(range(node, start, end).getClientRects(), bias)
+      rect = getUsefulRect(range(document, node, start, end).getClientRects(), bias)
       if (rect.left || rect.right || start == 0) break
       end = start
       start = start - 1
@@ -1151,21 +1152,11 @@ function measureCharInner(node, index, bias = "left") {
   // return {bottom, height, left, right, top, width};
 }
 
-function range(node, start, end, endNode) {
-    let r = document.createRange()
-    r.setEnd(endNode || node, end)
-    r.setStart(node, start)
-    return r
-
-  // range = function(node, start, end) {
-  //   let r = document.body.createTextRange()
-  //   try { r.moveToElementText(node.parentNode) }
-  //   catch(e) { return r }
-  //   r.collapse(true)
-  //   r.moveEnd("character", end)
-  //   r.moveStart("character", start)
-  //   return r
-  // }
+function range(document, node, start, end, endNode) {
+  let r = document.createRange()
+  r.setEnd(endNode || node, end)
+  r.setStart(node, start)
+  return r
 }
 
 function getUsefulRect(rects, bias) {
