@@ -8,15 +8,15 @@ const rgbaRegex = new RegExp('\\s*rgba?\\s*\\(\\s*(\\d+)(%?)\\s*,\\s*(\\d+)(%?)\
 
 class ColorHarmony {
 
-   static offsets() { return null }
+   offsets() { return null }
 
-   static stepCount() { return 0 }
+   stepCount() { return 0 }
 
-   static stepSize() { return 0; }
+   stepSize() { return 0; }
 
-   static get name() { return "Color Harmony"}
+   get name() { return "Color Harmony"}
 
-   static chord({hue, saturation, brightness}) {
+   chord({hue, saturation, brightness}) {
       const offsets = this.offsets() || arr.range(0, this.steps()).map(i => i * this.stepSize());
       return offsets.map(offset => Color.hsb(hue + offset % 360, saturation, brightness));
    }
@@ -25,47 +25,47 @@ class ColorHarmony {
 
 export class Complementary extends ColorHarmony {
 
-    static get name() { return "Complement" }
-    static steps() { return 1 }
-    static stepSize() { return 180 }
+   get name() { return "Complement" }
+   steps() { return 1 }
+   stepSize() { return 180 }
 
 }
 
 export class Triadic extends ColorHarmony {
 
-   static get name() { return "Triadic" }
-   static steps() { return 2 }
-   static stepSize() { return 120 }
+  get name() { return "Triadic" }
+  steps() { return 2 }
+  stepSize() { return 120 }
 
 }
 
 export class Tetradic extends ColorHarmony {
 
-   static get name() { return "Tetradic" }
-   static offsets() { return [0, 60, 180, 240] }
+  get name() { return "Tetradic" }
+  offsets() { return [0, 60, 180, 240] }
 
 }
 
 export class Quadratic extends ColorHarmony {
 
-   static get name() { return "Quadratic" }
-   static steps() { return 3 }
-   static stepSize() { return 90 }
+  get name() { return "Quadratic" }
+  steps() { return 3 }
+  stepSize() { return 90 }
 
 }
 
 export class Analogous extends ColorHarmony {
 
-   static get name() { return "Analogous" }
-   static steps() { return 5 }
-   static offsets() { return [-60, -30, 0, 30, 60] }
+  get name() { return "Analogous" }
+  steps() { return 5 }
+  offsets() { return [-60, -30, 0, 30, 60] }
 
 }
 
 export class Neutral extends ColorHarmony {
 
-   static get name() { return "Neutral" }
-   static offsets() { return [-30, -15, 0, 15, 30] }
+  get name() { return "Neutral" }
+  offsets() { return [-30, -15, 0, 15, 30] }
 
 }
 
