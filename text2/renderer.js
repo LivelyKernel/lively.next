@@ -7,21 +7,17 @@ import { inspect, show } from "lively.morphic";
 
 let cssInstalled = false;
 
-function installCSS(document) {
+function installCSS(domEnv) {
   cssInstalled = true;
   addOrChangeCSSDeclaration("new-text-css", `
-    .newtext-scroller {
-        overflow-anchor: none; /*annoying chrome*/
-        -moz-box-sizing: content-box;
-        box-sizing: content-box;
-        height: 100%;
-        outline: none;
-        position: relative;
+  
+    /* markers */
+
+    .newtext-marker-layer {
+      position: absolute;
     }
 
-    .newtext-text-layer {
-      z-index: 3;
-    }
+    /* selection / cursor */
 
     .newtext-cursor {
       z-index: 5;
@@ -36,8 +32,16 @@ function installCSS(document) {
 
     .newtext-selection-layer {
       position: absolute;
-      z-index: 0;
     }
+
+    /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+    /* text layer / content */
+
+    .newtext-text-layer {
+      z-index: 3;
+    }
+
+    .newtext-before-filler {}
 
     .newtext-text-layer {
       white-space: pre;
@@ -73,17 +77,52 @@ function installCSS(document) {
       word-wrap: normal;
       line-height: inherit;
       color: inherit;
-      z-index: 2;
       position: relative;
       overflow: visible;
       -webkit-tap-highlight-color: transparent;
       -webkit-font-variant-ligatures: contextual;
       font-variant-ligatures: contextual;
     }
-  `, document);
+
+    /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+    /* debug styling */
+
+    .debug-info {
+      position: absolute;
+      outline: 1px solid green;
+      pointerEvents: none;
+      zIndex: 4;
+      textAlign: center;
+      fontFamily: monospace;
+      color: green;
+      backgroundColor: white;
+      fontSize: small;
+      verticalAlign: baseline;
+    }
+
+    .debug-line" {
+      position: absolute;
+      outline: 1px solid red;
+      pointerEvents: none;
+      zIndex: 4,
+      textAlign: right;
+      fontFamily: monospace;
+      color: red;
+      fontSize: small;
+      verticalAlign: baseline;
+    }
+
+    .debug-char {
+      position: absolute;
+      outline: 1px solid orange;
+      pointerEvents: none;
+      zIndex: 3
+    }
+
+  `, domEnv.document);
 }
 
-// installCSS();
+// installCSS({document});
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -99,9 +138,8 @@ let nextTick = (function(window, prefixes, i, p, fnc, to) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // Render hook to update layout / size of text document lines once those are
 // rendered and DOM measuring can be used
-function AfterTextRenderHook(morph, lines) {
+function AfterTextRenderHook(morph) {
   this.morph = morph;
-  this.lines = lines;
   this.called = false;
   this.needsRerender = false;
 }
@@ -125,7 +163,7 @@ AfterTextRenderHook.prototype.updateLineHeightOfLines = function(textlayerNode) 
   // figure out what lines are displayed in the text layer node and map those
   // back to document lines.  Those are then updated via lineNode.getBoundingClientRect
 
-  let {morph, lines} = this,
+  let {morph} = this,
       {textLayout, viewState} = morph
 
   viewState.dom_nodes = [];
@@ -147,14 +185,16 @@ AfterTextRenderHook.prototype.updateLineHeightOfLines = function(textlayerNode) 
   if (typeof row !== "number" || isNaN(row)) return;
   viewState.dom_nodeFirstRow = row;
 
-  let actualTextHeight = 0;
+  let actualTextHeight = 0,
+      line = morph.document.getLine(row);
 
   while (lineNode) {
     lastLineNode = lineNode;
     viewState.dom_nodes.push(lineNode);
-    let line = lines[row++];
-    if (line)
+    if (line) {
       actualTextHeight += this.updateLineHeightOfNode(morph, line, lineNode);
+      line = line.nextLine();
+    }
     lineNode = lineNode.nextSibling;
   }
 
@@ -174,8 +214,9 @@ AfterTextRenderHook.prototype.hook = function(node, propName, prevValue) {
 
 export default class Renderer {
 
-  constructor() {
-    if (!cssInstalled) installCSS();
+  constructor(domEnv) {
+    if (!cssInstalled) installCSS(domEnv);
+    this.domEnv = domEnv;
   }
 
   renderMorph(morph, renderer) {
@@ -197,6 +238,9 @@ export default class Renderer {
       selectionLayer.push(...this.renderSelectionLayer(morph, sels[i], false/*diminished*/, 4))
     } else selectionLayer = this.renderSelectionLayer(morph, morph.selection, false, cursorWidth);
 
+    let textLayer = this.renderTextLayer(morph, renderer),
+        markerLayer = this.renderMarkerLayer(morph, renderer);
+
     return h("div", {
         ...defaultAttributes(morph, renderer),
         style: {
@@ -207,9 +251,8 @@ export default class Renderer {
         }
       }, [
         renderer.renderSubmorphs(morph),
-       ...selectionLayer,
-       this.renderTextLayer(morph, renderer)
-        // this.renderMarkerLayer(textLayout, morph)
+        ...selectionLayer, markerLayer,
+        textLayer
       ]
     );
   }
@@ -217,58 +260,54 @@ export default class Renderer {
 
   renderTextLayer(morph, renderer) {
     // this method renders the text content = lines
+//morph= that
+
+
+// let doc = morph.document;
+//let {line: startLine, offset, y: startY, row: startRow} = doc.findLineByVerticalOffset(Math.max(0, scrollTop - topP))
+//let {line: endLine, offset, y: endY, row: endRow} = doc.findLineByVerticalOffset(Math.min(doc.height, (scrollTop - topP) + scrollHeight))
+// startLine.text
+// endLine.text
+// endLine === doc.getLine(endRow)
+//height
+// scrollTop
+
 
     let {
-          height: scrollHeight,
-          scroll: {x: scrollLeft, y: scrollTop},
+          height,
+          scroll,
           padding,
           document: doc
         } = morph,
-        lines = doc.lines,
         leftP = padding.left(),
         rightP = padding.right(),
         topP = padding.top(),
         bottomP = padding.bottom(),
+        scrollTop = scroll.y,
+        scrollHeight = height,
         scrollBottom = scrollTop + scrollHeight,
-        textHeight = 0,
-        y = 0,
-        row = 0,
-        firstVisibleRow = 0,
-        firstFullyVisibleRow = firstVisibleRow,
-        lastVisibleRow = lines.length,
-        lastFullyVisibleRow = lastVisibleRow,
-        heightBefore = 0;
+        textHeight = doc.height;
 
-    scrollTop -= topP;
-    scrollBottom += topP;
+    let {
+      line: startLine,
+      offset: startOffset,
+      y: heightBefore,
+      row: startRow
+    } = doc.findLineByVerticalOffset(Math.max(0, scrollTop - topP));
 
-    // 2. figure out what lines are visible
-    for (; row < lines.length; row++) {
-      let lineHeight = lines[row].height,
-          nextY = y + lineHeight;
-      if (nextY >= scrollTop) {
-        firstVisibleRow = row;
-        firstFullyVisibleRow = y < scrollTop ? row + 1 : row;
-        break;
-      }
-      y = nextY;
-    }
+    let {
+      line: endLine,
+      offset: endLineOffset,
+      y: endY,
+      row: endRow
+    } = doc.findLineByVerticalOffset(Math.min(doc.height, (scrollTop - topP) + scrollHeight));
 
-    heightBefore = y;
+    let firstVisibleRow = startRow,
+        firstFullyVisibleRow = startOffset === 0 ? startRow : startRow + 1,
+        lastVisibleRow = endRow + 1,
+        lastFullyVisibleRow = endLineOffset === endLine.height ? endRow : endRow-1;
 
-    for (; row < lines.length; row++) {
-      if (y >= scrollBottom) break;
-      y = y + lines[row].height;
-    }
-
-    lastVisibleRow = row;
-    lastFullyVisibleRow = row-1;
-
-    for (; row < lines.length; row++) {
-      y = y + lines[row].height;
-    }
-
-    textHeight = y;
+    textHeight = doc.height;
 
 
 
@@ -303,7 +342,7 @@ export default class Renderer {
 
 
     // 4. install hook so we can update text layout from real DOM once it is rendered
-    let hook = new AfterTextRenderHook(morph, lines);
+    let hook = new AfterTextRenderHook(morph);
     textAttrs["after-text-render-hook"] = hook;
     nextTick(() => {
       // The hook only gets called on prop changes of textlayer node. We
@@ -323,15 +362,14 @@ export default class Renderer {
         renderedLines = [];
 
     // spacer to push visible lines into the scrolled area
-    renderedLines.push(
-      h("div.newtext-before-filler", {
-        style: {width: "1px", height: heightBefore + "px"}
-      }));
+    renderedLines.push(h("div.newtext-before-filler", {style: {height: heightBefore + "px"}}));
 
-    for (let i = firstVisibleRow; i < lastVisibleRow; i++) {
-      let line = lines[i];
+    let line = startLine, i = startRow;
+    while (line) {
       visibleLines.push(line);
-      renderedLines.push(this.renderLine(h, morph, line, i));
+      renderedLines.push(this.renderLine(h, morph, line, i++));
+      if (line === endLine) break;
+      line = line.nextLine();
     }
 
     Object.assign(morph.viewState, {
@@ -362,19 +400,9 @@ export default class Renderer {
 
     debugHighlights.push(h("div.debug-info", {
       style: {
-        position: "absolute",
         left: (visibleLeft+leftP) + "px",
         top: visibleTop + "px",
         width: (morph.width-rightP)+"px",
-        outline: "1px solid green",
-        pointerEvents: "none",
-        zIndex: 4,
-        textAlign: "center",
-        fontFamily: "monospace",
-        color: "green",
-        backgroundColor: "white",
-        fontSize: "small",
-        verticalAlign: "baseline"
       }
     }, h("span", `visible rows: ${firstVisibleRow} - ${lastVisibleRow}`)));
 
@@ -385,19 +413,10 @@ export default class Renderer {
 
       debugHighlights.push(h("div.debug-line", {
         style: {
-          position: "absolute",
           left: (visibleLeft + leftP) + "px",
           top: (topP + rowY) + "px",
           width: (morph.width-rightP)+"px",
           height: height+"px",
-          outline: "1px solid red",
-          pointerEvents: "none",
-          zIndex: 4,
-          textAlign: "right",
-          fontFamily: "monospace",
-          color: "red",
-          fontSize: "small",
-          verticalAlign: "baseline"
         }
       }, h("span", String(row))));
 
@@ -410,14 +429,10 @@ export default class Renderer {
         let {x, y, width, height} = charBounds[col];
         debugHighlights.push(h("div.debug-char", {
           style: {
-            position: "absolute",
             left: (leftP+x) +"px",
             top: (topP + rowY + y) + "px",
             width: width+"px",
-            height: height+"px",
-            outline: "1px solid orange",
-            pointerEvents: "none",
-            zIndex: 3
+            height: height+"px"
           }
         }))
       }
@@ -507,8 +522,7 @@ export default class Renderer {
         leadLineHeight      = startBounds.height,
         endLineHeight       = endBounds.height,
         cursorPos           = isReverse ? startPos : endPos,
-        cursorHeight        = isReverse ? leadLineHeight : endLineHeight,
-        lines               = morph.document.lines;
+        cursorHeight        = isReverse ? leadLineHeight : endLineHeight;
 
     // collapsed selection -> cursor
     if (selection.isEmpty())
@@ -562,6 +576,59 @@ export default class Renderer {
         display: visible ? "" : "none"
       }
     }/*, "\u00a0"*/);
+  }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // markers
+
+  renderMarkerLayer(morph) {
+    let {
+          markers,
+          textLayout,
+          viewState: {firstVisibleRow, lastVisibleRow}
+        } = morph,
+        parts = [];
+
+    if (!markers) return parts;
+
+    for (let m of markers) {
+      let {style, range: {start, end}} = m;
+
+      if (end.row < firstVisibleRow || start.row > lastVisibleRow) continue;
+
+      // single line
+      if (start.row === end.row) {
+        parts.push(this.renderMarkerPart(textLayout, morph, start, end, style));
+        continue;
+      }
+
+      // multiple lines
+      // first line
+      parts.push(this.renderMarkerPart(textLayout, morph, start, morph.lineRange(start.row).end, style));
+      // lines in the middle
+      for (var row = start.row+1; row <= end.row-1; row++) {
+        let {start: lineStart, end: lineEnd} = morph.lineRange(row);
+        parts.push(this.renderMarkerPart(textLayout, morph, lineStart, lineEnd, style));
+      }
+      // last line
+      parts.push(this.renderMarkerPart(textLayout, morph, {row: end.row, column: 0}, end, style));
+    }
+
+    return parts;
+  }
+
+  renderMarkerPart(textLayouter, morph, start, end, style) {
+    var {x,y} = textLayouter.boundsFor(morph, start),
+        {height, x: endX} = textLayouter.boundsFor(morph, end);
+    return h("div.newtext-marker-layer", {
+      style: {
+        ...style,
+        left: x + "px", top: y + "px",
+        height: height + "px",
+        width: endX-x + "px"
+      }
+    });
   }
 }
 

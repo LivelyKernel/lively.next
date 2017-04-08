@@ -54,8 +54,8 @@ export default class JavaScriptChecker {
             return morph.addMarker({
               id: "js-checker-" + i,
               style: warnStyle,
-              range: {start,
-              end}, type: "js-undeclared-var"
+              range: {start, end},
+              type: "js-undeclared-var"
             })
           });
       prevMarkers.slice(newMarkers.length).forEach(ea => morph.removeMarker(ea))
