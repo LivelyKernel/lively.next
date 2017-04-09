@@ -185,9 +185,9 @@ export default class FontMetric {
 
   defaultCharExtent(styleOpts, styleKey) { return this._domMeasure.defaultCharExtent(styleOpts, styleKey); }
 
-  manuallyComputeCharBoundsOfLine(line, offsetX = 0, offsetY = 0, styleOpts, styleKey) {
+  manuallyComputeCharBoundsOfLine(line, offsetX = 0, offsetY = 0, styleOpts, styleKey, renderLineFn) {
     return this._domMeasure.manuallyComputeCharBoundsOfLine(
-      line, offsetX, offsetY, styleOpts, styleKey);
+      line, offsetX, offsetY, styleOpts, styleKey, renderLineFn);
   }
 }
 
@@ -906,11 +906,14 @@ class DOMTextMeasure {
     return defaultCharWidthHeightCache[styleKey] = {width: width/12, height};
   }
 
-  manuallyComputeCharBoundsOfLine(line, offsetX = 0, offsetY = 0, styleOpts, styleKey) {
+  manuallyComputeCharBoundsOfLine(line, offsetX = 0, offsetY = 0, styleOpts, styleKey, renderLineFn) {
     if (!styleKey)
       styleKey = this.generateStyleKey(styleOpts);
 
-    let lineNode = this._ensureMeasureNodeForLine(line, styleOpts, styleKey),
+    if (!renderLineFn)
+      renderLineFn = this._defaultRenderLineFunction.bind(this);
+
+    let lineNode = this._ensureMeasureNodeForLine(line, styleOpts, styleKey, renderLineFn),
         offset = cumulativeOffset(lineNode);
 
     try {
@@ -978,10 +981,9 @@ class DOMTextMeasure {
     }
     return el;
   }
-  
-  _ensureMeasureNodeForLine(line, styleOpts, styleKey) {
-    let {doc: document} = this,
-        textNode = this._ensureMeasureNode(styleOpts, styleKey);
+
+  _defaultRenderLineFunction(line) {
+    let {doc: document} = this;
 
 // while(textNode.childNodes.length)
 //   textNode.removeChild(textNode.childNodes[0]);
@@ -1043,7 +1045,13 @@ class DOMTextMeasure {
       else el.appendChild(document.createElement("br"));
       lineEl.appendChild(el);
     }
+    return lineEl;
+  }
 
+  _ensureMeasureNodeForLine(line, styleOpts, styleKey, renderLineFn) {
+    let {doc: document} = this,
+        textNode = this._ensureMeasureNode(styleOpts, styleKey);
+    let lineEl = renderLineFn(line);
     textNode.appendChild(lineEl);
     return lineEl;
   }

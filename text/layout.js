@@ -251,6 +251,12 @@ export default class TextLayout {
         lineWrapping, clipMode, textAlign
       } = morph;
 
+      let renderLineFn = this._renderLineFn
+                     || (this._renderLineFn = line => {
+                          let h = morph.env.renderer.h_dom_fn;
+                          return morph.textRenderer.renderLine(h, morph, line);
+                        });
+
       charBounds = fontMetric.manuallyComputeCharBoundsOfLine(
         line, 0, 0, {
           defaultTextStyle,
@@ -258,6 +264,8 @@ export default class TextLayout {
           width, height, lineWrapping, clipMode, textAlign,
           cssClassName: "newtext-text-layer"
         },
+        undefined,
+        renderLineFn
       );
     }
 
