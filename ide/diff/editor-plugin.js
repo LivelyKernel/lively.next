@@ -36,9 +36,12 @@ export class DiffEditorPlugin extends EditorPlugin {
     let textMorph = this.textMorph;
     if (!this.theme || !textMorph || !textMorph.document) return;
 
-    try {
-      var {tokens, patches} = this.tokenizer.tokenize(textMorph.textString);
-    } catch (e) { tokens = []; patches = []; }
+    let tokens = [], patches = []; 
+    if (textMorph.textString) {
+      try {
+        ({tokens, patches} = this.tokenizer.tokenize(textMorph.textString));
+      } catch (e) {}
+    }
 
     this.tokens = tokens;
     this.patches = patches;
