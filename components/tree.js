@@ -737,7 +737,7 @@ export class TreeData {
     var value = this.safeDisplay(node);
     if (typeof value === "string") return value;
     if (!value || !Array.isArray(value)) return String(value);
-    return value.map(([ea]) => ea).join("");
+    return value.map((text, i) => i%2===0? text: "").join("");
   }
 
   parentNode(childNode) {
