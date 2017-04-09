@@ -8,7 +8,12 @@ var opts = {maxLeafSize: 3, minLeafSize: 2, maxNodeSize: 5, minNodeSize: 2};
 describe("lines", () => {
 
   it("have text and properties", () => {
-    let l = new Line({}, 10, ["th", null, "is", {foo: 23}, " is", null, " a ", {bar: 24}, "test", null]);
+    let l = new Line({
+      parent: {},
+      width: 0,
+      height: 10,
+      textAndAttributes: ["th", null, "is", {foo: 23}, " is", null, " a ", {bar: 24}, "test", null]
+    });
     expect(l.height).equals(10);
     expect(l.text).equals("this is a test");
     expect(l.textAttributes).deep.equals([{foo: 23}, {bar: 24}]);
@@ -65,13 +70,13 @@ describe("document as text tree", () => {
     var doc = new Document(["a", "b", "c", "d"], opts);
     doc.balance();
     expect(doc.print()).equals(
-      `root (size: 4, height: 0, stringSize: 8)\n`
-    + ` leaf (size: 2, height: 0, stringSize: 4)\n`
-    + `  line 0 (height: 0, stringSize: 2, text: "a")\n`
-    + `  line 1 (height: 0, stringSize: 2, text: "b")\n`
-    + ` leaf (size: 2, height: 0, stringSize: 4)\n`
-    + `  line 2 (height: 0, stringSize: 2, text: "c")\n`
-    + `  line 3 (height: 0, stringSize: 2, text: "d")`);
+      `root (size: 4, 0x0, stringSize: 8)\n`
+    + ` leaf (size: 2, 0x0, stringSize: 4)\n`
+    + `  line 0 (0x0, stringSize: 2, text: "a")\n`
+    + `  line 1 (0x0, stringSize: 2, text: "b")\n`
+    + ` leaf (size: 2, 0x0, stringSize: 4)\n`
+    + `  line 2 (0x0, stringSize: 2, text: "c")\n`
+    + `  line 3 (0x0, stringSize: 2, text: "d")`);
   });
 
   describe("insertion", () => {
@@ -80,8 +85,8 @@ describe("document as text tree", () => {
       var doc = new Document();
       doc.insertLine("hello world");
       expect(doc.print()).equals(
-        `root (size: 1, height: 0, stringSize: 12)\n`
-     + ` line 0 (height: 0, stringSize: 12, text: "hello world")`)
+        `root (size: 1, 0x0, stringSize: 12)\n`
+     + ` line 0 (0x0, stringSize: 12, text: "hello world")`)
     });
 
     it("inserts", () => {
@@ -90,10 +95,10 @@ describe("document as text tree", () => {
       doc.insertLine("a", 0);
       doc.insertLine("b", 1);
       expect(doc.print()).equals(
-        `root (size: 3, height: 0, stringSize: 6)\n`
-      + ` line 0 (height: 0, stringSize: 2, text: "a")\n`
-      + ` line 1 (height: 0, stringSize: 2, text: "b")\n`
-      + ` line 2 (height: 0, stringSize: 2, text: "c")`);
+        `root (size: 3, 0x0, stringSize: 6)\n`
+      + ` line 0 (0x0, stringSize: 2, text: "a")\n`
+      + ` line 1 (0x0, stringSize: 2, text: "b")\n`
+      + ` line 2 (0x0, stringSize: 2, text: "c")`);
     });
 
     it("balances leaf nodes after insert", () => {
@@ -101,13 +106,13 @@ describe("document as text tree", () => {
       doc.insertLine("x", 0);
       doc.insertLine("y", 3);
       expect(doc.print()).equals(
-        `root (size: 4, height: 0, stringSize: 8)\n`
-      + ` leaf (size: 2, height: 0, stringSize: 4)\n`
-      + `  line 0 (height: 0, stringSize: 2, text: "x")\n`
-      + `  line 1 (height: 0, stringSize: 2, text: "a")\n`
-      + ` leaf (size: 2, height: 0, stringSize: 4)\n`
-      + `  line 2 (height: 0, stringSize: 2, text: "b")\n`
-      + `  line 3 (height: 0, stringSize: 2, text: "y")`);
+        `root (size: 4, 0x0, stringSize: 8)\n`
+      + ` leaf (size: 2, 0x0, stringSize: 4)\n`
+      + `  line 0 (0x0, stringSize: 2, text: "x")\n`
+      + `  line 1 (0x0, stringSize: 2, text: "a")\n`
+      + ` leaf (size: 2, 0x0, stringSize: 4)\n`
+      + `  line 2 (0x0, stringSize: 2, text: "b")\n`
+      + `  line 3 (0x0, stringSize: 2, text: "y")`);
     });
 
     it("balances after insert 1", () => {
@@ -135,44 +140,44 @@ describe("document as text tree", () => {
       var doc = new Document(["a", "b", "c"]);
       doc.removeLine(1);
       expect(doc.print()).equals(
-        `root (size: 2, height: 0, stringSize: 4)\n`
-      + ` line 0 (height: 0, stringSize: 2, text: "a")\n`
-      + ` line 1 (height: 0, stringSize: 2, text: "c")`);
+        `root (size: 2, 0x0, stringSize: 4)\n`
+      + ` line 0 (0x0, stringSize: 2, text: "a")\n`
+      + ` line 1 (0x0, stringSize: 2, text: "c")`);
       doc.removeLine(1);
 
-      expect(doc.print()).equals(`root (size: 1, height: 0, stringSize: 2)\n line 0 (height: 0, stringSize: 2, text: "a")`);
+      expect(doc.print()).equals(`root (size: 1, 0x0, stringSize: 2)\n line 0 (0x0, stringSize: 2, text: "a")`);
       doc.removeLine(0);
-      expect(doc.print()).equals(`root (size: 0, height: 0, stringSize: 0)`);
+      expect(doc.print()).equals(`root (size: 0, 0x0, stringSize: 0)`);
     });
 
     it("balances leaf nodes after remove 1", () => {
       var doc = new Document(["a", "b", "c", "d"], opts);
       doc.removeLine(3);
       expect(doc.print()).equals(
-          `root (size: 3, height: 0, stringSize: 6)\n`
-        + ` line 0 (height: 0, stringSize: 2, text: "a")\n`
-        + ` line 1 (height: 0, stringSize: 2, text: "b")\n`
-        + ` line 2 (height: 0, stringSize: 2, text: "c")`);
+          `root (size: 3, 0x0, stringSize: 6)\n`
+        + ` line 0 (0x0, stringSize: 2, text: "a")\n`
+        + ` line 1 (0x0, stringSize: 2, text: "b")\n`
+        + ` line 2 (0x0, stringSize: 2, text: "c")`);
       doc.removeLine(1);
       expect(doc.print()).equals(
-          `root (size: 2, height: 0, stringSize: 4)\n`
-        + ` line 0 (height: 0, stringSize: 2, text: "a")\n`
-        + ` line 1 (height: 0, stringSize: 2, text: "c")`);
+          `root (size: 2, 0x0, stringSize: 4)\n`
+        + ` line 0 (0x0, stringSize: 2, text: "a")\n`
+        + ` line 1 (0x0, stringSize: 2, text: "c")`);
     });
 
     it("balances leaf nodes after remove 2", () => {
       var doc = new Document(["a", "b", "c", "d"], opts);
       doc.removeLine(1);
       expect(doc.print()).equals(
-          `root (size: 3, height: 0, stringSize: 6)\n`
-        + ` line 0 (height: 0, stringSize: 2, text: "a")\n`
-        + ` line 1 (height: 0, stringSize: 2, text: "c")\n`
-        + ` line 2 (height: 0, stringSize: 2, text: "d")`);
+          `root (size: 3, 0x0, stringSize: 6)\n`
+        + ` line 0 (0x0, stringSize: 2, text: "a")\n`
+        + ` line 1 (0x0, stringSize: 2, text: "c")\n`
+        + ` line 2 (0x0, stringSize: 2, text: "d")`);
       doc.removeLine(1);
       expect(doc.print()).equals(
-          `root (size: 2, height: 0, stringSize: 4)\n`
-        + ` line 0 (height: 0, stringSize: 2, text: "a")\n`
-        + ` line 1 (height: 0, stringSize: 2, text: "d")`);
+          `root (size: 2, 0x0, stringSize: 4)\n`
+        + ` line 0 (0x0, stringSize: 2, text: "a")\n`
+        + ` line 1 (0x0, stringSize: 2, text: "d")`);
     });
 
     it("balances by stealing values to be consistent", () => {
@@ -192,9 +197,9 @@ describe("document as text tree", () => {
       doc.removeLines(1, 2);
       doc.consistencyCheck();
       expect(doc.print()).equals(
-          `root (size: 2, height: 0, stringSize: 4)\n`
-        + ` line 0 (height: 0, stringSize: 2, text: "a")\n`
-        + ` line 1 (height: 0, stringSize: 2, text: "d")`);
+          `root (size: 2, 0x0, stringSize: 4)\n`
+        + ` line 0 (0x0, stringSize: 2, text: "a")\n`
+        + ` line 1 (0x0, stringSize: 2, text: "d")`);
     });
 
   });
@@ -231,26 +236,51 @@ describe("document as text tree", () => {
 
 });
 
-describe("geometry access", () => {
+describe("geometry", () => {
+
+  let doc, lines;
+  beforeEach(() => {
+    doc = new Document([
+      {text: "a", width: 10, height: 10},
+      {text: "b", width: 20, height: 20},
+      {text: "c", width: 5, height: 5},
+      {text: "d", width: 15, height: 15}]);
+    lines = doc.lines;
+  });
 
   it("updates height", () => {
-    let doc = new Document([{text: "a", height: 10}, {text: "b", height: 20}, {text: "c", height: 5}, {text: "d", height: 15}]),
-        lines = doc.lines;
-    lines[2].changeHeight(12);
+    lines[2].changeExtent(0, 12);
     expect(lines[2]).containSubset({text: "c", height: 12});
     expect(doc.root.children[1].height).equals(15+12, "height parent[1]");
     expect(doc.root.height).equals(30+15+12, "height root");
   });
 
   it("computes y position", () => {
-    var doc = new Document([{text: "a", height: 10}, {text: "b", height: 20}, {text: "c", height: 5}, {text: "d", height: 15}]);
     expect(doc.computeVerticalOffsetOf(0)).equals(0, "1");
     expect(doc.computeVerticalOffsetOf(1)).equals(10, "2");
     expect(doc.computeVerticalOffsetOf(2)).equals(30, "3");
     expect(doc.computeVerticalOffsetOf(3)).equals(35, "4");
-  })
+  });
 
-})
+  describe("width", () => {
+
+    it("updates on changeExtent", () => {
+      expect(doc.width).equals(20, "doc");
+      lines[2].changeExtent(16, 16);
+      expect(doc.root.children[1].width).equals(16, "width parent[1]");
+      expect(doc.root.width).equals(20, "width root");
+      expect(doc.width).equals(20, "doc after update");
+    });
+
+    it("updates on removal", () => {
+      doc.removeLines(1,2);
+      doc.print()
+      expect(doc.width).equals(15, "doc");
+      expect(doc.height).equals(25, "doc");
+    });
+
+  });
+});
 
 
 function range(startRow, startCol, endRow, endCol) {

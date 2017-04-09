@@ -91,18 +91,7 @@ export default class TextLayout {
 
   textBounds(morph) {
     let {document: doc, padding} = morph;
-
-    if (doc.rowCount === 0)
-      return new Rectangle(padding.left(), padding.top(), 0, 0)
-
-    if (morph.isClip()) {
-      this.estimateLineHeights(morph, false);
-      let w = Math.max(morph.viewState.textWidth, morph.width),
-          h = morph.document.height;
-      return new Rectangle(padding.left(), padding.top(), w - padding.right(), h);
-    }
-
-    return this.computeTextBoundsFromCharBounds(morph);
+    return new Rectangle(padding.left(), padding.top(), doc.width, doc.height);
   }
 
   computeTextBoundsFromCharBounds(
