@@ -283,78 +283,17 @@ export default class Renderer {
   renderTextLayer(morph, renderer) {
     // this method renders the text content = lines
 
-    let {
-          height,
-          scroll,
-          padding,
-          document: doc
-        } = morph,
-        leftP = padding.left(),
-        rightP = padding.right(),
-        topP = padding.top(),
-        bottomP = padding.bottom(),
-        scrollTop = scroll.y,
-        scrollHeight = height,
-        scrollBottom = scrollTop + scrollHeight,
-        textHeight = doc.height;
+    let children = morph.debug ? [
+      ...this.renderDebugLayer(morph),
+      ...this.renderLines(h, morph)
+    ] : this.renderLines(h, morph);
+    
 
-    let {
-      line: startLine,
-      offset: startOffset,
-      y: heightBefore,
-      row: startRow
-    } = doc.findLineByVerticalOffset(Math.max(0, scrollTop - topP))
-     || doc.getLine(0) || {startRow: 0, heightBefore: 0, startOffset: 0};
+    let node = this.renderJustTextLayerNode(h, morph, null, children);
 
-    let {
-      line: endLine,
-      offset: endLineOffset,
-      y: endY,
-      row: endRow
-    } = doc.findLineByVerticalOffset(Math.min(doc.height, (scrollTop - topP) + scrollHeight))
-     || doc.getLine(doc.rowCount-1) || {endRow: 0, endLineOffset: 0, endY: 0};
-
-    let firstVisibleRow = startRow,
-        firstFullyVisibleRow = startOffset === 0 ? startRow : startRow + 1,
-        lastVisibleRow = endRow + 1,
-        lastFullyVisibleRow = !endLine || endLineOffset === endLine.height ? endRow : endRow-1;
-
-    textHeight = doc.height;
-
-
-    // 3. assemble attributes of node
-
-    // start with lineWrapping
-    let textLayerClasses = "";
-
-    switch (morph.lineWrapping) {
-      case true:
-      case "by-words":      textLayerClasses = textLayerClasses + ".wrap-by-words"; break;
-      case "only-by-words": textLayerClasses = textLayerClasses + ".only-wrap-by-words"; break;
-      case "by-chars":      textLayerClasses = textLayerClasses + ".wrap-by-chars"; break;
-      case false:           textLayerClasses = textLayerClasses + ".no-wrapping"; break;
-    }
-
-    // ...and now other attribues
-    let textAttrs = {
-      style: {
-        height:        Math.max(textHeight, morph.height) + "px",
-        fontFamily:    morph.fontFamily,
-        fontSize:      morph.fontSize + "px",
-        textAlign:     morph.textAlign,
-        color:         morph.fontColor,
-        paddingLeft:   leftP + "px",
-        paddingRight:  rightP + "px",
-        paddingTop:    topP + "px",
-        paddingBottom: bottomP + "px"
-      }
-    };
-
-
-
-    // 4. install hook so we can update text layout from real DOM once it is rendered
+    // install hook so we can update text layout from real DOM once it is rendered
     let hook = new AfterTextRenderHook(morph);
-    textAttrs["after-text-render-hook"] = hook;
+    node.properties["after-text-render-hook"] = hook;
     nextTick(() => {
       // The hook only gets called on prop changes of textlayer node. We
       // actually want to always trigger in order to update the lines, so run
@@ -365,16 +304,112 @@ export default class Renderer {
       textlayerNode && hook.hook(textlayerNode);
     })
 
+    return node;
+  }
 
+  renderJustTextLayerNode(h, morph, additionalStyle, children) {
+    // this method renders the text content = lines
+  
+    let {
+          height,
+          scroll,
+          padding: {x: padLeft, y: padTop, width: padWidth, height: padHeight},
+          document: doc
+        } = morph,
+        padRight = padLeft + padWidth,
+        padBottom = padTop + padHeight,
+        textHeight = Math.max(morph.document.height, morph.height);
+  
+    // assemble attributes of node
+  
+    // start with lineWrapping
+    let textLayerClasses = "newtext-text-layer";
+  
+    switch (morph.lineWrapping) {
+      case true:
+      case "by-words":      textLayerClasses = textLayerClasses + " wrap-by-words"; break;
+      case "only-by-words": textLayerClasses = textLayerClasses + " only-wrap-by-words"; break;
+      case "by-chars":      textLayerClasses = textLayerClasses + " wrap-by-chars"; break;
+      case false:           textLayerClasses = textLayerClasses + " no-wrapping"; break;
+    }
+  
+    // ...and now other attribues
+    let style = {
+        height:          textHeight + "px",
+          fontFamily:      morph.fontFamily,
+          fontWeight:      morph.fontWeight,
+          fontStyle:       morph.fontStyle,
+          textDecoration:  morph.textDecoration,
+          fontSize:        morph.fontSize + "px",
+          textAlign:       morph.textAlign,
+          color:           morph.fontColor,
+          backgroundColor: morph.backgroundColor,
+          paddingLeft:     padLeft + "px",
+          paddingRight:    padRight + "px",
+          paddingTop:      padTop + "px",
+          paddingBottom:   padBottom + "px"
+        },
+        textAttrs = {className: textLayerClasses, style};
 
-    // 5. render text / lines via virtual-dom nodes
+    if (additionalStyle) {
+      let {clipMode, height, width} = additionalStyle;
+      if (typeof width === "number")
+        style.width = width + "px";
+      if (typeof height === "number")
+        style.height = height + "px";
+      if (clipMode)
+        style.overflow = clipMode;
+    }
+  
+    return h("div", textAttrs, children);
+  }
 
+  renderLines(h, morph) {
+    let {
+          height,
+          scroll,
+          padding: {x: padLeft, y: padTop, width: padWidth, height: padHeight},
+          document: doc
+        } = morph,
+        padRight = padLeft + padWidth,
+        padBottom = padTop + padHeight,
+        scrollTop = scroll.y,
+        scrollHeight = height,
+        scrollBottom = scrollTop + scrollHeight,
+        textHeight = doc.height;
+
+    // figure out where the visible area of the text starts / ends in terms of
+    // visible lines
+
+    let {
+      line: startLine,
+      offset: startOffset,
+      y: heightBefore,
+      row: startRow
+    } = doc.findLineByVerticalOffset(Math.max(0, scrollTop - padTop))
+     || doc.getLine(0) || {startRow: 0, heightBefore: 0, startOffset: 0};
+  
+    let {
+      line: endLine,
+      offset: endLineOffset,
+      y: endY,
+      row: endRow
+    } = doc.findLineByVerticalOffset(Math.min(doc.height, (scrollTop - padTop) + scrollHeight))
+     || doc.getLine(doc.rowCount-1) || {endRow: 0, endLineOffset: 0, endY: 0};
+  
+    let firstVisibleRow = startRow,
+        firstFullyVisibleRow = startOffset === 0 ? startRow : startRow + 1,
+        lastVisibleRow = endRow + 1,
+        lastFullyVisibleRow = !endLine || endLineOffset === endLine.height ? endRow : endRow-1;
+  
+    // render lines via virtual-dom
+  
     let visibleLines = [],
         renderedLines = [];
-
+  
     // spacer to push visible lines into the scrolled area
     renderedLines.push(h("div.newtext-before-filler", {style: {height: heightBefore + "px"}}));
-
+  
     let line = startLine, i = startRow;
     while (line) {
       visibleLines.push(line);
@@ -384,7 +419,7 @@ export default class Renderer {
       if (line === endLine) break;
       line = line.nextLine();
     }
-
+  
     Object.assign(morph.viewState, {
       scrollTop, scrollHeight, scrollBottom,
       heightBefore, textHeight,
@@ -392,68 +427,8 @@ export default class Renderer {
       firstFullyVisibleRow, lastFullyVisibleRow,
       visibleLines
     });
-
-    return h("div.newtext-text-layer" + textLayerClasses,
-             textAttrs, [
-             ...morph.debug ? this.renderDebugLayer(morph) : [],
-             ...renderedLines
-           ]);
-  }
-
-  renderDebugLayer(morph) {
-    let vs = morph.viewState,
-        debugHighlights = [],
-        textWidth = 0,
-        {heightBefore: rowY, firstVisibleRow, lastVisibleRow, visibleLines} = vs,
-        {padding, scroll: {x: visibleLeft, y: visibleTop}} = morph,
-        leftP = padding.left(),
-        rightP = padding.right(),
-        topP = padding.top(),
-        bottomP = padding.bottom();
-
-    debugHighlights.push(h("div.debug-info", {
-      style: {
-        left: (visibleLeft+leftP) + "px",
-        top: visibleTop + "px",
-        width: (morph.width-rightP)+"px",
-      }
-    }, h("span", `visible rows: ${firstVisibleRow} - ${lastVisibleRow}`)));
-
-    for (let i = 0, row = firstVisibleRow; row < lastVisibleRow; i++, row++) {
-      let line = visibleLines[i],
-          charBounds = morph.textLayout.lineCharBoundsCache.get(line),
-          {height} = line;
-
-      debugHighlights.push(h("div.debug-line", {
-        style: {
-          left: (visibleLeft + leftP) + "px",
-          top: (topP + rowY) + "px",
-          width: (morph.width-rightP)+"px",
-          height: height+"px",
-        }
-      }, h("span", String(row))));
-
-      if (!charBounds) {
-        rowY = rowY + height;
-        continue;
-      }
-
-      for (let col = 0; col < charBounds.length; col++) {
-        let {x, y, width, height} = charBounds[col];
-        debugHighlights.push(h("div.debug-char", {
-          style: {
-            left: (leftP+x) +"px",
-            top: (topP + rowY + y) + "px",
-            width: width+"px",
-            height: height+"px"
-          }
-        }))
-      }
-
-      rowY = rowY + height;
-    }
-
-    return debugHighlights
+  
+    return renderedLines;
   }
 
   renderLine(h, morph, line) {
@@ -643,6 +618,66 @@ export default class Renderer {
         width: endX-x + "px"
       }
     });
+  }
+  
+  
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // debug layer
+
+  renderDebugLayer(morph) {
+    let vs = morph.viewState,
+        debugHighlights = [],
+        textWidth = 0,
+        {heightBefore: rowY, firstVisibleRow, lastVisibleRow, visibleLines} = vs,
+        {padding, scroll: {x: visibleLeft, y: visibleTop}} = morph,
+        leftP = padding.left(),
+        rightP = padding.right(),
+        topP = padding.top(),
+        bottomP = padding.bottom();
+
+    debugHighlights.push(h("div.debug-info", {
+      style: {
+        left: (visibleLeft+leftP) + "px",
+        top: visibleTop + "px",
+        width: (morph.width-rightP)+"px",
+      }
+    }, h("span", `visible rows: ${firstVisibleRow} - ${lastVisibleRow}`)));
+
+    for (let i = 0, row = firstVisibleRow; row < lastVisibleRow; i++, row++) {
+      let line = visibleLines[i],
+          charBounds = morph.textLayout.lineCharBoundsCache.get(line),
+          {height} = line;
+
+      debugHighlights.push(h("div.debug-line", {
+        style: {
+          left: (visibleLeft + leftP) + "px",
+          top: (topP + rowY) + "px",
+          width: (morph.width-rightP)+"px",
+          height: height+"px",
+        }
+      }, h("span", String(row))));
+
+      if (!charBounds) {
+        rowY = rowY + height;
+        continue;
+      }
+
+      for (let col = 0; col < charBounds.length; col++) {
+        let {x, y, width, height} = charBounds[col];
+        debugHighlights.push(h("div.debug-char", {
+          style: {
+            left: (leftP+x) +"px",
+            top: (topP + rowY + y) + "px",
+            width: width+"px",
+            height: height+"px"
+          }
+        }))
+      }
+
+      rowY = rowY + height;
+    }
+
+    return debugHighlights
   }
 }
 
