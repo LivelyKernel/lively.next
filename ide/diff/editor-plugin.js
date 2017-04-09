@@ -44,9 +44,9 @@ export class DiffEditorPlugin extends EditorPlugin {
     this.patches = patches;
     
     let attributes = [];
-    for (let {token, start, end} of tokens)
+    for (let {type, start, end} of tokens)
       if (tokens.type !== "default")
-        attributes.push({start, end}, this.theme.styleCached(token));
+        attributes.push({start, end}, this.theme.styleCached(type));
     textMorph.setTextAttributesWithSortedRanges(attributes);
 
   }
