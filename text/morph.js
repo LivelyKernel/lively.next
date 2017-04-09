@@ -286,7 +286,7 @@ export class Text extends Morph {
       },
 
       lineWrapping: {
-        defaultValue: true,
+        defaultValue: false,
         after: ["document", "viewState"],
         set(lineWrapping) {
           // possible values:

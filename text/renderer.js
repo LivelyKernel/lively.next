@@ -192,7 +192,7 @@ AfterTextRenderHook.prototype.updateLineHeightOfLines = function(textlayerNode) 
     lastLineNode = lineNode;
     viewState.dom_nodes.push(lineNode);
     if (line) {
-      actualTextHeight += this.updateLineHeightOfNode(morph, line, lineNode);
+      actualTextHeight = actualTextHeight + this.updateLineHeightOfNode(morph, line, lineNode);
       line = line.nextLine();
     }
     lineNode = lineNode.nextSibling;
@@ -260,18 +260,6 @@ export default class Renderer {
 
   renderTextLayer(morph, renderer) {
     // this method renders the text content = lines
-//morph= that
-
-
-// let doc = morph.document;
-//let {line: startLine, offset, y: startY, row: startRow} = doc.findLineByVerticalOffset(Math.max(0, scrollTop - topP))
-//let {line: endLine, offset, y: endY, row: endRow} = doc.findLineByVerticalOffset(Math.min(doc.height, (scrollTop - topP) + scrollHeight))
-// startLine.text
-// endLine.text
-// endLine === doc.getLine(endRow)
-//height
-// scrollTop
-
 
     let {
           height,
@@ -293,22 +281,23 @@ export default class Renderer {
       offset: startOffset,
       y: heightBefore,
       row: startRow
-    } = doc.findLineByVerticalOffset(Math.max(0, scrollTop - topP));
+    } = doc.findLineByVerticalOffset(Math.max(0, scrollTop - topP))
+     || doc.getLine(0) || {startRow: 0, heightBefore: 0, startOffset: 0};
 
     let {
       line: endLine,
       offset: endLineOffset,
       y: endY,
       row: endRow
-    } = doc.findLineByVerticalOffset(Math.min(doc.height, (scrollTop - topP) + scrollHeight));
+    } = doc.findLineByVerticalOffset(Math.min(doc.height, (scrollTop - topP) + scrollHeight))
+     || doc.getLine(doc.rowCount-1) || {endRow: 0, endLineOffset: 0, endY: 0};
 
     let firstVisibleRow = startRow,
         firstFullyVisibleRow = startOffset === 0 ? startRow : startRow + 1,
         lastVisibleRow = endRow + 1,
-        lastFullyVisibleRow = endLineOffset === endLine.height ? endRow : endRow-1;
+        lastFullyVisibleRow = !endLine || endLineOffset === endLine.height ? endRow : endRow-1;
 
     textHeight = doc.height;
-
 
 
     // 3. assemble attributes of node
@@ -421,7 +410,7 @@ export default class Renderer {
       }, h("span", String(row))));
 
       if (!charBounds) {
-        rowY += height;
+        rowY = rowY + height;
         continue;
       }
 
@@ -437,7 +426,7 @@ export default class Renderer {
         }))
       }
 
-      rowY += height;
+      rowY = rowY + height;
     }
 
     return debugHighlights
