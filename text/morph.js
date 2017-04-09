@@ -110,6 +110,7 @@ export class Text extends Morph {
       document: {
         initialize() {
           this.document = Document.fromString("", {maxLeafSize: 50, minLeafSize: 25, maxNodeSize: 35, minNodeSize: 7});
+          this.consistencyCheck();
         }
       },
 
@@ -693,6 +694,7 @@ export class Text extends Morph {
     if (resetStyle)
       this.defaultTextStyle = defaultTextStyle;
     this.makeDirty();
+    this.consistencyCheck();
   }
 
   textInRange(range) { return this.document.textInRange(range); }
@@ -787,6 +789,8 @@ export class Text extends Morph {
       // with individual normal selections
       if (this._multiSelection) this._multiSelection.updateFromAnchors();
       else this.selection.updateFromAnchors();
+
+      this.consistencyCheck();
     });
 
     this.undoManager.undoStop();
@@ -822,6 +826,8 @@ export class Text extends Morph {
       // with individual normal selections
       if (this._multiSelection) this._multiSelection.updateFromAnchors();
       else this.selection.updateFromAnchors();
+      
+      this.consistencyCheck();
     });
     this.undoManager.undoStop();
     return text;
@@ -898,11 +904,13 @@ export class Text extends Morph {
   addTextAttribute(attr, range) {
     this.document.mixinTextAttribute(attr, range);
     this.onAttributesChanged(range);
+    this.consistencyCheck();
     return attr;
   }
 
   removeTextAttribute(attr, range) {
     this.document.mixoutTextAttribute(attr);
+    this.consistencyCheck();
     this.onAttributesChanged(range);
   }
 
@@ -914,6 +922,7 @@ export class Text extends Morph {
     // ranges are expected to be sorted and non-overlapping!!!
     // console.log(textAttributesAndRanges)
     this.document.setTextAttributesWithSortedRanges(textAttributesAndRanges);
+    this.consistencyCheck();
     // FIXME only update affected range!
     // this.onAttributesChanged({start: {row: 0, column: 0}, end: this.documentEndPosition});
   }
@@ -934,6 +943,7 @@ export class Text extends Morph {
   resetTextAttributes() {
     this.document.resetTextAttributes();
     this.onAttributesChanged(this.documentRange);
+    this.consistencyCheck();
   }
 
   onAttributesChanged(range) {
@@ -1653,6 +1663,29 @@ throw new Error("TODO");
   openRichTextControl() {
     this.showError(new Error("TODO"))
     // return RichTextControl.openDebouncedFor(this);
+  }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // debugging
+  consistencyCheck() {
+    try { this.document.consistencyCheck(); } catch(err) {
+      // Keep doc around for debugging
+      let brokenDocument = this.document
+      if (!this.brokenDocument) this.brokenDocument = brokenDocument;
+      let world = this.world() || $world;
+      try {
+        // try to fix things by at last keeping the content
+        let fixedDoc = new Document([]);
+        fixedDoc.textAndAttributes = brokenDocument.textAndAttributes;
+        this.changeDocument(fixedDoc);
+      } catch (err) {
+        let msg = `Broken document could not be fixed`;
+        world ? world.logError(msg) : console.error(msg);
+      }
+      // report
+      world ? world.logError(err) : console.error(err);
+    }
   }
 
 }

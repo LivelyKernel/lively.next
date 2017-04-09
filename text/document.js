@@ -73,45 +73,56 @@ class TreeNode {
   }
 
   consistencyCheck() {
-    var {
-      isRoot,
-      isLeaf,
-      children,
-      size, stringSize, height,
-      options: {maxLeafSize, maxNodeSize, minLeafSize, minNodeSize}
-    } = this;
+    let report = [],
+        {
+          isRoot,
+          isLeaf,
+          children,
+          size, stringSize, height,
+          options: {maxLeafSize, maxNodeSize, minLeafSize, minNodeSize}
+        } = this;
 
-    if (size === 0)
-      throw new Error(`size of ${this} expected to be > 0!`);
+    if (size === 0) {
+      report.push({error: `size of ${this} expected to be > 0!`});
+    }
+
+    if (!Array.isArray(children)) {
+      report.push({error: `${this}.children is not an array but ${children}`});
+      return report;
+    }
 
     var sumChildSizes = arr.sum(arr.pluck(children, "size"));
     if (sumChildSizes != size)
-      throw new Error(`Sum of child sizes is not size of ${this}: ${sumChildSizes} != ${size}`);
+      report.push({error: `Sum of child sizes is not size of ${this}: ${sumChildSizes} != ${size}`});
 
     var sumChildrenStringSize = arr.sum(arr.pluck(children, "stringSize"));
     if (sumChildrenStringSize != stringSize)
-      throw new Error(`Sum of child stringSize is not stringSIze of ${this}: ${sumChildrenStringSize} != ${stringSize}`);
+      report.push({error: `Sum of child stringSize is not stringSIze of ${this}: ${sumChildrenStringSize} != ${stringSize}`});
 
     var sumChildrenHeight = arr.sum(arr.pluck(children, "height"));
     if (sumChildrenHeight != height)
-      throw new Error(`Sum of child Height is not Height of ${this}: ${sumChildrenHeight} != ${height}`);
+      report.push({error: `Sum of child Height is not Height of ${this}: ${sumChildrenHeight} != ${height}`});
 
     if (!isRoot) {
       var max = isLeaf ? maxLeafSize : maxNodeSize,
           min = isLeaf ? minLeafSize : minNodeSize;
       if (!num.between(children.length, min, max))
-        throw new Error(`children count of ${this} expected to be between ${min} and ${max} but is ${children.length}`);
-      if (isLeaf) {
-        if (!children.every(ea => ea.isLine))
-          throw new Error(`children of leaf ${this} are not all lines!`)
-      } else {
-        if (!children.every(ea => ea.isNode))
-          throw new Error(`children of non-leaf ${this} are not all inner nodes!`)
+        report.push({error: `children count of ${this} expected to be between ${min} and ${max} but is ${children.length}`});
+      for (let i = 0; i < children.length; i++) {
+        let child = children[i];
+        if (!child) {
+          report.push({error: `child ${i} of ${this} is nullish!`})
+          continue;
+        }
+        if (isLeaf && !child.isLine) {
+          report.push({error: `child ${i} of leaf ${this} is not a line!`})
+        } else if (!child.isNode) {
+          report.push({error: `child of non-leaf ${this} is not an inner node!`})
+        }
       }
     }
 
-    if (!isLeaf)
-      children.forEach(ea => ea.consistencyCheck());
+    return arr.flatmap(children, ea => ea.consistencyCheck());
   }
 
 }
@@ -797,6 +808,14 @@ export class Line extends TreeNode {
   toString() {
     let {height, _text} = this;
     return `line (${string.truncate(_text, 30)}, ${height})`;
+  }
+
+  consistencyCheck() {
+    let report = [];
+    if (!this.parent) {
+      report.push(`line ${this} has no parent!`)
+      return report;
+    }
   }
 
 }
@@ -1497,13 +1516,17 @@ export default class Document {
 
   toString() { return `Document(${this.rowCount} lines)`; }
 
-
   consistencyCheck() {
+    let report = []
     if (this.rowCount !== this.lines.length)
-      throw new Error(`[consistency check] ${this} row count: ${this.rowCount} !== ${this.lines.length}`);
+      report.push({error: `document ${this} row count: ${this.rowCount} !== ${this.lines.length}`});
     if (this.textString.length !== this.stringSize)
-      throw new Error(`[consistency check] ${this} textString.length vs stringSize: ${this.textString.length} !== ${this.stringSize}`);
-    this.root.consistencyCheck();
+      report.push({error: `document ${this} textString.length vs stringSize: ${this.textString.length} !== ${this.stringSize}`});
+    report.push(...this.root.consistencyCheck());
+    if (report.length) {
+      throw new Error(`Consistency check of document revealed ${report.length} error${report.length > 1 ? "s" : ""}:\n`
+                    + `${report.map(ea => ea.error).filter(Boolean).join("\n")}`);
+    }
   }
 
   print() { return this.root.print(0, 0, "root"); }
