@@ -1166,18 +1166,23 @@ export default class Browser extends Window {
   }
 
   menuItems() {
+    let p = this.selectedPackage,
+        m = this.selectedModule,
+        c = this.selectedCodeEntity;
+
     return [
       ["browse snippet", () => {
-        var p = this.selectedPackage,
-            m = this.selectedModule,
-            c = this.selectedCodeEntity,
-            codeSnip = `$world.execCommand("open browser", {`
+        let codeSnip = `$world.execCommand("open browser", {`
         if (p) codeSnip += `packageName: "${p.name}"`;
         if (m) codeSnip += `, moduleName: "${m.name}"`;
         if (c) codeSnip += `, codeEntity: ${JSON.stringify(obj.select(c, ["name", "type"]))}`;
         codeSnip += `});`
-        this.world().execCommand("open workspace", {content: codeSnip})
+        this.world().execCommand("open workspace", {content: codeSnip});
+      }],
+      m && ["open in text editor", () => {
+        var lineNumber = c ? this.ui.sourceEditor.indexToPosition(c.node.start).row : null;
+        this.world().execCommand("open file", {url: m.url, lineNumber});
       }]
-    ]
+    ].filter(Boolean)
   }
 }
