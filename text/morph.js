@@ -31,13 +31,6 @@ const defaultTextStyle = {
   nativeCursor: undefined
 }
 
-const styleProps = [
-  "fontFamily", "fontSize", "fontColor", "fontWeight", "backgroundColor",
-  "fontStyle", "textDecoration", "fixedCharacterSpacing",
-  "textStyleClasses", "link", "nativeCursor"
-]
-
-
 export class Text extends Morph {
 
 
@@ -74,6 +67,7 @@ export class Text extends Morph {
       },
 
       debug: {
+        isStyleProp: true,
         after: ["textRenderer", "textLayout"],
         defaultValue: false,
         doc: "For visualizing and debugging text layout and rendering"
@@ -116,14 +110,22 @@ export class Text extends Morph {
 
       draggable:   {defaultValue: false},
 
-      useSoftTabs: {defaultValue: config.text.useSoftTabs !== undefined ? config.text.useSoftTabs : true},
-      tabWidth:    {defaultValue: config.text.tabWidth || 2},
+      useSoftTabs: {
+        isStyleProp: true,
+        defaultValue: config.text.useSoftTabs !== undefined ? config.text.useSoftTabs : true
+      },
+      tabWidth:    {
+        isStyleProp: true,
+        defaultValue: config.text.tabWidth || 2
+      },
       tab: {
+        isStyleProp: true,
         after: ["useSoftTabs", "tabWidth"], readOnly: true,
         get() { return this.useSoftTabs ? " ".repeat(this.tabWidth) : "\t"; }
       },
 
       clipMode: {
+        isStyleProp: true,
         defaultValue: "visible",
         set(value)  {
           this.setProperty("clipMode", value);
@@ -132,6 +134,7 @@ export class Text extends Morph {
       },
 
       fixedWidth: {
+        isStyleProp: true,
         after: ["clipMode", "viewState"], defaultValue: false,
         set(value) {
           this.setProperty("fixedWidth", value);
@@ -140,6 +143,7 @@ export class Text extends Morph {
       },
 
       fixedHeight: {
+        isStyleProp: true,
         after: ["clipMode", "viewState"], defaultValue: false,
         set(value) {
           this.setProperty("fixedHeight", value);
@@ -148,6 +152,7 @@ export class Text extends Morph {
       },
 
       readOnly: {
+        isStyleProp: true,
         defaultValue: false,
         set(value) {
           this.nativeCursor = value ? "default" : "auto";
@@ -156,6 +161,7 @@ export class Text extends Morph {
       },
 
       selectable: {
+        isStyleProp: true,
         after: ["selection"], defaultValue: true,
         set(value) {
           this.setProperty("selectable", value);
@@ -164,6 +170,7 @@ export class Text extends Morph {
       },
 
       padding: {
+        isStyleProp: true,
         after: ["textLayout", "viewState"],
         defaultValue: Rectangle.inset(0),
         set(value) {
@@ -260,23 +267,66 @@ export class Text extends Morph {
         }
       },
 
+      defaultTextStyleProps: {
+        readOnly: true, derived: true,
+        get() {
+          if (this.constructor._defaultTextStyleProps)
+            return this.constructor._defaultTextStyleProps;
+          let p = this.propertiesAndPropertySettings().properties,
+              styleProps = [];
+          for (let prop in p)
+            if (p[prop].isDefaultTextStyleProp)
+              styleProps.push(prop);
+          return this.constructor._defaultTextStyleProps = styleProps;
+        }
+      },
+
       defaultTextStyle: {
         after: ["viewState"],
         initialize() { this.defaultTextStyle = defaultTextStyle; },
-        get() { return obj.select(this, styleProps); },
+        get() { return obj.select(this, this.defaultTextStyleProps); },
         set(style) { Object.assign(this, style); }
       },
 
-      fontFamily: {           derived: true, after: ["defaultTextStyle"]},
-      fontSize: {             derived: true, after: ["defaultTextStyle"]},
-      selectionColor: {       derived: true, after: ["defaultTextStyle"]},
-      fontColor: {            derived: true, after: ["defaultTextStyle"]},
-      fontWeight: {           derived: true, after: ["defaultTextStyle"]},
-      fontStyle: {            derived: true, after: ["defaultTextStyle"]},
-      textDecoration: {       derived: true, after: ["defaultTextStyle"]},
-      textStyleClasses: {     derived: true, after: ["defaultTextStyle"]},
-      backgroundColor: {      derived: true, after: ["defaultTextStyle"]},
+      nativeCursor: {isDefaultTextStyleProp: true},
+      fontFamily: {
+        isStyleProp: true, isDefaultTextStyleProp: true,
+        derived: true, after: ["defaultTextStyle"]
+      },
+      fontSize: {
+        isStyleProp: true, isDefaultTextStyleProp: true,
+        derived: true, after: ["defaultTextStyle"]
+      },
+      selectionColor: {
+        isStyleProp: true,
+        derived: true, after: ["defaultTextStyle"]
+      },
+      fontColor: {
+        isStyleProp: true, isDefaultTextStyleProp: true,
+        derived: true, after: ["defaultTextStyle"]
+      },
+      fontWeight: {
+        isStyleProp: true, isDefaultTextStyleProp: true,
+        derived: true, after: ["defaultTextStyle"]
+      },
+      fontStyle: {
+        isStyleProp: true, isDefaultTextStyleProp: true,
+        derived: true, after: ["defaultTextStyle"]
+      },
+      textDecoration: {
+        isStyleProp: true, isDefaultTextStyleProp: true,
+        derived: true, after: ["defaultTextStyle"]
+      },
+      textStyleClasses: {
+        isStyleProp: true, isDefaultTextStyleProp: true,
+        derived: true, after: ["defaultTextStyle"]
+      },
+      backgroundColor: {
+        isStyleProp: true, isDefaultTextStyleProp: true,
+        derived: true, after: ["defaultTextStyle"]
+      },
       textAlign: {
+        isStyleProp: true, isDefaultTextStyleProp: true,
         after: ["document", "defaultTextStyle", "viewState"],
         set(textAlign) {
           // values:
@@ -287,6 +337,7 @@ export class Text extends Morph {
       },
 
       lineWrapping: {
+        isStyleProp: true, isDefaultTextStyleProp: true,
         defaultValue: false,
         after: ["document", "viewState"],
         set(lineWrapping) {
