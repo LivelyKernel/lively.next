@@ -833,7 +833,7 @@ class DOMTextMeasure {
   }
 
   install(doc, parentEl) {
-    this.maxElementsWithStyleCacheCount = 2;
+    this.maxElementsWithStyleCacheCount = 30;
     this.elementsWithStyleCache = {};
     this.elementsWithStyleCacheCount = 0;
     this.defaultCharWidthHeightCache = {};
@@ -1030,7 +1030,7 @@ class DOMTextMeasure {
       if (textDecoration) style.textDecoration   = textDecoration;
       if (fontColor) style.color                 = fontColor ? String(attr.fontColor) : "";
       if (backgroundColor) style.backgroundColor = backgroundColor ? String(attr.backgroundColor) : "";
-      if (nativeCursor) attrs.style.cursor       = nativeCursor;
+      if (nativeCursor) style.cursor             = nativeCursor;
 
       if (textStyleClasses && textStyleClasses.length)
         attrs.className = textStyleClasses.join(" ");
