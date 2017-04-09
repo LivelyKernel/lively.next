@@ -147,14 +147,16 @@ function AfterTextRenderHook(morph) {
 }
 
 AfterTextRenderHook.prototype.updateLineHeightOfNode = function(morph, docLine, lineNode) {
-  if (docLine.height === 0 || docLine.hasEstimatedHeight) {
-    var {height: nodeHeight} = lineNode.getBoundingClientRect();
-    if (docLine.height !== nodeHeight) {
+
+  if (docLine.height === 0 || docLine.hasEstimatedExtent) {
+    var {height: nodeHeight, width: nodeWidth} = lineNode.getBoundingClientRect();
+    if (docLine.height !== nodeHeight || docLine.width !== nodeWidth) {
       // console.log(`[${line.row}] ${nodeHeight} vs ${line.height}`)
-      docLine.changeHeight(nodeHeight, false);
+      docLine.changeExtent(nodeWidth, nodeHeight, false);
       morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
       // force re-render in case text layout / line heights changed
       this.needsRerender = true;
+      morph.viewState._needsFit = true;
     }
     return nodeHeight;
   }
