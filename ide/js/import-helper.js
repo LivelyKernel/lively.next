@@ -37,10 +37,11 @@ export async function chooseUnusedImports(source, opts) {
   if (!unused || !unused.length) return null;
 
   var items = unused.map(ea => {
-    var {local, from} = ea;
-    var label = [
-       [`${local}`, {fontWeight: "bold"}], [" from ", {}],
-       [`${from}\n`, {fontStyle: "italic"}]]
+    let {local, from} = ea,
+        label = [
+       `${local}`, {fontWeight: "bold"},
+       " from ", {},
+       `${from}\n`, {fontStyle: "italic"}]
      return {isListItem: true, label, value: ea};
   });
 
@@ -197,13 +198,12 @@ class ExportPrompt {
     annotationString += "]";
 
     var label = [
-      [exportName, {}],
-      [
+      exportName, {},
       `${type} ${reexportString || ""} ${annotationString}`, {
         fontSize: "70%",
         textStyleClasses: ["truncated-text", "annotation"],
         // maxWidth: 300
-      }]
+      }
     ]
 
     return {label}

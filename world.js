@@ -56,8 +56,8 @@ var worldCommands = [
             return {
               isListItem: true,
               label: [
-                [`${targetName}`, {fontSize: "80%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"}],
-                [`${name}`, {}]],
+                `${targetName}`, {fontSize: "80%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"},
+                `${name}`, null],
               annotation: [keysPrinted, {fontSize: "80%", textStyleClasses: ["truncated-text"], maxWidth: 140}],
               value: ea
             };
@@ -91,8 +91,8 @@ var worldCommands = [
               return {
                 isListItem: true,
                 label: [
-                  [`${String(++i)}${"\u2003".repeat(depth)}`, {fontSize: "80%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"}],
-                  [`${m}`]
+                  `${String(++i)}${"\u2003".repeat(depth)}`, {fontSize: "80%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"},
+									`${m}`, null
                 ],
                 value: m
               }

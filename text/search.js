@@ -166,10 +166,10 @@ export class SearchWidget extends Morph {
               fontSize = 14, fontFamily = "Inconsolata, monospace";
 
           this.submorphs = [
-            new Button({name: "acceptButton", label: [Icon.textAttribute("check-circle-o")], ...btnStyle}).fit(),
-            new Button({name: "cancelButton", label: [Icon.textAttribute("times-circle-o")], ...btnStyle}).fit(),
-            new Button({name: "nextButton", label: [Icon.textAttribute("arrow-circle-o-down")], ...btnStyle}).fit(),
-            new Button({name: "prevButton", label: [Icon.textAttribute("arrow-circle-o-up")], ...btnStyle}).fit(),
+            new Button({name: "acceptButton", label: Icon.textAttribute("check-circle-o"), ...btnStyle}).fit(),
+            new Button({name: "cancelButton", label: Icon.textAttribute("times-circle-o"), ...btnStyle}).fit(),
+            new Button({name: "nextButton", label: Icon.textAttribute("arrow-circle-o-down"), ...btnStyle}).fit(),
+            new Button({name: "prevButton", label: Icon.textAttribute("arrow-circle-o-up"), ...btnStyle}).fit(),
             Text.makeInputLine({
               name: "searchInput",
               width: this.width,

@@ -20,14 +20,15 @@ export default class Window extends Morph {
         after: ["submorphs"], derived: true,
         get() { return this.titleLabel().textString; },
         set(title) {
-          let textAndAttrs = typeof title === "string" ? [[title, {}]] : title,
+          let textAndAttrs = typeof title === "string" ? [title, {}] : title,
               maxLength = 100, length = 0, truncated = [];
-          for (let ea of textAndAttrs) {
-            let [string, attr] = ea;
+          for (var i = 0; i < textAndAttrs.length; i = i + 2) {
+            let string = textAndAttrs[i],
+                attr = textAndAttrs[i+1];
             string = string.replace(/\n/g, "");
             var delta = string.length + length - maxLength;
             if (delta > 0) string = string.slice(0, -delta);
-            truncated.push([string, attr || {}]);
+            truncated.push(string, attr || {});
             if (length >= maxLength) break;
           }
           this.titleLabel().value = truncated;

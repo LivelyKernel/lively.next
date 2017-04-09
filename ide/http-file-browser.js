@@ -297,8 +297,8 @@ class HTTPFileBrowserNode extends TreeData {
         sizePrinted = size ? num.humanReadableByteSize(size) : ""
 
     return [
-      [resource.name(), {}],
-      [`\t${sizePrinted} ${datePrinted}`, {fontSize: "70%", textStyleClasses: ["annotation"]}]
+      resource.name(), null,
+      `\t${sizePrinted} ${datePrinted}`, {fontSize: "70%", textStyleClasses: ["annotation"]}
     ]
   }
 

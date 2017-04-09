@@ -6,6 +6,8 @@ import { h } from "virtual-dom";
 import { Icon, Icons } from "../components/icons.js";
 import { signal } from "lively.bindings";
 
+import { splitTextAndAttributesIntoLines } from "./attributes.js";
+
 
 export class Label extends Morph {
 
@@ -26,9 +28,9 @@ export class Label extends Morph {
         derived: true, after: ["textAndAttributes", "textString"],
         get() {
           var {textAndAttributes} = this;
-          if (textAndAttributes.length === 1) {
-            var [text, style] = textAndAttributes[0];
-            if (!Object.keys(style || {}).length) return text;
+          if (textAndAttributes.length <= 2) {
+            var [text, style] = textAndAttributes;
+            if (!Object.keys(style || {}).length) return text || "";
           }
           return textAndAttributes;
         },
@@ -41,20 +43,21 @@ export class Label extends Morph {
 
       textString: {
         derived: true, after: ["textAndAttributes"],
-        get() { return this.textAndAttributes.map(([text]) => text).join(""); },
-        set(value) { this.textAndAttributes = [[value, {}]]; }
+        get() { return this.textAndAttributes.map((text, i) => i % 2==0 ? text : "").join(""); },
+        set(value) { this.textAndAttributes = [value, null]; }
       },
 
       textAndAttributes: {
         get() {
       				var val = this.getProperty("textAndAttributes");
-          if (!val || val.length < 1) val = [[""]];
+          if (!val || val.length < 1) val = ["", null];
           return val;
         },
 
         set(value) {
-          if (!Array.isArray(value)) value = [[String(value), {}]];
-          if (value.length === 0) value = [["", {}]];
+						if (Array.isArray(value) && value.length === 1) debugger;
+          if (!Array.isArray(value)) value = [String(value), {}];
+          if (value.length === 0) value = ["", {}];
           this._cachedTextBounds = null;
           this.setProperty("textAndAttributes", value);
           if (this.autofit) this._needsFit = true;
@@ -73,10 +76,10 @@ export class Label extends Morph {
 
         get() {
           var value = this.textAndAttributes, annotation = null;
-          if (value.length > 1)  {
-            var [string, props] = arr.last(value);
+          if (value.length > 2)  {
+            var [string, props] = value.slice(-2);
             if (props && props.textStyleClasses && props.textStyleClasses.includes("annotation")) {
-              value = value.slice(0, -1);
+              value = value.slice(0, -2);
               annotation = [string, props];
             }
           }
@@ -88,18 +91,17 @@ export class Label extends Morph {
 
           // Ensure value is in the right format for being the prefix in textAndAttributes
           if (!value) value = "";
-          if (typeof value === "string") value = [[value, {}]]
-          if (!Array.isArray(value)) value = String(value);
-          else if (value.length === 2 && typeof value[0] === "string") value = [value]
+          if (typeof value === "string") value = [value, null]
+          if (!Array.isArray(value)) value = [String(value), null];
 
           var textAndAttributes = value.slice();
 
           // convert and add the annotation
           if (annotation) {
-            if (typeof annotation === "string") annotation = [annotation, {}];
-            textAndAttributes.push(annotation);
+            if (typeof annotation === "string") annotation = [annotation, null];
             var annAttr = annotation[1];
             if (!annAttr) annAttr = annotation[1] = {};
+            textAndAttributes.push(...annotation);
             annAttr.textStyleClasses = (annAttr.textStyleClasses || []).concat("annotation");
             if (!annAttr.textStyleClasses.includes("annotation"))
               annAttr.textStyleClasses.push("annotation");
@@ -232,25 +234,14 @@ export class Label extends Morph {
   }
 
   get textAndAttributesOfLines() {
-    var lines = [[]],
-        {textAndAttributes} = this;
-    for (var i = 0; i < textAndAttributes.length; i++) {
-      var [text, style] = textAndAttributes[i],
-          style = style || {},
-          textLines = string.lines(text);
-      if (textLines[0].length)
-        arr.last(lines).push([textLines[0], style])
-      for (var j = 1; j < textLines.length; j++)
-        lines.push(textLines[j].length ? [[textLines[j], style]] : []);
-    }
-    return lines
+    return splitTextAndAttributesIntoLines(this.textAndAttributes, "\n");
   }
 
   textBoundsSingleChunk() {
     // text bounds not considering "chunks", i.e. only default text style is
     // used
     var fm = this._fontMetric || this.env.fontMetric,
-        [[text, chunkStyle]] = this.textAndAttributes,
+        [text, chunkStyle] = this.textAndAttributes,
         style = {...this.textStyle, ...chunkStyle},
         padding = this.padding,
         width, height;
@@ -283,8 +274,9 @@ export class Label extends Morph {
 
       var lineHeight = 0, lineWidth = 0;
 
-      for (var j = 0; j < textAndAttributes.length; j++) {
-        var [text, style] = textAndAttributes[j],
+      for (var j = 0; j < textAndAttributes.length; j = j+2) {
+        var text = textAndAttributes[j],
+            style = textAndAttributes[j+1] || {},
             mergedStyle = {...defaultStyle, ...style},
             isMonospaced = (defaultIsMonospaced && !style.fontFamily)
                         || !fm.isProportional(mergedStyle.fontFamily);
@@ -315,7 +307,7 @@ export class Label extends Morph {
     // this.env.fontMetric.sizeFor(style, string)
     var {textAndAttributes, _cachedTextBounds} = this;
     return _cachedTextBounds ? _cachedTextBounds :
-      this._cachedTextBounds = textAndAttributes.length <= 1 ?
+      this._cachedTextBounds = textAndAttributes.length <= 2 ?
         this.textBoundsSingleChunk() : this.textBoundsAllChunks();
   }
 
@@ -332,8 +324,9 @@ export class Label extends Morph {
 
     for (var i = 0; i < nLines; i++) {
       var line = this.textAndAttributesOfLines[i];
-      for (var j = 0; j < line.length; j++) {
-        var [text, style] = line[j];
+      for (var j = 0; j < line.length; j = j+2) {
+        var text = line[j],
+            style = line[j+1];
         renderedText.push(this.renderChunk(text, style));
       }
       if (i < nLines-1) renderedText.push(h("br"));
@@ -373,6 +366,7 @@ export class Label extends Morph {
   }
 
   renderChunk(text, chunkStyle) {
+    chunkStyle = chunkStyle || {};
     var {
           backgroundColor,
           fontColor,
@@ -382,7 +376,7 @@ export class Label extends Morph {
           textDecoration,
           textStyleClasses,
           textAlign
-        } = chunkStyle || {},
+        } = chunkStyle,
         style = {},
         attrs = {style};
     if (backgroundColor) style.backgroundColor = String(backgroundColor);
@@ -399,7 +393,7 @@ export class Label extends Morph {
     for (var i = 0; i < lengthAttrs.length; i++) {
       var name = lengthAttrs[i];
       if (!chunkStyle.hasOwnProperty(name)) continue;
-      var value = chunkStyle[name]
+			var value = chunkStyle[name];
       style[name] = typeof value === "number" ? value + "px" : value;
     }
 

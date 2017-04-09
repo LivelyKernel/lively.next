@@ -32,8 +32,8 @@ export default function browserCommands(browser) {
               return {
                 isListItem: true,
                 label: [
-                  [`${parent ? parent.name + ">>" : ""}${name}`, {}],
-                  [`${type}`, {fontSize: "70%", textStyleClasses: ["annotation"]}]
+                  `${parent ? parent.name + ">>" : ""}${name}`, null,
+                  `${type}`, {fontSize: "70%", textStyleClasses: ["annotation"]}
                 ],
                 value: def
               }
@@ -42,7 +42,7 @@ export default function browserCommands(browser) {
                                     "Select item", items,
                                     {
                                       preselect: currentIdx,
-                                      historyId: "js-browser-codeentity-jumo-hist"
+                                      historyId: "js-browser-codeentity-jump-hist"
                                     });
         if (choice) {
           browser.getSubmorphNamed("sourceEditor").saveMark();
@@ -223,8 +223,8 @@ export default function browserCommands(browser) {
           return {
                 isListItem: true,
                 label: [
-                  [`${ea.name}`, {}],
-                  [`${ea.url}`, {fontSize: "70%", textStyleClasses: ["annotation"]}]
+                  `${ea.name}`, null,
+                  `${ea.url}`, {fontSize: "70%", textStyleClasses: ["annotation"]},
                 ],
                 value: ea
               }

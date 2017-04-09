@@ -748,16 +748,14 @@ export default class Browser extends Window {
 
       this.ui.metaInfoText.textString = `[${pack.name}] ${m.nameInPackage} (${pack.url})`;
       this.ui.metaInfoText.textAndAttributes = [
-        [
-          `[${pack.name}]`,
-          {
-            nativeCursor: "pointer",
-            textDecoration: "underline",
-            doit: {code: `$world.execCommand("open file browser", {location: "${pack.url}"})`}
-          }
-        ],
-        [" "],
-        [m.nameInPackage, {}]
+        `[${pack.name}]`,
+        {
+          nativeCursor: "pointer",
+          textDecoration: "underline",
+          doit: {code: `$world.execCommand("open file browser", {location: "${pack.url}"})`}
+        },
+        " ", null,
+        m.nameInPackage, {}
       ];
 
     } finally {

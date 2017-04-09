@@ -49,7 +49,7 @@ export class MenuItem extends Label {
 
   get label() {
     var {value} = this.valueAndAnnotation,
-        label = value.map(([string]) => string).join("\n");
+        label = value.map(([string], i) => i%2===0 ? string : "").join("\n");
     return label;
   }
   set label(value) { this.valueAndAnnotation = {value, annotation: this.annotation}; }
