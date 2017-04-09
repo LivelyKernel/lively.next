@@ -202,8 +202,10 @@ AfterTextRenderHook.prototype.updateLineHeightOfLines = function(textlayerNode) 
     lineNode = lineNode.nextSibling;
   }
 
-  if (this.needsRerender) morph.makeDirty();
-  else morph._dirty = false;
+  if (this.needsRerender) {
+    morph.fitIfNeeded();
+    morph.makeDirty();
+  } else morph._dirty = false;
 }
 
 AfterTextRenderHook.prototype.hook = function(node, propName, prevValue) {
