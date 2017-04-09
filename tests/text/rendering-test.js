@@ -2,14 +2,11 @@
 import { expect } from "mocha-es6";
 import { createDOMEnvironment } from "../../rendering/dom-helper.js";
 import { World, MorphicEnv } from "../../index.js";
-import { Range } from "../../text/range.js";
 import { Text } from "../../text/morph.js";
-import { TextAttribute } from "../../text/attribute.js";
-import TextDocument from "../../text/document.js";
-import TextLayout from "../../text/rendering.js";
 import { dummyFontMetric as fontMetric } from "../test-helpers.js";
 import { Rectangle, Color, pt } from "lively.graphics";
-import { obj } from "lively.lang";
+import { obj, promise } from "lively.lang";
+import { Range } from "../../text/range.js";
 
 var inBrowser = System.get("@system-env").browser ? it :
   (title) => { console.warn(`Test ${title} is currently only supported in a browser`); return xit(title); }
@@ -20,8 +17,7 @@ const defaultStyle = {
   fontWeight: "normal",
   fontColor: Color.black,
   fontStyle: "normal",
-  textDecoration: "none",
-  fixedCharacterSpacing: false
+  textDecoration: "none"
 }
 
 var padding = Rectangle.inset(3);
@@ -32,7 +28,7 @@ function text(string, props) {
     textString: string,
     extent: pt(100,100),
     padding,
-    fontMetric,
+    // fontMetric,
     ...defaultStyle,
     ...props
   });
@@ -55,6 +51,7 @@ async function createMorphicEnv() {
   env.domEnv.document.body.style = "margin: 0";
   MorphicEnv.pushDefault(env);
   await env.setWorld(createDummyWorld());
+  await promise.delay(20);
 }
 
 async function destroyMorphicEnv() { MorphicEnv.popDefault().uninstall(); }
@@ -62,10 +59,8 @@ async function destroyMorphicEnv() { MorphicEnv.popDefault().uninstall(); }
 function printStyleNormalized(style) { return obj.inspect(style).replace(/ /g, ""); }
 
 function getRenderedTextNodes(morph) {
-  let root = env.renderer.getNodeForMorph(morph),
-      textLayer = root.getElementsByClassName("text-layer")[0],
-      lines = Array.from(textLayer.childNodes).slice(1); // index 0 is spacer
-  return lines
+  let root = env.renderer.getNodeForMorph(morph);
+  return Array.from(root.querySelectorAll(".newtext-text-layer .line"));
 }
 
 describe("text rendering", () => {
@@ -74,56 +69,57 @@ describe("text rendering", () => {
   afterEach(() => destroyMorphicEnv());
 
   inBrowser("only renders visible part of scrolled text", async () => {
-    var lineHeight = sut.textLayout.lines[0].height,
-        // lineHeight = fontMetric.height,
+    var lineHeight = sut.document.lines[0].height,
         padTop = sut.padding.top(),
         padBot = sut.padding.bottom();
     Object.assign(sut, {
       clipMode: "auto",
       extent: pt(100,2*lineHeight), position: pt(0,0),
-      textString: [0,1,2,3,4,5,6,7,8,9].join("\n"),
-      scroll: pt(0, lineHeight*2+padTop-1),
+      textString: [0,1,2,3,4,5,6,7,8,9, 10, 11, 12, 13, 14, 15, 16].join("\n"),
+      scroll: pt(0, lineHeight*10+(padTop-1)),
       borderWidth: 0
     });
 
     await sut.whenRendered();
 
-    var node = env.renderer.getNodeForMorph(sut),
-        b = node.querySelector(".text-layer").getBoundingClientRect(),
+    var node = sut.env.renderer.getNodeForMorph(sut),
+        b = node.querySelector(".newtext-text-layer").getBoundingClientRect(),
         textBounds = new Rectangle(b.left, b.top, b.width, b.height);
 
-    expect(textBounds.top()).equals(-2*lineHeight-padTop+1, "text layer not scrolled");
-    expect(textBounds.height).equals(lineHeight*11 + padTop+padBot, "text layer does not have size of all lines");
-    expect(node.querySelector(".text-layer").textContent).equals("123", "text  layer renders more than necessary");
+    expect(textBounds.top()).equals(-sut.scroll.y, "text layer not scrolled");
+    expect(textBounds.height).equals(lineHeight*17 + padTop+padBot, "text layer does not have size of all lines");
+    expect(node.querySelector(".newtext-text-layer").textContent).equals("9101112", "text  layer renders more than necessary");
   });
 
-  it("can resize on content change", async () => {
+  inBrowser("can resize on content change", async () => {
+    sut.clipMode = "visible";
+    sut.lineWrapping = false;
+    sut.fixedWidth = false;
     var padLeft = sut.padding.left(),
-        padRight = sut.padding.right();
-
+        padRight = sut.padding.right(),
+        {width: cWidth, height: cHeight} = sut.fontMetric.defaultCharExtent({defaultTextStyle: sut.defaultTextStyle});
     sut.textString = "Hello hello";
+
     await sut.whenRendered();
-    expect(sut.width).equals(11*fontMetric.width + padLeft + padRight);
+    let expectedWidth = 11*cWidth + padLeft + padRight;
+    expect(sut.width).within(expectedWidth-1, expectedWidth+1);
+
     sut.textString = "foo";
     await sut.whenRendered();
-    expect(sut.width).equals(3*fontMetric.width + padLeft + padRight);
+    expectedWidth = 3*cWidth + padLeft + padRight;
+    expect(sut.width).within(expectedWidth-1, expectedWidth+1);
   });
 
-  
-  
   describe("rich text", () => {
     
     var style_a = { fontSize: 12, fontStyle: "italic" },
-        style_b = { fontSize: 14, fontWeight: "bold" },
-        a = TextAttribute.create(style_a, 0, 1, 0, 3),
-        b = TextAttribute.create(style_b, 0, 2, 0, 4),
-        textAttributes;
+        style_b = { fontSize: 14, fontWeight: "bold" };
 
-    it("renders styles", async () => {
-      sut.addTextAttribute(a);
-      sut.addTextAttribute(b);
+    inBrowser("renders styles", async () => {
+      sut.setStyleInRange(style_a, Range.create(0, 1, 0, 3));
+      sut.setStyleInRange(style_b, Range.create(0, 2, 0, 4));
   
-      await sut.whenRendered();
+      await promise.delay(20);
   
       let lines = getRenderedTextNodes(sut),
           chunks = lines[0].childNodes;
@@ -131,7 +127,8 @@ describe("text rendering", () => {
       expect(chunks).property("length").equals(5);
   
       let styles = Array.from(chunks).map(ea => {
-        let jsStyle =        env.domEnv.window.getComputedStyle(ea),
+        let jsStyle =        env.domEnv.window.getComputedStyle(
+                                ea.nodeType === ea.TEXT_NODE ? ea.parentNode : ea),
             fontFamily =     jsStyle.getPropertyValue("font-family"),
             fontSize =       parseInt(jsStyle.getPropertyValue("font-size").slice(0, -2)),
             fontWeight =     jsStyle.getPropertyValue("font-weight"),
@@ -156,19 +153,18 @@ describe("text rendering", () => {
       expect(strings).equals(["h", "e", "l", "l", "o"]);
     });
 
-    it("renders css classes", async () => {
-      sut.addTextAttribute(TextAttribute.create({textStyleClasses: ["class1", "class2"]}, 0, 1, 0, 2));
-      await sut.whenRendered();
- 
+    inBrowser("renders css classes", async () => {
+      sut.addTextAttribute({textStyleClasses: ["class1", "class2"]}, Range.create(0, 1, 0, 2));
+      await promise.delay(20);
+    
       let chunks = getRenderedTextNodes(sut)[0].childNodes;
       expect(chunks[1].className).equals("class1 class2");
     });
-
-    it("links", async () => {
+    
+    inBrowser("links", async () => {
       sut.addTextAttribute({link: "http://foo"}, Range.create(0, 0, 0, 5));
-      await sut.whenRendered();
+      await promise.delay(20);
       let chunks = getRenderedTextNodes(sut)[0].childNodes;
-      chunks[0].tagName
       expect(obj.select(chunks[0], ["tagName", "href", "target"])).deep.equals({tagName:"A", href: "http://foo/", target: "_blank"});
     });
 
@@ -176,7 +172,7 @@ describe("text rendering", () => {
 
   describe("visible line detection", () => {
 
-    it("determines last and first full visible line based on padding and scroll", () => {
+    inBrowser("determines last and first full visible line based on padding and scroll", () => {
       var {width: w, height: h} = fontMetric;
       Object.assign(sut, {
         textString: "111111\n222222\n333333\n444444\n555555",
@@ -188,13 +184,14 @@ describe("text rendering", () => {
       var l = sut.textLayout;
       sut.render(sut.env.renderer);
       expect(l.firstFullVisibleLine(sut)).equals(0);
-      expect(l.lastFullVisibleLine(sut)).equals(2);
+      expect(l.lastFullVisibleLine(sut)).equals(3);
 
       sut.scroll = sut.scroll.addXY(0, padding.top()+h);
+      
       sut.render(sut.env.renderer);
 
       expect(l.firstFullVisibleLine(sut)).equals(1);
-      expect(l.lastFullVisibleLine(sut)).equals(3);
+      expect(l.lastFullVisibleLine(sut)).equals(4);
     });
 
   });
