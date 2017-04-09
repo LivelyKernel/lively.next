@@ -104,7 +104,7 @@ export default class InputLine extends Text {
       highlightWhenFocused: {defaultValue: false},
 
       height: {
-        after: ["padding", "textAttributes"],
+        after: ["padding", "textAndAttributes"],
         initialize() {
           this.height = this.defaultLineHeight + this.padding.top() + this.padding.bottom();
         }
