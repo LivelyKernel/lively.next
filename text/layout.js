@@ -39,22 +39,23 @@ export default class TextLayout {
   }
 
   estimateLineHeights(morph, force = false) {
-
     let {
       viewState,
       defaultTextStyle,
       lineWrapping: wraps,
-      width: morphWidth,
+      width: morphWidth, padding,
       document: {lines},
-      fontMetric
-    } = morph;
+      fontMetric, textRenderer,
+    } = morph,
+    directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph);
+
+    morphWidth = morphWidth - padding.left() - padding.right();
 
     for (let i = 0; i < lines.length; i++) {
       var line = lines[i];
       if (!force && line.height > 0) continue;
 
-      var textAttributes = line.textAttributes,
-          styles = [];
+      var textAttributes = line.textAttributes, styles = [];
 
       // find all styles that apply to line
       if (!textAttributes || !textAttributes.length) styles.push(defaultTextStyle);
@@ -62,25 +63,27 @@ export default class TextLayout {
         styles.push({...defaultTextStyle, ...textAttributes[j]});
 
       // measure default char widths and heights
-      var charWidthN = 0, charWidthSum = 0, charHeight = 0;
-      for (var h = 0; h < styles.length; h++) {
-        var {width, height} = fontMetric.defaultCharExtent({
-          defaultTextStyle: styles[h],
-          cssClassName: "newtext-text-layer"
-        });
+      var measureCount = styles.length, // for avg width
+          charWidthSum = 0,
+          charHeight = 0;
+      for (var h = 0; h < measureCount; h++) {
+        var {width, height} = fontMetric.defaultCharExtent(
+          {defaultTextStyle: styles[h], width: 1000}, directRenderTextLayerFn);
         charHeight = Math.max(height, charHeight);
-        if (wraps) { charWidthSum = charWidthSum + width; charWidthN++; }
+        charWidthSum = charWidthSum + width;
       }
 
       var estimatedHeight = charHeight,
-          charCount = wraps && line.text.length;
-      if (charCount) {
-        var charWidth = (charWidthSum/charWidthN),
-            charsPerline = Math.max(3, morphWidth / charWidth),
-            wrappedLineCount = Math.ceil(charCount / charsPerline) || 1;
+          charCount = line.text.length || 1,
+          charWidth = charWidthSum/measureCount,
+          unwrappedWidth = charCount * charWidth,
+          estimatedWidth = !wraps ? unwrappedWidth : Math.min(unwrappedWidth, morphWidth);
+      if (wraps) {
+        var charsPerline = Math.max(3, morphWidth / charWidth),
+            wrappedLineCount = Math.ceil(charCount / charsPerline) || 1,
         estimatedHeight = wrappedLineCount * charHeight;
       }
-      line.changeHeight(estimatedHeight, true);
+      line.changeExtent(estimatedWidth, estimatedHeight, true);
     }
 
     viewState._textLayoutStale = false;
@@ -227,58 +230,17 @@ export default class TextLayout {
     let cached = this.lineCharBoundsCache.get(line);
     if (cached) return cached;
 
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // find char bounds via rendered nodes
-    let {fontMetric, viewState: {dom_nodeFirstRow, dom_nodes}, padding} = morph,
-        paddingLeft = padding.left(),
-        paddingRight = padding.right(),
-        paddingTop = padding.top(),
-        paddingBottom = padding.bottom(),
-        lineNode = dom_nodes[row - dom_nodeFirstRow],
-        charBounds;
-
-    if (false && lineNode) { // compute using rendered text node
-      let {x: offsetX, y: offsetY} = morph.globalPosition;
-      offsetX = offsetX - paddingLeft;
-      offsetY = offsetY - paddingTop;
-      charBounds = charBoundsOfLine(lineNode, line.text.length, offsetX, offsetY);
-
-
-    } else {
-      let {
-        defaultTextStyle,
-        extent: {x: width, y: height},
-        lineWrapping, clipMode, textAlign
-      } = morph;
-
-      let renderLineFn = this._renderLineFn
-                     || (this._renderLineFn = line => {
-                          let h = morph.env.renderer.h_dom_fn;
-                          return morph.textRenderer.renderLine(h, morph, line);
-                        });
-
-      charBounds = fontMetric.manuallyComputeCharBoundsOfLine(
-        line, 0, 0, {
+    let {
+          fontMetric, textRenderer,
           defaultTextStyle,
-          paddingLeft,paddingRight, paddingTop, paddingBottom,
-          width, height, lineWrapping, clipMode, textAlign,
-          cssClassName: "newtext-text-layer"
-        },
-        undefined,
-        renderLineFn
-      );
-    }
-
-    // if ((!line.height || line.hasEstimatedHeight) && charBounds.length) {
-    //   // FIXME: when computing height via charbounds... we need to consider
-    //   // line margings/paddings, custom line heights....!
-    //   let baseY = charBounds[0].y, lineHeight = 0;
-    //   for (let i = 0; i < charBounds.length; i++) {
-    //     let {y: charBoundsY, height: charBoundsHeight} = charBounds[i];
-    //     lineHeight = Math.max(lineHeight, (charBoundsY - baseY) + charBoundsHeight+1/*????*/);
-    //   }
-    //   line.changeHeight(lineHeight, false/*not estimated*/)
-    // }
+          extent: {x: width, y: height},
+          clipMode, textAlign
+        } = morph,
+        directRenderLineFn = textRenderer.directRenderLineFn(morph),
+        directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph),
+        charBounds = fontMetric.manuallyComputeCharBoundsOfLine(
+          line, 0, 0, {defaultTextStyle, width, height, clipMode},
+          directRenderTextLayerFn, directRenderLineFn);
 
     this.lineCharBoundsCache.set(line, charBounds);
     return charBounds;
@@ -331,7 +293,7 @@ export default class TextLayout {
       else if (y <= padL) found = {line: {row: 0}}
       else return {row: 0, column: 0};/*????*/
     }
-    
+
     let {line: {row}} = found,
         charBounds = this.charBoundsOfRow(morph, row),
         nChars = charBounds.length,

@@ -38,6 +38,8 @@ function installCSS(domEnv) {
     /* text layer / content */
 
     .newtext-text-layer {
+      boxSizing = border-box;
+      position: absolute;
       z-index: 3;
     }
 
@@ -90,33 +92,33 @@ function installCSS(domEnv) {
     .debug-info {
       position: absolute;
       outline: 1px solid green;
-      pointerEvents: none;
-      zIndex: 4;
-      textAlign: center;
-      fontFamily: monospace;
+      pointer-events: none;
+      z-index: 4;
+      text-align: center;
+      font-family: monospace;
       color: green;
-      backgroundColor: white;
-      fontSize: small;
-      verticalAlign: baseline;
+      background-color: white;
+      font-size: small;
+      vertical-align: baseline;
     }
 
-    .debug-line" {
+    .debug-line {
       position: absolute;
       outline: 1px solid red;
-      pointerEvents: none;
-      zIndex: 4,
-      textAlign: right;
-      fontFamily: monospace;
+      pointer-events: none;
+      z-index: 4,
+      text-align: right;
+      font-family: monospace;
+      font-size: small;
+      vertical-align: baseline;
       color: red;
-      fontSize: small;
-      verticalAlign: baseline;
     }
 
     .debug-char {
       position: absolute;
       outline: 1px solid orange;
-      pointerEvents: none;
-      zIndex: 3
+      pointer-events: none;
+      z-index: 3
     }
 
   `, domEnv.document);
@@ -219,8 +221,24 @@ export default class Renderer {
     this.domEnv = domEnv;
   }
 
-  renderMorph(morph, renderer) {
+  directRenderLineFn(morph) {
+    if (!this._renderLineFn) {
+      let h = morph.env.renderer.h_dom_fn;
+      this._renderLineFn = line => this.renderLine(h, morph, line);
+    }
+    return this._renderLineFn;
+  }
 
+  directRenderTextLayerFn(morph) {
+    if (!this._renderTextLayerFn) {
+      let h = morph.env.renderer.h_dom_fn;
+      this._renderTextLayerFn = additionalStyle =>
+        this.renderJustTextLayerNode(h, morph, additionalStyle, []);
+    }
+    return this._renderTextLayerFn;
+  }
+
+  renderMorph(morph, renderer) {
     var cursorWidth = morph.fontSize <= 11 ? 2 : 3,
         selectionLayer = [];
 
