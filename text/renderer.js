@@ -146,7 +146,7 @@ function AfterTextRenderHook(morph) {
 
 AfterTextRenderHook.prototype.updateLineHeightOfNode = function(morph, docLine, lineNode) {
   if (docLine.height === 0 || docLine.hasEstimatedHeight) {
-    let {height: nodeHeight} = lineNode.getBoundingClientRect();
+    var {height: nodeHeight} = lineNode.getBoundingClientRect();
     if (docLine.height !== nodeHeight) {
       // console.log(`[${line.row}] ${nodeHeight} vs ${line.height}`)
       docLine.changeHeight(nodeHeight, false);
@@ -356,7 +356,9 @@ export default class Renderer {
     let line = startLine, i = startRow;
     while (line) {
       visibleLines.push(line);
-      renderedLines.push(this.renderLine(h, morph, line, i++));
+      // renderedLines.push(line._rendered || (line._rendered = this.renderLine(h, morph, line)));
+      renderedLines.push(this.renderLine(h, morph, line));
+      i++;
       if (line === endLine) break;
       line = line.nextLine();
     }
@@ -432,66 +434,67 @@ export default class Renderer {
     return debugHighlights
   }
 
-  renderLine(h, morph, line, i) {
+  renderLine(h, morph, line) {
     // Note: this function is being used in the font metric as well, with a
     // non-virtual-dom "h" function
 
-    // if (line._rendered)
-    //   return line._rendered;
-
     let { textAndAttributes } = line,
         renderedChunks = [],
-        size = textAndAttributes.length;
+        size = textAndAttributes.length,
+        text, attr,
+        fontSize, fontFamily, fontWeight, fontStyle, textDecoration, fontColor,
+        backgroundColor, nativeCursor, textStyleClasses, link,
+        tagname, nodeStyle, nodeAttrs;
 
     if (size > 0) {
       for (let i = 0; i < size; i = i+2) {
-        let text = textAndAttributes[i] || "\u00a0",
-            attr = textAndAttributes[i+1];
+        text = textAndAttributes[i] || "\u00a0";
+        attr = textAndAttributes[i+1];
 
         // FIXME!
         if (text.length > 1000) text = text.slice(0,1000);
 
         if (!attr) { renderedChunks.push(text); continue; }
 
-        let {
-          fontSize,
-          fontFamily,
-          fontWeight,
-          fontStyle,
-          textDecoration,
-          fontColor,
-          backgroundColor,
-          nativeCursor,
-          textStyleClasses,
-          link
-        } = attr;
+        fontSize =         attr.fontSize;
+        fontFamily =       attr.fontFamily;
+        fontWeight =       attr.fontWeight;
+        fontStyle =        attr.fontStyle;
+        textDecoration =   attr.textDecoration;
+        fontColor =        attr.fontColor;
+        backgroundColor =  attr.backgroundColor;
+        nativeCursor =     attr.nativeCursor;
+        textStyleClasses = attr.textStyleClasses;
+        link =             attr.link;
 
-        let tagname = "span", style = {}, attrs = {style};
+        tagname = "span";
+        nodeStyle = {};
+        nodeAttrs = {style: nodeStyle};
 
         if (link) {
           tagname = "a";
-          attrs.href = link;
-          attrs.target = "_blank";
+          nodeAttrs.href = link;
+          nodeAttrs.target = "_blank";
         }
 
-        if (fontSize) style.fontSize               = fontSize + "px";
-        if (fontFamily) style.fontFamily           = fontFamily;
-        if (fontWeight) style.fontWeight           = fontWeight;
-        if (fontStyle) style.fontStyle             = fontStyle;
-        if (textDecoration) style.textDecoration   = textDecoration;
-        if (fontColor) style.color                 = fontColor ? String(fontColor) : "";
-        if (backgroundColor) style.backgroundColor = backgroundColor ? String(backgroundColor) : "";
-        if (nativeCursor) attrs.style.cursor       = nativeCursor;
+        if (fontSize) nodeStyle.fontSize               = fontSize + "px";
+        if (fontFamily) nodeStyle.fontFamily           = fontFamily;
+        if (fontWeight) nodeStyle.fontWeight           = fontWeight;
+        if (fontStyle) nodeStyle.fontStyle             = fontStyle;
+        if (textDecoration) nodeStyle.textDecoration   = textDecoration;
+        if (fontColor) nodeStyle.color                 = fontColor ? String(fontColor) : "";
+        if (backgroundColor) nodeStyle.backgroundColor = backgroundColor ? String(backgroundColor) : "";
+        if (nativeCursor) nodeStyle.cursor             = nativeCursor;
 
         if (textStyleClasses && textStyleClasses.length)
-          attrs.className = textStyleClasses.join(" ");
+          nodeAttrs.className = textStyleClasses.join(" ");
 
-        renderedChunks.push(h(tagname, attrs, text));
+        renderedChunks.push(h(tagname, nodeAttrs, text));
       }
 
     } else renderedChunks.push(h("br"));
 
-    return line._rendered = h("div.line", {dataset: {row: line.row}}, renderedChunks);
+    return h("div.line", {dataset: {row: line.row}}, renderedChunks);
   }
 
   renderSelectionLayer(morph, selection, diminished = false, cursorWidth = 2) {

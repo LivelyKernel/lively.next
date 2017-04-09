@@ -129,7 +129,7 @@ export default class FontMetric {
           ({ width, height } = this.sizeFor(style, char));
         }
         bounds[col] = { x, y: 0, width, height };
-        x += width;
+        x = x + width;
       }
       if (adjustSpacing) this.cachedBoundsInfo = { bounds, str, style };
 
@@ -801,7 +801,7 @@ function isExtendingChar(ch) { return ch.charCodeAt(0) >= 768 && extendingChars.
 // Returns a number from the range [`0`; `str.length`] unless `pos` is outside that range.
 function skipExtendingChars(str, pos, dir) {
   while ((dir < 0 ? pos > 0 : pos < str.length) && isExtendingChar(str.charAt(pos)))
-    pos += dir;
+    pos = pos + dir;
   return pos
 }
 
@@ -1076,17 +1076,17 @@ class DOMTextMeasure {
 function cumulativeOffset(element) {
   let top = 0, left = 0;
   do {
-    top += element.offsetTop || 0;
-    left += element.offsetLeft || 0;
+    top = top + (element.offsetTop || 0);
+    left = left + (element.offsetLeft || 0);
     element = element.offsetParent;
   } while(element);
   return {top, left};
-};
+}
 
 
 function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
-  const {ELEMENT_NODE, TEXT_NODE, childNodes} = lineNode;
-  const maxLength = 20000;
+  const {ELEMENT_NODE, TEXT_NODE, childNodes} = lineNode,
+        maxLength = 20000;
 
   let document = lineNode.ownerDocument,
       node = childNodes[0],
@@ -1094,7 +1094,8 @@ function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
       textLength = line.text.length,
       index = 0;
 
-  let emptyNodeFill;
+  let textNode, left, top, width, height, x, y,
+      emptyNodeFill;
   if (!node) {
     emptyNodeFill = node = document.createElement("br");
     lineNode.appendChild(emptyNodeFill);
@@ -1104,7 +1105,7 @@ function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
 
     if (index > maxLength) break;
 
-    let textNode = node.nodeType === ELEMENT_NODE && node.childNodes[0] ?
+    textNode = node.nodeType === ELEMENT_NODE && node.childNodes[0] ?
       node.childNodes[0] : node;
 
     if (textNode.nodeType === TEXT_NODE) {
@@ -1113,19 +1114,20 @@ function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
         // "right" bias for rect means that if we get multiple rects for a
         // single char (if it comes after a line break caused by wrapping, we
         // prefer the bounds on the next (the wrapped) line)
-        let {left, top, width, height} = measureCharInner(document, textNode, i, "right"),
-            x = left + offsetX,
-            y = top + offsetY;
-        result[index++] = {x, y, width, height};
+        ({left, top, width, height} = measureCharInner(document, textNode, i, "right")),
+        x = left + offsetX;
+        y = top + offsetY;
+        result[index++] = {x,y,width,height};
       }
 
     } else if (node.nodeType === ELEMENT_NODE) {
-      let {left, top, width, height} = node.getBoundingClientRect(),
-          x = left + offsetX,
-          y = top + offsetY;
+      ({left, top, width, height} = node.getBoundingClientRect());
+      x = left + offsetX,
+      y = top + offsetY;
       result[index++] = {x,y,width,height};
 
     } else throw new Error(`Cannot deal with node ${node}`);
+
     node = node.nextSibling;
   }
 

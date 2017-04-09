@@ -35,56 +35,71 @@ export class Renderer {
     this.requestAnimationFrame = domEnvironment.window.requestAnimationFrame.bind(domEnvironment.window);
   }
 
-  h_dom(tagname, childrenOrAttrs, children) {
+  get h_dom_fn() {
     // h() function that renders directly to the DOM instead of virtual nodes
-    let attrs = childrenOrAttrs || undefined;
-    if (typeof children === "undefined") {
-      children = childrenOrAttrs;
-      attrs = undefined;
+    return this._h_dom_fn || (this._h_dom_fn = this.make_h_dom_fn());
+  }
+
+  make_h_dom_fn(document) {
+    // h() function that renders directly to the DOM instead of virtual nodes
+    
+    if (!document) {
+      if (!this.domNode)
+        throw new Error("Renderer not initialized yet!");
+      document = this.domNode.ownerDocument;
     }
 
-    let cssClasses = [], id = null,
-        tokens = tagname.split(".");
-
-    if (tokens.length > 1) {
-      tagname = tokens.shift();
-      for (let i = 0; i < tokens.length; i++) {
-        let token = tokens[i], hashIndex;
-        if ((hashIndex = token.indexOf("#")) > -1) {
-          id = token.slice(hashIndex+1)
-          token = token.slice(0, hashIndex);
+    return function h_dom(tagname, childrenOrAttrs, children) {
+      var attrs = childrenOrAttrs || undefined;
+  
+      if (typeof children === "undefined") {
+        children = childrenOrAttrs;
+        attrs = undefined;
+      }
+  
+      var cssClasses = [], id = null,
+          tokens = tagname.split(".");
+  
+      if (tokens.length > 1) {
+        tagname = tokens.shift();
+        for (var i = 0; i < tokens.length; i++) {
+          var token = tokens[i], hashIndex;
+          if ((hashIndex = token.indexOf("#")) > -1) {
+            id = token.slice(hashIndex+1)
+            token = token.slice(0, hashIndex);
+          }
+          cssClasses.push(token);
         }
-        cssClasses.push(token);
       }
-    }
-    let tagnameAndId = tagname.split("#");
-    if (tagnameAndId.length > 1) {
-      tagname = tagnameAndId[0];
-      id = tagnameAndId[1];
-    }
-
-    let el = document.createElement(tagname);
-
-    if (attrs) {
-      for (let key in attrs)
-        if (key !== "style" && key !== "dataset")
-          el[key] = attrs[key];
-      let style = attrs.style;
-      if (style) for (let key in style) el.style[key] = style[key];
-      let dataset = attrs.dataset;
-      if (dataset) for (let key in dataset) el.dataset[key] = dataset[key];
-    }
-
-    if (typeof children === "string") {
-      el.appendChild(document.createTextNode(children));
-    } else if (children && Array.isArray(children)) {
-      for (let i = 0; i < children.length; i++) {
-        let child = children[i];
-        el.appendChild(typeof child === "string" ? document.createTextNode(child) : child);
+      var tagnameAndId = tagname.split("#");
+      if (tagnameAndId.length > 1) {
+        tagname = tagnameAndId[0];
+        id = tagnameAndId[1];
       }
+  
+      var el = document.createElement(tagname);
+  
+      if (attrs) {
+        for (var attrKey in attrs)
+          if (attrKey !== "style" && attrKey !== "dataset")
+            el[attrKey] = attrs[attrKey];
+        var style = attrs.style;
+        if (style) for (var styleKey in style) el.style[styleKey] = style[styleKey];
+        var dataset = attrs.dataset;
+        if (dataset) for (var dsKey in dataset) el.dataset[dsKey] = dataset[dsKey];
+      }
+  
+      if (typeof children === "string") {
+        el.appendChild(document.createTextNode(children));
+      } else if (children && Array.isArray(children)) {
+        for (var i = 0; i < children.length; i++) {
+          var child = children[i];
+          el.appendChild(typeof child === "string" ? document.createTextNode(child) : child);
+        }
+      }
+  
+      return el;
     }
-
-    return el;
   }
 
   clear() {
