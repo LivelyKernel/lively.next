@@ -337,7 +337,7 @@ export class Text extends Morph {
       },
 
       lineWrapping: {
-        isStyleProp: true, isDefaultTextStyleProp: true,
+        isStyleProp: true,
         defaultValue: false,
         after: ["document", "viewState"],
         set(lineWrapping) {

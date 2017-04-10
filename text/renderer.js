@@ -38,7 +38,7 @@ function installCSS(domEnv) {
     /* text layer / content */
 
     .newtext-text-layer {
-      boxSizing = border-box;
+      box-sizing: border-box;
       position: absolute;
       z-index: 3;
     }
@@ -202,8 +202,8 @@ AfterTextRenderHook.prototype.updateLineHeightOfLines = function(textlayerNode) 
     lineNode = lineNode.nextSibling;
   }
 
+  morph.fitIfNeeded();
   if (this.needsRerender) {
-    morph.fitIfNeeded();
     morph.makeDirty();
   } else morph._dirty = false;
 }

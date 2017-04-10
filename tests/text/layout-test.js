@@ -1,6 +1,6 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
 
-import { expect } from "mocha-es6";
+import { expect, chai } from "mocha-es6";
 import { pt, rect, Color, Rectangle } from "lively.graphics";
 import { Text } from "../../text/morph.js";
 
@@ -49,14 +49,39 @@ describe("text layout", () => {
 
     it("text pos -> pixel pos", () => {
       text("hello\n lively\nworld")
-      expect(tl.pixelPositionFor(t, {row: 0, column: 0}))    .equals(pt(padl+0,   padt+0));
-      expect(tl.pixelPositionFor(t, {row: 0, column: 4}))    .equals(pt(padl+4*w, padt+0));
-      expect(tl.pixelPositionFor(t, {row: 0, column: 5}))    .equals(pt(padl+5*w, padt+0));
-      expect(tl.pixelPositionFor(t, {row: 1, column: 0}))    .equals(pt(padl+0,   padt+h));
-      expect(tl.pixelPositionFor(t, {row: 1, column: 1}))    .equals(pt(padl+1*w, padt+h));
-      expect(tl.pixelPositionFor(t, {row: 3, column: 2}))    .equals(pt(padl+2*w, padt+2*h));
-      expect(tl.pixelPositionFor(t, {row: 1, column: 100}))  .equals(pt(padl+7*w, padt+h));
-      expect(tl.pixelPositionFor(t, {row: 100, column: 100})).equals(pt(padl+5*w, padt+2*h));
+      let pos;
+
+      pos = tl.pixelPositionFor(t, {row: 0, column: 0});
+      expect(pos.x).closeTo(padl+0, 2);
+      expect(pos.y).closeTo(padt+0, 2);
+
+      pos = tl.pixelPositionFor(t, {row: 0, column: 4});
+      expect(pos.x).closeTo(padl+4*w, 2);
+      expect(pos.y).closeTo(padt+0, 2);
+
+      pos = tl.pixelPositionFor(t, {row: 0, column: 5});
+      expect(pos.x).closeTo(padl+5*w, 2);
+      expect(pos.y).closeTo(padt+0, 2);
+
+      pos = tl.pixelPositionFor(t, {row: 1, column: 0});
+      expect(pos.x).closeTo(padl+0, 2);
+      expect(pos.y).closeTo(padt+h, 2);
+
+      pos = tl.pixelPositionFor(t, {row: 1, column: 1});
+      expect(pos.x).closeTo(padl+1*w, 2);
+      expect(pos.y).closeTo(padt+h, 2);
+
+      pos = tl.pixelPositionFor(t, {row: 3, column: 2});
+      expect(pos.x).closeTo(padl+2*w, 2);
+      expect(pos.y).closeTo(padt+2*h, 2);
+
+      pos = tl.pixelPositionFor(t, {row: 1, column: 100});
+      expect(pos.x).closeTo(padl+7*w, 2);
+      expect(pos.y).closeTo(padt+h, 2);
+
+      pos = tl.pixelPositionFor(t, {row: 100, column: 100});
+      expect(pos.x).closeTo(padl+5*w, 2);
+      expect(pos.y).closeTo(padt+2*h, 2);
     });
   
     it("pixel pos -> text pos", () => {
@@ -72,29 +97,43 @@ describe("text layout", () => {
 
 
   describe("fit", () => {
-    
+
     it("computes size on construction", () => {
       var t = text("hello", {clipMode: "visible", fixedHeight: false, fixedWidth: false}),
-        {width, height} = t;
-      expect(height).equals(h + padding.top()+ padding.bottom());
-      expect(width).equals(5*w + padding.left()+ padding.right());
+          {width, height} = t;
+      expect(height).closeTo(h + padding.top()+ padding.bottom(), 2);
+      expect(width).closeTo(5*w + padding.left()+ padding.right(), 2);
     });
 
     it("computes only width", () => {
       var {extent: {x: width, y: height}} = text("hello", {clipMode: "visible", fixedWidth: false, fixedHeight: true});
-      expect(height).equals(100);
-      expect(width).equals(5*w + padding.top()+ padding.bottom());
+      expect(height).closeTo(100, 2);
+      expect(width).closeTo(5*w + padding.top()+ padding.bottom(), 2);
     });
 
     it("computes only height", () => {
       var {extent: {x: width, y: height}} = text("hello", {clipMode: "visible", fixedWidth: true, fixedHeight: false});
-      expect(height).equals(h + padding.top()+ padding.bottom());
-      expect(width).equals(100);
+      expect(height).closeTo(h + padding.top()+ padding.bottom(), 2);
+      expect(width).closeTo(100, 2);
     });
 
     it("leaves extent as is with fixed sizing", () => {
       var {extent} = text("hello", {clipMode: "visible", fixedWidth: true, fixedHeight: true});
+      expect(extent.x).closeTo(100, 2);
+      expect(extent.y).closeTo(100, 2);
+    });
+
+    it("when clip it won't shrink", () => {
+      var {extent} = text("hello", {clipMode: "hidden"});
       expect(extent).equals(pt(100,100));
+    });
+
+    it("still shrinks when forced", () => {
+      var t = text("hello", {clipMode: "hidden", fixedWidth: false, fixedHeight: false}),
+          {extent: {x: width, y: height}} = t;
+      t.fit();
+      expect(height).closeTo(h + padding.top()+ padding.bottom(), 2);
+      expect(width).closeTo(5*w + padding.left()+ padding.right(), 2);
     });
 
   });
@@ -108,12 +147,35 @@ describe("text layout", () => {
       expect(t.lineCount()).equals(2);
       expect(t.charBoundsFromTextPosition({row: 0, column: 5})).equals(rect(padl+w*5,padt,w,h-1), "not wrapped: text pos => pixel pos");
       expect(t.textPositionFromPoint(pt(padl + 2*w+1, padt + h+1))).deep.equals({column: 2,row: 1}, "not wrapped: pixel pos => text pos");
-      t.lineWrapping = "by-chars";
-      expect(tl.boundsFor(t, {row: 0, column: 3})).equals(rect(padl+w*3,padt+h*0,6,h-1), "wrapped: text pos => pixel pos 1");
 
-      expect(tl.boundsFor(t, {row: 0, column: 4})).equals(rect(padl+w*0,padt+h*1,6,h-1), "wrapped: text pos => pixel pos 1");
-      expect(tl.boundsFor(t, {row: 0, column: 5})).equals(rect(padl+w*1,padt+h*1,6,h-1), "wrapped: text pos => pixel pos 1");
-      expect(tl.boundsFor(t, {row: 0, column: 6})).equals(rect(padl+w*2,padt+h*1,0,h-1), "wrapped: text pos => pixel pos 1");
+      t.lineWrapping = false;
+      t.lineWrapping = "by-chars";
+
+      let height,width,x,y;
+
+      ({height,width,x,y} = tl.boundsFor(t, {row: 0, column: 3}));;
+      expect(x).closeTo(padl+w*3, 2);
+      expect(y).closeTo(padt+h*0, 2);
+      expect(width).closeTo(6, 2);
+      expect(height).closeTo(h-1, 2);
+
+      ({height,width,x,y} = tl.boundsFor(t, {row: 0, column: 4}));
+      expect(x).closeTo(padl+w*0, 2);
+      expect(y).closeTo(padt+h*1, 2);
+      expect(width).closeTo(6, 2);
+      expect(height).closeTo(h-1, 2);
+
+      ({height,width,x,y} = tl.boundsFor(t, {row: 0, column: 5}));
+      expect(x).closeTo(padl+w*1, 2);
+      expect(y).closeTo(padt+h*1, 2);
+      expect(width).closeTo(6, 2);
+      expect(height).closeTo(h-1, 2);
+
+      ({height,width,x,y} = tl.boundsFor(t, {row: 0, column: 6}));
+      expect(x).closeTo(padl+w*2, 2);
+      expect(y).closeTo(padt+h*1, 2);
+      expect(width).closeTo(0, 2);
+      expect(height).closeTo(h-1, 2);
     });
 
     it("screenLineRange", () => {

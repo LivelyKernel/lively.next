@@ -40,16 +40,20 @@ export default class TextLayout {
 
   estimateLineHeights(morph, force = false) {
     let {
-      viewState,
-      defaultTextStyle,
-      lineWrapping: wraps,
-      width: morphWidth, padding,
-      document: {lines},
-      fontMetric, textRenderer,
-    } = morph,
-    directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph);
+          viewState,
+          defaultTextStyle,
+          lineWrapping,
+          width: morphWidth, padding,
+          document: {lines},
+          fontMetric, textRenderer
+        } = morph,
+        directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph),
+        paddingLeft = padding.left(),
+        paddingRight = padding.right(),
+        paddingTop = padding.top(),
+        paddingBottom = padding.bottom();
 
-    morphWidth = morphWidth - padding.left() - padding.right();
+    morphWidth = morphWidth - paddingLeft - paddingRight;
 
     for (let i = 0; i < lines.length; i++) {
       var line = lines[i];
@@ -67,21 +71,24 @@ export default class TextLayout {
           charWidthSum = 0,
           charHeight = 0;
       for (var h = 0; h < measureCount; h++) {
-        var {width, height} = fontMetric.defaultCharExtent(
-          {defaultTextStyle: styles[h], width: 1000}, directRenderTextLayerFn);
+        var {width, height} = fontMetric.defaultCharExtent({
+          defaultTextStyle: styles[h],
+          width: 1000,
+          paddingBottom, paddingTop, paddingRight, paddingLeft
+        }, directRenderTextLayerFn);
         charHeight = Math.max(height, charHeight);
         charWidthSum = charWidthSum + width;
       }
 
       var estimatedHeight = charHeight,
           charCount = line.text.length || 1,
-          charWidth = charWidthSum/measureCount,
+          charWidth = Math.round(charWidthSum/measureCount),
           unwrappedWidth = charCount * charWidth,
-          estimatedWidth = !wraps ? unwrappedWidth : Math.min(unwrappedWidth, morphWidth);
-      if (wraps) {
+          estimatedWidth = !lineWrapping ? unwrappedWidth : Math.min(unwrappedWidth, morphWidth);
+      if (lineWrapping) {
         var charsPerline = Math.max(3, morphWidth / charWidth),
             wrappedLineCount = Math.ceil(charCount / charsPerline) || 1,
-        estimatedHeight = wrappedLineCount * charHeight;
+        estimatedHeight = Math.round(wrappedLineCount * charHeight);
       }
       line.changeExtent(estimatedWidth, estimatedHeight, true);
     }
@@ -92,44 +99,6 @@ export default class TextLayout {
   textBounds(morph) {
     let {document: doc, padding} = morph;
     return new Rectangle(padding.left(), padding.top(), doc.width, doc.height);
-  }
-
-  computeTextBoundsFromCharBounds(
-    morph
-    // rowCount, lineWrapping,
-    // paddingLeft, paddingTop, paddingRight, paddingBottom
-  ) {
-    let {document: doc, lineWrapping, padding} = morph,
-        textWidth = 0, textHeight = 0,
-        paddingTop = padding.top(),
-        paddingLeft = padding.left(),
-        rowY = paddingTop, rowX = paddingLeft,
-        lastCharBounds, charBounds,
-        x, y, width, height;
-
-    // for each line check the char bounds for max width...
-    for (let row = 0; row < doc.rowCount; row++) {
-      charBounds = this.charBoundsOfRow(morph, row);
-      if (charBounds.length) lastCharBounds = charBounds;
-
-      // ...if we have lineWrapping enabled we need to check every char
-      if (lineWrapping) {
-        for (let column = 0; column < charBounds.length; column++) {
-          ({x, width} = charBounds[column]);
-          textWidth = Math.max(textWidth, x + width + rowX);
-        }
-        ({y, height} = charBounds[charBounds.length-1]);
-        textHeight = textHeight + y + height;
-
-      // ...otherwise only the last
-      } else {
-        ({x, width, y, height} = charBounds[charBounds.length-1]);
-        textWidth = Math.max(textWidth, x + width + rowX);
-        textHeight = textHeight + y + height;
-      }
-    }
-
-    return new Rectangle(paddingLeft, paddingTop, textWidth-paddingLeft, doc.height);
   }
 
   isFirstLineVisible(morph) {
@@ -223,13 +192,19 @@ export default class TextLayout {
           fontMetric, textRenderer,
           defaultTextStyle,
           extent: {x: width, y: height},
-          clipMode, textAlign
+          clipMode, textAlign, padding, lineWrapping
         } = morph,
+        paddingLeft = padding.left(),
+        paddingRight = padding.right(),
+        paddingTop = padding.top(),
+        paddingBottom = padding.bottom(),
         directRenderLineFn = textRenderer.directRenderLineFn(morph),
         directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph),
         charBounds = fontMetric.manuallyComputeCharBoundsOfLine(
-          line, 0, 0, {defaultTextStyle, width, height, clipMode},
-          directRenderTextLayerFn, directRenderLineFn);
+          line, 0, 0, {
+            defaultTextStyle, width, height, clipMode, lineWrapping,
+            paddingLeft, paddingRight, paddingTop, paddingBottom
+          }, directRenderTextLayerFn, directRenderLineFn);
 
     this.lineCharBoundsCache.set(line, charBounds);
     return charBounds;
