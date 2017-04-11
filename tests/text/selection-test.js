@@ -5,6 +5,9 @@ import { expect, chai } from "mocha-es6";
 import { dummyFontMetric as fontMetric, expectSelection } from "../test-helpers.js";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 
+var describeInBrowser = System.get("@system-env").browser ? describe :
+  (title, fn) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xdescribe(title, fn); }
+
 expectSelection(chai);
 
 import { Range } from "lively.morphic/text/range.js";
@@ -30,7 +33,7 @@ function text(string, props) {
   return t;
 }
 
-describe("text selection", () => {
+describeInBrowser("text selection", () => {
 
   beforeEach(() => t = new Text({textString: "hello\nworld", fontMetric}));
 
@@ -183,7 +186,7 @@ describe("text selection", () => {
 });
 
 
-describe("multi select", () => {
+describeInBrowser("multi select", () => {
 
   beforeEach(() => {
     t = text("Hello World");

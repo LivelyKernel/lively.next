@@ -1,19 +1,14 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
-import { createDOMEnvironment } from "../../rendering/dom-helper.js";
-import { MorphicEnv } from "../../index.js";
-import { World } from "../../index.js";
 import { Text } from "../../text/morph.js";
 import { expect, chai } from "mocha-es6";
 import { pt, Color, Rectangle } from "lively.graphics";
-import { dummyFontMetric, expectSelection } from "../test-helpers.js";
+import { expectSelection } from "../test-helpers.js";
 import { Range } from "../../text/range.js";
 
 expectSelection(chai);
 
-const isolatedEnvs = true;
-
-var inBrowser = System.get("@system-env").browser ? it :
-  (title) => { console.warn(`Test ${title} is currently only supported in a browser`); return xit(title); }
+var describeInBrowser = System.get("@system-env").browser ? describe :
+  (title, fn) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xdescribe(title, fn); }
 
 const defaultStyle = {
   fontFamily: "Monaco, monospace",
@@ -33,7 +28,6 @@ function text(string, props) {
     textString: string,
     extent: pt(100,100),
     padding: Rectangle.inset(3),
-    fontMetric: isolatedEnvs ? dummyFontMetric : undefined,
     ...defaultStyle,
     ...props
   });
@@ -47,48 +41,21 @@ function range(startRow, startCol, endRow, endCol) {
 }
 
 
-var world, sut;
-function createDummyWorld() {
-  if (!isolatedEnvs) {
-    sut = text("text\nfor tests", {
-      position: pt(10.10),
-      fill: Color.gray.lighter(2),
-      cursorPosition: {row: 0, column: 0}
-    }).openInWorld();
-    return sut.world();
-  }
-  world = new World({name: "world", extent: pt(300,300), submorphs: [
-    text("text\nfor tests", {
-      position: pt(10.10),
-      fill: Color.gray.lighter(2),
-      cursorPosition: {row: 0, column: 0}
-    })]})
-  sut = world.get("text");
-  return world;
+var sut, env;
+function createSut() {
+  sut = text("text\nfor tests", {
+    position: pt(10.10),
+    fill: Color.gray.lighter(2),
+    cursorPosition: {row: 0, column: 0}
+  }).openInWorld();
+  env = sut.env;
 }
-
-var env;
-async function createMorphicEnv() {
-  if (!isolatedEnvs) {
-    world = createDummyWorld();
-    env = world.env;
-    return world;
-  }
-  env = new MorphicEnv(await createDOMEnvironment());
-  env.domEnv.document.body.style = "margin: 0";
-  MorphicEnv.pushDefault(env);
-  await env.setWorld(createDummyWorld());
-}
-async function destroyMorphicEnv() {
-  if (!isolatedEnvs) {
-    sut.remove();
-    return;
-  }
-  MorphicEnv.popDefault().uninstall();
+function removeSut() {
+  sut && sut.remove();
 }
 
 
-describe("text attributes", () => {
+describeInBrowser("text attributes", () => {
 
   beforeEach(() => sut = text("hello", {}))
 
@@ -144,7 +111,7 @@ describe("text attributes", () => {
 });
 
 
-describe("anchors", () => {
+describeInBrowser("anchors", () => {
 
   it("adds anchor by id", () => {
     var t = text("hello\nworld", {}),
@@ -201,13 +168,13 @@ describe("anchors", () => {
 });
 
 
-describe("scroll", () => {
+describeInBrowser("scroll", () => {
 
-  beforeEach(() => createMorphicEnv());
-  afterEach(() => destroyMorphicEnv());
+  beforeEach(() => createSut());
+  afterEach(() => removeSut());
 
   it("cursor into view", () => {
-    var lineHeight = fontMetric.defaultCharExtent(sut).height,
+    var lineHeight = fontMetric.defaultCharExtent(sut, sut.textRenderer.directRenderTextLayerFn(sut)).height,
         padTop = sut.padding.top(),
         padBot = sut.padding.bottom();
     Object.assign(sut, {
@@ -217,22 +184,22 @@ describe("scroll", () => {
       textString: [0,1,2,3,4,5,6,7,8,9].join("\n"),
     });
     expect(sut.scrollExtent).equals(
-      pt(100 + 18, sut.document.lines.length * lineHeight + padTop+padBot + 15),
+      pt(100 + 15, sut.document.lines.length * lineHeight + padTop+padBot + 15),
         "scrollExtent not as expected");
     sut.cursorPosition = { column: 0, row: 3 }
     sut.scrollCursorIntoView();
-    expect(sut.scroll).equals(pt(0,2*lineHeight+padTop));
+    expect(sut.scroll).equals(pt(0,2*lineHeight+padTop+3));
     sut.cursorPosition = {column: 0, row: 0};
     sut.scrollCursorIntoView();
-    expect(sut.scroll).equals(pt(0,padTop))
+    expect(sut.scroll).equals(pt(0,0))
   });
 
 });
 
-describe("text key events", () => {
+describeInBrowser("text key events", () => {
 
-  beforeEach(() => createMorphicEnv());
-  afterEach(() => destroyMorphicEnv());
+  beforeEach(() => createSut());
+  afterEach(() => removeSut());
 
   it("text entry via keydown", async () => {
     sut.focus();
@@ -277,20 +244,20 @@ describe("text key events", () => {
 });
 
 
-describe("text mouse events", () => {
+describeInBrowser("text mouse events", () => {
 
   var padLeft, padRight, padTop, padBot,
       h, w;
   beforeEach(async () => {
-    await createMorphicEnv();
+    await createSut();
     padLeft = sut.padding.left();
     padRight = sut.padding.right();
     padTop = sut.padding.top();
     padBot = sut.padding.bottom();
-    ({height: h, width: w} = fontMetric.defaultCharExtent(sut));
+    ({height: h, width: w} = fontMetric.defaultCharExtent(sut, sut.textRenderer.directRenderTextLayerFn(sut)));
     await sut.whenRendered();
   });
-  afterEach(() => destroyMorphicEnv());
+  afterEach(() => removeSut());
 
   it("click sets cursor", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
@@ -400,7 +367,7 @@ describe("text mouse events", () => {
 
 });
 
-describe("saved marks", () => {
+describeInBrowser("saved marks", () => {
 
   var t; beforeEach(() => t = text("hello\n world", {cursorPosition: {row: 0, column: 0}}));
   // t.openInWorld(); t.focus();
@@ -435,11 +402,11 @@ describe("saved marks", () => {
 
 });
 
-describe("clipboard buffer / kill ring", () => {
+describeInBrowser("clipboard buffer / kill ring", () => {
 
   var t, browserExtension;
   beforeEach(async () => {
-    await createMorphicEnv();
+    await createSut();
     t = sut;
     t.textString = "a\nb\nc\n ";
     browserExtension = lively.browserExtension;
@@ -447,10 +414,10 @@ describe("clipboard buffer / kill ring", () => {
   });
   afterEach(() => {
     lively.browserExtension = browserExtension;
-    return destroyMorphicEnv();
+    return removeSut();
   })
 
-  inBrowser("copy saves to clipboard buffer", async () => {
+  it("copy saves to clipboard buffer", async () => {
     t.selection = range(0,0,0,1);
     t.execCommand("manual clipboard copy");
     t.selection = range(1,0,1,1);
@@ -476,7 +443,7 @@ describe("clipboard buffer / kill ring", () => {
 
 });
 
-describe("text movement and selection commands", () => {
+describeInBrowser("text movement and selection commands", () => {
 
   it("selection / line string", () => {
     var t = text("hello\n world", {});
@@ -568,7 +535,7 @@ describe("text movement and selection commands", () => {
       // t=that
     });
 
-    inBrowser("with line wrapping", async () => {  
+    it("with line wrapping", async () => {  
       t.cursorPosition = {column: 5,row: 1};
       expect(t.screenLineRange().start).deep.equals({row: 1, column: 3}, "before 1");
 

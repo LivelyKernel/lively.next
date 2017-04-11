@@ -1,5 +1,4 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
-
 import { expect } from "mocha-es6";
 import { pt, rect, Color } from "lively.graphics";
 import { morph } from "lively.morphic";
@@ -7,7 +6,10 @@ import { connect } from "lively.bindings";
 
 var sut;
 
-describe("morphic bindings", function() {
+var describInBrowser = System.get("@system-env").browser ? describe :
+  (title, fn) => { console.warn(`Test ${title} is currently only supported in a browser`); return xdescribe(title, fn); }
+
+describInBrowser("morphic bindings", function() {
 
   beforeEach(function() {
     sut = morph({bounds: rect(100,100,100,50)});

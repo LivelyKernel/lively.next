@@ -1,15 +1,19 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
-
 import { expect, chai } from "mocha-es6";
 import { pt, rect, Color, Rectangle } from "lively.graphics";
 import { Text } from "../../text/morph.js";
+import { World, MorphicEnv } from "../../index.js";
+import { createDOMEnvironment } from "../../rendering/dom-helper.js";
 
+var describeInBrowser = System.get("@system-env").browser ? describe :
+  (title) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xit(title); }
 
 var padding = Rectangle.inset(5);
 
 var w, h, t, tl, padl, padr, padt, padb;
 
 function text(string, props) {
+  env = env || MorphicEnv.default();
   t = new Text({
     name: "text",
     textString: string,
@@ -21,11 +25,7 @@ function text(string, props) {
     clipMode: "auto",
     padding, borderWidth: 0, fill: Color.limeGreen,
     lineWrapping: false,
-
-    // fontMetric,
-    // fontMetric: $$world.env.fontMetric,
-    // textLayout: new TextLayout(fontMetric),
-    // textRenderer: newRenderer,
+    env,
     ...props
   });
 
@@ -41,9 +41,26 @@ function text(string, props) {
   return t;
 }
 
+var env;
+async function createMorphicEnv() {
+  if (System.get("@system-env").browser) return;
+  env = new MorphicEnv(await createDOMEnvironment());
+  env.domEnv.document.body.style = "margin: 0";
+  MorphicEnv.pushDefault(env);
+  await env.setWorld(new World({name: "world", extent: pt(300,300)}));
+}
 
-describe("text layout", () => {
+async function destroyMorphicEnv() {
+  if (System.get("@system-env").browser) return;
+  MorphicEnv.popDefault().uninstall();
+}
 
+describeInBrowser("text layout", function() {
+
+  this.timeout(7*1000);
+
+  beforeEach(() => createMorphicEnv());
+  afterEach(() => destroyMorphicEnv());
 
   describe("positions", () => {
 
@@ -142,7 +159,13 @@ describe("text layout", () => {
   describe("line wrapping", () => {
 
     it("wraps single line and computes positions back and forth", () => {
+      // await createMorphicEnv()
+      // destroyMorphicEnv()
+      // MorphicEnv.popDefault()
+      // MorphicEnv.envs
+
       text("abcdef\n1234567", {width: 4*w+padl+padr});
+      // t.openInWorld()
 
       expect(t.lineCount()).equals(2);
       expect(t.charBoundsFromTextPosition({row: 0, column: 5})).equals(rect(padl+w*5,padt,w,h-1), "not wrapped: text pos => pixel pos");

@@ -51,7 +51,6 @@ async function createMorphicEnv() {
   env.domEnv.document.body.style = "margin: 0";
   MorphicEnv.pushDefault(env);
   await env.setWorld(createDummyWorld());
-  await promise.delay(20);
 }
 
 async function destroyMorphicEnv() { MorphicEnv.popDefault().uninstall(); }
@@ -69,6 +68,7 @@ describe("text rendering", () => {
   afterEach(() => destroyMorphicEnv());
 
   inBrowser("only renders visible part of scrolled text", async () => {
+    
     var lineHeight = sut.document.lines[0].height,
         padTop = sut.padding.top(),
         padBot = sut.padding.bottom();
@@ -87,8 +87,8 @@ describe("text rendering", () => {
         textBounds = new Rectangle(b.left, b.top, b.width, b.height);
 
     expect(textBounds.top()).equals(-sut.scroll.y, "text layer not scrolled");
-    expect(textBounds.height).equals(lineHeight*17 + padTop+padBot, "text layer does not have size of all lines");
-    expect(node.querySelector(".newtext-text-layer").textContent).equals("9101112", "text  layer renders more than necessary");
+    expect(textBounds.height).closeTo(lineHeight*17 + (padTop+padBot), 30, "text layer does not have size of all lines");
+    expect(node.querySelector(".newtext-text-layer").textContent).equals("101112", "text  layer renders more than necessary");
   });
 
   inBrowser("can resize on content change", async () => {
@@ -97,15 +97,19 @@ describe("text rendering", () => {
     sut.fixedWidth = false;
     var padLeft = sut.padding.left(),
         padRight = sut.padding.right(),
-        {width: cWidth, height: cHeight} = sut.fontMetric.defaultCharExtent({defaultTextStyle: sut.defaultTextStyle});
+        {width: cWidth, height: cHeight} = sut.fontMetric.defaultCharExtent(
+          {defaultTextStyle: sut.defaultTextStyle},
+          sut.textRenderer.directRenderTextLayerFn(sut));
     sut.textString = "Hello hello";
 
     await sut.whenRendered();
-    let expectedWidth = 11*cWidth + padLeft + padRight;
+    await promise.delay(100);
+    let expectedWidth = sut.textString.length * cWidth + padLeft + padRight;
     expect(sut.width).within(expectedWidth-1, expectedWidth+1);
 
     sut.textString = "foo";
     await sut.whenRendered();
+    await promise.delay(100);
     expectedWidth = 3*cWidth + padLeft + padRight;
     expect(sut.width).within(expectedWidth-1, expectedWidth+1);
   });
@@ -184,14 +188,14 @@ describe("text rendering", () => {
       var l = sut.textLayout;
       sut.render(sut.env.renderer);
       expect(l.firstFullVisibleLine(sut)).equals(0);
-      expect(l.lastFullVisibleLine(sut)).equals(3);
+      expect(l.lastFullVisibleLine(sut)).equals(2);
 
       sut.scroll = sut.scroll.addXY(0, padding.top()+h);
       
       sut.render(sut.env.renderer);
 
-      expect(l.firstFullVisibleLine(sut)).equals(1);
-      expect(l.lastFullVisibleLine(sut)).equals(4);
+      expect(l.firstFullVisibleLine(sut)).equals(2);
+      expect(l.lastFullVisibleLine(sut)).equals(3);
     });
 
   });

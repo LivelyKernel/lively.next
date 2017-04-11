@@ -19,7 +19,9 @@ async function createMorphicEnv() {
 async function destroyMorphicEnv() { MorphicEnv.popDefault().uninstall(); }
 
 
-describe("label", () => {
+describe("label", function() {
+
+  this.timeout(7000);
 
   before(createMorphicEnv);
   after(destroyMorphicEnv);
@@ -53,8 +55,8 @@ describe("label", () => {
       textAndAttributes: ["1", null, "2", null, "\n", null, "bar", null],
       fontSize: 20});
     expect(l.textAndAttributesOfLines).deep.equals([
-      ["1", {}, "2", {}],
-      [" bar", {}]
+      ["1", null, "2", null],
+      ["bar", null]
     ]);
   })
 
