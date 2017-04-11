@@ -3,7 +3,7 @@ import { expect } from "mocha-es6";
 
 import { cleanupUnusedImports, interactivelyInjectImportIntoText } from "lively.morphic/ide/js/import-helper.js";
 
-import { Text } from 'lively.morphic';
+import { Text, inspect } from 'lively.morphic';
 import { JavaScriptEditorPlugin } from "lively.morphic/ide/js/editor-plugin.js";
 
 function listItem(item) {
@@ -14,7 +14,7 @@ function listItem(item) {
   var label = item.string || item.label || "no item.string";
   item.string = typeof label === "string" ? label :
     Array.isArray(label) ?
-      label.map(ea => String(ea[0])).join(" ") :
+      label.map((text, i) => i%2==0? String(text):"").join(" ") :
       String(label);
   return item;
 }
@@ -51,11 +51,14 @@ describe("import helper - injection command", function() {
     ed = new Text({plugins: [new JavaScriptEditorPlugin()]});
     var targetModule = `lively://import-helper-test/${Date.now()}`,
         dummyWorld = {
-          filterableListPrompt: (label, items) =>
-            ({selected: items
+          filterableListPrompt: (label, items) => {
+            return {
+              selected: items
                         .filter(item => queryMatcher(listItem(item).string))
-                        .map(ea => ea.value)})
-          };
+                        .map(ea => ea.value)
+            }
+          }
+        };
 
     ed.plugins[0].evalEnvironment.targetModule  = targetModule;
     ed.textString = `import { Text } from "lively.morphic";`;
