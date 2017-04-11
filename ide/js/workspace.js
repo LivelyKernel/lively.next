@@ -26,6 +26,7 @@ export default class Workspace extends Window {
           this.targetMorph = new Text({
             name: "editor",
             textString: "// Enter and evaluate JavaScript code here",
+            lineWrapping: true,
             ...config.codeEditor.defaultStyle,
             plugins: [new JavaScriptEditorPlugin()]
           });
