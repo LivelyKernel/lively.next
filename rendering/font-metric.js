@@ -187,8 +187,17 @@ export default class FontMetric {
     line, offsetX = 0, offsetY = 0, styleOpts,
     rendertTextLayerFn, renderLineFn
   ) {
-    return this._domMeasure.manuallyComputeCharBoundsOfLine(
+    return this._domMeasure.computeCharBBoxes(
       line, offsetX = 0, offsetY = 0, styleOpts,
+      rendertTextLayerFn, renderLineFn);
+  }
+
+  manuallyComputeBoundsOfLines(
+    lines, offsetX = 0, offsetY = 0, styleOpts,
+    rendertTextLayerFn, renderLineFn
+  ) {
+    return this._domMeasure.computeBBoxesOfLines(
+      lines, offsetX = 0, offsetY = 0, styleOpts,
       rendertTextLayerFn, renderLineFn);
   }
 }
@@ -231,9 +240,14 @@ class DOMTextMeasure {
   }
 
   install(doc, parentEl) {
+    this.maxLineBBoxCacheCount = 3000;
+    this.lineBBoxCacheCount = 0;
+    this.lineBBoxCache = {};
+
     this.maxTextlayerNodeCacheCount = 30;
-    this.textlayerNodeCache = {};
     this.textlayerNodeCacheCount = 0;
+    this.textlayerNodeCache = {};
+
     this.defaultCharWidthHeightCache = {};
     this.doc = doc;
     let el = this.element = doc.createElement("div");
@@ -310,7 +324,49 @@ class DOMTextMeasure {
     }, rendertTextLayerFn, styleOpts, styleKey);
   }
 
-  manuallyComputeCharBoundsOfLine(
+  computeBBoxesOfLines(
+    lines, offsetX = 0, offsetY = 0, styleOpts,
+    rendertTextLayerFn, renderLineFn
+  ) {
+    let styleKey = this.generateStyleKey(styleOpts),
+        result = new Array(lines.length),
+        allInCache = true;
+    for (let i = 0; i < lines.length; i++) {
+      let cached = this.lineBBoxCache[styleKey + "_" + lines[i].text];
+      if (cached && cached.height && cached.width) result[i] = cached;
+      else allInCache = false;
+    }
+
+    if (allInCache) return result;
+
+    return this.withTextLayerNodeDo(textNode => {
+      // render in once go, then read, not intermixed!
+      let lineNodes = new Array(lines.length),
+          results = new Array(lines.length);
+      for (let i = 0; i < lines.length; i++) {
+        if (results[i]) continue;
+        let lineNode = renderLineFn(lines[i]);
+        // FIXME!!!!
+        lineNode.style.display = "inline-block";
+        textNode.appendChild(lineNode);
+        lineNodes[i] = lineNode;
+      }
+      for (let i = 0; i < lineNodes.length; i++) {
+        if (results[i]) continue;
+        let node = lineNodes[i],
+            offset = cumulativeOffset(node),
+            {left, top, width, height} = node.getBoundingClientRect();
+        this.lineBBoxCache[styleKey + "_" + lines[i].text] = results[i] = {
+          x: left - offset.left + offsetX,
+          y: top - offset.top + offsetY,
+          width, height
+        };
+      }      
+      return results;
+    }, rendertTextLayerFn, styleOpts, styleKey);
+  }
+
+  computeCharBBoxes(
     line, offsetX = 0, offsetY = 0, styleOpts,
     rendertTextLayerFn, renderLineFn
   ) {

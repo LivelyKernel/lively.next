@@ -40,18 +40,35 @@ export default class TextLayout {
 
   estimateLineHeights(morph, force = false) {
     let {
-          viewState,
+          fontMetric, textRenderer, document,
           defaultTextStyle,
-          lineWrapping,
-          width: morphWidth, padding,
-          document: {lines},
-          fontMetric, textRenderer
+          extent: {x: morphWidth, y: morphHeight},
+          clipMode, textAlign, padding, lineWrapping
         } = morph,
-        directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph),
         paddingLeft = padding.left(),
         paddingRight = padding.right(),
         paddingTop = padding.top(),
-        paddingBottom = padding.bottom();
+        paddingBottom = padding.bottom(),
+        { lines, stringSize } = document;
+
+    // fast and exact version for small texts:
+    if (morph.lineCount() < 10 && morph.document.stringSize < 3000) {
+      var directRenderLineFn = textRenderer.directRenderLineFn(morph),
+          directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph),
+          linesBounds = fontMetric.manuallyComputeBoundsOfLines(
+            lines, 0, 0, {
+              defaultTextStyle, width: morphWidth, height: morphHeight,
+              clipMode, lineWrapping,
+              paddingLeft, paddingRight, paddingTop, paddingBottom
+            }, directRenderTextLayerFn, directRenderLineFn);
+      for (let i = 0; i < lines.length; i++) {
+        var {width, height} = linesBounds[i];
+        lines[i].changeExtent(width, height, false);
+      }
+      return;
+    }
+
+    var directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph);
 
     morphWidth = morphWidth - paddingLeft - paddingRight;
 
@@ -93,7 +110,7 @@ export default class TextLayout {
       line.changeExtent(estimatedWidth, estimatedHeight, true);
     }
 
-    viewState._textLayoutStale = false;
+    morph.viewState._textLayoutStale = false;
   }
 
   textBounds(morph) {
@@ -244,8 +261,6 @@ export default class TextLayout {
   }
 
   textPositionFromPoint(morph, point) {
-    this.estimateLineHeights(morph);
-
     let {x, y} = point,
         {document: doc, padding} = morph,
         padL = padding.left(),
