@@ -1,20 +1,28 @@
 {
-  "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
+  "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
   "snapshot": {
-    "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D": {
-      "rev": 329674,
+    "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30": {
+      "rev": 69864,
       "props": {
-        "clipMode": {
-          "key": "clipMode",
-          "value": "hidden"
+        "name": {
+          "key": "name",
+          "value": "NBAVisualization"
         },
         "dropShadow": {
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "6CF6E9F9-9A07-45A4-9B3C-428ADF22AD93",
+            "id": "CDA7EDAA-AD44-46B2-A461-C08DCA6FB129",
             "rev": 0
           }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(1100.4,58.4)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "extent": {
           "key": "extent",
@@ -24,17 +32,44 @@
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
         },
-        "name": {
-          "key": "name",
-          "value": "NBAVisualization"
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Ellipse_2554B8C3_A5B7_4A25_8C8D_98D6DE5545B6",
+              "rev": 69141
+            },
+            {
+              "__ref__": true,
+              "id": "Ellipse_3A4F42B2_CF66_421E_B407_879CD26DBBB8",
+              "rev": 69167
+            },
+            {
+              "__ref__": true,
+              "id": "Ellipse_D55555BD_89F2_4405_847C_9157C9FA9F65",
+              "rev": 69192
+            },
+            {
+              "__ref__": true,
+              "id": "Label_F1AE3B3D_4307_4184_BA33_B0D8CCCAA935",
+              "rev": 89034
+            },
+            {
+              "__ref__": true,
+              "id": "Morph_0DBE6892_CDEB_4665_96F5_EE34AB869651",
+              "rev": 88859
+            },
+            {
+              "__ref__": true,
+              "id": "VisjsMorph_7A816B43_0361_437E_9A7F_9DDCB6954EB8",
+              "rev": 88861
+            }
+          ]
         },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(627.3,293.4)"
+        "clipMode": {
+          "key": "clipMode",
+          "value": "hidden"
         },
         "scroll": {
           "key": "scroll",
@@ -46,41 +81,6 @@
             "Window",
             "Morph",
             "morph"
-          ]
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Ellipse_5901CC6F_13C9_4732_9DBC_3C7066ED0F5D",
-              "rev": 328944
-            },
-            {
-              "__ref__": true,
-              "id": "Ellipse_8001BC7C_03FB_426E_B4FB_96289ADB6F0F",
-              "rev": 328970
-            },
-            {
-              "__ref__": true,
-              "id": "Ellipse_CCEDC975_5023_4855_BBA3_2665A165AACA",
-              "rev": 328995
-            },
-            {
-              "__ref__": true,
-              "id": "Label_8DAF71D9_8E83_43CF_89BE_B23EAE2B3818",
-              "rev": 417687
-            },
-            {
-              "__ref__": true,
-              "id": "Morph_C47CCBAB_F941_447C_A65A_D7E728833B8D",
-              "rev": 417510
-            },
-            {
-              "__ref__": true,
-              "id": "VisjsMorph_A38E0184_E13C_4D40_8A30_B51DF1D6C8A0",
-              "rev": 417512
-            }
           ]
         },
         "borderColorBottom": {
@@ -156,12 +156,12 @@
           "value": [
             {
               "__ref__": true,
-              "id": "1152D47A-1A6D-4D7F-87ED-9AC1BED84C43",
+              "id": "1A34FCF7-1F13-4B59-92B7-DE194D43B5A3",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "CFAE3957-AD55-45CB-870F-5E0EBE208315",
+              "id": "B77E2D57-15AD-4A38-B4A3-2649AD2F9BF4",
               "rev": 0
             }
           ]
@@ -178,7 +178,7 @@
         }
       }
     },
-    "6CF6E9F9-9A07-45A4-9B3C-428ADF22AD93": {
+    "CDA7EDAA-AD44-46B2-A461-C08DCA6FB129": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -209,8 +209,8 @@
           "key": "morph",
           "value": {
             "__ref__": true,
-            "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
-            "rev": 329674
+            "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
+            "rev": 69864
           }
         }
       },
@@ -225,9 +225,21 @@
         }
       }
     },
-    "Ellipse_5901CC6F_13C9_4732_9DBC_3C7066ED0F5D": {
-      "rev": 328944,
+    "Ellipse_2554B8C3_A5B7_4A25_8C8D_98D6DE5545B6": {
+      "rev": 69141,
       "props": {
+        "name": {
+          "key": "name",
+          "value": "close"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(8.0,6.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(14.0,14.0)"
@@ -236,17 +248,15 @@
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,96,82)"
         },
-        "name": {
-          "key": "name",
-          "value": "close"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(8.0,6.0)"
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Label_6959BD65_EFA5_49D2_8283_7E8DC9F53322",
+              "rev": 75110
+            }
+          ]
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -254,16 +264,6 @@
             "Ellipse",
             "Morph",
             "morph"
-          ]
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Label_0F57ED35_641E_4B94_8333_D27EA450E4C9",
-              "rev": 329689
-            }
           ]
         },
         "borderColorBottom": {
@@ -303,17 +303,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "4D4FD41D-9F29-46C3-9A77-AEFF69A8A808",
+              "id": "EE95C4ED-D91C-40E9-B2B6-AB4F75DDE7C8",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "0F99E646-0B7C-4593-8724-16CC4DD641A3",
+              "id": "640EA052-AE4D-46E3-B2B0-0602F66C8AA1",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "9DC82D61-051B-451E-AD27-4111AA802E3D",
+              "id": "CE5BABD9-E0FD-4C0B-8545-FAA16D31B240",
               "rev": 0
             }
           ]
@@ -330,40 +330,32 @@
         }
       }
     },
-    "Label_0F57ED35_641E_4B94_8333_D27EA450E4C9": {
-      "rev": 329689,
+    "Label_6959BD65_EFA5_49D2_8283_7E8DC9F53322": {
+      "rev": 75110,
       "props": {
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,11.9)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": null
-        },
         "name": {
           "key": "name",
           "value": "aLabel"
-        },
-        "opacity": {
-          "key": "opacity",
-          "value": 0.5
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "position": {
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2.3,1.0)"
         },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Label",
-            "Morph",
-            "morph"
-          ]
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,11.9)"
+        },
+        "opacity": {
+          "key": "opacity",
+          "value": 0.5
+        },
+        "fill": {
+          "key": "fill",
+          "value": null
         },
         "visible": {
           "key": "visible",
@@ -373,17 +365,23 @@
           "key": "submorphs",
           "value": []
         },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "value": [
-            [
-              "",
-              {
-                "__ref__": true,
-                "id": "1E8968FB-7693-48BA-A64C-0790955E5936",
-                "rev": 0
-              }
-            ]
+            "",
+            {
+              "__ref__": true,
+              "id": "1FC4514F-FF53-42A3-9197-F07D47D5D2D6",
+              "rev": 0
+            }
           ]
         },
         "padding": {
@@ -413,7 +411,7 @@
         }
       }
     },
-    "1E8968FB-7693-48BA-A64C-0790955E5936": {
+    "1FC4514F-FF53-42A3-9197-F07D47D5D2D6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -432,7 +430,7 @@
         }
       }
     },
-    "4D4FD41D-9F29-46C3-9A77-AEFF69A8A808": {
+    "EE95C4ED-D91C-40E9-B2B6-AB4F75DDE7C8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -451,8 +449,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_5901CC6F_13C9_4732_9DBC_3C7066ED0F5D",
-            "rev": 328944
+            "id": "Ellipse_2554B8C3_A5B7_4A25_8C8D_98D6DE5545B6",
+            "rev": 69141
           }
         },
         "sourceAttrName": {
@@ -463,8 +461,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
-            "rev": 329674
+            "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
+            "rev": 69864
           }
         },
         "targetMethodName": {
@@ -475,7 +473,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "2501D996-AEB5-4749-87DD-E16E816237DD",
+            "id": "3CCC897A-F115-4D67-9F99-60EB4608AAF5",
             "rev": 0
           }
         },
@@ -499,28 +497,28 @@
         }
       }
     },
-    "2501D996-AEB5-4749-87DD-E16E816237DD": {
+    "3CCC897A-F115-4D67-9F99-60EB4608AAF5": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_5901CC6F_13C9_4732_9DBC_3C7066ED0F5D",
-            "rev": 328944
+            "id": "Ellipse_2554B8C3_A5B7_4A25_8C8D_98D6DE5545B6",
+            "rev": 69141
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
-            "rev": 329674
+            "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
+            "rev": 69864
           }
         }
       }
     },
-    "0F99E646-0B7C-4593-8724-16CC4DD641A3": {
+    "640EA052-AE4D-46E3-B2B0-0602F66C8AA1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -539,8 +537,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_5901CC6F_13C9_4732_9DBC_3C7066ED0F5D",
-            "rev": 328944
+            "id": "Ellipse_2554B8C3_A5B7_4A25_8C8D_98D6DE5545B6",
+            "rev": 69141
           }
         },
         "sourceAttrName": {
@@ -551,8 +549,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_0F57ED35_641E_4B94_8333_D27EA450E4C9",
-            "rev": 329689
+            "id": "Label_6959BD65_EFA5_49D2_8283_7E8DC9F53322",
+            "rev": 75110
           }
         },
         "targetMethodName": {
@@ -563,7 +561,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "DE810F79-B947-422B-8C07-8E89674610EE",
+            "id": "F526CDB6-B2A5-424E-8915-86600DAD0D7A",
             "rev": 0
           }
         },
@@ -591,28 +589,28 @@
         }
       }
     },
-    "DE810F79-B947-422B-8C07-8E89674610EE": {
+    "F526CDB6-B2A5-424E-8915-86600DAD0D7A": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_5901CC6F_13C9_4732_9DBC_3C7066ED0F5D",
-            "rev": 328944
+            "id": "Ellipse_2554B8C3_A5B7_4A25_8C8D_98D6DE5545B6",
+            "rev": 69141
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_0F57ED35_641E_4B94_8333_D27EA450E4C9",
-            "rev": 329689
+            "id": "Label_6959BD65_EFA5_49D2_8283_7E8DC9F53322",
+            "rev": 75110
           }
         }
       }
     },
-    "9DC82D61-051B-451E-AD27-4111AA802E3D": {
+    "CE5BABD9-E0FD-4C0B-8545-FAA16D31B240": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -631,8 +629,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_5901CC6F_13C9_4732_9DBC_3C7066ED0F5D",
-            "rev": 328944
+            "id": "Ellipse_2554B8C3_A5B7_4A25_8C8D_98D6DE5545B6",
+            "rev": 69141
           }
         },
         "sourceAttrName": {
@@ -643,8 +641,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_0F57ED35_641E_4B94_8333_D27EA450E4C9",
-            "rev": 329689
+            "id": "Label_6959BD65_EFA5_49D2_8283_7E8DC9F53322",
+            "rev": 75110
           }
         },
         "targetMethodName": {
@@ -655,7 +653,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "C74F0E5D-AE6B-4759-8A55-059F3D770FD9",
+            "id": "3A47EAB1-6690-4FE3-8866-8207A17897A7",
             "rev": 0
           }
         },
@@ -683,30 +681,46 @@
         }
       }
     },
-    "C74F0E5D-AE6B-4759-8A55-059F3D770FD9": {
+    "3A47EAB1-6690-4FE3-8866-8207A17897A7": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_5901CC6F_13C9_4732_9DBC_3C7066ED0F5D",
-            "rev": 328944
+            "id": "Ellipse_2554B8C3_A5B7_4A25_8C8D_98D6DE5545B6",
+            "rev": 69141
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_0F57ED35_641E_4B94_8333_D27EA450E4C9",
-            "rev": 329689
+            "id": "Label_6959BD65_EFA5_49D2_8283_7E8DC9F53322",
+            "rev": 75110
           }
         }
       }
     },
-    "Ellipse_8001BC7C_03FB_426E_B4FB_96289ADB6F0F": {
-      "rev": 328970,
+    "Ellipse_3A4F42B2_CF66_421E_B407_879CD26DBBB8": {
+      "rev": 69167,
       "props": {
+        "name": {
+          "key": "name",
+          "value": "minimize"
+        },
+        "tooltip": {
+          "key": "tooltip",
+          "value": "collapse window"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(28.0,6.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(14.0,14.0)"
@@ -715,17 +729,15 @@
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,190,6)"
         },
-        "name": {
-          "key": "name",
-          "value": "minimize"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(28.0,6.0)"
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Label_AA466B8D_2A40_4FB9_8F1E_39DDFE12E63C",
+              "rev": 75111
+            }
+          ]
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -733,20 +745,6 @@
             "Ellipse",
             "Morph",
             "morph"
-          ]
-        },
-        "tooltip": {
-          "key": "tooltip",
-          "value": "collapse window"
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Label_1F347ABE_C75E_4D99_99EF_A07EF8D8ADC9",
-              "rev": 329690
-            }
           ]
         },
         "borderColorBottom": {
@@ -790,17 +788,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "9700E4B4-6AAA-4828-B63C-24B5AA0CB436",
+              "id": "6BFFB07B-4817-4ACD-AEE1-5441191E5BDB",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "7C69137C-C438-422C-B584-9C8EBF2A61EF",
+              "id": "7A14C156-FB3A-4DC9-B540-362D541B3320",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "59E85581-8BCA-4DA1-BD38-E065CE4D0E87",
+              "id": "4183C181-2DB6-4E03-B520-E2679A82D57B",
               "rev": 0
             }
           ]
@@ -817,40 +815,32 @@
         }
       }
     },
-    "Label_1F347ABE_C75E_4D99_99EF_A07EF8D8ADC9": {
-      "rev": 329690,
+    "Label_AA466B8D_2A40_4FB9_8F1E_39DDFE12E63C": {
+      "rev": 75111,
       "props": {
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,11.9)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": null
-        },
         "name": {
           "key": "name",
           "value": "aLabel"
-        },
-        "opacity": {
-          "key": "opacity",
-          "value": 0.5
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "position": {
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2.3,1.0)"
         },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Label",
-            "Morph",
-            "morph"
-          ]
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,11.9)"
+        },
+        "opacity": {
+          "key": "opacity",
+          "value": 0.5
+        },
+        "fill": {
+          "key": "fill",
+          "value": null
         },
         "visible": {
           "key": "visible",
@@ -860,17 +850,23 @@
           "key": "submorphs",
           "value": []
         },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "value": [
-            [
-              "",
-              {
-                "__ref__": true,
-                "id": "21657671-4CD5-40CF-BE88-CF892156F04A",
-                "rev": 0
-              }
-            ]
+            "",
+            {
+              "__ref__": true,
+              "id": "FBC6AF62-85A3-4339-A0B0-874EAD8012F4",
+              "rev": 0
+            }
           ]
         },
         "padding": {
@@ -900,7 +896,7 @@
         }
       }
     },
-    "21657671-4CD5-40CF-BE88-CF892156F04A": {
+    "FBC6AF62-85A3-4339-A0B0-874EAD8012F4": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -919,7 +915,7 @@
         }
       }
     },
-    "9700E4B4-6AAA-4828-B63C-24B5AA0CB436": {
+    "6BFFB07B-4817-4ACD-AEE1-5441191E5BDB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -938,8 +934,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_8001BC7C_03FB_426E_B4FB_96289ADB6F0F",
-            "rev": 328970
+            "id": "Ellipse_3A4F42B2_CF66_421E_B407_879CD26DBBB8",
+            "rev": 69167
           }
         },
         "sourceAttrName": {
@@ -950,8 +946,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
-            "rev": 329674
+            "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
+            "rev": 69864
           }
         },
         "targetMethodName": {
@@ -962,7 +958,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "2B712260-472C-4FEC-AF23-B702C690C64D",
+            "id": "8D0DB179-2177-4108-BCB4-BF565DCF07A4",
             "rev": 0
           }
         },
@@ -986,28 +982,28 @@
         }
       }
     },
-    "2B712260-472C-4FEC-AF23-B702C690C64D": {
+    "8D0DB179-2177-4108-BCB4-BF565DCF07A4": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_8001BC7C_03FB_426E_B4FB_96289ADB6F0F",
-            "rev": 328970
+            "id": "Ellipse_3A4F42B2_CF66_421E_B407_879CD26DBBB8",
+            "rev": 69167
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
-            "rev": 329674
+            "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
+            "rev": 69864
           }
         }
       }
     },
-    "7C69137C-C438-422C-B584-9C8EBF2A61EF": {
+    "7A14C156-FB3A-4DC9-B540-362D541B3320": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1026,8 +1022,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_8001BC7C_03FB_426E_B4FB_96289ADB6F0F",
-            "rev": 328970
+            "id": "Ellipse_3A4F42B2_CF66_421E_B407_879CD26DBBB8",
+            "rev": 69167
           }
         },
         "sourceAttrName": {
@@ -1038,8 +1034,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_1F347ABE_C75E_4D99_99EF_A07EF8D8ADC9",
-            "rev": 329690
+            "id": "Label_AA466B8D_2A40_4FB9_8F1E_39DDFE12E63C",
+            "rev": 75111
           }
         },
         "targetMethodName": {
@@ -1050,7 +1046,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "DD8CA8A8-D0F7-4593-863A-E5EBB13AA8F3",
+            "id": "79D7A927-D898-4B78-9820-C277C79348DF",
             "rev": 0
           }
         },
@@ -1078,28 +1074,28 @@
         }
       }
     },
-    "DD8CA8A8-D0F7-4593-863A-E5EBB13AA8F3": {
+    "79D7A927-D898-4B78-9820-C277C79348DF": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_8001BC7C_03FB_426E_B4FB_96289ADB6F0F",
-            "rev": 328970
+            "id": "Ellipse_3A4F42B2_CF66_421E_B407_879CD26DBBB8",
+            "rev": 69167
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_1F347ABE_C75E_4D99_99EF_A07EF8D8ADC9",
-            "rev": 329690
+            "id": "Label_AA466B8D_2A40_4FB9_8F1E_39DDFE12E63C",
+            "rev": 75111
           }
         }
       }
     },
-    "59E85581-8BCA-4DA1-BD38-E065CE4D0E87": {
+    "4183C181-2DB6-4E03-B520-E2679A82D57B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1118,8 +1114,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_8001BC7C_03FB_426E_B4FB_96289ADB6F0F",
-            "rev": 328970
+            "id": "Ellipse_3A4F42B2_CF66_421E_B407_879CD26DBBB8",
+            "rev": 69167
           }
         },
         "sourceAttrName": {
@@ -1130,8 +1126,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_1F347ABE_C75E_4D99_99EF_A07EF8D8ADC9",
-            "rev": 329690
+            "id": "Label_AA466B8D_2A40_4FB9_8F1E_39DDFE12E63C",
+            "rev": 75111
           }
         },
         "targetMethodName": {
@@ -1142,7 +1138,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "CA159EB9-D5D8-4E6E-81D0-DC6004913701",
+            "id": "80EF1C42-A604-4D4F-AAE1-185771B93A9D",
             "rev": 0
           }
         },
@@ -1170,30 +1166,42 @@
         }
       }
     },
-    "CA159EB9-D5D8-4E6E-81D0-DC6004913701": {
+    "80EF1C42-A604-4D4F-AAE1-185771B93A9D": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_8001BC7C_03FB_426E_B4FB_96289ADB6F0F",
-            "rev": 328970
+            "id": "Ellipse_3A4F42B2_CF66_421E_B407_879CD26DBBB8",
+            "rev": 69167
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_1F347ABE_C75E_4D99_99EF_A07EF8D8ADC9",
-            "rev": 329690
+            "id": "Label_AA466B8D_2A40_4FB9_8F1E_39DDFE12E63C",
+            "rev": 75111
           }
         }
       }
     },
-    "Ellipse_CCEDC975_5023_4855_BBA3_2665A165AACA": {
-      "rev": 328995,
+    "Ellipse_D55555BD_89F2_4405_847C_9157C9FA9F65": {
+      "rev": 69192,
       "props": {
+        "name": {
+          "key": "name",
+          "value": "maximize"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(48.0,6.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(14.0,14.0)"
@@ -1202,17 +1210,15 @@
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,204,0)"
         },
-        "name": {
-          "key": "name",
-          "value": "maximize"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(48.0,6.0)"
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Label_5292E098_5851_482A_8D09_1A905E9BB7F0",
+              "rev": 75112
+            }
+          ]
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -1220,16 +1226,6 @@
             "Ellipse",
             "Morph",
             "morph"
-          ]
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Label_3A7336FA_492D_4480_BA11_57F10DB4AA3D",
-              "rev": 329691
-            }
           ]
         },
         "borderColorBottom": {
@@ -1269,17 +1265,17 @@
           "value": [
             {
               "__ref__": true,
-              "id": "AC8A0608-9253-4DCB-8CBE-957B8F57FDC2",
+              "id": "F9EC8284-9FB9-4D1D-97A5-B0C9A0786B0C",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "6E9A2D39-46C2-48E9-AF60-9B3BF287B2D9",
+              "id": "F03BE625-CFB1-4F5D-8B5A-C904B7C3B2D9",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "779FEEDC-D8D3-462B-ADD5-727DE63A0D16",
+              "id": "8297F367-5DFC-4CE3-B0AE-BAC93E42F0A6",
               "rev": 0
             }
           ]
@@ -1296,40 +1292,32 @@
         }
       }
     },
-    "Label_3A7336FA_492D_4480_BA11_57F10DB4AA3D": {
-      "rev": 329691,
+    "Label_5292E098_5851_482A_8D09_1A905E9BB7F0": {
+      "rev": 75112,
       "props": {
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,11.9)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": null
-        },
         "name": {
           "key": "name",
           "value": "aLabel"
-        },
-        "opacity": {
-          "key": "opacity",
-          "value": 0.5
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "position": {
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2.3,1.0)"
         },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "Label",
-            "Morph",
-            "morph"
-          ]
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(9.4,11.9)"
+        },
+        "opacity": {
+          "key": "opacity",
+          "value": 0.5
+        },
+        "fill": {
+          "key": "fill",
+          "value": null
         },
         "visible": {
           "key": "visible",
@@ -1339,17 +1327,23 @@
           "key": "submorphs",
           "value": []
         },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "value": [
-            [
-              "",
-              {
-                "__ref__": true,
-                "id": "DBA26DD7-9AFE-4A1A-9B0F-CE0BB9F41BA0",
-                "rev": 0
-              }
-            ]
+            "",
+            {
+              "__ref__": true,
+              "id": "D077A976-1B9E-4BE5-BD70-B07381E29411",
+              "rev": 0
+            }
           ]
         },
         "padding": {
@@ -1379,7 +1373,7 @@
         }
       }
     },
-    "DBA26DD7-9AFE-4A1A-9B0F-CE0BB9F41BA0": {
+    "D077A976-1B9E-4BE5-BD70-B07381E29411": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1398,7 +1392,7 @@
         }
       }
     },
-    "AC8A0608-9253-4DCB-8CBE-957B8F57FDC2": {
+    "F9EC8284-9FB9-4D1D-97A5-B0C9A0786B0C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1417,8 +1411,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_CCEDC975_5023_4855_BBA3_2665A165AACA",
-            "rev": 328995
+            "id": "Ellipse_D55555BD_89F2_4405_847C_9157C9FA9F65",
+            "rev": 69192
           }
         },
         "sourceAttrName": {
@@ -1429,8 +1423,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
-            "rev": 329674
+            "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
+            "rev": 69864
           }
         },
         "targetMethodName": {
@@ -1441,7 +1435,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "1A1173DC-9E39-4F27-BAC4-50ED13505B4B",
+            "id": "4AF0837C-57F0-47CB-9853-FD9CE5488C93",
             "rev": 0
           }
         },
@@ -1465,28 +1459,28 @@
         }
       }
     },
-    "1A1173DC-9E39-4F27-BAC4-50ED13505B4B": {
+    "4AF0837C-57F0-47CB-9853-FD9CE5488C93": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_CCEDC975_5023_4855_BBA3_2665A165AACA",
-            "rev": 328995
+            "id": "Ellipse_D55555BD_89F2_4405_847C_9157C9FA9F65",
+            "rev": 69192
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
-            "rev": 329674
+            "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
+            "rev": 69864
           }
         }
       }
     },
-    "6E9A2D39-46C2-48E9-AF60-9B3BF287B2D9": {
+    "F03BE625-CFB1-4F5D-8B5A-C904B7C3B2D9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1505,8 +1499,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_CCEDC975_5023_4855_BBA3_2665A165AACA",
-            "rev": 328995
+            "id": "Ellipse_D55555BD_89F2_4405_847C_9157C9FA9F65",
+            "rev": 69192
           }
         },
         "sourceAttrName": {
@@ -1517,8 +1511,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_3A7336FA_492D_4480_BA11_57F10DB4AA3D",
-            "rev": 329691
+            "id": "Label_5292E098_5851_482A_8D09_1A905E9BB7F0",
+            "rev": 75112
           }
         },
         "targetMethodName": {
@@ -1529,7 +1523,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "CFD7FD99-8254-490B-87EC-290942BEB1F1",
+            "id": "4DBB56B7-69BA-4B76-82DF-A15C1328E995",
             "rev": 0
           }
         },
@@ -1557,28 +1551,28 @@
         }
       }
     },
-    "CFD7FD99-8254-490B-87EC-290942BEB1F1": {
+    "4DBB56B7-69BA-4B76-82DF-A15C1328E995": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_CCEDC975_5023_4855_BBA3_2665A165AACA",
-            "rev": 328995
+            "id": "Ellipse_D55555BD_89F2_4405_847C_9157C9FA9F65",
+            "rev": 69192
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_3A7336FA_492D_4480_BA11_57F10DB4AA3D",
-            "rev": 329691
+            "id": "Label_5292E098_5851_482A_8D09_1A905E9BB7F0",
+            "rev": 75112
           }
         }
       }
     },
-    "779FEEDC-D8D3-462B-ADD5-727DE63A0D16": {
+    "8297F367-5DFC-4CE3-B0AE-BAC93E42F0A6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1597,8 +1591,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_CCEDC975_5023_4855_BBA3_2665A165AACA",
-            "rev": 328995
+            "id": "Ellipse_D55555BD_89F2_4405_847C_9157C9FA9F65",
+            "rev": 69192
           }
         },
         "sourceAttrName": {
@@ -1609,8 +1603,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Label_3A7336FA_492D_4480_BA11_57F10DB4AA3D",
-            "rev": 329691
+            "id": "Label_5292E098_5851_482A_8D09_1A905E9BB7F0",
+            "rev": 75112
           }
         },
         "targetMethodName": {
@@ -1621,7 +1615,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "D5AE54C4-B2F7-4626-82B6-1434E3424371",
+            "id": "31159727-07E7-4DEC-98C6-61CB1A3F581B",
             "rev": 0
           }
         },
@@ -1649,30 +1643,46 @@
         }
       }
     },
-    "D5AE54C4-B2F7-4626-82B6-1434E3424371": {
+    "31159727-07E7-4DEC-98C6-61CB1A3F581B": {
       "rev": 0,
       "props": {
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Ellipse_CCEDC975_5023_4855_BBA3_2665A165AACA",
-            "rev": 328995
+            "id": "Ellipse_D55555BD_89F2_4405_847C_9157C9FA9F65",
+            "rev": 69192
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Label_3A7336FA_492D_4480_BA11_57F10DB4AA3D",
-            "rev": 329691
+            "id": "Label_5292E098_5851_482A_8D09_1A905E9BB7F0",
+            "rev": 75112
           }
         }
       }
     },
-    "Label_8DAF71D9_8E83_43CF_89BE_B23EAE2B3818": {
-      "rev": 417687,
+    "Label_F1AE3B3D_4307_4184_BA33_B0D8CCCAA935": {
+      "rev": 89034,
       "props": {
+        "name": {
+          "key": "name",
+          "value": "titleLabel"
+        },
+        "reactsToPointer": {
+          "key": "reactsToPointer",
+          "value": false
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(380.4,4.6)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(95.1,15.8)"
@@ -1681,21 +1691,9 @@
           "key": "fill",
           "value": null
         },
-        "name": {
-          "key": "name",
-          "value": "titleLabel"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(380.4,4.6)"
-        },
-        "reactsToPointer": {
-          "key": "reactsToPointer",
-          "value": false
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -1705,21 +1703,15 @@
             "morph"
           ]
         },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
-        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "value": [
-            [
-              "NBA Visualization",
-              {
-                "__ref__": true,
-                "id": "6901417E-8B08-461D-844A-D752113187C0",
-                "rev": 0
-              }
-            ]
+            "NBA Visualization",
+            {
+              "__ref__": true,
+              "id": "DA2DBBBF-A29F-435C-8D2E-AF1A798702FF",
+              "rev": 0
+            }
           ]
         },
         "padding": {
@@ -1739,7 +1731,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "505E27F9-C36F-4816-A8E4-E86DC9983BAE",
+              "id": "837B6D81-6D67-4BCA-B226-AF7676DD4215",
               "rev": 0
             }
           ]
@@ -1756,7 +1748,7 @@
         }
       }
     },
-    "6901417E-8B08-461D-844A-D752113187C0": {
+    "DA2DBBBF-A29F-435C-8D2E-AF1A798702FF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1765,7 +1757,7 @@
         }
       }
     },
-    "505E27F9-C36F-4816-A8E4-E86DC9983BAE": {
+    "837B6D81-6D67-4BCA-B226-AF7676DD4215": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1784,8 +1776,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_8DAF71D9_8E83_43CF_89BE_B23EAE2B3818",
-            "rev": 417687
+            "id": "Label_F1AE3B3D_4307_4184_BA33_B0D8CCCAA935",
+            "rev": 89034
           }
         },
         "sourceAttrName": {
@@ -1796,8 +1788,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
-            "rev": 329674
+            "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
+            "rev": 69864
           }
         },
         "targetMethodName": {
@@ -1808,7 +1800,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "826ED747-EEB8-4801-888E-8D4C90334CF2",
+            "id": "DE290A2A-AFAF-49E2-B965-485DA950F567",
             "rev": 0
           }
         },
@@ -1832,7 +1824,7 @@
         }
       }
     },
-    "826ED747-EEB8-4801-888E-8D4C90334CF2": {
+    "DE290A2A-AFAF-49E2-B965-485DA950F567": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1843,31 +1835,23 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_8DAF71D9_8E83_43CF_89BE_B23EAE2B3818",
-            "rev": 417687
+            "id": "Label_F1AE3B3D_4307_4184_BA33_B0D8CCCAA935",
+            "rev": 89034
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
-            "rev": 329674
+            "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
+            "rev": 69864
           }
         }
       }
     },
-    "Morph_C47CCBAB_F941_447C_A65A_D7E728833B8D": {
-      "rev": 417510,
+    "Morph_0DBE6892_CDEB_4665_96F5_EE34AB869651": {
+      "rev": 88859,
       "props": {
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(20.0,20.0)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
-        },
         "name": {
           "key": "name",
           "value": "resizer"
@@ -1880,16 +1864,24 @@
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(843.3,664.0)"
         },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(20.0,20.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
         "styleClasses": {
           "key": "styleClasses",
           "value": [
             "Morph",
             "morph"
           ]
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1900,7 +1892,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "F35DFF5E-910A-4A2D-B962-83D9B550BE9A",
+              "id": "ECA4D6DB-67F9-4CAC-977A-F36F1CB3D7FB",
               "rev": 0
             }
           ]
@@ -1917,7 +1909,7 @@
         }
       }
     },
-    "F35DFF5E-910A-4A2D-B962-83D9B550BE9A": {
+    "ECA4D6DB-67F9-4CAC-977A-F36F1CB3D7FB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1936,8 +1928,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_C47CCBAB_F941_447C_A65A_D7E728833B8D",
-            "rev": 417510
+            "id": "Morph_0DBE6892_CDEB_4665_96F5_EE34AB869651",
+            "rev": 88859
           }
         },
         "sourceAttrName": {
@@ -1948,8 +1940,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
-            "rev": 329674
+            "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
+            "rev": 69864
           }
         },
         "targetMethodName": {
@@ -1960,7 +1952,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "0334E066-8A45-4686-802D-6321A8577ED2",
+            "id": "505E3241-F374-41A2-9594-F9D404A5888F",
             "rev": 0
           }
         },
@@ -1991,7 +1983,7 @@
         }
       }
     },
-    "0334E066-8A45-4686-802D-6321A8577ED2": {
+    "505E3241-F374-41A2-9594-F9D404A5888F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2002,42 +1994,62 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Morph_C47CCBAB_F941_447C_A65A_D7E728833B8D",
-            "rev": 417510
+            "id": "Morph_0DBE6892_CDEB_4665_96F5_EE34AB869651",
+            "rev": 88859
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
-            "rev": 329674
+            "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
+            "rev": 69864
           }
         }
       }
     },
-    "VisjsMorph_A38E0184_E13C_4D40_8A30_B51DF1D6C8A0": {
-      "rev": 417512,
+    "VisjsMorph_7A816B43_0361_437E_9A7F_9DDCB6954EB8": {
+      "rev": 88861,
       "props": {
+        "name": {
+          "key": "name",
+          "value": "visjsMorph"
+        },
         "draggable": {
           "key": "draggable",
           "value": false
         },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(863.3,659.0)"
-        },
-        "name": {
-          "key": "name",
-          "value": "visjsMorph"
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,25.0)"
         },
         "origin": {
           "key": "origin",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,25.0)"
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(863.3,659.0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+              "rev": 69525
+            },
+            {
+              "__ref__": true,
+              "id": "CancelButton_5275F96D_DDF4_45DF_82EF_4111928AEB1D",
+              "rev": 69549
+            },
+            {
+              "__ref__": true,
+              "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+              "rev": 69848
+            }
+          ]
         },
         "scroll": {
           "key": "scroll",
@@ -2051,26 +2063,6 @@
             "Morph",
             "morph",
             "tooltip"
-          ]
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-              "rev": 329332
-            },
-            {
-              "__ref__": true,
-              "id": "CancelButton_39FEF010_5D00_4060_860E_3486E296C4AB",
-              "rev": 329356
-            },
-            {
-              "__ref__": true,
-              "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-              "rev": 329658
-            }
           ]
         },
         "borderColorBottom": {
@@ -2107,7 +2099,7 @@
         },
         "html": {
           "key": "html",
-          "value": "<div style=\"height:100%\" id=\"vis-canvas-VisjsMorph_A38E0184_E13C_4D40_8A30_B51DF1D6C8A0\"><div class=\"vis-network\" tabindex=\"900\" style=\"position: relative; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width: 100%; height: 100%;\"><canvas style=\"position: relative; touch-action: none; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width: 100%; height: 100%;\" width=\"1379\" height=\"1053\"></canvas><div class=\"vis-manipulation\" style=\"display: none;\"></div><div class=\"vis-edit-mode\" style=\"display: block;\"><div class=\"vis-button vis-edit vis-edit-mode\" style=\"touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);\"><div class=\"vis-label\">Edit</div></div></div><div class=\"vis-close\" style=\"display: none;\"></div></div></div>"
+          "value": "<div style=\"height:100%\" id=\"vis-canvas-VisjsMorph_7A816B43_0361_437E_9A7F_9DDCB6954EB8\"><div class=\"vis-network\" tabindex=\"900\" style=\"position: relative; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width: 100%; height: 100%;\"><canvas style=\"position: relative; touch-action: none; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width: 100%; height: 100%;\" width=\"1379\" height=\"1053\"></canvas><div class=\"vis-manipulation\" style=\"display: none;\"></div><div class=\"vis-edit-mode\" style=\"display: block;\"><div class=\"vis-button vis-edit vis-edit-mode\" style=\"touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);\"><div class=\"vis-label\">Edit</div></div></div><div class=\"vis-close\" style=\"display: none;\"></div></div></div>"
         },
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -2128,17 +2120,9 @@
         }
       }
     },
-    "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02": {
-      "rev": 329332,
+    "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE": {
+      "rev": 69525,
       "props": {
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(120.0,30.0)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
-        },
         "name": {
           "key": "name",
           "value": "addEdgeButton"
@@ -2147,13 +2131,31 @@
           "key": "nativeCursor",
           "value": "pointer"
         },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(29.3,608.5)"
+        },
         "origin": {
           "key": "origin",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(29.3,608.5)"
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(120.0,30.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Label_9C1B86D5_C3C7_42CB_AB20_B62A72C2F1C2",
+              "rev": 75199
+            }
+          ]
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -2162,16 +2164,6 @@
             "Button",
             "Morph",
             "morph"
-          ]
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Label_6F2113E2_5F02_4B7E_BAD9_1BE5C71660AE",
-              "rev": 329694
-            }
           ]
         },
         "borderColorBottom": {
@@ -2234,7 +2226,7 @@
           "key": "defaultActiveStyle",
           "value": {
             "__ref__": true,
-            "id": "7FCC3485-4E5B-4CC1-8B8F-07087BB62FB3",
+            "id": "196F6D55-5D10-4772-920D-6D68A92C6FC8",
             "rev": 0
           }
         },
@@ -2242,7 +2234,7 @@
           "key": "activeStyle",
           "value": {
             "__ref__": true,
-            "id": "FAC88326-4C2F-4D76-B35A-7898EE8519F5",
+            "id": "F0C32D8C-DA81-4716-89E2-7E6AFEAC1707",
             "rev": 0
           }
         },
@@ -2250,7 +2242,7 @@
           "key": "defaultInactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "0E35E04B-23FF-4061-B3E9-82B3666E4B9D",
+            "id": "D0621393-0644-41C8-BAD6-5A17779E97E6",
             "rev": 0
           }
         },
@@ -2258,7 +2250,7 @@
           "key": "inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "0A7B8CE0-DD7A-4483-B5DA-9FACFB9FB37E",
+            "id": "2B6A51F8-C727-4F0E-ACC2-4AC1D21F53D5",
             "rev": 0
           }
         },
@@ -2266,7 +2258,7 @@
           "key": "defaultTriggerStyle",
           "value": {
             "__ref__": true,
-            "id": "6D9F059E-F54E-413E-86F2-351B926B0915",
+            "id": "11DE54FB-79B2-4D31-8FE2-726AF208AFD9",
             "rev": 0
           }
         },
@@ -2274,7 +2266,7 @@
           "key": "triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "91A38A7C-3600-40D1-B296-2619690FFDAF",
+            "id": "55396B27-A7B2-4729-B0C8-9CF4FF9956A7",
             "rev": 0
           }
         },
@@ -2287,37 +2279,37 @@
           "value": [
             {
               "__ref__": true,
-              "id": "4FFF13E5-1B24-4C80-8DBB-D0368F49E8CD",
+              "id": "4D9D41D2-CB17-4B4C-A464-BD3A2C55A41F",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "7B05B905-14DD-4A76-A7EA-4EAA69C95076",
+              "id": "9AD7B1A5-59A5-4939-8C29-C3B48A0DBFC9",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "2BD2B78F-CE05-4C35-A85C-58412339CF28",
+              "id": "96074301-7D07-436C-8E70-C60FECCD06FE",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "31C77D5D-818F-40DE-ABC0-5A6444A432CB",
+              "id": "6995AD79-5C31-4F95-A799-5AA2BC7BFE3B",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "C8227004-5682-45D6-B4B4-B264734E3D58",
+              "id": "F12F0584-369A-4CB5-A359-E88309A07316",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "5C4E71F8-0540-433C-BC1B-F84E7B0A7646",
+              "id": "B8F0D7BD-AA91-40DC-8EAB-06B2DA2AE712",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "6477324C-5F25-46A5-B4F2-AC6BFDC177DD",
+              "id": "6558A31D-DA48-404E-9F56-35EC1A084469",
               "rev": 0
             }
           ]
@@ -2334,17 +2326,9 @@
         }
       }
     },
-    "Label_6F2113E2_5F02_4B7E_BAD9_1BE5C71660AE": {
-      "rev": 329694,
+    "Label_9C1B86D5_C3C7_42CB_AB20_B62A72C2F1C2": {
+      "rev": 75199,
       "props": {
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(52.7,13.8)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(255,255,255,0)"
-        },
         "name": {
           "key": "name",
           "value": "label"
@@ -2353,13 +2337,25 @@
           "key": "nativeCursor",
           "value": "pointer"
         },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(33.7,8.1)"
+        },
         "origin": {
           "key": "origin",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(33.7,8.1)"
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(52.7,13.8)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(255,255,255,0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -2369,21 +2365,15 @@
             "morph"
           ]
         },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
-        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "value": [
-            [
-              "Add Edge",
-              {
-                "__ref__": true,
-                "id": "B310E384-8E75-4029-853D-92295718B8F4",
-                "rev": 0
-              }
-            ]
+            "Add Edge",
+            {
+              "__ref__": true,
+              "id": "FFD93184-549E-4F73-BDF3-01A422C16D51",
+              "rev": 0
+            }
           ]
         },
         "padding": {
@@ -2403,7 +2393,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "1B874E19-D28F-4A97-9EBB-345797EBE212",
+              "id": "673F4B3B-35AC-4A26-8276-457647082451",
               "rev": 0
             }
           ]
@@ -2420,7 +2410,7 @@
         }
       }
     },
-    "B310E384-8E75-4029-853D-92295718B8F4": {
+    "FFD93184-549E-4F73-BDF3-01A422C16D51": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2429,7 +2419,7 @@
         }
       }
     },
-    "1B874E19-D28F-4A97-9EBB-345797EBE212": {
+    "673F4B3B-35AC-4A26-8276-457647082451": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2448,8 +2438,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_6F2113E2_5F02_4B7E_BAD9_1BE5C71660AE",
-            "rev": 329694
+            "id": "Label_9C1B86D5_C3C7_42CB_AB20_B62A72C2F1C2",
+            "rev": 75199
           }
         },
         "sourceAttrName": {
@@ -2460,8 +2450,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "targetMethodName": {
@@ -2472,7 +2462,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "6C38DE77-F55B-45A0-8E38-FC14065BA2ED",
+            "id": "A64E098B-1831-473B-B912-7EB6AF4B46B0",
             "rev": 0
           }
         },
@@ -2496,7 +2486,7 @@
         }
       }
     },
-    "6C38DE77-F55B-45A0-8E38-FC14065BA2ED": {
+    "A64E098B-1831-473B-B912-7EB6AF4B46B0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2507,21 +2497,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_6F2113E2_5F02_4B7E_BAD9_1BE5C71660AE",
-            "rev": 329694
+            "id": "Label_9C1B86D5_C3C7_42CB_AB20_B62A72C2F1C2",
+            "rev": 75199
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         }
       }
     },
-    "7FCC3485-4E5B-4CC1-8B8F-07087BB62FB3": {
+    "196F6D55-5D10-4772-920D-6D68A92C6FC8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2546,7 +2536,7 @@
         }
       }
     },
-    "FAC88326-4C2F-4D76-B35A-7898EE8519F5": {
+    "F0C32D8C-DA81-4716-89E2-7E6AFEAC1707": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2577,12 +2567,12 @@
           "key": "fontFamily",
           "value": "Sans-Serif"
         },
-        "clipMode": {
-          "key": "clipMode",
-          "value": "visible"
-        },
         "draggable": {
           "key": "draggable",
+          "value": false
+        },
+        "grabbable": {
+          "key": "grabbable",
           "value": false
         },
         "acceptsDrops": {
@@ -2593,21 +2583,21 @@
           "key": "dropShadow",
           "value": false
         },
-        "grabbable": {
-          "key": "grabbable",
-          "value": false
-        },
         "halosEnabled": {
           "key": "halosEnabled",
-          "value": true
-        },
-        "isLayoutable": {
-          "key": "isLayoutable",
           "value": true
         },
         "opacity": {
           "key": "opacity",
           "value": 1
+        },
+        "visible": {
+          "key": "visible",
+          "value": true
+        },
+        "clipMode": {
+          "key": "clipMode",
+          "value": "visible"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -2618,8 +2608,8 @@
             "morph"
           ]
         },
-        "visible": {
-          "key": "visible",
+        "isLayoutable": {
+          "key": "isLayoutable",
           "value": true
         },
         "borderColorBottom": {
@@ -2690,7 +2680,7 @@
           "key": "borderLeft",
           "value": {
             "__ref__": true,
-            "id": "2FDD3EC7-5FF2-472C-8B1F-876AB5061BF5",
+            "id": "9E783020-CDB0-4669-83B2-2C26D079F541",
             "rev": 0
           }
         },
@@ -2698,7 +2688,7 @@
           "key": "borderRight",
           "value": {
             "__ref__": true,
-            "id": "EE49D061-32BA-439E-88B1-F21777EF6CFE",
+            "id": "B5D41F4E-BE97-41F6-BB94-DBE08A6A32B7",
             "rev": 0
           }
         },
@@ -2706,7 +2696,7 @@
           "key": "borderBottom",
           "value": {
             "__ref__": true,
-            "id": "67FA26D1-D65B-40FA-B8AB-6B4B16B1151C",
+            "id": "0E482325-91FF-4CE0-898B-C21D290B2823",
             "rev": 0
           }
         },
@@ -2714,7 +2704,7 @@
           "key": "borderTop",
           "value": {
             "__ref__": true,
-            "id": "09EB278B-DDF1-4B8B-9CC9-435558066D80",
+            "id": "3DEF3228-FEDC-4E52-9F57-7FA502688BD8",
             "rev": 0
           }
         },
@@ -2734,12 +2724,9 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "402E6A05-52C7-4FAC-800E-78F08B8EC239",
+            "id": "2D455B73-F01A-4516-BA0C-37CD9A6F0F77",
             "rev": 0
           }
-        },
-        "morphClasses": {
-          "key": "morphClasses"
         },
         "styleRules": {
           "key": "styleRules"
@@ -2750,7 +2737,7 @@
         }
       }
     },
-    "2FDD3EC7-5FF2-472C-8B1F-876AB5061BF5": {
+    "9E783020-CDB0-4669-83B2-2C26D079F541": {
       "rev": 0,
       "props": {
         "style": {
@@ -2767,7 +2754,7 @@
         }
       }
     },
-    "EE49D061-32BA-439E-88B1-F21777EF6CFE": {
+    "B5D41F4E-BE97-41F6-BB94-DBE08A6A32B7": {
       "rev": 0,
       "props": {
         "style": {
@@ -2784,7 +2771,7 @@
         }
       }
     },
-    "67FA26D1-D65B-40FA-B8AB-6B4B16B1151C": {
+    "0E482325-91FF-4CE0-898B-C21D290B2823": {
       "rev": 0,
       "props": {
         "style": {
@@ -2801,7 +2788,7 @@
         }
       }
     },
-    "09EB278B-DDF1-4B8B-9CC9-435558066D80": {
+    "3DEF3228-FEDC-4E52-9F57-7FA502688BD8": {
       "rev": 0,
       "props": {
         "style": {
@@ -2818,7 +2805,7 @@
         }
       }
     },
-    "402E6A05-52C7-4FAC-800E-78F08B8EC239": {
+    "2D455B73-F01A-4516-BA0C-37CD9A6F0F77": {
       "rev": 0,
       "props": {
         "style": {
@@ -2835,7 +2822,7 @@
         }
       }
     },
-    "0E35E04B-23FF-4061-B3E9-82B3666E4B9D": {
+    "D0621393-0644-41C8-BAD6-5A17779E97E6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2860,7 +2847,7 @@
         }
       }
     },
-    "0A7B8CE0-DD7A-4483-B5DA-9FACFB9FB37E": {
+    "2B6A51F8-C727-4F0E-ACC2-4AC1D21F53D5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2893,7 +2880,7 @@
         }
       }
     },
-    "6D9F059E-F54E-413E-86F2-351B926B0915": {
+    "11DE54FB-79B2-4D31-8FE2-726AF208AFD9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2906,7 +2893,7 @@
         }
       }
     },
-    "91A38A7C-3600-40D1-B296-2619690FFDAF": {
+    "55396B27-A7B2-4729-B0C8-9CF4FF9956A7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3046,7 +3033,7 @@
           "key": "borderLeft",
           "value": {
             "__ref__": true,
-            "id": "3B2ED497-2649-4904-BF37-C6DC3ACE513A",
+            "id": "94191D05-C7A2-4A2F-8FCB-AA1135C0257D",
             "rev": 0
           }
         },
@@ -3054,7 +3041,7 @@
           "key": "borderRight",
           "value": {
             "__ref__": true,
-            "id": "F913F4F3-4F87-4CE2-8757-F5EE2DA5CDF8",
+            "id": "C058CC10-F805-49B3-9FE9-4AC19ABF2270",
             "rev": 0
           }
         },
@@ -3062,7 +3049,7 @@
           "key": "borderBottom",
           "value": {
             "__ref__": true,
-            "id": "B4B3CA5D-9C2C-4D01-B883-CA977484A1C2",
+            "id": "91BEEC6B-E063-432A-8ED2-289BAFC02554",
             "rev": 0
           }
         },
@@ -3070,7 +3057,7 @@
           "key": "borderTop",
           "value": {
             "__ref__": true,
-            "id": "97C4BD3C-9D07-49A9-B9AC-4767B16133C3",
+            "id": "3C7C64BA-EEF5-41F6-AB04-97215F042FA7",
             "rev": 0
           }
         },
@@ -3094,7 +3081,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "F47891E9-8765-47A0-9AC6-B5DBB81643FA",
+            "id": "A849CAB4-F6C4-42B5-A884-1503F571ABE8",
             "rev": 0
           }
         },
@@ -3110,7 +3097,7 @@
         }
       }
     },
-    "3B2ED497-2649-4904-BF37-C6DC3ACE513A": {
+    "94191D05-C7A2-4A2F-8FCB-AA1135C0257D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3131,7 +3118,7 @@
         }
       }
     },
-    "F913F4F3-4F87-4CE2-8757-F5EE2DA5CDF8": {
+    "C058CC10-F805-49B3-9FE9-4AC19ABF2270": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3152,7 +3139,7 @@
         }
       }
     },
-    "B4B3CA5D-9C2C-4D01-B883-CA977484A1C2": {
+    "91BEEC6B-E063-432A-8ED2-289BAFC02554": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3173,7 +3160,7 @@
         }
       }
     },
-    "97C4BD3C-9D07-49A9-B9AC-4767B16133C3": {
+    "3C7C64BA-EEF5-41F6-AB04-97215F042FA7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3194,7 +3181,7 @@
         }
       }
     },
-    "F47891E9-8765-47A0-9AC6-B5DBB81643FA": {
+    "A849CAB4-F6C4-42B5-A884-1503F571ABE8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3215,7 +3202,7 @@
         }
       }
     },
-    "4FFF13E5-1B24-4C80-8DBB-D0368F49E8CD": {
+    "4D9D41D2-CB17-4B4C-A464-BD3A2C55A41F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3234,8 +3221,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "sourceAttrName": {
@@ -3246,8 +3233,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "targetMethodName": {
@@ -3258,7 +3245,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "26F82CD5-403E-4065-B763-39BC2128564A",
+            "id": "E2E244C4-79CD-460B-B0EF-212A992D2BBD",
             "rev": 0
           }
         },
@@ -3282,7 +3269,7 @@
         }
       }
     },
-    "26F82CD5-403E-4065-B763-39BC2128564A": {
+    "E2E244C4-79CD-460B-B0EF-212A992D2BBD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3293,21 +3280,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         }
       }
     },
-    "7B05B905-14DD-4A76-A7EA-4EAA69C95076": {
+    "9AD7B1A5-59A5-4939-8C29-C3B48A0DBFC9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3326,8 +3313,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "sourceAttrName": {
@@ -3338,8 +3325,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "targetMethodName": {
@@ -3350,7 +3337,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "9E19DC57-16C2-4A45-81F7-CA8DC97A5248",
+            "id": "C30143B7-A5FD-4C28-A31A-A9FD32928131",
             "rev": 0
           }
         },
@@ -3374,7 +3361,7 @@
         }
       }
     },
-    "9E19DC57-16C2-4A45-81F7-CA8DC97A5248": {
+    "C30143B7-A5FD-4C28-A31A-A9FD32928131": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3385,21 +3372,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         }
       }
     },
-    "2BD2B78F-CE05-4C35-A85C-58412339CF28": {
+    "96074301-7D07-436C-8E70-C60FECCD06FE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3418,8 +3405,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "sourceAttrName": {
@@ -3430,8 +3417,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "targetMethodName": {
@@ -3442,7 +3429,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "5E2FF877-39CE-47F2-AD4E-945C24605E5B",
+            "id": "40416886-3E8C-432C-9F4E-E3A1FB36D15B",
             "rev": 0
           }
         },
@@ -3466,7 +3453,7 @@
         }
       }
     },
-    "5E2FF877-39CE-47F2-AD4E-945C24605E5B": {
+    "40416886-3E8C-432C-9F4E-E3A1FB36D15B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3477,21 +3464,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         }
       }
     },
-    "31C77D5D-818F-40DE-ABC0-5A6444A432CB": {
+    "6995AD79-5C31-4F95-A799-5AA2BC7BFE3B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3510,8 +3497,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "sourceAttrName": {
@@ -3522,8 +3509,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "targetMethodName": {
@@ -3534,7 +3521,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "551F9D03-33C3-4A8D-898D-3694B3FA5488",
+            "id": "184973E3-0AD3-4143-83C1-9A1B481F160E",
             "rev": 0
           }
         },
@@ -3558,7 +3545,7 @@
         }
       }
     },
-    "551F9D03-33C3-4A8D-898D-3694B3FA5488": {
+    "184973E3-0AD3-4143-83C1-9A1B481F160E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3569,21 +3556,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         }
       }
     },
-    "C8227004-5682-45D6-B4B4-B264734E3D58": {
+    "F12F0584-369A-4CB5-A359-E88309A07316": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3602,8 +3589,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "sourceAttrName": {
@@ -3614,8 +3601,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "targetMethodName": {
@@ -3626,7 +3613,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "A3B53B60-827B-45BB-9568-446E9DB9B56F",
+            "id": "205BA4B9-B4A2-4089-AD22-D32BCA8E35BD",
             "rev": 0
           }
         },
@@ -3650,7 +3637,7 @@
         }
       }
     },
-    "A3B53B60-827B-45BB-9568-446E9DB9B56F": {
+    "205BA4B9-B4A2-4089-AD22-D32BCA8E35BD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3661,21 +3648,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         }
       }
     },
-    "5C4E71F8-0540-433C-BC1B-F84E7B0A7646": {
+    "B8F0D7BD-AA91-40DC-8EAB-06B2DA2AE712": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3694,8 +3681,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "sourceAttrName": {
@@ -3706,8 +3693,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "targetMethodName": {
@@ -3718,7 +3705,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "40F7AC90-85AB-4526-9A1C-D7AA869F07AE",
+            "id": "1A846248-811D-4E2D-B417-19014EB845CC",
             "rev": 0
           }
         },
@@ -3742,7 +3729,7 @@
         }
       }
     },
-    "40F7AC90-85AB-4526-9A1C-D7AA869F07AE": {
+    "1A846248-811D-4E2D-B417-19014EB845CC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3753,21 +3740,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         }
       }
     },
-    "6477324C-5F25-46A5-B4F2-AC6BFDC177DD": {
+    "6558A31D-DA48-404E-9F56-35EC1A084469": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3786,8 +3773,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "sourceAttrName": {
@@ -3798,8 +3785,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "targetMethodName": {
@@ -3810,7 +3797,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "5CEFF1E1-4CF1-40DF-B36D-55C37E8E2B52",
+            "id": "061168DC-C023-4DE5-A9E3-D1085042E94E",
             "rev": 0
           }
         },
@@ -3834,7 +3821,7 @@
         }
       }
     },
-    "5CEFF1E1-4CF1-40DF-B36D-55C37E8E2B52": {
+    "061168DC-C023-4DE5-A9E3-D1085042E94E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3845,26 +3832,38 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "AddEdgeButton_05FD282B_6B73_4E5E_AAF8_659CC543CB02",
-            "rev": 329332
+            "id": "AddEdgeButton_27DAF3D9_5378_470C_9D88_1BF28E12F7BE",
+            "rev": 69525
           }
         }
       }
     },
-    "CancelButton_39FEF010_5D00_4060_860E_3486E296C4AB": {
-      "rev": 329356,
+    "CancelButton_5275F96D_DDF4_45DF_82EF_4111928AEB1D": {
+      "rev": 69549,
       "props": {
+        "name": {
+          "key": "name",
+          "value": "cancelButton"
+        },
         "draggable": {
           "key": "draggable",
           "value": false
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(839.0,23.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
         },
         "extent": {
           "key": "extent",
@@ -3873,27 +3872,6 @@
         "fill": {
           "key": "fill",
           "value": "red"
-        },
-        "name": {
-          "key": "name",
-          "value": "cancelButton"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(839.0,23.0)"
-        },
-        "styleClasses": {
-          "key": "styleClasses",
-          "value": [
-            "CancelButton",
-            "Ellipse",
-            "Morph",
-            "morph"
-          ]
         },
         "visible": {
           "key": "visible",
@@ -3904,9 +3882,18 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_8CE62415_A3C5_4A9C_BFF6_9909636F6785",
-              "rev": 329695
+              "id": "Label_84A8C0B0_A3E8_4D31_B8F1_477E8D1AF3B3",
+              "rev": 75200
             }
+          ]
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "CancelButton",
+            "Ellipse",
+            "Morph",
+            "morph"
           ]
         },
         "borderRadiusBottom": {
@@ -3944,9 +3931,21 @@
         }
       }
     },
-    "Label_8CE62415_A3C5_4A9C_BFF6_9909636F6785": {
-      "rev": 329695,
+    "Label_84A8C0B0_A3E8_4D31_B8F1_477E8D1AF3B3": {
+      "rev": 75200,
       "props": {
+        "name": {
+          "key": "name",
+          "value": "aLabel"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(3.0,-1.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(10.2,11.0)"
+        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.7,20.0)"
@@ -3955,17 +3954,9 @@
           "key": "fill",
           "value": null
         },
-        "name": {
-          "key": "name",
-          "value": "aLabel"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(10.2,11.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(3.0,-1.0)"
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -3975,21 +3966,15 @@
             "morph"
           ]
         },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
-        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "value": [
-            [
-              "",
-              {
-                "__ref__": true,
-                "id": "D576A15A-07AD-4253-B404-E3C0603A4832",
-                "rev": 0
-              }
-            ]
+            "",
+            {
+              "__ref__": true,
+              "id": "BF1D225C-4BEC-4F18-B199-8F496DCA93F5",
+              "rev": 0
+            }
           ]
         },
         "padding": {
@@ -4023,7 +4008,7 @@
         }
       }
     },
-    "D576A15A-07AD-4253-B404-E3C0603A4832": {
+    "BF1D225C-4BEC-4F18-B199-8F496DCA93F5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4042,17 +4027,9 @@
         }
       }
     },
-    "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49": {
-      "rev": 329658,
+    "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C": {
+      "rev": 69848,
       "props": {
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(120.0,30.0)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
-        },
         "name": {
           "key": "name",
           "value": "editEdgeButton"
@@ -4061,13 +4038,31 @@
           "key": "nativeCursor",
           "value": "pointer"
         },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(155.4,608.6)"
+        },
         "origin": {
           "key": "origin",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(155.4,608.6)"
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(120.0,30.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Label_0E8C0826_923A_4FA3_AF18_93E6DBB3CB42",
+              "rev": 75202
+            }
+          ]
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -4076,16 +4071,6 @@
             "Button",
             "Morph",
             "morph"
-          ]
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Label_7F391402_9B68_4338_A654_A8C7ED0139D5",
-              "rev": 329697
-            }
           ]
         },
         "borderColorBottom": {
@@ -4148,7 +4133,7 @@
           "key": "defaultActiveStyle",
           "value": {
             "__ref__": true,
-            "id": "2E7496CA-F27C-4A82-BF36-6F6DCAED0729",
+            "id": "6ED34369-9004-484F-96B0-7A6A72C01E92",
             "rev": 0
           }
         },
@@ -4156,7 +4141,7 @@
           "key": "activeStyle",
           "value": {
             "__ref__": true,
-            "id": "B12B3354-159C-4FE9-852D-40CB92A5D4F1",
+            "id": "F4112676-6889-46ED-AA31-937F350EE28C",
             "rev": 0
           }
         },
@@ -4164,7 +4149,7 @@
           "key": "defaultInactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "C4E234BC-8A59-48E3-94CD-997B32AFCEEA",
+            "id": "F484DAA2-FDA8-4CE2-A24E-C74A1AEB816E",
             "rev": 0
           }
         },
@@ -4172,7 +4157,7 @@
           "key": "inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "AAAE64CA-4953-4960-A793-68DA206C5D7F",
+            "id": "276DC559-2D4D-49EA-B819-D08ADE3AEB74",
             "rev": 0
           }
         },
@@ -4180,7 +4165,7 @@
           "key": "defaultTriggerStyle",
           "value": {
             "__ref__": true,
-            "id": "FB697062-F218-4704-9009-43053F91527C",
+            "id": "A54EEFDD-C30E-464B-811B-3C76D75801F3",
             "rev": 0
           }
         },
@@ -4188,7 +4173,7 @@
           "key": "triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "69F3D515-FBC8-44AA-BA2E-9E0C9562EF64",
+            "id": "DA87C63B-B5EF-450D-BB1B-9BD76D275B8A",
             "rev": 0
           }
         },
@@ -4201,37 +4186,37 @@
           "value": [
             {
               "__ref__": true,
-              "id": "57286522-2048-4113-B5BE-C13FE2DAFCCB",
+              "id": "5A2C6BDE-D535-4668-9450-8B35FBE085EF",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "40EE55E8-E34D-4711-8850-733EB3CC1034",
+              "id": "73AFE795-95EB-4C38-88FF-626B13976FA0",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "A32D6E2D-AE50-4E75-9A76-FECBB2083028",
+              "id": "1E58BD0F-1ACF-4582-965F-06ABD4D03511",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "40DFD88E-91DA-40E9-A48A-0D0029368BCB",
+              "id": "7E0B4818-A74C-490A-88EE-46F86CE6AA8E",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "91E2AD30-A8D5-445B-931F-EBDB1A369E0E",
+              "id": "E254FCCE-C9DD-4774-82AB-3616A7DDC6DF",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "BD849B66-563F-4425-A0DF-F01A136D5FF7",
+              "id": "46DE37A8-9E20-4745-B89A-6F3BF90C100E",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "23465378-52AA-4A7A-9FEB-24CA91389631",
+              "id": "A8D11FC7-D133-411D-8917-6FEDD10E5470",
               "rev": 0
             }
           ]
@@ -4248,17 +4233,9 @@
         }
       }
     },
-    "Label_7F391402_9B68_4338_A654_A8C7ED0139D5": {
-      "rev": 329697,
+    "Label_0E8C0826_923A_4FA3_AF18_93E6DBB3CB42": {
+      "rev": 75202,
       "props": {
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(52.0,13.8)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(255,255,255,0)"
-        },
         "name": {
           "key": "name",
           "value": "label"
@@ -4267,13 +4244,25 @@
           "key": "nativeCursor",
           "value": "pointer"
         },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(34.0,8.1)"
+        },
         "origin": {
           "key": "origin",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(34.0,8.1)"
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(52.0,13.8)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(255,255,255,0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -4283,21 +4272,15 @@
             "morph"
           ]
         },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
-        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "value": [
-            [
-              "Edit Edge",
-              {
-                "__ref__": true,
-                "id": "08EB7EC6-571C-4DFB-8431-1A684E3A7482",
-                "rev": 0
-              }
-            ]
+            "Edit Edge",
+            {
+              "__ref__": true,
+              "id": "19E61EE4-60AB-4B31-8C96-3EAB01F6F872",
+              "rev": 0
+            }
           ]
         },
         "padding": {
@@ -4317,7 +4300,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "9D3723E0-8E3F-4492-9B9D-8184B6820843",
+              "id": "CEDCA1F6-E0C9-4081-9FBE-C65DA44CBE7D",
               "rev": 0
             }
           ]
@@ -4334,7 +4317,7 @@
         }
       }
     },
-    "08EB7EC6-571C-4DFB-8431-1A684E3A7482": {
+    "19E61EE4-60AB-4B31-8C96-3EAB01F6F872": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4343,7 +4326,7 @@
         }
       }
     },
-    "9D3723E0-8E3F-4492-9B9D-8184B6820843": {
+    "CEDCA1F6-E0C9-4081-9FBE-C65DA44CBE7D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4362,8 +4345,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_7F391402_9B68_4338_A654_A8C7ED0139D5",
-            "rev": 329697
+            "id": "Label_0E8C0826_923A_4FA3_AF18_93E6DBB3CB42",
+            "rev": 75202
           }
         },
         "sourceAttrName": {
@@ -4374,8 +4357,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "targetMethodName": {
@@ -4386,7 +4369,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "11C31CEC-A045-4D95-9BE9-D4F107654043",
+            "id": "8096FD81-B0C0-4F2B-8EDC-76DD2584C516",
             "rev": 0
           }
         },
@@ -4410,7 +4393,7 @@
         }
       }
     },
-    "11C31CEC-A045-4D95-9BE9-D4F107654043": {
+    "8096FD81-B0C0-4F2B-8EDC-76DD2584C516": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4421,21 +4404,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_7F391402_9B68_4338_A654_A8C7ED0139D5",
-            "rev": 329697
+            "id": "Label_0E8C0826_923A_4FA3_AF18_93E6DBB3CB42",
+            "rev": 75202
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         }
       }
     },
-    "2E7496CA-F27C-4A82-BF36-6F6DCAED0729": {
+    "6ED34369-9004-484F-96B0-7A6A72C01E92": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4460,7 +4443,7 @@
         }
       }
     },
-    "B12B3354-159C-4FE9-852D-40CB92A5D4F1": {
+    "F4112676-6889-46ED-AA31-937F350EE28C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4491,12 +4474,12 @@
           "key": "fontFamily",
           "value": "Sans-Serif"
         },
-        "clipMode": {
-          "key": "clipMode",
-          "value": "visible"
-        },
         "draggable": {
           "key": "draggable",
+          "value": false
+        },
+        "grabbable": {
+          "key": "grabbable",
           "value": false
         },
         "acceptsDrops": {
@@ -4507,21 +4490,21 @@
           "key": "dropShadow",
           "value": false
         },
-        "grabbable": {
-          "key": "grabbable",
-          "value": false
-        },
         "halosEnabled": {
           "key": "halosEnabled",
-          "value": true
-        },
-        "isLayoutable": {
-          "key": "isLayoutable",
           "value": true
         },
         "opacity": {
           "key": "opacity",
           "value": 1
+        },
+        "visible": {
+          "key": "visible",
+          "value": true
+        },
+        "clipMode": {
+          "key": "clipMode",
+          "value": "visible"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -4532,8 +4515,8 @@
             "morph"
           ]
         },
-        "visible": {
-          "key": "visible",
+        "isLayoutable": {
+          "key": "isLayoutable",
           "value": true
         },
         "borderColorBottom": {
@@ -4604,7 +4587,7 @@
           "key": "borderLeft",
           "value": {
             "__ref__": true,
-            "id": "BB1A3F2A-2E75-42B1-BCBD-9687FB1F4FA2",
+            "id": "419D5C8D-7F74-44EF-A558-A43CC6232230",
             "rev": 0
           }
         },
@@ -4612,7 +4595,7 @@
           "key": "borderRight",
           "value": {
             "__ref__": true,
-            "id": "6A3B9B4A-5015-4553-863D-3F35234DBB27",
+            "id": "9F708578-A1E1-4E52-8C33-8D59819C49FF",
             "rev": 0
           }
         },
@@ -4620,7 +4603,7 @@
           "key": "borderBottom",
           "value": {
             "__ref__": true,
-            "id": "FB2FED6D-B152-4F93-824D-D6F8B7D352A6",
+            "id": "0C18B73C-7832-40E8-B64B-1ABC1919E527",
             "rev": 0
           }
         },
@@ -4628,7 +4611,7 @@
           "key": "borderTop",
           "value": {
             "__ref__": true,
-            "id": "F2BE0939-B81E-40E8-81D3-A1DEBF7CF7E7",
+            "id": "A123057E-61A1-4CBE-9860-11253ED23397",
             "rev": 0
           }
         },
@@ -4648,12 +4631,9 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "4267CBA4-B9B7-4027-A454-AF0411E6821F",
+            "id": "3E6FFB83-CBBA-4E07-B5F7-6089D8224B06",
             "rev": 0
           }
-        },
-        "morphClasses": {
-          "key": "morphClasses"
         },
         "styleRules": {
           "key": "styleRules"
@@ -4664,7 +4644,7 @@
         }
       }
     },
-    "BB1A3F2A-2E75-42B1-BCBD-9687FB1F4FA2": {
+    "419D5C8D-7F74-44EF-A558-A43CC6232230": {
       "rev": 0,
       "props": {
         "style": {
@@ -4681,7 +4661,7 @@
         }
       }
     },
-    "6A3B9B4A-5015-4553-863D-3F35234DBB27": {
+    "9F708578-A1E1-4E52-8C33-8D59819C49FF": {
       "rev": 0,
       "props": {
         "style": {
@@ -4698,7 +4678,7 @@
         }
       }
     },
-    "FB2FED6D-B152-4F93-824D-D6F8B7D352A6": {
+    "0C18B73C-7832-40E8-B64B-1ABC1919E527": {
       "rev": 0,
       "props": {
         "style": {
@@ -4715,7 +4695,7 @@
         }
       }
     },
-    "F2BE0939-B81E-40E8-81D3-A1DEBF7CF7E7": {
+    "A123057E-61A1-4CBE-9860-11253ED23397": {
       "rev": 0,
       "props": {
         "style": {
@@ -4732,7 +4712,7 @@
         }
       }
     },
-    "4267CBA4-B9B7-4027-A454-AF0411E6821F": {
+    "3E6FFB83-CBBA-4E07-B5F7-6089D8224B06": {
       "rev": 0,
       "props": {
         "style": {
@@ -4749,7 +4729,7 @@
         }
       }
     },
-    "C4E234BC-8A59-48E3-94CD-997B32AFCEEA": {
+    "F484DAA2-FDA8-4CE2-A24E-C74A1AEB816E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4774,7 +4754,7 @@
         }
       }
     },
-    "AAAE64CA-4953-4960-A793-68DA206C5D7F": {
+    "276DC559-2D4D-49EA-B819-D08ADE3AEB74": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4807,7 +4787,7 @@
         }
       }
     },
-    "FB697062-F218-4704-9009-43053F91527C": {
+    "A54EEFDD-C30E-464B-811B-3C76D75801F3": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4820,7 +4800,7 @@
         }
       }
     },
-    "69F3D515-FBC8-44AA-BA2E-9E0C9562EF64": {
+    "DA87C63B-B5EF-450D-BB1B-9BD76D275B8A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4961,7 +4941,7 @@
           "key": "borderLeft",
           "value": {
             "__ref__": true,
-            "id": "55527B35-FCBC-4D80-9143-46667027471C",
+            "id": "3AE3A86B-A0DB-46C5-B250-D61AC0A4F3B1",
             "rev": 0
           }
         },
@@ -4969,7 +4949,7 @@
           "key": "borderRight",
           "value": {
             "__ref__": true,
-            "id": "E373F50F-C941-4E33-AA1B-8BD7CC51F964",
+            "id": "8A569568-7596-44BB-B047-F0F070A99BDD",
             "rev": 0
           }
         },
@@ -4977,7 +4957,7 @@
           "key": "borderBottom",
           "value": {
             "__ref__": true,
-            "id": "E75B7B02-573B-4641-A564-8D235C19FEC1",
+            "id": "5020539F-D775-4C20-A14A-F632769DE61F",
             "rev": 0
           }
         },
@@ -4985,7 +4965,7 @@
           "key": "borderTop",
           "value": {
             "__ref__": true,
-            "id": "597A920F-59CB-49AC-BD18-AB0AFD283D9A",
+            "id": "F75D9D73-C5FF-4A27-AE07-5E7AE9719EA9",
             "rev": 0
           }
         },
@@ -5009,7 +4989,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "C8255712-614B-45D3-8E3E-BCF078A4A282",
+            "id": "792DBD56-A3AC-4DA2-93A3-104C816CA665",
             "rev": 0
           }
         },
@@ -5025,7 +5005,7 @@
         }
       }
     },
-    "55527B35-FCBC-4D80-9143-46667027471C": {
+    "3AE3A86B-A0DB-46C5-B250-D61AC0A4F3B1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5046,7 +5026,7 @@
         }
       }
     },
-    "E373F50F-C941-4E33-AA1B-8BD7CC51F964": {
+    "8A569568-7596-44BB-B047-F0F070A99BDD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5067,7 +5047,7 @@
         }
       }
     },
-    "E75B7B02-573B-4641-A564-8D235C19FEC1": {
+    "5020539F-D775-4C20-A14A-F632769DE61F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5088,7 +5068,7 @@
         }
       }
     },
-    "597A920F-59CB-49AC-BD18-AB0AFD283D9A": {
+    "F75D9D73-C5FF-4A27-AE07-5E7AE9719EA9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5109,7 +5089,7 @@
         }
       }
     },
-    "C8255712-614B-45D3-8E3E-BCF078A4A282": {
+    "792DBD56-A3AC-4DA2-93A3-104C816CA665": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5130,7 +5110,7 @@
         }
       }
     },
-    "57286522-2048-4113-B5BE-C13FE2DAFCCB": {
+    "5A2C6BDE-D535-4668-9450-8B35FBE085EF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5149,8 +5129,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "sourceAttrName": {
@@ -5161,8 +5141,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "targetMethodName": {
@@ -5173,7 +5153,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "B47E26C4-7890-484A-937B-298E168885AF",
+            "id": "FB31C166-D342-4E78-8439-C2365C0624CD",
             "rev": 0
           }
         },
@@ -5197,7 +5177,7 @@
         }
       }
     },
-    "B47E26C4-7890-484A-937B-298E168885AF": {
+    "FB31C166-D342-4E78-8439-C2365C0624CD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5208,21 +5188,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         }
       }
     },
-    "40EE55E8-E34D-4711-8850-733EB3CC1034": {
+    "73AFE795-95EB-4C38-88FF-626B13976FA0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5241,8 +5221,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "sourceAttrName": {
@@ -5253,8 +5233,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "targetMethodName": {
@@ -5265,7 +5245,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "29E14150-1B3E-4FC2-8BEC-3B1C0CF9343D",
+            "id": "7E3C0052-C0C4-4FD5-97AC-6393CFC103D5",
             "rev": 0
           }
         },
@@ -5289,7 +5269,7 @@
         }
       }
     },
-    "29E14150-1B3E-4FC2-8BEC-3B1C0CF9343D": {
+    "7E3C0052-C0C4-4FD5-97AC-6393CFC103D5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5300,21 +5280,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         }
       }
     },
-    "A32D6E2D-AE50-4E75-9A76-FECBB2083028": {
+    "1E58BD0F-1ACF-4582-965F-06ABD4D03511": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5333,8 +5313,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "sourceAttrName": {
@@ -5345,8 +5325,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "targetMethodName": {
@@ -5357,7 +5337,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "5FFE4649-6A3C-4A27-9902-EDF5996256F2",
+            "id": "5614B891-A2C6-4FF4-8F77-3DC73FCF6736",
             "rev": 0
           }
         },
@@ -5381,7 +5361,7 @@
         }
       }
     },
-    "5FFE4649-6A3C-4A27-9902-EDF5996256F2": {
+    "5614B891-A2C6-4FF4-8F77-3DC73FCF6736": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5392,21 +5372,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         }
       }
     },
-    "40DFD88E-91DA-40E9-A48A-0D0029368BCB": {
+    "7E0B4818-A74C-490A-88EE-46F86CE6AA8E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5425,8 +5405,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "sourceAttrName": {
@@ -5437,8 +5417,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "targetMethodName": {
@@ -5449,7 +5429,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "92BD065F-EE28-4111-8837-5ECC4F02205E",
+            "id": "76CD76D9-D185-43A8-AEA4-7C47E24EF233",
             "rev": 0
           }
         },
@@ -5473,7 +5453,7 @@
         }
       }
     },
-    "92BD065F-EE28-4111-8837-5ECC4F02205E": {
+    "76CD76D9-D185-43A8-AEA4-7C47E24EF233": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5484,21 +5464,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         }
       }
     },
-    "91E2AD30-A8D5-445B-931F-EBDB1A369E0E": {
+    "E254FCCE-C9DD-4774-82AB-3616A7DDC6DF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5517,8 +5497,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "sourceAttrName": {
@@ -5529,8 +5509,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "targetMethodName": {
@@ -5541,7 +5521,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "FDFDA5D1-C899-48C8-B710-7BF0ECFB2F72",
+            "id": "1912F33C-0172-4832-B036-817A83FC64D2",
             "rev": 0
           }
         },
@@ -5565,7 +5545,7 @@
         }
       }
     },
-    "FDFDA5D1-C899-48C8-B710-7BF0ECFB2F72": {
+    "1912F33C-0172-4832-B036-817A83FC64D2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5576,21 +5556,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         }
       }
     },
-    "BD849B66-563F-4425-A0DF-F01A136D5FF7": {
+    "46DE37A8-9E20-4745-B89A-6F3BF90C100E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5609,8 +5589,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "sourceAttrName": {
@@ -5621,8 +5601,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "targetMethodName": {
@@ -5633,7 +5613,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "5E20BF14-D87E-46AB-B079-644FA20D6AF4",
+            "id": "852E54E1-B04F-44D3-BA0C-87ADE902F0B1",
             "rev": 0
           }
         },
@@ -5657,7 +5637,7 @@
         }
       }
     },
-    "5E20BF14-D87E-46AB-B079-644FA20D6AF4": {
+    "852E54E1-B04F-44D3-BA0C-87ADE902F0B1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5668,21 +5648,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         }
       }
     },
-    "23465378-52AA-4A7A-9FEB-24CA91389631": {
+    "A8D11FC7-D133-411D-8917-6FEDD10E5470": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5701,8 +5681,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "sourceAttrName": {
@@ -5713,8 +5693,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "targetMethodName": {
@@ -5725,7 +5705,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "AFEA9633-E820-4D3C-8362-C9C0F9A88EEF",
+            "id": "DE7525EA-C9D4-45BC-925C-684CCCE8BC32",
             "rev": 0
           }
         },
@@ -5749,7 +5729,7 @@
         }
       }
     },
-    "AFEA9633-E820-4D3C-8362-C9C0F9A88EEF": {
+    "DE7525EA-C9D4-45BC-925C-684CCCE8BC32": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5760,21 +5740,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "EditEdgeButton_0202ACB4_43BF_4659_BAD9_E90C05C9FF49",
-            "rev": 329658
+            "id": "EditEdgeButton_4A0F7302_401F_457E_ACE8_FEC72F86374C",
+            "rev": 69848
           }
         }
       }
     },
-    "1152D47A-1A6D-4D7F-87ED-9AC1BED84C43": {
+    "1A34FCF7-1F13-4B59-92B7-DE194D43B5A3": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5793,8 +5773,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
-            "rev": 329674
+            "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
+            "rev": 69864
           }
         },
         "sourceAttrName": {
@@ -5805,8 +5785,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Morph_C47CCBAB_F941_447C_A65A_D7E728833B8D",
-            "rev": 417510
+            "id": "Morph_0DBE6892_CDEB_4665_96F5_EE34AB869651",
+            "rev": 88859
           }
         },
         "targetMethodName": {
@@ -5817,7 +5797,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "C9186A61-272F-42C4-B326-68C6E19AEBBD",
+            "id": "CD37D3B1-E5E9-4617-8F9D-A47E10247B0D",
             "rev": 0
           }
         },
@@ -5841,7 +5821,7 @@
         }
       }
     },
-    "C9186A61-272F-42C4-B326-68C6E19AEBBD": {
+    "CD37D3B1-E5E9-4617-8F9D-A47E10247B0D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5852,21 +5832,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
-            "rev": 329674
+            "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
+            "rev": 69864
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Morph_C47CCBAB_F941_447C_A65A_D7E728833B8D",
-            "rev": 417510
+            "id": "Morph_0DBE6892_CDEB_4665_96F5_EE34AB869651",
+            "rev": 88859
           }
         }
       }
     },
-    "CFAE3957-AD55-45CB-870F-5E0EBE208315": {
+    "B77E2D57-15AD-4A38-B4A3-2649AD2F9BF4": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5885,8 +5865,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
-            "rev": 329674
+            "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
+            "rev": 69864
           }
         },
         "sourceAttrName": {
@@ -5897,8 +5877,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
-            "rev": 329674
+            "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
+            "rev": 69864
           }
         },
         "targetMethodName": {
@@ -5909,7 +5889,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "F2C0E6AB-D945-4A0A-9BBA-63B239CC8986",
+            "id": "48E0EB45-5E3E-4B11-9587-F7934284639E",
             "rev": 0
           }
         },
@@ -5933,7 +5913,7 @@
         }
       }
     },
-    "F2C0E6AB-D945-4A0A-9BBA-63B239CC8986": {
+    "48E0EB45-5E3E-4B11-9587-F7934284639E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5944,16 +5924,16 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
-            "rev": 329674
+            "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
+            "rev": 69864
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Window_0E1105B8_FC5F_42AF_B6E9_7B6E4B91A26D",
-            "rev": 329674
+            "id": "Window_7CFF374C_38FE_453D_BEB6_C56D93942B30",
+            "rev": 69864
           }
         }
       }
@@ -5964,7 +5944,7 @@
     "local://lively-object-modules/": {
       "VisjsMorph": {
         "package.json": "{\n  \"name\": \"VisjsMorph\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
-        "index.js": "import { HTMLMorph } from \"lively.morphic\";\nimport * as vis from \"https://lively-web.org/users/MattH/uploads/vis.js\"\nimport { deepCopy } from \"lively.lang/object.js\";\nimport { loadObjectFromPartsbinFolder } from \"lively.morphic/partsbin.js\";\n\nexport default class VisjsMorph extends HTMLMorph {\n  onLoad(){\n  this.loadGraph();\n  }\n  async loadGraph() {     \n      this.viscanvasId = 'vis-canvas-' + this.id\n      var htmlString = '<div style=\"height:100%\" id=\"' + this.viscanvasId + '\"/><//div>'\n      this.html = htmlString;\n      var DataObject = await this.getData(),\n      nodeArray = DataObject.nodes,\n      edgeArray = DataObject.edges     \n      var nodes = new vis.DataSet(nodeArray)  \n  var edges = new vis.DataSet(edgeArray)\n  \n  var container = this.domNode.querySelector('#' + this.viscanvasId)\n  this.data = {\n    nodes: nodes,\n    edges: edges\n  };\n  \n  this.options = {\n  interaction:{hover:true},\n\n  manipulation: {\n    addEdge: this.addEdge\n  },\n  \n  physics:{\n    enabled: false,\n    repulsion: {\n      centralGravity: 0.5,\n      springLength: 200,\n      springConstant: 0.05,\n      nodeDistance: 100,\n      damping: 0.09\n    },\n    maxVelocity: 50,\n    minVelocity: 0.1,\n    solver: 'repulsion',\n    stabilization: {\n      enabled: true,\n      iterations: 2500,\n      updateInterval: 10,\n      onlyDynamicEdges: false,\n      fit: true\n    },\n        timestep: 0.5,\n        adaptiveTimestep: true\n  },\n  layout: {\n    hierarchical: {\r\n      enabled:false\n    },\n    randomSeed: 1,\n    improvedLayout:true\n  }\n}\n\n\n  this.network = new vis.Network(container, this.data, this.options);\n\n  var self = this;\n  this.data.nodes.forEach(function(node){\n    if (node.group && node.level < 3){\n      var nodeId = node.Id\n      //If node is 'clusterable', it is of level less than 3 (which is a leaf node)\n      var group = node.group;\n      var clusterOptionsByData = self.getClusterByData(self,nodeId,node, group)\n      self.network.cluster( clusterOptionsByData);\n    }\n  })\n\n  this.network.fit()\n  \n  this.options.physics.enabled = true\n  this.network.setOptions(this.options)\n  \n  this.singleClickListener(this)\n  this.doubleClickListener(this)\n  this.longClickListener(this)\n  this.hoverListener(this)\n  this.blurListener(this)\n  this.rightClickListener(this)\n  this.dragStartListener(this)\n  this.dragListener(this)\n  this.dragEndListener(this)\n\n  this.addLoadingBar(this,container)\n  \n  }\n   singleClickListener(self) {\n    var network = this.network;\n    var hand = $world.hands[0]\n    network.on(\"click\", function (params) {\n      var node = params.nodes[0]\n      if(!node){\n        return\n      }\n    })\n  }\n  showTooltip(obj, blur) {\n    var container = this.domNode.querySelector('#' + this.viscanvasId)\n    var nodeDelete = this.domNode.querySelector('#tooltipNode');\n    if(nodeDelete){\n       container.removeChild(nodeDelete);   \n       if(blur){\n           return;\n       }\n    }\n    var tt = document.createElement(\"div\");\n    tt.setAttribute(\"id\", \"tooltipNode\");\n    tt.setAttribute(\"class\", \"tooltipNode\");\n    this.setTTStyle(tt)\n    \n    var title = ( obj.tt == undefined ) ? \"\"  : obj.tt;\n    tt.innerHTML = title;\n    container.appendChild(tt);\n  }\n  hoverListener(self) {\n     this.network.on(\"hoverNode\", function (params) {         \n        var HOVER_SIZE_ICON = 50;\n        var nodeId = params.node;\n        var node = self.data.nodes.get(nodeId.split('_cluster')[0]);//If cluster, display inner node tooltip\n        self.showTooltip(node); \n        \n    });\n  }  \n  setTTStyle(tt) {  \n    tt.setAttribute(\"style\",\"position: absolute;\\\n\t   text-align: center;\\\n\t   top: 5%;\\\n    left: 20px;\\\n    background-color: #FFFFFF;\\\n    font-family: Roboto, Ubuntu, Verdana, Arial;\\\n    font-size: 0.65em;\\\n    padding: 5px;\\\n    border-radius: 5px;\\\n    border: solid 4px;\\\n    min-width: 0px;\\\n    max-width: 50%;\\\n    min-height: 0px;\\\n    max-height: 50%;\")\n  }\n  blurListener(self){\n    var network = this.network;\n    network.on(\"blurNode\", function (params) {      \n      var node = self.data.nodes.get(params.node);\n      self.hideTooltip();\n    });\n  }\n  hideTooltip(){\n    var container = this.domNode.querySelector('#' + this.viscanvasId)\n    var nodeDelete = this.domNode.querySelector('#tooltipNode');\n    if(nodeDelete){\n        container.removeChild(nodeDelete);    \n    }\n  }\n  longClickListener(self) {\n    var network = this.network;\n    network.on(\"hold\", function (params) {      \n      var node = params.nodes[0]\n      if(node){\n        //duplicate node here\n        var nodeObj = self.data.nodes.get(node)\n        var tempNode = deepCopy(nodeObj)\n        tempNode.label = nodeObj.label + '_1'\n        tempNode.id = nodeObj.id + '_1'\n        self.data.nodes.update(tempNode)\n      } else {\n        //create node here\n        var nodeCount = self.data.nodes.length + 1\n        var {x,y} = params.pointer.canvas\n        var nodeObj = {id: nodeCount, label: 'Node ' + nodeCount, tt: 'Node ' + nodeCount, x: x, y: y}\n        console.log(params)\n        self.data.nodes.update(nodeObj)\n      }\n      \n    })\n  }\n  doubleClickListener(self) {\n    var network = this.network;\n    network.on(\"doubleClick\", async function (params) {\n         \n        var nodeId = params.nodes[0]\n        var node = self.data.nodes.get(nodeId)\n\n        if (self.network.isCluster(nodeId) == true){\n        //If selection is cluster\n          console.log(nodeId)\n          self.network.openCluster(nodeId);\n        } else {\n        //If selection is not cluster\n          if ((node.group || node.League || node.conference ) && node.level < 3){\n            //If node is 'clusterable', it is of level less than 3 (which is a leaf node)\n            var group;\n            if (node.level == 0){\n              group = node.League\n            }\n            if (node.level == 1){\n              group = node.conference\n            }\n            if (node.level == 2){\n              group = node.group;\n            }\n            \n\n            var clusterOptionsByData = self.getClusterByData(self,nodeId,node, group)          \n            self.network.cluster( clusterOptionsByData);\n            \n\n            return\n          }\n          if (node){\n            var editor = $world.get('NodeEditor')\n            if (!editor){\n              console.log('foo')           \n              editor = await loadObjectFromPartsbinFolder(\"NodeEditor\");\n              editor.openInWorld();\n            }\n            editor.get('container').makeFields(node)\n            editor.bringToFront();\n          }\n      }\n    })\n  }\n  rightClickListener(self) {\n    var network = this.network;\n    network.on(\"oncontext\", function (params) { })\n  }\n  dragStartListener(self){\n    var network = this.network;\n    network.on(\"dragStart\", function (params) {\n          \n    })\n  }\n  dragListener(self){\n    var network = this.network;\n    network.on(\"dragging\", function (params) { })\n  }\n  dragEndListener(self){\n    var network = this.network;\n    network.on(\"dragEnd\", function (params) {\n      \n    })\n  }\n  addEdge(data,callback) {\n    $world.get('cancelButton').visible = false    \n    callback(data);\n    \n  }\n  addNode(data,callback){\n  }\n  onResize(evt) {\n    console.log(evt)\n  }\n  makeTextField(k,v) {\n    console.log({k,v})\n  }\n  async getData() {\n    var nbaData = new URL( 'https://raw.githubusercontent.com/m-hemmings/MiscFiles/master/lively.next/RostersByTeamAndPosition.json')\n    var teamURL = new URL ('https://raw.githubusercontent.com/m-hemmings/MiscFiles/master/lively.next/NBAteams.json')\n    function getJSON(url) {\r\n      'use strict';\r\n        var xhr = new XMLHttpRequest();\r\n        return new Promise((resolve, reject) => {\r\n          xhr.onreadystatechange = function () {\r\n            if (xhr.readyState === 4) {\r\n              if (xhr.status === 200) {\r\n                resolve(JSON.parse(xhr.responseText));\r\n              } else {\r\n                reject(xhr.responseText);\r\n              }\r\n            }\r\n          };\r\n          xhr.open('GET', url);\r\n          xhr.send();\r\n        });\r\n      }  \n      var players = await getJSON(nbaData)\n      var teams = await getJSON(teamURL)\n      var nodes = []\n      var edges = []\n\n      nodes.push({\n        id: \"NBA_Logo\",\n        tt: \"NBA\",\n        label: \"NBA\",\n        League: \"NBA\",\n        shape: \"image\",\n        level: 0,\n        image: \"https://upload.wikimedia.org/wikipedia/en/thumb/0/07/NBALogo.svg/197px-NBALogo.svg.png\"\n      })\n\n      nodes.push({\n        id: \"Western_Conference\",\n        tt: \"Western Conference\",\n        label: \"Western Conference\",\n        conference: \"Western\",\n        League: \"NBA\",\n        shape: \"image\",\n        level: 1,\n        image: \"https://upload.wikimedia.org/wikipedia/en/0/02/Western_Conference_%28NBA%29_logo.gif\"\n      })\n\n      nodes.push({\n        id: \"Eastern_Conference\",\n        tt: \"Eastern Conference\",\n        label: \"Eastern Conference\",\n        conference: \"Eastern\",\n        League: \"NBA\",\n        shape: \"image\",\n        level: 1,\n        image: \"https://upload.wikimedia.org/wikipedia/en/e/ed/Eastern_Conference_%28NBA%29_logo.gif\"\n      })\n\n      edges.push({from: \"Western_Conference\", to: \"NBA_Logo\", length: 100})\n      edges.push({from: \"Eastern_Conference\", to: \"NBA_Logo\", length: 100})\n\n      teams.forEach(team =>{\n        var item = {\n          id: team.Team,\n          tt: team.City + '<BR>' + team.Team,\n          label: team.City + '\\n' + team.Team,\n          level: 2,\n          ...team\n        }\n        nodes.push(item)\n        edges.push({from: item.id, to: team.conference + \"_Conference\", length: 100})\n      })\n\n      players.forEach(player =>{\n        \n        var item = {\n        id: player.Name + '_' + player.Team,\n        tt: player.Name + '<BR>' + player.City + ' ' + player.Team,\n        label: player.Name,\n        level: 3,\n        ...player\n        }\n        \n        nodes.push(item)        \n        edges.push({from: item.id, to: player.Team})\n      })\n      console.log('done')\n      return {nodes,edges}\n      \n    }\n  stabilizationStart(self) {\n    var network = self.network\n    network.on(\"stabilizationProgress\", function(params) {\n    })\n  }\n  stabilizationEnd(self) {\n    var network = self.network\n    network.once(\"stabilizationIterationsDone\", function() {\n    })\n  }\n  addLoadingBar(self,container) {\n    var parts = ['loadingBar','outerBorder','text','border']\n    var divs = []\n    parts.forEach(function(ea){\n      var temp = document.createElement(\"div\");\n      temp.setAttribute(\"id\", ea);\n      temp.setAttribute(\"class\", ea);\n      divs.push(temp)\n    })\n   console.log(divs)\n    \n  }\n  \n  getClusterByData(self,nodeId,node,group) {\n    return {\n              joinCondition:  function(childOptions){\n                return (childOptions.Team == group || childOptions.conference == group || childOptions.League == group); // groups if Team is the same as the grouping value\n              },\n              clusterNodeProperties: {\n                id: node.id + '_cluster',\n                label: node.label,\n                tt: node.tt,\n                borderWidth:3,                \n                image: node.image,\n                shape: 'image',\n                League: node.League,\n                conference: node.conference\n                }\n          };\n  }\n}\n\n\n\n"
+        "index.js": "import { HTMLMorph } from \"lively.morphic\";\nimport * as vis from \"https://lively-web.org/users/MattH/uploads/vis.js\"\nimport { deepCopy } from \"lively.lang/object.js\";\nimport { loadObjectFromPartsbinFolder } from \"lively.morphic/partsbin.js\";\n\nexport default class VisjsMorph extends HTMLMorph {\n  onLoad(){\n  this.loadGraph();\n  }\n  async loadGraph() {     \n      this.viscanvasId = 'vis-canvas-' + this.id\n      var htmlString = '<div style=\"height:100%\" id=\"' + this.viscanvasId + '\"/><//div>'\n      this.html = htmlString;\n      var DataObject = await this.getData(),\n      nodeArray = DataObject.nodes,\n      edgeArray = DataObject.edges     \n      var nodes = new vis.DataSet(nodeArray)  \n  var edges = new vis.DataSet(edgeArray)\n  \n  var container = this.domNode.querySelector('#' + this.viscanvasId)\n  this.data = {\n    nodes: nodes,\n    edges: edges\n  };\n  \n  this.options = {\n  interaction:{hover:true},\n\n  manipulation: {\n    addEdge: this.addEdge\n  },\n  \n  physics:{\n    enabled: false,\n    repulsion: {\n      centralGravity: 0.5,\n      springLength: 200,\n      springConstant: 0.05,\n      nodeDistance: 100,\n      damping: 0.09\n    },\n    maxVelocity: 50,\n    minVelocity: 0.1,\n    solver: 'repulsion',\n    stabilization: {\n      enabled: true,\n      iterations: 2500,\n      updateInterval: 10,\n      onlyDynamicEdges: false,\n      fit: true\n    },\n        timestep: 0.5,\n        adaptiveTimestep: true\n  },\n  layout: {\n    hierarchical: {\r\n      enabled:false\n    },\n    randomSeed: 1,\n    improvedLayout:true\n  }\n}\n\n\n  this.network = new vis.Network(container, this.data, this.options);\n\n  var self = this;\n  this.data.nodes.forEach(function(node){\n    if (node.group && node.level < 3){\n      var nodeId = node.Id\n      //If node is 'clusterable', it is of level less than 3 (which is a leaf node)\n      var group = node.group;\n      var clusterOptionsByData = self.getClusterByData(self,nodeId,node, group)\n      self.network.cluster( clusterOptionsByData);\n    }\n  })\n\n  this.network.fit()\n  \n  this.options.physics.enabled = true\n  this.network.setOptions(this.options)\n  \n  this.singleClickListener(this)\n  this.doubleClickListener(this)\n  this.longClickListener(this)\n  this.hoverListener(this)\n  this.blurListener(this)\n  this.rightClickListener(this)\n  this.dragStartListener(this)\n  this.dragListener(this)\n  this.dragEndListener(this)\n\n  this.addLoadingBar(this,container)\n  \n  }\n   singleClickListener(self) {\n    var network = this.network;\n    var hand = $world.hands[0]\n    network.on(\"click\", function (params) {\n      var node = params.nodes[0]\n      if(!node){\n        return\n      }\n    })\n  }\n  showTooltip(obj, blur) {\n    var container = this.domNode.querySelector('#' + this.viscanvasId)\n    var nodeDelete = this.domNode.querySelector('#tooltipNode');\n    if(nodeDelete){\n       container.removeChild(nodeDelete);   \n       if(blur){\n           return;\n       }\n    }\n    var tt = document.createElement(\"div\");\n    tt.setAttribute(\"id\", \"tooltipNode\");\n    tt.setAttribute(\"class\", \"tooltipNode\");\n    this.setTTStyle(tt)\n    \n    var title = ( obj.tt == undefined ) ? \"\"  : obj.tt;\n    tt.innerHTML = title;\n    container.appendChild(tt);\n  }\n  hoverListener(self) {\n     this.network.on(\"hoverNode\", function (params) {         \n        var HOVER_SIZE_ICON = 50;\n        var nodeId = params.node;\n        var node = self.data.nodes.get(nodeId.split('_cluster')[0]);//If cluster, display inner node tooltip\n        self.showTooltip(node); \n        \n    });\n  }  \n  setTTStyle(tt) {  \n    tt.setAttribute(\"style\",\"position: absolute;\\\n\t   text-align: left;\\\n\t   top: 5%;\\\n    left: 20px;\\\n    background-color: #FFFFFF;\\\n    font-family: Roboto, Ubuntu, Verdana, Arial;\\\n    font-size: 0.65em;\\\n    padding: 5px;\\\n    border-radius: 5px;\\\n    border: solid 4px;\\\n    min-width: 0px;\\\n    max-width: 50%;\\\n    min-height: 0px;\\\n    max-height: 80%;\")\n  }\n  blurListener(self){\n    var network = this.network;\n    network.on(\"blurNode\", function (params) {      \n      var node = self.data.nodes.get(params.node);\n      self.hideTooltip();\n    });\n  }\n  hideTooltip(){\n    var container = this.domNode.querySelector('#' + this.viscanvasId)\n    var nodeDelete = this.domNode.querySelector('#tooltipNode');\n    if(nodeDelete){\n        container.removeChild(nodeDelete);    \n    }\n  }\n  longClickListener(self) {\n    var network = this.network;\n    network.on(\"hold\", function (params) {      \n      var node = params.nodes[0]\n      if(node){\n        //duplicate node here\n        var nodeObj = self.data.nodes.get(node)\n        var tempNode = deepCopy(nodeObj)\n        tempNode.label = nodeObj.label + '_1'\n        tempNode.id = nodeObj.id + '_1'\n        self.data.nodes.update(tempNode)\n      } else {\n        //create node here\n        var nodeCount = self.data.nodes.length + 1\n        var {x,y} = params.pointer.canvas\n        var nodeObj = {id: nodeCount, label: 'Node ' + nodeCount, tt: 'Node ' + nodeCount, x: x, y: y}\n        console.log(params)\n        self.data.nodes.update(nodeObj)\n      }\n      \n    })\n  }\n  doubleClickListener(self) {\n    var network = this.network;\n    network.on(\"doubleClick\", async function (params) {\n         \n        var nodeId = params.nodes[0]\n        var node = self.data.nodes.get(nodeId)\n\n        if (self.network.isCluster(nodeId) == true){\n        //If selection is cluster\n          console.log(nodeId)\n          self.network.openCluster(nodeId);\n        } else {\n        //If selection is not cluster\n          if ((node.group || node.League || node.conference ) && node.level < 3){\n            //If node is 'clusterable', it is of level less than 3 (which is a leaf node)\n            var group;\n            if (node.level == 0){\n              group = node.League\n            }\n            if (node.level == 1){\n              group = node.conference\n            }\n            if (node.level == 2){\n              group = node.group;\n            }\n            \n\n            var clusterOptionsByData = self.getClusterByData(self,nodeId,node, group)          \n            self.network.cluster( clusterOptionsByData);\n            \n\n            return\n          }\n          if (params.nodes.length > 0){\n            var editor = $world.get('NodeEditor')\n            if (!editor){\n              console.log('foo')           \n              editor = await loadObjectFromPartsbinFolder(\"NodeEditor\");\n              editor.openInWorld();\n            }\n            editor.get('container').makeFields(node)\n            editor.bringToFront();\n          }\n      }\n    })\n  }\n  rightClickListener(self) {\n    var network = this.network;\n    network.on(\"oncontext\", function (params) { })\n  }\n  dragStartListener(self){\n    var network = this.network;\n    network.on(\"dragStart\", function (params) {\n          \n    })\n  }\n  dragListener(self){\n    var network = this.network;\n    network.on(\"dragging\", function (params) { })\n  }\n  dragEndListener(self){\n    var network = this.network;\n    network.on(\"dragEnd\", function (params) {\n      \n    })\n  }\n  addEdge(data,callback) {\n    $world.get('cancelButton').visible = false    \n    callback(data);\n    \n  }\n  addNode(data,callback){\n  }\n  onResize(evt) {\n    console.log(evt)\n  }\n  makeTextField(k,v) {\n    console.log({k,v})\n  }\n  async getData() {\n    var nbaData = new URL( 'https://raw.githubusercontent.com/m-hemmings/MiscFiles/master/lively.next/RostersByTeamAndPosition.json')\n    var teamURL = new URL ('https://raw.githubusercontent.com/m-hemmings/MiscFiles/master/lively.next/NBAteams.json')\n    function getJSON(url) {\r\n      'use strict';\r\n        var xhr = new XMLHttpRequest();\r\n        return new Promise((resolve, reject) => {\r\n          xhr.onreadystatechange = function () {\r\n            if (xhr.readyState === 4) {\r\n              if (xhr.status === 200) {\r\n                resolve(JSON.parse(xhr.responseText));\r\n              } else {\r\n                reject(xhr.responseText);\r\n              }\r\n            }\r\n          };\r\n          xhr.open('GET', url);\r\n          xhr.send();\r\n        });\r\n      }  \n      var players = await getJSON(nbaData)\n      var teams = await getJSON(teamURL)\n      var nodes = []\n      var edges = []\n\n      nodes.push({\n        id: \"NBA_Logo\",\n        tt: \"NBA\",\n        label: \"NBA\",\n        League: \"NBA\",\n        shape: \"image\",\n        level: 0,\n        image: \"https://upload.wikimedia.org/wikipedia/en/thumb/0/07/NBALogo.svg/197px-NBALogo.svg.png\"\n      })\n\n      nodes.push({\n        id: \"Western_Conference\",\n        tt: \"Western Conference\",\n        label: \"Western Conference\",\n        conference: \"Western\",\n        League: \"NBA\",\n        shape: \"image\",\n        level: 1,\n        image: \"https://upload.wikimedia.org/wikipedia/en/0/02/Western_Conference_%28NBA%29_logo.gif\"\n      })\n\n      nodes.push({\n        id: \"Eastern_Conference\",\n        tt: \"Eastern Conference\",\n        label: \"Eastern Conference\",\n        conference: \"Eastern\",\n        League: \"NBA\",\n        shape: \"image\",\n        level: 1,\n        image: \"https://upload.wikimedia.org/wikipedia/en/e/ed/Eastern_Conference_%28NBA%29_logo.gif\"\n      })\n\n      edges.push({from: \"Western_Conference\", to: \"NBA_Logo\", length: 100})\n      edges.push({from: \"Eastern_Conference\", to: \"NBA_Logo\", length: 100})\n\n      teams.forEach(team =>{\n        var item = {\n          id: team.Team,\n          tt: team.City + '<BR>' + team.Team,\n          label: team.City + '\\n' + team.Team,\n          level: 2,\n          ...team\n        }\n        nodes.push(item)\n        edges.push({from: item.id, to: team.conference + \"_Conference\", length: 100})\n      })\n\n      players.forEach(player =>{\n        var tt = this.getPlayerInfo(player)\n        \n        var item = {\n        id: player.Name + '_' + player.Team,\n        tt: tt,//player.Name + '<BR>' + player.City + ' ' + player.Team,\n        label: player.Name,\n        level: 3,\n        ...player\n        }\n\n        var team = teams.filter(function(ea){\n        return ea.Team == player.Team\n        })[0]\n\n        item.conference = team.conference\n        item.League = team.League\n        \n        nodes.push(item)        \n        edges.push({from: item.id, to: player.Team})\n      })\n      console.log('done')\n      return {nodes,edges}\n      \n    }\n  stabilizationStart(self) {\n    var network = self.network\n    network.on(\"stabilizationProgress\", function(params) {\n    })\n  }\n  stabilizationEnd(self) {\n    var network = self.network\n    network.once(\"stabilizationIterationsDone\", function() {\n    })\n  }\n  addLoadingBar(self,container) {\n    var parts = ['loadingBar','outerBorder','text','border']\n    var divs = []\n    parts.forEach(function(ea){\n      var temp = document.createElement(\"div\");\n      temp.setAttribute(\"id\", ea);\n      temp.setAttribute(\"class\", ea);\n      divs.push(temp)\n    })\n   console.log(divs)\n    \n  }\n  \n  getClusterByData(self,nodeId,node,group) {\n    return {\n              joinCondition:  function(childOptions){\n                return (childOptions.Team == group || childOptions.conference == group || childOptions.League == group); // groups if Team is the same as the grouping value\n              },\n              clusterNodeProperties: {\n                id: node.id + '_cluster',\n                label: node.label,\n                tt: node.tt,\n                borderWidth:3,                \n                image: node.image,\n                shape: 'image',\n                League: node.League,\n                conference: node.conference\n                }\n          };\n  }\n  getPlayerInfo(player) {\n    var tt = ''\n    var fields = (Object.getOwnPropertyNames(player))\n    fields.forEach(function(ea,i){\n      var k = ea,\n      v = player[ea]\n      tt += '<B>' + k + ':</B> ' + v + '<BR>'\n    })\n    return tt;\n  }\n}\n\n\n\n"
       },
       "AddEdgeButton": {
         "package.json": "{\n  \"name\": \"AddEdgeButton\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
