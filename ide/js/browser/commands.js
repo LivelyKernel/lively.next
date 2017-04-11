@@ -319,8 +319,7 @@ export default function browserCommands(browser) {
               {coreInterface: livelySystem} = await browser.systemInterface();
 
           try {
-            for (let snippet of beforeCode)
-              await livelySystem.runEval(beforeCode, {...ed.evalEnvironment});
+            await livelySystem.runEval(beforeCode, {...ed.evalEnvironment});
             browser.setStatusMessage(`Executed ${nCalls} test ${what} functions`);
           } catch (e) {
             browser.showError(new Error(`Error when running ${what} calls of test:\n${e.stack}`));
