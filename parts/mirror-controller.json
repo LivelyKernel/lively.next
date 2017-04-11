@@ -1,28 +1,58 @@
 {
-  "id": "Rectangle_49F5B1D6_2C86_4988_8B63_B069B00D5649",
+  "id": "Rectangle_638506A8_84CB_4B30_8270_7C15B5A32C29",
   "snapshot": {
-    "Rectangle_49F5B1D6_2C86_4988_8B63_B069B00D5649": {
-      "rev": 342605,
+    "Rectangle_638506A8_84CB_4B30_8270_7C15B5A32C29": {
+      "rev": 247003,
       "props": {
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(278.3,105.0)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(253,254,254)"
-        },
         "name": {
           "key": "name",
           "value": "mirror-controller"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(352.9,19.5)"
         },
         "origin": {
           "key": "origin",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,-2.0)"
         },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(43.8,462.9)"
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(278.3,123.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(253,254,254)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+              "rev": 275298
+            },
+            {
+              "__ref__": true,
+              "id": "Text_C404F760_E05D_4A43_BAB8_317D3F89E028",
+              "rev": 275311
+            },
+            {
+              "__ref__": true,
+              "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+              "rev": 3752
+            },
+            {
+              "__ref__": true,
+              "id": "CheckBox_CC676C44_3C87_4876_AD32_59F123C5A4BC",
+              "rev": 244582
+            },
+            {
+              "__ref__": true,
+              "id": "Label_9A65C392_2C2A_41D8_8235_FF781ADB520E",
+              "rev": 207521
+            }
+          ]
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -35,26 +65,6 @@
         "layout": {
           "key": "layout",
           "value": null
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-              "rev": 342472
-            },
-            {
-              "__ref__": true,
-              "id": "Text_AFC81035_A142_4D06_B7AC_55D8FFA7FF0A",
-              "rev": 342511
-            },
-            {
-              "__ref__": true,
-              "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-              "rev": 342596
-            }
-          ]
         },
         "borderColorBottom": {
           "key": "borderColorBottom",
@@ -123,12 +133,24 @@
         }
       }
     },
-    "Button_F8F03E67_0C23_470F_9430_3A4F620E335D": {
-      "rev": 342472,
+    "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716": {
+      "rev": 275298,
       "props": {
-        "draggable": {
-          "key": "draggable",
-          "value": false
+        "name": {
+          "key": "name",
+          "value": "connectButton"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(34.0,7.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "extent": {
           "key": "extent",
@@ -138,25 +160,15 @@
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
         },
-        "name": {
-          "key": "name",
-          "value": "connectButton"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "pointer"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(34.0,7.0)"
-        },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Label_8122DF68_B474_429A_90E4_A04EED553F78",
+              "rev": 275315
+            }
+          ]
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -164,16 +176,6 @@
             "Button",
             "Morph",
             "morph"
-          ]
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Label_4777E9DA_A461_46D0_8E48_80FFE46FC5C2",
-              "rev": 342608
-            }
           ]
         },
         "borderColorBottom": {
@@ -236,7 +238,7 @@
           "key": "defaultActiveStyle",
           "value": {
             "__ref__": true,
-            "id": "08A1BD2A-F233-4548-91D5-3E7968EB1BDF",
+            "id": "22020A4A-D064-42CF-92B6-F5D7E49E6DC5",
             "rev": 0
           }
         },
@@ -244,7 +246,7 @@
           "key": "activeStyle",
           "value": {
             "__ref__": true,
-            "id": "A1A9A987-4B8A-49A0-A833-36D643D83E82",
+            "id": "5732218B-4E80-49B6-8450-F3265A5FA2E6",
             "rev": 0
           }
         },
@@ -252,7 +254,7 @@
           "key": "defaultInactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "27C2BCF1-976A-400A-96D0-7A574AD07C99",
+            "id": "671A166F-2978-43F6-A3B8-5CFFB4EBA5DE",
             "rev": 0
           }
         },
@@ -260,7 +262,7 @@
           "key": "inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "8210FF5D-E5A2-424F-8A10-CC982C9290FE",
+            "id": "A90A1155-2E71-4DA9-B9B5-E8FAF2BEE9D2",
             "rev": 0
           }
         },
@@ -268,7 +270,7 @@
           "key": "defaultTriggerStyle",
           "value": {
             "__ref__": true,
-            "id": "0C348D1F-64CA-4F8E-843B-11DA10C9F93F",
+            "id": "6CE90AAB-804F-4AD6-A449-DAA6FE437DA9",
             "rev": 0
           }
         },
@@ -276,7 +278,7 @@
           "key": "triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "87BD8903-7AA4-4A8C-BDB1-00516484C8D0",
+            "id": "8C12CD90-88E1-4431-924F-41B68A32F8B8",
             "rev": 0
           }
         },
@@ -289,42 +291,42 @@
           "value": [
             {
               "__ref__": true,
-              "id": "A2766CE7-187D-4B0F-9F37-4527656D2A29",
+              "id": "F305C2B3-9679-4805-837C-3D00839BE59E",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "F9404719-20D6-46B7-9FAD-F50888A95D97",
+              "id": "6BEAFF15-F93B-413B-BD44-70B6CD58D73C",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "EFF86028-BE30-4B0F-BA3A-0A4E40C782BD",
+              "id": "6BF24712-1551-41B3-8EAD-F6B0D913D55F",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "419F9150-C318-4FDE-A31E-06D0FE8832A1",
+              "id": "A23584B6-AA1A-4EEA-ADB1-D08ACEDA6303",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "D7B32B7B-F7D1-48D2-A104-D132791EC981",
+              "id": "86560B23-0701-4747-B7AA-49575F73C2A4",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "1CF98328-453B-4708-AA67-CB4C777AF442",
+              "id": "A355AC1B-9A11-4E0A-807A-AB7E8878244A",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "EECC1B08-B873-4A7E-A465-D0FFC91B2C39",
+              "id": "E3C8E22D-512B-474D-9B83-953120F8B222",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "CCAED426-637D-40EF-94DE-EF70568B1CED",
+              "id": "11F57BF5-8428-4FFC-ADAD-FC15D856303A",
               "rev": 0
             }
           ]
@@ -341,17 +343,9 @@
         }
       }
     },
-    "Label_4777E9DA_A461_46D0_8E48_80FFE46FC5C2": {
-      "rev": 342608,
+    "Label_8122DF68_B474_429A_90E4_A04EED553F78": {
+      "rev": 275315,
       "props": {
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(52.0,14.0)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(255,255,255,0)"
-        },
         "name": {
           "key": "name",
           "value": "label"
@@ -360,13 +354,25 @@
           "key": "nativeCursor",
           "value": "pointer"
         },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(23.6,7.0)"
+        },
         "origin": {
           "key": "origin",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(23.6,7.0)"
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(52.0,14.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(255,255,255,0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -376,21 +382,11 @@
             "morph"
           ]
         },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
-        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "value": [
-            [
-              "connect...",
-              {
-                "__ref__": true,
-                "id": "ECA52721-A44A-4F3C-BB42-37E1FADF653D",
-                "rev": 0
-              }
-            ]
+            "connect...",
+            null
           ]
         },
         "padding": {
@@ -410,7 +406,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "D44C94CC-6560-44E5-99D0-D276681551CD",
+              "id": "213BF9A5-CA5A-4264-B5FF-C07882A118DB",
               "rev": 0
             }
           ]
@@ -427,16 +423,7 @@
         }
       }
     },
-    "ECA52721-A44A-4F3C-BB42-37E1FADF653D": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        }
-      }
-    },
-    "D44C94CC-6560-44E5-99D0-D276681551CD": {
+    "213BF9A5-CA5A-4264-B5FF-C07882A118DB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -455,8 +442,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_4777E9DA_A461_46D0_8E48_80FFE46FC5C2",
-            "rev": 342608
+            "id": "Label_8122DF68_B474_429A_90E4_A04EED553F78",
+            "rev": 275315
           }
         },
         "sourceAttrName": {
@@ -467,8 +454,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "targetMethodName": {
@@ -479,7 +466,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "CABA5F61-FC85-44AF-94F8-87430C4F361A",
+            "id": "2D637694-6199-4F8D-BF39-C9633DF5AD33",
             "rev": 0
           }
         },
@@ -503,7 +490,7 @@
         }
       }
     },
-    "CABA5F61-FC85-44AF-94F8-87430C4F361A": {
+    "2D637694-6199-4F8D-BF39-C9633DF5AD33": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -514,21 +501,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_4777E9DA_A461_46D0_8E48_80FFE46FC5C2",
-            "rev": 342608
+            "id": "Label_8122DF68_B474_429A_90E4_A04EED553F78",
+            "rev": 275315
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         }
       }
     },
-    "08A1BD2A-F233-4548-91D5-3E7968EB1BDF": {
+    "22020A4A-D064-42CF-92B6-F5D7E49E6DC5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -553,7 +540,7 @@
         }
       }
     },
-    "A1A9A987-4B8A-49A0-A833-36D643D83E82": {
+    "5732218B-4E80-49B6-8450-F3265A5FA2E6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -583,10 +570,265 @@
         "fontFamily": {
           "key": "fontFamily",
           "value": "Sans-Serif"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "grabbable": {
+          "key": "grabbable",
+          "value": false
+        },
+        "acceptsDrops": {
+          "key": "acceptsDrops",
+          "value": true
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": false
+        },
+        "halosEnabled": {
+          "key": "halosEnabled",
+          "value": true
+        },
+        "opacity": {
+          "key": "opacity",
+          "value": 1
+        },
+        "visible": {
+          "key": "visible",
+          "value": true
+        },
+        "clipMode": {
+          "key": "clipMode",
+          "value": "visible"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Button",
+            "Morph",
+            "morph"
+          ]
+        },
+        "isLayoutable": {
+          "key": "isLayoutable",
+          "value": true
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 15
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 15
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 15
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 15
+        },
+        "borderStyleBottom": {
+          "key": "borderStyleBottom",
+          "value": "solid"
+        },
+        "borderStyleLeft": {
+          "key": "borderStyleLeft",
+          "value": "solid"
+        },
+        "borderStyleRight": {
+          "key": "borderStyleRight",
+          "value": "solid"
+        },
+        "borderStyleTop": {
+          "key": "borderStyleTop",
+          "value": "solid"
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 1
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
+        },
+        "borderLeft": {
+          "key": "borderLeft",
+          "value": {
+            "__ref__": true,
+            "id": "B0212096-3E4C-4EA2-A598-9CE8030F08CF",
+            "rev": 0
+          }
+        },
+        "borderRight": {
+          "key": "borderRight",
+          "value": {
+            "__ref__": true,
+            "id": "FAF4F6C8-8345-4976-8111-5972E4030267",
+            "rev": 0
+          }
+        },
+        "borderBottom": {
+          "key": "borderBottom",
+          "value": {
+            "__ref__": true,
+            "id": "B763538E-A357-4735-B8E0-F3F78470C9B0",
+            "rev": 0
+          }
+        },
+        "borderTop": {
+          "key": "borderTop",
+          "value": {
+            "__ref__": true,
+            "id": "BBA98B90-225C-481A-BE9C-D236C81CE53F",
+            "rev": 0
+          }
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": 1
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": 15
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": "solid"
+        },
+        "border": {
+          "key": "border",
+          "value": {
+            "__ref__": true,
+            "id": "5FD3793F-E046-47BB-BCB2-FFA0C7D0AAF0",
+            "rev": 0
+          }
+        },
+        "morphClasses": {
+          "key": "morphClasses"
+        },
+        "styleRules": {
+          "key": "styleRules"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
         }
       }
     },
-    "27C2BCF1-976A-400A-96D0-7A574AD07C99": {
+    "B0212096-3E4C-4EA2-A598-9CE8030F08CF": {
+      "rev": 0,
+      "props": {
+        "style": {
+          "key": "style",
+          "value": "solid"
+        },
+        "width": {
+          "key": "width",
+          "value": 1
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        }
+      }
+    },
+    "FAF4F6C8-8345-4976-8111-5972E4030267": {
+      "rev": 0,
+      "props": {
+        "style": {
+          "key": "style",
+          "value": "solid"
+        },
+        "width": {
+          "key": "width",
+          "value": 1
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        }
+      }
+    },
+    "B763538E-A357-4735-B8E0-F3F78470C9B0": {
+      "rev": 0,
+      "props": {
+        "style": {
+          "key": "style",
+          "value": "solid"
+        },
+        "width": {
+          "key": "width",
+          "value": 1
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        }
+      }
+    },
+    "BBA98B90-225C-481A-BE9C-D236C81CE53F": {
+      "rev": 0,
+      "props": {
+        "style": {
+          "key": "style",
+          "value": "solid"
+        },
+        "width": {
+          "key": "width",
+          "value": 1
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        }
+      }
+    },
+    "5FD3793F-E046-47BB-BCB2-FFA0C7D0AAF0": {
+      "rev": 0,
+      "props": {
+        "style": {
+          "key": "style",
+          "value": "solid"
+        },
+        "width": {
+          "key": "width",
+          "value": 1
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        }
+      }
+    },
+    "671A166F-2978-43F6-A3B8-5CFFB4EBA5DE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -611,7 +853,7 @@
         }
       }
     },
-    "8210FF5D-E5A2-424F-8A10-CC982C9290FE": {
+    "A90A1155-2E71-4DA9-B9B5-E8FAF2BEE9D2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -644,7 +886,7 @@
         }
       }
     },
-    "0C348D1F-64CA-4F8E-843B-11DA10C9F93F": {
+    "6CE90AAB-804F-4AD6-A449-DAA6FE437DA9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -657,7 +899,7 @@
         }
       }
     },
-    "87BD8903-7AA4-4A8C-BDB1-00516484C8D0": {
+    "8C12CD90-88E1-4431-924F-41B68A32F8B8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -679,10 +921,273 @@
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "grabbable": {
+          "key": "grabbable",
+          "value": false
+        },
+        "acceptsDrops": {
+          "key": "acceptsDrops",
+          "value": true
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": false
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "halosEnabled": {
+          "key": "halosEnabled",
+          "value": true
+        },
+        "opacity": {
+          "key": "opacity",
+          "value": 1
+        },
+        "visible": {
+          "key": "visible",
+          "value": true
+        },
+        "clipMode": {
+          "key": "clipMode",
+          "value": "visible"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Button",
+            "Morph",
+            "morph"
+          ]
+        },
+        "isLayoutable": {
+          "key": "isLayoutable",
+          "value": true
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 15
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 15
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 15
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 15
+        },
+        "borderStyleBottom": {
+          "key": "borderStyleBottom",
+          "value": "solid"
+        },
+        "borderStyleLeft": {
+          "key": "borderStyleLeft",
+          "value": "solid"
+        },
+        "borderStyleRight": {
+          "key": "borderStyleRight",
+          "value": "solid"
+        },
+        "borderStyleTop": {
+          "key": "borderStyleTop",
+          "value": "solid"
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 1
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
+        },
+        "borderLeft": {
+          "key": "borderLeft",
+          "value": {
+            "__ref__": true,
+            "id": "E7E9A3BB-8DC3-4A7F-B276-BB4516801C4F",
+            "rev": 0
+          }
+        },
+        "borderRight": {
+          "key": "borderRight",
+          "value": {
+            "__ref__": true,
+            "id": "5A778180-51A3-4986-9A2A-5A5A274BBFB4",
+            "rev": 0
+          }
+        },
+        "borderBottom": {
+          "key": "borderBottom",
+          "value": {
+            "__ref__": true,
+            "id": "B206647C-612D-42FE-BF29-03A39BC3CA93",
+            "rev": 0
+          }
+        },
+        "borderTop": {
+          "key": "borderTop",
+          "value": {
+            "__ref__": true,
+            "id": "44560726-ABED-4229-9AEC-321A2F349EAA",
+            "rev": 0
+          }
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": 1
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": 15
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": "solid"
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "border": {
+          "key": "border",
+          "value": {
+            "__ref__": true,
+            "id": "877E0A6B-3315-4F49-8C37-58D563F201EA",
+            "rev": 0
+          }
+        },
+        "morphClasses": {
+          "key": "morphClasses"
+        },
+        "styleRules": {
+          "key": "styleRules"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
         }
       }
     },
-    "A2766CE7-187D-4B0F-9F37-4527656D2A29": {
+    "E7E9A3BB-8DC3-4A7F-B276-BB4516801C4F": {
+      "rev": 0,
+      "props": {
+        "style": {
+          "key": "style",
+          "value": "solid"
+        },
+        "width": {
+          "key": "width",
+          "value": 1
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        }
+      }
+    },
+    "5A778180-51A3-4986-9A2A-5A5A274BBFB4": {
+      "rev": 0,
+      "props": {
+        "style": {
+          "key": "style",
+          "value": "solid"
+        },
+        "width": {
+          "key": "width",
+          "value": 1
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        }
+      }
+    },
+    "B206647C-612D-42FE-BF29-03A39BC3CA93": {
+      "rev": 0,
+      "props": {
+        "style": {
+          "key": "style",
+          "value": "solid"
+        },
+        "width": {
+          "key": "width",
+          "value": 1
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        }
+      }
+    },
+    "44560726-ABED-4229-9AEC-321A2F349EAA": {
+      "rev": 0,
+      "props": {
+        "style": {
+          "key": "style",
+          "value": "solid"
+        },
+        "width": {
+          "key": "width",
+          "value": 1
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        }
+      }
+    },
+    "877E0A6B-3315-4F49-8C37-58D563F201EA": {
+      "rev": 0,
+      "props": {
+        "style": {
+          "key": "style",
+          "value": "solid"
+        },
+        "width": {
+          "key": "width",
+          "value": 1
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        }
+      }
+    },
+    "F305C2B3-9679-4805-837C-3D00839BE59E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -701,8 +1206,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "sourceAttrName": {
@@ -713,8 +1218,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "targetMethodName": {
@@ -725,7 +1230,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "E4437F88-6202-409A-911F-4F27C88DE3DC",
+            "id": "191A1D31-CC4D-45AB-A7E1-D74DAE103241",
             "rev": 0
           }
         },
@@ -749,7 +1254,7 @@
         }
       }
     },
-    "E4437F88-6202-409A-911F-4F27C88DE3DC": {
+    "191A1D31-CC4D-45AB-A7E1-D74DAE103241": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -760,21 +1265,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         }
       }
     },
-    "F9404719-20D6-46B7-9FAD-F50888A95D97": {
+    "6BEAFF15-F93B-413B-BD44-70B6CD58D73C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -793,8 +1298,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "sourceAttrName": {
@@ -805,8 +1310,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "targetMethodName": {
@@ -817,7 +1322,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "327D81F2-7B15-4D79-9BE1-1C1A90B0BA40",
+            "id": "F826C8F7-5A14-4C7D-BDED-D4FA4DF6B856",
             "rev": 0
           }
         },
@@ -841,7 +1346,7 @@
         }
       }
     },
-    "327D81F2-7B15-4D79-9BE1-1C1A90B0BA40": {
+    "F826C8F7-5A14-4C7D-BDED-D4FA4DF6B856": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -852,21 +1357,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         }
       }
     },
-    "EFF86028-BE30-4B0F-BA3A-0A4E40C782BD": {
+    "6BF24712-1551-41B3-8EAD-F6B0D913D55F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -885,8 +1390,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "sourceAttrName": {
@@ -897,8 +1402,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "targetMethodName": {
@@ -909,7 +1414,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "4B054E2A-9834-48BA-9BA9-F82EA922C950",
+            "id": "2CEDC4C1-25BE-41D5-BBB4-C961284D4E55",
             "rev": 0
           }
         },
@@ -933,7 +1438,7 @@
         }
       }
     },
-    "4B054E2A-9834-48BA-9BA9-F82EA922C950": {
+    "2CEDC4C1-25BE-41D5-BBB4-C961284D4E55": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -944,21 +1449,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         }
       }
     },
-    "419F9150-C318-4FDE-A31E-06D0FE8832A1": {
+    "A23584B6-AA1A-4EEA-ADB1-D08ACEDA6303": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -977,8 +1482,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "sourceAttrName": {
@@ -989,8 +1494,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "targetMethodName": {
@@ -1001,7 +1506,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "F1189B7F-F7BB-492E-BA3E-F976D2726C48",
+            "id": "406D18A4-8D92-45F9-84A5-766CACD7134E",
             "rev": 0
           }
         },
@@ -1025,7 +1530,7 @@
         }
       }
     },
-    "F1189B7F-F7BB-492E-BA3E-F976D2726C48": {
+    "406D18A4-8D92-45F9-84A5-766CACD7134E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1036,21 +1541,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         }
       }
     },
-    "D7B32B7B-F7D1-48D2-A104-D132791EC981": {
+    "86560B23-0701-4747-B7AA-49575F73C2A4": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1069,8 +1574,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "sourceAttrName": {
@@ -1081,8 +1586,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "targetMethodName": {
@@ -1093,7 +1598,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "D698FA98-F9F6-4856-A1B8-49F28FB017C0",
+            "id": "8DE0771D-48F9-4650-87BC-BB6B7B4D5F20",
             "rev": 0
           }
         },
@@ -1117,7 +1622,7 @@
         }
       }
     },
-    "D698FA98-F9F6-4856-A1B8-49F28FB017C0": {
+    "8DE0771D-48F9-4650-87BC-BB6B7B4D5F20": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1128,21 +1633,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         }
       }
     },
-    "1CF98328-453B-4708-AA67-CB4C777AF442": {
+    "A355AC1B-9A11-4E0A-807A-AB7E8878244A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1161,8 +1666,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "sourceAttrName": {
@@ -1173,8 +1678,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "targetMethodName": {
@@ -1185,7 +1690,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "FD24791B-18BB-4CB7-ACC1-C82238F5B091",
+            "id": "F5DDC44D-7954-4D98-A573-A3CFFA96C8BF",
             "rev": 0
           }
         },
@@ -1209,7 +1714,7 @@
         }
       }
     },
-    "FD24791B-18BB-4CB7-ACC1-C82238F5B091": {
+    "F5DDC44D-7954-4D98-A573-A3CFFA96C8BF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1220,21 +1725,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         }
       }
     },
-    "EECC1B08-B873-4A7E-A465-D0FFC91B2C39": {
+    "E3C8E22D-512B-474D-9B83-953120F8B222": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1253,8 +1758,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "sourceAttrName": {
@@ -1265,8 +1770,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "targetMethodName": {
@@ -1277,7 +1782,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "E581099F-9DB8-4888-B15D-750CD66A9C99",
+            "id": "08CB6B5F-6898-48DE-BBD9-DC3B68F244F3",
             "rev": 0
           }
         },
@@ -1301,7 +1806,7 @@
         }
       }
     },
-    "E581099F-9DB8-4888-B15D-750CD66A9C99": {
+    "08CB6B5F-6898-48DE-BBD9-DC3B68F244F3": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1312,27 +1817,23 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         }
       }
     },
-    "CCAED426-637D-40EF-94DE-EF70568B1CED": {
+    "11F57BF5-8428-4FFC-ADAD-FC15D856303A": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -1345,8 +1846,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "sourceAttrName": {
@@ -1357,8 +1858,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Rectangle_49F5B1D6_2C86_4988_8B63_B069B00D5649",
-            "rev": 342605
+            "id": "Rectangle_638506A8_84CB_4B30_8270_7C15B5A32C29",
+            "rev": 247003
           }
         },
         "targetMethodName": {
@@ -1369,7 +1870,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "838806B4-E82D-44A6-9DE3-163DD6AB254F",
+            "id": "A884745D-C1D9-47E0-BB0D-73A227CD1245",
             "rev": 0
           }
         },
@@ -1393,53 +1894,60 @@
         }
       }
     },
-    "838806B4-E82D-44A6-9DE3-163DD6AB254F": {
+    "A884745D-C1D9-47E0-BB0D-73A227CD1245": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_F8F03E67_0C23_470F_9430_3A4F620E335D",
-            "rev": 342472
+            "id": "Button_9975014F_B1DF_4390_AEC9_4B9BE7C83716",
+            "rev": 275298
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Rectangle_49F5B1D6_2C86_4988_8B63_B069B00D5649",
-            "rev": 342605
+            "id": "Rectangle_638506A8_84CB_4B30_8270_7C15B5A32C29",
+            "rev": 247003
           }
         }
       }
     },
-    "Text_AFC81035_A142_4D06_B7AC_55D8FFA7FF0A": {
-      "rev": 342511,
+    "Text_C404F760_E05D_4A43_BAB8_317D3F89E028": {
+      "rev": 275311,
       "props": {
-        "clipMode": {
-          "key": "clipMode",
-          "value": "hidden"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(255.0,48.0)"
-        },
         "name": {
           "key": "name",
           "value": "statusLabel"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(13.0,63.0)"
         },
         "origin": {
           "key": "origin",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(8.0,42.0)"
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(250.0,48.0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "clipMode": {
+          "key": "clipMode",
+          "value": "hidden"
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -1448,10 +1956,6 @@
             "Morph",
             "morph"
           ]
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
         },
         "borderColorBottom": {
           "key": "borderColorBottom",
@@ -1517,7 +2021,7 @@
           "key": "selection",
           "value": {
             "__ref__": true,
-            "id": "DD2FD563-5D24-4E31-A267-8C9B28C63A75",
+            "id": "4A128714-FB53-48A8-8E02-105AA420D125",
             "rev": 0
           }
         },
@@ -1525,7 +2029,7 @@
           "key": "defaultTextStyle",
           "value": {
             "__ref__": true,
-            "id": "5554EF83-1C20-48D7-B648-CE281295056F",
+            "id": "E5A6EA19-19BB-4366-AA36-25354CBAD422",
             "rev": 0
           }
         },
@@ -1538,27 +2042,37 @@
           "value": [
             {
               "__ref__": true,
-              "id": "1A65F491-7781-4F12-A071-CB1DB1AFAE1D",
+              "id": "8898D77A-4722-4B31-81A9-4E815CF2FE4C",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "F30DCDEC-9F95-4837-B243-1357666ABC27",
+              "id": "CC349A47-A46C-40D1-93AE-FFA70B93A181",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "07529DB3-5B2A-4341-92A7-42C3001E343C",
+              "id": "9F7D956B-A049-4E8C-9A7B-DF15999D228D",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "selection-start-D8B77281-0A09-465D-8C9A-FBC85A1A4303",
+              "id": "CF1FC21F-18AB-43DB-AFFB-A95D4BFF53F0",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "selection-end-D8B77281-0A09-465D-8C9A-FBC85A1A4303",
+              "id": "D906D804-A8B0-4182-88EE-BADCE2423A6A",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "selection-start-5485356B-2CCB-4833-89BE-D05A17A833FF",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "selection-end-5485356B-2CCB-4833-89BE-D05A17A833FF",
               "rev": 0
             }
           ]
@@ -1568,7 +2082,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "07529DB3-5B2A-4341-92A7-42C3001E343C",
+              "id": "9F7D956B-A049-4E8C-9A7B-DF15999D228D",
               "rev": 0
             }
           ]
@@ -1588,30 +2102,8 @@
           "key": "textAndAttributes",
           "verbatim": true,
           "value": [
-            [
-              "disconnected",
-              [
-                {
-                  "fontFamily": "Sans-Serif",
-                  "fontSize": 12,
-                  "fontColor": {
-                    "r": 0,
-                    "g": 0,
-                    "b": 0,
-                    "a": 1
-                  },
-                  "fontWeight": "normal",
-                  "fontStyle": "normal",
-                  "textDecoration": "none",
-                  "fixedCharacterSpacing": false,
-                  "_rev": 0
-                }
-              ]
-            ],
-            [
-              "",
-              []
-            ]
+            "disconnected",
+            null
           ]
         }
       },
@@ -1626,7 +2118,7 @@
         }
       }
     },
-    "DD2FD563-5D24-4E31-A267-8C9B28C63A75": {
+    "4A128714-FB53-48A8-8E02-105AA420D125": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1637,8 +2129,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_AFC81035_A142_4D06_B7AC_55D8FFA7FF0A",
-            "rev": 342511
+            "id": "Text_C404F760_E05D_4A43_BAB8_317D3F89E028",
+            "rev": 275311
           }
         },
         "selections": {
@@ -1646,7 +2138,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "761BD4C4-D3C5-4BB0-B21B-085454B60FC9",
+              "id": "CEA3FCCB-4A07-4E5E-A43F-A7552874E26A",
               "rev": 0
             }
           ]
@@ -1671,7 +2163,7 @@
         }
       }
     },
-    "761BD4C4-D3C5-4BB0-B21B-085454B60FC9": {
+    "CEA3FCCB-4A07-4E5E-A43F-A7552874E26A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1682,8 +2174,8 @@
           "key": "textMorph",
           "value": {
             "__ref__": true,
-            "id": "Text_AFC81035_A142_4D06_B7AC_55D8FFA7FF0A",
-            "rev": 342511
+            "id": "Text_C404F760_E05D_4A43_BAB8_317D3F89E028",
+            "rev": 275311
           }
         },
         "_goalColumn": {
@@ -1698,7 +2190,7 @@
           "key": "startAnchor",
           "value": {
             "__ref__": true,
-            "id": "1A65F491-7781-4F12-A071-CB1DB1AFAE1D",
+            "id": "8898D77A-4722-4B31-81A9-4E815CF2FE4C",
             "rev": 0
           }
         },
@@ -1706,7 +2198,7 @@
           "key": "endAnchor",
           "value": {
             "__ref__": true,
-            "id": "F30DCDEC-9F95-4837-B243-1357666ABC27",
+            "id": "CC349A47-A46C-40D1-93AE-FFA70B93A181",
             "rev": 0
           }
         },
@@ -1714,7 +2206,7 @@
           "key": "_range",
           "value": {
             "__ref__": true,
-            "id": "D1CACEB2-0E84-496F-AF7F-9170C8193CBB",
+            "id": "89AEAC7A-DDAA-468F-8AE4-6C0B46490875",
             "rev": 0
           }
         },
@@ -1725,6 +2217,10 @@
         "cursorBlinkProcess": {
           "key": "cursorBlinkProcess",
           "value": null
+        },
+        "_goalX": {
+          "key": "_goalX",
+          "value": 72.8125
         }
       },
       "lively.serializer-class-info": {
@@ -1738,7 +2234,7 @@
         }
       }
     },
-    "1A65F491-7781-4F12-A071-CB1DB1AFAE1D": {
+    "8898D77A-4722-4B31-81A9-4E815CF2FE4C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1753,7 +2249,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "50C69A4A-4FC5-45FC-A729-F2A3373D1066",
+            "id": "1ECAA7C9-9A08-4ABC-A04E-E8F6769DD6D9",
             "rev": 0
           }
         },
@@ -1773,20 +2269,20 @@
         }
       }
     },
-    "50C69A4A-4FC5-45FC-A729-F2A3373D1066": {
+    "1ECAA7C9-9A08-4ABC-A04E-E8F6769DD6D9": {
       "rev": 0,
       "props": {
-        "column": {
-          "key": "column",
-          "value": 24
-        },
         "row": {
           "key": "row",
           "value": 0
+        },
+        "column": {
+          "key": "column",
+          "value": 12
         }
       }
     },
-    "F30DCDEC-9F95-4837-B243-1357666ABC27": {
+    "CC349A47-A46C-40D1-93AE-FFA70B93A181": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1801,7 +2297,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "C3426017-A061-4568-A694-051BE895F517",
+            "id": "55B59EA0-BA53-4BD2-9013-C444A4FB2164",
             "rev": 0
           }
         },
@@ -1821,31 +2317,27 @@
         }
       }
     },
-    "C3426017-A061-4568-A694-051BE895F517": {
+    "55B59EA0-BA53-4BD2-9013-C444A4FB2164": {
       "rev": 0,
       "props": {
-        "column": {
-          "key": "column",
-          "value": 24
-        },
         "row": {
           "key": "row",
           "value": 0
+        },
+        "column": {
+          "key": "column",
+          "value": 12
         }
       }
     },
-    "D1CACEB2-0E84-496F-AF7F-9170C8193CBB": {
+    "89AEAC7A-DDAA-468F-8AE4-6C0B46490875": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "start": {
           "key": "start",
           "value": {
             "__ref__": true,
-            "id": "BF144678-E956-46F1-80BA-9A3F9D2A83D1",
+            "id": "1ECAA7C9-9A08-4ABC-A04E-E8F6769DD6D9",
             "rev": 0
           }
         },
@@ -1853,7 +2345,7 @@
           "key": "end",
           "value": {
             "__ref__": true,
-            "id": "0BEEE505-7EF8-42F1-B9BB-3F62682FB972",
+            "id": "55B59EA0-BA53-4BD2-9013-C444A4FB2164",
             "rev": 0
           }
         }
@@ -1869,50 +2361,19 @@
         }
       }
     },
-    "BF144678-E956-46F1-80BA-9A3F9D2A83D1": {
+    "E5A6EA19-19BB-4366-AA36-25354CBAD422": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "nativeCursor": {
+          "key": "nativeCursor"
         },
-        "row": {
-          "key": "row",
-          "value": 0
-        },
-        "column": {
-          "key": "column",
-          "value": 12
-        }
-      }
-    },
-    "0BEEE505-7EF8-42F1-B9BB-3F62682FB972": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "row": {
-          "key": "row",
-          "value": 0
-        },
-        "column": {
-          "key": "column",
-          "value": 12
-        }
-      }
-    },
-    "5554EF83-1C20-48D7-B648-CE281295056F": {
-      "rev": 0,
-      "props": {
         "fontFamily": {
           "key": "fontFamily",
           "value": "Sans-Serif"
         },
         "fontSize": {
           "key": "fontSize",
-          "value": 12
+          "value": 11
         },
         "fontColor": {
           "key": "fontColor",
@@ -1930,29 +2391,18 @@
           "key": "textDecoration",
           "value": "none"
         },
-        "backgroundColor": {
-          "key": "backgroundColor"
-        },
-        "fixedCharacterSpacing": {
-          "key": "fixedCharacterSpacing",
-          "value": false
-        },
         "textStyleClasses": {
           "key": "textStyleClasses"
         },
-        "link": {
-          "key": "link"
+        "backgroundColor": {
+          "key": "backgroundColor"
         },
-        "nativeCursor": {
-          "key": "nativeCursor"
-        },
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "textAlign": {
+          "key": "textAlign"
         }
       }
     },
-    "07529DB3-5B2A-4341-92A7-42C3001E343C": {
+    "9F7D956B-A049-4E8C-9A7B-DF15999D228D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1967,7 +2417,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "AFA64D34-E03C-435E-ACBC-ED7D125BBA08",
+            "id": "E9CCE274-9556-4A33-A654-CB5967906516",
             "rev": 0
           }
         },
@@ -1987,12 +2437,12 @@
         }
       }
     },
-    "AFA64D34-E03C-435E-ACBC-ED7D125BBA08": {
+    "E9CCE274-9556-4A33-A654-CB5967906516": {
       "rev": 0,
       "props": {
         "column": {
           "key": "column",
-          "value": 99
+          "value": 111
         },
         "row": {
           "key": "row",
@@ -2000,18 +2450,22 @@
         }
       }
     },
-    "selection-start-D8B77281-0A09-465D-8C9A-FBC85A1A4303": {
+    "CF1FC21F-18AB-43DB-AFFB-A95D4BFF53F0": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "id": {
           "key": "id",
-          "value": "selection-start-D8B77281-0A09-465D-8C9A-FBC85A1A4303"
+          "value": null
         },
         "position": {
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "E427B743-5A84-4414-A4E6-7FA5EC5513EC",
+            "id": "11AC0A0B-D023-4FFB-9363-841AF886BFCC",
             "rev": 0
           }
         },
@@ -2031,31 +2485,35 @@
         }
       }
     },
-    "E427B743-5A84-4414-A4E6-7FA5EC5513EC": {
+    "11AC0A0B-D023-4FFB-9363-841AF886BFCC": {
       "rev": 0,
       "props": {
-        "row": {
-          "key": "row",
-          "value": 0
-        },
         "column": {
           "key": "column",
+          "value": 12
+        },
+        "row": {
+          "key": "row",
           "value": 0
         }
       }
     },
-    "selection-end-D8B77281-0A09-465D-8C9A-FBC85A1A4303": {
+    "D906D804-A8B0-4182-88EE-BADCE2423A6A": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "id": {
           "key": "id",
-          "value": "selection-end-D8B77281-0A09-465D-8C9A-FBC85A1A4303"
+          "value": null
         },
         "position": {
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "2674C9B0-4D06-454A-9F73-A8DC267BDB83",
+            "id": "DC82A210-F603-453F-8AD7-87B3AA006857",
             "rev": 0
           }
         },
@@ -2075,25 +2533,125 @@
         }
       }
     },
-    "2674C9B0-4D06-454A-9F73-A8DC267BDB83": {
+    "DC82A210-F603-453F-8AD7-87B3AA006857": {
       "rev": 0,
       "props": {
-        "row": {
-          "key": "row",
-          "value": 0
-        },
         "column": {
           "key": "column",
+          "value": 12
+        },
+        "row": {
+          "key": "row",
           "value": 0
         }
       }
     },
-    "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9": {
-      "rev": 342596,
+    "selection-start-5485356B-2CCB-4833-89BE-D05A17A833FF": {
+      "rev": 0,
       "props": {
-        "draggable": {
-          "key": "draggable",
-          "value": false
+        "id": {
+          "key": "id",
+          "value": "selection-start-5485356B-2CCB-4833-89BE-D05A17A833FF"
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "5A192600-83AF-4E4D-AF85-E9953542E49D",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "5A192600-83AF-4E4D-AF85-E9953542E49D": {
+      "rev": 0,
+      "props": {
+        "column": {
+          "key": "column",
+          "value": 12
+        },
+        "row": {
+          "key": "row",
+          "value": 0
+        }
+      }
+    },
+    "selection-end-5485356B-2CCB-4833-89BE-D05A17A833FF": {
+      "rev": 0,
+      "props": {
+        "id": {
+          "key": "id",
+          "value": "selection-end-5485356B-2CCB-4833-89BE-D05A17A833FF"
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "35E2FDF7-A9E4-4EFA-BD58-E9CAEA95A234",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "35E2FDF7-A9E4-4EFA-BD58-E9CAEA95A234": {
+      "rev": 0,
+      "props": {
+        "column": {
+          "key": "column",
+          "value": 12
+        },
+        "row": {
+          "key": "row",
+          "value": 0
+        }
+      }
+    },
+    "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834": {
+      "rev": 3752,
+      "props": {
+        "name": {
+          "key": "name",
+          "value": "openClientButton"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.0,8.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
         "extent": {
           "key": "extent",
@@ -2103,25 +2661,15 @@
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(240,240,240)"
         },
-        "name": {
-          "key": "name",
-          "value": "openClientButton"
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "pointer"
-        },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(146.0,8.0)"
-        },
-        "scroll": {
-          "key": "scroll",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Label_507123A6_59AD_4AB3_A3F3_4BD5F8E4F33D",
+              "rev": 275317
+            }
+          ]
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -2129,16 +2677,6 @@
             "Button",
             "Morph",
             "morph"
-          ]
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Label_149CE9F2_A38F_4739_94D0_6DDFC1AAF1B3",
-              "rev": 342610
-            }
           ]
         },
         "borderColorBottom": {
@@ -2201,7 +2739,7 @@
           "key": "defaultActiveStyle",
           "value": {
             "__ref__": true,
-            "id": "1ADD4878-EE76-4120-B7DA-0AF0487C6D7E",
+            "id": "BC3894E5-188D-4EDE-BDCD-6B786CAF4BD5",
             "rev": 0
           }
         },
@@ -2209,7 +2747,7 @@
           "key": "activeStyle",
           "value": {
             "__ref__": true,
-            "id": "24359048-3E36-489D-9E70-2500DB9663DC",
+            "id": "196C3D3B-2D30-4698-AD97-7C9DA3F465FD",
             "rev": 0
           }
         },
@@ -2217,7 +2755,7 @@
           "key": "defaultInactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "8A9F458E-7FB1-486C-B0EF-DE98934C180F",
+            "id": "11140A84-7A2F-4004-8F64-EE960117CA6D",
             "rev": 0
           }
         },
@@ -2225,7 +2763,7 @@
           "key": "inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "1418B131-FA2B-44EE-B1D6-D2EAD1D291EE",
+            "id": "85DD68BB-F151-41FC-8880-9680D354CAFF",
             "rev": 0
           }
         },
@@ -2233,7 +2771,7 @@
           "key": "defaultTriggerStyle",
           "value": {
             "__ref__": true,
-            "id": "DCA806F0-D42B-4B90-B409-2E6F7E3362DD",
+            "id": "FDB75DCB-28E7-475A-9416-FBD4E2D1E163",
             "rev": 0
           }
         },
@@ -2241,7 +2779,7 @@
           "key": "triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "F2CF868A-C41A-48EA-B4C7-FA6BCFDEDFF8",
+            "id": "2BCED5A9-5074-420E-9B92-5F2601D4601A",
             "rev": 0
           }
         },
@@ -2254,42 +2792,42 @@
           "value": [
             {
               "__ref__": true,
-              "id": "50F2438E-BE0F-495F-9F63-3C334D8DE5CC",
+              "id": "3941ED1A-D74F-46ED-83BA-EBBD00E9A05B",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "70E189BA-AB22-488C-95CE-D14006935D12",
+              "id": "777FA74F-DAD2-43A6-9604-28B806FBFA56",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "970E6AAD-1F29-4498-9965-6407202B432D",
+              "id": "D8463EE6-F13B-49D4-8DA5-B4D554F37FD7",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "6AE8AC15-CA77-4DB1-AA0E-9A835C7ABA47",
+              "id": "44A7DEA4-2249-4115-8528-73981D902F77",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "E60A1008-8DE7-4E17-8CA4-F7A8D3D80536",
+              "id": "8F72B874-99D9-4874-8618-3E5CB50548C0",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "B9800873-22AF-4C33-864F-B57BA88194A0",
+              "id": "26350D06-0196-4067-8087-92253BA62E67",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "47BA8AE8-9720-402A-AC20-687159A947A3",
+              "id": "826FD751-A3EA-4848-860C-BAF2A7105F61",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "4875DBFE-CBFF-47A5-8DBF-B0B0256B8C73",
+              "id": "75651048-C4B0-49E9-B9EF-847401A4DF45",
               "rev": 0
             }
           ]
@@ -2306,17 +2844,9 @@
         }
       }
     },
-    "Label_149CE9F2_A38F_4739_94D0_6DDFC1AAF1B3": {
-      "rev": 342610,
+    "Label_507123A6_59AD_4AB3_A3F3_4BD5F8E4F33D": {
+      "rev": 275317,
       "props": {
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(58.0,14.0)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(255,255,255,0)"
-        },
         "name": {
           "key": "name",
           "value": "label"
@@ -2325,13 +2855,25 @@
           "key": "nativeCursor",
           "value": "pointer"
         },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(22.1,7.0)"
+        },
         "origin": {
           "key": "origin",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(22.1,7.0)"
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(58.0,14.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(255,255,255,0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -2341,21 +2883,11 @@
             "morph"
           ]
         },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
-        },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "value": [
-            [
-              "open client",
-              {
-                "__ref__": true,
-                "id": "12867066-69C1-4B63-9B9B-508527B196D5",
-                "rev": 0
-              }
-            ]
+            "open client",
+            null
           ]
         },
         "padding": {
@@ -2375,7 +2907,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "1C1E81BC-26AD-4E10-ACA4-A033300F32FB",
+              "id": "01FDF4E5-28C4-44DB-9FD7-17842CCDEE31",
               "rev": 0
             }
           ]
@@ -2392,16 +2924,7 @@
         }
       }
     },
-    "12867066-69C1-4B63-9B9B-508527B196D5": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        }
-      }
-    },
-    "1C1E81BC-26AD-4E10-ACA4-A033300F32FB": {
+    "01FDF4E5-28C4-44DB-9FD7-17842CCDEE31": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2420,8 +2943,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_149CE9F2_A38F_4739_94D0_6DDFC1AAF1B3",
-            "rev": 342610
+            "id": "Label_507123A6_59AD_4AB3_A3F3_4BD5F8E4F33D",
+            "rev": 275317
           }
         },
         "sourceAttrName": {
@@ -2432,8 +2955,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "targetMethodName": {
@@ -2444,7 +2967,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "08585400-F11D-4B71-AF1F-6FE10106180A",
+            "id": "90357D6B-F9D0-43A4-9F92-096E77D6D476",
             "rev": 0
           }
         },
@@ -2468,7 +2991,7 @@
         }
       }
     },
-    "08585400-F11D-4B71-AF1F-6FE10106180A": {
+    "90357D6B-F9D0-43A4-9F92-096E77D6D476": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2479,21 +3002,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_149CE9F2_A38F_4739_94D0_6DDFC1AAF1B3",
-            "rev": 342610
+            "id": "Label_507123A6_59AD_4AB3_A3F3_4BD5F8E4F33D",
+            "rev": 275317
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         }
       }
     },
-    "1ADD4878-EE76-4120-B7DA-0AF0487C6D7E": {
+    "BC3894E5-188D-4EDE-BDCD-6B786CAF4BD5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2518,7 +3041,7 @@
         }
       }
     },
-    "24359048-3E36-489D-9E70-2500DB9663DC": {
+    "196C3D3B-2D30-4698-AD97-7C9DA3F465FD": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2548,10 +3071,265 @@
         "fontFamily": {
           "key": "fontFamily",
           "value": "Sans-Serif"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "grabbable": {
+          "key": "grabbable",
+          "value": false
+        },
+        "acceptsDrops": {
+          "key": "acceptsDrops",
+          "value": true
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": false
+        },
+        "halosEnabled": {
+          "key": "halosEnabled",
+          "value": true
+        },
+        "opacity": {
+          "key": "opacity",
+          "value": 1
+        },
+        "visible": {
+          "key": "visible",
+          "value": true
+        },
+        "clipMode": {
+          "key": "clipMode",
+          "value": "visible"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Button",
+            "Morph",
+            "morph"
+          ]
+        },
+        "isLayoutable": {
+          "key": "isLayoutable",
+          "value": true
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 15
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 15
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 15
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 15
+        },
+        "borderStyleBottom": {
+          "key": "borderStyleBottom",
+          "value": "solid"
+        },
+        "borderStyleLeft": {
+          "key": "borderStyleLeft",
+          "value": "solid"
+        },
+        "borderStyleRight": {
+          "key": "borderStyleRight",
+          "value": "solid"
+        },
+        "borderStyleTop": {
+          "key": "borderStyleTop",
+          "value": "solid"
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 1
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
+        },
+        "borderLeft": {
+          "key": "borderLeft",
+          "value": {
+            "__ref__": true,
+            "id": "930FD7C5-ADD0-4234-91EE-EAF7CEBD752B",
+            "rev": 0
+          }
+        },
+        "borderRight": {
+          "key": "borderRight",
+          "value": {
+            "__ref__": true,
+            "id": "C52A0519-8E60-4950-B096-90098D1884DB",
+            "rev": 0
+          }
+        },
+        "borderBottom": {
+          "key": "borderBottom",
+          "value": {
+            "__ref__": true,
+            "id": "4E317DC8-61E3-4515-8670-9ECC600F1EE1",
+            "rev": 0
+          }
+        },
+        "borderTop": {
+          "key": "borderTop",
+          "value": {
+            "__ref__": true,
+            "id": "47334054-7D97-4F18-9382-C54851ACCE83",
+            "rev": 0
+          }
+        },
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": 1
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": 15
+        },
+        "borderStyle": {
+          "key": "borderStyle",
+          "value": "solid"
+        },
+        "border": {
+          "key": "border",
+          "value": {
+            "__ref__": true,
+            "id": "71A4ABEA-C0B2-4D0B-8017-349BC4CDD0C0",
+            "rev": 0
+          }
+        },
+        "morphClasses": {
+          "key": "morphClasses"
+        },
+        "styleRules": {
+          "key": "styleRules"
+        },
+        "fontStyle": {
+          "key": "fontStyle",
+          "value": "normal"
         }
       }
     },
-    "8A9F458E-7FB1-486C-B0EF-DE98934C180F": {
+    "930FD7C5-ADD0-4234-91EE-EAF7CEBD752B": {
+      "rev": 0,
+      "props": {
+        "style": {
+          "key": "style",
+          "value": "solid"
+        },
+        "width": {
+          "key": "width",
+          "value": 1
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        }
+      }
+    },
+    "C52A0519-8E60-4950-B096-90098D1884DB": {
+      "rev": 0,
+      "props": {
+        "style": {
+          "key": "style",
+          "value": "solid"
+        },
+        "width": {
+          "key": "width",
+          "value": 1
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        }
+      }
+    },
+    "4E317DC8-61E3-4515-8670-9ECC600F1EE1": {
+      "rev": 0,
+      "props": {
+        "style": {
+          "key": "style",
+          "value": "solid"
+        },
+        "width": {
+          "key": "width",
+          "value": 1
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        }
+      }
+    },
+    "47334054-7D97-4F18-9382-C54851ACCE83": {
+      "rev": 0,
+      "props": {
+        "style": {
+          "key": "style",
+          "value": "solid"
+        },
+        "width": {
+          "key": "width",
+          "value": 1
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        }
+      }
+    },
+    "71A4ABEA-C0B2-4D0B-8017-349BC4CDD0C0": {
+      "rev": 0,
+      "props": {
+        "style": {
+          "key": "style",
+          "value": "solid"
+        },
+        "width": {
+          "key": "width",
+          "value": 1
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        }
+      }
+    },
+    "11140A84-7A2F-4004-8F64-EE960117CA6D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2576,7 +3354,7 @@
         }
       }
     },
-    "1418B131-FA2B-44EE-B1D6-D2EAD1D291EE": {
+    "85DD68BB-F151-41FC-8880-9680D354CAFF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2609,7 +3387,7 @@
         }
       }
     },
-    "DCA806F0-D42B-4B90-B409-2E6F7E3362DD": {
+    "FDB75DCB-28E7-475A-9416-FBD4E2D1E163": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2622,7 +3400,7 @@
         }
       }
     },
-    "F2CF868A-C41A-48EA-B4C7-FA6BCFDEDFF8": {
+    "2BCED5A9-5074-420E-9B92-5F2601D4601A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2647,7 +3425,7 @@
         }
       }
     },
-    "50F2438E-BE0F-495F-9F63-3C334D8DE5CC": {
+    "3941ED1A-D74F-46ED-83BA-EBBD00E9A05B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2666,8 +3444,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "sourceAttrName": {
@@ -2678,8 +3456,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "targetMethodName": {
@@ -2690,7 +3468,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "B0DB240D-9987-4E40-B66B-CE715E91CA00",
+            "id": "CB4D5F61-8BFA-427B-98F5-647C0B181C37",
             "rev": 0
           }
         },
@@ -2714,7 +3492,7 @@
         }
       }
     },
-    "B0DB240D-9987-4E40-B66B-CE715E91CA00": {
+    "CB4D5F61-8BFA-427B-98F5-647C0B181C37": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2725,21 +3503,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         }
       }
     },
-    "70E189BA-AB22-488C-95CE-D14006935D12": {
+    "777FA74F-DAD2-43A6-9604-28B806FBFA56": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2758,8 +3536,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "sourceAttrName": {
@@ -2770,8 +3548,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "targetMethodName": {
@@ -2782,7 +3560,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "9344347B-0689-4C7B-98A9-5D32F7867839",
+            "id": "36DCFC29-E6BC-4DDD-98BF-3D656E6D58A5",
             "rev": 0
           }
         },
@@ -2806,7 +3584,7 @@
         }
       }
     },
-    "9344347B-0689-4C7B-98A9-5D32F7867839": {
+    "36DCFC29-E6BC-4DDD-98BF-3D656E6D58A5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2817,21 +3595,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         }
       }
     },
-    "970E6AAD-1F29-4498-9965-6407202B432D": {
+    "D8463EE6-F13B-49D4-8DA5-B4D554F37FD7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2850,8 +3628,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "sourceAttrName": {
@@ -2862,8 +3640,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "targetMethodName": {
@@ -2874,7 +3652,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "7ED72C42-06EA-405E-A62F-9A5AF87F8531",
+            "id": "BF95D346-8917-4DC9-A946-86B744B65E42",
             "rev": 0
           }
         },
@@ -2898,7 +3676,7 @@
         }
       }
     },
-    "7ED72C42-06EA-405E-A62F-9A5AF87F8531": {
+    "BF95D346-8917-4DC9-A946-86B744B65E42": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2909,21 +3687,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         }
       }
     },
-    "6AE8AC15-CA77-4DB1-AA0E-9A835C7ABA47": {
+    "44A7DEA4-2249-4115-8528-73981D902F77": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2942,8 +3720,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "sourceAttrName": {
@@ -2954,8 +3732,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "targetMethodName": {
@@ -2966,7 +3744,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "306F4F10-7446-4770-980E-8955125F57F0",
+            "id": "648AFA70-277B-4767-B9AB-680CBBD26557",
             "rev": 0
           }
         },
@@ -2990,7 +3768,7 @@
         }
       }
     },
-    "306F4F10-7446-4770-980E-8955125F57F0": {
+    "648AFA70-277B-4767-B9AB-680CBBD26557": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3001,21 +3779,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         }
       }
     },
-    "E60A1008-8DE7-4E17-8CA4-F7A8D3D80536": {
+    "8F72B874-99D9-4874-8618-3E5CB50548C0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3034,8 +3812,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "sourceAttrName": {
@@ -3046,8 +3824,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "targetMethodName": {
@@ -3058,7 +3836,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "8D66FA33-2BFF-49F9-B07D-2FA7FF02D726",
+            "id": "60939064-F2CB-4C9F-ACD6-E964FCA1E6AE",
             "rev": 0
           }
         },
@@ -3082,7 +3860,7 @@
         }
       }
     },
-    "8D66FA33-2BFF-49F9-B07D-2FA7FF02D726": {
+    "60939064-F2CB-4C9F-ACD6-E964FCA1E6AE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3093,21 +3871,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         }
       }
     },
-    "B9800873-22AF-4C33-864F-B57BA88194A0": {
+    "26350D06-0196-4067-8087-92253BA62E67": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3126,8 +3904,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "sourceAttrName": {
@@ -3138,8 +3916,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "targetMethodName": {
@@ -3150,7 +3928,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "01866143-E656-4EEB-B9E8-23143ED47C02",
+            "id": "D5D55E19-1ADE-44E6-A91D-83249E686B39",
             "rev": 0
           }
         },
@@ -3174,7 +3952,7 @@
         }
       }
     },
-    "01866143-E656-4EEB-B9E8-23143ED47C02": {
+    "D5D55E19-1ADE-44E6-A91D-83249E686B39": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3185,21 +3963,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         }
       }
     },
-    "47BA8AE8-9720-402A-AC20-687159A947A3": {
+    "826FD751-A3EA-4848-860C-BAF2A7105F61": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3218,8 +3996,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "sourceAttrName": {
@@ -3230,8 +4008,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "targetMethodName": {
@@ -3242,7 +4020,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "B6670FF3-C0CD-44A5-8759-BF678B0B28B8",
+            "id": "92E7F4AE-018C-41F8-90E1-F38F0A322C8D",
             "rev": 0
           }
         },
@@ -3266,7 +4044,7 @@
         }
       }
     },
-    "B6670FF3-C0CD-44A5-8759-BF678B0B28B8": {
+    "92E7F4AE-018C-41F8-90E1-F38F0A322C8D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3277,21 +4055,21 @@
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         }
       }
     },
-    "4875DBFE-CBFF-47A5-8DBF-B0B0256B8C73": {
+    "75651048-C4B0-49E9-B9EF-847401A4DF45": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3310,8 +4088,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "sourceAttrName": {
@@ -3322,8 +4100,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "Rectangle_49F5B1D6_2C86_4988_8B63_B069B00D5649",
-            "rev": 342605
+            "id": "Rectangle_638506A8_84CB_4B30_8270_7C15B5A32C29",
+            "rev": 247003
           }
         },
         "targetMethodName": {
@@ -3334,7 +4112,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "B98F6A95-F058-473F-8104-307D6905DD2C",
+            "id": "D7E4F555-35D2-4B01-B8B2-8A8199370231",
             "rev": 0
           }
         },
@@ -3358,28 +4136,155 @@
         }
       }
     },
-    "B98F6A95-F058-473F-8104-307D6905DD2C": {
+    "D7E4F555-35D2-4B01-B8B2-8A8199370231": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Button_B9AEE1C3_431C_411C_B0FF_0452EF6EF2A9",
-            "rev": 342596
+            "id": "Button_2775EDB7_F866_44AF_A138_A61FF4F5C834",
+            "rev": 3752
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "Rectangle_49F5B1D6_2C86_4988_8B63_B069B00D5649",
-            "rev": 342605
+            "id": "Rectangle_638506A8_84CB_4B30_8270_7C15B5A32C29",
+            "rev": 247003
           }
+        }
+      }
+    },
+    "CheckBox_CC676C44_3C87_4876_AD32_59F123C5A4BC": {
+      "rev": 244582,
+      "props": {
+        "name": {
+          "key": "name",
+          "value": "debug-checkbox"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(41.1,39.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(14.0,17.0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "CheckBox",
+            "Morph",
+            "morph"
+          ]
+        },
+        "checked": {
+          "key": "checked",
+          "value": true
+        },
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "CheckBox",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "components/widgets.js"
+        }
+      }
+    },
+    "Label_9A65C392_2C2A_41D8_8235_FF781ADB520E": {
+      "rev": 207521,
+      "props": {
+        "name": {
+          "key": "name",
+          "value": "label"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(60.5,38.5)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(38.9,16.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(255,255,255,0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "debug",
+            null
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 14
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(64,64,64)"
+        },
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Label",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/label.js"
         }
       }
     }
@@ -3389,9 +4294,9 @@
     "local://lively-object-modules/": {
       "AA1DACAC-8241-455B-9259-655D545ED7CE": {
         "package.json": "{\n  \"name\": \"AA1DACAC-8241-455B-9259-655D545ED7CE\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
-        "index.js": "import { Morph } from \"lively.morphic\";\nimport Master from \"lively.mirror/master.js\";\nimport L2LClient from \"lively.2lively/client.js\";\nimport { connect, disconnect } from \"lively.bindings/index.js\";\nimport { promise } from \"lively.lang/index.js\";\n\nexport default class Rectangle extends Morph {\n\n  async reset() {\n    this.stopStepping();\n    if (this.mirrorMaster) {\n      try {\n        await this.mirrorMaster.disconnect()\n      } catch (e) { $world.logError(e); }\n    }\n    this.mirrorMaster = null;\n    this.get(\"statusLabel\").textString = \"disconnected\";\n    this.get(\"openClientButton\").label = \"open client\";\n    this.get(\"connectButton\").label = \"connect...\";\n    disconnect(this.get(\"connectButton\"), 'fire', this, 'reset');\n    connect(this.get(\"connectButton\"), 'fire', this, 'interactivelyConnectToMirrorClient');\n    connect(this.get(\"openClientButton\"), 'fire', this, 'openClientBrowserWindow');\n  }\n\n  async interactivelyConnectToMirrorClient() {\n    // await l2lClient.register()\n\n    if (this.mirrorMaster) await this.reset();\n\n    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n    // 1. select a l2l connection for the client\n    var clients = await this.findMirrorClients(),\n        {selected: [clientL2lId]} = await $world.listPrompt(\"select client id\", clients, {requester: this});\n\n    if (!clientL2lId) return this.reset();\n\n    // 2. initialize the master\n    var masterId = \"default-mirror-master\",\n        clientId = \"__default__\";\n    this.mirrorMaster = Master.createInstance(masterId, $world, null, clientId);\n    await this.mirrorMaster.l2lSetup(clientL2lId);\n\n    // 3. Updae the ui\n    this.get(\"statusLabel\").textString = \"connected to \" + clientL2lId;\n    this.get(\"connectButton\").label = \"disconnect\";\n    connect(this.get(\"connectButton\"), 'fire', this, 'reset');\n    disconnect(this.get(\"connectButton\"), 'fire', this, 'interactivelyConnectToMirrorClient');\n    await promise.delay(500);\n\n    // 4. start send process\n    this.startStepping(100, \"triggerMirrorUpdate\");\n  }\n\n  openClientBrowserWindow() {\n    window.open(`${document.location.origin}/mirror.html`, \"_blank\")\n  }\n\n  async findMirrorClients() {\n    var l2lClient = L2LClient.default(),\n        {data: clients} = await l2lClient.sendToAndWait(l2lClient.trackerId, \"getClients\", {}),\n        m = new Map(clients),\n        otherClients = []\n\n    for (let [key, val] of m)\n      if (key !== l2lClient.id)\n        otherClients.push(key);\n\n    return otherClients;\n  }\n\n  async triggerMirrorUpdate() {\n    if (!this.mirrorMaster || this.mirrorMaster.sendInProgress) return;\n    try {\n      var answer = await this.mirrorMaster.sendUpdate();\n      if (!answer) return; // no changes happened / were send;\n      this.get(\"statusLabel\").textString = JSON.stringify(answer.data);\n    } catch (e) { $world.logError(e); }\n  }\n\n}\n\n"
+        "index.js": "import { Morph } from \"lively.morphic\";\nimport Master from \"lively.mirror/master.js\";\nimport L2LClient from \"lively.2lively/client.js\";\nimport { connect, disconnect } from \"lively.bindings/index.js\";\nimport { promise } from \"lively.lang/index.js\";\n\nexport default class Rectangle extends Morph {\n\n  get debug() {\n    return this.getSubmorphNamed(\"debug-checkbox\").checked\n  }\n\n  async reset() {\n    this.stopStepping();\n    if (this.mirrorMaster) {\n      try {\n        await this.mirrorMaster.disconnect()\n      } catch (e) { $world.logError(e); }\n    }\n    this.mirrorMaster = null;\n    this.get(\"statusLabel\").textString = \"disconnected\";\n    this.get(\"openClientButton\").label = \"open client\";\n    this.get(\"connectButton\").label = \"connect...\";\n    disconnect(this.get(\"connectButton\"), 'fire', this, 'reset');\n    connect(this.get(\"connectButton\"), 'fire', this, 'interactivelyConnectToMirrorClient');\n    connect(this.get(\"openClientButton\"), 'fire', this, 'openClientBrowserWindow');\n  }\n\n  async interactivelyConnectToMirrorClient() {\n    // await l2lClient.register()\n\n    if (this.mirrorMaster) await this.reset();\n\n    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n    // 1. select a l2l connection for the client\n    var clients = await this.findMirrorClients(),\n        {selected: [clientL2lId]} = await $world.listPrompt(\"select client id\", clients, {requester: this});\n\n    if (!clientL2lId) return this.reset();\n\n    // 2. initialize the master\n    var masterId = \"default-mirror-master\",\n        clientId = \"__default__\";\n    this.mirrorMaster = Master.createInstance(masterId, $world, null, clientId);\n    await this.mirrorMaster.l2lSetup(clientL2lId);\n\n    // 3. Updae the ui\n    this.get(\"statusLabel\").textString = \"connected to \" + clientL2lId;\n    this.get(\"connectButton\").label = \"disconnect\";\n    connect(this.get(\"connectButton\"), 'fire', this, 'reset');\n    disconnect(this.get(\"connectButton\"), 'fire', this, 'interactivelyConnectToMirrorClient');\n    await promise.delay(500);\n\n    // 4. start send process\n    this.startStepping(0, \"triggerMirrorUpdate\");\n  }\n\n  openClientBrowserWindow() {\n    window.open(`${document.location.origin}/mirror.html`, \"_blank\")\n  }\n\n  async findMirrorClients() {\n    var l2lClient = L2LClient.default(),\n        {data: clients} = await l2lClient.sendToAndWait(l2lClient.trackerId, \"getClients\", {}),\n        m = new Map(clients),\n        otherClients = []\n\n    for (let [key, val] of m)\n      if (key !== l2lClient.id)\n        otherClients.push(key);\n\n    return otherClients;\n  }\n\n  async triggerMirrorUpdate() {\n    if (!this.mirrorMaster || this.mirrorMaster.sendInProgress) return;\n    let debug = this.debug;\n    this.mirrorMaster.debug = debug;\n    try {\n      var answer = await this.mirrorMaster.sendUpdate();\n      if (!answer) return; // no changes happened / were send;\n      let report = JSON.stringify(answer.data);\n      if (debug) {\n        let {\n          serializationStartTime: t1,\n          serializationEndTime: t2,\n          netEndTime: t3,\n          lastSendSize\n        } = this.mirrorMaster;\n        lastSendSize = lively.lang.num.humanReadableByteSize(lastSendSize);\n        report = `serialization: ${t2-t1}ms net: ${t3-t2}ms size: ${lastSendSize}\\n${report}`;\n      }\n      this.get(\"statusLabel\").textString = report;\n    } catch (e) { $world.logError(e); }\n  }\n\n}\n\n"
       }
     }
   },
-  "preview": "data:image/png;base64,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"
+  "preview": "data:image/png;base64,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"
 }
