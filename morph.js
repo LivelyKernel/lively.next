@@ -72,6 +72,81 @@ export class Morph {
       position:           {defaultValue: pt(0,0)},
       origin:             {defaultValue: pt(0,0)},
       extent:             {defaultValue: pt(10, 10)},
+      width: {
+        derived: true,
+        get()         { return this.extent.x; },
+        set(v)        { return this.extent = pt(v, this.extent.y); }
+      },
+      height: {
+        derived: true,
+        get()        { return this.extent.y; },
+        set(v)       { return this.extent = pt(this.extent.x, v); }
+      },
+      left: {
+        derived: true,
+        get()          { return this.bounds().left(); },
+        set(v)         { return this.moveBy(pt(v - this.left), 0); }
+      },
+      right: {
+        derived: true,
+        get()         { return this.bounds().right(); },
+        set(v)        { return this.moveBy(pt(v - this.right), 0); }
+      },
+      top: {
+        derived: true,
+        get()           { return this.bounds().top(); },
+        set(v)          { return this.moveBy(pt(0, v - this.top)); }
+      },
+      bottom: {
+        derived: true,
+        get()        { return this.bounds().bottom(); },
+        set(v)       { return this.moveBy(pt(0, v - this.bottom)); }
+      },
+      center: {
+        derived: true,
+        get()        { return this.bounds().center(); },
+        set(v)       { return this.align(this.center, v); }
+      },
+      topLeft: {
+        derived: true,
+        get()       { return this.bounds().topLeft(); },
+        set(v)      { return this.align(this.topLeft, v); }
+      },
+      topRight: {
+        derived: true,
+        get()      { return this.bounds().topRight(); },
+        set(v)     { return this.align(this.topRight, v); }
+      },
+      bottomRight: {
+        derived: true,
+        get()   { return this.bounds().bottomRight(); },
+        set(v)  { return this.align(this.bottomRight, v); }  
+      },
+      bottomLeft: {
+        derived: true,
+        get()    { return this.bounds().bottomLeft(); },
+        set(v)   { return this.align(this.bottomLeft, v); } 
+      },
+      bottomCenter: {
+        derived: true,
+        get()  { return this.bounds().bottomCenter(); },
+        set(v) { return this.align(this.bottomCenter, v); }
+      },
+      topCenter: {
+        derived: true,
+        get()     { return this.bounds().topCenter(); },
+        set(v)    { return this.align(this.topCenter, v); }
+      },
+      leftCenter: {
+        derived: true,
+          get()    { return this.bounds().leftCenter(); },
+          set(v)   { return this.align(this.leftCenter, v); }
+      },
+      rightCenter: {
+        derived: true,
+        get()   { return this.bounds().rightCenter(); },
+        set(v)  { return this.align(this.rightCenter, v); }
+      },
       rotation:           {defaultValue:  0},
       scale:              {defaultValue:  1},
       opacity:            {isStyleProp: true, defaultValue: 1},
@@ -271,10 +346,9 @@ export class Morph {
         }
       },
 
-      morphClasses: {isStyleProp: true}, //2017-01-31 rk: What is this????
-
       styleRules: {
         isStyleProp: true,
+        after: ['submorphs'],
         set(rules) {
           this.setProperty("styleRules", rules);
           if (rules) rules.applyToAll(this);
@@ -692,39 +766,6 @@ export class Morph {
   rotateBy(delta) { this.rotation += delta; }
   resizeBy(delta) { this.extent = this.extent.addPt(delta); }
   snap(grid) { this.position = this.position.roundTo(grid || 1); }
-
-  get width()         { return this.extent.x; }
-  set width(v)        { return this.extent = pt(v, this.extent.y); }
-  get height()        { return this.extent.y; }
-  set height(v)       { return this.extent = pt(this.extent.x, v); }
-
-  get left()          { return this.bounds().left(); }
-  set left(v)         { return this.moveBy(pt(v - this.left), 0); }
-  get right()         { return this.bounds().right(); }
-  set right(v)        { return this.moveBy(pt(v - this.right), 0); }
-  get top()           { return this.bounds().top(); }
-  set top(v)          { return this.moveBy(pt(0, v - this.top)); }
-  get bottom()        { return this.bounds().bottom(); }
-  set bottom(v)       { return this.moveBy(pt(0, v - this.bottom)); }
-
-  get center()        { return this.bounds().center(); }
-  set center(v)       { return this.align(this.center, v); }
-  get topLeft()       { return this.bounds().topLeft(); }
-  set topLeft(v)      { return this.align(this.topLeft, v); }
-  get topRight()      { return this.bounds().topRight(); }
-  set topRight(v)     { return this.align(this.topRight, v); }
-  get bottomRight()   { return this.bounds().bottomRight(); }
-  set bottomRight(v)  { return this.align(this.bottomRight, v); }
-  get bottomLeft()    { return this.bounds().bottomLeft(); }
-  set bottomLeft(v)   { return this.align(this.bottomLeft, v); }
-  get bottomCenter()  { return this.bounds().bottomCenter(); }
-  set bottomCenter(v) { return this.align(this.bottomCenter, v); }
-  get topCenter()     { return this.bounds().topCenter(); }
-  set topCenter(v)    { return this.align(this.topCenter, v); }
-  get leftCenter()    { return this.bounds().leftCenter(); }
-  set leftCenter(v)   { return this.align(this.leftCenter, v); }
-  get rightCenter()   { return this.bounds().rightCenter(); }
-  set rightCenter(v)  { return this.align(this.rightCenter, v); }
 
   get isEpiMorph() { /*transient "meta" morph*/ return this.getProperty("epiMorph"); }
 
