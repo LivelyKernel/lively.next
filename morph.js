@@ -31,18 +31,26 @@ export class Morph {
   static get properties() {
     return {
 
-      clipMode: {
-        isStyleProp: true,
-        defaultValue: "visible",
-        set(value) {
-          this.setProperty("clipMode", value);
-          if (!this.isClip()) this.scroll = pt(0, 0);
+      name: {
+        initialize() {
+          let className = this.constructor.name;
+          this.name = (string.startsWithVowel(className) ? "an" : "a") + className;
         }
       },
 
-      draggable:          {isStyleProp: true, defaultValue: true},
-      acceptsDrops:       {isStyleProp: true, defaultValue: true},
+      draggable: {isStyleProp: true, defaultValue: true},
+      grabbable: {
+        isStyleProp: true,
+        defaultValue: false,
+        set(bool) {
+          // Since grabbing is implemented via dragging we also need to make
+          // this morph draggable
+          if (bool && !this.draggable) this.draggable = true;
+          this.setProperty("grabbable", bool);
+        }
+      },
 
+      acceptsDrops: {isStyleProp: true, defaultValue: true},
       dropShadow: {
         isStyleProp: true,
         defaultValue: false,
@@ -55,59 +63,20 @@ export class Morph {
         }
       },
 
-      epiMorph:           {defaultValue: false},
-      extent:             {defaultValue: pt(10, 10)},
-      fill:               {isStyleProp: true, defaultValue: Color.white},
+      tooltip:            {defaultValue: null},
       focusable:          {defaultValue: true},
-      grabbable:          {isStyleProp: true, defaultValue: false},
-      halosEnabled:       {isStyleProp: true, defaultValue: !!config.halosEnabled},
-      isLayoutable:       {isStyleProp: true, defaultValue: true},
-
-      name: {
-        initialize() {
-          let className = this.constructor.name;
-          this.name = (string.startsWithVowel(className) ? "an" : "a") + className;
-        }
-      },
-
       nativeCursor:       {isStyleProp: true, defaultValue: "auto"},
-      opacity:            {isStyleProp: true, defaultValue: 1},
-      origin:             {defaultValue: pt(0,0)},
-      position:           {defaultValue: pt(0,0)},
+      halosEnabled:       {isStyleProp: true, defaultValue: !!config.halosEnabled},
       reactsToPointer:    {defaultValue: true},
+
+      position:           {defaultValue: pt(0,0)},
+      origin:             {defaultValue: pt(0,0)},
+      extent:             {defaultValue: pt(10, 10)},
       rotation:           {defaultValue:  0},
       scale:              {defaultValue:  1},
-
-      scroll: {
-        defaultValue: pt(0, 0),
-        set({x, y}) {
-          if (!this.isClip()) return;
-          var {x: maxScrollX, y: maxScrollY} = this.scrollExtent.subPt(this.extent);
-          x = Math.max(0, Math.min(maxScrollX, x));
-          y = Math.max(0, Math.min(maxScrollY, y));
-          this.setProperty("scroll", pt(x, y));
-          this.makeDirty();
-        }
-      },
-      styleClasses: {
-        isStyleProp: true,
-        defaultValue: ["morph"],
-        get() {
-          return this.constructor.styleClasses.concat(this.getProperty("styleClasses"));
-        },
-        set(value) {
-          this.setProperty("styleClasses", arr.withoutAll(value, this.constructor.styleClasses));
-        }
-      },
-      tooltip:            {defaultValue: null},
+      opacity:            {isStyleProp: true, defaultValue: 1},
+      fill:               {isStyleProp: true, defaultValue: Color.white},
       visible:            {isStyleProp: true, defaultValue: true},
-      layout: {
-        after: ["submorphs", "extent", "origin", "position", "isLayoutable"],
-        set(value) {
-          if (value) value.container = this;
-          this.setProperty("layout", value);
-        }
-      },
 
       submorphs: {
         defaultValue: [],
@@ -125,6 +94,47 @@ export class Morph {
         }
       },
 
+      clipMode: {
+        isStyleProp: true,
+        defaultValue: "visible",
+        set(value) {
+          this.setProperty("clipMode", value);
+          if (!this.isClip()) this.scroll = pt(0, 0);
+        }
+      },
+
+      scroll: {
+        defaultValue: pt(0, 0),
+        set({x, y}) {
+          if (!this.isClip()) return;
+          var {x: maxScrollX, y: maxScrollY} = this.scrollExtent.subPt(this.extent);
+          x = Math.max(0, Math.min(maxScrollX, x));
+          y = Math.max(0, Math.min(maxScrollY, y));
+          this.setProperty("scroll", pt(x, y));
+          this.makeDirty();
+        }
+      },
+
+      styleClasses: {
+        isStyleProp: true,
+        defaultValue: ["morph"],
+        get() {
+          return this.constructor.styleClasses.concat(this.getProperty("styleClasses"));
+        },
+        set(value) {
+          this.setProperty("styleClasses", arr.withoutAll(value, this.constructor.styleClasses));
+        }
+      },
+
+      layout: {
+        after: ["submorphs", "extent", "origin", "position", "isLayoutable"],
+        set(value) {
+          if (value) value.container = this;
+          this.setProperty("layout", value);
+        }
+      },
+      isLayoutable: {isStyleProp: true, defaultValue: true},
+
       borderColorBottom:  {isStyleProp: true, defaultValue: Color.white},
       borderColorLeft:    {isStyleProp: true, defaultValue: Color.white},
       borderColorRight:   {isStyleProp: true, defaultValue: Color.white},
@@ -141,7 +151,6 @@ export class Morph {
       borderWidthLeft:    {isStyleProp: true, defaultValue: 0},
       borderWidthRight:   {isStyleProp: true, defaultValue: 0},
       borderWidthTop:     {isStyleProp: true, defaultValue: 0},
-
 
       borderLeft: {
         isStyleProp: true,
@@ -194,7 +203,6 @@ export class Morph {
           if ("radius" in x) this.borderRadiusTop = x.radius;
         }
       },
-
 
       borderWidth: {
         isStyleProp: true,
@@ -295,6 +303,11 @@ export class Morph {
           }
           return style;
         }
+      },
+    
+      epiMorph: {
+        doc: "epi morphs are 'transient' morphs, i.e. meta objects that should not be serialized like halo items, menus, etc.",
+        defaultValue: false
       }
     }
   }
@@ -1405,7 +1418,13 @@ export class Morph {
   }
 
   onDrop(evt) {
+    // called when `this` is choosen as a drop target, double dispatches the
+    // drop back to the hand but can be overriden to handle drops differently
     evt.hand.dropMorphsOn(this);
+  }
+
+  onBeingDroppedOn(recipient) {
+    // called when `this` was dropped onto morph `recipient`
   }
 
   onHoverIn(evt) {}

@@ -1408,9 +1408,17 @@ export class Hand extends Morph {
 
   dropMorphsOn(dropTarget) {
     this.grabbedMorphs.forEach(morph => {
-      dropTarget.addMorph(morph);
-      Object.assign(morph, this.prevMorphProps.get(morph));
-      signal(this, "drop", morph);
+      try {
+        dropTarget.addMorph(morph);      
+        Object.assign(morph, this.prevMorphProps.get(morph));
+        signal(this, "drop", morph);
+        morph.onBeingDroppedOn(dropTarget);
+      } catch (err) {
+        console.error(err);
+        this.world().showError(`Error dropping ${morph} onto ${dropTarget}:\n${err.stack}`);
+        if (morph.owner !== dropTarget)
+          this.world.addMorph(dropTarget);
+      }
     });
   }
 
