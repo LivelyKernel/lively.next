@@ -17,7 +17,6 @@ B-Tree related data.  Consider those to be "private".
 */
 
 import { arr, num, string } from "lively.lang";
-import { printTree } from "lively.lang/text-graphics.js";
 
 import {
   lessEqPosition,
@@ -713,7 +712,7 @@ class InnerTreeNode extends TreeNode {
     var {isLeaf, size, stringSize, width, height, children} = this,
         name = optName ? optName : isLeaf ? "leaf" : "node",
         indent = " ".repeat(depth),
-        printed = `${indent}${name} (size: ${size}, ${width}x${height}, stringSize: ${stringSize})`;
+        printed = `${indent}${name} (size: ${size} width: ${Math.round(width)} height: ${Math.round(height)} text length: ${stringSize})`;
 
     if (children.length) {
       var childrenPrinted = "",
@@ -892,8 +891,8 @@ export class Line extends TreeNode {
 
   print(index = 0, depth = 0) {
     let indent = " ".repeat(depth),
-        {width, height, stringSize, _text} = this;
-    return `${indent}line ${index} (${width}x${height}, stringSize: ${stringSize}, text: ${JSON.stringify(_text)})`
+        {width, height, stringSize, textAndAttributes} = this;
+    return `${indent}line ${index} (size: 1 width: ${Math.round(width)} height: ${Math.round(height)} text length: ${stringSize} content: ${JSON.stringify(textAndAttributes)})`;
   }
 
   toString() {
@@ -1631,6 +1630,15 @@ export default class Document {
   print() { return this.root.print(0, 0, "root"); }
 
   print2() {
+    // FIXME don't want to load the dependency by default...
+    let url = System.decanonicalize("lively.lang/text-graphics.js");
+    let { printTree } = System.get(url) || {};
+    if (!printTree) {
+      lively.module.module(url).load()
+        .then(() => console.log("lively.lang/text-graphics.js loaded"))
+        .catch(err => console.error(err));
+      return "Loading lively.lang/text-graphics.js lib, please try again later :P";
+    }
     return printTree(this.root,
       (node) => node.toString(),
       (node) => node.children,
