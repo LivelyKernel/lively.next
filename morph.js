@@ -983,6 +983,15 @@ export class Morph {
     return this;
   }
 
+  openInHand(hand) {
+    if (!hand) {
+      var world = this.world() || this.env.world;
+      hand = world.firstHand;
+    }
+    hand.grab(this);
+    this.center = pt(0,0);
+  }
+
   openInWindow(opts = {title: this.name, name: "window for " + this.name, world: null}) {
     var world = opts.world || this.world() || this.env.world;
     return world.openInWindow(this, obj.dissoc(opts, ["world"]));
