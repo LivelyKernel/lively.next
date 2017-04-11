@@ -219,7 +219,8 @@ export function splitTextAndAttributesIntoLines(textAndAttributes, nl = "\n") {
       let lineSplit = text.indexOf(nl);
       if (lineSplit === -1) { attrsSoFar.push(text, attr); break; }
 
-      attrsSoFar.push(text.slice(0, lineSplit), attr);
+      if (lineSplit > 0)
+        attrsSoFar.push(text.slice(0, lineSplit), attr);
       lines.push(attrsSoFar)
 
       text = text.slice(lineSplit+1/*newlinelength!*/);
