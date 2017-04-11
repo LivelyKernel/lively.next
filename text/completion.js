@@ -13,7 +13,7 @@ export class WordCompleter {
   compute(textMorph, prefix) {
     var words = [],
         completions = [],
-        lines = textMorph.document.lines,
+        lines = textMorph.document.lineStrings,
         row = textMorph.cursorPosition.row,
         basePriority = 1000;
 
@@ -109,7 +109,7 @@ export class CompletionController {
         prefix = this.prefix(),
         {items, maxCol} = await this.computeCompletions(prefix),
         charBounds = m.env.fontMetric.sizeFor(fontFamily, fontSize, "M"),
-        minWidth = 80,
+        minWidth = 120,
         textWidth = charBounds.width*maxCol,
         width = Math.max(minWidth, textWidth < m.width ? textWidth : m.width),
         minHeight = 70, maxHeight = 700,
@@ -125,6 +125,11 @@ export class CompletionController {
         let delta = bounds.bottom() - visibleBounds.bottom();
         if (delta > bounds.height-50) delta = bounds.height-50;
         bounds.height -= delta;
+      }
+      if (bounds.right() > visibleBounds.right()) {
+        let delta = bounds.right() - visibleBounds.right();
+        if (bounds.width-delta < minWidth) bounds.width = minWidth;
+        else bounds.width -= delta;
       }
       if (!visibleBounds.containsRect(bounds))
         bounds = bounds.withTopLeft(visibleBounds.translateForInclusion(bounds).topLeft());
@@ -171,7 +176,7 @@ export class CompletionController {
   async openCompletionList() {
     let spec = await this.completionListSpec(),
         menu = new FilterableList(spec),
-        input = menu.get("input"),
+        input = menu.inputMorph,
         prefix = spec.input;
     connect(menu, "accepted", this, "insertCompletion", {
       updater: function($upd) {
@@ -183,7 +188,7 @@ export class CompletionController {
           textToInsert = completion.completion;
           customInsertionFn = completion.customInsertionFn;
         } else {
-          textToInsert = this.sourceObj.get("input").textString;
+          textToInsert = this.sourceObj.inputMorph.textString;
         }
         $upd(textToInsert, prefix, customInsertionFn);
       }, varMapping: {prefix}});
@@ -196,11 +201,12 @@ export class CompletionController {
 
     menu.selectedIndex = 0;
     if (prefix.length) {
-      menu.get("input").gotoDocumentEnd();
-      menu.moveBy(pt(-menu.get("input").textBounds().width, 0))
+      menu.inputMorph.gotoDocumentEnd();
+      menu.moveBy(pt(-menu.inputMorph.textBounds().width, 0));
     }
-    menu.get("list").dropShadow = true;
-    menu.get("list").fill = Color.white.withA(.85);
+    
+    menu.listMorph.dropShadow = true;
+    menu.listMorph.fill = Color.white.withA(.85);
     input.fill = Color.transparent;
     input.defaultTextStyle = {backgroundColor: this.textMorph.fill};
     input.focus();

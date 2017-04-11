@@ -75,7 +75,7 @@ export default class LoadingIndicator extends Morph {
 
             {
               type: "button", name: "closeButton",
-              label: [Icon.textAttribute('times')],
+              label: Icon.textAttribute('times'),
               fontFamily: 'FontAwesome',
               fontColor: Color.white,
               activeStyle: {

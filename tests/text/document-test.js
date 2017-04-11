@@ -1,9 +1,287 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
-import TextDocument from "../../text/document.js";
-import { Range } from "../../text/range.js";
-import { lessPosition, lessEqPosition, eqPosition } from "../../text/position.js";
-import { TextAttribute, TextStyleAttribute } from "../../text/attribute.js";
 import { expect } from "mocha-es6";
+import Document, { Line } from "../../text/document.js";
+import { arr } from "lively.lang";
+
+var opts = {maxLeafSize: 3, minLeafSize: 2, maxNodeSize: 5, minNodeSize: 2};
+
+describe("lines", () => {
+
+  it("have text and properties", () => {
+    let l = new Line({
+      parent: {},
+      width: 0,
+      height: 10,
+      textAndAttributes: ["th", null, "is", {foo: 23}, " is", null, " a ", {bar: 24}, "test", null]
+    });
+    expect(l.height).equals(10);
+    expect(l.text).equals("this is a test");
+    expect(l.textAttributes).deep.equals([{foo: 23}, {bar: 24}]);
+    expect(l.textAndAttributes).deep.equals([
+      "th", null,
+      "is", {foo: 23},
+      " is", null,
+      " a ", {bar: 24},
+      "test", null]);
+  });
+
+});
+
+describe("document as text tree", () => {
+
+  it("finds lines by row", () => {
+    var doc = new Document([{text: "a", height: 10}, {text: "b", height: 20}, {text: "c", height: 5}, {text: "d", height: 15}]);
+    doc.consistencyCheck();
+
+    var lines = [0,1,2,3].map(n => doc.root.findRow(n));
+    expect().assert(lines[0], "line 0 not found");
+    expect().assert(lines[1], "line 1 not found");
+    expect().assert(lines[2], "line 2 not found");
+    expect().assert(lines[3], "line 3 not found");
+    expect(lines[0]).containSubset({text: "a", height: 10});
+    expect(lines[1]).containSubset({text: "b", height: 20});
+    expect(lines[2]).containSubset({text: "c", height: 5});
+    expect(lines[3]).containSubset({text: "d", height: 15});
+
+    expect(lines[0].parent).equals(doc.root.children[0], "parent line 0");
+    expect(lines[1].parent).equals(doc.root.children[0], "parent line 1");
+    expect(lines[2].parent).equals(doc.root.children[1], "parent line 2");
+    expect(lines[3].parent).equals(doc.root.children[1], "parent line 3");
+
+    expect(doc.root.children[0].height).equals(30, "height parent[0]");
+    expect(doc.root.children[1].height).equals(20, "height parent[1]");
+    expect(doc.root.height).equals(50, "height root");
+
+    expect(doc.stringSize).equals(7, "doc.stringSize");
+    expect(doc.textString.length).equals(7, "doc.textString.length");
+    expect(doc.root.children[0].stringSize).equals(4, "stringSize parent[0]");
+    expect(doc.root.children[1].stringSize).equals(4, "stringSize parent[1]");
+    expect(doc.root.stringSize).equals(8, "stringSize root");
+
+    expect(lines[0].row).equals(0);
+    expect(lines[1].row).equals(1);
+    expect(lines[2].row).equals(2);
+    expect(lines[3].row).equals(3);
+
+    expect(doc.lines).equals(lines);
+  });
+
+  it("balances leaf nodes", () => {
+    var doc = new Document(["a", "b", "c", "d"], opts);
+    doc.balance();
+    expect(doc.print()).equals(
+      `root (size: 4 width: 0 height: 0 text length: 8)\n`
+    + ` leaf (size: 2 width: 0 height: 0 text length: 4)\n`
+    + `  line 0 (size: 1 width: 0 height: 0 text length: 2 content: ["a",null])\n`
+    + `  line 1 (size: 1 width: 0 height: 0 text length: 2 content: ["b",null])\n`
+    + ` leaf (size: 2 width: 0 height: 0 text length: 4)\n`
+    + `  line 2 (size: 1 width: 0 height: 0 text length: 2 content: ["c",null])\n`
+    + `  line 3 (size: 1 width: 0 height: 0 text length: 2 content: ["d",null])`);
+  });
+
+  describe("insertion", () => {
+
+    it("appends", () => {
+      var doc = new Document();
+      doc.insertLine("hello world");
+      expect(doc.print()).equals(
+        `root (size: 1 width: 0 height: 0 text length: 12)\n`
+     + ` line 0 (size: 1 width: 0 height: 0 text length: 12 content: ["hello world",null])`)
+    });
+
+    it("inserts", () => {
+      var doc = new Document();
+      doc.insertLine("c");
+      doc.insertLine("a", 0);
+      doc.insertLine("b", 1);
+      expect(doc.print()).equals(
+        `root (size: 3 width: 0 height: 0 text length: 6)\n`
+      + ` line 0 (size: 1 width: 0 height: 0 text length: 2 content: ["a",null])\n`
+      + ` line 1 (size: 1 width: 0 height: 0 text length: 2 content: ["b",null])\n`
+      + ` line 2 (size: 1 width: 0 height: 0 text length: 2 content: ["c",null])`);
+    });
+
+    it("balances leaf nodes after insert", () => {
+      var doc = new Document(["a", "b"], opts);
+      doc.insertLine("x", 0);
+      doc.insertLine("y", 3);
+      expect(doc.print()).equals(
+        `root (size: 4 width: 0 height: 0 text length: 8)\n`
+      + ` leaf (size: 2 width: 0 height: 0 text length: 4)\n`
+      + `  line 0 (size: 1 width: 0 height: 0 text length: 2 content: ["x",null])\n`
+      + `  line 1 (size: 1 width: 0 height: 0 text length: 2 content: ["a",null])\n`
+      + ` leaf (size: 2 width: 0 height: 0 text length: 4)\n`
+      + `  line 2 (size: 1 width: 0 height: 0 text length: 2 content: ["b",null])\n`
+      + `  line 3 (size: 1 width: 0 height: 0 text length: 2 content: ["y",null])`);
+    });
+
+    it("balances after insert 1", () => {
+      var doc = new Document([], opts);
+      doc.insertLines(["a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a"])
+      doc.insertLine("b");
+      doc.insertLine("b");
+      doc.consistencyCheck();
+    });
+
+    it("balances after insert 2", () => {
+      var doc = new Document([], opts);
+      doc.insertLines(["a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a"])
+      doc.insertLine("b");
+      doc.insertLine("b");
+      doc.consistencyCheck();
+    });
+
+  });
+
+
+  describe("removal", () => {
+
+    it("removes line", () => {
+      var doc = new Document(["a", "b", "c"]);
+      doc.removeLine(1);
+      expect(doc.print()).equals(
+        `root (size: 2 width: 0 height: 0 text length: 4)\n`
+      + ` line 0 (size: 1 width: 0 height: 0 text length: 2 content: ["a",null])\n`
+      + ` line 1 (size: 1 width: 0 height: 0 text length: 2 content: ["c",null])`);
+      doc.removeLine(1);
+
+      expect(doc.print()).equals(`root (size: 1 width: 0 height: 0 text length: 2)\n line 0 (size: 1 width: 0 height: 0 text length: 2 content: ["a",null])`);
+      doc.removeLine(0);
+      expect(doc.print()).equals(`root (size: 0 width: 0 height: 0 text length: 0)`);
+    });
+
+    it("balances leaf nodes after remove 1", () => {
+      var doc = new Document(["a", "b", "c", "d"], opts);
+      doc.removeLine(3);
+      expect(doc.print()).equals(
+          `root (size: 3 width: 0 height: 0 text length: 6)\n`
+        + ` line 0 (size: 1 width: 0 height: 0 text length: 2 content: ["a",null])\n`
+        + ` line 1 (size: 1 width: 0 height: 0 text length: 2 content: ["b",null])\n`
+        + ` line 2 (size: 1 width: 0 height: 0 text length: 2 content: ["c",null])`);
+      doc.removeLine(1);
+      expect(doc.print()).equals(
+          `root (size: 2 width: 0 height: 0 text length: 4)\n`
+        + ` line 0 (size: 1 width: 0 height: 0 text length: 2 content: ["a",null])\n`
+        + ` line 1 (size: 1 width: 0 height: 0 text length: 2 content: ["c",null])`);
+    });
+
+    it("balances leaf nodes after remove 2", () => {
+      var doc = new Document(["a", "b", "c", "d"], opts);
+      doc.removeLine(1);
+      expect(doc.print()).equals(
+          `root (size: 3 width: 0 height: 0 text length: 6)\n`
+        + ` line 0 (size: 1 width: 0 height: 0 text length: 2 content: ["a",null])\n`
+        + ` line 1 (size: 1 width: 0 height: 0 text length: 2 content: ["c",null])\n`
+        + ` line 2 (size: 1 width: 0 height: 0 text length: 2 content: ["d",null])`);
+      doc.removeLine(1);
+      expect(doc.print()).equals(
+          `root (size: 2 width: 0 height: 0 text length: 4)\n`
+        + ` line 0 (size: 1 width: 0 height: 0 text length: 2 content: ["a",null])\n`
+        + ` line 1 (size: 1 width: 0 height: 0 text length: 2 content: ["d",null])`);
+    });
+
+    it("balances by stealing values to be consistent", () => {
+      // steal lines from the second leaf node so that node one is OK
+      //                   node (size: 4)
+      //              •••••               •••••
+      // node (leaf, size: 1)          node (leaf, size: 3)
+      //       •                       ••••      •      ••••
+      // line (2)                line (3)    line (4)    line (5)
+      var t = new Document(["1", "2", "3", "4", "5"], opts);
+      t.removeLine(0);
+      t.consistencyCheck();
+    });
+
+    it("remove many lines", () => {
+      var doc = new Document(["a", "b", "c", "d"], opts);
+      doc.removeLines(1, 2);
+      doc.consistencyCheck();
+      expect(doc.print()).equals(
+          `root (size: 2 width: 0 height: 0 text length: 4)\n`
+        + ` line 0 (size: 1 width: 0 height: 0 text length: 2 content: ["a",null])\n`
+        + ` line 1 (size: 1 width: 0 height: 0 text length: 2 content: ["d",null])`);
+    });
+
+  });
+
+
+  describe("bugs", () => {
+
+    it("all nodes have correct size", () => {
+
+      var opts = {maxLeafSize: 3, minLeafSize: 2, maxNodeSize: 3, minNodeSize: 2},
+          doc = new Document([], opts);
+      for (var i = 0; i < 10; i++) doc.insertLine("" + i);
+      expect(doc.lines.map(ea => ea.text)).equals(arr.range(0, 9))
+
+      doc.removeLines(1,3);
+      expect(doc.lines.map(ea => ea.text)).equals(["0", "4", "5", "6", "7", "8", "9"]);
+      doc.print();
+      doc.removeLines(1,3);
+      expect(doc.lines.map(ea => ea.text)).equals(["0", "7", "8", "9"]);
+      doc.consistencyCheck();
+    });
+
+    it("inserts followed by removes not conistent", () => {
+      var opts = {maxLeafSize: 3, minLeafSize: 2, maxNodeSize: 3, minNodeSize: 2},
+          doc = new Document([], opts);
+      for (var i = 0; i < 7; i++) doc.insertLine("" + i);
+      doc.print();
+      doc.removeLines(1,3);
+      doc.consistencyCheck();
+      doc.print();
+    });
+
+  });
+
+});
+
+describe("geometry", () => {
+
+  let doc, lines;
+  beforeEach(() => {
+    doc = new Document([
+      {text: "a", width: 10, height: 10},
+      {text: "b", width: 20, height: 20},
+      {text: "c", width: 5, height: 5},
+      {text: "d", width: 15, height: 15}]);
+    lines = doc.lines;
+  });
+
+  it("updates height", () => {
+    lines[2].changeExtent(0, 12);
+    expect(lines[2]).containSubset({text: "c", height: 12});
+    expect(doc.root.children[1].height).equals(15+12, "height parent[1]");
+    expect(doc.root.height).equals(30+15+12, "height root");
+  });
+
+  it("computes y position", () => {
+    expect(doc.computeVerticalOffsetOf(0)).equals(0, "1");
+    expect(doc.computeVerticalOffsetOf(1)).equals(10, "2");
+    expect(doc.computeVerticalOffsetOf(2)).equals(30, "3");
+    expect(doc.computeVerticalOffsetOf(3)).equals(35, "4");
+  });
+
+  describe("width", () => {
+
+    it("updates on changeExtent", () => {
+      expect(doc.width).equals(20, "doc");
+      lines[2].changeExtent(16, 16);
+      expect(doc.root.children[1].width).equals(16, "width parent[1]");
+      expect(doc.root.width).equals(20, "width root");
+      expect(doc.width).equals(20, "doc after update");
+    });
+
+    it("updates on removal", () => {
+      doc.removeLines(1,2);
+      doc.print()
+      expect(doc.width).equals(15, "doc");
+      expect(doc.height).equals(25, "doc");
+    });
+
+  });
+});
+
 
 function range(startRow, startCol, endRow, endCol) {
   return {start: {row: startRow, column: startCol}, end: {row: endRow, column: endCol}}
@@ -12,19 +290,28 @@ function range(startRow, startCol, endRow, endCol) {
 describe("text document", () => {
 
   it("line access", () => {
-    var doc = TextDocument.fromString("hello\nworld");
-    // doc.root
-    expect(doc.getLine(0)).equals("hello");
-    expect(doc.getLine(1)).equals("world");
-    expect(doc.getLine(3)).equals("world");
-    expect(doc.getLine(-2)).equals("hello");
+    var doc = Document.fromString("hello\nworld");
+    expect(doc.getLine(0).text).equals("hello");
+    expect(doc.getLine(1).text).equals("world");
+    expect(doc.getLine(3).text).equals("world");
+    expect(doc.getLine(-2).text).equals("hello");
+  });
+
+
+  it("created using text string", () => {
+    var doc = Document.fromString("hello\nworld");
+    expect(doc.lines).containSubset([{text: "hello", text: "world"}]);
+    expect(doc.textString).equals("hello\nworld");
+    doc.textString += "\nfoo"
+    expect(doc.lines).containSubset([{text: "hello"}, {text: "world"}, {text: "foo"}]);
+    expect(doc.textString).equals("hello\nworld\nfoo");
   });
 
   describe("words", () => {
 
     var doc;
 
-    beforeEach(() => doc = TextDocument.fromString("Hello world\n 123 3  4\n"));
+    beforeEach(() => doc = Document.fromString("Hello world\n 123 3  4\n"));
 
     it("of line", () => {
       expect(doc.wordsOfLine(1)).deep.equals([
@@ -66,25 +353,16 @@ describe("text document", () => {
 
   });
 
-  it("created using text string", () => {
-    var doc = TextDocument.fromString("hello\nworld");
-    expect(doc.lines).equals(["hello", "world"]);
-    expect(doc.textString).equals("hello\nworld");
-    doc.textString += "\nfoo"
-    expect(doc.lines).equals(["hello", "world", "foo"]);
-    expect(doc.textString).equals("hello\nworld\nfoo");
-  });
-
   it("text length", () => {
-    expect(TextDocument.fromString("hello\nworld\nfoo").stringLength).equals(15);
+    expect(Document.fromString("hello\nworld\nfoo").stringSize).equals(15);
   });
 
   it("end position", () => {
-    expect(TextDocument.fromString("hello\nworld\nfoo").endPosition).deep.equals({row: 2, column: 3});
+    expect(Document.fromString("hello\nworld\nfoo").endPosition).deep.equals({row: 2, column: 3});
   });
 
   it("position to index", () => {
-    var doc = TextDocument.fromString("hello\nworld\nfoo");
+    var doc = Document.fromString("hello\nworld\nfoo");
     expect(doc.positionToIndex({row:-4, column: 0})).equals(0);
     expect(doc.positionToIndex({row: 0, column: 0})).equals(0);
     expect(doc.positionToIndex({row: 0, column: 5})).equals(5);
@@ -99,7 +377,7 @@ describe("text document", () => {
   });
 
   it("index to position", () => {
-    var doc = TextDocument.fromString("hello\nworld\nfoo");
+    var doc = Document.fromString("hello\nworld\nfoo");
     expect(doc.indexToPosition(-10)).deep.equals({row: 0, column: 0});
     expect(doc.indexToPosition(0)).deep.equals({row: 0, column: 0});
     expect(doc.indexToPosition(5)).deep.equals({row: 0, column: 5});
@@ -113,55 +391,62 @@ describe("text document", () => {
 
   describe("insertion", () => {
 
-    var doc; beforeEach(() => doc = TextDocument.fromString("hello\nworld"));
+    var doc; beforeEach(() => doc = Document.fromString("hello\nworld"));
 
     it("into empty doc", () => {
-      doc = new TextDocument();
-      doc.insert("test", {row: 0, column: 0});
+      doc = new Document();
+      doc.insertText("test", {row: 0, column: 0});
       expect(doc.textString).equals("test");
     });
 
     it("simple", () => {
-      doc.insert("test", {row: 0, column: 2});
+      doc.insertText("test", {row: 0, column: 2});
       expect(doc.textString).equals("hetestllo\nworld");
     });
 
     it("nothing", () => {
-      doc.insert("", {row: 0, column: 2});
+      doc.insertText("", {row: 0, column: 2});
       expect(doc.textString).equals("hello\nworld");
     });
 
     it("behind end", () => {
-      doc.insert("test", {row: 5, column: 0});
+      doc.insertText("test", {row: 5, column: 0});
+      doc.textString
       expect(doc.textString).equals("hello\nworld\n\n\n\ntest");
     });
 
     it("after last column", () => {
-      doc.insert("test", {row: 0, column: 10});
+      doc.insertText("test", {row: 0, column: 10});
       expect(doc.textString).equals("hello     test\nworld");
     });
 
     it("at end of line", () => {
-      doc.insert("test", {row: 0, column: 5});
+      doc.insertText("test", {row: 0, column: 5});
       expect(doc.textString).equals("hellotest\nworld");
     });
 
     it("at beginning of line", () => {
-      doc.insert("test", {row: 1, column: 0});
+      doc.insertText("test", {row: 1, column: 0});
       expect(doc.textString).equals("hello\ntestworld");
     });
 
     it("new line", () => {
-      doc.insert("\ntest\n", {row: 0, column: 5});
+      doc.insertText("\ntest\n", {row: 0, column: 5});
       expect(doc.textString).equals("hello\ntest\n\nworld");
-      expect(doc.lines).equals(["hello", "test", "", "world"]);
+      expect(doc.lines).containSubset([{text: "hello"}, {text: "test"}, {text: ""}, {text: "world"}]);
+    });
+
+    it("just new line", () => {
+      doc.insertText("\n", {row: 0, column: 2});
+      expect(doc.textString).equals("he\nllo\nworld");
+      expect(doc.lines).containSubset([{text: "he"}, {text: "llo"}, {text: "world"}]);
     });
 
   });
 
   describe("remove", () => {
 
-    var doc; beforeEach(() => doc = TextDocument.fromString("hello\nworld"));
+    var doc; beforeEach(() => doc = Document.fromString("hello\nworld"));
 
     it("nothing", () => {
       doc.remove(range(0, 2, 0, 2));
@@ -223,7 +508,7 @@ describe("text document", () => {
 
   describe("text in range", () => {
 
-    var doc; beforeEach(() => doc = TextDocument.fromString("hello\nworld\n123"));
+    var doc; beforeEach(() => doc = Document.fromString("hello\nworld\n123"));
 
     it("single line",           () => expect(doc.textInRange(range(0,1,0,5))).equals("ello"));
     it("empty range",           () => expect(doc.textInRange(range(0,1,0,1))).equals("") .equals(""));
@@ -248,7 +533,7 @@ describe("text document", () => {
 
   describe("char-wise scanning", () => {
 
-    var doc; beforeEach(() => doc = TextDocument.fromString("1 23\n4\n foo\n5  "));
+    var doc; beforeEach(() => doc = Document.fromString("1 23\n4\n foo\n5  "));
 
     it("scans forward", () => {
       var seen = [];
@@ -281,177 +566,157 @@ describe("text document", () => {
   describe("attributes", () => {
 
     var doc;
-    beforeEach(() => doc = TextDocument.fromString("hello\nworld"))
+    beforeEach(() => doc = Document.fromString("hello\nworld"))
 
     it("attributes and text access", () => {
       doc.textString = "hello\nworld";
-      let attr1 = new TextAttribute({}, range(1,0,1,3)),
-          attr2 = new TextAttribute({}, range(1,0,1,4));
-      expect(doc.textAttributes).equals([]);
-      doc.textAttributes = [attr1, attr2];
-      expect(doc.textAttributes).equals([attr1, attr2]);
-
+      expect(doc.textAndAttributes).deep.equals(["hello\nworld", null]);
+      doc.mixinTextAttribute({foo: 23}, range(1,1,1,3));
       expect(doc.textAndAttributes).deep.equals([
-        ["hello\n", []],
-        ["wor", [attr1, attr2]],
-        ["l", [attr2]],
-        ["d", []]
+        "hello\nw", null,
+        "or", {foo: 23},
+        "ld", null
       ]);
     });
 
     it("set attributes and text", () => {
       doc.textString = "";
-      let attr1 = new TextAttribute({}),
-          attr2 = new TextAttribute({});
-      doc.textAndAttributes = [
-        ["hello\n", []],
-        ["wor", [attr2, attr1]],
-        ["l", [attr2]],
-        ["d", []]
-      ];
+      let attr1 = {foo: 23},
+          attr2 = {bar: 99},
+          textAndAttributes = doc.textAndAttributes = [
+            "hello\n", null,
+            "wor", {...attr2, ...attr1},
+            "l", attr2,
+            "d", null
+          ]
+
       expect(doc.textString).equals("hello\nworld");
-      expect(doc.textAttributes).equals([attr1, attr2]);
-      expect(doc.textAttributes[0].range).equals(range(1,0,1,3));
-      expect(doc.textAttributes[1].range).equals(range(1,0,1,4));
+      expect(doc.textAndAttributes).deep.equals(textAndAttributes);
+
+      expect(doc.getLine(0).textAndAttributes).deep.equals(["hello", null]);
+      expect(doc.getLine(1).textAndAttributes).deep.equals([
+        "wor", {...attr2, ...attr1},
+        "l", attr2,
+        "d", null
+      ]);
     });
 
-    describe("addition", () => {
+    it("set attributes of line", () => {
+      doc.textString = "hello\nworld";
+      doc.setTextAndAttributesOfLine(1, ["ho", {foo: 23}, "hu", null]);
+      expect(doc.textString).equals("hello\nhohu");
+      expect(doc.textAndAttributes).deep.equals([
+        "hello\n", null,
+        "ho", {foo: 23},
+        "hu", null,
+      ]);
+    });
 
-      it("of single attribute", () => {
-        var [attr] = doc.addTextAttributes([TextAttribute.create({}, 1,2, 1, 5)]);
-        expect(doc.textAttributes).equals([attr]);
-        expect(doc.textAttributesByLine).equals([undefined, [attr]]);
+    it("reset attributes", () => {
+      doc.textString = "hello\nworld";
+      doc.setTextAndAttributesOfLine(1, ["ho", {foo: 23}, "hu", null]);
+      expect(doc.textString).equals("hello\nhohu");
+      doc.resetTextAttributes();
+      expect(doc.textAndAttributes).deep.equals(["hello\nhohu", null]);
+      expect(doc.getLine(1).textAndAttributes).deep.equals(["hohu", null]);
+    });
+
+    describe("mixin", () => {
+
+      it("attributes mixin", () => {
+        doc.textString = "hello\nworld";
+        expect(doc.textAndAttributes).deep.equals(["hello\nworld", null]);
+        doc.mixinTextAttribute({foo: 23}, range(1,1,1,3));
+        expect(doc.textAndAttributes).deep.equals([
+          "hello\nw", null,
+          "or", {foo: 23},
+          "ld", null
+        ], "1");
+
+        doc.mixinTextAttribute({bar: 99}, range(1,2,1,4));
+        expect(doc.textAndAttributes).deep.equals([
+          "hello\nw", null,
+          "o", {foo: 23},
+          "r", {foo: 23, bar: 99},
+          "l", {bar: 99},
+          "d", null
+        ], "2");
       });
 
-      it("of single attribute after default style", () => {
-        var [attr1] = doc.textAttributes = [TextAttribute.create({}, 0,-1,1,5)],
-            attr2 = doc.addTextAttribute(TextAttribute.create({}, 0,0,0,5));
-        expect(doc.textAttributes).equals([attr1, attr2]);
-        expect(doc.textAttributesByLine).equals([[attr1, attr2], [attr1]]);
-        doc.textAttributesByLine[1]
-      });
-
-      it("of single attribute on multiple lines", () => {
-        var attr = TextAttribute.create({}, 0,2, 1, 5);
-        doc.addTextAttributes([attr])
-        expect(doc.textAttributes).equals([attr]);
-        expect(doc.textAttributesByLine).equals([[attr], [attr]]);
-      });
-
-      it("of multiple attribute on single line", () => {
-        var attr1 = TextAttribute.create({}, 0,2, 0, 5);
-        var attr2 = TextAttribute.create({}, 0,1, 0, 5);
-        var attr3 = TextAttribute.create({}, 0,3, 0, 5);
-        doc.addTextAttributes([attr1, attr2, attr3])
-        expect(doc.textAttributes).equals([attr2, attr1, attr3]);
-        expect(doc.textAttributesByLine).equals([[attr2, attr1, attr3]]);
-      });
-
-      it("of multiple attribute across lines", () => {
-        var attr1 = TextAttribute.create({}, 0,2, 0, 5);
-        var attr2 = TextAttribute.create({}, 0,1, 1, 5);
-        var attr3 = TextAttribute.create({}, 0,3, 1, 0);
-        var attr4 = TextAttribute.create({}, 1,3, 1, 4);
-        doc.addTextAttributes([attr1, attr2, attr3, attr4])
-        expect(doc.textAttributes).equals([attr2, attr1, attr3, attr4]);
-        expect(doc.textAttributesByLine).equals([[attr2, attr1, attr3], [attr2, attr3, attr4]]);
-      });
-
-      it("of multiple attributes across lines with existing attributes", () => {
-        var [attr1, attr2, attr3] = doc.textAttributes = [
-          TextAttribute.create({}, 0,-1, 1, 5),
-          TextAttribute.create({}, 1,0, 1, 4),
-          TextAttribute.create({}, 1,4, 1, 5)
-        ];
-        var attr4 = TextAttribute.create({}, 0,2, 0, 5),
-            attr5 = TextAttribute.create({}, 0,1, 1, 5),
-            attr6 = TextAttribute.create({}, 0,3, 1, 0),
-            attr7 = TextAttribute.create({}, 1,3, 1, 4);
-        doc.addTextAttributes([attr4, attr5, attr6, attr7]);
-        expect(doc.textAttributes).equals([attr1, attr5, attr4, attr6, attr2, attr7, attr3]);
-        expect(doc.textAttributesByLine).equals([
-          [attr1, attr5, attr4, attr6],
-          [attr1, attr5, attr6, attr2, attr7, attr3]
+      it("attributes mixin multiline", () => {
+        doc.textString = "hello\nworld";
+        expect(doc.textAndAttributes).deep.equals(["hello\nworld", null]);
+        doc.mixinTextAttribute({foo: 23}, range(0,1,1,3));
+        expect(doc.textAndAttributes).deep.equals([
+          "h", null,
+          "ello\nwor", {foo: 23},
+          "ld", null
         ]);
       });
 
-      it("remove attributes cleans up attribute stores", () => {
-        var [attr1, attr2, attr3] = doc.textAttributes = [
-          TextAttribute.create({}, 0,-1, 1, 5),
-          TextAttribute.create({}, 1,0, 1, 4),
-          TextAttribute.create({}, 1,2, 1, 5)
-        ];
-
-        expect(doc.textAttributes).equals([attr1, attr2, attr3], "before 1");
-        expect(doc.textAttributesByLine[0]).equals([attr1], "before 2");
-        expect(doc.textAttributesByLine[1]).equals([attr1, attr2, attr3], "before 3");
-
-        // doc.removeTextAttributes([attr2]);
-        // expect(doc.textAttributes).equals([attr1, attr3], "textAttributes");
-        // expect(doc.textAttributesByLine[0]).equals([attr1], "textAttributesByLine[0]");
-        // expect(doc.textAttributesByLine[1]).equals([attr1, attr3], "textAttributesByLine[1]");
-
-        doc.removeTextAttributes([attr2, attr3]);
-        expect(doc.textAttributes).equals([attr1], "textAttributes");
-        expect(doc.textAttributesByLine[0]).equals([attr1], "textAttributesByLine[0]");
-        expect(doc.textAttributesByLine[1]).equals([attr1], "textAttributesByLine[1]");
-      });
-
     });
+
 
     describe("on text deletion", () => {
 
       it("are updated", () => {
-        doc.textString = "hello\nworld\n123";
-        let attr1 = new TextAttribute({}, range(0,0,0,5)),
-            attr2 = new TextAttribute({}, range(0,0,1,5)),
-            attr3 = new TextAttribute({}, range(0,0,2,3));
-        doc.textAttributes = [attr1, attr2, attr3];
+        doc.textAndAttributes = [
+          "hello\n", {a: 1},
+          "w", null,
+          "orld\n", {b: 1},
+          "12", null,
+          "3", {c: 1}
+        ];
+
         doc.remove(range(0,1,0,2));
-        expect(doc.textAttributes).equals([attr1, attr2, attr3]);
-        expect(doc.textAttributes[0].range).stringEquals("Range(0/0 -> 0/4)");
-        expect(doc.textAttributes[1].range).stringEquals("Range(0/0 -> 1/5)");
-        expect(doc.textAttributes[2].range).stringEquals("Range(0/0 -> 2/3)");
-        expect(doc.textAttributesByLine).equals([[attr1, attr2, attr3], [attr2, attr3], [attr3]]);
-  
+        expect(doc.textAndAttributes).deep.equals([
+          "hllo\n", {a: 1},
+          "w", null,
+          "orld\n", {b: 1},
+          "12", null,
+          "3", {c: 1}
+        ]);
+
         doc.remove(range(0,0,0,5));
-        expect(doc.textAttributes).equals([attr2, attr3]);
-        expect(doc.textAttributes[0].range).stringEquals("Range(0/0 -> 1/5)");
-        expect(doc.textAttributes[1].range).stringEquals("Range(0/0 -> 2/3)");
-        expect(doc.textAttributesByLine).equals([[attr2, attr3], [attr2, attr3], [attr3]]);
-  
+        expect(doc.textAndAttributes).deep.equals([
+          "\nw", null,
+          "orld\n", {b: 1},
+          "12", null,
+          "3", {c: 1}
+        ]);
+
         doc.remove(range(0,0,2,0));
-        expect(doc.textAttributes).equals([attr3]);
-        expect(doc.textAttributes[0].range).stringEquals("Range(0/0 -> 0/3)");
-        expect(doc.textAttributesByLine).equals([[attr3]]);
+        expect(doc.textAndAttributes).deep.equals([
+          "12", null,
+          "3", {c: 1}
+        ]);
       });
-  
+
       it("of line break are updated", () => {
-        doc.textString = "a\nb";
-        let attr = new TextAttribute({}, range(1,0,1,1));
-        doc.textAttributes = [attr];
+        doc.textAndAttributes = ["a\n", {a: 1}, "b", {b: 1}];
         doc.remove(range(0,1,1,0));
-        expect(doc.textAttributes).equals([attr]);
-        expect(doc.textAttributes[0].range).stringEquals("Range(0/1 -> 0/2)");
-        expect(doc.textAttributesByLine).equals([[attr]]);
+        expect(doc.textAndAttributes).deep.equals(["a", {a: 1}, "b", {b: 1}]);
       });
 
       it("are updated even if not directly in modified range", () => {
-        doc.textString = "a\n\nb";
-        let attr = new TextAttribute({}, range(2,0,2,1));
-        doc.textAttributes = [attr];
+        doc.textAndAttributes = ["a\n\n", {a: 1}, "b", {b: 1}];
         doc.remove(range(0,1,1,0));
-        expect(doc.textAttributes[0].range).stringEquals("Range(1/0 -> 1/1)");
-        expect(doc.textAttributesByLine).equals([undefined, [attr]]);
+        expect(doc.textAndAttributes).deep.equals(["a\n", {a: 1}, "b", {b: 1}]);
       });
-  
+
       it("are completely removed", () => {
-        doc.textString = "a\nb\nc";
-        let attr = new TextAttribute({}, range(1,0,1,1));
-        doc.textAttributes = [attr];
+        doc.textAndAttributes = ["a\n", {a: 1}, "b\n", {b: 1}, "c", {c: 1}];
         doc.remove(range(0,0,2,1));
-        expect(doc.textAttributes).equals([]);
-        expect(doc.textAttributesByLine).equals([undefined]);
+        expect(doc.textAndAttributes).deep.equals([]);
+      });
+
+      it("completely rplaced", () => {
+        doc.remove({start: {row: 0, column: 0}, end: doc.endPosition})
+        doc.textAndAttributes = ["a\n", {a: 1}, "b\n", {b: 1}, "c", {c: 1}];
+        expect(doc.lines).to.have.length(3);
+        doc.remove({start: {row: 0, column: 0}, end: doc.endPosition})
+        doc.textAndAttributes = ["a\n", {a: 1}, "b\n", {b: 1}, "c", {c: 1}];
+        expect(doc.lines).to.have.length(3);
       });
 
     });
@@ -459,165 +724,161 @@ describe("text document", () => {
     describe("on text insertion", () => {
 
       it("are updated", () => {
-        doc.textString = "hello\nworld";
-        let attr1 = new TextAttribute({}, range(0,0,0,5)),
-            attr2 = new TextAttribute({}, range(0,0,1,5));
-        doc.textAttributes = [attr1, attr2];
-  
-        doc.insert("X", {row: 0, column: 5});
-        expect(doc.textAttributes).equals([attr1, attr2]);
-        expect(doc.textAttributes[0].range).stringEquals("Range(0/0 -> 0/6)");
-        expect(doc.textAttributes[1].range).stringEquals("Range(0/0 -> 1/5)");
-        expect(doc.textAttributesByLine).equals([[attr1, attr2], [attr2]]);
-  
-        doc.insert("A\nY\nZ", {row: 0, column: 5});
-        expect(doc.textAttributes).equals([attr1, attr2]);
-        expect(doc.textAttributes[0].range).stringEquals("Range(0/0 -> 2/2)");
-        expect(doc.textAttributes[1].range).stringEquals("Range(0/0 -> 3/5)");
-        expect(doc.textAttributesByLine).equals([[attr1, attr2], [attr1, attr2], [attr1, attr2], [attr2]]);
+        doc.textAndAttributes = [
+          "hello\n", {a: true},
+          "w", null,
+          "orld", {b: true}
+        ];
+
+        doc.insertText("Y", {row: 0, column: 3}, false/*don't extend attrs*/);
+
+        expect(doc.textAndAttributes).deep.equals([
+          "hel", {a: true},
+          "Y", null,
+          "lo\n", {a: true},
+          "w", null,
+          "orld", {b: true}
+        ], 1);
+
+        doc.insertText("X", {row: 0, column: 3}, true);
+
+        expect(doc.textAndAttributes).deep.equals([
+          "helX", {a: true},
+          "Y", null,
+          "lo\n", {a: true},
+          "w", null,
+          "orld", {b: true}
+        ], 2);
       });
 
       it("are updated even if not directly in modified range 1", () => {
-        doc.textString = "a\nb";
-        let attr = new TextAttribute({}, range(1,0,1,1));
-        doc.textAttributes = [attr];
-        doc.insert("\n", {row: 0, column: 1});
-        expect(doc.textAttributes[0].range).stringEquals("Range(2/0 -> 2/1)");
-        expect(doc.textAttributesByLine).equals([[], [], [attr]]);
+        doc.textAndAttributes = [
+          "aaa\n", {a: true},
+          "bbb", {b: true},
+        ];
+        doc.insertText("X\n", {row: 0, column: 1}, false);
+        expect(doc.lines.map(l => l.textAndAttributes)).deep.equals([
+          ["a", { "a": true }, "X", null],
+          ["aa", { "a": true }],
+          ["bbb", { "b": true }]
+        ])
+      });
+
+      it("newline behind char creates new line below", () => {
+        doc.textAndAttributes = [
+          "aax\n", {a: true},
+          "bb", {b: true},
+        ];
+        doc.insertText("\n", {row: 0, column: 2}, false);
+        expect(doc.lines.map(l => l.textAndAttributes)).deep.equals([
+          ["aa", { "a": true }],
+          ["x", { "a": true }],
+          ["bb", { "b": true }]
+        ])
       });
 
     });
 
+    describe("merging", () => {
 
-    describe("chunking attributes by lines", () => {
+      it("merges attributes", () => {
 
-      it("empty doc", () => {
-        expect(TextDocument.fromString("").textAttributesChunkedByLine()).equals([[0,0, []]]);
-      });
-
-      it("no attributes doc", () => {
-        expect(TextDocument.fromString("hello\nworld").textAttributesChunkedByLine()).equals([[0,5, []], [0,5, []]]);
-      });
-
-      it("attribute on single line", () => {
-        doc.textString = "hello\n  world";
-        let attr1 = new TextAttribute({}, range(0,0,0,5));
-        doc.textAttributes = [attr1];
-        expect(doc.textAttributesChunkedByLine()).deep.equals([[0, 5, [attr1]], [0, 7, []]]);
-      });
-
-      it("overlapping", () => {
-        doc.textString = "hello\n  world";
-        let attr1 = new TextAttribute({}, range(0,1,0,5)),
-            attr2 = new TextAttribute({}, range(0,2,0,4));
-        doc.textAttributes = [attr1, attr2];
-        expect(doc.textAttributesChunkedByLine()).equals([
-          [0,1,[], 1,2, [attr1], 2,4, [attr1, attr2], 4,5, [attr1]],
-          [0,7,[]]]);
-      });
-
-      it("overlapping lines", () => {
-        doc.textString = "hello\n  world";
-        let attr1 = new TextAttribute({}, range(0,0,0,5)),
-            attr2 = new TextAttribute({}, range(0,0,1,5));
-        doc.textAttributes = [attr1, attr2];
-        expect(doc.textAttributesChunkedByLine()).deep.equals([
-          [0, 5, [attr1, attr2]],
-          [0, 5, [attr2], 5,7, []]]);
-      });
-
-      it("sparse", () => {
-        doc.textString = "hello\nworld";
-        let attr1 = new TextAttribute({}, range(0,1,0,3)),
-            attr2 = new TextAttribute({}, range(0,5,1,5));
-        doc.textAttributes = [attr1, attr2];
-        expect(doc.textAttributesChunkedByLine()).equals([[0,1, [], 1, 3, [attr1], 3,5, []], [0, 5, [attr2]]])
-      });
-
-      it("empty line followed by single", () => {
-        doc.textString = "\na";
-        let attr1 = new TextAttribute({}, range(0,1,1,1)),
-            attr2 = new TextAttribute({}, range(1,0,1,1));
-        doc.textAttributes = [attr1, attr2];
-        expect(doc.textAttributesChunkedByLine()).equals([[0,0, []], [0,1, [attr1, attr2]]])
+        doc.textAndAttributes = [
+          "aaa", {fontColor: "red"},
+          "bbb\n", {fontColor: "red"},
+          "ccc", {fontColor: "red"},
+        ];
+        expect(doc.textAndAttributes).deep.equals([
+          "aaabbb\nccc", {fontColor: "red"}
+        ]);
       });
 
     });
 
-    describe("chunked across lines", () => {
+    describe("insert with attributes", () => {
 
-      let attr1, attr2;
-      beforeEach(() => {
-        // doc = TextDocument.fromString("hello\nworld")
-        doc.textString = "hello\n  world";
-        attr1 = new TextAttribute({}, range(0,2,0,5));
-        attr2 = new TextAttribute({}, range(0,2,1,2));
-        doc.textAttributes = [attr1, attr2];
-      });
-
-
-      it("overlapping lines, whole doc", () => {
-        expect(doc.textAttributesChunked()).deep.equals([
-          [{row: 0, column: 0}, {row: 0, column: 2}, []],
-          [{row: 0, column: 2}, {row: 0, column: 5}, [attr1, attr2]],
-          [{row: 0, column: 5}, {row: 1, column: 2}, [attr2]],
-          [{row: 1, column: 2}, {row: 1, column: 7}, []],
+      it("works", () => {
+        doc.textAndAttributes = ["hello", {a: 1}];
+        doc.insertTextAndAttributes(["b", {b: 1}, "cc", {c: 1}], {row: 0, column: 2});
+        expect(doc.textAndAttributes).deep.equals([
+          "he", {a: 1},
+          "b", {b: 1},
+          "cc", {c: 1},
+          "llo", {a: 1}
         ]);
       });
 
-      it("overlapping lines, filtered", () => {
-        expect(doc.textAttributesChunked(undefined, undefined, attr => attr !== attr1)).deep.equals([
-          [{row: 0, column: 0}, {row: 0, column: 2}, []],
-          [{row: 0, column: 2}, {row: 1, column: 2}, [attr2]],
-          [{row: 1, column: 2}, {row: 1, column: 7}, []],
+      it("just newline", () => {
+        doc.textAndAttributes = ["hello", {a: 1}];
+        doc.insertTextAndAttributes(["\n", null], {row: 0, column: 2});
+        expect(doc.textAndAttributes).deep.equals(["he\nllo", {a: 1}]);
+      });
+
+      it("trailing newline", () => {
+        doc.textAndAttributes = ["hello", {a: 1}];
+        doc.insertTextAndAttributes(["foo\n", null], {row: 0, column: 2});
+        expect(doc.textAndAttributes).deep.equals(["he", {a: 1}, "foo\n", null, "llo", {a: 1}]);
+      });
+
+      it("leading newline", () => {
+        doc.textAndAttributes = ["hello", {a: 1}];
+        doc.insertTextAndAttributes(["\nfoo", null], {row: 0, column: 2});
+        expect(doc.textAndAttributes).deep.equals([
+          "he\n", {a: 1},
+          "foo", null,
+          "llo", {a: 1}
         ]);
       });
 
-      it("overlapping lines, range", () => {
-        expect(doc.textAttributesChunked({row: 0, column: 5}, {row: 1, column: 2})).deep.equals([
-          [{row: 0, column: 5}, {row: 1, column: 2}, [attr2]],
-        ]);
+      it("newline behind char creates new line below", () => {
+        doc.textAndAttributes = [
+          "aax\n", {a: true},
+          "bb", {b: true},
+        ];
+        doc.insertTextAndAttributes(["\n", null], {row: 0, column: 2});
+        expect(doc.lines.map(l => l.textAndAttributes)).deep.equals([
+          ["aa", { "a": true }],
+          ["x", { "a": true }],
+          ["bb", { "b": true }]
+        ])
       });
+
     });
 
-    describe("style attributes", () => {
-
-      let attr1, attr2;
-      beforeEach(() => {
-        // doc = TextDocument.fromString("hello\nworld")
-        doc.textString = "hello\n  world";
-        attr1 = new TextStyleAttribute({fontSize: 20, fontColor: "red"}, range(0,-1,1,7));
-        attr2 = new TextStyleAttribute({fontSize: 10}, range(0,2,1,2));
-        doc.textAttributes = [attr1, attr2];
-      });
-
-
-      it("retrieves style in chunks", () => {
-        expect(doc.stylesChunked()).deep.equals([
-          [{row: 0, column: 0}, {row: 0, column: 2}, {fontSize: 20, fontColor: "red"}],
-          [{row: 0, column: 2}, {row: 1, column: 2}, {fontSize: 10, fontColor: "red"}],
-          [{row: 1, column: 2}, {row: 1, column: 7}, {fontSize: 20, fontColor: "red"}],
-        ]);
-        expect(doc.stylesChunked({start: {row: 1, column: 0}, end: {row: 1, column: 7}})).deep.equals([
-          [{row: 1, column: 0}, {row: 1, column: 2}, {fontSize: 10, fontColor: "red"}],
-          [{row: 1, column: 2}, {row: 1, column: 7}, {fontSize: 20, fontColor: "red"}],
+    describe("setting text attributes", () => {
+    
+      it("in a single line", () => {
+        doc.textAndAttributes = ["aax\n", {a: true}, "bb", {b: true}];
+        doc.setTextAttributesWithSortedRanges([range(0, 1, 0, 2), {c: true}]);
+        expect(doc.textAndAttributes).deep.equals([
+          "a", {"a": true},
+          "a", {"c": true},
+          "x\n", {a: true},
+          "bb", {"b": true}
         ]);
       });
-
-      it("modifies style in range", () => {
-        doc.setStyleInRange(
-          {fontSize: 15},
-          {start: {row: 1, column: 0}, end: {row: 1, column: 7}},
-          attr1);
-        expect(doc.textAttributesChunked()).containSubset([
-          [{row: 0, column: 0}, {row: 0, column: 2}, [attr1]],
-          [{row: 0, column: 2}, {row: 1, column: 0}, [attr1, {data: {fontSize: 10}}]],
-          [{row: 1, column: 0}, {row: 1, column: 7}, [attr1, {data: {fontSize: 15}}]],
-        ], "merge didn't work");
+      
+      it("over two lines", () => {
+        doc.textAndAttributes = ["aax\n", {a: true}, "bb", {b: true}];
+        doc.setTextAttributesWithSortedRanges([range(0, 2, 1, 1), {c: true}]);
+        expect(doc.textAndAttributes).deep.equals([
+          "aa", {"a": true},
+          "x\nb", {c: true},
+          "b", {"b": true}
+        ]);
       });
-
+    
     });
 
   });
 
 });
+
+function fooo() {
+
+  var doc = new Document(["a", "b", "c", "d"], {maxLeafSize: 3, minLeafSize: 2});
+
+
+  doc.insertLines(["hello", "world", "hello", "world", "hello", "world", "hello", "world", "hello", "world", "hello", "world", "hello", "world", "hello", "world", "hello", "world", ])
+  doc.print2()
+}

@@ -56,8 +56,8 @@ var worldCommands = [
             return {
               isListItem: true,
               label: [
-                [`${targetName}`, {fontSize: "80%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"}],
-                [`${name}`, {}]],
+                `${targetName}`, {fontSize: "80%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"},
+                `${name}`, null],
               annotation: [keysPrinted, {fontSize: "80%", textStyleClasses: ["truncated-text"], maxWidth: 140}],
               value: ea
             };
@@ -91,8 +91,8 @@ var worldCommands = [
               return {
                 isListItem: true,
                 label: [
-                  [`${String(++i)}${"\u2003".repeat(depth)}`, {fontSize: "80%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"}],
-                  [`${m}`]
+                  `${String(++i)}${"\u2003".repeat(depth)}`, {fontSize: "80%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"},
+									`${m}`, null
                 ],
                 value: m
               }
@@ -375,15 +375,15 @@ var worldCommands = [
 
         if (format === "patch") {
           var {headerA, headerB, filenameA, filenameB, context} = opts
-          var content = [[diff.createTwoFilesPatch(
-                          filenameA || "a", filenameB || "b", a, b,
-                          headerA, headerB, typeof context === "number" ? {context} : undefined), {}]];
+          var content = [diff.createTwoFilesPatch(
+                         filenameA || "a", filenameB || "b", a, b,
+                         headerA, headerB, typeof context === "number" ? {context} : undefined), {}];
           var { DiffEditorPlugin } = await System.import("lively.morphic/ide/diff/editor-plugin.js");
           plugin = new DiffEditorPlugin();
 
         } else {
           diffed = diff[format](a,b, opts);
-          content = diffed.map(({count, value, added, removed}) => {
+          content = arr.flatmap(diffed, ({count, value, added, removed}) => {
             var attribute = removed ?
                 {fontWeight: "normal", textDecoration: "line-through", fontColor: Color.red} : added ?
                 {fontWeight: "bold", textDecoration: "", fontColor: Color.green} :

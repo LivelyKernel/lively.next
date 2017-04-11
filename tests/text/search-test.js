@@ -6,6 +6,9 @@ import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 import { dummyFontMetric as fontMetric, expectSelection } from "../test-helpers.js";
 import bowser from "bowser";
 
+var describeInBrowser = System.get("@system-env").browser ? describe :
+  (title, fn) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xdescribe(title, fn); }
+
 expectSelection(chai);
 
 import { Occur, occurStartCommand } from "../../text/occur.js"
@@ -28,7 +31,7 @@ function range(startRow, startCol, endRow, endCol) {
 }
 
 
-describe("searching", () => {
+describeInBrowser("searching", () => {
 
   describe("find matching", () => {
     var openPairs = {"{": "}","[": "]"},
@@ -97,7 +100,7 @@ describe("searching", () => {
 });
 
 
-describe("occur", () => {
+describeInBrowser("occur", () => {
 
   var t; beforeEach(() => t = text('abc\ndef\nxyz\nbcxbc'));
 
@@ -184,7 +187,7 @@ describe("occur", () => {
 });
 
 
-describe("iy", () => {
+describeInBrowser("iy", () => {
   
   var meta = bowser.mac ? "Meta" : "Ctrl", t;
   beforeEach(() => t = text("1 2 3 4\n 1 2 3 4"));

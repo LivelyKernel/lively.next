@@ -6,6 +6,9 @@ import { morph } from "../index.js";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { num, promise, fun } from "lively.lang";
 
+var describInBrowser = System.get("@system-env").browser ? describe :
+  (title, fn) => { console.warn(`Test ${title} is currently only supported in a browser`); return xdescribe(title, fn); }
+
 var world, submorph1, submorph2, submorph3, eventDispatcher;
 function createDummyWorld() {
   world = morph({
@@ -30,7 +33,7 @@ function closeToPoint(p1,p2) {
 }
 
 
-describe("halos", function() {
+describInBrowser("halos", function() {
 
   this.timeout(10*1000);
 
@@ -71,7 +74,7 @@ describe("halos", function() {
 
   it("can select multiple morphs", async () => {
      var halo = await world.showHaloForSelection([submorph1, submorph2]);
-     await halo.whenRendered(); await promise.delay();
+     await halo.whenRendered(); await promise.delay(100);
      expect(halo.target.selectedMorphs).equals([submorph1, submorph2]);
      expect(halo.borderBox.globalBounds()).equals(submorph1.globalBounds().union(submorph2.globalBounds()));
   });

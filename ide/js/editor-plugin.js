@@ -1,5 +1,4 @@
 import { string } from "lively.lang";
-import { TextStyleAttribute } from "../../text/attribute.js";
 import { lessEqPosition } from "../../text/position.js";
 import JavaScriptTokenizer from "./highlighter.js";
 import JavaScriptChecker from "./checker.js";
@@ -59,10 +58,12 @@ export class JavaScriptEditorPlugin extends EditorPlugin {
     
     textMorph.fill = this.theme.background();
     
-    let tokens = this._tokens = this.highlighter.tokenize(textMorph.textString);
-    textMorph.setSortedTextAttributes(
-      [textMorph.defaultTextStyleAttribute].concat(tokens.map(({token, start, end}) =>
-        TextStyleAttribute.fromPositions(this.theme.styleCached(token), start, end))));
+    let tokens = this._tokens = this.highlighter.tokenize(textMorph.textString),
+        attributes = [];
+
+    for (let {token, start, end} of tokens)
+      attributes.push({start, end}, this.theme.styleCached(token));
+    textMorph.setTextAttributesWithSortedRanges(attributes);
 
     if (this.checker)
       this.checker.onDocumentChange({}, textMorph, this);

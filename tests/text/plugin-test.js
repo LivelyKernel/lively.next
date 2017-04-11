@@ -6,6 +6,9 @@ import { dummyFontMetric as fontMetric, expectSelection } from "../test-helpers.
 import { Range } from "../../text/range.js";
 import KeyHandler from "../../events/KeyHandler.js"
 
+var describeInBrowser = System.get("@system-env").browser ? describe :
+  (title, fn) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xdescribe(title, fn); }
+
 function dummyPlugin() {
   return {
     installCount: 0,
@@ -20,7 +23,7 @@ function dummyPlugin() {
 }
 
 var text;
-describe("text plugins", () => {
+describeInBrowser("text plugins", () => {
 
   beforeEach(() => text = new Text({textString: "Hello\n World"}))
 

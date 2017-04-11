@@ -2,7 +2,6 @@
 import { arr, string } from "lively.lang";
 import { signal } from "lively.bindings";
 import EditorPlugin from "../editor-plugin.js";
-import { TextStyleAttribute } from "../../text/attribute.js";
 import { defaultDirectory, runCommand } from "./shell-interface.js";
 import { shellCompleters } from "./completers.js";
 
@@ -54,11 +53,11 @@ export class ShellEditorPlugin extends EditorPlugin {
     if (!this.theme || !textMorph || !textMorph.document) return;
 
     let tokens = this._tokens = this.tokenizer.tokenize(textMorph.textString),
-        styles = tokens.map(({type, start, end}) =>
-          tokens.type !== "default" &&
-            TextStyleAttribute.fromPositions(this.theme.styleCached(type),start, end))
-              .filter(Boolean);
-    textMorph.setSortedTextAttributes([textMorph.defaultTextStyleAttribute].concat(styles));
+        attributes = [];
+    for (let {token, start, end} of tokens)
+      if (tokens.type !== "default")
+        attributes.push({start, end}, this.theme.styleCached(token));
+    textMorph.setTextAttributesWithSortedRanges(attributes);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

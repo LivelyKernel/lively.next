@@ -2,7 +2,6 @@ import { arr, string } from "lively.lang";
 import EditorPlugin from "../editor-plugin.js";
 import { pt } from "lively.graphics";
 import { config } from "lively.morphic";
-import { TextStyleAttribute } from "lively.morphic/text/attribute.js";
 import { lessEqPosition } from "lively.morphic/text//position.js";
 
 import DiffNavigator from "./navigator.js";
@@ -37,18 +36,22 @@ export class DiffEditorPlugin extends EditorPlugin {
     let textMorph = this.textMorph;
     if (!this.theme || !textMorph || !textMorph.document) return;
 
-    try {
-      var {tokens, patches} = this.tokenizer.tokenize(textMorph.textString);
-    } catch (e) { tokens = []; patches = []; }
+    let tokens = [], patches = []; 
+    if (textMorph.textString) {
+      try {
+        ({tokens, patches} = this.tokenizer.tokenize(textMorph.textString));
+      } catch (e) {}
+    }
 
     this.tokens = tokens;
     this.patches = patches;
+    
+    let attributes = [];
+    for (let {type, start, end} of tokens)
+      if (tokens.type !== "default")
+        attributes.push({start, end}, this.theme.styleCached(type));
+    textMorph.setTextAttributesWithSortedRanges(attributes);
 
-    var styles = tokens.map(({type, start, end}) =>
-          tokens.type !== "default" &&
-            TextStyleAttribute.fromPositions(this.theme.styleCached(type),start, end))
-              .filter(Boolean);
-    textMorph.setSortedTextAttributes([textMorph.defaultTextStyleAttribute].concat(styles));
   }
 
   getCommands(other) { return other.concat(commands); }

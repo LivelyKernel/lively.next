@@ -3,7 +3,7 @@
 import { obj, arr, num } from "lively.lang";
 import { Rectangle, Color, pt } from "lively.graphics";
 import { connect, signal, disconnect } from "lively.bindings"; // for makeInputLine
-import { Text } from "./morph.js"
+import { Text } from "../text/morph.js"
 import { Range } from "./range.js";
 
 export default class InputLine extends Text {
@@ -104,7 +104,7 @@ export default class InputLine extends Text {
       highlightWhenFocused: {defaultValue: false},
 
       height: {
-        after: ["padding", "textAttributes"],
+        after: ["padding", "textAndAttributes"],
         initialize() {
           this.height = this.defaultLineHeight + this.padding.top() + this.padding.bottom();
         }

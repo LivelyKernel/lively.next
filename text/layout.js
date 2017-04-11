@@ -1,885 +1,319 @@
-import { arr, string, obj } from "lively.lang";
-import { pt, Rectangle } from "lively.graphics";
-
-
-/*
-
-TODO: render this nicely when browsed in a lively browser!
-
-# About text layouting
-
-
-This allows our text layouter to optionally wrap lines based on a `wrapAt` value that will usually be the text morph width.
-
-![line-wrapping](https://cloud.githubusercontent.com/assets/467450/19018641/aa357264-881f-11e6-9317-7af91352113c.gif)
-
-
-## Structure
-
-If wrapping is disabled then the following structure is used to compute the layout and is what the renderer works with:
-
-![image](https://cloud.githubusercontent.com/assets/467450/19018579/74e8b6aa-881c-11e6-88d1-b57d07120886.png)
-
-The TextLayout updates lines based on text and attributes changes as necessary. TextChunks inside lines are ranges in the text that have text attributes applied. If a text attribute spans multiple lines there will be at least as many chunks as lines, each referring to the text attribute.
-
-If line wrapping is disabled the structure is now:
-
-![image](https://cloud.githubusercontent.com/assets/467450/19018586/c7dbf764-881c-11e6-9e9c-fa9991884853.png)
-
-For each line in the document a WrappedTextLayoutLine is created. This object can split it's line content (text + text attributes) based on the `wrapAt` value of the layouter. It will create as many TextLayoutLines as necessary to fit the given space.
-
-
-## Line breaks
-
-Note that there are differences in how line endings are handled by normal line breaks and wrapped line breaks:
-
-Given a line `abc`. It has a starting position of `{row: 0, column: 0}` and end position `{row: 0, column: 3}`. The text cursor can be placed at `{row: 0, column: 3}` and will be rendered after the c.
-
-If the line is wrapped after "b" and the cursor is placed at `{row: 0, column: 2}` it will be rendered at the beginning of the subsequent line. The model behind that is that there is a newline character at the end of every natural line and you can place the cursor between it and the last normal character. Wrapped lines have no newline character so there is nothing to place the cursor between.
-
-
-## document and screen position
-
-Wrapped text creates a new "coordinate system" inside the text. Normally positions and ranges in text are identified by `{row, column}` pairs that map directly to a text morph's document and document lines.
-
-Wrapped text creates the need to differentiate "screen positions" from those "document positions". Screen positions are also expressed in `{row,column}` form but refer to what is visible in terms of wrapped content.
-
-Given a line `abc` and it being wrapped after b: Screen positions `{row: 0, column: 2}` and `{row: 1, column: 0}` both map to document position `{row: 0, column: 2}`. So in a sense, screen positions contain more information than document positions as those do not contain the information about wrapped line breaks.
-
-The TextLayout object provides an interface for working with pos kinds of positions:
-
-```
-pixelPositionFor(morph, {row, column})          => {x, y}
-pixelPositionForScreenPos(morph, {row, column}) => {x, y}
-boundsFor(morph, {row, column})                 => {x,y,width,height}
-boundsForScreenPos(morph, {row, column})        => {x,y,width,height}
-screenPositionFor(morph, {x, y})                => {row, column}
-docToScreenPos(morph, {row, column})            => {row, column}
-screenToDocPos(morph, {row, column})            => {row, column}
-```
-
-Note that most of the time for code working with a text morph and its text content it is more convenient to work with document positions (and most of the text commands do that). Only for specific code that e.g. relates position of other morphs to the text it is necessary to use screen positions.
-
-
-## Optimizations
-
-### Chunk handling
-
-Something that is not obvious: TextWrappableLayoutLines won't actually need to hold on to TextChunks. They do because this allows them to check for changes without creating new lines or splitting up the new chunks into pieces so they fit the wrapped space. Note that the chunks in TextWrappableLayoutLines don't have to be equal to the chunks in TextLayoutLines! This is b/c when wrapping is computed in [`TextWrappableLayoutLines>>updateIfNecessary`](https://github.com/LivelyKernel/lively.morphic/blob/text-line-wrapping/text/layout.js#L331), chunks are [split](https://github.com/LivelyKernel/lively.morphic/blob/text-line-wrapping/text/layout.js#L138) which can result in new chunk instances.
-
- */
-
-const newline = "\n",
-      newlineLength = 1; /*fixme make work for cr lf windows...*/
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-function styleFromTextAttributes(textAttributes) {
-  // see TextStyleAttribute.styleProps
-  var s = {};
-  for (var i = 0; i < textAttributes.length; i++) {
-    var d = textAttributes[i].data;
-    if ("fontFamily" in d)            s.fontFamily = d.fontFamily;
-    if ("fontSize" in d)              s.fontSize = d.fontSize;
-    if ("fontColor" in d)             s.fontColor = d.fontColor;
-    if ("backgroundColor" in d)       s.backgroundColor = d.backgroundColor;
-    if ("fontWeight" in d)            s.fontWeight = d.fontWeight;
-    if ("fontStyle" in d)             s.fontStyle = d.fontStyle;
-    if ("textDecoration" in d)        s.textDecoration = d.textDecoration;
-    if ("fixedCharacterSpacing" in d) s.fixedCharacterSpacing = d.fixedCharacterSpacing;
-    if (d.textStyleClasses)           s.textStyleClasses = (s.textStyleClasses || []).concat(d.textStyleClasses);
-    if (d.nativeCursor)               s.nativeCursor = d.nativeCursor;
-    if (d.link)                       { s.link = d.link; s.nativeCursor = "auto"; delete s.textDecoration; delete s.fontColor; }
-    if (d.doit)                       { s.doit = d.doit; }
-  }
-  return s;
-}
-
-function chunksFrom(textOfLine, fontMetric, textAttributesOfLine) {
-  let chunks = [];
-  for (var i = 0; i < textAttributesOfLine.length; i += 3) {
-    var startCol = textAttributesOfLine[i],
-        endCol = textAttributesOfLine[i+1],
-        attributes = textAttributesOfLine[i+2];
-    chunks.push(new TextChunk(textOfLine.slice(startCol, endCol), fontMetric, attributes));
-  }
-  return chunks;
-}
-
-function updateChunks(oldChunks, newChunks) {
-  // compares oldChunks with newChunks and modifies(!) oldChunks so that the
-  // oldChunks list gets patched with changed or new chunks
-  // returns true if changes occurred, false otherwise
-  if (!oldChunks.length && newChunks.length) {
-    oldChunks.push(...newChunks);
-    return true;
-  }
-
-  let oldChunkCount = oldChunks.length,
-      newChunkCount = newChunks.length,
-      changed = false;
-
-  for (let i = 0; i < newChunks.length; i++) {
-    let oldChunk = oldChunks[i],
-        newChunk = newChunks[i],
-        { text: newText, fontMetric: newFontMetric, textAttributes: newTextAttributes } = newChunk;
-    if (!oldChunk || !oldChunk.compatibleWith(newText, newFontMetric, newTextAttributes)) {
-      oldChunks[i] = newChunk;
-      changed = true;
-    }
-  }
-
-  if (newChunkCount < oldChunkCount) {
-    oldChunks.splice(newChunkCount, oldChunkCount - newChunkCount);
-    changed = true;
-  }
-
-  return changed;
-}
-
-class TextChunk {
-
-  constructor(text, fontMetric, textAttributes) {
-    this.fontMetric = fontMetric;
-    this.textAttributes = textAttributes;
-    this.text = text;
-
-    this.rendered = undefined;
-    this._style = undefined;
-    this._charBounds = undefined;
-    this._width = undefined;
-    this._height = undefined;
-    return this;
-  }
-
-  get style() {
-    return this._style || (this._style = styleFromTextAttributes(this.textAttributes));
-  }
-
-  compatibleWith(text2, fontMetric2, textAttributes2) {
-    var {text, fontMetric, style} = this;
-    return text === text2
-        && fontMetric === fontMetric2
-        // FIXME!!!!!! that's sloooooow....
-        && obj.equals(style, styleFromTextAttributes(textAttributes2));
-  }
-
-  get height() {
-    if (!this._height === undefined) this.computeBounds();
-    return this._height;
-  }
-
-  get width() {
-    if (this._width === undefined) this.computeBounds();
-    return this._width;
-  }
-
-  get length() { return this.text.length; }
-
-  get charBounds() {
-    if (this._charBounds === undefined) this.computeCharBounds();
-    return this._charBounds;
-  }
-
-  computeBounds() {
-    let width = 0, height = 0,
-        bounds = this.charBounds,
-        nBounds = bounds.length;
-    if (nBounds === 0) {
-      height = this.fontMetric.defaultLineHeight(this.style);
-    } else {
-      for (var i = 0; i < bounds.length; i++) {
-        var char = bounds[i];
-        width += char.width;
-        height = Math.max(height, char.height);
-      }
-    }
-    this._height = height;
-    this._width = width;
-    return this;
-  }
-
-  computeCharBounds() {
-    let {text, fontMetric, style} = this;
-    this._charBounds = text.length === 0 ?
-      [] : fontMetric.charBoundsFor(style, text);
-  }
-
-  splitAt(splitWidth) {
-    var width = this.width;
-    if (splitWidth <= 0 || width < splitWidth) return [this];
-
-    var {_charBounds, _style, _height, text, fontMetric, textAttributes} = this;
-
-    if (!_charBounds.length) return [this];
-
-    if (_charBounds[0].width > splitWidth) return [null, this];
-
-    for (let i = 1/*min 1 char*/; i < _charBounds.length; i++) {
-      let {x, width: w} = _charBounds[i],
-          currentWidth = x+w;
-      if (currentWidth <= splitWidth) continue;
-      let left = Object.assign(
-                  new TextChunk(text.slice(0, i), fontMetric, textAttributes),
-                  {_style, _width: x, _height, _charBounds: _charBounds.slice(0, i)}),
-          nextWidth = 0,
-          charBoundsSplitted = new Array(_charBounds.length-i);
-
-      for (let j = i, k = 0; j < _charBounds.length; j++, k++) {
-        var ea = _charBounds[j];
-        nextWidth += ea.width;
-        charBoundsSplitted[k] = {...ea, x: ea.x-x};
-      }
-
-      var right = Object.assign(
-        new TextChunk(text.slice(i), fontMetric, textAttributes),
-        {_style, _width: nextWidth, _height, _charBounds: charBoundsSplitted});
-
-      return [left, right]
-
-    }
-
-    return [null, this];
-  }
-
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-class TextLayoutLine {
-
-  constructor(chunks = []) {
-    this.chunks = chunks;
-    this.resetCache();
-  }
-
-  resetCache() {
-    this.rendered = this._charBounds = this._height = this._width = undefined;
-  }
-
-  get text() {
-    var text = "";
-    for (let i = 0; i < this.chunks.length; i++)
-      text += this.chunks[i].text
-    return text;
-  }
-
-  get length() {
-    var l = 0;
-    for (let i = 0; i < this.chunks.length; i++)
-      l += this.chunks[i].length
-    return l;
-  }
-
-  get height() {
-    if (this._height === undefined) this.computeBounds();
-    return this._height;
-  }
-
-  get width() {
-    if (this._width === undefined) this.computeBounds();
-    return this._width;
-  }
-
-  computeBounds() {
-    this._width = this._height = 0;
-    for (let i = 0; i < this.chunks.length; i++) {
-      var chunk = this.chunks[i];
-      this._width += chunk.width;
-      this._height = Math.max(this._height, chunk.height);
-    }
-    return this;
-  }
-
-  boundsFor(column) {
-    var charBounds = this.charBounds;
-    return charBounds[column]
-        || charBounds[charBounds.length-1]
-        || {x: 0, y: 0, width: 0, height: 0};
-  }
-
-  get charBounds() {
-    if (this._charBounds === undefined) this.computeCharBounds();
-    return this._charBounds;
-  }
-
-  computeCharBounds() {
-    let prefixWidth = 0,
-        { chunks, height: lineHeight } = this,
-        nChunks = chunks.length;
-    this._charBounds = [];
-
-    for (var i = 0; i < nChunks; i++) {
-      let { charBounds, width, height } = chunks[i];
-
-      for (let j = 0; j < charBounds.length; j++) {
-        let bounds = charBounds[j],
-            {x, y, width} = bounds;
-        this._charBounds.push({x: x + prefixWidth, y, width, height: lineHeight});
-      }
-
-      prefixWidth += width;
-    }
-
-    // "newline"
-    this._charBounds.push({x: prefixWidth, y: 0, width: 0, height: lineHeight});
-  }
-
-  rowColumnOffsetForPixelPos(xInPixels, yInPixels) {
-    let {charBounds} = this,
-        length = charBounds.length,
-        first = charBounds[0],
-        last = charBounds[length-1],
-        result = {row: 0, column: 0};
-
-    // everything to the left of the first char + half its width is col 0
-    if (!length || xInPixels <= first.x+Math.round(first.width/2)) return result;
-
-    // everything to the right of the last char + half its width is last col
-    if (xInPixels > last.x+Math.round(last.width/2)) {
-      result.column = length-1;
-      return result;
-    }
-
-    // find col so that x between right side of char[col-1] and left side of char[col]
-    for (var i = length-2; i >= 0; i--) {
-      let {x, width} = charBounds[i];
-      if (xInPixels >= x + Math.round(width/2)) {
-        result.column = i+1;
-        return result;
-      }
-    }
-
-    return result;
-  }
-
-  chunkAtOffset(offsetX, offsetY) {
-    var x = 0;
-    for (var i = 0; i < this.chunks.length; i++) {
-      let { charBounds, width, height } = this.chunks[i];
-      if (offsetX >= x && offsetX <= x + width) return this.chunks[i];
-      x += width;
-    }
-    return null
-  }
-
-  chunkAtColumn(column) {
-    var sumLength = 0;
-    for (var i = 0; i < this.chunks.length; i++) {
-      let { length } = this.chunks[i];
-      if (column >= sumLength && column <= sumLength + length) return this.chunks[i];
-      sumLength += length;
-    }
-    return null
-  }
-
-  updateIfNecessary(newChunks) {
-    var changed = updateChunks(this.chunks, newChunks);
-    changed && this.resetCache();
-    return changed;
-  }
-
-}
-
-
-class WrappedTextLayoutLine {
-
-  constructor() {
-    this.chunks = [];
-    this.wrappedLines = [];
-    this._wrapAt = Infinity;
-    this.resetCache();
-  }
-
-  resetCache() {
-    this._charBounds = this._height = this._width = undefined;
-  }
-
-  get text() {
-    var text = 0;
-    for (let i = 0; i < this.wrappedLines.length; i++)
-      text += this.wrappedLines[i].text
-    return text;
-  }
-
-  get length() {
-    var l = 0;
-    for (let i = 0; i < this.wrappedLines.length; i++)
-      l += this.wrappedLines[i].length
-    return l;
-  }
-
-  get wrapAt() { return this._wrapAt; }
-  set wrapAt(x) {
-    var changed = this._wrapAt !== x;
-    this._wrapAt = x;
-    changed && this.resetCache();
-  }
-
-  get height() {
-    if (this._height === undefined) this.computeBounds();
-    return this._height;
-  }
-
-  get width() {
-    if (this._width === undefined) this.computeBounds();
-    return this._width;
-  }
-
-  computeBounds() {
-    this._width = this._height = 0;
-    for (let i = 0; i < this.wrappedLines.length; i++) {
-      let l = this.wrappedLines[i];
-      this._width = Math.max(l.width, this._width);
-      this._height += l.height;
-    }
-    return this;
-  }
-
-  updateIfNecessary(newChunks, wrapAt) {
-    // Here we create wrapped lines and figure out what the right content for
-    // them is, i.e. we split the chunks that are in this line into sub-lists
-    // according to wrapAt. wrapAt specifies the width at which the wrap should
-    // occur.
-
-    // First update the chunks normally, i.e. compare old chunks of line with
-    // new chunks. If nothing has changed and the wrap width is the same we don't
-    // need to do anything. This is an important optimization!
-    let chunks = this.chunks,
-        changed = updateChunks(chunks, newChunks) || this.wrapAt !== wrapAt;
-
-    if (!changed) return false;
-
-    this.wrapAt = wrapAt;
-
-    // chunks by line is a list of chunk lists, each holding the chunks for a
-    // wrapped line
-    var chunksByLine = [[]],
-        currentLineChunks = chunksByLine[0],
-        x = 0;
-
-    // we iterate over the chunks and sum up there width. When we hit the
-    // wrapAt limit we split a chunk, putting its "left" part into the current
-    // chunk list and start a new chunk list, i.e. a new line. We do this until
-    // we run out of chunks
-    for (let i = 0; i < chunks.length; i++) {
-
-      let nextChunk = chunks[i],
-          nextW = nextChunk.width;
-
-      if (x + nextW <= wrapAt) { x += nextW; currentLineChunks.push(nextChunk); continue; }
-
-      let maybeNotSplittableChunk = null;
-      while (true) {
-
-        let [split1, split2] = x >= wrapAt ? [null, nextChunk] : nextChunk.splitAt(wrapAt-x);
-
-        if (!split1 && split2 && split2 === maybeNotSplittableChunk) {
-          // we have seen that chunk before and tried to split it, won't work
-          // so we leave it to not enter an endless loop!
-          split1 = split2;
-          split2 = maybeNotSplittableChunk = null;
-        }
-
-        if (split1) {
-          x += split1.width;
-          currentLineChunks.push(split1);
-        } else maybeNotSplittableChunk = split2;
-
-        if (!split2) break;
-
-        chunksByLine.push(currentLineChunks = []);
-        x = 0;
-        nextChunk = split2;
-      }
-    }
-
-    let nLines = chunksByLine.length;
-
-    // Now that we have the chunks by line we create new "normal" lines from them
-    for (let i = 0; i < nLines; i++) {
-      let chunks = chunksByLine[i],
-          line = this.wrappedLines[i] || (this.wrappedLines[i] =  new TextLayoutLine())
-      line.updateIfNecessary(chunks);
-    }
-
-    // If the wrapped line contained more sub lines before, remove them here
-    if (nLines !== this.wrappedLines.length)
-      this.wrappedLines.splice(nLines, this.wrappedLines.length - nLines);
-
-    this.resetCache();
-    return true;
-  }
-
-  boundsFor(column) {
-    var charBounds = this.charBounds;
-    return charBounds[column]
-        || charBounds[charBounds.length-1]
-        || {x: 0, y: 0, width: 0, height: 0};
-  }
-
-  rowColumnOffsetForPixelPos(xInPixels, yInPixels) {
-    // look for the wrapped line and offset row accordingly,
-    // use rowColumnOffsetForPixelPos of simple line for column
-    var line, currentHeight = 0, lines = this.wrappedLines;
-    for (var i = 0; i < lines.length; i++) {
-      line = lines[i];
-      currentHeight += line.height;
-      if (currentHeight > yInPixels) break;
-    }
-    return {
-      column: line.rowColumnOffsetForPixelPos(xInPixels, currentHeight - yInPixels).column,
-      row: i
-    }
-  }
-
-  get charBounds() {
-    if (this._charBounds === undefined) this.computeCharBounds();
-    return this._charBounds;
-  }
-
-  computeCharBounds() {
-    let currentX = 0, currentY = 0,
-        { wrappedLines } = this;
-
-    this._charBounds = [];
-
-    for (let i = 0; i < wrappedLines.length; i++) {
-
-      let { charBounds, height: lineHeight } = wrappedLines[i];
-
-      for (let j = 0; j < charBounds.length; j++) {
-        let bounds = charBounds[j],
-            {x, y, width, height} = bounds;
-
-        // add its bounding box
-        this._charBounds.push({x: x + currentX, y: y+currentY, width, height});
-      }
-
-      currentY += lineHeight
-    }
-
-  }
-
-}
-
-
+import { Rectangle, pt } from "lively.graphics";
+import { arr } from "lively.lang";
+import { inspect } from "lively.morphic";
+import { Range } from "../text/range.js";
+
+function todo(name) { throw new Error("not yet implemented " + name)}
 
 export default class TextLayout {
 
-  // The TextLayout coordinates the positioning and wrapping of lines, i.e. it
-  // takes the document lines from a morph (text + text attributes) and a font
-  // metric and maintains lines for which we can then compute positions and
-  // bounding boxes. This is used to map morphic coordinates to text positions
-  // and back and is used by the text renderer
-
-  constructor(fontMetric) {
-    this.lineWrapping = false;
-    this.reset(fontMetric);
+  constructor() {
+    this.reset();
   }
 
-  reset(fontMetric) {
-    this.layoutComputed = false;
-    this.lines = [];
-    this._wrappedLines = null;
-    if (fontMetric) this.fontMetric = fontMetric;
-    this.firstVisibleLine = undefined;
-    this.lastVisibleLine = undefined;
+  reset() {
+    this.resetLineCharBoundsCache();
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // accessing
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  wrappedLines(morph) {
-    // returns the lines in wrapped form
-    this.updateFromMorphIfNecessary(morph);
-    if (!this.lineWrapping)
-      return this.lines;
-    if (this._wrappedLines)
-      return this._wrappedLines;
-    var wrappedLines = [], lines = this.lines;
-    for (let i = 0; i < lines.length; i++)
-      wrappedLines.push(...lines[i].wrappedLines);
-    return this._wrappedLines = wrappedLines;
+  resetLineCharBoundsCache(morph) {
+    this.lineCharBoundsCache = new WeakMap();
+    if (morph) {
+      this.estimateLineHeights(morph, true);
+      morph.makeDirty();
+    }
   }
 
-  rangesOfWrappedLine(morph, row) {
-    // returns a list like [{start: {row,column}, end: {row,column}}, ...] that
-    // specify the start/end positions (ranges) of all wrapped lines identified by
-    // row. Note: row is a document position, i.e. it refers to the line no of a
-    // document / unwrapped line. Also, the {row,column} positions being
-    // returned are in document coordinates!
-    this.updateFromMorphIfNecessary(morph);
-
-    var line = this.lines[row];
-    if (!line) return [];
-
-    if (!this.lineWrapping)
-      return [{start: {column: 0, row}, end: {column: line.length, row}}]
-
-    var column = 0;
-    return line.wrappedLines.map(wrappedLine => {
-       var endColumn = column + wrappedLine.length,
-           range = {
-             start: {row, column},
-             end: {row, column: column + wrappedLine.length}
-           }
-       column = endColumn;
-       return range;
-    });
+  resetLineCharBoundsCacheOfLine(line) {
+    if (!line) return;
+    this.lineCharBoundsCache.set(line, null);
   }
 
-  firstFullVisibleLine(morph) {
-    var selector = this.lineWrapping ? "boundsForScreenPos" : "boundsFor",
-        bounds = this[selector](morph, {row: this.firstVisibleLine, column: 0});
-    return this.firstVisibleLine + (bounds.top() < morph.scroll.y ? 1 : 0);
+  resetLineCharBoundsCacheOfRow(morph, row) {
+    let doc = morph.document;
+    doc && this.resetLineCharBoundsCacheOfLine(doc.getLine(row));
   }
 
-  lastFullVisibleLine(morph) {
-    var selector = this.lineWrapping ? "boundsForScreenPos" : "boundsFor",
-        bounds = this[selector](morph, {row: this.lastVisibleLine, column: 0});
-    return this.lastVisibleLine + (bounds.bottom() > morph.scroll.y + morph.height ? -1 : 0);
+  resetLineCharBoundsCacheOfRange(morph, range) {
+    for (let row = range.start.row; row <= range.end.row; row++)
+      this.resetLineCharBoundsCacheOfRow(morph, row);
+  }
+
+  estimateLineHeights(morph, force = false) {
+    let {
+          viewState,
+          defaultTextStyle,
+          lineWrapping,
+          width: morphWidth, padding,
+          document: {lines},
+          fontMetric, textRenderer
+        } = morph,
+        directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph),
+        paddingLeft = padding.left(),
+        paddingRight = padding.right(),
+        paddingTop = padding.top(),
+        paddingBottom = padding.bottom();
+
+    morphWidth = morphWidth - paddingLeft - paddingRight;
+
+    for (let i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (!force && line.height > 0) continue;
+
+      var textAttributes = line.textAttributes, styles = [];
+
+      // find all styles that apply to line
+      if (!textAttributes || !textAttributes.length) styles.push(defaultTextStyle);
+      else for (var j = 0; j < textAttributes.length; j++)
+        styles.push({...defaultTextStyle, ...textAttributes[j]});
+
+      // measure default char widths and heights
+      var measureCount = styles.length, // for avg width
+          charWidthSum = 0,
+          charHeight = 0;
+      for (var h = 0; h < measureCount; h++) {
+        var {width, height} = fontMetric.defaultCharExtent({
+          defaultTextStyle: styles[h],
+          width: 1000,
+          paddingBottom, paddingTop, paddingRight, paddingLeft
+        }, directRenderTextLayerFn);
+        charHeight = Math.max(height, charHeight);
+        charWidthSum = charWidthSum + width;
+      }
+
+      var estimatedHeight = charHeight,
+          charCount = line.text.length || 1,
+          charWidth = Math.round(charWidthSum/measureCount),
+          unwrappedWidth = charCount * charWidth,
+          estimatedWidth = !lineWrapping ? unwrappedWidth : Math.min(unwrappedWidth, morphWidth);
+      if (lineWrapping) {
+        var charsPerline = Math.max(3, morphWidth / charWidth),
+            wrappedLineCount = Math.ceil(charCount / charsPerline) || 1,
+        estimatedHeight = Math.round(wrappedLineCount * charHeight);
+      }
+      line.changeExtent(estimatedWidth, estimatedHeight, true);
+    }
+
+    viewState._textLayoutStale = false;
+  }
+
+  textBounds(morph) {
+    let {document: doc, padding} = morph;
+    return new Rectangle(padding.left(), padding.top(), doc.width, doc.height);
+  }
+
+  isFirstLineVisible(morph) {
+    return morph.viewState.firstVisibleRow <= 0;
+  }
+  isLastLineVisible(morph) {
+    return morph.viewState.lastVisibleRow >= morph.lineCount() - 1;
   }
 
   isLineVisible(morph, row) {
-    return row >= this.firstVisibleLine && row <= this.lastVisibleLine;
+    return row >= morph.viewState.firstVisibleRow && row <= morph.viewState.lastVisibleRow;
   }
 
   isLineFullyVisible(morph, row) {
-    return row >= this.firstFullVisibleLine(morph) && row <= this.lastFullVisibleLine(morph);
+    return row >= morph.viewState.firstFullyVisibleRow && row <= morph.viewState.lastFullyVisibleRow;
   }
 
-  defaultCharSize(morph) {
-    return this.fontMetric.sizeFor(morph.fontFamily, morph.fontSize, "X");
+  whatsVisible(morph) {
+    var startRow = morph.viewState.firstVisibleRow,
+        endRow = morph.viewState.lastVisibleRow,
+        lines = morph.document.lines.slice(startRow, endRow);
+    return {lines, startRow, endRow};
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // updating
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  firstFullVisibleLine(morph) { return morph.viewState.firstFullyVisibleRow; }
+  lastFullVisibleLine(morph) { return morph.viewState.lastFullyVisibleRow; }
 
-  shiftLinesIfNeeded(morph, {start, end}, changeType) {
-    var nRows = end.row - start.row;
-    if (nRows === 0) return;
-    var nInsRows = changeType === "insertText" ? nRows : 0,
-        nDelRows = changeType === "deleteText" ? nRows : 0,
-        placeholderRows = Array(nInsRows),
-        from = start.row + 1,
-        to = from + nDelRows,
-        lines = this.lines;
-    // this.lines.splice(start.row+1, nDelRows, ...placeholderRows);
-    this.lines = lines.slice(0, from).concat(placeholderRows).concat(lines.slice(to));
-  }
+  screenLineRange(morph, textPos, ignoreLeadingWhitespace) {
+    // find the range that includes textPos whose start and end chars are in a
+    // vertical line. Normally all chars of a line are positioned vertically
+    // next to each other, unless the line is wrapped. This is for figuring
+    // that out
 
-  updateFromMorphIfNecessary(morph) {
-    if (this.layoutComputed) return false;
+    let {row, column} = textPos;
+    column = Math.max(0, column);
+    row = Math.min(morph.lineCount()-1, Math.max(0, row));
 
-    // TODO: specify which lines have changed!
+    let charBounds = this.charBoundsOfRow(morph, row);
+    if (column > charBounds.length-1) column = charBounds.length-1;
+    let bounds = charBounds[column];
 
-    // reset cache
-    this._wrappedLines = null;
+    let firstIndex = column, lastIndex = column;
 
-    let doc = morph.document,
-        lineWrappingBefore = this.lineWrapping,
-        lineWrapping = this.lineWrapping = morph.lineWrapping,
-        Line = lineWrapping ? WrappedTextLayoutLine : TextLayoutLine,
-        paddingLeft = morph.padding.left(),
-        paddingRight = morph.padding.right(),
-        wrapAt = lineWrapping && morph.fixedWidth ?
-          morph.width - paddingLeft - paddingRight :
-          Infinity,
-        fontMetric = this.fontMetric,
-        docLines = doc.lines,
-        nRows = docLines.length,
-        textAttributesChunked = doc.textAttributesChunkedByLine(0, nRows-1),
-        morphBounds = morph.innerBounds();
-
-    // need different keinds of lines, so reset
-    if (lineWrapping !== lineWrappingBefore) this.lines = [];
-
-    for (let row = 0; row < nRows; row++) {
-      let textAttributesOfLine = textAttributesChunked[row],
-          text = docLines[row],
-          line = this.lines[row],
-          chunksOfLine = chunksFrom(text, fontMetric, textAttributesOfLine);
-
-      if (!line) line = this.lines[row] = new Line();
-      line.updateIfNecessary(chunksOfLine, wrapAt);
+    for (let i = column+1; i < charBounds.length; i++) {
+      if (charBounds[i].y+charBounds[i].height > bounds.y+bounds.height) break;
+      lastIndex = i;
     }
-    this.lines.splice(nRows, this.lines.length - nRows);
+    // For last range we go until end of line
+    if (lastIndex === charBounds.length-1) lastIndex++;
 
-    this.layoutComputed = true;
-    return true;
+    for (let i = column-1; i >= 0; i--) {
+      if (charBounds[i].y+charBounds[i].height < bounds.y+bounds.height) break;
+      firstIndex = i;
+    }
+
+    if (ignoreLeadingWhitespace) {
+      let rangeString = morph.getLine(row).slice(firstIndex, lastIndex),
+          skip = rangeString.match(/^\s*/)[0].length;
+      firstIndex = firstIndex + skip;
+    }
+
+    return new Range({start: {row, column: firstIndex}, end: {row, column: lastIndex}});
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // position access and conversion, including
-  // pixel pos <=> doc pos <=> screen pos
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  rangesOfWrappedLine(morph, row) {
+    let lineLength = morph.getLine(row).length,
+        column = 0, ranges = [];
+    while (true) {
+      let range = this.screenLineRange(morph, {row, column}, false);
+      ranges.push(range);
+      if (range.end.column >= lineLength) break;
+      let nextColumn = range.end.column + 1;
+      if (nextColumn >= lineLength) break;
+      if (nextColumn <= column)
+        throw new Error(`should not happen ${range.end.column} vs ${column}`);
+      column = nextColumn;
+    }
+    return ranges;
+  }
+
+  chunkAtPos(morph, pos) { todo("chunkAtPos"); }
+
+  charBoundsOfRow(morph, row) {
+    let doc = morph.document,
+        line = doc.getLine(row);
+
+    let cached = this.lineCharBoundsCache.get(line);
+    if (cached) return cached;
+
+    let {
+          fontMetric, textRenderer,
+          defaultTextStyle,
+          extent: {x: width, y: height},
+          clipMode, textAlign, padding, lineWrapping
+        } = morph,
+        paddingLeft = padding.left(),
+        paddingRight = padding.right(),
+        paddingTop = padding.top(),
+        paddingBottom = padding.bottom(),
+        directRenderLineFn = textRenderer.directRenderLineFn(morph),
+        directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph),
+        charBounds = fontMetric.manuallyComputeCharBoundsOfLine(
+          line, 0, 0, {
+            defaultTextStyle, width, height, clipMode, lineWrapping,
+            paddingLeft, paddingRight, paddingTop, paddingBottom
+          }, directRenderTextLayerFn, directRenderLineFn);
+
+    this.lineCharBoundsCache.set(line, charBounds);
+    return charBounds;
+  }
+
+  boundsFor(morph, docPos) {
+    let {row, column} = docPos;
+    column = Math.max(0, column);
+    row = Math.min(morph.lineCount()-1, Math.max(0, row));
+
+    let charBounds = this.charBoundsOfRow(morph, row),
+        bounds;
+
+    if (charBounds.length > 0) {
+      if (column >= charBounds.length) {
+        let {x, y, width, height} = charBounds[charBounds.length-1];
+        bounds = new Rectangle(x+width, y, 0, height);
+      } else bounds = Rectangle.fromLiteral(charBounds[column]);
+    }
+
+    if (!bounds) {
+      // throw new Error(`Cannot compute bounds for line ${row}/${column}`);
+      console.warn(`Cannot compute bounds for line ${row}/${column}`);
+      bounds = new Rectangle(0, 0, 0, 0);
+    }
+
+    let {document: doc, padding} = morph;
+    bounds.x = bounds.x + padding.left();
+    bounds.y = bounds.y + padding.top() + doc.computeVerticalOffsetOf(row);
+
+    return bounds;
+  }
 
   pixelPositionFor(morph, docPos) {
     var { x, y } = this.boundsFor(morph, docPos);
     return pt(x, y);
   }
 
-  pixelPositionForIndex(morph, index) {
-    var pos = morph.document.indexToPosition(index);
-    return this.pixelPositionFor(morph, pos);
-  }
+  textPositionFromPoint(morph, point) {
+    this.estimateLineHeights(morph);
 
-  pixelPositionForScreenPos(morph, pos) {
-    var { x, y } = this.boundsForScreenPos(morph, pos);
-    return pt(x, y);
-  }
+    let {x, y} = point,
+        {document: doc, padding} = morph,
+        padL = padding.left(),
+        padT = padding.top(),
+        found = doc.findLineByVerticalOffset(y-padT);
 
-  boundsFor(morph, docPos) {
-    return this.boundsForScreenPos(morph, this.docToScreenPos(morph, docPos));
-  }
-
-  boundsForIndex(morph, index) {
-    this.updateFromMorphIfNecessary(morph);
-    var pos = morph.document.indexToPosition(index);
-    return this.boundsFor(morph, pos);
-  }
-
-  boundsForScreenPos(morph, {row, column}) {
-    this.updateFromMorphIfNecessary(morph);
-    let lines = this.wrappedLines(morph),
-        maxLength = lines.length-1,
-        safeRow = Math.max(0, Math.min(maxLength, row)),
-        line = lines[safeRow],
-        paddingTop = morph.padding.top(),
-        paddingLeft = morph.padding.left();
-
-    if (!line) return new Rectangle(paddingLeft, paddingTop, 0,0);
-
-    for (var y = 0, i = 0; i < safeRow; i++)
-      y += lines[i].height;
-    let { x, width, height } = line.boundsFor(column);
-    return new Rectangle(paddingLeft+x, paddingTop+y, width, height);
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  lineAndScreenPositionAtPoint(morph, point) {
-    this.updateFromMorphIfNecessary(morph);
-    var lines = this.wrappedLines(morph);
-    if (!lines.length) return {row: 0, column: 0, offsetX: 0, offsetY: 0, line: null};
-
-    let {x,y: remainingHeight} = point, line, row = 0;
-    x -= morph.padding.left();
-    remainingHeight -= morph.padding.top();
-
-    if (remainingHeight < 0) remainingHeight = 0;
-
-    for (; row < lines.length; row++) {
-      line = lines[row];
-      if (remainingHeight < line.height) break;
-      remainingHeight -= line.height;
-    }
-    row = Math.min(row, lines.length-1)
-
-    var {row: rowOffset, column: columnOffset} =
-      line.rowColumnOffsetForPixelPos(x, remainingHeight);
-
-    return {row: row+rowOffset, column: columnOffset, offsetX: x, offsetY: remainingHeight, line};
-  }
-
-  screenPositionFor(morph, point) {
-    return this.lineAndScreenPositionAtPoint(morph, point);
-  }
-
-  textIndexFor(morph, point) {
-    var pos = this.textPositionFor(morph, point);
-    return morph.document.positionToIndex(pos);
-  }
-
-  textBounds(morph) {
-    this.updateFromMorphIfNecessary(morph);
-    let textWidth = 0, textHeight = 0,
-        lines = this.wrappedLines(morph);
-    for (let row = 0; row < lines.length; row++) {
-      var {width, height} = lines[row];
-      textWidth = Math.max(width, textWidth);
-      textHeight += height;
-    }
-    return new Rectangle(morph.padding.left(), morph.padding.top(), textWidth, textHeight);
-  }
-
-  chunkAtPoint(morph, point) {
-    var {line, offsetX, offsetY} = morph.textLayout.lineAndScreenPositionAtPoint(morph, point);
-    return line ? line.chunkAtOffset(offsetX) : null;
-  }
-
-  chunkAtScreenPos(morph, {row, column}) {
-    this.updateFromMorphIfNecessary(morph);
-    let lines = this.wrappedLines(morph);
-    row = Math.max(0, Math.min(lines.length-1, row));
-    var line = lines[row];
-    return line ? line.chunkAtColumn(column) : null;
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  docToScreenPos(morph, {row, column}) {
-    if (!this.lineWrapping) return {row, column};
-    this.updateFromMorphIfNecessary(morph);
-    var screenRow = Math.max(0, row),
-        line = this.lines[row];
-    if (!line) line = this.lines[row = this.lines.length-1];
-    if (!line) return {row: 0, column: 0};
-
-    var screenRows = 0;
-    for (let j = 0; j < row; j++) {
-      // can be undefined when called directly after document change before the
-      // layouter had a chance to update, e.g. when pressing enter
-      screenRows += this.lines[j] ? this.lines[j].wrappedLines.length : 0;
+    if (!found) {
+      if (y >= doc.height+padT) found = {line: {row: doc.rowCount-1}}
+      else if (y <= padL) found = {line: {row: 0}}
+      else return {row: 0, column: 0};/*????*/
     }
 
-    var columnLeft = column, nChars;
-    for (var i = 0; i < line.wrappedLines.length; i++) {
-      nChars = line.wrappedLines[i].length;
-      if (columnLeft < nChars)
-        return {row: screenRows+i, column: columnLeft}
-      columnLeft -= nChars;
+    let {line: {row}} = found,
+        charBounds = this.charBoundsOfRow(morph, row),
+        nChars = charBounds.length,
+        first = charBounds[0],
+        last = charBounds[nChars-1],
+        result = {row, column: 0};
+
+    // charBounds are in local line coordinates. Translate points x, y so that it fits
+    x = x - padL;
+    y = y - (padT + doc.computeVerticalOffsetOf(row));
+
+    // everything to the left of the first char + half its width is col 0
+    if (nChars === 0 || (x <= first.x + Math.round(first.width/2)
+                      && y >= first.y && y <= first.y + first.height)) return result;
+
+    if (x > last.x + Math.round(last.width/2) && y >= last.y && y <= last.y + last.height) {
+      result.column = nChars;
+      return result;
     }
-    return {row: screenRows+i-1, column: nChars}
-  }
 
-  screenToDocPos(morph, {row, column}) {
-    if (!this.lineWrapping) {
-      row = Math.max(0, Math.min(row, this.lines.length-1));
-      column = Math.max(0, Math.min(column, this.lines[row].length));
-      return {row, column};
-    }
+    // find col so that x between right side of char[col-1] and left side of char[col]
+    // consider wrapped lines, i.e. charBounds.y <= y <= charBounds.y+charBounds.height
+    let wrappedCharBoundsWithMatchingVerticalPos = [];
+    for (var i = nChars-1; i >= 0; i--) {
+      let cb = charBounds[i],
+          {x: cbX, width: cbWidth, y: cbY, height: cbHeight} = cb;
+      if (y < cbY || y > cbY + cbHeight) continue;
+      wrappedCharBoundsWithMatchingVerticalPos.push(cb);
+      if (x >= cbX + Math.round(cbWidth/2)) {
 
-    this.updateFromMorphIfNecessary(morph);
-
-    let wrappedLines = [], lines = this.lines,
-        targetLine,
-        screenRow = 0,
-        docCol, docRow, found = false;
-
-    for (docRow = 0; docRow < lines.length; docRow++) {
-      docCol = 0;
-      // can be undefined when called directly after document change before the
-      // layouter had a chance to update, e.g. when pressing enter
-      let wrappedLines = (lines[docRow] && lines[docRow].wrappedLines) || [];
-      for (let i = 0; i < wrappedLines.length; i++, screenRow++) {
-        if (screenRow === row) {
-          column = Math.min(column, wrappedLines[i].length);
-          docCol += column;
-          found = true;
-          break;
-        }
-        docCol += wrappedLines[i].length;
+        let clickedAtEndOfWrappedLine = wrappedCharBoundsWithMatchingVerticalPos.length === 1;
+        result.column = clickedAtEndOfWrappedLine ? i/*pos in front of line break*/ : i+1;
+        return result;
       }
-      if (found) break;
     }
 
-    return found ?
-      {row: docRow, column: docCol} :
-      {row: docRow-1, column: lines[docRow-1].length};
-  }
+    // we counted backwards, so the last bounds in
+    // wrappedCharBoundsWithMatchingVerticalPos is actually the first in the
+    // wrapped line. Since we are left of its center, we just take it
+    if (wrappedCharBoundsWithMatchingVerticalPos.length) {
+      result.column = charBounds.indexOf(arr.last(wrappedCharBoundsWithMatchingVerticalPos));
+      return result;
+    }
 
+    // if still not found we go by proximity...
+    let minDist = Infinity, minIndex = -1;
+    for (let i = 0; i < charBounds.length; i++) {
+      let cb = charBounds[i],
+          {x: cbX, width: cbWidth, y: cbY, height: cbHeight} = cb,
+          dist = point.distSquared(pt(cbX+cbWidth/2, cbY+cbHeight/2));
+      if (dist >= minDist) continue;
+      minDist = dist;
+      minIndex = i;
+    }
+
+    result.column = minIndex;
+    return result;
+  }
 }

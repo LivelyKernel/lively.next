@@ -695,8 +695,10 @@ export class ObjectEditor extends Morph {
 
     var ed = this.get("sourceEditor"),
         cursorPos = ed.indexToPosition(putCursorInBody ?
-      method.value.body.start+1 : method.key.start)
+          method.value.body.start+1 : method.key.start)
     ed.cursorPosition = cursorPos;
+    this.world() && await ed.whenRendered();
+    ed.scrollCursorIntoView();
 
     if (highlight) {
       var methodRange = {
@@ -1034,8 +1036,8 @@ localStorage["oe helper"] = JSON.stringify(store);
                     return {
                       isListItem: true,
                       label: [
-                        [`${klass.name} `, {fontSize: 10}],
-                        [`${ea.name}`]
+                        `${klass.name} `, {fontSize: 10},
+                        `${ea.name}`, null
                       ],
                       value: {node: ea, selector: "selectMethod"}
                     };
@@ -1190,9 +1192,9 @@ class ImportController extends Morph {
         items = imports.map(ea => {
           var label = [];
           var alias = ea.local !== ea.imported && ea.imported !== "default" ? ea.local : null;
-          if (alias) label.push([`${ea.imported} as `, {}])
-          label.push([alias || ea.local || "??????", {fontWeight: "bold"}])
-          label.push([` from ${ea.fromModule}`]);
+          if (alias) label.push(`${ea.imported} as `, {});
+          label.push(alias || ea.local || "??????", {fontWeight: "bold"});
+          label.push(` from ${ea.fromModule}`);
           return {isListItem: true, value: ea, label}
         });
 

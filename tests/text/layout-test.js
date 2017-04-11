@@ -1,200 +1,214 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
+import { expect, chai } from "mocha-es6";
+import { pt, rect, Color, Rectangle } from "lively.graphics";
 import { Text } from "../../text/morph.js";
-import { Range } from "../../text/range.js";
-import { TextAttribute } from "../../text/attribute.js";
-import { expect } from "mocha-es6";
-import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
-import { dummyFontMetric as fontMetric } from "../test-helpers.js";
+import { World, MorphicEnv } from "../../index.js";
+import { createDOMEnvironment } from "../../rendering/dom-helper.js";
 
+var describeInBrowser = System.get("@system-env").browser ? describe :
+  (title) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xit(title); }
 
 var padding = Rectangle.inset(5);
 
-var w, h;
+var w, h, t, tl, padl, padr, padt, padb;
+
 function text(string, props) {
-  var t = new Text({
+  env = env || MorphicEnv.default();
+  t = new Text({
     name: "text",
     textString: string,
     fontFamily: "Monaco, monospace",
     fontSize: 10,
     extent: pt(100,100),
+    fixedWidth: true, fixedHeight: true,
     padding,
-    fontMetric,
-    // fontMetric: $$world.env.fontMetric,
-    // textLayout: new TextLayout(fontMetric),
-    // textRenderer: newRenderer,
+    clipMode: "auto",
+    padding, borderWidth: 0, fill: Color.limeGreen,
+    lineWrapping: false,
+    env,
     ...props
   });
-  ([{height:h, width:w}] = t.textLayout.fontMetric.charBoundsFor(t.styleProps, "X"));
+
+  [{height:h, width:w}] = t.env.fontMetric.charBoundsFor(t.defaultTextStyle, "X");
+
+  tl = t.textLayout;
+
+  padl = padding.left();
+  padr = padding.right();
+  padt = padding.top();
+  padb = padding.bottom();
+
   return t;
 }
 
+var env;
+async function createMorphicEnv() {
+  if (System.get("@system-env").browser) return;
+  env = new MorphicEnv(await createDOMEnvironment());
+  env.domEnv.document.body.style = "margin: 0";
+  MorphicEnv.pushDefault(env);
+  await env.setWorld(new World({name: "world", extent: pt(300,300)}));
+}
 
-describe("text layout", () => {
+async function destroyMorphicEnv() {
+  if (System.get("@system-env").browser) return;
+  MorphicEnv.popDefault().uninstall();
+}
+
+describeInBrowser("text layout", function() {
+
+  this.timeout(7*1000);
+
+  beforeEach(() => createMorphicEnv());
+  afterEach(() => destroyMorphicEnv());
+
+  describe("positions", () => {
+
+    it("text pos -> pixel pos", () => {
+      text("hello\n lively\nworld")
+      let pos;
+
+      pos = tl.pixelPositionFor(t, {row: 0, column: 0});
+      expect(pos.x).closeTo(padl+0, 2);
+      expect(pos.y).closeTo(padt+0, 2);
+
+      pos = tl.pixelPositionFor(t, {row: 0, column: 4});
+      expect(pos.x).closeTo(padl+4*w, 2);
+      expect(pos.y).closeTo(padt+0, 2);
+
+      pos = tl.pixelPositionFor(t, {row: 0, column: 5});
+      expect(pos.x).closeTo(padl+5*w, 2);
+      expect(pos.y).closeTo(padt+0, 2);
+
+      pos = tl.pixelPositionFor(t, {row: 1, column: 0});
+      expect(pos.x).closeTo(padl+0, 2);
+      expect(pos.y).closeTo(padt+h, 2);
+
+      pos = tl.pixelPositionFor(t, {row: 1, column: 1});
+      expect(pos.x).closeTo(padl+1*w, 2);
+      expect(pos.y).closeTo(padt+h, 2);
+
+      pos = tl.pixelPositionFor(t, {row: 3, column: 2});
+      expect(pos.x).closeTo(padl+2*w, 2);
+      expect(pos.y).closeTo(padt+2*h, 2);
+
+      pos = tl.pixelPositionFor(t, {row: 1, column: 100});
+      expect(pos.x).closeTo(padl+7*w, 2);
+      expect(pos.y).closeTo(padt+h, 2);
+
+      pos = tl.pixelPositionFor(t, {row: 100, column: 100});
+      expect(pos.x).closeTo(padl+5*w, 2);
+      expect(pos.y).closeTo(padt+2*h, 2);
+    });
+  
+    it("pixel pos -> text pos", () => {
+      text("hello\n lively\nworld")
+      expect(t.textPositionFromPoint(pt(padl+0,         padt+0)))    .deep.equals({row: 0, column: 0}, "1");
+      expect(t.textPositionFromPoint(pt(padl+w-1,       padt+h/2)))  .deep.equals({row: 0, column: 1}, "2");
+      expect(t.textPositionFromPoint(pt(padl+w+1,       padt+h+1)))  .deep.equals({row: 1, column: 1}, "3");
+      expect(t.textPositionFromPoint(pt(padl+w*2+1,     padt+h*2+1))).deep.equals({row: 2, column: 2}, "4");
+      expect(t.textPositionFromPoint(pt(padl+w*2+w/2+1, padt+h*2+1))).deep.equals({row: 2, column: 3}, "right side of char -> next pos")
+    });
+  
+  });
+
 
   describe("fit", () => {
 
     it("computes size on construction", () => {
-      var t = text("hello", {fixedWidth: false, fixedHeight: false}), {width, height} = t;
-      expect(height).equals(h + padding.top()+ padding.bottom());
-      expect(width).equals(5*w + padding.left()+ padding.right());
+      var t = text("hello", {clipMode: "visible", fixedHeight: false, fixedWidth: false}),
+          {width, height} = t;
+      expect(height).closeTo(h + padding.top()+ padding.bottom(), 2);
+      expect(width).closeTo(5*w + padding.left()+ padding.right(), 2);
     });
 
     it("computes only width", () => {
-      var {extent: {x: width, y: height}} = text("hello", {fixedWidth: false, fixedHeight: true});
-      expect(height).equals(100);
-      expect(width).equals(5*w + padding.top()+ padding.bottom());
+      var {extent: {x: width, y: height}} = text("hello", {clipMode: "visible", fixedWidth: false, fixedHeight: true});
+      expect(height).closeTo(100, 2);
+      expect(width).closeTo(5*w + padding.top()+ padding.bottom(), 2);
     });
 
     it("computes only height", () => {
-      var {extent: {x: width, y: height}} = text("hello", {fixedWidth: true, fixedHeight: false});
-      expect(height).equals(h + padding.top()+ padding.bottom());
-      expect(width).equals(100);
+      var {extent: {x: width, y: height}} = text("hello", {clipMode: "visible", fixedWidth: true, fixedHeight: false});
+      expect(height).closeTo(h + padding.top()+ padding.bottom(), 2);
+      expect(width).closeTo(100, 2);
     });
 
     it("leaves extent as is with fixed sizing", () => {
-      var {extent} = text("hello", {fixedWidth: true, fixedHeight: true});
+      var {extent} = text("hello", {clipMode: "visible", fixedWidth: true, fixedHeight: true});
+      expect(extent.x).closeTo(100, 2);
+      expect(extent.y).closeTo(100, 2);
+    });
+
+    it("when clip it won't shrink", () => {
+      var {extent} = text("hello", {clipMode: "hidden"});
       expect(extent).equals(pt(100,100));
     });
 
-  });
-
-
-  describe("positions", () => {
-
-    var t, r, padl, padr, padt, padb;
-    beforeEach(() => {
-      t = text("hello\n lively\nworld");
-      r = t.textLayout;
-      padl = padding.left();
-      padr = padding.right();
-      padt = padding.top();
-      padb = padding.bottom();
-    });
-
-    it("text pos -> pixel pos", () => {
-      expect(r.pixelPositionFor(t, {row: 0, column: 0}))    .equals(pt(padl+0,   padt+0));
-      expect(r.pixelPositionFor(t, {row: 0, column: 5}))    .equals(pt(padl+5*w, padt+0));
-      expect(r.pixelPositionFor(t, {row: 1, column: 0}))    .equals(pt(padl+0,   padt+h));
-      expect(r.pixelPositionFor(t, {row: 1, column: 1}))    .equals(pt(padl+1*w, padt+h));
-      expect(r.pixelPositionFor(t, {row: 3, column: 2}))    .equals(pt(padl+2*w, padt+2*h));
-      expect(r.pixelPositionFor(t, {row: 1, column: 100}))  .equals(pt(padl+7*w, padt+h));
-      expect(r.pixelPositionFor(t, {row: 100, column: 100})).equals(pt(padl+5*w, padt+2*h));
-    });
-
-    it("text index -> pixel pos", () => {
-      expect(r.pixelPositionForIndex(t, 0)).equals(pt(padl+0,padt+0));
-      expect(r.pixelPositionForIndex(t, 6)).equals(pt(padl+0,padt+h));
-      expect(r.pixelPositionForIndex(t, 7)).equals(pt(padl+w,padt+h));
-      expect(r.pixelPositionForIndex(t, 100)).equals(pt(padl+5*w,padt+2*h));
-    });
-
-    it("pixel pos -> text pos", () => {
-      expect(t.textPositionFromPoint(pt(padl+0,         padt+0)))            .deep.equals({row: 0, column: 0});
-      expect(t.textPositionFromPoint(pt(padl+w-1,       padt+h/2)))        .deep.equals({row: 0, column: 1});
-      expect(t.textPositionFromPoint(pt(padl+w+1,       padt+h+1)))        .deep.equals({row: 1, column: 1});
-      expect(t.textPositionFromPoint(pt(padl+w*2+1,     padt+h*2+1)))    .deep.equals({row: 2, column: 2});
-      expect(t.textPositionFromPoint(pt(padl+w*2+w/2+1, padt+h*2+1))).deep.equals({row: 2, column: 3}, "right side of char -> next pos")
+    it("still shrinks when forced", () => {
+      var t = text("hello", {clipMode: "hidden", fixedWidth: false, fixedHeight: false}),
+          {extent: {x: width, y: height}} = t;
+      t.fit();
+      expect(height).closeTo(h + padding.top()+ padding.bottom(), 2);
+      expect(width).closeTo(5*w + padding.left()+ padding.right(), 2);
     });
 
   });
 
-
+    
   describe("line wrapping", () => {
 
     it("wraps single line and computes positions back and forth", () => {
-      var padl = padding.left(),
-          padr = padding.right(),
-          padt = padding.top(),
-          padb = padding.bottom();
+      // await createMorphicEnv()
+      // destroyMorphicEnv()
+      // MorphicEnv.popDefault()
+      // MorphicEnv.envs
 
-      var t = text("abcdef\n1234567", {
-        padding, borderWidth: 0, fill: Color.red,
-        lineWrapping: false, clipMode: "auto",
-        width: 4*w+padl+padr
-      });
+      text("abcdef\n1234567", {width: 4*w+padl+padr});
+      // t.openInWorld()
 
-      var l = t.textLayout;
-
-      t.textLayout.updateFromMorphIfNecessary(t);
-
-      expect(l.lines).to.have.length(2);
-      expect(l.wrappedLines(t)).to.have.length(2);
-      expect(t.charBoundsFromTextPosition({row: 0, column: 5})).equals(rect(padl+w*5,padt,w,h), "not wrapped: text pos => pixel pos");
+      expect(t.lineCount()).equals(2);
+      expect(t.charBoundsFromTextPosition({row: 0, column: 5})).equals(rect(padl+w*5,padt,w,h-1), "not wrapped: text pos => pixel pos");
       expect(t.textPositionFromPoint(pt(padl + 2*w+1, padt + h+1))).deep.equals({column: 2,row: 1}, "not wrapped: pixel pos => text pos");
 
-      t.lineWrapping = true;
-      expect(l.wrappedLines(t)).to.have.length(4);
+      t.lineWrapping = false;
+      t.lineWrapping = "by-chars";
 
-      expect(l.boundsForScreenPos(t, {row: 0, column: 4})).equals(rect(padl+w*4,padt+0,0,h), "wrapped: text pos => pixel pos 1");
-      expect(l.boundsForScreenPos(t, {row: 0, column: 5})).equals(rect(padl+w*4,padt+0,0,h), "wrapped: text pos => pixel pos 2");
-      expect(l.boundsForScreenPos(t, {row: 1, column: 1})).equals(rect(padl+w*1,padt+h,w,h), "wrapped: pixel pos => text pos 3");
-      expect(l.boundsForScreenPos(t, {row: 3, column: 1})).equals(rect(padl+w*1,padt+3*h,w,h), "wrapped: pixel pos => text pos 4");
-      expect(l.boundsForScreenPos(t, {row: 0, column: 4})).equals(rect(padl+w*4,padt+0,0,h), "wrapped: pixel pos => text pos 5");
+      let height,width,x,y;
 
-      expect(l.docToScreenPos(t, {row: 0, column: 4})).deep.equals({row: 1, column: 0}, "doc => screen pos 1");
-      expect(l.docToScreenPos(t, {row: 0, column: 5})).deep.equals({row: 1, column: 1}, "doc => screen pos 2");
-      expect(l.docToScreenPos(t, {row: 0, column: 6})).deep.equals({row: 1, column: 2}, "doc => screen pos 3");
-      expect(l.docToScreenPos(t, {row: 1, column: 1})).deep.equals({row: 2, column: 1}, "doc => screen pos 4");
-      expect(l.docToScreenPos(t, {row: 1, column: 6})).deep.equals({row: 3, column: 2}, "doc => screen pos 5");
+      ({height,width,x,y} = tl.boundsFor(t, {row: 0, column: 3}));;
+      expect(x).closeTo(padl+w*3, 2);
+      expect(y).closeTo(padt+h*0, 2);
+      expect(width).closeTo(6, 2);
+      expect(height).closeTo(h-1, 2);
 
-      expect(l.screenToDocPos(t, {row: 0, column: 1})).deep.equals({row: 0, column: 1}, "screen => doc line 1 pos 1");
-      // at screen line end...
-      expect(l.screenToDocPos(t, {row: 0, column: 4})).deep.equals({row: 0, column: 4}, "screen => doc line 1 pos 2");
-      // ...at screen line start, note, it's the same position as line end for the document!
-      expect(l.screenToDocPos(t, {row: 0, column: 5})).deep.equals({row: 0, column: 4}, "screen => doc line 1 pos 3");
-      expect(l.screenToDocPos(t, {row: 1, column: 0})).deep.equals({row: 0, column: 4}, "screen => doc line 1 pos 4");
-      expect(l.screenToDocPos(t, {row: 1, column: 1})).deep.equals({row: 0, column: 5}, "screen => doc line 1 pos 5");
-      expect(l.screenToDocPos(t, {row: 1, column: 2})).deep.equals({row: 0, column: 6}, "screen => doc line 1 pos 6");
-      expect(l.screenToDocPos(t, {row: 1, column: 3})).deep.equals({row: 0, column: 6}, "screen => doc line 1 pos 7");
+      ({height,width,x,y} = tl.boundsFor(t, {row: 0, column: 4}));
+      expect(x).closeTo(padl+w*0, 2);
+      expect(y).closeTo(padt+h*1, 2);
+      expect(width).closeTo(6, 2);
+      expect(height).closeTo(h-1, 2);
 
-      expect(l.screenToDocPos(t, {row: 2, column: 0})).deep.equals({row: 1, column: 0}, "screen => doc pos line 2 1");
-      expect(l.screenToDocPos(t, {row: 2, column: 3})).deep.equals({row: 1, column: 3}, "screen => doc pos line 2 2");
-      expect(l.screenToDocPos(t, {row: 2, column: 4})).deep.equals({row: 1, column: 4}, "screen => doc pos line 2 3");
-      expect(l.screenToDocPos(t, {row: 2, column: 5})).deep.equals({row: 1, column: 4}, "screen => doc pos line 2 4");
-      expect(l.screenToDocPos(t, {row: 3, column: 0})).deep.equals({row: 1, column: 4}, "screen => doc pos line 2 5");
-      expect(l.screenToDocPos(t, {row: 3, column: 1})).deep.equals({row: 1, column: 5}, "screen => doc pos line 2 6");
-      expect(l.screenToDocPos(t, {row: 3, column: 3})).deep.equals({row: 1, column: 7}, "screen => doc pos line 2 7");
-      expect(l.screenToDocPos(t, {row: 3, column: 4})).deep.equals({row: 1, column: 7}, "screen => doc pos line 2 8");
+      ({height,width,x,y} = tl.boundsFor(t, {row: 0, column: 5}));
+      expect(x).closeTo(padl+w*1, 2);
+      expect(y).closeTo(padt+h*1, 2);
+      expect(width).closeTo(6, 2);
+      expect(height).closeTo(h-1, 2);
 
-      expect(l.screenToDocPos(t, {row: 4, column: 0})).deep.equals({row: 1, column: 7}, "screen => doc pos after text");
+      ({height,width,x,y} = tl.boundsFor(t, {row: 0, column: 6}));
+      expect(x).closeTo(padl+w*2, 2);
+      expect(y).closeTo(padt+h*1, 2);
+      expect(width).closeTo(0, 2);
+      expect(height).closeTo(h-1, 2);
     });
 
-    it("wraps attribute line", () => {
-
-      var textAttributes = [
-        TextAttribute.create({fontColor: "blue"}, 0,0,0,3),
-        TextAttribute.create({fontColor: "green"}, 0,3,0,6)]
-
-      var t = text("", {
-        padding: Rectangle.inset(0), borderWidth: 0, fill: Color.red,
-        lineWrapping: true, clipMode: "auto",
-        width: 4*w, textString: "abcdef",
-        textAttributes
-      });
-
-      var wrappedLines = t.textLayout.wrappedLines(t)
-      expect(wrappedLines[0].chunks[0]).containSubset({text: "abc"});
-      expect(wrappedLines[0].chunks[1]).containSubset({text: "d"});
-      expect(wrappedLines[1].chunks[0]).containSubset({text: "ef"});
-
+    it("screenLineRange", () => {
+      text("abcdef\n1234567", {width: 4*w+padl+padr});
+      // t.fit()
+      t.lineWrapping = "by-chars";
+      let range = t.screenLineRange({row: 0, column: 5});
+      expect(range).deep.equals({start: {row: 0, column: 4}, end: {row: 0, column: 6}});
     });
 
-    it("first char of new chunk is wrapped correctly to new line if space not sufficient", () => {
-      var t = text("aabb", {
-        padding: Rectangle.inset(0), borderWidth: 0, fill: Color.lightGray,
-        lineWrapping: true, clipMode: "auto",
-        width: 2*w+1,
-        textAttributes: [
-          TextAttribute.create({fontColor: "red"}, 0,0,0,2),
-          TextAttribute.create({fontColor: "blue"}, 0,2,0,4),
-        ]
-      });
-
-      expect(t.textLayout.wrappedLines(t)).to.have.length(2)
-      expect(t.textLayout.wrappedLines(t)[0].text).equals("aa");
-      expect(t.textLayout.wrappedLines(t)[1].text).equals("bb");
-    });
   });
 
 });
-

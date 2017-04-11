@@ -62,7 +62,7 @@ describe("rendering", function () {
       await submorph1.whenRendered();
       expect(env.renderer.getNodeForMorph(submorph1)).deep.property("style.transform")
         .match(/translate.*10px/)
-        .match(/rotate\((45|44\.9+)deg\)/)
+        .match(/rotate\((0.8|0\.79+)rad\)/)
         .match(/scale\(1,\s*1\)/)
     });
 
@@ -102,18 +102,22 @@ describe("rendering", function () {
   describe("scroll", () => {
 
     it("scroll extent", () => {
-      expect(submorph1.scrollExtent).equals(pt(100,100), "1");
+      const HTMLScrollbarOffset = pt(15, 15);
+      expect(submorph1.scrollExtent).equals(pt(100,100).addPt(HTMLScrollbarOffset), "1");
       submorph1.clipMode = "auto";
-      expect(submorph1.scrollExtent).equals(pt(100,100), "2");
+      expect(submorph1.scrollExtent).equals(pt(100,100).addPt(HTMLScrollbarOffset), "2");
       submorph2.extent = pt(200,200);
-      expect(submorph1.scrollExtent).equals(submorph2.bounds().bottomRight(), "3");
+      submorph2.bounds().bottomRight()
+      expect(submorph1.scrollExtent)
+        .equals(submorph2.extent.addPt(submorph2.position).addPt(HTMLScrollbarOffset), "3");
     });
 
     it("scroll is bounded", () => {
+      const HTMLScrollbarOffset = pt(15, 15);
       submorph1.clipMode = "auto";
       submorph2.extent = pt(200,200);
       submorph1.scroll = pt(100000,100000);
-      expect(submorph1.scroll).equals(submorph2.bounds().bottomRight().subPt(submorph1.extent), "1");
+      expect(submorph1.scroll).equals(submorph2.bounds().bottomRight().subPt(submorph1.extent).addPt(HTMLScrollbarOffset), "1");
       submorph1.scroll = pt(-100000,-100000);
       expect(submorph1.scroll).equals(pt(0,0), "2");
     });

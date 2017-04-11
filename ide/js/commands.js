@@ -108,7 +108,8 @@ var printEvalResult = (function() {
     return `${name}(${open}${printed}${close})`;
   }
 
-  function inspectPrinter(val, ignore) {
+  function inspectPrinter(val, ignore, continueInspectFn) {
+
     if (!val) return ignore;
     if (typeof val === "symbol") return printSymbol(val);
     if (typeof val === "string") return string.print(string.truncate(val, maxStringLength));
@@ -120,7 +121,7 @@ var printEvalResult = (function() {
     if (length !== undefined && length > maxIterLength && val.slice) {
       var printed = typeof val === "string" || val.byteLength ?
                       safeToString(val.slice(0, maxIterLength)) :
-                      val.slice(0,maxIterLength).map(string.print);
+                      val.slice(0,maxIterLength).map(continueInspectFn);
       return "[" + printed + ",...]";
     }
     var iterablePrinted = printIterable(val, ignore);

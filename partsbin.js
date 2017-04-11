@@ -1,7 +1,11 @@
 // This is a prototype implementation of a file-system based partsbin...
 
 import { resource } from "lively.resources";
-import { createMorphSnapshot, findPackagesInFileSpec, loadMorphFromSnapshot } from "lively.morphic/serialization.js";
+import {
+  createMorphSnapshot,
+  findPackagesInFileSpec,
+  loadMorphFromSnapshot
+} from "lively.morphic/serialization.js";
 
 export const defaultPartsbinFolder = System.decanonicalize("lively.morphic/parts/");
 
@@ -51,11 +55,11 @@ export async function saveObjectToPartsbinFolder(obj, partName, options = {}) {
 }
 
 export async function loadObjectFromPartsbinFolder(partName, options) {
-  let {partsbinFolder} = normalizePartsBinFolder({partsbinFolder: defaultPartsbinFolder, ...options})
-
-  var rawContent = await resource(partsbinFolder).join(partName + ".json").read(),
-      deserialized = loadMorphFromSnapshot(JSON.parse(rawContent));
-  return deserialized;
+  let {partsbinFolder} = normalizePartsBinFolder({
+    partsbinFolder: defaultPartsbinFolder, ...options});
+  return loadMorphFromSnapshot(
+    await resource(partsbinFolder).join(partName + ".json")
+      .readJson());
 }
 
 export async function interactivelySaveObjectToPartsBinFolder(obj) {

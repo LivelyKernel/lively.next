@@ -6,6 +6,9 @@ import { morph, World, show } from "../index.js";
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { MorphicEnv } from "../index.js";
 
+var inBrowser = System.get("@system-env").browser ? it :
+  (title) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xit(title); }
+
 function wait(n) {
   return n ? promise.delay(n*1000) : Promise.resolve();
 }
@@ -34,7 +37,7 @@ function createDummyWorld() {
       submorphs: [{name: "submorph2", extent: pt(20,20), position: pt(5,10), fill: Color.green}]
     },
     {name: "submorph3", extent: pt(50,50), position: pt(200,20), fill: Color.yellow},
-    {name: "submorph4", type: "text", extent: pt(50,50), position: pt(200,200), fill: Color.blue, textString: "text", cursorPosition: {row: 0, column: 0}}];
+    {name: "submorph4", extent: pt(50,50), position: pt(200,200), fill: Color.blue}];
 
   submorph1 = world.submorphs[0];
   submorph2 = world.submorphs[0].submorphs[0];
@@ -285,7 +288,6 @@ describe("pointer event related", function() {
 
 describe("scroll events", () => {
 
-
   beforeEach(async () => {
     await setup();
     submorph1.clipMode = "auto";
@@ -387,11 +389,19 @@ describe("key events", () => {
         .deep.equals({count: undefined, keyChain: ""});
     });
 
-    it("dispatches keychained input events correctly", async () => {
+    inBrowser("dispatches keychained input events correctly", async () => {
+      let submorph5 = world.addMorph({
+        name: "submorph5", type: "text",
+        extent: pt(50,50),
+        position: pt(300,300), fill: Color.orange,
+        textString: "text",
+        cursorPosition: {row: 0, column: 0}
+      });
+
       var log = "";
       world.addCommands([{name: "test", exec: () => { log += "!"; return true; }}]);
       world.addKeyBindings([{keys: "x y", command: "test"}]);
-      submorph4.focus();
+      submorph5.focus();
       var [e] = await env.eventDispatcher.simulateDOMEvents({type: "keydown", key: "x"});
       !e.propagationStopped && await env.eventDispatcher.simulateDOMEvents({type: "input", key: "x"});
       var [e] = await env.eventDispatcher.simulateDOMEvents({type: "keydown", key: "y"});
@@ -399,7 +409,7 @@ describe("key events", () => {
       var [e] = await env.eventDispatcher.simulateDOMEvents({type: "keydown", key: "z"});
       !e.propagationStopped && await env.eventDispatcher.simulateDOMEvents({type: "input", key: "z"});
       expect(log).equals("!");
-      expect(submorph4.textString).equals("ztext");
+      expect(submorph5.textString).equals("ztext");
       expect(env).deep.property("eventDispatcher.eventState.keyInputState")
         .deep.equals({count: undefined, keyChain: ""});
     });

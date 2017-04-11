@@ -10,9 +10,9 @@ function asItem(obj) {
   if (obj && obj.isListItem && typeof obj.string === "string") return obj;
   if (!obj || !obj.isListItem) return {isListItem: true, string: String(obj), value: obj};
   var label = obj.string || obj.label || "no item.string";
-  obj.string = typeof label === "string" ? label :
+  obj.string = !label || typeof label === "string" ? String(label) :
     Array.isArray(label) ?
-      label.map(ea => String(ea[0])).join("") :
+      label.map((text, i) => i%2==0? String(text) : "").join("") :
       String(label);
   return obj;
 }
@@ -198,7 +198,7 @@ var listCommands = [
 
             if (label) {
               if (typeof label === "string") result += label;
-              else result += label.map(([ea]) => ea).join("")
+              else result += label.map((text, i) => i%2==0? text: "").join("")
             } else if (string) result += string;
 
             if (annotation) {
@@ -1052,6 +1052,7 @@ export class DropDownList extends Button {
       listHeight: {defaultValue: 100},
 
       listMorph: {
+        after: ["labelMorph"],
         get() {
           let list = this.getProperty("listMorph");
           if (list) return list;
@@ -1088,7 +1089,11 @@ export class DropDownList extends Button {
           } else {
             var item = this.listMorph.find(value);
             if (!item) return;
-            this.label = [[item.string || String(item), {}], [" ", {}], Icon.textAttribute("caret-down")];
+            this.label = [
+              item.string || String(item), {},
+              " ", {},
+              ...Icon.textAttribute("caret-down")
+            ];
             this.listMorph.selection = value;
           }
         }

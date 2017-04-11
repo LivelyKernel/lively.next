@@ -911,9 +911,19 @@ var commands = [
           currentLine = morph.getLine(row),
           indent = currentLine.match(/^\s*/)[0].length;
       morph.undoManager.group();
+
       if (!currentLine.trim() && indent) // remove trailing spaces of empty lines
         var deleted = morph.deleteText({start: {row, column: 0}, end: {row, column: indent}});
-      morph.selection.text = morph.document.constructor.newline + " ".repeat(indent);
+      let prefill = "\n" + " ".repeat(indent);
+
+      // if we are inside a line comment then make the next line also be a comment
+      let {token, start, end} = morph.tokenAt(morph.cursorPosition) || {},
+          editorPlugin = token && morph.pluginFind(ea => ea.isEditorPlugin),
+          {lineCommentStart} = (editorPlugin && editorPlugin.getComment && editorPlugin.getComment()) || {},
+          isLineComment = lineCommentStart && morph.textInRange({start, end}).startsWith(lineCommentStart);
+      if (isLineComment) prefill += lineCommentStart + " ";
+
+      morph.selection.text = prefill;
       morph.selection.collapseToEnd();
       morph.undoManager.group();
       return true;
@@ -1208,3 +1218,5 @@ import { commands as codeCommands } from "./generic-code-commands.js";
 commands.push(...codeCommands);
 
 export default commands;
+
+// lively.modules.module("lively.morphic/text/morph.js").reload({reloadDeps: false, resetEnv: false});

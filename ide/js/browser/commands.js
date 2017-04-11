@@ -32,8 +32,8 @@ export default function browserCommands(browser) {
               return {
                 isListItem: true,
                 label: [
-                  [`${parent ? parent.name + ">>" : ""}${name}`, {}],
-                  [`${type}`, {fontSize: "70%", textStyleClasses: ["annotation"]}]
+                  `${parent ? parent.name + ">>" : ""}${name}`, null,
+                  `${type}`, {fontSize: "70%", textStyleClasses: ["annotation"]}
                 ],
                 value: def
               }
@@ -42,7 +42,7 @@ export default function browserCommands(browser) {
                                     "Select item", items,
                                     {
                                       preselect: currentIdx,
-                                      historyId: "js-browser-codeentity-jumo-hist"
+                                      historyId: "js-browser-codeentity-jump-hist"
                                     });
         if (choice) {
           browser.getSubmorphNamed("sourceEditor").saveMark();
@@ -223,8 +223,8 @@ export default function browserCommands(browser) {
           return {
                 isListItem: true,
                 label: [
-                  [`${ea.name}`, {}],
-                  [`${ea.url}`, {fontSize: "70%", textStyleClasses: ["annotation"]}]
+                  `${ea.name}`, null,
+                  `${ea.url}`, {fontSize: "70%", textStyleClasses: ["annotation"]},
                 ],
                 value: ea
               }
@@ -319,8 +319,7 @@ export default function browserCommands(browser) {
               {coreInterface: livelySystem} = await browser.systemInterface();
 
           try {
-            for (let snippet of beforeCode)
-              await livelySystem.runEval(beforeCode, {...ed.evalEnvironment});
+            await livelySystem.runEval(beforeCode, {...ed.evalEnvironment});
             browser.setStatusMessage(`Executed ${nCalls} test ${what} functions`);
           } catch (e) {
             browser.showError(new Error(`Error when running ${what} calls of test:\n${e.stack}`));

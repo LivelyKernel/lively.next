@@ -406,7 +406,8 @@ export default class Browser extends Window {
       sourceEditor.setBounds(
         new Rectangle(
           0, metaInfoText.bottom,
-          metaInfoText.width, container.height - metaInfoText.bottom));
+          metaInfoText.width - sourceEditor.borderWidth,
+          container.height - metaInfoText.bottom - sourceEditor.borderWidth));
     } finally { this._inLayout = false; }
   }
 
@@ -536,6 +537,7 @@ export default class Browser extends Window {
   async browse(browseSpec = {}, optBackend) {
     // browse spec:
     // packageName, moduleName, codeEntity, scroll, textPosition like {row: 0, column: 0}
+
     let {
       packageName,
       moduleName,
@@ -572,14 +574,14 @@ export default class Browser extends Window {
     }
 
     if (textPosition) {
-      let text = sourceEditor;
-      text.cursorPosition = textPosition;
-      text.centerRow(textPosition.row);
+      if (this.world()) await sourceEditor.whenRendered();
+      sourceEditor.cursorPosition = textPosition;
+      sourceEditor.centerRow(textPosition.row);
     }
 
     if (scroll) {
-      sourceEditor.scroll = scroll;
       if (this.world()) await sourceEditor.whenRendered();
+      sourceEditor.scroll = scroll;
     }
 
     if (moduleListScroll) moduleList.scroll = moduleListScroll;
@@ -748,16 +750,14 @@ export default class Browser extends Window {
 
       this.ui.metaInfoText.textString = `[${pack.name}] ${m.nameInPackage} (${pack.url})`;
       this.ui.metaInfoText.textAndAttributes = [
-        [
-          `[${pack.name}]`,
-          {
-            nativeCursor: "pointer",
-            textDecoration: "underline",
-            doit: {code: `$world.execCommand("open file browser", {location: "${pack.url}"})`}
-          }
-        ],
-        [" "],
-        [m.nameInPackage, {}]
+        `[${pack.name}]`,
+        {
+          nativeCursor: "pointer",
+          textDecoration: "underline",
+          doit: {code: `$world.execCommand("open file browser", {location: "${pack.url}"})`}
+        },
+        " ", null,
+        m.nameInPackage, {}
       ];
 
     } finally {
@@ -1168,18 +1168,23 @@ export default class Browser extends Window {
   }
 
   menuItems() {
+    let p = this.selectedPackage,
+        m = this.selectedModule,
+        c = this.selectedCodeEntity;
+
     return [
       ["browse snippet", () => {
-        var p = this.selectedPackage,
-            m = this.selectedModule,
-            c = this.selectedCodeEntity,
-            codeSnip = `$world.execCommand("open browser", {`
+        let codeSnip = `$world.execCommand("open browser", {`
         if (p) codeSnip += `packageName: "${p.name}"`;
         if (m) codeSnip += `, moduleName: "${m.name}"`;
         if (c) codeSnip += `, codeEntity: ${JSON.stringify(obj.select(c, ["name", "type"]))}`;
         codeSnip += `});`
-        this.world().execCommand("open workspace", {content: codeSnip})
+        this.world().execCommand("open workspace", {content: codeSnip});
+      }],
+      m && ["open in text editor", () => {
+        var lineNumber = c ? this.ui.sourceEditor.indexToPosition(c.node.start).row : null;
+        this.world().execCommand("open file", {url: m.url, lineNumber});
       }]
-    ]
+    ].filter(Boolean)
   }
 }

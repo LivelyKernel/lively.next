@@ -34,8 +34,10 @@ export class TextSearcher {
     if (char !== needle[0]) return null;
 
     var {row, column} = pos,
-        chunk = lines[row].slice(column)
-                + (nLines > 1 ? "\n" + lines.slice(row+1, (row+1)+(nLines-1)).join("\n") : ""),
+        /*FIXME rk 2017-04-06 while transitioning to new text:*/
+        lineString = lines[row],
+        followingText = nLines <= 1 ? "" : "\n" + lines.slice(row+1, (row+1)+(nLines-1)).join("\n"),
+        chunk = lineString.slice(column) + followingText,
         chunkToTest = caseSensitive ? chunk : chunk.toLowerCase();
 
     return chunkToTest.indexOf(needle) !== 0 ?
@@ -78,12 +80,12 @@ export class TextSearcher {
           multiline = !!needle.multiline; flags.splice(flags.indexOf("m"), 1);
       if (!caseSensitive && !flags.includes("i")) flags.push("i");
       needle = new RegExp('^' + needle.source.replace(/^\^+/, ""), flags.join(""));
-      search = this.reSearch.bind(this, this.doc.lines, needle, multiline, inRange);
+      search = this.reSearch.bind(this, this.doc.lineStrings, needle, multiline, inRange);
     } else {
       needle = String(needle);
       if (!caseSensitive) needle = needle.toLowerCase();
       var nLines = needle.split(this.doc.constructor.newline).length
-      search = this.stringSearch.bind(this, this.doc.lines, needle, caseSensitive, nLines, inRange);
+      search = this.stringSearch.bind(this, this.doc.lineStrings, needle, caseSensitive, nLines, inRange);
     }
 
     var result = this.doc[backwards ? "scanBackward" : "scanForward"](start, search);
@@ -164,10 +166,10 @@ export class SearchWidget extends Morph {
               fontSize = 14, fontFamily = "Inconsolata, monospace";
 
           this.submorphs = [
-            new Button({name: "acceptButton", label: [Icon.textAttribute("check-circle-o")], ...btnStyle}).fit(),
-            new Button({name: "cancelButton", label: [Icon.textAttribute("times-circle-o")], ...btnStyle}).fit(),
-            new Button({name: "nextButton", label: [Icon.textAttribute("arrow-circle-o-down")], ...btnStyle}).fit(),
-            new Button({name: "prevButton", label: [Icon.textAttribute("arrow-circle-o-up")], ...btnStyle}).fit(),
+            new Button({name: "acceptButton", label: Icon.textAttribute("check-circle-o"), ...btnStyle}).fit(),
+            new Button({name: "cancelButton", label: Icon.textAttribute("times-circle-o"), ...btnStyle}).fit(),
+            new Button({name: "nextButton", label: Icon.textAttribute("arrow-circle-o-down"), ...btnStyle}).fit(),
+            new Button({name: "prevButton", label: Icon.textAttribute("arrow-circle-o-up"), ...btnStyle}).fit(),
             Text.makeInputLine({
               name: "searchInput",
               width: this.width,
@@ -318,7 +320,7 @@ export class SearchWidget extends Morph {
         {backwards, found: {range: {start, end}}} = searchResult,
         pos = backwards ? start : end;
     select ? sel.lead = pos : text.cursorPosition = pos;
-    if (!text.isLineVisible(pos.row)) text.centerRow();
+    if (!text.isLineFullyVisible(pos.row)) text.centerRow();
     return searchResult;
   }
 
@@ -332,7 +334,7 @@ export class SearchWidget extends Morph {
 
     var text = this.target,
         {startRow, endRow} = text.whatsVisible,
-        lines = text.document.lines,
+        lines = text.document.lineStrings,
         i = 0;
 
     for (var row = startRow; row <= endRow; row++) {

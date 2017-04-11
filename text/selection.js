@@ -15,6 +15,7 @@ export class Selection {
 
   initialize(range) { 
     this._goalColumn = undefined;
+    this._goalX = undefined;
     this._isReverse = false;
 
     var id = string.newUUID();
@@ -93,8 +94,9 @@ export class Selection {
 
     this._range = range;
     this._goalColumn = this.textMorph.lineWrapping ?
-      this.textMorph.toScreenPosition(this.lead).column :
+      this.textMorph.columnInWrappedLine(this.lead) :
       this.lead.column;
+    this._goalX = this.textMorph.charBoundsFromTextPosition(this.lead).x;
 
     this.startAnchor.position = range.start;
     this.endAnchor.position = range.end;
@@ -194,9 +196,11 @@ export class Selection {
   goUp(n = 1, useScreenPosition = false, select = false) {
     if (n === 0) return this;
     var goalColumn = this._goalColumn;
-    this.lead = this.textMorph.getPositionAboveOrBelow(n, this.lead, useScreenPosition, goalColumn);
+    var goalX = this._goalX;
+    this.lead = this.textMorph.getPositionAboveOrBelow(n, this.lead, useScreenPosition, goalColumn, goalX);
     if (!select) this.anchor = this.lead;
     this._goalColumn = goalColumn;
+    this._goalX = goalX;
     return this;
   }
   goDown(n = 1, useScreenPosition) { return this.goUp(-n, useScreenPosition); }

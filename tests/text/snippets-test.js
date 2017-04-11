@@ -5,12 +5,15 @@ import { expect, chai } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 import { expectSelection } from "../test-helpers.js";
 
+var describeInBrowser = System.get("@system-env").browser ? describe :
+  (title, fn) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xdescribe(title, fn); }
+
 expectSelection(chai);
 
 var text;
-describe("text plugins", () => {
+describeInBrowser("text plugins", () => {
 
-  beforeEach(() => text = new Text({textString: "Hello\n World"}))
+  beforeEach(() => text = new Text({textString: "Hello\n World"}));
 
   it("simple expansion", () => {
     new Snippet({expansion: "foo"}).expandAtCursor(text);

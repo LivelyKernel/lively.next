@@ -2,6 +2,7 @@ import { ObjectPool, serialize, deserialize } from "lively.serializer2";
 import { World, Morph } from "./index.js";
 import { resource } from "lively.resources";
 import { newMorphId } from "./morph.js";
+import { applyObjectMigrations } from "./object-migration.js";
 
 function normalizeOptions(options) {
   options = {reinitializeIds: false, ...options}
@@ -22,9 +23,11 @@ export function deserializeMorph(idAndSnapshot, options) {
   return deserialize(idAndSnapshot, normalizeOptions(options));
 }
 
+
 export async function loadWorldFromResource(fromResource) {
   // fromResource = resource(location.origin).join("test-world.json");
   let data = await fromResource.readJson();
+
   // load required modules
   await Promise.all(
     ObjectPool.requiredModulesOfSnapshot(data.snapshot)
@@ -137,6 +140,8 @@ export async function createMorphSnapshot(aMorph, options = {}) {
 }
 
 export async function loadMorphFromSnapshot(snapshot) {
+  snapshot = applyObjectMigrations(snapshot);
+
   if (snapshot.packages) {
     let packages = findPackagesInFileSpec(snapshot.packages);
     for (let {files, url} of packages) {

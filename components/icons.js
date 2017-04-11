@@ -13,7 +13,7 @@ Show all icons:
 
 $world.openInWindow(morph({
   extent: pt(300,800), clipMode: "auto", type: "text", fontSize: 20, padding: Rectangle.inset(4),
-  textAndAttributes: Object.keys(Icons).map(name =>
+  textAndAttributes: lively.lang.arr.flatmap(Object.keys(Icons), name =>
     [`${Icons[name].code} ${name}\n`, {fontFamily: "", textStyleClasses: ["fa"]}])
 }), {title: "icons"}).activate();
 
@@ -30,9 +30,9 @@ export class Icon {
     // var l = Label.icon("users", {prefix: "??? ", suffix: " !!!", fontSize: 30}).openInWorld();
     var {prefix, suffix} = props;
     var textAndAttributes = [];
-    if (prefix) textAndAttributes.push(typeof prefix === "string" ? [prefix || "", {}] : prefix);
-    textAndAttributes.push(this.textAttribute(iconName));
-    if (suffix) textAndAttributes.push(typeof suffix === "string" ? [suffix || "", {}] : suffix);
+    if (prefix) textAndAttributes.push(...typeof prefix === "string" ? [prefix || "", {}] : prefix);
+    textAndAttributes.push(...this.textAttribute(iconName));
+    if (suffix) textAndAttributes.push(...typeof suffix === "string" ? [suffix || "", {}] : suffix);
     return new Label({
       value: textAndAttributes,
       ...obj.dissoc(props, ["prefix", "suffix"])
@@ -46,7 +46,7 @@ export class Icon {
   }
 
   static setIcon(label, iconName) {
-     label.textAndAttributes = [this.textAttribute(iconName)];
+     label.textAndAttributes = this.textAttribute(iconName);
   }
 
 }

@@ -3,7 +3,10 @@ import { promise } from "lively.lang";
 import { Text } from "../../text/morph.js";
 import { Range } from "../../text/selection.js";
 import { expect, chai } from "mocha-es6";
-import { dummyFontMetric as fontMetric, expectSelection } from "../test-helpers.js";
+import { expectSelection } from "../test-helpers.js";
+
+var describeInBrowser = System.get("@system-env").browser ? describe :
+  (title, fn) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xdescribe(title, fn); }
 
 expectSelection(chai);
 
@@ -16,13 +19,12 @@ function range(startRow, startCol, endRow, endCol) {
 
 var text;
 
-describe("undo", function() {
+describeInBrowser("undo", function() {
 
   this.timeout(config.text.undoGroupDelay*2);
 
   beforeEach(() => text = new Text({
     textString: "hello\nworld",
-    fontMetric,
     cursorPosition: {row: 0, column: 0}
   }))
 
@@ -48,7 +50,7 @@ describe("undo", function() {
     expect(text.textString).equals("foo ");
     text.textUndo();
     expect(text.textString).equals("foo bar");
-    expect(text.selection).selectionEquals("Selection(0/4 -> 0/7)");
+    expect(text.selection).selectionEquals("Selection(0/4 -> 0/6)");
     text.textRedo();
     expect(text.textString).equals("foo ");
     expect(text.selection).selectionEquals("Selection(0/4 -> 0/4)");

@@ -1,4 +1,4 @@
-import {diff, patch, create} from "virtual-dom";
+import { diff, patch, create, h } from "virtual-dom";
 import "gsap";
 import { num, obj, arr, properties, promise } from "lively.lang";
 import { Color, RadialGradient, pt, Point, LinearGradient, rect } from "lively.graphics";
@@ -9,6 +9,122 @@ function pad(array, n, getPadElement = arr.last) {
    return [...array, ...(new Array(Math.max(n - array.length, 0)).fill(getPadElement(array)))]
 }
 
+// await $world.env.renderer.ensureDefaultCSS()
+export const defaultCSS = `
+
+/*-=- html fixes -=-*/
+
+textarea.lively-text-input.debug {
+  z-index: 20 !important;
+  opacity: 1 !important;
+  background: rgba(0,255,0,0.5) !important;
+}
+
+.no-html-select {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.hiddenScrollbar::-webkit-scrollbar { 
+  /* This is the magic bit */
+  display: none;
+}
+
+
+/*-=- generic morphic -=-*/
+
+.Morph {
+  outline: none;
+  /*for aliasing issue in chrome: http://stackoverflow.com/questions/6492027/css-transform-jagged-edges-in-chrome*/
+  -webkit-backface-visibility: hidden;
+
+  /*include border size in extent of element*/
+  box-sizing: border-box;
+
+  /*don't use dom selection on morphs*/
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  zIndex: 1010
+}
+
+.Tooltip {
+  z-index:  3;
+}
+
+.Hand {
+  z-index: 1;
+}
+
+/*-=- halos -=-*/
+
+.Halo {
+  z-index: 2;
+}
+
+.HaloItem:not(.NameHaloItem) {
+  /*FIXME: we shouldn't need to hardcode the size...*/
+	 line-height: 24px !important;
+	 text-align: center;
+	 vertical-align: middle;
+}
+
+.halo-mesh {
+  background-color:transparent;
+  background-image: linear-gradient(rgba(0,0,0,.1) 2px, transparent 2px),
+  linear-gradient(90deg, rgba(0,0,0,.1) 2px, transparent 2px),
+  linear-gradient(rgba(0,0,0,.1) 1px, transparent 1px),
+  linear-gradient(90deg, rgba(0,0,0,.1) 1px, transparent 1px);
+  background-size:100px 100px, 100px 100px, 10px 10px, 10px 10px;
+  background-position:-2px -2px, -2px -2px, -1px -1px, -1px -1px;
+}
+
+/*-=- text -=-*/
+
+.center-text {
+	 text-align: center;
+}
+
+.v-center-text {
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+div.text-layer span {
+  line-height: normal;
+}
+
+/*-=- text -=-*/
+
+.Label span {
+  white-space: nowrap;
+}
+
+.Label .annotation {
+/*  vertical-align: middle;
+  height: 100%;*/
+  /*vertical align*/
+  float: right;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: right;
+}
+
+.truncated-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+`;
 
 
 export class ShadowObject {
@@ -89,7 +205,7 @@ class StyleMapper {
   }
 
   static getDisplay({visible}) {
-    return (visible != null) && {display: visible ? "inline" : "none"};
+    return (visible != null) && {display: visible ? "" : "none"};
   }
 
   static getBorderRadius({borderRadiusLeft, borderRadiusRight, borderRadiusBottom, borderRadiusTop}) {
@@ -509,6 +625,7 @@ MorphAfterRenderHook.prototype.hook = function(node, propertyName, previousValue
       } else if (this.morph.isClip()) this.updateScroll(this.morph, node);
     }
     this.morph._rendering = false; // see morph.makeDirty();
+    this.morph.onAfterRender(node);
   });
 }
 MorphAfterRenderHook.prototype.updateScroll = function(morph, node) {
@@ -592,13 +709,34 @@ function shadowCss(morph) {
             ``;
 }
 
+export function renderGradient(morph, prop) {
+  const gradient = morph[prop],
+        {bounds, focus, vector} = gradient;
+  return h(gradient.type, {
+               namespace: "http://www.w3.org/2000/svg",
+               attributes: {id: "gradient-" + prop + morph.id,
+                            gradientUnits: "userSpaceOnUse",
+                            r: "50%",
+                            ...(vector && {gradientTransform: `rotate(${num.toDegrees(vector.extent().theta())}, ${morph.width / 2}, ${morph.height / 2})`}),
+                            ...(focus && bounds && {gradientTransform: `matrix(
+                                    ${bounds.width / morph.width}, 0, 0, ${bounds.height / morph.height},
+                                    ${((morph.width / 2) - (bounds.width / morph.width) * (morph.width / 2)) + (focus.x * morph.width) - (morph.width / 2)},
+                                    ${((morph.height / 2) - (bounds.height / morph.height) * (morph.height / 2)) + (focus.y * morph.height) - (morph.height / 2)})`})}},
+               gradient.stops.map(({offset, color}) =>
+                        h("stop",
+                            {namespace: "http://www.w3.org/2000/svg",
+                              attributes:
+                                {offset: (offset * 100) + "%",
+                                 "stop-color": color.toString()}})));
+}
+
 function initDOMState(renderer, world) {
   renderer.rootNode.appendChild(renderer.domNode);
   renderer.ensureDefaultCSS()
     .then(() => promise.delay(500))
     .then(() => world.env.fontMetric.reset())
     .then(() => world.withAllSubmorphsDo(ea => (ea.isText || ea.isLabel) && ea.forceRerender()))
-    .catch(err => console.error());
+    .catch(err => console.error(err));
 }
 
 export function renderMorph(morph, renderer = morph.env.renderer) {

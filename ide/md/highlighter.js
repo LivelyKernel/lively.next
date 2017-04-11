@@ -1,5 +1,3 @@
-import { TextStyleAttribute } from "../../text/attribute.js";
-
 export default class MarkdownStyler {
 
   style(morph, parsedMd) {
@@ -15,7 +13,7 @@ export default class MarkdownStyler {
 
 
     var state = {listDepth: 0},
-        styles = [],
+        attributes = [],
         pos = 0,
         remainingText = morph.textString;
 
@@ -64,16 +62,15 @@ export default class MarkdownStyler {
 
       // console.log(startIndex, endIndex, remainingText.slice(startIndex, endIndex))
 
-      styles.push(TextStyleAttribute.fromPositions(
-        this.styleFor(token, defaultStyle),
-        morph.indexToPosition(pos+startIndex),
-        morph.indexToPosition(pos+endIndex)));
+      let start = morph.indexToPosition(pos+startIndex),
+          end = morph.indexToPosition(pos+endIndex);
+      attributes.push({start, end}, this.styleFor(token, defaultStyle));
+
       pos += endIndex;
       remainingText = remainingText.slice(endIndex);
     }
 
-
-    morph.setSortedTextAttributes([morph.defaultTextStyleAttribute].concat(styles))
+    morph.setTextAttributesWithSortedRanges(attributes);
   }
 
   parseInlinedCode(text) {
