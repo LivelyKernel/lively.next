@@ -447,7 +447,8 @@ export class Text extends Morph {
 
     this.viewState = this.defaultViewState;
     this.markers = [];
-    this.textRenderer = new Renderer(this);
+    this.textRenderer = new Renderer(this.env.domEnv);
+    this.textLayout = new TextLayout(this);
     this.changeDocument(Document.fromString(""));
     this.ensureUndoManager();
   }
@@ -457,7 +458,7 @@ export class Text extends Morph {
     let propNames = super.__only_serialize__;
     return arr.withoutAll(propNames,
       ["document", "textRenderer", "viewState",
-       "undoManager", "markers"]);
+       "undoManager", "markers", "textLayout"]);
   }
 
   __additionally_serialize__(snapshot, objRef, pool, addFn) {
@@ -513,10 +514,13 @@ export class Text extends Morph {
   }
 
   removeAnchor(anchor) {
-    this.anchors = this.anchors.filter(
-      typeof anchor === "string" ?
-        ea => ea.id !== anchor :
-        ea => ea !== anchor);
+    // anchor can be anchor object or anchor id (string)
+    let anchors = [], removed;
+    for (let a of this.anchors)
+      if (a.id == anchor || a === anchor) removed = a;
+      else anchors.push(a);
+    this.anchors = anchors;
+    return removed;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -877,7 +881,7 @@ export class Text extends Morph {
       // with individual normal selections
       if (this._multiSelection) this._multiSelection.updateFromAnchors();
       else this.selection.updateFromAnchors();
-      
+
       this.consistencyCheck();
     });
     this.undoManager.undoStop();
@@ -1073,7 +1077,7 @@ throw new Error("TODO");
 
     // raw char bounds are without text padding so subtract it from goalX as well
     if (typeof goalX === "number") goalX -= this.padding.left();
-    
+
     let nextRow = pos.row, nextCol = pos.column;
 
     if (!useScreenPosition || !this.lineWrapping) {
@@ -1083,7 +1087,7 @@ throw new Error("TODO");
         nextCol = columnInCharBoundsClosestToX(charBounds, goalX);
       }
 
-    } else {  
+    } else {
       // up / down in screen coordinates is a little difficult, there are a
       // number of requirements to observe:
       // When going up and down "goalX" should be observed, that is
@@ -1094,16 +1098,16 @@ throw new Error("TODO");
       // the column before the last char (b/c there is no newline the cursor could
       // be placed between). For actual line ends the last column value is after
       // the last char.
-  
+
       let ranges = this.textLayout.rangesOfWrappedLine(this, pos.row);
-  
+
       if (!ranges.length) return pos;
-  
+
       var currentRangeIndex = ranges.length-1 - ranges.slice().reverse().findIndex(({start, end}) =>
                                                     start.column <= pos.column),
           currentRange = ranges[currentRangeIndex],
           nextRange, nextRangeIsAtLineEnd = false;
-  
+
       if (n >= 1) {
         var isFirst = 0 === currentRangeIndex;
         nextRange = isFirst ? pos.row <= 0 ? null :
@@ -1111,7 +1115,7 @@ throw new Error("TODO");
           ranges[currentRangeIndex-1];
         if (!nextRange) return pos;
         nextRangeIsAtLineEnd = isFirst;
-  
+
       } else if (n <= -1) {
         var isLast = ranges.length-1 === currentRangeIndex,
             nextRanges = isLast ? pos.row >= this.lineCount()-1 ? [] :
@@ -1121,11 +1125,11 @@ throw new Error("TODO");
         if (!nextRange) return pos;
         nextRangeIsAtLineEnd = nextRanges.length === 1;
       }
-  
+
       nextRow = nextRange.start.row;
       let charBounds = this.textLayout.charBoundsOfRow(this, nextRow).slice(nextRange.start.column, nextRange.end.column);
       nextCol = nextRange.start.column + columnInCharBoundsClosestToX(charBounds, goalX);
-  
+
     }
 
     let newPos = {row: nextRow, column: nextCol};
@@ -1136,7 +1140,7 @@ throw new Error("TODO");
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // helper
-    
+
     function columnInCharBoundsClosestToX(charBounds, goalX) {
       // find the index of the bounds in charBounds whose x offset is nearest to goalX
       charBounds = charBounds.slice();
@@ -1204,16 +1208,25 @@ throw new Error("TODO");
 
   scrollPositionIntoView(pos, offset = pt(0,0)) {
     if (!this.isClip()) return;
-    var { scroll, padding } = this,
-        paddedBounds = this.innerBounds().translatedBy(scroll),
-        charBounds =   this.charBoundsFromTextPosition(pos),
-        // if no line wrapping is enabled we add a little horizontal offset so
-        // that characters at line end are better visible
-        charBounds =   this.lineWrapping ? charBounds : charBounds.insetByPt(pt(-20, 0)),
-        delta = charBounds.topLeft()
-          .subPt(paddedBounds.translateForInclusion(charBounds).topLeft());
-    this.scroll = this.scroll.addPt(delta).addPt(offset);
 
+    let { scroll, padding } = this,
+        viewBounds = this.innerBounds()
+                      .insetByRect(this.padding)
+                      .insetBy(this.borderWidth)
+                      .translatedBy(scroll),
+        charBounds =   this.charBoundsFromTextPosition(pos);
+
+    // if no line wrapping is enabled we add a little horizontal offset so
+    // that characters at line end are better visible
+    if (!this.lineWrapping)
+      charBounds = charBounds.insetByPt(pt(-20, 0));
+
+    // if we are close to the bottom, make sure bottom of char is visible:
+    let corner = viewBounds.bottom() - charBounds.bottom() > 20 ? "bottomLeft" : "topLeft",
+        delta = charBounds[corner]()
+          .subPt(viewBounds.translateForInclusion(charBounds)[corner]());
+
+    this.scroll = this.scroll.addPt(delta).addPt(offset);
     if (this.isFocused()) this.ensureKeyInputHelperAtCursor();
   }
 
@@ -1325,10 +1338,6 @@ throw new Error("TODO");
   aboutToRender(renderer) {
     super.aboutToRender(renderer);
     this.fitIfNeeded();
-  }
-
-  onAfterRender(node) {
-    super.onAfterRender(node);
   }
 
   render(renderer) {
