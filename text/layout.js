@@ -114,8 +114,19 @@ export default class TextLayout {
   }
 
   textBounds(morph) {
-    let {document: doc, padding} = morph;
-    return new Rectangle(padding.left(), padding.top(), doc.width, doc.height);
+    let {
+      document: doc,
+      padding,
+      borderWidthLeft,
+      borderWidthRight,
+      borderWidthTop,
+      borderWidthBottom
+    } = morph;
+
+    return new Rectangle(
+      padding.left(), padding.top(),
+      doc.width + borderWidthLeft + borderWidthRight,
+      doc.height + borderWidthTop + borderWidthBottom);
   }
 
   isFirstLineVisible(morph) {
