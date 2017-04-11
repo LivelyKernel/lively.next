@@ -388,8 +388,8 @@ function propertiesAndSettingsInHierarchyOf(klass) {
     current && (typeof current === "undefined" ? "undefined" : _typeof(current)) === "object" && Object.assign(propertySettings, current);
   }
 
-  for (var _i = 0; _i < allProps.length; _i++) {
-    var _current = allProps[_i];
+  for (var i = 0; i < allProps.length; i++) {
+    var _current = allProps[i];
     if ((typeof _current === "undefined" ? "undefined" : _typeof(_current)) !== "object") {
       console.error("[initializeProperties] " + klass + " encountered property declaration " + ("that is not a JS object: " + _current));
       continue;
@@ -446,8 +446,8 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
   // 2. Run init code for properties
   // and if we have values we will initialize the properties from it. Values
   // is expected to be a JS object mapping property names to property values
-  for (var _i2 = 0; _i2 < propsNeedingInitialize.length; _i2++) {
-    var _key = propsNeedingInitialize[_i2],
+  for (var i = 0; i < propsNeedingInitialize.length; i++) {
+    var _key = propsNeedingInitialize[i],
         actions = initActions[_key],
         hasValue = actions.hasOwnProperty("value");
 
@@ -514,8 +514,6 @@ function setSuperclass(klass, superclassOrSpec) {
     ensureInitializeStub(superclass);
     klass[superclassSymbol] = superclass;
     setPrototypeOf(klass.prototype, superclass.prototype);
-    // klass.prototype = Object.create(superclass.prototype);
-    // klass.prototype.constructor = klass;
     if (superclass !== Object) setPrototypeOf(klass, superclass);
   }
   return superclass;
