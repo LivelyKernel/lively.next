@@ -52,7 +52,7 @@ class StyleEditor extends Morph {
     if (!target)
       throw Error("No target provided!");
     super({
-      morphClasses: ["closed"],
+      styleClasses: ["closed"],
       clipMode: "hidden",
       layout: new VerticalLayout({spacing: 5}),
       ...props
@@ -196,7 +196,7 @@ class StyleEditor extends Morph {
     })
     this.animate({
       submorphs: [titleLabel],
-      morphClasses: ["closed"],
+      styleClasses: ["closed"],
       position: this.openPosition,
       layout: new VerticalLayout({spacing: 5}),
       duration
@@ -217,7 +217,7 @@ class StyleEditor extends Morph {
     this.openPosition = this.position;
 
     var btn = morph({
-      type: "button", morphClasses: ['closeStylerButton'],
+      type: "button", styleClasses: ['closeStylerButton'],
       fontSize: 22,
       label: Icon.makeLabel("times-circle-o")
     });
@@ -238,7 +238,7 @@ class StyleEditor extends Morph {
       this.addMorph(c).animate({opacity: 1, duration});
     });
     this.animate({
-      morphClasses: ["opened"],
+      styleClasses: ["opened"],
       duration,
       layout: new VerticalLayout({spacing: 5})
     });
@@ -271,10 +271,10 @@ class StyleEditor extends Morph {
   createControl(name, controlElement, toggleable) {
     return {
       name,
-      morphClasses: ["controlWrapper"],
+      styleClasses: ["controlWrapper"],
       layout: new VerticalLayout({spacing: 5}),
       submorphs: [
-        {type: "text", morphClasses: ["controlLabel"], textString: name},
+        {type: "text", styleClasses: ["controlLabel"], textString: name},
         controlElement
       ]
     };
@@ -287,7 +287,7 @@ class StyleEditor extends Morph {
             init,
           }),
           selectableControl = new Morph({
-            morphClasses: ["controlWrapper"],
+            styleClasses: ["controlWrapper"],
             layout: new VerticalLayout({spacing: 10, autoResize: true}),
             remove() {
               super.remove();
@@ -338,7 +338,7 @@ class StyleEditor extends Morph {
                 layout: new HorizontalLayout({autoResize: false}),
                 height: 25,
                 submorphs: [
-                  {type: "text", textString: title, morphClasses: ["controlLabel"]},
+                  {type: "text", textString: title, styleClasses: ["controlLabel"]},
                   toggler
                 ]
               }
@@ -598,7 +598,7 @@ export class PolygonEditor extends BorderStyleEditor {
 
   vertexEditModes(target) {
     return this.createControl("Edit Modes", {
-      morphClasses: ["controlWrapper"],
+      styleClasses: ["controlWrapper"],
       layout: new VerticalLayout({spacing: 5}),
       styleRules: this.vertexModeStyles,
       submorphs: KeyHandler.generateCommandToKeybindingMap(this).map(ea => {
@@ -611,7 +611,7 @@ export class PolygonEditor extends BorderStyleEditor {
     const self = this,
       {prettyKeys, command: {doc, name}} = cmd,
       m = new Morph({
-        morphClasses: this.commandToMorphClasses(cmd.command),
+        styleClasses: this.commandToMorphClasses(cmd.command),
         layout: new HorizontalLayout({spacing: 5}),
         onMouseDown: () => {
           this.execCommand(cmd.command);
@@ -624,11 +624,11 @@ export class PolygonEditor extends BorderStyleEditor {
           this.opacity = 0.5;
         },
         submorphs: [
-          {type: "label", value: doc, morphClasses: ["modeLabel"]},
+          {type: "label", value: doc, styleClasses: ["modeLabel"]},
           {
             type: "label",
             value: prettyKeys.join(" "),
-            morphClasses: ["modeLabel"]
+            styleClasses: ["modeLabel"]
           }
         ]
       });
@@ -725,7 +725,7 @@ export class LayoutStyleEditor extends StyleEditor {
     return this.get("Layout Type") ||
       this.createControl("Layout Type", {
         name: "layoutPicker",
-        morphClasses: ["controlWrapper"],
+        styleClasses: ["controlWrapper"],
         layout: new HorizontalLayout({spacing: 5}),
         submorphs: [
           new DropDownSelector({

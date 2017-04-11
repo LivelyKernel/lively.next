@@ -237,10 +237,10 @@ class ColorPropertyView extends Text {
            return this.textString;
          }
        },
-       morphClasses: {
+       styleClasses: {
          after: ['readOnly'],
          initialize() {
-           this.morphClasses = [!this.readOnly && 'editable', 'value'];
+           this.styleClasses = [!this.readOnly && 'editable', 'value'];
          }
        },
        selectionColor: {defaultValue: Color.gray.darker()}
@@ -248,14 +248,14 @@ class ColorPropertyView extends Text {
   }
   
   onFocus() {
-    this.get('keyLabel').morphClasses = ['key', ...!this.readOnly ? ['large', 'active'] : []];
-    this.morphClasses = [...!this.readOnly ? ['editable', 'active'] : [], 'value'];
+    this.get('keyLabel').styleClasses = ['key', ...!this.readOnly ? ['large', 'active'] : []];
+    this.styleClasses = [...!this.readOnly ? ['editable', 'active'] : [], 'value'];
     this.selection.cursorBlinkStart();
   }
   
   onBlur() {
-    this.get('keyLabel').morphClasses = [!this.readOnly && 'large', 'key'];
-    this.morphClasses = [!this.readOnly && 'editable', 'value'];
+    this.get('keyLabel').styleClasses = [!this.readOnly && 'large', 'key'];
+    this.styleClasses = [!this.readOnly && 'editable', 'value'];
     this.selection.uninstall();
   }
   
@@ -372,7 +372,7 @@ class ColorDetails extends Morph {
       fill: Color.transparent,
       layout: new HorizontalLayout({spacing: 5}),
       submorphs: [
-        {type: 'label', name: "keyLabel", morphClasses: [editable && 'large', 'key'], value: key},
+        {type: 'label', name: "keyLabel", styleClasses: [editable && 'large', 'key'], value: key},
         new ColorPropertyView({name: name || key, readOnly: !editable, value, update})]
     })
   }

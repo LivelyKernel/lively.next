@@ -15,6 +15,7 @@ that morph.
 
 
 export class StyleRules {
+
   constructor(rules) {
     this.rules = rules;
   }
@@ -35,7 +36,7 @@ export class StyleRules {
     const {selector, args, prop, prevValue, value} = change;
     if (selector == "addMorphAt") {
       this.applyToAll(morph, args[0]);
-    } else if (prop == "name" || prop == "morphClasses") {
+    } else if (prop == "name" || prop == "styleClasses") {
       if (prevValue == value)
         return;
       this.enforceRulesOn(morph);
@@ -55,9 +56,9 @@ export class StyleRules {
 
   getStyleProps(morph) {
     if (this.rules[morph.name]) {
-      return this.rules[morph.name]; // name overrides morphClasses
-    } else if (morph.morphClasses) {
-      return obj.merge(arr.compact(morph.morphClasses.map(c => this.rules[c])));
+      return this.rules[morph.name]; // name takes precedence over styleClasses
+    } else if (morph.styleClasses) {
+      return obj.merge(arr.compact(morph.styleClasses.map(c => this.rules[c])));
     }
     return {};
   }
@@ -76,6 +77,12 @@ export class StyleRules {
   }
 
   applyToMorph(morph, styleProps) {
-    return Object.assign(morph, styleProps);
+    let {properties} = morph.propertiesAndPropertySettings(),
+        sortedKeys = arr.intersect(obj.sortKeysWithBeforeAndAfterConstraints(properties), 
+                                   Object.keys(styleProps));
+    for (let prop of sortedKeys) {
+      morph[prop] = styleProps[prop];
+    }
+    return morph;
   }
 }

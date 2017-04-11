@@ -198,7 +198,7 @@ export class PropertyInspector extends Morph {
        const {target, property, defaultValue} = props;
        super({
            ...props,
-           morphClasses: ["root"],
+           styleClasses: ["root"],
            layout: new GridLayout({
              columns: [1, {paddingLeft: 5, paddingRight: 5, fixed: 25}],
              grid:[["value", "up"],
@@ -481,6 +481,9 @@ export class ModeSelector extends Morph {
     // cb.remove()
   }
 
+  static get properties() {
+  
+  }
 
   constructor(props) {
     var {items, init, tooltips = {}} = props, keys, values;
@@ -494,7 +497,7 @@ export class ModeSelector extends Morph {
       keys,
       values,
       tooltips,
-      morphClasses: ["root"],
+      styleClasses: ["root"],
       layout: new GridLayout({
         rows: [0, {paddingBottom: 10}],
         grid: [[...arr.interpose(keys.map(k => k + "Label"), null)]],
@@ -529,26 +532,12 @@ export class ModeSelector extends Morph {
     ];
     this.layout.row(0).items.forEach(c => {
       c.group.align = 'center';
-    })
-    this.applyStyler();
-  }
-
-  applyStyler() {
-    this.withAllSubmorphsDo(m => {
-      var styleProps;
-      if (styleProps = this.styler[m.name]) {
-        Object.assign(m, styleProps);
-      } else if (m.morphClasses) {
-        styleProps = obj.merge(
-          arr.compact(m.morphClasses.map(c => this.styler[c]))
-        );
-        Object.assign(m, styleProps);
-      }
     });
+    this.styleRules = this.styler;
   }
 
   get styler() {
-    return {
+    return new StyleRules({
       root: {fill: Color.transparent, height: 30, origin: pt(0, 5)},
       typeMarker: {fill: Color.gray.darker(), borderRadius: 3},
       label: {
@@ -556,7 +545,7 @@ export class ModeSelector extends Morph {
         nativeCursor: "pointer",
         padding: Rectangle.inset(4)
       }
-    };
+    });
   }
 
   createLabels(keys, values, tooltips = {}) {
@@ -564,7 +553,7 @@ export class ModeSelector extends Morph {
       const tooltip = tooltips[name];
       return {
         name: name + "Label",
-        morphClasses: ["label"],
+        styleClasses: ["label"],
         type: "label",
         value: name,
         ...this.labelStyle,

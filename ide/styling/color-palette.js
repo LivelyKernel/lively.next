@@ -23,10 +23,10 @@ class ColorPaletteField extends Morph {
           this.fill = this.color || Color.transparent;
         }
       },
-      morphClasses: {
+      styleClasses: {
         after: ['color'],
         initialize() {
-           this.morphClasses = this.color ? ['colorField'] : ['vacantColorField'];
+           this.styleClasses = this.color ? ['colorField'] : ['vacantColorField'];
         }
       }
     }
@@ -110,7 +110,7 @@ class PivotColorControl extends Ellipse {
   static get properties() {
     return {
       pivotColor: {defaultValue: Color.blue},
-      morphClasses: {defaultValue: ['pivotControlCenter']},
+      styleClasses: {defaultValue: ['pivotControlCenter']},
     }
   }
 
@@ -135,7 +135,7 @@ class HarmonyVisualizer extends Image {
 
   static get properties() {
     return {
-     morphClasses: {defaultValue: ['harmonyVisualizer']},
+     styleClasses: {defaultValue: ['harmonyVisualizer']},
      submorphs: {
        initialize() {
          this.submorphs = [{
@@ -178,7 +178,7 @@ class HarmonyPalette extends Morph {
 
   static get properties() {
     return {
-      morphClasses: {defaultValue: ['paletteFormatter']},
+      styleClasses: {defaultValue: ['paletteFormatter']},
       harmony: {defaultValue: new Complementary()},
       pivotBrightness: {defaultValue: 1},
       submorphs: {
@@ -229,7 +229,7 @@ export class ColorPalette extends Morph {
 
    static get properties() {
      return {
-       morphClasses: {defaultValue: ['back']},
+       styleClasses: {defaultValue: ['back']},
        colorPalette: {
          after: ['submorphs'],
          defaultValue: "flatDesign",
@@ -273,7 +273,7 @@ export class ColorPalette extends Morph {
        },
        colorFieldWidth: {defaultValue: 20},
        styleRules: {
-         after: ['colorFieldWidth', 'morphClasses'],
+         after: ['colorFieldWidth', 'styleClasses'],
          initialize() {
            this.styleRules = this.styler
          }
@@ -559,7 +559,7 @@ export class ColorPalette extends Morph {
 
    paletteConfig() {
       return {
-         name: "paletteConfig", morphClasses: ['paletteFormatter'],
+         name: "paletteConfig", styleClasses: ['paletteFormatter'],
          submorphs: [new DropDownSelector({
              isHaloItem: true, name: "paletteSelector",
              target: this, property: "colorPalette",

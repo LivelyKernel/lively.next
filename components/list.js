@@ -31,20 +31,14 @@ class ListItemMorph extends Label {
     }
   }
 
-  displayItem(item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, props) {
-    if (props.fontFamily) this.fontFamily = props.fontFamily;
-    if (props.selectionColor) this.selectionColor = props.selectionColor;
-    if (props.selectionFontColor) this.selectionFontColor = props.selectionFontColor;
-    if (props.nonSelectionFontColor) this.nonSelectionFontColor = props.nonSelectionFontColor;
-    if (props.fontSize) this.fontSize = props.fontSize;
-    if (props.padding) this.padding = props.padding;
+  displayItem(item, itemIndex, goalWidth, itemHeight, pos, isSelected = false) {
 
     var label = item.label || item.string || "no item.string";
     if (item.annotation) this.valueAndAnnotation = {value: label, annotation: item.annotation}
     else if (typeof label === "string") this.textString = label
     else this.value = label
 
-    this.tooltip = props.tooltip || this.textString;
+    this.tooltip = this.tooltip || this.textString;
     this.itemIndex = itemIndex;
     this.position = pos;
     // if its wider, its wider...
@@ -222,9 +216,14 @@ export class List extends Morph {
 
     return {
 
-      morphClasses:    {defaultValue: ['list']},
+      styleClasses:    {defaultValue: ['list']},
       fill:            {defaultValue: Color.white},
       clipMode:        {defaultValue: "auto"},
+      
+      selectionFontColor:    {defaultValue: Color.white},
+      selectionColor:        {defaultValue: Color.blue},
+      nonSelectionFontColor: {defaultValue: Color.rgbHex("333")},
+      fontColor:             {defaultValue: Color.rgbHex("333")},
 
       theme: {
         isStyleProp: true,
@@ -367,7 +366,7 @@ export class List extends Morph {
     if (theme == "dark") {
       return new StyleRules({
         list: {
-          fill: null,
+          fill: Color.transparent,
           hideScrollbars: true,
           nonSelectionFontColor: Color.gray,
           selectionFontColor: Color.black,
@@ -510,14 +509,15 @@ export class List extends Morph {
 
         var itemMorph = itemMorphs[i]
                     || (itemMorphs[i] = listItemContainer.addMorph(
-                          new ListItemMorph({fontFamily, fontSize})));
+                          new ListItemMorph({
+                               fontFamily, selectionColor, 
+                               selectionFontColor, nonSelectionFontColor,
+                               fontSize, padding: itemPadding || Rectangle.inset(0)})));
 
         itemMorph.displayItem(item, itemIndex,
           goalWidth, itemHeight,
           pt(0, 0+itemHeight*itemIndex),
-          selectedIndexes.includes(itemIndex),
-          {fontFamily, selectionColor, selectionFontColor, nonSelectionFontColor,
-           fontSize, padding: itemPadding || Rectangle.inset(0)});
+          selectedIndexes.includes(itemIndex));
         maxWidth = Math.max(maxWidth, itemMorph.width);
       }
 

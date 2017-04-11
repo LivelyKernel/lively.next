@@ -43,14 +43,14 @@ class GradientTypeSelector extends Morph {
             initialize() {
               this.submorphs = [{
                  type: "ellipse",
-                 morphClasses: ['modeButton'], name: "radialMode",
+                 styleClasses: ['modeButton'], name: "radialMode",
                  fill: this.defaultRadialGradient,
                  onMouseDown: (evt) => {
                     signal(this, "radial");
                  }
               }, {
                   type: 'ellipse',
-                  morphClasses: ['modeButton'], name: "linearMode",
+                  styleClasses: ['modeButton'], name: "linearMode",
                   fill: this.defaultLinearGradient,
                   onMouseDown: (evt) => {
                      signal(this, "linear");
@@ -78,7 +78,7 @@ export class GradientEditor extends Morph {
    constructor(props) {
       if (!props.target) throw Error("No target provided!");
       super({
-         morphClasses: ['body'],
+         styleClasses: ['body'],
          ...props
       });
       this.build();
@@ -186,7 +186,7 @@ export class GradientEditor extends Morph {
        const head = this.stopControlHead(gradientEditor, idx),
              stopControl = new Morph({
           head,
-          morphClasses: ['stopControlLine'],
+          styleClasses: ['stopControlLine'],
           nativeCursor: '-webkit-grab',
           update(gradient) {
              this.position = gradientEditor.extent.subPt(pt(10,0))
@@ -198,7 +198,7 @@ export class GradientEditor extends Morph {
              this.nativeCursor = '-webkit-grabbing';
              gradientEditor.nativeCursor = '-webkit-grabbing';
              this.offsetView = this.addMorph(new Text({
-                type: 'text', morphClasses: ['propertyView']
+                type: 'text', styleClasses: ['propertyView']
              })).openInWorld(evt.hand.position.addPt(pt(10,10)));
           },
           onDrag(evt) {
@@ -224,7 +224,7 @@ export class GradientEditor extends Morph {
         return morph({
            queue: [],
            isHaloItem: true,
-           morphClasses: ['stopControlHead'],
+           styleClasses: ['stopControlHead'],
            layout: new HorizontalLayout({spacing: 3}),
            update(gradient) {
               var paletteField = this.getSubmorphNamed("paletteField"),
@@ -294,7 +294,7 @@ export class GradientEditor extends Morph {
                  extent: pt(15,15), fill: Color.transparent,
                  origin: pt(0,-3), clipMode: 'hidden',
                  submorphs: [Icon.makeLabel("close", {
-                  morphClasses: ["closeButton"],
+                  styleClasses: ["closeButton"],
                   onMouseDown: () => {
                      gradientEditor.removeStop(idx) && this.remove();
                   }})]})
@@ -425,7 +425,7 @@ export class GradientFocusHandle extends Ellipse {
        if (!props.target || !props.target.fill instanceof RadialGradient)
           throw Error("Focus Handle only applicable to Morphs with radial gradient!")
        super({
-          morphClasses: ['root'],
+          styleClasses: ['root'],
           ...props
        })
        this.build();
@@ -450,8 +450,8 @@ export class GradientFocusHandle extends Ellipse {
           focusHandle: {clipMode: "hidden", nativeCursor: '-webkit-grab',
                         fill: Color.transparent, borderColor: Color.orange,
                         submorphs: [
-                           {type: 'path', vertices: [pt(0,0), pt(50,0)], morphClasses: ["crossBar"]},
-                           {type: 'path', vertices: [pt(0,0), pt(0,50)], morphClasses: ["crossBar"]},
+                           {type: 'path', vertices: [pt(0,0), pt(50,0)], styleClasses: ["crossBar"]},
+                           {type: 'path', vertices: [pt(0,0), pt(0,50)], styleClasses: ["crossBar"]},
                            {type: "ellipse", fill: Color.transparent, extent: pt(20,20),
                             tooltip: "Shift focal center of radial gradient",
                             reactsToPointer: false}
@@ -480,13 +480,13 @@ export class GradientFocusHandle extends Ellipse {
        this.bounds().sides.forEach(side => {
           this.addMorph({
              type: "ellipse",
-             morphClasses: ['boundsHandle', side],
+             styleClasses: ['boundsHandle', side],
              relayout() {
                 this.center = self.innerBounds().partNamed(side);
              },
              onDragStart(evt) {
                 this.boundsView = this.addMorph(new Text({
-                  type: 'text', morphClasses: ['propertyView']
+                  type: 'text', styleClasses: ['propertyView']
                 })).openInWorld(evt.hand.position.addPt(pt(10,10)));
              },
              onDrag(evt) {
@@ -509,7 +509,7 @@ export class GradientFocusHandle extends Ellipse {
        const self = this;
        this.addMorph({
           type: "ellipse",
-          morphClasses: ['focusHandle'],
+          styleClasses: ['focusHandle'],
           extent: pt(20,20),
           relayout() {
              this.center = self.innerBounds().center();
@@ -517,7 +517,7 @@ export class GradientFocusHandle extends Ellipse {
           onDragStart(evt) {
              this.tfm = self.target.getGlobalTransform().inverse();
              this.focusView = this.addMorph(new Text({
-                  type: 'text', morphClasses: ['propertyView']
+                  type: 'text', styleClasses: ['propertyView']
              })).openInWorld(evt.hand.position.addPt(pt(10,10)));
           },
           onDrag(evt) {
@@ -545,7 +545,7 @@ class GradientDirectionHandle extends Ellipse {
      if (!props.target || !props.target.fill instanceof LinearGradient)
         throw Error("Focus Handle only applicable to Morphs with radial gradient!")
      super({
-        morphClasses: ['root'],
+        styleClasses: ['root'],
         ...props
      })
      this.build();
@@ -579,13 +579,13 @@ class GradientDirectionHandle extends Ellipse {
   initRotationPoint() {
      const self = this;
      this.rotationPoint = this.addMorph({
-         type: "ellipse", morphClasses: ['rotationPoint'],
+         type: "ellipse", styleClasses: ['rotationPoint'],
          relayout() {
             this.center = Point.polar(self.width / 2, self.target.fill.vectorAsAngle());
          },
          onDragStart(evt) {
             this.angleView = this.addMorph(new Text({
-                  type: 'text', morphClasses: ['propertyView']
+                  type: 'text', styleClasses: ['propertyView']
              })).openInWorld(evt.hand.position.addPt(pt(10,10)));
          },
          onDrag(evt) {

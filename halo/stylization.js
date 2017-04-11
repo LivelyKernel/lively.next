@@ -51,7 +51,7 @@ class StyleHalo extends Morph {
 
   constructor(target, pointerId) {
     super({
-      morphClasses: ["formatter"],
+      styleClasses: ["formatter"],
       bounds: target.globalBounds().insetBy(-10),
       target
     });
@@ -69,7 +69,7 @@ class StyleHalo extends Morph {
     this.styleRules = this.styler;
     this.submorphs = [
       {
-        morphClasses: ["formatter"],
+        styleClasses: ["formatter"],
         position: pt(10, 10),
         submorphs: [this.getBorderHalo(), this.borderRadiusHalo()]
       }
@@ -503,7 +503,7 @@ class VertexHandle extends Morph {
     super({
       halo,
       index,
-      morphClasses: ["vertexHandles", "sharp"],
+      styleClasses: ["vertexHandles", "sharp"],
       center: position.addXY(bw, bw)
     });
     this.initialize();
@@ -565,7 +565,7 @@ class VertexHandle extends Morph {
     const self = this;
     return [
       new Leash({
-        morphClasses: ["controlPoint"],
+        styleClasses: ["controlPoint"],
         visible: false,
         vertices: [pt(0, 0), this.vertex.controlPoints.previous],
         update() {
@@ -582,7 +582,7 @@ class VertexHandle extends Morph {
         }
       }),
       new Leash({
-        morphClasses: ["controlPoint"],
+        styleClasses: ["controlPoint"],
         visible: false,
         vertices: [pt(0, 0), this.vertex.controlPoints.next],
         update() {
@@ -613,20 +613,20 @@ class VertexHandle extends Morph {
   }
 
   select() {
-    this.morphClasses = ["vertexHandles", "selected"];
+    this.styleClasses = ["vertexHandles", "selected"];
     const {previous, next} = this.vertex.controlPoints;
     if (!previous.equals(pt(0, 0)) || !next.equals(pt(0, 0)))
       this.showControlPoints();
   }
 
   deselect() {
-    this.morphClasses = ["vertexHandles"];
+    this.styleClasses = ["vertexHandles"];
     this.hideControlPoints();
   }
 
   transformVertex() {
     this.vertex.isSmooth = !this.vertex.isSmooth;
-    this.morphClasses = this.vertex.isSmooth
+    this.styleClasses = this.vertex.isSmooth
       ? ["vertexHandles", "selected", "smooth"]
       : ["vertexHandles", "selected", "sharp"], this.update();
   }
