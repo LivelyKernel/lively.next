@@ -27,7 +27,12 @@ function makeNodeSerializable(node) {
     var {morph, morphVtree} = node;
     node = morphVtree || node.renderMorph();
     var {properties, tagName, children, key, namespace} = node;
-    properties = obj.dissoc(properties, ["morph-render-done-hook", "morph-after-render-hook", "animation"]);
+    properties = obj.dissoc(properties, [
+      "morph-render-done-hook",
+      "morph-after-render-hook",
+      "after-text-render-hook",
+      "animation"
+    ]);
     children = children ? children.slice() : [];
     serializableNode = new VNode(tagName, properties, children, key, namespace);
     className = "VirtualNode";
@@ -47,8 +52,18 @@ function makeNodeSerializable(node) {
   if (className === "VirtualNode") {
     // removing hooks as those can't be JSONified
     var p = serializableNode.properties;
-    if (p && (p.hasOwnProperty("animation") || p.hasOwnProperty("morph-after-render-hook") || p.hasOwnProperty("morph-render-done-hook"))) {
-      serializableNode = new VNode(serializableNode.tagName, obj.dissoc(p, ["morph-render-done-hook", "morph-after-render-hook", "animation"]), serializableNode.children, serializableNode.key, serializableNode.namespace)
+    if (p && (p.hasOwnProperty("animation")
+           || p.hasOwnProperty("morph-after-render-hook")
+           || p.hasOwnProperty("morph-render-done-hook")
+           || p.hasOwnProperty("after-text-render-hook"))) {
+      serializableNode = new VNode(
+        serializableNode.tagName,
+        obj.dissoc(p, [
+          "morph-render-done-hook",
+          "morph-after-render-hook",
+          "after-text-render-hook",
+          "animation"]),
+          serializableNode.children, serializableNode.key, serializableNode.namespace)
     }
 
     if (serializableNode.children && serializableNode.children.length) {
@@ -147,6 +162,13 @@ export default class Master {
     this.clientId = clientId;
     this.prevVdomNode = null;
     this.sendInProgress = false;
+
+    this.debug = true;
+    this.lastSendSize = 0;
+    this.serializationStartTime = 0;
+    this.serializationEndTime = 0;
+    this.netStartTime = 0;
+    this.netEndTime = 0;
   }
 
   async l2lSetup(clientL2lId) {
@@ -172,7 +194,10 @@ export default class Master {
       this.prevVdomNode ?
         this.sendViewPatch() :
         this.sendInitialView(),
-      () => this.sendInProgress = false);
+      () => {
+        this.sendInProgress = false;
+        this.netEndTime = Date.now();
+      });
   }
 
   async disconnect() {
@@ -181,10 +206,16 @@ export default class Master {
   }
 
   sendInitialView() {
+    
+    this.debug && (this.serializationStartTime = Date.now());
     var node = this.prevVdomNode = makeNodeSerializable(renderMorph(this.targetMorph)),
         id = this.clientId;
+    this.debug && (this.serializationEndTime = Date.now());
     // try { JSON.stringify(node); } catch (e) { throw new Error("Node cannot be serialized");  }
     // node = vdomAsJSON.toJson(node);
+    this.debug && (this.netStartTime = Date.now());
+    this.debug && (this.lastSendSize = JSON.stringify(node).length);
+
     return this.channel.send("lively.mirror.render", {node, id});
   }
 
@@ -195,19 +226,27 @@ export default class Master {
 
     replaceUndefinedWithPlaceholder(patch);
 
-    return this.channel.send("lively.mirror.render-patch", {useOptimizedPatchFormat, patch, id});
+    this.debug && (this.netStartTime = Date.now());
+    this.debug && (this.lastSendSize = JSON.stringify(patch).length);
+
+    return this.channel.send("lively.mirror.render-patch",
+      {useOptimizedPatchFormat, patch, id});
   }
 
   getVdomPatch() {
+    this.debug && (this.serializationStartTime = Date.now());
+
     var newNode = makeNodeSerializable(renderMorph(this.targetMorph)),
         rawPatch = diff(this.prevVdomNode, newNode);
     this.prevVdomNode = newNode;
 
     if (Object.keys(rawPatch).length === 1 && rawPatch.a) return null; // no patch
     
-    return useOptimizedPatchFormat ?
+    let result = useOptimizedPatchFormat ?
             serializePatch(rawPatch) :
             vdomAsJSON.toJson(rawPatch);
+    this.debug && (this.serializationEndTime = Date.now());
+    return result;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
