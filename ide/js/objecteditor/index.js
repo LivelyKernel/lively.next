@@ -695,8 +695,10 @@ export class ObjectEditor extends Morph {
 
     var ed = this.get("sourceEditor"),
         cursorPos = ed.indexToPosition(putCursorInBody ?
-      method.value.body.start+1 : method.key.start)
+          method.value.body.start+1 : method.key.start)
     ed.cursorPosition = cursorPos;
+    this.world() && await ed.whenRendered();
+    ed.scrollCursorIntoView();
 
     if (highlight) {
       var methodRange = {
