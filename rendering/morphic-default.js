@@ -9,7 +9,7 @@ function pad(array, n, getPadElement = arr.last) {
    return [...array, ...(new Array(Math.max(n - array.length, 0)).fill(getPadElement(array)))]
 }
 
-
+// await $world.env.renderer.ensureDefaultCSS()
 export const defaultCSS = `
 
 /*-=- html fixes -=-*/
@@ -69,7 +69,7 @@ textarea.lively-text-input.debug {
   z-index: 2;
 }
 
-.HaloItem {
+.HaloItem:not(.NameHaloItem) {
   /*FIXME: we shouldn't need to hardcode the size...*/
 	 line-height: 24px !important;
 	 text-align: center;

@@ -4,6 +4,7 @@ import { h } from "../node_modules/virtual-dom/dist/virtual-dom.js";
 import { defaultAttributes, defaultStyle } from "../rendering/morphic-default.js";
 import { addOrChangeCSSDeclaration } from "../rendering/dom-helper.js";
 import { inspect, show } from "lively.morphic";
+import { hyperscriptFnForDocument } from "../rendering/dom-helper.js";
 
 let cssInstalled = false;
 
@@ -40,7 +41,7 @@ function installCSS(domEnv) {
     .newtext-text-layer {
       box-sizing: border-box;
       position: absolute;
-      z-index: 3;
+      z-index: 0;
     }
 
     .newtext-before-filler {}
@@ -185,7 +186,7 @@ AfterTextRenderHook.prototype.updateLineHeightOfLines = function(textlayerNode) 
 
   if (!lineNode) return;
 
-  let row = Number(lineNode.dataset.row);
+  let row = Number(lineNode.dataset ? lineNode.dataset.row : lineNode.getAttribute("data-row"));
   if (typeof row !== "number" || isNaN(row)) return;
   viewState.dom_nodeFirstRow = row;
 
@@ -202,8 +203,8 @@ AfterTextRenderHook.prototype.updateLineHeightOfLines = function(textlayerNode) 
     lineNode = lineNode.nextSibling;
   }
 
-  morph.fitIfNeeded();
   if (this.needsRerender) {
+    morph.fitIfNeeded();
     morph.makeDirty();
   } else morph._dirty = false;
 }
@@ -221,25 +222,29 @@ AfterTextRenderHook.prototype.hook = function(node, propName, prevValue) {
 export default class Renderer {
 
   constructor(domEnv) {
-    if (!cssInstalled) installCSS(domEnv);
+    if (!domEnv) {
+      console.warn(`Text renderer initialized without domEnv. Depending on what you want to do you might have bad luck...!`);
+    } else if (!cssInstalled) installCSS(domEnv);
     this.domEnv = domEnv;
   }
 
   directRenderLineFn(morph) {
-    if (!this._renderLineFn) {
-      let h = morph.env.renderer.h_dom_fn;
-      this._renderLineFn = line => this.renderLine(h, morph, line);
+    let fn = morph.viewState._renderLineFn;
+    if (!fn) {
+      let h = hyperscriptFnForDocument(this.domEnv.document);
+      fn = morph.viewState._renderLineFn = line => this.renderLine(h, morph, line);
     }
-    return this._renderLineFn;
+    return fn;
   }
 
   directRenderTextLayerFn(morph) {
-    if (!this._renderTextLayerFn) {
-      let h = morph.env.renderer.h_dom_fn;
-      this._renderTextLayerFn = additionalStyle =>
+    let fn = morph.viewState._renderTextLayerFn;
+    if (!fn) {
+      let h = hyperscriptFnForDocument(this.domEnv.document);
+      fn = morph.viewState._renderTextLayerFn = additionalStyle =>
         this.renderJustTextLayerNode(h, morph, additionalStyle, []);
     }
-    return this._renderTextLayerFn;
+    return fn;
   }
 
   renderMorph(morph, renderer) {
@@ -272,9 +277,9 @@ export default class Renderer {
             morph.nativeCursor
         }
       }, [
-        renderer.renderSubmorphs(morph),
         ...selectionLayer, markerLayer,
-        textLayer
+        textLayer,
+        renderer.renderSubmorphs(morph)
       ]
     );
   }
@@ -312,7 +317,6 @@ export default class Renderer {
   
     let {
           height,
-          scroll,
           padding: {x: padLeft, y: padTop, width: padWidth, height: padHeight},
           document: doc
         } = morph,

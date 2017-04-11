@@ -146,3 +146,76 @@ export function addOrChangeLinkedCSS(id, url, doc = document) {
   var loaded = false; link.onload = () => loaded = true;
   return promise.waitFor(() => !!loaded && link);
 }
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+export const hyperscriptFnForDocument = (function() {
+
+  let h_dom_cache = new WeakMap();
+  
+  return function hyperscriptFnForDocument(document = window.document) {
+    // h() function that renders using document instead of virtual nodes
+  
+    if (document.lines) debugger;
+    let existing = h_dom_cache.get(document);
+    if (!existing) h_dom_cache.set(document, h_dom);
+    return existing || h_dom;
+  
+    function h_dom(tagname, childrenOrAttrs, children) {
+      var attrs = childrenOrAttrs || undefined;
+  
+      if (typeof children === "undefined") {
+        children = childrenOrAttrs;
+        attrs = undefined;
+      }
+  
+      var cssClasses = [], id = null,
+          tokens = tagname.split(".");
+  
+      if (tokens.length > 1) {
+        tagname = tokens.shift();
+        for (var i = 0; i < tokens.length; i++) {
+          var token = tokens[i], hashIndex;
+          if ((hashIndex = token.indexOf("#")) > -1) {
+            id = token.slice(hashIndex+1)
+            token = token.slice(0, hashIndex);
+          }
+          cssClasses.push(token);
+        }
+      }
+      var tagnameAndId = tagname.split("#");
+      if (tagnameAndId.length > 1) {
+        tagname = tagnameAndId[0];
+        id = tagnameAndId[1];
+      }
+  
+      var el = document.createElement(tagname);
+  
+      if (attrs) {
+        for (var attrKey in attrs)
+          if (attrKey !== "style" && attrKey !== "dataset")
+            el[attrKey] = attrs[attrKey];
+        var style = attrs.style;
+        if (style) for (var styleKey in style) el.style[styleKey] = style[styleKey];
+        var dataset = attrs.dataset;
+        if (dataset) {
+          if (el.dataset) for (var dsKey in dataset) el.dataset[dsKey] = dataset[dsKey];
+          else for (var dsKey in dataset) el.setAttribute("data-" + dsKey, dataset[dsKey]);
+        }
+      }
+  
+      if (typeof children === "string") {
+        el.appendChild(document.createTextNode(children));
+      } else if (children && Array.isArray(children)) {
+        for (var i = 0; i < children.length; i++) {
+          var child = children[i];
+          el.appendChild(typeof child === "string" ? document.createTextNode(child) : child);
+        }
+      }
+  
+      return el;
+    }
+  }
+
+})();
