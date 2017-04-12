@@ -262,16 +262,15 @@ export class PropertyInspector extends Morph {
 
 export class ValueScrubber extends Text {
 
-  constructor(props) {
-      super({
-        fill: Color.transparent, draggable: true,
-        min: -Infinity,
-        max: Infinity,
-        ...obj.dissoc(props, ["value"])
-      });
+  static get properties() {
 
-      this.value = props.value || 0;
-      
+    return {
+      value: {defaultValue: 0},
+      fill: {defaultValue: Color.transparent},
+      draggable: {defaultValue: true},
+      min: {defaultValue: -Infinity},
+      max: {defaultValue: Infinity}
+    }
   }
 
   relayout() {
