@@ -1,7 +1,6 @@
 import { Image } from "lively.morphic";
-export function uploadItem() {
-  
-}
+
+export function uploadItem() {}
 
 export async function uploadFile(file, type, options) {
   // file is an instance of the Browser File class
@@ -9,7 +8,13 @@ export async function uploadFile(file, type, options) {
 
   if (type.startsWith("image/")) {
     // upload as inlined image    
-    return new Image({imageUrl: await fileReadAsDataURL(file), autoResize: true, name: file.name});
+    let imageUrl = await fileReadAsDataURL(file);
+
+    return new Image({
+      imageUrl,
+      autoResize: true,
+      name: file.name
+    });
   }
 
   return null;
