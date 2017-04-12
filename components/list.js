@@ -1089,11 +1089,8 @@ export class DropDownList extends Button {
           } else {
             var item = this.listMorph.find(value);
             if (!item) return;
-            this.label = [
-              item.string || String(item), {},
-              " ", {},
-              ...Icon.textAttribute("caret-down")
-            ];
+            let label = item.label || [item.string, null];
+            this.label = [...label, " ", null, ...Icon.textAttribute("caret-down")];
             this.listMorph.selection = value;
           }
         }
