@@ -1012,14 +1012,13 @@ export class World extends Morph {
 
     for (let i = 0; i < domEvt.dataTransfer.items.length; i++) {
       let item = domEvt.dataTransfer.items[i];
-      console.log(`${item.kind} - ${item.type}`)
+      // console.log(`${item.kind} - ${item.type}`)
       if (item.kind === "file") {
         let f = item.getAsFile();
         let upload = await this.confirm(`Upload ${f.name}?`);
         if (upload) {
-          let uploadedMorph = await uploadFile(f, item.type);
+          let uploadedMorph = await uploadFile(f, f.type);
           uploadedMorph && uploadedMorph.openInWorld();
-          inspect({item, file: f});
         }
       } else if (item.kind === "string") {
         item.getAsString((s) => inspect(s))
