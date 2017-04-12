@@ -656,6 +656,8 @@ export class ObjectEditor extends Morph {
 
     if (isObjectClass(klass)) this.ui.forkPackageButton.enable();
     else this.ui.forkPackageButton.disable();
+    
+    this.updateTitle();
   }
 
   async selectMethod(klass, methodSpec, highlight = true, putCursorInBody = false) {
@@ -689,10 +691,13 @@ export class ObjectEditor extends Morph {
 
     this.state.selectedMethod = methodSpec;
 
+    this.updateTitle();
+
     if (!method) {
       this.setStatusMessage(`Cannot find method ${methodSpec.name}`);
       return;
     }
+
 
     var ed = this.get("sourceEditor"),
         cursorPos = ed.indexToPosition(putCursorInBody ?
@@ -710,6 +715,27 @@ export class ObjectEditor extends Morph {
       ed.centerRange(methodRange);
       // ed.alignRowAtTop(undefined, pt(0, -20))
     }
+  }
+  
+  updateTitle() {
+    let win = this.getWindow();
+    if (!win) return;
+    let title = "ObjectEditor"
+    let {
+      selectedClass,
+      selectedMethod,
+      selectedModule
+    } = this;
+
+    if (selectedClass) {
+      title += ` - ${selectedClass.name}`;
+      if (selectedMethod) title += `>>${selectedMethod.name}`;      
+    } else if (selectedModule) {
+      title += ` - ${selectedModule.shortName()}`;
+    }
+    
+    win.title = title;
+    win.relayoutWindowControls();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
