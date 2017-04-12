@@ -17,6 +17,7 @@ import { TextSearcher } from "./search.js";
 import TextLayout from "./layout.js";
 import Renderer from "./renderer.js";
 import commands from "./commands.js";
+import { RichTextControl } from "./ui.js";
 
 const defaultTextStyle = {
   fontFamily: "Sans-Serif",
@@ -1541,12 +1542,16 @@ export class Text extends Morph {
   // keyboard events
 
   get keybindings() {
-    return this.pluginCollect("getKeyBindings", super.keybindings.concat(config.text.defaultKeyBindings))
+    return this.pluginCollect("getKeyBindings",
+            super.keybindings.concat(
+              config.text.defaultKeyBindings));
   }
   set keybindings(x) { super.keybindings = x }
   get keyhandlers() {
-    return this._cachedKeyhandlers
-       || (this._cachedKeyhandlers = this.pluginCollect("getKeyHandlers", super.keyhandlers.concat(this._keyhandlers || [])));
+    if (this._cachedKeyhandlers) return this._cachedKeyhandlers;
+    let handlers = super.keyhandlers.concat(this._keyhandlers || []);
+    handlers = this.pluginCollect("getKeyHandlers", handlers);
+    return this._cachedKeyhandlers = handlers;
   }
 
   get snippets() {
@@ -1830,8 +1835,7 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // controls
   openRichTextControl() {
-    this.showError(new Error("TODO"))
-    // return RichTextControl.openDebouncedFor(this);
+    return RichTextControl.openDebouncedFor(this);
   }
 
 
