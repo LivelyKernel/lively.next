@@ -172,9 +172,10 @@ export function modifyAttributesInRange(doc, range, modifyFn) {
   // modify lines between startRow and endRow, exclusive
   for (let i = startRow+1; i < endRow; i++) {
     line = line.nextLine();
-    let textAndAttributes = line.textAndAttributes.slice();
+    let textAndAttributes = line.textAndAttributes,
+        textAndAttributesToModify = textAndAttributes.slice();
     textAndAttributes.length = 0;
-    textAndAttributesDo(textAndAttributes, (text, attr) =>
+    textAndAttributesDo(textAndAttributesToModify, (text, attr) =>
       textAndAttributes.push(text, modifyFn(line, attr)));
     line._textAttributes = null; // reset cache;
     line.textAndAttributes = joinTextAttributes(textAndAttributes);

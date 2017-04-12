@@ -568,16 +568,40 @@ describe("text document", () => {
     var doc;
     beforeEach(() => doc = Document.fromString("hello\nworld"))
 
-    it("attributes and text access", () => {
-      doc.textString = "hello\nworld";
-      expect(doc.textAndAttributes).deep.equals(["hello\nworld", null]);
-      doc.mixinTextAttribute({foo: 23}, range(1,1,1,3));
-      expect(doc.textAndAttributes).deep.equals([
-        "hello\nw", null,
-        "or", {foo: 23},
-        "ld", null
-      ]);
-    });
+    describe("access", () => {
+    
+      it("attributes and text access", () => {
+        doc.textString = "hello\nworld";
+        expect(doc.textAndAttributes).deep.equals(["hello\nworld", null]);
+        doc.mixinTextAttribute({foo: 23}, range(1,1,1,3));
+        expect(doc.textAndAttributes).deep.equals([
+          "hello\nw", null,
+          "or", {foo: 23},
+          "ld", null
+        ]);
+      });
+  
+      it("and text access in range simple", () => {
+        doc.textString = "xxx\nyyy\nfoo\n";
+        expect(doc.textAndAttributesInRange(range(0,0,0,2)))
+          .deep.equals(["xx", null]);
+        expect(doc.textAndAttributesInRange(range(0,0,2,0)))
+          .deep.equals(["xxx\nyyy\n", null]);
+        expect(doc.textAndAttributesInRange(range(1,1,2,2)))
+          .deep.equals(["yy\nfo", null]);
+      });
+
+      it("and text access in range with attributes", () => {
+        doc.textAndAttributes = ["xxx\nyyy\nfoo\n", {foo: 23}]
+        expect(doc.textAndAttributesInRange(range(0,0,0,2)))
+          .deep.equals(["xx", {foo: 23}]);
+        expect(doc.textAndAttributesInRange(range(0,0,2,0)))
+          .deep.equals(["xxx\nyyy\n", {foo: 23}]);
+        expect(doc.textAndAttributesInRange(range(1,1,2,2)))
+          .deep.equals(["yy\nfo", {foo: 23}]);
+      });
+
+    })
 
     it("set attributes and text", () => {
       doc.textString = "";

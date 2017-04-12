@@ -813,7 +813,11 @@ export class Text extends Morph {
       this.insertText(text, this.documentEndPosition));
   }
 
-  insertText(textOrtextAndAttributes, pos = this.cursorPosition) {
+  insertText(
+    textOrtextAndAttributes,
+    pos = this.cursorPosition,
+    extendTextAttributes = true
+  ) {
     let textAndAttributes = typeof textOrtextAndAttributes === "string" ?
       [textOrtextAndAttributes, null] :
       Array.isArray(textOrtextAndAttributes) ?
@@ -821,6 +825,14 @@ export class Text extends Morph {
 
     if (!textAndAttributes.length || textAndAttributes.length == 2 && !textAndAttributes[0])
       return Range.fromPositions(pos, pos);
+
+    if (extendTextAttributes && pos.column > 0) {
+      let attrToExtend = this.textAttributeAt({row: pos.row, column: pos.column-1});
+      if (attrToExtend) {
+        for (let i = 0; i < textAndAttributes.length; i = i+2)
+          textAndAttributes[i+1] = {...textAndAttributes[i+1], ...attrToExtend};
+      }
+    }
 
     // the document manages the actual content
     var range = this.document.insertTextAndAttributes(textAndAttributes, pos);
@@ -860,7 +872,8 @@ export class Text extends Morph {
 
     this.undoManager.undoStart(this, "deleteText");
     var {document: doc, textLayout} = this,
-        text = doc.textInRange(range);
+        textAndAttributes = this.textAndAttributesInRange(range);
+
     doc.remove(range);
 
     this.addMethodCallChangeDoing({
@@ -870,7 +883,7 @@ export class Text extends Morph {
       undo: {
         target: this,
         selector: "insertText",
-        args: [text, range.start],
+        args: [textAndAttributes, range.start, false],
       }
     }, () => {
       this.invalidateTextLayout();
@@ -885,7 +898,7 @@ export class Text extends Morph {
       this.consistencyCheck();
     });
     this.undoManager.undoStop();
-    return text;
+    return textAndAttributes;
   }
 
   replace(range, text, undoGroup = false) {
@@ -956,17 +969,43 @@ export class Text extends Morph {
   // TextAttributes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  addTextAttribute(attr, range) {
-    this.document.mixinTextAttribute(attr, range);
-    this.onAttributesChanged(range);
-    this.consistencyCheck();
+  addTextAttribute(attr, range = this.selection) {
+    this.undoManager.undoStart(this, "addTextAttribute");
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "addTextAttribute",
+      args: [attr, range],
+      undo: {
+        target: this,
+        selector: "removeTextAttribute",
+        args: [attr, range],
+      }
+    }, () => {
+      this.document.mixinTextAttribute(attr, range);
+      this.onAttributesChanged(range);
+      this.consistencyCheck();
+    });
+    this.undoManager.undoStop();
     return attr;
   }
 
-  removeTextAttribute(attr, range) {
-    this.document.mixoutTextAttribute(attr);
-    this.consistencyCheck();
-    this.onAttributesChanged(range);
+  removeTextAttribute(attr, range = this.selection) {
+    this.undoManager.undoStart(this, "removeTextAttribute");
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "removeTextAttribute",
+      args: [attr, range],
+      undo: {
+        target: this,
+        selector: "addTextAttribute",
+        args: [attr, range],
+      }
+    }, () => {
+      this.document.mixoutTextAttribute(attr);
+      this.onAttributesChanged(range);
+      this.consistencyCheck();
+    });
+    this.undoManager.undoStop();
   }
 
   setTextAttributesWithSortedRanges(textAttributesAndRanges) {
@@ -1020,13 +1059,62 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   getStyleInRange(range = this.selection) {
-throw new Error("TODO");
-    var [[from, to, firstStyle]] = this.document.stylesChunked(range);
-    return firstStyle;
+    let attrs = this.textAndAttributesInRange(range).filter((ea, i) => i % 2 != 0);
+    return attrs.reduce((all, ea) => {
+      for (let key in ea) {
+        let val = ea[key];
+        if (all.hasOwnProperty(key)
+          && (val === undefined || val === null))
+            continue;
+        all[key] = val;
+      }
+      return all;
+    }, {});
   }
 
-  setStyleInRange(style, range = this.selection) {
-    this.addTextAttribute(style, range);
+  setStyleInRange(attr, range = this.selection) {
+
+    // record the existing attributes for undo...
+    let textAndAttributes = this.textAndAttributesInRange(range),
+        currentRange = {start: {...range.start}, end: {...range.start}},
+        rangesAndAttributes = [];
+    for (let i = 0; i < textAndAttributes.length; i = i+2) {
+      let text = textAndAttributes[i],
+          attr = textAndAttributes[i+1],
+          newlineIndex = -1;
+      while ((newlineIndex = text.indexOf("\n")) > -1) {
+        if (newlineIndex > 0) {
+          currentRange.end.column = currentRange.end.column + newlineIndex;
+          rangesAndAttributes.push(currentRange, attr);
+        }
+        let pos = {row: currentRange.end.row + 1, column: 0};
+        currentRange = {start: pos, end: {...pos}};
+        text = text.slice(newlineIndex+1)
+      }
+      currentRange.end.column += text.length;
+      rangesAndAttributes.push(currentRange, attr);
+      currentRange = {start: {...currentRange.end}, end: {...currentRange.end}};
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    
+    this.undoManager.undoStart(this, "setStyleInRange");
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "setStyleInRange",
+      args: [attr, range],
+      undo: {
+        target: this,
+        selector: "setTextAttributesWithSortedRanges",
+        args: [rangesAndAttributes],
+      }
+    }, () => {
+      this.document.setTextAttribute(attr, range)
+      this.consistencyCheck();
+      this.onAttributesChanged(range);
+    });
+    this.undoManager.undoStop();
+
   }
 
   resetStyleInRange(range = this.selection) {
@@ -1035,6 +1123,18 @@ throw new Error("TODO");
     for (let i = 0; i < textAndAttrs.length; i=i+2)
       Object.assign(mixout, textAndAttrs[i+1]);
     this.removeTextAttribute(mixout, range);
+  }
+
+  changeStyleProperty(propName, newValueFn, range = this.selection) {
+    // gets the property specified by propName. Figures out what the values of
+    // those property is in the specified range and gives its value as parameter
+    // to newValueFn. The function is then expected to produce a new value for
+    // property.
+    // Example: text.changeStyleProperty("fontSize", size => size ? size+10 : 20);
+    var oldValue = this.getStyleInRange(range)[propName],
+        newValue = newValueFn(oldValue);
+    this.selections.forEach(sel =>
+      this.addTextAttribute({[propName]: newValue}, sel));
   }
 
 
@@ -1640,7 +1740,13 @@ throw new Error("TODO");
 
   ensureUndoManager() {
     if (this.undoManager) return this.undoManager;
-    var filterFn = change => change.selector === "insertText" || change.selector === "deleteText";
+    let selectors = [
+      "addTextAttribute",
+      "removeTextAttribute",
+      "setStyleInRange",
+      "insertText",
+      "deleteText"];
+    var filterFn = change => selectors.includes(change.selector);
     return this.undoManager = new UndoManager(filterFn);
   }
 

@@ -1080,6 +1080,14 @@ export default class Document {
       });
   }
 
+  setTextAttribute(newAttr, range) {
+    modifyAttributesInRange(this, range,
+      (line, attr) => {
+        line._textAttributes = null;
+        return newAttr;
+      });
+  }
+
   mixoutTextAttribute(mixout, range = {start: {row: 0, column: 0}, end: this.endPosition}) {
     if (!mixout) return;
     let keys = Object.keys(mixout);
@@ -1240,8 +1248,18 @@ export default class Document {
 
   textAndAttributesInRange({start, end}) {
     let line = this.getLine(start.row),
-        firstLine = line,
-        lines = [line];
+        firstLine = line;
+
+    if (end.row === start.row) {
+      let from = start.column,
+          to = end.column;
+      if (from === to) to++;
+      let [_, attrs] = splitTextAndAttributesAtColumns(
+        firstLine.textAndAttributes, [from, to]);
+      return attrs;
+    }
+
+    let lines = [line];
     for (let i = 0; i < end.row - start.row; i++)
       lines.push(line = line.nextLine());
 
@@ -1253,9 +1271,14 @@ export default class Document {
       return concatTextAndAttributes(first, last, true);
 
     let result = first;
-    for (let i = 0; i < lines.length; i++)
-      concatTextAndAttributes(result, lastLine.textAndAttributes, true);
-    return concatTextAndAttributes(result, last, true);
+    for (let i = 1; i < lines.length-1; i++) {
+      result[result.length-2] = result[result.length-2] + newline;
+      concatTextAndAttributes(result, lines[i].textAndAttributes, true);
+    }
+
+    result[result.length-2] = result[result.length-2] + newline;
+    concatTextAndAttributes(result, last, true);
+    return joinTextAttributes(result, "");
   }
 
   textInRange({start, end}) {

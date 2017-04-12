@@ -88,6 +88,12 @@ describeInBrowser("text attributes", () => {
       expect(sut.textAndAttributes).deep.equals(["h", null, "el", {fontSize: 40}, "lo", null]);
     });
 
+    it("replaces text attributes", () => {
+      sut.setStyleInRange({fontSize: 40}, range(0,1,0,3));
+      sut.setStyleInRange({fontWeight: "bold"}, range(0,1,0,3));
+      expect(sut.textAndAttributes).deep.equals(["h", null, "el", {fontWeight: "bold"}, "lo", null]);
+    });
+
     it("resets text attributes in range", () => {
       sut.setStyleInRange({fontSize: 40}, range(0,1,0,3));
       sut.resetStyleInRange(range(0,1,0,2));
@@ -95,15 +101,101 @@ describeInBrowser("text attributes", () => {
     });
 
     it("style attributes are cleaned up / coalesced", () => {
-      sut.setStyleInRange({fontWeight: "bold"}, range(0,1,0,3));
-      sut.setStyleInRange({fontSize: 40}, range(0,2,0,5));
-      sut.setStyleInRange({fontSize: 10}, range(0,2,0,5));
+      sut.addTextAttribute({fontWeight: "bold"}, range(0,1,0,3));
+      sut.addTextAttribute({fontSize: 40}, range(0,2,0,5));
+      sut.addTextAttribute({fontSize: 10}, range(0,2,0,5));
       expect(sut.textAndAttributes).deep.equals([
         "h", null,
         "e", {fontWeight: "bold"},
         "l", {fontSize: 10, fontWeight: "bold"},
         "lo", {fontSize: 10}
       ]);
+    });
+
+    it("line-wise", () => {
+      // sut.openInWorld();
+      // sut.remove();
+      sut.textAndAttributes = ["xxx\nyyy\nfooo\n", null];
+      sut.addTextAttribute({fontFamily: "Arial"}, range(0, 0, 2, 0))
+      expect(sut.textAndAttributes).deep.equals([
+        "xxx\nyyy\n", {fontFamily: "Arial"},
+        "fooo\n", null
+      ]);
+    });
+
+  });
+
+  describe("insertText with attributes", () => {
+
+    it("extends attributes on insertion by default", () => {
+      sut.textAndAttributes = ["hello", {fontSize: 10}, " world", {}];
+      sut.insertText([" foo", {fontFamily: "Arial"}], {row: 0, column: 5});
+      expect(sut.textAndAttributes).deep.equals([
+        "hello", {fontSize: 10},
+        " foo", {fontSize: 10, fontFamily: "Arial"},
+        " world", {}
+      ]);
+    });
+
+    it("does not extend attributes on insertion when told so", () => {
+      sut.textAndAttributes = ["hello", {fontSize: 10}, " world", {}];
+      sut.insertText([" foo", {fontWeight: "bold"}], {row: 0, column: 5}, false);
+      expect(sut.textAndAttributes).deep.equals([
+        "hello", {fontSize: 10},
+        " foo", {fontWeight: "bold"},
+        " world", {}
+      ]);
+    });
+
+  });
+
+  describe("are undoable", () => {
+
+    it("textAndAttributes setter", () => {
+      let original = sut.textAndAttributes.slice();
+      sut.undoManager.group();
+      sut.textAndAttributes = ["xxx\nyyy\nfooo\n", {fontFamily: "Arial"}];
+      sut.undoManager.group();
+      sut.textUndo();
+      expect(sut.textAndAttributes).deep.equals(original);
+    });
+
+    it("textAndAttributes setter with previous attributes", () => {
+      sut.textAndAttributes = ["xxx\nyyy", {textDecoration: "underline"}];
+      sut.undoManager.group();
+      sut.textAndAttributes = ["xxx\nyyyfooo\n", {fontFamily: "Arial"}];
+      sut.undoManager.group();
+      sut.textUndo();
+      expect(sut.textAndAttributes)
+        .deep.equals(["xxx\nyyy", {textDecoration: "underline"}]);
+    });
+
+    it("add attribute", () => {
+      // sut.openInWorld();
+      // sut.remove();
+      sut.textAndAttributes = ["xxx\nyyy\nfooo", {textDecoration: "underline"}];
+      sut.undoManager.reset()
+      sut.undoManager.group();
+
+      sut.addTextAttribute({fontFamily: "Arial"}, range(0, 0, 2, 0))
+      sut.undoManager.group();
+      sut.undoManager.undos
+
+      sut.textUndo();
+
+      expect(sut.textAndAttributes)
+        .deep.equals(["xxx\nyyy\nfooo", {textDecoration: "underline"}]);
+    });
+
+    it("overwrite attributes", () => {
+      // sut.openInWorld();
+      // sut.remove();
+      sut.textAndAttributes = ["xxx\n", {y: 24}, "yyy\nfooo", {x: 23}];
+      sut.undoManager.group();
+      sut.setStyleInRange({z: 99}, range(0, 2, 1, 1))
+      sut.undoManager.group();
+      sut.textUndo();
+      expect(sut.textAndAttributes).deep.equals(["xxx\n", {y: 24}, "yyy\nfooo", {x: 23}]);
     });
 
   });
@@ -535,14 +627,14 @@ describeInBrowser("text movement and selection commands", () => {
       // t=that
     });
 
-    it("with line wrapping", async () => {  
+    it("with line wrapping", async () => {
       t.cursorPosition = {column: 5,row: 1};
       expect(t.screenLineRange().start).deep.equals({row: 1, column: 3}, "before 1");
 
       t.selection.goUp(1, true);
       expect(t.screenLineRange().start).deep.equals({row: 1, column: 0}, "up wrapped line 1");
       expect(t.cursorPosition).deep.equals({row: 1, column: 2}, "up wrapped line 2");
-  
+
       t.selection.goUp(1, true);
       expect(t.screenLineRange().start).deep.equals({row: 0, column: 0}, "upped simple line ");
       expect(t.cursorPosition).deep.equals({row: 0, column: 1}, "upped");
@@ -551,16 +643,16 @@ describeInBrowser("text movement and selection commands", () => {
       expect(t.cursorPosition).deep.equals({column: 0, row: 2}, "down into wrapped");
       t.selection.goUp(1, true);
       expect(t.cursorPosition).deep.equals({row: 1, column: 5}, "up again from empty line");
-  
+
       t.cursorPosition = {row: 1, column: 5}
       t.selection.goUp(1, true);
       expect(t.cursorPosition).deep.equals({row: 1, column: 2}, "up from empty line with goal column set to it");
-  
+
       t.cursorPosition = {row: 1, column: 1}
       t.selection.goUp(1, true);
       expect(t.cursorPosition).deep.equals({row: 0, column: 1}, "up from wrapped line with goal column set to it");
     })
-  
+
   })
 
 });
