@@ -1,7 +1,7 @@
 import { arr, obj, string } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { show, Label, morph, Morph, GridLayout, ShadowObject } from "lively.morphic";
-import { connect, signal } from "lively.bindings";
+import { connect, disconnect, signal } from "lively.bindings";
 
 export default class Window extends Morph {
 
@@ -77,7 +77,7 @@ export default class Window extends Morph {
     this.resizer().bottomRight = innerB.bottomRight();
 
     // targetMorph
-    if (this.targetMorph)
+    if (this.targetMorph && this.targetMorph.isLayoutable)
       this.targetMorph.setBounds(this.targetMorphBounds());
 
     // title
@@ -174,7 +174,6 @@ export default class Window extends Morph {
       bottomRight: this.extent,
     });
     connect(resizer, 'onDrag', win, 'resizeBy', {converter: evt => evt.state.dragDelta});
-    connect(win, 'extent', resizer, 'bottomRight');
     return resizer;
   }
 
