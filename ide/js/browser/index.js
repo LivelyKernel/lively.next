@@ -798,13 +798,14 @@ export default class Browser extends Window {
 
   }
 
-  onCodeEntitySelected(entity) {
+  async onCodeEntitySelected(entity) {
     if (!entity) return;
     var { sourceEditor } = this.ui,
         start = sourceEditor.indexToPosition(entity.node.start),
         end = sourceEditor.indexToPosition(entity.node.end)
     sourceEditor.cursorPosition = start;
     sourceEditor.flash({start, end}, {id: 'codeentity', time: 1000, fill: Color.rgb(200,235,255)});
+    if (this.world()) await sourceEditor.whenRendered();
     sourceEditor.centerRange({start, end});
   }
 
