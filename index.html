@@ -136,6 +136,16 @@ await lively.vm.runEval("y = 10", {targetModule: "test.js"});
       </div>
       </p>
 
+      <h2>notifications</h2>
+
+There are two types of system-wide notifications:
+<code>
+{type: "lively.vm/doitrequest", code, targetModule, waitForPromise}
+{type: "lively.vm/doitresult", code, targetModule, waitForPromise, result}
+</code>
+These notifications are all emitted with lively.notifications.
+
+
       <h2>License</h2>
       <a href="https://raw.githubusercontent.com/LivelyKernel/lively.vm/master/LICENSE">MIT</a>
     </div>
