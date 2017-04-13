@@ -13,4 +13,7 @@ function cd {
   builtin cd "${DIR}"
 }
 
-alias em="lively-as-editor.sh"
+function em {
+  # lively-as-editor.sh "$1" 2&> /dev/null
+  lively-as-editor.sh "$1" &> /dev/null
+}
