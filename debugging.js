@@ -230,6 +230,24 @@ export class SnapshotInspector {
     return lookupPath(s, fromId, path);
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  
+  openSummary() {
+    return $world.execCommand("open text window",
+      {content: this.toString(), title: "serialization debug", fontFamily: "monospace"});
+  }
+
+  openConnectionsList() {    
+    let conns = (this.classes.AttributeConnection || {}).objects || [];
+    let report = conns.map(c => {
+      let [_, {props: {sourceObj, sourceAttrName, targetObj, targetMethodName}}] = c;
+      return `${this.explainId(sourceObj.value.id)}.${sourceAttrName.value} => `
+           + `${this.explainId(targetObj.value.id)}.${targetMethodName.value}`;
+    }).join("\n");
+
+    return $world.execCommand("open text window",
+      {content: report, title: "serialized connections", fontFamily: "monospace"});
+  }
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
