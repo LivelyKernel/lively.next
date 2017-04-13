@@ -40,7 +40,7 @@ export default class FontMetric {
     this.element = null;
   }
 
-  reset() {
+  reset(debug) {
     var doc, parentNode;
     if (this.element) {
       parentNode = this.element.parentNode;
@@ -50,15 +50,15 @@ export default class FontMetric {
     this.charMap = {};
     this.cachedBoundsInfo = {};
     if (doc && parentNode)
-      this.install(doc, parentNode);
+      this.install(doc, parentNode, debug);
   }
 
-  install(doc, parentEl) {
+  install(doc, parentEl, debug) {
     this.element = doc.createElement("div");
     this.element.name = "fontMetric";
     this.setMeasureNodeStyles(this.element.style, true);
     parentEl.appendChild(this.element);
-    this._domMeasure = new DOMTextMeasure().install(doc, parentEl);
+    this._domMeasure = new DOMTextMeasure().install(doc, parentEl, debug);
   }
 
   uninstall() {
@@ -240,19 +240,21 @@ class DOMTextMeasure {
     return this;
   }
 
-  install(doc, parentEl) {
-    this.maxLineBBoxCacheCount = 3000;
+  install(doc, parentEl, debug = false) {
+    this.debug = debug;
+
+    this.maxLineBBoxCacheCount = debug ? 1 : 3000;
     this.lineBBoxCacheCount = 0;
     this.lineBBoxCache = {};
 
-    this.maxTextlayerNodeCacheCount = 30;
+    this.maxTextlayerNodeCacheCount = debug ? 1 : 30;
     this.textlayerNodeCacheCount = 0;
     this.textlayerNodeCache = {};
 
     this.defaultCharWidthHeightCache = {};
     this.doc = doc;
     let el = this.element = doc.createElement("div");
-    el.id = "domMeasure";
+    el.className = "dom-measure" + (debug ? " debug" : "");
     this.setMeasureNodeStyles(el.style, true);
     parentEl.appendChild(el);
     return this;
@@ -267,12 +269,14 @@ class DOMTextMeasure {
 
   setMeasureNodeStyles(style, isRoot) {
     style.width = style.height = "auto";
-    style.left = style.top = "0px";
-    style.visibility = "hidden";
+    if (!this.debug) {
+      style.left = style.top = "0px";
+      style.visibility = "hidden";
+    }
     style.position = "absolute";
     style.whiteSpace = "pre";
     style.font = "inherit";
-    style.overflow = isRoot ? "hidden" : "visible";
+    style.overflow = isRoot && !this.debug ? "hidden" : "visible";
   }
 
   generateStyleKey(styleOpts) {
@@ -320,7 +324,7 @@ class DOMTextMeasure {
       textNode.appendChild(span);
       span.textContent = testString;
       let {width, height} = span.getBoundingClientRect();
-      textNode.removeChild(span);
+      if (!this.debug) textNode.removeChild(span);
       return defaultCharWidthHeightCache[styleKey] = {width: width/testString.length, height};
     }, rendertTextLayerFn, styleOpts, styleKey);
   }
@@ -343,7 +347,8 @@ class DOMTextMeasure {
     return this.withTextLayerNodeDo(textNode => {
       // render in once go, then read, not intermixed!
       let lineNodes = new Array(lines.length),
-          results = new Array(lines.length);
+          results = new Array(lines.length),
+          {doc: document} = this;
       for (let i = 0; i < lines.length; i++) {
         if (results[i]) continue;
         let lineNode = renderLineFn(lines[i]);
@@ -364,6 +369,9 @@ class DOMTextMeasure {
           width, height
         };
       }      
+      if (!this.debug) 
+        for (let i = 0; i < lineNodes.length; i++)
+          textNode.removeChild(lineNodes[i]);
       return results;
     }, rendertTextLayerFn, styleOpts, styleKey);
   }
@@ -377,9 +385,13 @@ class DOMTextMeasure {
       let lineNode = renderLineFn(line),
           _ = textNode.appendChild(lineNode),
           offset = cumulativeOffset(lineNode),
-          result = charBoundsOfLine(
-            line, lineNode, -offset.left + offsetX, -offset.top + offsetY);
-      lineNode.parentNode.removeChild(lineNode);
+          {doc: document} = this,
+          {scrollTop, scrollLeft} = document.body,
+          result = charBoundsOfLine(line, lineNode,
+          -offset.left + offsetX + scrollLeft,
+            -offset.top + offsetY + scrollTop);
+      if (!this.debug)
+        lineNode.parentNode.removeChild(lineNode);
       return result;
     }, rendertTextLayerFn, styleOpts, styleKey);
   }
@@ -395,7 +407,7 @@ class DOMTextMeasure {
     }
 
     try { return doFn(textNode); } finally {
-      if (this.textlayerNodeCacheCount > this.maxTextlayerNodeCacheCount) {
+      if (!this.debug && this.textlayerNodeCacheCount > this.maxTextlayerNodeCacheCount) {
         let toRemove = Math.ceil(this.maxTextlayerNodeCacheCount/2), node;
         while (toRemove-- && (node = root.childNodes[0])) {
           cache[node.id] = null;
