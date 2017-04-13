@@ -140,6 +140,14 @@ class ModuleInterface {
     return load ? load.metadata : null;
   }
 
+  addMetadata(addedMeta) {
+    let {System, id} = this,
+        oldMeta = this.metadata(),
+        meta = oldMeta ? Object.assign(oldMeta, addedMeta) : addedMeta;
+    System.config({meta: {[id]: meta}});
+    return System.meta[id];
+  }
+
   format() {
     // assume esm by default
     var meta = this.metadata();
@@ -148,11 +156,9 @@ class ModuleInterface {
     return "global";
   }
 
-  setFormat(f) {
+  setFormat(format) {
     // assume esm by default
-    var meta = this.metadata();
-    if (!meta) throw new Error("No meta data")
-    return meta.format = f;
+    return this.addMetadata({format});
   }
 
   reset() {
@@ -165,8 +171,10 @@ class ModuleInterface {
   // loading
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  async load() {
+  async load(opts) {
+    // opts = {format, instrument}
     var {id, System} = this;
+    opts && this.addMetadata(opts);
     return System.get(id) || await System.import(id);
   }
 
