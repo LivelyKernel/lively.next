@@ -1307,14 +1307,19 @@ export class Text extends Morph {
     this.scroll = pos.addPt(offset);
   }
 
+  alignRowAtBottom(row = this.cursorPosition.row, offset = pt(0,0)) {
+    let charHeight = this.charBoundsFromTextPosition({row, column: 0}).height
+    this.alignRowAtTop(row, offset.addXY(0, -this.textPageHeight()+charHeight));
+  }
+
   scrollPositionIntoView(pos, offset = pt(0,0)) {
     if (!this.isClip()) return;
 
     let { scroll, padding } = this,
         viewBounds = this.innerBounds()
-                      .insetByRect(this.padding)
-                      .insetBy(this.borderWidth)
-                      .translatedBy(scroll),
+                        .translatedBy(scroll)
+                        .insetByRect(this.padding)
+                        .insetBy(this.borderWidth),
         charBounds =   this.charBoundsFromTextPosition(pos);
 
     // if no line wrapping is enabled we add a little horizontal offset so
@@ -1626,14 +1631,27 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // command helper
 
+  textPageHeight() {
+    let {height, padding, borderWidthBottom, borderWidthTop} = this;
+    return height - padding.top() - padding.bottom() - borderWidthBottom - borderWidthTop;
+  }
+  scrollPageDown() { this.scrollDown(this.textPageHeight()); }
+  scrollPageUp() { this.scrollUp(this.textPageHeight()); }
+
   pageUpOrDown(opts = {direction: "up", select: false}) {
-    var {direction, select} = opts;
-    this[direction === "down" ? "scrollPageDown" : "scrollPageUp"]();
-    var offset = pt(0, (direction === "down" ? 1 : -1) * this.height),
-        pos = this.textLayout.pixelPositionFor(this, this.cursorPosition).addPt(offset),
-        textPos = this.textPositionFromPoint(pos);
-    if (!opts || !opts.select) this.cursorPosition = textPos;
-    else this.selection.lead = textPos;
+    // opts = {direction: "up", select: false}
+    // opts = {direction: "down", select: false}
+    let {direction, select} = opts,
+        row = this.textLayout[direction === "down" ? "lastFullVisibleLine" : "firstFullVisibleLine"](this),
+        {cursorPosition: {column}, padding} = this;
+    if (!select) this.cursorPosition = {row, column};
+    else this.selection.lead = {row, column};
+    if (direction === "down") {
+      this.alignRowAtTop(row, pt(0, -padding.top() - padding.bottom()));
+    } else {
+      this.alignRowAtBottom(row, pt(0, 0));
+      this.alignRowAtBottom(row, pt(0, padding.top() + padding.bottom()));
+    }
   }
 
   gotoDocumentStart(opts = {select: false}) {
