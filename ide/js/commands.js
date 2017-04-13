@@ -48,7 +48,7 @@ function maybeSelectCommentOrLine(morph) {
       ) { morph.selectLine(row); return }
 
   // Select and return the text between the comment slashes and end of method
-  sel.range = {start: {row, column: idx+2}, end: {row, column: text.length}};
+  sel.range = {start: {row, column: idx + 2}, end: {row, column: text.length}};
 }
 
 
@@ -390,46 +390,27 @@ export var jsIdeCommands = [
     }
   },
 
-  // {
-  //   name: "[javascript] eslint fix",
-  //   exec: async text => {
-  //     var { default: ESLinter } = await System.import("lively.morphic/ide/js/eslint/lively-interface.js"),
-  //         range = text.selection.isEmpty() ? null : text.selection.range,
-  //         replacedRange;
-  //     try {
-  //       ({replacedRange} = await ESLinter.fixMorph(text, range));
-  //     } catch(e) { text.showError(e); return; }
-  //     if (range && replacedRange) text.selection = replacedRange;
-  //   }
-  // },
-
   {
-    name: "[javascript] eslint fix",
+    name: "[javascript] auto format code",
     exec: async (text, opts) => {
-      // var { default: ESLinter } = await System.import("lively.morphic/ide/js/eslint/lively-interface.js");
-  
       opts = {
-        printWidth: 80,
+        printWidth: Math.floor(text.width / text.defaultCharExtent().width),
         tabWidth: 2,
         bracketSpacing: false,
         ...opts
       }
-  
-      var {format} = await System.import("http://localhost:9011/lively.morphic/node_modules/prettier/prettier-browserified.js"),
-        {findNodeByAstIndex} = await System.import("lively.ast/lib/acorn-extension.js"),
-        {parse, printAst} = await System.import("lively.ast"),
-        {nodesAt} = await System.import("lively.ast/lib/query.js");
-  
-          prettifyRange(text);
-      // text.saveExcursion(() => prettifyRange(text), {useAnchors: false});
-      
-  
+
+      let module = lively.modules.module,
+          prettier = await module("https://prettier.github.io/prettier/prettier.min.js").load({format: "global", instrument: false}),
+          {findNodeByAstIndex} = await module("lively.ast/lib/acorn-extension.js").load(),
+          {parse, printAst} = await module("lively.ast").load(),
+          {nodesAt} = await module("lively.ast/lib/query.js").load(),
+          format = prettier.format;
+      prettifyRange(text);
       return true;
   
-  
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
       function prettifyRange(textMorph, range = textMorph.selection.range) {
+
         var {start, end} = range,
             source = textMorph.textString,
             parsed = parse(source, {addAstIndex: true}),
@@ -437,8 +418,15 @@ export var jsIdeCommands = [
             // find the ast nodes that are at start / end of the range
             startI = textMorph.positionToIndex(start),
             endI = textMorph.positionToIndex(end),
-            startNode = arr.last(nodesAt(startI, parsed)),
-            endNode = arr.last(nodesAt(endI, parsed)),
+            commonNode = arr.intersect(nodesAt(startI, parsed), nodesAt(endI, parsed))
+                          .reverse().find(ea => ea.body && ea.start < startI && ea.end < endI)
+                      || parsed,
+            statements = commonNode.body.body || commonNode.body,
+            affectedNodes = arr.takeWhile(
+                              arr.dropWhile(statements, ea => ea.start < startI),
+                              ea => ea.end <= endI),
+            startNode = affectedNodes[0] || arr.last(nodesAt(startI, parsed)),
+            endNode = arr.last(affectedNodes) || arr.last(nodesAt(endI, parsed)),
   
             prettySource = format(source, opts),
             prettyParsed = parse(prettySource, {addAstIndex: true}),
@@ -461,9 +449,9 @@ export var jsIdeCommands = [
             replacementRange = {start: {column: 0, row: origStartRow}, end: {column: 0, row: origEndRow+1}};
   
         textMorph.undoManager.group()
-        textMorph.replace(replacementRange, replacementLines.join("\n") + "\n")
+        let newRange = textMorph.replace(replacementRange, replacementLines.join("\n") + "\n")
         textMorph.undoManager.group()
-        textMorph.selection = replacementRange;
+        textMorph.selection = newRange;
       }
   
     }
@@ -568,7 +556,7 @@ export var tabBehavior = {
   scrollCursorIntoView: true,
   exec: function(morph) {
     if (!morph.selection.isEmpty()) {
-      return morph.execCommand("[javascript] eslint fix");
+      return morph.execCommand("[javascript] auto format code");
     }
 
     var snippet = morph.snippets.find(snippet => snippet.canExpand(morph));
