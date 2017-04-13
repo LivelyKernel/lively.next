@@ -249,7 +249,7 @@ export default class TextEditor extends Morph {
       switch (ext) {
 
         case 'js':
-          var { JavaScriptEditorPlugin } = await System.import("lively.morphic/ide/js/editor-plugin.js");
+          var { default: JavaScriptEditorPlugin } = await System.import("lively.morphic/ide/js/editor-plugin.js");
           editorPlugin = new JavaScriptEditorPlugin(config.codeEditor.defaultTheme);
           editorPlugin.evalEnvironment = {
             get targetModule() { return url; },
@@ -259,17 +259,17 @@ export default class TextEditor extends Morph {
           break;
 
         case 'json':
-          var { JSONEditorPlugin } = await System.import("lively.morphic/ide/json/editor-plugin.js");
+          var { default: JSONEditorPlugin } = await System.import("lively.morphic/ide/json/editor-plugin.js");
           editorPlugin = new JSONEditorPlugin(config.codeEditor.defaultTheme);
           break;
 
         case 'md':
-          var { MarkdownEditorPlugin } = await System.import("lively.morphic/ide/md/editor-plugin.js");
+          var { default: MarkdownEditorPlugin } = await System.import("lively.morphic/ide/md/editor-plugin.js");
           editorPlugin = new MarkdownEditorPlugin(config.codeEditor.defaultTheme);
           break;
 
         case 'sh':
-          var { ShellEditorPlugin } = await System.import("lively.morphic/ide/shell/editor-plugin.js");
+          var { default: ShellEditorPlugin } = await System.import("lively.morphic/ide/shell/editor-plugin.js");
           editorPlugin = new ShellEditorPlugin(config.codeEditor.defaultTheme);
           break;
 

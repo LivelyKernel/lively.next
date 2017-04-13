@@ -1,7 +1,7 @@
 import { arr, obj } from "lively.lang";
 import { pt, Point, Color, Rectangle } from "lively.graphics";
 import { config, Icon, Window, DropDownList } from "../../index.js";
-import { JavaScriptEditorPlugin } from "./editor-plugin.js";
+import JavaScriptEditorPlugin from "./editor-plugin.js";
 import EvalBackendChooser from "./eval-backend-ui.js";
 import InputLine from "../../text/input-line.js";
 import { connect, once, noUpdate } from "lively.bindings";

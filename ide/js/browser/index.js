@@ -4,10 +4,10 @@ import { connect, disconnect, noUpdate } from "lively.bindings";
 import { morph, show, Label, HorizontalLayout, GridLayout,
          DropDownList, config, Window } from "lively.morphic";
 import InputLine from "../../../text/input-line.js";
-import { JSONEditorPlugin } from "lively.morphic/ide/json/editor-plugin.js";
+import JSONEditorPlugin from "lively.morphic/ide/json/editor-plugin.js";
 import { HorizontalResizer } from "lively.morphic/components/resizers.js";
 import { Icon } from "lively.morphic/components/icons.js";
-import { JavaScriptEditorPlugin } from "../editor-plugin.js";
+import JavaScriptEditorPlugin from "../editor-plugin.js";
 import EvalBackendChooser from "../eval-backend-ui.js";
 import browserCommands from "./commands.js";
 import { Tree, TreeData } from "lively.morphic/components/tree.js"

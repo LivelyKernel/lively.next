@@ -20,7 +20,7 @@ var commands = [
   }
 ]
 
-export class MarkdownEditorPlugin extends EditorPlugin {
+export default class MarkdownEditorPlugin extends EditorPlugin {
 
   constructor(theme) {
     super(theme);

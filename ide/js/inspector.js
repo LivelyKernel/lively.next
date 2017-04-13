@@ -4,7 +4,7 @@ import { connect, disconnect } from "lively.bindings";
 import { Morph, HorizontalLayout, morph, config } from "lively.morphic";
 import { Tree, TreeData } from "lively.morphic/components/tree.js";
 import { HorizontalResizer } from "lively.morphic/components/resizers.js";
-import { JavaScriptEditorPlugin } from "./editor-plugin.js";
+import JavaScriptEditorPlugin from "./editor-plugin.js";
 import { debounce, throttle } from "lively.lang/function.js";
 import { ColorPicker } from "../styling/color-picker.js";
 import { isBoolean, isString, isNumber } from "lively.lang/object.js";

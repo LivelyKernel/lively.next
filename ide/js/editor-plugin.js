@@ -28,7 +28,7 @@ System.import("lively-system-interface").then(system => {
   serverInterfaceFor = system.serverInterfaceFor; localInterface = system.localInterface; })
 
 
-export class JavaScriptEditorPlugin extends EditorPlugin {
+export default class JavaScriptEditorPlugin extends EditorPlugin {
 
   constructor(theme) {
     super(theme)

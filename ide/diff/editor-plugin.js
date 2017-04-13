@@ -13,7 +13,7 @@ import * as git from "lively.morphic/ide/shell/git.js"
 
 // that.plugins = [new DiffEditorPlugin()]
 
-export class DiffEditorPlugin extends EditorPlugin {
+export default class DiffEditorPlugin extends EditorPlugin {
 
   constructor(theme) {
     super(theme);

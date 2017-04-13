@@ -1,5 +1,5 @@
 import { arr } from "lively.lang";
-import { JavaScriptEditorPlugin } from "../js/editor-plugin.js";
+import JavaScriptEditorPlugin from "../js/editor-plugin.js";
 
 import prism from "https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/prism.js";
 import "https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/components/prism-json.js";
@@ -30,7 +30,7 @@ class JSONTokenizer {
 
 }
 
-export class JSONEditorPlugin extends JavaScriptEditorPlugin {
+export default class JSONEditorPlugin extends JavaScriptEditorPlugin {
 
   constructor(theme = "chrome") {
     super(theme);

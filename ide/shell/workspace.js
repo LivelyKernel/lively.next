@@ -3,7 +3,7 @@ import { connect } from "lively.bindings";
 import { pt, Point, Color, Rectangle } from "lively.graphics";
 import { config, morph } from "../../index.js";
 import Window from "../../components/window.js";
-import { ShellEditorPlugin } from "./editor-plugin.js";
+import ShellEditorPlugin from "./editor-plugin.js";
 import Terminal from "./terminal.js";
 
 export default class Workspace extends Window {

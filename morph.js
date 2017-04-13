@@ -1,6 +1,6 @@
 import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree, fun } from "lively.lang";
-import { renderRootMorph, renderMorph, AnimationQueue, ShadowObject } from "./rendering/morphic-default.js"
+import { renderRootMorph, renderMorph, AnimationQueue, ShadowObject } from "./rendering/morphic-default.js";
 import { morph, show } from "./index.js";
 import { MorphicEnv } from "./env.js";
 import config from "./config.js";

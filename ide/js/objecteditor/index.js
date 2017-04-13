@@ -1,7 +1,7 @@
 import { arr, t, Path, string, fun } from "lively.lang";
 import { Morph, HorizontalLayout, GridLayout, config } from "lively.morphic";
 import { pt, Color } from "lively.graphics";
-import { JavaScriptEditorPlugin } from "../editor-plugin.js";
+import JavaScriptEditorPlugin from "../editor-plugin.js";
 import { withSuperclasses, lexicalClassMembers, isClass } from "lively.classes/util.js";
 import { Icon } from "lively.morphic/components/icons.js";
 import { TreeData, Tree } from "lively.morphic/components/tree.js";

@@ -33,7 +33,7 @@ class ShellTokenizer {
 
 }
 
-export class ShellEditorPlugin extends EditorPlugin {
+export default class ShellEditorPlugin extends EditorPlugin {
 
   constructor(theme) {
     super(theme)

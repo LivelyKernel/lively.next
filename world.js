@@ -378,7 +378,7 @@ var worldCommands = [
           var content = [diff.createTwoFilesPatch(
                          filenameA || "a", filenameB || "b", a, b,
                          headerA, headerB, typeof context === "number" ? {context} : undefined), {}];
-          var { DiffEditorPlugin } = await System.import("lively.morphic/ide/diff/editor-plugin.js");
+          var { default: DiffEditorPlugin } = await System.import("lively.morphic/ide/diff/editor-plugin.js");
           plugin = new DiffEditorPlugin();
 
         } else {
