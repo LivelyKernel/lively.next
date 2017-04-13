@@ -1792,6 +1792,20 @@ function uniqBy(array, comparator, context) {
   return result;
 }
 
+function uniqByKey(array, key) {
+  // like `arr.uniq` but with equality based on item[key]
+  var seen = {},
+      result = [];
+  for (var i = 0; i < array.length; i++) {
+    var item = array[i];
+    if (!seen[item[key]]) {
+      seen[item[key]] = true;
+      result.push(item);
+    }
+  }
+  return result;
+}
+
 function compact(array) {
   // removes falsy values
   // Example:
@@ -2779,6 +2793,7 @@ var arr = Object.freeze({
 	withoutAll: withoutAll,
 	uniq: uniq,
 	uniqBy: uniqBy,
+	uniqByKey: uniqByKey,
 	compact: compact,
 	mutableCompact: mutableCompact,
 	forEach: forEach$1,
