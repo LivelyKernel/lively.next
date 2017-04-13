@@ -102,7 +102,7 @@ class TreeNode {
     if (sumChildrenHeight != height)
       report.push({error: `Sum of child Height is not Height of ${this}: ${sumChildrenHeight} != ${height}`});
 
-    
+
     var maxWidth = Math.max.apply(null, arr.pluck(children, "width"));
     if (maxWidth != width)
       report.push({error: `max width of children of ${this} is not node width: ${maxWidth} != ${width}`});
@@ -228,7 +228,7 @@ class InnerTreeNode extends TreeNode {
           lineSpec.textAndAttributes || [lineSpec.text|| "", null],
         width = isString ? 0 : lineSpec.width || 0,
         height = isString ? 0 : lineSpec.height || 0;
-    
+
     return new Line({parent: this, width, height, textAndAttributes});
   }
 
@@ -256,8 +256,8 @@ class InnerTreeNode extends TreeNode {
         width: 0, height: 0,
         options: this.options
       }));
-      
-    
+
+
     var i = 0;
     for (; i < this.children.length; i++) {
       var child = this.children[i], childSize = child.size;
@@ -265,7 +265,7 @@ class InnerTreeNode extends TreeNode {
         return child.insert(lineSpecs, atIndex);
       atIndex = atIndex - childSize;
     }
-    
+
     let last = this.children[i-1];
     return last.insert(lineSpecs, last.size);
   }
@@ -356,7 +356,7 @@ class InnerTreeNode extends TreeNode {
     return result;
   }
 
-  removeFromToInRoot(fromIndex, toIndex) {
+  removeFromToInRoot(fromIndex, toIndex, debug) {
     // Remove lines fromIndex to toIndex
     if (!this.isRoot)
       throw new Error("removeFromTo() should be called on the root node");
@@ -378,10 +378,12 @@ class InnerTreeNode extends TreeNode {
 
     if (last && first.node === last.node) last = null;
 
-    // The first, leftmost affected node. If all its lines are remove, remove
+    // The first, leftmost affected node. If all its lines are removed, remove
     // it entirely, otherwise remember it for merge/stealing
-    if (first.full) toRemove.push(first);
-    else {
+    if (first.full) {
+      debug && debug.log(`Removing complete first line ${first}`);
+      toRemove.push(first);
+    } else {
       let {lastLine, firstLine, node: {children}} = first,
           n = (lastLine - firstLine)+1;
       firstNeedsMerge = children.length - n < minLeafSize;
@@ -389,8 +391,10 @@ class InnerTreeNode extends TreeNode {
 
     // ...same with the last (rightmost) affected node
     if (last) {
-      if (last.full) toRemove.push(last);
-      else {
+      if (last.full) {
+        debug && debug.log(`Removing complete last line ${last}`);
+        toRemove.push(last);
+      } else {
         let {lastLine, firstLine, node: {children}} = last,
             n = (lastLine - firstLine)+1;
         lastNeedsMerge = children.length - n < minLeafSize;
@@ -458,24 +462,30 @@ class InnerTreeNode extends TreeNode {
       node.resize(-n, -height, -stringSize);
     }
 
+    debug && debug.dump(`${this.root.print(false)}`);
+
+    let needsRebalance = true;
     // merge if needed
     if (firstNeedsMerge) {
+      needsRebalance = false;
       first.node.letLeafMergeOrStealAfterRemove(
-        firstLeftSibling, !last || last.full ? lastRightSibling : last.node);
+        firstLeftSibling, !last || last.full ? lastRightSibling : last.node, debug);
     }
 
     // also do that for last but consider the case that the first node might
     // have been merged "away"
     if (last && lastNeedsMerge) {
+      needsRebalance = false;
       last.node.letLeafMergeOrStealAfterRemove(
-        first.full || !first.node.parent ? firstLeftSibling : first.node, lastRightSibling);
+        first.full || !first.node.parent ? firstLeftSibling : first.node,
+        lastRightSibling, debug);
     }
 
     // rebalance all affected nodes, meaning to change tree structure as necessary
-    rebalance.forEach(ea => ea.balanceAfterShrink());
+    needsRebalance && rebalance.forEach(ea => ea.balanceAfterShrink(debug));
   }
 
-  letLeafMergeOrStealAfterRemove(leftSibling, rightSibling) {
+  letLeafMergeOrStealAfterRemove(leftSibling, rightSibling, debug) {
     if (!this.isLeaf)
       throw new Error(`Called letLeafMergeOrStealAfterRemove() in non-leaf ${this}`);
 
@@ -493,16 +503,19 @@ class InnerTreeNode extends TreeNode {
         mergeTarget = mergeLeft ? leftSibling : mergeRight ? rightSibling : null;
 
     if (mergeTarget) {
+
+      debug && debug.log(`[letLeafMergeOrStealAfterRemove] merging ${this} ${mergeLeft ? "left" : "right"} into ${mergeTarget}`);
+
       // update size of sibling and parents up to common parent and
       // subtract my size from self and all parents up to common parent with sibling
       var {size: mySize, width: myWidth, height: myHeight, stringSize: myStringSize} = this;
-      
+
       // move children over
       children.forEach(ea => ea.parent = mergeTarget);
       if (mergeLeft) mergeTarget.children.push(...children);
       else mergeTarget.children.unshift(...children);
       children.length = 0;
-      
+
       // all children gone, no width
       this.width = 0;
 
@@ -544,6 +557,9 @@ class InnerTreeNode extends TreeNode {
             stealN = stealLeft ? stealLeftN : stealRightN,
             stealHeight = 0, stealStringSize = 0,
             stealMaxWidth = 0, remainingMaxWidth = 0;
+
+        debug && debug.log(`[letLeafMergeOrStealAfterRemove] ${this} steals from ${stealLeft ? "left" : "right"} node ${stealTarget} ${stealN} nodes`);
+
         for (let i = 0; i < newChildren.length; i++) {
           stealHeight = stealHeight + newChildren[i].height;
           stealStringSize = stealStringSize + newChildren[i].stringSize;
@@ -588,10 +604,10 @@ class InnerTreeNode extends TreeNode {
       if (p) {
         this.parent = null;
         p.children.splice(p.children.indexOf(this), 1);
-        p.balanceAfterShrink();
+        p.balanceAfterShrink(debug);
       }
     } else {
-      this.balanceAfterShrink();
+      this.balanceAfterShrink(debug);
     }
   }
 
@@ -653,21 +669,34 @@ class InnerTreeNode extends TreeNode {
     this.parent.balanceAfterGrowth();
   }
 
-  balanceAfterShrink() {
+  balanceAfterShrink(debug) {
     var {isLeaf, parent, children, options} = this,
         {maxLeafSize, maxNodeSize, minLeafSize, minNodeSize} = options,
         maxChildren = isLeaf ? maxLeafSize : maxNodeSize,
         minChildren = isLeaf ? minLeafSize : minNodeSize;
+if (this.root.print(false).split("\n")[0] === `node (size: 21 width: 678 height: 600 text length: 1532)`) debugger;
+    let removedBecauseEmpty = false;
+    for (let i = children.length; i--; ) {
+      if (children[i].size === 0) {
+        debug && debug.log(`[balanceAfterShrink] ${this} removes node ${i} b/c it is empty`);
+        children.splice(i, 1);
+        removedBecauseEmpty = true
+      }
+    }
+    if (removedBecauseEmpty)
+      debug && debug.dump(`${this.root.print(false)}`);
 
     if (children.length >= minChildren) {
-      parent && parent.balanceAfterShrink();
+      parent && parent.balanceAfterShrink(debug);
       return;
     }
 
     if (children.length === 0) {
       if (parent) {
-        arr.remove(parent.children, this);
-        parent.balanceAfterShrink();
+        // debug && debug.log(`[balanceAfterShrink] removing node ${this} b/c it has no children anymore`);
+        // debug && debug.dump(`${this.root.print(false)}`);
+        // arr.remove(parent.children, this);
+        parent.balanceAfterShrink(debug);
       }
       return;
     }
@@ -679,25 +708,41 @@ class InnerTreeNode extends TreeNode {
       // its a leaf so children are lines, try to remove myself...
       if (parent && parent.children.length === 1) {
         // I'm the only child...
+        debug && debug.log(`[balanceAfterShrink] ${this} is the only child - will remove it's parent and take its position`);
+        debug && debug.dump(`${this.root.print(false)}`);
         this.parent = null;
         parent.children.length = 0;
         parent.children.push(...children);
         children.forEach(ea => ea.parent = parent);
         parent.isLeaf = true;
       }
-      parent && parent.balanceAfterShrink();
+      parent && parent.balanceAfterShrink(debug);
       return;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // not a leaf, try to get rid of myself anyway...
-    var grandChildren = [];
+    var grandChildren = [],
+        hasLeafAsChild = false,
+        hasNonLeafAsChild = false,
+        hasMixedChildNodes = false;
     for (var i = 0; i < children.length; i++) {
-      grandChildren.push(...children[i].children);
+      let child = children[i];
+      if (!hasLeafAsChild && child.isLeaf) hasLeafAsChild = true;
+      if (!hasNonLeafAsChild && !child.isLeaf) hasNonLeafAsChild = true;
+      if (hasLeafAsChild && hasNonLeafAsChild) { hasMixedChildNodes = true; break; }
+      grandChildren.push(...child.children);
     }
 
-    var leaf = children[0].isLeaf;
+    if (hasMixedChildNodes) { // can't rebalance mixed yet
+      parent && parent.balanceAfterShrink(debug);
+      return;
+    }
+
+    var leaf = hasLeafAsChild;
     if (grandChildren.length > (leaf ? maxLeafSize : maxNodeSize)) return;
+
+    debug && debug.log(`[balanceAfterShrink] ${this} grandChildren.length is ${grandChildren.length} and <= max size so it is removing all its children and adopting their children`);
 
     children.forEach(ea => ea.parent = null);
     grandChildren.forEach(ea => ea.parent = this);
@@ -705,10 +750,14 @@ class InnerTreeNode extends TreeNode {
     children.push(...grandChildren);
     this.isLeaf = leaf;
 
-    parent && parent.balanceAfterShrink();
+    debug && debug.log(`[balanceAfterShrink] ${children.join("\n")}`);
+
+    debug && debug.dump(`${this.root.print(false)}`);
+
+    parent && parent.balanceAfterShrink(debug);
   }
 
-  print(index = 0, depth = 0, optName) {
+  print(short = true, index = 0, depth = 0, optName) {
     var {isLeaf, size, stringSize, width, height, children} = this,
         name = optName ? optName : isLeaf ? "leaf" : "node",
         indent = " ".repeat(depth),
@@ -720,7 +769,7 @@ class InnerTreeNode extends TreeNode {
       for (var i = children.length; i--;) {
         var child = children[i];
         childIndex = childIndex - child.size;
-        childrenPrinted = "\n" + child.print(childIndex, depth + 1) + childrenPrinted;
+        childrenPrinted = "\n" + child.print(short, childIndex, depth + 1) + childrenPrinted;
       }
       printed += childrenPrinted;
     }
@@ -729,7 +778,8 @@ class InnerTreeNode extends TreeNode {
   }
 
   toString() {
-    return `node (${this.isLeaf ? "leaf, " : ""}size: ${this.size})`;
+    let {isLeaf, size, width, height} = this;
+    return `node (${isLeaf ? "leaf, " : ""}size: ${size} ${width}x${height})`;
   }
 
 }
@@ -889,15 +939,16 @@ export class Line extends TreeNode {
     return this.changeText(text, textAndAttributes);
   }
 
-  print(index = 0, depth = 0) {
+  print(short = true, index = 0, depth = 0) {
     let indent = " ".repeat(depth),
-        {width, height, stringSize, textAndAttributes} = this;
-    return `${indent}line ${index} (size: 1 width: ${Math.round(width)} height: ${Math.round(height)} text length: ${stringSize} content: ${JSON.stringify(textAndAttributes)})`;
+        {width, height, stringSize, textAndAttributes} = this,
+        printed = `${indent}line ${index} (size: 1 width: ${Math.round(width)} height: ${Math.round(height)} text length: ${stringSize}`;
+    return printed + (short ? ")" : ` content: ${JSON.stringify(textAndAttributes)})`);
   }
 
   toString() {
     let {width, height, _text} = this;
-    return `line (${string.truncate(_text, 30)}, ${width}x${height})`;
+    return `line ("${string.truncate(_text, 30)}", ${width}x${height})`;
   }
 
   consistencyCheck() {
@@ -998,8 +1049,8 @@ export default class Document {
     // this.root.remove(row);
   }
 
-  removeLines(fromRow, toRow) {
-    this.root.removeFromToInRoot(fromRow, toRow);
+  removeLines(fromRow, toRow, debug) {
+    this.root.removeFromToInRoot(fromRow, toRow, debug);
   }
 
   insertLines(lineSpecs, atRow) {
@@ -1174,7 +1225,7 @@ export default class Document {
 
     function textAndAttributesFromRangedAttributesForRow(row, text, textAttributesAndRanges, startIndex = 0) {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // helper  
+      // helper
       // function range(sr, sc, er, ec) { return {start: {row: sr, column: sc}, end: {row: er, column: ec}}; }
       // textAndAttributesFromRangedAttributesForRow(0, "hello", [], 0);
       //   => {attributes: ["hello", null], index: 0}
@@ -1470,7 +1521,7 @@ export default class Document {
     return {start: {row, column}, end: endPos};
   }
 
-  remove(range) {
+  remove(range, debug = false) {
     if (this.rowCount === 0) return;
 
     var {start, end} = range;
@@ -1487,17 +1538,32 @@ export default class Document {
     if (fromCol < 0) fromCol = 0;
     if (toCol < 0) toCol = 0;
 
+    if (debug) {
+      console.group(`[text doc removal]`);
+      console.log(`[text doc] removing ${fromRow}/${fromCol} => ${toRow}/${toCol}`);
+    }
+
     let line = this.getLine(fromRow),
         firstLine = line,
         lines = [line];
     for (let i = 0; i < toRow - fromRow; i++)
       lines.push(line = line.nextLine());
+
     let lastLine = lines[lines.length-1],
         [before] = splitTextAndAttributesAt(firstLine.textAndAttributes, fromCol),
         [_, after] = splitTextAndAttributesAt(lastLine.textAndAttributes, toCol);
 
     firstLine.changeTextAndAttributes(concatTextAndAttributes(before, after, true));
-    if (lines.length > 1) this.removeLines(fromRow+1, toRow);
+
+    if (debug) {
+      console.log(`[text doc removal] what remains of start/end line: "${firstLine.textAndAttributes}"`);
+    }
+
+    if (lines.length > 1) this.removeLines(fromRow+1, toRow, debug);
+
+    if (debug) {
+      console.groupEnd(`[text doc removal]`);
+    }
   }
 
   splitLineAt({row, column}) {
@@ -1638,19 +1704,32 @@ export default class Document {
   toString() { return `Document(${this.rowCount} lines)`; }
 
   consistencyCheck() {
-    let report = []
-    if (this.rowCount !== this.lines.length)
-      report.push({error: `document ${this} row count: ${this.rowCount} !== ${this.lines.length}`});
-    if (this.textString.length !== this.stringSize)
-      report.push({error: `document ${this} textString.length vs stringSize: ${this.textString.length} !== ${this.stringSize}`});
-    report.push(...this.root.consistencyCheck());
+    let report = [],
+        {rowCount, stringSize, lines, textString, root} = this;
+    if (rowCount !== lines.length)
+      report.push({error: `document ${this} row count: ${rowCount} !== ${lines.length}`});
+    if (textString.length !== stringSize)
+      report.push({error: `document ${this} textString.length vs stringSize: ${textString.length} !== ${stringSize}`});
+    report.push(...root.consistencyCheck());
+
+    let i = 0, line = lines[0];
+    do {
+    // console.log(line)
+      if (line != lines[i])
+        report.push({error: `line iteration at ${i} is broken: nextLine() of ${lines[i-1]} is not ${lines[i]}!`});
+      i++;
+    } while(line = line.nextLine());
+    if (lines[i]) {
+      report.push({error: `nextLine() of\n  ${lines[i-1]}\nis nullish but \n  ${lines[i]}\nexists in tree!`});
+    }
+
     if (report.length) {
       throw new Error(`Consistency check of document revealed ${report.length} error${report.length > 1 ? "s" : ""}:\n`
                     + `${report.map(ea => ea.error).filter(Boolean).join("\n")}`);
     }
   }
 
-  print() { return this.root.print(0, 0, "root"); }
+  print() { return this.root.print(false, 0, 0, "root"); }
 
   print2() {
     // FIXME don't want to load the dependency by default...
