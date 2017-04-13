@@ -402,6 +402,29 @@ export default class Halo extends Morph {
       this.buttonControls.map(b => b.onKeyUp(evt));
   }
 
+  getMesh({x, y}) {
+     var {height, width} = this.world().visibleBounds(),
+         defaultGuideProps = {
+        borderStyle: "dotted",
+        borderWidth: 2,
+        borderColor: Color.orange
+     },
+     mesh = this.get('mesh') || this.addMorph(new Morph({
+        name: "mesh",
+        styleClasses: ["halo-mesh"],
+        extent: pt(width, height),
+        fill: null,
+        submorphs: [
+          new Path({name: "vertical", ...defaultGuideProps}),
+          new Path({name: "horizontal", ...defaultGuideProps})
+        ]
+      }));
+    mesh.globalPosition = pt(0,0)
+    mesh.getSubmorphNamed("vertical").vertices = [pt(x,0), pt(x, height)];
+    mesh.getSubmorphNamed("horizontal").vertices = [pt(0,y), pt(width, y)];
+    return mesh;
+  }
+
 }
 
 
@@ -862,32 +885,9 @@ class DragHaloItem extends HaloItem {
 
   updateAlignmentGuide(active) {
     var mesh = this.halo.getSubmorphNamed("mesh");
-
     if (!active) { mesh && mesh.remove(); return; }
 
-    var {height, width} = this.world().visibleBounds();
-
-    if (!mesh) {
-      var defaultGuideProps = {
-        borderStyle: "dotted",
-        borderWidth: 2,
-        borderColor: Color.orange
-      }
-      mesh = this.halo.addMorph(new Morph({
-        name: "mesh",
-        styleClasses: ["halo-mesh"],
-        extent: pt(width, height),
-        fill: null,
-        submorphs: [
-          new Path({name: "vertical", ...defaultGuideProps}),
-          new Path({name: "horizontal", ...defaultGuideProps})
-        ]
-      }));
-    }
-    mesh.moveBy(mesh.globalPosition.negated())
-    var {x, y} = this.halo.target.worldPoint(pt(0,0));
-    mesh.getSubmorphNamed("vertical").vertices = [pt(x,0), pt(x, height)];
-    mesh.getSubmorphNamed("horizontal").vertices = [pt(0,y), pt(width, y)];
+    mesh = this.halo.getMesh(this.halo.target.worldPoint(pt(0,0)));
 
     this.focus();
     return mesh;
@@ -1319,7 +1319,7 @@ class ResizeHandle extends HaloItem {
   }
 
   onDrag(evt) {
-    this.update(evt.position, evt.isShiftDown());
+    this.update(evt.position, evt.isShiftDown(), evt.isAltDown());
     this.focus();
   }
 
@@ -1338,11 +1338,14 @@ class ResizeHandle extends HaloItem {
     this.halo.toggleDiagonal(proportional, this.corner);
   }
 
-  update(currentPos, shiftDown = false) {
+  update(currentPos, shiftDown = false, altDown = false) {
     var target = this.halo.target,
       oldPosition = target.position,
       {x, y} = this.startPos.subPt(currentPos),
       delta = this.tfm.transformDirection(pt(x, y));
+    if (altDown) {
+      delta = delta.griddedBy(pt(10,10));
+    }
     this.halo.updateBoundsFor(
       this.corner,
       shiftDown,
@@ -1350,7 +1353,8 @@ class ResizeHandle extends HaloItem {
       this.startBounds,
       this.startOrigin
     );
-    this.halo.toggleDiagonal(shiftDown, this.corner);
+    this.halo.toggleDiagonal(shiftDown, this.corner);    
+    this.updateAlignmentGuide(altDown);
   }
 
   stop(proportional) {
@@ -1358,6 +1362,17 @@ class ResizeHandle extends HaloItem {
     this.halo.state.activeButton = null;
     this.halo.alignWithTarget();
     this.halo.toggleDiagonal(false);
+    this.updateAlignmentGuide(false);
+  }
+
+  updateAlignmentGuide(active) {
+    var mesh = this.halo.getSubmorphNamed("mesh");
+    if (!active) { mesh && mesh.remove(); return; }
+
+    mesh = this.halo.getMesh(this.globalPosition.addPt(this.extent.scaleBy(.5)));
+
+    this.focus();
+    return mesh;
   }
 }
 
