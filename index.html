@@ -23,8 +23,12 @@
   </head>
   <body>
 
+    
+    <a href="https://github.com/LivelyKernel/lively.vm"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
+
     <div class="content">
-      <h1>lively.vm</h1>
+      <h1>lively.vm <img src="https://travis-ci.org/LivelyKernel/lively.vm.svg?branch=master"/></h1>
+      
       <p>lively.vm provides the ability to evaluate JavaScript code in an evaluation context.  Normally the JavaScript <code>eval()</code> function uses the local scope of the function it was called in (however, <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#Description" target="_blank">there are some additional weird rules</a>).  It offers no further options about scope and bindings.</p>
 
       <p>lively.vm has a range of options that control what bindings are available inside the executed code and also how top-level assignments inside the evaluated code are captured.  The latter is helpful when you want to access intermediate results and assignments caused by the evaluation, e.g. to allow incremental development.</p>
