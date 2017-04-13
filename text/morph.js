@@ -1588,8 +1588,50 @@ export class Text extends Morph {
     if (!this.isFocused()) return;
     evt.stop();
     var sel = this.selection;
-    evt.domEvt.clipboardData.setData("text", sel.text);
-    this.execCommand("manual clipboard copy", {delete: deleteCopiedText, dontTryNativeClipboard: true})
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // copy as html
+    if (window.doHTMLTextCopy) { // WIP
+      let html = this.document.lines.map(line => {
+  // line = this.document.lines[1]
+  // [text, attr] = lively.lang.arr.toTuples(line.textAndAttributes, 2)[0]
+        let tuples = lively.lang.arr.toTuples(line.textAndAttributes, 2);
+        if (!tuples.length || !tuples[0].length) return "<br>";
+        return '<span class="line">' + tuples.map(([text, attr]) => {
+          let tagname = null, style = "", attrs = {};
+          if (attr) {
+            style = `style="`;
+            // this.defaultTextStyleProps.join("\n")
+            if (attr.nativeCursor)     style += `native-cursor: ${attr.nativeCursor};`;
+            if (attr.fontFamily)       style += `font-family: ${attr.fontFamily};`;
+            if (attr.fontSize)         style += `font-size: ${attr.fontSize}px;`;
+            if (attr.fontColor)        style += `font-color: ${attr.fontColor};`;
+            if (attr.fontWeight)       style += `font-weight: ${attr.fontWeight};`;
+            if (attr.fontStyle)        style += `font-style: ${attr.fontStyle};`;
+            if (attr.textDecoration)   style += `text-decoration: ${attr.textDecoration};`;
+            if (attr.textStyleClasses) style += `text-style-classes: ${attr.textStyleClasses};`;
+            if (attr.backgroundColor)  style += `background-color: ${attr.backgroundColor};`;
+            if (attr.textAlign)        style += `text-align: ${attr.textAlign};`;
+            if (attr.link)             { tagname = "a"; attrs.href = attr.link; };
+            style += `" `;
+          }
+          tagname = tagname || "span";
+          let attrString = Object.keys(attrs).reduce((attrString, key) =>
+            `${key}="${attrs[key]}" ${attrString}`, "");
+          return `<${tagname} ${style} ${attrString}>${text}</${tagname}>`;
+        }).join("") + "</span>"
+      }).join("\n<br>\n")
+      console.log(html)
+      evt.domEvt.clipboardData.setData("text/html", html);
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // copy as text
+    evt.domEvt.clipboardData.setData("text/plain", sel.text);
+
+    this.execCommand(
+      "manual clipboard copy",
+      {delete: deleteCopiedText, dontTryNativeClipboard: true});
   }
 
   onPaste(evt) {
