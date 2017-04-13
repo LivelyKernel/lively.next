@@ -58,10 +58,10 @@ export default class TextLayout {
           linesBounds = fontMetric.manuallyComputeBoundsOfLines(
             lines, 0, 0, {
               defaultTextStyle, width: morphWidth, height: morphHeight,
-              clipMode, lineWrapping,
+              clipMode, lineWrapping, textAlign,
               paddingLeft, paddingRight, paddingTop, paddingBottom
             }, directRenderTextLayerFn, directRenderLineFn);
-      for (let i = 0; i < lines.length; i++) {
+      for (var i = 0; i < lines.length; i++) {
         var {width, height} = linesBounds[i];
         lines[i].changeExtent(width, height, false);
       }
@@ -72,7 +72,7 @@ export default class TextLayout {
 
     morphWidth = morphWidth - paddingLeft - paddingRight;
 
-    for (let i = 0; i < lines.length; i++) {
+    for (var i = 0; i < lines.length; i++) {
       var line = lines[i];
       if (!force && line.height > 0) continue;
 
@@ -176,14 +176,14 @@ export default class TextLayout {
 
     let firstIndex = column, lastIndex = column;
 
-    for (let i = column+1; i < charBounds.length; i++) {
+    for (var i = column+1; i < charBounds.length; i++) {
       if (charBounds[i].y+charBounds[i].height > bounds.y+bounds.height) break;
       lastIndex = i;
     }
     // For last range we go until end of line
     if (lastIndex === charBounds.length-1) lastIndex++;
 
-    for (let i = column-1; i >= 0; i--) {
+    for (var i = column-1; i >= 0; i--) {
       if (charBounds[i].y+charBounds[i].height < bounds.y+bounds.height) break;
       firstIndex = i;
     }
@@ -236,7 +236,7 @@ export default class TextLayout {
         directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph),
         charBounds = fontMetric.manuallyComputeCharBoundsOfLine(
           line, 0, 0, {
-            defaultTextStyle, width, height, clipMode, lineWrapping,
+            defaultTextStyle, width, height, clipMode, lineWrapping, textAlign,
             paddingLeft, paddingRight, paddingTop, paddingBottom
           }, directRenderTextLayerFn, directRenderLineFn);
 
@@ -336,7 +336,7 @@ export default class TextLayout {
 
     // if still not found we go by proximity...
     let minDist = Infinity, minIndex = -1;
-    for (let i = 0; i < charBounds.length; i++) {
+    for (var i = 0; i < charBounds.length; i++) {
       let cb = charBounds[i],
           {x: cbX, width: cbWidth, y: cbY, height: cbHeight} = cb,
           dist = point.distSquared(pt(cbX+cbWidth/2, cbY+cbHeight/2));
