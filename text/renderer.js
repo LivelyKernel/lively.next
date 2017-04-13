@@ -452,9 +452,6 @@ export default class Renderer {
         text = textAndAttributes[i] || "\u00a0";
         attr = textAndAttributes[i+1];
 
-        // FIXME!
-        if (text.length > 1000) text = text.slice(0,1000);
-
         if (!attr) { renderedChunks.push(text); continue; }
 
         fontSize =         attr.fontSize;
