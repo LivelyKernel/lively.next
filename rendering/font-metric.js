@@ -1,5 +1,6 @@
 import { string, obj } from "lively.lang";
 import FontDetector from "./font-detector.js";
+import { cumulativeOffset } from "./dom-helper.js";
 
 
 export default class FontMetric {
@@ -355,10 +356,11 @@ class DOMTextMeasure {
         if (results[i]) continue;
         let node = lineNodes[i],
             offset = cumulativeOffset(node),
-            {left, top, width, height} = node.getBoundingClientRect();
+            {left, top, width, height} = node.getBoundingClientRect(),
+            {scrollTop, scrollLeft} = document.body;
         this.lineBBoxCache[styleKey + "_" + lines[i].text] = results[i] = {
-          x: left - offset.left + offsetX,
-          y: top - offset.top + offsetY,
+          x: left - offset.left + offsetX + scrollLeft,
+          y: top - offset.top + offsetY + scrollTop,
           width, height
         };
       }      
@@ -405,20 +407,10 @@ class DOMTextMeasure {
   }
 }
 
-function cumulativeOffset(element) {
-  let top = 0, left = 0;
-  do {
-    top = top + (element.offsetTop || 0);
-    left = left + (element.offsetLeft || 0);
-    element = element.offsetParent;
-  } while(element);
-  return {top, left};
-}
-
 
 function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
   const {ELEMENT_NODE, TEXT_NODE, childNodes} = lineNode,
-        maxLength = 20000;
+        maxLength = Infinity;
 
   let document = lineNode.ownerDocument,
       node = childNodes[0],

@@ -1,6 +1,16 @@
 import { promise, arr } from "lively.lang";
 import { Rectangle } from "lively.graphics";
 
+export function cumulativeOffset(element) {
+  let top = 0, left = 0;
+  do {
+    top = top + (element.offsetTop || 0);
+    left = left + (element.offsetLeft || 0);
+    element = element.offsetParent;
+  } while(element);
+  return {top, left};
+}
+
 function createIFrame(parentElement, url = "about:blank", bounds = new Rectangle(0,0, 700,700)) {
   return new Promise((resolve, reject) => {
     if (!parentElement) throw new Error("Need parent element!")

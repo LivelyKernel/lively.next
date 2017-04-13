@@ -2,17 +2,7 @@ import bowser from "bowser";
 import { obj } from "lively.lang";
 import { pt } from "lively.graphics";
 import Keys from './Keys.js';
-
-export function cumulativeElementOffset(element) {
-  // computes offset in pixels of element from the top left screen position
-  var offsetTop = 0, offsetLeft = 0;
-  do {
-    offsetTop += element.offsetTop  || 0;
-    offsetLeft += element.offsetLeft || 0;
-    element = element.offsetParent;
-  } while(element);
-  return {offsetLeft, offsetTop};
-}
+import { cumulativeOffset } from "../rendering/dom-helper.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // event constants and type detection
@@ -107,9 +97,9 @@ export class Event {
       return pt(0,0)
     }
 
-    var {offsetLeft, offsetTop} = cumulativeElementOffset(worldNode),
+    var {left, top} = cumulativeOffset(worldNode),
         {pageX, pageY} = this.domEvt,
-        pos = pt((pageX || 0) - offsetLeft, (pageY || 0) - offsetTop);
+        pos = pt((pageX || 0) - left, (pageY || 0) - top);
     if (this.world.scale !== 1)
       pos = pos.scaleBy(1 / this.world.scale);
     return pos;

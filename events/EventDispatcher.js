@@ -3,12 +3,8 @@ import { pt } from "lively.graphics";
 import config from "../config.js";
 import TextInput from './TextInput.js';
 import KillRing from './KillRing.js';
-
-import {
-  Event, KeyEvent, SimulatedDOMEvent,
-  cumulativeElementOffset,
-  keyLikeEvents
-} from './Event.js';
+import { Event, KeyEvent, SimulatedDOMEvent, keyLikeEvents } from './Event.js';
+import { cumulativeOffset } from "../rendering/dom-helper.js";
 
 // note: keydown, keyup, cut, copy, paste, compositionstart, compositionend,
 // compositionupdate, input are listened to by the text input helper
@@ -576,8 +572,8 @@ export default class EventDispatcher {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // position
       if (spec.position) {
-        var {offsetLeft, offsetTop} = cumulativeElementOffset(doc.getElementById(this.world.id));
-        spec.position = spec.position.addXY(offsetLeft, offsetTop);
+        var {left, top} = cumulativeOffset(doc.getElementById(this.world.id));
+        spec.position = spec.position.addXY(left, top);
       }
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
