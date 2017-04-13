@@ -189,7 +189,7 @@ class FieldPicker extends Morph {
                 borderColor: Color.white,
                 reactsToPointer: false,
                 borderWidth: 3,
-                center: pt(9,9),
+                center: pt(8,8),
                 extent: pt(12,12)
               }]
             }];

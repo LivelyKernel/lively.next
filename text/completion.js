@@ -99,7 +99,7 @@ export class CompletionController {
     return globalCursorBounds.topLeft()
       .addXY(m.padding.left()-2, -m.padding.top())
       .addXY(-m.scroll.x, -m.scroll.y)
-      .addPt(pt(m.borderWidth-2, m.borderWidth-2));
+      .addPt(pt(m.borderWidth-2, m.borderWidth));
   }
 
   async completionListSpec() {
@@ -144,7 +144,7 @@ export class CompletionController {
       historyId: "lively.morphic-text completion",
       fill: Color.transparent,
       border: {width: 0, color: Color.gray},
-      inputPadding: Rectangle.inset(0, 4),
+      inputPadding: Rectangle.inset(0, 2),
       filterFunction: (parsedInput, item) => {
         var tokens = parsedInput.lowercasedTokens;
         if (tokens.every(token => item.string.toLowerCase().includes(token))) return true;
@@ -178,6 +178,8 @@ export class CompletionController {
         menu = new FilterableList(spec),
         input = menu.inputMorph,
         prefix = spec.input;
+    menu.get('padding').height = 0;
+    menu.relayout();
     connect(menu, "accepted", this, "insertCompletion", {
       updater: function($upd) {
         let textToInsert,
@@ -195,6 +197,7 @@ export class CompletionController {
     connect(menu, "accepted", menu, "remove");
     connect(menu, "canceled", menu, "remove");
     connect(menu, "remove", this.textMorph, "focus");
+    connect(input, 'onBlur', menu, 'remove')
 
     var world = this.textMorph.world();
     world.addMorph(menu);

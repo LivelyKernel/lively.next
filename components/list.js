@@ -635,7 +635,7 @@ export class FilterableList extends Morph {
       },
 
       paddingMorph: {
-        defived: true, readOnly: true, after: ['submorphs'],
+        derived: true, readOnly: true, after: ['submorphs'],
         get() { return this.getSubmorphNamed('padding') }
       },
 
