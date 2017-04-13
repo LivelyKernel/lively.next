@@ -176,20 +176,27 @@ var exceptions = [
 function getExceptions() { return exceptions; }
 function setExceptions(v) { return exceptions = v; }
 
-export function prepareCodeForCustomCompile(System, source, moduleId, env, module, debug) {
+export function prepareCodeForCustomCompile(System, source, moduleId, module, debug) {
   source = String(source);
 
-  var embedOriginalCode = true,
-      sourceAccessorName = embedOriginalCode ? env.sourceAccessorName : undefined;
+  let {
+        sourceAccessorName,
+        recorder,
+        recorderName,
+        dontTransform,
+        varDefinitionCallbackName,
+      } = module,
+      embedOriginalCode = true;
+  sourceAccessorName = embedOriginalCode ? sourceAccessorName : undefined;
 
-  var options = {
-        topLevelVarRecorder: env.recorder,
-        varRecorderName: env.recorderName,
-        sourceAccessorName: env.sourceAccessorName,
-        dontTransform: env.dontTransform,
+  let options = {
+        topLevelVarRecorder: recorder,
+        varRecorderName: recorderName,
+        sourceAccessorName,
+        dontTransform,
         recordGlobals: true,
         keepPreviouslyDeclaredValues: true,
-        declarationWrapperName: module.varDefinitionCallbackName,
+        declarationWrapperName: varDefinitionCallbackName,
         evalId: module.nextEvalId(),
         currentModuleAccessor: funcCall(
                                 member(
@@ -198,9 +205,8 @@ export function prepareCodeForCustomCompile(System, source, moduleId, env, modul
                                     literal("@lively-env")),
                                   "moduleEnv"),
                                 literal(moduleId))
-
       },
-      isGlobal = env.recorderName === "System.global",
+      isGlobal = recorderName === "System.global",
       header = (debug ? `console.log("[lively.modules] executing module ${moduleId}");\n` : ""),
       footer = "";
 
@@ -209,7 +215,7 @@ export function prepareCodeForCustomCompile(System, source, moduleId, env, modul
     delete options.declarationWrapperName;
   } else {
     header += `System.get("@lively-env").evaluationStart("${moduleId}");\n`
-            + `var ${env.recorderName} = System.get("@lively-env").moduleEnv("${moduleId}").recorder;\n`
+            + `var ${recorderName} = System.get("@lively-env").moduleEnv("${moduleId}").recorder;\n`
             + (embedOriginalCode ? `\nvar ${sourceAccessorName} = ${JSON.stringify(source)};\n` : "");
     footer += `\nSystem.get("@lively-env").evaluationEnd("${moduleId}");`
   }
@@ -224,13 +230,13 @@ export function prepareCodeForCustomCompile(System, source, moduleId, env, modul
   }
 }
 
-function prepareTranslatedCodeForSetterCapture(System, source, moduleId, env, module, options, debug) {
+function prepareTranslatedCodeForSetterCapture(System, source, moduleId, module, options, debug) {
   source = String(source);
   var tfmOptions = {
         ...options,
-        topLevelVarRecorder: env.recorder,
-        varRecorderName: env.recorderName,
-        dontTransform: env.dontTransform,
+        topLevelVarRecorder: module.recorder,
+        varRecorderName: module.recorderName,
+        dontTransform: module.dontTransform,
         recordGlobals: true,
         declarationWrapperName: module.varDefinitionCallbackName,
         currentModuleAccessor: funcCall(
@@ -241,7 +247,7 @@ function prepareTranslatedCodeForSetterCapture(System, source, moduleId, env, mo
                                   "moduleEnv"),
                                 literal(moduleId))
       },
-      isGlobal = env.recorderName === "System.global";
+      isGlobal = module.recorderName === "System.global";
 
   try {
     var rewrittenSource = evalCodeTransformOfSystemRegisterSetters(source, tfmOptions);
@@ -294,9 +300,12 @@ async function customTranslate(proceed, load) {
   //   source: "..."
   // }
 
-  var System = this, debug = System.debug;
+  var System = this, debug = System.debug,
+      meta = load.metadata,
+      ignored = (meta && meta.hasOwnProperty("instrument") && !meta.instrument)
+              || exceptions.some(exc => exc(load.name));
 
-  if (exceptions.some(exc => exc(load.name))) {
+  if (ignored) {
     debug && console.log("[lively.modules customTranslate ignoring] %s", load.name);
     return proceed(load);
   }
@@ -308,9 +317,8 @@ async function customTranslate(proceed, load) {
 
   var start = Date.now();
 
-  var format = detectModuleFormat(load.source, load.metadata),
+  var format = detectModuleFormat(load.source, meta),
       mod = module(System, load.name),
-      env = mod.env(),
       instrumented = false,
       isEsm = format === "esm",
       isCjs = format === "cjs",
@@ -330,8 +338,8 @@ async function customTranslate(proceed, load) {
           stored = await cache.fetchStoredModuleSource(load.name);
       if (stored && stored.hash == hashForCache && stored.timestamp >= BrowserModuleTranslationCache.earliestDate) {
         if (stored.source) {
-          load.metadata.format = "register";
-          load.metadata.deps = []; // the real deps will be populated when the
+          meta.format = "register";
+          meta.deps = []; // the real deps will be populated when the
                                    // system register code is run, still need
                                    // to define it here to avoid an
                                    // undefined entry later!
@@ -346,8 +354,8 @@ async function customTranslate(proceed, load) {
           stored = await cache.fetchStoredModuleSource(load.name);
       if (stored && stored.hash == hashForCache && stored.timestamp >= NodeModuleTranslationCache.earliestDate) {
         if (stored.source) {
-          load.metadata.format = "register";
-          load.metadata.deps = []; // the real deps will be populated when the
+          meta.format = "register";
+          meta.deps = []; // the real deps will be populated when the
                                    // system register code is run, still need
                                    // to define it here to avoid an
                                    // undefined entry later!
@@ -366,7 +374,7 @@ async function customTranslate(proceed, load) {
 
   if (isEsm) {
     load.metadata.format = "esm";
-    var {options, source} = prepareCodeForCustomCompile(System, load.source, load.name, env, mod, debug);
+    var {options, source} = prepareCodeForCustomCompile(System, load.source, load.name, mod, debug);
     load.source = source;
     load.metadata["lively.modules instrumented"] = true;
     instrumented = true;
@@ -374,10 +382,10 @@ async function customTranslate(proceed, load) {
     // debug && console.log(load.source)
 
   } else if (load.metadata.format === "global") {
-    env.recorderName = "System.global";
-    env.recorder = System.global;
+    mod.recorderName = "System.global";
+    mod.recorder = System.global;
     load.metadata.format = "global";
-    var {options, source} = prepareCodeForCustomCompile(System, load.source, load.name, env, mod, debug);
+    var {options, source} = prepareCodeForCustomCompile(System, load.source, load.name, mod, debug);
     load.source = source
     load.metadata["lively.modules instrumented"] = true;
     instrumented = true;
@@ -402,7 +410,7 @@ async function customTranslate(proceed, load) {
   return proceed(load).then(async translated => {
     if (translated.indexOf("System.register(") === 0) {
       debug && console.log("[lively.modules customTranslate] Installing System.register setter captures for %s", load.name);
-      translated = prepareTranslatedCodeForSetterCapture(System, translated, load.name, env, mod, options, debug);
+      translated = prepareTranslatedCodeForSetterCapture(System, translated, load.name, mod, options, debug);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
