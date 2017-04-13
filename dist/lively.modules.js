@@ -1,5 +1,5 @@
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -658,9 +658,9 @@
   typeof self === "object" ? self : this
 );
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.lang/dist/lively.lang.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
 
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -2455,6 +2455,20 @@ function uniqBy(array, comparator, context) {
   return result;
 }
 
+function uniqByKey(array, key) {
+  // like `arr.uniq` but with equality based on item[key]
+  var seen = {},
+      result = [];
+  for (var i = 0; i < array.length; i++) {
+    var item = array[i];
+    if (!seen[item[key]]) {
+      seen[item[key]] = true;
+      result.push(item);
+    }
+  }
+  return result;
+}
+
 function compact(array) {
   // removes falsy values
   // Example:
@@ -3442,6 +3456,7 @@ var arr = Object.freeze({
 	withoutAll: withoutAll,
 	uniq: uniq,
 	uniqBy: uniqBy,
+	uniqByKey: uniqByKey,
 	compact: compact,
 	mutableCompact: mutableCompact,
 	forEach: forEach$1,
@@ -3766,8 +3781,11 @@ function inspect(object, options, depth) {
   depth = depth || 0;
 
   if (options.customPrinter) {
-    var ignoreSignal = options._ignoreSignal || (options._ignoreSignal = {});
-    var customInspected = options.customPrinter(object, ignoreSignal);
+    var ignoreSignal = options._ignoreSignal || (options._ignoreSignal = {}),
+        continueInspectFn = function continueInspectFn(obj) {
+      return inspect(obj, options, depth + 1);
+    },
+        customInspected = options.customPrinter(object, ignoreSignal, continueInspectFn);
     if (customInspected !== ignoreSignal) return customInspected;
   }
   if (!object) return print$1(object);
@@ -8289,9 +8307,9 @@ exports.uninstallGlobals = uninstallGlobals;
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.lang;
 })();
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.lang/dist/lively.lang.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.notifications/dist/lively.notifications.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -8449,9 +8467,9 @@ exports.stopLogging = stopLogging;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /home/lively/lively-web.org/lively.next/lively.notifications/dist/lively.notifications.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.ast/dist/lively.ast.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
 
 (function() {
   var module = undefined, require = undefined;
@@ -23384,9 +23402,9 @@ exports.fuzzyParse = fuzzyParse;
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.ast;
 })();
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.ast/dist/lively.ast.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.classes/dist/lively.classes.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -24405,9 +24423,9 @@ exports.classToFunctionTransform = classToFunctionTransform;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /home/lively/lively-web.org/lively.next/lively.classes/dist/lively.classes.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.source-transform/dist/lively.source-transform.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -25357,9 +25375,9 @@ exports.stringifyFunctionWithoutToplevelRecorder = stringifyFunctionWithoutTople
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.sourceTransform;
 })();
-// INLINED END /home/lively/lively-web.org/lively.next/lively.source-transform/dist/lively.source-transform.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.vm/dist/lively.vm.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -27218,9 +27236,9 @@ exports.evalCodeTransformOfSystemRegisterSetters = evalCodeTransformOfSystemRegi
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
 })();
-// INLINED END /home/lively/lively-web.org/lively.next/lively.vm/dist/lively.vm.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.resources/dist/lively.resources_no-deps.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -29534,9 +29552,9 @@ exports.Resource = Resource$$1;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.resources;
 })();
-// INLINED END /home/lively/lively-web.org/lively.next/lively.resources/dist/lively.resources_no-deps.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.storage/dist/lively.storage_with-pouch.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.storage/dist/lively.storage_with-pouch.js
 
 (function() {
 
@@ -64978,9 +64996,9 @@ exports.Database = Database;
 
 })();
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.storage/dist/lively.storage_with-pouch.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.storage/dist/lively.storage_with-pouch.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.modules/systemjs-init.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -65193,12 +65211,12 @@ exports.Database = Database;
 
 })();
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.modules/systemjs-init.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
-// INLINED /home/lively/lively-web.org/lively.next/lively.modules/node_modules/semver/semver.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -66403,7 +66421,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.modules/node_modules/semver/semver.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
 semver = exports;
 })({}, {});
 
@@ -66705,7 +66723,7 @@ var customTranslate = function () {
   var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(proceed, load) {
     var _this6 = this;
 
-    var System, debug, start, format, mod, env, instrumented, isEsm, isCjs, isGlobal, useCache, indexdb, hashForCache, cache, stored, options, _prepareCodeForCustom, source, _prepareCodeForCustom2;
+    var System, debug, meta, ignored, start, format, mod, instrumented, isEsm, isCjs, isGlobal, useCache, indexdb, hashForCache, cache, stored, options, _prepareCodeForCustom, source, _prepareCodeForCustom2;
 
     return regeneratorRuntime.wrap(function _callee9$(_context9) {
       while (1) {
@@ -66719,11 +66737,11 @@ var customTranslate = function () {
             //   source: "..."
             // }
 
-            System = this, debug = System.debug;
-
-            if (!exceptions.some(function (exc) {
+            System = this, debug = System.debug, meta = load.metadata, ignored = meta && meta.hasOwnProperty("instrument") && !meta.instrument || exceptions.some(function (exc) {
               return exc(load.name);
-            })) {
+            });
+
+            if (!ignored) {
               _context9.next = 4;
               break;
             }
@@ -66742,7 +66760,7 @@ var customTranslate = function () {
 
           case 7:
             start = Date.now();
-            format = detectModuleFormat(load.source, load.metadata), mod = module$2(System, load.name), env = mod.env(), instrumented = false, isEsm = format === "esm", isCjs = format === "cjs", isGlobal = format === "global";
+            format = detectModuleFormat(load.source, meta), mod = module$2(System, load.name), instrumented = false, isEsm = format === "esm", isCjs = format === "cjs", isGlobal = format === "global";
 
 
             mod.setSource(load.source);
@@ -66774,8 +66792,8 @@ var customTranslate = function () {
               break;
             }
 
-            load.metadata.format = "register";
-            load.metadata.deps = []; // the real deps will be populated when the
+            meta.format = "register";
+            meta.deps = []; // the real deps will be populated when the
             // system register code is run, still need
             // to define it here to avoid an
             // undefined entry later!
@@ -66810,8 +66828,8 @@ var customTranslate = function () {
               break;
             }
 
-            load.metadata.format = "register";
-            load.metadata.deps = []; // the real deps will be populated when the
+            meta.format = "register";
+            meta.deps = []; // the real deps will be populated when the
             // system register code is run, still need
             // to define it here to avoid an
             // undefined entry later!
@@ -66837,7 +66855,7 @@ var customTranslate = function () {
 
             if (isEsm) {
               load.metadata.format = "esm";
-              _prepareCodeForCustom = prepareCodeForCustomCompile(System, load.source, load.name, env, mod, debug), options = _prepareCodeForCustom.options, source = _prepareCodeForCustom.source;
+              _prepareCodeForCustom = prepareCodeForCustomCompile(System, load.source, load.name, mod, debug), options = _prepareCodeForCustom.options, source = _prepareCodeForCustom.source;
 
               load.source = source;
               load.metadata["lively.modules instrumented"] = true;
@@ -66845,10 +66863,10 @@ var customTranslate = function () {
               debug && console.log("[lively.modules] loaded %s as es6 module", load.name);
               // debug && console.log(load.source)
             } else if (load.metadata.format === "global") {
-              env.recorderName = "System.global";
-              env.recorder = System.global;
+              mod.recorderName = "System.global";
+              mod.recorder = System.global;
               load.metadata.format = "global";
-              _prepareCodeForCustom2 = prepareCodeForCustomCompile(System, load.source, load.name, env, mod, debug), options = _prepareCodeForCustom2.options, source = _prepareCodeForCustom2.source;
+              _prepareCodeForCustom2 = prepareCodeForCustomCompile(System, load.source, load.name, mod, debug), options = _prepareCodeForCustom2.options, source = _prepareCodeForCustom2.source;
 
               load.source = source;
               load.metadata["lively.modules instrumented"] = true;
@@ -66880,7 +66898,7 @@ var customTranslate = function () {
                       case 0:
                         if (translated.indexOf("System.register(") === 0) {
                           debug && console.log("[lively.modules customTranslate] Installing System.register setter captures for %s", load.name);
-                          translated = prepareTranslatedCodeForSetterCapture(System, translated, load.name, env, mod, options, debug);
+                          translated = prepareTranslatedCodeForSetterCapture(System, translated, load.name, mod, options, debug);
                         }
 
                         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -67498,25 +67516,30 @@ function (id) {
   return id.endsWith("babel-core/browser.js") || id.endsWith("system.src.js") || id.includes("systemjs-plugin-babel");
 }];
 
-function prepareCodeForCustomCompile(System, source, moduleId, env, module, debug) {
+function prepareCodeForCustomCompile(System, source, moduleId, module, debug) {
   source = String(source);
 
-  var embedOriginalCode = true,
-      sourceAccessorName = embedOriginalCode ? env.sourceAccessorName : undefined;
+  var sourceAccessorName = module.sourceAccessorName,
+      recorder = module.recorder,
+      recorderName = module.recorderName,
+      dontTransform = module.dontTransform,
+      varDefinitionCallbackName = module.varDefinitionCallbackName,
+      embedOriginalCode = true;
+
+  sourceAccessorName = embedOriginalCode ? sourceAccessorName : undefined;
 
   var options = {
-    topLevelVarRecorder: env.recorder,
-    varRecorderName: env.recorderName,
-    sourceAccessorName: env.sourceAccessorName,
-    dontTransform: env.dontTransform,
+    topLevelVarRecorder: recorder,
+    varRecorderName: recorderName,
+    sourceAccessorName: sourceAccessorName,
+    dontTransform: dontTransform,
     recordGlobals: true,
     keepPreviouslyDeclaredValues: true,
-    declarationWrapperName: module.varDefinitionCallbackName,
+    declarationWrapperName: varDefinitionCallbackName,
     evalId: module.nextEvalId(),
     currentModuleAccessor: funcCall(member(funcCall(member(member("__lvVarRecorder", "System"), "get"), literal("@lively-env")), "moduleEnv"), literal(moduleId))
-
   },
-      isGlobal = env.recorderName === "System.global",
+      isGlobal = recorderName === "System.global",
       header = debug ? "console.log(\"[lively.modules] executing module " + moduleId + "\");\n" : "",
       footer = "";
 
@@ -67524,7 +67547,7 @@ function prepareCodeForCustomCompile(System, source, moduleId, env, module, debu
     // FIXME how to update exports in that case?
     delete options.declarationWrapperName;
   } else {
-    header += "System.get(\"@lively-env\").evaluationStart(\"" + moduleId + "\");\n" + ("var " + env.recorderName + " = System.get(\"@lively-env\").moduleEnv(\"" + moduleId + "\").recorder;\n") + (embedOriginalCode ? "\nvar " + sourceAccessorName + " = " + JSON.stringify(source) + ";\n" : "");
+    header += "System.get(\"@lively-env\").evaluationStart(\"" + moduleId + "\");\n" + ("var " + recorderName + " = System.get(\"@lively-env\").moduleEnv(\"" + moduleId + "\").recorder;\n") + (embedOriginalCode ? "\nvar " + sourceAccessorName + " = " + JSON.stringify(source) + ";\n" : "");
     footer += "\nSystem.get(\"@lively-env\").evaluationEnd(\"" + moduleId + "\");";
   }
 
@@ -67538,17 +67561,17 @@ function prepareCodeForCustomCompile(System, source, moduleId, env, module, debu
   }
 }
 
-function prepareTranslatedCodeForSetterCapture(System, source, moduleId, env, module, options, debug) {
+function prepareTranslatedCodeForSetterCapture(System, source, moduleId, module, options, debug) {
   source = String(source);
   var tfmOptions = _extends({}, options, {
-    topLevelVarRecorder: env.recorder,
-    varRecorderName: env.recorderName,
-    dontTransform: env.dontTransform,
+    topLevelVarRecorder: module.recorder,
+    varRecorderName: module.recorderName,
+    dontTransform: module.dontTransform,
     recordGlobals: true,
     declarationWrapperName: module.varDefinitionCallbackName,
     currentModuleAccessor: funcCall(member(funcCall(member(member("__lvVarRecorder", "System"), "get"), literal("@lively-env")), "moduleEnv"), literal(moduleId))
   }),
-      isGlobal = env.recorderName === "System.global";
+      isGlobal = module.recorderName === "System.global";
 
   try {
     var rewrittenSource = lively_vm.evalCodeTransformOfSystemRegisterSetters(source, tfmOptions);
@@ -68714,7 +68737,7 @@ var Package = function () {
         }, _callee, this);
       }));
 
-      function resources(_x2, _x3) {
+      function resources(_x2) {
         return _ref.apply(this, arguments);
       }
 
@@ -68855,27 +68878,28 @@ var Package = function () {
               case 2:
                 url = this.url;
                 System = this.System;
-                _context3.t0 = System;
-                _context3.next = 7;
+                _context3.t0 = module$2;
+                _context3.t1 = System;
+                _context3.next = 8;
                 return System.normalize(url);
 
-              case 7:
-                _context3.t1 = _context3.sent;
-                mainModule = module$2(_context3.t0, _context3.t1);
-                _context3.next = 11;
+              case 8:
+                _context3.t2 = _context3.sent;
+                mainModule = (0, _context3.t0)(_context3.t1, _context3.t2);
+                _context3.next = 12;
                 return System.import(mainModule.id);
 
-              case 11:
+              case 12:
                 exported = _context3.sent;
-                _context3.next = 14;
+                _context3.next = 15;
                 return lively_lang.promise.waitFor(1000, function () {
                   return mainModule.isLoaded();
                 });
 
-              case 14:
+              case 15:
                 return _context3.abrupt("return", exported);
 
-              case 15:
+              case 16:
               case "end":
                 return _context3.stop();
             }
@@ -69029,7 +69053,7 @@ var Package = function () {
         }, _callee4, this, [[15, 32, 36, 44], [37,, 39, 43]]);
       }));
 
-      function register(_x5, _x6) {
+      function register(_x4) {
         return _ref4.apply(this, arguments);
       }
 
@@ -69098,7 +69122,7 @@ var Package = function () {
         }, _callee5, this);
       }));
 
-      function fork(_x8, _x9) {
+      function fork(_x6, _x7) {
         return _ref5.apply(this, arguments);
       }
 
@@ -69128,7 +69152,7 @@ var Package = function () {
         }, _callee6, this);
       }));
 
-      function rename(_x10) {
+      function rename(_x8) {
         return _ref6.apply(this, arguments);
       }
 
@@ -69400,7 +69424,7 @@ var Package = function () {
         }, _callee7, this, [[22, 41, 45, 53], [46,, 48, 52], [56, 68, 72, 80], [73,, 75, 79], [90, 107]]);
       }));
 
-      function changeAddress(_x11, _x12, _x13) {
+      function changeAddress(_x9) {
         return _ref7.apply(this, arguments);
       }
 
@@ -69467,7 +69491,7 @@ var Package = function () {
         }, _callee8, this);
       }));
 
-      function search(_x16, _x17) {
+      function search(_x12) {
         return _ref8.apply(this, arguments);
       }
 
@@ -70023,7 +70047,7 @@ var doesModuleExist$1 = function () {
     }, _callee, this);
   }));
 
-  return function doesModuleExist$1(_x2, _x3, _x4) {
+  return function doesModuleExist$1(_x2, _x3) {
     return _ref.apply(this, arguments);
   };
 }();
@@ -70129,14 +70153,15 @@ var ModuleInterface = function () {
                 return _context2.abrupt("return", this._ast);
 
               case 2:
-                _context2.next = 4;
+                _context2.t0 = lively_ast.parse;
+                _context2.next = 5;
                 return this.source();
 
-              case 4:
-                _context2.t0 = _context2.sent;
-                return _context2.abrupt("return", this._ast = lively_ast.parse(_context2.t0));
+              case 5:
+                _context2.t1 = _context2.sent;
+                return _context2.abrupt("return", this._ast = (0, _context2.t0)(_context2.t1));
 
-              case 6:
+              case 7:
               case "end":
                 return _context2.stop();
             }
@@ -70225,6 +70250,17 @@ var ModuleInterface = function () {
       return load ? load.metadata : null;
     }
   }, {
+    key: "addMetadata",
+    value: function addMetadata(addedMeta) {
+      var System = this.System,
+          id = this.id,
+          oldMeta = this.metadata(),
+          meta = oldMeta ? Object.assign(oldMeta, addedMeta) : addedMeta;
+
+      System.config({ meta: defineProperty({}, id, meta) });
+      return System.meta[id];
+    }
+  }, {
     key: "format",
     value: function format() {
       // assume esm by default
@@ -70235,11 +70271,9 @@ var ModuleInterface = function () {
     }
   }, {
     key: "setFormat",
-    value: function setFormat(f) {
+    value: function setFormat(format) {
       // assume esm by default
-      var meta = this.metadata();
-      if (!meta) throw new Error("No meta data");
-      return meta.format = f;
+      return this.addMetadata({ format: format });
     }
   }, {
     key: "reset",
@@ -70256,30 +70290,33 @@ var ModuleInterface = function () {
   }, {
     key: "load",
     value: function () {
-      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(opts) {
         var id, System;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
+                // opts = {format, instrument}
                 id = this.id, System = this.System;
+
+                opts && this.addMetadata(opts);
                 _context5.t0 = System.get(id);
 
                 if (_context5.t0) {
-                  _context5.next = 6;
+                  _context5.next = 7;
                   break;
                 }
 
-                _context5.next = 5;
+                _context5.next = 6;
                 return System.import(id);
 
-              case 5:
+              case 6:
                 _context5.t0 = _context5.sent;
 
-              case 6:
+              case 7:
                 return _context5.abrupt("return", _context5.t0);
 
-              case 7:
+              case 8:
               case "end":
                 return _context5.stop();
             }
@@ -70287,7 +70324,7 @@ var ModuleInterface = function () {
         }, _callee5, this);
       }));
 
-      function load() {
+      function load(_x5) {
         return _ref5.apply(this, arguments);
       }
 
@@ -70462,7 +70499,7 @@ var ModuleInterface = function () {
         }, _callee8, this);
       }));
 
-      function renameTo(_x8, _x9) {
+      function renameTo(_x8) {
         return _ref8.apply(this, arguments);
       }
 
@@ -70876,7 +70913,7 @@ var ModuleInterface = function () {
         }, _callee11, this, [[6, 10, 14, 22], [15,, 17, 21]]);
       }));
 
-      function addImports(_x13) {
+      function addImports(_x12) {
         return _ref11.apply(this, arguments);
       }
 
@@ -70930,7 +70967,7 @@ var ModuleInterface = function () {
         }, _callee12, this);
       }));
 
-      function removeImports(_x14) {
+      function removeImports(_x13) {
         return _ref12.apply(this, arguments);
       }
 
@@ -70966,7 +71003,7 @@ var ModuleInterface = function () {
         }, _callee13, this);
       }));
 
-      function _localDeclForRefAt(_x15) {
+      function _localDeclForRefAt(_x14) {
         return _ref14.apply(this, arguments);
       }
 
@@ -71031,7 +71068,7 @@ var ModuleInterface = function () {
         }, _callee14, this);
       }));
 
-      function _importForNSRefAt(_x16) {
+      function _importForNSRefAt(_x15) {
         return _ref15.apply(this, arguments);
       }
 
@@ -71093,7 +71130,7 @@ var ModuleInterface = function () {
         }, _callee15, this);
       }));
 
-      function _resolveImportedDecl(_x17) {
+      function _resolveImportedDecl(_x16) {
         return _ref17.apply(this, arguments);
       }
 
@@ -71153,7 +71190,7 @@ var ModuleInterface = function () {
         }, _callee16, this);
       }));
 
-      function bindingPathForExport(_x18) {
+      function bindingPathForExport(_x17) {
         return _ref18.apply(this, arguments);
       }
 
@@ -71222,7 +71259,7 @@ var ModuleInterface = function () {
         }, _callee17, this);
       }));
 
-      function bindingPathForRefAt(_x19) {
+      function bindingPathForRefAt(_x18) {
         return _ref19.apply(this, arguments);
       }
 
@@ -71252,7 +71289,7 @@ var ModuleInterface = function () {
         }, _callee18, this);
       }));
 
-      function definitionForRefAt(_x20) {
+      function definitionForRefAt(_x19) {
         return _ref22.apply(this, arguments);
       }
 
@@ -71406,7 +71443,7 @@ var ModuleInterface = function () {
         }, _callee19, this);
       }));
 
-      function search(_x21, _x22) {
+      function search(_x20, _x21) {
         return _ref23.apply(this, arguments);
       }
 
@@ -72155,7 +72192,7 @@ var buildPackageMap = function () {
     }, _callee, this, [[3, 15], [18, 24], [30, 43, 47, 55], [48,, 50, 54]]);
   }));
 
-  return function buildPackageMap(_x, _x2, _x3, _x4) {
+  return function buildPackageMap(_x) {
     return _ref.apply(this, arguments);
   };
 }();
