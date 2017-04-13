@@ -641,6 +641,7 @@ export class Text extends Morph {
   }
 
   textBounds() { return this.textLayout.textBounds(this); }
+  defaultCharExtent() { return this.textLayout.defaultCharExtent(this); }
 
   get scrollExtent() {
     // rms: See: morph>>scrollExtent

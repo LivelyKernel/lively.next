@@ -113,6 +113,12 @@ export default class TextLayout {
     morph.viewState._textLayoutStale = false;
   }
 
+  defaultCharExtent(morph) {
+    let {textRenderer, fontMetric, defaultTextStyle} = morph,
+        directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph);
+    return fontMetric.defaultCharExtent({defaultTextStyle, width: 1000}, directRenderTextLayerFn);
+  }
+
   textBounds(morph) {
     let {
       document: doc,
