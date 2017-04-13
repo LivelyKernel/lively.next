@@ -136,14 +136,54 @@ await lively.vm.runEval("y = 10", {targetModule: "test.js"});
       </div>
       </p>
 
+      <h2>dynamic code completions</h2>
+<p>
+To inspect objects from an editor or repl and get auto completions of properties and methods you can use <code>lively.vm.completions.getCompletions</code>.  The result of the getCompletions call is a nested list, providing the prototype hierarchy of the completion target and their respective attributes/methods.
+<div class="example">
+var someObject = {
+  aProperty: 23,
+  anotherProperty: "hello world",
+  xProperty: 99
+}, bindings = {topLevelVarRecorder: {someObject}}
+
+let result = await lively.vm.completions.getCompletions(
+  source => lively.vm.syncEval(source, bindings),
+  "someObject.a");
+  
+=> {
+  code: "someObject",
+  startLetters: "a",
+  completions: [
+    ["[object Object]",
+      ["aProperty",
+       "anotherProperty",
+       "xProperty"]
+    ],
+    ["Object",
+      ["__defineGetter__()",
+       "__defineSetter__()",
+       "__lookupGetter__()",
+       "__lookupSetter__()",
+       "constructor()",
+       "hasOwnProperty()",
+       "isPrototypeOf()",
+       "propertyIsEnumerable()",
+       "toLocaleString()",
+       "toString()",...]
+    ]],
+}
+</div>
+</p>
+
+
       <h2>notifications</h2>
 
-There are two types of system-wide notifications:
+<p>There are two types of system-wide notifications:</p>
 <code>
 {type: "lively.vm/doitrequest", code, targetModule, waitForPromise}
 {type: "lively.vm/doitresult", code, targetModule, waitForPromise, result}
 </code>
-These notifications are all emitted with lively.notifications.
+<p>These notifications are all emitted with lively.notifications.</p>
 
 
       <h2>License</h2>
