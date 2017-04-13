@@ -232,8 +232,9 @@ function inspect(object, options, depth) {
   depth = depth || 0;
 
   if (options.customPrinter) {
-    var ignoreSignal = options._ignoreSignal || (options._ignoreSignal = {});
-    var customInspected = options.customPrinter(object, ignoreSignal);
+    let ignoreSignal = options._ignoreSignal || (options._ignoreSignal = {}),
+        continueInspectFn = (obj) => inspect(obj, options, depth+1),
+        customInspected = options.customPrinter(object, ignoreSignal, continueInspectFn);
     if (customInspected !== ignoreSignal) return customInspected
   }
   if (!object) return print(object);

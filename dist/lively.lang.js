@@ -3103,8 +3103,11 @@ function inspect(object, options, depth) {
   depth = depth || 0;
 
   if (options.customPrinter) {
-    var ignoreSignal = options._ignoreSignal || (options._ignoreSignal = {});
-    var customInspected = options.customPrinter(object, ignoreSignal);
+    var ignoreSignal = options._ignoreSignal || (options._ignoreSignal = {}),
+        continueInspectFn = function continueInspectFn(obj) {
+      return inspect(obj, options, depth + 1);
+    },
+        customInspected = options.customPrinter(object, ignoreSignal, continueInspectFn);
     if (customInspected !== ignoreSignal) return customInspected;
   }
   if (!object) return print$1(object);
