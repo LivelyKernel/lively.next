@@ -876,8 +876,6 @@ export class Text extends Morph {
     var {document: doc, textLayout} = this,
         textAndAttributes = this.textAndAttributesInRange(range);
 
-    doc.remove(range);
-
     this.addMethodCallChangeDoing({
       target: this,
       selector: "deleteText",
@@ -888,6 +886,7 @@ export class Text extends Morph {
         args: [textAndAttributes, range.start, false],
       }
     }, () => {
+      doc.remove(range, this.debug && this.debugHelper());
       this.invalidateTextLayout();
       this.textLayout.resetLineCharBoundsCacheOfRow(this, range.start.row);
       this.textLayout.resetLineCharBoundsCacheOfRow(this, range.end.row);
@@ -1842,8 +1841,63 @@ export class Text extends Morph {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // debugging
+  
+  debugHelper() {
+    if (this._debugHelper) return this._debugHelper;
+    return this._debugHelper = {
+      logged: [],
+      reset() {
+        this.logged = [];
+      },
+      log(...args) {
+        console.log(...args);
+        this.logged.push({args});
+      },
+      dump(dump) {
+        console.log(dump.split("\n").map(ea => ea.slice(0, 100)).join("\n"));
+        this.logged.push({dump});
+      },
+      steps() {
+        let logged = this.logged.slice(), steps = [];
+        while (logged.length) {
+          let actions = arr.takeWhile(logged, ea => !ea.dump);
+          logged = logged.slice(actions.length);
+          let {dump} = logged.shift() || {};
+          steps.push({actions, dump});
+        }
+        return steps;
+      },
+      printToConsole() {
+        console.clear();
+        this.steps().forEach(({actions}, i) => {
+          console.group(`step ${i+1}`);
+          actions.forEach(({args}) => console.log(...args));
+          console.groupEnd(`step ${i+1}`);
+        });
+      },
+      async openDiffs() {
+        let jsDiff = await System.import("https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js"),
+            {default: DiffEditorPlugin} = await System.import("lively.morphic/ide/diff/editor-plugin.js"),
+            steps = this.steps(),
+            diffs = steps.slice(1).map((ea, i) =>
+              jsDiff.createPatch(String(i), steps[i].dump, ea.dump));
+              steps[0].dump
+        return $world.execCommand("open text window", {
+          title: "text debug dumps",
+          fontFamily: "monospace",
+          plugins: [(new DiffEditorPlugin())],
+          content: diffs.join("")
+        });
+      }
+    }
+  }
+
   consistencyCheck() {
-    try { this.document.consistencyCheck(); } catch(err) {
+    // don't fix in debug mode
+    if (this.debug)
+      return this.document.consistencyCheck();
+
+    try { return this.document.consistencyCheck(); } catch(err) {
       // Keep doc around for debugging
       let brokenDocument = this.document
       if (!this.brokenDocument) this.brokenDocument = brokenDocument;
