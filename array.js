@@ -189,6 +189,19 @@ function uniqBy(array, comparator, context) {
   return result;
 }
 
+function uniqByKey(array, key) {
+  // like `arr.uniq` but with equality based on item[key]
+  let seen = {}, result = [];
+  for (var i = 0; i < array.length; i++) {
+    let item = array[i];
+    if (!seen[item[key]]) {
+      seen[item[key]] = true;
+      result.push(item);
+    }
+  }
+  return result;
+}
+
 function compact(array) {
   // removes falsy values
   // Example:
@@ -1086,6 +1099,7 @@ export {
   withoutAll,
   uniq,
   uniqBy,
+  uniqByKey,
   compact,
   mutableCompact,
   forEach,
