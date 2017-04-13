@@ -367,6 +367,7 @@ export default class Inspector extends Morph {
     this.state = {targetObject: undefined, updateInProgress: false};
     this.targetObject = targetObject || null;
     this.refreshProperties = () => {
+      if (!this.targetObject || !this.targetObject.isMorph) return;
       let change = last(this.targetObject.env.changeManager.changesFor(this.targetObject));
       if (change == this.lastChange) return;
       this.lastChange = change;
