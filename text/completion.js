@@ -145,6 +145,7 @@ export class CompletionController {
       fill: Color.transparent,
       border: {width: 0, color: Color.gray},
       inputPadding: Rectangle.inset(0, 2),
+
       filterFunction: (parsedInput, item) => {
         var tokens = parsedInput.lowercasedTokens;
         if (tokens.every(token => item.string.toLowerCase().includes(token))) return true;
@@ -177,9 +178,9 @@ export class CompletionController {
     let spec = await this.completionListSpec(),
         menu = new FilterableList(spec),
         input = menu.inputMorph,
+        list = menu.listMorph,
         prefix = spec.input;
-    menu.get('padding').height = 0;
-    menu.relayout();
+
     connect(menu, "accepted", this, "insertCompletion", {
       updater: function($upd) {
         let textToInsert,
@@ -202,17 +203,23 @@ export class CompletionController {
     var world = this.textMorph.world();
     world.addMorph(menu);
 
-    menu.selectedIndex = 0;
-    if (prefix.length) {
-      menu.inputMorph.gotoDocumentEnd();
-      menu.moveBy(pt(-menu.inputMorph.textBounds().width, 0));
-    }
-    
-    menu.listMorph.dropShadow = true;
-    menu.listMorph.fill = Color.white.withA(.85);
+    list.dropShadow = true;
+    list.fill = Color.white.withA(.85);
+    list.addStyleClass("hiddenScrollbar");
+
+    input.height = list.itemHeight
+    input.fixedHeight = true;
     input.fill = Color.transparent;
     input.defaultTextStyle = {backgroundColor: this.textMorph.fill};
     input.focus();
+
+    menu.get('padding').height = 0;
+    menu.relayout();
+    menu.selectedIndex = 0;
+    if (prefix.length) {
+      input.gotoDocumentEnd();
+      menu.moveBy(pt(-input.textBounds().width, 0));
+    }
   }
 
   insertCompletion(completion, prefix, customInsertionFn) {

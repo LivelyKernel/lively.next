@@ -49,13 +49,12 @@ export class Label extends Morph {
 
       textAndAttributes: {
         get() {
-      				var val = this.getProperty("textAndAttributes");
+          var val = this.getProperty("textAndAttributes");
           if (!val || val.length < 1) val = ["", null];
           return val;
         },
 
         set(value) {
-						if (Array.isArray(value) && value.length === 1) debugger;
           if (!Array.isArray(value)) value = [String(value), {}];
           if (value.length === 0) value = ["", {}];
           this._cachedTextBounds = null;
@@ -124,6 +123,7 @@ export class Label extends Morph {
         defaultValue: Rectangle.inset(0),
         initialize(value) { this.padding = value; /*for num -> rect conversion*/},
         set(value) {
+          if (!value) value = Rectangle.inset(0);
           this._cachedTextBounds = null;
           this.setProperty("padding", typeof value === "number" ? Rectangle.inset(value) : value);
           if (this.autofit) this._needsFit = true;
@@ -351,7 +351,9 @@ export class Label extends Morph {
           paddingRight: padding.right() + "px",
           paddingTop: padding.top() + "px",
           paddingBottom: padding.bottom() + "px",
-          cursor: this.nativeCursor
+          cursor: this.nativeCursor,
+          "white-space": "pre",
+          "word-break": "keep-all"
         },
         attrs = defaultAttributes(this, renderer);
 

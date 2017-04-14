@@ -21,6 +21,7 @@ class ListItemMorph extends Label {
 
   static get properties() {
     return {
+      clipMode:              {defaultValue: "hidden"},
       autofit:               {defaultValue: false},
       fill:                  {defaultValue: null},
       itemIndex:             {defaultValue: undefined},
