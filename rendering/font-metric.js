@@ -369,7 +369,7 @@ class DOMTextMeasure {
           width, height
         };
       }      
-      if (!this.debug) 
+      // if (!this.debug) 
         for (let i = 0; i < lineNodes.length; i++)
           textNode.removeChild(lineNodes[i]);
       return results;
