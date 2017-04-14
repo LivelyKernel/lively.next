@@ -31,18 +31,39 @@ class ListItemMorph extends Label {
     }
   }
 
-  displayItem(item, itemIndex, goalWidth, itemHeight, pos, isSelected = false) {
+  displayItem(item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, style) {
+    let label = item.label || item.string || "no item.string";
 
-    var label = item.label || item.string || "no item.string";
-    if (item.annotation) this.valueAndAnnotation = {value: label, annotation: item.annotation}
+    if (style) {
+      let {
+        fontFamily,
+        selectionColor,
+        selectionFontColor,
+        nonSelectionFontColor,
+        fontSize,
+        padding
+      } = style;
+      if (selectionFontColor && this.selectionFontColor !== selectionFontColor)          this.selectionFontColor = selectionFontColor;
+      if (nonSelectionFontColor && this.nonSelectionFontColor !== nonSelectionFontColor) this.nonSelectionFontColor = nonSelectionFontColor;
+      if (selectionColor && this.selectionColor !== selectionColor)                      this.selectionColor = selectionColor;
+      if (fontSize && this.fontSize !== fontSize)                                        this.fontSize = fontSize;
+      if (fontFamily && this.fontFamily !== fontFamily)                                  this.fontFamily = fontFamily;
+      if (padding && !this.padding.equals(padding))                                      this.padding = padding;
+    }
+    if (item.annotation) this.valueAndAnnotation = {value: label, annotation: item.annotation};
     else if (typeof label === "string") this.textString = label
-    else this.value = label
+    else this.value = label;
 
     this.tooltip = this.tooltip || this.textString;
     this.itemIndex = itemIndex;
     this.position = pos;
-    // if its wider, its wider...
-    this.extent = pt(Math.max(goalWidth, this.textBounds().width), itemHeight);
+
+    { // if its wider, its wider...
+      // this is more correct but slower:
+      // this.extent = pt(Math.max(goalWidth, this.textBounds().width), itemHeight);
+      // this is faster:
+      this.extent = pt(goalWidth, itemHeight);
+    }
     this.fill = isSelected ? this.selectionColor : null;
     this.fontColor = isSelected ? this.selectionFontColor : this.nonSelectionFontColor;
   }
@@ -489,11 +510,12 @@ export class List extends Morph {
             padding, itemPadding, selectionColor,
             selectionFontColor, nonSelectionFontColor
           } = this,
+          additionalSpace = 2*height,
           padding = padding || Rectangle.inset(0),
           padTop = padding.top(), padLeft = padding.left(),
           padBottom = padding.bottom(), padRight = padding.right(),
-          firstItemIndex = Math.floor((top + padTop) / itemHeight),
-          lastItemIndex = Math.ceil((top + height + padTop) / itemHeight),
+          firstItemIndex = Math.max(0, Math.floor((top + padTop - additionalSpace) / itemHeight)),
+          lastItemIndex = Math.min(items.length, Math.ceil((top + height + padTop + additionalSpace) / itemHeight)),
           maxWidth = 0,
           goalWidth = this.width - (padLeft + padRight);
 
@@ -507,24 +529,34 @@ export class List extends Morph {
           break;
         }
 
-        var itemMorph = itemMorphs[i]
-                    || (itemMorphs[i] = listItemContainer.addMorph(
-                          new ListItemMorph({
-                               fontFamily, selectionColor, 
-                               selectionFontColor, nonSelectionFontColor,
-                               fontSize, padding: itemPadding || Rectangle.inset(0)})));
+        let style = {
+          fontFamily,
+          selectionColor,
+          selectionFontColor,
+          nonSelectionFontColor,
+          fontSize,
+          padding: itemPadding
+        }, itemMorph = itemMorphs[i];
 
-        itemMorph.displayItem(item, itemIndex,
+        if (!itemMorph)
+          itemMorph = itemMorphs[i] = listItemContainer.addMorph(new ListItemMorph(style));
+
+        itemMorph.displayItem(
+          item, itemIndex,
           goalWidth, itemHeight,
           pt(0, 0+itemHeight*itemIndex),
-          selectedIndexes.includes(itemIndex));
+          selectedIndexes.includes(itemIndex),
+          style);
+
         maxWidth = Math.max(maxWidth, itemMorph.width);
       }
 
       itemMorphs.slice(lastItemIndex-firstItemIndex).forEach(ea => ea.remove());
 
       listItemContainer.position = pt(padLeft, padTop);
-      listItemContainer.extent = pt(maxWidth, Math.max(padTop + padBottom + itemHeight*items.length, this.height));
+      listItemContainer.extent = pt(
+        maxWidth,
+        Math.max(padTop + padBottom + itemHeight * items.length, this.height));
     });
   }
 
