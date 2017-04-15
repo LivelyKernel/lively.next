@@ -536,7 +536,6 @@ class InnerTreeNode extends TreeNode {
                 thisOrParent.width = child.width
             }
           }
-          thisOrParent.stringSize = thisOrParent.stringSize - myStringSize;
           thisOrParent.height = thisOrParent.height - myHeight;
           thisOrParent.size = thisOrParent.size - mySize;
           thisOrParent.stringSize = thisOrParent.stringSize - myStringSize;
@@ -788,8 +787,11 @@ class InnerTreeNode extends TreeNode {
   }
 
   toString() {
-    let {isLeaf, size, width, height} = this;
-    return `node (${isLeaf ? "leaf, " : ""}size: ${size} ${width}x${height})`;
+    let {isLeaf, size, width, height, children} = this;
+    return `node (${isLeaf ? "leaf, " : ""}`
+         + `${isLeaf && children.length ?
+               `rows: ${children[0].row}-${arr.last(children).row} ` : ""}`
+         + `size: ${size} ${width}x${height})`;
   }
 
 }
