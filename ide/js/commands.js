@@ -333,15 +333,23 @@ export var jsIdeCommands = [
   {
     name: "[javascript] list errors and warnings",
     exec: async text => {
-      var markers = (text.markers || []).filter(({type}) => type === "js-undeclared-var" || type === "js-syntax-error");
-      if (!markers.length) { show("no warnings or errors"); return true; }
+      var markers = (text.markers || [])
+        .filter(({type}) => type === "js-undeclared-var" || type === "js-syntax-error");
+      if (!markers.length) {
+        show("no warnings or errors");
+        return true;
+      }
 
       var items = markers.map(({range, type}) => {
-                    var string = `[${type.split("-").slice(1).join(" ")}] ${text.textInRange(range)}`
-                    return {isListItem: true, string, value: range}
-                  }),
-          {selected: [sel]} = await text.world().filterableListPrompt("jump to warning or error", items);
-          // var {selected: [sel]} = await text.world().filterableListPrompt("jump to warning or error", items);
+            var string = `[${type.split("-").slice(1).join(" ")}] ${text.textInRange(range)}`;
+            return {isListItem: true, string, value: range};
+          }),
+          {selected: [sel]} = await text
+            .world()
+            .filterableListPrompt("jump to warning or error", items);
+      // var {selected: [sel]} = await text
+      //   .world()
+      //   .filterableListPrompt("jump to warning or error", items);
       if (sel) {
         text.saveMark();
         text.selection = sel;
@@ -401,20 +409,22 @@ export var jsIdeCommands = [
       }
 
       let module = lively.modules.module,
-          prettier = await module("https://prettier.github.io/prettier/prettier.min.js").load({format: "global", instrument: false}),
+          prettier = await module("https://prettier.github.io/prettier/prettier.min.js").load({
+            format: "global",
+            instrument: false
+          }),
           {findNodeByAstIndex} = await module("lively.ast/lib/acorn-extension.js").load(),
-          {parse, printAst} = await module("lively.ast").load(),
+          {parse, printAst, withMozillaAstDo} = await module("lively.ast").load(),
           {nodesAt} = await module("lively.ast/lib/query.js").load(),
           format = prettier.format;
       prettifyRange(text);
       return true;
-  
-      function prettifyRange(textMorph, range = textMorph.selection.range) {
 
+      function prettifyRange(textMorph, range = textMorph.selection.range) {
         var {start, end} = range,
             source = textMorph.textString,
             parsed = parse(source, {addAstIndex: true}),
-  
+
             // find the ast nodes that are at start / end of the range
             startI = textMorph.positionToIndex(start),
             endI = textMorph.positionToIndex(end),
@@ -427,14 +437,28 @@ export var jsIdeCommands = [
                               ea => ea.end <= endI),
             startNode = affectedNodes[0] || arr.last(nodesAt(startI, parsed)),
             endNode = arr.last(affectedNodes) || arr.last(nodesAt(endI, parsed)),
-  
-            prettySource = format(source, opts),
+
+            // prettier does throw away empty statements, make the ast indexes
+            // fit so we can find start/end node in prettified source
+            fixedStartAstIndex = startNode.astIndex,
+            fixedEndAstIndex = endNode.astIndex,
+            _ = withMozillaAstDo(parsed, {}, (next, node) => {
+              if (node.type === "EmptyStatement") {
+                if (node.astIndex < fixedStartAstIndex) {
+                  fixedStartAstIndex--; fixedEndAstIndex--; }
+                else if (node.astIndex < fixedEndAstIndex) {
+                  fixedEndAstIndex--; }
+              }
+              next();
+            }),
+
+            prettySource = fixPrettified(format(source, opts)),
             prettyParsed = parse(prettySource, {addAstIndex: true}),
-  
+
             // ...find the same ast nodes in the prettified source...
-            prettyStartNode = findNodeByAstIndex(prettyParsed, startNode.astIndex),
-            prettyEndNode = findNodeByAstIndex(prettyParsed, endNode.astIndex),
-  
+            prettyStartNode = findNodeByAstIndex(prettyParsed, fixedStartAstIndex),
+            prettyEndNode = findNodeByAstIndex(prettyParsed, fixedEndAstIndex),
+
             // ...and go from those nodes to the start and and row in the orig source
             // text and prettified source text
             origStartRow = textMorph.indexToPosition(startNode.start).row,
@@ -443,17 +467,88 @@ export var jsIdeCommands = [
             lineIndexComputer = string.lineIndexComputer(prettySource),
             prettyStartRow = lineIndexComputer(prettyStartNode.start),
             prettyEndRow = lineIndexComputer(prettyEndNode.end),
-  
+
             // Now replace the lines designated by the selection range
             replacementLines = prettyLines.slice(prettyStartRow, prettyEndRow+1),
-            replacementRange = {start: {column: 0, row: origStartRow}, end: {column: 0, row: origEndRow+1}};
-  
+            replacementRange = {
+              start: {column: 0, row: origStartRow},
+              end: {column: 0, row: origEndRow + 1}
+            };
+console.log(startNode.astIndex)
+console.log(endNode.astIndex)
+console.log(prettySource)
+
+
         textMorph.undoManager.group()
-        let newRange = textMorph.replace(replacementRange, replacementLines.join("\n") + "\n")
+        let newRange = textMorph.replace(replacementRange, replacementLines.join("\n") + "\n");
         textMorph.undoManager.group()
         textMorph.selection = newRange;
       }
-  
+
+      function fixPrettified(source) {
+        // prettify has it's issues...
+        return fixVarDeclIndentation(source);
+      }
+
+      function fixVarDeclIndentation(src, parsed) {
+        // Example:
+        // fixVarDeclIndentation("var foo = 23,\nbar;")
+        //   => "var foo = 23,\n    bar;"
+
+        if (!parsed) parsed = parse(src);
+
+        // visitor to find variable declarations
+        let ranges = string.lineRanges(src),
+            lines = src.split("\n"),
+            actions = [],
+            v = new lively.ast.BaseVisitor(),
+            superVisitVariableDeclaration = v.visitVariableDeclaration;
+
+        v.visitVariableDeclaration = (node, state, path) => {
+          if (node.declarations.length > 1) {
+            // whats the "indent" of the first var decl? offset from start of its line
+            // to ident
+
+            let firstRow = string.findLineWithIndexInLineRanges(ranges, node.start),
+                firstIndent = node.declarations[0].start - ranges[firstRow][0];
+
+            // for the following decls, compare their indent and emit delete or insert
+            // action
+            for (let i = 1; i < node.declarations.length; i++) {
+              let decl = node.declarations[i],
+                  row = string.findLineWithIndexInLineRanges(ranges, decl.start);
+              if (firstRow === row) continue;
+              let declIndent = lines[row].match(/\s*/)[0].length,
+                  offset = firstIndent - declIndent;
+              if (offset === 0) continue;
+              // var decl bodies can be multi line, fix all of them
+              let endRowOfDecl = string.findLineWithIndexInLineRanges(ranges, decl.end),
+                  actionType = offset > 0 ? "insert" : "delete",
+                  arg = offset > 0 ? " ".repeat(offset) : -offset;
+              actions.push(
+                ...arr.range(row, endRowOfDecl).map(row => [actionType, ranges[row][0], arg]));
+            }
+          }
+          return superVisitVariableDeclaration.call(v, node, state, path);
+        }
+
+        // visit!
+        v.accept(parsed, {}, []);
+
+        // patch src
+        for (let i = actions.length; i--; ) {
+          let [action, index, arg] = actions[i];
+          if (action === "insert") {
+            src = src.slice(0, index) + arg + src.slice(index);
+          } else if (action === "delete") {
+            src = src.slice(0, index) + src.slice(index + arg);
+          }
+        }
+
+        return src;
+      }
+
+
     }
   }
 
