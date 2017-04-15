@@ -190,7 +190,7 @@ export class Text extends Morph {
       },
 
       selection: {
-        after: ["document"],
+        derived: true, after: ["document", "anchors"],
         get() {
           var sel = this.getProperty("selection");
           if (sel) return sel;
@@ -358,6 +358,12 @@ export class Text extends Morph {
       // anchors – positions in text that move when text is changed
       anchors: {
         defaultValue: [],
+        set(anchors) {
+          let newAnchors = arr.withoutAll(anchors, this.anchors),
+              toRemove = arr.withoutAll(this.anchors, newAnchors);
+          toRemove.forEach(ea => this.removeAnchor(ea));
+          newAnchors.forEach(ea => this.addAnchor(ea));
+        }
       },
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -456,14 +462,20 @@ export class Text extends Morph {
 
 
   get __only_serialize__() {
-    let propNames = super.__only_serialize__;
-    return arr.withoutAll(propNames,
+    return arr.withoutAll(super.__only_serialize__,
       ["document", "textRenderer", "viewState",
        "undoManager", "markers", "textLayout"]);
   }
 
   __additionally_serialize__(snapshot, objRef, pool, addFn) {
     super.__additionally_serialize__(snapshot, objRef, pool, addFn);
+    snapshot.props.selections = {
+      key: "selections",
+      verbatim: true,
+      value: (this.selection.isMultiSelection
+        ? this.selection.ranges
+        : [this.selection.range]).map(ea => obj.select(ea, ["start", "end"]))
+    };
     snapshot.props.textAndAttributes = {
       key: "textAndAttributes",
       verbatim: true,
@@ -516,11 +528,14 @@ export class Text extends Morph {
 
   removeAnchor(anchor) {
     // anchor can be anchor object or anchor id (string)
-    let anchors = [], removed;
-    for (let a of this.anchors)
-      if (a.id == anchor || a === anchor) removed = a;
-      else anchors.push(a);
-    this.anchors = anchors;
+    let {anchors} = this, removed;
+    for (let i = anchors.length; i--; ) {
+      let a = anchors[i];
+      if (a.id == anchor || a === anchor) {
+        removed = a;
+        anchors.splice(i, 1);
+      };
+    }
     return removed;
   }
 
@@ -820,10 +835,11 @@ export class Text extends Morph {
     pos = this.cursorPosition,
     extendTextAttributes = true
   ) {
-    let textAndAttributes = typeof textOrtextAndAttributes === "string" ?
-      [textOrtextAndAttributes, null] :
-      Array.isArray(textOrtextAndAttributes) ?
-        textOrtextAndAttributes : [String(textOrtextAndAttributes || ""), null];
+    let textAndAttributes = typeof textOrtextAndAttributes === "string"
+      ? [textOrtextAndAttributes, null]
+      : Array.isArray(textOrtextAndAttributes)
+          ? textOrtextAndAttributes
+          : [String(textOrtextAndAttributes || ""), null];
 
     if (!textAndAttributes.length || textAndAttributes.length == 2 && !textAndAttributes[0])
       return Range.fromPositions(pos, pos);
