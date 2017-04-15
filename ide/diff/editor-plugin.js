@@ -36,22 +36,40 @@ export default class DiffEditorPlugin extends EditorPlugin {
     let textMorph = this.textMorph;
     if (!this.theme || !textMorph || !textMorph.document) return;
 
+    this.tokenize(textMorph.textString);
+    textMorph.setTextAttributesWithSortedRanges(this.styledRanges());
+  }
+
+  tokenize(string) {
     let tokens = [], patches = []; 
-    if (textMorph.textString) {
+    if (string) {
       try {
-        ({tokens, patches} = this.tokenizer.tokenize(textMorph.textString));
+        ({tokens, patches} = this.tokenizer.tokenize(string));
       } catch (e) {}
     }
-
     this.tokens = tokens;
     this.patches = patches;
-    
-    let attributes = [];
-    for (let {type, start, end} of tokens)
+  }
+
+  styledRanges(offsetRow = 0, indent = 0) {
+    let attributes = [], tokens = this.tokens;
+    for (let {type, start, end} of tokens) {
+      if (offsetRow || indent) {
+        {
+          let {row, column} = start;
+          row += offsetRow; //column += indent;
+          start = {row, column};
+        }
+        {
+          let {row, column} = end;
+          row += offsetRow; //column += indent-;
+          end = {row, column};
+        }
+      }
       if (tokens.type !== "default")
         attributes.push({start, end}, this.theme.styleCached(type));
-    textMorph.setTextAttributesWithSortedRanges(attributes);
-
+    }
+    return attributes;
   }
 
   getCommands(other) { return other.concat(commands); }
