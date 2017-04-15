@@ -1101,7 +1101,7 @@ export class Text extends Morph {
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    
+
     this.undoManager.undoStart(this, "setStyleInRange");
     this.addMethodCallChangeDoing({
       target: this,
@@ -1904,54 +1904,109 @@ export class Text extends Morph {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // debugging
-  
+
   debugHelper() {
     if (this._debugHelper) return this._debugHelper;
     return this._debugHelper = {
       logged: [],
       reset() {
-        this.logged = [];
+        this.groups = [[]];
+        this.logged = this.groups[0];
       },
+
       log(...args) {
         console.log(...args);
-        this.logged.push({args});
+        this.logged.push({ args });
       },
+
       dump(dump) {
         console.log(dump.split("\n").map(ea => ea.slice(0, 100)).join("\n"));
-        this.logged.push({dump});
+        this.logged.push({ dump });
       },
-      steps() {
-        let logged = this.logged.slice(), steps = [];
+
+      group(title) {
+        this.groups.push([]);
+        this.logged = arr.last(this.groups);
+        console.group(title);
+      },
+
+      groupEnd(title) {
+        console.groupEnd(title);
+      },
+
+      steps(logged) {
+        let steps = [];
         while (logged.length) {
           let actions = arr.takeWhile(logged, ea => !ea.dump);
           logged = logged.slice(actions.length);
           let {dump} = logged.shift() || {};
-          steps.push({actions, dump});
+          steps.push({
+            actions,
+            dump
+          });
         }
         return steps;
       },
+
       printToConsole() {
         console.clear();
-        this.steps().forEach(({actions}, i) => {
-          console.group(`step ${i+1}`);
-          actions.forEach(({args}) => console.log(...args));
-          console.groupEnd(`step ${i+1}`);
+        this.groups.forEach(group => {
+          let steps = this.steps(group);
+          console.group(steps.length);
+          this.steps(group).forEach(({actions}, i) => {
+            console.group(`step ${ i + 1 }`);
+            actions.forEach(({args}) => console.log(...args));
+            console.groupEnd(`step ${ i + 1 }`);
+          });
+          console.groupEnd(steps.length);
         });
       },
-      async openDiffs() {
+
+      async report() {
         let jsDiff = await System.import("https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js"),
             {default: DiffEditorPlugin} = await System.import("lively.morphic/ide/diff/editor-plugin.js"),
-            steps = this.steps(),
-            diffs = steps.slice(1).map((ea, i) =>
-              jsDiff.createPatch(String(i), steps[i].dump, ea.dump));
-              steps[0].dump
+            indent = 0;
+
+        let report = "", reportStyles = [], row = 0;
+        this.groups.forEach((group, groupN) => {
+          report += `>>> group ${ groupN + 1 }\n`; row++;
+          indent++;
+          let steps = this.steps(group);
+          steps.forEach(({actions, dump}, i) => {
+            report += string.indent(`>>> step ${ i + 1 }`, " ", indent) + "\n"; row++;
+            indent++;
+            actions.forEach(({args}) => {
+              let content = string.indent(string.formatFromArray(args.slice()).trim(), " ", indent);
+              row += content.split("\n").length;
+              report += content + "\n";
+            });
+            if (i >= 1 && dump && steps[i-1].dump) {
+              let p = new DiffEditorPlugin()
+              let patch = jsDiff.createPatch(String(i), steps[i-1].dump, dump);
+              p.tokenize(patch);
+              reportStyles.push(...p.styledRanges(row, indent));
+              report += patch;
+              row += patch.split("\n").length-1;
+            }
+            report += string.indent(`<< step ${ i + 1 }`, " ", indent) + "\n"; row++;
+            indent--;
+          });
+          report += `<<< group ${ groupN + 1 }\n`; row++;
+          indent--;
+        });
+        return {report, reportStyles};
+      },
+
+      async openReport() {
+        let {reportStyles, report} = await this.report()
         return $world.execCommand("open text window", {
-          title: "text debug dumps",
+          title: "text debug",
           fontFamily: "monospace",
-          plugins: [(new DiffEditorPlugin())],
-          content: diffs.join("")
+          content: report,
+          rangesAndStyles: reportStyles
         });
       }
+
     }
   }
 
