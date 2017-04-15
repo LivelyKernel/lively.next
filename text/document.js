@@ -680,9 +680,9 @@ class InnerTreeNode extends TreeNode {
     let removedBecauseEmpty = false;
     for (let i = children.length; i--; ) {
       if (children[i].size === 0) {
-        debug && debug.log(`[balanceAfterShrink] ${this} removes node ${i} b/c it is empty`);
         children.splice(i, 1);
         removedBecauseEmpty = true
+        debug && debug.log(`[balanceAfterShrink] ${this} removes node ${i} b/c it is empty, remaining children: ${children.length} (min: ${minChildren}, max: ${maxChildren})`);
       }
     }
     if (removedBecauseEmpty)
@@ -708,17 +708,24 @@ class InnerTreeNode extends TreeNode {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (isLeaf) {
       // its a leaf so children are lines, try to remove myself...
-      if (parent && parent.children.length === 1) {
-        // I'm the only child...
-        debug && debug.log(`[balanceAfterShrink] ${this} is the only child - will remove it's parent and take its position`);
-        debug && debug.dump(`${this.root.print(false)}`);
-        this.parent = null;
-        parent.children.length = 0;
-        parent.children.push(...children);
-        children.forEach(ea => ea.parent = parent);
-        parent.isLeaf = true;
+      if (parent) {
+        if (parent.children.length === 1) {          
+          // I'm the only child...
+          debug && debug.log(`[balanceAfterShrink] ${this} is the only child - will remove it's parent and take its position`);
+          debug && debug.dump(`${this.root.print(false)}`);
+          this.parent = null;
+          parent.children.length = 0;
+          parent.children.push(...children);
+          children.forEach(ea => ea.parent = parent);
+          parent.isLeaf = true;
+        } else {
+          let myIndex = parent.children.indexOf(this);
+          this.prevLine
+          this.letLeafMergeOrStealAfterRemove(
+            parent.children[myIndex-1], parent.children[myIndex+1], debug);
+        }
       }
-      parent && parent.balanceAfterShrink(debug);
+      this.parent && this.parent.balanceAfterShrink(debug);
       return;
     }
 
@@ -737,6 +744,7 @@ class InnerTreeNode extends TreeNode {
     }
 
     if (hasMixedChildNodes) { // can't rebalance mixed yet
+      debug && debug.log(`[balanceAfterShrink] ${this} hasMixedChildNodes, can't re-balance`);
       parent && parent.balanceAfterShrink(debug);
       return;
     }
@@ -1384,12 +1392,14 @@ export default class Document {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  insertTextAndAttributes(textAndAttributes, pos) {
+  insertTextAndAttributes(textAndAttributes, pos, debug = false) {
     // inserts text and attribute pairs of `textAndAttributes` into the
     // document at text position `pos`.
 
     if (!textAndAttributes || !textAndAttributes.length)
       return {start: pos, end: pos};
+
+    if (debug && !debug.log) debug = console;
 
     let {row, column} = pos;
     if (row < 0) row = 0;
@@ -1398,9 +1408,15 @@ export default class Document {
     let line = this.getLine(row),
         attrsForLines = splitTextAndAttributesIntoLines(textAndAttributes, newline);
 
+    if (debug) {
+      if (!debug.log) debug = {log: console.log.bind(console), dump: console.log.bind(console)};
+      
+    }
+
     if (!line) { // text empty
       let lines = this.insertLines(attrsForLines.map(ea =>
         new Line({parent: null, width: 0, height: 0, textAndAttributes: ea})));
+      debug && debug.log(`insert ${lines.length} lines into empty text`);
       return {
         start: {row: 0, column: 0},
         end: {row: lines.length, column: arr.last(lines).text.length}
@@ -1410,14 +1426,19 @@ export default class Document {
     // if insertion position comes after last row fill in new lines
     if (row >= this.rowCount) {
       let docEndPos = this.endPosition;
+      debug && debug.log(`insertion after doc end, ${row}/${column}, inserting ${row - docEndPos.row} rows`);
       for (let i = 0; i < row - docEndPos.row; i++)
         attrsForLines.unshift(["", null]);
       ({row, column} = docEndPos);
     }
 
     // just a new line, split line row and column and be done
-    if (attrsForLines.length === 1 && attrsForLines[0][0] === "")
-      return this.splitLineAt({row, column});
+    if (attrsForLines.length === 1 && attrsForLines[0][0] === "") {
+      debug && debug.log(`insert just newline at ${row}/${column}`);
+      let splitted = this.splitLineAt({row, column});
+      debug && debug.dump(`${this.root.print(false)}`);
+      return splitted;
+    }
 
     let firstInsertionLine = attrsForLines.shift(),
         nInsertionLines = attrsForLines.length,
@@ -1425,6 +1446,7 @@ export default class Document {
         lineLength = line.stringSize-1;
 
     if (column > lineLength) {
+      debug && debug.log(`filling up insertion column at ${row}/${column}: ${column - lineLength}`);
       let fill = " ".repeat(column - lineLength);
       if (firstInsertionLine.length)
         firstInsertionLine[0] = fill + firstInsertionLine[0];
@@ -1444,7 +1466,14 @@ export default class Document {
     }
     line.changeTextAndAttributes(lineTextAndAttributes);
 
-    if (nInsertionLines === 0) return {start: {row, column}, end: endPos};
+    if (nInsertionLines === 0) {
+      if (debug) {
+        debug.log(`single line inserted at ${row}/${column}`);
+        debug && debug.dump(`${this.root.print(false)}`);
+      }
+      return {start: {row, column}, end: endPos};
+    }
+
     let lastInsertionLine = attrsForLines[nInsertionLines-1],
         lastInsertionLineLength = 0;
     for (let i = 0; i < lastInsertionLine.length; i = i+2)
@@ -1457,6 +1486,11 @@ export default class Document {
         lastLine = arr.last(lines);
     lastLine.changeTextAndAttributes(
       concatTextAndAttributes(lastLine.textAndAttributes, after, true));
+
+    if (debug) {
+      debug.log(`${lines.length} inserted at ${row}/${column}`);
+      debug && debug.dump(`${this.root.print(false)}`);
+    }
 
     return {start: {row, column}, end: endPos};
   }
@@ -1541,8 +1575,14 @@ export default class Document {
     if (toCol < 0) toCol = 0;
 
     if (debug) {
-      console.group(`[text doc removal]`);
-      console.log(`[text doc] removing ${fromRow}/${fromCol} => ${toRow}/${toCol}`);
+      if (!debug.log) debug = {
+        log: console.log.bind(console),
+        dump: console.log.bind(console),
+        group: console.group.bind(console),
+        groupEnd: console.groupEnd.bind(console)
+      };
+      debug.group(`document.remove ` + JSON.stringify(range));
+      debug.log(`[text doc] removing ${fromRow}/${fromCol} => ${toRow}/${toCol}`);
     }
 
     let line = this.getLine(fromRow),
@@ -1558,13 +1598,13 @@ export default class Document {
     firstLine.changeTextAndAttributes(concatTextAndAttributes(before, after, true));
 
     if (debug) {
-      console.log(`[text doc removal] what remains of start/end line: "${firstLine.textAndAttributes}"`);
+      debug.log(`[text doc removal] what remains of start/end line: "${firstLine.textAndAttributes}"`);
     }
 
     if (lines.length > 1) this.removeLines(fromRow+1, toRow, debug);
 
     if (debug) {
-      console.groupEnd(`[text doc removal]`);
+      debug.groupEnd(`[text doc removal]`);
     }
   }
 

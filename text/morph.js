@@ -837,9 +837,11 @@ export class Text extends Morph {
     }
 
     // the document manages the actual content
-    var range = this.document.insertTextAndAttributes(textAndAttributes, pos);
 
     this.undoManager.undoStart(this, "insertText");
+
+    let range = this.document.insertTextAndAttributes(
+        textAndAttributes, pos, this.debug && this.debugHelper());
 
     this.addMethodCallChangeDoing({
       target: this,
@@ -876,6 +878,8 @@ export class Text extends Morph {
     var {document: doc, textLayout} = this,
         textAndAttributes = this.textAndAttributesInRange(range);
 
+    doc.remove(range, this.debug && this.debugHelper());
+
     this.addMethodCallChangeDoing({
       target: this,
       selector: "deleteText",
@@ -886,7 +890,6 @@ export class Text extends Morph {
         args: [textAndAttributes, range.start, false],
       }
     }, () => {
-      doc.remove(range, this.debug && this.debugHelper());
       this.invalidateTextLayout();
       this.textLayout.resetLineCharBoundsCacheOfRow(this, range.start.row);
       this.textLayout.resetLineCharBoundsCacheOfRow(this, range.end.row);
