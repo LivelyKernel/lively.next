@@ -325,18 +325,19 @@ var worldCommands = [
   {
     name: "open text window",
     exec: (world, opts = {}) => {
-      var {title, extent, content, mode, name} = opts;
+      var {title, extent, content, mode, name, rangesAndStyles} = opts;
 
       title = title ||  "text window";
       content = content ||  "";
       extent = extent || pt(500, 400);
       name = name || "text workspace";
-
-      return world.openInWindow(
-        new Text({padding: Rectangle.inset(3),
+      let textAndAttributes = typeof content === "string" ? [content, null] : content;
+      let text = new Text({padding: Rectangle.inset(3),
                   ...obj.dissoc(opts, ["title", "content"]),
-                  textString: content, clipMode: "auto", name, extent}),
-        {title}).activate();
+                  textAndAttributes, clipMode: "auto", name, extent});
+      if (rangesAndStyles)
+        text.setTextAttributesWithSortedRanges(rangesAndStyles);
+      return world.openInWindow(text, {title}).activate();
     }
   },
 
