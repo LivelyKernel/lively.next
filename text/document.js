@@ -107,26 +107,28 @@ class TreeNode {
     if (maxWidth != width)
       report.push({error: `max width of children of ${this} is not node width: ${maxWidth} != ${width}`});
 
-    if (!isRoot) {
-      var max = isLeaf ? maxLeafSize : maxNodeSize,
-          min = isLeaf ? minLeafSize : minNodeSize;
-      if (!num.between(children.length, min, max))
-        report.push({error: `children count of ${this} expected to be between ${min} and ${max} but is ${children.length}`});
-      for (let i = 0; i < children.length; i++) {
-        let child = children[i];
-        if (!child) {
-          report.push({error: `child ${i} of ${this} is nullish!`})
-          continue;
-        }
-        if (isLeaf && !child.isLine) {
-          report.push({error: `child ${i} of leaf ${this} is not a line!`})
-        } else if (!child.isNode) {
-          report.push({error: `child of non-leaf ${this} is not an inner node!`})
-        }
+    var max = isLeaf ? maxLeafSize : maxNodeSize,
+        min = isLeaf ? minLeafSize : minNodeSize;
+    if (!isRoot && !num.between(children.length, min, max))
+      report.push({error: `children count of ${this} expected to be between ${min} and ${max} but is ${children.length}`});
+    for (let i = 0; i < children.length; i++) {
+      let child = children[i];
+      if (!child) {
+        report.push({error: `child ${i} of ${this} is nullish!`})
+        continue;
+      }
+      if (isLeaf && !child.isLine) {
+        report.push({error: `child ${i} of leaf ${this} is not a line!`})
+      } else if (!isLeaf && child.isLine) {
+        report.push({error: `child of non-leaf ${this} is a line!`})
+      }
+      if (this !== child.parent) {
+        report.push({error: `child.parent is ${child.parent} but should be ${this}`});
       }
     }
 
-    return arr.flatmap(children, ea => ea.consistencyCheck());
+    report.push(...arr.flatmap(children, ea => ea.consistencyCheck()));
+    return report;
   }
 
 }
@@ -674,7 +676,7 @@ class InnerTreeNode extends TreeNode {
         {maxLeafSize, maxNodeSize, minLeafSize, minNodeSize} = options,
         maxChildren = isLeaf ? maxLeafSize : maxNodeSize,
         minChildren = isLeaf ? minLeafSize : minNodeSize;
-if (this.root.print(false).split("\n")[0] === `node (size: 21 width: 678 height: 600 text length: 1532)`) debugger;
+
     let removedBecauseEmpty = false;
     for (let i = children.length; i--; ) {
       if (children[i].size === 0) {
