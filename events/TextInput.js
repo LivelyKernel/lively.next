@@ -82,8 +82,8 @@ export default class TextInput {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // event handlers
     domState.eventHandlers = [
-      {type: "focus", node: newRootNode, fn: evt => this.onRootNodeFocus(evt), capturing: true},
-      // {type: "blur", node: domNode, fn: evt => evt => domNode.focus(), capturing: true},
+      {type: "focus",   node: newRootNode,           fn: evt => this.onRootNodeFocus(evt), capturing: true},
+      {type: "blur",    node: domState.textareaNode, fn: evt => this.onTextAreaBlur(evt), capturing: true},
       {type: "keydown", node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
       {type: "keyup",   node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
       {type: "cut",     node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
@@ -146,6 +146,7 @@ export default class TextInput {
     var node = this.domState.textareaNode;
     if (!node) return;
     node.ownerDocument.activeElement !== node && node.focus();
+
     if (bowser.firefox) // FF needs an extra invitation...
       Promise.resolve().then(() => node.ownerDocument.activeElement !== node && node.focus());
 
@@ -229,6 +230,14 @@ export default class TextInput {
     }
 
     return deferred.promise;
+  }
+
+  onTextAreaBlur(evt) {
+    setTimeout(() => {
+      var {textareaNode, rootNode} = this.domState || {};
+      if (rootNode && document.activeElement === rootNode)
+        rootNode && rootNode.focus();
+    });
   }
 
   onRootNodeFocus(evt) {
