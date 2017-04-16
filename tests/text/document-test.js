@@ -234,7 +234,8 @@ describe("document as text tree", () => {
 
   });
 
-  it("survives fuzzy testing", () => {
+  it("survives fuzzy testing", function() {
+    this.timeout(6000);
     let {doc, actions, error} = Document.fuzzyTest();
     if (error) {
       System.global.lastDocumentFuzzyTest = {doc, actions, error};

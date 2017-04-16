@@ -51,9 +51,10 @@ export default class JSONEditorPlugin extends JavaScriptEditorPlugin {
 
     let tokens = this._tokens = this.tokenizer.tokenize(textMorph.textString),
         attributes = [];
-    for (let {token, start, end} of tokens)
-      if (tokens.type !== "default")
-        attributes.push({start, end}, this.theme.styleCached(token));
+    for (let {type, start, end} of tokens)
+      if (type !== "default")
+        attributes.push({start, end}, this.theme.styleCached(type));
+
     textMorph.setTextAttributesWithSortedRanges(attributes);
 
     try {
