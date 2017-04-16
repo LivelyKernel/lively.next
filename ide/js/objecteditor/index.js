@@ -399,7 +399,7 @@ export class ObjectEditor extends Morph {
   isShowingImports() { return this.get("importsList").width > 10; }
 
   toggleShowingImports(timeout = 300/*ms*/) {
-    var expandedWidth = Math.min(300, Math.max(150, this.get("importsList").listItemContainer.width)),
+    var expandedWidth = Math.min(300, Math.max(200, this.get("importsList").listItemContainer.width)),
         enable = !this.isShowingImports(),
         newWidth = enable ? expandedWidth : -expandedWidth,
         column = this.layout.grid.col(2)
