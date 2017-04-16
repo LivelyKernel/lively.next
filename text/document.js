@@ -685,7 +685,7 @@ class InnerTreeNode extends TreeNode {
     }
 
     if (children.length === 0) {
-      if (parent) {        
+      if (parent) {
         // parent will remove empty children:
         parent.balanceAfterShrink(debug);
       }
@@ -697,7 +697,7 @@ class InnerTreeNode extends TreeNode {
     if (isLeaf) {
       if (parent) {
         // its a leaf so children are lines, try to remove myself...
-        if (parent.children.length === 1) {          
+        if (parent.children.length === 1) {
           // I'm the only child...
           debug && debug.log(`[balanceAfterShrink] ${this} is the only child - will remove it's parent and take its position`);
           debug && debug.dump(`${this.root.print(false)}`);
@@ -734,13 +734,13 @@ class InnerTreeNode extends TreeNode {
     var leaf = hasLeafAsChild;
     if (!hasMixedChildNodes && grandChildren.length <= (leaf ? maxLeafSize : maxNodeSize)) {
       debug && debug.log(`[balanceAfterShrink] ${this} grandChildren.length is ${grandChildren.length} and <= max size so it is removing all its children and adopting their children`);
-  
+
       children.forEach(ea => ea.parent = null);
       grandChildren.forEach(ea => ea.parent = this);
       children.length = 0;
       children.push(...grandChildren);
       this.isLeaf = leaf;
-  
+
       debug && debug.log(`[balanceAfterShrink] ${children.join("\n")}`);
       debug && debug.dump(`${this.root.print(false)}`);
     }
@@ -957,11 +957,87 @@ export class Line extends TreeNode {
 
 
 
+var documentFuzzier = {
+
+  makeString(min = 5, max = 50) {
+    let chars = arr.range(65, 90).map(ea => String.fromCharCode(ea)).join("");
+    chars += chars.toLowerCase() + " \n";
+    let n = num.random(min, max)
+    return arr.shuffle(Array.from(chars.repeat(Math.ceil(n / chars.length)))).slice(0, n).join("")
+  },
+
+  randomDocPosition(doc) {
+    let row = doc.rowCount === 0 ? 0 : num.random(0, doc.rowCount-1),
+        column = num.random(0, doc.getLineString(row).length-1);
+    return {row, column};
+  },
+
+  insertRandom(doc, actions, minLength, maxLength) {
+    let content = [this.makeString(minLength, maxLength), null],
+        pos = this.randomDocPosition(doc)
+    actions.push(["insertTextAndAttributes", content, pos]);
+    doc.insertTextAndAttributes(content, pos);
+  },
+
+  deleteRandom(doc, actions, minLength, maxLength) {
+    let range = {start: this.randomDocPosition(doc), end: this.randomDocPosition(doc)};
+    actions.push(["remove", range]);
+    doc.remove(range);
+  },
+
+  maybe() { return Math.random() < 0.5; },
+
+  replay(textMorph, actions, debug = false, halt = false) {
+    if (debug) {
+      textMorph.debug = debug;
+      debug = textMorph.debugHelper();
+      debug.reset();
+    }
+    let doc = new Document([""]);
+    actions.forEach(([type, ...args], i) => {
+      if (halt && i == actions.length-1) debugger;
+      doc[type](...args, debug);
+    })
+    textMorph.changeDocument(doc);
+  },
+
+  run() {
+    // let {doc, time, error} = documentFuzzier.run(); [error, time];
+    let opts = {
+      maxLeafSize: 3,
+      minLeafSize: 2,
+      leafSplit: 0.5,
+      maxNodeSize: 10,
+      minNodeSize: 5,
+      nodeSplit: 0.5,
+    }
+
+    let t = Date.now(),
+        counter = 0,
+        doc = new Document([], opts),
+        actions = [], error;
+
+    try {
+      while(doc.stringSize < 10000 && counter++ < 10000) {
+        if (this.maybe()) this.deleteRandom(doc, actions);
+        else this.insertRandom(doc, actions);
+        doc.consistencyCheck();
+      }
+    } catch (err) { error = err; }
+
+    let time = Date.now()-t;
+
+    return {error, doc, actions, time};
+  }
+
+}
 
 const newline = "\n",
       newlineLength = 1; /*fixme make work for cr lf windows...*/
 
 export default class Document {
+
+  static fuzzyTest() { return documentFuzzier.run(); }
 
   static get newline() { return newline; }
 
@@ -1394,7 +1470,7 @@ export default class Document {
 
     if (debug) {
       if (!debug.log) debug = {log: console.log.bind(console), dump: console.log.bind(console)};
-      
+
     }
 
     if (!line) { // text empty
@@ -1773,4 +1849,5 @@ export default class Document {
       (node) => node.children,
       {padding: [2,1,2,1]});
   }
+
 }

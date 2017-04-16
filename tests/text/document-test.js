@@ -234,6 +234,13 @@ describe("document as text tree", () => {
 
   });
 
+  it("survives fuzzy testing", () => {
+    let {doc, actions, error} = Document.fuzzyTest();
+    if (error) {
+      System.global.lastDocumentFuzzyTest = {doc, actions, error};
+      expect().assert(false, `Document fuzzy test failed: ${error}. Results are stored in global.lastDocumentFuzzyTest`);
+    }
+  })
 });
 
 describe("geometry", () => {
