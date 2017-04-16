@@ -1,20 +1,22 @@
-import * as userdb from "lively.user/user-db.js";
+/* global System */
+import { Database } from "lively.storage";
 import user from 'lively.user/user.js';
 
-var bcryptPath = System.decanonicalize("lively.user/node_modules/bcryptjs/index.js").replace(/^file:\/\//, "");
-var bcrypt = System._nodeRequire(bcryptPath);
-var jwtpath = System.decanonicalize("lively.user/node_modules/jsonwebtoken/index.js").replace(/^file:\/\//, "");
-var jwt = System._nodeRequire(jwtpath);
+var dbPath = System.decanonicalize("lively.user/user.db").replace(/^file:\/\//, ""),
+    userdb = Database.ensureDB(dbPath);
 
+if (System._nodeRequire) {
+  var bcryptPath = System.decanonicalize("lively.user/node_modules/bcryptjs/index.js").replace(/^file:\/\//, "");
+  var bcrypt = System._nodeRequire(bcryptPath);
+  var jwtpath = System.decanonicalize("lively.user/node_modules/jsonwebtoken/index.js").replace(/^file:\/\//, "");
+  var jwt = System._nodeRequire(jwtpath);
+}
 //replace with uuid, visible only to server
 var key = "mysecret"
 // var adminpassword = 'adminpassword'
 
 export async function authenticate(user){
-  
-  var users = await userdb.getfromDB(user.name, user.email)
-  //check 0-th record, as both username and email are PKs  
-  var authUser = users[0]  
+  var authUser = await userdb.get(user.email)
   if(!authUser){
     return {status: 'error', body: {data: 'No such username ' + user.name}}
   }
@@ -28,10 +30,7 @@ export async function authenticate(user){
 }
 
 export async function getUserInfo(email){
-  
-  var users = await userdb.getByEmail(email)
-  //check 0-th record, as both username and email are PKs  
-  var user = users[0]  
+  var user = await userdb.get(email);
   if(!user){
     return {status: 'error', body: {data: 'No user for email ' + email }}
   }
@@ -40,7 +39,7 @@ export async function getUserInfo(email){
 
 export async function getAllUsers(){
   
-  var users = await userdb.doSQL('select * from users'),
+  var users = await userdb.getAll(),
       userDict = {};
    for (var user of users) {
      userDict[user.email] = user;
@@ -49,10 +48,7 @@ export async function getAllUsers(){
 }
 
 export async function removeUser({name: username,email},adminpassword){  
-  var users = await userdb.getfromDB('admin','admin@lively-next.org')
-  
-  //check 0-th record, as both username and email are PKs  
-  var admin = users[0]  
+  var admin = await userdb.get('admin@lively-next.org'); 
   if(!admin){
     return {status: 'error', body: {data: 'No admin'}}
   }
@@ -61,15 +57,12 @@ export async function removeUser({name: username,email},adminpassword){
     return {status: 'error', body: {data: 'Unable to add user, admin not authenticated'}}
   }
 
-  return await userdb.remove({username,email})
+  return await userdb.remove(email)
   
 }
 
 export async function addUser({name: username,email,password,avatar},adminpassword){  
-  var users = await userdb.getfromDB('admin','admin@lively-next.org')
-  
-  //check 0-th record, as both username and email are PKs  
-  var admin = users[0]  
+  var admin = await userdb.get('admin@lively-next.org')
   if(!admin){
     return {status: 'error', body: {data: 'No admin'}}
   }
@@ -79,7 +72,7 @@ export async function addUser({name: username,email,password,avatar},adminpasswo
   }
   var salt = bcrypt.genSaltSync(10);
   var hash = bcrypt.hashSync(password, salt);
-  return await userdb.push({username,email,hash,avatar})
+  return await userdb.set(email, {username,email,hash,avatar});
 }
 
 //Export temporarily while testing function. Export to be removed.
