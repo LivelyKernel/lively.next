@@ -118,7 +118,43 @@ var set$1 = function set$1(object, property, value, receiver) {
   return value;
 };
 
+var slicedToArray = function () {
+  function sliceIterator(arr, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
 
+    try {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"]) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  return function (arr, i) {
+    if (Array.isArray(arr)) {
+      return arr;
+    } else if (Symbol.iterator in Object(arr)) {
+      return sliceIterator(arr, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
 
 
 
@@ -1754,8 +1790,8 @@ function without(array, elem) {
   // non-mutating
   // Example:
   // arr.without([1,2,3,4,5,6], 3) // => [1,2,4,5,6]
-  return array.filter(function (value) {
-    return value !== elem;
+  return array.filter(function (val) {
+    return val !== elem;
   });
 }
 
@@ -1763,18 +1799,30 @@ function withoutAll(array, otherArr) {
   // non-mutating
   // Example:
   // arr.withoutAll([1,2,3,4,5,6], [3,4]) // => [1,2,5,6]
-  return array.filter(function (value) {
-    return otherArr.indexOf(value) === -1;
+  return array.filter(function (val) {
+    return otherArr.indexOf(val) === -1;
   });
 }
 
 function uniq(array, sorted) {
   // non-mutating
   // Removes duplicates from array.
-  return array.reduce(function (a, value, index) {
-    if (0 === index || (sorted ? last(a) != value : a.indexOf(value) === -1)) a.push(value);
-    return a;
-  }, []);
+  // if sorted == true then assume array is sorted which allows uniq to be more
+  // efficient
+  // uniq([3,5,6,2,3,4,2,6,4])
+  var result = [array[0]];
+  if (sorted) {
+    for (var i = 1; i < array.length; i++) {
+      var val = array[i];
+      if (val !== result[result.length]) result.push(val);
+    }
+  } else {
+    for (var _i = 1; _i < array.length; _i++) {
+      var _val = array[_i];
+      if (result.indexOf(_val) === -1) result.push(_val);
+    }
+  }
+  return result;
 }
 
 function uniqBy(array, comparator, context) {
@@ -1810,9 +1858,7 @@ function compact(array) {
   // removes falsy values
   // Example:
   // arr.compact([1,2,undefined,4,0]) // => [1,2,4]
-  return array.filter(function (ea) {
-    return !!ea;
-  });
+  return array.filter(Boolean);
 }
 
 function mutableCompact(array) {
@@ -1896,6 +1942,7 @@ function interpose(array, delim) {
 
 function delimWith(array, delim) {
   // ignore-in-doc
+  // previously used, use interpose now!
   return interpose(array, delim);
 }
 
@@ -2509,13 +2556,14 @@ function dropWhile(arr, fun, context) {
 function shuffle(array) {
   // Ramdomize the order of elements of array. Does not mutate array.
   // Example:
-  // arr.shuffle([1,2,3,4,5]) // => [3,1,2,5,4]
-  var unusedIndexes = range(0, array.length - 1);
-  return array.reduce(function (shuffled, ea, i) {
+  // shuffle([1,2,3,4,5]) // => [3,1,2,5,4]
+  var unusedIndexes = range(0, array.length - 1),
+      shuffled = Array(array.length);
+  for (var i = 0; i < array.length; i++) {
     var shuffledIndex = unusedIndexes.splice(Math.round(Math.random() * (unusedIndexes.length - 1)), 1);
-    shuffled[shuffledIndex] = ea;
-    return shuffled;
-  }, Array(array.length));
+    shuffled[shuffledIndex] = array[i];
+  }
+  return shuffled;
 }
 
 // -=-=-=-=-=-=-=-
@@ -4314,13 +4362,52 @@ function lineNumberToIndexesComputer(s) {
 }
 
 function lineRanges(s) {
-  return lines(s).reduce(function (akk, line) {
-    var start = akk.indexCount,
-        end = akk.indexCount + line.length + 1;
-    akk.lineRanges.push([start, end]);
-    akk.indexCount = end;
-    return akk;
-  }, { lineRanges: [], indexCount: 0 }).lineRanges;
+  var from$$1 = 0,
+      to = 0,
+      linesOfS = lines(s),
+      result = [];
+  for (var i = 0; i < linesOfS.length; i++) {
+    var line = linesOfS[i];
+    to = from$$1 + line.length + 1;
+    result.push([from$$1, to]);
+    from$$1 = to;
+  }
+  return result;
+}
+
+function findLineWithIndexInLineRanges(lineRanges, idx) {
+  // given a list of `lineRanges` (produced by
+  // `livley.lang.string.lineRanges(string)`) like lineRanges = [[0, 12], [12, 33]]
+  // and an string index `idx` into `string`, find the line no (the index into
+  // `lineRanges`) that includes idx.  The index intervals include start and exclude end:
+  // Example:
+  // findLineWithIndex2(lineRanges, 2); // => 0
+  // findLineWithIndex2(lineRanges, 12); // => 1
+  // findLineWithIndex2(lineRanges, 33); // => 1
+  // findLineWithIndex2(lineRanges, 34); // => -1
+  // findLineWithIndex2(lineRanges, -4); // => -1
+  var nRows = lineRanges.length;
+  if (nRows === 0) return -1;
+  // let currentRow = Math.floor(nRows/2), lastRow = nRows;
+  var startRow = 0,
+      endRow = nRows;
+  while (true) {
+    var middle = startRow + Math.floor((endRow - startRow) / 2),
+        _lineRanges$middle = slicedToArray(lineRanges[middle], 2),
+        from$$1 = _lineRanges$middle[0],
+        to = _lineRanges$middle[1];
+
+    if (idx < from$$1) {
+      if (middle === 0) return -1;
+      endRow = middle;
+      continue;
+    }
+    if (idx > to) {
+      startRow = middle;continue;
+    }
+    return middle;
+  }
+  return -1;
 }
 
 // -=-=-=-=-
@@ -4547,6 +4634,7 @@ var string = Object.freeze({
 	peekLeft: peekLeft,
 	lineIndexComputer: lineIndexComputer,
 	lineNumberToIndexesComputer: lineNumberToIndexesComputer,
+	findLineWithIndexInLineRanges: findLineWithIndexInLineRanges,
 	lineRanges: lineRanges,
 	diff: diff,
 	empty: empty,

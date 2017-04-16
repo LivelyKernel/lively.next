@@ -152,26 +152,37 @@ function without(array, elem) {
   // non-mutating
   // Example:
   // arr.without([1,2,3,4,5,6], 3) // => [1,2,4,5,6]
-  return array.filter(function(value) { return value !== elem; });
+  return array.filter(val => val !== elem);
 }
 
 function withoutAll(array, otherArr) {
   // non-mutating
   // Example:
   // arr.withoutAll([1,2,3,4,5,6], [3,4]) // => [1,2,5,6]
-  return array.filter(function(value) {
-    return otherArr.indexOf(value) === -1;
-  });
+  return array.filter(val => otherArr.indexOf(val) === -1);
 }
 
 function uniq(array, sorted) {
   // non-mutating
   // Removes duplicates from array.
-  return array.reduce(function(a, value, index) {
-    if (0 === index || (sorted ? last(a) != value : a.indexOf(value) === -1))
-      a.push(value);
-    return a;
-  }, []);
+  // if sorted == true then assume array is sorted which allows uniq to be more
+  // efficient
+  // uniq([3,5,6,2,3,4,2,6,4])
+  let result = [array[0]];
+  if (sorted) {
+    for (let i = 1; i < array.length; i++) {
+      let val = array[i];
+      if (val !== result[result.length])
+        result.push(val);
+    }
+  } else {
+    for (let i = 1; i < array.length; i++) {
+      let val = array[i];
+      if (result.indexOf(val) === -1)
+        result.push(val);
+    }
+  }
+  return result;
 }
 
 function uniqBy(array, comparator, context) {
@@ -206,7 +217,7 @@ function compact(array) {
   // removes falsy values
   // Example:
   // arr.compact([1,2,undefined,4,0]) // => [1,2,4]
-  return array.filter(function(ea) { return !!ea; });
+  return array.filter(Boolean);
 }
 
 function mutableCompact(array) {
@@ -284,6 +295,7 @@ function interpose(array, delim) {
 
 function delimWith(array, delim) {
   // ignore-in-doc
+  // previously used, use interpose now!
   return interpose(array, delim);
 }
 
@@ -311,7 +323,7 @@ function pluck(array, property) {
   // Returns `property` or undefined from each element of array. For quick
   // `map`s and similar to `invoke`.
   // Example: arr.pluck(["hello", "world"], 0) // => ["h","w"]
-  return array.map(function(ea) { return ea[property]; });
+  return array.map(ea => ea[property]);
 }
 
 // -=-=-=-=-
@@ -853,13 +865,15 @@ function dropWhile(arr, fun, context) {
 function shuffle(array) {
   // Ramdomize the order of elements of array. Does not mutate array.
   // Example:
-  // arr.shuffle([1,2,3,4,5]) // => [3,1,2,5,4]
-  var unusedIndexes = range(0, array.length-1);
-  return array.reduce(function(shuffled, ea, i) {
-    var shuffledIndex = unusedIndexes.splice(Math.round(Math.random() * (unusedIndexes.length-1)), 1);
-    shuffled[shuffledIndex] = ea;
-    return shuffled;
-  }, Array(array.length));
+  // shuffle([1,2,3,4,5]) // => [3,1,2,5,4]
+  let unusedIndexes = range(0, array.length-1),
+      shuffled = Array(array.length);
+  for (let i = 0; i < array.length; i++) {
+    var shuffledIndex = unusedIndexes.splice(
+      Math.round(Math.random() * (unusedIndexes.length-1)), 1);
+    shuffled[shuffledIndex] = array[i];
+  }
+  return shuffled;
 }
 
 // -=-=-=-=-=-=-=-

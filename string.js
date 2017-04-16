@@ -822,12 +822,43 @@ function lineNumberToIndexesComputer(s) {
 }
 
 function lineRanges(s) {
-  return lines(s).reduce(function(akk, line) {
-    var start = akk.indexCount, end = akk.indexCount + line.length+1;
-    akk.lineRanges.push([start, end]);
-    akk.indexCount = end;
-    return akk;
-  }, {lineRanges: [], indexCount: 0}).lineRanges;
+  let from = 0, to = 0, linesOfS = lines(s), result = [];
+  for (let i = 0; i < linesOfS.length; i++) {
+    let line = linesOfS[i];
+    to = from + line.length + 1;
+    result.push([from, to])
+    from = to;
+  }
+  return result;
+}
+
+function findLineWithIndexInLineRanges(lineRanges, idx) {
+  // given a list of `lineRanges` (produced by
+  // `livley.lang.string.lineRanges(string)`) like lineRanges = [[0, 12], [12, 33]]
+  // and an string index `idx` into `string`, find the line no (the index into
+  // `lineRanges`) that includes idx.  The index intervals include start and exclude end:
+  // Example:
+  // findLineWithIndex2(lineRanges, 2); // => 0
+  // findLineWithIndex2(lineRanges, 12); // => 1
+  // findLineWithIndex2(lineRanges, 33); // => 1
+  // findLineWithIndex2(lineRanges, 34); // => -1
+  // findLineWithIndex2(lineRanges, -4); // => -1
+  let nRows = lineRanges.length;
+  if (nRows === 0) return -1;
+  // let currentRow = Math.floor(nRows/2), lastRow = nRows;
+  let startRow = 0, endRow = nRows;
+  while (true) {
+    let middle = startRow + Math.floor((endRow - startRow)/2),
+        [from, to] = lineRanges[middle];
+    if (idx < from) {
+      if (middle === 0) return -1;
+      endRow = middle;
+      continue;
+    }
+    if (idx > to) { startRow = middle; continue; }
+    return middle;
+  }
+  return -1;
 }
 
 // -=-=-=-=-
@@ -1065,6 +1096,7 @@ export {
   peekLeft,
   lineIndexComputer,
   lineNumberToIndexesComputer,
+  findLineWithIndexInLineRanges,
   lineRanges,
   diff,
   empty,
