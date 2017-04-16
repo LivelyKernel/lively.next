@@ -506,11 +506,17 @@ export default class Browser extends Window {
   set backend(remote) {
     this.editorPlugin.evalEnvironment.remote = remote;
   }
-  setEvalBackend(newRemote) {
-    var oldRemote = this.backend;
+
+  async setEvalBackend(newRemote) {
+    var oldRemote = this.backend,
+        pckg = this.selectedPackage.name,
+        mod = this.selectedModule.nameInPackage;
     if (newRemote !== oldRemote) {
       this.backend = newRemote;
       this.reset();
+      await this.selectPackageNamed(pckg);
+      await this.selectModuleNamed(mod);
+      this.relayout();
     }
   }
 
