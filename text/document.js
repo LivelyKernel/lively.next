@@ -81,7 +81,7 @@ class TreeNode {
           options: {maxLeafSize, maxNodeSize, minLeafSize, minNodeSize}
         } = this;
 
-    if (size === 0) {
+    if (!isRoot && size === 0) {
       report.push({error: `size of ${this} expected to be > 0!`});
     }
 
@@ -103,14 +103,16 @@ class TreeNode {
       report.push({error: `Sum of child Height is not Height of ${this}: ${sumChildrenHeight} != ${height}`});
 
 
-    var maxWidth = Math.max.apply(null, arr.pluck(children, "width"));
+    var maxWidth = children.length ? Math.max.apply(null, arr.pluck(children, "width")) : 0;
     if (maxWidth != width)
       report.push({error: `max width of children of ${this} is not node width: ${maxWidth} != ${width}`});
 
     var max = isLeaf ? maxLeafSize : maxNodeSize,
         min = isLeaf ? minLeafSize : minNodeSize;
-    if (!isRoot && !num.between(children.length, min, max))
+    // for now we are OK if nodes aren't bigger....
+    if (!isRoot && children.length > max /*!num.between(children.length, min, max)*/)
       report.push({error: `children count of ${this} expected to be between ${min} and ${max} but is ${children.length}`});
+
     for (let i = 0; i < children.length; i++) {
       let child = children[i];
       if (!child) {
@@ -237,8 +239,8 @@ class InnerTreeNode extends TreeNode {
   insert(lineSpecs, atIndex = this.size) {
 
     if (this.isLeaf) {
-      let lines = [], height = 0, stringSize = 0;
-      for (let i = 0; i < lineSpecs.length; i++) {
+      var lines = [], height = 0, stringSize = 0;
+      for (var i = 0; i < lineSpecs.length; i++) {
         var line = this.ensureLine(lineSpecs[i]);
         lines.push(line);
         height = height + line.height;
@@ -259,7 +261,6 @@ class InnerTreeNode extends TreeNode {
         options: this.options
       }));
 
-
     var i = 0;
     for (; i < this.children.length; i++) {
       var child = this.children[i], childSize = child.size;
@@ -268,7 +269,7 @@ class InnerTreeNode extends TreeNode {
       atIndex = atIndex - childSize;
     }
 
-    let last = this.children[i-1];
+    var last = this.children[i-1];
     return last.insert(lineSpecs, last.size);
   }
 
@@ -464,40 +465,36 @@ class InnerTreeNode extends TreeNode {
       node.resize(-n, -height, -stringSize);
     }
 
-    debug && debug.dump(`${this.root.print(false)}`);
+    debug && debug.dump(`${this.print(false)}`);
 
-    let needsRebalance = true;
     // merge if needed
-    if (firstNeedsMerge) {
-      needsRebalance = false;
-      first.node.letLeafMergeOrStealAfterRemove(
+    if (firstNeedsMerge)
+      first.node.balanceByMergeOrTheft(
         firstLeftSibling, !last || last.full ? lastRightSibling : last.node, debug);
-    }
 
     // also do that for last but consider the case that the first node might
-    // have been merged "away"
-    if (last && lastNeedsMerge) {
-      needsRebalance = false;
-      last.node.letLeafMergeOrStealAfterRemove(
-        first.full || !first.node.parent ? firstLeftSibling : first.node,
-        lastRightSibling, debug);
+    // have been merged "away" or the last.node was itself affected by the merge
+    if (last && lastNeedsMerge && last.node.root === this) {
+      let okToMergeLast = true
+      let leftNode = first.full || !first.node.parent ? firstLeftSibling : first.node;
+      if (firstNeedsMerge) {
+        if (last.node.root !== this) okToMergeLast = false;
+        if (leftNode && leftNode.root !== this) leftNode = null;
+        if (lastRightSibling && lastRightSibling.root !== this) lastRightSibling = null;
+      }
+      if (okToMergeLast)
+        last.node.balanceByMergeOrTheft(leftNode, lastRightSibling, debug);
     }
 
     // rebalance all affected nodes, meaning to change tree structure as necessary
-    needsRebalance && rebalance.forEach(ea => ea.balanceAfterShrink(debug));
+    rebalance.forEach(ea => ea.root === this && ea.balanceAfterShrink(debug));
   }
 
-  letLeafMergeOrStealAfterRemove(leftSibling, rightSibling, debug) {
-    if (!this.isLeaf)
-      throw new Error(`Called letLeafMergeOrStealAfterRemove() in non-leaf ${this}`);
-
-    var {children, options} = this,
-        maxChildren = options.maxLeafSize,
-        minChildren = options.minLeafSize,
+  balanceByMergeOrTheft(leftSibling, rightSibling, debug) {
+    var {children, options, isLeaf} = this,
+        maxChildren = isLeaf ? options.maxLeafSize : options.maxNodeSize,
+        minChildren = isLeaf ? options.minLeafSize : options.minNodeSize,
         needsChange = children.length < minChildren;
-
-    // if (!needsMerge)
-    //   throw new Error(`Called letLeafMergeOrStealAfterRemove() but ${this} does not need merge/theft!`);
 
     // ...try to merge with left or right sibling
     var mergeLeft = leftSibling && leftSibling.children.length + children.length <= maxChildren,
@@ -505,8 +502,7 @@ class InnerTreeNode extends TreeNode {
         mergeTarget = mergeLeft ? leftSibling : mergeRight ? rightSibling : null;
 
     if (mergeTarget) {
-
-      debug && debug.log(`[letLeafMergeOrStealAfterRemove] merging ${this} ${mergeLeft ? "left" : "right"} into ${mergeTarget}`);
+      debug && debug.log(`[balanceByMergeOrTheft] merging ${this} ${mergeLeft ? "left" : "right"} into ${mergeTarget}`);
 
       // update size of sibling and parents up to common parent and
       // subtract my size from self and all parents up to common parent with sibling
@@ -559,7 +555,7 @@ class InnerTreeNode extends TreeNode {
             stealHeight = 0, stealStringSize = 0,
             stealMaxWidth = 0, remainingMaxWidth = 0;
 
-        debug && debug.log(`[letLeafMergeOrStealAfterRemove] ${this} steals from ${stealLeft ? "left" : "right"} node ${stealTarget} ${stealN} nodes`);
+        debug && debug.log(`[balanceByMergeOrTheft] ${this} steals from ${stealLeft ? "left" : "right"} node ${stealTarget} ${stealN} nodes`);
 
         for (let i = 0; i < newChildren.length; i++) {
           stealHeight = stealHeight + newChildren[i].height;
@@ -600,16 +596,12 @@ class InnerTreeNode extends TreeNode {
       }
     }
 
+    var p = this.parent;
     if (children.length === 0) {
-      var p = this.parent;
-      if (p) {
-        this.parent = null;
-        p.children.splice(p.children.indexOf(this), 1);
-        p.balanceAfterShrink(debug);
-      }
-    } else {
-      this.balanceAfterShrink(debug);
+      this.parent = null;
+      p && p.children.splice(p.children.indexOf(this), 1);
     }
+    p && p.balanceAfterShrink(debug);
   }
 
   balanceAfterGrowth() {
@@ -693,10 +685,8 @@ class InnerTreeNode extends TreeNode {
     }
 
     if (children.length === 0) {
-      if (parent) {
-        // debug && debug.log(`[balanceAfterShrink] removing node ${this} b/c it has no children anymore`);
-        // debug && debug.dump(`${this.root.print(false)}`);
-        // arr.remove(parent.children, this);
+      if (parent) {        
+        // parent will remove empty children:
         parent.balanceAfterShrink(debug);
       }
       return;
@@ -704,10 +694,9 @@ class InnerTreeNode extends TreeNode {
 
     // less children than desired
 
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (isLeaf) {
-      // its a leaf so children are lines, try to remove myself...
       if (parent) {
+        // its a leaf so children are lines, try to remove myself...
         if (parent.children.length === 1) {          
           // I'm the only child...
           debug && debug.log(`[balanceAfterShrink] ${this} is the only child - will remove it's parent and take its position`);
@@ -718,18 +707,18 @@ class InnerTreeNode extends TreeNode {
           children.forEach(ea => ea.parent = parent);
           parent.isLeaf = true;
         } else {
-          let myIndex = parent.children.indexOf(this);
-          this.prevLine
-          this.letLeafMergeOrStealAfterRemove(
-            parent.children[myIndex-1], parent.children[myIndex+1], debug);
+          let prevLine = children[0].prevLine(),
+              left = prevLine && prevLine.parent,
+              nextLine = arr.last(children).nextLine(),
+              right = nextLine && nextLine.parent;
+          this.balanceByMergeOrTheft(left, right, debug);
         }
       }
       this.parent && this.parent.balanceAfterShrink(debug);
       return;
     }
 
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // not a leaf, try to get rid of myself anyway...
+    // not a leaf, try to "inline" children of my children...
     var grandChildren = [],
         hasLeafAsChild = false,
         hasNonLeafAsChild = false,
@@ -742,26 +731,19 @@ class InnerTreeNode extends TreeNode {
       grandChildren.push(...child.children);
     }
 
-    if (hasMixedChildNodes) { // can't rebalance mixed yet
-      debug && debug.log(`[balanceAfterShrink] ${this} hasMixedChildNodes, can't re-balance`);
-      parent && parent.balanceAfterShrink(debug);
-      return;
-    }
-
     var leaf = hasLeafAsChild;
-    if (grandChildren.length > (leaf ? maxLeafSize : maxNodeSize)) return;
-
-    debug && debug.log(`[balanceAfterShrink] ${this} grandChildren.length is ${grandChildren.length} and <= max size so it is removing all its children and adopting their children`);
-
-    children.forEach(ea => ea.parent = null);
-    grandChildren.forEach(ea => ea.parent = this);
-    children.length = 0;
-    children.push(...grandChildren);
-    this.isLeaf = leaf;
-
-    debug && debug.log(`[balanceAfterShrink] ${children.join("\n")}`);
-
-    debug && debug.dump(`${this.root.print(false)}`);
+    if (!hasMixedChildNodes && grandChildren.length <= (leaf ? maxLeafSize : maxNodeSize)) {
+      debug && debug.log(`[balanceAfterShrink] ${this} grandChildren.length is ${grandChildren.length} and <= max size so it is removing all its children and adopting their children`);
+  
+      children.forEach(ea => ea.parent = null);
+      grandChildren.forEach(ea => ea.parent = this);
+      children.length = 0;
+      children.push(...grandChildren);
+      this.isLeaf = leaf;
+  
+      debug && debug.log(`[balanceAfterShrink] ${children.join("\n")}`);
+      debug && debug.dump(`${this.root.print(false)}`);
+    }
 
     parent && parent.balanceAfterShrink(debug);
   }
@@ -852,7 +834,7 @@ export class Line extends TreeNode {
     // closest parent is last
     var index = 0;
     for (let i = parents.length-1; i >= 1; i--) {
-      let parent = parents[i],
+      var parent = parents[i],
           itsParent = parents[i - 1],
           nodeIndex = parent.children.indexOf(itsParent);
       for (let j = 0; j < nodeIndex; j++) {
@@ -863,20 +845,20 @@ export class Line extends TreeNode {
   }
 
   nextLine() {
-    let {parent} = this;
+    var {parent} = this;
     if (!parent) return null;
-    let next = parent.children[parent.children.indexOf(this)+1];
+    var next = parent.children[parent.children.indexOf(this)+1];
     if (next) return next;
-    let {root, row} = this;
+    var {root, row} = this;
     return root.findRow(row+1);
   }
 
   prevLine() {
-    let {parent} = this;
+    var {parent} = this;
     if (!parent) return null;
-    let prev = parent.children[parent.children.indexOf(this)-1];
+    var prev = parent.children[parent.children.indexOf(this)-1];
     if (prev) return prev;
-    let {root, row} = this;
+    var {root, row} = this;
     return root.findRow(row-1);
   }
 
@@ -1757,12 +1739,13 @@ export default class Document {
     report.push(...root.consistencyCheck());
 
     let i = 0, line = lines[0];
-    do {
+    while (line) {
     // console.log(line)
       if (line != lines[i])
         report.push({error: `line iteration at ${i} is broken: nextLine() of ${lines[i-1]} is not ${lines[i]}!`});
       i++;
-    } while(line = line.nextLine());
+      line = line.nextLine();
+    }
     if (lines[i]) {
       report.push({error: `nextLine() of\n  ${lines[i-1]}\nis nullish but \n  ${lines[i]}\nexists in tree!`});
     }
