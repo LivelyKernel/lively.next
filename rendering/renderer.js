@@ -52,13 +52,17 @@ export class Renderer {
 
   startRenderWorldLoop() {
     this.renderWorldLoopProcess = this.requestAnimationFrame(() => this.startRenderWorldLoop());
-    this.worldMorph.renderAsRoot(this);
-    return this;
+    return this.renderStep();
   }
 
   stopRenderWorldLoop() {
     this.domEnvironment.window.cancelAnimationFrame(this.renderWorldLoopProcess);
     this.renderWorldLoopProcess = null;
+  }
+
+  renderStep() {
+    this.worldMorph.renderAsRoot(this);
+    return this;
   }
 
   getNodeForMorph(morph) {

@@ -544,6 +544,10 @@ export default class EventDispatcher {
         .then(() => this.activations--, err => { this.activations--; throw err; })
     });
     events.forEach(evt => this.dispatchEvent(evt, morphMethod));
+
+    if (this.world && this.world.needsRerender()) {
+      this.world.env.renderer.renderStep(); 
+    }
   }
 
   simulateDOMEvents(...eventSpecs) {
