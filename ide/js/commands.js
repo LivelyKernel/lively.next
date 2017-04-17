@@ -1,8 +1,6 @@
-import { pt, Rectangle } from "lively.graphics";
-import { chain, arr, obj, string } from "lively.lang";
+import { arr, string } from "lively.lang";
 import { show } from "../../index.js";
 import { Range } from "../../text/range.js";
-import { eqPosition, lessPosition } from "../../text/position.js";
 import Inspector from "./inspector.js";
 
 function getEvalEnv(morph) {
@@ -20,7 +18,9 @@ function doEval(
   morph,
   range = morph.selection.isEmpty() ? morph.lineRange() : morph.selection.range,
   additionalOpts,
-  code = morph.textInRange(range)) {
+  code = morph.textInRange(range)
+) {
+
   var jsPlugin = morph.pluginFind(p => p.isJSEditorPlugin);
   if (!jsPlugin)
     throw new Error(`doit not possible: cannot find js editor plugin of !${morph}`)
@@ -52,105 +52,6 @@ function maybeSelectCommentOrLine(morph) {
 }
 
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// FIXME duplication with lively.vm completions and lively morphic completions and inspector!
-var symMatcher = /^Symbol\((.*)\)$/,
-    knownSymbols = (() =>
-      Object.getOwnPropertyNames(Symbol)
-        .filter(ea => typeof Symbol[ea] === "symbol")
-        .reduce((map, ea) => map.set(Symbol[ea], "Symbol." + ea), new Map()))();
-function printSymbol(sym) {
-  if (Symbol.keyFor(sym)) return `Symbol.for("${Symbol.keyFor(sym)}")`;
-  if (knownSymbols.get(sym)) return knownSymbols.get(sym)
-  var matched = String(sym).match(symMatcher);
-  return String(sym);
-}
-function safeToString(value) {
-  if (!value) return String(value);
-  if (Array.isArray(value)) return `[${value.map(safeToString).join(",")}]`;
-  if (typeof value === "symbol") return printSymbol(value);
-  try {
-    return String(value);
-  } catch (e) { return `Cannot print object: ${e}`; }
-}
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-var printEvalResult = (function() {
-  var itSym = typeof Symbol !== "undefined" && Symbol.iterator,
-      maxIterLength = 10,
-      maxStringLength = 100;
-
-  return function(result, maxDepth) {
-    var err = result instanceof Error ? result : result.isError ? result.value : null;
-    return err ?
-      String(err) + (err.stack ? "\n" + err.stack : "") :
-      printInspect(result.value, maxDepth);
-  }
-
-  function printIterable(val, ignore) {
-    var isIterable = typeof val !== "string"
-                  && !Array.isArray(val)
-                  && itSym && typeof val[itSym] === "function";
-    if (!isIterable) return ignore;
-    var hasEntries = typeof val.entries === "function",
-        it = hasEntries ? val.entries() : val[itSym](),
-        values = [],
-        open = hasEntries ? "{" : "[", close = hasEntries ? "}" : "]",
-        name = val.constructor && val.constructor.name || "Iterable";
-    for (var i = 0, next; i < maxIterLength; i++) {
-      next = it.next();
-      if (next.done) break;
-      values.push(next.value);
-    }
-    var printed = values.map(ea => hasEntries ?
-        `${printInspect(ea[0], 1)}: ${printInspect(ea[1], 1)}` :
-        printInspect(ea, 2)).join(", ");
-    return `${name}(${open}${printed}${close})`;
-  }
-
-  function inspectPrinter(val, ignore, continueInspectFn) {
-
-    if (!val) return ignore;
-    if (typeof val === "symbol") return printSymbol(val);
-    if (typeof val === "string") return string.print(string.truncate(val, maxStringLength));
-    if (val.isMorph) return safeToString(val);
-    if (val instanceof Promise) return "Promise()";
-    if (val instanceof Node) return safeToString(val);
-    if (typeof ImageData !== "undefined" && val instanceof ImageData) return safeToString(val);
-    var length = val.length || val.byteLength;
-    if (length !== undefined && length > maxIterLength && val.slice) {
-      var printed = typeof val === "string" || val.byteLength ?
-                      safeToString(val.slice(0, maxIterLength)) :
-                      val.slice(0,maxIterLength).map(continueInspectFn);
-      return "[" + printed + ",...]";
-    }
-    var iterablePrinted = printIterable(val, ignore);
-    if (iterablePrinted !== ignore) return iterablePrinted;
-    return ignore;
-  }
-
-  function printInspect(object, maxDepth) {
-    if (typeof maxDepth === "object")
-      maxDepth = maxDepth.maxDepth || 2;
-
-    if (!object) return String(object);
-    if (typeof object === "string") {
-      var mark = object.includes("\n") ? "`" : '"'
-      return mark + object + mark;
-    }
-    if (object instanceof Error) return object.stack || safeToString(object);
-    if (!obj.isObject(object)) return safeToString(object);
-    try {
-      var inspected = obj.inspect(object, {
-        customPrinter: inspectPrinter,
-        maxDepth, printFunctionSource: true
-      });
-    } catch (e) {}
-    // return inspected;
-    return inspected === "{}" ? safeToString(object) : inspected;
-  }
-
-})();
 
 export var jsEditorCommands = [
 
@@ -162,12 +63,13 @@ export var jsEditorCommands = [
       maybeSelectCommentOrLine(morph);
       var result, err;
       try {
+        opts = {...opts, inspect: true, inspectDepth: count};
         result = await doEval(morph, undefined, opts);
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
       err ?
         morph.showError(err) :
-        morph.setStatusMessage(printEvalResult(result, count));
+        morph.setStatusMessage(result.value);
       return result;
     }
   },
@@ -185,19 +87,20 @@ export var jsEditorCommands = [
       } catch (e) { err = e; }
       err ?
         morph.showError(err) :
-        morph.setStatusMessage(safeToString(result.value));
+        morph.setStatusMessage(String(result.value));
       return result;
     }
   },
 
   {
     name: "printit",
-    doc: "Evaluates the selecte code or the current line and insert the result in a printed representation",
+    doc: "Evaluates selected code or the current line and inserts the result in a printed representation",
     exec: async function(morph, opts) {
       // opts = {targetModule}
       maybeSelectCommentOrLine(morph);
       var result, err;
       try {
+        opts = {...opts, asString: true};
         result = await doEval(morph, undefined, opts);
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
@@ -205,7 +108,7 @@ export var jsEditorCommands = [
       // morph.insertTextAndSelect(err ? err.stack || String(err) : String(result.value));
       morph.insertTextAndSelect(
         err ? String(err) + (err.stack ? "\n" + err.stack : "") :
-        safeToString(result.value));
+        String(result.value));
       return result;
     }
   },
@@ -233,11 +136,12 @@ export var jsEditorCommands = [
       maybeSelectCommentOrLine(morph);
       var result, err;
       try {
+        opts = {...opts, inspect: true, inspectDepth: count};
         result = await doEval(morph, undefined, opts);
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
       morph.selection.collapseToEnd();
-      morph.insertTextAndSelect(printEvalResult(result, count));
+      morph.insertTextAndSelect(result.value);
       return result;
     }
   },
