@@ -10,6 +10,8 @@ export class HTTPCoreInterface extends RemoteCoreInterface {
     this.server = new HttpEvalStrategy(url);
   }
 
+  get name() { return this.url; }
+
   runEval(source, options) {
     return this.server.runEval(source, options);
   }

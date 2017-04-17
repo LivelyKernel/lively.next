@@ -26,6 +26,8 @@ export class Interface {
     this.coreInterface = coreInterface;
   }
 
+  get name() { return this.coreInterface.name; }
+
   dynamicCompletionsForPrefix(mod, prefix, opts) { return this.coreInterface.dynamicCompletionsForPrefix(mod, prefix, opts); }
   runEval(source, options)                       { return this.coreInterface.runEval(source, options); }
   printSystemConfig(a, b, c)                     { return this.coreInterface.printSystemConfig(a, b, c); }

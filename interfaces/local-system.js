@@ -11,6 +11,8 @@ import { AbstractCoreInterface } from "./interface";
 
 export class LocalCoreInterface extends AbstractCoreInterface {
 
+  get name() { return "local"; }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // lively.vm
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
