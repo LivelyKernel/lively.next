@@ -50,7 +50,16 @@ export default class Workspace extends Window {
             targetModule: "lively://lively.next-workspace/" + ed.id,
             context: ed, format: "esm"
           }
-          this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(this, this.getEvalBackend()));
+          this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(
+            this, this.systemInterface.name));
+        }
+      },
+
+      systemInterface: {
+        derived: true, readOnly: true, after: ["jsPlugin"],
+        get() { return this.jsPlugin.systemInterface(); },
+        set(systemInterface) {
+          this.jsPlugin.setSystemInterface(systemInterface);
         }
       },
 
@@ -68,8 +77,9 @@ export default class Workspace extends Window {
     this.jsPlugin.requestHighlight();
   }
 
-  setEvalBackend(choice) { this.jsPlugin.evalEnvironment.remote = choice; }
-  getEvalBackend() { this.jsPlugin.evalEnvironment.remote; }
+  setEvalBackend(choice) {
+    this.jsPlugin.setSystemInterfaceNamed(choice);
+  }
 
   relayoutWindowControls() {
     super.relayoutWindowControls();

@@ -11,7 +11,17 @@ class EvalBackendList extends DropDownList {
       fontSize: {defaultValue: 10},
       extent: {defaultValue: pt(120, 20)},
       target: {},
+      evalbackendChooser: {}
     }
+  }
+
+  setAndSelectBackend(backend) {
+    if (!backend) backend = "local";
+    if (typeof backend !== "string") backend = backend.name || "unknown backend"
+    let chooser = this.evalbackendChooser;
+    if (!chooser.backends.includes(backend))
+      chooser.backends = [...chooser.backends, backend];
+    this.selection = backend;
   }
 }
 
@@ -29,22 +39,27 @@ export default class EvalBackendChooser {
   get backends() {
     var stored = [];
     try {
-      var stringified = localStorage.getItem("lively.morphic-ide/js/EvalBackendChooser-history");
+      var stringified = localStorage["lively.morphic-ide/js/EvalBackendChooser-history"];
       stored = JSON.parse(stringified);
     } catch (e) {}
     return this._backends = arr.uniq([...(this._backends || []), ...(stored || [])]);
   }
 
   set backends(backends) {
+      // localStorage["lively.morphic-ide/js/EvalBackendChooser-history"] =  JSON.stringify(["http://localhost:9011/eval"]);
     backends = backends.filter(ea => !!ea && ea !== "local" && ea !== "edit...");
     this._backends = backends;
     try {
-      localStorage.setItem("lively.morphic-ide/js/EvalBackendChooser-history", JSON.stringify(backends));
+      localStorage["lively.morphic-ide/js/EvalBackendChooser-history"] =  JSON.stringify(backends);
     } catch (e) {}
   }
 
   buildEvalBackendDropdownFor(morph) {
-    var list = new EvalBackendList({name: "eval backend list", target: morph});
+    var list = new EvalBackendList({
+      evalbackendChooser: this,
+      name: "eval backend list",
+      target: morph
+    });
 
     connect(list, 'selection', this, 'interactivelyChangeEvalBackend', {
       updater: function($upd, choice) { $upd(choice, this.sourceObj.target); }
@@ -66,7 +81,7 @@ export default class EvalBackendChooser {
 
   updateItemsOfEvalBackendDropdown(dropdown, currentBackend) {
     currentBackend = currentBackend || "local";
-    var items = arr.uniq(["edit...", "local", ...this.backends]);
+    var items = arr.uniq(["edit...", "local", currentBackend, ...this.backends]);
     setTimeout(() => {
       noUpdate({sourceObj: dropdown, sourceAttribute: "selection"}, () => {
         dropdown.items = items;
@@ -106,17 +121,12 @@ export default class EvalBackendChooser {
     requester.focus();
   }
 
-  setBackendOfCodeEditorMorph(editorMorph, backend) {
-    var plugin = editorMorph.pluginFind(p => p.isJSEditorPlugin);
-    if (plugin) plugin.evalEnvironment.remote = backend;
-  }
-
   activateEvalBackendCommand(requester) {
     return {
         name: "activate eval backend dropdown list",
         exec: () => {
           var list = requester.getSubmorphNamed("eval backend list");
-          list.toggleList(); list.list.focus();
+          list.toggleList(); list.listMorph.focus();
           return true;
         }
       }

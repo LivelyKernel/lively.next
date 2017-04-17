@@ -55,15 +55,33 @@ class CodeDefTreeData extends TreeData {
 // Browser.browse({moduleName: "lively.morphic/morph.js", codeEntity: {name: "Morph"}});
 export default class Browser extends Window {
 
-  static async browse(browseSpec = {}, browserOrProps = {}, optBackend) {
+  static async browse(browseSpec = {}, browserOrProps = {}, optSystemInterface) {
     // browse spec:
     // packageName, moduleName, codeEntity, scroll, textPosition like {row: 0, column: 0}
     var browser = browserOrProps instanceof Browser ?
       browserOrProps : new this(browserOrProps);
     if (!browser.world()) browser.openInWorldNearHand();
-    return browser.browse(browseSpec, optBackend);
+    return browser.browse(browseSpec, optSystemInterface);
   }
 
+  static get properties() {
+  
+    return {
+      systemInterface: {
+        derived: true, readOnly: true, after: ["editorPlugin"],
+        get() { return this.editorPlugin.systemInterface(); },
+        set(systemInterface) {
+          this.editorPlugin.setSystemInterface(systemInterface);
+        }
+      },
+
+      editorPlugin: {
+        after: ["submorphs"], readOnly: true, derived: true,
+        get() { return this.get("sourceEditor").pluginFind(p => p.isEditorPlugin); }
+      }
+    }
+  
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // initialization
@@ -161,7 +179,6 @@ export default class Browser extends Window {
     // remember browse state
     var {
       ui: {sourceEditor, codeEntityTree, codeEntityTree, moduleList},
-      backend,
       selectedPackage,
       selectedModule,
       selectedCodeEntity
@@ -177,7 +194,6 @@ export default class Browser extends Window {
         scroll: sourceEditor.scroll,
         codeEntityTreeScroll: codeEntityTree.scroll,
         moduleListScroll: moduleList.scroll,
-        backend
       }
     }
   }
@@ -419,8 +435,6 @@ export default class Browser extends Window {
 
   get isBrowser() { return true; }
 
-  get editorPlugin() { return this.get("sourceEditor").pluginFind(p => p.isEditorPlugin); }
-
   get ui() {
     return {
       container:             this.targetMorph,
@@ -502,17 +516,13 @@ export default class Browser extends Window {
   // system interface
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  get backend() { return this.editorPlugin.evalEnvironment.remote || "local"; }
-  set backend(remote) {
-    this.editorPlugin.evalEnvironment.remote = remote;
-  }
-
   async setEvalBackend(newRemote) {
-    var oldRemote = this.backend,
+    newRemote = newRemote || "local";
+    var oldSystemInterface = this.systemInterface,
         pckg = this.selectedPackage.name,
         mod = this.selectedModule.nameInPackage;
-    if (newRemote !== oldRemote) {
-      this.backend = newRemote;
+    if (newRemote !== oldSystemInterface.name) {
+      this.editorPlugin.setSystemInterfaceNamed(newRemote);
       this.reset();
       await this.selectPackageNamed(pckg);
       await this.selectModuleNamed(mod);
@@ -520,18 +530,10 @@ export default class Browser extends Window {
     }
   }
 
-  async systemInterface() {
-    var livelySystem = await System.import("lively-system-interface"),
-        remote = this.backend;
-    return !remote || remote === "local" ?
-      livelySystem.localInterface :
-      livelySystem.serverInterfaceFor(remote);
-  }
-
   async packageResources(p) {
     // await this.packageResources(this.selectedPackage)
     try {
-      return (await (await this.systemInterface()).resourcesOfPackage(p.address))
+      return (await this.systemInterface.resourcesOfPackage(p.address))
         .filter(({url}) => url.endsWith(".js") || url.endsWith(".json"))
         .map((ea) => { ea.name = ea.url; return ea; });
     } catch (e) { this.showError(e); return []; }
@@ -541,7 +543,7 @@ export default class Browser extends Window {
   // browser actions
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  async browse(browseSpec = {}, optBackend) {
+  async browse(browseSpec = {}, optSystemInterface) {
     // browse spec:
     // packageName, moduleName, codeEntity, scroll, textPosition like {row: 0, column: 0}
 
@@ -553,20 +555,21 @@ export default class Browser extends Window {
       scroll,
       codeEntityTreeScroll,
       moduleListScroll,
-      backend
+      systemInterface
     } = browseSpec,
       {sourceEditor, codeEntityTree, moduleList} = this.ui;
 
     if (this.world()) await this.whenRendered();
 
-    if (optBackend || backend) this.backend = optBackend || backend;
+    if (optSystemInterface || systemInterface)
+      this.systemInterface = optSystemInterface || systemInterface;
 
     if (packageName) {
       await this.selectPackageNamed(packageName);
       if (moduleName) await this.selectModuleNamed(moduleName);
 
     } else if (moduleName) {
-      let system = await this.systemInterface(),
+      let system = this.systemInterface,
           m = await system.getModule(moduleName);
       if (m) {
         moduleName = m.id;
@@ -601,8 +604,7 @@ export default class Browser extends Window {
   whenModuleUpdated() { return this.state.moduleUpdateInProgress || Promise.resolve(); }
 
   async selectPackageNamed(pName) {
-    let system = await this.systemInterface(),
-        p = await system.getPackage(pName);
+    let p = await this.systemInterface.getPackage(pName);
     this.onPackageSelected(p);
     await this.whenPackageUpdated();
     return p;
@@ -641,7 +643,7 @@ export default class Browser extends Window {
           mName === name || mName === nameInPackage);
 
     if (!m) {
-      let system = await this.systemInterface(),
+      let system = this.systemInterface,
           p = this.state.selectedPackage,
           url, nameInPackage;
 
@@ -683,7 +685,7 @@ export default class Browser extends Window {
     if (selectedModule && selectedModule.name === moduleURI)
       return selectedModule;
 
-    var system = await this.systemInterface(),
+    var system = this.systemInterface,
         mods = await system.getModules(),
         m = mods.find(({name}) => name === moduleURI),
         p = m && await system.getPackageForModule(m.name);
@@ -717,7 +719,7 @@ export default class Browser extends Window {
     }
 
     try {
-      var system = await this.systemInterface();
+      var system = this.systemInterface;
 
       if (!m.isLoaded && m.name.endsWith(".js")) {
         var err;
@@ -776,7 +778,7 @@ export default class Browser extends Window {
   }
 
   async prepareCodeEditorForModule(module) {
-    var system = await this.systemInterface(),
+    var system = this.systemInterface,
         format = (await system.moduleFormat(module.name)) || "esm",
         [_, ext] = module.name.match(/\.([^\.]+)$/) || [];
     // FIXME we already have such "mode" switching code in the text editor...
@@ -889,7 +891,7 @@ export default class Browser extends Window {
     if (!module) return this.setStatusMessage("Cannot save, no module selected", Color.red);
 
     let content = this.ui.sourceEditor.textString,
-        system = await this.systemInterface();
+        system = this.systemInterface;
 
     // moduleChangeWarning is set when this browser gets notified that the
     // current module was changed elsewhere (onModuleChanged) and it also has

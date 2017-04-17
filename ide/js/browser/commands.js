@@ -104,7 +104,7 @@ export default function browserCommands(browser) {
         var m = browser.selectedModule;
         if (!m) return browser.world().inform("No module selected", {requester: browser});
         try {
-          await (await browser.systemInterface()).interactivelyReloadModule(null, m.name);
+          await browser.systemInterface.interactivelyReloadModule(null, m.name);
         } catch(err) {
           browser.world().inform(`Error while reloading ${m.name}:\n${err.stack || err}`, {requester: browser});
           return true;
@@ -120,7 +120,7 @@ export default function browserCommands(browser) {
       exec: async (browser) => {
         var p = browser.selectedPackage,
             m = browser.selectedModule,
-            system = await browser.systemInterface();
+            system = browser.systemInterface;
         try {
           var mods = await system.interactivelyAddModule(browser, m ? m.name : p ? p.address : null);
         } catch(e) {
@@ -144,7 +144,7 @@ export default function browserCommands(browser) {
       exec: async (browser) => {
         var p = browser.selectedPackage,
             m = browser.selectedModule,
-            system = await browser.systemInterface();
+            system = browser.systemInterface;
         if (!p) return browser.world().inform("No package selected", {requester: browser});
         if (!m) return browser.world().inform("No module selected", {requester: browser});
         try {
@@ -177,7 +177,7 @@ export default function browserCommands(browser) {
 
         var pkg;
         try {
-          var system = await browser.systemInterface();
+          var system = browser.systemInterface;
           pkg = what === "create" ?
             await system.interactivelyCreatePackage(browser) :
             await system.interactivelyLoadPackage(
@@ -200,7 +200,7 @@ export default function browserCommands(browser) {
         if (!p) { browser.world().inform("No package selected"); return true; }
 
         try {
-          var pkg = await (await browser.systemInterface()).interactivelyRemovePackage(browser, p.address);
+          var pkg = await browser.systemInterface.interactivelyRemovePackage(browser, p.address);
         } catch (e) {
           if (e === "Canceled") browser.world().inform("Canceled package removel");
           else throw e;
@@ -216,7 +216,7 @@ export default function browserCommands(browser) {
     {
       name: "show imports and exports of package",
       exec: async browser => {
-        var system = await browser.systemInterface()
+        var system = browser.systemInterface;
         var packages = await system.getPackages();
 
         var items = packages.map(ea => {
@@ -315,11 +315,10 @@ export default function browserCommands(browser) {
                   nCalls++;
                   return `await ((${lively.ast.stringify(beforeFn)})());`
                 })
-              }).join("\n"),
-              {coreInterface: livelySystem} = await browser.systemInterface();
+              }).join("\n");
 
           try {
-            await livelySystem.runEval(beforeCode, {...ed.evalEnvironment});
+            await browser.systemInterface.runEval(beforeCode, {...ed.evalEnvironment});
             browser.setStatusMessage(`Executed ${nCalls} test ${what} functions`);
           } catch (e) {
             browser.showError(new Error(`Error when running ${what} calls of test:\n${e.stack}`));
@@ -357,8 +356,8 @@ export default function browserCommands(browser) {
 
     runner = runner.getWindow().targetMorph;
 
-    if (runner.backend != browser.backend)
-      runner.backend = browser.backend;
+    if (runner.systemInterface != browser.systemInterface)
+      runner.systemInterface = browser.systemInterface;
 
     return spec ?
       runner[spec.type === "suite" ? "runSuite" : "runTest"](spec.fullTitle):
@@ -375,8 +374,8 @@ export default function browserCommands(browser) {
 
     runner = runner.getWindow().targetMorph;
 
-    if (runner.backend != browser.backend)
-      runner.backend = browser.backend;
+    if (runner.systemInterface != browser.systemInterface)
+      runner.systemInterface = browser.systemInterface;
 
     return runner.runTestsInPackage(packageURL);
   }

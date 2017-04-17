@@ -23,9 +23,11 @@ import { Snippet } from "../../text/snippets.js";
 // FIXME! We don't want to create a dependency from lively.morphic to
 // lively-system-interface so this get's "side-loaded". We need to split various
 // ide parts into own packages that then can have the proper dependencies
-var serverInterfaceFor, localInterface;
+var localInterface, serverInterfaceFor;
 System.import("lively-system-interface").then(system => {
-  serverInterfaceFor = system.serverInterfaceFor; localInterface = system.localInterface; })
+  localInterface = system.localInterface;
+  serverInterfaceFor = system.serverInterfaceFor;
+})
 
 
 export default class JavaScriptEditorPlugin extends EditorPlugin {
@@ -130,16 +132,14 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
   }
 
   sanatizedJsEnv(envMixin) {
-    var env = {...this.evalEnvironment, ...envMixin},
-        {targetModule, context, format, remote} = env,
-        context = context || this.textMorph,
-        // targetModule = targetModule || "lively://lively.next-prototype_2016_08_23/" + morph.id,
-        sourceURL = targetModule + "_doit_" + Date.now(),
-        format = format || "esm";    
-    if (remote === "local") remote = null;
-    return remote ?
-      {targetModule, format, sourceURL, remote} :
-      {System, targetModule, format, context, sourceURL}
+    var env = {...this.evalEnvironment, ...envMixin};
+    if (!env.format) env.formatd = "esm";    
+    if (!env.context) env.context = this.textMorph;
+    if (!env.sourceURL)
+      env.sourceURL = env.targetModule + "_doit_" + Date.now();
+    // targetModule = targetModule || "lively://lively.next-prototype_2016_08_23/" + morph.id,
+    if (!env.systemInterface) env.systemInterface = localInterface;
+    return env;
   }
 
   backend(envMixin) {
@@ -149,7 +149,18 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
 
   systemInterface(envMixin) {
     var env = this.sanatizedJsEnv(envMixin);
-    return env.remote ? serverInterfaceFor(env.remote) : localInterface;
+    return env.systemInterface;
+  }
+
+  setSystemInterface(systemInterface) {
+    return this.evalEnvironment.systemInterface = systemInterface;
+  }
+
+  setSystemInterfaceNamed(interfaceName) {
+    return this.setSystemInterface(
+      !interfaceName || interfaceName === "local" ?
+        localInterface :
+        serverInterfaceFor(interfaceName));
   }
 
   runEval(code, opts) {

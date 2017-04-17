@@ -9,18 +9,19 @@ import EvalBackendChooser from "./js/eval-backend-ui.js";
 
 import "mocha-es6";
 import LoadingIndicator from "../components/loading-indicator.js";
+import JavaScriptEditorPlugin from "./js/editor-plugin.js";
 
 var jsDiff;
 (async function loadJsDiff() {
   jsDiff = await System.import("https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js");
 })();
 
-export async function findTestModulesInPackage(livelySystem, packageOrUrl) {
-  var resources = await livelySystem.resourcesOfPackage(packageOrUrl)
+export async function findTestModulesInPackage(systemInterface, packageOrUrl) {
+  var resources = await systemInterface.resourcesOfPackage(packageOrUrl)
   return Promise.all(
     resources.map(async ({url}) => {
       if (!url.endsWith(".js")) return null;
-      var source = await livelySystem.moduleRead(url),
+      var source = await systemInterface.moduleRead(url),
           hasMochaImports = query.imports(query.scopes(parse(source))).some(({fromModule}) =>
             fromModule.includes("mocha-es6"));
       if (!hasMochaImports) return null;
@@ -198,6 +199,26 @@ export default class TestRunner extends HTMLMorph {
     ).activate();
   }
 
+  static get properties() {
+    return {
+      editorPlugin: {
+        get() {
+          return this.getProperty("editorPlugin")
+              || (this.editorPlugin = new JavaScriptEditorPlugin());
+        }
+      },
+
+      systemInterface: {
+        derived: true, after: ["editorPlugin", "submorphs"],
+        get() { return this.editorPlugin.systemInterface(); },
+        set(systemInterface) {
+          this.editorPlugin.setSystemInterface(systemInterface);
+          this.get("eval backend list").setAndSelectBackend(systemInterface.name);
+        }
+      }
+    }
+  }
+
   constructor(props) {
     super({name: "test runner", clipMode: "auto", ...props});
     this.reset();
@@ -219,9 +240,7 @@ export default class TestRunner extends HTMLMorph {
       collapsedSuites: {}
     }
 
-    this.backend = null;
-
-    this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(this, this.backend));
+    this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(this, null));
     this.update();
   }
 
@@ -229,18 +248,9 @@ export default class TestRunner extends HTMLMorph {
     this.get("eval backend list").topRight = this.innerBounds().topRight();
   }
 
-  get backend() { return this.state.backend || "local"; }
-  set backend(x) {
-    this.state.backend = x;
-    this.get("eval backend list") && (this.get("eval backend list").selection = x);
-  }
-  setEvalBackend(choice) { this.backend = choice; }
-
-  async getLivelySystem() {
-    var systemInterface = await System.import("lively-system-interface");
-    return !this.backend || this.backend === "local" ?
-      systemInterface.localInterface :
-      systemInterface.serverInterfaceFor(this.backend);
+  setEvalBackend(choice) {
+    this.editorPlugin.setSystemInterfaceNamed(choice);
+    this.get("eval backend list").setAndSelectBackend(this.systemInterface);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -338,8 +348,7 @@ export default class TestRunner extends HTMLMorph {
     grep = grep || this.state.grep || /.*/;
 
     try {
-      var livelySystem = await this.getLivelySystem(),
-          result = await livelySystem.runMochaTests(
+      var result = await this.systemInterface.runMochaTests(
                     grep, testRecords,
                     () => this.update(),
                     (err, when) => this.showError(`Error during ${when}: ${err}`));
@@ -359,7 +368,7 @@ export default class TestRunner extends HTMLMorph {
   }
 
   async runTestsInPackage(packageURL) {
-    var testModuleURLs = await findTestModulesInPackage(await this.getLivelySystem(), packageURL),
+    var testModuleURLs = await findTestModulesInPackage(this.systemInterface, packageURL),
         results = [];
     for (let url of testModuleURLs)
       results.push(await this.runTestFile(url))
@@ -649,7 +658,7 @@ export default class TestRunner extends HTMLMorph {
   }
 
   async interactivelyloadTests() {
-    let sys = await this.getLivelySystem(),
+    let sys = this.systemInterface,
         packages = await sys.getPackages()
           .map(({name, url}) => {
             return {isListItem: true, string: name, value: {name, url}}; }),
