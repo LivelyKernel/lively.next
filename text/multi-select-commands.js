@@ -8,7 +8,8 @@ export var multiSelectCommands = [
     exec: morph => {
       var start = morph.selection.start;      
       if (start.row > 0) {
-        var pos = morph.getPositionAboveOrBelow(1, start, true)
+        var pos = morph.getPositionAboveOrBelow(
+          1, start, true, 0, morph.charBoundsFromTextPosition(start).x);
         morph.selection.addRange({start: pos, end: pos})
       }
       return true;
@@ -19,10 +20,13 @@ export var multiSelectCommands = [
     name: "[multi select] add cursor below",
     multiSelectAction: "single",
     exec: morph => {
-      var {row, column} = morph.selection.start,
+      var start = morph.selection.start,
           {row: endRow} = morph.documentEndPosition;
-      if (row < endRow)
-        morph.selection.addRange({start: {row: row+1, column}, end: {row: row+1, column}})
+      if (start.row < endRow) {
+        var pos = morph.getPositionAboveOrBelow(
+          -1, start, true, 0, morph.charBoundsFromTextPosition(start).x);
+        morph.selection.addRange({start: pos, end: pos})
+      }
       return true;
     }
   },
@@ -173,3 +177,6 @@ export var multiSelectCommands = [
   }
 
 ];
+
+// await lively.modules.module("lively.morphic/text/commands.js").reload({reloadDeps: false, resetEnv: false});
+//await  lively.modules.module("lively.morphic/text/morph.js").reload({reloadDeps: false, resetEnv: false});
