@@ -1949,6 +1949,15 @@ export class Image extends Morph {
 
   arrayBuffer() { return this.imageData().data.buffer; }
 
+  loadArrayBuffer(arrayBuffer, type = "image/jpeg") {
+    let arrayBufferView = new Uint8Array(arrayBuffer),
+        blob = new Blob( [ arrayBufferView ], { type: "image/jpeg" } ),
+        urlCreator = window.URL || window.webkitURL,
+        imageUrl = urlCreator.createObjectURL(blob);
+    this.imageUrl = imageUrl;
+    this.makeDirty();
+  }
+
   async convertToBase64() {
     // this.imageUrl = "http://www.amir.ninja/content/images/2015/12/Hello-World.png"
     // await this.convertToBase64();
