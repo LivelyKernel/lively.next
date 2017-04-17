@@ -781,7 +781,43 @@ var set$1 = function set$1(object, property, value, receiver) {
   return value;
 };
 
+var slicedToArray = function () {
+  function sliceIterator(arr, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
 
+    try {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"]) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  return function (arr, i) {
+    if (Array.isArray(arr)) {
+      return arr;
+    } else if (Symbol.iterator in Object(arr)) {
+      return sliceIterator(arr, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
 
 
 
@@ -2417,8 +2453,8 @@ function without(array, elem) {
   // non-mutating
   // Example:
   // arr.without([1,2,3,4,5,6], 3) // => [1,2,4,5,6]
-  return array.filter(function (value) {
-    return value !== elem;
+  return array.filter(function (val) {
+    return val !== elem;
   });
 }
 
@@ -2426,18 +2462,30 @@ function withoutAll(array, otherArr) {
   // non-mutating
   // Example:
   // arr.withoutAll([1,2,3,4,5,6], [3,4]) // => [1,2,5,6]
-  return array.filter(function (value) {
-    return otherArr.indexOf(value) === -1;
+  return array.filter(function (val) {
+    return otherArr.indexOf(val) === -1;
   });
 }
 
 function uniq(array, sorted) {
   // non-mutating
   // Removes duplicates from array.
-  return array.reduce(function (a, value, index) {
-    if (0 === index || (sorted ? last(a) != value : a.indexOf(value) === -1)) a.push(value);
-    return a;
-  }, []);
+  // if sorted == true then assume array is sorted which allows uniq to be more
+  // efficient
+  // uniq([3,5,6,2,3,4,2,6,4])
+  var result = [array[0]];
+  if (sorted) {
+    for (var i = 1; i < array.length; i++) {
+      var val = array[i];
+      if (val !== result[result.length]) result.push(val);
+    }
+  } else {
+    for (var _i = 1; _i < array.length; _i++) {
+      var _val = array[_i];
+      if (result.indexOf(_val) === -1) result.push(_val);
+    }
+  }
+  return result;
 }
 
 function uniqBy(array, comparator, context) {
@@ -2473,9 +2521,7 @@ function compact(array) {
   // removes falsy values
   // Example:
   // arr.compact([1,2,undefined,4,0]) // => [1,2,4]
-  return array.filter(function (ea) {
-    return !!ea;
-  });
+  return array.filter(Boolean);
 }
 
 function mutableCompact(array) {
@@ -2559,6 +2605,7 @@ function interpose(array, delim) {
 
 function delimWith(array, delim) {
   // ignore-in-doc
+  // previously used, use interpose now!
   return interpose(array, delim);
 }
 
@@ -3172,13 +3219,14 @@ function dropWhile(arr, fun, context) {
 function shuffle(array) {
   // Ramdomize the order of elements of array. Does not mutate array.
   // Example:
-  // arr.shuffle([1,2,3,4,5]) // => [3,1,2,5,4]
-  var unusedIndexes = range(0, array.length - 1);
-  return array.reduce(function (shuffled, ea, i) {
+  // shuffle([1,2,3,4,5]) // => [3,1,2,5,4]
+  var unusedIndexes = range(0, array.length - 1),
+      shuffled = Array(array.length);
+  for (var i = 0; i < array.length; i++) {
     var shuffledIndex = unusedIndexes.splice(Math.round(Math.random() * (unusedIndexes.length - 1)), 1);
-    shuffled[shuffledIndex] = ea;
-    return shuffled;
-  }, Array(array.length));
+    shuffled[shuffledIndex] = array[i];
+  }
+  return shuffled;
 }
 
 // -=-=-=-=-=-=-=-
@@ -4977,13 +5025,52 @@ function lineNumberToIndexesComputer(s) {
 }
 
 function lineRanges(s) {
-  return lines(s).reduce(function (akk, line) {
-    var start = akk.indexCount,
-        end = akk.indexCount + line.length + 1;
-    akk.lineRanges.push([start, end]);
-    akk.indexCount = end;
-    return akk;
-  }, { lineRanges: [], indexCount: 0 }).lineRanges;
+  var from$$1 = 0,
+      to = 0,
+      linesOfS = lines(s),
+      result = [];
+  for (var i = 0; i < linesOfS.length; i++) {
+    var line = linesOfS[i];
+    to = from$$1 + line.length + 1;
+    result.push([from$$1, to]);
+    from$$1 = to;
+  }
+  return result;
+}
+
+function findLineWithIndexInLineRanges(lineRanges, idx) {
+  // given a list of `lineRanges` (produced by
+  // `livley.lang.string.lineRanges(string)`) like lineRanges = [[0, 12], [12, 33]]
+  // and an string index `idx` into `string`, find the line no (the index into
+  // `lineRanges`) that includes idx.  The index intervals include start and exclude end:
+  // Example:
+  // findLineWithIndex2(lineRanges, 2); // => 0
+  // findLineWithIndex2(lineRanges, 12); // => 1
+  // findLineWithIndex2(lineRanges, 33); // => 1
+  // findLineWithIndex2(lineRanges, 34); // => -1
+  // findLineWithIndex2(lineRanges, -4); // => -1
+  var nRows = lineRanges.length;
+  if (nRows === 0) return -1;
+  // let currentRow = Math.floor(nRows/2), lastRow = nRows;
+  var startRow = 0,
+      endRow = nRows;
+  while (true) {
+    var middle = startRow + Math.floor((endRow - startRow) / 2),
+        _lineRanges$middle = slicedToArray(lineRanges[middle], 2),
+        from$$1 = _lineRanges$middle[0],
+        to = _lineRanges$middle[1];
+
+    if (idx < from$$1) {
+      if (middle === 0) return -1;
+      endRow = middle;
+      continue;
+    }
+    if (idx > to) {
+      startRow = middle;continue;
+    }
+    return middle;
+  }
+  return -1;
 }
 
 // -=-=-=-=-
@@ -5210,6 +5297,7 @@ var string = Object.freeze({
 	peekLeft: peekLeft,
 	lineIndexComputer: lineIndexComputer,
 	lineNumberToIndexesComputer: lineNumberToIndexesComputer,
+	findLineWithIndexInLineRanges: findLineWithIndexInLineRanges,
 	lineRanges: lineRanges,
 	diff: diff,
 	empty: empty,
@@ -25593,9 +25681,6 @@ var toConsumableArray = function (arr$$1) {
   }
 };
 
-/*global require, __dirname*/
-
-// helper
 function signatureOf(name, func) {
   var source = String(func),
       match = source.match(/function\s*[a-zA-Z0-9_$]*\s*\(([^\)]*)\)/),
@@ -25603,11 +25688,137 @@ function signatureOf(name, func) {
   return name + '(' + params + ')';
 }
 
+
+
 function pluck(list, prop) {
   return list.map(function (ea) {
     return ea[prop];
   });
 }
+
+var knownSymbols = function () {
+  return Object.getOwnPropertyNames(Symbol).filter(function (ea) {
+    return _typeof(Symbol[ea]) === "symbol";
+  }).reduce(function (map, ea) {
+    return map.set(Symbol[ea], "Symbol." + ea);
+  }, new Map());
+}();
+
+var symMatcher = /^Symbol\((.*)\)$/;
+
+function printSymbol(sym) {
+  if (Symbol.keyFor(sym)) return 'Symbol.for("' + Symbol.keyFor(sym) + '")';
+  if (knownSymbols.get(sym)) return knownSymbols.get(sym);
+  var matched = String(sym).match(symMatcher);
+  return String(sym);
+}
+
+function safeToString(value) {
+  if (!value) return String(value);
+  if (Array.isArray(value)) return '[' + value.map(safeToString).join(",") + ']';
+  if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === "symbol") return printSymbol(value);
+  try {
+    return String(value);
+  } catch (e) {
+    throw new Error('Cannot print object: ' + e.stack);
+  }
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function printEvalResult(evalResult) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  var value = evalResult.value,
+      isError = evalResult.isError,
+      isPromise = evalResult.isPromise,
+      promisedValue = evalResult.promisedValue,
+      promiseStatus = evalResult.promiseStatus;
+
+
+  if (isError || value instanceof Error) return String(value.stack || value);
+
+  if (isPromise) {
+    var status = lively_lang.string.print(promiseStatus),
+        printed = promiseStatus === "pending" ? undefined : printEvalResult({ value: promisedValue }, options);
+    return 'Promise({status: ' + status + ', ' + (value === undefined ? "" : "value: " + printed) + '})';
+  }
+
+  if (value instanceof Promise) return 'Promise({status: "unknown"})';
+
+  if (options.inspect) return printInspectEvalValue(value, options.inspectDepth || 2);
+
+  // options.asString
+  return String(value);
+}
+
+var printInspectEvalValue = function () {
+  var itSym = typeof Symbol !== "undefined" && Symbol.iterator,
+      maxIterLength = 10,
+      maxStringLength = 100;
+
+  return function printInspect(object, maxDepth) {
+    if ((typeof maxDepth === 'undefined' ? 'undefined' : _typeof(maxDepth)) === "object") maxDepth = maxDepth.maxDepth || 2;
+
+    if (!object) return String(object);
+    if (typeof object === "string") {
+      var mark = object.includes("\n") ? "`" : '"';
+      return mark + object + mark;
+    }
+    if (object instanceof Error) return object.stack || safeToString(object);
+    if (!lively_lang.obj.isObject(object)) return safeToString(object);
+    try {
+      var inspected = lively_lang.obj.inspect(object, {
+        customPrinter: inspectPrinter,
+        maxDepth: maxDepth, printFunctionSource: true
+      });
+    } catch (e) {}
+    // return inspected;
+    return inspected === "{}" ? safeToString(object) : inspected;
+  };
+
+  function printIterable(val, ignore) {
+    var isIterable = typeof val !== "string" && !Array.isArray(val) && itSym && typeof val[itSym] === "function";
+    if (!isIterable) return ignore;
+    var hasEntries = typeof val.entries === "function",
+        it = hasEntries ? val.entries() : val[itSym](),
+        values = [],
+        open = hasEntries ? "{" : "[",
+        close = hasEntries ? "}" : "]",
+        name = val.constructor && val.constructor.name || "Iterable";
+    for (var i = 0, next; i < maxIterLength; i++) {
+      next = it.next();
+      if (next.done) break;
+      values.push(next.value);
+    }
+    var printed = values.map(function (ea) {
+      return hasEntries ? printInspect(ea[0], 1) + ': ' + printInspect(ea[1], 1) : printInspect(ea, 2);
+    }).join(", ");
+    return name + '(' + open + printed + close + ')';
+  }
+
+  function inspectPrinter(val, ignore, continueInspectFn) {
+
+    if (!val) return ignore;
+    if ((typeof val === 'undefined' ? 'undefined' : _typeof(val)) === "symbol") return printSymbol(val);
+    if (typeof val === "string") return lively_lang.string.print(lively_lang.string.truncate(val, maxStringLength));
+    if (val.isMorph) return safeToString(val);
+    if (val instanceof Promise) return "Promise()";
+    if (typeof Node !== "undefined" && val instanceof Node) return safeToString(val);
+    if (typeof ImageData !== "undefined" && val instanceof ImageData) return safeToString(val);
+    var length = val.length || val.byteLength;
+    if (length !== undefined && length > maxIterLength && val.slice) {
+      var printed = typeof val === "string" || val.byteLength ? safeToString(val.slice(0, maxIterLength)) : val.slice(0, maxIterLength).map(continueInspectFn);
+      return "[" + printed + ",...]";
+    }
+    var iterablePrinted = printIterable(val, ignore);
+    if (iterablePrinted !== ignore) return iterablePrinted;
+    return ignore;
+  }
+}();
+
+/*global require, __dirname*/
+
+// helper
 
 function getObjectForCompletion(evalFunc, stringToEval) {
   var startLetters = '';
@@ -25631,36 +25842,8 @@ function getObjectForCompletion(evalFunc, stringToEval) {
   });
 }
 
-var knownSymbols = function () {
-  return Object.getOwnPropertyNames(Symbol).filter(function (ea) {
-    return _typeof(Symbol[ea]) === "symbol";
-  }).reduce(function (map, ea) {
-    return map.set(Symbol[ea], "Symbol." + ea);
-  }, new Map());
-}();
-
-var symMatcher = /^Symbol\((.*)\)$/;
-
-function printSymbolForCompletion(sym) {
-  if (Symbol.keyFor(sym)) return 'Symbol.for("' + Symbol.keyFor(sym) + '")';
-  if (knownSymbols.get(sym)) return knownSymbols.get(sym);
-  var matched = String(sym).match(symMatcher);
-  return String(sym);
-}
-
-function safeToString(value) {
-  if (!value) return String(value);
-  if (Array.isArray(value)) return '[' + value.map(safeToString).join(",") + ']';
-  if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === "symbol") return printSymbolForCompletion(value);
-  try {
-    return String(value);
-  } catch (e) {
-    throw new Error('Cannot print object: ' + e.stack);
-  }
-}
-
 function propertyExtract(excludes, obj$$1, extractor) {
-  return Object.getOwnPropertyNames(obj$$1).concat(Object.getOwnPropertySymbols(obj$$1).map(printSymbolForCompletion)).filter(function (key) {
+  return Object.getOwnPropertyNames(obj$$1).concat(Object.getOwnPropertySymbols(obj$$1).map(printSymbol)).filter(function (key) {
     return excludes.indexOf(key) === -1;
   }).map(extractor).filter(function (ea) {
     return !!ea;
@@ -25759,6 +25942,7 @@ function getCompletions(evalFunc, string$$1, thenDo) {
 
 
 var completions = Object.freeze({
+	getObjectForCompletion: getObjectForCompletion,
 	getCompletions: getCompletions
 });
 
@@ -26121,13 +26305,10 @@ var EvalResult = function () {
     }
   }, {
     key: "printed",
-    value: function printed(options) {
-      this.value = print(this.value, Object.assign(options || {}, {
-        isError: this.isError,
-        isPromise: this.isPromise,
-        promisedValue: this.promisedValue,
-        promiseStatus: this.promiseStatus
-      }));
+    value: function printed() {
+      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+      this.value = printEvalResult(this, options);
     }
   }, {
     key: "processSync",
@@ -26165,32 +26346,6 @@ function tryToWaitForPromise(evalResult, timeoutMs) {
   });
 }
 
-function print(value, options) {
-  if (options.isError || value instanceof Error) return String(value.stack || value);
-
-  if (options.isPromise) {
-    var status = lively_lang.string.print(options.promiseStatus),
-        printed = options.promiseStatus === "pending" ? undefined : print(options.promisedValue, Object.assign(options || {}, { isPromise: false }));
-    return "Promise({status: " + status + ", " + (value === undefined ? "" : "value: " + printed) + "})";
-  }
-
-  if (value instanceof Promise) return 'Promise({status: "unknown"})';
-
-  if (options.inspect) return printInspect$1(value, options);
-
-  // options.asString
-  return String(value);
-}
-
-function printInspect$1(value, options) {
-  var printDepth = options.printDepth || 2,
-      customPrintInspect = lively_lang.Path("lively.morphic.printInspect").get(getGlobal()),
-      customPrinter = customPrintInspect ? function (val, _) {
-    return customPrintInspect(val, printDepth);
-  } : undefined;
-  return lively_lang.obj.inspect(value, { maxDepth: printDepth, customPrinter: customPrinter });
-}
-
 var funcCall = lively_ast.nodes.funcCall;
 var member$1 = lively_ast.nodes.member;
 var literal$1 = lively_ast.nodes.literal;
@@ -26220,10 +26375,9 @@ function hasUnimportedImports(System, code, parentModule) {
       imports = body.filter(function (node) {
     return node.type === "ImportDeclaration";
   }),
-      importedModules = lively.lang.arr.uniq(imports.map(function (_ref) {
-    var value = _ref.source.value;
-    return value;
-  })),
+      importedModules = lively_lang.arr.uniq(imports.map(function (ea) {
+    return ea.source.value;
+  })).filter(Boolean),
       unloadedImports = importedModules.filter(function (ea) {
     return !System.get(System.decanonicalize(ea, parentModule));
   });
@@ -26666,7 +26820,8 @@ var RemoteEvalStrategy = function (_LivelyVmEvalStrategy) {
   createClass(RemoteEvalStrategy, [{
     key: "sourceForRemote",
     value: function sourceForRemote(action, arg, options) {
-      return "\n(function() {\n  var arg = " + JSON.stringify(arg) + ",\n      options = " + JSON.stringify(options) + ";\n  options.context = System.global;\n  function evalFunction(source, options) {\n    var conf = {meta: {}}; conf.meta[options.targetModule] = {format: \"esm\"};\n    lively.modules.System.config(conf);\n    return lively.vm.runEval(source, options);\n  }\n  function keysOfObjectFunction(prefix, options) {\n    return lively.vm.completions.getCompletions(code => evalFunction(code, options), prefix)\n      .then(result => ({completions: result.completions, prefix: result.startLetters}));\n  }\n  options.asString = " + (action === "eval" ? "true" : "false") + ";\n  return " + (action === "eval" ? "evalFunction" : "keysOfObjectFunction") + "(arg, options)\n    .catch(err => ({isError: true, value: String(err.stack || err)}));\n})();\n";
+      options = lively_lang.obj.dissoc(options, ["systemInterface", "System", "context"]);
+      return "\n(function() {\n  var arg = " + JSON.stringify(arg) + ",\n      options = " + JSON.stringify(options) + ";\n  if (typeof lively === \"undefined\" || !lively.vm) {\n    return {isError: true, value: new Error('lively.vm not available!')}\n  }\n  var hasSystem = typeof System !== \"undefined\"\n  options.context = hasSystem\n    ? System.global\n    : typeof window !== \"undefined\"\n        ? window\n        : typeof global !== \"undefined\"\n            ? global\n            : typeof self !== \"undefined\" ? self : this;\n  function evalFunction(source, options) {\n    if (hasSystem) {\n      var conf = {meta: {}}; conf.meta[options.targetModule] = {format: \"esm\"};\n      System.config(conf);\n    } else {\n      options = Object.assign({}, options);\n      delete options.targetModule;\n    }\n    return lively.vm.runEval(source, options);\n  }\n  function keysOfObjectFunction(prefix, options) {\n    return lively.vm.completions.getCompletions(code => evalFunction(code, options), prefix)\n      .then(result => ({completions: result.completions, prefix: result.startLetters}));\n  }\n  options.asString = " + (action === "eval" ? "true" : "false") + ";\n  return " + (action === "eval" ? "evalFunction" : "keysOfObjectFunction") + "(arg, options)\n    .catch(err => ({isError: true, value: String(err.stack || err)}));\n})();\n";
     }
   }, {
     key: "runEval",
@@ -26731,7 +26886,7 @@ var RemoteEvalStrategy = function (_LivelyVmEvalStrategy) {
 
               case 3:
                 result = _context9.sent;
-                return _context9.abrupt("return", JSON.parse(result));
+                return _context9.abrupt("return", typeof result === "string" ? JSON.parse(result) : result);
 
               case 7:
                 _context9.prev = 7;
@@ -27194,6 +27349,7 @@ var EvalableTextMorphTrait = (_EvalableTextMorphTra = {
 
 
 var evalStrategies = Object.freeze({
+	RemoteEvalStrategy: RemoteEvalStrategy,
 	EvalStrategy: EvalStrategy,
 	SimpleEvalStrategy: SimpleEvalStrategy,
 	LivelyVmEvalStrategy: LivelyVmEvalStrategy,
