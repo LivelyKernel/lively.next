@@ -49,23 +49,38 @@ var worldCommands = [
     name: "run command",
     handlesCount: true,
     exec: async (world, args, count) => {
-      var items = KeyHandler.generateCommandToKeybindingMap(world.focusedMorph || world, true).map(ea => {
-            var {prettyKeys, target, command: {name}} = ea,
-                targetName = target.constructor.name,
-                keysPrinted = prettyKeys ? prettyKeys.join(", ") : "";
-            return {
-              isListItem: true,
-              label: [
-                `${targetName}`, {fontSize: "80%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"},
-                `${name}`, null],
-              annotation: [keysPrinted, {fontSize: "80%", textStyleClasses: ["truncated-text"], maxWidth: 140}],
-              value: ea
-            };
-          }),
-          {prompt, selected: [cmd]} = await world.filterableListPrompt(
-            "Run command", items, {
-              historyId: "lively.morphic-run command",
-              extent: pt(700,900), prompt: world._cachedRunCommandPrompt})
+      let target = world.focusedMorph || world;
+      let items = KeyHandler.generateCommandToKeybindingMap(target, true).map(ea => {
+        var {prettyKeys, target, command: {name}} = ea,
+            targetName = target.constructor.name,
+            keysPrinted = prettyKeys ? prettyKeys.join(", ") : "";
+        return {
+          isListItem: true,
+          value: ea,
+          label: [
+            `${targetName}`, {
+              fontSize: "80%",
+              textStyleClasses: ["v-center-text"],
+              top: "-8%",
+              paddingRight: "10px"
+            },
+            `${name}`, null
+          ],
+          annotation: [
+            keysPrinted, {
+              fontSize: "80%",
+              textStyleClasses: ["truncated-text"],
+              maxWidth: 140
+            }
+          ]
+        };
+      });
+
+      let {prompt, selected: [cmd]} = await world.filterableListPrompt(
+        "Run command", items, {
+          historyId: "lively.morphic-run command",
+          extent: pt(700,900), prompt: world._cachedRunCommandPrompt});
+
       world._cachedRunCommandPrompt = prompt;
       return cmd ? cmd.target.execCommand(cmd.command, args, count) : true;
     }
@@ -529,16 +544,12 @@ var worldCommands = [
         browser = browser.getWindow();
       else browser = null;
 
-      var backend = opts.backend || (browser && browser.backend),
-          systemInterface = await System.import("lively-system-interface"),
-          livelySystem = backend && backend !== "local" ?
-            systemInterface.serverInterfaceFor(backend) :
-            systemInterface.localInterface, // FIXME
-          pkgs = await livelySystem.getPackages({excluded: config.ide.js.ignoredPackages}),
+      var system = browser.systemInterface,
+          pkgs = await system.getPackages({excluded: config.ide.js.ignoredPackages}),
           items = [];
 
       for (let p of pkgs) {
-        items.push(...(await livelySystem.resourcesOfPackage(p))
+        items.push(...(await system.resourcesOfPackage(p))
           .filter(({url}) => !url.endsWith("/"))
           .sort((a, b) => {
             if (a.isLoaded && !b.isLoaded) return -1;
@@ -591,16 +602,13 @@ var worldCommands = [
           { default: Browser } = await System.import("lively.morphic/ide/js/browser/index.js"),
           backend = opts.backend || (browser && browser.backend),
           remote = backend && backend !== "local" ? backend : null,
-          systemInterface = await System.import("lively-system-interface"),
-          livelySystem = remote ?
-            systemInterface.serverInterfaceFor(remote) :
-            systemInterface.localInterface, // FIXME
-          pkgs = await livelySystem.getPackages(),
+          systemInterface = browser.systemInterface,
+          pkgs = await systemInterface.getPackages(),
           items = [];
 
       for (let p of pkgs) {
         for (let m of p.modules) {
-          var shortName = livelySystem.shortModuleName(m.name, p);
+          var shortName = systemInterface.shortModuleName(m.name, p);
           items.push({
             isListItem: true,
             string: `[${p.name}] ${shortName}`,
