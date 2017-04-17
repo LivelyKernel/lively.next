@@ -1,39 +1,36 @@
 /*global System*/
 
 function buildEvalOpts(morph, additionalOpts) {
-  // FIXME, also in text/commands
-  var env = {...morph.evalEnvironment, ...additionalOpts},
-      {targetModule, context, format, remote} = env,
-      context = context || morph,
-      // targetModule = targetModule || "lively://lively.next-prototype_2016_08_23/" + morph.id,
-      sourceURL = targetModule + "_doit_" + Date.now(),
-      format = format || "esm";
-  if (remote === "local") remote = null;
-  return remote ?
-    {targetModule, format, sourceURL, remote} :
-    {System, targetModule, format, context, sourceURL}
+  let p = morph.plugins.find(p => p.isJSEditorPlugin)
+  return p.sanatizedJsEnv(additionalOpts);
 }
 
 export class ModuleTopLevelVarCompleter {
 
   async compute(textMorph, prefix) {
 
-    // "lazy" dependency
-    var {serverInterfaceFor, localInterface} = System.get(
-      System.decanonicalize("lively-system-interface")) || {};
+    let p = textMorph.pluginFind(p => p.isJSEditorPlugin),
+        endpoint = p && p.systemInterface();
 
-    if (!serverInterfaceFor || !localInterface) return [];
+    if (!endpoint) return [];
 
     var opts = buildEvalOpts(textMorph),
-        endpoint = opts.remote ? serverInterfaceFor(opts.remote) : localInterface,
         m = opts.targetModule, names
 
-    if (opts.remote) {
-      var result = await endpoint.runEval(
-        `var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
-         JSON.stringify(
-          Object.getOwnPropertyNames(livelySystem.localInterface.getModule("${m}").recorder))`,
-        {targetModule: "lively://module-recorder-completer"})
+    if (endpoint.name !== "local") {
+      var result = await endpoint.runEval(`
+        var result, livelySystem = typeof System !== "undefined"
+                      && System.get(System.decanonicalize("lively-system-interface"));
+        if (livelySystem) {
+          result = JSON.stringify(
+            Object.getOwnPropertyNames(livelySystem.localInterface.getModule("${m}").recorder));
+        } else {
+          var G = typeof window !== "undefined" ?
+            window : typeof global !== "undefined" ? global : this;
+          result = JSON.stringify(Object.getOwnPropertyNames(G));
+        }
+        result;
+      `, {targetModule: "lively://module-recorder-completer"})
       if (result.isError) return [];
       names = JSON.parse(result.value);
 
@@ -89,15 +86,12 @@ export class DynamicJavaScriptCompleter {
 
     if (!this.isValidPrefix(roughPrefix)) return [];
 
-    // FIXME this should got into a seperate JavaScript support module where
-    // the dependency can be properly declared
-    var {serverInterfaceFor, localInterface} = System.get(
-      System.decanonicalize("lively-system-interface")) || {};
+    let p = textMorph.pluginFind(p => p.isJSEditorPlugin),
+        endpoint = p && p.systemInterface();
 
-    if (!serverInterfaceFor || !localInterface) return [];
+    if (!endpoint) return [];
 
     var opts = buildEvalOpts(textMorph),
-      endpoint = opts.remote ? serverInterfaceFor(opts.remote) : localInterface,
       {
         isError,
         value: err,
