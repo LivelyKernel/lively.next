@@ -12,6 +12,7 @@ Date.now() - t;
 
 */
 
+
 export function shallowEquals(obj1, obj2) {
   if (!obj1 || !obj2) return obj1 == obj2;
   let areEqual = true, seen = {};
@@ -36,6 +37,24 @@ export function concatAttributePair(text1, attr1, text2, attr2, seperator = "") 
   // concatAttributePair("hello", null, "world", null) => ["helloworld", null]
   // concatAttributePair("hello", null, "world", {foo: 23}) => ["hello", null, "world", {foo: 23}]
   // concatAttributePair("hello", {foo: 23}, "world", {foo: 23}) => ["helloworld", {foo: 23}]
+  // concatAttributePair({}, {foo: 23}, "world", {foo: 23})
+  let isObj1 = typeof text1 !== "string",
+      isObj2 = typeof text2 !== "string",
+      hasObj = isObj1 || isObj2;
+
+  if (isObj1 || isObj2) {
+    let result = [];
+    if (isObj1) {
+      result.push(text1, attr1)
+      if (seperator) result.push(seperator, attr1);
+    } else result.push(text1 + seperator, attr1);
+    if (isObj2) {
+      result.push(text2, attr2)
+      if (seperator) result.push(seperator, attr2);
+    } else result.push(text2 + seperator, attr2);
+    return result;
+  }
+
   if (!attr1 && !attr2) return [text1 + seperator + text2, attr1];
   if (attr1 == attr2) return [text1 + seperator + text2, attr1];
   if (!attr1 || !attr2) return [text1 + seperator, attr1, text2, attr2];
@@ -47,7 +66,7 @@ export function concatAttributePair(text1, attr1, text2, attr2, seperator = "") 
 export function joinTextAttributes(textAttributes, seperator = "") {
   // takes a list of textAttribtues like [text1, attr1, text2, attr2, ....] and
   // "joins" each text using `seperator`.  Joining means: If `attr1` and `attr2`
-  // can be merged (see `concatAttributePair`) then do 
+  // can be merged (see `concatAttributePair`) then do
   // text1 + seperator + text2, merge(attr1, attr2) as the text attribute text/attr pair
   if (textAttributes.length <= 2) return textAttributes;
   let result = [], [text, attr] = textAttributes;
@@ -55,11 +74,11 @@ export function joinTextAttributes(textAttributes, seperator = "") {
     let nextText = textAttributes[i],
         nextAttr = textAttributes[i+1],
         merged = concatAttributePair(text, attr, nextText, nextAttr, seperator);
-    if (merged.length === 2) {
+    if (merged.length <= 2) {
       text = merged[0]; attr = merged[1];
     } else {
-      result.push(merged[0], merged[1]);
-      text = merged[2]; attr = merged[3];
+      result.push(...merged.slice(0, -2));
+      [text, attr] = merged.slice(-2);
     }
   }
   result.push(text, attr);
@@ -76,11 +95,16 @@ export function splitTextAndAttributesAt(textAndAttributes, column) {
 
   for (let i = 0; i < textAndAttributes.length; i = i+2) {
     let text = textAndAttributes[i],
-        textEndPos = textPos + text.length;
+        textEndPos = textPos + (typeof text === "string" ? text.length : 1);
     if (textEndPos < column) { textPos = textEndPos; continue; }
 
     if (textPos === column)
       return [textAndAttributes.slice(0, i), textAndAttributes.slice(i)];
+    if (textEndPos === column)
+      return [textAndAttributes.slice(0, i+2), textAndAttributes.slice(i+2)];
+
+    if (typeof text !== "string")
+      throw new Error(`Assuming text is a string for splitting it, got ${text} instead!`);
 
     let attr = textAndAttributes[i+1],
         sliceI = column - textPos,
@@ -105,7 +129,7 @@ export function splitTextAndAttributesAtColumns(textAndAttributes, columns) {
     let [left, right] = splitTextAndAttributesAt(current, columns[i] - offset);
     result.push(left);
     for (let j = 0; j < left.length; j = j+2)
-      offset = offset + left[j].length;
+      offset = offset + (typeof left[j] === "string" ? left[j].length : 1);
     current = right;
   }
   result.push(current);
@@ -146,7 +170,7 @@ export function modifyAttributesInRange(doc, range, modifyFn) {
     textAndAttributes.length = 0;
 
     textAndAttributesDo(before, (text, attr) => {
-      offset = offset + text.length;
+      offset = offset + (typeof text === "string" ? text.length : 1);
       textAndAttributes.push(text, attr);
     });
 
@@ -194,7 +218,7 @@ export function modifyAttributesInRange(doc, range, modifyFn) {
 
     textAndAttributesDo(after, (text, attr) =>
       textAndAttributes.push(text, attr));
-      
+
     line._textAttributes = null; // reset cache;
     line.textAndAttributes = joinTextAttributes(textAndAttributes);
   }
@@ -216,6 +240,9 @@ export function splitTextAndAttributesIntoLines(textAndAttributes, nl = "\n") {
   let lines = [], attrsSoFar = [];
   for (var i = 0; i < textAndAttributes.length; i = i+2) {
     let text = textAndAttributes[i], attr = textAndAttributes[i+1];
+
+    if (typeof text !== "string") { attrsSoFar.push(text, attr); continue; }
+
     while (text.length) {
       let lineSplit = text.indexOf(nl);
       if (lineSplit === -1) { attrsSoFar.push(text, attr); break; }
@@ -233,8 +260,9 @@ export function splitTextAndAttributesIntoLines(textAndAttributes, nl = "\n") {
     lines.push(attrsSoFar);
   } else {
     let [lastText, lastAttr] = textAndAttributes.slice(-2);
-    if (lastText.endsWith(nl)) lines.push(["", lastAttr]);
+    if (typeof lastText === "string" && lastText.endsWith(nl))
+      lines.push(["", lastAttr]);
   }
 
-  return this.lines = lines;
+  return lines;
 }

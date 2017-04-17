@@ -221,7 +221,6 @@ export default class TextLayout {
 
     let cached = this.lineCharBoundsCache.get(line);
     if (cached) return cached;
-
     let {
           fontMetric, textRenderer,
           defaultTextStyle,

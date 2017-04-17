@@ -5,6 +5,7 @@ import { defaultAttributes, defaultStyle } from "../rendering/morphic-default.js
 import { addOrChangeCSSDeclaration } from "../rendering/dom-helper.js";
 import { inspect, show } from "lively.morphic";
 import { hyperscriptFnForDocument } from "../rendering/dom-helper.js";
+import { objectReplacementChar } from "./document.js";
 
 let cssInstalled = false;
 
@@ -451,6 +452,8 @@ export default class Renderer {
       for (let i = 0; i < size; i = i+2) {
         text = textAndAttributes[i] || "\u00a0";
         attr = textAndAttributes[i+1];
+
+        if (typeof text !== "string") text = objectReplacementChar;
 
         if (!attr) { renderedChunks.push(text); continue; }
 

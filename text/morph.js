@@ -3,7 +3,7 @@ import { config, Morph } from "lively.morphic";
 import { Rectangle, rect, Color, pt } from "lively.graphics";
 import { Selection, MultiSelection } from "./selection.js";
 import { string, obj, fun, promise, arr } from "lively.lang";
-import Document from "./document.js";
+import Document, { objectReplacementChar } from "./document.js";
 import { signal } from "lively.bindings";
 import { Anchor } from "./anchors.js";
 import { Range } from "./range.js";
@@ -1102,6 +1102,7 @@ export class Text extends Morph {
       let text = textAndAttributes[i],
           attr = textAndAttributes[i+1],
           newlineIndex = -1;
+      if (typeof text !== "string") text = objectReplacementChar;
       while ((newlineIndex = text.indexOf("\n")) > -1) {
         if (newlineIndex > 0) {
           currentRange.end.column = currentRange.end.column + newlineIndex;
@@ -1806,7 +1807,8 @@ export class Text extends Morph {
     function insertRange(textAndAttributes, pos) {
       let text = "";
       for (let i = 0; i < textAndAttributes.length; i = i+2)
-        text += textAndAttributes[i];
+        text += typeof textAndAttributes[i] === "string" ?
+          textAndAttributes[i] : objectReplacementChar;
 
       let lines = morph.parseIntoLines(text), range;
 

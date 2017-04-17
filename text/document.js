@@ -36,6 +36,9 @@ import {
   splitTextAndAttributesAt
 } from "./attributes.js";
 
+// export let objectReplacementChar = "\ufffc";
+export let objectReplacementChar = "\ufffd";
+
 var defaultOptions = {
   maxLeafSize: 3,
   minLeafSize: 2,
@@ -808,7 +811,7 @@ export class Line extends TreeNode {
     if (this._text) return this._text;
     let text = "", attrs = this.textAndAttributes;
     for (let i = 0; i < attrs.length; i = i+2)
-      text = text + attrs[i];
+      text = text + (typeof attrs[i] === "string" ? attrs[i] : objectReplacementChar);
     return this._text = text;
   }
 
@@ -904,8 +907,8 @@ export class Line extends TreeNode {
     for (var i = 0; i < textAndAttributes.length; i=i+2) {
       let text = textAndAttributes[i],
           attr = textAndAttributes[i+1];
-      if (typeof text !== "string")
-          throw new Error("invalid text part of text/attr pair, not a string but: " + text);
+      // if (typeof text !== "string")
+      //     throw new Error("invalid text part of text/attr pair, not a string but: " + text);
       if (!attr) continue;
       if (Array.isArray(attr))
           throw new Error("invalid attr part of text/attr pair, its an array: " + attr);
@@ -929,7 +932,8 @@ export class Line extends TreeNode {
     textAndAttributes = joinTextAttributes(textAndAttributes);
     let text = "";
     for (let i = 0; i < textAndAttributes.length; i = i+2)
-      text = text + textAndAttributes[i];
+      text = text + (typeof textAndAttributes[i] === "string" ?
+                        textAndAttributes[i] : objectReplacementChar);
     return this.changeText(text, textAndAttributes);
   }
 
@@ -1311,6 +1315,8 @@ export default class Document {
       //   => {attributes: ["hel", null, "lo", {foo: 23}],index: 0}
       // textAndAttributesFromRangedAttributesForRow(1, "hello", [range(0,3, 1, 2), {foo: 23}], 0);
       //   => {attributes: ["he", {foo: 23}, "llo", null],index: 2}
+      // textAndAttributesFromRangedAttributesForRow(1, "hello", [range(0,3, 1, 2), {foo: 23}], 0);
+      //   => {attributes: ["he", {foo: 23}, "llo", null],index: 2}
 
       let col = 0, maxCol = text.length;
       if (textAttributesAndRanges.length - startIndex <= 0)
@@ -1361,7 +1367,7 @@ export default class Document {
     let index = 0, attrs = line.textAndAttributes;
     for (let i = 0; i < attrs.length; i = i+2) {
       let text = attrs[i], attr = attrs[i+1];
-      index = index + text.length;
+      index = index + (typeof text === "string" ? text.length : 1);
       if (column < index) return attr;
     }
     return attrs[attrs.length-1];
@@ -1519,8 +1525,10 @@ export default class Document {
     let lineTextAndAttributes = concatTextAndAttributes(before, firstInsertionLine, true);
     if (nInsertionLines === 0) {
       let firstInsertionLineLength = 0;
-      for (let i = 0; i < firstInsertionLine.length; i = i+2)
-        firstInsertionLineLength += firstInsertionLine[i].length;
+      for (let i = 0; i < firstInsertionLine.length; i = i+2) {
+        let text = firstInsertionLine[i];
+        firstInsertionLineLength += (typeof text === "string" ? text.length : 1);
+      }
       endPos.column = column + firstInsertionLineLength;
       concatTextAndAttributes(lineTextAndAttributes, after, true);
     }
@@ -1536,8 +1544,10 @@ export default class Document {
 
     let lastInsertionLine = attrsForLines[nInsertionLines-1],
         lastInsertionLineLength = 0;
-    for (let i = 0; i < lastInsertionLine.length; i = i+2)
-      lastInsertionLineLength += lastInsertionLine[i].length;
+    for (let i = 0; i < lastInsertionLine.length; i = i+2) {
+        let text = lastInsertionLine[i];
+        lastInsertionLineLength += (typeof text === "string" ? text.length : 1);
+    }
     endPos.row += nInsertionLines;
     endPos.column = lastInsertionLineLength;
 

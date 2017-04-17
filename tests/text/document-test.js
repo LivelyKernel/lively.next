@@ -906,11 +906,15 @@ describe("text document", () => {
 
 });
 
-function fooo() {
+describe("text attributes with objects", () => {
 
-  var doc = new Document(["a", "b", "c", "d"], {maxLeafSize: 3, minLeafSize: 2});
-
-
-  doc.insertLines(["hello", "world", "hello", "world", "hello", "world", "hello", "world", "hello", "world", "hello", "world", "hello", "world", "hello", "world", "hello", "world", ])
-  doc.print2()
-}
+  it("can be added to document", () => {
+    let doc = new Document([{textAndAttributes: ["test", null]}]);
+    let obj = {};
+    doc.textAndAttributes = ["test", null, obj, null];
+    expect(doc.textAndAttributes).deep.equals(["test", null, obj, null]);
+    doc.getLine(0)._text
+    expect(doc.getLine(0).text).equals("test�", "line string");
+    expect(doc.textString).equals("test�", "doc string");
+  });
+});
