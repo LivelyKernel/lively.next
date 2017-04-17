@@ -1,5 +1,5 @@
 import { parseJsonLikeObj } from "../helpers.js";
-import { arr } from "lively.lang";
+import { arr, obj } from "lively.lang";
 import { resource } from "lively.resources";
 import { transform } from "lively.ast";
 import { module } from "lively.modules";
@@ -162,6 +162,7 @@ try {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async dynamicCompletionsForPrefix(moduleName, prefix, options) {
+    options = obj.dissoc(options, ["systemInterface", "System", "context"]);
     var src = `
       var livelySystem = System.get(System.decanonicalize("lively-system-interface")),
           mName = ${JSON.stringify(moduleName)},
