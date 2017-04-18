@@ -6,31 +6,121 @@ import { Morph, Button, List, Text, GridLayout, HorizontalLayout,
 import { intersect, shape } from 'svg-intersections';
 import { roundTo } from "lively.lang/number.js";
 
+class LeashEndpoint extends Ellipse {
+
+  onDrag(evt) {
+     this.leash.onEndpointDrag(this, evt);
+  }
+
+  getConnectionPoint() {
+    const {isPath, isPolygon, vertices, origin} = this.connectedMorph,
+          gb = this.connectedMorph.globalBounds();
+    if ((isPath || isPolygon) && this.attachedSide != "center") {
+       const vs = vertices.map(({x,y}) => pt(x,y).addPt(origin)),
+             ib = Rectangle.unionPts(vs),
+             side = ib[this.attachedSide](),
+             center = ib.center().addPt(ib.center().subPt(side)),
+             line = shape("line", {x1: side.x, y1: side.y, x2: center.x, y2: center.y}),
+             path = shape("polyline", {points: vs.map(({x,y}) => `${x},${y}`).join(" ")}),
+             {x,y} = arr.min(intersect(path, line).points, ({x,y}) => pt(x,y).dist(side));
+       return pt(x,y).addPt(gb.topLeft());
+    } else {
+       return gb[this.attachedSide]();
+    }
+  }
+
+  update(change) {
+     const globalPos = this.getConnectionPoint(),
+           pos = this.leash.localize(globalPos);
+     this.vertex = {...this.vertex, ...pos};
+  }
+
+  clearConnection() {
+     if (this.connectedMorph) {
+         disconnect(this.connectedMorph, "extent", this, "update");
+         disconnect(this.connectedMorph, "position", this, "update");
+     }
+  }
+  
+  relayout() {
+    const {x,y} = this.vertex, bw = this.leash.borderWidth;
+    //this.extent = this.pt((2*bw), (2 * bw));
+    this.center = pt(x + bw,y + bw);
+  }
+  
+  attachTo(morph, side) {
+      this.clearConnection()
+      this.connectedMorph = morph;
+      this.attachedSide = side;
+      this.vertex = {...this.leash.vertices[this.index],
+                     controlPoints: this.leash.controlPointsFor(side)}
+      connect(this.connectedMorph, "position", this, "update");
+      connect(this.connectedMorph, "extent", this, "update");
+      this.update();
+  }
+  
+  static get properties() {
+    return {
+      index: {},
+      leash: {},
+      styleClasses: {defaultValue: ['endpointStyle']},
+      vertex: {
+        get() {
+         return this.leash.vertices[this.index];
+        },
+        set(v) {
+         this.leash.vertices[this.index] = v;
+         this.leash.vertices = this.leash.vertices; // this is a very akward interface
+        }
+      }
+    }
+  }
+}
+
 export class Leash extends Path {
 
-   constructor(props) {
-      const {start, end} = props;
-      super({
-         borderWidth: 2, borderColor: Color.black,
-         fill: Color.transparent,
-         ...props,
-         endpointStyle: {
+   static get properties() {
+     return {
+        start: {}, end: {},
+        borderWidth: {defaultValue: 2},
+        borderColor: {defaultValue: Color.black},
+        fill: {defaultValue: Color.transparent},
+        styleRules: {
+          after: ['endpointStyle'],
+          get() {
+            return new StyleRules({
+              endpointStyle: this.endpointStyle
+            }, this)
+          }
+        },
+        endpointStyle: {
+          after: ['submorphs'],
+          defaultValue: {
              fill: Color.black, origin: pt(3.5,3.5),
              extent: pt(10,10), nativeCursor: "-webkit-grab",
-             ...props.endpointStyle
-         },
-         vertices: [start, end]
-      });
-      this.build()
-      connect(this, "extent", this, "relayout");
-      connect(this, "position", this, "relayout");
-   }
-
-   get endpointStyle() { return this._endpointStyle }
-   set endpointStyle(style) {
-       this._endpointStyle = style;
-       this.startPoint && Object.assign(this.startPoint, this.getEndpointStyle(0));
-       this.endPoint && Object.assign(this.endPoint, this.getEndpointStyle(1));
+          },
+          set(style) { 
+             this.setProperty('endpointStyle', {...this.endpointStyle, style}); 
+             this.styleRules = this.styleRules;
+          }
+       },
+       vertices: {
+         after: ['start', 'end'],
+         initialize() {
+           this.vertices = [this.start, this.end];
+         }
+       },
+       submorphs: {
+         initialize() {
+            this.submorphs = [
+               this.startPoint = this.endpoint(0), 
+               this.endPoint = this.endpoint(1)
+            ];
+            connect(this, "extent", this, "relayout");
+            connect(this, "position", this, "relayout");
+         }
+       }
+     }
    }
 
    remove() {
@@ -40,9 +130,9 @@ export class Leash extends Path {
    }
 
    onEndpointDrag(endpoint, evt) {
-      const v = endpoint.getVertex(),
+      const v = endpoint.vertex,
             {x,y} = v;
-      endpoint.setVertex({...v, ...pt(x,y).addPt(evt.state.dragDelta)})
+      endpoint.vertex = {...v, ...pt(x,y).addPt(evt.state.dragDelta)}
       this.relayout();
    }
 
@@ -54,61 +144,7 @@ export class Leash extends Path {
 
    endpoint(idx) {
       const leash = this, {x,y} = leash.vertices[idx];
-      return new Ellipse({
-              position: pt(x,y), index: idx,
-              ...this.getEndpointStyle(idx),
-              onDrag(evt) {
-                 leash.onEndpointDrag(this, evt);
-              },
-              getConnectionPoint() {
-                  const {isPath, isPolygon, vertices, origin} = this.connectedMorph,
-                        gb = this.connectedMorph.globalBounds();
-                  if ((isPath || isPolygon) && this.attachedSide != "center") {
-                     const vs = vertices.map(({x,y}) => pt(x,y).addPt(origin)),
-                           ib = Rectangle.unionPts(vs),
-                           side = ib[this.attachedSide](),
-                           center = ib.center().addPt(ib.center().subPt(side)),
-                           line = shape("line", {x1: side.x, y1: side.y, x2: center.x, y2: center.y}),
-                           path = shape("polyline", {points: vs.map(({x,y}) => `${x},${y}`).join(" ")}),
-                           {x,y} = arr.min(intersect(path, line).points, ({x,y}) => pt(x,y).dist(side));
-                     return pt(x,y).addPt(gb.topLeft());
-                  } else {
-                     return gb[this.attachedSide]();
-                  }
-              },
-              update(change) {
-                 const globalPos = this.getConnectionPoint(),
-                       pos = leash.localize(globalPos);
-                 this.setVertex({...this.vertex, ...pos});
-              },
-              clearConnection() {
-                 if (this.connectedMorph) {
-                     disconnect(this.connectedMorph, "extent", this, "update");
-                     disconnect(this.connectedMorph, "position", this, "update");
-                 }
-              },
-              relayout() {
-                const {x,y} = this.getVertex(), bw = leash.borderWidth;
-                //this.extent = this.pt((2*bw), (2 * bw));
-                this.center = pt(x + bw,y + bw);
-              },
-              getVertex() {
-                 return leash.vertices[idx];
-              },
-              setVertex(v) {
-                 leash.vertices[idx] = v;
-                 leash.vertices = leash.vertices;
-              },
-              attachTo(morph, side) {
-                  this.clearConnection()
-                  this.connectedMorph = morph;
-                  this.attachedSide = side;
-                  this.vertex = {...leash.vertices[idx],
-                                 controlPoints: leash.controlPointsFor(side)}
-                  connect(this.connectedMorph, "position", this, "update");
-                  connect(this.connectedMorph, "extent", this, "update");
-                  this.update();
-              }})
+      return new LeashEndpoint({index: idx, leash: this, position: pt(x,y)});
    }
 
    controlPointsFor(side) {
@@ -120,10 +156,6 @@ export class Leash extends Path {
          center: pt(0,0)
       }[side];
       return {previous: next.negated().scaleBy(100), next: next.scaleBy(100)}
-   }
-
-   build() {
-       this.submorphs = [this.startPoint = this.endpoint(0), this.endPoint = this.endpoint(1)]
    }
 
    relayout() {
