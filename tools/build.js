@@ -4,9 +4,11 @@ var fs = require("fs");
 var path = require("path");
 var rollup = require('rollup');
 var babel = require('rollup-plugin-babel');
+var uglify = require("uglify-js");
 
 var targetFile = "dist/lively.vm.js";
 var targetFile2 = "dist/lively.vm_standalone.js";
+var targetFileMin = "dist/lively.vm_standalone.min.js";
 
 var placeholderSrc = "throw new Error('Not yet read')";
 
@@ -86,5 +88,6 @@ return {noDeps: noDeps, complete: complete};
   .then(sources => {
     fs.writeFileSync(targetFile, sources.noDeps);
     fs.writeFileSync(targetFile2, sources.complete);
+    fs.writeFileSync(targetFileMin, sources.complete);
   })
   .catch(err => { console.error(err.stack || err); throw err; })
