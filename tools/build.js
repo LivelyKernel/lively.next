@@ -54,16 +54,21 @@ module.exports = Promise.resolve()
 
 function combineSources() {
   return `
-${acornSource};
-${escodegenSource};
-(function() {
+;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
+  if (GLOBAL.define) { var __define_suckz__ = GLOBAL; delete GLOBAL.define; }
+  (function() {
+    var module = undefined, require = undefined, define = undefined;
+    ${acornSource};
+    ${escodegenSource};
+  })();
   (function() {
     ${astSource}
   }).call(GLOBAL);
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.ast;
+  if (__define_suckz__) { GLOBAL.define = __define_suckz__; }
 })();
 `;
 }

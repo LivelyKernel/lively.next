@@ -11,7 +11,8 @@ var path = require("path"),
     astDir = path.join(__dirname, ".."),
     _ = global.lively = {lang: require("lively.lang")},
     ast = require("../dist/lively.ast.js"),
-    escodegenRepo = "https://github.com/LivelyKernel/escodegen",
+    escodegenRepo = "https://github.com/estools/escodegen",
+    // escodegenRepo = "https://github.com/LivelyKernel/escodegen",
     escodegenVersion = "master",
     targetFile1 = "dist/escodegen.browser.js",
     targetFile2 = "dist/escodegen.js"; // also works in node.js
@@ -35,11 +36,15 @@ function globalizeFreeRefsAndThis(source) {
                         .sort((a, b) => a.start < b.start ? -1 : a.start === b.start ? 0 : 1);
 
   // reverse!
-  return refsToReplace.reduceRight((source, ref) =>
+  source = refsToReplace.reduceRight((source, ref) =>
     source.slice(0, ref.start)
       + (ref.type === "ThisExpression" ?
         'GLOBAL' + source.slice(ref.end) :
         'GLOBAL.' + source.slice(ref.start)), source);
+
+  source = source.replace(/GLOBAL.define/g, "define");
+
+  return source;
 }
 
 function flexibleGlobal(source) {

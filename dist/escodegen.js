@@ -36,7 +36,7 @@
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v7.7.0',
+        version: 'v7.7.4',
         browser: true,
         env: {},
         argv: [],
@@ -1626,14 +1626,11 @@
           return parenthesize(result, Precedence.Member, precedence);
         },
         MetaProperty: function (expr, precedence, flags) {
-          var result, meta, property;
-          meta = typeof expr.meta.type === 'string' && expr.meta.type === Syntax.Identifier ? expr.meta.name : expr.meta;
-          property = typeof expr.property.type === 'string' && expr.property.type === Syntax.Identifier ? expr.property.name : expr.property;
-          result = [
-            meta,
-            '.',
-            property
-          ];
+          var result;
+          result = [];
+          result.push(expr.meta);
+          result.push('.');
+          result.push(expr.property);
           return parenthesize(result, Precedence.Member, precedence);
         },
         UnaryExpression: function (expr, precedence, flags) {
@@ -4169,8 +4166,8 @@
   require.define('/node_modules/estraverse/estraverse.js', function (module, exports, __dirname, __filename) {
     (function (root, factory) {
       'use strict';
-      if (typeof GLOBAL.define === 'function' && GLOBAL.define.amd) {
-        GLOBAL.define(['exports'], factory);
+      if (typeof define === 'function' && define.amd) {
+        define(['exports'], factory);
       } else if (typeof exports !== 'undefined') {
         factory(exports);
       } else {

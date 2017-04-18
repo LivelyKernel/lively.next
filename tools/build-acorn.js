@@ -23,7 +23,7 @@ module.exports = new Promise((resolve, reject) => {
 })(this.acorn);`,
       targetFile = "dist/acorn.js",
       source = `(function() {
-  var module = undefined, require = undefined;
+  var module = undefined, require = undefined, define = undefined;
   ${acornSrc};
   ${walkSrc}
   ${looseSrc}
