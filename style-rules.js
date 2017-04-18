@@ -16,8 +16,9 @@ that morph.
 
 export class StyleRules {
 
-  constructor(rules) {
+  constructor(rules, morph=null) {
     this.rules = rules;
+    this.morph = morph;
   }
 
   applyToAll(root, morph) {
@@ -46,7 +47,7 @@ export class StyleRules {
 
   getShadowedProps(morph) {
     var props = {}, curr = morph;
-    while (curr && curr.styleRules != this) {
+    while (curr && curr != this.morph) {
       if (curr.styleRules)
         props = {...props, ...curr.styleRules.getStyleProps(morph)};
       curr = curr.owner;

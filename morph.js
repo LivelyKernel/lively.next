@@ -351,7 +351,10 @@ export class Morph {
         after: ['submorphs'],
         set(rules) {
           this.setProperty("styleRules", rules);
-          if (rules) rules.applyToAll(this);
+          if (rules) {
+             rules.morph = this;
+             rules.applyToAll(this);
+          }
         }
       },
 
