@@ -122,7 +122,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
 
     return this.currentEval = Promise.resolve().then(async () => {
       var result = await this.runEval(`
-        Promise.resolve((${transform.wrapInFunction(source)})())
+        Promise.resolve((async ${transform.wrapInFunction(source)})())
           .then(function(result) { return JSON.stringify(result); })
           .catch(function(err) { return {isError: true, value: err}; })
           .then(function(result) {
@@ -131,27 +131,28 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
               {isError: true, value: result.value.stack || String(result.value)} :
               result)
           });`,
-        Object.assign({
+        {
           targetModule: "lively://remote-lively-system/runEvalAndStringify",
-          promiseTimeout: 2000,
+          promiseTimeout: 5000,
           waitForPromise: true,
-        }, opts));
+          ...opts
+        });
 
       if (result && result.isError)
         throw new Error(String(result.value));
   
       if (!result || !result.value) return null;
+
+      let val = result.promisedValue || await result.value;
+
+      if (!val) return;
       
-      if (result.value === "undefined") return undefined;
-      if (result.value === "null") return null;
-      if (result.value === "true") return true;
-      if (result.value === "false") return false;
+      if (val === "undefined") return undefined;
+      if (val === "null") return null;
+      if (val === "true") return true;
+      if (val === "false") return false;
   
-      try {
-        return JSON.parse(result.promisedValue || result.value);
-      } catch (e) {
-        throw new Error(`Could not JSON.parse the result of runEvalAndStringify: ${result.value}\n(Evaluated expression:\n ${source})`);
-      }
+      try { return JSON.parse(val); } catch (e) { return val; }
     }).then(
       result => { delete this.currentEval; return result; },
       err => { delete this.currentEval; return Promise.reject(err); });

@@ -19,6 +19,7 @@ import {
 
 import { LocalCoreInterface } from "./interfaces/local-system.js";
 import { HTTPCoreInterface } from "./interfaces/http-interface.js";
+import { L2LCoreInterface } from "./interfaces/l2l-interface.js";
 
 export class Interface {
 
@@ -106,4 +107,5 @@ export class Interface {
 }
 
 export var localInterface = new Interface(new LocalCoreInterface());
-export var serverInterfaceFor = (url) => new Interface(new HTTPCoreInterface(url));
+export var serverInterfaceFor = url => new Interface(new HTTPCoreInterface(url));
+export var l2lInterfaceFor = (targetId, targetInfo) => new Interface(new L2LCoreInterface(targetId, targetInfo));
