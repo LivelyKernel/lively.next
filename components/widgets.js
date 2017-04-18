@@ -194,48 +194,61 @@ export class Slider extends Morph {
 
 export class PropertyInspector extends Morph {
 
-   constructor(props) {
-       const {target, property, defaultValue} = props;
-       super({
-           ...props,
-           styleClasses: ["root"],
-           layout: new GridLayout({
-             columns: [1, {paddingLeft: 5, paddingRight: 5, fixed: 25}],
-             grid:[["value", "up"],
-                   ["value", "down"]]
-           }),
-           submorphs: [new ValueScrubber({
+   static get properties() {
+      return {
+        target: {},
+        property: {},
+        min: {defaultValue: -Infinity},
+        max: {defaultValue: Infinity},
+        styleClasses: {defaultValue: ['root']},
+        styleRules: {
+          initialize() {
+            this.styleRules = this.styler;
+          }
+        },
+        layout: {
+          initialize() {
+             this.layout = new GridLayout({
+               columns: [1, {paddingLeft: 5, paddingRight: 5, fixed: 25}],
+               grid:[["value", "up"],
+                     ["value", "down"]]
+             });
+          }
+        },
+        submorphs: {
+           after: ['target', 'property', 'defaultValue', 'min', 'max'],
+           initialize() {
+              this.submorphs = [new ValueScrubber({
                         name: "value",
-                        value: target[property] || defaultValue,
-                        ...obj.dissoc(props, ["name"])}),
+                        value: this.target[this.property] || this.defaultValue,
+                        min: this.min, max: this.max}),
                         {type: "button", name: "down", label: Icon.makeLabel(
                                   "sort-desc", {padding: rect(2,2,0,0), fontSize: 12})},
                         {type: "button", name: "up", label: Icon.makeLabel(
-                                  "sort-asc", {padding: rect(2,2,0,0), fontSize: 12})}]
-       });
-       this.build();
-   }
-
-   build() {
-       this.styleRules = this.styler;
-       connect(this.get("value"), "scrub", this.target, this.property);
-       connect(this.get("up"), "fire", this, "increment");
-       connect(this.get("down"), "fire", this, "decrement");
+                                  "sort-asc", {padding: rect(2,2,0,0), fontSize: 12})}];
+              connect(this.get("value"), "scrub", this.target, this.property);
+              connect(this.get("up"), "fire", this, "increment");
+              connect(this.get("down"), "fire", this, "decrement");
+           }
+        }
+      }
    }
 
    get styler() {
        const buttonStyle = {
             type: "button",
             clipMode: "hidden",
-            fill: Color.transparent,
-            borderWidth: 0, fontColor: Color.white.darker(),
-            triggerStyle: {fill: Color.transparent, fontColor: Color.black}
+            activeStyle: {fill: Color.transparent, borderWidth: 0,
+                          fontColor: Color.white.darker()},
+            triggerStyle: {fill: Color.transparent, 
+                           fontColor: Color.black}
          };
        return new StyleRules({
            root: {
-              extent:pt(55, 25), borderRadius: 5,
+              extent: pt(55, 25), borderRadius: 5,
               borderWidth: 1, borderColor: Color.gray,
-              clipMode: "hidden"},
+              clipMode: "hidden"
+           },
            down: {padding: rect(0,-5,0,10), ...buttonStyle},
            up: {padding: rect(0,0,0,-5), ...buttonStyle},
            value: {fill: Color.white, padding: Rectangle.inset(4), fontSize: 15},
@@ -263,7 +276,6 @@ export class PropertyInspector extends Morph {
 export class ValueScrubber extends Text {
 
   static get properties() {
-
     return {
       value: {defaultValue: 0},
       fill: {defaultValue: Color.transparent},
