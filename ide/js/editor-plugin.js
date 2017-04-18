@@ -53,9 +53,9 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
     let textMorph = this.textMorph;
 
     if (!this.theme || !textMorph || !textMorph.document) return;
-    
+
     textMorph.fill = this.theme.background();
-    
+
     let tokens = this._tokens = this.highlighter.tokenize(textMorph.textString),
         attributes = [];
 
@@ -105,7 +105,7 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
         {command: "selectDefinition", alias: `jump to definition of "${ref.name}"`, target: editor},
         {command: "selectSymbolReferenceOrDeclaration", alias: `select all occurrences of "${ref.name}"`, target: editor});
     }
-    
+
     var text = editor.selection.text.trim();
     if (text) {
       items.push({
@@ -129,7 +129,7 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
 
   sanatizedJsEnv(envMixin) {
     var env = {...this.evalEnvironment, ...envMixin};
-    if (!env.format) env.formatd = "esm";    
+    if (!env.format) env.formatd = "esm";
     if (!env.context) env.context = this.textMorph;
     if (!env.sourceURL)
       env.sourceURL = env.targetModule + "_doit_" + Date.now();
@@ -154,17 +154,23 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
 
   setSystemInterfaceNamed(interfaceSpec) {
     if (!interfaceSpec) interfaceSpec = "local";
-    let name = typeof interfaceSpec === "string" ? interfaceSpec : null,
-        systemInterface;
-    if (!name && interfaceSpec.type === "l2l") {
-      systemInterface = l2lInterfaceFor(interfaceSpec.id, interfaceSpec.info)
-    } else name = "local";
+    let systemInterface;
 
-    if (name) {
-      systemInterface = !name || name === "local" ?
-        localInterface :
-        serverInterfaceFor(name)
+    if (typeof interfaceSpec !== "string") {
+      if (interfaceSpec.type === "l2l")
+        systemInterface = l2lInterfaceFor(interfaceSpec.id, interfaceSpec.info)
     }
+
+    if (typeof interfaceSpec !== "string") {
+      $world.setStatusMessage(`Unknown system interface ${interfaceSpec}`)
+      interfaceSpec = "local";
+    }
+
+    if (!systemInterface)
+      systemInterface = !interfaceSpec || interfaceSpec === "local" ?
+        localInterface :
+        serverInterfaceFor(interfaceSpec)
+
     return this.setSystemInterface(systemInterface);
   }
 

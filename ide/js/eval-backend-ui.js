@@ -33,9 +33,6 @@ export default class EvalBackendChooser {
     return this._default || (this._default = new this());
   }
 
-  constructor() {
-  }
-
   get backends() {
     var stored = [];
     try {
@@ -120,7 +117,7 @@ export default class EvalBackendChooser {
     setTimeout(() => {
       noUpdate({sourceObj: dropdown, sourceAttribute: "selection"}, () => {
         dropdown.items = items;
-        // dropdown.selection = currentBackend;
+        dropdown.selection = currentBackend;
         // dropdown.label = currentBackend;
       });
     }, 20);
