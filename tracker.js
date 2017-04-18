@@ -1,8 +1,6 @@
 /*global Map*/
 import L2LConnection from "./interface.js";
 import { defaultActions, defaultTrackerActions } from "./default-actions.js";
-import user from "lively.user/user.js"
-import * as authserver from "lively.user/authserver.js"
 
 // Array.from(L2LTracker._trackers.keys());
 // Array.from(L2LTracker._trackers.values())[1].remove()
@@ -158,7 +156,7 @@ export default class L2LTracker extends L2LConnection {
 
   registerClient({sender, data}, answerFn, socket) {
     this.debug && console.log(`[${this}] got register request ${JSON.stringify({sender, data})}`);
-    this.clients.set(sender, {socketId: socket.id});
+    this.clients.set(sender, {socketId: socket.id, registeredAt: new Date(), info: data});
     var msgNo = this._outgoingOrderNumberingByTargets.get(sender);
     typeof answerFn === "function" && answerFn({nextMessageNumber: msgNo, trackerId: this.id});
   }

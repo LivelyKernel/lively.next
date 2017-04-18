@@ -7,7 +7,6 @@ export var defaultActions = {
   },
 
   "remote-eval": (tracker, {sender, data: {source}}, ackFn, socket) => {
-
     Promise.resolve().then(() => eval(source))
       .then(result => ackFn({value: result}))
       .catch(err => {
@@ -40,16 +39,18 @@ export var defaultActions = {
 
 export var defaultTrackerActions = {
 
-  async "broadcast": (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) => {
+  async broadcast: (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) => {
     socket.broadcast.to(roomName).emit(broadcastMessage)
     if(ackFn && typeof ackFn === 'function'){ackFn({status: 'Message delivered to ' + roomName})}
   },
-  async "systemBroadcast": (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) => {
+
+  async systemBroadcast: (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) => {
     let io = tracker.io;
     io.nsps["/" + tracker.namespace].to(roomName).emit(broadcastMessage)
     if(ackFn && typeof ackFn === 'function'){ackFn({status: 'System Broadcast Message delivered to ' + roomName})}
   },
-  async "multiServerBroadcast": (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) =>{
+
+  async multiServerBroadcast: (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) =>{
     let id = tracker.id,
         trackers = tracker.getTrackerList()
     trackers.forEach(function(tracker){
@@ -63,26 +64,26 @@ export var defaultTrackerActions = {
     })
   },
 
-  async "getClients": (tracker, {trackerId},ackFn) => {
+  async getClients: (tracker, {trackerId},ackFn) => {
     tracker.removeDisconnectedClients();
     ackFn(Array.from(tracker.clients));
   },
 
-   async "joinRoom": (tracker, {sender, data: {roomName}}, ackFn, socket) => {
+   async joinRoom: (tracker, {sender, data: {roomName}}, ackFn, socket) => {
       await socket.join(roomName)
       if(ackFn && typeof ackFn === 'function'){ackFn({status: 'Joined ' + roomName})}
       console.log(sender + ' joined room ' + roomName)
   },
-  async "leaveRoom": (tracker, {sender, data: {roomName}}, ackFn, socket) => {
+  async leaveRoom: (tracker, {sender, data: {roomName}}, ackFn, socket) => {
       socket.leave(roomName)
       if(ackFn && typeof ackFn === 'function'){ackFn({status: 'Left ' + roomName})}
       console.log(sender + ' left room ' + roomName)
   },
-  async "clientRoomList": (tracker, {}, ackFn, socket) => {
+  async clientRoomList: (tracker, {}, ackFn, socket) => {
    (ackFn && (typeof ackFn == 'function')) ? ackFn(socket.rooms) : console.log('Error: missing or invalid ack function')
 
   },
-  async "listRoom": (tracker, {sender, data: {roomName}}, ackFn, socket) => {
+  async listRoom: (tracker, {sender, data: {roomName}}, ackFn, socket) => {
       var io = tracker.io
       var contents
       if (roomName){
@@ -104,6 +105,7 @@ export var defaultTrackerActions = {
 
 
 export var defaultClientActions = {
+
   async "getServers": (ackFn) => {
     if (!(ackFn && typeof ackFn =='function')){
       console.log('Bad or Missing Ack Function')

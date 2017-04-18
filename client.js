@@ -1,5 +1,5 @@
 /*global Map*/
-import { promise, string, events } from "lively.lang";
+import { promise, events } from "lively.lang";
 import { resource } from "lively.resources";
 import ioClient from "socket.io-client";
 import L2LConnection from "./interface.js";
@@ -182,7 +182,13 @@ export default class L2LClient extends L2LConnection {
     try {
 
       this.debug && console.log(`[${this}] register`)
-      var answer = await this.sendToAndWait("tracker", "register", {});
+
+      var answer = await this.sendToAndWait("tracker", "register", {
+        userName: "unknown",
+        type: "lively.morphic browser,",
+        location: String(document.location)
+      });
+
       if (!answer.data) {
         let err = new Error(`Register answer is empty!`);
         this.emit("error", err);
