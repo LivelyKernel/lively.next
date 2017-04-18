@@ -8560,6 +8560,10 @@ exports.stopLogging = stopLogging;
 // INLINED /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
 
 ;(function() {
+  var GLOBAL = typeof window !== "undefined" ? window :
+      typeof global!=="undefined" ? global :
+        typeof self!=="undefined" ? self : this;
+  if (GLOBAL.define) { var __define_suckz__ = GLOBAL; delete GLOBAL.define; }
   (function() {
     var module = undefined, require = undefined, define = undefined;
     (function() {
@@ -18950,9 +18954,6 @@ module.exports = function(acorn) {
       typeof self!=="undefined" ? self : this);
 ;
   })();
-  var GLOBAL = typeof window !== "undefined" ? window :
-      typeof global!=="undefined" ? global :
-        typeof self!=="undefined" ? self : this;
   (function() {
     this.lively = this.lively || {};
 (function (exports,lively_lang,escodegen,acorn$1) {
@@ -23514,6 +23515,7 @@ exports.fuzzyParse = fuzzyParse;
 
   }).call(GLOBAL);
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.ast;
+  if (__define_suckz__) { GLOBAL.define = __define_suckz__; }
 })();
 
 // INLINED END /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
