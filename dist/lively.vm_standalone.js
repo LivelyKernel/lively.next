@@ -18168,8 +18168,9 @@ module.exports = function(acorn) {
   require.define('/node_modules/estraverse/estraverse.js', function (module, exports, __dirname, __filename) {
     (function (root, factory) {
       'use strict';
-      if (typeof define === 'function' && define.amd) {
-        define(['exports'], factory);
+      if (typeof GLOBAL.define === 'function' && GLOBAL.define.amd) {
+          GLOBAL.dezdxd
+	  fine(['exports'], factory);
       } else if (typeof exports !== 'undefined') {
         factory(exports);
       } else {
@@ -25793,7 +25794,9 @@ var printInspectEvalValue = function () {
       maxIterLength = 10,
       maxStringLength = 100;
 
-  return function printInspect(object, maxDepth) {
+  return printInspect;
+
+  function printInspect(object, maxDepth) {
     if ((typeof maxDepth === "undefined" ? "undefined" : _typeof(maxDepth)) === "object") maxDepth = maxDepth.maxDepth || 2;
 
     if (!object) return String(object);
@@ -25811,7 +25814,7 @@ var printInspectEvalValue = function () {
     } catch (e) {}
     // return inspected;
     return inspected === "{}" ? safeToString(object) : inspected;
-  };
+  }
 
   function printIterable(val, ignore) {
     var isIterable = typeof val !== "string" && !Array.isArray(val) && itSym && typeof val[itSym] === "function";
@@ -26629,8 +26632,6 @@ function evalEnd(System, code, options, result) {
   return result;
 }
 
-var _EvalableTextMorphTra;
-
 var EvalStrategy = function () {
   function EvalStrategy() {
     classCallCheck(this, EvalStrategy);
@@ -26858,7 +26859,7 @@ var RemoteEvalStrategy = function (_LivelyVmEvalStrategy) {
     key: "sourceForRemote",
     value: function sourceForRemote(action, arg, options) {
       options = lively_lang.obj.dissoc(options, ["systemInterface", "System", "context"]);
-      return "\n(function() {\n  var arg = " + JSON.stringify(arg) + ",\n      options = " + JSON.stringify(options) + ";\n  if (typeof lively === \"undefined\" || !lively.vm) {\n    return Promise.resolve({\n      isEvalResult: true,\n      isError: true,\n      value: 'lively.vm not available!'\n    });\n  }\n  var hasSystem = typeof System !== \"undefined\"\n  options.context = hasSystem\n    ? System.global\n    : typeof window !== \"undefined\"\n        ? window\n        : typeof global !== \"undefined\"\n            ? global\n            : typeof self !== \"undefined\" ? self : this;\n  function evalFunction(source, options) {\n    if (hasSystem) {\n      var conf = {meta: {}}; conf.meta[options.targetModule] = {format: \"esm\"};\n      System.config(conf);\n    } else {\n      options = Object.assign({}, options);\n      delete options.targetModule;\n    }\n    return lively.vm.runEval(source, options);\n  }\n  function keysOfObjectFunction(prefix, options) {\n    return lively.vm.completions.getCompletions(code => evalFunction(code, options), prefix)\n      .then(result => ({isEvalResult: true, completions: result.completions, prefix: result.startLetters}));\n  }\n  options.asString = " + (action === "eval" ? "true" : "false") + ";\n  return " + (action === "eval" ? "evalFunction" : "keysOfObjectFunction") + "(arg, options)\n    .catch(err => ({isEvalResult: true, isError: true, value: String(err.stack || err)}));\n})();\n";
+      return "\n(function() {\n  var arg = " + JSON.stringify(arg) + ",\n      options = " + JSON.stringify(options) + ";\n  if (typeof lively === \"undefined\" || !lively.vm) {\n    return Promise.resolve({\n      isEvalResult: true,\n      isError: true,\n      value: 'lively.vm not available!'\n    });\n  }\n  var hasSystem = typeof System !== \"undefined\"\n  options.context = hasSystem\n    ? System.global\n    : typeof window !== \"undefined\"\n        ? window\n        : typeof global !== \"undefined\"\n            ? global\n            : typeof self !== \"undefined\" ? self : this;\n  function evalFunction(source, options) {\n    if (hasSystem) {\n      var conf = {meta: {}}; conf.meta[options.targetModule] = {format: \"esm\"};\n      System.config(conf);\n    } else {\n      options = Object.assign({}, options);\n      delete options.targetModule;\n    }\n    return lively.vm.runEval(source, options);\n  }\n  function keysOfObjectFunction(prefix, options) {\n    return lively.vm.completions.getCompletions(code => evalFunction(code, options), prefix)\n      .then(result => ({isEvalResult: true, completions: result.completions, prefix: result.startLetters}));\n  }\n  return " + (action === "eval" ? "evalFunction" : "keysOfObjectFunction") + "(arg, options)\n    .catch(err => ({isEvalResult: true, isError: true, value: String(err.stack || err)}));\n})();\n";
     }
   }, {
     key: "runEval",
@@ -27123,265 +27124,60 @@ var HttpEvalStrategy = function (_RemoteEvalStrategy) {
   return HttpEvalStrategy;
 }(RemoteEvalStrategy);
 
-function evalStrategy(morph) {
-  return morph.state && morph.state.evalStrategy || new LivelyVmEvalStrategy();
-}
+var L2LEvalStrategy = function (_RemoteEvalStrategy2) {
+  inherits(L2LEvalStrategy, _RemoteEvalStrategy2);
 
-function processEvalError(evalResult) {
-  // produce a hopefully helpful string out of an error
-  var isError = evalResult.isError,
-      value = evalResult.value,
-      warnings = evalResult.warnings;
+  function L2LEvalStrategy(l2lClient, targetId) {
+    classCallCheck(this, L2LEvalStrategy);
 
-  console.assert(evalResult.isError, "processEvalError called with non-error eval result");
-  var error = String(value),
-      stack = value.stack,
-      warning = warnings ? warnings.join("\n") : "";
-  if (error.match(/syntaxerror/i) && warning.match(/syntaxerror/i)) {
-    return warning + "\n\n" + error;
+    var _this6 = possibleConstructorReturn(this, (L2LEvalStrategy.__proto__ || Object.getPrototypeOf(L2LEvalStrategy)).call(this));
+
+    _this6.l2lClient = l2lClient;
+    _this6.targetId = targetId;
+    return _this6;
   }
-  return stack || error;
-}
 
-var EvalableTextMorphTrait = (_EvalableTextMorphTra = {
-  applyTo: function applyTo(obj$$1) {
-    var overrides = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+  createClass(L2LEvalStrategy, [{
+    key: "basicRemoteEval",
+    value: function () {
+      var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(source, options) {
+        var l2lClient, targetId, _ref15, evalResult;
 
-    var trait = this,
-        dontCopy = ["applyTo"].concat(lively.lang.arr.withoutAll(lively.lang.properties.allProperties(obj$$1), overrides));
-    Object.keys(trait).filter(function (key) {
-      return !dontCopy.includes(key);
-    }).forEach(function (key) {
-      return Object.defineProperty(obj$$1, key, { configurable: true, get: function get() {
-          return trait[key];
-        }
-      });
-    });
-    return obj$$1;
-  },
-  doit: function doit(printResult, editor, options) {
-    var _this6 = this;
+        return regeneratorRuntime.wrap(function _callee14$(_context14) {
+          while (1) {
+            switch (_context14.prev = _context14.next) {
+              case 0:
+                l2lClient = this.l2lClient;
+                targetId = this.targetId;
+                _context14.next = 4;
+                return new Promise(function (resolve, reject) {
+                  return l2lClient.sendTo(targetId, "remote-eval", { source: source }, resolve);
+                });
 
-    return asyncToGenerator(regeneratorRuntime.mark(function _callee14() {
-      var result, val;
-      return regeneratorRuntime.wrap(function _callee14$(_context14) {
-        while (1) {
-          switch (_context14.prev = _context14.next) {
-            case 0:
-              _context14.prev = 0;
+              case 4:
+                _ref15 = _context14.sent;
+                evalResult = _ref15.data;
 
-              options = Object.assign({
-                inspect: !printResult,
-                printDepth: _this6.printInspectMaxDepth,
-                targetModule: _this6.moduleId(),
-                context: _this6
-              }, options);
-              _context14.next = 4;
-              return evalStrategy(_this6).runEval(_this6.getCodeForEval(), options);
+                if (evalResult && evalResult.value && evalResult.value.isEvalResult) evalResult = evalResult.value;
+                return _context14.abrupt("return", evalResult);
 
-            case 4:
-              result = _context14.sent;
-              val = result.isError ? processEvalError(result) : result.value;
-
-              if (printResult) {
-                _this6.printObject(editor, val, false, _this6.getPrintItAsComment());
-              } else {
-                _this6[result.isError ? "showError" : "setStatusMessage"](val);
-              }
-              _this6.onDoitDone(result);
-              return _context14.abrupt("return", result);
-
-            case 11:
-              _context14.prev = 11;
-              _context14.t0 = _context14["catch"](0);
-              _this6.showError(_context14.t0);throw _context14.t0;
-
-            case 15:
-            case "end":
-              return _context14.stop();
+              case 8:
+              case "end":
+                return _context14.stop();
+            }
           }
-        }
-      }, _callee14, _this6, [[0, 11]]);
-    }))();
-  },
-  printInspect: function printInspect(options) {
-    var _this7 = this;
+        }, _callee14, this);
+      }));
 
-    return asyncToGenerator(regeneratorRuntime.mark(function _callee15() {
-      var msgMorph, ed;
-      return regeneratorRuntime.wrap(function _callee15$(_context15) {
-        while (1) {
-          switch (_context15.prev = _context15.next) {
-            case 0:
-              options = options || {};
-              msgMorph = _this7._statusMorph;
-              _context15.next = 4;
-              return new Promise(function (resolve, reject) {
-                return _this7.withAceDo(resolve);
-              });
+      function basicRemoteEval(_x27, _x28) {
+        return _ref14.apply(this, arguments);
+      }
 
-            case 4:
-              ed = _context15.sent;
-
-              if (!(msgMorph && msgMorph.world())) {
-                _context15.next = 7;
-                break;
-              }
-
-              return _context15.abrupt("return", ed.execCommand('insertEvalResult'));
-
-            case 7:
-              return _context15.abrupt("return", _this7.doit(true, ed, { inspect: true, printDepth: options.depth || _this7.printInspectMaxDepth }));
-
-            case 8:
-            case "end":
-              return _context15.stop();
-          }
-        }
-      }, _callee15, _this7);
-    }))();
-  },
-  evalSelection: function evalSelection(printIt) {
-    var _this8 = this;
-
-    return asyncToGenerator(regeneratorRuntime.mark(function _callee16() {
-      var options, result;
-      return regeneratorRuntime.wrap(function _callee16$(_context16) {
-        while (1) {
-          switch (_context16.prev = _context16.next) {
-            case 0:
-              options = { context: _this8, targetModule: _this8.moduleId(), asString: !!printIt };
-              _context16.next = 3;
-              return evalStrategy(_this8).runEval(_this8.getCodeForEval(), options);
-
-            case 3:
-              result = _context16.sent;
-
-              if (printIt) _this8.insertAtCursor(result.value, true);
-              return _context16.abrupt("return", result);
-
-            case 6:
-            case "end":
-              return _context16.stop();
-          }
-        }
-      }, _callee16, _this8);
-    }))();
-  },
-  doListProtocol: function doListProtocol() {
-    var _this9 = this;
-
-    return asyncToGenerator(regeneratorRuntime.mark(function _callee17() {
-      var m, prefix, completions, lister;
-      return regeneratorRuntime.wrap(function _callee17$(_context17) {
-        while (1) {
-          switch (_context17.prev = _context17.next) {
-            case 0:
-              _context17.prev = 0;
-              m = lively.module("lively.ide.codeeditor.Completions");
-
-              if (m.isLoaded()) {
-                _context17.next = 5;
-                break;
-              }
-
-              _context17.next = 5;
-              return m.load();
-
-            case 5:
-              prefix = _this9.getCodeForCompletions();
-              _context17.next = 8;
-              return evalStrategy(_this9).keysOfObject(prefix, { context: _this9, targetModule: _this9.moduleId() });
-
-            case 8:
-              completions = _context17.sent;
-              lister = new lively.ide.codeeditor.Completions.ProtocolLister(_this9);
-
-              lister.openNarrower(completions);
-              return _context17.abrupt("return", lister);
-
-            case 14:
-              _context17.prev = 14;
-              _context17.t0 = _context17["catch"](0);
-              _this9.showError(_context17.t0);
-            case 17:
-            case "end":
-              return _context17.stop();
-          }
-        }
-      }, _callee17, _this9, [[0, 14]]);
-    }))();
-  },
-  doSave: function doSave() {
-    var _this10 = this;
-
-    return asyncToGenerator(regeneratorRuntime.mark(function _callee18() {
-      return regeneratorRuntime.wrap(function _callee18$(_context18) {
-        while (1) {
-          switch (_context18.prev = _context18.next) {
-            case 0:
-              _this10.savedTextString = _this10.textString;
-
-              if (!_this10.getEvalOnSave()) {
-                _context18.next = 10;
-                break;
-              }
-
-              _context18.prev = 2;
-              _context18.next = 5;
-              return lively.modules.moduleSourceChange(_this10.moduleId(), _this10.textString);
-
-            case 5:
-              _context18.next = 10;
-              break;
-
-            case 7:
-              _context18.prev = 7;
-              _context18.t0 = _context18["catch"](2);
-              return _context18.abrupt("return", _this10.showError(_context18.t0));
-
-            case 10:
-              _this10.onSaveDone();
-
-            case 11:
-            case "end":
-              return _context18.stop();
-          }
-        }
-      }, _callee18, _this10, [[2, 7]]);
-    }))();
-  },
-  onDoitDone: function onDoitDone(result) {},
-  onSaveDone: function onSaveDone() {},
-  getAllCode: function getAllCode() {
-    throw new Error("getAllCode() not yet implemented for " + this.constructor.name);
-  },
-  getCodeForEval: function getCodeForEval() {
-    throw new Error("getCodeForEval() not yet implemented for " + this.constructor.name);
-  },
-  getCodeForCompletions: function getCodeForCompletions() {
-    throw new Error("getCodeForCompletions() not yet implemented for " + this.constructor.name);
-  },
-  moduleId: function moduleId() {
-    throw new Error("moduleId() not yet implemented for " + this.constructor.name);
-  },
-  printObject: function printObject() {
-    throw new Error("printObject() not yet implemented for " + this.constructor.name);
-  },
-  getPrintItAsComment: function getPrintItAsComment() {
-    throw new Error("getPrintItAsComment() not yet implemented for " + this.constructor.name);
-  },
-  insertAtCursor: function insertAtCursor() {
-    throw new Error("insertAtCursor() not yet implemented for " + this.constructor.name);
-  },
-  setStatusMessage: function setStatusMessage() {
-    throw new Error("setStatusMessage() not yet implemented for " + this.constructor.name);
-  }
-}, defineProperty(_EvalableTextMorphTra, "setStatusMessage", function setStatusMessage() {
-  throw new Error("setStatusMessage() not yet implemented for " + this.constructor.name);
-}), defineProperty(_EvalableTextMorphTra, "showError", function showError() {
-  throw new Error("showError() not yet implemented for " + this.constructor.name);
-}), _EvalableTextMorphTra);
+      return basicRemoteEval;
+    }()
+  }]);
+  return L2LEvalStrategy;
+}(RemoteEvalStrategy);
 
 
 
@@ -27391,7 +27187,7 @@ var evalStrategies = Object.freeze({
 	SimpleEvalStrategy: SimpleEvalStrategy,
 	LivelyVmEvalStrategy: LivelyVmEvalStrategy,
 	HttpEvalStrategy: HttpEvalStrategy,
-	EvalableTextMorphTrait: EvalableTextMorphTrait
+	L2LEvalStrategy: L2LEvalStrategy
 });
 
 function runEval$$1(code, options) {
