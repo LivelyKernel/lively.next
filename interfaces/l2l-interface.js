@@ -1,6 +1,5 @@
 import { L2LEvalStrategy } from "lively.vm/lib/eval-strategies.js";
 import { RemoteCoreInterface } from "./interface.js";
-import L2LClient from "lively.2lively/client.js";
 
 export class L2LCoreInterface extends RemoteCoreInterface {
 
@@ -12,8 +11,9 @@ export class L2LCoreInterface extends RemoteCoreInterface {
 
   get name() { return `l2l ${this.targetId}`; }
 
-  runEval(source, options) {
-    let l2lClient = L2LClient.forLivelyInBrowser(),
+  async runEval(source, options) {
+    let {default: L2LClient} = await lively.modules.module("lively.2lively/client.js").load(),
+        l2lClient = L2LClient.forLivelyInBrowser(),
         l2lEval = new L2LEvalStrategy(l2lClient, this.targetId);
     return l2lEval.runEval(source, options);
   }
