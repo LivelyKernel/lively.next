@@ -115,7 +115,7 @@ export default class ExpressionSerializer {
           if (typeof varName === "string") {
             local = varName; exported = varName;
           } else if (typeof varName === "object") { // alias
-            ({local, exported}) = varName;
+            ({local, exported} = varName);
           }
           __boundValues__[local] = exports[exported];
           source = `var ${local} = __boundValues__.${local};\n${source}`;
