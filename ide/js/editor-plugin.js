@@ -19,16 +19,11 @@ import {
 import EditorPlugin from "../editor-plugin.js";
 import { Snippet } from "../../text/snippets.js";
 
-
-// FIXME! We don't want to create a dependency from lively.morphic to
-// lively-system-interface so this get's "side-loaded". We need to split various
-// ide parts into own packages that then can have the proper dependencies
-var localInterface, serverInterfaceFor, l2lInterfaceFor;
-System.import("lively-system-interface").then(system => {
-  localInterface = system.localInterface;
-  serverInterfaceFor = system.serverInterfaceFor;
-  l2lInterfaceFor = system.l2lInterfaceFor;
-})
+import {
+  localInterface,
+  serverInterfaceFor,
+  l2lInterfaceFor
+} from "lively-system-interface";
 
 
 export default class JavaScriptEditorPlugin extends EditorPlugin {
@@ -150,7 +145,7 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
 
   systemInterface(envMixin) {
     var env = this.sanatizedJsEnv(envMixin);
-    return env.systemInterface;
+    return env.systemInterface || localInterface;
   }
 
   setSystemInterface(systemInterface) {
