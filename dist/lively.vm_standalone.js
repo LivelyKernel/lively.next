@@ -25708,6 +25708,17 @@ var toConsumableArray = function (arr$$1) {
   }
 };
 
+function getGlobal() {
+  if (typeof System !== "undefined") return System.global;
+  if (typeof window !== "undefined") return window;
+  if (typeof global !== "undefined") return global;
+  if (typeof Global !== "undefined") return Global;
+  if (typeof self !== "undefined") return self;
+  return function () {
+    return this;
+  }();
+}
+
 function signatureOf(name, func) {
   var source = String(func),
       match = source.match(/function\s*[a-zA-Z0-9_$]*\s*\(([^\)]*)\)/),
@@ -25734,7 +25745,7 @@ var knownSymbols = function () {
 var symMatcher = /^Symbol\((.*)\)$/;
 
 function printSymbol(sym) {
-  if (Symbol.keyFor(sym)) return 'Symbol.for("' + Symbol.keyFor(sym) + '")';
+  if (Symbol.keyFor(sym)) return "Symbol.for(\"" + Symbol.keyFor(sym) + "\")";
   if (knownSymbols.get(sym)) return knownSymbols.get(sym);
   var matched = String(sym).match(symMatcher);
   return String(sym);
@@ -25742,12 +25753,12 @@ function printSymbol(sym) {
 
 function safeToString(value) {
   if (!value) return String(value);
-  if (Array.isArray(value)) return '[' + value.map(safeToString).join(",") + ']';
-  if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === "symbol") return printSymbol(value);
+  if (Array.isArray(value)) return "[" + value.map(safeToString).join(",") + "]";
+  if ((typeof value === "undefined" ? "undefined" : _typeof(value)) === "symbol") return printSymbol(value);
   try {
     return String(value);
   } catch (e) {
-    throw new Error('Cannot print object: ' + e.stack);
+    throw new Error("Cannot print object: " + e.stack);
   }
 }
 
@@ -25767,7 +25778,7 @@ function printEvalResult(evalResult) {
   if (isPromise) {
     var status = lively_lang.string.print(promiseStatus),
         printed = promiseStatus === "pending" ? undefined : printEvalResult({ value: promisedValue }, options);
-    return 'Promise({status: ' + status + ', ' + (value === undefined ? "" : "value: " + printed) + '})';
+    return "Promise({status: " + status + ", " + (value === undefined ? "" : "value: " + printed) + "})";
   }
 
   if (value instanceof Promise) return 'Promise({status: "unknown"})';
@@ -25784,7 +25795,7 @@ var printInspectEvalValue = function () {
       maxStringLength = 100;
 
   return function printInspect(object, maxDepth) {
-    if ((typeof maxDepth === 'undefined' ? 'undefined' : _typeof(maxDepth)) === "object") maxDepth = maxDepth.maxDepth || 2;
+    if ((typeof maxDepth === "undefined" ? "undefined" : _typeof(maxDepth)) === "object") maxDepth = maxDepth.maxDepth || 2;
 
     if (!object) return String(object);
     if (typeof object === "string") {
@@ -25818,15 +25829,15 @@ var printInspectEvalValue = function () {
       values.push(next.value);
     }
     var printed = values.map(function (ea) {
-      return hasEntries ? printInspect(ea[0], 1) + ': ' + printInspect(ea[1], 1) : printInspect(ea, 2);
+      return hasEntries ? printInspect(ea[0], 1) + ": " + printInspect(ea[1], 1) : printInspect(ea, 2);
     }).join(", ");
-    return name + '(' + open + printed + close + ')';
+    return name + "(" + open + printed + close + ")";
   }
 
   function inspectPrinter(val, ignore, continueInspectFn) {
 
     if (!val) return ignore;
-    if ((typeof val === 'undefined' ? 'undefined' : _typeof(val)) === "symbol") return printSymbol(val);
+    if ((typeof val === "undefined" ? "undefined" : _typeof(val)) === "symbol") return printSymbol(val);
     if (typeof val === "string") return lively_lang.string.print(lively_lang.string.truncate(val, maxStringLength));
     if (val.isMorph) return safeToString(val);
     if (val instanceof Promise) return "Promise()";
@@ -26017,6 +26028,16 @@ function evalCodeTransform(code, options) {
 
   // 3. capture top level vars into topLevelVarRecorder "environment"
 
+  if (!options.topLevelVarRecorder && options.topLevelVarRecorderName) {
+    var G = getGlobal();
+    if (options.topLevelVarRecorderName === "GLOBAL") {
+      // "magic"
+      options.topLevelVarRecorder = getGlobal();
+    } else {
+      options.topLevelVarRecorder = lively_lang.Path(options.topLevelVarRecorderName).get(G);
+    }
+  }
+
   if (options.topLevelVarRecorder) {
 
     // capture and wrap logic
@@ -26161,16 +26182,6 @@ function _normalizeEvalOptions(opts) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // eval
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-function getGlobal() {
-  if (typeof System !== "undefined") return System.global;
-  if (typeof window !== "undefined") return window;
-  if (typeof global !== "undefined") return global;
-  if (typeof Global !== "undefined") return Global;
-  return function () {
-    return this;
-  }();
-}
 
 function _eval(__lvEvalStatement, __lvVarRecorder /*needed as arg for capturing*/, __lvOriginalCode) {
   return eval(__lvEvalStatement);
