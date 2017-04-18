@@ -5478,7 +5478,7 @@ module.exports = function(acorn) {
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v7.7.4',
+        version: 'v7.7.3',
         browser: true,
         env: {},
         argv: [],
@@ -9608,9 +9608,8 @@ module.exports = function(acorn) {
   require.define('/node_modules/estraverse/estraverse.js', function (module, exports, __dirname, __filename) {
     (function (root, factory) {
       'use strict';
-      if (typeof GLOBAL.define === 'function' && GLOBAL.define.amd) {
-          GLOBAL.dezdxd
-	  fine(['exports'], factory);
+      if (typeof define === 'function' && define.amd) {
+        define(['exports'], factory);
       } else if (typeof exports !== 'undefined') {
         factory(exports);
       } else {

@@ -35,7 +35,7 @@
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v7.7.4',
+        version: 'v7.7.3',
         browser: true,
         env: {},
         argv: [],
