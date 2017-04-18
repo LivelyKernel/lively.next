@@ -88,6 +88,6 @@ return {noDeps: noDeps, complete: complete};
   .then(sources => {
     fs.writeFileSync(targetFile, sources.noDeps);
     fs.writeFileSync(targetFile2, sources.complete);
-    fs.writeFileSync(targetFileMin, sources.complete);
+    fs.writeFileSync(targetFileMin, uglify.minify(sources.complete, {fromString: true}).code);
   })
   .catch(err => { console.error(err.stack || err); throw err; })
