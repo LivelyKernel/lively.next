@@ -73,77 +73,77 @@ export class Morph {
       origin:             {defaultValue: pt(0,0)},
       extent:             {defaultValue: pt(10, 10)},
       width: {
-        derived: true,
+        derived: true, after: ['extent'],
         get()         { return this.extent.x; },
         set(v)        { return this.extent = pt(v, this.extent.y); }
       },
       height: {
-        derived: true,
+        derived: true, after: ['extent'],
         get()        { return this.extent.y; },
         set(v)       { return this.extent = pt(this.extent.x, v); }
       },
       left: {
-        derived: true,
+        derived: true, after: ['extent', 'submorphs'],
         get()          { return this.bounds().left(); },
         set(v)         { return this.moveBy(pt(v - this.left), 0); }
       },
       right: {
-        derived: true,
+        derived: true, after: ['extent', 'submorphs'],
         get()         { return this.bounds().right(); },
         set(v)        { return this.moveBy(pt(v - this.right), 0); }
       },
       top: {
-        derived: true,
+        derived: true, after: ['extent', 'submorphs'],
         get()           { return this.bounds().top(); },
         set(v)          { return this.moveBy(pt(0, v - this.top)); }
       },
       bottom: {
-        derived: true,
+        derived: true, after: ['extent', 'submorphs'],
         get()        { return this.bounds().bottom(); },
         set(v)       { return this.moveBy(pt(0, v - this.bottom)); }
       },
       center: {
-        derived: true,
+        derived: true, after: ['extent', 'submorphs'],
         get()        { return this.bounds().center(); },
         set(v)       { return this.align(this.center, v); }
       },
       topLeft: {
-        derived: true,
+        derived: true, after: ['extent', 'submorphs'],
         get()       { return this.bounds().topLeft(); },
         set(v)      { return this.align(this.topLeft, v); }
       },
       topRight: {
-        derived: true,
+        derived: true, after: ['extent', 'submorphs'],
         get()      { return this.bounds().topRight(); },
         set(v)     { return this.align(this.topRight, v); }
       },
       bottomRight: {
-        derived: true,
+        derived: true, after: ['extent'],
         get()   { return this.bounds().bottomRight(); },
         set(v)  { return this.align(this.bottomRight, v); }  
       },
       bottomLeft: {
-        derived: true,
+        derived: true, after: ['extent', 'submorphs'],
         get()    { return this.bounds().bottomLeft(); },
         set(v)   { return this.align(this.bottomLeft, v); } 
       },
       bottomCenter: {
-        derived: true,
+        derived: true, after: ['extent', 'submorphs'],
         get()  { return this.bounds().bottomCenter(); },
         set(v) { return this.align(this.bottomCenter, v); }
       },
       topCenter: {
-        derived: true,
+        derived: true, after: ['extent', 'submorphs'],
         get()     { return this.bounds().topCenter(); },
         set(v)    { return this.align(this.topCenter, v); }
       },
       leftCenter: {
-        derived: true,
+        derived: true, after: ['extent', 'submorphs'],
           get()    { return this.bounds().leftCenter(); },
           set(v)   { return this.align(this.leftCenter, v); }
       },
       rightCenter: {
-        derived: true,
+        derived: true, after: ['extent', 'submorphs'],
         get()   { return this.bounds().rightCenter(); },
         set(v)  { return this.align(this.rightCenter, v); }
       },
