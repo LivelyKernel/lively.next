@@ -122,20 +122,20 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
 
     return this.currentEval = Promise.resolve().then(async () => {
       var result = await this.runEval(`
-var result;
-try {
-  result = JSON.stringify(await (async ${transform.wrapInFunction(source)})());
-} catch (e) { result = {isError: true, value: e}; }
-!result || typeof result === "string" ?
-  result :
-  JSON.stringify(result.isError ?
-    {isError: true, value: result.value.stack || String(result.value)} :
-    result)
-;`, Object.assign({
-      targetModule: "lively://remote-lively-system/runEvalAndStringify",
-      promiseTimeout: 2000,
-      waitForPromise: true,
-    }, opts));
+        Promise.resolve((${transform.wrapInFunction(source)})())
+          .then(function(result) { return JSON.stringify(result); })
+          .catch(function(err) { return {isError: true, value: err}; })
+          .then(function(result) {
+            if (!result || typeof result === "string") return result;
+            return JSON.stringify(result.isError ?
+              {isError: true, value: result.value.stack || String(result.value)} :
+              result)
+          });`,
+        Object.assign({
+          targetModule: "lively://remote-lively-system/runEvalAndStringify",
+          promiseTimeout: 2000,
+          waitForPromise: true,
+        }, opts));
 
       if (result && result.isError)
         throw new Error(String(result.value));
@@ -148,7 +148,7 @@ try {
       if (result.value === "false") return false;
   
       try {
-        return JSON.parse(result.value);
+        return JSON.parse(result.promisedValue || result.value);
       } catch (e) {
         throw new Error(`Could not JSON.parse the result of runEvalAndStringify: ${result.value}\n(Evaluated expression:\n ${source})`);
       }
@@ -164,11 +164,17 @@ try {
   async dynamicCompletionsForPrefix(moduleName, prefix, options) {
     options = obj.dissoc(options, ["systemInterface", "System", "context"]);
     var src = `
-      var livelySystem = System.get(System.decanonicalize("lively-system-interface")),
-          mName = ${JSON.stringify(moduleName)},
-          prefix = ${JSON.stringify(prefix)},
-          opts = ${JSON.stringify(options)};
-      await livelySystem.localInterface.dynamicCompletionsForPrefix(mName, prefix, opts);`;
+      var prefix = ${JSON.stringify(prefix)},
+          opts = ${JSON.stringify(options)},
+          evalFn = code => lively.vm.runEval(code, opts);
+      if (typeof System === "undefined") delete opts.targetModule;
+      lively.vm.completions.getCompletions(evalFn, prefix).then(function(result) {
+        if (result.isError) throw result.value;
+        return {
+          completions: result.completions,
+          prefix: result.startLetters
+        }
+      });`;
     return this.runEvalAndStringify(src);
   }
 
