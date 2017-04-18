@@ -182,256 +182,420 @@ export class GradientEditor extends Morph {
        this.targetProperty && this.updateGradientHandles(this.targetProperty.__proto__.constructor);
    }
 
-   gradientStopControl(gradientEditor, idx) {
-       const head = this.stopControlHead(gradientEditor, idx),
-             stopControl = new Morph({
-          head,
-          styleClasses: ['stopControlLine'],
-          nativeCursor: '-webkit-grab',
-          update(gradient) {
-             this.position = gradientEditor.extent.subPt(pt(10,0))
-                                           .scaleByPt(pt(gradient.stops[idx].offset, 0))
-                                           .addPt(pt(5,0))
-             arr.invoke(this.submorphs, "update", gradient);
-          },
-          onDragStart(evt) {
-             this.nativeCursor = '-webkit-grabbing';
-             gradientEditor.nativeCursor = '-webkit-grabbing';
-             this.offsetView = this.addMorph(new Text({
-                type: 'text', styleClasses: ['propertyView']
-             })).openInWorld(evt.hand.position.addPt(pt(10,10)));
-          },
-          onDrag(evt) {
-             const absOffset = this.position.x - 5 + evt.state.dragDelta.x,
-                   offset = Math.max(0, Math.min(1, absOffset / (gradientEditor.width - 10)));
-             gradientEditor.updateStop(idx, {offset});
-             this.offsetView.textString = (offset * 100).toFixed(2) + "%"
-             this.offsetView.position = evt.hand.position.addPt(pt(10,10));
-          },
-          onDragEnd() {
-             this.nativeCursor = '-webkit-grab';
-             gradientEditor.nativeCursor = 'auto';
-             this.offsetView.remove();
-          },
-       });
-       head.stopControl = stopControl;
-       stopControl.addMorph(head);
-       return stopControl;
-   }
-
-   stopControlHead(gradientEditor, idx) {
-        const self = this;
-        return morph({
-           queue: [],
-           isHaloItem: true,
-           styleClasses: ['stopControlHead'],
-           layout: new HorizontalLayout({spacing: 3}),
-           update(gradient) {
-              var paletteField = this.getSubmorphNamed("paletteField"),
-                  pickerField = this.getSubmorphNamed("pickerField");
-              if (!paletteField) {
-                 this.submorphs = [paletteField = this.paletteField(pt(10,10))];
-              }
-              pickerField && pickerField.update(gradient);
-              paletteField.update(gradient);
-
-           },
-           onHoverIn() {
-              const color = self.targetProperty.stops[idx].color;
-              this.palette = this.palette || new ColorPalette({color}),
-              this.picker = this.picker || new ColorPicker({color}),
-              this.picker.color = color;
-              this.scheduleExpand();
-           },
-           onHoverOut() {
-              this.scheduleShrink();
-           },
-           scheduleExpand() {
-              if (this.queue.pop()) return;
-              this.queue.push(this.expand);
-              this.dequeue();
-           },
-           scheduleShrink() {
-              if (this.queue.pop()) return;
-              this.queue.push(this.shrink);
-              this.dequeue();
-           },
-           async dequeue() {
-              if (this.queueActive) return;
-              this.queueActive = true;
-              while (this.queue.length > 0) {
-                 await this.queue.shift().bind(this)()
-              }
-              this.queueActive = false;
-           },
-           async expand() {
-              if (this.submorphs.length > 1) return;
-              const oldCenter = this.globalBounds().center(),
-                    palette = this.get("paletteField");
-              this.layout = null;
-              this.submorphs = [this.closeButton(), palette, this.pickerField()];
-              this.openInWorld(this.globalPosition);
-              palette.animate({extent: pt(15,15), duration: 200});
-              await this.animate({layout: new HorizontalLayout({spacing: 3}), center: oldCenter, duration: 200});
-              self.update();
-           },
-           async shrink() {
-              if (this.submorphs.length < 3) return;
-              const oldCenter = this.center,
-                    [close, palette, picker] = [this.get("close"), this.get("paletteField"), this.get("pickerField")];
-              palette.animate({extent: pt(10,10), duration: 200});
-              this.layout = null; close.remove(); picker.remove();
-              await this.animate({layout: new HorizontalLayout({spacing: 3}), center: oldCenter, duration: 200});
-              this.stopControl.addMorph(this);
-           },
-           onWidgetClosed() {
-               this.palette = this.picker = null;
-               this.shrink();
-           },
-           closeButton() {
-              return new Morph({
-                 name: "close",
-                 extent: pt(15,15), fill: Color.transparent,
-                 origin: pt(0,-3), clipMode: 'hidden',
-                 submorphs: [Icon.makeLabel("close", {
-                  styleClasses: ["closeButton"],
-                  onMouseDown: () => {
-                     gradientEditor.removeStop(idx) && this.remove();
-                  }})]})
-           },
-           updateColor(color) {
-               gradientEditor.updateStop(idx, {color});
-           },
-           openColorWidget(name) {
-               gradientEditor.stopControls.forEach(c => c.head.closeAllWidgets());
-               this[name].position = pt(0,0);
-               connect(this[name], "color", this, "updateColor");
-               connect(this[name], "close", this, "onWidgetClosed");
-               connect(self, "remove", this[name], "remove");
-               connect(self.owner, "onMouseDown", this[name], "remove");
-               this[name].fadeIntoWorld(this.globalBounds().bottomCenter());
-           },
-           closeColorWidget(name) {
-              this[name] && this[name].remove();
-           },
-           closeAllWidgets() {
-              this.closeColorWidget('palette');
-              this.closeColorWidget('picker');
-           },
-           paletteField(extent) {
-               const stopControl = this;
-               return {
-                  type: "ellipse", name: "paletteField", extent,
-                  update(gradient) {
-                     this.fill = stopControl.stopColor = gradient.stops[idx].color;
-                  },
-                  onMouseDown: () => {
-                     this.openColorWidget("palette");
-                     this.closeColorWidget("picker");
-                  }
-               }
-           },
-           pickerField() {
-               return new Image({
-                  name: "pickerField",
-                  update: (gradient) => {
-                     this.stopColor = gradient.stops[idx].color
-                  },
-                  onMouseDown: () => {
-                     this.openColorWidget("picker");
-                     this.closeColorWidget("palette");
-                  }
-               });
-           }
-        })
-   }
-
    gradientEditor() {
-      const self = this;
-      return {
-         name: "gradientEditor", fill: Color.gray,
-         update(gradient) {
-            this.fill = new LinearGradient({stops: gradient.stops, vector: "eastwest"});
-            this.get("instruction").animate({opacity: 0, visible: false, duration: 300});
-            this.renderStopControls(gradient)
-         },
-         onHoverOut() { this.toggleStopPreview(false) },
-         onMouseMove(evt) {
-            const pos = evt.positionIn(this),
-                  absOffset = pos.x;
-            if (this.stopControls && this.stopControls.find(m => m.bounds().containsPoint(pos))) {
-               this.toggleStopPreview(false)
-            } else {
-               this.toggleStopPreview(true);
-               this.get("stopControlPreview").position = pt(absOffset, 0);
-            }
-         },
-         onMouseDown(evt) {
-            if (!this.get("stopControlPreview").visible) return;
-            var   offset = evt.positionIn(this).x / this.width,
-                  idx = self.targetProperty.stops.findIndex(m => m.offset > offset);
-            idx = idx < 0 ? self.targetProperty.stops.length - 1 : idx;
-            this.insertStop(idx, offset);
-         },
-         toggleStopPreview(visible) {
-             if (!this.get("instruction").visible)
-                 this.get("stopControlPreview").visible = visible
-         },
-         removeStop(idx) {
-            const gradient = self.targetProperty;
-            if (gradient.stops.length > 2) {
-                arr.removeAt(gradient.stops, idx);
-                self.targetProperty = gradient;
-                return true;
-            } else {
-               return false;
-            }
-         },
-         insertStop(idx, offset) {
-            const gradient = self.targetProperty,
-                  color = gradient.stops[idx].color;
-            arr.pushAt(gradient.stops, {offset, color}, idx);
-            self.targetProperty = gradient;
-         },
-         updateStop(idx, props) {
-            const gradient = self.targetProperty;
-            gradient.stops[idx] = {...gradient.stops[idx], ...props};
-            self.targetProperty = gradient;
-         },
-         renderStopControls(gradient) {
-            if (!this.stopControls || this.stopControls.length != gradient.stops.length) {
-               const [instructions, preview] = this.submorphs;
-               this.stopControls = gradient.stops.map((s,i) => self.gradientStopControl(this, i));
-               this.submorphs = [instructions, preview, ...this.stopControls];
-               arr.invoke(this.stopControls, "update", gradient);
-            }
-            arr.invoke(this.stopControls, "update", gradient);
-         },
-         submorphs: [{
-            type: "label", name: "instruction", value: "Select Gradient Type",
-            visible: !(this.targetProperty && this.targetProperty.isGradient)
-         }, {
-            name: "stopControlPreview", visible: false, submorphs: [Icon.makeLabel("plus-circle", {name: "addStopLabel"})]
-         }]
-      }
+      return new GradientStopVisualizer({name: "gradientEditor", gradientEditor: this});
    }
+}
+
+class StopControlHead extends Morph {
+
+   static get properties() {
+     return {
+       stopVisualizer: {},
+       gradientEditor: {},
+       targetProperty: {
+         get() { return this.stopVisualizer.targetProperty },
+       },
+       index: {},
+       queue: {defaultValue: []},
+       isHaloItem: {defaultValue: true},
+       styleClasses: {defaultValue: ['stopControlHead']},
+       layout: {initialize() { this.layout = new HorizontalLayout({spacing: 3}) }}
+    }
+  }
+
+   update(gradient) {
+      var paletteField = this.getSubmorphNamed("paletteField"),
+          pickerField = this.getSubmorphNamed("pickerField");
+      if (!paletteField) {
+         this.submorphs = [paletteField = this.paletteField(pt(10,10))];
+      }
+      pickerField && pickerField.update(gradient);
+      paletteField.update(gradient);
+   }
+   
+   onHoverIn() {
+      const color = this.targetProperty.stops[this.index].color;
+      this.palette = this.palette || new ColorPalette({color}),
+      this.picker = this.picker || new ColorPicker({color}),
+      this.picker.color = color;
+      this.scheduleExpand();
+   }
+           
+   onHoverOut() {
+      this.scheduleShrink();
+   }
+   
+   scheduleExpand() {
+      if (this.queue.pop()) return;
+      this.queue.push(this.expand);
+      this.dequeue();
+   }
+           
+   scheduleShrink() {
+      if (this.queue.pop()) return;
+      this.queue.push(this.shrink);
+      this.dequeue();
+   }
+   
+   async dequeue() {
+      if (this.queueActive) return;
+      this.queueActive = true;
+      while (this.queue.length > 0) {
+         await this.queue.shift().bind(this)()
+      }
+      this.queueActive = false;
+   }
+           
+   async expand() {
+      if (this.submorphs.length > 1) return;
+      const oldCenter = this.globalBounds().center(),
+            palette = this.get("paletteField");
+      this.layout = null;
+      this.submorphs = [this.closeButton(), palette, this.pickerField()];
+      this.openInWorld(this.globalPosition);
+      palette.animate({extent: pt(15,15), duration: 200});
+      await this.animate({layout: new HorizontalLayout({spacing: 3}), center: oldCenter, duration: 200});
+      this.stopVisualizer.gradientEditor.update();
+   }
+           
+   async shrink() {
+      if (this.submorphs.length < 3) return;
+      const oldCenter = this.center,
+            [close, palette, picker] = [this.get("close"), this.get("paletteField"), this.get("pickerField")];
+      palette.animate({extent: pt(10,10), duration: 200});
+      this.layout = null; close.remove(); picker.remove();
+      await this.animate({layout: new HorizontalLayout({spacing: 3}), center: oldCenter, duration: 200});
+      this.stopControl.addMorph(this);
+   }
+           
+   onWidgetClosed() {
+       this.palette = this.picker = null;
+       this.shrink();
+   }
+   
+   closeButton() {
+      return new Morph({
+         name: "close",
+         extent: pt(15,15), fill: Color.transparent,
+         origin: pt(0,-3), clipMode: 'hidden',
+         submorphs: [Icon.makeLabel("close", {
+          styleClasses: ["closeButton"],
+          onMouseDown: () => {
+             this.stopVisualizer.removeStop(this.index) && this.remove();
+          }})]})
+   }
+           
+   updateColor(color) {
+       this.stopVisualizer.updateStop(this.index, {color});
+   }
+           
+   openColorWidget(name) {
+       this.stopVisualizer.stopControls.forEach(c => c.head.closeAllWidgets());
+       this[name].position = pt(0,0);
+       connect(this[name], "color", this, "updateColor");
+       connect(this[name], "close", this, "onWidgetClosed");
+       connect(this.stopVisualizer, "remove", this[name], "remove");
+       connect(this.stopVisualizer.gradientEditor, "onMouseDown", this[name], "remove");
+       this[name].fadeIntoWorld(this.globalBounds().bottomCenter());
+   }
+   
+   closeColorWidget(name) {
+      this[name] && this[name].remove();
+   }
+           
+   closeAllWidgets() {
+      this.closeColorWidget('palette');
+      this.closeColorWidget('picker');
+   }
+   
+   paletteField(extent) {
+       const stopControl = this;
+       return morph({
+          type: "ellipse", name: "paletteField", extent,
+          update(gradient) {
+             this.fill = stopControl.stopColor = gradient.stops[stopControl.index].color;
+          },
+          onMouseDown: () => {
+             this.openColorWidget("palette");
+             this.closeColorWidget("picker");
+          }
+       })
+   }
+           
+   pickerField() {
+       return new Image({
+          name: "pickerField",
+          update: (gradient) => {
+             this.stopColor = gradient.stops[this.index].color
+          },
+          onMouseDown: () => {
+             this.openColorWidget("picker");
+             this.closeColorWidget("palette");
+          }
+       });
+   }
+}
+
+class GradientStopVisualizer extends Morph {
+
+  static get properties() {
+    return {
+         fill: {defaultValue: Color.gray},
+         gradientEditor: {},
+         targetProperty: {
+           get() {
+             return this.gradientEditor.targetProperty;
+           },
+           set(v) {
+             this.gradientEditor.targetProperty = v;
+           }
+         },
+         submorphs: {
+           initialize() {
+             this.submorphs = [{
+                 type: "label", name: "instruction", value: "Select Gradient Type",
+                 visible: !(this.targetProperty && this.targetProperty.isGradient)
+             }, {name: "stopControlPreview", visible: false, 
+                 submorphs: [Icon.makeLabel("plus-circle", {name: "addStopLabel"})]
+             }];
+            }
+          }
+      }
+  }
+
+  update(gradient) {
+    this.fill = new LinearGradient({stops: gradient.stops, vector: "eastwest"});
+    this.get("instruction").animate({opacity: 0, visible: false, duration: 300});
+    this.renderStopControls(gradient)
+  }
+  
+  onHoverOut() { this.toggleStopPreview(false) }
+  
+  onMouseMove(evt) {
+    const pos = evt.positionIn(this),
+          absOffset = pos.x;
+    if (this.stopControls && this.stopControls.find(m => m.bounds().containsPoint(pos))) {
+       this.toggleStopPreview(false)
+    } else {
+       this.toggleStopPreview(true);
+       this.get("stopControlPreview").position = pt(absOffset, 0);
+    }
+  }
+  
+  onMouseDown(evt) {
+    if (!this.get("stopControlPreview").visible) return;
+    var   offset = evt.positionIn(this).x / this.width,
+          idx = this.targetProperty.stops.findIndex(m => m.offset > offset);
+    idx = idx < 0 ? this.targetProperty.stops.length - 1 : idx;
+    this.insertStop(idx, offset);
+  }
+  
+  toggleStopPreview(visible) {
+    if (!this.get("instruction").visible)
+      this.get("stopControlPreview").visible = visible
+  }
+  
+  removeStop(idx) {
+      const gradient = this.targetProperty;
+      if (gradient.stops.length > 2) {
+          arr.removeAt(gradient.stops, idx);
+          this.targetProperty = gradient;
+          return true;
+      } else {
+         return false;
+      }
+  }
+  
+  insertStop(idx, offset) {
+      const gradient = this.targetProperty,
+            color = gradient.stops[idx].color;
+      arr.pushAt(gradient.stops, {offset, color}, idx);
+      this.targetProperty = gradient;
+   }
+   
+   updateStop(idx, props) {
+      const gradient = this.targetProperty;
+      gradient.stops[idx] = {...gradient.stops[idx], ...props};
+      this.targetProperty = gradient;
+   }
+   
+   renderStopControls(gradient) {
+      if (!this.stopControls || this.stopControls.length != gradient.stops.length) {
+         const [instructions, preview] = this.submorphs;
+         this.stopControls = gradient.stops.map((s,i) => new GradientStopControl({
+              stopVisualizer: this, index: i
+         }));
+         this.submorphs = [instructions, preview, ...this.stopControls];
+         arr.invoke(this.stopControls, "update", gradient);
+      }
+     arr.invoke(this.stopControls, "update", gradient);
+   }
+   
+}
+
+class GradientStopControl extends Morph {
+
+  static get properties() {
+    return {
+      index: {},
+      head: {},
+      stopVisualizer: {},
+      styleClasses: {defaultValue: ['stopControlLine']},
+      nativeCursor: {defaultValue: '-webkit-grab'},
+      submorphs: {
+        after: ['index', 'stopVisualizer', 'gradientEditor'],
+        initialize() {
+          this.head = new StopControlHead({
+             stopVisualizer: this.stopVisualizer,
+             index: this.index
+          });
+          this.head.stopControl = this;
+          this.addMorph(this.head);
+         }
+      }
+    }
+  }
+
+  update(gradient) {
+    this.position = this.stopVisualizer
+                        .extent.subPt(pt(10,0))
+                        .scaleByPt(pt(gradient.stops[this.index].offset, 0))
+                        .addPt(pt(5,0))
+   this.head.update(gradient);
+  }
+          
+  onDragStart(evt) {
+     this.nativeCursor = '-webkit-grabbing';
+     this.stopVisualizer.nativeCursor = '-webkit-grabbing';
+     this.offsetView = this.addMorph(new Text({
+        type: 'text', styleClasses: ['propertyView']
+     })).openInWorld(evt.hand.position.addPt(pt(10,10)));
+  }
+          
+  onDrag(evt) {
+     const absOffset = this.position.x - 5 + evt.state.dragDelta.x,
+           offset = Math.max(0, Math.min(1, absOffset / (this.stopVisualizer.width - 10)));
+     this.stopVisualizer.updateStop(this.index, {offset});
+     this.offsetView.textString = (offset * 100).toFixed(2) + "%"
+     this.offsetView.position = evt.hand.position.addPt(pt(10,10));
+  }
+          
+  onDragEnd() {
+     this.nativeCursor = '-webkit-grab';
+     this.stopVisualizer.nativeCursor = 'auto';
+     this.offsetView.remove();
+  }
+}
+
+class FocusHandle extends Ellipse {
+
+  static get properties() {
+    return {
+      gradientHandle: {},
+      styleClasses: {defaultValue: ['focusHandle']},
+      extent: pt(20,20)
+    }
+  }
+
+  relayout() {
+     this.center = this.gradientHandle.innerBounds().center();
+  }
+  
+  onDragStart(evt) {
+     this.tfm = this.gradientHandle.target.getGlobalTransform().inverse();
+     this.focusView = this.addMorph(new Text({
+          type: 'text', styleClasses: ['propertyView']
+     })).openInWorld(evt.hand.position.addPt(pt(10,10)));
+     this.focusView.rotation = 0;
+     this.focusView.scale = 1;
+  }
+  
+  onDrag(evt) {
+     const {x,y} = evt.state.dragDelta,
+           gh = this.gradientHandle,
+           g = gh.target.fill;
+     g.focus = g.focus.addXY(x / gh.target.width, y / gh.target.height)
+     this.focusView.textString = `x: ${(g.focus.x * 100).toFixed()}%, y: ${(g.focus.y * 100).toFixed()}%`;
+     this.focusView.position = evt.hand.position.addPt(pt(10,10));
+     gh.target.makeDirty();
+     gh.relayout();
+  }
+  
+  onDragEnd(evt) {
+     this.focusView.remove();
+  }
+
+}
+
+class BoundsHandle extends Ellipse {
+
+  static get properties() {
+    return {
+      side: {},
+      gradientHandle: {},
+      styleClasses: {
+        after: ['side'],
+        initialize() {
+          this.styleClasses = ['boundsHandle', this.side]
+        }
+      }
+    }
+  }
+
+  relayout() {
+     this.center = this.gradientHandle.innerBounds().partNamed(this.side);
+     this.scale = 1 / this.gradientHandle.target.getGlobalTransform().getScale();
+  }
+  
+  onDragStart(evt) {
+    this.boundsView = this.addMorph(new Text({
+      type: 'text', styleClasses: ['propertyView']
+    })).openInWorld(evt.hand.position.addPt(pt(10,10)));
+    this.boundsView.rotation = 0;
+  }
+  
+  onDrag(evt) {
+    var gh = this.gradientHandle,
+        g = gh.target.fill,
+        newSide = g.bounds.partNamed(this.side).addPt(evt.state.dragDelta.scaleBy(2));
+    g.bounds = g.bounds.withPartNamed(this.side, newSide);
+    this.boundsView.textString = `w: ${g.bounds.width.toFixed()}px h: ${g.bounds.height.toFixed()}px`
+    this.boundsView.position = evt.hand.position.addPt(pt(10,10));
+    gh.target.makeDirty()
+    gh.relayout();
+  }
+  
+  onDragEnd(evt) {
+    this.boundsView.remove()
+  }
+  
 }
 
 export class GradientFocusHandle extends Ellipse {
 
    /* Used to configure the focal point of a radial gradient, i.e. its center and bounds */
 
-    constructor(props) {
-       if (!props.target || !props.target.fill instanceof RadialGradient)
-          throw Error("Focus Handle only applicable to Morphs with radial gradient!")
-       super({
-          styleClasses: ['root'],
-          ...props
-       })
-       this.build();
+    static get properties() {
+      return {
+        target: {/* REQUIRED */},
+        isHaloItem: {defaultValue: true},
+        styleClasses: {defaultValue: ['root']},
+        styleRules: {
+          initialize() {
+            this.styleRules = this.styler;
+          }
+        },
+        submorphs: {
+          initialize() {
+            this.submorps = [];
+            this.initBoundsHandles();
+            this.addMorph(new FocusHandle({gradientHandle: this}))
+            this.relayout();
+          }
+        }
+      }
     }
-
-    get isHaloItem() { return true }
 
     get styler() {
        return new StyleRules({
@@ -459,96 +623,84 @@ export class GradientFocusHandle extends Ellipse {
        })
     }
 
-    build() {
-       this.initBoundsHandles();
-       this.initFocusHandle();
-       this.styleRules = this.styler;
-       this.relayout();
-    }
-
     relayout() {
        const {bounds, focus} = this.target.fill;
        this.extent = bounds.extent();
        this.submorphs.forEach(m => m.relayout());
        this.rotation = this.target.rotation;
+       this.scale = this.target.scale;
+       this.borderWidth = 2 / this.scale;
        if (this.owner) 
           this.center = this.owner.localizePointFrom(this.target.extent.scaleByPt(focus), this.target);
     }
 
     initBoundsHandles() {
-       const self = this;
        this.bounds().sides.forEach(side => {
-          this.addMorph({
-             type: "ellipse",
-             styleClasses: ['boundsHandle', side],
-             relayout() {
-                this.center = self.innerBounds().partNamed(side);
-             },
-             onDragStart(evt) {
-                this.boundsView = this.addMorph(new Text({
-                  type: 'text', styleClasses: ['propertyView']
-                })).openInWorld(evt.hand.position.addPt(pt(10,10)));
-             },
-             onDrag(evt) {
-                var g = self.target.fill,
-                    newSide = g.bounds.partNamed(side).addPt(evt.state.dragDelta.scaleBy(2));
-                g.bounds = g.bounds.withPartNamed(side, newSide);
-                this.boundsView.textString = `w: ${g.bounds.width.toFixed()}px h: ${g.bounds.height.toFixed()}px`
-                this.boundsView.position = evt.hand.position.addPt(pt(10,10));
-                self.target.makeDirty()
-                self.relayout();
-             },
-             onDragEnd(evt) {
-                this.boundsView.remove()
-             }
-          })
+          this.addMorph(new BoundsHandle({gradientHandle: this, side}))
        });
     }
 
-    initFocusHandle() {
-       const self = this;
-       this.addMorph({
-          type: "ellipse",
-          styleClasses: ['focusHandle'],
-          extent: pt(20,20),
-          relayout() {
-             this.center = self.innerBounds().center();
-          },
-          onDragStart(evt) {
-             this.tfm = self.target.getGlobalTransform().inverse();
-             this.focusView = this.addMorph(new Text({
-                  type: 'text', styleClasses: ['propertyView']
-             })).openInWorld(evt.hand.position.addPt(pt(10,10)));
-          },
-          onDrag(evt) {
-             const {x,y} = evt.state.dragDelta,
-                   g = self.target.fill;
-             g.focus = g.focus.addXY(x / self.target.width, y / self.target.height)
-             this.focusView.textString = `x: ${(g.focus.x * 100).toFixed()}%, y: ${(g.focus.y * 100).toFixed()}%`;
-             this.focusView.position = evt.hand.position.addPt(pt(10,10));
-             self.target.makeDirty();
-             self.relayout();
-          },
-          onDragEnd(evt) {
-             this.focusView.remove();
-          }
-       })
-    }
+}
 
+class RotationPoint extends Ellipse {
+  static get properties() {
+    return {
+      gradientHandle: {},
+      styleClasses: {defaultValue: ["rotationPoint"]}
+    };
+  }
+
+  relayout() {
+    this.center = Point.polar(
+      this.gradientHandle.width / 2,
+      this.gradientHandle.target.fill.vectorAsAngle()
+    );
+  }
+
+  onDragStart(evt) {
+    this.angleView = this.addMorph(
+      new Text({
+        type: "text",
+        styleClasses: ["propertyView"]
+      })
+    ).openInWorld(evt.hand.position.addPt(pt(10, 10)));
+    this.angleView.rotation = 0;
+  }
+
+  onDrag(evt) {
+    let gh = this.gradientHandle;
+    gh.target.fill.vector = evt.positionIn(gh).theta();
+    gh.target.makeDirty();
+    gh.relayout();
+    this.angleView.textString = `${(num.toDegrees(gh.target.fill.vectorAsAngle()) + 180).toFixed()}°`;
+    this.angleView.position = evt.hand.position.addPt(pt(10, 10));
+  }
+
+  onDragEnd(evt) {
+    this.angleView.remove();
+  }
 }
 
 class GradientDirectionHandle extends Ellipse {
 
    /* Used to configure the direction of a linear gradient (degrees) */
 
-  constructor(props) {
-     if (!props.target || !props.target.fill instanceof LinearGradient)
-        throw Error("Focus Handle only applicable to Morphs with radial gradient!")
-     super({
-        styleClasses: ['root'],
-        ...props
-     })
-     this.build();
+  static get properties() {
+    return {
+      target: {},
+      styleClasses: {defaultValue: ['root']},
+      styleRules: {
+        initialize() {
+          this.styleRules = this.styler;
+        }
+      },
+      submorphs: {
+        initialize() {
+          this.initRotationPoint();
+          this.relayout();
+        }
+      }
+    }
   }
 
   get styler() {
@@ -570,35 +722,8 @@ class GradientDirectionHandle extends Ellipse {
       this.rotationPoint.relayout();
   }
 
-  build() {
-      this.initRotationPoint();
-      this.styleRules = this.styler;
-      this.relayout();
-  }
-
   initRotationPoint() {
-     const self = this;
-     this.rotationPoint = this.addMorph({
-         type: "ellipse", styleClasses: ['rotationPoint'],
-         relayout() {
-            this.center = Point.polar(self.width / 2, self.target.fill.vectorAsAngle());
-         },
-         onDragStart(evt) {
-            this.angleView = this.addMorph(new Text({
-                  type: 'text', styleClasses: ['propertyView']
-             })).openInWorld(evt.hand.position.addPt(pt(10,10)));
-         },
-         onDrag(evt) {
-            self.target.fill.vector = evt.positionIn(self).theta();
-            self.target.makeDirty();
-            self.relayout();
-            this.angleView.textString = `${(num.toDegrees(self.target.fill.vectorAsAngle()) + 180).toFixed()}°`;
-            this.angleView.position = evt.hand.position.addPt(pt(10,10));
-         },
-         onDragEnd(evt) {
-            this.angleView.remove();
-         }
-     })
+     this.rotationPoint = this.addMorph(new RotationPoint({gradientHandle: this}));
   }
 
 }
