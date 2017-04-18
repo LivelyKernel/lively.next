@@ -525,47 +525,55 @@ export class ModeSelector extends Morph {
   }
 
   static get properties() {
-  
-  }
-
-  constructor(props) {
-    var {items, init, tooltips = {}} = props, keys, values;
-    if (obj.isArray(items)) {
-      keys = values = items;
-    } else {
-      keys = obj.keys(items);
-      values = obj.values(items);
-    }
-    super({
-      keys,
-      values,
-      tooltips,
-      styleClasses: ["root"],
-      layout: new GridLayout({
-        rows: [0, {paddingBottom: 10}],
-        grid: [[...arr.interpose(keys.map(k => k + "Label"), null)]],
-        autoAssign: false,
-        align: 'center',
-        fitToCell: false
-      }),
-      ...props
-    });
-    this.build();
-    this.update(
-      init ? init : keys[0],
-      values[keys.includes(init) ? keys.indexOf(init) : 0],
-      true
-    );
-    connect(this, "extent", this, "relayout");
-    this.whenRendered().then(() => {
-      this.withAllSubmorphsDo(ea => {
-        if (ea.isLabel) {
-          ea._cachedTextBounds = null;
-          ea.fit();
+    return {
+      items: {
+        set(items) {
+          if (obj.isArray(items)) {
+             this.keys = this.values = items;
+          } else {
+             this.keys = obj.keys(items);
+             this.values = obj.values(items);
+          }
         }
-      });
-      this.layout.apply();
-    })
+      },
+      init: {},
+      keys: {},
+      values: {},
+      tooltips: {},
+      styleClasses: {defaultValue: ["root"]},
+      layout: {
+        after: ['items'],
+        initialize() {
+          this.layout = new GridLayout({
+            rows: [0, {paddingBottom: 10}],
+            grid: [[...arr.interpose(this.keys.map(k => k + "Label"), null)]],
+            autoAssign: false,
+            align: 'center',
+            fitToCell: false
+          })
+        }
+      },
+      submorphs: {
+        initialize() {
+          this.build();
+          this.update(
+            this.init ? this.init : this.keys[0],
+            this.values[this.keys.includes(this.init) ? this.keys.indexOf(this.init) : 0],
+            true
+          );
+          connect(this, "extent", this, "relayout");
+          this.whenRendered().then(() => {
+            this.withAllSubmorphsDo(ea => {
+              if (ea.isLabel) {
+                ea._cachedTextBounds = null;
+                ea.fit();
+              }
+            });
+            this.layout.apply();
+          })
+        }
+      }
+    }
   }
 
   build() {
