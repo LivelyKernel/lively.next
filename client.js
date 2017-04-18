@@ -20,6 +20,15 @@ export default class L2LClient extends L2LConnection {
     return this._clients || (this._clients = new Map())
   }
 
+  static forLivelyInBrowser() {
+    let def = this.default();
+    if (def) return def;
+    return L2LClient.ensure({
+      url: `${document.location.origin}/lively-socket.io`,
+      namespace: "l2l"
+    });
+  }
+
   static default() {
     // FIXME
     let key = L2LClient.clients.keys().next().value;
