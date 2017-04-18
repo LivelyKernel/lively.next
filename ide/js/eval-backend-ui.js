@@ -1,9 +1,10 @@
 /*global localStorage*/
 
 import { pt, Point, Color, Rectangle } from "lively.graphics";
-import { arr } from "lively.lang";
+import { arr, obj } from "lively.lang";
 import { connect, noUpdate } from "lively.bindings";
-import { DropDownList } from "lively.morphic";
+import { DropDownList, config } from "lively.morphic";
+import L2LClient from "lively.2lively/client.js";
 
 class EvalBackendList extends DropDownList {
   static get properties() {
@@ -33,7 +34,6 @@ export default class EvalBackendChooser {
   }
 
   constructor() {
-    this._backends = [];
   }
 
   get backends() {
@@ -42,13 +42,12 @@ export default class EvalBackendChooser {
       var stringified = localStorage["lively.morphic-ide/js/EvalBackendChooser-history"];
       stored = JSON.parse(stringified);
     } catch (e) {}
-    return this._backends = arr.uniq([...(this._backends || []), ...(stored || [])]);
+    return stored || [];
   }
 
   set backends(backends) {
       // localStorage["lively.morphic-ide/js/EvalBackendChooser-history"] =  JSON.stringify(["http://localhost:9011/eval"]);
     backends = backends.filter(ea => !!ea && ea !== "local" && ea !== "edit...");
-    this._backends = backends;
     try {
       localStorage["lively.morphic-ide/js/EvalBackendChooser-history"] =  JSON.stringify(backends);
     } catch (e) {}
@@ -79,14 +78,50 @@ export default class EvalBackendChooser {
     return dropdown;
   }
 
-  updateItemsOfEvalBackendDropdown(dropdown, currentBackend) {
+  async l2lEvalBackends() {
+    // FIXME this is temporary... needs cleanup
+    let l2lClient = L2LClient.forLivelyInBrowser(),
+        {data: clients} = await new Promise((resolve, reject) =>
+          l2lClient.sendTo(l2lClient.trackerId, "getClients", {}, resolve));
+    clients = clients.filter(ea => ea[0] !== l2lClient.id)
+    return clients.map(([id, {info = {}}]) => {
+      let name = `l2l ${id.slice(0, 5)}${info ? " - " + info.type : ""}`;
+      return {
+        string: name,
+        value: {id, info, type: "l2l", name},
+        isListItem: true
+      }
+    })
+  }
+
+  async updateItemsOfEvalBackendDropdown(dropdown, currentBackend) {
     currentBackend = currentBackend || "local";
-    var items = arr.uniq(["edit...", "local", currentBackend, ...this.backends]);
+    if (typeof currentBackend !== "string" && !currentBackend.isListItem) {
+      currentBackend = {
+        isListItem: true,
+        string: currentBackend.name || "unknown",
+        value: currentBackend
+      }
+    }
+
+    let l2lBackends = await this.l2lEvalBackends(),
+        items = arr.uniqBy([
+          "edit...", "local",
+          currentBackend,
+          ...this.backends,
+          ...obj.values(config.remotes),
+          ...l2lBackends
+        ], (a, b) => {
+          let valA = a.value || a;
+          let valB = b.value || b;
+          return valA == valB || obj.equals(valA, valB)
+        });
+
     setTimeout(() => {
       noUpdate({sourceObj: dropdown, sourceAttribute: "selection"}, () => {
         dropdown.items = items;
-        dropdown.selection = currentBackend;
-        dropdown.label = currentBackend;
+        // dropdown.selection = currentBackend;
+        // dropdown.label = currentBackend;
       });
     }, 20);
   }
@@ -113,10 +148,11 @@ export default class EvalBackendChooser {
 
     choice = "local" === choice ? undefined : choice;
 
-    if (choice) this.backends = arr.uniq([choice, ...this.backends]);
+    // if (choice) this.backends = arr.uniq([choice, ...this.backends]);
     this.updateItemsOfEvalBackendDropdown(requester.getSubmorphNamed("eval backend list"), choice);
 
-    requester.setStatusMessage(`Eval backend is now ${choice || "local"}`);
+    let name = !choice ? "local" : typeof choice === "string" ? choice : choice.name
+    requester.setStatusMessage(`Eval backend is now ${name}`);
     requester.setEvalBackend(choice);
     requester.focus();
   }

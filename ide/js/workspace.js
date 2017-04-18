@@ -50,8 +50,9 @@ export default class Workspace extends Window {
             targetModule: "lively://lively.next-workspace/" + ed.id,
             context: ed, format: "esm"
           }
+          let sys = this.jsPlugin.systemInterface();
           this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(
-            this, this.systemInterface.name));
+            this, sys ? sys.name : "local"));
         }
       },
 

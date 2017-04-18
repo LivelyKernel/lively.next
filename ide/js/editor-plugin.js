@@ -23,10 +23,11 @@ import { Snippet } from "../../text/snippets.js";
 // FIXME! We don't want to create a dependency from lively.morphic to
 // lively-system-interface so this get's "side-loaded". We need to split various
 // ide parts into own packages that then can have the proper dependencies
-var localInterface, serverInterfaceFor;
+var localInterface, serverInterfaceFor, l2lInterfaceFor;
 System.import("lively-system-interface").then(system => {
   localInterface = system.localInterface;
   serverInterfaceFor = system.serverInterfaceFor;
+  l2lInterfaceFor = system.l2lInterfaceFor;
 })
 
 
@@ -156,11 +157,20 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
     return this.evalEnvironment.systemInterface = systemInterface;
   }
 
-  setSystemInterfaceNamed(interfaceName) {
-    return this.setSystemInterface(
-      !interfaceName || interfaceName === "local" ?
+  setSystemInterfaceNamed(interfaceSpec) {
+    if (!interfaceSpec) interfaceSpec = "local";
+    let name = typeof interfaceSpec === "string" ? interfaceSpec : null,
+        systemInterface;
+    if (!name && interfaceSpec.type === "l2l") {
+      systemInterface = l2lInterfaceFor(interfaceSpec.id, interfaceSpec.info)
+    } else name = "local";
+
+    if (name) {
+      systemInterface = !name || name === "local" ?
         localInterface :
-        serverInterfaceFor(interfaceName));
+        serverInterfaceFor(name)
+    }
+    return this.setSystemInterface(systemInterface);
   }
 
   runEval(code, opts) {
