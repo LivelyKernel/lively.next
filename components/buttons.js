@@ -1,7 +1,7 @@
 import { pt, Color, Rectangle } from "lively.graphics";
-import { Morph } from "lively.morphic";
+import { Morph, StyleRules } from "lively.morphic";
 import { signal, disconnect, connect } from "lively.bindings";
-import { obj } from "lively.lang/index.js";
+import { obj, arr } from "lively.lang/index.js";
 
 // var b = new Button({label: "test", extent: pt(22,18)}).openInWorld()
 // b.scale = 10
@@ -48,7 +48,7 @@ export class Button extends Morph {
         initialize() {
           this.labelMorph = this.addMorph({
             type: "label", name: "label",
-            value: "no label yet", fill: Color.white.withA(0),
+            value: "no label yet", fill: Color.transparent,
             padding: Rectangle.inset(0)
           });
         },
@@ -63,6 +63,25 @@ export class Button extends Morph {
           labelMorph.reactsToPointer = false;
           this.addMorphAt(labelMorph, 0);
           connect(this.labelMorph, 'extent', this, 'relayout');
+        }
+      },
+
+      icon: {
+        after: ['labelMorph'], derived: true,
+        initialize() {
+          this.iconMorph = this.addMorph({
+            type: "label", name: "iconMorph",
+            value: "", fill: Color.transparent,
+            padding: Rectangle.inset(0)
+          });
+        },
+        get() { return this.iconMorph.textString },
+        set(codeOrIconMorph) {
+          if (codeOrIconMorph.isMorph) {
+            this.iconMorph = codeOrIconMorph;
+          } else {
+            this.labelMorph.value = codeOrIconMorph;
+          }
         }
       },
 
@@ -123,6 +142,20 @@ export class Button extends Morph {
         get() { return this.labelMorph.textAndAttributes; },
         set(val) { this.labelMorph.textAndAttributes = val; }
       },
+      
+      styleRules: {
+        after: ['activeStyle', 'triggerStyle', 'inactiveStyle'],
+        initialize() {
+          this.styleRules = this.styleRules;
+        },
+        get() {
+          return new StyleRules({
+             activeStyle: this.activeStyle,
+             triggerStyle: this.triggerStyle,
+             inactiveStyle: this.inactiveStyle
+          }, this);
+        }
+      },
 
       // button styles
       defaultActiveStyle: {
@@ -143,7 +176,7 @@ export class Button extends Morph {
             ...obj.select(this, ["fontSize", "fontFamily", "fontColor"]),
             ...value
           });
-          if (this.isActive) this.updateButtonStyle(this.activeStyle);
+          this.updateStyleSheets();
         }
       },
 
@@ -165,8 +198,7 @@ export class Button extends Morph {
             ...obj.select(this, ["fontSize", "fontFamily", "fontColor"]),
             ...value,
           });
-          if (this.activeMode == 'inactive')
-            this.updateButtonStyle(this.inactiveStyle);
+          this.updateStyleSheets();
         }
       },
 
@@ -182,10 +214,16 @@ export class Button extends Morph {
             ...obj.select(this, ["fontSize", "fontFamily", "fontColor"]),
             ...value,
           });
-          if (this.activeMode == 'triggered') this.updateButtonStyle(this.triggerStyle);
+          this.updateStyleSheets();
         }
       }
 
+    }
+  }
+
+  updateStyleSheets() {
+    if (this.triggerStyle && this.activeStyle && this.inactiveStyle) {
+       this.styleRules = this.styleRules;
     }
   }
 
@@ -236,30 +274,19 @@ export class Button extends Morph {
     return this.activeMode == 'active'
   }
 
-  cacheStyle() {
-    // rk 2017-03-22 FIXME! why is that necessary!?
-     const modeToCache = {
-             inactive: 'inactiveStyle',
-             active: 'activeStyle',
-             triggered: 'triggerStyle'
-           },
-           cachedStyle = obj.select(this, this.styleProperties);
-    this[modeToCache[this.activeMode]] = cachedStyle;
-  }
-
   activate() {
-    this.cacheStyle();
-    this.updateButtonStyle(this.activeStyle)
+    let classes = arr.withoutAll(this.styleClasses, ['inactiveStyle', 'triggerStyle'])
+    this.styleClasses = [...classes, 'activeStyle'];
   }
 
   deactivate() {
-    this.cacheStyle();
-    this.updateButtonStyle(this.inactiveStyle)
+    let classes = arr.withoutAll(this.styleClasses, ['activeStyle', 'triggerStyle'])
+    this.styleClasses = [...classes, 'inactiveStyle'];
   }
 
   perform() {
-    this.cacheStyle();
-    this.updateButtonStyle(this.triggerStyle)
+    let classes = arr.withoutAll(this.styleClasses, ['inactiveStyle', 'activeStyle'])
+    this.styleClasses = [...classes, 'triggerStyle'];
   }
 
   enable() { this.activeMode = "active"; }
