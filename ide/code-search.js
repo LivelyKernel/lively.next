@@ -44,10 +44,10 @@ export async function doSearch(
 
 export class CodeSearcher extends FilterableList {
 
-  static inWindow(props = {title: "code search", targetBrowser: null, backend: null}) {
+  static inWindow(props = {title: "code search", targetBrowser: null, systemInterface: null}) {
     var searcher = new this(props),
         win = new Window({
-          ...obj.dissoc(props, ["targetBrowser", "backend"]),
+          ...obj.dissoc(props, ["targetBrowser", "systemInterface"]),
           extent: searcher.extent.addXY(0, 25),
           targetMorph: searcher
         });
@@ -110,18 +110,17 @@ export class CodeSearcher extends FilterableList {
         }
       },
 
-      backend: {
+      systemInterface: {
         after: ["browser"], derived: true,
-        defaultValue: "local",
         get() {
           var browser = this.browser;
-          return browser ? browser.backend : this.getProperty("backend");
+          return browser ? browser.systemInterface : this.getProperty("systemInterface");
         },
 
-        set(backend) {
+        set(systemInterface) {
           var browser = this.browser;
-          if (browser) browser.backend = backend;
-          else this.setProperty("backend", backend);
+          if (browser) browser.systemInterface = systemInterface;
+          else this.setProperty("systemInterface", systemInterface);
         }
 
       },
@@ -157,15 +156,6 @@ export class CodeSearcher extends FilterableList {
     input.fontSize = 20;
     input.extent = pt(this.width, 27);
     cb && (cb.rightCenter = input.rightCenter);
-  }
-
-  async getLivelySystem() {
-    var backend = this.backend,
-        remote = backend && backend !== "local" ? backend : null,
-        systemInterface = await System.import("lively-system-interface");
-    return remote ?
-      systemInterface.serverInterfaceFor(remote) :
-      systemInterface.localInterface; // FIXME
   }
 
   ensureIndicator(label) {
@@ -217,7 +207,7 @@ export class CodeSearcher extends FilterableList {
       var includeUnloaded = this.getSubmorphNamed("searchInUnloadedModulesCheckbox").checked;
       this.ensureIndicator("searching...")
       this.items = await doSearch(
-        await this.getLivelySystem(),
+        this.systemInterface,
         searchTerm,
         undefined, /*excluded modules*/
         config.ide.js.ignoredPackages,
@@ -245,7 +235,7 @@ export class CodeSearcher extends FilterableList {
         },
         browser = await Browser.browse(
           browseSpec, browserOrProps,
-          browser? browser.backend : this.backend);
+          browser? browser.systemInterface : this.systemInterface);
     browser.associatedSearchPanel = this;
     return browser.activate();
   }

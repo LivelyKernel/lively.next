@@ -533,7 +533,7 @@ var worldCommands = [
   {
     name: "choose and browse package resources",
     progressIndicator: "browsing resources...",
-    exec: async (world, opts = {browser: null, backend: null}, _, evt) => {
+    exec: async (world, opts = {browser: null, systemInterface: null}, _, evt) => {
       var relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
       if (relayed) return relayed;
 
@@ -544,12 +544,14 @@ var worldCommands = [
         browser = browser.getWindow();
       else browser = null;
 
-      var system = browser.systemInterface,
-          pkgs = await system.getPackages({excluded: config.ide.js.ignoredPackages}),
+      var { localInterface } = await System.import("lively-system-interface"),
+          systemInterface = opts && opts.systemInterface ? opts.systemInterface :
+            browser ? browser.systemInterface : localInterface,
+          pkgs = await systemInterface.getPackages({excluded: config.ide.js.ignoredPackages}),
           items = [];
 
       for (let p of pkgs) {
-        items.push(...(await system.resourcesOfPackage(p))
+        items.push(...(await systemInterface.resourcesOfPackage(p))
           .filter(({url}) => !url.endsWith("/"))
           .sort((a, b) => {
             if (a.isLoaded && !b.isLoaded) return -1;
@@ -573,7 +575,7 @@ var worldCommands = [
 
       await Promise.all(jsModules.map(ea => {
         var loc = {packageName: ea.package, moduleName: ea.url}
-        return Browser.browse(loc, browser, backend)
+        return Browser.browse(loc, browser, systemInterface)
                 .then(browser => browser.activate())
       }));
 
@@ -588,7 +590,7 @@ var worldCommands = [
     name: "choose and browse module",
     progressIndicator: "browsing module...",
     handlesCount: true,
-    exec: async (world, opts = {browser: undefined, backend: undefined}, count) => {
+    exec: async (world, opts = {browser: undefined, systemInterface: undefined}, count) => {
 
       if (!opts.browser) { // invoked from a file browser? => use it
         var focused = world.focusedMorph,
@@ -600,9 +602,9 @@ var worldCommands = [
       var browser = opts.browser
                  || (focused && focused.ownerChain().find(ea => ea.isBrowser)),
           { default: Browser } = await System.import("lively.morphic/ide/js/browser/index.js"),
-          backend = opts.backend || (browser && browser.backend),
-          remote = backend && backend !== "local" ? backend : null,
-          systemInterface = browser.systemInterface,
+          { localInterface } = await System.import("lively-system-interface"),
+          systemInterface = opts && opts.systemInterface ? opts.systemInterface :
+            browser ? browser.systemInterface : localInterface,
           pkgs = await systemInterface.getPackages(),
           items = [];
 
@@ -629,7 +631,7 @@ var worldCommands = [
            var {package: p, shortName} = selected[i],
                loc = {packageName: p.name, moduleName: shortName},
                b = await Browser.browse(
-                  loc, i === 0 ? browser : undefined, backend);
+                  loc, i === 0 ? browser : undefined, systemInterface);
            b.moveBy(pt(i*20, i*20));
            b.activate();
          }
@@ -642,7 +644,7 @@ var worldCommands = [
   {
     name: "open code search",
     progressIndicator: "opening code search...",
-    exec: async (world, opts = {browser: null, backend: null, input: null}) => {
+    exec: async (world, opts = {browser: null, systemInterface: null, input: null}) => {
       var browser = opts.browser
                  || (world.focusedMorph && world.focusedMorph.ownerChain().find(ea => ea.isBrowser)),
           { CodeSearcher } = await System.import("lively.morphic/ide/code-search.js");
@@ -652,12 +654,12 @@ var worldCommands = [
           return browser.state.associatedSearchPanel.getWindow().activate();
       } else browser = null;
 
-      var backend = opts.backend || (browser && browser.backend),
+      var systemInterface = opts.systemInterface || (browser && browser.systemInterface),
           searcher = CodeSearcher.inWindow({
             title: "code search", extent: pt(800, 500),
             targetBrowser: browser,
             input: opts.input,
-            backend
+            systemInterface
           }).activate();
       if (browser) browser.state.associatedSearchPanel = searcher;
       return searcher;
