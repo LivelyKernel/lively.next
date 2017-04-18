@@ -15624,14 +15624,11 @@ module.exports = function(acorn) {
           return parenthesize(result, Precedence.Member, precedence);
         },
         MetaProperty: function (expr, precedence, flags) {
-          var result, meta, property;
-          meta = typeof expr.meta.type === 'string' && expr.meta.type === Syntax.Identifier ? expr.meta.name : expr.meta;
-          property = typeof expr.property.type === 'string' && expr.property.type === Syntax.Identifier ? expr.property.name : expr.property;
-          result = [
-            meta,
-            '.',
-            property
-          ];
+          var result;
+          result = [];
+          result.push(expr.meta);
+          result.push('.');
+          result.push(expr.property);
           return parenthesize(result, Precedence.Member, precedence);
         },
         UnaryExpression: function (expr, precedence, flags) {
