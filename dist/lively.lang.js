@@ -1829,12 +1829,10 @@ function uniqBy(array, comparator, context) {
   // like `arr.uniq` but with custom equality: `comparator(a,b)` returns
   // BOOL. True if a and be should be regarded equal, false otherwise.
   var result = array.slice();
-  for (var i = 0; i < result.length; i++) {
+  for (var i = result.length; i--;) {
     var item = array[i];
     for (var j = i + 1; j < result.length; j++) {
-      if (comparator.call(context, item, result[j])) {
-        removeAt(result, j);j--;
-      }
+      if (comparator.call(context, item, result[j])) result.splice(j--, 1);
     }
   }
   return result;

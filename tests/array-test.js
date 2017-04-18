@@ -37,6 +37,7 @@ import {
 } from "../array.js";
 import { curry } from "../function.js";
 import { random } from "../number.js";
+import { equals } from "../object.js";
 
 describe('arr', function() {
 
@@ -156,6 +157,21 @@ describe('arr', function() {
         result = pluck(uniqBy(a, function(a,b) { return a.x === b.x; }), 'x'),
         expected = [33, 1,2,3,99];
     expect(expected).to.eql(result);
+
+    expect(uniqBy([
+      "edit...", "local", "local",
+      "http://localhost:9011/eval", "http://localhost:9011/eval",
+      {value: {name: "l2l 28E1E - undefined"}},
+      {value: {name: "l2l 28E1E - undefined"}}
+    ], (a, b) => {
+      let valA = a.value || a;
+      let valB = b.value || b;
+      return valA == valB || equals(valA, valB)
+    })).deep.equals([
+      "edit...", "local",
+      "http://localhost:9011/eval",
+      {value: {name: "l2l 28E1E - undefined"}}
+    ])
   });
 
   it('mask', function() {
