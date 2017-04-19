@@ -161,13 +161,6 @@ var commands = [
   },
 
   {
-    name: "saveit",
-    doc: "...",
-    scrollCursorIntoView: false,
-    exec: function(morph) { morph.doSave(); return true; }
-  },
-
-  {
     name: "delete backwards",
     doc: "Delete the character in front of the cursor or the selection.",
     exec: function(morph) {

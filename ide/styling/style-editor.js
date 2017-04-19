@@ -763,10 +763,10 @@ export class HTMLEditor extends Morph {
    get isHaloItem() { return true }
 
   build() {
-    const htmlMorph = this.target;
     this.submorphs = [
       {
         type: "text",
+        name: "html editor",
         textString: this.target.html,
         fontColor: Color.white,
         fontFamily: "Inconsolata, monospace",
@@ -774,12 +774,27 @@ export class HTMLEditor extends Morph {
         fontSize: 14,
         fill: Color.transparent,
         extent: this.extent,
-        clipMode: "auto",
-        doSave() {
-          htmlMorph.html = this.textString;
-        }
+        clipMode: "auto"
       }
     ];
+  }
+
+  get keybindings() {
+    return [
+      {keys: {mac: "Meta-S", win: "Ctrl-S"}, command: "save html"}
+    ]
+  }
+  
+  get commands() {
+    return [
+      {
+        name: "save html",
+        exec() {
+          this.target.html = this.get("html editor").textString;
+          return true;
+        }
+      }
+    ]
   }
 
   onMouseMove() { this.show() }
@@ -809,7 +824,7 @@ export class PathEditor extends BorderStyleEditor {
 export class ImageEditor extends StyleEditor {
 
   constructor(props) {
-    super({title: "Change Image URL", ...props});
+    super({title: "Change Image URL", name: "image editor", ...props});
   }
 
   controls(target) {
@@ -817,6 +832,7 @@ export class ImageEditor extends StyleEditor {
   }
 
   urlEditor(target) {
+
     return {
       layout: new HorizontalLayout({spacing: 3}),
       fill: Color.transparent,
@@ -836,26 +852,28 @@ export class ImageEditor extends StyleEditor {
           tooltip: "Update the image URL"
         }
       }),
+
       submorphs: [
         {
-          type: "text",
-          name: "urlBar",
+          type: "input", name: "urlBar",
           textString: target.imageUrl,
-          doSave() {
-            target.imageUrl = this.textString;
+          fixedWidth: false,
+          onInput() { 
+            target.imageUrl = this.get("urlBar").input;
           }
         },
         Icon.makeLabel("check-circle", {
           name: "saveButton",
           onMouseDown() {
             this.fontColor = Color.black;
-            this.get("urlBar").doSave();
+            target.imageUrl = this.get("urlBar").input;
           },
           onMouseUp() {
             this.fontColor = Color.gray.darker();
           }
         })
       ]
+
     };
   }
 
@@ -1020,23 +1038,24 @@ export class ButtonBodyEditor extends BodyStyleEditor {
   }
 
   textLabelControl(button) {
-     return morph({
-          type: "text",
-          name: "urlBar",
-          textString: button.label,
-          autoFit: false, padding: 5,
-          borderRadius: 5, fontSize: 14,
-          onFocus() {
-            this.animate({dropShadow: focusHalo})
-          },
-          onBlur() {
-            this.animate({dropShadow: false, duration});
-            button.label = this.textString;
-          },
-          doSave() {
-            button.label = this.textString;
-          }
-        })
+     let input = morph({
+      type: "input", name: "button label input",
+      fixedHeight: false,
+      textString: button.label,
+      padding: Rectangle.inset(2,5), borderRadius: 5, fontSize: 14,
+      onFocus() {
+        this.animate({dropShadow: focusHalo})
+      },
+      onBlur() {
+        this.animate({dropShadow: false, duration});
+        button.label = this.textString;
+      }
+    });
+    connect(input, 'inputAccepted', button, 'label', {
+      converter: function() { return this.sourceObj.input; }
+    });
+
+    return input;
   }
 
   setButtonIcon(iconName) {

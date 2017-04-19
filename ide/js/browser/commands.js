@@ -22,6 +22,8 @@ export default function browserCommands(browser) {
     {name: "browser history backward", exec: browser => { browser.historyBackward(); return true; }},
     {name: "browser history forward", exec: browser => { browser.historyForward(); return true; }},
 
+    {name: "browser save", exec: browser => { return browser.save(); }},
+
     {
       name: "jump to codeentity",
       exec: async browser => {

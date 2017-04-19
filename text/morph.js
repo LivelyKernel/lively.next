@@ -1572,6 +1572,7 @@ export class Text extends Morph {
               config.text.defaultKeyBindings));
   }
   set keybindings(x) { super.keybindings = x }
+
   get keyhandlers() {
     if (this._cachedKeyhandlers) return this._cachedKeyhandlers;
     let handlers = super.keyhandlers.concat(this._keyhandlers || []);
@@ -1595,8 +1596,6 @@ export class Text extends Morph {
   onTextInput(evt) {
     KeyHandler.invokeKeyHandlers(this, evt, false/*allow input evts*/);
   }
-
-  doSave() { /*...*/ }
 
   onCut(evt) {
     if (this.rejectsInput() || !this.isFocused()) return;

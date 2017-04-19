@@ -123,9 +123,7 @@ export default class TextEditor extends Morph {
           connect(urlInput, 'inputAccepted', this, 'location');
           connect(loadButton, 'fire', this, 'execCommand', {converter: () => "load file"});
           connect(saveButton, 'fire', this, 'execCommand', {converter: () => "save file"});
-          connect(removeButton, 'fire', this, 'execCommand', {converter: () => "remove file"});
-          connect(contentText, 'doSave', this, 'execCommand', {converter: () => "save file"});
-        }
+          connect(removeButton, 'fire', this, 'execCommand', {converter: () => "remove file"});        }
       },
 
       ui: {

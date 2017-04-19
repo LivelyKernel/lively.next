@@ -30,8 +30,6 @@ export default class Workspace extends Window {
             ...config.codeEditor.defaultStyle,
             plugins: [new JavaScriptEditorPlugin()]
           });
-          connect(this.targetMorph, 'doSave', this, 'execCommand', {
-            converter: () => "[workspace] save content"});
         }
       },
       

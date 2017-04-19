@@ -136,7 +136,6 @@ export default class Browser extends Window {
     connect(codeEntityTree, 'selection', this, 'onCodeEntitySelected');
 
     connect(sourceEditor, "textChange", this, "updateUnsavedChangeIndicatorDebounced");
-    connect(sourceEditor, 'doSave', this, 'save');
 
     moduleList.selection = null;
     moduleList.items = [];
@@ -1137,21 +1136,22 @@ export default class Browser extends Window {
 
   get keybindings() {
     return [
-      {keys: "Alt-Up", command: "focus list with selection"},
-      {keys: "F1", command: "focus module list"},
-      {keys: "F2", command: "focus code entities"},
-      {keys: "F3|Alt-Down", command: "focus source editor"},
-      {keys: "Alt-R", command: "reload module"},
-      {keys: "Alt-L", command: "load or add module"},
-      {keys: "Ctrl-C Ctrl-T", command: "run all tests in module"},
-      {keys: "Ctrl-C T", command: "run tests at point"},
-      {keys: "Ctrl-C B E F", command: "run setup code of tests (before and beforeEach)"},
-      {keys: "Ctrl-C A F T", command: "run teardown code of tests (after and afterEach)"},
-      {keys: "Alt-P", command: "browser history backward"},
-      {keys: "Alt-N", command: "browser history forward"},
-      {keys: "Alt-H", command: "browser history browse"},
-      {keys: "Meta-Shift-L b a c k e n d", command: "activate eval backend dropdown list"},
-      {keys: "Alt-J", command: "jump to codeentity"}
+      {keys: {mac: "Meta-S", win: "Ctrl-S"}, command: "browser save"},
+      {keys: "Alt-Up",                       command: "focus list with selection"},
+      {keys: "F1",                           command: "focus module list"},
+      {keys: "F2",                           command: "focus code entities"},
+      {keys: "F3|Alt-Down",                  command: "focus source editor"},
+      {keys: "Alt-R",                        command: "reload module"},
+      {keys: "Alt-L",                        command: "load or add module"},
+      {keys: "Ctrl-C Ctrl-T",                command: "run all tests in module"},
+      {keys: "Ctrl-C T",                     command: "run tests at point"},
+      {keys: "Ctrl-C B E F",                 command: "run setup code of tests (before and beforeEach)"},
+      {keys: "Ctrl-C A F T",                 command: "run teardown code of tests (after and afterEach)"},
+      {keys: "Alt-P",                        command: "browser history backward"},
+      {keys: "Alt-N",                        command: "browser history forward"},
+      {keys: "Alt-H",                        command: "browser history browse"},
+      {keys: "Meta-Shift-L b a c k e n d",   command: "activate eval backend dropdown list"},
+      {keys: "Alt-J",                        command: "jump to codeentity"}
     ].concat(super.keybindings);
   }
 

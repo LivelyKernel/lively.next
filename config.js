@@ -130,7 +130,6 @@ var config = {
       {keys: {mac: 'Meta-I', win: 'Ctrl-I'}, command: "print inspectit"},
       {keys: {mac: 'Meta-Shift-I', win: 'Ctrl-Shift-I'}, command: "inspectit"},
       {keys: {mac: 'Meta-Shift-U', win: 'Ctrl-Shift-U'}, command: "undefine variable"},
-      {keys: {mac: 'Meta-S', win: 'Ctrl-S'}, command: "saveit"},
 
       {keys: 'Backspace',                           command: "delete backwards"},
       {keys: {win: 'Delete', mac: 'Delete|Ctrl-D'}, command: "delete"},

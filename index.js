@@ -27,6 +27,7 @@ import { CheckBox } from "./components/widgets.js";
 import { List } from "./components/list.js";
 import { HTMLMorph } from './html-morph.js';
 import Window from "./components/window.js";
+import InputLine from "./text/input-line.js";
 export { Window };
 
 export function morph(props = {}, opts = {restore: false}) {
@@ -42,6 +43,7 @@ export function morph(props = {}, opts = {restore: false}) {
         case 'triangle': klass = Triangle; break;
         case 'path':     klass = Path; break;
         case 'text':     klass = Text; break;
+        case 'input':    klass = InputLine; break;
         case 'label':    klass = Label; break;
         case 'list':     klass = List; break;
         case 'button':   klass = Button; break;
