@@ -9,7 +9,7 @@ import {signal, connect, disconnect} from "lively.bindings";
 import {Slider} from "../../components/widgets.js";
 import { obj } from "lively.lang";
 import {ColorPalette} from "./color-palette.js";
-import { StyleRules } from '../../style-rules.js';
+import { StyleSheet } from '../../style-rules.js';
 import { zip } from "lively.lang/array.js";
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
@@ -467,9 +467,9 @@ export class ColorPicker extends Window {
           this.titleLabel().fontColor = Color.gray;
         }
       },
-      styleRules: {
+      styleSheets: {
         initialize() {
-          this.styleRules = new StyleRules({
+          this.styleSheets = new StyleSheet({
             key: {fill: Color.transparent, 
                   fontColor: Color.gray, 
                   fontWeight: 'bold'},

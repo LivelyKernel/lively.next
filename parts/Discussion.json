@@ -110,8 +110,8 @@
           "key": "borderWidthTop",
           "value": 1
         },
-        "styleRules": {
-          "key": "styleRules",
+        "styleSheets": {
+          "key": "styleSheets",
           "value": [
             {
               "__ref__": true,
@@ -779,8 +779,8 @@
           "key": "borderWidthTop",
           "value": 2
         },
-        "styleRules": {
-          "key": "styleRules",
+        "styleSheets": {
+          "key": "styleSheets",
           "value": [
             {
               "__ref__": true,
@@ -6015,7 +6015,7 @@
         }
       },
       "lively.serializer-class-info": {
-        "className": "StyleRules",
+        "className": "StyleSheet",
         "module": {
           "package": {
             "name": "lively.morphic",
@@ -6249,8 +6249,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle"
@@ -6560,8 +6560,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle"
@@ -6983,8 +6983,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -21611,8 +21611,8 @@
           "key": "borderWidthTop",
           "value": 6
         },
-        "styleRules": {
-          "key": "styleRules",
+        "styleSheets": {
+          "key": "styleSheets",
           "value": [
             {
               "__ref__": true,
@@ -26775,7 +26775,7 @@
         }
       },
       "lively.serializer-class-info": {
-        "className": "StyleRules",
+        "className": "StyleSheet",
         "module": {
           "package": {
             "name": "lively.morphic",
@@ -27005,8 +27005,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle"
@@ -27312,8 +27312,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle"
@@ -27623,8 +27623,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle"
@@ -52510,8 +52510,8 @@
           "key": "borderWidthTop",
           "value": 2
         },
-        "styleRules": {
-          "key": "styleRules",
+        "styleSheets": {
+          "key": "styleSheets",
           "value": [
             {
               "__ref__": true,
@@ -57980,7 +57980,7 @@
         }
       },
       "lively.serializer-class-info": {
-        "className": "StyleRules",
+        "className": "StyleSheet",
         "module": {
           "package": {
             "name": "lively.morphic",
@@ -58214,8 +58214,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle"
@@ -58561,8 +58561,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -58977,8 +58977,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -69302,8 +69302,8 @@
           "key": "borderRadiusTop",
           "value": 15
         },
-        "styleRules": {
-          "key": "styleRules",
+        "styleSheets": {
+          "key": "styleSheets",
           "value": [
             {
               "__ref__": true,
@@ -69618,7 +69618,7 @@
         }
       },
       "lively.serializer-class-info": {
-        "className": "StyleRules",
+        "className": "StyleSheet",
         "module": {
           "package": {
             "name": "lively.morphic",
@@ -69851,8 +69851,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle",
@@ -70159,8 +70159,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle",
@@ -75845,8 +75845,8 @@
           "key": "borderWidthTop",
           "value": 2
         },
-        "styleRules": {
-          "key": "styleRules",
+        "styleSheets": {
+          "key": "styleSheets",
           "value": [
             {
               "__ref__": true,
@@ -81071,7 +81071,7 @@
         }
       },
       "lively.serializer-class-info": {
-        "className": "StyleRules",
+        "className": "StyleSheet",
         "module": {
           "package": {
             "name": "lively.morphic",
@@ -81305,8 +81305,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle"
@@ -81616,8 +81616,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle"
@@ -82039,8 +82039,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -96666,8 +96666,8 @@
           "key": "borderRadiusTop",
           "value": 15
         },
-        "styleRules": {
-          "key": "styleRules",
+        "styleSheets": {
+          "key": "styleSheets",
           "value": [
             {
               "__ref__": true,
@@ -96963,7 +96963,7 @@
         }
       },
       "lively.serializer-class-info": {
-        "className": "StyleRules",
+        "className": "StyleSheet",
         "module": {
           "package": {
             "name": "lively.morphic",
@@ -97196,8 +97196,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle",
@@ -97504,8 +97504,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle",
@@ -102981,8 +102981,8 @@
           "key": "borderRadiusTop",
           "value": 14
         },
-        "styleRules": {
-          "key": "styleRules",
+        "styleSheets": {
+          "key": "styleSheets",
           "value": [
             {
               "__ref__": true,
@@ -103293,7 +103293,7 @@
         }
       },
       "lively.serializer-class-info": {
-        "className": "StyleRules",
+        "className": "StyleSheet",
         "module": {
           "package": {
             "name": "lively.morphic",
@@ -103526,8 +103526,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle",
@@ -103834,8 +103834,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle",
@@ -106785,7 +106785,7 @@
         }
       },
       "lively.serializer-class-info": {
-        "className": "StyleRules",
+        "className": "StyleSheet",
         "module": {
           "package": {
             "name": "lively.morphic",
@@ -107066,7 +107066,7 @@
         }
       },
       "lively.serializer-class-info": {
-        "className": "StyleRules",
+        "className": "StyleSheet",
         "module": {
           "package": {
             "name": "lively.morphic",

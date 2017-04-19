@@ -1,7 +1,7 @@
 /* global Element, Node */
 import {obj, string} from "lively.lang";
 import {pt, Color, Point, Rectangle, rect} from "lively.graphics";
-import {morph, StyleRules, Morph, MorphicEnv, ShadowObject} from "lively.morphic";
+import {morph, StyleSheet, Morph, MorphicEnv, ShadowObject} from "lively.morphic";
 import {connect, disconnect} from "lively.bindings";
 import {Icon} from "./icons.js";
 
@@ -194,9 +194,9 @@ export class StatusMessage extends Morph {
         }
       },
 
-      styleRules: {
+      styleSheets: {
         initialize() {
-          this.styleRules = new StyleRules({
+          this.styleSheets = new StyleSheet({
             messageText: {
               draggable: false,
               readOnly: true,

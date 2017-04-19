@@ -1,5 +1,5 @@
 import { pt, Color, Rectangle } from "lively.graphics";
-import { Morph, StyleRules } from "lively.morphic";
+import { Morph, StyleSheet } from "lively.morphic";
 import { signal, disconnect, connect } from "lively.bindings";
 import { obj, arr } from "lively.lang/index.js";
 
@@ -143,13 +143,13 @@ export class Button extends Morph {
         set(val) { this.labelMorph.textAndAttributes = val; }
       },
       
-      styleRules: {
+      styleSheets: {
         after: ['activeStyle', 'triggerStyle', 'inactiveStyle'],
         initialize() {
-          this.styleRules = this.styleRules;
+          this.styleSheets = this.styleSheets;
         },
         get() {
-          return [new StyleRules({
+          return [new StyleSheet({
              activeStyle: this.activeStyle,
              triggerStyle: this.triggerStyle,
              inactiveStyle: this.inactiveStyle
@@ -223,7 +223,7 @@ export class Button extends Morph {
 
   updateStyleSheets() {
     if (this.triggerStyle && this.activeStyle && this.inactiveStyle) {
-       this.styleRules = this.styleRules;
+       this.styleSheets = this.styleSheets;
     }
   }
 

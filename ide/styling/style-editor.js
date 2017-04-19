@@ -25,7 +25,7 @@ import {
 
 import { ColorPickerField } from "./color-picker.js";
 import { GradientEditor } from "./gradient-editor.js";
-import { StyleRules } from "../../style-rules.js";
+import { StyleSheet } from "../../style-rules.js";
 import KeyHandler from "../../events/KeyHandler.js";
 import { loadObjectFromPartsbinFolder } from "../../partsbin.js";
 
@@ -68,7 +68,7 @@ class StyleEditor extends Morph {
 
   build() {
     this.submorphs = [this.titleLabel(this.title)];
-    this.styleRules = this.styler;
+    this.styleSheets = this.styler;
     connect(this, 'submorphChanged', this, 'equalizeControlWidths');
   }
 
@@ -90,7 +90,7 @@ class StyleEditor extends Morph {
   }
 
   get styler() {
-    return new StyleRules({
+    return new StyleSheet({
       closeStylerButton: {
         fontColor: Color.gray.darker(),
         nativeCursor: "pointer",
@@ -583,7 +583,7 @@ export class PolygonEditor extends BorderStyleEditor {
   }
 
   get vertexModeStyles() {
-    return new StyleRules({
+    return new StyleSheet({
       modeLabel: {
         fontColor: Color.white,
         fontWeight: "bold",
@@ -600,7 +600,7 @@ export class PolygonEditor extends BorderStyleEditor {
     return this.createControl("Edit Modes", {
       styleClasses: ["controlWrapper"],
       layout: new VerticalLayout({spacing: 5}),
-      styleRules: this.vertexModeStyles,
+      styleSheets: this.vertexModeStyles,
       submorphs: KeyHandler.generateCommandToKeybindingMap(this).map(ea => {
         return this.newVertexMode(ea);
       })
@@ -836,7 +836,7 @@ export class ImageEditor extends StyleEditor {
     return {
       layout: new HorizontalLayout({spacing: 3}),
       fill: Color.transparent,
-      styleRules: new StyleRules({
+      styleSheets: new StyleSheet({
         urlBar: {
           borderRadius: 5,
           padding: Rectangle.inset(4),

@@ -10,7 +10,7 @@ import { BorderStyleEditor, BodyStyleEditor, ButtonBodyEditor, ButtonBorderEdito
          LayoutStyleEditor, HTMLEditor, PathEditor, PolygonEditor,
          ImageEditor, NoEditor } from "../ide/styling/style-editor.js";
 import { Leash } from "../components/widgets.js";
-import { StyleRules } from "../style-rules.js";
+import { StyleSheet } from "../style-rules.js";
 import { Event } from "../events/Event.js";
 import { pathAttributes } from "../rendering/morphic-default.js";
 
@@ -66,7 +66,7 @@ class StyleHalo extends Morph {
   }
 
   initialize() {
-    this.styleRules = this.styler;
+    this.styleSheets = this.styler;
     this.submorphs = [
       {
         styleClasses: ["formatter"],
@@ -89,7 +89,7 @@ class StyleHalo extends Morph {
    get isHaloItem() { return true; }
 
   get styler() {
-    return new StyleRules({
+    return new StyleSheet({
       formatter: {draggable: false, fill: Color.transparent},
       borderHalo: {
         draggable: false,
@@ -512,7 +512,7 @@ class VertexHandle extends Morph {
 
   initialize() {
     this.submorphs = this.controlPoints();
-    this.styleRules = this.styler;
+    this.styleSheets = this.styler;
   }
 
   update() {
@@ -523,7 +523,7 @@ class VertexHandle extends Morph {
   }
 
   get styler() {
-    return new StyleRules({
+    return new StyleSheet({
       vertexHandles: {
         nativeCursor: "-webkit-grab",
         extent: pt(10, 10),
@@ -709,7 +709,7 @@ class SvgStyleHalo extends StyleHalo {
   }
 
   get svgStyler() {
-    return new StyleRules({
+    return new StyleSheet({
       propertyDisplay: {
         fill: Color.black.withA(0.7),
         borderRadius: 5,
@@ -783,7 +783,7 @@ class SvgStyleHalo extends StyleHalo {
     return {
       ...super.borderHaloShape(props),
       type: "polygon",
-      styleRules: this.svgStyler,
+      styleSheets: this.svgStyler,
       vertices: halo.target.vertices,
       position: halo.target.origin,
       submorphs: [

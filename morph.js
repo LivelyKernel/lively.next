@@ -370,7 +370,7 @@ export class Morph {
         }
       },
 
-      styleRules: {
+      styleSheets: {
         isStyleProp: true,
         after: ['submorphs'],
         set(rules) {
@@ -378,7 +378,7 @@ export class Morph {
             rules = [rules];
           }
           this.setProperty(
-            "styleRules",
+            "styleSheets",
             arr.compact(rules).map(rule => {
               rule.morph = this;
               rule.applyToAll(this);
@@ -622,12 +622,12 @@ export class Morph {
       }
     }
     this.layout && this.layout.onChange(change);
-    this.styleRules && this.styleRules.forEach(r => r.onMorphChange(this, change));
+    this.styleSheets && this.styleSheets.forEach(r => r.onMorphChange(this, change));
   }
 
   onSubmorphChange(change, submorph) {
     this.layout && this.layout.onSubmorphChange(submorph, change);
-    this.styleRules && this.styleRules.forEach(r => r.onMorphChange(submorph, change));
+    this.styleSheets && this.styleSheets.forEach(r => r.onMorphChange(submorph, change));
   }
 
   get changes() { return this.env.changeManager.changesFor(this); }

@@ -109,8 +109,8 @@
           "key": "borderWidthTop",
           "value": 1
         },
-        "styleRules": {
-          "key": "styleRules",
+        "styleSheets": {
+          "key": "styleSheets",
           "value": [
             {
               "__ref__": true,
@@ -1654,8 +1654,8 @@
           "key": "borderWidthTop",
           "value": 1
         },
-        "styleRules": {
-          "key": "styleRules",
+        "styleSheets": {
+          "key": "styleSheets",
           "value": [
             {
               "__ref__": true,
@@ -2073,7 +2073,7 @@
         }
       },
       "lively.serializer-class-info": {
-        "className": "StyleRules",
+        "className": "StyleSheet",
         "module": {
           "package": {
             "name": "lively.morphic",
@@ -2347,8 +2347,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -2688,8 +2688,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -6451,7 +6451,7 @@
         }
       },
       "lively.serializer-class-info": {
-        "className": "StyleRules",
+        "className": "StyleSheet",
         "module": {
           "package": {
             "name": "lively.morphic",

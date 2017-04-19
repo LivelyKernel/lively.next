@@ -3,7 +3,7 @@ import { arr, string } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { Label, morph, Morph, ShadowObject } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
-import {StyleRules} from '../style-rules.js';
+import {StyleSheet} from '../style-rules.js';
 import {HorizontalLayout} from '../layout.js';
 
 export const defaultWindowStyleSheet = () => {
@@ -13,7 +13,7 @@ export const defaultWindowStyleSheet = () => {
          fontSize: 11,
          center: windowButtonSize.scaleBy(.5)
       };
-  return new StyleRules({
+  return new StyleSheet({
     buttonGroup: {
       fill: Color.transparent,
       position: pt(0, 0),
@@ -68,9 +68,9 @@ export default class Window extends Morph {
         }
       },
       styleClasses: {defaultValue: ["windowBody"]},
-      styleRules: {
+      styleSheets: {
         initialize() {
-          this.styleRules = defaultWindowStyleSheet();
+          this.styleSheets = defaultWindowStyleSheet();
         }
       },
       clipMode: {defaultValue: "hidden"},

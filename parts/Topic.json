@@ -4680,8 +4680,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle"
@@ -5066,8 +5066,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -8441,8 +8441,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle"
@@ -8827,8 +8827,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -12192,8 +12192,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle"
@@ -12540,8 +12540,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -12889,8 +12889,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -16425,8 +16425,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle"
@@ -16773,8 +16773,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -17122,8 +17122,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -20894,8 +20894,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle"
@@ -21246,8 +21246,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -21667,8 +21667,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -25275,8 +25275,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle"
@@ -25623,8 +25623,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -25976,8 +25976,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -35458,8 +35458,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle",
@@ -35850,8 +35850,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -46668,8 +46668,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle",
@@ -47060,8 +47060,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },
@@ -53033,8 +53033,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle"
@@ -53423,8 +53423,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         }
       }
     },

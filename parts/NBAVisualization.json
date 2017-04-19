@@ -2825,8 +2825,8 @@
             "rev": 0
           }
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle",
@@ -3182,8 +3182,8 @@
             "rev": 0
           }
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle",
@@ -4548,8 +4548,8 @@
             "rev": 0
           }
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle",
@@ -4906,8 +4906,8 @@
             "rev": 0
           }
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle",
@@ -6194,8 +6194,8 @@
             "rev": 0
           }
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle",
@@ -6509,8 +6509,8 @@
             "rev": 0
           }
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle",

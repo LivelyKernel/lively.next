@@ -14,7 +14,7 @@ that morph.
 */
 
 
-export class StyleRules {
+export class StyleSheet {
 
   constructor(rules, morph=null) {
     this.rules = rules;
@@ -48,8 +48,8 @@ export class StyleRules {
   getShadowedProps(morph) {
     var props = {}, curr = morph;
     while (curr && curr != this.morph) {
-      if (curr.styleRules)
-        props = {...props, ...obj.merge(curr.styleRules.map(r => r.getStyleProps(morph)))};
+      if (curr.styleSheets)
+        props = {...props, ...obj.merge(curr.styleSheets.map(r => r.getStyleProps(morph)))};
       curr = curr.owner;
     }
     return ["layout", ...Object.keys(props)];

@@ -1,4 +1,4 @@
-import { Morph, GridLayout, Text, StyleRules, Label, Button, morph } from "lively.morphic";
+import { Morph, GridLayout, Text, StyleSheet, Label, Button, morph } from "lively.morphic";
 import { pt, LinearGradient, Color, Rectangle, rect } from "lively.graphics";
 import { arr, Path, string, obj } from "lively.lang";
 import { signal, once } from "lively.bindings";
@@ -253,10 +253,10 @@ export class List extends Morph {
 
       theme: {
         isStyleProp: true,
-        after: ["styleRules"],
+        after: ["styleSheets"],
         set(val) {
           this.setProperty("theme", val);
-          this.styleRules = this.listStyle(val);
+          this.styleSheets = this.listStyle(val);
         }
       },
 
@@ -390,7 +390,7 @@ export class List extends Morph {
 
   listStyle(theme) {
     if (theme == "dark") {
-      return new StyleRules({
+      return new StyleSheet({
         list: {
           fill: Color.transparent,
           hideScrollbars: true,
@@ -401,7 +401,7 @@ export class List extends Morph {
         }
       });
     } else {
-      return new StyleRules({list: {padding: Rectangle.inset(2, 0)}});
+      return new StyleSheet({list: {padding: Rectangle.inset(2, 0)}});
     }
   }
 
@@ -693,7 +693,7 @@ export class FilterableList extends Morph {
         after: ["submorphs"],
         get() { return this.listMorph.theme; },
         set(val) {
-          this.inputMorph.styleRules = this.inputStyle(val);
+          this.inputMorph.styleSheets = this.inputStyle(val);
           this.listMorph.theme = val;
         }
       },
@@ -907,7 +907,7 @@ export class FilterableList extends Morph {
 
   inputStyle(theme) {
    if (theme == "dark") {
-      return new StyleRules({
+      return new StyleSheet({
         input: {
           borderWidth: 0,
           borderRadius: 20,
@@ -917,7 +917,7 @@ export class FilterableList extends Morph {
         }
       })
     } else {
-      return new StyleRules({
+      return new StyleSheet({
         input: {
           borderWidth: 0,
           borderColor: Color.gray

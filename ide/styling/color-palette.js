@@ -6,7 +6,7 @@ import { Morph, VerticalLayout, HorizontalLayout,
 import { DropDownSelector, ModeSelector, Slider } from "../../components/widgets.js";
 import { connect, signal } from "lively.bindings";
 import { num, arr } from "lively.lang";
-import { StyleRules } from "../../style-rules.js";
+import { StyleSheet } from "../../style-rules.js";
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
 
@@ -272,14 +272,14 @@ export class ColorPalette extends Morph {
          }
        },
        colorFieldWidth: {defaultValue: 20},
-       styleRules: {
+       styleSheets: {
          after: ['colorFieldWidth', 'styleClasses'],
          initialize() {
-           this.styleRules = this.styler
+           this.styleSheets = this.styler
          }
        },
        submorphs: {
-         after: ['color', 'styleRules'],
+         after: ['color', 'styleSheets'],
          initialize() {
             const [h,s,b] = this.color.toHSB();
             this.cachedPalette = {};
@@ -319,7 +319,7 @@ export class ColorPalette extends Morph {
    get styler() {
       const fill = Color.gray,
             colorFieldWidth = this.colorFieldWidth;
-      return new StyleRules({
+      return new StyleSheet({
          body:{
            fill,
            extent: pt(200,300),

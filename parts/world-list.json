@@ -1126,8 +1126,8 @@
         "morphClasses": {
           "key": "morphClasses"
         },
-        "styleRules": {
-          "key": "styleRules"
+        "styleSheets": {
+          "key": "styleSheets"
         },
         "fontStyle": {
           "key": "fontStyle",

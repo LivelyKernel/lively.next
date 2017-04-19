@@ -1,6 +1,6 @@
 /* global System */
 import { promise } from "lively.lang";
-import { Morph, StyleRules, Image, Text } from "lively.morphic";
+import { Morph, StyleSheet, Image, Text } from "lively.morphic";
 import { Icon } from "./icons.js";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { connect } from "lively.bindings";
@@ -54,9 +54,9 @@ export default class LoadingIndicator extends Morph {
         set(val) { this.getSubmorphNamed("label").fontSize = val; }
       },
 
-      styleRules: {
+      styleSheets: {
         initialize() {
-          this.styleRules = new StyleRules({
+          this.styleSheets = new StyleSheet({
             spinner: {
               fill: Color.transparent,
               extent: pt(100, 104),

@@ -8,7 +8,7 @@ import {
   Text,
   GridLayout,
   HorizontalLayout,
-  StyleRules,
+  StyleSheet,
   Path,
   Ellipse,
   config,
@@ -98,10 +98,10 @@ export class Leash extends Path {
       borderWidth: {defaultValue: 2},
       borderColor: {defaultValue: Color.black},
       fill: {defaultValue: Color.transparent},
-      styleRules: {
+      styleSheets: {
         after: ["endpointStyle"],
         get() {
-          return new StyleRules(
+          return new StyleSheet(
             {
               endpointStyle: this.endpointStyle
             },
@@ -119,7 +119,7 @@ export class Leash extends Path {
         },
         set(style) {
           this.setProperty("endpointStyle", {...this.endpointStyle, style});
-          this.styleRules = this.styleRules;
+          this.styleSheets = this.styleSheets;
         }
       },
       vertices: {
@@ -257,9 +257,9 @@ export class PropertyInspector extends Morph {
       min: {defaultValue: -Infinity},
       max: {defaultValue: Infinity},
       styleClasses: {defaultValue: ["root"]},
-      styleRules: {
+      styleSheets: {
         initialize() {
-          this.styleRules = this.styler;
+          this.styleSheets = this.styler;
         }
       },
       layout: {
@@ -313,7 +313,7 @@ export class PropertyInspector extends Morph {
         fontColor: Color.black
       }
     };
-    return new StyleRules({
+    return new StyleSheet({
       root: {
         extent: pt(55, 25),
         borderRadius: 5,
@@ -641,11 +641,11 @@ export class ModeSelector extends Morph {
     this.layout.row(0).items.forEach(c => {
       c.group.align = "center";
     });
-    this.styleRules = this.styler;
+    this.styleSheets = this.styler;
   }
 
   get styler() {
-    return new StyleRules({
+    return new StyleSheet({
       root: {fill: Color.transparent, height: 30, origin: pt(0, 5)},
       typeMarker: {fill: Color.gray.darker(), borderRadius: 3},
       label: {

@@ -7,7 +7,7 @@ import {Morph, Image, VerticalLayout, GridLayout,
         Text, Path, HorizontalLayout, Ellipse, morph} from "../../index.js";
 import {num, obj, arr} from "lively.lang";
 import {Icon} from "lively.morphic/components/icons.js";
-import {StyleRules} from "../../style-rules.js";
+import {StyleSheet} from "../../style-rules.js";
 import {connect, signal, once} from "lively.bindings";
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
@@ -90,7 +90,7 @@ export class GradientEditor extends Morph {
    }
 
    getStyler() {
-      return new StyleRules({
+      return new StyleSheet({
               body: {layout: new VerticalLayout({spacing: 3}),fill: Color.transparent},
               addStopLabel: {fontSize: 18, fontColor: Color.orange, center: pt(-1, -17), extent: pt(10,10),
                              padding: Rectangle.inset(0), fixedWidth: true, fixedHeight: true},
@@ -178,7 +178,7 @@ export class GradientEditor extends Morph {
        connect(this, "targetProperty", this, "update");
        this.update();
        selector.update(this.targetProperty);
-       this.styleRules = this.getStyler();
+       this.styleSheets = this.getStyler();
        this.targetProperty && this.updateGradientHandles(this.targetProperty.__proto__.constructor);
    }
 
@@ -581,9 +581,9 @@ export class GradientFocusHandle extends Ellipse {
         target: {/* REQUIRED */},
         isHaloItem: {defaultValue: true},
         styleClasses: {defaultValue: ['root']},
-        styleRules: {
+        styleSheets: {
           initialize() {
-            this.styleRules = this.styler;
+            this.styleSheets = this.styler;
           }
         },
         submorphs: {
@@ -598,7 +598,7 @@ export class GradientFocusHandle extends Ellipse {
     }
 
     get styler() {
-       return new StyleRules({
+       return new StyleSheet({
           root: {fill: Color.transparent,
                  borderColor: Color.orange, draggable: false,
                  borderWidth: 2},
@@ -689,9 +689,9 @@ class GradientDirectionHandle extends Ellipse {
     return {
       target: {},
       styleClasses: {defaultValue: ['root']},
-      styleRules: {
+      styleSheets: {
         initialize() {
-          this.styleRules = this.styler;
+          this.styleSheets = this.styler;
         }
       },
       submorphs: {
@@ -704,7 +704,7 @@ class GradientDirectionHandle extends Ellipse {
   }
 
   get styler() {
-     return new StyleRules({
+     return new StyleSheet({
         root: {borderColor: Color.orange, fill: Color.transparent, borderWidth: 1,
                origin: pt(25,25), extent: pt(50,50)},
         rotationPoint: {fill: Color.orange, extent: pt(10,10),

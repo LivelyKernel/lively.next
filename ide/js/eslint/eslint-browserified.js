@@ -77811,7 +77811,7 @@ module.exports = {
         var config = context.options[1] || {};
         var balanced = config.block && config.block.balanced;
 
-        var styleRules = ["block", "line"].reduce(function (rule, type) {
+        var styleSheets = ["block", "line"].reduce(function (rule, type) {
             var markers = parseMarkersOption(config[type] && config[type].markers || config.markers);
             var exceptions = config[type] && config[type].exceptions || config.exceptions || [];
             var endNeverPattern = "[ \t]+$";
@@ -77893,7 +77893,7 @@ module.exports = {
          */
         function checkCommentForSpace(node) {
             var type = node.type.toLowerCase(),
-                rule = styleRules[type],
+                rule = styleSheets[type],
                 commentIdentifier = type === "block" ? "/*" : "//";
 
             // Ignores empty comments.
