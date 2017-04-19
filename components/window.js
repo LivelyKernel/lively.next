@@ -1,30 +1,94 @@
+/* global Expo */
 import { arr, string } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { Label, morph, Morph, ShadowObject } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
+import {StyleRules} from '../style-rules.js';
+import {HorizontalLayout} from '../layout.js';
+
+export const defaultWindowStyleSheet = () => {
+  let windowButtonSize = pt(13,13),
+      defaultLabelStyle = {
+         fill: Color.transparent, opacity: 0.5,
+         fontSize: 11,
+         center: windowButtonSize.scaleBy(.5)
+      };
+  return new StyleRules({
+    buttonGroup: {
+      fill: Color.transparent,
+      position: pt(0, 0),
+      layout: new HorizontalLayout({autoResize: true, spacing: 6})
+    },
+    closeButton: {
+      borderRadius: 14,
+      extent: windowButtonSize,
+      borderColor: Color.darkRed,
+      fill: Color.rgb(255, 96, 82)
+    },
+    closeLabel: defaultLabelStyle,
+    minimizeButton: {
+      borderRadius: 14,
+      extent: windowButtonSize,
+      borderColor: Color.brown,
+      fill: Color.rgb(255, 190, 6)
+    },
+    minimizeLabel: defaultLabelStyle,
+    maximizeButton: {
+      borderRadius: 14,
+      extent: windowButtonSize,
+      borderColor: Color.darkGreen,
+      fill: Color.green
+    },
+    maximizeLabel: defaultLabelStyle,
+    windowTitleLabel: {
+      fill: Color.transparent,
+      fontColor: Color.darkGray
+    },
+    windowBody: {
+      fill: Color.lightGray,
+      borderRadius: 7,
+      borderColor: Color.gray,
+      borderWidth: 1
+    }
+  });
+}
 
 export default class Window extends Morph {
 
   static get properties() {
     return {
-      submorphs:    {initialize() { this.submorphs = this.controls(); }},
-      dropShadow:   {initialize() { this.dropShadow = new ShadowObject(true); }},
-      fill:         {defaultValue: Color.lightGray},
-      borderRadius: {defaultValue: 7},
-      borderColor:  {defaultValue: Color.gray},
-      borderWidth:  {defaultValue: 1},
-      clipMode:     {defaultValue: "hidden"},
-      resizable:    {defaultValue: true},
+      submorphs: {
+        initialize() {
+          this.submorphs = this.controls = this.getControls();
+        }
+      },
+      dropShadow: {
+        initialize() {
+          this.dropShadow = new ShadowObject(true);
+        }
+      },
+      styleClasses: {defaultValue: ["windowBody"]},
+      styleRules: {
+        initialize() {
+          this.styleRules = defaultWindowStyleSheet();
+        }
+      },
+      clipMode: {defaultValue: "hidden"},
+      resizable: {defaultValue: true},
 
       title: {
-        after: ["submorphs"], derived: true,
-        get() { return this.titleLabel().textString; },
+        after: ["submorphs"],
+        derived: true,
+        get() {
+          return this.titleLabel().textString;
+        },
         set(title) {
           let textAndAttrs = typeof title === "string" ? [title, {}] : title,
-              maxLength = 100, length = 0, truncated = [];
+              maxLength = 100,
+              length = 0,
+              truncated = [];
           for (var i = 0; i < textAndAttrs.length; i = i + 2) {
-            let string = textAndAttrs[i],
-                attr = textAndAttrs[i+1];
+            let string = textAndAttrs[i], attr = textAndAttrs[i + 1];
             string = string.replace(/\n/g, "");
             var delta = string.length + length - maxLength;
             if (delta > 0) string = string.slice(0, -delta);
@@ -35,11 +99,14 @@ export default class Window extends Morph {
         }
       },
 
-      targetMorph:  {
-        after: ["submorphs"], derived: true,
-        get() { return arr.withoutAll(this.submorphs, this.controls())[0]; },
+      targetMorph: {
+        after: ["submorphs"],
+        derived: true,
+        get() {
+          return arr.withoutAll(this.submorphs, this.controls)[0];
+        },
         set(morph) {
-          let ctrls = this.controls();
+          let ctrls = this.controls;
           arr.withoutAll(this.submorphs, ctrls).forEach(ea => ea.remove());
           if (morph) this.addMorph(morph, ctrls[0]);
           this.whenRendered().then(() => this.relayoutWindowControls());
@@ -51,8 +118,7 @@ export default class Window extends Morph {
       minimizedBounds: {},
       minimized: {},
       maximized: {}
-
-    }
+    };
   }
 
   constructor(props = {}) {
@@ -62,16 +128,20 @@ export default class Window extends Morph {
     connect(this.titleLabel(), "value", this, "relayoutWindowControls");
   }
 
-  get isWindow() { return true }
+  get isWindow() {
+    return true;
+  }
 
-  targetMorphBounds() { return new Rectangle(0, 25, this.width, this.height - 25); }
+  targetMorphBounds() {
+    return new Rectangle(0, 25, this.width, this.height - 25);
+  }
 
   relayoutWindowControls() {
     var innerB = this.innerBounds(),
         title = this.titleLabel(),
         labelBounds = innerB.withHeight(25),
-        buttonOffset = arr.last(this.buttons()).bounds().right() + 3,
-        minLabelBounds = labelBounds.withLeftCenter(pt(buttonOffset, labelBounds.height/2));
+        buttonOffset = this.get("button wrapper").bounds().right() + 3,
+        minLabelBounds = labelBounds.withLeftCenter(pt(buttonOffset, labelBounds.height / 2));
 
     // resizer
     this.resizer().bottomRight = innerB.bottomRight();
@@ -81,86 +151,104 @@ export default class Window extends Morph {
       this.targetMorph.setBounds(this.targetMorphBounds());
 
     // title
-    title.textBounds().width < labelBounds.width - 2*buttonOffset ?
-      title.center = labelBounds.center() :
-      title.leftCenter = minLabelBounds.leftCenter();
+    title.textBounds().width < labelBounds.width - 2 * buttonOffset
+      ? (title.center = labelBounds.center())
+      : (title.leftCenter = minLabelBounds.leftCenter());
   }
 
-  controls() {
-    return this.buttons()
-              .concat(this.titleLabel())
-              .concat(this.resizable ? this.resizer() : []);
+  getControls() {
+    return [
+      morph({
+        name: "button wrapper",
+        styleClasses: ["buttonGroup"],
+        submorphs: this.buttons()
+      })
+    ]
+      .concat(this.titleLabel())
+      .concat(this.resizable ? this.resizer() : []);
   }
 
   buttons() {
-    let defaultStyle = {type: "ellipse", extent: pt(14,14)};
-
-    let closeButton = this.getSubmorphNamed("close") || morph({
-      ...defaultStyle,
-      name: "close",
-      tooltip: "close window",
-      center: pt(15,13),
-      borderColor: Color.darkRed,
-      fill: Color.rgb(255,96,82),
-      submorphs: [
-        Label.icon("times", {
-          fill: null, visible: false,
-          center: defaultStyle.extent.scaleBy(.5), opacity: 0.5
-        })]
+    let closeButton =
+      this.getSubmorphNamed("close") ||
+      morph({
+        name: "close",
+        styleClasses: ["closeButton"],
+        tooltip: "close window",
+        submorphs: [
+          Label.icon("times", {
+            styleClasses: ["closeLabel"],
+            visible: false
+          })
+        ]
+      });
+    connect(closeButton, "onMouseDown", this, "close");
+    connect(closeButton, "onHoverIn", closeButton.submorphs[0], "visible", {
+      converter: () => true
     });
-    connect(closeButton, 'onMouseDown', this, 'close');
-    connect(closeButton, 'onHoverIn', closeButton.submorphs[0], 'visible', {converter: () => true});
-    connect(closeButton, 'onHoverOut', closeButton.submorphs[0], 'visible', {converter: () => false});
-
-    let minimizeButton = this.getSubmorphNamed("minimize") || morph({
-      ...defaultStyle,
-      center: pt(35,13),
-      name: "minimize",
-      tooltip: "collapse window",
-      borderColor: Color.brown,
-      fill: Color.rgb(255,190,6),
-      submorphs: [
-        Label.icon("minus", {
-          fill: null, visible: false,
-          center: defaultStyle.extent.scaleBy(.5), opacity: 0.5
-        })]
+    connect(closeButton, "onHoverOut", closeButton.submorphs[0], "visible", {
+      converter: () => false
     });
-    connect(minimizeButton, 'onMouseDown', this, 'toggleMinimize');
-    connect(minimizeButton, 'onHoverIn', minimizeButton.submorphs[0], 'visible', {converter: () => true});
-    connect(minimizeButton, 'onHoverOut', minimizeButton.submorphs[0], 'visible', {converter: () => false});
+
+    let minimizeButton =
+      this.getSubmorphNamed("minimize") ||
+      morph({
+        name: "minimize",
+        styleClasses: ["minimizeButton"],
+        tooltip: "collapse window",
+        submorphs: [
+          Label.icon("minus", {
+            styleClasses: ["minimizeLabel"],
+            visible: false
+          })
+        ]
+      });
+    connect(minimizeButton, "onMouseDown", this, "toggleMinimize");
+    connect(minimizeButton, "onHoverIn", minimizeButton.submorphs[0], "visible", {
+      converter: () => true
+    });
+    connect(minimizeButton, "onHoverOut", minimizeButton.submorphs[0], "visible", {
+      converter: () => false
+    });
 
     if (this.resizable) {
-      var maximizeButton =  (this.getSubmorphNamed("maximize") || morph({
-        ...defaultStyle,
-        name: "maximize",
-        tooltip: "maximize window",
-        center: pt(55,13),
-        borderColor: Color.darkGreen,
-        fill: Color.green,
-        submorphs: [
-          Label.icon("plus", {
-            fill: null, visible: false,
-            center: defaultStyle.extent.scaleBy(.5), opacity: 0.5
-          })]
-      }));
-      connect(maximizeButton, 'onMouseDown', this, 'toggleMaximize');
-      connect(maximizeButton, 'onHoverIn', maximizeButton.submorphs[0], 'visible', {converter: () => true});
-      connect(maximizeButton, 'onHoverOut', maximizeButton.submorphs[0], 'visible', {converter: () => false});
+      var maximizeButton =
+        this.getSubmorphNamed("maximize") ||
+        morph({
+          name: "maximize",
+          styleClasses: ["maximizeButton"],
+          tooltip: "maximize window",
+          submorphs: [
+            Label.icon("plus", {
+              styleClasses: ["maximizeLabel"],
+              visible: false
+            })
+          ]
+        });
+      connect(maximizeButton, "onMouseDown", this, "toggleMaximize");
+      connect(maximizeButton, "onHoverIn", maximizeButton.submorphs[0], "visible", {
+        converter: () => true
+      });
+      connect(maximizeButton, "onHoverOut", maximizeButton.submorphs[0], "visible", {
+        converter: () => false
+      });
     }
 
     return arr.compact([closeButton, minimizeButton, maximizeButton]);
   }
 
   titleLabel() {
-    return this.getSubmorphNamed("titleLabel") || morph({
-      padding: Rectangle.inset(0, 2, 0, 0),
-      type: "label",
-      name: "titleLabel",
-      fill: null,
-      fontColor: Color.darkGray,
-      reactsToPointer: false,
-      value: ""
-    });
+    return (
+      this.getSubmorphNamed("titleLabel") ||
+      morph({
+        padding: Rectangle.inset(0, 2, 0, 0),
+        styleClasses: ["windowTitleLabel"],
+        type: "label",
+        name: "titleLabel",
+        reactsToPointer: false,
+        value: ""
+      })
+    );
   }
 
   resizer() {
@@ -169,11 +257,11 @@ export default class Window extends Morph {
     resizer = morph({
       name: "resizer",
       nativeCursor: "nwse-resize",
-      extent: pt(20,20),
+      extent: pt(20, 20),
       fill: Color.transparent,
-      bottomRight: this.extent,
+      bottomRight: this.extent
     });
-    connect(resizer, 'onDrag', win, 'resizeBy', {converter: evt => evt.state.dragDelta});
+    connect(resizer, "onDrag", win, "resizeBy", {converter: evt => evt.state.dragDelta});
     return resizer;
   }
 
@@ -193,7 +281,7 @@ export default class Window extends Morph {
       var minimizedBounds = this.minimizedBounds || bounds.withExtent(pt(width, 25)),
           labelBounds = this.titleLabel().textBounds(),
           buttonOffset = arr.last(this.buttons()).bounds().right() + 3;
-      if (labelBounds.width + 2*buttonOffset < minimizedBounds.width)
+      if (labelBounds.width + 2 * buttonOffset < minimizedBounds.width)
         minimizedBounds = minimizedBounds.withWidth(labelBounds.width + buttonOffset + 3);
       this.minimizedBounds = minimizedBounds;
       collapseButton.tooltip = "uncollapse window";
@@ -204,8 +292,7 @@ export default class Window extends Morph {
   }
 
   toggleMaximize() {
-    var easing = Expo.easeOut,
-        duration = 200;
+    var easing = Expo.easeOut, duration = 200;
     if (this.maximized) {
       this.animate({bounds: this.nonMaximizedBounds, duration, easing});
       this.resizer().bottomRight = this.extent;
@@ -251,9 +338,12 @@ export default class Window extends Morph {
   }
 
   activate(evt) {
-    if (this.isActive()) { this.focus(evt); return this; }
+    if (this.isActive()) {
+      this.focus(evt);
+      return this;
+    }
 
-    if (!this.world()) this.openInWorldNearHand()
+    if (!this.world()) this.openInWorldNearHand();
     else this.bringToFront();
     let w = this.world() || this.env.world;
 
