@@ -227,6 +227,16 @@ export default class Database {
     }
   }
 
+  async has(id) {
+    // FIXME, more efficient version?
+    return !!(await this.get(id));
+  }
+
+  async add(doc) {
+    // auto generates id
+    return this.pouchdb.post(doc);
+  }
+
   async docList(opts = {}) {
     // a list of ids and revs of current docs in the database.
     // does not return full document!
