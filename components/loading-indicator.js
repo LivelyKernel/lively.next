@@ -1,5 +1,6 @@
+/* global System */
 import { promise } from "lively.lang";
-import { Morph, Image, Text } from "lively.morphic";
+import { Morph, StyleRules, Image, Text } from "lively.morphic";
 import { Icon } from "./icons.js";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { connect } from "lively.bindings";
@@ -53,35 +54,53 @@ export default class LoadingIndicator extends Morph {
         set(val) { this.getSubmorphNamed("label").fontSize = val; }
       },
 
+      styleRules: {
+        initialize() {
+          this.styleRules = new StyleRules({
+            spinner: {
+              fill: Color.transparent,
+              extent: pt(100, 104),
+              topLeft: pt(0, 0),
+              halosEnabled: false
+            },
+            label: {
+              fontSize: 16,
+              fontFamily: "Helvetica Neue, Arial",
+              fontColor: Color.white,
+              halosEnabled: false
+            },
+            closeButton: {
+              fontFamily: "FontAwesome",
+              fontColor: Color.white,
+              activeStyle: {
+                extent: pt(20, 20),
+                fill: Color.transparent,
+                borderWidth: 0,
+                fontColor: Color.white
+              },
+              visible: false
+            }
+          });
+        }
+      },
+
       submorphs: {
         initialize() {
           this.submorphs = [
-
             new Image({
               imageUrl,
-              name: "spinner", fill: Color.transparent,
-              extent: pt(100,104),
-              topLeft: pt(0,0),
-              halosEnabled: false
+              name: "spinner"
             }),
-
             {
-              type: "label", name: "label", value: "",
-              fontSize: 16, fontFamily: "Helvetica Neue, Arial",
-              fontColor: Color.white,
-              styleClasses: ["center-text"],
-              halosEnabled: false
+              type: "label",
+              name: "label",
+              value: "",
+              styleClasses: ["center-text"]
             },
-
             {
-              type: "button", name: "closeButton",
-              label: Icon.textAttribute('times'),
-              fontFamily: 'FontAwesome',
-              fontColor: Color.white,
-              activeStyle: {
-                extent: pt(20,20), fill: Color.transparent,
-                borderWidth: 0, fontColor: Color.white},
-              visible: false
+              type: "button",
+              name: "closeButton",
+              label: Icon.textAttribute("times")
             }
           ];
  

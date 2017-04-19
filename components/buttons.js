@@ -149,11 +149,11 @@ export class Button extends Morph {
           this.styleRules = this.styleRules;
         },
         get() {
-          return new StyleRules({
+          return [new StyleRules({
              activeStyle: this.activeStyle,
              triggerStyle: this.triggerStyle,
              inactiveStyle: this.inactiveStyle
-          }, this);
+          }, this)];
         }
       },
 

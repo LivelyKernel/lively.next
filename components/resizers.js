@@ -4,12 +4,13 @@ import { Morph } from "lively.morphic";
 
 export class VerticalResizer extends Morph {
 
-  constructor(props = {}) {
-    super({fill: Color.gray.lighter(), nativeCursor: "ew-resize", ...props});
-    this.fixed = [];
-    this.scalingLeft = [];
-    this.scalingRight = [];
-    this.minWidth = 20;
+  static get properties() {
+    return {fill: Color.gray.lighter(), nativeCursor: "ew-resize",
+      fixed: {defaultValue: []},
+      scalingLeft: {defaultValue: []},
+      scalingRight: {defualtValue: []},
+      minWidth: {defaultValue: 20}
+    }
   }
 
   onDrag(evt) {
@@ -79,12 +80,15 @@ export class VerticalResizer extends Morph {
 
 export class HorizontalResizer extends Morph {
 
-  constructor(props = {}) {
-    super({fill: Color.gray.lighter(), nativeCursor: "ns-resize", ...props});
-    this.fixed = [];
-    this.scalingBelow = [];
-    this.scalingAbove = [];
-    this.minHeight = 20;
+  static get properties() {
+    return {
+      fill: {defaultValue: Color.gray.lighter()},
+      nativeCursor: {defaultValue: 'ns-resize'},
+      fixed: {defaultValue: []},
+      scalingBelow: {defaultValue: []},
+      scalingAbove: {defaultValue: []},
+      minHeight: {defaultValue: 20}
+    }
   }
 
   onDrag(evt) {

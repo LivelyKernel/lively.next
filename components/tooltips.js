@@ -65,26 +65,42 @@ export class TooltipViewer {
 
 export class Tooltip extends Morph {
 
-  constructor(props) {
-    super({
-      ...props,
-      draggable: false,
-      fill: Color.black.withA(.5),
-      borderRadius: 4,
-      layout: new HorizontalLayout({spacing: 5}),
-      submorphs: [new Label({
-        width: 200,
-        fixedWidth: props.description.length > 40,
-        value: props.description,
-        fill: Color.transparent,
-        fontColor: Color.white,
-      })]
-    });
-  }
-
-  set description(stringOrAttributes) {
-    const [descriptor] = this.submorphs;
-    descriptor.value = stringOrAttributes;
+  static get properties() {
+    return {
+      draggable: {defaultValue: false},
+      fill: {defaultValue: Color.black.withA(.5)},
+      borderRadius: {defaultValue: 4},
+      layout: {
+        initialize() {
+          this.layout = new HorizontalLayout({spacing: 5});
+        }
+      },
+      description: {
+        after: ['submorphs'],
+        derived: true,
+        get() {
+          const [descriptor] = this.submorphs;
+          return descriptor.value;
+        },
+        set(stringOrAttributes) {
+          const [descriptor] = this.submorphs;
+          descriptor.fixedWidth = stringOrAttributes.length > 40,
+          descriptor.value = stringOrAttributes,
+          descriptor.value = stringOrAttributes;
+        }
+      },
+      submorphs: {
+        initialize() {
+          this.submorphs = [
+            new Label({
+              width: 200,
+              fill: Color.transparent,
+              fontColor: Color.white
+            })
+          ];
+        }
+      }
+    }
   }
 
   async softRemove(cb) {

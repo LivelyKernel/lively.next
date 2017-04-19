@@ -4,64 +4,71 @@ import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 
 export class MenuDivider extends Morph {
 
-  constructor(props = {}) {
-    super({
-      fill: Color.gray.lighter(),
-      extent: pt(100, 5),
-      reactsToPointer: false,
-      ...props
-    });
+  static get properties() {
+    return {
+      isMenuDevider: {defaultValue: true},
+      fill: {defaultValue: Color.gray.lighter()},
+      extent: {defaultValue: pt(100, 5)},
+      reactsToPointer: {defaultValue: false}
+    }
   }
-
-  get isMenuDivider() { return true; }
+  
 }
 
 export class MenuItem extends Label {
 
-  constructor(props = {}) {
-    super({
-      fixedWidth: false, fixedHeight: false,
-      fill: null,
-      fontSize: 14,
-      draggable: false,
-      readOnly: true,
-      nativeCursor: "pointer",
-      ...obj.dissoc(props, ["selected"])
-    });
-
-    this.selected = props.hasOwnProperty("selected") ? props.selected : false;
+  static get properties() {
+    return {
+      fixedWidth: {defaultValue: false},
+      fixedHeight: {defaultValue: false},
+      fill: {defaultValue: Color.transparent},
+      fontSize: {defaultValue: 14},
+      draggable: {defaultValue: false},
+      readOnly: {defaultValue: true},
+      nativeCursor: {defaultValue: "pointer"},
+      selected: {
+        defaultValue: false,
+        set(value) {
+          if (this.selected === value) return;
+          this.addValueChange("selected", value);
+          if (value) {
+            this.fontColor = Color.white;
+            this.fill = Color.blue;
+          } else {
+            this.fill = Color.transparent;
+            this.fontColor = Color.black;
+          }
+        }
+      },
+      isMenuItem: {
+        derived: true,
+        readOnly: true,
+        get() {
+          return true;
+        }
+      },
+      label: {
+        get() {
+          var {value} = this.valueAndAnnotation,
+              label = value.map(([string], i) => (i % 2 === 0 ? string : "")).join("\n");
+          return label;
+        },
+        set(value) {
+          this.valueAndAnnotation = {value, annotation: this.annotation};
+        }
+      },
+      annotation: {
+        get() {
+          return this.valueAndAnnotation.annotation;
+        },
+        set(annotation) {
+          this.valueAndAnnotation = {value: this.value, annotation};
+        }
+      },
+      action: {},
+      submenu: {}
+    };
   }
-
-  get isMenuItem() { return true; }
-
-  get selected() { return this.getProperty("selected"); }
-  set selected(value) {
-    if (this.selected === value) return;
-    this.addValueChange("selected", value);
-    if (value) {
-      this.fontColor = Color.white;
-      this.fill = Color.blue;
-    } else {
-      this.fill = Color.null;
-      this.fontColor = Color.black;
-    }
-  }
-
-  get label() {
-    var {value} = this.valueAndAnnotation,
-        label = value.map(([string], i) => i%2===0 ? string : "").join("\n");
-    return label;
-  }
-  set label(value) { this.valueAndAnnotation = {value, annotation: this.annotation}; }
-
-  get annotation() { return this.valueAndAnnotation.annotation; }
-  set annotation(annotation) { this.valueAndAnnotation = {value: this.value, annotation}; }
-
-  get action() { return this.getProperty("action") }
-  set action(value) { this.addValueChange("action", value); }
-
-  get submenu() { return this.getProperty("submenu") }
-  set submenu(value) { this.addValueChange("submenu", value); }
 
   onHoverIn(evt) {
     this.owner.itemMorphs.forEach(ea => ea !== this && (ea.selected = false));
@@ -120,73 +127,79 @@ export class Menu extends Morph {
     return menu;
   }
 
-  constructor(props) {
-    var {ownerMenu, ownerItemMorph, subMenu, removeOnMouseOut, items} = props
-    super({
-      dropShadow: true,
-      title: null,
-      padding: Rectangle.inset(0, 2),
-      itemPadding: Rectangle.inset(8, 4),
-      borderWidth: 1,
-      fill: Color.white,
-      borderColor: Color.gray.lighter(),
-      borderRadius: 4,
-      opacity: 0.95,
-      fontSize: 16,
-      fontFamily: "Helvetica Neue, Arial, sans-serif",
-      ...obj.dissoc(props, ["ownerMenu", "ownerItemMorph", "subMenu", "items", "removeOnMouseOut"])
-    });
-    this.state = {
-      ownerMenu: null, ownerItemMorph: null, removeOnMouseOut: false,
-      subMenu: null, items: null, openingSubMenuProcess: null
+  static get properties() {
+    return {
+      dropShadow: {
+        initialize() {
+          this.dropShadow = true;
+        }
+      },
+      submorphs: {
+        initialize() {
+          this.updateMorphs();
+        }
+      },
+      padding: {defaultValue: Rectangle.inset(0, 2)},
+      itemPadding: {defaultValue: Rectangle.inset(8, 4)},
+      borderWidth: {defaultValue: 1},
+      fill: {defaultValue: Color.white},
+      borderColor: {defaultValue: Color.gray.lighter()},
+      borderRadius: {defaultValue: 4},
+      opacity: {defaultValue: 0.95},
+      fontSize: {defaultValue: 16},
+      fontFamily: {defaultValue: "Helvetica Neue, Arial, sans-serif"},
+      title: {
+        get() {
+          return this.getProperty("title");
+        },
+        set(value) {
+          this.addValueChange("title", value);
+        }
+      },
+      ownerMenu: {},
+      submenu: {},
+      submenus: {
+        readOnly: true,
+        get() {
+          return this.submenu ? [this.submenu].concat(this.submenu.submenus) : [];
+        }
+      },
+      ownerItemMorph: {},
+      removeOnMouseOut: {},
+      items: {
+        set(items) {
+          items = items.map(this.ensureItem.bind(this)).filter(Boolean);
+          this.setProperty('items', items);
+        }
+      },
+      selectedItemMorph: {
+        derived: true,
+        readOnly: true,
+        get() {
+          return this.itemMorphs.find(ea => ea.selected);
+        }
+      },
+      titleMorph: {
+        derived: true,
+        readOnly: true,
+        get() {
+          return this.getSubmorphNamed("title");
+        }
+      },
+      itemMorphs: {
+        derived: true,
+        readOnly: true,
+        get() {
+          return this.submorphs.filter(ea => ea.isMenuItem);
+        }
+      }
     };
-    Object.assign(this, {ownerMenu, ownerItemMorph, subMenu, removeOnMouseOut, items});
-    this.updateMorphs();
   }
 
   async remove() {
     await this.animate({opacity: 0, duration: 300});
     super.remove()
   }
-
-  get title() { return this.getProperty("title") }
-  set title(value) { this.addValueChange("title", value); }
-
-  get ownerMenu() { return this.state.ownerMenu; }
-  set ownerMenu(value) { this.state.ownerMenu = value; }
-
-  get submenu() { return this.state.submenu; }
-  set submenu(value) { this.state.submenu = value; }
-
-  get submenus() {
-    return this.submenu ?
-      [this.submenu].concat(this.submenu.submenus) : []
-  }
-
-  get ownerItemMorph() { return this.state.ownerItemMorph; }
-  set ownerItemMorph(value) { this.state.ownerItemMorph = value; }
-
-  get removeOnMouseOut() { return this.state.removeOnMouseOut; }
-  set removeOnMouseOut(value) { this.state.removeOnMouseOut = value; }
-
-  get items() { return this.state.items; }
-  set items(items) {
-    items = items.map(this.ensureItem.bind(this)).filter(Boolean);
-    this.state.items = items;
-  }
-
-  get padding() { return this.getProperty("padding") }
-  set padding(value) { this.addValueChange("padding", value); }
-
-  get fontSize() { return this.getProperty("fontSize") }
-  set fontSize(value) { this.addValueChange("fontSize", value); }
-
-  get fontFamily() { return this.getProperty("fontFamily") }
-  set fontFamily(value) { this.addValueChange("fontFamily", value); }
-
-  get selectedItemMorph() { return this.itemMorphs.find(ea => ea.selected); }
-  get titleMorph() { return this.getSubmorphNamed("title"); }
-  get itemMorphs() { return this.submorphs.filter(ea => ea.isMenuItem); }
 
   ensureItem(item) {
     if (!item) return invalidItem;
@@ -292,8 +305,8 @@ export class Menu extends Morph {
     // only open a new submenu after a certain delay to reduce the
     // impression of "flickering" menus and to be less annoying when trying to
     // move over a menu and leaving the bounds of the item morph that opened it
-    this.state.openingSubMenuProcess && clearTimeout(this.state.openingSubMenuProcess);
-    this.state.openingSubMenuProcess = setTimeout(() => {
+    this.openingSubMenuProcess && clearTimeout(this.openingSubMenuProcess);
+    this.openingSubMenuProcess = setTimeout(() => {
       try {
         this.openSubMenu(evt, itemMorph, items);
       } catch(err) { var w = this.world(); w ? w.logError(err) : console.error(err); }

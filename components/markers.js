@@ -1,22 +1,28 @@
-import { obj, string } from "lively.lang";
-import { pt, Color, Point, Rectangle, rect } from "lively.graphics";
-import { morph, Morph, MorphicEnv, ShadowObject } from "lively.morphic";
-import { connect, disconnect } from "lively.bindings";
-import { Icon } from "./icons.js";
+/* global Element, Node */
+import {obj, string} from "lively.lang";
+import {pt, Color, Point, Rectangle, rect} from "lively.graphics";
+import {morph, StyleRules, Morph, MorphicEnv, ShadowObject} from "lively.morphic";
+import {connect, disconnect} from "lively.bindings";
+import {Icon} from "./icons.js";
 
 export function show(target) {
-
   var world = MorphicEnv.default().world;
 
   if (target === null || target === undefined) target = String(target);
   if (target.isMorph) return showRect(target.world(), target.globalBounds());
-  if (target.isPoint) return showRect(world, new Rectangle(target.x-5, target.y-5, 10,10));
+  if (target.isPoint) return showRect(world, new Rectangle(target.x - 5, target.y - 5, 10, 10));
   if (target.isRectangle) return showRect(world, target);
-  if (typeof Element !== "undefined" && target instanceof Element) return showRect(world, Rectangle.fromElement(target));
-  if (typeof target === "number" || typeof target === "symbol" || typeof target === "boolean"
-    || (typeof Node !== "undefined" && target instanceof Node)
-    || target instanceof RegExp) target = String(target);
-  if (typeof target === "object") target = obj.inspect(target, {maxDepth: 1})
+  if (typeof Element !== "undefined" && target instanceof Element)
+    return showRect(world, Rectangle.fromElement(target));
+  if (
+    typeof target === "number" ||
+    typeof target === "symbol" ||
+    typeof target === "boolean" ||
+    (typeof Node !== "undefined" && target instanceof Node) ||
+    target instanceof RegExp
+  )
+    target = String(target);
+  if (typeof target === "object") target = obj.inspect(target, {maxDepth: 1});
   if (typeof target === "string" && arguments.length === 1) return world.setStatusMessage(target);
 
   return world.setStatusMessage(string.formatFromArray(Array.from(arguments)));
@@ -27,18 +33,18 @@ function showRect(world, rect) {
   return showThenHide(world, marker);
 }
 
-function showThenHide (world, morphOrMorphs, duration = 3) {
+function showThenHide(world, morphOrMorphs, duration = 3) {
   if (!world) return;
   var morphs = Array.isArray(morphOrMorphs) ? morphOrMorphs : [morphOrMorphs];
   morphs.forEach(ea => world.addMorph(ea));
-  if (duration) { // FIXME use scheduler
-    setTimeout(() => morphs.forEach(ea => ea.fadeOut(2000)), duration*1000);
+  if (duration) {
+    // FIXME use scheduler
+    setTimeout(() => morphs.forEach(ea => ea.fadeOut(2000)), duration * 1000);
   }
   return morphOrMorphs;
 }
 
 class BoundsMarker extends Morph {
-
   // creates a marker that looks like:
   // xxxx     xxxx
   // x           x
@@ -47,7 +53,6 @@ class BoundsMarker extends Morph {
   // x           x
   // x           x
   // xxxx     xxxx
-
 
   static highlightMorph(morph) {
     return new this().alignWithMorph(morph);
@@ -63,35 +68,46 @@ class BoundsMarker extends Morph {
     // this.ignoreEvents();
   }
 
-  get isEpiMorph() { return true }
+  get isEpiMorph() {
+    return true;
+  }
 
   markerLength(forBounds) {
     forBounds = forBounds.insetBy(-2);
     var length = Math.min(forBounds.width, forBounds.height);
-    return Math.max(4, Math.floor((length/10) < 10 ? (length / 2) - 5 : length / 10));
+    return Math.max(4, Math.floor(length / 10 < 10 ? length / 2 - 5 : length / 10));
   }
 
   createMarkerEdge() {
-      var b = morph({fill: Color.red, reactsToPointer: false});
-      // b.isEpiMorph = true;
-      // b.ignoreEvents();
-      return b;
+    var b = morph({fill: Color.red, reactsToPointer: false});
+    // b.isEpiMorph = true;
+    // b.ignoreEvents();
+    return b;
   }
 
   ensureMarkerCorners() {
-    var topLeftH     = this.topLeftH     || (this.topLeftH     = this.addMorph(this.createMarkerEdge())),
-        topLeftV     = this.topLeftV     || (this.topLeftV     = this.addMorph(this.createMarkerEdge())),
-        topRightH    = this.topRightH    || (this.topRightH    = this.addMorph(this.createMarkerEdge())),
-        topRightV    = this.topRightV    || (this.topRightV    = this.addMorph(this.createMarkerEdge())),
-        bottomRightH = this.bottomRightH || (this.bottomRightH = this.addMorph(this.createMarkerEdge())),
-        bottomRightV = this.bottomRightV || (this.bottomRightV = this.addMorph(this.createMarkerEdge())),
-        bottomLeftH  = this.bottomLeftH  || (this.bottomLeftH  = this.addMorph(this.createMarkerEdge())),
-        bottomLeftV  = this.bottomLeftV  || (this.bottomLeftV  = this.addMorph(this.createMarkerEdge()));
+    var topLeftH = this.topLeftH || (this.topLeftH = this.addMorph(this.createMarkerEdge())),
+        topLeftV = this.topLeftV || (this.topLeftV = this.addMorph(this.createMarkerEdge())),
+        topRightH = this.topRightH || (this.topRightH = this.addMorph(this.createMarkerEdge())),
+        topRightV = this.topRightV || (this.topRightV = this.addMorph(this.createMarkerEdge())),
+        bottomRightH =
+          this.bottomRightH || (this.bottomRightH = this.addMorph(this.createMarkerEdge())),
+        bottomRightV =
+          this.bottomRightV || (this.bottomRightV = this.addMorph(this.createMarkerEdge())),
+        bottomLeftH =
+          this.bottomLeftH || (this.bottomLeftH = this.addMorph(this.createMarkerEdge())),
+        bottomLeftV =
+          this.bottomLeftV || (this.bottomLeftV = this.addMorph(this.createMarkerEdge()));
     return [
-      topLeftH, topLeftV,
-      topRightH, topRightV,
-      bottomRightH, bottomRightV,
-      bottomLeftH, bottomLeftV];
+      topLeftH,
+      topLeftV,
+      topRightH,
+      topRightV,
+      bottomRightH,
+      bottomRightV,
+      bottomLeftH,
+      bottomLeftV
+    ];
   }
 
   alignWithMorph(otherMorph) {
@@ -100,7 +116,7 @@ class BoundsMarker extends Morph {
 
   alignWithBounds(bounds) {
     this.alignWithRect(bounds.insetBy(-20));
-    return this.alignWithRect(bounds, true)
+    return this.alignWithRect(bounds, true);
   }
 
   alignWithRect(r, animated) {
@@ -108,44 +124,46 @@ class BoundsMarker extends Morph {
         corners = this.ensureMarkerCorners(),
         markerLength = this.markerLength(r),
         boundsForMarkers = [
-          r.topLeft().    addXY(0,0).                        extent(pt(markerLength, markerWidth)),
-          r.topLeft().    addXY(0,0).                        extent(pt(markerWidth, markerLength)),
-          r.topRight().   addXY(-markerLength, 0).           extent(pt(markerLength, markerWidth)),
-          r.topRight().   addXY(-markerWidth,0).             extent(pt(markerWidth, markerLength)),
+          r.topLeft().addXY(0, 0).extent(pt(markerLength, markerWidth)),
+          r.topLeft().addXY(0, 0).extent(pt(markerWidth, markerLength)),
+          r.topRight().addXY(-markerLength, 0).extent(pt(markerLength, markerWidth)),
+          r.topRight().addXY(-markerWidth, 0).extent(pt(markerWidth, markerLength)),
           r.bottomRight().addXY(-markerWidth, -markerLength).extent(pt(markerWidth, markerLength)),
           r.bottomRight().addXY(-markerLength, -markerWidth).extent(pt(markerLength, markerWidth)),
-          r.bottomLeft(). addXY(0,-markerWidth).             extent(pt(markerLength, markerWidth)),
-          r.bottomLeft(). addXY(0, -markerLength).           extent(pt(markerWidth, markerLength))];
+          r.bottomLeft().addXY(0, -markerWidth).extent(pt(markerLength, markerWidth)),
+          r.bottomLeft().addXY(0, -markerLength).extent(pt(markerWidth, markerLength))
+        ];
     corners.forEach((corner, i) => corner.setBounds(boundsForMarkers[i]));
     if (animated) {
-       this.adjustOrigin(r.center());
-       this.opacity = 0, this.scale = 1.5;
-       this.animate({opacity: 1, scale: 1, duration: 300});
+      this.adjustOrigin(r.center());
+      (this.opacity = 0), (this.scale = 1.5);
+      this.animate({opacity: 1, scale: 1, duration: 300});
     }
     return this;
   }
-
 }
 
-
 export class StatusMessage extends Morph {
-
   static get properties() {
-    return {      
-      stayOpen:     {defaultValue: false},
-      slidable:     {defaultValue: true}, // auto slide up on new message
-      isMaximized:  {defaultValue: false},
-      expandable:   {initialize() { this.expandable = true; }},
-      maxLines:     {defaultValue: Infinity},
-      name:         {defaultValue: "messageMorph"},
-      extent:       {defaultValue: pt(240, 65)},
-      clipMode:     {defaultValue: "hidden"},
-      grabbing:     {defaultValue: false},
-      dragging:     {defaultValue: false},
+    return {
+      stayOpen: {defaultValue: false},
+      slidable: {defaultValue: true}, // auto slide up on new message
+      isMaximized: {defaultValue: false},
+      expandable: {
+        initialize() {
+          this.expandable = true;
+        }
+      },
+      maxLines: {defaultValue: Infinity},
+      name: {defaultValue: "messageMorph"},
+      extent: {defaultValue: pt(240, 65)},
+      clipMode: {defaultValue: "hidden"},
+      grabbing: {defaultValue: false},
+      dragging: {defaultValue: false},
       borderRadius: {defaultValue: 20},
-      borderWidth:  {defaultValue: 5},
-      fill:         {defaultValue: Color.white},
-      dropShadow:   {defaultValue: new ShadowObject(true)},
+      borderWidth: {defaultValue: 5},
+      fill: {defaultValue: Color.white},
+      dropShadow: {defaultValue: new ShadowObject(true)},
 
       message: {
         after: ["submorphs"],
@@ -166,25 +184,52 @@ export class StatusMessage extends Morph {
       },
 
       color: {
-        after: ["borderColor"], derived: true,
-        get() { return this.borderColor; },
-        set(value) { this.borderColor = value; }
+        after: ["borderColor"],
+        derived: true,
+        get() {
+          return this.borderColor;
+        },
+        set(value) {
+          this.borderColor = value;
+        }
       },
 
-      submorphs:    {
+      styleRules: {
+        initialize() {
+          this.styleRules = new StyleRules({
+            messageText: {
+              draggable: false,
+              readOnly: true,
+              selectable: true,
+              fixedWidth: false,
+              fixedHeight: false,
+              clipMode: "visible",
+              fontSize: 14,
+              fontFamily: "Inconsolata, 'DejaVu Sans Mono', monospace"
+            },
+            closeButton: {
+              extent: pt(22, 22),
+              activeStyle: {fill: Color.white},
+            },
+            expandButton: {
+              extent: pt(22, 22),
+              activeStyle: {fill: Color.white}
+            }
+          })
+        }
+      },
+
+      submorphs: {
         after: ["extent"],
         initialize() {
           this.submorphs = [
             {
               name: "messageText",
-              type: "text",
-              draggable: false, readOnly: true, selectable: true,
-              fixedWidth: false, fixedHeight: false, clipMode: "visible",
-              fontSize: 14, fontFamily: "Inconsolata, 'DejaVu Sans Mono', monospace"
+              type: "text"
             },
             {
-              name: "closeButton", type: "button",
-              extent: pt(22,22), activeStyle: {fill: Color.white},
+              name: "closeButton",
+              type: "button",
               label: Icon.makeLabel("close")
             }
           ];
@@ -192,16 +237,20 @@ export class StatusMessage extends Morph {
           connect(this.getSubmorphNamed("closeButton"), "fire", this, "remove");
         }
       }
-    }
+    };
   }
 
   relayout() {
     this.getSubmorphNamed("messageText").setBounds(this.innerBounds().insetBy(10));
-    this.getSubmorphNamed("closeButton").topRight = this.innerBounds().topRight().addXY(-6,6);
+    this.getSubmorphNamed("closeButton").topRight = this.innerBounds().topRight().addXY(-6, 6);
   }
 
-  isEpiMorph() { return true }
-  isStatusMessage() { return true }
+  isEpiMorph() {
+    return true;
+  }
+  isStatusMessage() {
+    return true;
+  }
 
   setMessage(msg, color) {
     this.message = msg;
@@ -209,12 +258,12 @@ export class StatusMessage extends Morph {
   }
 
   async slideTo(pos) {
-     this.sliding = this.animate({
-            position: pos,
-            duration: 500
-          });
-     await this.sliding;
-     this.sliding = false
+    this.sliding = this.animate({
+      position: pos,
+      duration: 500
+    });
+    await this.sliding;
+    this.sliding = false;
   }
 
   async expand() {
@@ -224,16 +273,15 @@ export class StatusMessage extends Morph {
     if (!world || this.isMaximized) return;
     this.isMaximized = true;
     this.stayOpen = true;
-    var text = this.getSubmorphNamed('messageText');
-    Object.assign(text, {readOnly: false, fixedWidth: false, selectable: true})
+    var text = this.getSubmorphNamed("messageText");
+    Object.assign(text, {readOnly: false, fixedWidth: false, selectable: true});
     if (this.expandedContent) text.value = this.expandedContent;
     text.fit();
-    var ext = text.extent.addXY(20,20),
-        visibleBounds = world.visibleBounds();
+    var ext = text.extent.addXY(20, 20), visibleBounds = world.visibleBounds();
     if (ext.y > visibleBounds.extent().y) ext.y = visibleBounds.extent().y - 20;
     if (ext.x > visibleBounds.extent().x) ext.x = visibleBounds.extent().x - 20;
     ext = this.extent.maxPt(ext);
-    this.animate({extent: ext, center: visibleBounds.center(), duration: 200})
+    this.animate({extent: ext, center: visibleBounds.center(), duration: 200});
     this.relayout();
     this.focus();
   }
@@ -256,7 +304,6 @@ export class StatusMessage extends Morph {
   }
 }
 
-
 // var m = new StatusMessageForMorph({message: "test"}).openInWorld();
 // m.borderColorTop
 // m.setMessage("???", Color.green)
@@ -265,9 +312,7 @@ export class StatusMessage extends Morph {
 // m.submorphs[0].textString
 // m.remove()
 
-
 export class StatusMessageForMorph extends StatusMessage {
-
   static get properties() {
     return {
       slidable: {defaultValue: false},
@@ -278,7 +323,7 @@ export class StatusMessageForMorph extends StatusMessage {
 
       targetMorph: {
         defaultValue: null,
-        get()      {
+        get() {
           var id = this.getProperty("targetMorph");
           return id && $world.getMorphWithId(id);
         },
@@ -295,8 +340,8 @@ export class StatusMessageForMorph extends StatusMessage {
           if (val) {
             if (!this.getSubmorphNamed("expandButton")) {
               var btn = this.addMorph({
-                name: "expandButton", type: "button",
-                extent: pt(22,22), activeStyle: {fill: Color.white},
+                name: "expandButton",
+                type: "button",
                 label: Icon.makeLabel("expand")
               });
               connect(btn, "fire", this, "expand");
@@ -310,8 +355,7 @@ export class StatusMessageForMorph extends StatusMessage {
           this.relayout();
         }
       }
-
-    }
+    };
   }
 
   relayout() {

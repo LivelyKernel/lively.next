@@ -1,312 +1,350 @@
-import { obj, num, arr, properties } from "lively.lang";
-import { pt, Color, Rectangle, rect } from "lively.graphics";
-import { signal, connect, disconnect } from "lively.bindings";
-import { Morph, Button, List, Text, GridLayout, HorizontalLayout,
-         StyleRules, Path, Ellipse, config, Label, Tooltip, Icon } from "lively.morphic";
-import { intersect, shape } from 'svg-intersections';
-import { roundTo } from "lively.lang/number.js";
+import {obj, num, arr, properties} from "lively.lang";
+import {pt, Color, Rectangle, rect} from "lively.graphics";
+import {signal, connect, disconnect} from "lively.bindings";
+import {
+  Morph,
+  Button,
+  List,
+  Text,
+  GridLayout,
+  HorizontalLayout,
+  StyleRules,
+  Path,
+  Ellipse,
+  config,
+  Label,
+  Tooltip,
+  Icon
+} from "lively.morphic";
+import {intersect, shape} from "svg-intersections";
+import {roundTo} from "lively.lang/number.js";
 
 class LeashEndpoint extends Ellipse {
-
   onDrag(evt) {
-     this.leash.onEndpointDrag(this, evt);
+    this.leash.onEndpointDrag(this, evt);
   }
 
   getConnectionPoint() {
     const {isPath, isPolygon, vertices, origin} = this.connectedMorph,
           gb = this.connectedMorph.globalBounds();
     if ((isPath || isPolygon) && this.attachedSide != "center") {
-       const vs = vertices.map(({x,y}) => pt(x,y).addPt(origin)),
-             ib = Rectangle.unionPts(vs),
-             side = ib[this.attachedSide](),
-             center = ib.center().addPt(ib.center().subPt(side)),
-             line = shape("line", {x1: side.x, y1: side.y, x2: center.x, y2: center.y}),
-             path = shape("polyline", {points: vs.map(({x,y}) => `${x},${y}`).join(" ")}),
-             {x,y} = arr.min(intersect(path, line).points, ({x,y}) => pt(x,y).dist(side));
-       return pt(x,y).addPt(gb.topLeft());
+      const vs = vertices.map(({x, y}) => pt(x, y).addPt(origin)),
+            ib = Rectangle.unionPts(vs),
+            side = ib[this.attachedSide](),
+            center = ib.center().addPt(ib.center().subPt(side)),
+            line = shape("line", {x1: side.x, y1: side.y, x2: center.x, y2: center.y}),
+            path = shape("polyline", {points: vs.map(({x, y}) => `${x},${y}`).join(" ")}),
+            {x, y} = arr.min(intersect(path, line).points, ({x, y}) => pt(x, y).dist(side));
+      return pt(x, y).addPt(gb.topLeft());
     } else {
-       return gb[this.attachedSide]();
+      return gb[this.attachedSide]();
     }
   }
 
   update(change) {
-     const globalPos = this.getConnectionPoint(),
-           pos = this.leash.localize(globalPos);
-     this.vertex = {...this.vertex, ...pos};
+    const globalPos = this.getConnectionPoint(), pos = this.leash.localize(globalPos);
+    this.vertex = {...this.vertex, ...pos};
   }
 
   clearConnection() {
-     if (this.connectedMorph) {
-         disconnect(this.connectedMorph, "extent", this, "update");
-         disconnect(this.connectedMorph, "position", this, "update");
-     }
+    if (this.connectedMorph) {
+      disconnect(this.connectedMorph, "extent", this, "update");
+      disconnect(this.connectedMorph, "position", this, "update");
+    }
   }
-  
+
   relayout() {
-    const {x,y} = this.vertex, bw = this.leash.borderWidth;
+    const {x, y} = this.vertex, bw = this.leash.borderWidth;
     //this.extent = this.pt((2*bw), (2 * bw));
-    this.center = pt(x + bw,y + bw);
+    this.center = pt(x + bw, y + bw);
   }
-  
+
   attachTo(morph, side) {
-      this.clearConnection()
-      this.connectedMorph = morph;
-      this.attachedSide = side;
-      this.vertex = {...this.leash.vertices[this.index],
-                     controlPoints: this.leash.controlPointsFor(side)}
-      connect(this.connectedMorph, "position", this, "update");
-      connect(this.connectedMorph, "extent", this, "update");
-      this.update();
+    this.clearConnection();
+    this.connectedMorph = morph;
+    this.attachedSide = side;
+    this.vertex = {
+      ...this.leash.vertices[this.index],
+      controlPoints: this.leash.controlPointsFor(side)
+    };
+    connect(this.connectedMorph, "position", this, "update");
+    connect(this.connectedMorph, "extent", this, "update");
+    this.update();
   }
-  
+
   static get properties() {
     return {
       index: {},
       leash: {},
-      styleClasses: {defaultValue: ['endpointStyle']},
+      styleClasses: {defaultValue: ["endpointStyle"]},
       vertex: {
         get() {
-         return this.leash.vertices[this.index];
+          return this.leash.vertices[this.index];
         },
         set(v) {
-         this.leash.vertices[this.index] = v;
-         this.leash.vertices = this.leash.vertices; // this is a very akward interface
+          this.leash.vertices[this.index] = v;
+          this.leash.vertices = this.leash.vertices; // this is a very akward interface
         }
       }
-    }
+    };
   }
 }
 
 export class Leash extends Path {
-
-   static get properties() {
-     return {
-        start: {}, end: {},
-        borderWidth: {defaultValue: 2},
-        borderColor: {defaultValue: Color.black},
-        fill: {defaultValue: Color.transparent},
-        styleRules: {
-          after: ['endpointStyle'],
-          get() {
-            return new StyleRules({
+  static get properties() {
+    return {
+      start: {},
+      end: {},
+      borderWidth: {defaultValue: 2},
+      borderColor: {defaultValue: Color.black},
+      fill: {defaultValue: Color.transparent},
+      styleRules: {
+        after: ["endpointStyle"],
+        get() {
+          return new StyleRules(
+            {
               endpointStyle: this.endpointStyle
-            }, this)
-          }
+            },
+            this
+          );
+        }
+      },
+      endpointStyle: {
+        after: ["submorphs"],
+        defaultValue: {
+          fill: Color.black,
+          origin: pt(3.5, 3.5),
+          extent: pt(10, 10),
+          nativeCursor: "-webkit-grab"
         },
-        endpointStyle: {
-          after: ['submorphs'],
-          defaultValue: {
-             fill: Color.black, origin: pt(3.5,3.5),
-             extent: pt(10,10), nativeCursor: "-webkit-grab",
-          },
-          set(style) { 
-             this.setProperty('endpointStyle', {...this.endpointStyle, style}); 
-             this.styleRules = this.styleRules;
-          }
-       },
-       vertices: {
-         after: ['start', 'end'],
-         initialize() {
-           this.vertices = [this.start, this.end];
-         }
-       },
-       submorphs: {
-         initialize() {
-            this.submorphs = [
-               this.startPoint = this.endpoint(0), 
-               this.endPoint = this.endpoint(1)
-            ];
-            connect(this, "extent", this, "relayout");
-            connect(this, "position", this, "relayout");
-         }
-       }
-     }
-   }
+        set(style) {
+          this.setProperty("endpointStyle", {...this.endpointStyle, style});
+          this.styleRules = this.styleRules;
+        }
+      },
+      vertices: {
+        after: ["start", "end"],
+        initialize() {
+          this.vertices = [this.start, this.end];
+        }
+      },
+      submorphs: {
+        initialize() {
+          this.submorphs = [
+            (this.startPoint = this.endpoint(0)),
+            (this.endPoint = this.endpoint(1))
+          ];
+          connect(this, "extent", this, "relayout");
+          connect(this, "position", this, "relayout");
+        }
+      }
+    };
+  }
 
-   remove() {
-      super.remove();
-      this.startPoint.clearConnection();
-      this.endPoint.clearConnection()
-   }
+  remove() {
+    super.remove();
+    this.startPoint.clearConnection();
+    this.endPoint.clearConnection();
+  }
 
-   onEndpointDrag(endpoint, evt) {
-      const v = endpoint.vertex,
-            {x,y} = v;
-      endpoint.vertex = {...v, ...pt(x,y).addPt(evt.state.dragDelta)}
-      this.relayout();
-   }
+  onEndpointDrag(endpoint, evt) {
+    const v = endpoint.vertex, {x, y} = v;
+    endpoint.vertex = {...v, ...pt(x, y).addPt(evt.state.dragDelta)};
+    this.relayout();
+  }
 
-   getEndpointStyle(idx) {
-      return {...this.endpointStyle, ...idx == 0 ?
-                 this.endpointStyle.start :
-                 this.endpointStyle.end}
-   }
+  getEndpointStyle(idx) {
+    return {
+      ...this.endpointStyle,
+      ...(idx == 0 ? this.endpointStyle.start : this.endpointStyle.end)
+    };
+  }
 
-   endpoint(idx) {
-      const leash = this, {x,y} = leash.vertices[idx];
-      return new LeashEndpoint({index: idx, leash: this, position: pt(x,y)});
-   }
+  endpoint(idx) {
+    const leash = this, {x, y} = leash.vertices[idx];
+    return new LeashEndpoint({index: idx, leash: this, position: pt(x, y)});
+  }
 
-   controlPointsFor(side) {
-      const next = {
-         topCenter: pt(0,-1), topLeft: pt(1,-1),
-         rightCenter: pt(1,0), bottomRight: pt(1,1),
-         bottomCenter: pt(0,1), bottomLeft: pt(-1,1),
-         leftCenter: pt(-1,0), topRight: pt(-1,-1),
-         center: pt(0,0)
-      }[side];
-      return {previous: next.negated().scaleBy(100), next: next.scaleBy(100)}
-   }
+  controlPointsFor(side) {
+    const next = {
+      topCenter: pt(0, -1),
+      topLeft: pt(1, -1),
+      rightCenter: pt(1, 0),
+      bottomRight: pt(1, 1),
+      bottomCenter: pt(0, 1),
+      bottomLeft: pt(-1, 1),
+      leftCenter: pt(-1, 0),
+      topRight: pt(-1, -1),
+      center: pt(0, 0)
+    }[side];
+    return {previous: next.negated().scaleBy(100), next: next.scaleBy(100)};
+  }
 
-   relayout() {
-      this.startPoint.relayout();
-      this.endPoint.relayout();
-   }
-
+  relayout() {
+    this.startPoint.relayout();
+    this.endPoint.relayout();
+  }
 }
 
 export class Slider extends Morph {
+  constructor(props) {
+    super({
+      height: 20,
+      fill: Color.transparent,
+      draggable: false,
+      ...props
+    });
+    const slider = this;
+    this.submorphs = [
+      new Path({
+        borderColor: Color.gray.darker(),
+        borderWidth: 2,
+        vertices: [this.leftCenter.addXY(5, 0), this.rightCenter.addXY(-5, 0)]
+      }),
+      {
+        type: "ellipse",
+        fill: Color.gray,
+        name: "slideHandle",
+        borderColor: Color.gray.darker(),
+        borderWidth: 1,
+        dropShadow: {blur: 5},
+        extent: pt(15, 15),
+        nativeCursor: "-webkit-grab",
+        getValue: () => {
+          return roundTo(this.target[this.property], 0.01);
+        },
+        onDragStart(evt) {
+          this.valueView = new Tooltip({description: this.getValue()}).openInWorld(
+            evt.hand.position.addXY(10, 10)
+          );
+        },
+        onDrag(evt) {
+          slider.onSlide(this, evt.state.dragDelta);
+          this.valueView.description = this.getValue();
+          this.valueView.position = evt.hand.position.addXY(10, 10);
+        },
+        onDragEnd(evt) {
+          this.valueView.remove();
+        }
+      }
+    ];
+    connect(this, "extent", this, "update");
+    this.update();
+  }
 
-    constructor(props) {
-        super({
-           height: 20,
-           fill: Color.transparent,
-           draggable: false,
-           ...props
-        });
-        const slider = this;
-        this.submorphs = [
-           new Path({
-                borderColor: Color.gray.darker(),
-                borderWidth: 2,
-                vertices: [this.leftCenter.addXY(5,0),
-                           this.rightCenter.addXY(-5,0)]
-              }),
-              {type: "ellipse", fill: Color.gray, name: "slideHandle",
-               borderColor: Color.gray.darker(), borderWidth: 1, dropShadow: {blur: 5},
-               extent: pt(15,15), nativeCursor: "-webkit-grab",
-               getValue: () => {
-                 return roundTo(this.target[this.property], .01)
-               },
-               onDragStart(evt) {
-                  this.valueView = new Tooltip({description: this.getValue()})
-                                                 .openInWorld(evt.hand.position.addXY(10,10));
-               },
-               onDrag(evt) { 
-                  slider.onSlide(this, evt.state.dragDelta);
-                  this.valueView.description = this.getValue();
-                  this.valueView.position = evt.hand.position.addXY(10,10);
-               },
-               onDragEnd(evt) {
-                 this.valueView.remove();
-               }
-             }
-         ];
-         connect(this, "extent", this, "update");
-         this.update();
-    }
+  normalize(v) {
+    return Math.abs(v / (this.max - this.min));
+  }
 
-    normalize(v) {
-        return Math.abs(v / (this.max - this.min));
-    }
+  update() {
+    const x = (this.width - 15) * this.normalize(this.target[this.property]);
+    this.get("slideHandle").center = pt(x + 7.5, 10);
+  }
 
-    update() {
-        const x = (this.width - 15) * this.normalize(this.target[this.property]);
-        this.get("slideHandle").center = pt(x + 7.5, 10);
-    }
-
-    onSlide(slideHandle, delta) {
-       const oldValue = this.target[this.property],
-             newValue = roundTo(oldValue + delta.x / this.width, .01);
-       this.target[this.property] = Math.max(this.min, Math.min(this.max, newValue));
-       this.update();
-    }
-
+  onSlide(slideHandle, delta) {
+    const oldValue = this.target[this.property],
+          newValue = roundTo(oldValue + delta.x / this.width, 0.01);
+    this.target[this.property] = Math.max(this.min, Math.min(this.max, newValue));
+    this.update();
+  }
 }
 
 export class PropertyInspector extends Morph {
-
-   static get properties() {
-      return {
-        target: {},
-        property: {},
-        min: {defaultValue: -Infinity},
-        max: {defaultValue: Infinity},
-        styleClasses: {defaultValue: ['root']},
-        styleRules: {
-          initialize() {
-            this.styleRules = this.styler;
-          }
-        },
-        layout: {
-          initialize() {
-             this.layout = new GridLayout({
-               columns: [1, {paddingLeft: 5, paddingRight: 5, fixed: 25}],
-               grid:[["value", "up"],
-                     ["value", "down"]]
-             });
-          }
-        },
-        submorphs: {
-           after: ['target', 'property', 'defaultValue', 'min', 'max'],
-           initialize() {
-              this.submorphs = [new ValueScrubber({
-                        name: "value",
-                        value: this.target[this.property] || this.defaultValue,
-                        min: this.min, max: this.max}),
-                        {type: "button", name: "down", label: Icon.makeLabel(
-                                  "sort-desc", {padding: rect(2,2,0,0), fontSize: 12})},
-                        {type: "button", name: "up", label: Icon.makeLabel(
-                                  "sort-asc", {padding: rect(2,2,0,0), fontSize: 12})}];
-              connect(this.get("value"), "scrub", this.target, this.property);
-              connect(this.get("up"), "fire", this, "increment");
-              connect(this.get("down"), "fire", this, "decrement");
-           }
+  static get properties() {
+    return {
+      target: {},
+      property: {},
+      min: {defaultValue: -Infinity},
+      max: {defaultValue: Infinity},
+      styleClasses: {defaultValue: ["root"]},
+      styleRules: {
+        initialize() {
+          this.styleRules = this.styler;
+        }
+      },
+      layout: {
+        initialize() {
+          this.layout = new GridLayout({
+            columns: [1, {paddingLeft: 5, paddingRight: 5, fixed: 25}],
+            grid: [["value", "up"], ["value", "down"]]
+          });
+        }
+      },
+      submorphs: {
+        after: ["target", "property", "defaultValue", "min", "max"],
+        initialize() {
+          this.submorphs = [
+            new ValueScrubber({
+              name: "value",
+              value: this.target[this.property] || this.defaultValue,
+              min: this.min,
+              max: this.max
+            }),
+            {
+              type: "button",
+              name: "down",
+              label: Icon.makeLabel("sort-desc", {padding: rect(2, 2, 0, 0), fontSize: 12})
+            },
+            {
+              type: "button",
+              name: "up",
+              label: Icon.makeLabel("sort-asc", {padding: rect(2, 2, 0, 0), fontSize: 12})
+            }
+          ];
+          connect(this.get("value"), "scrub", this.target, this.property);
+          connect(this.get("up"), "fire", this, "increment");
+          connect(this.get("down"), "fire", this, "decrement");
         }
       }
-   }
+    };
+  }
 
-   get styler() {
-       const buttonStyle = {
-            type: "button",
-            clipMode: "hidden",
-            activeStyle: {fill: Color.transparent, borderWidth: 0,
-                          fontColor: Color.white.darker()},
-            triggerStyle: {fill: Color.transparent, 
-                           fontColor: Color.black}
-         };
-       return new StyleRules({
-           root: {
-              extent: pt(55, 25), borderRadius: 5,
-              borderWidth: 1, borderColor: Color.gray,
-              clipMode: "hidden"
-           },
-           down: {padding: rect(0,-5,0,10), ...buttonStyle},
-           up: {padding: rect(0,0,0,-5), ...buttonStyle},
-           value: {fill: Color.white, padding: Rectangle.inset(4), fontSize: 15},
-       })
-   }
+  get styler() {
+    const buttonStyle = {
+      type: "button",
+      clipMode: "hidden",
+      activeStyle: {
+        fill: Color.transparent,
+        borderWidth: 0,
+        fontColor: Color.white.darker()
+      },
+      triggerStyle: {
+        fill: Color.transparent,
+        fontColor: Color.black
+      }
+    };
+    return new StyleRules({
+      root: {
+        extent: pt(55, 25),
+        borderRadius: 5,
+        borderWidth: 1,
+        borderColor: Color.gray,
+        clipMode: "hidden"
+      },
+      down: {padding: rect(0, -5, 0, 10), ...buttonStyle},
+      up: {padding: rect(0, 0, 0, -5), ...buttonStyle},
+      value: {fill: Color.white, padding: Rectangle.inset(4), fontSize: 15}
+    });
+  }
 
-   update() {
-       this.get("value").value = this.target[this.property];
-   }
+  update() {
+    this.get("value").value = this.target[this.property];
+  }
 
-   increment() {
-      if (this.max != undefined && this.target[this.property] >= this.max) return;
-      this.target[this.property] = (this.target[this.property] || this.defaultValue) + 1;
-      this.update()
-   }
+  increment() {
+    if (this.max != undefined && this.target[this.property] >= this.max) return;
+    this.target[this.property] = (this.target[this.property] || this.defaultValue) + 1;
+    this.update();
+  }
 
-   decrement() {
-      if (this.min != undefined && this.target[this.property] <= this.min) return;
-      this.target[this.property] = (this.target[this.property] || this.defaultValue) - 1;
-      this.update()
-   }
-
+  decrement() {
+    if (this.min != undefined && this.target[this.property] <= this.min) return;
+    this.target[this.property] = (this.target[this.property] || this.defaultValue) - 1;
+    this.update();
+  }
 }
 
 export class ValueScrubber extends Text {
-
   static get properties() {
     return {
       value: {defaultValue: 0},
@@ -314,7 +352,7 @@ export class ValueScrubber extends Text {
       draggable: {defaultValue: true},
       min: {defaultValue: -Infinity},
       max: {defaultValue: Infinity}
-    }
+    };
   }
 
   relayout() {
@@ -326,93 +364,92 @@ export class ValueScrubber extends Text {
       this.expandLabel(this.width);
     }
   }
-   
-   squeezeLabel(len) {
-      if (this.fontSize < 11) return;
-      while (this.fontSize > 10 && this.textBounds().width > len) {
-         this.fontSize -= 2
-         this.padding = this.padding.withY(this.padding.top() + 1);
-      }
-   }
 
-   expandLabel(len) {
-      if (this.fontSize > 13) return;
-      while (this.fontSize < 14 && this.textBounds().width < len) {
-         this.fontSize += 2
-         this.padding = this.padding.withY(this.padding.top() - 1);
-      }
-   }
+  squeezeLabel(len) {
+    if (this.fontSize < 11) return;
+    while (this.fontSize > 10 && this.textBounds().width > len) {
+      this.fontSize -= 2;
+      this.padding = this.padding.withY(this.padding.top() + 1);
+    }
+  }
+
+  expandLabel(len) {
+    if (this.fontSize > 13) return;
+    while (this.fontSize < 14 && this.textBounds().width < len) {
+      this.fontSize += 2;
+      this.padding = this.padding.withY(this.padding.top() - 1);
+    }
+  }
 
   onKeyDown(evt) {
     super.onKeyDown(evt);
     if ("Enter" == evt.keyCombo) {
       const [v, unit] = this.textString.split(" ");
       if (v) {
-         this.value = parseFloat(v);
-         signal(this, "scrub", this.scrubbedValue);
+        this.value = parseFloat(v);
+        signal(this, "scrub", this.scrubbedValue);
       }
       evt.stop();
     }
   }
 
   onDragStart(evt) {
-     this.execCommand("toggle active mark");
-     this.initPos = evt.position;
-     this.factorLabel = new Tooltip({description: "1x"}).openInWorld(evt.hand.position.addXY(10,10));
+    this.execCommand("toggle active mark");
+    this.initPos = evt.position;
+    this.factorLabel = new Tooltip({description: "1x"}).openInWorld(
+      evt.hand.position.addXY(10, 10)
+    );
   }
 
   getScaleAndOffset(evt) {
-     const {x, y} = evt.position.subPt(this.initPos),
-           scale = num.roundTo(Math.exp(-y / $world.height * 4), 0.01);
-     return {offset: x, scale}
+    const {x, y} = evt.position.subPt(this.initPos),
+          scale = num.roundTo(Math.exp(-y / $world.height * 4), 0.01);
+    return {offset: x, scale};
   }
 
   onDrag(evt) {
-      // x delta is the offset to the original value
-      // y is the scale
-      const {scale, offset} = this.getScaleAndOffset(evt),
-            v = this.getCurrentValue(offset, scale);
-      signal(this, "scrub", v);
-      this.textString = obj.safeToString(v);
-      if (this.unit) this.textString += " " + this.unit;
-      this.factorLabel.description = scale + "x";
-      this.factorLabel.position = evt.hand.position.addXY(10,10);
-      this.relayout();
+    // x delta is the offset to the original value
+    // y is the scale
+    const {scale, offset} = this.getScaleAndOffset(evt), v = this.getCurrentValue(offset, scale);
+    signal(this, "scrub", v);
+    this.textString = obj.safeToString(v);
+    if (this.unit) this.textString += " " + this.unit;
+    this.factorLabel.description = scale + "x";
+    this.factorLabel.position = evt.hand.position.addXY(10, 10);
+    this.relayout();
   }
 
   getCurrentValue(delta, s) {
-      const v = this.scrubbedValue + Math.round(delta * s);
-      return Math.max(this.min, Math.min(this.max, v));
+    const v = this.scrubbedValue + Math.round(delta * s);
+    return Math.max(this.min, Math.min(this.max, v));
   }
 
   onDragEnd(evt) {
-      const {offset, scale} = this.getScaleAndOffset(evt);
-      this.value = this.getCurrentValue(offset, scale);
-      this.factorLabel.softRemove();
+    const {offset, scale} = this.getScaleAndOffset(evt);
+    this.value = this.getCurrentValue(offset, scale);
+    this.factorLabel.softRemove();
   }
 
   set value(v) {
-      v = Math.max(this.min, Math.min(this.max, v));
-      this.scrubbedValue = v;
-      this.textString = obj.safeToString(v) || "";
-      if (this.unit) this.textString += " " + this.unit;
-      this.relayout();
+    v = Math.max(this.min, Math.min(this.max, v));
+    this.scrubbedValue = v;
+    this.textString = obj.safeToString(v) || "";
+    if (this.unit) this.textString += " " + this.unit;
+    this.relayout();
   }
-
 }
 
 export class CheckBox extends Morph {
-
   static get properties() {
     return {
       draggable: {defaultValue: false},
-      extent: {defaultValue: pt(15,15)},
+      extent: {defaultValue: pt(15, 15)},
       borderWidth: {defaultValue: 0},
       active: {defaultValue: true},
       checked: {defaultValue: false},
       fill: {defaultValue: Color.transparent},
-      nativeCursor: {defaultValue: "pointer"},
-    }
+      nativeCursor: {defaultValue: "pointer"}
+    };
   }
 
   trigger() {
@@ -433,11 +470,9 @@ export class CheckBox extends Morph {
   render(renderer) {
     return renderer.renderCheckBox(this);
   }
-
 }
 
 export class LabeledCheckBox extends Morph {
-
   static example() {
     var cb = new LabeledCheckBox({label: "foo"}).openInWorld();
     // cb.remove()
@@ -448,27 +483,50 @@ export class LabeledCheckBox extends Morph {
       name: {defaultValue: "LabeledCheckBox"},
       alignCheckBox: {defaultValue: "left"},
       label: {
-        defaultValue: "label", after: ["submorphs"], derived: true,
-        get() { return this.labelMorph.value; },
-        set(value) { this.labelMorph.value = value; }
+        defaultValue: "label",
+        after: ["submorphs"],
+        derived: true,
+        get() {
+          return this.labelMorph.value;
+        },
+        set(value) {
+          this.labelMorph.value = value;
+        }
       },
       checked: {
-        after: ["submorphs"], derived: true,
-        get() { return this.checkboxMorph.checked; },
-        set(value) { this.checkboxMorph.checked = value; signal(this, "checked", value); }
+        after: ["submorphs"],
+        derived: true,
+        get() {
+          return this.checkboxMorph.checked;
+        },
+        set(value) {
+          this.checkboxMorph.checked = value;
+          signal(this, "checked", value);
+        }
       },
       active: {
-        after: ["submorphs"], derived: true,
-        get() { return this.checkboxMorph.active; },
-        set(value) { this.checkboxMorph.active; }
+        after: ["submorphs"],
+        derived: true,
+        get() {
+          return this.checkboxMorph.active;
+        },
+        set(value) {
+          this.checkboxMorph.active;
+        }
       },
       labelMorph: {
-        derived: true, readOnly: true,
-        get() { return this.getSubmorphNamed("label"); }
+        derived: true,
+        readOnly: true,
+        get() {
+          return this.getSubmorphNamed("label");
+        }
       },
       checkboxMorph: {
-        derived: true, readOnly: true,
-        get() { return this.getSubmorphNamed("checkbox"); }
+        derived: true,
+        readOnly: true,
+        get() {
+          return this.getSubmorphNamed("checkbox");
+        }
       },
 
       submorphs: {
@@ -486,12 +544,11 @@ export class LabeledCheckBox extends Morph {
     };
   }
 
-
   constructor(props) {
     super(props);
-    connect(this, 'alignCheckBox', this, 'relayout');
-    connect(this.labelMorph, 'value', this, 'relayout');
-    connect(this.checkboxMorph, 'checked', this, 'checked');
+    connect(this, "alignCheckBox", this, "relayout");
+    connect(this.labelMorph, "value", this, "relayout");
+    connect(this.checkboxMorph, "checked", this, "checked");
     this.relayout();
     setTimeout(() => this.relayout(), 0);
   }
@@ -499,26 +556,26 @@ export class LabeledCheckBox extends Morph {
   relayout() {
     var l = this.labelMorph, cb = this.checkboxMorph;
     if (this.alignCheckBox === "left") {
-      cb.leftCenter = pt(0, l.height/2);
+      cb.leftCenter = pt(0, l.height / 2);
       l.leftCenter = cb.rightCenter;
     } else {
-      l.position = pt(0,0)
-      cb.leftCenter = pt(l.width, l.height/2);
+      l.position = pt(0, 0);
+      cb.leftCenter = pt(l.width, l.height / 2);
     }
     this.extent = this.submorphBounds().extent();
   }
 
-  trigger() { this.checkboxMorph.trigger(); }
+  trigger() {
+    this.checkboxMorph.trigger();
+  }
 
   onMouseDown(evt) {
     if (this.active) this.trigger();
     evt.stop();
   }
-
 }
 
 export class ModeSelector extends Morph {
-
   static example() {
     var cb = new ModeSelector({items: {foo: {}}}).openInWorld();
     // cb.remove()
@@ -529,10 +586,10 @@ export class ModeSelector extends Morph {
       items: {
         set(items) {
           if (obj.isArray(items)) {
-             this.keys = this.values = items;
+            this.keys = this.values = items;
           } else {
-             this.keys = obj.keys(items);
-             this.values = obj.values(items);
+            this.keys = obj.keys(items);
+            this.values = obj.values(items);
           }
         }
       },
@@ -542,15 +599,15 @@ export class ModeSelector extends Morph {
       tooltips: {},
       styleClasses: {defaultValue: ["root"]},
       layout: {
-        after: ['items'],
+        after: ["items"],
         initialize() {
           this.layout = new GridLayout({
             rows: [0, {paddingBottom: 10}],
             grid: [[...arr.interpose(this.keys.map(k => k + "Label"), null)]],
             autoAssign: false,
-            align: 'center',
+            align: "center",
             fitToCell: false
-          })
+          });
         }
       },
       submorphs: {
@@ -570,10 +627,10 @@ export class ModeSelector extends Morph {
               }
             });
             this.layout.apply();
-          })
+          });
         }
       }
-    }
+    };
   }
 
   build() {
@@ -582,7 +639,7 @@ export class ModeSelector extends Morph {
       ...this.createLabels(this.keys, this.values, this.tooltips)
     ];
     this.layout.row(0).items.forEach(c => {
-      c.group.align = 'center';
+      c.group.align = "center";
     });
     this.styleRules = this.styler;
   }
@@ -609,24 +666,24 @@ export class ModeSelector extends Morph {
         value: name,
         ...this.labelStyle,
         ...(tooltip && {tooltip}),
-        onMouseDown: evt => { this.update(name, value); }
+        onMouseDown: evt => {
+          this.update(name, value);
+        }
       };
     });
   }
 
   async relayout() {
-    return this.currentLabel &&
-      this
-        .get("typeMarker")
-        .animate({bounds: this.currentLabel.bounds(), duration: 200});
+    return (
+      this.currentLabel &&
+      this.get("typeMarker").animate({bounds: this.currentLabel.bounds(), duration: 200})
+    );
   }
 
   async update(label, value, silent = false) {
     const newLabel = this.get(label + "Label"), duration = 200;
-    if (newLabel == this.currentLabel)
-      return;
-    if (this.currentLabel)
-      this.currentLabel.fontColor = Color.black;
+    if (newLabel == this.currentLabel) return;
+    if (this.currentLabel) this.currentLabel.fontColor = Color.black;
     this.currentLabel = newLabel;
     newLabel.fontColor = Color.white;
     await this.relayout(duration);
@@ -636,7 +693,6 @@ export class ModeSelector extends Morph {
 }
 
 export class DropDownSelector extends Morph {
-
   constructor(props) {
     const {target, property, values} = props;
     super({
@@ -668,7 +724,7 @@ export class DropDownSelector extends Morph {
   getMenuEntries() {
     const currentValue = this.getNameFor(this.value);
     return [
-      ...this.value ? [{command: currentValue, target: this}] : [],
+      ...(this.value ? [{command: currentValue, target: this}] : []),
       ...arr.compact(
         this.commands.map(c => {
           return c.name != currentValue && {command: c.name, target: this};
@@ -700,8 +756,7 @@ export class DropDownSelector extends Morph {
   }
 
   getNameFor(value) {
-    if (this.getCurrentValue)
-      return this.getCurrentValue();
+    if (this.getCurrentValue) return this.getCurrentValue();
     if (obj.isArray(this.values)) {
       return obj.safeToString(value);
     } else {
@@ -709,7 +764,9 @@ export class DropDownSelector extends Morph {
     }
   }
 
-  get value() { return this.target[this.property] }
+  get value() {
+    return this.target[this.property];
+  }
 
   set value(v) {
     if (obj.isFunction(v)) {
@@ -717,18 +774,17 @@ export class DropDownSelector extends Morph {
     } else {
       this.target[this.property] = v;
     }
-    this.relayout()
+    this.relayout();
   }
 
   relayout() {
-    const vPrinted = this.getNameFor(this.value),
-          valueLabel = this.get("currentValue");
-    if (vPrinted == 'undefined') {
-         valueLabel.textString = 'Not set'
-         valueLabel.fontColor = Color.gray;
+    const vPrinted = this.getNameFor(this.value), valueLabel = this.get("currentValue");
+    if (vPrinted == "undefined") {
+      valueLabel.textString = "Not set";
+      valueLabel.fontColor = Color.gray;
     } else {
-       valueLabel.textString = vPrinted;
-       valueLabel.fontColor = Color.black;
+      valueLabel.textString = vPrinted;
+      valueLabel.fontColor = Color.black;
     }
   }
 
@@ -745,5 +801,4 @@ export class DropDownSelector extends Morph {
     this.menu.globalPosition = this.globalPosition;
     this.menu.isHaloItem = this.isHaloItem;
   }
-
 }

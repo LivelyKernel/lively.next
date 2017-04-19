@@ -44,22 +44,26 @@ class ListItemMorph extends Label {
         fontSize,
         padding
       } = style;
-      if (selectionFontColor && this.selectionFontColor !== selectionFontColor)          this.selectionFontColor = selectionFontColor;
-      if (nonSelectionFontColor && this.nonSelectionFontColor !== nonSelectionFontColor) this.nonSelectionFontColor = nonSelectionFontColor;
-      if (selectionColor && this.selectionColor !== selectionColor)                      this.selectionColor = selectionColor;
-      if (fontSize && this.fontSize !== fontSize)                                        this.fontSize = fontSize;
-      if (fontFamily && this.fontFamily !== fontFamily)                                  this.fontFamily = fontFamily;
-      if (padding && !this.padding.equals(padding))                                      this.padding = padding;
+      if (selectionFontColor && this.selectionFontColor !== selectionFontColor)
+        this.selectionFontColor = selectionFontColor;
+      if (nonSelectionFontColor && this.nonSelectionFontColor !== nonSelectionFontColor)
+        this.nonSelectionFontColor = nonSelectionFontColor;
+      if (selectionColor && this.selectionColor !== selectionColor)
+        this.selectionColor = selectionColor;
+      if (fontSize && this.fontSize !== fontSize) this.fontSize = fontSize;
+      if (fontFamily && this.fontFamily !== fontFamily) this.fontFamily = fontFamily;
+      if (padding && !this.padding.equals(padding)) this.padding = padding;
     }
     if (item.annotation) this.valueAndAnnotation = {value: label, annotation: item.annotation};
-    else if (typeof label === "string") this.textString = label
+    else if (typeof label === "string") this.textString = label;
     else this.value = label;
 
     this.tooltip = this.tooltip || this.textString;
     this.itemIndex = itemIndex;
     this.position = pos;
 
-    { // if its wider, its wider...
+    {
+      // if its wider, its wider...
       // this is more correct but slower:
       // this.extent = pt(Math.max(goalWidth, this.textBounds().width), itemHeight);
       // this is faster:
@@ -654,16 +658,18 @@ export class FilterableList extends Morph {
 
       submorphs: {
         initialize() {
-          this.submorphs = [
-            Text.makeInputLine({
+          let input = Text.makeInputLine({
               name: "input",
               highlightWhenFocused: false,
               fixedHeight: false,
               autofit: false
-            }),
+            });
+          input.whenRendered().then(() => this.relayout());
+          this.submorphs = [
+            input,
             new morph({name: 'padding', fill: Color.transparent, height: 5}),
             new List({name: "list", items: [], clipMode: "auto"})
-          ]
+          ];
         }
       },
 
@@ -687,8 +693,8 @@ export class FilterableList extends Morph {
         after: ["submorphs"],
         get() { return this.listMorph.theme; },
         set(val) {
-          this.listMorph.theme = val;
           this.inputMorph.styleRules = this.inputStyle(val);
+          this.listMorph.theme = val;
         }
       },
 
@@ -892,7 +898,9 @@ export class FilterableList extends Morph {
     let {listMorph, inputMorph, paddingMorph, borderWidth: offset} = this;
     inputMorph.topLeft = pt(offset, offset);
     inputMorph.width = listMorph.width = this.width - 2*offset;
-    if (paddingMorph) paddingMorph.topLeft = inputMorph.bottomLeft;
+    if (paddingMorph) {
+      paddingMorph.topLeft = inputMorph.bottomLeft;
+    }
     listMorph.topLeft = paddingMorph ? paddingMorph.bottomLeft : inputMorph.bottomLeft;
     listMorph.height = this.height -listMorph.top - offset;
   }
