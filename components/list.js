@@ -802,7 +802,11 @@ export class FilterableList extends Morph {
 
       filterFunction: {
         get() {
-          return this.getProperty("filterFunction") || this.defaultFilterFunction;
+          let filterFunction = this.getProperty("filterFunction");
+          if (!filterFunction) return this.defaultFilterFunction;
+          if (typeof filterFunction === "string")
+            filterFunction = eval(`(${filterFunction})`);
+          return filterFunction;
         }
       },
 
@@ -953,10 +957,10 @@ export class FilterableList extends Morph {
     var parsedInput = this.parseInput(),
         filterFunction = this.filterFunction,
         sortFunction = this.sortFunction,
-        filteredItems = this.items.filter(item => filterFunction(parsedInput, item));
+        filteredItems = this.items.filter(item => filterFunction.call(this, parsedInput, item));
 
     if (sortFunction)
-      filteredItems = arr.sortBy(filteredItems, ea => sortFunction(parsedInput, ea));
+      filteredItems = arr.sortBy(filteredItems, ea => sortFunction.call(this, parsedInput, ea));
 
     var list = this.listMorph,
         newSelectedIndexes = this.updateSelectionsAfterFilter ?
