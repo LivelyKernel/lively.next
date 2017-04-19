@@ -1,5 +1,5 @@
 // This is a prototype implementation of a file-system based partsbin...
-
+/* global System */
 import { resource } from "lively.resources";
 import {
   createMorphSnapshot,
@@ -34,13 +34,17 @@ export async function saveObjectToPartsbinFolder(obj, partName, options = {}) {
   }
   try {
     if (obj.isMorph) {
+      let morphsToPrepare = [];
       obj.withAllSubmorphsDo(ea => {
         if (typeof ea.beforePublish === "function")
-          ea.beforePublish(partName, obj);
+          morphsToPrepare.push(ea);
       });
+      for (var m of morphsToPrepare) {
+        await m.beforePublish();
+      }
     } else {
       if (typeof obj.beforePublish === "function")
-        obj.beforePublish(partName, obj);
+        await obj.beforePublish(partName, obj);
     }
   } catch (e) {
     let msg = `Error in beforePublish of ${obj}\n${e.stack}`;
