@@ -231,7 +231,13 @@ export class Morph {
         isStyleProp: true,
         derived: true,
         after:   ["borderStyleLeft", "borderWidthLeft", "borderColorLeft"],
-        get()    { return {style: this.borderStyleLeft, width: this.borderWidthLeft, color: this.borderColorLeft} },
+        get() {
+          return {
+            style: this.borderStyleLeft,
+            width: this.borderWidthLeft,
+            color: this.borderColorLeft
+          };
+        },
         set(x) {
           if ("style" in x) this.borderStyleLeft = x.style;
           if ("width" in x) this.borderWidthLeft = x.width;
@@ -244,7 +250,13 @@ export class Morph {
         isStyleProp: true,
         derived: true,
         after:  ["borderStyleRight", "borderWidthRight", "borderColorRight"],
-        get()   { return {style: this.borderStyleRight, width: this.borderWidthRight, color: this.borderColorRight} },
+        get() {
+          return {
+            style: this.borderStyleRight,
+            width: this.borderWidthRight,
+            color: this.borderColorRight
+          };
+        },
         set(x) {
           if ("style" in x) this.borderStyleRight = x.style;
           if ("width" in x) this.borderWidthRight = x.width;
@@ -257,7 +269,13 @@ export class Morph {
         isStyleProp: true,
         derived: true,
         after: ["borderStyleBottom", "borderWidthBottom", "borderColorBottom"],
-        get()  { return {style: this.borderStyleBottom, width: this.borderWidthBottom, color: this.borderColorBottom} },
+        get() {
+          return {
+            style: this.borderStyleBottom,
+            width: this.borderWidthBottom,
+            color: this.borderColorBottom
+          };
+        },
         set(x) {
           if ("style" in x) this.borderStyleBottom = x.style;
           if ("width" in x) this.borderWidthBottom = x.width;
@@ -270,7 +288,13 @@ export class Morph {
         isStyleProp: true,
         derived: true,
         after: ["borderStyleTop", "borderWidthTop", "borderColorTop"],
-        get()     { return {style: this.borderStyleTop, width: this.borderWidthTop, color: this.borderColorTop} },
+        get() {
+          return {
+            style: this.borderStyleTop,
+            width: this.borderWidthTop,
+            color: this.borderColorTop
+          };
+        },
         set(x) {
           if ("style" in x) this.borderStyleTop = x.style;
           if ("width" in x) this.borderWidthTop = x.width;
@@ -282,7 +306,7 @@ export class Morph {
       borderWidth: {
         isStyleProp: true,
         derived: true,
-        after:      ["borderWidthLeft", "borderWidthRight", "borderWidthTop", "borderWidthBottom"],
+        after: ["borderWidthLeft", "borderWidthRight", "borderWidthTop", "borderWidthBottom"],
         get()       { return this.borderWidthLeft; },
         set(value) {
           this.borderWidthLeft = this.borderWidthRight =
@@ -314,11 +338,10 @@ export class Morph {
       borderStyle: {
         isStyleProp: true,
         derived: true,
-        after:      ["borderStyleLeft", "borderStyleRight", "borderStyleTop", "borderStyleBottom"],
+        after: ["borderStyleLeft", "borderStyleRight", "borderStyleTop", "borderStyleBottom"],
         get()       { return this.borderStyleLeft; },
         set(value) {
-          this.borderStyleLeft = this.borderStyleRight =
-            this.borderStyleTop = this.borderStyleBottom = value;
+          this.borderStyleLeft = this.borderStyleRight = this.borderStyleTop = this.borderStyleBottom = value;
         }
       },
 
@@ -328,8 +351,7 @@ export class Morph {
         after:      ["borderColorLeft", "borderColorRight", "borderColorTop", "borderColorBottom"],
         get()       { return this.borderColorLeft; },
         set(value) {
-          this.borderColorLeft = this.borderColorRight =
-            this.borderColorTop = this.borderColorBottom = value;
+          this.borderColorLeft = this.borderColorRight = this.borderColorTop = this.borderColorBottom = value;
         }
       },
 
@@ -337,7 +359,9 @@ export class Morph {
         isStyleProp: true,
         derived: true,
         after: ["borderStyle", "borderWidth", "borderColor"],
-        get()    { return {style: this.borderStyle, width: this.borderWidth, color: this.borderColor} },
+        get() {
+          return {style: this.borderStyle, width: this.borderWidth, color: this.borderColor};
+        },
         set(x)   {
           if ("style" in x) this.borderStyle = x.style;
           if ("width" in x) this.borderWidth = x.width;
@@ -350,11 +374,17 @@ export class Morph {
         isStyleProp: true,
         after: ['submorphs'],
         set(rules) {
-          this.setProperty("styleRules", rules);
-          if (rules) {
-             rules.morph = this;
-             rules.applyToAll(this);
+          if (!obj.isArray(rules)) {
+            rules = [rules];
           }
+          this.setProperty(
+            "styleRules",
+            arr.compact(rules).map(rule => {
+              rule.morph = this;
+              rule.applyToAll(this);
+              return rule;
+            })
+          );
         }
       },
 
@@ -592,12 +622,12 @@ export class Morph {
       }
     }
     this.layout && this.layout.onChange(change);
-    this.styleRules && this.styleRules.onMorphChange(this, change);
+    this.styleRules && this.styleRules.forEach(r => r.onMorphChange(this, change));
   }
 
   onSubmorphChange(change, submorph) {
     this.layout && this.layout.onSubmorphChange(submorph, change);
-    this.styleRules && this.styleRules.onMorphChange(submorph, change);
+    this.styleRules && this.styleRules.forEach(r => r.onMorphChange(submorph, change));
   }
 
   get changes() { return this.env.changeManager.changesFor(this); }

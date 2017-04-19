@@ -49,7 +49,7 @@ export class StyleRules {
     var props = {}, curr = morph;
     while (curr && curr != this.morph) {
       if (curr.styleRules)
-        props = {...props, ...curr.styleRules.getStyleProps(morph)};
+        props = {...props, ...obj.merge(curr.styleRules.map(r => r.getStyleProps(morph)))};
       curr = curr.owner;
     }
     return ["layout", ...Object.keys(props)];
