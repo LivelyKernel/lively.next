@@ -60,7 +60,7 @@ describe("Style Rules", () => {
                                        child: {fill: Color.green}})
        m2.addMorph(m3)
        m1.addMorph(m2);
-       expect(m1.styleRules.getShadowedProps(m3)).equals(["layout", "fill", "borderColor"]);
+       expect(m1.styleRules[0].getShadowedProps(m3)).equals(["layout", "fill", "borderColor"]);
        expect(m1.fill).equals(Color.orange);
        expect(m2.fill).equals(Color.black);
        expect(m3.fill).equals(Color.black);
