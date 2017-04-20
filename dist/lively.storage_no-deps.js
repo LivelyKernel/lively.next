@@ -784,7 +784,7 @@ var Database = function () {
   }, {
     key: "setDocuments",
     value: function () {
-      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(documents) {
+      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(documents, opts) {
         var results, i, d, result, _ref16, id, rev;
 
         return regeneratorRuntime.wrap(function _callee11$(_context11) {
@@ -792,7 +792,7 @@ var Database = function () {
             switch (_context11.prev = _context11.next) {
               case 0:
                 _context11.next = 2;
-                return this.pouchdb.bulkDocs(documents);
+                return this.pouchdb.bulkDocs(documents, opts);
 
               case 2:
                 results = _context11.sent;
@@ -839,7 +839,7 @@ var Database = function () {
         }, _callee11, this);
       }));
 
-      function setDocuments(_x21) {
+      function setDocuments(_x21, _x22) {
         return _ref15.apply(this, arguments);
       }
 
@@ -918,7 +918,7 @@ var Database = function () {
         }, _callee12, this);
       }));
 
-      function getDocuments(_x22) {
+      function getDocuments(_x23) {
         return _ref17.apply(this, arguments);
       }
 
@@ -966,7 +966,7 @@ var Database = function () {
         }, _callee13, this);
       }));
 
-      function remove(_x24, _x25, _x26) {
+      function remove(_x25, _x26, _x27) {
         return _ref19.apply(this, arguments);
       }
 
@@ -1178,11 +1178,163 @@ var Database = function () {
         }, _callee16, this, [[11, 30, 34, 42], [35,, 37, 41]]);
       }));
 
-      function resolveConflicts(_x27, _x28) {
+      function resolveConflicts(_x28, _x29) {
         return _ref23.apply(this, arguments);
       }
 
       return resolveConflicts;
+    }()
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // backup
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  }, {
+    key: "dump",
+    value: function () {
+      var _ref24 = asyncToGenerator(regeneratorRuntime.mark(function _callee17() {
+        var name, pouchdb, header, docs;
+        return regeneratorRuntime.wrap(function _callee17$(_context17) {
+          while (1) {
+            switch (_context17.prev = _context17.next) {
+              case 0:
+                name = this.name;
+                pouchdb = this.pouchdb;
+                _context17.t0 = name;
+                _context17.t1 = pouchdb.type();
+                _context17.t2 = new Date().toJSON();
+                _context17.next = 7;
+                return pouchdb.info();
+
+              case 7:
+                _context17.t3 = _context17.sent;
+                header = {
+                  name: _context17.t0,
+                  db_type: _context17.t1,
+                  start_time: _context17.t2,
+                  db_info: _context17.t3
+                };
+                _context17.next = 11;
+                return this.getAll({ attachments: true });
+
+              case 11:
+                docs = _context17.sent;
+                return _context17.abrupt("return", { header: header, docs: docs });
+
+              case 13:
+              case "end":
+                return _context17.stop();
+            }
+          }
+        }, _callee17, this);
+      }));
+
+      function dump() {
+        return _ref24.apply(this, arguments);
+      }
+
+      return dump;
+    }()
+  }, {
+    key: "backup",
+    value: function () {
+      var _ref25 = asyncToGenerator(regeneratorRuntime.mark(function _callee18() {
+        var backupNo = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+        var name, backupDB;
+        return regeneratorRuntime.wrap(function _callee18$(_context18) {
+          while (1) {
+            switch (_context18.prev = _context18.next) {
+              case 0:
+                name = this.name + "_backup_" + backupNo, backupDB = this.constructor.ensureDB(name);
+                _context18.next = 3;
+                return this.replicateTo(backupDB);
+
+              case 3:
+                return _context18.abrupt("return", backupDB);
+
+              case 4:
+              case "end":
+                return _context18.stop();
+            }
+          }
+        }, _callee18, this);
+      }));
+
+      function backup() {
+        return _ref25.apply(this, arguments);
+      }
+
+      return backup;
+    }()
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // migration
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  }, {
+    key: "migrate",
+    value: function () {
+      var _ref26 = asyncToGenerator(regeneratorRuntime.mark(function _callee19(migrationFn) {
+        var docs, migrated, unchanged, i, doc, migratedDoc;
+        return regeneratorRuntime.wrap(function _callee19$(_context19) {
+          while (1) {
+            switch (_context19.prev = _context19.next) {
+              case 0:
+                _context19.next = 2;
+                return this.getAll();
+
+              case 2:
+                docs = _context19.sent;
+                migrated = [], unchanged = [];
+                i = 0;
+
+              case 5:
+                if (!(i < docs.length)) {
+                  _context19.next = 16;
+                  break;
+                }
+
+                doc = docs[i], migratedDoc = migrationFn(doc, i);
+
+                if (migratedDoc) {
+                  _context19.next = 10;
+                  break;
+                }
+
+                unchanged.push(doc);return _context19.abrupt("continue", 13);
+
+              case 10:
+
+                if (!migratedDoc.hasOwnProperty("_id")) migratedDoc._id = doc._id;
+                if (migratedDoc.hasOwnProperty("_rev")) delete migratedDoc._rev;
+
+                migrated.push(migratedDoc);
+
+              case 13:
+                i++;
+                _context19.next = 5;
+                break;
+
+              case 16:
+                _context19.next = 18;
+                return this.setDocuments(migrated);
+
+              case 18:
+                return _context19.abrupt("return", { migrated: migrated.length, unchanged: unchanged.length });
+
+              case 19:
+              case "end":
+                return _context19.stop();
+            }
+          }
+        }, _callee19, this);
+      }));
+
+      function migrate(_x31) {
+        return _ref26.apply(this, arguments);
+      }
+
+      return migrate;
     }()
   }, {
     key: "pouchdb",
@@ -1194,6 +1346,37 @@ var Database = function () {
 
       return this._pouchdb = createPouchDB(name, options);
     }
+  }], [{
+    key: "loadDump",
+    value: function () {
+      var _ref27 = asyncToGenerator(regeneratorRuntime.mark(function _callee20(dump) {
+        var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+        var header, docs, name, db;
+        return regeneratorRuntime.wrap(function _callee20$(_context20) {
+          while (1) {
+            switch (_context20.prev = _context20.next) {
+              case 0:
+                header = dump.header, docs = dump.docs, name = opts.name || header.name, db = this.ensureDB(name);
+                _context20.next = 3;
+                return db.setDocuments(docs, { new_edits: false });
+
+              case 3:
+                return _context20.abrupt("return", db);
+
+              case 4:
+              case "end":
+                return _context20.stop();
+            }
+          }
+        }, _callee20, this);
+      }));
+
+      function loadDump(_x32) {
+        return _ref27.apply(this, arguments);
+      }
+
+      return loadDump;
+    }()
   }]);
   return Database;
 }();
