@@ -406,7 +406,7 @@ var commands = [
     readOnly: true,
     exec: function(morph) {
       var select = !!morph.activeMark,
-          currentPos = morph.lineWrapping ? morph.cursorScreenPosition : morph.cursorPosition,
+          currentPos = morph.cursorPosition,
           firstRow = morph.textLayout.firstFullVisibleLine(morph),
           lastRow = morph.textLayout.lastFullVisibleLine(morph),
           middleRow = firstRow+Math.floor((lastRow - firstRow)/2),
@@ -415,7 +415,7 @@ var commands = [
       else if (currentPos.row < middleRow) newPos.row = middleRow;
       else if (currentPos.row < lastRow) newPos.row = lastRow;
       else return true;
-      morph.selection.lead = morph.lineWrapping ? morph.toDocumentPosition(newPos) : newPos;
+      morph.selection.lead = newPos;
       if (!select) morph.selection.anchor = morph.selection.lead;
       return true;
     }
@@ -426,7 +426,7 @@ var commands = [
     readOnly: true,
     exec: function(morph) {
       var select = !!morph.activeMark,
-          currentPos = morph.lineWrapping ? morph.cursorScreenPosition : morph.cursorPosition,
+          currentPos = morph.cursorPosition,
           firstRow = morph.textLayout.firstFullVisibleLine(morph),
           lastRow = morph.textLayout.lastFullVisibleLine(morph),
           middleRow = firstRow+Math.floor((lastRow - firstRow)/2),
@@ -435,7 +435,7 @@ var commands = [
       if (currentPos.row <= middleRow) newPos.row = firstRow;
       else if (currentPos.row <= lastRow) newPos.row = middleRow;
       else newPos.row = lastRow;
-      morph.selection.lead = morph.lineWrapping ? morph.toDocumentPosition(newPos) : newPos;
+      morph.selection.lead = newPos;
       if (!select) morph.selection.anchor = morph.selection.lead;
       return true;
     }
