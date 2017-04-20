@@ -274,10 +274,10 @@ export default class Database {
     return rows.map(ea => ea.doc);
   }
 
-  async setDocuments(documents) {
+  async setDocuments(documents, opts) {
     // bulk set multiple documents at once
     // documents = [{_id, _rev?}, ...]
-    let results =  await this.pouchdb.bulkDocs(documents);
+    let results =  await this.pouchdb.bulkDocs(documents, opts);
     for (let i = 0; i < results.length; i++) {
       let d = documents[i], result = results[i];
       // if a conflict happens and document does not specify the exact revision
