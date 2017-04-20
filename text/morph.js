@@ -19,18 +19,7 @@ import Renderer from "./renderer.js";
 import commands from "./commands.js";
 import { RichTextControl } from "./ui.js";
 
-const defaultTextStyle = {
-  fontFamily: "Sans-Serif",
-  fontSize: 12,
-  fontColor: Color.black,
-  fontWeight: "normal",
-  fontStyle: "normal",
-  textDecoration: "none",
-  backgroundColor: undefined,
-  textStyleClasses: undefined,
-  link: undefined,
-  nativeCursor: undefined
-}
+
 
 export class Text extends Morph {
 
@@ -46,6 +35,29 @@ export class Text extends Morph {
   }
 
   static makeInputLine(props) { return new InputLine(props); }
+
+  static get defaultTextStyle() {
+    if (this._defaultTextStyle)
+      return this._defaultTextStyle;
+    let {properties} = this.prototype.propertiesAndPropertySettings(),
+        propNames = this.defaultTextStyleProps, style = {};
+    for (let i = 0; i < propNames.length; i++) {
+      let name = propNames[i];
+      style[name] = properties[name].defaultValue;
+    }
+    return this._defaultTextStyle = style;
+  }
+
+  static get defaultTextStyleProps() {
+    if (this._defaultTextStyleProps)
+      return this._defaultTextStyleProps;
+    let {properties} = this.prototype.propertiesAndPropertySettings(),
+        styleProps = [];
+    for (let prop in properties)
+      if (properties[prop].isDefaultTextStyleProp)
+        styleProps.push(prop);
+    return this._defaultTextStyleProps = styleProps;
+  }
 
   static get properties() {
     return {
@@ -270,31 +282,39 @@ export class Text extends Morph {
 
       defaultTextStyleProps: {
         readOnly: true, derived: true,
-        get() {
-          if (this.constructor._defaultTextStyleProps)
-            return this.constructor._defaultTextStyleProps;
-          let p = this.propertiesAndPropertySettings().properties,
-              styleProps = [];
-          for (let prop in p)
-            if (p[prop].isDefaultTextStyleProp)
-              styleProps.push(prop);
-          return this.constructor._defaultTextStyleProps = styleProps;
-        }
+        get() { return this.constructor.defaultTextStyleProps; }
       },
 
       defaultTextStyle: {
-        after: ["viewState"],
-        initialize() { this.defaultTextStyle = defaultTextStyle; },
+        after: ["viewState"], derived: true,
         get() { return obj.select(this, this.defaultTextStyleProps); },
         set(style) { Object.assign(this, style); }
       },
 
-      nativeCursor: {isDefaultTextStyleProp: true},
+      customizedTextStyle: {
+        readOnly: true, derived: true,
+        get() {
+          let style = {},
+              props = this.defaultTextStyleProps,
+              defaultStyle = this.constructor.defaultTextStyle;
+          for (let i = 0; i < props.length; i++) {
+            let name = props[i], val = this[name];
+            if (val !== defaultStyle[name])
+              style[name] = val;
+          }
+          return style;
+        }
+      },
+
+      nativeCursor: {defaultValue: "pointer", isDefaultTextStyleProp: true},
+
       fontFamily: {
+        defaultValue: "Sans-Serif",
         isStyleProp: true, isDefaultTextStyleProp: true,
         derived: true, after: ["defaultTextStyle"]
       },
       fontSize: {
+        defaultValue: 12,
         isStyleProp: true, isDefaultTextStyleProp: true,
         derived: true, after: ["defaultTextStyle"]
       },
@@ -303,18 +323,22 @@ export class Text extends Morph {
         derived: true, after: ["defaultTextStyle"]
       },
       fontColor: {
+        defaultValue: Color.black,
         isStyleProp: true, isDefaultTextStyleProp: true,
         derived: true, after: ["defaultTextStyle"]
       },
       fontWeight: {
+        defaultValue: "normal",
         isStyleProp: true, isDefaultTextStyleProp: true,
         derived: true, after: ["defaultTextStyle"]
       },
       fontStyle: {
+        defaultValue: "normal",
         isStyleProp: true, isDefaultTextStyleProp: true,
         derived: true, after: ["defaultTextStyle"]
       },
       textDecoration: {
+        defaultValue: "none",
         isStyleProp: true, isDefaultTextStyleProp: true,
         derived: true, after: ["defaultTextStyle"]
       },
