@@ -26,15 +26,7 @@ export function deserializeMorph(idAndSnapshot, options) {
 
 export async function loadWorldFromResource(fromResource) {
   // fromResource = resource(location.origin).join("test-world.json");
-  let data = await fromResource.readJson();
-
-  // load required modules
-  await Promise.all(
-    ObjectPool.requiredModulesOfSnapshot(data.snapshot)
-      .map(modId =>
-        (System.get(modId) ? null : System.import(modId))
-                .catch(e => console.error(`Error loading ${modId}`, e))));
-  return loadMorphFromSnapshot(data);
+  return loadMorphFromSnapshot(await fromResource.readJson());
 }
 
 export async function saveWorldToResource(world = World.defaultWorld(), toResource, options) {
@@ -142,6 +134,7 @@ export async function createMorphSnapshot(aMorph, options = {}) {
 export async function loadMorphFromSnapshot(snapshot) {
   snapshot = applyObjectMigrations(snapshot);
 
+  // embedded package definitions
   if (snapshot.packages) {
     let packages = findPackagesInFileSpec(snapshot.packages);
     for (let {files, url} of packages) {
@@ -151,6 +144,15 @@ export async function loadMorphFromSnapshot(snapshot) {
       ObjectPackage.withId(getPackage(url).name);
     }
   }
+  
+  // referenced packages / modules, e.g. b/c instances have classes from them
+  // load required modules
+  await Promise.all(
+    ObjectPool.requiredModulesOfSnapshot(snapshot.snapshot)
+      .map(modId =>
+        (System.get(modId) ? null : System.import(modId))
+                .catch(e => console.error(`Error loading ${modId}`, e))));
+
   return deserializeMorph(snapshot, {reinitializeIds: true, ignoreClassNotFound: false});
 }
 
