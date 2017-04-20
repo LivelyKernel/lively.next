@@ -306,7 +306,7 @@ export class Text extends Morph {
         }
       },
 
-      nativeCursor: {defaultValue: "pointer", isDefaultTextStyleProp: true},
+      nativeCursor: {defaultValue: "", isDefaultTextStyleProp: true},
 
       fontFamily: {
         defaultValue: "Sans-Serif",
