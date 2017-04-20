@@ -52,11 +52,10 @@ textarea.lively-text-input.debug {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  zIndex: 1010
 }
 
 .Tooltip {
-  z-index:  3;
+  z-index: 3;
 }
 
 .Hand {
@@ -71,9 +70,9 @@ textarea.lively-text-input.debug {
 
 .HaloItem:not(.NameHaloItem) {
   /*FIXME: we shouldn't need to hardcode the size...*/
-	 line-height: 24px !important;
-	 text-align: center;
-	 vertical-align: middle;
+  line-height: 24px !important;
+  text-align: center;
+  vertical-align: middle;
 }
 
 .halo-mesh {
@@ -89,7 +88,7 @@ textarea.lively-text-input.debug {
 /*-=- text -=-*/
 
 .center-text {
-	 text-align: center;
+  text-align: center;
 }
 
 .v-center-text {
