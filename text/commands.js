@@ -1211,8 +1211,45 @@ var usefulEditorCommands = [
       textEd.location = url;
       return textEd;
     }
-  }
+  },
 
+  {
+    name: "change editor mode",
+    async exec(ed) {
+      let filter = url => !url.endsWith("ide/editor-plugin.js")
+                        && url.endsWith("editor-plugin.js"),
+          results = await lively.modules.getPackage("lively.morphic").resources(filter),
+          {shortName: current} = ed.editorPlugin || {},
+          currentIndex = 0,
+          items = ["<no mode>"].concat(results.map((ea, i) => {
+            let name = ea.url.match(/([^\/]+)\/editor-plugin.js/)[1];
+            if (name === current) currentIndex = i;
+            return {
+              isListItem: true,
+              string: name,
+              value: ea
+            }
+          })),
+          {selected: [choice]} = await ed.world().filterableListPrompt("choose mode", items, {
+            requester: ed,
+            preselect: currentIndex,
+            historyId: "lively.morphic/text-change-editor-mode-hist",
+            fuzzy: true,
+          })
+
+      if (!choice) return;
+
+      if (choice === "<no mode>") {
+        await ed.changeEditorMode(null);
+        ed.resetTextAttributes();
+        return;
+      }
+
+      if (!choice.isLoaded) await lively.modules.module(choice.url).load();
+
+      await ed.changeEditorMode(choice.url);
+    }
+  }
 ];
 commands.push(...usefulEditorCommands);
 

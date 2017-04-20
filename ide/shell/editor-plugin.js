@@ -35,6 +35,8 @@ class ShellTokenizer {
 
 export default class ShellEditorPlugin extends EditorPlugin {
 
+  static get shortName() { return "shell"; }
+
   constructor(theme) {
     super(theme)
     this.tokenizer = new ShellTokenizer();

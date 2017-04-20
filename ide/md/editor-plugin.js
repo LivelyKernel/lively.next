@@ -22,6 +22,8 @@ var commands = [
 
 export default class MarkdownEditorPlugin extends EditorPlugin {
 
+  static get shortName() { return "md"; }
+
   constructor(theme) {
     super(theme);
     this.highlighter = new MarkdownStyler();

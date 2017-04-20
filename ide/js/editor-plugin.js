@@ -28,6 +28,8 @@ import {
 
 export default class JavaScriptEditorPlugin extends EditorPlugin {
 
+  static get shortName() { return "js"; }
+
   constructor(theme) {
     super(theme)
     this.highlighter = new JavaScriptTokenizer();

@@ -15,6 +15,8 @@ import * as git from "lively.morphic/ide/shell/git.js"
 
 export default class DiffEditorPlugin extends EditorPlugin {
 
+  static get shortName() { return "diff"; }
+
   constructor(theme) {
     super(theme);
     this.tokenizer = new DiffTokenizer();

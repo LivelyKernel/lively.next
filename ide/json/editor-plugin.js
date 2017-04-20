@@ -32,6 +32,8 @@ class JSONTokenizer {
 
 export default class JSONEditorPlugin extends JavaScriptEditorPlugin {
 
+  static get shortName() { return "json"; }
+
   constructor(theme = "chrome") {
     super(theme);
     this.tokenizer = new JSONTokenizer();

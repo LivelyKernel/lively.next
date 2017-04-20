@@ -641,6 +641,45 @@ export class Text extends Morph {
     return this.plugins.slice().reverse().find(iterator);
   }
 
+  get editorPlugin() { return this.pluginFind(ea => ea.isEditorPlugin); }
+
+  async lookupEditorPluginNamed(modeName) {
+    // let modeName = "js"    
+    let isAbsURL = /^[^:\\]+:\/\//.test(modeName);
+    let url = isAbsURL ? modeName : `lively.morphic/ide/${modeName}/editor-plugin.js`;
+    if (!await lively.modules.doesModuleExist(url)) return null;
+    let {default: Mode} = await lively.modules.module(url).load();
+    return Mode;
+  }
+
+  get editorModeName() {
+    let p = this.editorPlugin;
+    return p ? p.shortName : null;
+  }
+
+  async changeEditorMode(nameOrMode) {
+    // let nameOrMode = "js"
+    
+    let pluginsWithoutModes = this.plugins.filter(ea => !ea.isEditorPlugin);
+
+    if (!nameOrMode) {
+      // disbale
+      this.plugins = pluginsWithoutModes;
+      return null;
+    }
+
+    if (typeof nameOrMode === "string") {
+      let Mode = await this.lookupEditorPluginNamed(nameOrMode);
+      if (!Mode)
+        throw new Error(`Cannot find editor mode ${nameOrMode}`);
+      nameOrMode = new Mode(config.codeEditor.defaultTheme);
+    }
+
+    this.plugins = pluginsWithoutModes.concat(nameOrMode);
+    return nameOrMode;
+  }
+
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   invalidateTextLayout(resetCharBoundsCache = false) {
@@ -1902,11 +1941,11 @@ export class Text extends Morph {
   tokenAt(pos) { return this.pluginInvokeFirst("tokenAt", pos); }
   astAt(pos) { return this.pluginInvokeFirst("astAt", pos); }
   get evalEnvironment() {
-    var p = this.pluginFind(p => p.isEditorPlugin);
+    var p = this.editorPlugin;
     return p && p.evalEnvironment;
   }
   set evalEnvironment(env) {
-    var p = this.pluginFind(p => p.isEditorPlugin);
+    var p = this.editorPlugin;
     p && (p.evalEnvironment = env);
   }
   get doitContext() { var {context} = this.evalEnvironment || {}; return context; }
