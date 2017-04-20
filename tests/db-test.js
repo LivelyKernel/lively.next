@@ -210,3 +210,37 @@ describe("database replication", () => {
   });
   
 });
+describe("backup", () => {
+  
+  let origDB, backupDB
+  beforeEach(() => {
+    origDB = Database.ensureDB("lively.storage-backup-test", dbOpts);
+  });
+
+  afterEach(async () => {
+    expect(await origDB.destroy()).deep.equals({ok: true})
+    if (backupDB)
+      expect(await backupDB.destroy()).deep.equals({ok: true})
+  });
+
+  it("creates backup db", async () => {
+    origDB.setDocuments([{doc1: "foo"}, {doc2: "bar"}]);
+    let docs = await origDB.getAll();
+    backupDB = await origDB.backup();
+    expect(backupDB).not.equals(origDB);
+    expect(backupDB.name).equals(origDB.name + "_backup_1");
+    expect(await origDB.getAll()).deep.equals(await backupDB.getAll());
+  });
+
+  it("dump", async () => {
+    origDB.setDocuments([{doc1: "foo"}, {doc2: "bar"}]);
+    let docs = await origDB.getAll(),
+        dump = await origDB.dump();
+    expect(dump).containSubset({header: {name: origDB.name}, docs});
+    await origDB.destroy();
+    backupDB = await Database.loadDump(dump);
+    expect(backupDB.name).equals(origDB.name);
+    expect(await backupDB.getAll()).deep.equals(docs);
+  });
+
+});

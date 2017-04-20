@@ -370,3 +370,31 @@ export default class Database {
   }
 
 }
+  static async loadDump(dump, opts = {}) {
+    let {header, docs} = dump,
+        name = opts.name || header.name,
+        db = this.ensureDB(name);
+    await db.setDocuments(docs, {new_edits: false});
+    return db;
+  }
+
+  async dump() {
+    // similar format to pouchd.dump but no stream.
+    // see https://github.com/nolanlawson/pouchdb-replication-stream/blob/master/lib/index.js#L27
+    let {name, pouchdb} = this,
+        header = {
+          name,
+          db_type: pouchdb.type(),
+          start_time: new Date().toJSON(),
+          db_info: await pouchdb.info()
+        },
+        docs = await this.getAll({attachments: true});
+    return {header, docs};
+  }
+
+  async backup(backupNo = 1) {
+    let name = `${this.name}_backup_${backupNo}`,
+        backupDB = this.constructor.ensureDB(name);
+    await this.replicateTo(backupDB);
+    return backupDB;
+  }
