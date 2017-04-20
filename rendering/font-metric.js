@@ -403,7 +403,18 @@ class DOMTextMeasure {
       this.textlayerNodeCacheCount++;
       textNode = cache[styleKey] = rendertTextLayerFn(styleOpts, []);
       textNode.id = styleKey;
-      root.appendChild(textNode);
+
+      let {width, clipMode} = styleOpts;
+      if (styleOpts.width || (styleOpts.clipMode && styleOpts.clipMode !== "visible")) {
+        let clipNode = document.createElement("div");
+        clipNode.style.position = "absolute";
+        if (clipMode) clipNode.style.overflow = clipMode
+        if (width) clipNode.style.width = width + "px";
+        clipNode.appendChild(textNode);
+        root.appendChild(clipNode);
+      } else {
+        root.appendChild(textNode);
+      }
     }
 
     try { return doFn(textNode); } finally {

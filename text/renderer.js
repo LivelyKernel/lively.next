@@ -356,16 +356,6 @@ export default class Renderer {
         },
         textAttrs = {className: textLayerClasses, style};
 
-    if (additionalStyle) {
-      let {clipMode, height, width} = additionalStyle;
-      if (typeof width === "number")
-        style.width = width + "px";
-      if (typeof height === "number")
-        style.height = height + "px";
-      if (clipMode)
-        style.overflow = clipMode;
-    }
-  
     return h("div", textAttrs, children);
   }
 
