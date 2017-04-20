@@ -311,44 +311,44 @@ export class Text extends Morph {
       fontFamily: {
         defaultValue: "Sans-Serif",
         isStyleProp: true, isDefaultTextStyleProp: true,
-        derived: true, after: ["defaultTextStyle"]
+        after: ["defaultTextStyle"]
       },
       fontSize: {
         defaultValue: 12,
         isStyleProp: true, isDefaultTextStyleProp: true,
-        derived: true, after: ["defaultTextStyle"]
+        after: ["defaultTextStyle"]
       },
       selectionColor: {
         isStyleProp: true,
-        derived: true, after: ["defaultTextStyle"]
+        after: ["defaultTextStyle"]
       },
       fontColor: {
         defaultValue: Color.black,
         isStyleProp: true, isDefaultTextStyleProp: true,
-        derived: true, after: ["defaultTextStyle"]
+        after: ["defaultTextStyle"]
       },
       fontWeight: {
         defaultValue: "normal",
         isStyleProp: true, isDefaultTextStyleProp: true,
-        derived: true, after: ["defaultTextStyle"]
+        after: ["defaultTextStyle"]
       },
       fontStyle: {
         defaultValue: "normal",
         isStyleProp: true, isDefaultTextStyleProp: true,
-        derived: true, after: ["defaultTextStyle"]
+        after: ["defaultTextStyle"]
       },
       textDecoration: {
         defaultValue: "none",
         isStyleProp: true, isDefaultTextStyleProp: true,
-        derived: true, after: ["defaultTextStyle"]
+        after: ["defaultTextStyle"]
       },
       textStyleClasses: {
         isStyleProp: true, isDefaultTextStyleProp: true,
-        derived: true, after: ["defaultTextStyle"]
+        after: ["defaultTextStyle"]
       },
       backgroundColor: {
         isStyleProp: true, isDefaultTextStyleProp: true,
-        derived: true, after: ["defaultTextStyle"]
+        after: ["defaultTextStyle"]
       },
       textAlign: {
         isStyleProp: true, isDefaultTextStyleProp: true,

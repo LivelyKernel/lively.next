@@ -41,8 +41,9 @@ export default class FontDetector {
       //get the default width for the three base fonts
       s.style.fontFamily = baseFonts[index];
       h.appendChild(s);
-      defaultWidth[baseFonts[index]] = s.offsetWidth; //width for the default font
-      defaultHeight[baseFonts[index]] = s.offsetHeight; //height for the defualt font
+      let {width, height} = s.getBoundingClientRect();
+      defaultWidth[baseFonts[index]] = width; //width for the default font
+      defaultHeight[baseFonts[index]] = height; //height for the defualt font
       h.removeChild(s);
     }
     this.prepared = true;
@@ -61,12 +62,17 @@ export default class FontDetector {
       body.appendChild(span);
       for (let index in baseFonts) {
         span.style.fontFamily = font + ',' + baseFonts[index]; // name of the font along with the base font for fallback.
-        let matched = (span.offsetWidth != defaultWidth[baseFonts[index]]
-                    || span.offsetHeight != defaultHeight[baseFonts[index]]);
+        let {width, height} = span.getBoundingClientRect();
+        let matched = (width != defaultWidth[baseFonts[index]]
+                    || height != defaultHeight[baseFonts[index]]);
         if (matched) return true;
       }
       return false;
     } finally { body.removeChild(span); }
+  }
+
+  supportedFonts() {
+    return fonts.filter(ea => this.isFontSupported(ea));
   }
 }
 
@@ -247,7 +253,6 @@ export const fonts = [
   {name: "Sreda",               type: "slab serif"},
   {name: "Swift",               type: "slab serif"},
   {name: "Tower",               type: "slab serif"},
-
 
   {name: "Agency FB",                     type: "sans-serif"},
   {name: "Akzidenz-Grotesk",              type: "sans-serif"},
