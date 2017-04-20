@@ -369,7 +369,11 @@ export default class Database {
     return resolved;
   }
 
-}
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // backup
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   static async loadDump(dump, opts = {}) {
     let {header, docs} = dump,
         name = opts.name || header.name,
@@ -398,3 +402,28 @@ export default class Database {
     await this.replicateTo(backupDB);
     return backupDB;
   }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // migration
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  async migrate(migrationFn) {
+    let docs = await this.getAll();
+    let migrated = [], unchanged = [];
+    for (let i = 0; i < docs.length; i++) {
+      let doc = docs[i],
+          migratedDoc = migrationFn(doc, i);
+      if (!migratedDoc) { unchanged.push(doc); continue; }
+
+      if (!migratedDoc.hasOwnProperty("_id"))
+        migratedDoc._id = doc._id;
+      if (migratedDoc.hasOwnProperty("_rev"))
+        delete migratedDoc._rev;
+
+      migrated.push(migratedDoc);
+    }
+
+    await this.setDocuments(migrated);
+    return {migrated: migrated.length, unchanged: unchanged.length};
+  }
+}

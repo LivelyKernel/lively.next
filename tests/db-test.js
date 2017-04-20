@@ -210,6 +210,72 @@ describe("database replication", () => {
   });
   
 });
+
+let migrationDB;
+describe("database migration", () => {
+  
+  beforeEach(() => {
+    migrationDB = Database.ensureDB("lively.storage-migration-test", dbOpts);
+  });
+
+  afterEach(async () => {
+    expect(await migrationDB.destroy()).deep.equals({ok: true})
+  });
+
+
+  beforeEach(async () => {
+    await migrationDB.setDocuments([
+      {oldField: "doc1"},
+      {oldField: "doc2"}
+    ]);
+  });
+
+  it("converts documents", async () => {
+    let original = await migrationDB.getAll(),
+        status = await migrationDB.migrate(doc => ({newField: doc.oldField})),
+        migrated = await migrationDB.getAll();
+
+    expect(status).deep.equals({migrated: 2, unchanged: 0});
+    expect(migrated).length(2);
+    expect(migrated[0]).property("_id", original[0]._id);
+    expect(migrated[0]).property("newField", original[0].oldField);
+    expect(migrated[0]).to.not.have.property("oldField");
+    expect(migrated[1]).property("_id", original[1]._id);
+    expect(migrated[1]).property("newField", original[1].oldField);
+    expect(migrated[1]).to.not.have.property("oldField");
+  });
+
+  it("can keep docs unchanged", async () => {
+    let original = await migrationDB.getAll(),
+        status = await migrationDB.migrate((doc, i) =>
+          i === 1 ? null : {newField: doc.oldField}),
+        migrated = await migrationDB.getAll();
+
+    expect(status).deep.equals({migrated: 1, unchanged: 1});
+    expect(migrated).length(2);
+    expect(migrated[0]).property("_id", original[0]._id);
+    expect(migrated[0]).property("newField", original[0].oldField);
+    expect(migrated[0]).to.not.have.property("oldField");
+    expect(migrated[1]).property("_id", original[1]._id);
+    expect(migrated[1]).property("oldField", original[1].oldField);
+    expect(migrated[1]).to.not.have.property("newField");
+  });
+
+  it("cancels on error", async () => {
+    let original = await migrationDB.getAll();
+    try {
+      await migrationDB.migrate((doc, i) => {
+        if (i === 1) throw new Error("stop");
+        doc.foo = 23;
+        return doc;
+      })
+    } catch (err) {}
+    expect(original).deep.equals(await migrationDB.getAll());
+  });
+
+});
+
+
 describe("backup", () => {
   
   let origDB, backupDB
