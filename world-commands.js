@@ -629,22 +629,33 @@ var commands = [
     name: "open code search",
     progressIndicator: "opening code search...",
     exec: async (world, opts = {browser: null, systemInterface: null, input: null}) => {
-      var browser = opts.browser
-                 || (world.focusedMorph && world.focusedMorph.ownerChain().find(ea => ea.isBrowser)),
-          { CodeSearcher } = await System.import("lively.morphic/ide/code-search.js");
+
+      let activeMorphs = world.focusedMorph ? world.focusedMorph.ownerChain() : [],
+          browser = opts.browser || activeMorphs.find(ea => ea.isBrowser);
 
       if (browser && browser.isBrowser) {
         if (browser.state.associatedSearchPanel)
           return browser.state.associatedSearchPanel.getWindow().activate();
       } else browser = null;
 
-      var systemInterface = opts.systemInterface || (browser && browser.systemInterface),
-          searcher = CodeSearcher.inWindow({
-            title: "code search", extent: pt(800, 500),
-            targetBrowser: browser,
-            input: opts.input,
-            systemInterface
-          }).activate();
+      let { CodeSearcher } = await System.import("lively.morphic/ide/code-search.js"),
+          { localInterface } = await System.import("lively-system-interface");
+
+      let systemInterface = opts.systemInterface || (browser && browser.systemInterface);
+      if (!systemInterface) {
+        let ed = activeMorphs.find(ea =>
+          ea.isText && ea.editorPlugin && ea.editorPlugin.isJSEditorPlugin);
+        if (ed) systemInterface = ed.editorPlugin.systemInterface()
+        else systemInterface = localInterface;
+      }
+
+      let searcher = CodeSearcher.inWindow({
+        title: "code search", extent: pt(800, 500),
+        targetBrowser: browser,
+        input: opts.input,
+        systemInterface
+      }).activate();
+
       if (browser) browser.state.associatedSearchPanel = searcher;
       return searcher;
     }
