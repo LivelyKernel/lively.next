@@ -372,6 +372,7 @@ class DOMTextMeasure {
       // if (!this.debug) 
         for (let i = 0; i < lineNodes.length; i++)
           textNode.removeChild(lineNodes[i]);
+
       return results;
     }, rendertTextLayerFn, styleOpts, styleKey);
   }
@@ -410,6 +411,7 @@ class DOMTextMeasure {
         clipNode.style.position = "absolute";
         if (clipMode) clipNode.style.overflow = clipMode
         if (width) clipNode.style.width = width + "px";
+        clipNode.id = styleKey;
         clipNode.appendChild(textNode);
         root.appendChild(clipNode);
       } else {
