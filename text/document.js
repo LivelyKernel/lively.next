@@ -1374,6 +1374,9 @@ export default class Document {
   }
 
   textAndAttributesInRange({start, end}) {
+    start = maxPosition(start, {column: 0, row: 0});
+    end = minPosition(end, this.endPosition);
+
     let line = this.getLine(start.row),
         firstLine = line;
 
