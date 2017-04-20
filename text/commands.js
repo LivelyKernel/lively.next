@@ -969,27 +969,40 @@ var commands = [
   },
 
   {
-    name: "increase font size",
+    name: "change font",
     scrollCursorIntoView: false,
-    exec: function(morph) { morph.keepPosAtSameScrollOffsetWhile(() => morph.fontSize++); return true; }
-  },
+    exec: async function(morph) {
 
-  {
-    name: "decrease font size",
-    scrollCursorIntoView: false,
-    exec: function(morph) { morph.keepPosAtSameScrollOffsetWhile(() => morph.fontSize--); return true; }
-  },
+      let fontNames = [
+            "serif",
+            "sans-serif",
+            "monospace"
+          ],
+          lsKey = "lively.morpic/text-change-font-additional-fonts",
+          additional = localStorage[lasKey]
+      if (additional) {
+        additional = JSON.parse(additional);
+        fontNames.push(...additional);
+      }
+      if (!fontNames.map(ea => ea.toLowerCase()).includes(morph.fontFamily.toLowerCase())) {
+        fontNames.push(morph.fontFamily);
+        additional = [...(additional || []), morph.fontFamily];
+        localStorage[lsKey] = JSON.stringify(additional)
+      }
 
-  {
-    name: "increase font size",
-    scrollCursorIntoView: false,
-    exec: function(morph) { morph.keepPosAtSameScrollOffsetWhile(() => morph.fontSize++); return true; }
-  },
 
-  {
-    name: "decrease font size",
-    scrollCursorIntoView: false,
-    exec: function(morph) { morph.keepPosAtSameScrollOffsetWhile(() => morph.fontSize--); return true; }
+      let {selections: [choice]} = await $world.editListPrompt("choose font", fontNames, {
+        requester: morph,
+        preselect: fontNames.indexOf(morph.fontFamily),
+        historyId: "lively.morpic/text-change-font-hist",
+      });
+
+      if (choice) {
+        morph.fontFamily = choice;
+      }
+
+      return true;
+    }
   },
 
   {
