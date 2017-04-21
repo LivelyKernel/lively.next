@@ -110,6 +110,11 @@ export class Event {
     return this.state.clickedOnPosition;
   }
 
+  get pressure() {
+    if (!this.domEvt) return 0.5;
+    return this.domEvt.pressure;
+  }
+
   positionIn(aMorph) {
     // returns the event position localized to aMorph
     return aMorph.localize(this.position);
