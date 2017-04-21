@@ -242,6 +242,8 @@ export default class EventDispatcher {
 
     this.keyInputHelper = new TextInput(this).install(rootNode);
 
+    rootNode.setAttribute("touch-action", "none");  // handle touch ourselves
+
     return this;
   }
 
