@@ -1134,43 +1134,26 @@ class CopyHaloItem extends HaloItem {
 
     try {
       for (let m of morphsToCopy) {
-        try {
-          let snap = await createMorphSnapshot(m, {addPreview: false, testLoad: true});
-          snap.copyMeta = {offset: m.worldPoint(pt(0,0)).subPt(origin)};
-          snapshots.push(snap)
-          html += m.renderPreview();
-        } catch (err) {
-          evt.world.setStatusMessage(`Could not copy ${m}`, Color.yellow);
-        }
+        let snap = await createMorphSnapshot(m, {addPreview: false, testLoad: true});
+        snap.copyMeta = {offset: m.worldPoint(pt(0,0)).subPt(origin)};
+        snapshots.push(snap)
+        html += m.renderPreview();
       }
 
       html += "</body></html>"
 
-      let data = JSON.stringify(snapshots),
-          success = false;;
+      let data = JSON.stringify(snapshots);
 
-      try {
-        await evt.dispatcher.doCopyWithMimeTypes([
-          {type: 'text/html', data: html},
-          {type: 'application/morphic', data}
-        ]);
-        success = true;;
-      } catch(err) {}
+      await evt.dispatcher.doCopyWithMimeTypes([
+        {type: 'text/html', data: html},
+        {type: 'application/morphic', data}
+      ]);
 
-      if (!success) {
-        try {
-          await evt.dispatcher.doCopy("[serialized-lively-object]"+data);
-          success = true;
-        } catch(err) {}
-      }
-
-      evt.world.setStatusMessage(
-        success ? `Copied morphs to clipboard`: `Could not add data to clipboard`,
-        success ? Color.green : Color.yellow);
     } catch (e) { world.logError(e); return; }
 
     world.addMorph(halo);
     halo.refocus(morphsToCopy);
+    halo.setStatusMessage("copied");
   }
 }
 

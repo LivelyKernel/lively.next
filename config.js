@@ -129,7 +129,7 @@ var config = {
       {keys: {mac: 'Meta-P', win: 'Ctrl-P'}, command: "printit"},
       {keys: {mac: 'Meta-I', win: 'Ctrl-I'}, command: "print inspectit"},
       {keys: {mac: 'Meta-Shift-I', win: 'Ctrl-Shift-I'}, command: "inspectit"},
-      {keys: 'Alt-Shift-U', command: "undefine variable"},
+      {keys: {mac: 'Meta-Shift-U', win: 'Ctrl-Shift-U'}, command: "undefine variable"},
 
       {keys: 'Backspace',                           command: "delete backwards"},
       {keys: {win: 'Delete', mac: 'Delete|Ctrl-D'}, command: "delete"},
@@ -219,7 +219,6 @@ var config = {
       {keys: {mac: 'Meta-Shift-L L T'}, command: "toggle line wrapping"},
       {keys: {win: 'Ctrl-=', mac: 'Meta-='}, command: "increase font size"},
       {keys: {win: 'Ctrl--', mac: 'Meta--'}, command: "decrease font size"},
-      {keys: {win: "Ctrl-Shift-U", mac: "Meta-Shift-U"}, command: "reset text style in selected range"},
 
       {keys: "Esc|Ctrl-G", command: "cancel input"},
 

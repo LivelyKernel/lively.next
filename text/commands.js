@@ -1284,9 +1284,6 @@ commands.push(...navCommands);
 import { commands as codeCommands } from "./generic-code-commands.js";
 commands.push(...codeCommands);
 
-import { commands as richTextCommands } from "./rich-text-commands.js";
-commands.push(...richTextCommands);
-
 export default commands;
 
 // lively.modules.module("lively.morphic/text/morph.js").reload({reloadDeps: false, resetEnv: false});
