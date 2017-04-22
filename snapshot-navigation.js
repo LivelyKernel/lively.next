@@ -150,6 +150,38 @@ export function lookupPath(snapshot, fromId, path) {
   return current;
 }
 
+export function modifyProperty(snapshot, objId, pathToProperty, modifyFn) {
+  // lookup the object with identifier `objId` and modify it's property specified
+  // by pathToProperty via modifyFn(obj, key, val);
+  // Example:
+  // let snap = {obj: {props: {a: {value: 23},b: {value: [123]}}}};
+  // modifyProperty(snap, "obj", "a", (_, _2, val) => val+1)
+  // snap.obj.props.a.value => 24
+  // modifyProperty(snap, "obj", "b.0", (_, _2, val) => val+1)
+  // snap.obj.props.b.value => [124]
+
+  pathToProperty = pathToProperty.replace(/^\./, "");
+  pathToProperty = pathToProperty.replace(/\[([^\]])+\]/g, ".$1")
+
+  var parts = Path(pathToProperty).parts(),
+      obj = snapshot[objId],
+      key = parts.shift();
+
+  if (!obj.props || !obj.props[key])
+    throw new Error(`Property ${key} not found for ref ${JSON.stringify(obj)}`);
+
+  var {value} = obj.props[key] || {};
+  if (!value)
+    throw new Error(`Property ${key} has no value`);
+
+  if (parts.length) {
+    let innerValue = Path(parts).get(value);
+    Path(parts).set(value, modifyFn(obj, key, innerValue))
+  } else {
+    obj.props[key].value = modifyFn(obj, key, value);
+  }
+}
+
 export function removeUnreachableObjects(rootIds, snapshot) {
   let idsToRemove = arr.withoutAll(Object.keys(snapshot), rootIds),
       refGraph = referenceGraph(snapshot);

@@ -1,7 +1,12 @@
 import { fun, obj, arr, num, string, graph, Path } from "lively.lang";
 
 import { ObjectPool } from "lively.serializer2";
-import { lookupPath, removeUnreachableObjects, referenceGraph, findPathFromToId } from "./snapshot-navigation.js";
+import {
+  lookupPath, modifyProperty,
+  removeUnreachableObjects,
+  referenceGraph,
+  findPathFromToId
+} from "./snapshot-navigation.js";
 import ClassHelper from "./class-helper.js";
 import { HTMLMorph, inspect } from "lively.morphic";
 
@@ -230,8 +235,50 @@ export class SnapshotInspector {
     return lookupPath(s, fromId, path);
   }
 
+  idsReferencingId(id) {
+    return graph.invert(this.referenceGraph())[id];
+  }
+
+  modifyProperty(objId, pathToProperty, modifyFn) {
+    // modifyFn: function(obj, key, val)
+    let {snapshot} = this;
+    if (snapshot.snapshot) snapshot = snapshot.snapshot;
+    return modifyProperty(snapshot, objId, pathToProperty, modifyFn);
+  }
+
+  replaceReferencesTo(id, replaceFn) {
+    let refs = graph.invert(this.referenceGraph())[id];
+    for (let refId of refs) {
+      let localPath = this.findPathFromToId(refId, id);
+      this.modifyProperty(refId, localPath, replaceFn);
+    }
+  }
+
+  removeUnreachableObjects(rootId) {
+    let {snapshot} = this;
+    if (!rootId) rootId = this.snapshot.id;
+    if (!rootId) throw new Error(`Cannot find root id`);
+    if (snapshot.snapshot) snapshot = snapshot.snapshot;
+    return removeUnreachableObjects([rootId], snapshot);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
+
+  reportAboutObject(id, invertedRefs) {
+    invertedRefs = invertedRefs || graph.invert(this.referenceGraph());
+    let refs = (invertedRefs[id] || []).map(refId =>
+      `${refId}${this.findPathFromToId(refId, id)}`);
+    return `${id}\n`
+           + ` is a ${this.explainId(id)} object\n`
+           + ` path from root: ${this.findPathFromToId(this.snapshot.id, id)}\n`
+           + ` referenced by:\n${string.indent(refs.join("\n"), "  ", 2)}\n`;
+  }
+
+  reportAboutObjects(ids) {
+    let invertedRefs = graph.invert(this.referenceGraph());
+    return ids.map(id => this.reportAboutObject(id)).join("\n")
+  }
+
   openSummary() {
     return $world.execCommand("open text window",
       {content: this.toString(), title: "serialization debug", fontFamily: "monospace"});
