@@ -4820,6 +4820,17 @@ function toRadians(n) {
   return n / 180 * Math.PI;
 }
 
+function backoff(attempt) /*ms*/{
+  var base = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 5;
+  var cap = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 30000;
+
+  // exponential backoff function
+  // https://www.awsarchitectureblog.com/2015/03/backoff.html
+  var temp = Math.min(cap, base * 2 ** attempt),
+      sleep = temp / 2 + Math.round(Math.random() * (temp / 2));
+  return Math.min(cap, base + Math.random() * (sleep * 3 - base));
+}
+
 
 
 var num = Object.freeze({
@@ -4836,7 +4847,8 @@ var num = Object.freeze({
 	roundTo: roundTo,
 	detent: detent,
 	toDegrees: toDegrees,
-	toRadians: toRadians
+	toRadians: toRadians,
+	backoff: backoff
 });
 
 function all$2(object, predicate) {

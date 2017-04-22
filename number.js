@@ -158,6 +158,14 @@ function toRadians(n) {
   return n / 180 * Math.PI;
 }
 
+function backoff(attempt, base = 5/*ms*/, cap = 30000/*ms*/) {
+  // exponential backoff function
+  // https://www.awsarchitectureblog.com/2015/03/backoff.html
+  let temp = Math.min(cap, base * 2 ** attempt),
+      sleep = temp / 2 + Math.round(Math.random() * (temp / 2));
+  return Math.min(cap, base + (Math.random() * (sleep*3-base)));
+}
+
 export {
   random,
   normalRandom,
@@ -173,4 +181,5 @@ export {
   detent,
   toDegrees,
   toRadians,
+  backoff
 }
