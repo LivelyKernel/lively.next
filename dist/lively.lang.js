@@ -1810,6 +1810,8 @@ function uniq(array, sorted) {
   // if sorted == true then assume array is sorted which allows uniq to be more
   // efficient
   // uniq([3,5,6,2,3,4,2,6,4])
+  if (!array.length) return array;
+
   var result = [array[0]];
   if (sorted) {
     for (var i = 1; i < array.length; i++) {

@@ -20,6 +20,7 @@ import {
   pluck,
   zip,
   withN,
+  uniq,
   uniqBy,
   without,
   batchify,
@@ -150,6 +151,11 @@ describe('arr', function() {
 
     var mapGroupResult = group.map(function(groupName, groupEl) { return groupEl.b; });
     expect(mapGroupResult).to.containSubset({foo: [1,3,5], bar: [2,6], baz: [4]}, 'mapGroupResult');
+  });
+
+  it('uniq', function() {
+    expect(uniq([6,3,2,6,4,2])).equals([6,3,2,4]);
+    expect(uniq([])).equals([]);
   });
 
   it('uniqBy', function() {
