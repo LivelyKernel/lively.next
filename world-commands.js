@@ -662,6 +662,15 @@ var commands = [
   },
 
   {
+    name: "open grep search",
+    progressIndicator: "opening code search...",
+    exec: async (world, opts) => {
+      let searcher = await loadObjectFromPartsbinFolder("grep search")
+      return searcher.openInWorldNearHand(world).activate();
+    }
+  },
+
+  {
     name: "open test runner",
     progressIndicator: "opening test runner...",
     exec: async world => {

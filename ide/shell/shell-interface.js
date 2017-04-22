@@ -4,6 +4,7 @@ import {
   env as _env,
   defaultDirectory as _defaultDirectory
 } from "lively.shell/client-command.js";
+import { string } from "lively.lang";
 
 
 // FIXME put this in either config or have it provided by server
@@ -65,33 +66,50 @@ export function parseCommand(cmd) {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    // 
-    // downloadFile: function(path, options, thenDo) {
-    //     this.commandLineServerURL
-    //         .withFilename("download-file")
-    //         .withQuery({path: path})
-    //         .asWebResource().beAsync()
-    //         .get().whenDone(function(_, status) {
-    //             thenDo && thenDo(status.isSuccess() ? null : status);
-    //         });
-    // },
-    // 
-    // diffIgnoringWhiteSpace: function(string1, string2, thenDo) {
-    //     return lively.ide.CommandLineInterface.runAll([
-    //         {command: 'mkdir -p diff-tmp/'},
-    //         {writeFile: 'diff-tmp/a', content: string1},
-    //         {writeFile: 'diff-tmp/b', content: string2},
-    //         {name: 'diff', command: 'git diff -w --no-index --histogram diff-tmp/a diff-tmp/b'},
-    //         {command: 'rm -rfd diff-tmp/'}
-    //     ], function(err, result) { thenDo(result.diff.resultString(true)); });
-    // },
-    // 
-    // diff: function(string1, string2, thenDo) {
-    //     return lively.ide.CommandLineInterface.runAll([
-    //         {command: 'mkdir -p diff-tmp/'},
-    //         {writeFile: 'diff-tmp/a', content: string1},
-    //         {writeFile: 'diff-tmp/b', content: string2},
-    //         {name: 'diff', command: 'git diff --no-index --histogram diff-tmp/a diff-tmp/b'},
-    //         {command: 'rm -rfd diff-tmp/'}
-    //     ], function(err, result) { thenDo(result.diff.resultString(true)); });
-    // },
+const defaultGrepExclusions = [
+  ".svn",
+  ".git",
+  "node_modules",
+  "dist",
+  ".module_cache"
+];
+
+export function doGrep(queryString, path, options = {}) {
+
+  let {
+    exclusions,
+    fileTypes = [], // allow all,
+    sizeLimit = "+1M",
+    charsBefore = 80,
+    charsAfter = 80,
+  } = options;
+
+  if (!exclusions) exclusions = defaultGrepExclusions;
+
+  var fullPath = path,
+      excludes = exclusions.length ? "-iname " + exclusions.map(JSON.stringify).join(' -o -iname ') : '',
+      sizeExclude = sizeLimit ? '-size ' + sizeLimit : '',
+      prune = [excludes, sizeExclude].filter(Boolean).join(" -o "),
+      prune = prune ? `\\( ${prune} \\) -prune -o` : "",
+      allowedFileNames = fileTypes.length ? "-iname " + fileTypes.map(JSON.stringify).join(' -o -iname ') : '',
+      allowedFileNames = allowedFileNames ? `-a \\( ${allowedFileNames} \\)` : "",
+      baseCmd = 'find %s %s -type f %s -a -print0 | xargs -0 grep -IinH -o ".\\{0,%s\\}%s.\\{0,%s\\}" ',
+      platform = "mac", // FIXME
+      baseCmd = platform !== 'win32' ? baseCmd.replace(/([\(\);])/g, '\\$1') : baseCmd,
+      cmdString = string.format(baseCmd, fullPath, prune, allowedFileNames, charsBefore, queryString, charsAfter),
+      cmd = runCommand(cmdString);
+
+  cmd.whenDone().then(({exitCode, stdout, stderr}) => {
+    if (exitCode && exitCode !== 1) return;
+    cmd.results = stdout.split('\n')
+      // .map((line) => line.replace(/\/\//g, '/'));
+      .map(line => {
+        let reMatch = line.match(/(.*):([0-9]+):(.*)/);
+        if (!reMatch) return null;
+        let [_, filename, lineno, match] = reMatch;
+        return {filename, lineno: Number(lineno), match};
+      }).filter(Boolean);
+  })
+
+  return cmd;
+}
