@@ -765,7 +765,8 @@ export default class Browser extends Window {
           doit: {code: `$world.execCommand("open file browser", {location: "${pack.url}"})`}
         },
         " ", null,
-        m.nameInPackage, {}
+        m.nameInPackage, {},
+        ` (${await system.moduleFormat(m.url)} format)`, {}
       ];
 
     } finally {
