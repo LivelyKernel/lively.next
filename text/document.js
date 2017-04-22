@@ -940,8 +940,9 @@ export class Line extends TreeNode {
   print(short = true, index = 0, depth = 0) {
     let indent = " ".repeat(depth),
         {width, height, stringSize, textAndAttributes} = this,
-        printed = `${indent}line ${index} (size: 1 width: ${Math.round(width)} height: ${Math.round(height)} text length: ${stringSize}`;
-    return printed + (short ? ")" : ` content: ${JSON.stringify(textAndAttributes)})`);
+        printed = `${indent}line ${index} (size: 1 width: ${Math.round(width)} height: ${Math.round(height)} text length: ${stringSize}`,
+        printedContent = arr.toTuples(textAndAttributes, 2).map(([content, attrs]) => String(content) + JSON.stringify(attrs)).join(",");
+    return printed + (short ? ")" : ` content: ${printedContent})`);
   }
 
   toString() {
