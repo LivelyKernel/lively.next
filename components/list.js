@@ -979,6 +979,8 @@ export class FilterableList extends Morph {
     list.selectedIndexes = newSelectedIndexes.length ? newSelectedIndexes : filteredItems.length ? [0] : [];
     this.relayout();
     this.scrollSelectionIntoView();
+
+    signal(this, "filterChanged", {parsedInput, items: list.items});
   }
 
   acceptInput() {
