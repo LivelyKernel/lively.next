@@ -1988,7 +1988,7 @@ export class Text extends Morph {
   debugHelper() {
     if (this._debugHelper) return this._debugHelper;
     return this._debugHelper = {
-      logged: [],
+      logged: [], groups: [],
       reset() {
         this.groups = [[]];
         this.logged = this.groups[0];
