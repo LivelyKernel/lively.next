@@ -5483,6 +5483,17 @@ function toRadians(n) {
   return n / 180 * Math.PI;
 }
 
+function backoff(attempt) /*ms*/{
+  var base = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 5;
+  var cap = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 30000;
+
+  // exponential backoff function
+  // https://www.awsarchitectureblog.com/2015/03/backoff.html
+  var temp = Math.min(cap, base * 2 ** attempt),
+      sleep = temp / 2 + Math.round(Math.random() * (temp / 2));
+  return Math.min(cap, base + Math.random() * (sleep * 3 - base));
+}
+
 
 
 var num = Object.freeze({
@@ -5499,7 +5510,8 @@ var num = Object.freeze({
 	roundTo: roundTo,
 	detent: detent,
 	toDegrees: toDegrees,
-	toRadians: toRadians
+	toRadians: toRadians,
+	backoff: backoff
 });
 
 function all$2(object, predicate) {
@@ -63930,33 +63942,20 @@ var Database = function () {
       return get$$1;
     }()
   }, {
-    key: "docList",
+    key: "has",
     value: function () {
-      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
-        var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
-        var _ref7, rows, result, i, _rows$i, id, rev;
-
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(id) {
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
                 _context5.next = 2;
-                return this.pouchdb.allDocs(opts);
+                return this.get(id);
 
               case 2:
-                _ref7 = _context5.sent;
-                rows = _ref7.rows;
-                result = [];
+                return _context5.abrupt("return", !!_context5.sent);
 
-                for (i = 0; i < rows.length; i++) {
-                  _rows$i = rows[i], id = _rows$i.id, rev = _rows$i.value.rev;
-
-                  result.push({ id: id, rev: rev });
-                }
-                return _context5.abrupt("return", result);
-
-              case 7:
+              case 3:
               case "end":
                 return _context5.stop();
             }
@@ -63964,36 +63963,23 @@ var Database = function () {
         }, _callee5, this);
       }));
 
-      function docList() {
+      function has(_x14) {
         return _ref6.apply(this, arguments);
       }
 
-      return docList;
+      return has;
     }()
   }, {
-    key: "revList",
+    key: "add",
     value: function () {
-      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(id) {
-        var _ref9, _id, _ref9$_revisions, start, ids;
-
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(doc) {
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
               case 0:
-                _context6.next = 2;
-                return this.pouchdb.get(id, { revs: true });
+                return _context6.abrupt("return", this.pouchdb.post(doc));
 
-              case 2:
-                _ref9 = _context6.sent;
-                _id = _ref9._id;
-                _ref9$_revisions = _ref9._revisions;
-                start = _ref9$_revisions.start;
-                ids = _ref9$_revisions.ids;
-                return _context6.abrupt("return", ids.map(function (ea) {
-                  return start-- + "-" + ea;
-                }));
-
-              case 8:
+              case 1:
               case "end":
                 return _context6.stop();
             }
@@ -64001,46 +63987,40 @@ var Database = function () {
         }, _callee6, this);
       }));
 
-      function revList(_x15) {
-        return _ref8.apply(this, arguments);
+      function add(_x15) {
+        return _ref7.apply(this, arguments);
       }
 
-      return revList;
+      return add;
     }()
   }, {
-    key: "getAllRevisions",
+    key: "docList",
     value: function () {
-      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(id) {
-        var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
+        var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
-        var _options$skip, skip, _options$limit, limit, revs, query;
+        var _ref9, rows, result, i, _rows$i, id, rev;
 
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
               case 0:
-                _options$skip = options.skip;
-                skip = _options$skip === undefined ? 0 : _options$skip;
-                _options$limit = options.limit;
-                limit = _options$limit === undefined ? 0 : _options$limit;
-                _context7.next = 6;
-                return this.revList(id);
+                _context7.next = 2;
+                return this.pouchdb.allDocs(opts);
 
-              case 6:
-                revs = _context7.sent;
+              case 2:
+                _ref9 = _context7.sent;
+                rows = _ref9.rows;
+                result = [];
 
-                if (skip > 0) revs = revs.slice(skip);
-                if (limit > 0) revs = revs.slice(0, limit);
-                query = revs.map(function (rev) {
-                  return { rev: rev, id: id };
-                });
-                _context7.next = 12;
-                return this.getDocuments(query);
+                for (i = 0; i < rows.length; i++) {
+                  _rows$i = rows[i], id = _rows$i.id, rev = _rows$i.value.rev;
 
-              case 12:
-                return _context7.abrupt("return", _context7.sent);
+                  result.push({ id: id, rev: rev });
+                }
+                return _context7.abrupt("return", result);
 
-              case 13:
+              case 7:
               case "end":
                 return _context7.stop();
             }
@@ -64048,35 +64028,36 @@ var Database = function () {
         }, _callee7, this);
       }));
 
-      function getAllRevisions(_x16) {
-        return _ref10.apply(this, arguments);
+      function docList() {
+        return _ref8.apply(this, arguments);
       }
 
-      return getAllRevisions;
+      return docList;
     }()
   }, {
-    key: "getAll",
+    key: "revList",
     value: function () {
-      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
-        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
-        var _ref12, rows;
+      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(id) {
+        var _ref11, _id, _ref11$_revisions, start, ids;
 
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
             switch (_context8.prev = _context8.next) {
               case 0:
                 _context8.next = 2;
-                return this.pouchdb.allDocs(_extends({}, options, { include_docs: true }));
+                return this.pouchdb.get(id, { revs: true });
 
               case 2:
-                _ref12 = _context8.sent;
-                rows = _ref12.rows;
-                return _context8.abrupt("return", rows.map(function (ea) {
-                  return ea.doc;
+                _ref11 = _context8.sent;
+                _id = _ref11._id;
+                _ref11$_revisions = _ref11._revisions;
+                start = _ref11$_revisions.start;
+                ids = _ref11$_revisions.ids;
+                return _context8.abrupt("return", ids.map(function (ea) {
+                  return start-- + "-" + ea;
                 }));
 
-              case 5:
+              case 8:
               case "end":
                 return _context8.stop();
             }
@@ -64084,8 +64065,91 @@ var Database = function () {
         }, _callee8, this);
       }));
 
+      function revList(_x17) {
+        return _ref10.apply(this, arguments);
+      }
+
+      return revList;
+    }()
+  }, {
+    key: "getAllRevisions",
+    value: function () {
+      var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(id) {
+        var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+        var _options$skip, skip, _options$limit, limit, revs, query;
+
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+          while (1) {
+            switch (_context9.prev = _context9.next) {
+              case 0:
+                _options$skip = options.skip;
+                skip = _options$skip === undefined ? 0 : _options$skip;
+                _options$limit = options.limit;
+                limit = _options$limit === undefined ? 0 : _options$limit;
+                _context9.next = 6;
+                return this.revList(id);
+
+              case 6:
+                revs = _context9.sent;
+
+                if (skip > 0) revs = revs.slice(skip);
+                if (limit > 0) revs = revs.slice(0, limit);
+                query = revs.map(function (rev) {
+                  return { rev: rev, id: id };
+                });
+                _context9.next = 12;
+                return this.getDocuments(query);
+
+              case 12:
+                return _context9.abrupt("return", _context9.sent);
+
+              case 13:
+              case "end":
+                return _context9.stop();
+            }
+          }
+        }, _callee9, this);
+      }));
+
+      function getAllRevisions(_x18) {
+        return _ref12.apply(this, arguments);
+      }
+
+      return getAllRevisions;
+    }()
+  }, {
+    key: "getAll",
+    value: function () {
+      var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee10() {
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+        var _ref14, rows;
+
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+          while (1) {
+            switch (_context10.prev = _context10.next) {
+              case 0:
+                _context10.next = 2;
+                return this.pouchdb.allDocs(_extends({}, options, { include_docs: true }));
+
+              case 2:
+                _ref14 = _context10.sent;
+                rows = _ref14.rows;
+                return _context10.abrupt("return", rows.map(function (ea) {
+                  return ea.doc;
+                }));
+
+              case 5:
+              case "end":
+                return _context10.stop();
+            }
+          }
+        }, _callee10, this);
+      }));
+
       function getAll() {
-        return _ref11.apply(this, arguments);
+        return _ref13.apply(this, arguments);
       }
 
       return getAll;
@@ -64093,23 +64157,23 @@ var Database = function () {
   }, {
     key: "setDocuments",
     value: function () {
-      var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(documents) {
-        var results, i, d, result, _ref14, id, rev;
+      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(documents, opts) {
+        var results, i, d, result, _ref16, id, rev;
 
-        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
-            switch (_context9.prev = _context9.next) {
+            switch (_context11.prev = _context11.next) {
               case 0:
-                _context9.next = 2;
-                return this.pouchdb.bulkDocs(documents);
+                _context11.next = 2;
+                return this.pouchdb.bulkDocs(documents, opts);
 
               case 2:
-                results = _context9.sent;
+                results = _context11.sent;
                 i = 0;
 
               case 4:
                 if (!(i < results.length)) {
-                  _context9.next = 16;
+                  _context11.next = 16;
                   break;
                 }
 
@@ -64118,38 +64182,38 @@ var Database = function () {
                 // then just overwrite old doc
 
                 if (!(!result.ok && result.name === "conflict" && !d._rev)) {
-                  _context9.next = 13;
+                  _context11.next = 13;
                   break;
                 }
 
-                _context9.next = 9;
+                _context11.next = 9;
                 return this.set(d._id, d);
 
               case 9:
-                _ref14 = _context9.sent;
-                id = _ref14._id;
-                rev = _ref14._rev;
+                _ref16 = _context11.sent;
+                id = _ref16._id;
+                rev = _ref16._rev;
 
                 results[i] = { ok: true, id: id, rev: rev };
 
               case 13:
                 i++;
-                _context9.next = 4;
+                _context11.next = 4;
                 break;
 
               case 16:
-                return _context9.abrupt("return", results);
+                return _context11.abrupt("return", results);
 
               case 17:
               case "end":
-                return _context9.stop();
+                return _context11.stop();
             }
           }
-        }, _callee9, this);
+        }, _callee11, this);
       }));
 
-      function setDocuments(_x19) {
-        return _ref13.apply(this, arguments);
+      function setDocuments(_x21, _x22) {
+        return _ref15.apply(this, arguments);
       }
 
       return setDocuments;
@@ -64157,29 +64221,29 @@ var Database = function () {
   }, {
     key: "getDocuments",
     value: function () {
-      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(idsAndRevs) {
+      var _ref17 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(idsAndRevs) {
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-        var _options$ignoreErrors, ignoreErrors, _ref16, results, result, i, _results$i, docs, id, j, d;
+        var _options$ignoreErrors, ignoreErrors, _ref18, results, result, i, _results$i, docs, id, j, d;
 
-        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+        return regeneratorRuntime.wrap(function _callee12$(_context12) {
           while (1) {
-            switch (_context10.prev = _context10.next) {
+            switch (_context12.prev = _context12.next) {
               case 0:
                 _options$ignoreErrors = options.ignoreErrors;
                 ignoreErrors = _options$ignoreErrors === undefined ? true : _options$ignoreErrors;
-                _context10.next = 4;
+                _context12.next = 4;
                 return this.pouchdb.bulkGet({ docs: idsAndRevs });
 
               case 4:
-                _ref16 = _context10.sent;
-                results = _ref16.results;
+                _ref18 = _context12.sent;
+                results = _ref18.results;
                 result = [];
                 i = 0;
 
               case 8:
                 if (!(i < results.length)) {
-                  _context10.next = 23;
+                  _context12.next = 23;
                   break;
                 }
 
@@ -64190,45 +64254,45 @@ var Database = function () {
 
               case 12:
                 if (!(j < docs.length)) {
-                  _context10.next = 20;
+                  _context12.next = 20;
                   break;
                 }
 
                 d = docs[j];
 
                 if (!(ignoreErrors && !d.ok)) {
-                  _context10.next = 16;
+                  _context12.next = 16;
                   break;
                 }
 
-                return _context10.abrupt("continue", 17);
+                return _context12.abrupt("continue", 17);
 
               case 16:
                 result.push(d.ok || d.error || d);
 
               case 17:
                 j++;
-                _context10.next = 12;
+                _context12.next = 12;
                 break;
 
               case 20:
                 i++;
-                _context10.next = 8;
+                _context12.next = 8;
                 break;
 
               case 23:
-                return _context10.abrupt("return", result);
+                return _context12.abrupt("return", result);
 
               case 24:
               case "end":
-                return _context10.stop();
+                return _context12.stop();
             }
           }
-        }, _callee10, this);
+        }, _callee12, this);
       }));
 
-      function getDocuments(_x20) {
-        return _ref15.apply(this, arguments);
+      function getDocuments(_x23) {
+        return _ref17.apply(this, arguments);
       }
 
       return getDocuments;
@@ -64241,42 +64305,42 @@ var Database = function () {
   }, {
     key: "remove",
     value: function () {
-      var _ref17 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(_id, _rev, options) {
+      var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(_id, _rev, options) {
         var arg;
-        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+        return regeneratorRuntime.wrap(function _callee13$(_context13) {
           while (1) {
-            switch (_context11.prev = _context11.next) {
+            switch (_context13.prev = _context13.next) {
               case 0:
                 if (!(typeof _rev !== "undefined")) {
-                  _context11.next = 4;
+                  _context13.next = 4;
                   break;
                 }
 
-                _context11.t0 = { _id: _id, _rev: _rev };
-                _context11.next = 7;
+                _context13.t0 = { _id: _id, _rev: _rev };
+                _context13.next = 7;
                 break;
 
               case 4:
-                _context11.next = 6;
+                _context13.next = 6;
                 return this.get(_id);
 
               case 6:
-                _context11.t0 = _context11.sent;
+                _context13.t0 = _context13.sent;
 
               case 7:
-                arg = _context11.t0;
-                return _context11.abrupt("return", arg ? this.pouchdb.remove(arg) : undefined);
+                arg = _context13.t0;
+                return _context13.abrupt("return", arg ? this.pouchdb.remove(arg) : undefined);
 
               case 9:
               case "end":
-                return _context11.stop();
+                return _context13.stop();
             }
           }
-        }, _callee11, this);
+        }, _callee13, this);
       }));
 
-      function remove(_x22, _x23, _x24) {
-        return _ref17.apply(this, arguments);
+      function remove(_x25, _x26, _x27) {
+        return _ref19.apply(this, arguments);
       }
 
       return remove;
@@ -64284,36 +64348,36 @@ var Database = function () {
   }, {
     key: "removeAll",
     value: function () {
-      var _ref18 = asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
+      var _ref20 = asyncToGenerator(regeneratorRuntime.mark(function _callee14() {
         var db, docs;
-        return regeneratorRuntime.wrap(function _callee12$(_context12) {
+        return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
-            switch (_context12.prev = _context12.next) {
+            switch (_context14.prev = _context14.next) {
               case 0:
                 db = this.pouchdb;
-                _context12.next = 3;
+                _context14.next = 3;
                 return db.allDocs();
 
               case 3:
-                docs = _context12.sent;
-                _context12.next = 6;
+                docs = _context14.sent;
+                _context14.next = 6;
                 return Promise.all(docs.rows.map(function (row) {
                   return db.remove(row.id, row.value.rev);
                 }));
 
               case 6:
-                return _context12.abrupt("return", _context12.sent);
+                return _context14.abrupt("return", _context14.sent);
 
               case 7:
               case "end":
-                return _context12.stop();
+                return _context14.stop();
             }
           }
-        }, _callee12, this);
+        }, _callee14, this);
       }));
 
       function removeAll() {
-        return _ref18.apply(this, arguments);
+        return _ref20.apply(this, arguments);
       }
 
       return removeAll;
@@ -64347,33 +64411,33 @@ var Database = function () {
   }, {
     key: "getConflicts",
     value: function () {
-      var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee13() {
-        var _ref20, rows;
+      var _ref21 = asyncToGenerator(regeneratorRuntime.mark(function _callee15() {
+        var _ref22, rows;
 
-        return regeneratorRuntime.wrap(function _callee13$(_context13) {
+        return regeneratorRuntime.wrap(function _callee15$(_context15) {
           while (1) {
-            switch (_context13.prev = _context13.next) {
+            switch (_context15.prev = _context15.next) {
               case 0:
-                _context13.next = 2;
+                _context15.next = 2;
                 return this.pouchdb.query({ map: "function(doc) { if (doc._conflicts) emit(doc._id); }" }, { reduce: false, include_docs: true, conflicts: true });
 
               case 2:
-                _ref20 = _context13.sent;
-                rows = _ref20.rows;
-                return _context13.abrupt("return", rows.map(function (ea) {
+                _ref22 = _context15.sent;
+                rows = _ref22.rows;
+                return _context15.abrupt("return", rows.map(function (ea) {
                   return ea.doc;
                 }));
 
               case 5:
               case "end":
-                return _context13.stop();
+                return _context15.stop();
             }
           }
-        }, _callee13, this);
+        }, _callee15, this);
       }));
 
       function getConflicts() {
-        return _ref19.apply(this, arguments);
+        return _ref21.apply(this, arguments);
       }
 
       return getConflicts;
@@ -64381,117 +64445,269 @@ var Database = function () {
   }, {
     key: "resolveConflicts",
     value: function () {
-      var _ref21 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(id, resolveFn) {
+      var _ref23 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(id, resolveFn) {
         var doc, query, conflicted, resolved, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, conflictedDoc;
 
-        return regeneratorRuntime.wrap(function _callee14$(_context14) {
+        return regeneratorRuntime.wrap(function _callee16$(_context16) {
           while (1) {
-            switch (_context14.prev = _context14.next) {
+            switch (_context16.prev = _context16.next) {
               case 0:
-                _context14.next = 2;
+                _context16.next = 2;
                 return this.pouchdb.get("doc", { conflicts: true });
 
               case 2:
-                doc = _context14.sent;
+                doc = _context16.sent;
                 query = doc._conflicts.map(function (rev) {
                   return { id: id, rev: rev };
                 });
-                _context14.next = 6;
+                _context16.next = 6;
                 return this.getDocuments(query);
 
               case 6:
-                conflicted = _context14.sent;
+                conflicted = _context16.sent;
                 resolved = doc;
                 _iteratorNormalCompletion = true;
                 _didIteratorError = false;
                 _iteratorError = undefined;
-                _context14.prev = 11;
+                _context16.prev = 11;
                 _iterator = conflicted[Symbol.iterator]();
 
               case 13:
                 if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-                  _context14.next = 28;
+                  _context16.next = 28;
                   break;
                 }
 
                 conflictedDoc = _step.value;
-                _context14.next = 17;
+                _context16.next = 17;
                 return resolveFn(resolved, conflictedDoc);
 
               case 17:
-                resolved = _context14.sent;
+                resolved = _context16.sent;
 
                 if (resolved) {
-                  _context14.next = 20;
+                  _context16.next = 20;
                   break;
                 }
 
-                return _context14.abrupt("return", null);
+                return _context16.abrupt("return", null);
 
               case 20:
-                _context14.next = 22;
+                _context16.next = 22;
                 return this.set(id, resolved);
 
               case 22:
-                resolved = _context14.sent;
-                _context14.next = 25;
+                resolved = _context16.sent;
+                _context16.next = 25;
                 return this.pouchdb.remove(conflictedDoc);
 
               case 25:
                 _iteratorNormalCompletion = true;
-                _context14.next = 13;
+                _context16.next = 13;
                 break;
 
               case 28:
-                _context14.next = 34;
+                _context16.next = 34;
                 break;
 
               case 30:
-                _context14.prev = 30;
-                _context14.t0 = _context14["catch"](11);
+                _context16.prev = 30;
+                _context16.t0 = _context16["catch"](11);
                 _didIteratorError = true;
-                _iteratorError = _context14.t0;
+                _iteratorError = _context16.t0;
 
               case 34:
-                _context14.prev = 34;
-                _context14.prev = 35;
+                _context16.prev = 34;
+                _context16.prev = 35;
 
                 if (!_iteratorNormalCompletion && _iterator.return) {
                   _iterator.return();
                 }
 
               case 37:
-                _context14.prev = 37;
+                _context16.prev = 37;
 
                 if (!_didIteratorError) {
-                  _context14.next = 40;
+                  _context16.next = 40;
                   break;
                 }
 
                 throw _iteratorError;
 
               case 40:
-                return _context14.finish(37);
+                return _context16.finish(37);
 
               case 41:
-                return _context14.finish(34);
+                return _context16.finish(34);
 
               case 42:
-                return _context14.abrupt("return", resolved);
+                return _context16.abrupt("return", resolved);
 
               case 43:
               case "end":
-                return _context14.stop();
+                return _context16.stop();
             }
           }
-        }, _callee14, this, [[11, 30, 34, 42], [35,, 37, 41]]);
+        }, _callee16, this, [[11, 30, 34, 42], [35,, 37, 41]]);
       }));
 
-      function resolveConflicts(_x25, _x26) {
-        return _ref21.apply(this, arguments);
+      function resolveConflicts(_x28, _x29) {
+        return _ref23.apply(this, arguments);
       }
 
       return resolveConflicts;
+    }()
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // backup
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  }, {
+    key: "dump",
+    value: function () {
+      var _ref24 = asyncToGenerator(regeneratorRuntime.mark(function _callee17() {
+        var name, pouchdb, header, docs;
+        return regeneratorRuntime.wrap(function _callee17$(_context17) {
+          while (1) {
+            switch (_context17.prev = _context17.next) {
+              case 0:
+                name = this.name;
+                pouchdb = this.pouchdb;
+                _context17.t0 = name;
+                _context17.t1 = pouchdb.type();
+                _context17.t2 = new Date().toJSON();
+                _context17.next = 7;
+                return pouchdb.info();
+
+              case 7:
+                _context17.t3 = _context17.sent;
+                header = {
+                  name: _context17.t0,
+                  db_type: _context17.t1,
+                  start_time: _context17.t2,
+                  db_info: _context17.t3
+                };
+                _context17.next = 11;
+                return this.getAll({ attachments: true });
+
+              case 11:
+                docs = _context17.sent;
+                return _context17.abrupt("return", { header: header, docs: docs });
+
+              case 13:
+              case "end":
+                return _context17.stop();
+            }
+          }
+        }, _callee17, this);
+      }));
+
+      function dump() {
+        return _ref24.apply(this, arguments);
+      }
+
+      return dump;
+    }()
+  }, {
+    key: "backup",
+    value: function () {
+      var _ref25 = asyncToGenerator(regeneratorRuntime.mark(function _callee18() {
+        var backupNo = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+        var name, backupDB;
+        return regeneratorRuntime.wrap(function _callee18$(_context18) {
+          while (1) {
+            switch (_context18.prev = _context18.next) {
+              case 0:
+                name = this.name + "_backup_" + backupNo, backupDB = this.constructor.ensureDB(name);
+                _context18.next = 3;
+                return this.replicateTo(backupDB);
+
+              case 3:
+                return _context18.abrupt("return", backupDB);
+
+              case 4:
+              case "end":
+                return _context18.stop();
+            }
+          }
+        }, _callee18, this);
+      }));
+
+      function backup() {
+        return _ref25.apply(this, arguments);
+      }
+
+      return backup;
+    }()
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // migration
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  }, {
+    key: "migrate",
+    value: function () {
+      var _ref26 = asyncToGenerator(regeneratorRuntime.mark(function _callee19(migrationFn) {
+        var docs, migrated, unchanged, i, doc, migratedDoc;
+        return regeneratorRuntime.wrap(function _callee19$(_context19) {
+          while (1) {
+            switch (_context19.prev = _context19.next) {
+              case 0:
+                _context19.next = 2;
+                return this.getAll();
+
+              case 2:
+                docs = _context19.sent;
+                migrated = [], unchanged = [];
+                i = 0;
+
+              case 5:
+                if (!(i < docs.length)) {
+                  _context19.next = 16;
+                  break;
+                }
+
+                doc = docs[i], migratedDoc = migrationFn(doc, i);
+
+                if (migratedDoc) {
+                  _context19.next = 10;
+                  break;
+                }
+
+                unchanged.push(doc);return _context19.abrupt("continue", 13);
+
+              case 10:
+
+                if (!migratedDoc.hasOwnProperty("_id")) migratedDoc._id = doc._id;
+                if (migratedDoc.hasOwnProperty("_rev")) delete migratedDoc._rev;
+
+                migrated.push(migratedDoc);
+
+              case 13:
+                i++;
+                _context19.next = 5;
+                break;
+
+              case 16:
+                _context19.next = 18;
+                return this.setDocuments(migrated);
+
+              case 18:
+                return _context19.abrupt("return", { migrated: migrated.length, unchanged: unchanged.length });
+
+              case 19:
+              case "end":
+                return _context19.stop();
+            }
+          }
+        }, _callee19, this);
+      }));
+
+      function migrate(_x31) {
+        return _ref26.apply(this, arguments);
+      }
+
+      return migrate;
     }()
   }, {
     key: "pouchdb",
@@ -64503,6 +64719,37 @@ var Database = function () {
 
       return this._pouchdb = createPouchDB(name, options);
     }
+  }], [{
+    key: "loadDump",
+    value: function () {
+      var _ref27 = asyncToGenerator(regeneratorRuntime.mark(function _callee20(dump) {
+        var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+        var header, docs, name, db;
+        return regeneratorRuntime.wrap(function _callee20$(_context20) {
+          while (1) {
+            switch (_context20.prev = _context20.next) {
+              case 0:
+                header = dump.header, docs = dump.docs, name = opts.name || header.name, db = this.ensureDB(name);
+                _context20.next = 3;
+                return db.setDocuments(docs, { new_edits: false });
+
+              case 3:
+                return _context20.abrupt("return", db);
+
+              case 4:
+              case "end":
+                return _context20.stop();
+            }
+          }
+        }, _callee20, this);
+      }));
+
+      function loadDump(_x32) {
+        return _ref27.apply(this, arguments);
+      }
+
+      return loadDump;
+    }()
   }]);
   return Database;
 }();
