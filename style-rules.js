@@ -1,4 +1,5 @@
 import { arr, obj } from "lively.lang";
+import { isFunction, isObject } from "lively.lang/object.js";
 
 /*
 
@@ -14,11 +15,55 @@ that morph.
 */
 
 
+export class StyleSheetRegistry {
+
+  static getStyleSheet(name) {
+    var ss;
+    $world.withAllSubmorphsDetect(m => {
+      ss = m.styleSheets && m.styleSheets.find(ss => ss.name == name);
+      return ss;
+    });
+    return ss;
+  }
+
+  static getStyledMorphsFor(name) {
+    return $world.withAllSubmorphsSelect(
+      m => m.styleSheets && m.styleSheets.find(ss => ss.name == name)
+    );
+  }
+  
+}
+
 export class StyleSheet {
 
-  constructor(rules, morph=null) {
-    this.rules = rules;
-    this.morph = morph;
+  /* If the style sheet is created with a name, 
+     the name will be used as an identifier to
+     track down all the instances that the
+     Style Sheet is being used in the system.
+     Updates to the style sheet will then
+     ensure that the rules are being updated
+     everywhere the style sheet with that name 
+     has been used */
+
+  constructor(name, rules) {
+    if (obj.isString(name)) this.name = name;
+    if (obj.isObject(name)) this.rules = name; 
+    // if rules are not propvided by the name is given, we will lookup the existing style
+    if (this.name && !rules) this.rules = StyleSheetRegistry.getStyleSheet(this.name).rules;
+    // if rules and name are given, we will ensure that these rules serve as the new 
+    // standard for all style sheets in the world name that way
+    if (rules && name) this.propagateRules(rules)
+  }
+
+  propagateRules(newRules) {
+    //  currently slow, since we refrain from using an index
+    this.rules = newRules;
+    this.name && $world.withAllSubmorphsDo(
+      m => {
+        let ss = m.styleSheets && m.styleSheets.find(ss => ss.name == this.name);
+        if (ss) ss.rules = newRules;
+      }
+    );
   }
 
   applyToAll(root, morph) {
@@ -27,27 +72,28 @@ export class StyleSheet {
       removedLayouts[m.id] = m.layout;
       m.layout = null;
     });
-    (morph || root).withAllSubmorphsDo(m => this.enforceRulesOn(m));
+    (morph || root).withAllSubmorphsDo(m => this.enforceRulesOn(m, root));
     root.withAllSubmorphsDo(m => {
       (m.layout = removedLayouts[m.id]) || this.applyLayout(m);
     });
   }
 
-  onMorphChange(morph, change) {
+  onMorphChange(morph, change, root) {
     const {selector, args, prop, prevValue, value} = change;
     if (selector == "addMorphAt") {
       this.applyToAll(morph, args[0]);
     } else if (prop == "name" || prop == "styleClasses") {
+      debugger;
       if (prevValue == value)
         return;
-      this.enforceRulesOn(morph);
+      this.enforceRulesOn(morph, root);
       this.applyLayout(morph);
     }
   }
 
-  getShadowedProps(morph) {
+  getShadowedProps(morph, root) {
     var props = {}, curr = morph;
-    while (curr && curr != this.morph) {
+    while (curr && curr != root) {
       if (curr.styleSheets)
         props = {...props, ...obj.merge(curr.styleSheets.map(r => r.getStyleProps(morph)))};
       curr = curr.owner;
@@ -56,17 +102,20 @@ export class StyleSheet {
   }
 
   getStyleProps(morph) {
-    if (this.rules[morph.name]) {
-      return this.rules[morph.name]; // name takes precedence over styleClasses
-    } else if (morph.styleClasses) {
-      return obj.merge(arr.compact(morph.styleClasses.map(c => this.rules[c])));
+    var props = {};
+    if (morph.styleClasses) {
+      props = obj.merge(arr.compact(morph.styleClasses.map(c => this.rules[c])));
     }
-    return {};
+
+    if (this.rules[morph.name]) {
+      props = {...props, ...this.rules[morph.name]};
+    }
+    return props;
   }
 
-  enforceRulesOn(morph) {
+  enforceRulesOn(morph, root) {
     var styleProps = this.getStyleProps(morph),
-      shadowedProps = this.getShadowedProps(morph);
+      shadowedProps = this.getShadowedProps(morph, root);
     styleProps &&
       this.applyToMorph(morph, obj.dissoc(styleProps, shadowedProps));
   }

@@ -380,7 +380,6 @@ export class Morph {
           this.setProperty(
             "styleSheets",
             arr.compact(rules).map(rule => {
-              rule.morph = this;
               rule.applyToAll(this);
               return rule;
             })
@@ -622,12 +621,12 @@ export class Morph {
       }
     }
     this.layout && this.layout.onChange(change);
-    this.styleSheets && this.styleSheets.forEach(r => r.onMorphChange(this, change));
+    this.styleSheets && this.styleSheets.forEach(r => r.onMorphChange(this, change, this));
   }
 
   onSubmorphChange(change, submorph) {
     this.layout && this.layout.onSubmorphChange(submorph, change);
-    this.styleSheets && this.styleSheets.forEach(r => r.onMorphChange(submorph, change));
+    this.styleSheets && this.styleSheets.forEach(r => r.onMorphChange(submorph, change, this));
   }
 
   get changes() { return this.env.changeManager.changesFor(this); }
@@ -736,7 +735,13 @@ export class Morph {
   }
 
   addStyleClass(className)  { this.styleClasses = arr.uniq(this.styleClasses.concat(className)) }
-  removeStyleClass(className)  { this.styleClasses = this.styleClasses.filter(ea => ea != className) }
+  removeStyleClass(className) {
+    this.styleClasses = this.styleClasses.filter(ea => ea != className);
+  }
+
+  applyStyleSheets() {
+    this.styleSheets && this.styleSheets.forEach(ss => ss.applyToAll(this));
+  }
 
   adjustOrigin(newOrigin) {
     var oldOrigin = this.origin,
