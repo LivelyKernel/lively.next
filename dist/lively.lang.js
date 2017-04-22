@@ -4826,7 +4826,7 @@ function backoff(attempt) /*ms*/{
 
   // exponential backoff function
   // https://www.awsarchitectureblog.com/2015/03/backoff.html
-  var temp = Math.min(cap, base * 2 ** attempt),
+  var temp = Math.min(cap, base * Math.pow(2, attempt)),
       sleep = temp / 2 + Math.round(Math.random() * (temp / 2));
   return Math.min(cap, base + Math.random() * (sleep * 3 - base));
 }
