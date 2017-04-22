@@ -941,8 +941,13 @@ export class Line extends TreeNode {
     let indent = " ".repeat(depth),
         {width, height, stringSize, textAndAttributes} = this,
         printed = `${indent}line ${index} (size: 1 width: ${Math.round(width)} height: ${Math.round(height)} text length: ${stringSize}`,
-        printedContent = arr.toTuples(textAndAttributes, 2).map(([content, attrs]) => String(content) + JSON.stringify(attrs)).join(",");
-    return printed + (short ? ")" : ` content: ${printedContent})`);
+        printedContent = arr.toTuples(textAndAttributes, 2).map(printTextAttrTuple).join(",");
+    return printed + (short ? ")" : ` content: [${printedContent}])`);
+    
+    function printTextAttrTuple([content, attrs]) {
+      return (typeof content === "string" ?
+        `"${content}"` : String(content)) + `,${JSON.stringify(attrs)}`;
+    }
   }
 
   toString() {
