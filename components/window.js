@@ -133,7 +133,9 @@ export default class Window extends Morph {
     var innerB = this.innerBounds(),
         title = this.titleLabel(),
         labelBounds = innerB.withHeight(25),
-        buttonOffset = this.get("button wrapper").bounds().right() + 3,
+        lastButtonOrWrapper = this.getSubmorphNamed("button wrapper")
+                           || arr.last(this.buttons()),
+        buttonOffset = lastButtonOrWrapper.bounds().right() + 3,
         minLabelBounds = labelBounds.withLeftCenter(pt(buttonOffset, labelBounds.height / 2));
 
     // resizer
