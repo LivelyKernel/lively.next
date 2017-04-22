@@ -1,60 +1,12 @@
 /* global Expo */
-import { arr, string } from "lively.lang";
-import { pt, Color, Rectangle } from "lively.graphics";
-import { Label, morph, Morph, ShadowObject } from "lively.morphic";
-import { connect, signal } from "lively.bindings";
-import {StyleSheet} from '../style-rules.js';
-import {HorizontalLayout} from '../layout.js';
-
-export const defaultWindowStyleSheet = () => {
-  let windowButtonSize = pt(13,13),
-      defaultLabelStyle = {
-         fill: Color.transparent, opacity: 0.5,
-         fontSize: 11,
-         center: windowButtonSize.scaleBy(.5)
-      };
-  return new StyleSheet({
-    buttonGroup: {
-      fill: Color.transparent,
-      position: pt(0, 0),
-      layout: new HorizontalLayout({autoResize: true, spacing: 6})
-    },
-    closeButton: {
-      borderRadius: 14,
-      extent: windowButtonSize,
-      borderColor: Color.darkRed,
-      fill: Color.rgb(255, 96, 82)
-    },
-    closeLabel: defaultLabelStyle,
-    minimizeButton: {
-      borderRadius: 14,
-      extent: windowButtonSize,
-      borderColor: Color.brown,
-      fill: Color.rgb(255, 190, 6)
-    },
-    minimizeLabel: defaultLabelStyle,
-    maximizeButton: {
-      borderRadius: 14,
-      extent: windowButtonSize,
-      borderColor: Color.darkGreen,
-      fill: Color.green
-    },
-    maximizeLabel: defaultLabelStyle,
-    windowTitleLabel: {
-      fill: Color.transparent,
-      fontColor: Color.darkGray
-    },
-    windowBody: {
-      fill: Color.lightGray,
-      borderRadius: 7,
-      borderColor: Color.gray,
-      borderWidth: 1
-    }
-  });
-}
+import {arr, string} from "lively.lang";
+import {pt, Color, Rectangle} from "lively.graphics";
+import {Label, morph, Morph, ShadowObject} from "lively.morphic";
+import {connect, signal} from "lively.bindings";
+import {StyleSheet} from "../style-rules.js";
+import {HorizontalLayout} from "../layout.js";
 
 export default class Window extends Morph {
-
   static get properties() {
     return {
       submorphs: {
@@ -70,7 +22,48 @@ export default class Window extends Morph {
       styleClasses: {defaultValue: ["windowBody"]},
       styleSheets: {
         initialize() {
-          this.styleSheets = defaultWindowStyleSheet();
+          let windowButtonSize = pt(13, 13);
+          this.styleSheets = new StyleSheet("Window Style", {
+            buttonGroup: {
+              fill: Color.transparent,
+              position: pt(0, 0),
+              layout: new HorizontalLayout({autoResize: true, spacing: 6})
+            },
+            closeButton: {
+              borderRadius: 14,
+              extent: windowButtonSize,
+              borderColor: Color.darkRed,
+              fill: Color.rgb(255, 96, 82)
+            },
+            defaultLabel: {
+              fill: Color.transparent,
+              opacity: 0.5,
+              fontSize: 11,
+              center: windowButtonSize.scaleBy(0.5)
+            },
+            minimizeButton: {
+              borderRadius: 14,
+              extent: windowButtonSize,
+              borderColor: Color.brown,
+              fill: Color.rgb(255, 190, 6)
+            },
+            maximizeButton: {
+              borderRadius: 14,
+              extent: windowButtonSize,
+              borderColor: Color.darkGreen,
+              fill: Color.green
+            },
+            windowTitleLabel: {
+              fill: Color.transparent,
+              fontColor: Color.darkGray
+            },
+            windowBody: {
+              fill: Color.lightGray,
+              borderRadius: 7,
+              borderColor: Color.gray,
+              borderWidth: 1
+            }
+          });
         }
       },
       clipMode: {defaultValue: "hidden"},
@@ -177,7 +170,7 @@ export default class Window extends Morph {
         tooltip: "close window",
         submorphs: [
           Label.icon("times", {
-            styleClasses: ["closeLabel"],
+            styleClasses: ["defaultLabel"],
             visible: false
           })
         ]
@@ -198,7 +191,7 @@ export default class Window extends Morph {
         tooltip: "collapse window",
         submorphs: [
           Label.icon("minus", {
-            styleClasses: ["minimizeLabel"],
+            styleClasses: ["defaultLabel"],
             visible: false
           })
         ]
@@ -220,7 +213,7 @@ export default class Window extends Morph {
           tooltip: "maximize window",
           submorphs: [
             Label.icon("plus", {
-              styleClasses: ["maximizeLabel"],
+              styleClasses: ["defaultLabel"],
               visible: false
             })
           ]
