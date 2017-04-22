@@ -9,7 +9,7 @@ export default class L2LConnection {
   constructor(ns) {
     this.id = string.newUUID();
     this.actions = {};
-    this.options = {ackTimeout: 500, debug: true};
+    this.options = {ackTimeout: 500, debug: false};
     this._incomingOrderNumberingBySenders = new Map();
     this._outgoingOrderNumberingByTargets = new Map();
     this._outOfOrderCacheBySenders = new Map();
@@ -62,6 +62,10 @@ export default class L2LConnection {
       roundtrip: t3-t
     }
   }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // sending stuff
+
   send(msg, ackFn) { nyi("send"); }
 
   async sendAndWait(msg) {
@@ -70,23 +74,21 @@ export default class L2LConnection {
     // really go wrong
     // FIXME: set timeoutMs to receiver timeout time!
 
-    var sendP = new Promise(resolve => this.send(msg, resolve));
-
-    var timeout = {},
+    var sendP = new Promise((resolve, reject) => this.send(msg, resolve)),
+        timeout = {},
         timeoutMs = this.options.ackTimeout + 400;
+
     if ("ackTimeout" in msg) {
       if (!msg.ackTimeout || msg.ackTimeout < 0) timeoutMs = null;
       else timeoutMs = msg.ackTimeout + 400;
     }
 
-    var answer = await (promise ?
-      Promise.race([promise.delay(timeoutMs, timeout), sendP]) : sendP);
+    var answer;
+    if (timeoutMs) answer = await Promise.race([promise.delay(timeoutMs, timeout), sendP]);
+    else answer = await sendP;
 
     if (answer === timeout)
-      throw new Error(`Timout sending ${msg.action}`);
-
-    var err = answer.error || (answer.data && answer.data.error);
-    if (err) throw new Error(err);
+      throw new Error(`Timeout sending ${msg.action}`);
 
     return answer;
   }

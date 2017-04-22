@@ -39,18 +39,18 @@ export var defaultActions = {
 
 export var defaultTrackerActions = {
 
-  async broadcast: (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) => {
-    socket.broadcast.to(roomName).emit(broadcastMessage)
-    if(ackFn && typeof ackFn === 'function'){ackFn({status: 'Message delivered to ' + roomName})}
+  async broadcast(tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) {
+    socket.broadcast.to(roomName).emit(broadcastMessage);
+    if (ackFn && typeof ackFn === 'function') ackFn({status: 'Message delivered to ' + roomName})
   },
 
-  async systemBroadcast: (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) => {
+  async systemBroadcast(tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) {
     let io = tracker.io;
     io.nsps["/" + tracker.namespace].to(roomName).emit(broadcastMessage)
     if(ackFn && typeof ackFn === 'function'){ackFn({status: 'System Broadcast Message delivered to ' + roomName})}
   },
 
-  async multiServerBroadcast: (tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket) =>{
+  async multiServerBroadcast(tracker, {sender, data: {broadcastMessage, roomName}}, ackFn, socket){
     let id = tracker.id,
         trackers = tracker.getTrackerList()
     trackers.forEach(function(tracker){
@@ -64,26 +64,26 @@ export var defaultTrackerActions = {
     })
   },
 
-  async getClients: (tracker, {trackerId},ackFn) => {
+  async getClients(tracker, {trackerId},ackFn) {
     tracker.removeDisconnectedClients();
     ackFn(Array.from(tracker.clients));
   },
 
-   async joinRoom: (tracker, {sender, data: {roomName}}, ackFn, socket) => {
+   async joinRoom(tracker, {sender, data: {roomName}}, ackFn, socket) {
       await socket.join(roomName)
       if(ackFn && typeof ackFn === 'function'){ackFn({status: 'Joined ' + roomName})}
       console.log(sender + ' joined room ' + roomName)
   },
-  async leaveRoom: (tracker, {sender, data: {roomName}}, ackFn, socket) => {
+  async leaveRoom(tracker, {sender, data: {roomName}}, ackFn, socket) {
       socket.leave(roomName)
       if(ackFn && typeof ackFn === 'function'){ackFn({status: 'Left ' + roomName})}
       console.log(sender + ' left room ' + roomName)
   },
-  async clientRoomList: (tracker, {}, ackFn, socket) => {
+  async clientRoomList(tracker, {}, ackFn, socket) {
    (ackFn && (typeof ackFn == 'function')) ? ackFn(socket.rooms) : console.log('Error: missing or invalid ack function')
 
   },
-  async listRoom: (tracker, {sender, data: {roomName}}, ackFn, socket) => {
+  async listRoom(tracker, {sender, data: {roomName}}, ackFn, socket) {
       var io = tracker.io
       var contents
       if (roomName){
@@ -106,7 +106,7 @@ export var defaultTrackerActions = {
 
 export var defaultClientActions = {
 
-  async "getServers": (ackFn) => {
+  async "getServers"(ackFn) {
     if (!(ackFn && typeof ackFn =='function')){
       console.log('Bad or Missing Ack Function')
     }
@@ -116,19 +116,19 @@ export var defaultClientActions = {
     typeof ackFn === "function" && ackFn(response);
   },
 
-  async "getRoomList": ({client,ackFn}) =>{
+  async "getRoomList"({client,ackFn}){
     var result = client._socketioClient.rooms
     ackFn(result)
   },
 
-  async "ask for": (tracker, {sender, data: {query}}, ackFn, socket) => {
+  async "ask for"(tracker, {sender, data: {query}}, ackFn, socket) {
     var promptMethod = query.match(/password|sudo/i) ? 'passwordPrompt' : 'prompt',
         answer = await $world[promptMethod](query);
     typeof ackFn === "function" && ackFn({answer});
     tracker.debug && console.log(`[${this}] message 'ask for' from ${sender}, query: ${query}`);
   },
 
-  async "open editor": (tracker, {sender, data: {args}}, ackFn, socket) => {
+  async "open editor"(tracker, {sender, data: {args}}, ackFn, socket) {
     if (!args.length) {
       ackFn({error: 'no file specified'});
       return;
@@ -138,7 +138,7 @@ export var defaultClientActions = {
     typeof ackFn === "function" && ackFn(status === "aborted" ? {error: String(status)} : {status})
   },
 
-  async "changeWorkingDirectory": (tracker, {sender, data: {args}}, ackFn, socket) => {
+  async "changeWorkingDirectory"(tracker, {sender, data: {args}}, ackFn, socket) {
     var [dir, commandMorphId] = args || [];
     var status = "OK";
 

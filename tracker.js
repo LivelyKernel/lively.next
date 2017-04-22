@@ -95,10 +95,6 @@ export default class L2LTracker extends L2LConnection {
 
     this._open = true;
     this.ioNamespace.on("connection", this._connectionHandler = this.onConnection.bind(this));
-    this.ioNamespace.on("connection",function joinRoom(socket){
-      socket.join('defaultRoom')
-      if(this.debug) console.log(`[${socket.id}] joined defaultRoom`)
-    }.bind(this))
     return Promise.resolve(this);
   }
 
@@ -136,8 +132,12 @@ export default class L2LTracker extends L2LConnection {
   onConnection(socket) {
     if (this.debug) console.log(`[${this}] got connection request ${socket.id}`);
 
+    socket.join('defaultRoom');
+    if (this.debug) console.log(`[${socket.id}] joined defaultRoom`);
+
     // FIXME, remove this
-    console.log(`[${this}] client connected ${socket.id} ${socket.request.headers["x-real-ip"] || socket.request.socket.remoteAddress}`);
+    let ip = socket.request.headers["x-real-ip"] || socket.request.socket.remoteAddress;
+    console.log(`[${this}] client connected ${socket.id} ${ip}`);
 
     socket.on("error", (err) => this.onError(err));
     socket.on("connect", () => this.onConnect(socket));
@@ -169,6 +169,8 @@ export default class L2LTracker extends L2LConnection {
   }
 
   receive(msg, socket, ackFn) {
+    // this.debug && console.log(`[${this}] received`, msg);
+
     // 1. is the message for the tracker itself?
     if (!msg.target || msg.target === this.id || msg.target === "tracker") {
       this.dispatchL2LMessageToSelf(msg, socket, ackFn);

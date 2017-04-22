@@ -1,11 +1,21 @@
-/*global Map*/
-import { promise, events } from "lively.lang";
+/*global Map,System*/
+import { promise, events, num } from "lively.lang";
 import { resource } from "lively.resources";
 import ioClient from "socket.io-client";
 import L2LConnection from "./interface.js";
 import { defaultActions, defaultClientActions } from "./default-actions.js";
-// import L2LTracker from "lively.2lively/tracker.js";
-// import LivelyServer from "lively.server";
+
+let isNode = System.get("@system-env").node;
+
+function determineLocation() {
+  if (typeof document !== "undefined" && document.location)
+    return document.location.origin;
+
+  if (isNode)
+    return System._nodeRequire("os").hostname();
+
+  return System.baseURL;
+}
 
 export default class L2LClient extends L2LConnection {
 
@@ -20,12 +30,17 @@ export default class L2LClient extends L2LConnection {
     return this._clients || (this._clients = new Map())
   }
 
-  static forLivelyInBrowser() {
+  static forLivelyInBrowser(info) {
     let def = this.default();
     if (def) return def;
+    
     return L2LClient.ensure({
       url: `${document.location.origin}/lively-socket.io`,
-      namespace: "l2l"
+      namespace: "l2l",
+      info: {
+        type: "lively.morphic browser",
+        ...info
+      }
     });
   }
 
@@ -35,11 +50,17 @@ export default class L2LClient extends L2LConnection {
     return L2LClient.clients.get(key);
   }
 
-  static ensure(options = {url: null, namespace: null}) {
+  static ensure(options = {}) {
     // url specifies hostname + port + io path
     // namespace is io namespace
 
-    let {url, namespace, autoOpen = true} = options;
+    let {
+      debug = false,
+      url = null,
+      namespace = null,
+      autoOpen = true,
+      info = {}
+    } = options;
 
     if (!url) throw new Error("L2LClient needs server url!")
 
@@ -50,29 +71,35 @@ export default class L2LClient extends L2LConnection {
         client = this.clients.get(key);
 
     if (!client) {
-      client = new this(origin, path, namespace || "");
-      if (autoOpen) { client.open(); client.register(); }
+      client = new this(origin, path, namespace || "", info);
+      if (autoOpen) { client.register(); }
       this.clients.set(key, client);
     }
 
     return client;
   }
 
-  constructor(origin, path, namespace) {
+  constructor(origin, path, namespace, info) {
     super();
     events.makeEmitter(this);
+    this.info = info;
     this.origin = origin;
     this.path = path;
     this.namespace = namespace.replace(/^\/?/, "/");
     this.trackerId = null;
     this._socketioClient = null;
+
     // not socket.io already does auto reconnect when network fails but if the
     // socket.io server disconnects a socket, it won't retry by itself. We want
-    // that behavior for l2l, howver
+    // that behavior for l2l, however
     this._reconnectState = {
+      closed: false,
       autoReconnect: true,
       isReconnecting: false,
-      isReconnectingViaSocketio: false
+      isReconnectingViaSocketio: false,
+      registerAttempt: 0,
+      registerProcess: null,
+      isOpening: false
     };
 
     Object.keys(defaultActions).forEach(name =>
@@ -95,50 +122,94 @@ export default class L2LClient extends L2LConnection {
   async open() {
     if (this.isOnline()) return this;
 
+    if (this._reconnectState.isOpening) return this;
+
     await this.close();
 
+    this._reconnectState.closed = false;
+
     var url = resource(this.origin).join(this.namespace).url,
-        // opts = {path: this.path, transports: ['websocket', 'polling']},
-        opts = {path: this.path, transports: ['polling'], upgrade: false},
+        opts = {path: this.path, transports: ['websocket', 'polling']},
         socket = this._socketioClient = ioClient(url, opts);
 
 
     if (this.debug) console.log(`[${this}] connecting`);
 
-    socket.on("error",            (err) =>    this.debug && console.log(`[${this}] errored: ${err}`))
-    socket.on("close",            (reason) => this.debug && console.log(`[${this}] closed: ${reason}`))
-    socket.on("reconnect_failed", () =>       this.debug && console.log(`[${this}] could not reconnect`))
-    socket.on("reconnect_error",  (err) =>    this.debug && console.log(`[${this}] reconnect error ${err}`))
+    socket.on("error",            (err) =>    {
+      this._reconnectState.isOpening = false;
+      this.debug && console.log(`[${this}] errored: ${err}`);
+    });
+    socket.on("close",            (reason) => this.debug && console.log(`[${this}] closed: ${reason}`));
+    socket.on("reconnect_failed", () =>       this.debug && console.log(`[${this}] could not reconnect`));
+    socket.on("reconnect_error",  (err) =>    this.debug && console.log(`[${this}] reconnect error ${err}`));
 
     socket.on("connect", () => {
       this.debug && console.log(`[${this}] connected`);
       this.emit("connected", this);
+      this._reconnectState.isOpening = false;
       this._reconnectState.isReconnecting = false;
       this._reconnectState.isReconnectingViaSocketio = false;
     })
 
     socket.on("disconnect", () => {
+      this._reconnectState.isOpening = false;
+
       this.debug && console.log(`[${this}] disconnected`)
       this.emit("disconnected", this);
 
-      if (!this.trackerId) return;
-      this.renameTarget(this.trackerId, "tracker");
-      this.trackerId = null;
-
-      if (this._reconnectState.autoReconnect) {
-        this._reconnectState.isReconnecting = true;
-        setTimeout(() => {
-          // if socket.io isn't auto reconnecting we are doing it manually
-          if (this._reconnectState.isReconnectingViaSocketio) return;
-          this.open(); this.register();
-        }, 500);
+      if (!this.trackerId) {
+        this.debug && console.log(`[${this}] disconnect: don't have a tracker id, won't try reconnect`);
+        this.trackerId = "tracker";
+        return;
       }
+
+      if (this.trackerId !== "tracker") {
+        // for maintaining seq nos.
+        this.renameTarget(this.trackerId, "tracker");
+        this.trackerId = null;
+      }
+
+      if (this._reconnectState.closed) {
+        this.debug && console.log(`[${this}] won't reconnect b/c client is marked as closed`);
+        return;
+      }
+
+      if (!this._reconnectState.autoReconnect) {
+        this.debug && console.log(`[${this}] won't reconnect b/c client has reconnection disabled`);
+        return;
+      }
+
+      this._reconnectState.isReconnecting = true;
+
+      setTimeout(() => {
+        // if socket.io isn't auto reconnecting we are doing it manually
+
+        if (this._reconnectState.closed) {
+          this.debug && console.log(`[${this}] won't reconnect b/c client is marked as closed 2`);
+          return;
+        }
+        if (this._reconnectState.isReconnectingViaSocketio) {
+          this.debug && console.log(`[${this}] won't reconnect again, client already reconnecting`);
+          return;
+        }
+        
+        this.debug && console.log(`[${this}] initiating reconnection to tracker`);
+        this.register();
+      }, 20);
+
     });
 
     socket.on("reconnecting", () => {
-      this.debug && console.log(`[${this}] reconnecting`)
-      this._reconnectState.isReconnecting = true;
-      this._reconnectState.isReconnectingViaSocketio = true;
+      this.debug && console.log(`[${this}] reconnecting`, this._reconnectState);
+      if (this._reconnectState.closed) {
+        this._reconnectState.isReconnecting = false;
+        this._reconnectState.isReconnectingViaSocketio = false;
+        socket.close();
+        this.close();
+      } else {
+        this._reconnectState.isReconnecting = true;
+        this._reconnectState.isReconnectingViaSocketio = true;
+      }
     });
 
     socket.on("reconnect", () => {
@@ -150,6 +221,8 @@ export default class L2LClient extends L2LConnection {
 
     this.installEventToMessageTranslator(socket);
 
+    this._reconnectState.isOpening = true;
+
     return new Promise((resolve, reject) => {
       socket.once("error", reject);
       socket.once("connect", resolve);
@@ -157,16 +230,46 @@ export default class L2LClient extends L2LConnection {
   }
 
   async close() {
-    if (this.isRegistered()) await this.unregister();
-    if (!this.isOnline() && !this.socket) return;
+    this._reconnectState.closed = true;
+
     var socket = this.socket;
     // this._socketioClient = null;
-    socket.close();
-    if (!socket.connected) return;
+
+    if (socket) {
+      socket.removeAllListeners("reconnect");
+      socket.removeAllListeners("reconnecting");
+      socket.removeAllListeners("disconnect");
+      socket.removeAllListeners("connect");
+      socket.removeAllListeners("reconnect_error");
+      socket.removeAllListeners("reconnect_failed");
+      socket.removeAllListeners("close");
+      socket.removeAllListeners("error");  
+      socket.close();
+    }
+
+    this.debug && console.log(`[${this}] closing...`)
+
+    if (this.isRegistered()) await this.unregister();
+    if (!this.isOnline() && !this.socket) {
+      if (this.debug) {
+        let reason = !this.isOnline() ? "not online" : "no socket";
+        this.debug && console.log(`[${this}] cannot close: ${reason}`);
+      }
+      return this;
+    }
+
+    if (socket && !socket.connected) {
+      this.debug && console.log(`[${this}] socket not connected, considering client closed`);
+      return this;
+    }
+
     return Promise.race([
       promise.delay(2000).then(() => socket.removeAllListeners("disconnect")),
       new Promise(resolve => socket.once("disconnect", resolve))
-    ]);
+    ]).then(() => {
+      this.debug && console.log(`[${this}] closed`);
+      return this;
+    });
   }
 
   remove() {
@@ -179,14 +282,29 @@ export default class L2LClient extends L2LConnection {
   async register() {
     if (this.isRegistered()) return;
 
+    if (this._reconnectState.closed) {
+      this.debug && console.log(`[${this}] not registering this b/c closed`)
+      this._reconnectState.registerAttempt = 0;
+      return;
+    }
+
+    if (this._reconnectState.registerProcess) {
+      this.debug && console.log(`[${this}] not registering this b/c register process exists`)
+      return;
+    }
+
     try {
+
+      if (!this.isOnline())
+        await this.open();
 
       this.debug && console.log(`[${this}] register`)
 
       var answer = await this.sendToAndWait("tracker", "register", {
         userName: "unknown",
-        type: "lively.morphic browser,",
-        location: String(document.location)
+        type: "l2l " + (isNode ? "node" : "browser"),
+        location: determineLocation(),
+        ...this.info
       });
 
       if (!answer.data) {
@@ -195,24 +313,26 @@ export default class L2LClient extends L2LConnection {
         throw err;
       }
 
-      var {data: {trackerId, messageNumber}} = answer;
-      this.trackerId = trackerId;
-      this._incomingOrderNumberingBySenders.set(trackerId, messageNumber || 0);
-      this.emit("registered", {trackerId, user: this.user});
-
-      // rk 2017-03-29: FIXME why do we need a second roundtrip????
-      this.debug && console.log(`[${this}] requesting user info`)
-      var response = await this.sendToAndWait(this.trackerId, 'userInfo', {});
-      if (!response.data) {
-        let err = new Error(`User answer is empty!`);
+      if (answer.data.isError) {
+        let err = new Error(answer.data.error);
         this.emit("error", err);
         throw err;
       }
 
-      this.user = response.data
+      this._reconnectState.registerAttempt = 0;
+      var {data: {trackerId, messageNumber}} = answer;
+      this.trackerId = trackerId;
+      this._incomingOrderNumberingBySenders.set(trackerId, messageNumber || 0);
+      this.emit("registered", {trackerId});
+
     } catch (e) {
-      this.unregister();
-      throw new Error(`Error in register request of ${this}: ${e}`);
+      console.error(`Error in register request of ${this}: ${e}`);
+      let attempt = this._reconnectState.registerAttempt++,
+          timeout = num.backoff(attempt, 4/*base*/, 5*60*1000/*max*/);
+      this._reconnectState.registerProcess = setTimeout(() => {
+        this._reconnectState.registerProcess = null;
+        this.register();
+      }, timeout);
     }
   }
 
@@ -243,21 +363,6 @@ export default class L2LClient extends L2LConnection {
         socket.emit(action, msg, ackFn) :
         socket.emit(action, msg);
     });
-  }
-
-  async authenticate(options){
-    var response = await this.sendToAndWait(this.trackerId,'authenticateUser',options)
-    if (!response.data)
-      throw new Error(`User answer is empty!`);
-    this.user = response.data
-  }
-
-  async validateToken(user){
-    //Shorthand method for temporarily authenticating user tokens
-    var response = await this.sendToAndWait(this.trackerId,'validate',user)
-    if (!response.data)
-      throw new Error(`Validation answer is empty!`);
-    return response
   }
 
   toString() {

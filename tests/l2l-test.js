@@ -17,7 +17,7 @@ import * as authserver from "lively.user/authserver.js"
 let hostname = "localhost",
     port = 9009,
     namespace = "l2l-test";
-  
+
 var testServer, tracker, client1, client2,
     io, url;
 
@@ -41,6 +41,8 @@ async function startTracker(server) {
 
 describe('l2l', function() {
 
+  this.timeout(5000);
+
   before(() => startServer().then(s => testServer = s));
 
   after(async () => {
@@ -52,9 +54,11 @@ describe('l2l', function() {
     tracker = await startTracker(testServer);
     client1 = await L2LClient.ensure({url, namespace});
     await client1.whenRegistered(300);
+    console.log("...START");
   });
 
   afterEach(async () => {
+    console.log("...STOP");
     client1 && await client1.remove();
     client2 && await client2.remove();
     tracker && await tracker.remove();
@@ -72,11 +76,14 @@ describe('l2l', function() {
       expect(tracker.id).equals(client1.trackerId);
 
       expect().assert(tracker.clients.has(client1.id), "client1 not in tracker clients");
-      expect(tracker.clients.get(client1.id)).deep.equals({socketId: client1.socketId});
+      expect(tracker.clients.get(client1.id)).containSubset({
+        socketId: client1.socketId,
+        registeredAt: {},
+        info: {type: "l2l node", userName: "unknown"}
+      });
     });
 
     it("client emits status events", async () => {
-
       let origin = `http://${hostname}:${port}`, path = io.path();
       client2 = new L2LClient(origin, path, namespace);
 
@@ -87,22 +94,25 @@ describe('l2l', function() {
       let connected = false;
       client2.once("connected", () => connected = true);
       client2.open();
-      await promise.waitFor(300, () => connected);
+      await promise.waitFor(1000, () => connected);
 
       let registered = false;
       client2.once("registered", () => registered = true);
       client2.register();
-      await promise.waitFor(300, () => registered);
 
+      await promise.waitFor(1000, () => registered);
+      
       let disconnected = false;
       client2.once("disconnected", () => disconnected = true);
+      
       testServer.close();
-      await promise.waitFor(300, () => disconnected);
+      await promise.waitFor(1000, () => disconnected);
 
       let connectedAgain = false;
       client2.once("connected", () => connectedAgain = true);
+      
       tracker = await startTracker(await startServer().then(s => testServer = s));
-      await promise.waitFor(1000, () => connectedAgain);
+      await promise.waitFor(4000, () => connectedAgain);
     });
 
     it("client unregisters", async () => {
@@ -165,6 +175,91 @@ describe('l2l', function() {
       ]);
       expect(answers.map(ea => ea.data)).deep.equals([1,2,3]);
     });
+
+  });
+
+
+  describe("client-to-client", () => {
+
+    beforeEach(async () => {
+      await testServer.whenStarted();
+      let origin = `http://${hostname}:${port}`, path = io.path();
+      client2 = new L2LClient(origin, path, namespace);
+      client2.open().then(() => client2.register());
+      await client2.whenRegistered();
+    });
+
+    it("sends message and gets answer back", async () => {
+      let client2Received = [];
+      client2.addService("test", (tracker, msg, ackFn, sender) => {
+        client2Received.push(msg); ackFn("got it"); });
+
+      let msg = {
+        action: "test", target: client2.id,
+        data: {payload: "for test"},
+        messageId: "test-message-1"
+      }, answer = await client1.sendAndWait(msg);
+
+      expect(client2Received).deep.equals([msg]);
+
+      expect(answer).containSubset({
+        action: "test-response", target: client1.id, data: "got it",
+        sender: client2.id, inResponseTo: "test-message-1"
+      });
+
+    });
+
+    it("sends message without answer", async () => {
+      var client2Received = [], ackFnSeen;
+      client2.addService("test", (tracker, msg, ackFn, sender) => {
+        client2Received.push(msg); ackFnSeen = typeof ackFn === "function"; });
+
+      var msg = {
+        action: "test", target: client2.id,
+        data: {payload: "for test"},
+        messageId: "test-message-1"
+      }
+      client1.send(msg);
+
+      await promise.waitFor(200, () => !!client2Received.length)
+
+      expect(client2Received).deep.equals([msg]);
+      expect(ackFnSeen).equals(false, "ackFn was passed to client2 even though no answer was requested");
+    });
+
+  });
+
+  describe("failure handling", () => {
+
+    it('handler does not call ack', async () => {
+      console.log('START')
+      var trackerReceived = [];
+      tracker.addService("test", (tracker, msg, ackFn, sender) => {/*nothing*/});
+      tracker.addService("test-2", (tracker, msg, ackFn, sender) => { ackFn("OK"); });
+      var answer = await client1.sendToAndWait(tracker.id, "test", {});
+      expect(answer).deep.property("data.isError");
+      expect(answer).deep.property("data.error").match(/timeout/i)
+      expect(await client1.sendToAndWait(tracker.id, "test-2", {})).property("data", "OK");
+    });
+
+    it("switching tracker", async () => {
+      console.log("tracker going down");
+      await tracker.remove();
+      await promise.delay(300);
+      console.log("tracker down");
+      expect().assert(!client1.isOnline(), "client still connected");
+      expect().assert(!client1.isRegistered(), "client still registered");
+      var newTracker = await L2LTracker.ensure({namespace, hostname, port, io: tracker.io});
+      await newTracker.open()
+      console.log("tracker re-opened");
+      expect(newTracker).not.equals(tracker, "no new tracker created");
+      await client1.whenRegistered(3000);
+    });
+
+  });
+
+
+  describe("broadcast", () => {
 
     it('can connect to default room', async () => {
       var namespace = '/l2l-test'
@@ -240,24 +335,24 @@ describe('l2l', function() {
       var trackers = tracker.getTrackerList()
       console.log(trackers.length)
       expect(trackers.length).greaterThan(0)
-      return
-
+      return;
     })
+
     it('send broadcast message from server to server without sending to himself',async() =>{
       // return;
-
+      var debug = false;
       var port2 = 9008,port3 = 9007
       var testServer2, testServer3
       var io2, io3;
       var l2l2, l2l3;
 
       //Create Server 2
-      var testServer2 = new LivelyServer({port: port2, namespace: namespace, hostname: hostname, debug: true,plugins: [new CorsPlugin(), new SocketioPlugin(), new L2lPlugin()]}).start();
+      var testServer2 = new LivelyServer({port: port2, namespace: namespace, hostname: hostname, debug,plugins: [new CorsPlugin(), new SocketioPlugin(), new L2lPlugin()]}).start();
       await testServer2.whenStarted(300);
       await testServer2.addPlugins([new CorsPlugin(), new SocketioPlugin(), new L2lPlugin()]);
 
       //Create Server 3
-      var testServer3 = new LivelyServer({port: port3, namespace: namespace, hostname: hostname, debug: true, plugins: [new CorsPlugin(), new SocketioPlugin(), new L2lPlugin()]}).start();
+      var testServer3 = new LivelyServer({port: port3, namespace: namespace, hostname: hostname, debug, plugins: [new CorsPlugin(), new SocketioPlugin(), new L2lPlugin()]}).start();
       await testServer3.whenStarted(300);
       await testServer3.addPlugins([new CorsPlugin(), new SocketioPlugin(), new L2lPlugin()]);
 
@@ -355,76 +450,35 @@ describe('l2l', function() {
 
       await testServer3.close();
       await testServer3.whenClosed();
-    })
-  });
-
-
-  describe("client-to-client", () => {
-
-    beforeEach(async () => {
-      await testServer.whenStarted();
-      let origin = `http://${hostname}:${port}`, path = io.path();
-      client2 = new L2LClient(origin, path, namespace);
-      client2.open();
-      client2.register();
-      await client2.whenRegistered();
     });
 
-    it("sends message and gets answer back", async () => {
-      let client2Received = [];
-      client2.addService("test", (tracker, msg, ackFn, sender) => {
-        client2Received.push(msg); ackFn("got it"); });
 
-      let msg = {
-        action: "test", target: client2.id,
-        data: {payload: "for test"},
-        messageId: "test-message-1"
-      }, answer = await client1.sendAndWait(msg);
+    describe("to other client", () => {
 
-      expect(client2Received).deep.equals([msg]);
-
-      expect(answer).containSubset({
-        action: "test-response", target: client1.id, data: "got it",
-        sender: client2.id, inResponseTo: "test-message-1"
+      beforeEach(async () => {
+        await testServer.whenStarted();
+        let origin = `http://${hostname}:${port}`, path = io.path();
+        client2 = new L2LClient(origin, path, namespace);
+        client2.open().then(() => client2.register());
+        await client2.whenRegistered();
       });
 
-    });
-
-    it("sends message without answer", async () => {
-      var client2Received = [], ackFnSeen;
-      client2.addService("test", (tracker, msg, ackFn, sender) => {
-        client2Received.push(msg); ackFnSeen = typeof ackFn === "function"; });
-
-      var msg = {
-        action: "test", target: client2.id,
-        data: {payload: "for test"},
-        messageId: "test-message-1"
-      }
-      client1.send(msg);
-
-      await promise.waitFor(200, () => !!client2Received.length)
-
-      expect(client2Received).deep.equals([msg]);
-      expect(ackFnSeen).equals(false, "ackFn was passed to client2 even though no answer was requested");
-    });
-
-    it('sends broadcast without sending to himself', async () =>{
-
+      it('sends broadcast without sending to himself', async () =>{
         var ackFn = function(ans){
            console.log(ans)
         }
 
         client1.sendTo(tracker.id,"joinRoom", {roomName: 'testRoom'}, ackFn)
         client2.sendTo(tracker.id,"joinRoom", {roomName: 'testRoom'}, ackFn)
-
+  
         var client1Received = [];
         client1.addService("test", (tracker, msg, ackFn, sender) => {
         client1Received.push(msg);});
-
+  
         var client2Received = [];
         client2.addService("test", (tracker, msg, ackFn, sender) => {
         client2Received.push(msg);});
-
+  
         var msg = {
           action: "test", target: 'testRoom',
           data: {payload: "test for broadcast message"},
@@ -433,61 +487,35 @@ describe('l2l', function() {
         var ackFn = function(ans){
           console.log(ans)
         }
-
-       [msg, ackFn] = client1.prepareSend(msg, ackFn);
-       client1.sendTo(tracker.id,"broadcast", {broadcastMessage: msg, roomName: 'testRoom'}, ackFn)
-       await promise.waitFor(200, () => (client1Received.length == 0 && client2Received.length == 1));
-       expect(client1Received).deep.equals([]);
-       expect(client2Received).deep.equals([msg]);
-    });
-
-  });
-
-  describe("failure handling", () => {
-
-    it('handler does not call ack', async () => {
-      var trackerReceived = [];
-      tracker.addService("test", (tracker, msg, ackFn, sender) => {/*nothing*/});
-      tracker.addService("test-2", (tracker, msg, ackFn, sender) => { ackFn("OK"); });
-      var answer = await client1.sendToAndWait(tracker.id, "test", {})
-      expect(answer).deep.property("data.isError");
-      expect(answer).deep.property("data.error").match(/timeout/i)
-      expect(await client1.sendToAndWait(tracker.id, "test-2", {})).property("data", "OK");
-    });
-
-    it("switching tracker", async () => {
-      console.log("tracker going down")
-      await tracker.remove();
-      await promise.delay(300);
-      console.log("tracker down")
-      expect().assert(!client1.isOnline(), "client still connected");
-      expect().assert(!client1.isRegistered(), "client still registered");
-      var newTracker = await L2LTracker.ensure({namespace, hostname, port, io: tracker.io});
-      await newTracker.open()
-      expect(newTracker).not.equals(tracker, "no new tracker created");
-      client1.trackerId
-      await client1.whenRegistered(300);
-    });
-
-  });
-
-
-
-  describe("user integration", () => {
   
+        [msg, ackFn] = client1.prepareSend(msg, ackFn);
+        client1.sendTo(tracker.id,"broadcast", {broadcastMessage: msg, roomName: 'testRoom'}, ackFn)
+        await promise.waitFor(800, () => (client1Received.length == 0 && client2Received.length == 1));
+        expect(client1Received).deep.equals([]);
+        expect(client2Received).deep.equals([msg]);
+      });
+    
+    })
+
+  });
+
+  // rk 2017-04-21: currently disabled until we find a better place for where
+  // to put the user logic
+
+  xdescribe("user integration", () => {
     before(async () =>
       authserver.addUser({
         name: "testUser1",
         email: "testuser1@lively-next.org",
         password: "test"
       }, 'adminpassword'));
-  
+
     after(async () =>
       authserver.removeUser({
         name: "testUser1",
         email: "testuser1@lively-next.org"
       }, 'adminpassword'));
-  
+
     it('Ensure anonymous user is created on init without options', async ()=>{
       await promise.delay(100);
       expect(client1.user).to.be.an('object',"user object not present");
@@ -495,7 +523,7 @@ describe('l2l', function() {
       expect(client1.user.email).equals(null,"null email for anonymous user not present")
       expect(client1.user.token).to.be.an('object','failed token object not present')
     })
-  
+
     it('Determine that a user can be authenticated after creation', async () => {
       await promise.delay(100);
       expect(client1.user.token).to.be.an('object','failed token object not present');
@@ -504,7 +532,7 @@ describe('l2l', function() {
       var response = await authserver.verify(client1.user);
       expect(response.type).equals('success');
     });
-  
+
     it('Ensure token can be validated', async() => {
        await promise.delay(100);
        await client1.authenticate({name: "testUser1", email: "testuser1@lively-next.org", password: "test"})
