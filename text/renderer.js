@@ -88,6 +88,11 @@ function installCSS(domEnv) {
       font-variant-ligatures: contextual;
     }
 
+    .line .Morph {
+      display: inline-block !important;
+      vertical-align: middle !important;
+    }
+
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
     /* debug styling */
 
@@ -233,7 +238,7 @@ export default class Renderer {
     let fn = morph.viewState._renderLineFn;
     if (!fn) {
       let h = hyperscriptFnForDocument(this.domEnv.document);
-      fn = morph.viewState._renderLineFn = line => this.renderLine(h, morph, line);
+      fn = morph.viewState._renderLineFn = line => this.renderLine(h, null, morph, line);
     }
     return fn;
   }
@@ -291,8 +296,8 @@ export default class Renderer {
 
     let children = morph.debug ? [
       ...this.renderDebugLayer(morph),
-      ...this.renderLines(h, morph)
-    ] : this.renderLines(h, morph);
+      ...this.renderLines(h, renderer, morph)
+    ] : this.renderLines(h, renderer, morph);
     
 
     let node = this.renderJustTextLayerNode(h, morph, null, children);
@@ -356,10 +361,20 @@ export default class Renderer {
         },
         textAttrs = {className: textLayerClasses, style};
 
+    if (additionalStyle) {
+      let {clipMode, height, width} = additionalStyle;
+      if (typeof width === "number")
+        style.width = width + "px";
+      if (typeof height === "number")
+        style.height = height + "px";
+      if (clipMode)
+        style.overflow = clipMode;
+    }
+  
     return h("div", textAttrs, children);
   }
 
-  renderLines(h, morph) {
+  renderLines(h, renderer, morph) {
     let {
           height,
           scroll,
@@ -409,7 +424,7 @@ export default class Renderer {
     while (line) {
       visibleLines.push(line);
       // renderedLines.push(line._rendered || (line._rendered = this.renderLine(h, morph, line)));
-      renderedLines.push(this.renderLine(h, morph, line));
+      renderedLines.push(this.renderLine(h, renderer, morph, line));
       i++;
       if (line === endLine) break;
       line = line.nextLine();
@@ -426,26 +441,48 @@ export default class Renderer {
     return renderedLines;
   }
 
-  renderLine(h, morph, line) {
+  renderLine(h, renderer, morph, line) {
     // Note: this function is being used in the font metric as well, with a
     // non-virtual-dom "h" function
 
     let { textAndAttributes } = line,
         renderedChunks = [],
         size = textAndAttributes.length,
-        text, attr,
+        content, attr,
         fontSize, fontFamily, fontWeight, fontStyle, textDecoration, fontColor,
         backgroundColor, nativeCursor, textStyleClasses, link,
         tagname, nodeStyle, nodeAttrs;
 
     if (size > 0) {
       for (let i = 0; i < size; i = i+2) {
-        text = textAndAttributes[i] || "\u00a0";
+        content = textAndAttributes[i] || "\u00a0";
         attr = textAndAttributes[i+1];
 
-        if (typeof text !== "string") text = objectReplacementChar;
+        if (typeof content !== "string") {
 
-        if (!attr) { renderedChunks.push(text); continue; }
+          if (content && content.isMorph) {
+            let rendered;
+            if (renderer) {
+              rendered = content.render(renderer);
+              rendered.properties.style.position = "";
+              rendered.properties.style.transform = "";
+            } else {
+              let {extent} = content,
+                  width = extent.x + "px",
+                  height = extent.y + "px";
+
+              rendered = h("div", {className: "Morph", style: {width, height}}, []);
+            }
+            renderedChunks.push(rendered);
+
+          } else {
+            renderedChunks.push(objectReplacementChar)
+          }
+          
+          continue;
+        }
+
+        if (!attr) { renderedChunks.push(content); continue; }
 
         fontSize =         attr.fontSize;
         fontFamily =       attr.fontFamily;
@@ -480,12 +517,12 @@ export default class Renderer {
         if (textStyleClasses && textStyleClasses.length)
           nodeAttrs.className = textStyleClasses.join(" ");
 
-        renderedChunks.push(h(tagname, nodeAttrs, text));
+        renderedChunks.push(h(tagname, nodeAttrs, content));
       }
 
     } else renderedChunks.push(h("br"));
 
-    return h("div.line", {dataset: {row: line.row}}, renderedChunks);
+    return h("div", {className: "line", dataset: {row: line.row}}, renderedChunks);
   }
 
   renderSelectionLayer(morph, selection, diminished = false, cursorWidth = 2) {
@@ -674,15 +711,3 @@ export default class Renderer {
     return debugHighlights
   }
 }
-
-
-
-// defaultRenderer>>renderSelectionLayer
-// defaultRenderer>>renderMarkerLayer
-// defaultRenderer>>renderTextLayer
-// defaultRenderer>>renderDebugLayer
-// defaultRenderer>>selectionLayerPart
-// defaultRenderer>>cursor
-// defaultRenderer>>renderMarkerPart
-// defaultRenderer>>renderLine
-// defaultRenderer>>renderChunk
