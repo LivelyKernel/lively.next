@@ -3,17 +3,27 @@
   "version": "0.1.0",
   "dependencies": {
     "lively.resources": "*",
-    "lively.storage": "*",      
+    "lively.storage": "*",
     "lively.lang": "*",
     "socket.io-client": "^1.5.1",
     "lively.user": "git://github.com/LivelyKernel/lively.user.git"
   },
   "devDependencies": {
+    "babel-core": "^6.24.1",
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-plugin-syntax-object-rest-spread": "^6.13.0",
+    "babel-plugin-transform-async-to-generator": "^6.24.1",
+    "babel-plugin-transform-object-rest-spread": "^6.23.0",
+    "babel-preset-es2015": "^6.24.1",
+    "lively.server": "git://github.com/LivelyKernel/lively.server.git",
     "mocha-es6": "^0.4",
-    "lively.server": "git://github.com/LivelyKernel/lively.server.git"
+    "rollup": "^0.41.6",
+    "rollup-plugin-babel": "^2.7.1",
+    "uglify-js": "^2.8.22"
   },
   "scripts": {
-    "test": "mocha-es6 tests/*-test.js --pre-script ./tests/node-pre.js"
+    "test": "mocha-es6 tests/*-test.js --pre-script ./tests/node-pre.js",
+    "build": "node tools/build.js"
   },
   "systemjs": {
     "map": {
