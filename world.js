@@ -15,16 +15,25 @@ import {
   ListPrompt,
   EditListPrompt
 } from "./components/prompts.js";
-import { loadMorphFromSnapshot } from "./serialization.js";
+import { loadMorphFromSnapshot, loadWorldFromResource } from "./serialization.js";
 
 import { loadObjectFromPartsbinFolder } from "./partsbin.js";
 import { uploadFile } from "./events/html-drop-handler.js";
 import worldCommands from "./world-commands.js";
+import { loadWorldFromURL, loadWorld } from "./world-loading.js";
 
 
 export class World extends Morph {
 
   static defaultWorld() { return MorphicEnv.default().world; }
+
+  static async loadWorldFromURL(url, oldWorld = this.defaultWorld(), options = {}) {
+    return loadWorldFromURL(url, oldWorld, options);
+  }
+
+  static async loadWorld(newWorld, oldWorld = this.defaultWorld(), options = {}) {
+    return loadWorld(newWorld, oldWorld, options);
+  }
 
   constructor(props) {
     super(props);

@@ -30,9 +30,11 @@ async function loadWorld(from, showWorldLoadDialog) {
       world = await loadWorldFromResource(fromLocation);
   MorphicEnv.default().setWorld(world);
   showWorldLoadDialog && world.execCommand("load world");
-  world.execCommand("fix font metric");
+  setTimeout(() => world.execCommand("fix font metric"), 500);
   setTimeout(() => world.execCommand("fix font metric"), 1000);
   setTimeout(() => world.execCommand("fix font metric"), 5000);
+  setTimeout(() => world.execCommand("fix font metric"), 10000);
+  loadLocalConfig();
   return world;
 }
 
@@ -40,8 +42,7 @@ async function loadWorld(from, showWorldLoadDialog) {
 
 import L2LClient from "lively.2lively/client.js";
 async function setupLively2Lively(opts) {
-  var l2lURL = `${document.location.origin}/lively-socket.io`,
-      client = await L2LClient.ensure({url: l2lURL, namespace: "l2l"});
+  var client = await L2LClient.forLivelyInBrowser();
   console.log(`[lively] lively2lively client created ${client}`)
   return client;
 }
@@ -59,6 +60,18 @@ async function setupLivelyShell(opts) {
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+async function loadLocalConfig() {
+  let localconfig = lively.modules.module("localconfig.js");
+  try {
+    if (await resource(localconfig.id).exists())
+      await localconfig.load();
+  } catch (err) {
+    console.error(`Error loading localconfig:`, err);
+    if (typeof $world !== "undefined")
+      $world.showError(`Error loading localconfig.js: ${err}`);
+  }
+}
 
 function urlQuery() {
   if (typeof document === "undefined" || !document.location) return {};

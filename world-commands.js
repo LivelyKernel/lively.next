@@ -794,29 +794,18 @@ var commands = [
   
   {
     name: "load world",
-    exec: async (world, args = {}) => {
-      let toLoad = args.resource;
+    exec: async (oldWorld, args = {}) => {
+      let {resource, world} = args;
 
-      if (!toLoad) { // old world selection
-        let worldList = world.get("world-list") || await loadObjectFromPartsbinFolder("world-list");
-        return await worldList.bringToFront().alignInWorld(world).setLocationToLastChoiceOr("public");
+      if (!resource && !world) { // old world selection
+        let worldList = oldWorld.get("world-list") || await loadObjectFromPartsbinFolder("world-list");
+        return await worldList.bringToFront().alignInWorld(oldWorld).setLocationToLastChoiceOr("public");
       }
 
-      if (!toLoad) return;
-
-      try {
-        let newWorld = await loadWorldFromResource(toLoad);
-        await world.env.setWorld(newWorld);
-        newWorld.setStatusMessage("loaded!");
-        newWorld.execCommand("fix font metric");
-        setTimeout(() => newWorld.execCommand("fix font metric"), 1000);
-        return newWorld;
-      } catch (e) {
-        console.error(`Error loading world: `, e);
-        await world.env.setWorld(world);
-        world.showError(e);
-        throw e;
-      }
+      let World = oldWorld.constructor;
+      return resource ?
+        World.loadWorldFromURL(resource, oldWorld) :
+        World.loadWorld(world, oldWorld);
     }
   }
 

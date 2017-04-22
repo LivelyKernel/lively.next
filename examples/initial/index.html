@@ -4,43 +4,38 @@
     <title>lively.next</title>
   </head>
   <body style="margin: 0;">
-    <div id="preview"> 
-      <div id="loading indicator" style="
-           position: absolute;
-           left: 0; right: 0; top: 0; bottom: 0;
-           width: 320px; height: 180px;
-           margin: auto;
-           color: #ff7700;
-           font-family: Helvetica Neue, Arial, sans-serif;
-           font-size: 30pt; border-radius: 10px;
-           padding: 10px; background: #666">
-             <center><b>Loading</b></center>
-             <div style="
-               background-image: url(/lively.morphic/lively-web-logo-small-animate.svg);
-               background-size: cover;
-               height: 100%;
-               margin-left: 110px;
-               margin-top: 20px;
-             "></div>
-           </div>
-      </div>
-    </div>
-
     <script src="/lively.modules/node_modules/babel-standalone/babel.js"></script>
     <script src="/lively.modules/node_modules/systemjs/dist/system.src.js"></script>
     <script src="/lively.modules/dist/lively.modules.js"></script>
+
+    <div id="dom-loading-indicator"
+         style="position: fixed; top: 50%; left: 50%;
+                margin-left: -160px; margin-top: -90px; z-index: 10;">
+      <div style="width: 320px; height: 180px; font-size: 30pt; border-radius: 10px;
+                  color: #ff7700; font-family: Helvetica Neue, Arial, sans-serif;
+                  padding: 10px; background: #666;">
+         <center><b>Loading</b></center>
+         <div style="background-image: url(/lively.morphic/lively-web-logo-small-animate.svg);
+                     background-size: cover; height: 100%; margin-left: 110px; margin-top: 20px;"></div>
+      </div>
+    </div>
+
     <script>
       var origin = document.location.origin;
       Promise.resolve()
         .then(polyfills)
         .then(bootstrapLivelySystem)
-        .then(function() { console.log("3. loading lively.morphic"); })
-        .then(function () { return lively.modules.importPackage('.'); })
-        .then(function(startModule) {
-          document.getElementById('preview').remove();
-          return startModule.run();
+        .then(function() { return lively.modules.importPackage('lively.morphic'); })
+        .then(function(morphic) {
+          return morphic.World.loadWorldFromURL("lively.morphic/worlds/default.json", null, {
+            verbose: true,
+            localconfig: true,
+            l2l: true,
+            shell: true,
+            worldLoadDialog: true
+          });
         })
-        .then(function() { console.log("...lively.morphic loaded"); })
+        .then(function() { console.log("...lively.morphic world created"); })
         .catch(function(err) {
           if (err.originalErr) err = err.originalErr;
           console.error(err);
@@ -53,11 +48,10 @@
 
         // for loading an instrumented version of the packages comprising the lively.system
         return Promise.resolve()
-          .then(function() { console.log("1. loading initial system so we can bootstrap..."); })
+          .then(function() { console.log("loading initial system so we can bootstrap..."); })
           .then(function () { return lively.modules.importPackage(origin + '/lively-system-interface/'); })
-          .then(function() { console.log("... done!"); })
 
-          .then(function() { console.log("2. preparing to bootstrap..."); })
+          .then(function() { console.log("starting bootstrap process..."); })
 
           .then(function () {
             var System = lively.modules.getSystem("bootstrapped");
@@ -103,8 +97,7 @@
               "lively.storage",
               function(m) { lively.storage = m; })})
 
-          .then(function() { return importPackageAndDo(origin + "/lively.2lively"); })
-          .then(function() { console.log("...lively.system bootstrapped!"); });
+          .then(function() { console.log("...lively systems are ready!"); });
       }
 
       function importPackageAndDo(packageURL, doFunc) {
