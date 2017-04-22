@@ -114,7 +114,7 @@ describe("module loading", () => {
       expect(module1 in loadedModules(System)).equals(false, "listed in loadedModules");
     });
 
-    it("not existint", async () => {
+    it("not existing", async () => {
       let uri = testDir + "foo.js";
       await registerPackage(System, testDir);
       expect(isModuleLoaded(System, uri)).equals(false, "isLoaded");
