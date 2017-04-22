@@ -305,8 +305,11 @@ export var jsIdeCommands = [
   {
     name: "[javascript] auto format code",
     exec: async (text, opts) => {
+      let margin = 7*(text.width/100),
+          printWidth = Math.floor(text.width / text.defaultCharExtent().width);
+      
       opts = {
-        printWidth: Math.floor(text.width / text.defaultCharExtent().width),
+        printWidth,
         tabWidth: 2,
         bracketSpacing: false,
         ...opts
