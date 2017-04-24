@@ -23532,7 +23532,7 @@ exports.fuzzyParse = fuzzyParse;
 
 // INLINED END /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/lively.classes/dist/lively.classes.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -23923,8 +23923,8 @@ function propertiesAndSettingsInHierarchyOf(klass) {
     current && (typeof current === "undefined" ? "undefined" : _typeof(current)) === "object" && Object.assign(propertySettings, current);
   }
 
-  for (var i = 0; i < allProps.length; i++) {
-    var _current = allProps[i];
+  for (var _i = 0; _i < allProps.length; _i++) {
+    var _current = allProps[_i];
     if ((typeof _current === "undefined" ? "undefined" : _typeof(_current)) !== "object") {
       console.error("[initializeProperties] " + klass + " encountered property declaration " + ("that is not a JS object: " + _current));
       continue;
@@ -23981,8 +23981,8 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
   // 2. Run init code for properties
   // and if we have values we will initialize the properties from it. Values
   // is expected to be a JS object mapping property names to property values
-  for (var i = 0; i < propsNeedingInitialize.length; i++) {
-    var _key = propsNeedingInitialize[i],
+  for (var _i2 = 0; _i2 < propsNeedingInitialize.length; _i2++) {
+    var _key = propsNeedingInitialize[_i2],
         actions = initActions[_key],
         hasValue = actions.hasOwnProperty("value");
 
@@ -24049,6 +24049,8 @@ function setSuperclass(klass, superclassOrSpec) {
     ensureInitializeStub(superclass);
     klass[superclassSymbol] = superclass;
     setPrototypeOf(klass.prototype, superclass.prototype);
+    // klass.prototype = Object.create(superclass.prototype);
+    // klass.prototype.constructor = klass;
     if (superclass !== Object) setPrototypeOf(klass, superclass);
   }
   return superclass;
@@ -24551,9 +24553,9 @@ exports.classToFunctionTransform = classToFunctionTransform;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/lively.classes/dist/lively.classes.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/lively.source-transform/dist/lively.source-transform.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -25503,7 +25505,7 @@ exports.stringifyFunctionWithoutToplevelRecorder = stringifyFunctionWithoutTople
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.sourceTransform;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/lively.source-transform/dist/lively.source-transform.js
 
 // INLINED /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
 (function() {
@@ -26872,7 +26874,7 @@ var RemoteEvalStrategy = function (_LivelyVmEvalStrategy) {
     key: "sourceForRemote",
     value: function sourceForRemote(action, arg, options) {
       options = lively_lang.obj.dissoc(options, ["systemInterface", "System", "context"]);
-      return "\n(function() {\n  var arg = " + JSON.stringify(arg) + ",\n      options = " + JSON.stringify(options) + ";\n  if (typeof lively === \"undefined\" || !lively.vm) {\n    return Promise.resolve({\n      isEvalResult: true,\n      isError: true,\n      value: 'lively.vm not available!'\n    });\n  }\n  var hasSystem = typeof System !== \"undefined\"\n  options.context = hasSystem\n    ? System.global\n    : typeof window !== \"undefined\"\n        ? window\n        : typeof global !== \"undefined\"\n            ? global\n            : typeof self !== \"undefined\" ? self : this;\n  function evalFunction(source, options) {\n    if (hasSystem) {\n      var conf = {meta: {}}; conf.meta[options.targetModule] = {format: \"esm\"};\n      System.config(conf);\n    } else {\n      options = Object.assign({}, options);\n      delete options.targetModule;\n    }\n    return lively.vm.runEval(source, options);\n  }\n  function keysOfObjectFunction(prefix, options) {\n    return lively.vm.completions.getCompletions(code => evalFunction(code, options), prefix)\n      .then(result => ({isEvalResult: true, completions: result.completions, prefix: result.startLetters}));\n  }\n  return " + (action === "eval" ? "evalFunction" : "keysOfObjectFunction") + "(arg, options)\n    .catch(err => ({isEvalResult: true, isError: true, value: String(err.stack || err)}));\n})();\n";
+      return "\n(function() {\n  var arg = " + JSON.stringify(arg) + ",\n      options = " + JSON.stringify(options) + ";\n  if (typeof lively === \"undefined\" || !lively.vm) {\n    return Promise.resolve({\n      isEvalResult: true,\n      isError: true,\n      value: 'lively.vm not available!'\n    });\n  }\n  var hasSystem = typeof System !== \"undefined\"\n  options.context = hasSystem\n    ? System.global\n    : typeof window !== \"undefined\"\n        ? window\n        : typeof global !== \"undefined\"\n            ? global\n            : typeof self !== \"undefined\" ? self : this;\n  function evalFunction(source, options) {\n    if (hasSystem) {\n      var conf = {meta: {}}; conf.meta[options.targetModule] = {format: \"esm\"};\n      System.config(conf);\n    } else {\n      options = Object.assign({topLevelVarRecorderName: \"GLOBAL\"}, options);\n      delete options.targetModule;\n    }\n    return lively.vm.runEval(source, options);\n  }\n  function keysOfObjectFunction(prefix, options) {\n    return lively.vm.completions.getCompletions(code => evalFunction(code, options), prefix)\n      .then(result => ({isEvalResult: true, completions: result.completions, prefix: result.startLetters}));\n  }\n  return " + (action === "eval" ? "evalFunction" : "keysOfObjectFunction") + "(arg, options)\n    .catch(err => ({isEvalResult: true, isError: true, value: String(err.stack || err)}));\n})();\n";
     }
   }, {
     key: "runEval",
@@ -27160,21 +27162,22 @@ var L2LEvalStrategy = function (_RemoteEvalStrategy2) {
           while (1) {
             switch (_context14.prev = _context14.next) {
               case 0:
+                inspect({ source: source, options: options });
                 l2lClient = this.l2lClient;
                 targetId = this.targetId;
-                _context14.next = 4;
+                _context14.next = 5;
                 return new Promise(function (resolve, reject) {
                   return l2lClient.sendTo(targetId, "remote-eval", { source: source }, resolve);
                 });
 
-              case 4:
+              case 5:
                 _ref15 = _context14.sent;
                 evalResult = _ref15.data;
 
                 if (evalResult && evalResult.value && evalResult.value.isEvalResult) evalResult = evalResult.value;
                 return _context14.abrupt("return", evalResult);
 
-              case 8:
+              case 9:
               case "end":
                 return _context14.stop();
             }
