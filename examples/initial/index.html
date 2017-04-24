@@ -27,6 +27,11 @@
         .then(bootstrapLivelySystem)
         .then(function() { return lively.modules.importPackage('lively.morphic'); })
         .then(function(morphic) {
+          window.addEventListener('beforeunload', function(evt) {
+            var msg = "Really?";
+            evt.returnValue = msg;
+            return msg;
+          }, true);
           return morphic.World.loadWorldFromURL("lively.morphic/worlds/default.json", null, {
             verbose: true,
             localconfig: true,
