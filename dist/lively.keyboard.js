@@ -86,7 +86,20 @@ var createClass = function () {
 
 
 
+var defineProperty = function (obj$$1, key, value) {
+  if (key in obj$$1) {
+    Object.defineProperty(obj$$1, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj$$1[key] = value;
+  }
 
+  return obj$$1;
+};
 
 var _extends = Object.assign || function (target) {
   for (var i = 1; i < arguments.length; i++) {
@@ -163,6 +176,30 @@ var set = function set(object, property, value, receiver) {
   }
 
   return value;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var toConsumableArray = function (arr$$1) {
+  if (Array.isArray(arr$$1)) {
+    for (var i = 0, arr2 = Array(arr$$1.length); i < arr$$1.length; i++) arr2[i] = arr$$1[i];
+
+    return arr2;
+  } else {
+    return Array.from(arr$$1);
+  }
 };
 
 function printArg(x) {
@@ -1511,11 +1548,121 @@ var DOMInputCapture = function () {
   return DOMInputCapture;
 }();
 
+var KeyBindingsTrait = {
+  addKeyBindings: function addKeyBindings(bindings) {
+    var _keybindings;
+
+    if (!this._keybindings) this._keybindings = [];
+    (_keybindings = this._keybindings).unshift.apply(_keybindings, toConsumableArray(bindings));
+  },
+
+
+  get keybindings() {
+    return this._keybindings || [];
+  },
+
+  set keybindings(bndgs) {
+    return this._keybindings = bndgs;
+  },
+
+  get keyhandlers() {
+    // Note that reconstructing the keyhandler on every stroke might prove too
+    // slow. On my machine it's currently around 10ms which isn't really noticable
+    // but for snappier key behavior we might want to cache that. Tricky thing
+    // about caching is to figure out when to invalidate... keys binding changes
+    // can happen in a number of places
+    return [KeyHandler.withBindings(this.keybindings)];
+  },
+
+  get keyCommandMap() {
+    var platform = this.keyhandlers[0].platform;
+    return this.keybindings.reduce(function (keyMap, binding) {
+      var keys = binding.keys,
+          platformKeys = findKeysForPlatform(keys, platform),
+          command = binding.command,
+          name = typeof command === "string" ? command : command.command || command.name;
+
+      if (typeof platformKeys !== "string") return keyMap;
+
+      return platformKeys.split("|").reduce(function (keyMap, combo) {
+        return Object.assign(keyMap, defineProperty({}, combo, {
+          name: name, command: command,
+          prettyKeys: KeyHandler.prettyCombo(combo)
+        }));
+      }, keyMap);
+    }, {});
+  },
+
+  keysForCommand: function keysForCommand(commandName) {
+    var pretty = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
+    var map = this.keyCommandMap,
+        rawKey = Object.keys(map).find(function (key) {
+      return map[key].name === commandName;
+    });
+    return rawKey && pretty ? map[rawKey].prettyKeys : rawKey;
+  },
+  simulateKeys: function simulateKeys(keyString) {
+    return KeyHandler.simulateKeys(this, keyString);
+  }
+};
+
+var defaultCommandHandler = new CommandHandler();
+
+var CommandTrait = {
+  get commands() {
+    return this._commands || [];
+  },
+
+  set commands(cmds) {
+    if (this._commands) this.removeCommands(this._commands);
+    this.addCommands(cmds);
+  },
+
+  get commandsIncludingOwners() {
+    return lively.lang.arr.flatmap([this].concat(this.ownerChain()), function (morph) {
+      return lively.lang.arr.sortByKey(morph.commands, "name").map(function (command) {
+        return { target: morph, command: command };
+      });
+    });
+  },
+
+  addCommands: function addCommands(cmds) {
+    this.removeCommands(cmds);
+    this._commands = (this._commands || []).concat(cmds);
+  },
+  removeCommands: function removeCommands(cmdsOrNames) {
+    var names = cmdsOrNames.map(function (ea) {
+      return typeof ea === "string" ? ea : ea.name;
+    }),
+        commands = (this._commands || []).filter(function (_ref) {
+      var name = _ref.name;
+      return !names.includes(name);
+    });
+    if (!commands.length) delete this._commands;else this._commands = commands;
+  },
+
+
+  get commandHandler() {
+    return this._commandHandler || defaultCommandHandler;
+  },
+
+  lookupCommand: function lookupCommand(commandOrName) {
+    var result = this.commandHandler.lookupCommand(commandOrName, this);
+    return result && result.command ? result : null;
+  },
+  execCommand: function execCommand(command, args, count, evt) {
+    return this.commandHandler.exec(command, this, args, count, evt);
+  }
+};
+
 exports.CommandHandler = CommandHandler;
 exports.Keys = Keys;
 exports.KeyHandler = KeyHandler;
 exports.findKeysForPlatform = findKeysForPlatform;
 exports.DOMInputCapture = DOMInputCapture;
+exports.KeyBindingsTrait = KeyBindingsTrait;
+exports.CommandTrait = CommandTrait;
 
 }((this.lively.keyboard = this.lively.keyboard || {}),lively.lang,bowser));
 
