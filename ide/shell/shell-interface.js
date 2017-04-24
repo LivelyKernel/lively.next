@@ -107,7 +107,7 @@ export function doGrep(queryString, path, options = {}) {
         let reMatch = line.match(/(.*):([0-9]+):(.*)/);
         if (!reMatch) return null;
         let [_, filename, lineno, match] = reMatch;
-        return {filename, lineno: Number(lineno), match};
+        return {filename, lineno: Number(lineno)-1, match};
       }).filter(Boolean);
   })
 

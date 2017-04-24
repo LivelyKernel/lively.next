@@ -695,14 +695,30 @@ var commands = [
   {
     name: "open file",
     progressIndicator: "opening file...",
-    exec: async (world, opts = {url: null, lineNumber: null}) => {
-      var { default: TextEditor } = await System.import("lively.morphic/ide/text-editor.js"),
-          { url, lineNumber } = opts;
+    exec: async (world, opts = {url: null, lineNumber: null, reuse: false}) => {
+      let { url, lineNumber, reuse } = opts;
       if (!url)
         url = await world.prompt("Enter file location", {
-          historyId: "lively.morphic-text editor url", useLastInput: true
+          historyId: "lively.morphic-text editor url",
+          useLastInput: true
         });
+
+      if (reuse) {
+        let ea = world.getWindows().slice(-2)[0]
+        
+        let editor = arr.findAndGet(world.getWindows(), ea => {
+          let t = ea.targetMorph;
+          return t && t.isTextEditor && t.location.split(":")[0] === url ? t : null;
+        });
+        if (editor) {
+          if (typeof lineNumber === "number")
+            editor.lineNumber = lineNumber;
+          return editor.getWindow().activate();
+        }
+      }
+
       if (lineNumber) url += ":" + lineNumber;
+      let { default: TextEditor } = await System.import("lively.morphic/ide/text-editor.js");
       return url ? TextEditor.openURL(url, obj.dissoc(opts, ["url"])) : null;
     }
   },

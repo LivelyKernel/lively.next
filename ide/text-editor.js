@@ -181,6 +181,8 @@ export default class TextEditor extends Morph {
     this._loadPromise = null;
   }
 
+  get isTextEditor() { return true; }
+
   reload() { this.location = this.location; }
 
   relayout() {
