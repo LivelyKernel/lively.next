@@ -2473,6 +2473,8 @@ function uniq(array, sorted) {
   // if sorted == true then assume array is sorted which allows uniq to be more
   // efficient
   // uniq([3,5,6,2,3,4,2,6,4])
+  if (!array.length) return array;
+
   var result = [array[0]];
   if (sorted) {
     for (var i = 1; i < array.length; i++) {
@@ -5483,6 +5485,17 @@ function toRadians(n) {
   return n / 180 * Math.PI;
 }
 
+function backoff(attempt) /*ms*/{
+  var base = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 5;
+  var cap = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 30000;
+
+  // exponential backoff function
+  // https://www.awsarchitectureblog.com/2015/03/backoff.html
+  var temp = Math.min(cap, base * Math.pow(2, attempt)),
+      sleep = temp / 2 + Math.round(Math.random() * (temp / 2));
+  return Math.min(cap, base + Math.random() * (sleep * 3 - base));
+}
+
 
 
 var num = Object.freeze({
@@ -5499,7 +5512,8 @@ var num = Object.freeze({
 	roundTo: roundTo,
 	detent: detent,
 	toDegrees: toDegrees,
-	toRadians: toRadians
+	toRadians: toRadians,
+	backoff: backoff
 });
 
 function all$2(object, predicate) {
@@ -8237,7 +8251,7 @@ var GLOBAL = typeof window !== "undefined" ? window : typeof global !== "undefin
 
 var isNode = typeof process !== "undefined" && process.env && typeof process.exit === "function";
 
-var globalInterfaceSpec = [{ action: "installMethods", target: "Array", sources: ["arr"], methods: ["from", "genN", "range", "withN"] }, { action: "installMethods", target: "Array.prototype", sources: ["arr"], methods: ["all", "any", "batchify", "clear", "clone", "collect", "compact", "delimWith", "detect", "doAndContinue", "each", "equals", "filterByKey", "findAll", "first", "flatten", "forEachShowingProgress", "grep", "groupBy", "groupByKey", "histogram", "include", "inject", "intersect", "invoke", "last", "mapAsync", "mapAsyncSeries", "mask", "max", "min", "mutableCompact", "nestedDelay", "partition", "pluck", "pushAll", "pushAllAt", "pushAt", "pushIfNotIncluded", "reMatches", "reject", "rejectByKey", "remove", "removeAt", "replaceAt", "rotate", "shuffle", "size", "sortBy", "sortByKey", "sum", "swap", "toArray", "toTuples", "union", "uniq", "uniqBy", "without", "withoutAll", "zip"], alias: [["select", "filter"]] }, { action: "installMethods", target: "Date", sources: ["date"], methods: [/*"parse"*/] }, { action: "installMethods", target: "Date.prototype", sources: ["date"], methods: ["equals", "format", "relativeTo"] }, { action: "installMethods", target: "Function", sources: ["fun"], methods: ["fromString"] }, { action: "installMethods", target: "Function.prototype", sources: ["fun"], methods: [/*"addProperties",*/"addToObject", "argumentNames", "asScript", "asScriptOf", "binds", "curry", "delay", "functionNames", "localFunctionNames", "getOriginal", "getVarMapping", "logCalls", "logCompletion", "logErrors", "qualifiedMethodName", "setProperty", "traceCalls", "wrap"] }, { action: "installMethods", target: "Number", sources: ["num"], methods: [] }, { action: "installMethods", target: "Number.prototype", sources: ["num"], methods: ["detent", "randomSmallerInteger", "roundTo", "toDegrees", "toRadians"] }, { action: "installMethods", target: "Object", sources: ["obj"], methods: ["addScript", "clone", "deepCopy", "extend", "inherit", "isArray", "isBoolean", "isElement", "isEmpty", "isFunction", "isNumber", "isObject", "isRegExp", "isString", "isUndefined", "merge", "mergePropertyInHierarchy", "values", "valuesInPropertyHierarchy"] }, { action: "installMethods", target: "Object.prototype", sources: ["obj"], methods: [] }, { action: "installMethods", target: "String.prototype", sources: ["string"], methods: ["camelize", "capitalize", "digitValue", "empty", "hashCode", "include", "pad", "regExpEscape", "startsWithVowel", "succ", "times", "toArray", "toQueryParams", "truncate"] }, { action: "installMethods", target: "Function.prototype", sources: ["klass"], methods: ["create", "addMethods", "isSubclassOf", "superclasses", "categoryNameFor", "remove"], alias: [["subclass", "create"]] }, { action: "installObject", target: "Numbers", source: "num", methods: ["average", "between", "convertLength", "humanReadableByteSize", "median", "normalRandom", "parseLength", "random", "sort"] }, { action: "installObject", target: "Properties", source: "properties", methods: ["all", "allOwnPropertiesOrFunctions", "allProperties", "any", "forEachOwn", "hash", "nameFor", "own", "ownValues", "values"] }, { action: "installObject", target: "Strings", source: "string", methods: ["camelCaseString", "createDataURI", "diff", "format", "formatFromArray", "indent", "lineIndexComputer", "lines", "md5", "newUUID", "nonEmptyLines", "pad", "paragraphs", "peekLeft", "peekRight", "print", "printNested", "printTable", "printTree", "quote", "reMatches", "stringMatch", "tableize", "tokens", "unescapeCharacterEntities", "withDecimalPrecision"] }, { action: "installObject", target: "Objects", source: "obj", methods: ["asObject", "equals", "inspect", "isMutableType", "safeToString", "shortPrintStringOf", "typeStringOf"] }, { action: "installObject", target: "Functions", source: "fun", methods: ["all", "compose", "composeAsync", "createQueue", "debounce", "debounceNamed", "either", "extractBody", "flip", "notYetImplemented", "once", "own", "throttle", "throttleNamed", "timeToRun", "timeToRunN", "waitFor", "workerWithCallbackQueue", "wrapperChain"] }, { action: "installObject", target: "Grid", source: "grid" }, { action: "installObject", target: "Interval", source: "interval" }, { action: "installObject", target: "lively.ArrayProjection", source: "arrayProjection" }, { action: "installObject", target: "lively.Closure", source: "Closure" }, { action: "installObject", target: "lively.Grouping", source: "Group" }, { action: "installObject", target: "lively.PropertyPath", source: "Path" }, { action: "installObject", target: "lively.Worker", source: "worker" }, { action: "installObject", target: "lively.Class", source: "classHelper" }];
+var globalInterfaceSpec = [{ action: "installMethods", target: "Array", sources: ["arr"], methods: ["genN", "range", "withN"] }, { action: "installMethods", target: "Array.prototype", sources: ["arr"], methods: ["all", "any", "batchify", "clear", "clone", "collect", "compact", "delimWith", "detect", "doAndContinue", "each", "equals", "filterByKey", "findAll", "first", "flatten", "forEachShowingProgress", "grep", "groupBy", "groupByKey", "histogram", "include", "inject", "intersect", "invoke", "last", "mapAsync", "mapAsyncSeries", "mask", "max", "min", "mutableCompact", "nestedDelay", "partition", "pluck", "pushAll", "pushAllAt", "pushAt", "pushIfNotIncluded", "reMatches", "reject", "rejectByKey", "remove", "removeAt", "replaceAt", "rotate", "shuffle", "size", "sortBy", "sortByKey", "sum", "swap", "toArray", "toTuples", "union", "uniq", "uniqBy", "without", "withoutAll", "zip"], alias: [["select", "filter"]] }, { action: "installMethods", target: "Date", sources: ["date"], methods: [/*"parse"*/] }, { action: "installMethods", target: "Date.prototype", sources: ["date"], methods: ["equals", "format", "relativeTo"] }, { action: "installMethods", target: "Function", sources: ["fun"], methods: ["fromString"] }, { action: "installMethods", target: "Function.prototype", sources: ["fun"], methods: [/*"addProperties",*/"addToObject", "argumentNames", "asScript", "asScriptOf", "binds", "curry", "delay", "functionNames", "localFunctionNames", "getOriginal", "getVarMapping", "logCalls", "logCompletion", "logErrors", "qualifiedMethodName", "setProperty", "traceCalls", "wrap"] }, { action: "installMethods", target: "Number", sources: ["num"], methods: [] }, { action: "installMethods", target: "Number.prototype", sources: ["num"], methods: ["detent", "randomSmallerInteger", "roundTo", "toDegrees", "toRadians"] }, { action: "installMethods", target: "Object", sources: ["obj"], methods: ["addScript", "clone", "deepCopy", "extend", "inherit", "isArray", "isBoolean", "isElement", "isEmpty", "isFunction", "isNumber", "isObject", "isRegExp", "isString", "isUndefined", "merge", "mergePropertyInHierarchy", "values", "valuesInPropertyHierarchy"] }, { action: "installMethods", target: "Object.prototype", sources: ["obj"], methods: [] }, { action: "installMethods", target: "String.prototype", sources: ["string"], methods: ["camelize", "capitalize", "digitValue", "empty", "hashCode", "include", "pad", "regExpEscape", "startsWithVowel", "succ", "times", "toArray", "toQueryParams", "truncate"] }, { action: "installMethods", target: "Function.prototype", sources: ["klass"], methods: ["create", "addMethods", "isSubclassOf", "superclasses", "categoryNameFor", "remove"], alias: [["subclass", "create"]] }, { action: "installObject", target: "Numbers", source: "num", methods: ["average", "between", "convertLength", "humanReadableByteSize", "median", "normalRandom", "parseLength", "random", "sort"] }, { action: "installObject", target: "Properties", source: "properties", methods: ["all", "allOwnPropertiesOrFunctions", "allProperties", "any", "forEachOwn", "hash", "nameFor", "own", "ownValues", "values"] }, { action: "installObject", target: "Strings", source: "string", methods: ["camelCaseString", "createDataURI", "diff", "format", "formatFromArray", "indent", "lineIndexComputer", "lines", "md5", "newUUID", "nonEmptyLines", "pad", "paragraphs", "peekLeft", "peekRight", "print", "printNested", "printTable", "printTree", "quote", "reMatches", "stringMatch", "tableize", "tokens", "unescapeCharacterEntities", "withDecimalPrecision"] }, { action: "installObject", target: "Objects", source: "obj", methods: ["asObject", "equals", "inspect", "isMutableType", "safeToString", "shortPrintStringOf", "typeStringOf"] }, { action: "installObject", target: "Functions", source: "fun", methods: ["all", "compose", "composeAsync", "createQueue", "debounce", "debounceNamed", "either", "extractBody", "flip", "notYetImplemented", "once", "own", "throttle", "throttleNamed", "timeToRun", "timeToRunN", "waitFor", "workerWithCallbackQueue", "wrapperChain"] }, { action: "installObject", target: "Grid", source: "grid" }, { action: "installObject", target: "Interval", source: "interval" }, { action: "installObject", target: "lively.ArrayProjection", source: "arrayProjection" }, { action: "installObject", target: "lively.Closure", source: "Closure" }, { action: "installObject", target: "lively.Grouping", source: "Group" }, { action: "installObject", target: "lively.PropertyPath", source: "Path" }, { action: "installObject", target: "lively.Worker", source: "worker" }, { action: "installObject", target: "lively.Class", source: "classHelper" }];
 
 function createLivelyLangObject() {
   return {
@@ -26856,7 +26870,7 @@ var RemoteEvalStrategy = function (_LivelyVmEvalStrategy) {
     key: "sourceForRemote",
     value: function sourceForRemote(action, arg, options) {
       options = lively_lang.obj.dissoc(options, ["systemInterface", "System", "context"]);
-      return "\n(function() {\n  var arg = " + JSON.stringify(arg) + ",\n      options = " + JSON.stringify(options) + ";\n  if (typeof lively === \"undefined\" || !lively.vm) {\n    return Promise.resolve({\n      isEvalResult: true,\n      isError: true,\n      value: 'lively.vm not available!'\n    });\n  }\n  var hasSystem = typeof System !== \"undefined\"\n  options.context = hasSystem\n    ? System.global\n    : typeof window !== \"undefined\"\n        ? window\n        : typeof global !== \"undefined\"\n            ? global\n            : typeof self !== \"undefined\" ? self : this;\n  function evalFunction(source, options) {\n    if (hasSystem) {\n      var conf = {meta: {}}; conf.meta[options.targetModule] = {format: \"esm\"};\n      System.config(conf);\n    } else {\n      options = Object.assign({}, options);\n      delete options.targetModule;\n    }\n    return lively.vm.runEval(source, options);\n  }\n  function keysOfObjectFunction(prefix, options) {\n    return lively.vm.completions.getCompletions(code => evalFunction(code, options), prefix)\n      .then(result => ({isEvalResult: true, completions: result.completions, prefix: result.startLetters}));\n  }\n  return " + (action === "eval" ? "evalFunction" : "keysOfObjectFunction") + "(arg, options)\n    .catch(err => ({isEvalResult: true, isError: true, value: String(err.stack || err)}));\n})();\n";
+      return "\n(function() {\n  var arg = " + JSON.stringify(arg) + ",\n      options = " + JSON.stringify(options) + ";\n  if (typeof lively === \"undefined\" || !lively.vm) {\n    return Promise.resolve({\n      isEvalResult: true,\n      isError: true,\n      value: 'lively.vm not available!'\n    });\n  }\n  var hasSystem = typeof System !== \"undefined\"\n  options.context = hasSystem\n    ? System.global\n    : typeof window !== \"undefined\"\n        ? window\n        : typeof global !== \"undefined\"\n            ? global\n            : typeof self !== \"undefined\" ? self : this;\n  function evalFunction(source, options) {\n    if (hasSystem) {\n      var conf = {meta: {}}; conf.meta[options.targetModule] = {format: \"esm\"};\n      System.config(conf);\n    } else {\n      options = Object.assign({topLevelVarRecorderName: \"GLOBAL\"}, options);\n      delete options.targetModule;\n    }\n    return lively.vm.runEval(source, options);\n  }\n  function keysOfObjectFunction(prefix, options) {\n    return lively.vm.completions.getCompletions(code => evalFunction(code, options), prefix)\n      .then(result => ({isEvalResult: true, completions: result.completions, prefix: result.startLetters}));\n  }\n  return " + (action === "eval" ? "evalFunction" : "keysOfObjectFunction") + "(arg, options)\n    .catch(err => ({isEvalResult: true, isError: true, value: String(err.stack || err)}));\n})();\n";
     }
   }, {
     key: "runEval",
@@ -27144,21 +27158,22 @@ var L2LEvalStrategy = function (_RemoteEvalStrategy2) {
           while (1) {
             switch (_context14.prev = _context14.next) {
               case 0:
+                inspect({ source: source, options: options });
                 l2lClient = this.l2lClient;
                 targetId = this.targetId;
-                _context14.next = 4;
+                _context14.next = 5;
                 return new Promise(function (resolve, reject) {
                   return l2lClient.sendTo(targetId, "remote-eval", { source: source }, resolve);
                 });
 
-              case 4:
+              case 5:
                 _ref15 = _context14.sent;
                 evalResult = _ref15.data;
 
                 if (evalResult && evalResult.value && evalResult.value.isEvalResult) evalResult = evalResult.value;
                 return _context14.abrupt("return", evalResult);
 
-              case 8:
+              case 9:
               case "end":
                 return _context14.stop();
             }

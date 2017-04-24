@@ -1364,7 +1364,7 @@ var RemoteEvalStrategy = function (_LivelyVmEvalStrategy) {
     key: "sourceForRemote",
     value: function sourceForRemote(action, arg, options) {
       options = lively_lang.obj.dissoc(options, ["systemInterface", "System", "context"]);
-      return "\n(function() {\n  var arg = " + JSON.stringify(arg) + ",\n      options = " + JSON.stringify(options) + ";\n  if (typeof lively === \"undefined\" || !lively.vm) {\n    return Promise.resolve({\n      isEvalResult: true,\n      isError: true,\n      value: 'lively.vm not available!'\n    });\n  }\n  var hasSystem = typeof System !== \"undefined\"\n  options.context = hasSystem\n    ? System.global\n    : typeof window !== \"undefined\"\n        ? window\n        : typeof global !== \"undefined\"\n            ? global\n            : typeof self !== \"undefined\" ? self : this;\n  function evalFunction(source, options) {\n    if (hasSystem) {\n      var conf = {meta: {}}; conf.meta[options.targetModule] = {format: \"esm\"};\n      System.config(conf);\n    } else {\n      options = Object.assign({}, options);\n      delete options.targetModule;\n    }\n    return lively.vm.runEval(source, options);\n  }\n  function keysOfObjectFunction(prefix, options) {\n    return lively.vm.completions.getCompletions(code => evalFunction(code, options), prefix)\n      .then(result => ({isEvalResult: true, completions: result.completions, prefix: result.startLetters}));\n  }\n  return " + (action === "eval" ? "evalFunction" : "keysOfObjectFunction") + "(arg, options)\n    .catch(err => ({isEvalResult: true, isError: true, value: String(err.stack || err)}));\n})();\n";
+      return "\n(function() {\n  var arg = " + JSON.stringify(arg) + ",\n      options = " + JSON.stringify(options) + ";\n  if (typeof lively === \"undefined\" || !lively.vm) {\n    return Promise.resolve({\n      isEvalResult: true,\n      isError: true,\n      value: 'lively.vm not available!'\n    });\n  }\n  var hasSystem = typeof System !== \"undefined\"\n  options.context = hasSystem\n    ? System.global\n    : typeof window !== \"undefined\"\n        ? window\n        : typeof global !== \"undefined\"\n            ? global\n            : typeof self !== \"undefined\" ? self : this;\n  function evalFunction(source, options) {\n    if (hasSystem) {\n      var conf = {meta: {}}; conf.meta[options.targetModule] = {format: \"esm\"};\n      System.config(conf);\n    } else {\n      options = Object.assign({topLevelVarRecorderName: \"GLOBAL\"}, options);\n      delete options.targetModule;\n    }\n    return lively.vm.runEval(source, options);\n  }\n  function keysOfObjectFunction(prefix, options) {\n    return lively.vm.completions.getCompletions(code => evalFunction(code, options), prefix)\n      .then(result => ({isEvalResult: true, completions: result.completions, prefix: result.startLetters}));\n  }\n  return " + (action === "eval" ? "evalFunction" : "keysOfObjectFunction") + "(arg, options)\n    .catch(err => ({isEvalResult: true, isError: true, value: String(err.stack || err)}));\n})();\n";
     }
   }, {
     key: "runEval",
@@ -1652,21 +1652,22 @@ var L2LEvalStrategy = function (_RemoteEvalStrategy2) {
           while (1) {
             switch (_context14.prev = _context14.next) {
               case 0:
+                inspect({ source: source, options: options });
                 l2lClient = this.l2lClient;
                 targetId = this.targetId;
-                _context14.next = 4;
+                _context14.next = 5;
                 return new Promise(function (resolve, reject) {
                   return l2lClient.sendTo(targetId, "remote-eval", { source: source }, resolve);
                 });
 
-              case 4:
+              case 5:
                 _ref15 = _context14.sent;
                 evalResult = _ref15.data;
 
                 if (evalResult && evalResult.value && evalResult.value.isEvalResult) evalResult = evalResult.value;
                 return _context14.abrupt("return", evalResult);
 
-              case 8:
+              case 9:
               case "end":
                 return _context14.stop();
             }
