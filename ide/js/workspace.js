@@ -32,7 +32,7 @@ export default class Workspace extends Window {
           });
         }
       },
-      
+
       content: {
         derived: true, after: ["targetMorph"],
         get() { return this.targetMorph.textString; },
@@ -111,7 +111,7 @@ export default class Workspace extends Window {
       connect(label, 'onHoverOut', label, 'fontSize', {converter: () => 14});
       connect(label, 'onMouseDown', this, 'execCommand', {converter: () => "[workspace] query for file"});
     }
-    return buttons;
+    return [...buttons, label];
   }
 
   get commands() {
@@ -144,7 +144,7 @@ export default class Workspace extends Window {
             workspace.content = await workspace.file.read();
         }
       },
-      
+
       {
         name: "[workspace] save content",
         async exec(workspace) {
