@@ -219,6 +219,7 @@ export default class ServerCommand extends CommandInterface {
   kill(signal = "KILL") {
     if (!this.process || this.exitCode !== undefined) return Promise.resolve();
     debug && console.log(`[${this}] signaling ${signal}`);
+    this.lastSignal = signal;
     return new Promise((resolve, reject) =>
       doKill(this.pid, signal, err => err ? reject(err) : resolve()));
   }

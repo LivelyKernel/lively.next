@@ -19,6 +19,7 @@ export default class CommandInterface {
     this._whenDone = promise.deferred();
     this._whenStarted = promise.deferred();
     this.startTime = 0;
+    this.lastSignal = null;
     events.makeEmitter(this);
   }
 
@@ -61,7 +62,9 @@ export default class CommandInterface {
     throw new Error("not yet implemented");
   }
 
-  kill(signal = "KILL") {}
+  kill(signal = "KILL") {
+    this.lastSignal = signal;
+  }
 
   toString() {
     return `${this.constructor.name}(${this.commandString}, ${this.status})`;

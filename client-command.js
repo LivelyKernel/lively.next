@@ -139,7 +139,8 @@ export default class ClientCommand extends CommandInterface {
 
   async kill(signal = "KILL") {
     if (!this.isRunning()) return;
-    debug && console.log(`${this} requesting kill`)
+    debug && console.log(`${this} signaling ${signal}`)
+    this.lastSignal = signal;
     var {pid, l2lClient} = this,
         {data: {status, error}} = await l2lClient.sendToAndWait(
                                     l2lClient.trackerId, "lively.shell.kill", {pid});
