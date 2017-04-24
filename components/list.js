@@ -1002,7 +1002,6 @@ export class FilterableList extends Morph {
       {keys: "Down|Ctrl-N",                  command: "arrow down"},
       {keys: "Shift-Up",                     command: "select up"},
       {keys: "Shift-Down",                   command: "select down"},
-      {keys: {win: "Ctrl-A", mac: "Meta-A"}, command: "select all"},
       {keys: "Alt-V|PageUp",                 command: "page up"},
       {keys: "Ctrl-V|PageDown",              command: "page down"},
       {keys: "Alt-Shift-,",                  command: "goto first item"},
