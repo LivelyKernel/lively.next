@@ -83,9 +83,7 @@ export class StyleSheet {
     if (selector == "addMorphAt") {
       this.applyToAll(morph, args[0]);
     } else if (prop == "name" || prop == "styleClasses") {
-      debugger;
-      if (prevValue == value)
-        return;
+      if (prevValue == value) return;
       this.enforceRulesOn(morph, root);
       this.applyLayout(morph);
     }
