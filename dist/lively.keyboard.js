@@ -223,8 +223,6 @@ var CommandHandler = function () {
       // 1. a string, naming a command in morphs.commands
       // 2. a spec object like {command: "cmd name", args: {...}, handlesCount: BOOL, }
       // 3. a proper command object {name: STRING, exec: FUNCTION, ....}
-      debugger;
-
       var _ref2 = this.lookupCommand(commandOrName, morph) || {},
           name = _ref2.name,
           command = _ref2.command;
@@ -952,12 +950,13 @@ var KeyHandler = function () {
             lower = keyCombo.replace(/^(input-)(.*)$/, function (_, before, key) {
           return before + key.toLowerCase();
         });
-        combos.push(upper, lower);
+        if (!combos.includes(upper)) combos.push(upper);
+        if (!combos.includes(lower)) combos.push(lower);
       }
 
-      var command = combos.map(function (keyCombo) {
+      var command = lively_lang.arr.findAndGet(combos, function (keyCombo) {
         return _this2.keyBindings[keyCombo];
-      })[0];
+      });
 
       if (keyChain) {
         var chainCombo = combos.find(function (keyCombo) {
@@ -1068,14 +1067,13 @@ var placeholderValue = "\x01\x01";
 var placeholderRe = new RegExp("\x01", "g");
 
 var DOMInputCapture = function () {
-  function DOMInputCapture(eventDispatcher, options) {
+  function DOMInputCapture(eventDispatcher) {
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     classCallCheck(this, DOMInputCapture);
 
     this.eventDispatcher = eventDispatcher;
 
-    this.options = _extends({
-      autofocus: false
-    }, options);
+    this.keepTextNodeFocused = options.hasOwnProperty("keepTextNodeFocused") ? options.keepTextNodeFocused : false;
 
     this.domState = {
       rootNode: null,
@@ -1131,28 +1129,32 @@ var DOMInputCapture = function () {
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // event handlers
-      domState.eventHandlers = [{ type: "focus", node: newRootNode, fn: function fn(evt) {
+      domState.eventHandlers = [{ type: "keydown", node: newRootNode, fn: function fn(evt) {
+          return _this.onRootNodeKeyDown(evt);
+        }, capturing: false }, { type: "keyup", node: newRootNode, fn: function fn(evt) {
+          return _this.onRootNodeKeyUp(evt);
+        }, capturing: false }, { type: "focus", node: newRootNode, fn: function fn(evt) {
           return _this.onRootNodeFocus(evt);
-        }, capturing: true }, { type: "blur", node: domState.textareaNode, fn: function fn(evt) {
-          return _this.onTextAreaBlur(evt);
-        }, capturing: true }, { type: "keydown", node: domState.textareaNode, fn: function fn(evt) {
-          return _this.onKeyDown(evt);
-        }, capturing: false }, { type: "keyup", node: domState.textareaNode, fn: function fn(evt) {
-          return _this.onKeyUp(evt);
-        }, capturing: false }, { type: "cut", node: domState.textareaNode, fn: function fn(evt) {
-          return _this.onCut(evt);
-        }, capturing: false }, { type: "copy", node: domState.textareaNode, fn: function fn(evt) {
-          return _this.onCopy(evt);
-        }, capturing: false }, { type: "paste", node: domState.textareaNode, fn: function fn(evt) {
-          return _this.onPaste(evt);
-        }, capturing: false }, { type: "compositionstart", node: domState.textareaNode, fn: function fn(evt) {
+        }, capturing: true }, { type: "blur", node: textareaNode, fn: function fn(evt) {
+          return _this.onTextareaBlur(evt);
+        }, capturing: true }, { type: "keydown", node: textareaNode, fn: function fn(evt) {
+          return _this.onTextareaKeyDown(evt);
+        }, capturing: false }, { type: "keyup", node: textareaNode, fn: function fn(evt) {
+          return _this.onTextareaKeyUp(evt);
+        }, capturing: false }, { type: "cut", node: textareaNode, fn: function fn(evt) {
+          return _this.onTextareaCut(evt);
+        }, capturing: false }, { type: "copy", node: textareaNode, fn: function fn(evt) {
+          return _this.onTextareaCopy(evt);
+        }, capturing: false }, { type: "paste", node: textareaNode, fn: function fn(evt) {
+          return _this.onTextareaPaste(evt);
+        }, capturing: false }, { type: "compositionstart", node: textareaNode, fn: function fn(evt) {
           return _this.onCompositionStart(evt);
-        }, capturing: false }, { type: "compositionend", node: domState.textareaNode, fn: function fn(evt) {
+        }, capturing: false }, { type: "compositionend", node: textareaNode, fn: function fn(evt) {
           return _this.onCompositionEnd(evt);
-        }, capturing: false }, { type: "compositionupdate", node: domState.textareaNode, fn: function fn(evt) {
+        }, capturing: false }, { type: "compositionupdate", node: textareaNode, fn: function fn(evt) {
           return _this.onCompositionUpdate(evt);
-        }, capturing: false }, { type: "input", node: domState.textareaNode, fn: function fn(evt) {
-          return _this.onInput(evt);
+        }, capturing: false }, { type: "input", node: textareaNode, fn: function fn(evt) {
+          return _this.onTextareaInput(evt);
         }, capturing: false }];
       domState.eventHandlers.forEach(function (_ref) {
         var type = _ref.type,
@@ -1225,6 +1227,18 @@ var DOMInputCapture = function () {
         });
 
       if (morph && morph.isText) this.ensureBeingAtCursorOfText(morph);else if (world) this.ensureBeingInVisibleBoundsOfWorld(world);
+    }
+  }, {
+    key: "focusTextareaNode",
+    value: function focusTextareaNode(morph, world) {
+      return this.focus(morph, world);
+    }
+  }, {
+    key: "focusRootNode",
+    value: function focusRootNode(morph, world) {
+      var node = this.domState.rootNode;
+      if (!node) return;
+      node.ownerDocument.activeElement !== node && node.focus();
     }
   }, {
     key: "blur",
@@ -1365,7 +1379,7 @@ var DOMInputCapture = function () {
         }, _callee, this, [[4, 9], [14, 19]]);
       }));
 
-      function execCommand(_x, _x2) {
+      function execCommand(_x2, _x3) {
         return _ref4.apply(this, arguments);
       }
 
@@ -1415,12 +1429,12 @@ var DOMInputCapture = function () {
           textareaNode = _ref6.textareaNode,
           rootNode = _ref6.rootNode;
 
-      if (this.options.autofocus && (evt.target === textareaNode || evt.target === rootNode)) this.focus();
+      if (this.keepTextNodeFocused && (evt.target === textareaNode || evt.target === rootNode)) this.focus();
       this.inputState.composition = null;
     }
   }, {
-    key: "onTextAreaBlur",
-    value: function onTextAreaBlur(evt) {
+    key: "onTextareaBlur",
+    value: function onTextareaBlur(evt) {
       var _this5 = this;
 
       setTimeout(function () {
@@ -1432,18 +1446,28 @@ var DOMInputCapture = function () {
       });
     }
   }, {
-    key: "onKeyUp",
-    value: function onKeyUp(evt) {
+    key: "onRootNodeKeyUp",
+    value: function onRootNodeKeyUp(evt) {
       this.eventDispatcher.dispatchDOMEvent(evt);
     }
   }, {
-    key: "onKeyDown",
-    value: function onKeyDown(evt) {
+    key: "onRootNodeKeyDown",
+    value: function onRootNodeKeyDown(evt) {
       this.eventDispatcher.dispatchDOMEvent(evt);
     }
   }, {
-    key: "onInput",
-    value: function onInput(evt) {
+    key: "onTextareaKeyUp",
+    value: function onTextareaKeyUp(evt) {
+      this.eventDispatcher.dispatchDOMEvent(evt);
+    }
+  }, {
+    key: "onTextareaKeyDown",
+    value: function onTextareaKeyDown(evt) {
+      this.eventDispatcher.dispatchDOMEvent(evt);
+    }
+  }, {
+    key: "onTextareaInput",
+    value: function onTextareaInput(evt) {
       if (this.inputState.composition) return;
       if (!evt.data) evt.data = this.readValue();
       this.resetValue();
@@ -1469,18 +1493,18 @@ var DOMInputCapture = function () {
       this.inputState.composition = null;
     }
   }, {
-    key: "onPaste",
-    value: function onPaste(evt) {
+    key: "onTextareaPaste",
+    value: function onTextareaPaste(evt) {
       this.inputState.manualPaste ? this.inputState.manualPaste.onEvent(evt) : this.eventDispatcher.dispatchDOMEvent(evt);
     }
   }, {
-    key: "onCopy",
-    value: function onCopy(evt) {
+    key: "onTextareaCopy",
+    value: function onTextareaCopy(evt) {
       this.inputState.manualCopy ? this.inputState.manualCopy.onEvent(evt) : this.eventDispatcher.dispatchDOMEvent(evt);
     }
   }, {
-    key: "onCut",
-    value: function onCut(evt) {
+    key: "onTextareaCut",
+    value: function onTextareaCut(evt) {
       this.eventDispatcher.dispatchDOMEvent(evt);
     }
   }]);

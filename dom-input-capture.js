@@ -6,13 +6,11 @@ const placeholderValue = "\x01\x01",
 
 export default class DOMInputCapture {
 
-  constructor(eventDispatcher, options) {
+  constructor(eventDispatcher, options = {}) {
     this.eventDispatcher = eventDispatcher;
 
-    this.options = {
-      autofocus: false,
-      ...options
-    }
+    this.keepTextNodeFocused = options.hasOwnProperty("keepTextNodeFocused") ?
+                                options.keepTextNodeFocused : false;
 
     this.domState = {
       rootNode: null,
@@ -88,18 +86,20 @@ export default class DOMInputCapture {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // event handlers
     domState.eventHandlers = [
-      {type: "focus",   node: newRootNode,           fn: evt => this.onRootNodeFocus(evt), capturing: true},
-      {type: "blur",    node: domState.textareaNode, fn: evt => this.onTextAreaBlur(evt), capturing: true},
-      {type: "keydown", node: domState.textareaNode, fn: evt => this.onKeyDown(evt), capturing: false},
-      {type: "keyup",   node: domState.textareaNode, fn: evt => this.onKeyUp(evt), capturing: false},
-      {type: "cut",     node: domState.textareaNode, fn: evt => this.onCut(evt), capturing: false},
-      {type: "copy",    node: domState.textareaNode, fn: evt => this.onCopy(evt), capturing: false},
-      {type: "paste",   node: domState.textareaNode, fn: evt => this.onPaste(evt), capturing: false},
+      {type: "keydown", node: newRootNode,  fn: evt => this.onRootNodeKeyDown(evt), capturing: false},
+      {type: "keyup",   node: newRootNode,  fn: evt => this.onRootNodeKeyUp(evt), capturing: false},
+      {type: "focus",   node: newRootNode,  fn: evt => this.onRootNodeFocus(evt), capturing: true},
+      {type: "blur",    node: textareaNode, fn: evt => this.onTextareaBlur(evt), capturing: true},
+      {type: "keydown", node: textareaNode, fn: evt => this.onTextareaKeyDown(evt), capturing: false},
+      {type: "keyup",   node: textareaNode, fn: evt => this.onTextareaKeyUp(evt), capturing: false},
+      {type: "cut",     node: textareaNode, fn: evt => this.onTextareaCut(evt), capturing: false},
+      {type: "copy",    node: textareaNode, fn: evt => this.onTextareaCopy(evt), capturing: false},
+      {type: "paste",   node: textareaNode, fn: evt => this.onTextareaPaste(evt), capturing: false},
 
-      {type: "compositionstart",  node: domState.textareaNode, fn: evt => this.onCompositionStart(evt), capturing: false},
-      {type: "compositionend",    node: domState.textareaNode, fn: evt => this.onCompositionEnd(evt), capturing: false},
-      {type: "compositionupdate", node: domState.textareaNode, fn: evt => this.onCompositionUpdate(evt), capturing: false},
-      {type: "input",             node: domState.textareaNode, fn: evt => this.onInput(evt), capturing: false},
+      {type: "compositionstart",  node: textareaNode, fn: evt => this.onCompositionStart(evt), capturing: false},
+      {type: "compositionend",    node: textareaNode, fn: evt => this.onCompositionEnd(evt), capturing: false},
+      {type: "compositionupdate", node: textareaNode, fn: evt => this.onCompositionUpdate(evt), capturing: false},
+      {type: "input",             node: textareaNode, fn: evt => this.onTextareaInput(evt), capturing: false},
     ]
     domState.eventHandlers.forEach(({type, node, fn, capturing}) =>
       node.addEventListener(type, fn, capturing));
@@ -158,6 +158,14 @@ export default class DOMInputCapture {
 
     if (morph && morph.isText) this.ensureBeingAtCursorOfText(morph);
     else if (world) this.ensureBeingInVisibleBoundsOfWorld(world);
+  }
+
+  focusTextareaNode(morph, world) { return this.focus(morph, world); }
+
+  focusRootNode(morph, world) {
+    var node = this.domState.rootNode;
+    if (!node) return;
+    node.ownerDocument.activeElement !== node && node.focus();
   }
 
   blur() {
@@ -270,13 +278,12 @@ export default class DOMInputCapture {
 
   onRootNodeFocus(evt) {
     var {textareaNode, rootNode} = this.domState || {};
-    if (this.options.autofocus
-     && (evt.target === textareaNode || evt.target === rootNode))
+    if (this.keepTextNodeFocused && (evt.target === textareaNode || evt.target === rootNode))
       this.focus();
     this.inputState.composition = null;
   }
 
-  onTextAreaBlur(evt) {
+  onTextareaBlur(evt) {
     setTimeout(() => {
       var {textareaNode, rootNode} = this.domState || {};
       if (rootNode && document.activeElement === rootNode)
@@ -284,11 +291,13 @@ export default class DOMInputCapture {
     });
   }
 
-  onKeyUp(evt) { this.eventDispatcher.dispatchDOMEvent(evt); }
+  onRootNodeKeyUp(evt) { this.eventDispatcher.dispatchDOMEvent(evt); }
+  onRootNodeKeyDown(evt) { this.eventDispatcher.dispatchDOMEvent(evt); }
 
-  onKeyDown(evt) { this.eventDispatcher.dispatchDOMEvent(evt); }
+  onTextareaKeyUp(evt) { this.eventDispatcher.dispatchDOMEvent(evt); }
+  onTextareaKeyDown(evt) { this.eventDispatcher.dispatchDOMEvent(evt); }
 
-  onInput(evt) {
+  onTextareaInput(evt) {
     if (this.inputState.composition) return;
     if (!evt.data) evt.data = this.readValue();
     this.resetValue();
@@ -310,19 +319,19 @@ export default class DOMInputCapture {
     this.inputState.composition = null;
   }
 
-  onPaste(evt) {
+  onTextareaPaste(evt) {
     this.inputState.manualPaste
       ? this.inputState.manualPaste.onEvent(evt)
       : this.eventDispatcher.dispatchDOMEvent(evt);
   }
 
-  onCopy(evt) {
+  onTextareaCopy(evt) {
     this.inputState.manualCopy
       ? this.inputState.manualCopy.onEvent(evt)
       : this.eventDispatcher.dispatchDOMEvent(evt);
   }
 
-  onCut(evt) {
+  onTextareaCut(evt) {
     this.eventDispatcher.dispatchDOMEvent(evt);
   }
 }

@@ -274,10 +274,11 @@ export default class KeyHandler {
     if (!command && keyCombo.startsWith("input-")) {
       var upper = keyCombo.replace(/^(input-)(.*)$/, (_, before, key) => before+key.toUpperCase()),
           lower = keyCombo.replace(/^(input-)(.*)$/, (_, before, key) => before+key.toLowerCase());
-      combos.push(upper, lower);
+      if (!combos.includes(upper)) combos.push(upper);
+      if (!combos.includes(lower)) combos.push(lower);
     }
-
-    var command = combos.map(keyCombo => this.keyBindings[keyCombo])[0];
+    
+    var command = arr.findAndGet(combos, keyCombo => this.keyBindings[keyCombo]);
 
     if (keyChain) {
       var chainCombo = combos.find(keyCombo => this.keyBindings[keyChain + " " + keyCombo]);
