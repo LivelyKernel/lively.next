@@ -1,11 +1,36 @@
 /*global Map,System*/
 import { promise, events, num } from "lively.lang";
-import { resource } from "lively.resources";
 import ioClient from "socket.io-client";
 import L2LConnection from "./interface.js";
 import { defaultActions, defaultClientActions } from "./default-actions.js";
 
-let isNode = System.get("@system-env").node;
+const urlHelper = {
+  isRoot: url => urlHelper.path(url) === "/",
+
+  root: url =>
+    urlHelper.isRoot(url) ? url :
+      url.slice(0, -urlHelper.path(url).length) + "/",
+
+  path: (function() {
+    const protocolRe = /^[a-z0-9-_\.]+:/,
+          slashslashRe = /^\/\/[^\/]+/;
+    return url => {
+      var path = url.replace(protocolRe, "").replace(slashslashRe, "");
+      return path === "" ? "/" : path;
+    }
+  })(),
+
+  join: (url, path) => {
+    if (url.endsWith("/")) url = url.slice(0, -1);
+    if (path.startsWith("/")) path = path.slice(1);
+    return url + "/" + path;
+  }
+}
+
+
+let isNode = typeof System !== "undefined" ?
+  System.get("@system-env").node :
+  typeof process !== "undefined" && process.env;
 
 function determineLocation() {
   if (typeof document !== "undefined" && document.location)
@@ -64,9 +89,8 @@ export default class L2LClient extends L2LConnection {
 
     if (!url) throw new Error("L2LClient needs server url!")
 
-    let res = resource(url),
-        origin = res.root().url.replace(/\/+$/, ""),
-        path = res.path(),
+    let origin = urlHelper.root(url).replace(/\/+$/, ""),
+        path = urlHelper.path(url),
         key = this.clientKey(origin, path, namespace || ""),
         client = this.clients.get(key);
 
@@ -128,7 +152,7 @@ export default class L2LClient extends L2LConnection {
 
     this._reconnectState.closed = false;
 
-    var url = resource(this.origin).join(this.namespace).url,
+    var url = urlHelper.join(this.origin, this.namespace),
         opts = {path: this.path, transports: ['websocket', 'polling']},
         socket = this._socketioClient = ioClient(url, opts);
 

@@ -2,7 +2,6 @@
   "name": "lively.2lively",
   "version": "0.1.0",
   "dependencies": {
-    "lively.resources": "*",
     "lively.storage": "*",
     "lively.lang": "*",
     "socket.io-client": "^1.5.1",

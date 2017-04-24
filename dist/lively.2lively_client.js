@@ -8,7 +8,7 @@ t&&t.ArrayBuffer&&(h=r(27));var y="undefined"!=typeof navigator&&/Android/i.test
         typeof self!=="undefined" ? self : this;
   this.lively = this.lively || {};
 this.lively.l2l = this.lively.l2l || {};
-this.lively.l2l.L2LClient = (function (lively_lang,lively_resources,ioClient) {
+this.lively.l2l.L2LClient = (function (lively_lang,ioClient) {
 'use strict';
 
 ioClient = 'default' in ioClient ? ioClient['default'] : ioClient;
@@ -832,7 +832,32 @@ var defaultClientActions = {
 };
 
 /*global Map,System*/
-var isNode = System.get("@system-env").node;
+var urlHelper = {
+  isRoot: function isRoot(url) {
+    return urlHelper.path(url) === "/";
+  },
+
+  root: function root(url) {
+    return urlHelper.isRoot(url) ? url : url.slice(0, -urlHelper.path(url).length) + "/";
+  },
+
+  path: function () {
+    var protocolRe = /^[a-z0-9-_\.]+:/,
+        slashslashRe = /^\/\/[^\/]+/;
+    return function (url) {
+      var path = url.replace(protocolRe, "").replace(slashslashRe, "");
+      return path === "" ? "/" : path;
+    };
+  }(),
+
+  join: function join(url, path) {
+    if (url.endsWith("/")) url = url.slice(0, -1);
+    if (path.startsWith("/")) path = path.slice(1);
+    return url + "/" + path;
+  }
+};
+
+var isNode = typeof System !== "undefined" ? System.get("@system-env").node : typeof process !== "undefined" && process.env;
 
 function determineLocation() {
   if (typeof document !== "undefined" && document.location) return document.location.origin;
@@ -895,9 +920,8 @@ var L2LClient = function (_L2LConnection) {
 
       if (!url) throw new Error("L2LClient needs server url!");
 
-      var res = lively_resources.resource(url),
-          origin = res.root().url.replace(/\/+$/, ""),
-          path = res.path(),
+      var origin = urlHelper.root(url).replace(/\/+$/, ""),
+          path = urlHelper.path(url),
           key = this.clientKey(origin, path, namespace || ""),
           client = this.clients.get(key);
 
@@ -998,7 +1022,7 @@ var L2LClient = function (_L2LConnection) {
 
                 this._reconnectState.closed = false;
 
-                url = lively_resources.resource(this.origin).join(this.namespace).url, opts = { path: this.path, transports: ['websocket', 'polling'] }, socket = this._socketioClient = ioClient(url, opts);
+                url = urlHelper.join(this.origin, this.namespace), opts = { path: this.path, transports: ['websocket', 'polling'] }, socket = this._socketioClient = ioClient(url, opts);
 
 
                 if (this.debug) console.log("[" + this + "] connecting");
@@ -1445,7 +1469,7 @@ var L2LClient = function (_L2LConnection) {
 
 return L2LClient;
 
-}(lively.lang,lively.resources,io));
+}(lively.lang,io));
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.l2l.client;
 })();

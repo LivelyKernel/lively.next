@@ -30,7 +30,6 @@ module.exports = Promise.resolve()
       moduleName: 'lively.l2l.L2LClient',
       globals: {
         "lively.lang": "lively.lang",
-        "lively.resources": "lively.resources",
         "socket.io-client": "io"
       },
     }))

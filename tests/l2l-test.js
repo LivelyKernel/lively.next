@@ -1,7 +1,6 @@
 /*global beforeEach, afterEach, before, after, describe, it*/
 
 import { expect } from "mocha-es6";
-import { resource } from "lively.resources";
 import { promise } from "lively.lang";
 import L2LTracker from "../tracker.js";
 import L2LClient from "../client.js";
