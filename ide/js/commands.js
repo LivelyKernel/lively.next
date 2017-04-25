@@ -304,16 +304,19 @@ export var jsIdeCommands = [
 
   {
     name: "[javascript] auto format code",
-    exec: async (text, opts) => {
-      let margin = 7*(text.width/100),
-          printWidth = Math.floor(text.width / text.defaultCharExtent().width);
-      
+    handlesCount: true,
+    exec: async (text, opts, count) => {
+      show(count);
+
+      let margin = 7 * (text.width / 100),
+          printWidth = count ? count : Math.floor(text.width / text.defaultCharExtent().width);
+
       opts = {
         printWidth,
         tabWidth: 2,
         bracketSpacing: false,
         ...opts
-      }
+      };
 
       let module = lively.modules.module,
           prettier = await module("https://prettier.github.io/prettier/prettier.min.js").load({
@@ -381,9 +384,6 @@ export var jsIdeCommands = [
               start: {column: 0, row: origStartRow},
               end: {column: 0, row: origEndRow + 1}
             };
-console.log(startNode.astIndex)
-console.log(endNode.astIndex)
-console.log(prettySource)
 
 
         textMorph.undoManager.group()
@@ -555,10 +555,11 @@ export var deleteBackwardsWithBehavior = {
 }
 export var tabBehavior = {
   name: "tab - snippet expand or indent",
+  handlesCount: true,
   scrollCursorIntoView: true,
-  exec: function(morph) {
+  exec: function(morph, args, count) {
     if (!morph.selection.isEmpty()) {
-      return morph.execCommand("[javascript] auto format code");
+      return morph.execCommand("[javascript] auto format code", args, count);
     }
 
     var snippet = morph.snippets.find(snippet => snippet.canExpand(morph));
@@ -566,11 +567,9 @@ export var tabBehavior = {
       snippet.expandAtCursor(morph);
       return true;
     }
-    return morph.execCommand("insertstring", {string: morph.tab});
+    return morph.execCommand("insertstring", {string: morph.tab}, count);
   }
-}
-
-
+};
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // ast commands
