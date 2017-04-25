@@ -375,13 +375,13 @@ export class Morph {
       styleSheets: {
         isStyleProp: true,
         after: ['submorphs'],
-        set(rules) {
-          if (!obj.isArray(rules)) {
-            rules = [rules];
+        set(sheets) {
+          if (!obj.isArray(sheets)) {
+            sheets = [sheets];
           }
           this.setProperty(
             "styleSheets",
-            arr.compact(rules).map(rule => {
+            arr.compact(sheets).map(rule => {
               rule.applyToAll(this);
               return rule;
             })
@@ -1351,6 +1351,10 @@ export class Morph {
       if (morph) return morph;
     }
     return null;
+  }
+
+  getSubmorphsByStyleClassName(styleClassName) {
+    return this.withAllSubmorphsSelect(({styleClasses}) => styleClasses.includes(styleClassName));
   }
 
   getOwnerNamed(name) {
