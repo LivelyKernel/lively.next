@@ -72,6 +72,12 @@ export class World extends Morph {
 
   world() { return this }
 
+  makeDirty() {
+    if (this._dirty) return;
+    this._dirty = true;
+    this.env.renderer.renderLater();
+  }
+
   get hands() {
     return arr.sortBy(this.submorphs.filter(ea => ea.isHand), ea => ea.pointerId);
   }

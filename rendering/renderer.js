@@ -31,7 +31,7 @@ export class Renderer {
     this.domEnvironment = domEnvironment;
     this.renderMap = new WeakMap();
     this.renderWorldLoopProcess = null;
-    this.afterRenderCallTargets = [];
+    this.renderWorldLoopLater = null;
     this.requestAnimationFrame = domEnvironment.window.requestAnimationFrame.bind(domEnvironment.window);
   }
 
@@ -58,6 +58,14 @@ export class Renderer {
   stopRenderWorldLoop() {
     this.domEnvironment.window.cancelAnimationFrame(this.renderWorldLoopProcess);
     this.renderWorldLoopProcess = null;
+  }
+
+  renderLater() {
+    if (this.renderWorldLoopLater) return;
+    this.renderWorldLoopLater = this.requestAnimationFrame(() => {
+      this.renderStep();
+      this.renderWorldLoopLater = null;
+    });
   }
 
   renderStep() {

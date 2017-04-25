@@ -107,7 +107,7 @@ export class MorphicEnv {
     this.deleteHistory();
     this.uninstallWorldRelated();
     this.world = world;
-    this.renderer = new Renderer(world, rootNode, this.domEnv).startRenderWorldLoop();
+    this.renderer = new Renderer(world, rootNode, this.domEnv);
     this.eventDispatcher = new EventDispatcher(this.domEnv.window, world).install(rootNode);
     world.makeDirty();
     world.resumeSteppingAll();
