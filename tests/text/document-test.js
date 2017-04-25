@@ -519,11 +519,13 @@ describe("text document", () => {
     var doc; beforeEach(() => doc = Document.fromString("hello\nworld\n123"));
 
     it("single line",           () => expect(doc.textInRange(range(0,1,0,5))).equals("ello"));
-    it("empty range",           () => expect(doc.textInRange(range(0,1,0,1))).equals("") .equals(""));
+    it("empty range",           () => expect(doc.textInRange(range(0,1,0,1))).equals(""));
     it("reverse",               () => expect(doc.textInRange(range(0,5,0,1))).equals("ello"));
     it("across one lines",      () => expect(doc.textInRange(range(0,4,1,2))).equals("o\nwo"));
     it("across mulitple lines", () => expect(doc.textInRange(range(0,4,2,2))).equals("o\nworld\n12"));
     it("including newline",     () => expect(doc.textInRange(range(0,4,1,0))).equals("o\n"));
+    it("only newline",          () => expect(doc.textInRange(range(0,5,1,0))).equals("\n"));
+    it("starting with newline", () => expect(doc.textInRange(range(0,5,1,2))).equals("\nwo"));
 
     it("replaces text range single line", () => {
       var newRange = doc.setTextInRange("foo\nbar", range(0,2,0,4));
@@ -536,6 +538,21 @@ describe("text document", () => {
       expect(doc.textString).equals("hellfoo\nbar3");
       expect(newRange).deep.equals(range(0,4,1,3));
     });
+
+  });
+
+  describe("textAndAttributes in range", () => {
+
+    var doc; beforeEach(() => doc = Document.fromString("hello\nworld\n123"));
+
+    it("single line",           () => expect(doc.textAndAttributesInRange(range(0,1,0,5))).equals(["ello", null]));
+    it("empty range",           () => expect(doc.textAndAttributesInRange(range(0,1,0,1))).equals(["", null]));
+    it("reverse",               () => expect(doc.textAndAttributesInRange(range(0,5,0,1))).equals(["ello", null]));
+    it("across one lines",      () => expect(doc.textAndAttributesInRange(range(0,4,1,2))).equals(["o\nwo", null]));
+    it("across mulitple lines", () => expect(doc.textAndAttributesInRange(range(0,4,2,2))).equals(["o\nworld\n12", null]));
+    it("including newline",     () => expect(doc.textAndAttributesInRange(range(0,4,1,0))).equals(["o\n", null]));
+    it("only newline",          () => expect(doc.textAndAttributesInRange(range(0,5,1,0))).equals(["\n", null]));
+    it("starting with newline", () => expect(doc.textAndAttributesInRange(range(0,5,1,2))).equals(["\nwo", null]));
 
   });
 

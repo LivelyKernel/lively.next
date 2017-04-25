@@ -1380,6 +1380,13 @@ export default class Document {
   }
 
   textAndAttributesInRange({start, end}) {
+
+    if (eqPosition(start, end))
+      return ["", null];
+
+    if (lessPosition(end, start))
+      [start, end] = [end, start];
+
     start = maxPosition(start, {column: 0, row: 0});
     end = minPosition(end, this.endPosition);
 
@@ -1402,6 +1409,8 @@ export default class Document {
     let lastLine = lines[lines.length-1],
         [_, first] = splitTextAndAttributesAt(firstLine.textAndAttributes, start.column),
         [last] = splitTextAndAttributesAt(lastLine.textAndAttributes, end.column);
+
+    if (first.length === 0) first = ["", null];
 
     if (lines.length === 1)
       return concatTextAndAttributes(first, last, true);

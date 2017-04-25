@@ -50,7 +50,7 @@ describeInBrowser("undo", function() {
     expect(text.textString).equals("foo ");
     text.textUndo();
     expect(text.textString).equals("foo bar");
-    expect(text.selection).selectionEquals("Selection(0/4 -> 0/6)");
+    expect(text.selection).selectionEquals("Selection(0/4 -> 0/7)");
     text.textRedo();
     expect(text.textString).equals("foo ");
     expect(text.selection).selectionEquals("Selection(0/4 -> 0/4)");
@@ -137,6 +137,14 @@ describeInBrowser("undo", function() {
     expect(text.undoManager.undos).to.have.length(1);
     expect(text.undoManager.undos[0].changes).to.have.length(1);
     expect(text.undoManager.undos[0]).containSubset({changes: [{selector: "insertText"}]})
+  });
+
+  it("new line delete undo", () => {
+    text.textString = "aaa\nbbb";
+    text.undoManager.reset();
+    text.deleteText({start: {row: 0, column: 3}, end: {row: 1, column: 0}});
+    text.undoManager.undo();
+    expect(text.textString).equals("aaa\nbbb");
   });
 
 });
