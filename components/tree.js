@@ -701,7 +701,7 @@ export class Tree extends Morph {
     /* highlights all visible nodes that contain different information
        to their (location-wise) counterparts in 'treeData'. */
     let changedNodes = this.treeData.diff(treeData);
-    changedNodes.forEach(n => n.renderedNode && n.renderedNode.highlight());
+    changedNodes.forEach(([n,_]) => n.renderedNode && n.renderedNode.highlight());
   }
 
 }
@@ -821,9 +821,23 @@ export class TreeData {
         bList = treeData.asListWithIndexAndDepth();
     if (aList.length != bList.length) return [];
     for (var [a, b] of zip(aList, bList)) {
-      if (!obj.equals(a.node.value, b && b.node.value)) changedNodes.push(a.node);
+      if (!obj.equals(a.node.value, b && b.node.value)) changedNodes.push([a.node, b.node]);
     }
     return changedNodes;
+  }
+
+  patch(treeData) {
+    /* change a tree in place, leaving all the unchanged nodes
+       untouched */
+    let changedNodes = this.diff(treeData);
+    if (changedNodes.length > 0) {
+      for (let [a, b] of changedNodes) {
+        a.value = b.value;
+      }
+      return this;
+    } else {
+      return treeData;
+    }
   }
 
 }
