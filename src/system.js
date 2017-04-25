@@ -327,7 +327,12 @@ function instantiate_triggerOnLoadCallbacks(proceed, load) {
     // Then find those callbacks in System.get("@lively-env").onLoadCallbacks that
     // resolve to the loaded module, trigger + remove them
 
-    promise.waitFor(() => System.get(load.name)).then(() => {
+    let timeout = {};
+    promise.waitFor(10*1000, () => System.get(load.name), timeout).then(result => {
+      if (result === timeout) {
+        console.warn(`[lively.modules] instantiate_triggerOnLoadCallbacks for ${load.name} timed out`);
+        return;
+      }
       var modId = load.name,
           mod = module(System, modId),
           callbacks = System.get("@lively-env").onLoadCallbacks;

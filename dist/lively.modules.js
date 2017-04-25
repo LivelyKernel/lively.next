@@ -5875,17 +5875,21 @@ function timeout(ms, promise) {
   });
 }
 
-function waitFor$1(ms, tester) {
+function waitFor$1(ms, tester, timeoutObj) {
   // Tests for a condition calling function `tester` until the result is
   // truthy. Resolves with last return value of `tester`. If `ms` is defined
   // and `ms` milliseconds passed, reject with timeout error
+  // if timeoutObj is passed will resolve(!) with this object instead of raise
+  // an error
 
+  if (typeof ms === "function") {
+    tester = ms;ms = undefined;
+  }
   return new Promise(function (resolve, reject) {
-    if (typeof ms === "function") {
-      tester = ms;ms = undefined;
-    }
     var stopped = false,
-        error = null,
+        timedout = false,
+        timeoutValue = undefined,
+        error = undefined,
         value = undefined,
         i = setInterval(function () {
       if (stopped) {
@@ -5896,17 +5900,16 @@ function waitFor$1(ms, tester) {
       } catch (e) {
         error = e;
       }
-      if (value || error) {
-        stopped = true;
-        clearInterval(i);
-        error ? reject(error) : resolve(value);
-      }
+      if (!value && !error && !timedout) return;
+      stopped = true;
+      clearInterval(i);
+      if (error) return reject(error);
+      if (timedout) return typeof timeoutObj === "undefined" ? reject(new Error("timeout")) : resolve(timeoutObj);
+      return resolve(value);
     }, 10);
-    if (typeof ms === "number") {
-      setTimeout(function () {
-        error = new Error('timeout');
-      }, ms);
-    }
+    if (typeof ms === "number") setTimeout(function () {
+      return timedout = true;
+    }, ms);
   });
 }
 
@@ -72221,9 +72224,14 @@ function instantiate_triggerOnLoadCallbacks(proceed, load) {
     // Then find those callbacks in System.get("@lively-env").onLoadCallbacks that
     // resolve to the loaded module, trigger + remove them
 
-    lively_lang.promise.waitFor(function () {
+    var timeout = {};
+    lively_lang.promise.waitFor(10 * 1000, function () {
       return System.get(load.name);
-    }).then(function () {
+    }, timeout).then(function (result) {
+      if (result === timeout) {
+        console.warn("[lively.modules] instantiate_triggerOnLoadCallbacks for " + load.name + " timed out");
+        return;
+      }
       var modId = load.name,
           mod = module$2(System, modId),
           callbacks = System.get("@lively-env").onLoadCallbacks;
