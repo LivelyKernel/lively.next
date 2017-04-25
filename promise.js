@@ -45,28 +45,34 @@ function timeout(ms, promise) {
   });
 }
 
-function waitFor(ms, tester) {
+function waitFor(ms, tester, timeoutObj) {
   // Tests for a condition calling function `tester` until the result is
   // truthy. Resolves with last return value of `tester`. If `ms` is defined
   // and `ms` milliseconds passed, reject with timeout error
+  // if timeoutObj is passed will resolve(!) with this object instead of raise
+  // an error
 
-  return new Promise(function(resolve, reject) {
-    if (typeof ms === "function") { tester = ms; ms = undefined; }
-    var stopped = false,
-        error = null,
+  if (typeof ms === "function") { tester = ms; ms = undefined; }
+  return new Promise((resolve, reject) => {
+    let stopped = false,
+        timedout = false,
+        timeoutValue = undefined,
+        error = undefined,
         value = undefined,
-        i = setInterval(function() {
+        i = setInterval(() => {
           if (stopped) { clearInterval(i); return; }
           try { value = tester(); } catch (e) { error = e; }
-          if (value || error) {
-              stopped = true;
-              clearInterval(i);
-              error ? reject(error) : resolve(value);
-          }
+          if (!value && !error && !timedout) return;
+          stopped = true;
+          clearInterval(i);
+          if (error) return reject(error);
+          if (timedout)
+            return typeof timeoutObj === "undefined"
+              ? reject(new Error("timeout"))
+              : resolve(timeoutObj);
+          return resolve(value);
         }, 10);
-    if (typeof ms === "number") {
-      setTimeout(function() { error = new Error('timeout'); }, ms);
-    }
+    if (typeof ms === "number") setTimeout(() => timedout = true, ms);
   });
 }
 

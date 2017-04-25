@@ -141,6 +141,17 @@ describe('promise', () => {
       });
     });
 
+    it("timesout with value", () => {
+      var startTime = Date.now(), condition = false, timeoutval = {};
+      setTimeout(() => condition = {}, 100);
+      return waitFor(50, () => condition, timeoutval)
+      .then(val => {
+        expect(val).equals(timeoutval)
+        expect(Date.now() - startTime).below(70);
+      })
+      .catch((err) => expect().assert(false, "waitFor threw up"));
+    });
+
   });
 
 });
