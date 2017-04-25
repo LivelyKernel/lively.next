@@ -1,6 +1,6 @@
 {
   "name": "lively.lang",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "JavaScript utils providing useful abstractions for working with collections, functions, objects.",
   "main": "dist/lively.lang.js",
   "systemjs": {

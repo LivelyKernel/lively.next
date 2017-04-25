@@ -49,7 +49,7 @@ var GLOBAL = typeof window !== "undefined" ?
 var isNode = typeof process !== "undefined" && process.env && typeof process.exit === "function";
  
 var globalInterfaceSpec = [
-  {action: "installMethods", target: "Array",              sources: ["arr"],    methods: ["from","genN","range","withN"]},
+  {action: "installMethods", target: "Array",              sources: ["arr"],    methods: ["from", "genN","range","withN"]},
   {action: "installMethods", target: "Array.prototype",    sources: ["arr"],    methods: ["all","any","batchify","clear","clone","collect","compact","delimWith","detect","doAndContinue","each","equals","filterByKey","findAll","first","flatten","forEachShowingProgress","grep","groupBy","groupByKey","histogram","include","inject","intersect","invoke","last","mapAsync", "mapAsyncSeries", "mask","max","min","mutableCompact","nestedDelay","partition","pluck","pushAll","pushAllAt","pushAt","pushIfNotIncluded","reMatches","reject","rejectByKey","remove","removeAt","replaceAt","rotate","shuffle","size","sortBy","sortByKey","sum","swap","toArray","toTuples","union","uniq","uniqBy","without","withoutAll","zip"], alias: [["select", "filter"]]},
   {action: "installMethods", target: "Date",               sources: ["date"],   methods: [/*"parse"*/]},
   {action: "installMethods", target: "Date.prototype",     sources: ["date"],   methods: ["equals","format","relativeTo"]},
@@ -60,7 +60,6 @@ var globalInterfaceSpec = [
   {action: "installMethods", target: "Object",             sources: ["obj"],    methods: ["addScript","clone","deepCopy","extend","inherit","isArray","isBoolean","isElement","isEmpty","isFunction","isNumber","isObject","isRegExp","isString","isUndefined","merge","mergePropertyInHierarchy","values","valuesInPropertyHierarchy"]},
   {action: "installMethods", target: "Object.prototype",   sources: ["obj"],    methods: []},
   {action: "installMethods", target: "String.prototype",   sources: ["string"], methods: ["camelize","capitalize","digitValue","empty","hashCode","include","pad","regExpEscape","startsWithVowel","succ","times","toArray","toQueryParams","truncate"]},
-  {action: "installMethods", target: "Function.prototype", sources: ["klass"],  methods: ["create","addMethods","isSubclassOf","superclasses","categoryNameFor","remove"], alias: [["subclass", "create"]]},
 
   {action: "installObject", target: "Numbers",                source: "num",        methods: ["average","between","convertLength","humanReadableByteSize","median","normalRandom","parseLength","random","sort"]},
   {action: "installObject", target: "Properties",             source: "properties", methods: ["all","allOwnPropertiesOrFunctions","allProperties","any","forEachOwn","hash","nameFor","own","ownValues","values"]},
@@ -140,6 +139,27 @@ export function noConflict() {
 }
 
 export function installGlobals() {
+  Object.assign(livelyLang, {
+    worker,
+    messenger,
+    events,
+    tree,
+    grid,
+    arrayProjection,
+    interval,
+    graph,
+    date,
+    properties,
+    obj,
+    arr,
+    fun,
+    num,
+    string,
+    Closure,
+    promise,
+    Path,
+    Group
+  });
   globalInterfaceSpec.forEach(function(ea) {
     if (ea.action === "installMethods") {
       var targetPath = Path(ea.target);
