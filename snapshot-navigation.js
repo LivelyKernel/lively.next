@@ -1,5 +1,6 @@
 import ClassHelper from "./class-helper.js";
 import { Path, arr, graph } from "lively.lang";
+import ExpressionSerializer from "./plugins/expression-serializer.js";
 
 export function referenceGraph(snapshot) {
   let ids = Object.keys(snapshot),
@@ -195,4 +196,46 @@ export function removeUnreachableObjects(rootIds, snapshot) {
 
   idsToRemove.forEach(id => delete snapshot[id]);
   return idsToRemove;
+}
+
+
+const defaultExprSerializer = new ExpressionSerializer();
+
+export function requiredModulesOfSnapshot(snapshot, exprSerializer = defaultExprSerializer) {
+  // knows how to extract lively.modules packages/modules from __expr__ and
+  // class data
+
+  if (snapshot.snapshot) snapshot = snapshot.snapshot;
+
+  var modules = [];
+
+  for (var i = 0, ids = Object.keys(snapshot); i < ids.length; i++) {
+    var ref = snapshot[ids[i]];
+
+    if (ref.__expr__) {
+      let exprModules = exprSerializer.requiredModulesOf__expr__(ref.__expr__);
+      if (exprModules) modules.push(...exprModules);
+      continue;
+    }
+
+    var classModules = ClassHelper.sourceModulesInObjRef(ref);
+    if (classModules && classModules.length)
+      modules.push(...classModules.map(spec =>
+        ((spec.package && spec.package.name) || "") + "/" + spec.pathInPackage));
+
+    if (ref.props) {
+      for (var j = 0; j < ref.props.length; j++) {
+        let val = ref.props[j].value;
+        if (typeof val === "string") {
+          let exprModules = exprSerializer.requiredModulesOf__expr__(val);
+          if (exprModules) modules.push(...exprModules);
+        }
+      }
+    }
+
+  }
+
+  modules = arr.uniq(modules);
+
+  return modules;
 }

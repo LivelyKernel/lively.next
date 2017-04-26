@@ -2,18 +2,19 @@
 import { expect, chai } from "mocha-es6";
 
 import { obj, arr } from "lively.lang";
-import { ObjectPool, ObjectRef, serialize } from "../index.js";
+import { ObjectPool, requiredModulesOfSnapshot, ObjectRef, serialize } from "../index.js";
+import { Plugin, AdditionallySerializePlugin, OnlySerializePropsPlugin, DontSerializePropsPlugin, CustomSerializePlugin } from "../Plugin.js";
 
 function serializationRoundtrip(obj) {
   var ref = objPool.add(obj);
-  return ObjectPool.fromJSONSnapshot(objPool.jsonSnapshot()).resolveToObj(ref.id);
+  return ObjectPool.fromJSONSnapshot(objPool.jsonSnapshot(), objPool.options).resolveToObj(ref.id);
 }
 
 
 function itSerializesInto(subject, expected) {
   var title = `serializes ${String(subject)} into ${JSON.stringify(expected)}`
   return it(title, () => {
-    var {id, snapshot} = serialize(subject);
+    var {id, snapshot} = serialize(subject, {objPool});
     expect(snapshot[id]).deep.equals(expected);
   });
 }
@@ -90,6 +91,8 @@ describe("marshalling", () => {
 
   describe("symbols", () => {
 
+    beforeEach(() => objPool = new ObjectPool({plugins: [new CustomSerializePlugin()]}));
+
     itSerializesInto(Symbol.for("test"), {__expr__: '__lv_expr__:Symbol.for("test")'});
     itSerializesInto(Symbol.iterator, {__expr__: '__lv_expr__:Symbol.iterator'});
 
@@ -133,12 +136,14 @@ describe("marshalling", () => {
 
   describe("built-in js objects", () => {
 
+    let plugins = [new CustomSerializePlugin()];
+
     it("Map", () => {
       let obj = {}, obj2 = {bar: 23},
           map = new Map([["a", 1], [obj2, 2], ["c", obj]]);
       obj.map = map;
       obj.obj2 = obj2;
-      objPool = ObjectPool.withObject(obj);
+      objPool = ObjectPool.withObject(obj, {plugins});
 
       let objCopy = serializationRoundtrip(obj),
           copiedMap = objCopy.map;
@@ -153,7 +158,7 @@ describe("marshalling", () => {
           set = new Set(["a", obj, obj2]);
       obj.set = set;
       obj.obj2 = obj2;
-      objPool = ObjectPool.withObject(obj);
+      objPool = ObjectPool.withObject(obj, {plugins});
 
       let objCopy = serializationRoundtrip(obj),
           entries = Array.from(objCopy.set.values());
@@ -166,6 +171,8 @@ describe("marshalling", () => {
   });
 
   describe("serialized expressions", () => {
+
+    beforeEach(() => objPool = new ObjectPool({plugins: [new CustomSerializePlugin()]}));
 
     it("simple", () => {
       function __serialize__() {
@@ -235,7 +242,7 @@ describe("marshalling", () => {
           },
           _ = objPool.add(exprObj);
 
-      expect(objPool.requiredModulesOfSnapshot(objPool.snapshot()))
+      expect(requiredModulesOfSnapshot(objPool.snapshot()))
         .equals(["lively.serializer2/tests/test-resources/module1.js"])
     });
 
@@ -261,6 +268,8 @@ describe("marshalling", () => {
 
   describe("ignore properties", () => {
 
+    beforeEach(() => (objPool = new ObjectPool({plugins: [new OnlySerializePropsPlugin(), new DontSerializePropsPlugin()]})));
+
     it("via __dont_serialize__", () => {
       var obj = {foo: 23, bar: 24, __dont_serialize__: ["bar"]},
           ref = objPool.add(obj),
@@ -283,9 +292,18 @@ describe("marshalling", () => {
       expect(objCopy).deep.equals({_rev: 0, bar: 24});
     });
 
+    it("__only_serialize__ and __dont_serialize__", () => {
+      var obj = {foo: 23, bar: 24, baz: 123, __only_serialize__: ["foo", "bar"], __dont_serialize__: ["bar"]},
+          ref = objPool.add(obj),
+          objCopy = ObjectPool.fromSnapshot(objPool.snapshot()).resolveToObj(ref.id);
+      expect(objCopy).deep.equals({_rev: 0, foo: 23});
+    });
+
   });
 
   describe("__additionally_serialize__ hook", () => {
+
+    beforeEach(() => (objPool = new ObjectPool({plugins: [new AdditionallySerializePlugin()]})));
 
     it("gets called and has access to serialized obj", () => {
       var obj = {
@@ -309,16 +327,13 @@ describe("marshalling", () => {
     });
 
     it("can remove registered objects", () => {
-      var obj1 = {bar: 99},
-          obj2 = {zork: 33},
+      var other1 = {bar: 99},
+          other2 = {zork: 33},
           obj3 = {
-            other1: obj1,
-            other2: obj2,
-            __additionally_serialize__: function(snapshot, objRef, pool, add) {
-              delete snapshot.props.other1;
-            }
+            other1, other2,
+            __additionally_serialize__(snapshot, objRef, pool, add) { delete snapshot.props.other1; }
           },
-          {id, snapshot} = serialize(obj3),
+          {id, snapshot} = serialize(obj3, {objPool}),
           ids = Object.keys(snapshot),
           otherId = arr.without(ids, id)[0];
 
@@ -348,13 +363,63 @@ describe("marshalling", () => {
 
 });
 
+describe("plugins", () => {
+  
+  it("serializeObject", () => {
+    let o = {bar: 23},
+        p = Object.assign(new Plugin(), {
+          serializeObject(pool, objRef, serializedObjMap, path) { return {fooo: 23}; }
+        }),
+        s = ObjectPool.withObject(o, {plugins: [p]}).snapshot();
+    expect(obj.values(s)).deep.equals([{fooo: 23}]);
+  });
+
+  it("additionallySerialize", () => {
+    let o = {bar: 23},
+        p = Object.assign(new Plugin(), {
+          additionallySerialize(pool, ref, snapshot, addFn) {
+            snapshot.props.bar.value++;
+            addFn("foo", 99)
+          }
+        }),
+        s = ObjectPool.withObject(o, {plugins: [p]}).snapshot();
+    expect(obj.values(s)).deep.equals([
+      {props: {bar: {key: "bar", value: 24}, foo: {key: "foo", value: 99}}, rev: 0}
+    ]);
+  });
+  
+  it("propertiesToSerialize", () => {
+    let o = {bar: 23, foo: 99},
+        p = Object.assign(new Plugin(), {
+          propertiesToSerialize(pool, ref, snapshot, keysSoFar) { return ["bar"]; }
+        }),
+        s = ObjectPool.withObject(o, {plugins: [p]}).snapshot();
+    expect(obj.values(s)).deep.equals([{props: {bar: {key: "bar", value: 23}}, rev: 0}]);
+  });
+
+  it("deserializeObject", () => {
+    let snapshot = {
+          a: {special: true, props: {bar: {key: "bar", value: 24}}},
+          b: {props: {foo: {key: "foo", value: 99}}}
+        },
+        p = Object.assign(new Plugin(), {
+          deserializeObject(pool, ref, snapshot, path) { return snapshot.special ? {verySpecial: true} : null }
+        }),
+        pool = ObjectPool.fromSnapshot(snapshot, {plugins: [p]});
+        
+    expect(pool.resolveToObj("b")).deep.equals({foo: 99, _rev: 0});
+    expect(pool.resolveToObj("a")).deep.equals({verySpecial: true, bar: 24, _rev: 0});
+  });
+
+});
+
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function benchmarks() {
 
   var n = 100;
-  var objs = Array.range(1,n).map(i => ({n: i}))
+  var objs = lively.lang.arr.range(1,n).map(i => ({n: i}))
   objs.slice(0, -1).forEach((obj, i) => obj.next = objs[i+1]);
   objs[objs.length-1].first = objs[0]
 

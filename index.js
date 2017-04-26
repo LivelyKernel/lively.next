@@ -1,10 +1,12 @@
-export { ObjectRef } from "./object-ref.js";
-export { ObjectPool } from "./object-pool.js";
+export { ObjectRef, ObjectPool } from "./object-pool.js";
+export { requiredModulesOfSnapshot } from "./snapshot-navigation.js";
 
 import "./object-extensions.js";
 import { ObjectPool } from "./object-pool.js";
 import { version as serializerVersion } from "./package.json";
 import { removeUnreachableObjects } from "./snapshot-navigation.js";
+import ClassHelper from "./class-helper.js";
+import { arr } from "lively.lang";
 
 function normalizeOptions(options) {
   options = {reinitializeIds: false, ...options}
