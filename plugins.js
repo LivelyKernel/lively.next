@@ -76,29 +76,49 @@ class LivelyClassPropertiesPlugin {
   propertiesToSerialize(pool, ref, snapshot, keysSoFar) {
     // serialize class properties as indicated by realObj.constructor.properties
     let {realObj} = ref,
-        classProperties =
-          ref.realObj.constructor[Symbol.for("lively.classes-properties-and-settings")];
+        classProperties = realObj.constructor[Symbol.for("lively.classes-properties-and-settings")];
 
     if (!classProperties) return null;
 
     let {properties, propertySettings} = classProperties,
         valueStoreProperty = propertySettings.valueStoreProperty || "_state",
         valueStore = realObj[valueStoreProperty],
+        only = !!realObj.__only_serialize__,
         keys = [];
-
-    let valueStoreKeyIdx = keysSoFar.indexOf(valueStoreProperty);
-    if (valueStoreKeyIdx > -1) keysSoFar.splice(valueStoreKeyIdx, 1);
 
     if (!valueStore) return;
 
-    for (let key in properties) {
-      let spec = properties[key];
-      if (spec.derived) continue;
-      if (!spec || (spec.hasOwnProperty("serialize") && !spec.serialize)) continue;
-      keys.push(key);
+    // if __only_serialize__ is defined we will only consider those properties
+    // that are in keysSoFar – it is expected that the OnlySerializePropsPlugin
+    // was producing that list.
+
+    if (only) {
+      for (var i = 0; i < keysSoFar.length; i++) {
+        let key = keysSoFar[i], spec = properties[key];
+        if (key === valueStoreProperty) continue;
+        if (spec) {
+          if (spec && (spec.derived || spec.readOnly
+                    || (spec.hasOwnProperty("serialize") && !spec.serialize))) continue;
+        }
+        keys.push(key);
+      }
+      return keys;
     }
 
-    return arr.uniq(keys.concat(keysSoFar));
+    // Otherwise properties add to keysSoFar
+    var valueStoreKeyIdx = keysSoFar.indexOf(valueStoreProperty);
+    if (valueStoreKeyIdx > -1) keysSoFar.splice(valueStoreKeyIdx, 1);
+
+    for (var key in properties) {
+      var spec = properties[key],
+          idx = keysSoFar.indexOf(key);
+      if (spec.derived || spec.readOnly ||
+          (spec.hasOwnProperty("serialize") && !spec.serialize)) {
+        if (idx > -1) keysSoFar.splice(idx, 1);
+      } else if (idx === -1) keys.push(key);
+    }
+    return keys.concat(keysSoFar);
+
   }
 }
 
