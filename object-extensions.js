@@ -53,8 +53,10 @@ Object.defineProperty(Map.prototype, "__serialize__", {
     for (let [key, value] of this) {
       i++;
       // serialize all entries into snapshot.entries
-      let serializedKey = ref.snapshotProperty(ref.id, key, path.concat("key", String(i)), snapshots, pool),
-          serializedValue = ref.snapshotProperty(ref.id, value, path.concat("value", String(i)), snapshots, pool);
+      let serializedKey = ref.snapshotProperty(
+        ref.id, key, path.concat("key", String(i)), snapshots, pool),
+          serializedValue = ref.snapshotProperty(
+            ref.id, value, path.concat("value", String(i)), snapshots, pool);
       entries.push([serializedKey, serializedValue])
     }
     return ref.asRefForSerializedObjMap(rev);
@@ -67,8 +69,10 @@ Object.defineProperty(Map.prototype, "__deserialize__", {
     var {entries} = snapshot;
     for (let i = 0; i < entries.length; i++) {
       let [key, value] = entries[i],
-          deserializedKey = ref.recreateProperty("key." + i, key, serializedObjMap, pool, path.concat("key", i)),
-          deserializedValue = ref.recreateProperty("value." + i, value, serializedObjMap, pool, path.concat("value", i));
+          deserializedKey = ref.recreateProperty(
+            "key." + i, key, serializedObjMap, pool, path.concat("key", i)),
+          deserializedValue = ref.recreateProperty(
+            "value." + i, value, serializedObjMap, pool, path.concat("value", i));
       this.set(deserializedKey, deserializedValue);
     }
   }
@@ -90,7 +94,8 @@ Object.defineProperty(Set.prototype, "__serialize__", {
     for (let entry of this) {
       i++;
       // serialize all entries into snapshot.entries
-      let serializedEntry = ref.snapshotProperty(ref.id, entry, path.concat("entry", String(i)), snapshots, pool);
+      let serializedEntry = ref.snapshotProperty(
+        ref.id, entry, path.concat("entry", String(i)), snapshots, pool);
       entries.push(serializedEntry);
     }
     return ref.asRefForSerializedObjMap(rev);
@@ -102,7 +107,8 @@ Object.defineProperty(Set.prototype, "__deserialize__", {
     // deserialize entries from snapshot.entries
     var {entries} = snapshot;
     for (let i = 0; i < entries.length; i++) {
-      let deserializedEntry = ref.recreateProperty("entry." + i, entries[i], serializedObjMap, pool, path.concat("key", i));
+      let deserializedEntry = ref.recreateProperty(
+        "entry." + i, entries[i], serializedObjMap, pool, path.concat("key", i));
       this.add(deserializedEntry);
     }
   }

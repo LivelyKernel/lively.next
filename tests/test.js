@@ -3,7 +3,7 @@ import { expect, chai } from "mocha-es6";
 
 import { obj, arr } from "lively.lang";
 import { ObjectPool, requiredModulesOfSnapshot, ObjectRef, serialize } from "../index.js";
-import { Plugin, AdditionallySerializePlugin, OnlySerializePropsPlugin, DontSerializePropsPlugin, CustomSerializePlugin } from "../Plugin.js";
+import { Plugin, plugins } from "../plugins.js";
 
 function serializationRoundtrip(obj) {
   var ref = objPool.add(obj);
@@ -91,7 +91,7 @@ describe("marshalling", () => {
 
   describe("symbols", () => {
 
-    beforeEach(() => objPool = new ObjectPool({plugins: [new CustomSerializePlugin()]}));
+    beforeEach(() => objPool = new ObjectPool({plugins: [plugins.customSerializePlugin]}));
 
     itSerializesInto(Symbol.for("test"), {__expr__: '__lv_expr__:Symbol.for("test")'});
     itSerializesInto(Symbol.iterator, {__expr__: '__lv_expr__:Symbol.iterator'});
@@ -136,14 +136,14 @@ describe("marshalling", () => {
 
   describe("built-in js objects", () => {
 
-    let plugins = [new CustomSerializePlugin()];
+    let pluginsForBuiltins = [plugins.customSerializePlugin, plugins.classPlugin];
 
     it("Map", () => {
       let obj = {}, obj2 = {bar: 23},
           map = new Map([["a", 1], [obj2, 2], ["c", obj]]);
       obj.map = map;
       obj.obj2 = obj2;
-      objPool = ObjectPool.withObject(obj, {plugins});
+      objPool = ObjectPool.withObject(obj, {plugins: pluginsForBuiltins});
 
       let objCopy = serializationRoundtrip(obj),
           copiedMap = objCopy.map;
@@ -158,7 +158,7 @@ describe("marshalling", () => {
           set = new Set(["a", obj, obj2]);
       obj.set = set;
       obj.obj2 = obj2;
-      objPool = ObjectPool.withObject(obj, {plugins});
+      objPool = ObjectPool.withObject(obj, {plugins: pluginsForBuiltins});
 
       let objCopy = serializationRoundtrip(obj),
           entries = Array.from(objCopy.set.values());
@@ -172,7 +172,7 @@ describe("marshalling", () => {
 
   describe("serialized expressions", () => {
 
-    beforeEach(() => objPool = new ObjectPool({plugins: [new CustomSerializePlugin()]}));
+    beforeEach(() => objPool = new ObjectPool({plugins: [plugins.customSerializePlugin]}));
 
     it("simple", () => {
       function __serialize__() {
@@ -183,7 +183,7 @@ describe("marshalling", () => {
       var exprObj = {n: 1, __serialize__},
           obj = {foo: exprObj},
           {id} = objPool.add(obj),
-          objPool2 = ObjectPool.fromSnapshot(objPool.snapshot()),
+          objPool2 = ObjectPool.fromSnapshot(objPool.snapshot(), objPool.options),
           obj2 = objPool2.resolveToObj(id);
       expect(obj2).deep.property("foo.n", 2);
       expect(obj2.foo).property("__serialize__").to.be.a("function");
@@ -192,7 +192,7 @@ describe("marshalling", () => {
     it("serialized object is expr itself", () => {
       var exprObj = {n: 1, __serialize__() { return {__expr__: `({n: ${this.n + 1}})`} }},
           {id} = objPool.add(exprObj),
-          objPool2 = ObjectPool.fromSnapshot(objPool.snapshot()),
+          objPool2 = ObjectPool.fromSnapshot(objPool.snapshot(), objPool.options),
           obj2 = objPool2.resolveToObj(id);
       expect(obj2).property("n", 2);
     });
@@ -206,7 +206,7 @@ describe("marshalling", () => {
         {[id]: {rev: 0, props: {foo: {key: "foo", value: "__lv_expr__:foo()"}}}});
       try {
         System.global.foo = () => foo;
-        var obj2 = ObjectPool.fromSnapshot(objPool.snapshot()).resolveToObj(id);
+        var obj2 = ObjectPool.fromSnapshot(objPool.snapshot(), objPool.options).resolveToObj(id);
       } finally { delete System.global.foo; }
       expect(obj2).deep.equals(obj2, "deserialize not working");
     });
@@ -216,15 +216,15 @@ describe("marshalling", () => {
       await System.import("lively.serializer2/tests/test-resources/module1.js");
 
       var exprObj = {
-        n: 1, __serialize__() {
-          return {
-            __expr__: `createSomeObject(${this.n})`,
-            bindings: {"lively.serializer2/tests/test-resources/module1.js": ["createSomeObject"]}
-          }
-        }
-      },
+            n: 1, __serialize__() {
+              return {
+                __expr__: `createSomeObject(${this.n})`,
+                bindings: {"lively.serializer2/tests/test-resources/module1.js": ["createSomeObject"]}
+              }
+            }
+          },
           _ = objPool.add(exprObj),
-          obj2 = ObjectPool.fromSnapshot(objPool.snapshot()).objects()[0];
+          obj2 = ObjectPool.fromSnapshot(objPool.snapshot(), objPool.options).objects()[0];
       expect(obj2).property("n", 2);
     });
 
@@ -268,7 +268,7 @@ describe("marshalling", () => {
 
   describe("ignore properties", () => {
 
-    beforeEach(() => (objPool = new ObjectPool({plugins: [new OnlySerializePropsPlugin(), new DontSerializePropsPlugin()]})));
+    beforeEach(() => (objPool = new ObjectPool({plugins: [plugins.onlySerializePropsPlugin, plugins.dontSerializePropsPlugin]})));
 
     it("via __dont_serialize__", () => {
       var obj = {foo: 23, bar: 24, __dont_serialize__: ["bar"]},
@@ -303,7 +303,7 @@ describe("marshalling", () => {
 
   describe("__additionally_serialize__ hook", () => {
 
-    beforeEach(() => (objPool = new ObjectPool({plugins: [new AdditionallySerializePlugin()]})));
+    beforeEach(() => (objPool = new ObjectPool({plugins: [plugins.additionallySerializePlugin]})));
 
     it("gets called and has access to serialized obj", () => {
       var obj = {

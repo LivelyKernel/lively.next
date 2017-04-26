@@ -7,9 +7,10 @@ import { version as serializerVersion } from "./package.json";
 import { removeUnreachableObjects } from "./snapshot-navigation.js";
 import ClassHelper from "./class-helper.js";
 import { arr } from "lively.lang";
+import { allPlugins } from "./plugins.js";
 
 function normalizeOptions(options) {
-  options = {reinitializeIds: false, ...options}
+  options = {plugins: allPlugins, reinitializeIds: false, ...options};
   if (options.reinitializeIds && typeof options.reinitializeIds !== "function")
     throw new Error(`serializer option 'reinitializeIds' needs to be a function(id, ref) => id`)
   return options;

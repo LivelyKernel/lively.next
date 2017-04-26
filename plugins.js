@@ -2,7 +2,7 @@ import { obj, arr } from "lively.lang";
 
 export class Plugin {}
 
-export class CustomSerializePlugin {
+class CustomSerializePlugin {
 
   // can realObj be manually serialized, e.g. into an expression?
   serializeObject(realObj, isProperty, pool, serializedObjMap, path) {
@@ -22,7 +22,7 @@ export class CustomSerializePlugin {
 
 }
 
-export class ClassPlugin {
+class ClassPlugin {
 
   // record class meta info for re-instantiating
   additionallySerialize(pool, ref, snapshot, addFn) {
@@ -35,7 +35,7 @@ export class ClassPlugin {
 
 }
 
-export class AdditionallySerializePlugin {
+class AdditionallySerializePlugin {
   // for objects with __additionally_serialize__(snapshot, ref, pool, addFn) method
 
   additionallySerialize(pool, ref, snapshot, addFn) {
@@ -46,7 +46,7 @@ export class AdditionallySerializePlugin {
 
 }
 
-export class OnlySerializePropsPlugin {
+class OnlySerializePropsPlugin {
 
  propertiesToSerialize(pool, ref, snapshot, keysSoFar) {
    let {realObj} = ref;
@@ -54,7 +54,7 @@ export class OnlySerializePropsPlugin {
  }
 }
 
-export class DontSerializePropsPlugin {
+class DontSerializePropsPlugin {
 
  propertiesToSerialize(pool, ref, snapshot, keysSoFar) {
    let {realObj} = ref;
@@ -71,7 +71,7 @@ export class DontSerializePropsPlugin {
 
 }
 
-export class LivelyClassPropertiesPlugin {
+class LivelyClassPropertiesPlugin {
 
   propertiesToSerialize(pool, ref, snapshot, keysSoFar) {
     // serialize class properties as indicated by realObj.constructor.properties
@@ -86,6 +86,9 @@ export class LivelyClassPropertiesPlugin {
         valueStore = realObj[valueStoreProperty],
         keys = [];
 
+    let valueStoreKeyIdx = keysSoFar.indexOf(valueStoreProperty);
+    if (valueStoreKeyIdx > -1) keysSoFar.splice(valueStoreKeyIdx, 1);
+
     if (!valueStore) return;
 
     for (let key in properties) {
@@ -99,16 +102,20 @@ export class LivelyClassPropertiesPlugin {
   }
 }
 
-export var serializationPlugins = [
-  AdditionallySerializePlugin,
-  OnlySerializePropsPlugin,
-  DontSerializePropsPlugin,
-  LivelyClassPropertiesPlugin,
-  CustomSerializePlugin,
-  ClassPlugin
-];
+export var plugins = {
+  livelyClassPropertiesPlugin: new LivelyClassPropertiesPlugin(),
+  dontSerializePropsPlugin:    new DontSerializePropsPlugin(),
+  onlySerializePropsPlugin:    new OnlySerializePropsPlugin(),
+  additionallySerializePlugin: new AdditionallySerializePlugin(),
+  classPlugin:                 new ClassPlugin(),
+  customSerializePlugin:       new CustomSerializePlugin(),
+}
 
-export var deserializationPlugins = [
-  CustomSerializePlugin,
-  ClassPlugin
-];
+export var allPlugins = [
+  plugins.customSerializePlugin,
+  plugins.classPlugin,
+  plugins.additionallySerializePlugin,
+  plugins.onlySerializePropsPlugin,
+  plugins.dontSerializePropsPlugin,
+  plugins.livelyClassPropertiesPlugin
+]

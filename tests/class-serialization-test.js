@@ -6,9 +6,10 @@ import ClassHelper from "../class-helper.js";
 import { resource } from "lively.resources";
 import { version as serializerVersion } from "../package.json";
 
-function serializationRoundtrip(obj, serializer = new ObjectPool()) {
+function serializationRoundtrip(obj, serializer = ObjectPool.withDefaultPlugins()) {
   var ref = objPool.add(obj);
-  return ObjectPool.fromJSONSnapshot(objPool.jsonSnapshot()).resolveToObj(ref.id);
+  return ObjectPool.withDefaultPlugins()
+    .readJsonSnapshot(objPool.jsonSnapshot()).resolveToObj(ref.id);
 }
 
 
@@ -31,13 +32,13 @@ describe('class serialization', function() {
     instance2 = new TestDummy(2);
     instance1.friend = instance2;
     instance2.specialProperty = 'some string';
-    objPool = new ObjectPool();
+    objPool = ObjectPool.withDefaultPlugins();
     refInstance1 = objPool.add(instance1);
   });
 
   it("serialize class instance", function() {
     // serialization
-    var objPool2 = new ObjectPool().readSnapshot(objPool.snapshot());
+    var objPool2 = ObjectPool.withDefaultPlugins().readSnapshot(objPool.snapshot());
     var instance1_copy = objPool2.resolveToObj(refInstance1.id);
 
     expect(instance2.specialProperty).to.equal(instance1_copy.friend.specialProperty);
@@ -76,13 +77,13 @@ describe('class serialization', function() {
   });
 
   it("raise error when class not found", function() {
-    var objPool = new ObjectPool(),
+    var objPool = ObjectPool.withDefaultPlugins(),
         klass = class Dummy_testRaiseErrorWhenClassNotFound {},
         instance = new klass(),
         _ = objPool.add(instance),
         serialized = objPool.jsonSnapshot();
     try {
-      ObjectPool.fromJSONSnapshot(serialized, {ignoreClassNotFound: false})
+      ObjectPool.withDefaultPlugins({ignoreClassNotFound: false}).readJsonSnapshot(serialized);
     } catch(e) {
       expect(String(e)).match(/Trying to deserialize instance of.*Dummy_testRaiseErrorWhenClassNotFound.*but this class cannot be found/i);
       return;
@@ -91,22 +92,18 @@ describe('class serialization', function() {
   });
 
   it("raise no error when class not found when overridden", function() {
-    var objPool = new ObjectPool(),
+    var objPool = ObjectPool.withDefaultPlugins(),
         klass = class Dummy_testDontRaiseErrorWhenClassNotFound {},
         instance = new klass(),
         ref = objPool.add(instance),
         serialized = objPool.jsonSnapshot();
     try {
-      var result = ObjectPool.fromJSONSnapshot(serialized, {ignoreClassNotFound: true}).resolveToObj(ref.id);
+      var result = ObjectPool.withDefaultPlugins({ignoreClassNotFound: true}).readJsonSnapshot(serialized).resolveToObj(ref.id);
     } catch(e) {
       expect().assert(false, `Should ignore class not found but raised error:\n${e}`);
     }
     expect().assert(result.isClassPlaceHolder)
     expect("Dummy_testDontRaiseErrorWhenClassNotFound").to.equal(result.className)
-  });
-
-  xit("serializes inline classes", () => {
-
   });
 
 });

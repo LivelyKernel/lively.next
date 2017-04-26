@@ -2,6 +2,7 @@ import { arr, obj, string } from "lively.lang";
 import { isPrimitive } from "./util.js";
 import ClassHelper from "./class-helper.js";
 import ExpressionSerializer from "./plugins/expression-serializer.js";
+import { allPlugins } from "./plugins.js";
 
 
 /*
@@ -51,6 +52,10 @@ const debugSerialization = false,
       debugDeserialization = false;
 
 export class ObjectPool {
+
+  static withDefaultPlugins(options) {
+    return new this({plugins: allPlugins, ...options});
+  }
 
   static fromJSONSnapshot(jsonSnapshoted, options) {
     return this.fromSnapshot(JSON.parse(jsonSnapshoted), options);
@@ -144,6 +149,8 @@ export class ObjectPool {
     return snapshot;
   }
 
+  jsonSnapshot() { return JSON.stringify(this.snapshot(), null, 2); }
+
   readSnapshot(snapshot) {
     // populates object pool with object refs read from the dead snapshot
     for (var i = 0, ids = Object.keys(snapshot); i < ids.length; i++)
@@ -152,7 +159,10 @@ export class ObjectPool {
     return this;
   }
 
-  jsonSnapshot() { return JSON.stringify(this.snapshot(), null, 2); }
+  readJsonSnapshot(jsonString) {
+    return this.readSnapshot(JSON.parse(jsonString));
+  }
+
 }
 
 
@@ -341,7 +351,8 @@ export class ObjectRef {
     }
 
     if (!newObj) newObj = {};
-    if (typeof newObj._rev === "undefined") newObj._rev = rev || 0;
+    if (typeof newObj._rev === "undefined" && typeof newObj === "object")
+      newObj._rev = rev || 0;
 
     this.realObj = newObj;
 
