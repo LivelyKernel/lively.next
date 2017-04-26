@@ -496,6 +496,8 @@ export default class HTTPFileBrowser extends Morph {
   get isFileBrowser() { return true; }
 
   relayout() {
+    if (this.height <= 0) return;
+
     var {
           selectedFileName,
           deleteFileButton,
