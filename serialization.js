@@ -1,4 +1,4 @@
-import { ObjectPool, serialize, deserialize } from "lively.serializer2";
+import { requiredModulesOfSnapshot, serialize, deserialize } from "lively.serializer2";
 import { World, Morph } from "./index.js";
 import { resource } from "lively.resources";
 import { newMorphId } from "./morph.js";
@@ -40,7 +40,7 @@ export async function saveWorldToResource(world = World.defaultWorld(), toResour
       .join("../" + name.replace(/\.[^\.]+/, "-world.json"))
       .withRelativePartsResolved()
   }
-  
+
   if (typeof toResource === "string")
     toResource = resource(toResource);
 
@@ -139,16 +139,16 @@ export async function loadMorphFromSnapshot(snapshot) {
     let packages = findPackagesInFileSpec(snapshot.packages);
     for (let {files, url} of packages) {
       let r = await createFiles(url, files);
-      await reloadPackage(url, {forgetEnv: false, forgetDeps: false});      
+      await reloadPackage(url, {forgetEnv: false, forgetDeps: false});
       // ensure object package instance
       ObjectPackage.withId(getPackage(url).name);
     }
   }
-  
+
   // referenced packages / modules, e.g. b/c instances have classes from them
   // load required modules
   await Promise.all(
-    ObjectPool.requiredModulesOfSnapshot(snapshot.snapshot)
+    requiredModulesOfSnapshot(snapshot)
       .map(modId =>
         (System.get(modId) ? null : System.import(modId))
                 .catch(e => console.error(`Error loading ${modId}`, e))));
