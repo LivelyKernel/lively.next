@@ -60,11 +60,14 @@ export class Renderer {
     this.renderWorldLoopProcess = null;
   }
 
-  renderLater() {
+  renderLater(n = 10) {
+    this.renderWorldLoopLaterCounter = n;
     if (this.renderWorldLoopLater) return;
     this.renderWorldLoopLater = this.requestAnimationFrame(() => {
       this.renderStep();
       this.renderWorldLoopLater = null;
+      if (this.renderWorldLoopLaterCounter > 0)
+        this.renderLater(this.renderWorldLoopLaterCounter-1);
     });
   }
 
