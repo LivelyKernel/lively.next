@@ -75,7 +75,8 @@ export class World extends Morph {
   makeDirty() {
     if (this._dirty) return;
     this._dirty = true;
-    this.env.renderer.renderLater();
+    let r = this.env.renderer;
+    r && r.renderLater();
   }
 
   get hands() {

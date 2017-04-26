@@ -39,7 +39,7 @@ export async function loadWorld(newWorld, oldWorld, options = {}) {
     localconfig && await loadLocalConfig();
   
     worldLoadDialog && newWorld.execCommand("load world");
-  
+
     return newWorld;
   } catch (e) {
     console.error(`Error loading world: `, e);
