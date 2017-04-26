@@ -90,34 +90,41 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
 
   async getMenuItems(items) {
     var editor = this.textMorph;
-    items = items.concat([
-      {isDivider: true},
+    let jsItems = [
       {command: "doit", target: editor, showKeyShortcuts: true},
-    ]);
+      {command: "printit", target: editor, showKeyShortcuts: true},
+      {command: "print inspectit", alias: "print inspect", target: editor, showKeyShortcuts: true},
+      {command: "eval all", target: editor, showKeyShortcuts: true},
+      {command: "text completion", alias: "code completion", target: editor, showKeyShortcuts: true},
+      {isDivider: true},
+    ];
 
     if (this.evalEnvironment.targetModule)
-      items.push(
+      jsItems.push(
         {command: "[javascript] inject import", alias: `add import`, target: editor},
         {command: "[javascript] remove unused imports", alias: `remove unused imports`, target: editor});
 
     var nav = this.getNavigator();
     var ref = nav.resolveIdentifierAt(editor, editor.cursorPosition);
     if (ref) {
-      items.push(
+      jsItems.push(
         {command: "selectDefinition", alias: `jump to definition of "${ref.name}"`, target: editor},
         {command: "selectSymbolReferenceOrDeclaration", alias: `select all occurrences of "${ref.name}"`, target: editor});
     }
 
     var text = editor.selection.text.trim();
     if (text) {
-      items.push({
+      jsItems.push({
         command: "open code search",
         alias: `code search for "${string.truncate(text, 30)}"`,
         target: editor.world(),
         args: {input: text, backend: this.backend()}
       })
     }
-    return items;
+
+    jsItems.push({isDivider: true});
+
+    return jsItems.concat(items);
   }
 
   getSnippets() {

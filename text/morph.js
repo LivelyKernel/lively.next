@@ -1610,19 +1610,20 @@ export class Text extends Morph {
 
   async menuItems() {
     var items = [
-      ["run command", () => { this.focus(); this.world().execCommand("run command")}],
       {command: "text undo", alias: "undo", target: this, showKeyShortcuts: true},
       {command: "text redo", alias: "redo", target: this, showKeyShortcuts: true},
       {command: "manual clipboard copy", alias: "copy", target: this, showKeyShortcuts: this.keysForCommand("clipboard copy"), args: {collapseSelection: false, delete: false}},
       {command: "manual clipboard paste", alias: "paste", target: this, showKeyShortcuts: this.keysForCommand("clipboard paste")},
-      {command: "toggle line wrapping", alias: (this.lineWrapping ? "disable" : "enable") + " line wrapping", target: this, showKeyShortcuts: true}
-
+      {isDivider: true},
+      {command: "toggle line wrapping", alias: (this.lineWrapping ? "disable" : "enable") + " line wrapping", target: this, showKeyShortcuts: true},
+      ["run command", () => { this.focus(); this.world().execCommand("run command")}],
     ];
 
     for (let plugin of this.plugins) {
       if (typeof plugin["getMenuItems"] === "function")
         items = await plugin["getMenuItems"](items);
     }
+
     return items;
   }
 
