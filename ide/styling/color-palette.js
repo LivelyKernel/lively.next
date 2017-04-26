@@ -33,6 +33,7 @@ class ColorPaletteField extends Morph {
   }
   
   onHoverIn() {
+    if (!this.color) return;
     const [h,s,b] = this.color.toHSB();
     this.borderColor = Color.hsb(h,s + .5 > 1 ? s - .5 : s + .5, b + .5 > 1 ? b - .5 : b + .5)
   }
@@ -179,6 +180,7 @@ class HarmonyPalette extends Morph {
     return {
       harmony: {defaultValue: new Complementary()},
       pivotBrightness: {defaultValue: 1},
+      styleClasses: {defaultValue: ['paletteFormatter']},
       submorphs: {
         after: ['harmony'],
         initialize() {
@@ -316,68 +318,82 @@ export class ColorPalette extends Morph {
    get styler() {
       const fill = Color.gray,
             colorFieldWidth = this.colorFieldWidth;
-      return new StyleSheet({
-         '.ColorPalette [name=body]':{
-           fill,
-           extent: pt(200,300),
-           borderRadius: 5, reactsToPointer: false,
-           layout: new VerticalLayout()},
-         '.ColorPalette': {
-           fill: Color.transparent, dropShadow: true, borderRadius: 5,
-           extent: pt(200,300),
-           layout: new VerticalLayout({ignore: ["arrow"]})
-         },
-         '.ColorPalette [name=arrow]': { fill, grabbable: false, draggable: false },
-         '.ColorPalette .HarmonyPalette': {layout: new HorizontalLayout({spacing: 5}),
-                            fill: Color.transparent},
-         '.ColorPaltte [name=harmonyControl]': {layout: new VerticalLayout({spacing: 5}),
-                            fill: Color.transparent},
-         '.ColorPalette [name=paletteView]': {clipMode: "hidden", fill: Color.transparent},
-         '.ColorPalette [name=solidColorPalette]': {fill: Color.transparent, layout: new VerticalLayout()},
-         '.ColorPalette [name=paletteContainer]': {fill: Color.transparent,
-                            rotation: num.toRadians(90)},
-         '.ColorPalette .vacantColorField': {
-             extent: pt(colorFieldWidth, colorFieldWidth),
-             borderColor: Color.black.lighter().lighter(), borderWidth: 1,
-             fill: Color.transparent
-         },
-         '.ColorPalette .colorField': {
-            extent: pt(colorFieldWidth, colorFieldWidth),
-            borderColor: Color.transparent,
-            borderWidth: 2
-         },
-         '.ColorPalette .HarmonyDisplay': {
-            layout: new TilingLayout({spacing: 5}),
-            fill: Color.transparent,
-            width: 260,
-         },
-         '.ColorPalette .HarmonyVisualizer': {
-            extent: pt(110,110),
-            fill: Color.transparent,
-            imageUrl: WHEEL_URL,
-         },
-         '.ColorPalette [name=harmonyPoints]': {
-            borderWidth: 1,
-            draggable: false,
-            extent: pt(100,100),
-            origin: pt(50,50),
-            position: pt(50,50),
-         },
-         // '.ColorPalette .PivotColorControl': {
-         //    draggable: false,
-         //    fill: Color.transparent,
-         //    borderColor: Color.black,
-         //    borderWidth: 3,
-         //    extent: pt(18,18)
-         // },
-         '.ColorPalette .PivotColorControl': {
-            fill: Color.transparent,
-            borderColor: Color.white,
-            borderWidth: 3,
-            center: pt(8,8),
-            extent: pt(12,12)
-         }
-      })
+    return new StyleSheet({
+      ".ColorPalette [name=body]": {
+        fill,
+        extent: pt(200, 300),
+        borderRadius: 5,
+        reactsToPointer: false,
+        layout: new VerticalLayout()
+      },
+      ".ColorPalette": {
+        fill: Color.transparent,
+        dropShadow: true,
+        borderRadius: 5,
+        extent: pt(200, 300),
+        layout: new VerticalLayout({ignore: ["arrow"]})
+      },
+      ".ColorPalette [name=arrow]": {fill, grabbable: false, draggable: false},
+      ".ColorPalette .paletteFormatter": {
+        layout: new HorizontalLayout({spacing: 5}),
+        fill: Color.transparent
+      },
+      ".ColorPalette [name=harmonyControl]": {
+        layout: new VerticalLayout({spacing: 5}),
+        fill: Color.transparent
+      },
+      ".ColorPalette [name=paletteView]": {clipMode: "hidden", fill: Color.transparent},
+      ".ColorPalette [name=solidColorPalette]": {
+        fill: Color.transparent,
+        layout: new VerticalLayout()
+      },
+      ".ColorPalette [name=paletteContainer]": {
+        fill: Color.transparent,
+        rotation: num.toRadians(90)
+      },
+      ".ColorPalette .vacantColorField": {
+        extent: pt(colorFieldWidth, colorFieldWidth),
+        borderColor: Color.black.lighter().lighter(),
+        borderWidth: 1,
+        fill: Color.transparent
+      },
+      ".ColorPalette .colorField": {
+        extent: pt(colorFieldWidth, colorFieldWidth),
+        borderColor: Color.transparent,
+        borderWidth: 2
+      },
+      ".ColorPalette .HarmonyDisplay": {
+        layout: new TilingLayout({spacing: 5}),
+        fill: Color.transparent,
+        width: 260
+      },
+      ".ColorPalette .HarmonyVisualizer": {
+        extent: pt(110, 110),
+        fill: Color.transparent,
+        imageUrl: WHEEL_URL
+      },
+      ".ColorPalette [name=harmonyPoints]": {
+        borderWidth: 1,
+        draggable: false,
+        extent: pt(100, 100),
+        origin: pt(50, 50),
+        position: pt(50, 50)
+      },
+      // '.ColorPalette .PivotColorControl': {
+      //    draggable: false,
+      //    fill: Color.transparent,
+      //    borderColor: Color.black,
+      //    borderWidth: 3,
+      //    extent: pt(18,18)
+      // },
+      ".ColorPalette .PivotColorControl": {
+        fill: Color.transparent,
+        borderColor: Color.white,
+        borderWidth: 3,
+        center: pt(8, 8),
+        extent: pt(12, 12)
+      }
+    });
    }
 
    isHaloItem() { return true }
