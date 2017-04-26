@@ -109,8 +109,7 @@ class PivotColorControl extends Ellipse {
 
   static get properties() {
     return {
-      pivotColor: {defaultValue: Color.blue},
-      styleClasses: {defaultValue: ['pivotControlCenter']},
+      pivotColor: {defaultValue: Color.blue}
     }
   }
 
@@ -178,7 +177,6 @@ class HarmonyPalette extends Morph {
 
   static get properties() {
     return {
-      styleClasses: {defaultValue: ['paletteFormatter']},
       harmony: {defaultValue: new Complementary()},
       pivotBrightness: {defaultValue: 1},
       submorphs: {
@@ -229,7 +227,6 @@ export class ColorPalette extends Morph {
 
    static get properties() {
      return {
-       styleClasses: {defaultValue: ['back']},
        colorPalette: {
          after: ['submorphs'],
          defaultValue: "flatDesign",
@@ -320,60 +317,60 @@ export class ColorPalette extends Morph {
       const fill = Color.gray,
             colorFieldWidth = this.colorFieldWidth;
       return new StyleSheet({
-         body:{
+         '.ColorPalette [name=body]':{
            fill,
            extent: pt(200,300),
            borderRadius: 5, reactsToPointer: false,
            layout: new VerticalLayout()},
-         back: {
+         '.ColorPalette': {
            fill: Color.transparent, dropShadow: true, borderRadius: 5,
            extent: pt(200,300),
            layout: new VerticalLayout({ignore: ["arrow"]})
          },
-         arrow: { fill, grabbable: false, draggable: false },
-         paletteFormatter: {layout: new HorizontalLayout({spacing: 5}),
+         '.ColorPalette [name=arrow]': { fill, grabbable: false, draggable: false },
+         '.ColorPalette .HarmonyPalette': {layout: new HorizontalLayout({spacing: 5}),
                             fill: Color.transparent},
-         harmonyControl: {layout: new VerticalLayout({spacing: 5}),
+         '.ColorPaltte [name=harmonyControl]': {layout: new VerticalLayout({spacing: 5}),
                             fill: Color.transparent},
-         paletteView: {clipMode: "hidden", fill: Color.transparent},
-         solidColorPalette: {fill: Color.transparent, layout: new VerticalLayout()},
-         paletteContainer: {fill: Color.transparent,
+         '.ColorPalette [name=paletteView]': {clipMode: "hidden", fill: Color.transparent},
+         '.ColorPalette [name=solidColorPalette]': {fill: Color.transparent, layout: new VerticalLayout()},
+         '.ColorPalette [name=paletteContainer]': {fill: Color.transparent,
                             rotation: num.toRadians(90)},
-         vacantColorField: {
+         '.ColorPalette .vacantColorField': {
              extent: pt(colorFieldWidth, colorFieldWidth),
              borderColor: Color.black.lighter().lighter(), borderWidth: 1,
              fill: Color.transparent
          },
-         colorField: {
+         '.ColorPalette .colorField': {
             extent: pt(colorFieldWidth, colorFieldWidth),
             borderColor: Color.transparent,
             borderWidth: 2
          },
-         harmonies: {
+         '.ColorPalette .HarmonyDisplay': {
             layout: new TilingLayout({spacing: 5}),
             fill: Color.transparent,
             width: 260,
          },
-         harmonyVisualizer: {
+         '.ColorPalette .HarmonyVisualizer': {
             extent: pt(110,110),
             fill: Color.transparent,
             imageUrl: WHEEL_URL,
          },
-         harmonyPoints: {
+         '.ColorPalette [name=harmonyPoints]': {
             borderWidth: 1,
             draggable: false,
             extent: pt(100,100),
             origin: pt(50,50),
             position: pt(50,50),
          },
-         pivotControl: {
-            draggable: false,
-            fill: Color.transparent,
-            borderColor: Color.black,
-            borderWidth: 3,
-            extent: pt(18,18)
-         },
-         pivotControlCenter: {
+         // '.ColorPalette .PivotColorControl': {
+         //    draggable: false,
+         //    fill: Color.transparent,
+         //    borderColor: Color.black,
+         //    borderWidth: 3,
+         //    extent: pt(18,18)
+         // },
+         '.ColorPalette .PivotColorControl': {
             fill: Color.transparent,
             borderColor: Color.white,
             borderWidth: 3,

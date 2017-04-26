@@ -84,9 +84,9 @@ export class Tooltip extends Morph {
         },
         set(stringOrAttributes) {
           const [descriptor] = this.submorphs;
-          descriptor.fixedWidth = stringOrAttributes.length > 40,
-          descriptor.value = stringOrAttributes,
+          descriptor.fixedWidth = stringOrAttributes.length > 40;
           descriptor.value = stringOrAttributes;
+          //descriptor.fit();
         }
       },
       submorphs: {
@@ -94,6 +94,7 @@ export class Tooltip extends Morph {
           this.submorphs = [
             new Label({
               width: 200,
+              autoFit: true,
               fill: Color.transparent,
               fontColor: Color.white
             })

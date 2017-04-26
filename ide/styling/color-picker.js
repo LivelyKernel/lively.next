@@ -11,6 +11,7 @@ import { obj } from "lively.lang";
 import {ColorPalette} from "./color-palette.js";
 import { StyleSheet } from '../../style-rules.js';
 import { zip } from "lively.lang/array.js";
+import { defaultWindowStyleSheet } from "../../components/window.js";
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
 
@@ -182,7 +183,7 @@ class FieldPicker extends Morph {
               fill: Color.transparent,
               borderColor: Color.black,
               borderWidth: 3,
-              extent: pt(18,18),
+              extent: pt(16,16),
               submorphs: [{
                 type: "ellipse",
                 fill: Color.transparent,
@@ -469,17 +470,32 @@ export class ColorPicker extends Window {
       },
       styleSheets: {
         initialize() {
-          this.styleSheets = new StyleSheet({
-            key: {fill: Color.transparent, 
-                  fontColor: Color.gray, 
-                  fontWeight: 'bold'},
-            large: {fontSize: 20},
-            active: {fontColor: Color.orange, borderColor: Color.orange},
-            value: {fill: Color.transparent, fontColor: Color.gray.lighter()},
-            editable: {borderRadius: 4, borderWidth: 1, 
-                       padding: rect(2,2,2,2), 
-                       borderColor: Color.gray.lighter()}
-         });
+          this.styleSheets = [
+            defaultWindowStyleSheet(),
+            new StyleSheet({
+              ".ColorPicker .key": {
+                fill: Color.transparent,
+                fontColor: Color.gray,
+                fontWeight: "bold"
+              },
+              ".ColorPicker.Window": {
+                fill: Color.black.withA(0.7),
+                borderColor: Color.gray.darker()
+              },
+              ".ColorPicker .large": {fontSize: 20},
+              ".ColorPicker .active": {fontColor: Color.orange, borderColor: Color.orange},
+              ".ColorPicker .ColorPropertyView": {
+                fill: Color.transparent,
+                fontColor: Color.gray.lighter()
+              },
+              ".ColorPicker .editable": {
+                borderRadius: 4,
+                borderWidth: 1,
+                padding: rect(2, 2, 2, 2),
+                borderColor: Color.gray.lighter()
+              }
+            })
+          ];
         }
       }
     }

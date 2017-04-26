@@ -76,7 +76,6 @@ class LeashEndpoint extends Ellipse {
     return {
       index: {},
       leash: {},
-      styleClasses: {defaultValue: ["endpointStyle"]},
       vertex: {
         get() {
           return this.leash.vertices[this.index];
@@ -101,12 +100,11 @@ export class Leash extends Path {
       styleSheets: {
         after: ["endpointStyle"],
         get() {
-          return [new StyleSheet(
-            {
-              endpointStyle: this.endpointStyle
-            },
-            this
-          )];
+          return [
+            new StyleSheet({
+              '.Leash .LeashEndpoint': this.endpointStyle
+            })
+          ];
         }
       },
       endpointStyle: {
@@ -258,10 +256,33 @@ export class PropertyInspector extends Morph {
       property: {},
       min: {defaultValue: -Infinity},
       max: {defaultValue: Infinity},
-      styleClasses: {defaultValue: ["root"]},
       styleSheets: {
         initialize() {
-          this.styleSheets = this.styler;
+          this.styleSheets = new StyleSheet({
+            '.PropertyInspector .buttonStyle': {
+              type: "button",
+              clipMode: "hidden",
+              activeStyle: {
+                fill: Color.transparent,
+                borderWidth: 0,
+                fontColor: Color.white.darker()
+              },
+              '.triggerStyle': {
+                fill: Color.transparent,
+                fontColor: Color.black
+              }
+            },
+            '.PropertyInspector': {
+              extent: pt(55, 25),
+              borderRadius: 5,
+              borderWidth: 1,
+              borderColor: Color.gray,
+              clipMode: "hidden"
+            },
+            '.PropertyInspector [name=down]': {padding: rect(0, -5, 0, 10)},
+            '.PropertyInspector [name=up]': {padding: rect(0, 0, 0, -5)},
+            '.PropertyInspector [name=value]': {fill: Color.white, padding: Rectangle.inset(4), fontSize: 15}
+          });
         }
       },
       layout: {
@@ -284,12 +305,12 @@ export class PropertyInspector extends Morph {
             }),
             {
               type: "button",
-              name: "down",
+              name: "down", styleClasses: ['buttonStyle'],
               label: Icon.makeLabel("sort-desc", {padding: rect(2, 2, 0, 0), fontSize: 12})
             },
             {
               type: "button",
-              name: "up",
+              name: "up", styleClasses: ['buttonStyle'],
               label: Icon.makeLabel("sort-asc", {padding: rect(2, 2, 0, 0), fontSize: 12})
             }
           ];
@@ -305,34 +326,6 @@ export class PropertyInspector extends Morph {
   __deserialize__(snapshot, objRef) {
     super.__deserialize__(snapshot, objRef);
     if (!this.target) this.setProperty("target", {});
-  }
-
-  get styler() {
-    const buttonStyle = {
-      type: "button",
-      clipMode: "hidden",
-      activeStyle: {
-        fill: Color.transparent,
-        borderWidth: 0,
-        fontColor: Color.white.darker()
-      },
-      triggerStyle: {
-        fill: Color.transparent,
-        fontColor: Color.black
-      }
-    };
-    return new StyleSheet({
-      root: {
-        extent: pt(55, 25),
-        borderRadius: 5,
-        borderWidth: 1,
-        borderColor: Color.gray,
-        clipMode: "hidden"
-      },
-      down: {padding: rect(0, -5, 0, 10), ...buttonStyle},
-      up: {padding: rect(0, 0, 0, -5), ...buttonStyle},
-      value: {fill: Color.white, padding: Rectangle.inset(4), fontSize: 15}
-    });
   }
 
   update() {
@@ -605,7 +598,19 @@ export class ModeSelector extends Morph {
       keys: {},
       values: {},
       tooltips: {},
-      styleClasses: {defaultValue: ["root"]},
+      styleSheets: {
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            ".ModeSelector": {fill: Color.transparent, height: 30, origin: pt(0, 5)},
+            ".ModeSelector [name=typeMarker]": {fill: Color.gray.darker(), borderRadius: 3},
+            ".ModeSelector .label": {
+              fontWeight: "bold",
+              nativeCursor: "pointer",
+              padding: Rectangle.inset(4)
+            }
+          });
+        }
+      },
       layout: {
         after: ["items"],
         initialize() {
@@ -613,14 +618,19 @@ export class ModeSelector extends Morph {
             rows: [0, {paddingBottom: 10}],
             grid: [[...arr.interpose(this.keys.map(k => k + "Label"), null)]],
             autoAssign: false,
-            align: "center",
             fitToCell: false
+          });
+          this.layout.row(0).items.forEach(c => {
+            c.group.align = "center";
           });
         }
       },
       submorphs: {
         initialize() {
-          this.build();
+          this.submorphs = [
+            {name: "typeMarker"},
+            ...this.createLabels(this.keys, this.values, this.tooltips)
+          ];
           this.update(
             this.init ? this.init : this.keys[0],
             this.values[this.keys.includes(this.init) ? this.keys.indexOf(this.init) : 0],
@@ -639,29 +649,6 @@ export class ModeSelector extends Morph {
         }
       }
     };
-  }
-
-  build() {
-    this.submorphs = [
-      {name: "typeMarker"},
-      ...this.createLabels(this.keys, this.values, this.tooltips)
-    ];
-    this.layout.row(0).items.forEach(c => {
-      c.group.align = "center";
-    });
-    this.styleSheets = this.styler;
-  }
-
-  get styler() {
-    return new StyleSheet({
-      root: {fill: Color.transparent, height: 30, origin: pt(0, 5)},
-      typeMarker: {fill: Color.gray.darker(), borderRadius: 3},
-      label: {
-        fontWeight: "bold",
-        nativeCursor: "pointer",
-        padding: Rectangle.inset(4)
-      }
-    });
   }
 
   createLabels(keys, values, tooltips = {}) {

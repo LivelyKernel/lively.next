@@ -197,7 +197,7 @@ export class StatusMessage extends Morph {
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
-            messageText: {
+            '.StatusMessage [name=messageText]': {
               draggable: false,
               readOnly: true,
               selectable: true,
@@ -207,11 +207,11 @@ export class StatusMessage extends Morph {
               fontSize: 14,
               fontFamily: "Inconsolata, 'DejaVu Sans Mono', monospace"
             },
-            closeButton: {
+            '.StatusMessage [name=closeButton]': {
               extent: pt(22, 22),
               activeStyle: {fill: Color.white},
             },
-            expandButton: {
+            '.StatusMessage [name=expandButton]': {
               extent: pt(22, 22),
               activeStyle: {fill: Color.white}
             }

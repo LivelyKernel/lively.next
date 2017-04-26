@@ -57,19 +57,19 @@ export default class LoadingIndicator extends Morph {
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
-            spinner: {
+            '.LoadingIndicator [name=spinner]': {
               fill: Color.transparent,
               extent: pt(100, 104),
               topLeft: pt(0, 0),
               halosEnabled: false
             },
-            label: {
+            '.LoadingIndicator [name=label]': {
               fontSize: 16,
               fontFamily: "Helvetica Neue, Arial",
               fontColor: Color.white,
               halosEnabled: false
             },
-            closeButton: {
+            '.LoadingIndicator [name=closeButton]': {
               fontFamily: "FontAwesome",
               fontColor: Color.white,
               activeStyle: {

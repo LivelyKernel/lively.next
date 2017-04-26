@@ -251,15 +251,6 @@ export class List extends Morph {
       nonSelectionFontColor: {defaultValue: Color.rgbHex("333")},
       fontColor:             {defaultValue: Color.rgbHex("333")},
 
-      theme: {
-        isStyleProp: true,
-        after: ["styleSheets"],
-        set(val) {
-          this.setProperty("theme", val);
-          this.styleSheets = this.listStyle(val);
-        }
-      },
-
       extent: {
         set(value) {
           if (value.eqPt(this.extent)) return;
@@ -386,23 +377,6 @@ export class List extends Morph {
     if (!props.bounds && !props.extent) props.extent = pt(400, 360);
     super(props);
     this.update();
-  }
-
-  listStyle(theme) {
-    if (theme == "dark") {
-      return new StyleSheet({
-        list: {
-          fill: Color.transparent,
-          hideScrollbars: true,
-          nonSelectionFontColor: Color.gray,
-          selectionFontColor: Color.black,
-          selectionColor: Color.gray.lighter(),
-          padding: Rectangle.inset(2, 0)
-        }
-      });
-    } else {
-      return new StyleSheet({list: {padding: Rectangle.inset(2, 0)}});
-    }
   }
 
   get isList() { return true; }
@@ -656,6 +630,35 @@ export class FilterableList extends Morph {
       borderColor: {defaultValue: 1},
       updateSelectionsAfterFilter: {defaultValue: false},
 
+      styleSheets: {
+        initialize() {
+          this.styleSheets = [
+            new StyleSheet({
+              ".list.dark [name=list]": {
+                fill: Color.transparent,
+                hideScrollbars: true,
+                nonSelectionFontColor: Color.gray,
+                selectionFontColor: Color.black,
+                selectionColor: Color.gray.lighter(),
+                padding: Rectangle.inset(2, 0)
+              },
+              ".list.dark [name=input]": {
+                borderWidth: 0,
+                borderRadius: 20,
+                fill: Color.gray.withA(0.8),
+                fontColor: Color.gray.darker(),
+                padding: rect(10, 2)
+              },
+              ".list.default [name=list]": {padding: Rectangle.inset(2, 0)},
+              ".list.default [name=input]": {
+                borderWidth: 0,
+                borderColor: Color.gray
+              }
+            })
+          ];
+        }
+      },
+
       submorphs: {
         initialize() {
           let input = Text.makeInputLine({
@@ -690,11 +693,10 @@ export class FilterableList extends Morph {
 
       theme: {
         isStyleProp: true,
-        after: ["submorphs"],
-        get() { return this.listMorph.theme; },
+        before: ["styleSheets"],
         set(val) {
-          this.inputMorph.styleSheets = this.inputStyle(val);
-          this.listMorph.theme = val;
+          this.setProperty('theme', val);
+          this.styleClasses = ['list', val];
         }
       },
 
@@ -903,27 +905,6 @@ export class FilterableList extends Morph {
     }
     listMorph.topLeft = paddingMorph ? paddingMorph.bottomLeft : inputMorph.bottomLeft;
     listMorph.height = this.height -listMorph.top - offset;
-  }
-
-  inputStyle(theme) {
-   if (theme == "dark") {
-      return new StyleSheet({
-        input: {
-          borderWidth: 0,
-          borderRadius: 20,
-          fill: Color.gray.withA(0.8),
-          fontColor: Color.gray.darker(),
-          padding: rect(10,2)
-        }
-      })
-    } else {
-      return new StyleSheet({
-        input: {
-          borderWidth: 0,
-          borderColor: Color.gray
-        }
-      })
-    }
   }
 
   focus() { this.get("input").focus(); }

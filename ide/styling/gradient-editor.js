@@ -89,27 +89,71 @@ export class GradientEditor extends Morph {
       this.gradientHandle && this.gradientHandle.remove();
    }
 
-   getStyler() {
-      return new StyleSheet({
-              body: {layout: new VerticalLayout({spacing: 3}),fill: Color.transparent},
-              addStopLabel: {fontSize: 18, fontColor: Color.orange, center: pt(-1, -17), extent: pt(10,10),
-                             padding: Rectangle.inset(0), fixedWidth: true, fixedHeight: true},
-              stopControlPreview: {extent: pt(2, 50), fill: Color.orange},
-              propertyView: {fill: Color.black.withA(.7), borderRadius: 5,
-                             padding: Rectangle.inset(5), fontColor: Color.white},
-              stopControlLine: {extent: pt(2,50), fill: Color.gray.darker(), tooltip: "Drag to change proportional offset of stop"},
-              stopControlHead: {fill: Color.black.withA(.3), borderRadius: 20, extent: pt(15,15), center: pt(1, -13)},
-              pickerField: {imageUrl: WHEEL_URL, extent: pt(15,15), tooltip: "Open Color Picker",
-                            nativeCursor: "pointer",fill: Color.transparent},
-              paletteField: {nativeCursor: "pointer", clipMode: "hidden", tooltip: "Open Color Palette"},
-              typeSelector: {fill: Color.transparent, extent: pt(180, 40)},
-              modeButton: {extent: pt(30,30), borderWidth: 2},
-              instruction: {fontSize: 15, padding: Rectangle.inset(15), fontWeight: "bold", fontColor: Color.black.lighter()},
-              closeButton: {fontColor: Color.gray.lighter(),
-                            tooltip: "Remove Stop", fontSize: 17, nativeCursor: "pointer"},
-              gradientEditor: {width: 180, height: 50, borderRadius: 5,
-                               borderWidth: 1, borderColor: Color.gray.darker()}});
-   }
+  getStyler() {
+    return new StyleSheet({
+      ".GradientEditor": {layout: new VerticalLayout({spacing: 3}), fill: Color.transparent},
+      ".GradientEditor [name=addStopLabel]": {
+        fontSize: 18,
+        fontColor: Color.orange,
+        center: pt(-1, -17),
+        extent: pt(10, 10),
+        padding: Rectangle.inset(0),
+        fixedWidth: true,
+        fixedHeight: true
+      },
+      ".GradientEditor [name=stopControlPreview]": {extent: pt(2, 50), fill: Color.orange},
+      ".GradientEditor .propertyView": {
+        fill: Color.black.withA(0.7),
+        borderRadius: 5,
+        padding: Rectangle.inset(5),
+        fontColor: Color.white
+      },
+      ".GradientEditor .stopControlLine": {
+        extent: pt(2, 50),
+        fill: Color.gray.darker(),
+        tooltip: "Drag to change proportional offset of stop"
+      },
+      ".GradientEditor .StopControlHead": {
+        fill: Color.black.withA(0.3),
+        borderRadius: 20,
+        extent: pt(15, 15),
+        center: pt(1, -13)
+      },
+      ".pickerField": {
+        imageUrl: WHEEL_URL,
+        extent: pt(15, 15),
+        tooltip: "Open Color Picker",
+        nativeCursor: "pointer",
+        fill: Color.transparent
+      },
+      ".GradientEditor .paletteField": {
+        nativeCursor: "pointer",
+        clipMode: "hidden",
+        tooltip: "Open Color Palette"
+      },
+      ".GradientEditor [name=typeSelector]": {fill: Color.transparent, extent: pt(180, 40)},
+      ".GradientEditor .modeButton": {nativeCursor: 'pointer', extent: pt(30, 30), borderWidth: 2},
+      ".GradientEditor [name=instruction]": {
+        fontSize: 15,
+        padding: Rectangle.inset(15),
+        fontWeight: "bold",
+        fontColor: Color.black.lighter()
+      },
+      ".closeButton": {
+        fontColor: Color.gray.lighter(),
+        tooltip: "Remove Stop",
+        fontSize: 17,
+        nativeCursor: "pointer"
+      },
+      ".GradientEditor [name=gradientEditor]": {
+        width: 180,
+        height: 50,
+        borderRadius: 5,
+        borderWidth: 1,
+        borderColor: Color.gray.darker()
+      }
+    });
+  }
 
    get targetProperty() { return this.target[this.property]; }
    set targetProperty(v) { this.target[this.property] = v; signal(this, "targetProperty", v); }
@@ -199,7 +243,6 @@ class StopControlHead extends Morph {
        index: {},
        queue: {defaultValue: []},
        isHaloItem: {defaultValue: true},
-       styleClasses: {defaultValue: ['stopControlHead']},
        layout: {initialize() { this.layout = new HorizontalLayout({spacing: 3}) }}
     }
   }
@@ -313,6 +356,7 @@ class StopControlHead extends Morph {
        const stopControl = this;
        return morph({
           type: "ellipse", name: "paletteField", extent,
+          styleClasses: ['paletteField'],
           update(gradient) {
              this.fill = stopControl.stopColor = gradient.stops[stopControl.index].color;
           },
@@ -326,6 +370,7 @@ class StopControlHead extends Morph {
    pickerField() {
        return new Image({
           name: "pickerField",
+          styleClasses: ['pickerField'],
           update: (gradient) => {
              this.stopColor = gradient.stops[this.index].color
           },
@@ -580,7 +625,6 @@ export class GradientFocusHandle extends Ellipse {
       return {
         target: {/* REQUIRED */},
         isHaloItem: {defaultValue: true},
-        styleClasses: {defaultValue: ['root']},
         styleSheets: {
           initialize() {
             this.styleSheets = this.styler;
@@ -597,31 +641,54 @@ export class GradientFocusHandle extends Ellipse {
       }
     }
 
-    get styler() {
-       return new StyleSheet({
-          root: {fill: Color.transparent,
-                 borderColor: Color.orange, draggable: false,
-                 borderWidth: 2},
-          topCenter: {nativeCursor: "ns-resize"},
-          rightCenter: {nativeCursor: "ew-resize"},
-          bottomCenter: {nativeCursor: "ns-resize"},
-          leftCenter: {nativeCursor: "ew-resize"},
-          propertyView: {fill: Color.black.withA(.7), borderRadius: 5,
-                         padding: Rectangle.inset(5), fontColor: Color.white},
-          boundsHandle: {borderColor: Color.orange.darker(), fill: Color.orange.withA(.7),
-                         tooltip: "Resize bounds of radial gradient"},
-          crossBar: {borderWidth: 2, borderColor: Color.orange, center: pt(11,11), draggable: false},
-          focusHandle: {clipMode: "hidden", nativeCursor: '-webkit-grab',
-                        fill: Color.transparent, borderColor: Color.orange,
-                        submorphs: [
-                           {type: 'path', vertices: [pt(0,0), pt(50,0)], styleClasses: ["crossBar"]},
-                           {type: 'path', vertices: [pt(0,0), pt(0,50)], styleClasses: ["crossBar"]},
-                           {type: "ellipse", fill: Color.transparent, extent: pt(20,20),
-                            tooltip: "Shift focal center of radial gradient",
-                            reactsToPointer: false}
-                        ]}
-       })
-    }
+  get styler() {
+    return new StyleSheet({
+      ".GradientFocusHandle": {
+        fill: Color.transparent,
+        borderColor: Color.orange,
+        draggable: false,
+        borderWidth: 2
+      },
+      ".GradientFocusHandle .topCenter": {nativeCursor: "ns-resize"},
+      ".GradientFocusHandle .rightCenter": {nativeCursor: "ew-resize"},
+      ".GradientFocusHandle .bottomCenter": {nativeCursor: "ns-resize"},
+      ".GradientFocusHandle .leftCenter": {nativeCursor: "ew-resize"},
+      ".GradientFocusHandle .propertyView": {
+        fill: Color.black.withA(0.7),
+        borderRadius: 5,
+        padding: Rectangle.inset(5),
+        fontColor: Color.white
+      },
+      ".GradientFocusHandle .boundsHandle": {
+        borderColor: Color.orange.darker(),
+        fill: Color.orange.withA(0.7),
+        tooltip: "Resize bounds of radial gradient"
+      },
+      ".GradientFocusHandle .crossBar": {
+        borderWidth: 2,
+        borderColor: Color.orange,
+        center: pt(11, 11),
+        draggable: false
+      },
+      ".GradientFocusHandle .focusHandle": {
+        clipMode: "hidden",
+        nativeCursor: "-webkit-grab",
+        fill: Color.transparent,
+        borderColor: Color.orange,
+        submorphs: [
+          {type: "path", vertices: [pt(0, 0), pt(50, 0)], styleClasses: ["crossBar"]},
+          {type: "path", vertices: [pt(0, 0), pt(0, 50)], styleClasses: ["crossBar"]},
+          {
+            type: "ellipse",
+            fill: Color.transparent,
+            extent: pt(20, 20),
+            tooltip: "Shift focal center of radial gradient",
+            reactsToPointer: false
+          }
+        ]
+      }
+    });
+  }
 
     relayout() {
        const {bounds, focus} = this.target.fill;
@@ -646,7 +713,6 @@ class RotationPoint extends Ellipse {
   static get properties() {
     return {
       gradientHandle: {},
-      styleClasses: {defaultValue: ["rotationPoint"]}
     };
   }
 
@@ -688,7 +754,6 @@ class GradientDirectionHandle extends Ellipse {
   static get properties() {
     return {
       target: {},
-      styleClasses: {defaultValue: ['root']},
       styleSheets: {
         initialize() {
           this.styleSheets = this.styler;
@@ -704,14 +769,27 @@ class GradientDirectionHandle extends Ellipse {
   }
 
   get styler() {
-     return new StyleSheet({
-        root: {borderColor: Color.orange, fill: Color.transparent, borderWidth: 1,
-               origin: pt(25,25), extent: pt(50,50)},
-        rotationPoint: {fill: Color.orange, extent: pt(10,10),
-                        nativeCursor: '-webkit-grab', tooltip: "Adjust direction of linear gradient"},
-        propertyView: {fill: Color.black.withA(.7), borderRadius: 5,
-                       padding: Rectangle.inset(5), fontColor: Color.white},
-     })
+    return new StyleSheet({
+      '.GradientDirectionHandle': {
+        borderColor: Color.orange,
+        fill: Color.transparent,
+        borderWidth: 1,
+        origin: pt(25, 25),
+        extent: pt(50, 50)
+      },
+      '.GradientDirectionHandle .RotationPoint': {
+        fill: Color.orange,
+        extent: pt(10, 10),
+        nativeCursor: "-webkit-grab",
+        tooltip: "Adjust direction of linear gradient"
+      },
+      '.GradientDirectionHandle .propertyView': {
+        fill: Color.black.withA(0.7),
+        borderRadius: 5,
+        padding: Rectangle.inset(5),
+        fontColor: Color.white
+      }
+    });
   }
 
   get isHaloItem() { return true }

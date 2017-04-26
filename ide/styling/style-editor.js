@@ -91,14 +91,14 @@ class StyleEditor extends Morph {
 
   get styler() {
     return new StyleSheet({
-      closeStylerButton: {
+      '.StyleEditor .closeStylerButton': {
         fontColor: Color.gray.darker(),
         nativeCursor: "pointer",
         fill: Color.transparent,
         fontSize: 22,
         borderWidth: 0
       },
-      closed: {
+      '.StyleEditor.closed': {
         dropShadow: true,
         draggable: true,
         borderColor: Color.gray,
@@ -106,7 +106,7 @@ class StyleEditor extends Morph {
         fill: Color.black.withA(0.7),
         borderRadius: 15
       },
-      opened: {
+      '.StyleEditor.opened': {
         fill: new LinearGradient({
           stops: [
             {color: Color.rgb(242, 243, 244), offset: 0},
@@ -117,7 +117,7 @@ class StyleEditor extends Morph {
         borderRadius: 7,
         borderColor: Color.gray
       },
-      controlLabel: {
+      '.StyleEditor .controlLabel': {
         fontSize: 12,
         fontWeight: "bold",
         fontColor: Color.black,
@@ -125,7 +125,7 @@ class StyleEditor extends Morph {
         fill: Color.transparent,
         readOnly: true
       },
-      controlWrapper: {
+      '.StyleEditor .controlWrapper': {
         clipMode: "hidden",
         fill: Color.transparent,
         reactsToPointer: false
@@ -584,15 +584,15 @@ export class PolygonEditor extends BorderStyleEditor {
 
   get vertexModeStyles() {
     return new StyleSheet({
-      modeLabel: {
+      '.PolygonEditor .modeLabel': {
         fontColor: Color.white,
         fontWeight: "bold",
         fill: Color.transparent
       },
-      modeBox: {borderRadius: 5, nativeCursor: "pointer"},
-      addMode: {fill: Color.rgb(39, 174, 96)},
-      deleteMode: {fill: Color.rgb(231, 76, 60)},
-      transformMode: {fill: Color.rgb(52, 152, 219)}
+      '.PolygonEditor .modeBox': {borderRadius: 5, nativeCursor: "pointer"},
+      '.PolygonEditor .addMode': {fill: Color.rgb(39, 174, 96)},
+      '.PolygonEditor .deleteMode': {fill: Color.rgb(231, 76, 60)},
+      '.PolygonEditor .transformMode': {fill: Color.rgb(52, 152, 219)}
     });
   }
 
@@ -837,14 +837,14 @@ export class ImageEditor extends StyleEditor {
       layout: new HorizontalLayout({spacing: 3}),
       fill: Color.transparent,
       styleSheets: new StyleSheet({
-        urlBar: {
+        '.ImageEditor .urlBar': {
           borderRadius: 5,
           padding: Rectangle.inset(4),
           fill: Color.white.withA(0.8),
           fontColor: Color.gray.darker(),
           fontSize: 15
         },
-        saveButton: {
+        '.ImageEditor .saveButton': {
           fontSize: 18,
           padding: Rectangle.inset(2),
           nativeCursor: "pointer",

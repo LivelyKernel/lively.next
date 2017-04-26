@@ -7,44 +7,41 @@ import {StyleSheet} from '../style-rules.js';
 import {HorizontalLayout} from '../layout.js';
 
 export const defaultWindowStyleSheet = () => {
-  let windowButtonSize = pt(13,13),
-      defaultLabelStyle = {
-         fill: Color.transparent, opacity: 0.5,
-         fontSize: 11,
-         center: windowButtonSize.scaleBy(.5)
-      };
+  let windowButtonSize = pt(13,13);
   return new StyleSheet({
-    buttonGroup: {
+    '.Window .buttonGroup': {
       fill: Color.transparent,
       position: pt(0, 0),
       layout: new HorizontalLayout({autoResize: true, spacing: 6})
     },
-    closeButton: {
+    '.Window .closeButton': {
       borderRadius: 14,
       extent: windowButtonSize,
       borderColor: Color.darkRed,
       fill: Color.rgb(255, 96, 82)
     },
-    closeLabel: defaultLabelStyle,
-    minimizeButton: {
+    '.Window .defaultLabelStyle': {
+         fill: Color.transparent, opacity: 0.5,
+         fontSize: 11,
+         center: windowButtonSize.scaleBy(.5)
+      },
+    '.Window .minimizeButton': {
       borderRadius: 14,
       extent: windowButtonSize,
       borderColor: Color.brown,
       fill: Color.rgb(255, 190, 6)
     },
-    minimizeLabel: defaultLabelStyle,
-    maximizeButton: {
+    '.Window .maximizeButton': {
       borderRadius: 14,
       extent: windowButtonSize,
       borderColor: Color.darkGreen,
       fill: Color.green
     },
-    maximizeLabel: defaultLabelStyle,
-    windowTitleLabel: {
+    '.Window .windowTitleLabel': {
       fill: Color.transparent,
       fontColor: Color.darkGray
     },
-    windowBody: {
+    '.Window': {
       fill: Color.lightGray,
       borderRadius: 7,
       borderColor: Color.gray,
@@ -181,7 +178,7 @@ export default class Window extends Morph {
         tooltip: "close window",
         submorphs: [
           Label.icon("times", {
-            styleClasses: ["closeLabel"],
+            styleClasses: ["defaultLabelStyle"],
             visible: false
           })
         ]
@@ -202,7 +199,7 @@ export default class Window extends Morph {
         tooltip: "collapse window",
         submorphs: [
           Label.icon("minus", {
-            styleClasses: ["minimizeLabel"],
+            styleClasses: ["defaultLabelStyle"],
             visible: false
           })
         ]
@@ -224,7 +221,7 @@ export default class Window extends Morph {
           tooltip: "maximize window",
           submorphs: [
             Label.icon("plus", {
-              styleClasses: ["maximizeLabel"],
+              styleClasses: ["defaultLabelStyle"],
               visible: false
             })
           ]
