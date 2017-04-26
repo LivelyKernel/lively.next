@@ -28,12 +28,12 @@ export class StyleSheet {
 
   constructor(rules) {
     this.rules = rules;
+    this._styledMorphs = [];
   }
 
   applyToAll(root, morph) {
     const sizzle = new Sizzle();
     this.removedLayouts = [];
-    this._styledMorphs = this._styledMorphs || [];
     root.withAllSubmorphsDo(m => {
       if (m.layout) {
         this.removedLayouts.push([m, m.layout]);
@@ -44,8 +44,9 @@ export class StyleSheet {
       arr.flatten(sizzle.select(rule, root))
          .filter(m => !this._styledMorphs.includes(m.id))
          .forEach(m => {
-            this.applyToMorph(m, this.rules[rule], true); 
+            this.applyToMorph(m, this.rules[rule], true);
             this._styledMorphs.push(m.id);
+            this.enforceRulesBetween(m, root);
           });
     }
     this.removedLayouts.forEach(([m, l]) => {m.layout = l});
@@ -54,9 +55,6 @@ export class StyleSheet {
   onMorphChange(morph, change, root) {
     const {selector, args, prop, prevValue, value} = change;
     if (selector == "addMorphAt") {
-        // further apply rules to the submorph hierarcht of the morph
-        // find a way to sizzle the morph
-      //args[0].withAllSubmorphsDo(m => this.enforceRulesOn(m, root));
       this.applyToAll(root, args[0]);
     } else if (prop == "name" || prop == "styleClasses") {
       if (prevValue == value) return;
@@ -78,6 +76,9 @@ export class StyleSheet {
   enforceRulesBetween(morph, root) {
     var props = {}, curr = morph;
     while (curr && curr != root) {
+      if (curr.styleSheets) {
+        curr.styleSheets.forEach(ss => arr.remove(ss._styledMorphs, morph.id));
+      }
       curr.applyStyleSheets();
       curr = curr.owner;
     }
