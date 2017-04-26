@@ -1,5 +1,6 @@
 import { arr, obj } from "lively.lang";
 import { isFunction, isObject } from "lively.lang/object.js";
+import { Sizzle } from './sizzle.js';
 
 /*
 
@@ -14,26 +15,6 @@ that morph.
 
 */
 
-
-export class StyleSheetRegistry {
-
-  static getStyleSheet(name) {
-    var ss;
-    $world.withAllSubmorphsDetect(m => {
-      ss = m.styleSheets && m.styleSheets.find(ss => ss.name == name);
-      return ss;
-    });
-    return ss;
-  }
-
-  static getStyledMorphsFor(name) {
-    return $world.withAllSubmorphsSelect(
-      m => m.styleSheets && m.styleSheets.find(ss => ss.name == name)
-    );
-  }
-  
-}
-
 export class StyleSheet {
 
   /* If the style sheet is created with a name, 
@@ -45,91 +26,79 @@ export class StyleSheet {
      everywhere the style sheet with that name 
      has been used */
 
-  constructor(name, rules) {
-    if (obj.isString(name)) this.name = name;
-    if (obj.isObject(name)) this.rules = name; 
-    // if rules are not propvided by the name is given, we will lookup the existing style
-    if (this.name && !rules) this.rules = StyleSheetRegistry.getStyleSheet(this.name).rules;
-    // if rules and name are given, we will ensure that these rules serve as the new 
-    // standard for all style sheets in the world name that way
-    if (rules && name) this.propagateRules(rules)
-  }
-
-  propagateRules(newRules) {
-    //  currently slow, since we refrain from using an index
-    this.rules = newRules;
-    this.name && $world.withAllSubmorphsDo(
-      m => {
-        let ss = m.styleSheets && m.styleSheets.find(ss => ss.name == this.name);
-        if (ss) ss.rules = newRules;
-      }
-    );
+  constructor(rules) {
+    this.rules = rules;
   }
 
   applyToAll(root, morph) {
-    const removedLayouts = {};
+    const sizzle = new Sizzle();
+    this.removedLayouts = [];
+    this._styledMorphs = this._styledMorphs || [];
     root.withAllSubmorphsDo(m => {
-      removedLayouts[m.id] = m.layout;
-      m.layout = null;
+      if (m.layout) {
+        this.removedLayouts.push([m, m.layout]);
+        m.layout = null;
+      }
     });
-    (morph || root).withAllSubmorphsDo(m => this.enforceRulesOn(m, root));
-    root.withAllSubmorphsDo(m => {
-      (m.layout = removedLayouts[m.id]) || this.applyLayout(m);
-    });
+    for (let rule in this.rules) {
+      arr.flatten(sizzle.select(rule, root))
+         .filter(m => !this._styledMorphs.includes(m.id))
+         .forEach(m => {
+            this.applyToMorph(m, this.rules[rule], true); 
+            this._styledMorphs.push(m.id);
+          });
+    }
+    this.removedLayouts.forEach(([m, l]) => {m.layout = l});
   }
 
   onMorphChange(morph, change, root) {
     const {selector, args, prop, prevValue, value} = change;
     if (selector == "addMorphAt") {
-      this.applyToAll(morph, args[0]);
+        // further apply rules to the submorph hierarcht of the morph
+        // find a way to sizzle the morph
+      //args[0].withAllSubmorphsDo(m => this.enforceRulesOn(m, root));
+      this.applyToAll(root, args[0]);
     } else if (prop == "name" || prop == "styleClasses") {
       if (prevValue == value) return;
       this.enforceRulesOn(morph, root);
-      this.applyLayout(morph);
     }
-  }
-
-  getShadowedProps(morph, root) {
-    var props = {}, curr = morph;
-    while (curr && curr != root) {
-      if (curr.styleSheets)
-        props = {...props, ...obj.merge(curr.styleSheets.map(r => r.getStyleProps(morph)))};
-      curr = curr.owner;
-    }
-    return ["layout", ...Object.keys(props)];
   }
 
   getStyleProps(morph) {
-    var props = {};
-    if (morph.styleClasses) {
-      props = obj.merge(arr.compact(morph.styleClasses.map(c => this.rules[c])));
-    }
-
-    if (this.rules[morph.name]) {
-      props = {...props, ...this.rules[morph.name]};
+    var props = {}, sizzle = new Sizzle(), 
+        owners = [morph, ...morph.ownerChain()];
+    for (let rule in this.rules) {
+      if (morph == sizzle.select(rule, owners)[0]) {
+        props = {...props, ...this.rules[rule]};
+      }
     }
     return props;
   }
 
+  enforceRulesBetween(morph, root) {
+    var props = {}, curr = morph;
+    while (curr && curr != root) {
+      curr.applyStyleSheets();
+      curr = curr.owner;
+    }
+  }
+
   enforceRulesOn(morph, root) {
-    var styleProps = this.getStyleProps(morph),
-      shadowedProps = this.getShadowedProps(morph, root);
-    styleProps &&
-      this.applyToMorph(morph, obj.dissoc(styleProps, shadowedProps));
+    var styleProps = this.getStyleProps(morph);
+    styleProps && this.applyToMorph(morph, styleProps);
+    this.enforceRulesBetween(morph, root) 
   }
 
-  applyLayout(morph) {
-    const layout = this.getStyleProps(morph).layout;
-    if (layout)
-      morph.layout = layout;
-  }
-
-  applyToMorph(morph, styleProps) {
+  applyToMorph(morph, styleProps, skipLayouts=false) {
     let {properties} = morph.propertiesAndPropertySettings(),
         sortedKeys = arr.intersect(obj.sortKeysWithBeforeAndAfterConstraints(properties), 
                                    Object.keys(styleProps));
     for (let prop of sortedKeys) {
-      morph[prop] = styleProps[prop];
+      if (skipLayouts && prop == 'layout' && styleProps[prop]) {  
+        this.removedLayouts.push([morph, styleProps[prop]]);
+      } else {
+        morph[prop] = styleProps[prop];
+      }
     }
     return morph;
   }
