@@ -3,9 +3,8 @@ import { Path, arr, graph } from "lively.lang";
 import ExpressionSerializer from "./plugins/expression-serializer.js";
 
 export function referenceGraph(snapshot) {
-  let ids = Object.keys(snapshot),
-      g = {};
-  for (let id in snapshot)
+  let ids = Object.keys(snapshot), g = {};
+  for (var id in snapshot)
     g[id] = referencesOfId(snapshot, id);
   return g;
 }
@@ -15,7 +14,7 @@ function isReference(value) { return value && value.__ref__; }
 function referencesOfId(snapshot, id, withPath) {
   // all the ids an regObj (given by id) points to
   let ref = snapshot[id], result = [];
-  for (let key in ref.props) {
+  for (var key in ref.props) {
     let {value, verbatim} = ref.props[key] || {};
     if (Array.isArray(value)) {
       result.push(...referencesInArray(snapshot, value, withPath && key));

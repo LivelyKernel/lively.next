@@ -228,15 +228,16 @@ export class ObjectRef {
     if (path.length > 100) throw new Error(
       `Stopping serializer, encountered a possibly infinit loop: ${path.join(".")}`);
 
-    let {id, realObj, snapshots} = this;
+    let {id, realObj, snapshots} = this,
+        rev, ref;
 
     if (!realObj) {
       console.error(`Cannot marshall object ref ${id}, no real object!`);
       return {...this.asRefForSerializedObjMap(), isMissing: true};
     }
 
-    let rev = realObj._rev || 0,
-        ref = this.asRefForSerializedObjMap(rev);
+    rev = realObj._rev || 0;
+    ref = this.asRefForSerializedObjMap(rev);
     arr.pushIfNotIncluded(this.snapshotVersions, rev);
 
     // do we already have serialized a current version of realObj?
@@ -246,16 +247,14 @@ export class ObjectRef {
       return ref;
     }
 
-    if (typeof id !== "string") {
-      let msg = `Error snapshoting ${realObj}: `
-              + `id is not a string but ${id} `
-              + `(serialization path: ${path.join(".")})`;
-      throw new Error(msg)
-    }
+    if (typeof id !== "string")
+      throw new Error(`Error snapshoting ${realObj}: `
+                    + `id is not a string but ${id} `
+                    + `(serialization path: ${path.join(".")})`)
 
     // maybe custom serialization
-    for (let i = 0; i < pool.plugins.serializeObject.length; i++) {
-      let p = pool.plugins.serializeObject[i],
+    for (var i = 0; i < pool.plugins.serializeObject.length; i++) {
+      var p = pool.plugins.serializeObject[i],
           serialized = p.serializeObject(realObj, false, pool, serializedObjMap, path);
       if (serialized) {
         snapshots[rev] = serializedObjMap[id] = serialized;
@@ -264,18 +263,18 @@ export class ObjectRef {
     }
 
     // serialize properties
-    let keys = Object.getOwnPropertyNames(realObj),
+    var keys = Object.getOwnPropertyNames(realObj),
         props = {},
         snapshot = snapshots[rev] = serializedObjMap[id] = {rev, props};
 
-    for (let i = 0; i < pool.plugins.propertiesToSerialize.length; i++) {
-      let p = pool.plugins.propertiesToSerialize[i],
+    for (var i = 0; i < pool.plugins.propertiesToSerialize.length; i++) {
+      var p = pool.plugins.propertiesToSerialize[i],
           result = p.propertiesToSerialize(pool, this, snapshot, keys);
       if (result) keys = result;
     }
 
     // do the generic serialization, i.e. enumerate all properties and
-    for (let i = 0; i < keys.length; i++) {
+    for (var i = 0; i < keys.length; i++) {
       var key = keys[i];
       props[key] = {
         key,
@@ -286,12 +285,11 @@ export class ObjectRef {
     }
 
     // add more / custom stuff to snapshot or modify it somehow
-    let addFn = pool.plugins.additionallySerialize.length
-             || typeof realObj.__additionally_serialize__ === "function"
+    var addFn = pool.plugins.additionallySerialize.length
               ? __additionally_serialize__addObjectFunction(
                 this, snapshot, serializedObjMap, pool, path) : null;
-    for (let i = 0; i < pool.plugins.additionallySerialize.length; i++) {
-      let p = pool.plugins.additionallySerialize[i];
+    for (var i = 0; i < pool.plugins.additionallySerialize.length; i++) {
+      var p = pool.plugins.additionallySerialize[i];
       p.additionallySerialize(pool, this, snapshot, addFn);
     }
 
@@ -305,7 +303,7 @@ export class ObjectRef {
 
     if (isPrimitive(value)) return value; // stored as is
 
-    for (let i = 0; i < pool.plugins.serializeObject.length; i++) {
+    for (var i = 0; i < pool.plugins.serializeObject.length; i++) {
       let p = pool.plugins.serializeObject[i],
           serialized = p.serializeObject(value, true, pool, serializedObjMap, path);
       if (serialized) return serialized;
@@ -315,7 +313,7 @@ export class ObjectRef {
       return value.map((ea, i) =>
         this.snapshotProperty(sourceObjId, ea, path.concat(i), serializedObjMap, pool));
 
-    let objectRef = pool.add(value);
+    var objectRef = pool.add(value);
     return !objectRef || !objectRef.isObjectRef ?
       objectRef :
       objectRef.snapshotObject(serializedObjMap, pool, path);
@@ -363,15 +361,15 @@ export class ObjectRef {
     if (typeof newObj.__deserialize__ === "function")
       newObj.__deserialize__(snapshot, this, serializedObjMap, pool, path);
 
-    let {props} = snapshot,
+    var {props} = snapshot,
         deserializedKeys = {};
 
     if (props) {
 
       // deserialize class properties as indicated by realObj.constructor.properties
-      let classProperties = newObj.constructor[Symbol.for("lively.classes-properties-and-settings")];
+      var classProperties = newObj.constructor[Symbol.for("lively.classes-properties-and-settings")];
       if (classProperties) {
-        let {properties, propertySettings} = classProperties,
+        var {properties, propertySettings} = classProperties,
             valueStoreProperty = propertySettings.valueStoreProperty || "_state";
 
         // if props has a valueStoreProperty then we directly deserialize that.
@@ -379,10 +377,10 @@ export class ObjectRef {
         if (!props[valueStoreProperty]) {
           if (!newObj.hasOwnProperty(valueStoreProperty))
             newObj.initializeProperties();
-          let valueStore = newObj[valueStoreProperty],
+          var valueStore = newObj[valueStoreProperty],
               sortedKeys = obj.sortKeysWithBeforeAndAfterConstraints(properties);
-          for (let i = 0; i < sortedKeys.length; i++) {
-            let key = sortedKeys[i],
+          for (var i = 0; i < sortedKeys.length; i++) {
+            var key = sortedKeys[i],
                 spec = properties[key];
             if (!(key in props)) continue;
             this.recreatePropertyAndSetProperty(newObj, props, key, serializedObjMap, pool, path);
