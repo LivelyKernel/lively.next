@@ -26,6 +26,7 @@
     "main": "server.js",
     "packageMap": {
       "lively.modules": "./node_modules/lively.modules",
+      "lively.resources": "./node_modules/lively.resources",				
       "lively.2lively": "./node_modules/lively.2lively",
       "lively-system-interface": "./node_modules/lively-system-interface",
       "lively.shell": "./node_modules/lively.shell",
