@@ -471,7 +471,6 @@ export class ColorPicker extends Window {
       styleSheets: {
         initialize() {
           this.styleSheets = [
-            defaultWindowStyleSheet(),
             new StyleSheet({
               ".ColorPicker .key": {
                 fill: Color.transparent,

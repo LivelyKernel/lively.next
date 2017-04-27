@@ -150,9 +150,9 @@ export class Button extends Morph {
         },
         get() {
           return [new StyleSheet({
-             '.Button .activeStyle': this.activeStyle,
-             '.Button .triggerStyle': this.triggerStyle,
-             '.Button .inactiveStyle': this.inactiveStyle
+             '.Button.activeStyle': this.activeStyle,
+             '.Button.triggerStyle': this.triggerStyle,
+             '.Button.inactiveStyle': this.inactiveStyle
           })];
         }
       },

@@ -3,7 +3,7 @@ import { Rectangle, Color, pt } from "lively.graphics";
 import { arr, obj, promise } from "lively.lang";
 import { once, signal } from "lively.bindings";
 import { StatusMessage, StatusMessageForMorph } from './components/markers.js';
-import { Morph, inspect, config, MorphicEnv, Window, Menu } from "./index.js";
+import { Morph, FilterableList, inspect, config, MorphicEnv, Window, Menu } from "./index.js";
 import { TooltipViewer } from "./components/tooltips.js";
 
 import {
@@ -22,9 +22,26 @@ import { loadObjectFromPartsbinFolder } from "./partsbin.js";
 import { uploadFile } from "./events/html-drop-handler.js";
 import worldCommands from "./world-commands.js";
 import { loadWorldFromURL, loadWorld } from "./world-loading.js";
+import { defaultWindowStyleSheet } from "./components/window.js";
+import LoadingIndicator from "./components/loading-indicator.js";
 
 
 export class World extends Morph {
+
+  static get properties() {
+    return {
+      styleSheets: {
+        initialize() {
+          this.styleSheets = [
+            Window.styleSheet,
+            FilterableList.styleSheet,
+            LoadingIndicator.styleSheet,
+            StatusMessage.styleSheet
+          ];
+        }
+      }
+    };
+  }
 
   static defaultWorld() { return MorphicEnv.default().world; }
 

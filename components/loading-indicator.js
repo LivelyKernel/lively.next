@@ -13,6 +13,34 @@ const imageUrl = System.decanonicalize("lively.morphic/") + "lively-web-logo-sma
 
 export default class LoadingIndicator extends Morph {
 
+  static get styleSheet() {
+    return new StyleSheet({
+      ".LoadingIndicator [name=spinner]": {
+        fill: Color.transparent,
+        extent: pt(100, 104),
+        topLeft: pt(0, 0),
+        halosEnabled: false
+      },
+      ".LoadingIndicator [name=label]": {
+        fontSize: 16,
+        fontFamily: "Helvetica Neue, Arial",
+        fontColor: Color.white,
+        halosEnabled: false
+      },
+      ".LoadingIndicator [name=closeButton]": {
+        fontFamily: "FontAwesome",
+        fontColor: Color.white,
+        activeStyle: {
+          extent: pt(20, 20),
+          fill: Color.transparent,
+          borderWidth: 0,
+          fontColor: Color.white
+        },
+        visible: false
+      }
+    });
+  }
+
   static open(label, props) {
     return new this({...props, label}).openInWorld();
   }
@@ -52,36 +80,6 @@ export default class LoadingIndicator extends Morph {
         derived: true, after: ["submorphs"],
         get() { return this.getSubmorphNamed("label").fontSize; },
         set(val) { this.getSubmorphNamed("label").fontSize = val; }
-      },
-
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            '.LoadingIndicator [name=spinner]': {
-              fill: Color.transparent,
-              extent: pt(100, 104),
-              topLeft: pt(0, 0),
-              halosEnabled: false
-            },
-            '.LoadingIndicator [name=label]': {
-              fontSize: 16,
-              fontFamily: "Helvetica Neue, Arial",
-              fontColor: Color.white,
-              halosEnabled: false
-            },
-            '.LoadingIndicator [name=closeButton]': {
-              fontFamily: "FontAwesome",
-              fontColor: Color.white,
-              activeStyle: {
-                extent: pt(20, 20),
-                fill: Color.transparent,
-                borderWidth: 0,
-                fontColor: Color.white
-              },
-              visible: false
-            }
-          });
-        }
       },
 
       submorphs: {

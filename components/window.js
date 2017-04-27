@@ -6,55 +6,56 @@ import { connect, signal } from "lively.bindings";
 import {StyleSheet} from '../style-rules.js';
 import {HorizontalLayout} from '../layout.js';
 
-export const defaultWindowStyleSheet = () => {
-  let windowButtonSize = pt(13,13);
-  return new StyleSheet({
-    '.Window .buttonGroup': {
-      fill: Color.transparent,
-      position: pt(0, 0),
-      layout: new HorizontalLayout({autoResize: true, spacing: 6})
-    },
-    '.Window .closeButton': {
-      borderRadius: 14,
-      extent: windowButtonSize,
-      borderColor: Color.darkRed,
-      fill: Color.rgb(255, 96, 82)
-    },
-    '.Window .defaultLabelStyle': {
-         fill: Color.transparent, opacity: 0.5,
-         fontSize: 11,
-         center: windowButtonSize.scaleBy(.5)
-      },
-    '.Window .minimizeButton': {
-      borderRadius: 14,
-      extent: windowButtonSize,
-      borderColor: Color.brown,
-      fill: Color.rgb(255, 190, 6)
-    },
-    '.Window .maximizeButton': {
-      borderRadius: 14,
-      extent: windowButtonSize,
-      borderColor: Color.darkGreen,
-      fill: Color.green
-    },
-    '.Window .windowTitleLabel': {
-      fill: Color.transparent,
-      fontColor: Color.darkGray
-    },
-    '.Window': {
-      fill: Color.lightGray,
-      borderRadius: 7,
-      borderColor: Color.gray,
-      borderWidth: 1
-    }
-  });
-}
 
 export default class Window extends Morph {
 
+  static get styleSheet() {
+    let windowButtonSize = pt(13, 13);
+    return new StyleSheet({
+      ".Window .buttonGroup": {
+        fill: Color.transparent,
+        position: pt(0, 0),
+        layout: new HorizontalLayout({autoResize: true, spacing: 6})
+      },
+      ".Window .closeButton": {
+        borderRadius: 14,
+        extent: windowButtonSize,
+        borderColor: Color.darkRed,
+        fill: Color.rgb(255, 96, 82)
+      },
+      ".Window .defaultLabelStyle": {
+        fill: Color.transparent,
+        opacity: 0.5,
+        fontSize: 11,
+        center: windowButtonSize.scaleBy(0.5)
+      },
+      ".Window .minimizeButton": {
+        borderRadius: 14,
+        extent: windowButtonSize,
+        borderColor: Color.brown,
+        fill: Color.rgb(255, 190, 6)
+      },
+      ".Window .maximizeButton": {
+        borderRadius: 14,
+        extent: windowButtonSize,
+        borderColor: Color.darkGreen,
+        fill: Color.green
+      },
+      ".Window .windowTitleLabel": {
+        fill: Color.transparent,
+        fontColor: Color.darkGray
+      },
+      ".Window": {
+        fill: Color.lightGray,
+        borderRadius: 7,
+        borderColor: Color.gray,
+        borderWidth: 1
+      }
+    });
+  }
+
   static get properties() {
     return {
-
       controls: {
         after: ["submorphs"],
         initialize() {
@@ -64,25 +65,25 @@ export default class Window extends Morph {
               styleClasses: ["buttonGroup"],
               submorphs: this.buttons()
             }),
-            this.titleLabel(),
-          ]
+            this.titleLabel()
+          ];
           if (this.resizable) this.controls.push(this.resizer());
 
           this.submorphs = [...this.submorphs, ...this.controls];
         }
       },
-      
+
       dropShadow: {
         initialize() {
           this.dropShadow = new ShadowObject(true);
         }
       },
       styleClasses: {defaultValue: ["windowBody"]},
-      styleSheets: {
-        initialize() {
-          this.styleSheets = defaultWindowStyleSheet();
-        }
-      },
+      // styleSheets: {
+      //   initialize() {
+      //     this.styleSheets = defaultWindowStyleSheet();
+      //   }
+      // },
       clipMode: {defaultValue: "hidden"},
       resizable: {defaultValue: true},
 

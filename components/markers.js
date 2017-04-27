@@ -144,6 +144,30 @@ class BoundsMarker extends Morph {
 }
 
 export class StatusMessage extends Morph {
+
+  static get styleSheet() {
+    return new StyleSheet({
+      ".StatusMessage [name=messageText]": {
+        draggable: false,
+        readOnly: true,
+        selectable: true,
+        fixedWidth: false,
+        fixedHeight: false,
+        clipMode: "visible",
+        fontSize: 14,
+        fontFamily: "Inconsolata, 'DejaVu Sans Mono', monospace"
+      },
+      ".StatusMessage [name=closeButton]": {
+        extent: pt(22, 22),
+        activeStyle: {fill: Color.white}
+      },
+      ".StatusMessage [name=expandButton]": {
+        extent: pt(22, 22),
+        activeStyle: {fill: Color.white}
+      }
+    });
+  }
+
   static get properties() {
     return {
       stayOpen: {defaultValue: false},
@@ -191,31 +215,6 @@ export class StatusMessage extends Morph {
         },
         set(value) {
           this.borderColor = value;
-        }
-      },
-
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            '.StatusMessage [name=messageText]': {
-              draggable: false,
-              readOnly: true,
-              selectable: true,
-              fixedWidth: false,
-              fixedHeight: false,
-              clipMode: "visible",
-              fontSize: 14,
-              fontFamily: "Inconsolata, 'DejaVu Sans Mono', monospace"
-            },
-            '.StatusMessage [name=closeButton]': {
-              extent: pt(22, 22),
-              activeStyle: {fill: Color.white},
-            },
-            '.StatusMessage [name=expandButton]': {
-              extent: pt(22, 22),
-              activeStyle: {fill: Color.white}
-            }
-          })
         }
       },
 

@@ -621,6 +621,31 @@ import { connect } from "lively.bindings";
 
 export class FilterableList extends Morph {
 
+  static get styleSheet() {
+    return new StyleSheet({
+      ".list.dark [name=list]": {
+        fill: Color.transparent,
+        hideScrollbars: true,
+        nonSelectionFontColor: Color.gray,
+        selectionFontColor: Color.black,
+        selectionColor: Color.gray.lighter(),
+        padding: Rectangle.inset(2, 0)
+      },
+      ".list.dark [name=input]": {
+        borderWidth: 0,
+        borderRadius: 20,
+        fill: Color.gray.withA(0.8),
+        fontColor: Color.gray.darker(),
+        padding: rect(10, 2)
+      },
+      ".list.default [name=list]": {padding: Rectangle.inset(2, 0)},
+      ".list.default [name=input]": {
+        borderWidth: 0,
+        borderColor: Color.gray
+      }
+    });
+  }
+
   static get properties() {
 
     return {
@@ -629,35 +654,6 @@ export class FilterableList extends Morph {
       borderWidth: {defaultValue: 1},
       borderColor: {defaultValue: 1},
       updateSelectionsAfterFilter: {defaultValue: false},
-
-      styleSheets: {
-        initialize() {
-          this.styleSheets = [
-            new StyleSheet({
-              ".list.dark [name=list]": {
-                fill: Color.transparent,
-                hideScrollbars: true,
-                nonSelectionFontColor: Color.gray,
-                selectionFontColor: Color.black,
-                selectionColor: Color.gray.lighter(),
-                padding: Rectangle.inset(2, 0)
-              },
-              ".list.dark [name=input]": {
-                borderWidth: 0,
-                borderRadius: 20,
-                fill: Color.gray.withA(0.8),
-                fontColor: Color.gray.darker(),
-                padding: rect(10, 2)
-              },
-              ".list.default [name=list]": {padding: Rectangle.inset(2, 0)},
-              ".list.default [name=input]": {
-                borderWidth: 0,
-                borderColor: Color.gray
-              }
-            })
-          ];
-        }
-      },
 
       submorphs: {
         initialize() {
