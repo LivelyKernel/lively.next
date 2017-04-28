@@ -11,16 +11,17 @@ var path = require("path"),
     util = require('util'),
     io = require("socket.io-client"),
     debug = false,
+    debugOut = debug && require('fs').createWriteStream(process.env.HOME + "/.commandline2lively-debug.log"),
     env = process.env;
 
 function log(/*args*/) {
   if (!debug) return;
   var args = Array.prototype.slice.call(arguments);
   args[0] = '[cmdline2lv] ' + args[0];
-  console.log.apply(console, arguments);
+  debugOut.write(args.join(" ") + "\n");
+  // console.log.apply(console, arguments);
 }
 
-env
 function createConnection(thenDo) {
   var url =    env.L2L_SESSIONTRACKER_SERVER || "http://localhost:9001",
       ioPath = env.L2L_SESSIONTRACKER_PATH || "/lively-socket.io",
