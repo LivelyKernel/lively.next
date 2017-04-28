@@ -42,9 +42,22 @@ export class ModuleTranslationCache {
   fetchStoredModuleSource(moduleId) { throw new Error("not yet implemented"); }
 }
 
+var nodejsCacheDir = null;
+function prepareNodejsCaching() {
+  var fs = System._nodeRequire("fs"),
+      path = System._nodeRequire("path");
+  nodejsCacheDir = process.cwd() === "/"
+    ? path.join(process.env.HOME, ".lively.next")
+    : process.cwd();
+  if (!fs.existsSync(nodejsCacheDir)) fs.mkdirSync(nodejsCacheDir);
+}
+
 export class NodeModuleTranslationCache extends ModuleTranslationCache {
 
-  get moduleCacheDir() { return resource(`file://${process.env.PWD}/.module_cache/`); }
+  get moduleCacheDir() {
+    if (!nodejsCacheDir) prepareNodejsCaching();
+    return resource(`file://${nodejsCacheDir}/.module_cache/`); 
+  }
 
   async ensurePath(path) {
     if (await this.moduleCacheDir.join(path).exists()) return;
@@ -349,18 +362,26 @@ async function customTranslate(proceed, load) {
         }
       }
     } else if (isNode && useCache && isEsm) {
-       var cache = System._livelyModulesTranslationCache
-               || (System._livelyModulesTranslationCache = new NodeModuleTranslationCache()),
+      var cache =
+        System._livelyModulesTranslationCache ||
+        (System._livelyModulesTranslationCache = new NodeModuleTranslationCache()),
           stored = await cache.fetchStoredModuleSource(load.name);
-      if (stored && stored.hash == hashForCache && stored.timestamp >= NodeModuleTranslationCache.earliestDate) {
+      if (
+        stored && stored.hash == hashForCache
+        && stored.timestamp >= NodeModuleTranslationCache.earliestDate
+      ) {
         if (stored.source) {
           meta.format = "register";
           meta.deps = []; // the real deps will be populated when the
-                                   // system register code is run, still need
-                                   // to define it here to avoid an
-                                   // undefined entry later!
+                          // system register code is run, still need
+                          // to define it here to avoid an
+                          // undefined entry later!
 
-          debug && console.log("[lively.modules customTranslate] loaded %s from filesystem cache after %sms", load.name, Date.now()-start);
+          debug &&
+            console.log(
+              "[lively.modules customTranslate] loaded %s from filesystem cache after %sms",
+              load.name,
+              Date.now() - start);
           return Promise.resolve(stored.source);
         }
       }

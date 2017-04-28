@@ -1,5 +1,5 @@
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
+// INLINED /Applications/lively.app.app/Contents/Resources/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -212,12 +212,12 @@
 
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
+// INLINED END /Applications/lively.app.app/Contents/Resources/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
-// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
+// INLINED /Applications/lively.app.app/Contents/Resources/lively.modules/node_modules/semver/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -1422,7 +1422,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
+// INLINED END /Applications/lively.app.app/Contents/Resources/lively.modules/node_modules/semver/semver.js
 semver = exports;
 })({}, {});
 
@@ -2027,6 +2027,14 @@ var ModuleTranslationCache = function () {
   return ModuleTranslationCache;
 }();
 
+var nodejsCacheDir = null;
+function prepareNodejsCaching() {
+  var fs = System._nodeRequire("fs"),
+      path = System._nodeRequire("path");
+  nodejsCacheDir = process.cwd() === "/" ? path.join(process.env.HOME, ".lively.next") : process.cwd();
+  if (!fs.existsSync(nodejsCacheDir)) fs.mkdirSync(nodejsCacheDir);
+}
+
 var NodeModuleTranslationCache = function (_ModuleTranslationCac) {
   inherits(NodeModuleTranslationCache, _ModuleTranslationCac);
 
@@ -2326,7 +2334,8 @@ var NodeModuleTranslationCache = function (_ModuleTranslationCac) {
   }, {
     key: "moduleCacheDir",
     get: function get() {
-      return lively_resources.resource("file://" + process.env.PWD + "/.module_cache/");
+      if (!nodejsCacheDir) prepareNodejsCaching();
+      return lively_resources.resource("file://" + nodejsCacheDir + "/.module_cache/");
     }
   }]);
   return NodeModuleTranslationCache;

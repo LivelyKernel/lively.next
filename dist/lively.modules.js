@@ -1,5 +1,5 @@
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
+// INLINED /Applications/lively.app.app/Contents/Resources/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -658,9 +658,9 @@
   typeof self === "object" ? self : this
 );
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
+// INLINED END /Applications/lively.app.app/Contents/Resources/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
+// INLINED /Applications/lively.app.app/Contents/Resources/lively.lang/dist/lively.lang.js
 
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -8254,7 +8254,7 @@ var GLOBAL = typeof window !== "undefined" ? window : typeof global !== "undefin
 
 var isNode = typeof process !== "undefined" && process.env && typeof process.exit === "function";
 
-var globalInterfaceSpec = [{ action: "installMethods", target: "Array", sources: ["arr"], methods: ["from", "genN", "range", "withN"] }, { action: "installMethods", target: "Array.prototype", sources: ["arr"], methods: ["all", "any", "batchify", "clear", "clone", "collect", "compact", "delimWith", "detect", "doAndContinue", "each", "equals", "filterByKey", "findAll", "first", "flatten", "forEachShowingProgress", "grep", "groupBy", "groupByKey", "histogram", "include", "inject", "intersect", "invoke", "last", "mapAsync", "mapAsyncSeries", "mask", "max", "min", "mutableCompact", "nestedDelay", "partition", "pluck", "pushAll", "pushAllAt", "pushAt", "pushIfNotIncluded", "reMatches", "reject", "rejectByKey", "remove", "removeAt", "replaceAt", "rotate", "shuffle", "size", "sortBy", "sortByKey", "sum", "swap", "toArray", "toTuples", "union", "uniq", "uniqBy", "without", "withoutAll", "zip"], alias: [["select", "filter"]] }, { action: "installMethods", target: "Date", sources: ["date"], methods: [/*"parse"*/] }, { action: "installMethods", target: "Date.prototype", sources: ["date"], methods: ["equals", "format", "relativeTo"] }, { action: "installMethods", target: "Function", sources: ["fun"], methods: ["fromString"] }, { action: "installMethods", target: "Function.prototype", sources: ["fun"], methods: [/*"addProperties",*/"addToObject", "argumentNames", "asScript", "asScriptOf", "binds", "curry", "delay", "functionNames", "localFunctionNames", "getOriginal", "getVarMapping", "logCalls", "logCompletion", "logErrors", "qualifiedMethodName", "setProperty", "traceCalls", "wrap"] }, { action: "installMethods", target: "Number", sources: ["num"], methods: [] }, { action: "installMethods", target: "Number.prototype", sources: ["num"], methods: ["detent", "randomSmallerInteger", "roundTo", "toDegrees", "toRadians"] }, { action: "installMethods", target: "Object", sources: ["obj"], methods: ["addScript", "clone", "deepCopy", "extend", "inherit", "isArray", "isBoolean", "isElement", "isEmpty", "isFunction", "isNumber", "isObject", "isRegExp", "isString", "isUndefined", "merge", "mergePropertyInHierarchy", "values", "valuesInPropertyHierarchy"] }, { action: "installMethods", target: "Object.prototype", sources: ["obj"], methods: [] }, { action: "installMethods", target: "String.prototype", sources: ["string"], methods: ["camelize", "capitalize", "digitValue", "empty", "hashCode", "include", "pad", "regExpEscape", "startsWithVowel", "succ", "times", "toArray", "toQueryParams", "truncate"] }, { action: "installMethods", target: "Function.prototype", sources: ["klass"], methods: ["create", "addMethods", "isSubclassOf", "superclasses", "categoryNameFor", "remove"], alias: [["subclass", "create"]] }, { action: "installObject", target: "Numbers", source: "num", methods: ["average", "between", "convertLength", "humanReadableByteSize", "median", "normalRandom", "parseLength", "random", "sort"] }, { action: "installObject", target: "Properties", source: "properties", methods: ["all", "allOwnPropertiesOrFunctions", "allProperties", "any", "forEachOwn", "hash", "nameFor", "own", "ownValues", "values"] }, { action: "installObject", target: "Strings", source: "string", methods: ["camelCaseString", "createDataURI", "diff", "format", "formatFromArray", "indent", "lineIndexComputer", "lines", "md5", "newUUID", "nonEmptyLines", "pad", "paragraphs", "peekLeft", "peekRight", "print", "printNested", "printTable", "printTree", "quote", "reMatches", "stringMatch", "tableize", "tokens", "unescapeCharacterEntities", "withDecimalPrecision"] }, { action: "installObject", target: "Objects", source: "obj", methods: ["asObject", "equals", "inspect", "isMutableType", "safeToString", "shortPrintStringOf", "typeStringOf"] }, { action: "installObject", target: "Functions", source: "fun", methods: ["all", "compose", "composeAsync", "createQueue", "debounce", "debounceNamed", "either", "extractBody", "flip", "notYetImplemented", "once", "own", "throttle", "throttleNamed", "timeToRun", "timeToRunN", "waitFor", "workerWithCallbackQueue", "wrapperChain"] }, { action: "installObject", target: "Grid", source: "grid" }, { action: "installObject", target: "Interval", source: "interval" }, { action: "installObject", target: "lively.ArrayProjection", source: "arrayProjection" }, { action: "installObject", target: "lively.Closure", source: "Closure" }, { action: "installObject", target: "lively.Grouping", source: "Group" }, { action: "installObject", target: "lively.PropertyPath", source: "Path" }, { action: "installObject", target: "lively.Worker", source: "worker" }, { action: "installObject", target: "lively.Class", source: "classHelper" }];
+var globalInterfaceSpec = [{ action: "installMethods", target: "Array", sources: ["arr"], methods: ["from", "genN", "range", "withN"] }, { action: "installMethods", target: "Array.prototype", sources: ["arr"], methods: ["all", "any", "batchify", "clear", "clone", "collect", "compact", "delimWith", "detect", "doAndContinue", "each", "equals", "filterByKey", "findAll", "first", "flatten", "forEachShowingProgress", "grep", "groupBy", "groupByKey", "histogram", "include", "inject", "intersect", "invoke", "last", "mapAsync", "mapAsyncSeries", "mask", "max", "min", "mutableCompact", "nestedDelay", "partition", "pluck", "pushAll", "pushAllAt", "pushAt", "pushIfNotIncluded", "reMatches", "reject", "rejectByKey", "remove", "removeAt", "replaceAt", "rotate", "shuffle", "size", "sortBy", "sortByKey", "sum", "swap", "toArray", "toTuples", "union", "uniq", "uniqBy", "without", "withoutAll", "zip"], alias: [["select", "filter"]] }, { action: "installMethods", target: "Date", sources: ["date"], methods: [/*"parse"*/] }, { action: "installMethods", target: "Date.prototype", sources: ["date"], methods: ["equals", "format", "relativeTo"] }, { action: "installMethods", target: "Function", sources: ["fun"], methods: ["fromString"] }, { action: "installMethods", target: "Function.prototype", sources: ["fun"], methods: [/*"addProperties",*/"addToObject", "argumentNames", "asScript", "asScriptOf", "binds", "curry", "delay", "functionNames", "localFunctionNames", "getOriginal", "getVarMapping", "logCalls", "logCompletion", "logErrors", "qualifiedMethodName", "setProperty", "traceCalls", "wrap"] }, { action: "installMethods", target: "Number", sources: ["num"], methods: [] }, { action: "installMethods", target: "Number.prototype", sources: ["num"], methods: ["detent", "randomSmallerInteger", "roundTo", "toDegrees", "toRadians"] }, { action: "installMethods", target: "Object", sources: ["obj"], methods: ["addScript", "clone", "deepCopy", "extend", "inherit", "isArray", "isBoolean", "isElement", "isEmpty", "isFunction", "isNumber", "isObject", "isRegExp", "isString", "isUndefined", "merge", "mergePropertyInHierarchy", "values", "valuesInPropertyHierarchy"] }, { action: "installMethods", target: "Object.prototype", sources: ["obj"], methods: [] }, { action: "installMethods", target: "String.prototype", sources: ["string"], methods: ["camelize", "capitalize", "digitValue", "empty", "hashCode", "include", "pad", "regExpEscape", "startsWithVowel", "succ", "times", "toArray", "toQueryParams", "truncate"] }, { action: "installObject", target: "Numbers", source: "num", methods: ["average", "between", "convertLength", "humanReadableByteSize", "median", "normalRandom", "parseLength", "random", "sort"] }, { action: "installObject", target: "Properties", source: "properties", methods: ["all", "allOwnPropertiesOrFunctions", "allProperties", "any", "forEachOwn", "hash", "nameFor", "own", "ownValues", "values"] }, { action: "installObject", target: "Strings", source: "string", methods: ["camelCaseString", "createDataURI", "diff", "format", "formatFromArray", "indent", "lineIndexComputer", "lines", "md5", "newUUID", "nonEmptyLines", "pad", "paragraphs", "peekLeft", "peekRight", "print", "printNested", "printTable", "printTree", "quote", "reMatches", "stringMatch", "tableize", "tokens", "unescapeCharacterEntities", "withDecimalPrecision"] }, { action: "installObject", target: "Objects", source: "obj", methods: ["asObject", "equals", "inspect", "isMutableType", "safeToString", "shortPrintStringOf", "typeStringOf"] }, { action: "installObject", target: "Functions", source: "fun", methods: ["all", "compose", "composeAsync", "createQueue", "debounce", "debounceNamed", "either", "extractBody", "flip", "notYetImplemented", "once", "own", "throttle", "throttleNamed", "timeToRun", "timeToRunN", "waitFor", "workerWithCallbackQueue", "wrapperChain"] }, { action: "installObject", target: "Grid", source: "grid" }, { action: "installObject", target: "Interval", source: "interval" }, { action: "installObject", target: "lively.ArrayProjection", source: "arrayProjection" }, { action: "installObject", target: "lively.Closure", source: "Closure" }, { action: "installObject", target: "lively.Grouping", source: "Group" }, { action: "installObject", target: "lively.PropertyPath", source: "Path" }, { action: "installObject", target: "lively.Worker", source: "worker" }, { action: "installObject", target: "lively.Class", source: "classHelper" }];
 
 function createLivelyLangObject() {
   return {
@@ -8314,6 +8314,27 @@ function noConflict() {
 }
 
 function installGlobals() {
+  Object.assign(livelyLang, {
+    worker: worker,
+    messenger: messenger,
+    events: events,
+    tree: tree,
+    grid: grid,
+    arrayProjection: arrayProjection,
+    interval: interval,
+    graph: graph,
+    date: date,
+    properties: properties,
+    obj: obj,
+    arr: arr,
+    fun: fun,
+    num: num,
+    string: string,
+    Closure: Closure,
+    promise: promise,
+    Path: Path,
+    Group: Group
+  });
   globalInterfaceSpec.forEach(function (ea) {
     if (ea.action === "installMethods") {
       var targetPath = Path(ea.target);
@@ -8410,9 +8431,9 @@ exports.uninstallGlobals = uninstallGlobals;
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.lang;
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
+// INLINED END /Applications/lively.app.app/Contents/Resources/lively.lang/dist/lively.lang.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
+// INLINED /Applications/lively.app.app/Contents/Resources/lively.notifications/dist/lively.notifications.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -8570,9 +8591,9 @@ exports.stopLogging = stopLogging;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
+// INLINED END /Applications/lively.app.app/Contents/Resources/lively.notifications/dist/lively.notifications.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
+// INLINED /Applications/lively.app.app/Contents/Resources/lively.ast/dist/lively.ast.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -23533,9 +23554,9 @@ exports.fuzzyParse = fuzzyParse;
   if (__define_suckz__) { GLOBAL.define = __define_suckz__; }
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
+// INLINED END /Applications/lively.app.app/Contents/Resources/lively.ast/dist/lively.ast.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/lively.classes/dist/lively.classes.js
+// INLINED /Applications/lively.app.app/Contents/Resources/lively.classes/dist/lively.classes.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -23926,8 +23947,8 @@ function propertiesAndSettingsInHierarchyOf(klass) {
     current && (typeof current === "undefined" ? "undefined" : _typeof(current)) === "object" && Object.assign(propertySettings, current);
   }
 
-  for (var _i = 0; _i < allProps.length; _i++) {
-    var _current = allProps[_i];
+  for (var i = 0; i < allProps.length; i++) {
+    var _current = allProps[i];
     if ((typeof _current === "undefined" ? "undefined" : _typeof(_current)) !== "object") {
       console.error("[initializeProperties] " + klass + " encountered property declaration " + ("that is not a JS object: " + _current));
       continue;
@@ -23984,8 +24005,8 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
   // 2. Run init code for properties
   // and if we have values we will initialize the properties from it. Values
   // is expected to be a JS object mapping property names to property values
-  for (var _i2 = 0; _i2 < propsNeedingInitialize.length; _i2++) {
-    var _key = propsNeedingInitialize[_i2],
+  for (var i = 0; i < propsNeedingInitialize.length; i++) {
+    var _key = propsNeedingInitialize[i],
         actions = initActions[_key],
         hasValue = actions.hasOwnProperty("value");
 
@@ -24052,8 +24073,6 @@ function setSuperclass(klass, superclassOrSpec) {
     ensureInitializeStub(superclass);
     klass[superclassSymbol] = superclass;
     setPrototypeOf(klass.prototype, superclass.prototype);
-    // klass.prototype = Object.create(superclass.prototype);
-    // klass.prototype.constructor = klass;
     if (superclass !== Object) setPrototypeOf(klass, superclass);
   }
   return superclass;
@@ -24556,9 +24575,9 @@ exports.classToFunctionTransform = classToFunctionTransform;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/lively.classes/dist/lively.classes.js
+// INLINED END /Applications/lively.app.app/Contents/Resources/lively.classes/dist/lively.classes.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/lively.source-transform/dist/lively.source-transform.js
+// INLINED /Applications/lively.app.app/Contents/Resources/lively.source-transform/dist/lively.source-transform.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -25508,9 +25527,9 @@ exports.stringifyFunctionWithoutToplevelRecorder = stringifyFunctionWithoutTople
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.sourceTransform;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/lively.source-transform/dist/lively.source-transform.js
+// INLINED END /Applications/lively.app.app/Contents/Resources/lively.source-transform/dist/lively.source-transform.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
+// INLINED /Applications/lively.app.app/Contents/Resources/lively.vm/dist/lively.vm.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -27244,9 +27263,9 @@ exports.evalCodeTransformOfSystemRegisterSetters = evalCodeTransformOfSystemRegi
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
+// INLINED END /Applications/lively.app.app/Contents/Resources/lively.vm/dist/lively.vm.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
+// INLINED /Applications/lively.app.app/Contents/Resources/lively.resources/dist/lively.resources_no-deps.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -29560,9 +29579,9 @@ exports.Resource = Resource$$1;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.resources;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
+// INLINED END /Applications/lively.app.app/Contents/Resources/lively.resources/dist/lively.resources_no-deps.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.storage/dist/lively.storage_with-pouch.js
+// INLINED /Applications/lively.app.app/Contents/Resources/lively.storage/dist/lively.storage_with-pouch.js
 
 (function() {
 
@@ -65239,9 +65258,9 @@ exports.Database = Database;
 
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.storage/dist/lively.storage_with-pouch.js
+// INLINED END /Applications/lively.app.app/Contents/Resources/lively.storage/dist/lively.storage_with-pouch.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
+// INLINED /Applications/lively.app.app/Contents/Resources/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -65454,12 +65473,12 @@ exports.Database = Database;
 
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
+// INLINED END /Applications/lively.app.app/Contents/Resources/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
-// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
+// INLINED /Applications/lively.app.app/Contents/Resources/lively.modules/node_modules/semver/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -66664,7 +66683,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
+// INLINED END /Applications/lively.app.app/Contents/Resources/lively.modules/node_modules/semver/semver.js
 semver = exports;
 })({}, {});
 
@@ -67269,6 +67288,14 @@ var ModuleTranslationCache = function () {
   return ModuleTranslationCache;
 }();
 
+var nodejsCacheDir = null;
+function prepareNodejsCaching() {
+  var fs = System._nodeRequire("fs"),
+      path = System._nodeRequire("path");
+  nodejsCacheDir = process.cwd() === "/" ? path.join(process.env.HOME, ".lively.next") : process.cwd();
+  if (!fs.existsSync(nodejsCacheDir)) fs.mkdirSync(nodejsCacheDir);
+}
+
 var NodeModuleTranslationCache = function (_ModuleTranslationCac) {
   inherits(NodeModuleTranslationCache, _ModuleTranslationCac);
 
@@ -67568,7 +67595,8 @@ var NodeModuleTranslationCache = function (_ModuleTranslationCac) {
   }, {
     key: "moduleCacheDir",
     get: function get() {
-      return lively_resources.resource("file://" + process.env.PWD + "/.module_cache/");
+      if (!nodejsCacheDir) prepareNodejsCaching();
+      return lively_resources.resource("file://" + nodejsCacheDir + "/.module_cache/");
     }
   }]);
   return NodeModuleTranslationCache;
