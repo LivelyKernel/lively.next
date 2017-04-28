@@ -2,9 +2,11 @@ require("systemjs");
 require("lively.modules");
 require("socket.io");
 
+const defaultServerDir = __dirname;
+
 module.exports = function start(hostname, port, rootDirectory, serverDir) {
   if (!rootDirectory) rootDirectory = process.cwd();
-  if (!serverDir) serverDir = ".";
+  if (!serverDir) serverDir = defaultServerDir;
 
   var step = 1;
   console.log(`Lively server starting with root dir ${rootDirectory}`);
