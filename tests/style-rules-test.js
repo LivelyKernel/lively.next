@@ -9,15 +9,15 @@ describe("Style Rules", () => {
 
    it("applies a style to a morph", () => {
        const m1 = new Morph({styleClasses: ['root'], fill: Color.blue});
-       m1.styleSheets = new StyleSheet({root: {fill: Color.orange}})
+       m1.styleSheets = new StyleSheet({'.root': {fill: Color.orange}})
        expect(m1.fill).equals(Color.orange);
    });
 
    it("applies a style once a morph is added to the hierarchy", () => {
        const m1 = new Morph({styleClasses: ['root'], fill: Color.blue}),
              m2 = new Morph({styleClasses: ['child'], fill: Color.blue})
-       m1.styleSheets = new StyleSheet({root: {fill: Color.orange}, 
-                                       child: {fill: Color.green}})
+       m1.styleSheets = new StyleSheet({'.root': {fill: Color.orange}, 
+                                       '.child': {fill: Color.green}})
        m1.addMorph(m2);
        expect(m2.fill).equals(Color.green);
        m2.submorphs = [{styleClasses: ['child'], 
@@ -30,8 +30,8 @@ describe("Style Rules", () => {
    it("updates the style once a morph changes morphClass", () => {
        const m1 = new Morph({styleClasses: ['root'], fill: Color.blue}),
              m2 = new Morph({styleClasses: ['child'], fill: Color.blue})
-       m1.styleSheets = new StyleSheet({root: {fill: Color.orange}, 
-                                       child: {fill: Color.green}})
+       m1.styleSheets = new StyleSheet({'.root': {fill: Color.orange}, 
+                                       '.child': {fill: Color.green}})
        m1.addMorph(m2);
        m1.styleClasses = ['child'];
        m2.styleClasses = ['root']
@@ -42,8 +42,8 @@ describe("Style Rules", () => {
    it("updates the style once a morph changes name", () => {
        const m1 = new Morph({styleClasses: ['root'], fill: Color.blue}),
              m2 = new Morph({styleClasses: ['child'], fill: Color.blue})
-       m1.styleSheets = new StyleSheet({root: {fill: Color.orange}, 
-                                       child: {fill: Color.green}})
+       m1.styleSheets = new StyleSheet({'[name=root]': {fill: Color.orange}, 
+                                        '[name=child]': {fill: Color.green}})
        m1.addMorph(m2);
        m1.name = 'child';
        m2.name = 'root';
@@ -55,12 +55,11 @@ describe("Style Rules", () => {
        const m1 = new Morph({name: "m1", styleClasses: ['root']}),
              m2 = new Morph({name: "m2", styleClasses: ['child']}),
              m3 = new Morph({name: "m3", styleClasses: ['child']})
-       m2.styleSheets = new StyleSheet({child: {fill: Color.black, borderColor: Color.red}})
-       m1.styleSheets = new StyleSheet({root: {fill: Color.orange}, 
-                                       child: {fill: Color.green}})
+       m2.styleSheets = new StyleSheet({'.child': {fill: Color.black, borderColor: Color.red}})
+       m1.styleSheets = new StyleSheet({'.root': {fill: Color.orange}, 
+                                        '.child': {fill: Color.green}})
        m2.addMorph(m3)
        m1.addMorph(m2);
-       expect(m1.styleSheets[0].getShadowedProps(m3)).equals(["layout", "fill", "borderColor"]);
        expect(m1.fill).equals(Color.orange);
        expect(m2.fill).equals(Color.black);
        expect(m3.fill).equals(Color.black);
