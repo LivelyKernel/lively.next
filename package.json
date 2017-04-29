@@ -1,6 +1,7 @@
 {
   "name": "lively.keyboard",
   "version": "0.1.0",
+  "main": "index.js",
   "lively": {
     "main": "index.js",
     "packageMap": {
