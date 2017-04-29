@@ -33,20 +33,25 @@ export class SizzleExpression {
       Matcher.create(token)
     );
   }
-  
 
   exec(context, matchedMatchers = []) {
-    if (!this.morphIndex[context.id]) this.morphIndex[context.id] = matchedMatchers;
-    this.compiledRule.forEach(matcher => {
-      if (context.constructor.name == "Label") debugger;
-      if (matcher.matches(context)) pushIfNotIncluded(this.morphIndex[context.id], matcher);
-      if (arr.equals(this.morphIndex[context.id], this.compiledRule) && arr.last(this.compiledRule).matches(context)) {
-        pushIfNotIncluded(this.matchedMorphs, context);
+    if (!this.morphIndex[context.id]) this.morphIndex[context.id] = [...matchedMatchers];
+    for (let matcher of this.compiledRule) {
+      // make sure that the descendants part of a rule is also enforced!
+      if (matcher.matches(context)) {
+        pushIfNotIncluded(this.morphIndex[context.id], matcher);
+        if (
+          arr.equals(this.morphIndex[context.id], this.compiledRule) &&
+          arr.last(this.compiledRule).matches(context)
+        ) {
+          pushIfNotIncluded(this.matchedMorphs, context);
+        }
+        break;
       }
-    });
-    context.submorphs.forEach(m => {
-      this.exec(m, [...this.morphIndex[context.id]]);
-    });
+    }
+    for (let m of context.submorphs) {
+      this.exec(m, this.morphIndex[context.id]);
+    }
   }
 
   hasIndexed(morph) {
