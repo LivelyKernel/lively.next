@@ -44,6 +44,16 @@ class AdditionallySerializePlugin {
       realObj.__additionally_serialize__(snapshot, ref, pool, addFn);
   }
 
+  additionallyDeserializeBeforeProperties(pool, ref, newObj, props, snapshot, serializedObjMap, path) {
+    if (typeof newObj.__deserialize__ === "function")
+      newObj.__deserialize__(snapshot, ref, serializedObjMap, pool, path);
+  }
+
+  additionallyDeserializeAfterProperties(pool, ref, newObj, snapshot, serializedObjMap, path) {
+    if (typeof newObj.__after_deserialize__ === "function")
+      newObj.__after_deserialize__(snapshot, ref);
+  }
+
 }
 
 class OnlySerializePropsPlugin {
@@ -119,6 +129,38 @@ class LivelyClassPropertiesPlugin {
     }
     return keys.concat(keysSoFar);
 
+  }
+
+
+  additionallyDeserializeBeforeProperties(pool, ref, newObj, props, snapshot, serializedObjMap, path) {
+    // deserialize class properties as indicated by realObj.constructor.properties
+    var classProperties = newObj.constructor[Symbol.for("lively.classes-properties-and-settings")];
+    if (!classProperties) return props;
+
+    var {properties, propertySettings} = classProperties,
+        valueStoreProperty = propertySettings.valueStoreProperty || "_state",
+        props = snapshot.props;
+
+    // if props has a valueStoreProperty then we directly deserialize that.
+    // As of 2017-02-26 this is for backwards compat.
+    if (props[valueStoreProperty]) return props;
+
+    props = obj.clone(props);
+
+    if (!newObj.hasOwnProperty(valueStoreProperty))
+      newObj.initializeProperties();
+
+    var valueStore = newObj[valueStoreProperty],
+        sortedKeys = obj.sortKeysWithBeforeAndAfterConstraints(properties);
+    for (var i = 0; i < sortedKeys.length; i++) {
+      var key = sortedKeys[i],
+          spec = properties[key];
+      if (!props.hasOwnProperty(key)) continue;
+      ref.recreatePropertyAndSetProperty(newObj, props, key, serializedObjMap, pool, path);
+      delete props[key];
+    }
+
+    return props;
   }
 }
 

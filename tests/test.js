@@ -136,7 +136,7 @@ describe("marshalling", () => {
 
   describe("built-in js objects", () => {
 
-    let pluginsForBuiltins = [plugins.customSerializePlugin, plugins.classPlugin];
+    let pluginsForBuiltins = [plugins.customSerializePlugin, plugins.classPlugin, plugins.additionallySerializePlugin];
 
     it("Map", () => {
       let obj = {}, obj2 = {bar: 23},
