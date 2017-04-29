@@ -1,15 +1,5 @@
-export function applyObjectMigrations(snapshotJson) {
-  for (let {name, snapshotConverter} of migrations) {
-    if (typeof snapshotConverter !== "function") continue;
-    try {
-      snapshotJson = snapshotConverter(snapshotJson);
-    } catch (err) {
-      console.error(`Object migration ${name} failed: ${err.stack}`);
-    }
-  }
-  return snapshotJson;
-}
-
+import { Color, pt } from "lively.graphics";
+import { morph } from "lively.morphic";
 
 export var migrations = [
 
@@ -22,8 +12,8 @@ Changing the format from
 to
   [string1, attr1, string2, attr2, ...].
     `,
-    snapshotConverter: snap => {
-      let {snapshot} = snap;
+    snapshotConverter: idAndSnapshot => {
+      let {snapshot} = idAndSnapshot;
       for (let key in snapshot) {
         let serialized = snapshot[key],
             textAndAttributes = serialized.props && serialized.props.textAndAttributes;
@@ -43,7 +33,36 @@ to
         }
         serialized.props.textAndAttributes = {...textAndAttributes, value};
       }
-      return snap;
+      return idAndSnapshot;
+    }
+  },
+
+  {
+    date: "2017-04-29",
+    name: "Window button fix",
+    description: `
+A recent change in the structure of windows, that now adds a "button wrapper"
+morph breaks old windows without it.
+`,
+    objectConverter: ({snapshot, id}, pool) => {
+      let rootMorph = pool.refForId(id).realObj;
+      // inspect(rootMorph)
+      if (rootMorph && rootMorph.isMorph)
+        rootMorph.withAllSubmorphsDo(win => {
+          if (!win.isWindow || win.submorphs.some(m => m.name === "button wrapper")) return;
+
+          let btnWrapper = morph({
+            name: "button wrapper",
+            styleClasses: ["buttonGroup"],
+            submorphs: win.buttons()
+          });
+          win.controls = [btnWrapper, win.titleLabel()];
+          if (win.resizable) win.controls.push(win.resizer());
+          win.submorphs = [...win.submorphs, ...win.controls];
+          btnWrapper.position = pt(0,0)
+          win.buttons().forEach(ea => ea.extent = pt(14,14));
+          win.getWindow().relayoutWindowControls();
+        });
     }
   }
 
