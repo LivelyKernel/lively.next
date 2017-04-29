@@ -45,6 +45,11 @@ function timeout(ms, promise) {
   });
 }
 
+function timeToRun(prom) {
+  let startTime = Date.now();
+  return Promise.resolve(prom).then(() => Date.now() - startTime);
+}
+
 function waitFor(ms, tester, timeoutObj) {
   // Tests for a condition calling function `tester` until the result is
   // truthy. Resolves with last return value of `tester`. If `ms` is defined
@@ -184,6 +189,7 @@ export {
   delay,
   delayReject,
   timeout,
+  timeToRun,
   waitFor,
   deferred,
   convertCallbackFun,
