@@ -60,10 +60,9 @@ export async function saveObjectToPartsbinFolder(obj, partName, options = {}) {
 
 export async function loadObjectFromPartsbinFolder(partName, options) {
   let {partsbinFolder} = normalizePartsBinFolder({
-    partsbinFolder: defaultPartsbinFolder, ...options});
-  return loadMorphFromSnapshot(
-    await resource(partsbinFolder).join(partName + ".json")
-      .readJson());
+        partsbinFolder: defaultPartsbinFolder, ...options}),
+      snap = await resource(partsbinFolder).join(partName + ".json").readJson();
+  return loadMorphFromSnapshot(snap, options);
 }
 
 export async function interactivelySaveObjectToPartsBinFolder(obj) {
