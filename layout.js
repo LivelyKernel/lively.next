@@ -20,6 +20,10 @@ class Layout {
     this.autoResize = autoResize != undefined ? autoResize : true;
   }
 
+  copy() {
+    return new this.constructor(this);
+  }
+
   description() { return "Describe the layout behavior here."; }
   name() { return "Name presented to the user."; }
 
@@ -31,7 +35,7 @@ class Layout {
     this.apply(animation);
   }
 
-  get boundsChanged() { return !this.container.bounds().equals(this.lastBounds); }
+  boundsChanged(container) { return !container.bounds().equals(this.lastBounds); }
 
   get layoutableSubmorphs() {
     return this.container.submorphs.filter(m => m.isLayoutable && !this.ignore.includes(m.name));
@@ -48,7 +52,7 @@ class Layout {
   onSubmorphResized(submorph, change) {
     if (this.container.submorphs.includes(submorph)
         || this.submorphBoundsChanged
-        || this.boundsChanged)
+        || this.boundsChanged(this.container))
       this.apply(change.meta.animation);
   }
   onSubmorphAdded(submorph, anim) { 
@@ -338,7 +342,7 @@ export class TilingLayout extends Layout {
     if (this.active) return;
     this.active = true;
     super.apply(animate);
-    var width = this.getOptimalWidth(),
+    var width = this.getOptimalWidth(this.container),
         currentRowHeight = 0,
         currentRowWidth = this.border.left,
         {spacing, layoutableSubmorphs} = this,
@@ -380,8 +384,8 @@ export class TilingLayout extends Layout {
           this.border.top + this.border.bottom;
   }
 
-  getOptimalWidth() {
-    var width = this.container.width - this.border.left - this.border.right,
+  getOptimalWidth(container) {
+    var width = container.width - this.border.left - this.border.right,
         maxSubmorphWidth = this.getMinWidth();
     return Math.max(width, maxSubmorphWidth);
   }
@@ -398,7 +402,7 @@ export class CenteredTilingLayout extends TilingLayout {
     this.active = true;
     super.apply(animate);
 
-    var width = this.getOptimalWidth(),
+    var width = this.getOptimalWidth(this.container),
         {spacing, layoutableSubmorphs} = this,
         y = spacing + this.border.top;
 
