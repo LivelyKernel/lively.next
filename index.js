@@ -16,9 +16,7 @@ module.exports = function start(hostname, port, rootDirectory, serverDir) {
   lively.modules.changeSystem(System, true);
 
   return (
-    lively.modules
-      .registerPackage(serverDir)
-      .then(registered => console.log(registered))
+    lively.modules.registerPackage(serverDir)
       .then(() => console.log(`[lively.server] ${step++}. preparing system...`))
       // 1. This loads the lively system
       .then(() => System.import("lively.resources"))
