@@ -6,6 +6,7 @@ import { LabeledCheckBox } from "lively.morphic/components/widgets.js";
 import LoadingIndicator from "lively.morphic/components/loading-indicator.js";
 import Browser from "./js/browser/index.js";
 import { connect } from 'lively.bindings';
+import { localInterface } from "lively-system-interface/index.js";
 
 
 export async function doSearch(
@@ -114,7 +115,9 @@ export class CodeSearcher extends FilterableList {
         after: ["browser"], derived: true,
         get() {
           var browser = this.browser;
-          return browser ? browser.systemInterface : this.getProperty("systemInterface");
+          return browser ?
+            browser.systemInterface :
+            this.getProperty("systemInterface") || localInterface;
         },
 
         set(systemInterface) {
