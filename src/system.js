@@ -93,6 +93,16 @@ function prepareSystem(System, config) {
 
   System.set("@lively-env", System.newModule(livelySystemEnv(System)));
 
+  let isElectron =
+    typeof process !== "undefined" &&
+    process.versions &&
+    process.versions.electron;
+
+  if (isElectron) {
+    System.set("@system-env",
+      System.newModule({electron: isElectron, ...System.get("@system-env")}));
+  }
+
   wrapResource(System);
   wrapModuleLoad(System);
 
@@ -107,6 +117,13 @@ function prepareSystem(System, config) {
 
   if (!isHookInstalled(System, "instantiate", "instantiate_triggerOnLoadCallbacks"))
     installHook(System, "instantiate", instantiate_triggerOnLoadCallbacks);
+
+  if (isElectron) {
+    var electronCoreModules = ["electron"],
+        map = electronCoreModules.reduce((map, ea) => {
+          map[ea] = "@node/" + ea; return map; }, {});
+    config.map = obj.merge(map, config.map);
+  }
 
   if (isNode) {
     var nodejsCoreModules = ["addons", "assert", "buffer", "child_process",

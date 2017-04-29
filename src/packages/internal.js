@@ -1,10 +1,26 @@
 import { isURL, urlResolve, join } from '../url-helpers.js';
 import { arr, obj } from "lively.lang";
 
-export function normalizeInsidePackage(System, urlOrName, packageURL) {
+export function normalizeInsidePackage(System, urlOrNameOrMap, packageURL) {
+  // for env dependend rules like {"node": "./foo.js", "~node": "./bar.js"}
+  if (typeof urlOrNameOrMap === "object") {
+    let map = urlOrNameOrMap,
+        env = System.get("@system-env");
+    let found = lively.lang.arr.findAndGet(Object.keys(map), key => {
+      let negate = false, pred = key;
+      if (pred.startsWith("~")) { negate = true; pred = pred.slice(1); }
+      let matches = env[pred]; if (negate) matches = !matches;
+      return matches ? map[key] : null;
+    });
+    if (found) normalizePackageURL(System, found, packageURL);
+  }
+
+  let urlOrName = urlOrNameOrMap;
   return isURL(urlOrName) ?
-    urlOrName : // absolute
-    urlResolve(join(urlOrName[0] === "." ? packageURL : System.baseURL, urlOrName)); // relative to either the package or the system:
+    // absolute
+    urlOrName :
+    // relative to either the package or the system:
+    urlResolve(join(urlOrName[0] === "." ? packageURL : System.baseURL, urlOrName));
 }
 
 export function normalizePackageURL(System, packageURL) {

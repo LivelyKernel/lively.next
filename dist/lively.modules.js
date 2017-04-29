@@ -68491,9 +68491,29 @@ function urlResolve(url) {
   return protocol + result;
 }
 
-function normalizeInsidePackage(System, urlOrName, packageURL) {
-  return isURL(urlOrName) ? urlOrName : // absolute
-  urlResolve(join(urlOrName[0] === "." ? packageURL : System.baseURL, urlOrName)); // relative to either the package or the system:
+function normalizeInsidePackage(System, urlOrNameOrMap, packageURL) {
+  // for env dependend rules like {"node": "./foo.js", "~node": "./bar.js"}
+  if ((typeof urlOrNameOrMap === "undefined" ? "undefined" : _typeof(urlOrNameOrMap)) === "object") {
+    var map = urlOrNameOrMap,
+        env = System.get("@system-env");
+    var found = lively.lang.arr.findAndGet(Object.keys(map), function (key) {
+      var negate = false,
+          pred = key;
+      if (pred.startsWith("~")) {
+        negate = true;pred = pred.slice(1);
+      }
+      var matches = env[pred];if (negate) matches = !matches;
+      return matches ? map[key] : null;
+    });
+    if (found) normalizePackageURL(System, found, packageURL);
+  }
+
+  var urlOrName = urlOrNameOrMap;
+  return isURL(urlOrName) ?
+  // absolute
+  urlOrName :
+  // relative to either the package or the system:
+  urlResolve(join(urlOrName[0] === "." ? packageURL : System.baseURL, urlOrName));
 }
 
 function normalizePackageURL(System, packageURL) {
@@ -72027,6 +72047,12 @@ function prepareSystem(System, config) {
 
   System.set("@lively-env", System.newModule(livelySystemEnv(System)));
 
+  var isElectron = typeof process !== "undefined" && process.versions && process.versions.electron;
+
+  if (isElectron) {
+    System.set("@system-env", System.newModule(_extends({ electron: isElectron }, System.get("@system-env"))));
+  }
+
   wrapResource(System);
   wrapModuleLoad$1(System);
 
@@ -72037,6 +72063,14 @@ function prepareSystem(System, config) {
   if (!isInstalled(System, "newModule", "newModule_volatile")) install(System, "newModule", newModule_volatile);
 
   if (!isInstalled(System, "instantiate", "instantiate_triggerOnLoadCallbacks")) install(System, "instantiate", instantiate_triggerOnLoadCallbacks);
+
+  if (isElectron) {
+    var electronCoreModules = ["electron"],
+        map = electronCoreModules.reduce(function (map, ea) {
+      map[ea] = "@node/" + ea;return map;
+    }, {});
+    config.map = lively_lang.obj.merge(map, config.map);
+  }
 
   if (isNode) {
     var nodejsCoreModules = ["addons", "assert", "buffer", "child_process", "cluster", "console", "crypto", "dgram", "dns", "domain", "events", "fs", "http", "https", "module", "net", "os", "path", "punycode", "querystring", "readline", "repl", "stream", "stringdecoder", "timers", "tls", "tty", "url", "util", "v8", "vm", "zlib"],
