@@ -2,7 +2,6 @@ import { requiredModulesOfSnapshot, serialize, deserialize } from "lively.serial
 import { World, Morph } from "./index.js";
 import { resource } from "lively.resources";
 import { newMorphId } from "./morph.js";
-import { applyObjectMigrations } from "./object-migration.js";
 
 function normalizeOptions(options) {
   options = {reinitializeIds: false, ...options}
@@ -63,7 +62,7 @@ export async function saveWorldToResource(world = World.defaultWorld(), toResour
 
 
 export function copyMorph(morph) {
-  return deserializeMorph(serializeMorph(morph), {reinitializeIds: true});
+  return deserializeMorph(serializeMorph(morph), {migrations, reinitializeIds: true});
 }
 
 
@@ -74,6 +73,7 @@ import { reloadPackage, getPackage } from "lively.modules";
 import ObjectPackage from "lively.classes/object-classes.js";
 import LoadingIndicator from "./components/loading-indicator.js";
 import { promise } from "lively.lang";
+import { migrations } from "./object-migration.js";
 
 export async function createMorphSnapshot(aMorph, options = {}) {
   let {
@@ -131,8 +131,7 @@ export async function createMorphSnapshot(aMorph, options = {}) {
   return snapshot;
 }
 
-export async function loadMorphFromSnapshot(snapshot) {
-  snapshot = applyObjectMigrations(snapshot);
+export async function loadMorphFromSnapshot(snapshot, options) {
 
   // embedded package definitions
   if (snapshot.packages) {
@@ -153,7 +152,12 @@ export async function loadMorphFromSnapshot(snapshot) {
         (System.get(modId) ? null : System.import(modId))
                 .catch(e => console.error(`Error loading ${modId}`, e))));
 
-  return deserializeMorph(snapshot, {reinitializeIds: true, ignoreClassNotFound: false});
+  return deserializeMorph(snapshot, {
+    reinitializeIds: true,
+    ignoreClassNotFound: false,
+    migrations,
+    ...options
+  });
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
