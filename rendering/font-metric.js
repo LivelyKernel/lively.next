@@ -38,6 +38,7 @@ export default class FontMetric {
     this.charMap = {};
     this.cachedBoundsInfo = {};
     this.element = null;
+    this.isProportionalCache = {};
   }
 
   reset(debug) {
@@ -141,10 +142,12 @@ export default class FontMetric {
   }
 
   isProportional(fontFamily) {
+    if (this.isProportionalCache.hasOwnProperty(fontFamily))
+      return this.isProportionalCache[fontFamily];
     let style = { fontFamily, fontSize: 12 },
         w_width = this.sizeFor(style, 'w').width,
         i_width = this.sizeFor(style, 'i').width;
-    return w_width !== i_width;
+    return this.isProportionalCache[fontFamily] = w_width !== i_width;
   }
 
   sizeFor(style, string, forceCache = false) {
@@ -190,7 +193,7 @@ export default class FontMetric {
   ) {
     return this._domMeasure.computeCharBBoxes(
       line, offsetX = 0, offsetY = 0, styleOpts,
-      rendertTextLayerFn, renderLineFn);
+      rendertTextLayerFn, renderLineFn, this);
   }
 
   manuallyComputeBoundsOfLines(
@@ -313,7 +316,7 @@ class DOMTextMeasure {
         {defaultCharWidthHeightCache} = this,
         found = defaultCharWidthHeightCache[styleKey];
 
-    if (styleOpts.defaultTextStyle.fontSize !== 22 && found) return found;
+    if (found) return found;
 
     let {doc} = this,
         testString = "abcdefghijklmnopqrstufwxyz ABCDEFGHIJKLMNOPQRSTUFWXYZ 1234567890 {}[];,./<>?'\"!@#$%^&*()-=_+";
@@ -368,8 +371,8 @@ class DOMTextMeasure {
           y: top - offset.top + offsetY + scrollTop,
           width, height
         };
-      }      
-      // if (!this.debug) 
+      }
+      // if (!this.debug)
         for (let i = 0; i < lineNodes.length; i++)
           textNode.removeChild(lineNodes[i]);
 
@@ -379,7 +382,7 @@ class DOMTextMeasure {
 
   computeCharBBoxes(
     line, offsetX = 0, offsetY = 0, styleOpts,
-    rendertTextLayerFn, renderLineFn
+    renderTextLayerFn, renderLineFn, fontMetric
   ) {
     let styleKey = this.generateStyleKey(styleOpts);
     return this.withTextLayerNodeDo(textNode => {
@@ -388,13 +391,16 @@ class DOMTextMeasure {
           offset = cumulativeOffset(lineNode),
           {doc: document} = this,
           {scrollTop, scrollLeft} = document.body,
-          result = charBoundsOfLine(line, lineNode,
-          -offset.left + offsetX + scrollLeft,
-            -offset.top + offsetY + scrollTop);
+          result = (line.stringSize > 1000
+                 && charBoundsOfBigMonospacedLine(
+                  fontMetric, line, lineNode, offsetX, offsetY, styleOpts, renderTextLayerFn))
+              || charBoundsOfLine(line, lineNode,
+                  -offset.left + offsetX + scrollLeft,
+                    -offset.top + offsetY + scrollTop);
       if (!this.debug)
         lineNode.parentNode.removeChild(lineNode);
       return result;
-    }, rendertTextLayerFn, styleOpts, styleKey);
+    }, renderTextLayerFn, styleOpts, styleKey);
   }
 
   withTextLayerNodeDo(doFn, rendertTextLayerFn, styleOpts, styleKey) {
@@ -432,6 +438,42 @@ class DOMTextMeasure {
   }
 }
 
+
+const GLOBAL = typeof System !== "undefined"
+  ? System.global
+  : window || global || self || this;
+
+function charBoundsOfBigMonospacedLine(
+  fontMetric, line, lineNode,
+  offsetX = 0, offsetY = 0,
+  styleOpts, directRenderTextLayerFn
+) {
+
+  let textLength = line.text.length,
+      index = 0;
+
+  if (textLength < 500 || !(typeof GLOBAL.getComputedStyle === "function")
+   || fontMetric.isProportional(GLOBAL.getComputedStyle(lineNode).fontFamily)) return null;
+
+  let lineWidth = Infinity,
+      lineHeight = Infinity,
+      {defaultTextStyle, lineWrapping} = styleOpts;
+
+  if (lineWrapping)
+    ({width: lineWidth, height: lineHeight} = lineNode.getBoundingClientRect());
+
+  let {width, height} = fontMetric.defaultCharExtent({defaultTextStyle, width: 10000}, directRenderTextLayerFn),
+      x = offsetX, y = offsetY,
+      result = new Array(textLength);
+
+  for (let i = 0; i < textLength; i++) {
+    if (x + width >= lineWidth) { x = 0; y = y + height; }
+    result[i] = {x, y, width, height};
+    x = x + width;
+  }
+
+  return result;
+}
 
 function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
   const {ELEMENT_NODE, TEXT_NODE, childNodes} = lineNode,
