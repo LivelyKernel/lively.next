@@ -7,8 +7,7 @@ var parseArgs = require('minimist'),
     port = 3000,
     hostname = "localhost",
     rootDirectory = process.cwd(),
-    isMain = !module.parent,
-    step = 1;
+    isMain = !module.parent;
 
 if (isMain) {
   var args = parseArgs(process.argv.slice(2), {
