@@ -18,29 +18,34 @@ if (fs.existsSync(installerDir) && fs.existsSync(packageConfig)) {
   var livelyModules = JSON.parse(fs.readFileSync(packageConfig)).map(ea => ea.name);
 }
 
-
 if (!livelyModules) {
   livelyModules = [
-    "lively-system-interface",
-    "lively.2lively",
-    "lively.ast",
-    "lively.bindings",
-    "lively.changesets",
-    "lively.graphics",
-    "lively.installer",
-    "lively.installer",
     "lively.lang",
-    "lively.modules",
-    "lively.morphic",
-    "lively.notifications",
-    "lively.resources",
-    "lively.serializer2",
-    "lively.server",
-    "lively.shell",
-    "lively.sync",
+    "lively.bindings",
+    "lively.ast",
+    "lively.source-transform",
+    "lively.classes",
     "lively.vm",
-    "lively.classes"
-  ]
+    "lively.modules",
+    "mocha-es6",
+    "lively.resources",
+    "lively.storage",
+    "lively-system-interface",
+    "lively.installer",
+    "lively.serializer2",
+    "lively.graphics",
+    "lively.morphic",
+    "lively.mirror",
+    "lively.sync",
+    "lively.notifications",
+    "lively.changesets",
+    "lively.shell",
+    "lively.server",
+    "lively.2lively",
+    "lively.user",
+    "lively.git",
+    "lively.traits"
+  ];
 }
 
 
@@ -55,9 +60,16 @@ livelyModules.forEach(modDir => {
 
   // console.log(modDir, livelyDeps);
 
-  livelyDeps.forEach(ea => {
+  let unlinkedLivelyDeps = fs.readdirSync(j(dir, "node_modules")).filter(ea => {
+    if (!livelyModules.includes(ea) || livelyDeps.includes(ea)) return false;
+    try { fs.readlinkSync(j(dir, "node_modules", ea)); } catch (err) { return true; }
+    return false;
+  })
+
+  livelyDeps.concat(unlinkedLivelyDeps).forEach(ea => {
     console.log(`[${dir}] ln -s ${j("../..", ea)} ${j("node_modules", ea)}`);
     x(`rm -rf ${j(dir, "node_modules", ea)}`);
     x(`ln -s ${j("../..", ea)} ${j("node_modules", ea)}`, {cwd: dir});
   });
+
 });
