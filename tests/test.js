@@ -416,15 +416,18 @@ describe("object migrations", () => {
                   delete snapshot[key].props.bar;
                 }
               }
-              return snapshot;
+              return snap;
             }
           },
   
           {
             snapshotConverter: snap => {
               let {snapshot} = snap;
+              debugger;
+              console.log(snap)
               for (let key in snapshot)
-                if (snapshot[key].props.hasOwnProperty("baz")) snapshot[key].props.baz.value++;
+                if (snapshot[key].props.hasOwnProperty("baz"))
+                  snapshot[key].props.baz.value++;
             }
           }
         ],
