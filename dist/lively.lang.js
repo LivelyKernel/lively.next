@@ -3941,16 +3941,18 @@ function joinPath() /*paths*/{
 // -=-=-=-=-=-=-=-=-
 // ids and hashing
 // -=-=-=-=-=-=-=-=-
+var newUUIDTemplate = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx';
+var newUUIDRe = /[xy]/g;
+var newUUIDReplacer = function newUUIDReplacer(c) {
+  var r = Math.random() * 16 | 0,
+      v = c == 'x' ? r : r & 0x3 | 0x8;
+  return v.toString(16);
+};
 
 function newUUID() {
   // Example:
-  //   string.newUUID() // => "3B3E74D0-85EA-45F2-901C-23ECF3EAB9FB"
-  var id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    var r = Math.random() * 16 | 0,
-        v = c == 'x' ? r : r & 0x3 | 0x8;
-    return v.toString(16);
-  }).toUpperCase();
-  return id;
+  //   newUUID() // => "3B3E74D0-85EA-45F2-901C-23ECF3EAB9FB"
+  return newUUIDTemplate.replace(newUUIDRe, newUUIDReplacer).toUpperCase();
 }
 
 function createDataURI(content, mimeType) {
