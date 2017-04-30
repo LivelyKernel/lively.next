@@ -238,7 +238,7 @@ export default class TextEditor extends Morph {
     var url = (resource || {}).url,
         fileType = "plain text";
 
-    if (content.length > 2**20/*1MB*/) {
+    if (content.length > 2**19/*0.5MB*/) {
       this.setStatusMessage(`File content very big, ${num.humanReadableByteSize(content.length)}. Styling is disabled`);
 
     } else if (url) {
