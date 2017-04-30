@@ -2,7 +2,7 @@ import { arr, obj, string } from "lively.lang";
 import { isPrimitive } from "./util.js";
 import ClassHelper from "./class-helper.js";
 import ExpressionSerializer from "./plugins/expression-serializer.js";
-import { allPlugins } from "./plugins.js";
+import { allPlugins, ObjectMigrationPlugin } from "./plugins.js";
 
 
 /*
@@ -21,29 +21,31 @@ the snapshot representation of those objects.
 
 Example:
 
-ObjectPool.withObject({foo: {bar: 23}}).snapshot(); // =>
+new ObjectPool().snapshotObject({foo: {bar: 23}}); // =>
 {
-  A1CB461E-9187-4711-BEBA-B9E3D1B6D900: {
-    props: {
-      bar: {key: "bar",value: 23}
+  id: "EDF8404A-243A-4858-9C98-0BFEE7DB369E"
+  snapshot: {
+    "A1CB461E-9187-4711-BEBA-B9E3D1B6D900": {
+      props: {
+        bar: {key: "bar",value: 23}
+      },
+      rev: 0
     },
-    rev: 0
-  },
-  EDF8404A-243A-4858-9C98-0BFEE7DB369E: {
-    props: {
-      foo: {
-        key: "foo",
-        value: {__ref__: true, id: "A1CB461E-9187-4711-BEBA-B9E3D1B6D900", rev: 0}
-      }
-    },
-    rev: 0
+    "EDF8404A-243A-4858-9C98-0BFEE7DB369E": {
+      props: {
+        foo: {
+          key: "foo",
+          value: {__ref__: true, id: "A1CB461E-9187-4711-BEBA-B9E3D1B6D900", rev: 0}
+        }
+      },
+      rev: 0
+    }
   }
 }
 
 For deserialization the process is reversed, i.e. object refs are created from
 a snapshot which then re-instantiate objects.  Object properties are hooked up
 so that a copy of the original object graph is re-created.
-
 
 */
 
@@ -57,8 +59,8 @@ export class ObjectPool {
     return new this({plugins: allPlugins, ...options});
   }
 
-  static fromJSONSnapshot(jsonSnapshoted, options) {
-    return this.fromSnapshot(JSON.parse(jsonSnapshoted), options);
+  static resolveFromSnapshotAndId(snapshotAndId, options) {
+    return new this(options).resolveFromSnapshotAndId(snapshotAndId);
   }
 
   static fromSnapshot(snapshoted, options) {
@@ -98,17 +100,33 @@ export class ObjectPool {
       deserializeObject: [],
       additionallyDeserializeBeforeProperties: [],
       additionallyDeserializeAfterProperties: [],
+      afterDeserialization: [],
+      beforeDeserialization: [],
+      afterSerialization: [],
+      beforeSerialization: [],
     };
+
+    if (options.migrations) {
+      if (!options.plugins) options.plugins = [];
+      options.plugins = options.plugins.filter(ea => !(ea instanceof ObjectMigrationPlugin));
+      options.plugins.push(new ObjectMigrationPlugin(options.migrations));
+    }
+
     if (options.plugins) {
       options.plugins.forEach(p => {
-        if (typeof p.serializeObject === "function") ps.serializeObject.push(p);
-        if (typeof p.additionallySerialize === "function") ps.additionallySerialize.push(p);
-        if (typeof p.propertiesToSerialize === "function") ps.propertiesToSerialize.push(p);
-        if (typeof p.deserializeObject === "function") ps.deserializeObject.push(p);
+        if (typeof p.serializeObject === "function")                         ps.serializeObject.push(p);
+        if (typeof p.additionallySerialize === "function")                   ps.additionallySerialize.push(p);
+        if (typeof p.propertiesToSerialize === "function")                   ps.propertiesToSerialize.push(p);
+        if (typeof p.deserializeObject === "function")                       ps.deserializeObject.push(p);
         if (typeof p.additionallyDeserializeBeforeProperties === "function") ps.additionallyDeserializeBeforeProperties.push(p);
-        if (typeof p.additionallyDeserializeAfterProperties === "function") ps.additionallyDeserializeAfterProperties.push(p);
+        if (typeof p.additionallyDeserializeAfterProperties === "function")  ps.additionallyDeserializeAfterProperties.push(p);
+        if (typeof p.beforeDeserialization === "function")                   ps.beforeDeserialization.push(p);
+        if (typeof p.afterDeserialization === "function")                    ps.afterDeserialization.push(p);
+        if (typeof p.beforeSerialization === "function")                     ps.beforeSerialization.push(p);
+        if (typeof p.afterSerialization === "function")                      ps.afterSerialization.push(p);
       });
     }
+
   }
 
   knowsId(id) { return !!this._id_ref_map[id]; }
@@ -143,34 +161,79 @@ export class ObjectPool {
                 obj, undefined, this.idPropertyName));
   }
 
-  snapshot() {
+  snapshot(id) {
     // traverses the object graph and create serialized representation => snapshot
     let snapshot = {};
+    this.plugin_beforeSerialization(snapshot, id);
     for (let i = 0, ids = Object.keys(this._id_ref_map); i < ids.length; i++) {
       let ref = this._id_ref_map[ids[i]];
       ref.snapshotObject(snapshot, this);
     }    
+    snapshot = this.plugin_afterSerialization(snapshot, id);
     return snapshot;
   }
 
-  jsonSnapshot() { return JSON.stringify(this.snapshot(), null, 2); }
+  snapshotObject(obj) {
+    let {id} = this.add(obj),
+        snapshot = this.snapshot(id);
+    return {id, snapshot};
+  }
 
   readSnapshot(snapshot) {
     // populates object pool with object refs read from the dead snapshot
+    if (snapshot.hasOwnProperty("id")) {
+      throw new Error(`readSnapshot expects simple serialized object map, not id-snapshot pair!`)
+    }
     for (var i = 0, ids = Object.keys(snapshot); i < ids.length; i++)
       if (!this.resolveToObj(ids[i]))
         ObjectRef.fromSnapshot(ids[i], snapshot, this, [], this.idPropertyName);
     return this;
   }
 
-  readJsonSnapshot(jsonString) {
-    return this.readSnapshot(JSON.parse(jsonString));
+  resolveFromSnapshotAndId(idAndSnapshot) {
+    if (!idAndSnapshot.hasOwnProperty("id")) throw new Error("idAndSnapshot does not have id");
+    if (!idAndSnapshot.hasOwnProperty("snapshot")) throw new Error("idAndSnapshot does not have snapshot");
+    idAndSnapshot = this.plugin_beforeDeserialization(idAndSnapshot);
+    let {id, snapshot} = idAndSnapshot;
+    this.readSnapshot(snapshot);
+    this.plugin_afterDeserialization(idAndSnapshot);
+    return this.resolveToObj(id);
   }
-
-
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+
+  plugin_beforeSerialization(snapshot, rootId) {
+    for (var i = 0; i < this.plugins.beforeSerialization.length; i++) {
+      var p = this.plugins.beforeSerialization[i];
+      p.beforeSerialization(this, snapshot, rootId);
+    }
+  }
+
+  plugin_afterSerialization(snapshot, rootId) {
+    for (var i = 0; i < this.plugins.afterSerialization.length; i++) {
+      var p = this.plugins.afterSerialization[i],
+          result = p.afterSerialization(this, snapshot, rootId);
+      if (result) snapshot = result;
+    }
+    return snapshot;
+  }
+
+  plugin_beforeDeserialization(idAndSnapshot) {
+    for (var i = 0; i < this.plugins.beforeDeserialization.length; i++) {
+      var p = this.plugins.beforeDeserialization[i],
+          result = p.beforeDeserialization(this, idAndSnapshot);
+      if (result) idAndSnapshot = result;
+    }
+    return idAndSnapshot;
+  }
+
+  plugin_afterDeserialization(idAndSnapshot) {
+    for (var i = 0; i < this.plugins.afterDeserialization.length; i++) {
+      var p = this.plugins.afterDeserialization[i];
+      p.afterDeserialization(this, idAndSnapshot);
+    }
+  }
 
   plugin_serializeObject(realObj, isProperty, serializedObjMap, path) {
     for (var i = 0; i < this.plugins.serializeObject.length; i++) {

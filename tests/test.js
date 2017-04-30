@@ -6,8 +6,8 @@ import { ObjectPool, requiredModulesOfSnapshot, ObjectRef, serialize } from "../
 import { Plugin, plugins } from "../plugins.js";
 
 function serializationRoundtrip(obj) {
-  var ref = objPool.add(obj);
-  return ObjectPool.fromJSONSnapshot(objPool.jsonSnapshot(), objPool.options).resolveToObj(ref.id);
+  return ObjectPool.resolveFromSnapshotAndId(
+    JSON.parse(JSON.stringify(objPool.snapshotObject(obj))), objPool.options);
 }
 
 
@@ -22,6 +22,7 @@ function itSerializesInto(subject, expected) {
 var objPool;
 
 describe("object registration", () => {
+
   beforeEach(() => objPool = new ObjectPool());
 
   it("registers objects", () => {
@@ -49,12 +50,11 @@ describe("snapshots", () => {
 
   it("snapshots", () => {
     var o = {foo: 23, ref: {bar: 24}},
-        ref = objPool.add(o),
-        snapshot = objPool.jsonSnapshot(),
-        objPool2 = ObjectPool.fromJSONSnapshot(snapshot);
+        {id, snapshot} = objPool.snapshotObject(o),
+        objPool2 = ObjectPool.fromSnapshot(snapshot);
 
-    expect(objPool2.resolveToObj(ref.id)).not.equals(o, "identical object");
-    expect(objPool2.resolveToObj(ref.id))
+    expect(objPool2.resolveToObj(id)).not.equals(o, "identical object");
+    expect(objPool2.resolveToObj(id))
       .deep.equals({...o, _rev: 0, ref: {...o.ref, _rev: 0}}, "object structure changed");
     expect(objPool.objects()).to.have.length(2);
     expect(objPool2.objects()).containSubset(objPool.objects(), "object list diverged");
@@ -67,8 +67,6 @@ describe("snapshots", () => {
     o1.bar = [o2];
     o2.o1 = o1;
 
-    objPool.add(o1);
-
     var opts = {
       reinitializeIds(id, ref) {
         if (id === "o1") return "new_o1";
@@ -77,7 +75,7 @@ describe("snapshots", () => {
       }
     }
 
-    var newO1 = ObjectPool.fromSnapshot(objPool.snapshot(), opts).resolveToObj("o1");
+    var newO1 = ObjectPool.resolveFromSnapshotAndId(objPool.snapshotObject(o1), opts);
     expect(newO1).containSubset({id: "new_o1", bar: [{id: "new_o2", o1: {}}]});
   });
 
@@ -182,31 +180,27 @@ describe("marshalling", () => {
       }
       var exprObj = {n: 1, __serialize__},
           obj = {foo: exprObj},
-          {id} = objPool.add(obj),
-          objPool2 = ObjectPool.fromSnapshot(objPool.snapshot(), objPool.options),
-          obj2 = objPool2.resolveToObj(id);
+          snap = objPool.snapshotObject(obj),
+          obj2 = ObjectPool.resolveFromSnapshotAndId(snap, objPool.options);
       expect(obj2).deep.property("foo.n", 2);
       expect(obj2.foo).property("__serialize__").to.be.a("function");
     });
 
     it("serialized object is expr itself", () => {
       var exprObj = {n: 1, __serialize__() { return {__expr__: `({n: ${this.n + 1}})`} }},
-          {id} = objPool.add(exprObj),
-          objPool2 = ObjectPool.fromSnapshot(objPool.snapshot(), objPool.options),
-          obj2 = objPool2.resolveToObj(id);
+          obj2 = ObjectPool.resolveFromSnapshotAndId(objPool.snapshotObject(exprObj), objPool.options);
       expect(obj2).property("n", 2);
     });
 
     it("__serialize__ in property is inlined in snapshot", () => {
       var foo = {__serialize__: () => ({__expr__: "foo()"})},
           obj = {foo},
-          {id} = objPool.add(obj),
-          snapshot = objPool.snapshot();
+          {id, snapshot} = objPool.snapshotObject(obj);
       expect(snapshot).deep.equals(
         {[id]: {rev: 0, props: {foo: {key: "foo", value: "__lv_expr__:foo()"}}}});
       try {
         System.global.foo = () => foo;
-        var obj2 = ObjectPool.fromSnapshot(objPool.snapshot(), objPool.options).resolveToObj(id);
+        var obj2 = ObjectPool.resolveFromSnapshotAndId({id, snapshot}, objPool.options);
       } finally { delete System.global.foo; }
       expect(obj2).deep.equals(obj2, "deserialize not working");
     });
@@ -214,7 +208,6 @@ describe("marshalling", () => {
     it("bindings via object import", async () => {
       // lively.modules.module("lively.serializer2/tests/test-resources/module1.js").unload()
       await System.import("lively.serializer2/tests/test-resources/module1.js");
-
       var exprObj = {
             n: 1, __serialize__() {
               return {
@@ -223,8 +216,7 @@ describe("marshalling", () => {
               }
             }
           },
-          _ = objPool.add(exprObj),
-          obj2 = ObjectPool.fromSnapshot(objPool.snapshot(), objPool.options).objects()[0];
+          obj2 = ObjectPool.resolveFromSnapshotAndId(objPool.snapshotObject(exprObj), objPool.options);;
       expect(obj2).property("n", 2);
     });
 
@@ -239,10 +231,9 @@ describe("marshalling", () => {
                 bindings: {"lively.serializer2/tests/test-resources/module1.js": ["createSomeObject"]}
               }
             }
-          },
-          _ = objPool.add(exprObj);
+          };
 
-      expect(requiredModulesOfSnapshot(objPool.snapshot()))
+      expect(requiredModulesOfSnapshot(objPool.snapshotObject(exprObj)))
         .equals(["lively.serializer2/tests/test-resources/module1.js"])
     });
 
@@ -272,30 +263,26 @@ describe("marshalling", () => {
 
     it("via __dont_serialize__", () => {
       var obj = {foo: 23, bar: 24, __dont_serialize__: ["bar"]},
-          ref = objPool.add(obj),
-          objCopy = ObjectPool.fromSnapshot(objPool.snapshot()).resolveToObj(ref.id);
+          objCopy = ObjectPool.resolveFromSnapshotAndId(objPool.snapshotObject(obj));
       expect(objCopy).deep.equals({_rev: 0, foo: 23, __dont_serialize__: ["bar"]});
     });
 
     it("__dont_serialize__ is merged in proto chain", () => {
       var proto = Object.assign(Object.create({__dont_serialize__: ["bar"]}), {__dont_serialize__: ["baz"]}),
           obj = Object.assign(Object.create(proto), {__dont_serialize__: ["zork"], foo: 1, bar: 2, baz: 3, zork: 4}),
-          ref = objPool.add(obj),
-          objCopy = ObjectPool.fromSnapshot(objPool.snapshot()).resolveToObj(ref.id);
+          objCopy = ObjectPool.resolveFromSnapshotAndId(objPool.snapshotObject(obj));
       expect(objCopy).deep.equals({_rev: 0, foo: 1, __dont_serialize__: ["zork"]});
     });
 
     it("__only_serialize__", () => {
       var obj = {foo: 23, bar: 24, __only_serialize__: ["bar"]},
-          ref = objPool.add(obj),
-          objCopy = ObjectPool.fromSnapshot(objPool.snapshot()).resolveToObj(ref.id);
+          objCopy = ObjectPool.resolveFromSnapshotAndId(objPool.snapshotObject(obj));
       expect(objCopy).deep.equals({_rev: 0, bar: 24});
     });
 
     it("__only_serialize__ and __dont_serialize__", () => {
       var obj = {foo: 23, bar: 24, baz: 123, __only_serialize__: ["foo", "bar"], __dont_serialize__: ["bar"]},
-          ref = objPool.add(obj),
-          objCopy = ObjectPool.fromSnapshot(objPool.snapshot()).resolveToObj(ref.id);
+          objCopy = ObjectPool.resolveFromSnapshotAndId(objPool.snapshotObject(obj));
       expect(objCopy).deep.equals({_rev: 0, foo: 23});
     });
 
@@ -308,8 +295,8 @@ describe("marshalling", () => {
     it("gets called and has access to serialized obj", () => {
       var obj = {
         __additionally_serialize__: (snapshot, objRef) => snapshot.props.foo = 23
-      }, {id} = objPool.add(obj);
-      expect(objPool.snapshot()).containSubset({[id]: {"rev": 0, "props": {"foo": 23}}});
+      }, {id, snapshot} = objPool.snapshotObject(obj);
+      expect(snapshot).containSubset({[id]: {"rev": 0, "props": {"foo": 23}}});
     });
 
     it("can register new objects", () => {
@@ -413,6 +400,56 @@ describe("plugins", () => {
 
 });
 
+
+describe("object migrations", () => {
+
+  it("applies snapshot converters", () => {
+    let obj = {foo: {bar: 23}},
+        migrations = [
+          {
+            snapshotConverter: snap => {
+              let {snapshot} = snap;
+              for (let key in snapshot) {
+                if (snapshot[key].props.hasOwnProperty("bar")) {
+                  snapshot[key].props.baz = snapshot[key].props.bar;
+                  snapshot[key].props.baz.key = "baz";
+                  delete snapshot[key].props.bar;
+                }
+              }
+              return snapshot;
+            }
+          },
+  
+          {
+            snapshotConverter: snap => {
+              let {snapshot} = snap;
+              for (let key in snapshot)
+                if (snapshot[key].props.hasOwnProperty("baz")) snapshot[key].props.baz.value++;
+            }
+          }
+        ],
+        copy = new ObjectPool({migrations}).resolveFromSnapshotAndId(new ObjectPool().snapshotObject(obj));
+
+    expect(copy).deep.equals({_rev: 0, foo: {_rev: 0, baz: 24}});
+  });
+  
+  it("applies object converters", () => {
+    let obj = {foo: {bar: 23}},
+        migrations = [
+          {
+            objectConverter: (snap, pool) => {
+              let {snapshot, id} = snap;
+              pool.refForId(id).realObj.foo.bar++;
+            }
+          }
+        ],
+        copy = new ObjectPool({migrations}).resolveFromSnapshotAndId(new ObjectPool().snapshotObject(obj));
+
+    expect(obj).deep.equals({foo: {bar: 23}});
+    expect(copy).deep.equals({_rev: 0, foo: {_rev: 0, bar: 24}});
+  });
+
+});
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

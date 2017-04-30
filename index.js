@@ -21,14 +21,14 @@ const majorAndMinorVersionRe = /\.[^\.]+$/; // x.y.z => x.y
 export function serialize(obj, options) {
   options = normalizeOptions(options);
   let objPool = options.objPool || new ObjectPool(options),
-      ref = objPool.add(obj),
       requiredVersion = "~" + serializerVersion.replace(majorAndMinorVersionRe, ""), // semver
-      snapshot = objPool.snapshot();
+      snapshotAndId = objPool.snapshotObject(obj);
   // object hooks are allowed to modify the snapshot graph and remove
   // references. To only serialize what's needed we cleanup the graph after all
   // hooks are done.
-  removeUnreachableObjects([ref.id], snapshot);
-  return {id: ref.id, snapshot, requiredVersion};
+  removeUnreachableObjects([snapshotAndId.id], snapshotAndId.snapshot);
+  snapshotAndId.requiredVersion = requiredVersion;
+  return snapshotAndId;
 }
 
 export function deserialize(idAndSnapshot, options) {
@@ -39,10 +39,9 @@ export function deserialize(idAndSnapshot, options) {
                + `${requiredVersion} but serializer has incompatible version `
                + `${serializerVersion}. Deserialization might fail...!`);
   let objPool = options.objPool || new ObjectPool(options);
-  objPool.readSnapshot(snapshot);
-  return objPool.resolveToObj(id)
+  return objPool.resolveFromSnapshotAndId(idAndSnapshot);
 }
 
-export function copy(obj) {
-  return deserialize(serialize(obj));
+export function copy(obj, options) {
+  return deserialize(serialize(obj, options), options);
 }

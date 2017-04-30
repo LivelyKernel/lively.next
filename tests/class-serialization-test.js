@@ -7,9 +7,8 @@ import { resource } from "lively.resources";
 import { version as serializerVersion } from "../package.json";
 
 function serializationRoundtrip(obj, serializer = ObjectPool.withDefaultPlugins()) {
-  var ref = objPool.add(obj);
-  return ObjectPool.withDefaultPlugins()
-    .readJsonSnapshot(objPool.jsonSnapshot()).resolveToObj(ref.id);
+  let snapshotAndId = JSON.parse(JSON.stringify(objPool.snapshotObject(obj)));
+  return ObjectPool.withDefaultPlugins().resolveFromSnapshotAndId(snapshotAndId);
 }
 
 
@@ -38,15 +37,14 @@ describe('class serialization', function() {
 
   it("serialize class instance", function() {
     // serialization
-    var objPool2 = ObjectPool.withDefaultPlugins().readSnapshot(objPool.snapshot());
-    var instance1_copy = objPool2.resolveToObj(refInstance1.id);
+    var instance1_copy = ObjectPool.withDefaultPlugins()
+      .resolveFromSnapshotAndId({id: refInstance1.id, snapshot: objPool.snapshot()});
 
     expect(instance2.specialProperty).to.equal(instance1_copy.friend.specialProperty);
     expect(instance1.n).to.equal(instance1_copy.n);
 
     expect(instance1_copy).instanceOf(TestDummy, "obj1_b");
     expect(instance1_copy.friend).instanceOf(TestDummy, "obj2_b");
-
 
     expect().assert(instance1_copy.m1, 'deserialized does not have method');
     expect(2).to.equal(instance1_copy.m1(), 'wrong method invocation result');
@@ -64,8 +62,8 @@ describe('class serialization', function() {
   });
 
   it("find packages and modules of classes in serialized blob", function() {
-    var serialized = objPool.jsonSnapshot(),
-        result = ClassHelper.sourceModulesIn(JSON.parse(serialized));
+    var serialized = objPool.snapshot(),
+        result = ClassHelper.sourceModulesIn(serialized);
 
     expect(result).to.deep.equal([{
       className: "TestDummy",
@@ -81,9 +79,9 @@ describe('class serialization', function() {
         klass = class Dummy_testRaiseErrorWhenClassNotFound {},
         instance = new klass(),
         _ = objPool.add(instance),
-        serialized = objPool.jsonSnapshot();
+        serialized = objPool.snapshot();
     try {
-      ObjectPool.withDefaultPlugins({ignoreClassNotFound: false}).readJsonSnapshot(serialized);
+      ObjectPool.withDefaultPlugins({ignoreClassNotFound: false}).readSnapshot(serialized);
     } catch(e) {
       expect(String(e)).match(/Trying to deserialize instance of.*Dummy_testRaiseErrorWhenClassNotFound.*but this class cannot be found/i);
       return;
@@ -95,10 +93,10 @@ describe('class serialization', function() {
     var objPool = ObjectPool.withDefaultPlugins(),
         klass = class Dummy_testDontRaiseErrorWhenClassNotFound {},
         instance = new klass(),
-        ref = objPool.add(instance),
-        serialized = objPool.jsonSnapshot();
+        serialized = objPool.snapshotObject(instance);
     try {
-      var result = ObjectPool.withDefaultPlugins({ignoreClassNotFound: true}).readJsonSnapshot(serialized).resolveToObj(ref.id);
+      var result = ObjectPool.withDefaultPlugins({ignoreClassNotFound: true})
+                    .resolveFromSnapshotAndId(serialized);
     } catch(e) {
       expect().assert(false, `Should ignore class not found but raised error:\n${e}`);
     }

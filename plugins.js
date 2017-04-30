@@ -1,6 +1,60 @@
 import { obj, arr } from "lively.lang";
 
-export class Plugin {}
+/*
+
+Plugins can implement the following methods to hook into and modify the
+serialization process
+
+# serialization
+
+beforeSerialization(pool, realObj)
+  Called before serialization starts
+
+afterSerialization(pool, realObj, snapshot)
+  Called after serialization ended
+
+serializeObject(realObj, isProperty, pool, serializedObjMap, path)
+  If an non-null value is returned this is taken as the value to be placed into
+  the snapshot
+
+propertiesToSerialize(pool, ref, snapshot, keysSoFar)
+  Should either return null or a list of property names to serialize.  Plugins
+  implementing this method get chained in the order in which the object pool
+  has the plugins installed.  The return value of one plugin gets passed as
+  `keysSoFar` to the next plugin.  The initial value of `keysSoFar` is
+  Object.getOwnPropertyKeys(obj).  A nullish value is ignored.
+
+additionallySerialize(pool, ref, snapshot, addFn)
+  Can modify `snapshot`.  Return value is not used.
+
+
+# deserialization
+
+beforeDeserialization(pool, idAndSnapshot)
+  Called before serialization starts
+
+afterDeserialization(pool, idAndSnapshot)
+  Called after deserialization ended
+
+deserializeObject(pool, ref, snapshot, path)
+  given snapshot can produce a new object as the instance to be used in the new
+  object graph.  A nullish value will result in the deserializer using a plain
+  Object instance.
+
+additionallyDeserializeBeforeProperties(pool, ref, newObj, props, snapshot, serializedObjMap, path)
+  Gets snapshot.props passed and can modify newObj.  A non-nullish value will
+  be used as props, it is passed to the next plugin implementing this method.
+  The result of the final plugin will be used for the normal props
+  deserialization.
+
+additionallyDeserializeAfterProperties(pool, ref, newObj, snapshot, serializedObjMap, path)
+  Called for side effect, can modify newObj
+
+*/
+
+export class Plugin {
+}
+
 
 class CustomSerializePlugin {
 
@@ -164,13 +218,34 @@ class LivelyClassPropertiesPlugin {
   }
 }
 
+
+export class ObjectMigrationPlugin {
+
+  constructor(migrations) {
+    this.migrations = migrations;
+    this.before = migrations.filter(ea => typeof ea.snapshotConverter === "function");
+    this.after = migrations.filter(ea => typeof ea.objectConverter === "function");
+  }
+
+  beforeDeserialization(pool, idAndSnapshot) {
+    for (let i = 0; i < this.before.length; i++)
+      idAndSnapshot = this.before[i].snapshotConverter(idAndSnapshot, pool);
+    return idAndSnapshot;
+  }
+
+  afterDeserialization(pool, idAndSnapshot) {
+    for (let i = 0; i < this.after.length; i++)
+      this.after[i].objectConverter(idAndSnapshot, pool);
+  }
+}
+
 export var plugins = {
   livelyClassPropertiesPlugin: new LivelyClassPropertiesPlugin(),
   dontSerializePropsPlugin:    new DontSerializePropsPlugin(),
   onlySerializePropsPlugin:    new OnlySerializePropsPlugin(),
   additionallySerializePlugin: new AdditionallySerializePlugin(),
   classPlugin:                 new ClassPlugin(),
-  customSerializePlugin:       new CustomSerializePlugin(),
+  customSerializePlugin:       new CustomSerializePlugin()
 }
 
 export var allPlugins = [
