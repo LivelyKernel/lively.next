@@ -1,7 +1,7 @@
-import { Rectangle, pt, Color } from "lively.graphics";
+import { Rectangle, rect, pt, Color } from "lively.graphics";
 import { connect, disconnect } from "lively.bindings"
 import { obj, promise, Path } from "lively.lang";
-import { Morph, Text } from "../index.js";
+import { Morph, GridLayout, StyleSheet, Text } from "../index.js";
 import { lessPosition, minPosition, maxPosition } from "./position.js";
 import { occurStartCommand } from "./occur.js";
 import { Icon } from "../components/icons.js";
@@ -151,32 +151,73 @@ export class SearchWidget extends Morph {
         }
       },
 
+      styleSheets: {
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            '.Button.nav': {
+               extent: pt(24,24),
+               opacity: .9,
+               borderWidth: 0,
+               fill: Color.transparent
+            },
+            ".Button.nav [name=label]": {
+              fontSize: 18,
+              fontColor: Color.white
+            },
+            '.Button.replace': {
+              borderWidth: 2, borderColor: Color.white, 
+              fill: Color.transparent
+            },
+            '.Button.replace [name=label]': {
+              fontColor: Color.white,
+            }
+          });
+        }
+      },
+
+      layout: {
+        initialize() {
+          this.layout = new GridLayout({
+            groups: {
+              nextButton: {resize: false},
+              prevButton: {resize: false},
+              acceptButton: {resize: false},
+              cancelButton: {resize: false}
+            },
+            rows: [0, {fixed: 30, paddingTop: 5, paddingBottom: 2.5}, 
+                   1, {fixed: 30, paddingTop: 2.5, paddingBottom: 5}],
+            columns: [0, {paddingLeft: 5, paddingRight: 5}, 
+                      1, {fixed: 20}, 2, {fixed: 20}, 3, {fixed: 20}, 
+                      4, {fixed: 20}, 5, {fixed: 5}],
+            grid: [['searchInput', 'nextButton', 'prevButton', 'acceptButton', 'cancelButton', null],
+                   ['replaceInput', 'replaceButton', 'replaceButton', 'replaceButton', 'replaceButton', null]]  
+          })
+        }
+      },
+
       submorphs: {
         after: ["extent"],
         initialize() {
-          let btnStyle = {extent: pt(24,24), 
-                          triggerStyle: {
-                            fontSize: 18,
-                            fill: Color.transparent
-                          },
-                          opacity: .9,
-                          activeStyle: {
-                             fontSize: 18, borderWidth: 0, 
-                             fill: Color.transparent, fontColor: Color.white}},
-              fontSize = 14, fontFamily = "Inconsolata, monospace";
+          let fontSize = 14, fontFamily = "Inconsolata, monospace";
 
           this.submorphs = [
-            new Button({name: "acceptButton", label: Icon.textAttribute("check-circle-o"), ...btnStyle}).fit(),
-            new Button({name: "cancelButton", label: Icon.textAttribute("times-circle-o"), ...btnStyle}).fit(),
-            new Button({name: "nextButton", label: Icon.textAttribute("arrow-circle-o-down"), ...btnStyle}).fit(),
-            new Button({name: "prevButton", label: Icon.textAttribute("arrow-circle-o-up"), ...btnStyle}).fit(),
+            new Button({name: "acceptButton", label: Icon.textAttribute("check-circle-o"), styleClasses: ["nav"]}).fit(),
+            new Button({name: "cancelButton", label: Icon.textAttribute("times-circle-o"), styleClasses: ["nav"]}).fit(),
+            new Button({
+              name: "nextButton",
+              label: Icon.textAttribute("arrow-circle-o-down"),
+              styleClasses: ["nav"]
+            }).fit(),
+            new Button({name: "prevButton", label: Icon.textAttribute("arrow-circle-o-up"), styleClasses: ["nav"]}).fit(),
             Text.makeInputLine({
               name: "searchInput",
               width: this.width,
-              fill: Color.gray.withA(.2),
-              fontSize, fontFamily,
+              fill: Color.gray.withA(0.2),
+              fontSize,
+              fontFamily,
               fontColor: Color.white,
-              borderWidth: 1, borderColor: Color.gray,
+              borderWidth: 1,
+              borderColor: Color.gray,
               padding: Rectangle.inset(2),
               placeholder: "search input",
               historyId: "lively.morphic-text search"
@@ -184,21 +225,22 @@ export class SearchWidget extends Morph {
             Text.makeInputLine({
               name: "replaceInput",
               width: this.width,
-              fill: Color.gray.withA(.2),
-              fontSize, fontFamily,
+              fill: Color.gray.withA(0.2),
+              fontSize,
+              fontFamily,
               fontColor: Color.white,
-              borderWidth: 1, borderColor: Color.gray,
+              borderWidth: 1,
+              borderColor: Color.gray,
               padding: Rectangle.inset(2),
               placeholder: "replace input",
               historyId: "lively.morphic-text replace"
             }),
             new Button({
-                name: "replaceButton", label: "replace", 
-                extent: pt(80, 20), fontColor: Color.white, 
-                activeStyle: {
-                   border: {width: 2, color: Color.white}, 
-                   fontColor: Color.white,
-                   fill: null}})
+              styleClasses: ["replace"],
+              name: "replaceButton",
+              label: "replace",
+              extent: pt(80, 20)
+            })
           ];
         }
       }
@@ -225,8 +267,6 @@ export class SearchWidget extends Morph {
     connect(searchInput, "inputChanged", this, "search");
     connect(replaceButton, "fire", this, "execCommand", {converter: () => "replace and go to next"});
 
-    this.relayout();
-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     this.state = {
@@ -248,32 +288,6 @@ export class SearchWidget extends Morph {
       }}
     ]);
 
-  }
-
-  relayout() {
-    let acceptButton =  this.getSubmorphNamed("acceptButton"),
-        cancelButton =  this.getSubmorphNamed("cancelButton"),
-        prevButton =    this.getSubmorphNamed("prevButton"),
-        nextButton =    this.getSubmorphNamed("nextButton"),
-        searchInput =   this.getSubmorphNamed("searchInput"),
-        replaceButton = this.getSubmorphNamed("replaceButton"),
-        replaceInput =  this.getSubmorphNamed("replaceInput");
-
-    acceptButton.top = prevButton.top = nextButton.top = cancelButton.top = 2
-    cancelButton.right = this.innerBounds().right() - 2;
-    acceptButton.right = cancelButton.left;
-    prevButton.right = acceptButton.left;
-    nextButton.right = prevButton.left;
-
-
-    searchInput.topLeft = pt(4,4);
-    replaceInput.topLeft = searchInput.bottomLeft.addXY(0, 4);
-    replaceInput.width = searchInput.width = nextButton.left - 4;
-    replaceButton.top = replaceInput.top;
-    replaceButton.center = pt(nextButton.left + (cancelButton.right - nextButton.left)/2, replaceInput.center.y);
-
-    // inputMorph.topCenter = this.innerBounds().topCenter().withY(cancelButton.bottom+3);
-    this.height = replaceInput.bottom + 5;
   }
 
   focus() {
@@ -390,7 +404,6 @@ export class SearchWidget extends Morph {
         state = this.state;
     world.addMorph(this);
     this.topRight = text.globalBounds().insetBy(5).topRight();
-    this.whenRendered().then(() => this.relayout());
 
     var {scroll, selection: sel} = text;
     state.position = sel.lead;
