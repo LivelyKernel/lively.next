@@ -44,7 +44,7 @@ i.findPathFromToId(snap.id, "BF4B7B7B-DEE0-4971-ACEA-9F8A6A02941A")
 
 let report = "";
 for (let [id, o] of i.classes.AttributeConnection.objects) {
-  // let [id, o] = i.classes.AttributeConnection.objects[0]  
+  // let [id, o] = i.classes.AttributeConnection.objects[0]
   let sourceId = o.props.sourceObj.value.id;
   let source = i.explainId(sourceId);
   let targetId = o.props.targetObj.value.id;
@@ -264,36 +264,74 @@ export class SnapshotInspector {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  reportAboutObject(id, invertedRefs) {
-    invertedRefs = invertedRefs || graph.invert(this.referenceGraph());
-    let refs = (invertedRefs[id] || []).map(refId =>
-      `${refId}${this.findPathFromToId(refId, id)}`);
+  reportAboutObject(id, refs, invertedRefs) {
+    refs = refs || this.referenceGraph();
+    invertedRefs = invertedRefs || graph.invert(refs);
+    let refsTo = (invertedRefs[id] || []).map(refId =>
+          [refId, this.findPathFromToId(refId, id), this.explainId(refId)]),
+        refsFrom = (refs[id] || []).map(refId =>
+          [refId, this.findPathFromToId(id, refId), this.explainId(refId)]);
+
     return `${id}\n`
            + ` is a ${this.explainId(id)} object\n`
            + ` path from root: ${this.findPathFromToId(this.snapshot.id, id)}\n`
-           + ` referenced by:\n${string.indent(refs.join("\n"), "  ", 2)}\n`;
+           + ` references \n${string.indent(string.printTable(refsFrom), "  ", 2)}\n`
+           + ` referenced by:\n${string.indent(string.printTable(refsTo), "  ", 2)}\n`;
   }
 
   reportAboutObjects(ids) {
-    let invertedRefs = graph.invert(this.referenceGraph());
-    return ids.map(id => this.reportAboutObject(id)).join("\n")
+    let refs = this.referenceGraph(),
+        invertedRefs = graph.invert(refs);
+    return ids.map(id => this.reportAboutObject(id, refs, invertedRefs)).join("\n")
+  }
+
+  rootObjectName() {
+    var {snapshot} = this, name = "";
+    if (snapshot.snapshot) {
+      var {id, snapshot} = snapshot;
+      if (snapshot[id].props.name)
+        name = snapshot[id].props.name.value;
+    }
+    return name;
   }
 
   openSummary() {
-    return $world.execCommand("open text window",
-      {content: this.toString(), title: "serialization debug", fontFamily: "monospace"});
+    let name = this.rootObjectName();
+    return $world.execCommand("open text window", {
+      content: this.toString(),
+      title: "serialization debug" + (name ? " for " + name : ""),
+      fontFamily: "monospace"
+    });
   }
 
-  openConnectionsList() {    
-    let conns = (this.classes.AttributeConnection || {}).objects || [];
-    let report = conns.map(c => {
-      let [_, {props: {sourceObj, sourceAttrName, targetObj, targetMethodName}}] = c;
-      return `${this.explainId(sourceObj.value.id)}.${sourceAttrName.value} => `
-           + `${this.explainId(targetObj.value.id)}.${targetMethodName.value}`;
-    }).join("\n");
+  openConnectionsList() {
+    let name = this.rootObjectName(),
+        conns = (this.classes.AttributeConnection || {}).objects || [],
+        report = conns
+          .map(c => {
+            let [_, {props: {sourceObj, sourceAttrName, targetObj, targetMethodName}}] = c;
+            return (
+              `${this.explainId(sourceObj.value.id)}.${sourceAttrName.value} => `
+            + `${this.explainId(targetObj.value.id)}.${targetMethodName.value}\n`
+            + `  ${sourceObj.value.id} => ${targetObj.value.id}\n`
+            );
+          }).join("\n");
 
-    return $world.execCommand("open text window",
-      {content: report, title: "serialized connections", fontFamily: "monospace"});
+    return $world.execCommand("open text window", {
+      content: report,
+      title: "serialized connections" + (name ? " for " + name : ""),
+      fontFamily: "monospace"
+    });
+  }
+
+  openObjectReport() {
+    var {snapshot} = this, name = this.rootObjectName();
+    if (snapshot.snapshot) snapshot = snapshot.snapshot;
+    $world.execCommand("open text window", {
+      title: "object report" + (name ? " for " + name : ""),
+      content: this.reportAboutObjects(Object.keys(snapshot)),
+      fontFamily: "monospace"
+    });
   }
 }
 
