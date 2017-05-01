@@ -109,7 +109,8 @@ export class StyleSheet {
       let layout = props.layout.copy();
       layout.container = morph;
       props.layout = layout;
-    } else if ("dropShadow" in props) {
+    }
+    if ("dropShadow" in props) {
       props.dropShadow = new ShadowObject(props.dropShadow);
       props.dropShadow.morph = morph;
     }
