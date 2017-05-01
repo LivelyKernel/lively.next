@@ -3,11 +3,111 @@
 import { exec } from "child_process";
 import { join as j } from "path";
 import { tmpdir } from "os";
+import { resource } from "lively.resources";
+
+
+
+export async function npmSearchForVersions(packageNameAndRange) {
+  // let packageNameAndRange = "lively.lang@~0.4"
+  try {
+    let [pname, range = "*"] = packageNameAndRange.split("@"),
+        {name, version} = await resource(`http://registry.npmjs.org/${pname}/${range}`).readJson()
+    return {name, version};
+  } catch (err) {
+    throw new Error(`Cannot find npm package for ${packageNameAndRange}`);
+  }
+}
+
+export async function npmDownloadArchive(packageNameAndRange, destinationDir) {
+  destinationDir = resource(destinationDir);
+  let {version, name} = await npmSearchForVersions(packageNameAndRange),
+      archive=`${name}-${version}.tgz`,
+      archiveURL = `https://registry.npmjs.org/${name}/-/${archive}`
+  console.log(`[${packageNameAndRange}] downloading ${archiveURL}`);
+  let downloadedArchive = destinationDir.join(archive);
+  await resource(archiveURL).beBinary().copyTo(downloadedArchive);
+  return {downloadedArchive, name, version};
+}
+
+
+// let {downloadedArchive} = await npmDownloadArchive("lively.lang@^0.3", "local://lively.node-packages-test/test-download/")
+// let z = await untar(downloadedArchive, resource("file:///Users/robert/temp/"))
+// let z = await untar(downloadedArchive, resource("local://lively.node-packages-test/test-download/"))
+// await z.dirList()
+// https://registry.npmjs.org/lively.lang/-/lively.lang-0.3.5.tgz
+
+export async function untar(downloadedArchive, targetDir, name) {
+  // FIXME use tar module???
+
+  if (!name) name = downloadedArchive.name().replace(/(\.tar|\.tar.tgz|.tgz)$/, "");
+  downloadedArchive = resource(downloadedArchive);
+  targetDir = resource(targetDir);
+
+  let untarDir = resource(`file://${tmpdir()}/npm-helper-untar/`);
+  await untarDir.ensureExistance();
+  if (!downloadedArchive.url.startsWith("file://")) { // need to run exec
+    let tmpDir = untarDir.join(downloadedArchive.name());
+    await downloadedArchive.copyTo(tmpDir);
+    downloadedArchive = tmpDir;
+  }
+
+  if (untarDir.join(name).exists())
+    await untarDir.join(name).remove();
+
+  // console.log(`[${name}] extracting ${downloadedArchive.path()} => ${targetDir.join(name).asDirectory().url}`);
+
+  await x(`mkdir "${name}" && `
+        + `tar xzf "${downloadedArchive.path()}" --strip-components 1 -C "${name}" && `
+        + `rm "${downloadedArchive.path()}"`, {cwd: untarDir.path()});
+
+  await targetDir.join(name).asDirectory().remove();
+  await targetDir.join(name).asDirectory().ensureExistance();
+  return untarDir.join(name).asDirectory().rename(targetDir.join(name).asDirectory());
+}
+
+
+// await gitClone("https://github.com/LivelyKernel/lively.morphic", "local://lively.node-packages-test/test-download/lively.morphic.test")
+
+export async function gitClone(gitURL, intoDir, branch = "master") {
+  intoDir = resource(intoDir).asDirectory();
+  let name = intoDir.name(), tmp;
+  if (!intoDir.url.startsWith("file://")) {
+    tmp = resource(`file://${tmpdir()}/npm-helper-gitclone/`);
+    await tmp.ensureExistance();
+    if (tmp.join(name).exists()) await tmp.join(name).remove()
+  } else {
+    intoDir.parent().ensureExistance();
+    if (intoDir.exists()) await intoDir.remove();
+  }
+
+  // console.log(`git clone -b "${branch}" "${gitURL}" "${name}"`)
+  // console.log(tmp ? tmp.path() : intoDir.parent().path())
+
+  let destPath = tmp ? tmp.path() : intoDir.parent().path();
+  try {
+    try {
+      await x(`git clone --single-branch -b "${branch}" "${gitURL}" "${name}"`, {cwd: destPath});
+    } catch (err) {
+      // specific shas can't be cloned, so do it manually:
+      await x(`git clone "${gitURL}" "${name}" && cd ${name} && git reset --hard "${branch}" `, {cwd: destPath});
+    }
+  } catch (err) {
+    throw new Error(`git clone of ${gitURL} branch ${branch} into ${destPath} failed:\n${err}`);
+  }
+  
+  if (tmp) await tmp.join(name + "/").rename(intoDir);
+
+  return intoDir;
+}
+
+
 
 export function x(cmd, opts = {}) {
   return new Promise((resolve, reject) => {
-    let p = exec(cmd, opts, (err, stdout, stderr) =>
-      err ? reject(new Error(stderr)) : resolve(stdout));
+    let p = exec(cmd, opts, (code, stdout, stderr) =>
+      (code && console.log(opts)) || code
+        ? reject(new Error(`Command ${cmd} failed: ${code}\n${stdout}${stderr}`))
+        : resolve(stdout));
     if (opts.verbose) {
       // p.stdout.on("data", d => console.log(d));
       // p.stderr.on("data", d => console.log(d));
@@ -49,7 +149,7 @@ export const npmFallbackEnv = {
   npm_config_git_tag_version: 'true',
   npm_config_global: '',
   npm_config_global_style: '',
-  
+
   npm_config_globalconfig: j(process.env.HOME, 'npmrc'),
   npm_config_globalignorefile: j(process.env.HOME, 'npmignore'),
   npm_config_group: '20',

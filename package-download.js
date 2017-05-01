@@ -1,81 +1,94 @@
-import {join as j} from "path";
-import fs from "fs";
-import {exec} from "child_process";
-import {tmpdir} from "os";
+import { tmpdir } from "os";
 import semver from "./semver.min.js"
-import { x } from "./util.js";
+import { resource } from "lively.resources";
+import * as util from "./util.js";
 
 // let centralPackageDir = process.env.CENTRAL_NODE_PACKAGE_DIR
 // let centralPackageDir = "/Users/robert/.central-node-packages"
 // let destinationDir = "/Users/robert/.central-node-packages"
 // let spec = await installPackage("lively.user@LivelyKernel/lively.user", centralPackageDir);
 // let spec = await installPackage("pouchdb", centralPackageDir);
+// (await resource("file:///Users/robert/.central-node-packages").dirList()).forEach(ea => ea.remove())
+// let spec = await installPackage("mkdirp@0.5.1", centralPackageDir);
 // let {location, config} = await getInstalledPackage("pouchdb", null, centralPackageDir);
-
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // interface
 
 export async function installPackage(pNameAndVersion, destinationDir) {
 
-  if (!fs.existsSync(destinationDir))
-    fs.mkdirSync(destinationDir);
+  if (typeof destinationDir === "string" && destinationDir.startsWith("/"))
+    destinationDir = "file://" + destinationDir;
+
+  destinationDir = resource(destinationDir);
+  await destinationDir.ensureExistance();
 
   let queue = [pNameAndVersion.split("@")],
       packages = [];
 
   while (queue.length) {
     let [name, version] = queue.shift(),
-        installed = getInstalledPackage(name, version, destinationDir)
-        || await npmPackageDownload(version ? name + "@" + version : name, destinationDir);
+        installed = await getInstalledPackage(name, version, destinationDir)
+                 || await npmPackageDownload(version ? name + "@" + version : name, destinationDir);
     if (!installed)
       throw new Error(`cannot install package ${name}@${version}!`)
     packages.push(installed);
-    let {config} = installed;
-    Object.keys(config.dependencies || {}).forEach(name => {
-      if (!getInstalledPackage(name, config.dependencies[name], destinationDir))
+    let {config} = installed,
+        deps = config.dependencies || {};
+    for (let name in deps)
+      if (!await getInstalledPackage(name, config.dependencies[name], destinationDir))
         queue.push([name, config.dependencies[name]]);
-    });
     // console.log(queue)
   }
   return packages;
 }
 
-export function getInstalledPackages(packageInstallDir) {
-  return fs.readdirSync(packageInstallDir).map(name =>
-    readPackageSpec(j(packageInstallDir, name)));
+export async function getInstalledPackages(packageInstallDir) {
+  if (typeof packageInstallDir === "string" && packageInstallDir.startsWith("/"))
+    packageInstallDir = "file://" + packageInstallDir;
+  return Promise.all((await resource(packageInstallDir).dirList(1))
+                        .map(ea => readPackageSpec(ea)));
 }
 
-export function getInstalledPackage(pName, versionRange, packageInstallDir, installedPackages) {
-  if (!installedPackages) installedPackages = fs.readdirSync(packageInstallDir);
+export async function getInstalledPackage(pName, versionRange, packageInstallDir, installedPackages) {
+  if (typeof packageInstallDir === "string" && packageInstallDir.startsWith("/"))
+      packageInstallDir = "file://" + packageInstallDir;
+  packageInstallDir = resource(packageInstallDir);
+
+  if (!installedPackages) installedPackages = await packageInstallDir.dirList(1);
   let gitSpec = gitSpecFromVersion(versionRange || "");
 
-  let existing = installedPackages.find(ea => {
-    let [name, version] = ea.split("@");
-    if (name !== pName) return false;
-    if (!versionRange) return true;
-    if (gitSpec && gitSpec.inFileName === version) return true;
+  let existing;
+  for (let p of installedPackages) {
+    let [name, version] = p.name().split("@");
+    if (name !== pName) continue;
+    if (!versionRange || (gitSpec && gitSpec.inFileName === version)) {
+      existing = p;
+      break;
+    }
 
     if (!semver.parse(version || "")) {
       try {
-        version = JSON.parse(fs.readFileSync(j(packageInstallDir, ea, "package.json"))).version;
+        version = (await p.join("package.json").readJson()).version;
       } catch (err) {}
     }
-    return semver.satisfies(version, versionRange);
-  });
-  return existing ? readPackageSpec(j(packageInstallDir, existing)) : null;
+    if (semver.satisfies(version, versionRange)) {
+      existing = p; break;
+    }
+  }
+
+  return existing ? readPackageSpec(existing) : null;
 }
 
 async function npmPackageDownload(packageNameAndRange, destinationDir) {
   // packageNameAndRange like "lively.modules@^0.7.45"
   // if no @ part than we assume @*
 
-global.x = {packageNameAndRange, destinationDir}
-// ({packageNameAndRange, destinationDir} = global.x)
+  destinationDir = resource(destinationDir);
 
   // do we have package already?
   let [name, range] = packageNameAndRange.split("@");
-  let installed = getInstalledPackage(name, range, destinationDir);
+  let installed = await getInstalledPackage(name, range, destinationDir);
   if (installed) return installed;
 
   if (!packageNameAndRange.includes("@")) {
@@ -84,31 +97,29 @@ global.x = {packageNameAndRange, destinationDir}
   }
 
   // download package to tmp location
-  let tmp = j(tmpdir(), "package_install_tmp/")
-  if (!fs.existsSync(tmp)) fs.mkdirSync(tmp)
+  let tmp = resource("file://" + tmpdir()).join("package_install_tmp/");
+  await tmp.ensureExistance()
 
   let pathSpec = pathForNameAndVersion(packageNameAndRange, destinationDir),
       downloadDir = pathSpec.gitURL
         ? await npmPackageDownloadViaGit(pathSpec, tmp)
         : await npmPackageDownloadViaCurl(packageNameAndRange, tmp);
 
-  
-  let config = JSON.parse(fs.readFileSync(j(downloadDir, "package.json"))),
-      packageDir;
+
+  let config = await downloadDir.join("package.json").readJson(), packageDir;
 
   if (pathSpec.gitURL) {
-    packageDir = pathSpec.location;
+    packageDir = resource(pathSpec.location).asDirectory();
   } else {
     let dirName = config.name + "@" + config.version;
-    packageDir = j(destinationDir, dirName);
+    packageDir = destinationDir.join(dirName).asDirectory();
     pathSpec = {...pathSpec, location: packageDir};
   }
 
-  fs.renameSync(downloadDir, packageDir);
+  await downloadDir.rename(packageDir);
 
-  if (pathSpec.gitURL) {
-    fs.writeFileSync(j(packageDir, lvInfoFileName), JSON.stringify(pathSpec, null, 2))
-  }
+  if (pathSpec.gitURL)
+    await packageDir.join(lvInfoFileName).writeJson(pathSpec);
 
   return readPackageSpec(packageDir, config);
 }
@@ -120,36 +131,29 @@ global.x = {packageNameAndRange, destinationDir}
 // helper
 const lvInfoFileName = ".lv-npm-helper-info.json";
 
-async function npmPackageDownloadViaGit({gitURL, name, branch}, targetDir) {
+async function npmPackageDownloadViaGit({gitURL: url, name, branch}, targetDir) {
   // packageNameAndRepo like "lively.modules@https://github.com/LivelyKernel/lively.modules"
   branch = branch || "master"
-  gitURL = gitURL.replace(/#[^#]+$/, "");
-  await x(`git clone -b "${branch}" "${gitURL}" "${name}"`, {cwd: targetDir});
-  return j(targetDir, name);
+  url = url.replace(/#[^#]+$/, "");
+  let dir = targetDir.join(name).asDirectory()
+  await util.gitClone(url, dir, branch);
+  return dir;
 }
 
 async function npmPackageDownloadViaCurl(packageNameAndRange, targetDir) {
   // packageNameAndRange like "lively.modules@^0.7.45"
   // if no @ part than we assume @*
-
-  let versions = JSON.parse(String(await x(`npm show "${packageNameAndRange}" name version --json`))),
-      // _ = console.log(packageNameAndRange, versions),
-      {version, name} = Array.isArray(versions) ? versions.slice(-1)[0] : versions,
-      archive=`${name}-${version}.tgz`,
-      archiveURL = `https://registry.npmjs.org/${name}/-/${archive}`
-
-  console.log(`[${packageNameAndRange}] downloading ${archiveURL}`);
-
-  await x(`curl --silent --remote-name "${archiveURL}"`, {cwd: targetDir});
-  if (fs.existsSync(j(targetDir, name)))
-    await x(`rm -rf "${name}"`, {cwd: targetDir});
-  await x(`mkdir "${name}" && tar xzf "${archive}" --strip-components 1 -C "${name}" && rm "${archive}"`, {cwd: targetDir});
-  return j(targetDir, name);
+  let {
+    downloadedArchive,
+    name, version
+  } = await util.npmDownloadArchive(packageNameAndRange, targetDir);
+  return util.untar(downloadedArchive, targetDir, name);
 }
 
-function readPackageSpec(packageDir, optPackageJSON) {
-  let hasBindingGyp = fs.existsSync(j(packageDir, "binding.gyp")),
-      config = optPackageJSON || JSON.parse(fs.readFileSync(j(packageDir, "package.json"))),
+async function readPackageSpec(packageDir, optPackageJSON) {
+
+  let hasBindingGyp = await packageDir.join("binding.gyp").exists(),
+      config = optPackageJSON || await packageDir.join("package.json").readJson(),
       scripts, bin;
 
   if (config.bin) {
@@ -163,13 +167,11 @@ function readPackageSpec(packageDir, optPackageJSON) {
   }
 
   let info = {};
-  if (fs.existsSync(j(packageDir, lvInfoFileName))) {
-    info = JSON.parse(fs.readFileSync(j(packageDir, lvInfoFileName)))
-  }
+  try { info = await packageDir.join(lvInfoFileName).readJson(); } catch (err) {}
 
   return {
     ...info,
-    location: packageDir,
+    location: packageDir.url,
     hasBindingGyp,
     scripts,
     bin,
@@ -193,18 +195,18 @@ function gitSpecFromVersion(version = "") {
 }
 
 function pathForNameAndVersion(nameAndVersion, destinationDir) {
-  // pathForNameAndVersion("foo-bar@1.2.3", "/x/y")
-  // pathForNameAndVersion("foo-bar@foo/bar", "/x/y")
-  // pathForNameAndVersion("foo-bar@git+https://github.com/foo/bar#master", "/x/y")
+  // pathForNameAndVersion("foo-bar@1.2.3", "file:///x/y")
+  // pathForNameAndVersion("foo-bar@foo/bar", "file:///x/y")
+  // pathForNameAndVersion("foo-bar@git+https://github.com/foo/bar#master", "file:///x/y")
 
   let [name, version] = nameAndVersion.split("@"),
       gitSpec = gitSpecFromVersion(version);
 
   // "git clone -b my-branch git@github.com:user/myproject.git"
   if (gitSpec) {
-    let location = j(destinationDir, `${name}@${gitSpec.inFileName}`)
+    let location = resource(destinationDir).join(`${name}@${gitSpec.inFileName}`).url;
     return {...gitSpec, location, name, version: gitSpec.gitURL}
   }
   
-  return {location: j(destinationDir, nameAndVersion), name, version}
+  return {location: resource(destinationDir).join(nameAndVersion).url, name, version}
 }

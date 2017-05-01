@@ -60,6 +60,8 @@ function linkBins(packageSpecs, linkState = {}) {
   let linkLocation = j(tmpdir(), "npm-helper-bin-dir");
   if (!fs.existsSync(linkLocation)) fs.mkdirSync(linkLocation);
   packageSpecs.forEach(({bin, location}) => {
+    if (location.startsWith("file://"))
+      location = location.replace(/^file:\/\//, "")
     if (!bin) return;
     if (linkState[location]) return;
     for (let linkName in bin) {
@@ -84,30 +86,43 @@ class BuildProcess {
   }
 
   async run() {
+    // let {buildStages, packageDir} = build
     let {buildStages, packageDir} = this,
         i = 1, n = buildStages.length;
-    console.log(`Running build stage ${i}/${n}`)
-  
+
+    // console.log(`Running build stage ${i++}/${n}`)
+
     while (buildStages.length) {
       let stage = buildStages[0];
-      if (!stage.length) { buildStages.shift(); continue; }
+      if (!stage.length) {
+        // console.log(`Running build stage ${i++}/${n}`);
+        buildStages.shift();
+        continue;
+      }
       let next = stage[0],
-          packageSpec = getInstalledPackage(...[...next.split("@"), packageDir]);
+          packageSpec = await getInstalledPackage(...[...next.split("@"), packageDir]);
       if (!packageSpec) throw new Error(`package ${next} cannot be found (in ${packageDir})`);
-      console.log(`Running build for ${next}`);
       await this.build(packageSpec);
       stage.shift();
     }
+  }
+
+  hasBuiltScripts({config}) {
+    return config.scripts && Object.keys(config.scripts).some(scriptName =>
+      ["preinstall", "install", "postinstall"].includes(scriptName));
   }
 
   async build(packageSpec) {
     this.binLinkLocation = linkBins([...this.builtPackages, packageSpec], this.binLinkState);
     let env = npmCreateEnvVars(packageSpec.config);
 
-    console.log(`[build ${packageSpec.config.name}]`);
-    await this.runScript("preinstall",  packageSpec, env);
-    await this.runScript("install",     packageSpec, env);
-    await this.runScript("postinstall", packageSpec, env);
+    if (this.hasBuiltScripts(packageSpec)) {
+      console.log(`[${packageSpec.config.name}] build starting`);
+      await this.runScript("preinstall",  packageSpec, env);
+      await this.runScript("install",     packageSpec, env);
+      await this.runScript("postinstall", packageSpec, env);
+      console.log(`[${packageSpec.config.name}] build done`);
+    }
 
     this.builtPackages.push(packageSpec);
   }
@@ -115,7 +130,7 @@ class BuildProcess {
   async runScript(scriptName, {config, location, scripts}, env) {
     if (!scripts || !scripts[scriptName]) return false;
     console.log(`[build ${config.name}] running ${scriptName}`);
-    let PATH = `${this.binLinkLocation}:${helperBinDir}:${process.env.PATH}`;
+
     env = {
       ...process.env,
       ...npmFallbackEnv,
@@ -123,32 +138,50 @@ class BuildProcess {
       ...env,
       npm_lifecycle_event: scriptName,
       npm_lifecycle_script: scripts[scriptName].split(" ")[0],
-      PATH
+      PATH: `${this.binLinkLocation}:${helperBinDir}:${process.env.PATH}`
     };
 
-global.context = {scriptName, config, location, scripts, env};
-
     try {
-      return await x(`/bin/sh -c '${scripts[scriptName]}'`, {verbose: true, cwd: location, env});
+      return await x(`/bin/sh -c '${scripts[scriptName]}'`, {
+        verbose: true,
+        cwd: location.replace(/^file:\/\//, ""),
+        env
+      });
+
     } catch (err) {
-      console.error(`[build ${config.name}] error running ${scripts[scriptName]}:`);
-      console.error(err);
+      console.error(`[build ${config.name}] error running ${scripts[scriptName]}:\n${err}`);
+      if (err.stdout || err.stderr) {
+        console.log("The command output:");
+        console.log(err.stdout);
+        console.log(err.stderr);
+      }
       throw err;
     }
   }
 
 }
 
+/*
+DIR=/Users/robert/Lively/lively-dev2/npm-helper/bin
+export PATH=$DIR:$PATH
+export CENTRAL_NODE_PACKAGE_DIR="/Users/robert/.central-node-packages";
+node -r "lively.resources/dist/lively.resources.js" -e "lively.resources.resource('file://'+__dirname).dirList().then(files => console.log(files.map(ea => ea.path())))"
+*/
 
-// await installPackage("lively.user", packageDir)
 // await installPackage("pouchdb", packageDir)
+// await installPackage("lively.resources", packageDir)
+// await installPackage("lively.user@LivelyKernel/lively.user#master", packageDir)
+// await installPackage("pouchdb", packageDir)
+
 // process.env.CENTRAL_NODE_PACKAGE_DIR = "/Users/robert/.central-node-packages"
 // let packageDir = process.env.CENTRAL_NODE_PACKAGE_DIR
 // let packages = getInstalledPackages(packageDir)
-// let p = getInstalledPackage("pouchdb", null, packageDir)
+// let p = await getInstalledPackage("pouchdb", null, packageDir)
+// let p = await getInstalledPackage("lively.resources", undefined, packageDir);
 // let p = await getInstalledPackage("lively.user", undefined, packageDir);
 
-// let stages = buildStages(`${p.config.name}@${p.config.version}`, packageDir)
+// await depGraph(p, packageDir)
+// let stages = await buildStages(p, packageDir)
 // let build = new BuildProcess(stages, packageDir);
 // await build.run()
 
