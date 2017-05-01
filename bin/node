@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# echo "calling node with args: $@"
+
+DIR=$(dirname $0)
+
+# FIXME remove shadowed node...
+declare -a PATH_PARTS
+PATH_PARTS=$(echo $PATH | tr -s ':' ' ')
+for PATH_PART in $PATH_PARTS
+do
+  if [ "$DIR" != "$PATH_PART" ] && [ -f "$PATH_PART/node" ]; then
+    real_node="$PATH_PART/node";
+    break;
+  fi
+done 
+
+$real_node -r "$DIR/../package-resolve.js" "$@"

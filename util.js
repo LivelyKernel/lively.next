@@ -1,0 +1,125 @@
+/*global process*/
+
+import { exec } from "child_process";
+import { join as j } from "path";
+import { tmpdir } from "os";
+
+export function x(cmd, opts = {}) {
+  return new Promise((resolve, reject) => {
+    let p = exec(cmd, opts, (err, stdout, stderr) =>
+      err ? reject(new Error(stderr)) : resolve(stdout));
+    if (opts.verbose) {
+      // p.stdout.on("data", d => console.log(d));
+      // p.stderr.on("data", d => console.log(d));
+      p.stdout.pipe(process.stdout);
+      p.stderr.pipe(process.stderr);
+    }
+  });
+}
+
+
+export const npmFallbackEnv = {
+  npm_config_access: '',
+  npm_config_also: '',
+  npm_config_always_auth: '',
+  npm_config_auth_type: 'legacy',
+  npm_config_bin_links: 'true',
+  npm_config_browser: '',
+  npm_config_ca: '',
+  npm_config_cache: j(process.env.HOME, '.npm'),
+  npm_config_cache_lock_retries: '10',
+  npm_config_cache_lock_stale: '60000',
+  npm_config_cache_lock_wait: '10000',
+  npm_config_cache_max: 'Infinity',
+  npm_config_cache_min: '10',
+  npm_config_cafile: '',
+  npm_config_cert: '',
+  npm_config_color: 'true',
+  npm_config_depth: 'Infinity',
+  npm_config_description: 'true',
+  npm_config_dev: '',
+  npm_config_dry_run: '',
+  npm_config_engine_strict: '',
+  npm_config_fetch_retries: '2',
+  npm_config_fetch_retry_factor: '10',
+  npm_config_fetch_retry_maxtimeout: '60000',
+  npm_config_fetch_retry_mintimeout: '10000',
+  npm_config_force: '',
+  npm_config_git: 'git',
+  npm_config_git_tag_version: 'true',
+  npm_config_global: '',
+  npm_config_global_style: '',
+  
+  npm_config_globalconfig: j(process.env.HOME, 'npmrc'),
+  npm_config_globalignorefile: j(process.env.HOME, 'npmignore'),
+  npm_config_group: '20',
+  npm_config_ham_it_up: '',
+  npm_config_heading: 'npm',
+  npm_config_https_proxy: '',
+  npm_config_if_present: '',
+  npm_config_ignore_scripts: '',
+  npm_config_init_author_email: '',
+  npm_config_init_author_name: '',
+  npm_config_init_author_url: '',
+  npm_config_init_license: 'ISC',
+  npm_config_init_module: j(process.env.HOME, '.npm-init.js'),
+  npm_config_init_version: '1.0.0',
+  npm_config_json: '',
+  npm_config_key: '',
+  npm_config_legacy_bundling: '',
+  npm_config_link: '',
+  npm_config_local_address: '',
+  npm_config_loglevel: 'warn',
+  npm_config_logs_max: '10',
+  npm_config_long: '',
+  npm_config_maxsockets: '50',
+  npm_config_message: '%s',
+  npm_config_metrics_registry: 'https://registry.npmjs.org/',
+  npm_config_node_version: '7.7.4',
+  npm_config_onload_script: '',
+  npm_config_only: '',
+  npm_config_optional: 'true',
+  npm_config_parseable: '',
+  npm_config_prefix: process.env.HOME,
+  npm_config_production: '',
+  npm_config_progress: 'true',
+  npm_config_proprietary_attribs: 'true',
+  npm_config_proxy: '',
+  npm_config_rebuild_bundle: 'true',
+  npm_config_registry: 'https://registry.npmjs.org/',
+  npm_config_rollback: 'true',
+  npm_config_save: '',
+  npm_config_save_bundle: '',
+  npm_config_save_dev: '',
+  npm_config_save_exact: '',
+  npm_config_save_optional: '',
+  npm_config_save_prefix: '^',
+  npm_config_scope: '',
+  npm_config_scripts_prepend_node_path: 'warn-only',
+  npm_config_searchexclude: '',
+  npm_config_searchlimit: '20',
+  npm_config_searchopts: '',
+  npm_config_searchstaleness: '900',
+  npm_config_send_metrics: '',
+  npm_config_shell: 'bash',
+  npm_config_shrinkwrap: 'true',
+  npm_config_sign_git_tag: '',
+  npm_config_sso_poll_frequency: '500',
+  npm_config_sso_type: 'oauth',
+  npm_config_strict_ssl: 'true',
+  npm_config_tag: 'latest',
+  npm_config_tag_version_prefix: 'v',
+  npm_config_tmp: tmpdir(),
+  npm_config_umask: '0022',
+  npm_config_unicode: 'true',
+  npm_config_unsafe_perm: 'true',
+  npm_config_usage: '',
+  npm_config_user: '501',
+  npm_config_user_agent: 'npm/4.4.4 node/v7.7.4 darwin x64',
+  npm_config_userconfig: j(process.env.HOME, '.npmrc'),
+  npm_config_version: '',
+  npm_config_versions: '',
+  npm_config_viewer: 'man',
+  npm_execpath: '/Users/robert/.nvm/versions/node/v7.7.4/lib/node_modules/npm/bin/npm-cli.js',
+  npm_node_execpath: '/Users/robert/.nvm/versions/node/v7.7.4/bin/node'
+}
