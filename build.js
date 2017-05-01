@@ -35,11 +35,6 @@ const npmEnv = (() => {
   }
 })();
 
-  // npm_execpath: '/Users/robert/.nvm/versions/node/v7.7.4/lib/node_modules/npm/bin/npm-cli.js',
-// String(execSync("which node")).trim()
-
-
-
 function npmCreateEnvVars(configObj, env = {}, path = "npm_package") {
   if (Array.isArray(configObj))
     configObj.forEach((ea, i) => add(i, configObj[i]));
@@ -160,31 +155,3 @@ class BuildProcess {
   }
 
 }
-
-/*
-DIR=/Users/robert/Lively/lively-dev2/npm-helper/bin
-export PATH=$DIR:$PATH
-export CENTRAL_NODE_PACKAGE_DIR="/Users/robert/.central-node-packages";
-node -r "lively.resources/dist/lively.resources.js" -e "lively.resources.resource('file://'+__dirname).dirList().then(files => console.log(files.map(ea => ea.path())))"
-*/
-
-// await installPackage("pouchdb", packageDir)
-// await installPackage("lively.resources", packageDir)
-// await installPackage("lively.user@LivelyKernel/lively.user#master", packageDir)
-// await installPackage("pouchdb", packageDir)
-
-// process.env.CENTRAL_NODE_PACKAGE_DIR = "/Users/robert/.central-node-packages"
-// let packageDir = process.env.CENTRAL_NODE_PACKAGE_DIR
-// let packages = getInstalledPackages(packageDir)
-// let p = await getInstalledPackage("pouchdb", null, packageDir)
-// let p = await getInstalledPackage("lively.resources", undefined, packageDir);
-// let p = await getInstalledPackage("lively.user", undefined, packageDir);
-
-// await depGraph(p, packageDir)
-// let stages = await buildStages(p, packageDir)
-// let build = new BuildProcess(stages, packageDir);
-// await build.run()
-
-
-// context.env
-// await x(`/bin/sh -c 'env'`, {cwd: context.location, env: context.env});

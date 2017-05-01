@@ -44,49 +44,12 @@ export async function depGraph(packageSpec, packageInstallDir) {
   }
 
   return {deps, packages, resolvedVersions};
-
-  // if (pNameAndVersion in deps) return {deps, packages};
-  //
-  // let [name, version] = pNameAndVersion.split("@"),
-  //     {config} = getInstalledPackage(name, version, packageInstallDir),
-  //     resolvedNameAndVersion = `${config.name}@${config.version}`;
-  //
-  // if (!packages[config.name]) packages[config.name] = [];
-  // if (!packages[config.name].includes(pNameAndVersion)) packages[config.name].push(pNameAndVersion)
-  // if (!packages[config.name].includes(resolvedNameAndVersion)) packages[config.name].push(resolvedNameAndVersion)
-  //
-  // if (resolvedNameAndVersion !== pNameAndVersion) {
-  //   if (!deps[pNameAndVersion]) deps[pNameAndVersion] = [];
-  //   deps[pNameAndVersion].push(resolvedNameAndVersion);
-  // }
-  //
-  // Object.keys(config.dependencies || {}).forEach(name => {
-  //   let depNameAndVersion = `${name}@${config.dependencies[name]}`;
-  //   if (!deps[resolvedNameAndVersion]) deps[resolvedNameAndVersion] = [];
-  //   if (!deps[resolvedNameAndVersion].includes(depNameAndVersion))
-  //     deps[resolvedNameAndVersion].push(depNameAndVersion);
-  //   // graph[depNameAndVersion] = resolvedNameAndVersion;
-  //   depGraph(depNameAndVersion, packageInstallDir, deps, packages, depth + 1);
-  // });
-  // return {deps, packages};
 }
 
 export function graphvizDeps({deps, packages, resolvedVersions}) {
-  // depGraph = depGraphDot("pouchdb", centralPackageDir)
-  // let depGroups = Object.keys(depGraph).reduce((byName, nameAndVersion) => {
-  //   let name = nameAndVersion.split("@")[0];
-  //   if (!byName[name]) byName[name] = {};
-  //   if (!byName[name][nameAndVersion]) byName[name][nameAndVersion] = [];
-  //   byName[name][nameAndVersion].push(...depGraph[nameAndVersion]);
-  //   return byName;
-  // }, {});
-
   let graph = `digraph {\n`
             + `compound=true;\n`
             + `node [shape=record fontsize=10 fontname="Verdana"];\n`;
-
-  // groupName="pouchdb"
-
 
   Object.keys(packages).forEach(pName => {
     graph += `subgraph "cluster_${pName}" {\n`

@@ -15,4 +15,4 @@ do
   fi
 done 
 
-$real_node -r "$DIR/../package-resolve.js" "$@"
+$real_node -r "$DIR/../module-resolver.js" "$@"

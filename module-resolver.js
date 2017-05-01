@@ -12,27 +12,33 @@ process.env.CENTRAL_NODE_PACKAGE_DIR = "/Users/robert/.central-node-packages"
 let centralPackageDir = process.env.CENTRAL_NODE_PACKAGE_DIR,
     knownPackageDirs = fs.readdirSync(centralPackageDir)
 
+var originalResolve;
+
+installResolver();
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-let orig__resolveFilename = Module._resolveFilename;
-Module._resolveFilename = function (request, parent, isMain) {
-  try {
-    let result = orig__resolveFilename.call(this, request, parent, isMain);
-    // console.log(`${request} => ${result}`);
-    return result;
-  } catch (err) {
-    let parentId = parent ? parent.filename || parent.id : "",
-        // _ = console.log(`[_resolveFilename] searching for "${request}" from ${parentId}`),
-        config = findPackageConfig(parentId),
-        deps = config && depMap(config),
-        basename = request.split("/")[0],
-        globalModulesMatching = findPathToModule(basename, deps[basename]),
-        // _2 = console.log(`globalModulesMatching: ${globalModulesMatching.join(", ")}`),
-        resolved = resolveModuleInGlobalPackage(globalModulesMatching, basename, request);
-
-    if (resolved) return resolved;
-
-    throw err;
+function installResolver() {
+  if (!originalResolve) originalResolve = Module._resolveFilename;
+  Module._resolveFilename = function(request, parent, isMain) {
+    try {
+      let result = originalResolve.call(this, request, parent, isMain);
+      // console.log(`${request} => ${result}`);
+      return result;
+    } catch (err) {
+      let parentId = parent ? parent.filename || parent.id : "",
+          // _ = console.log(`[_resolveFilename] searching for "${request}" from ${parentId}`),
+          config = findPackageConfig(parentId),
+          deps = config && depMap(config),
+          basename = request.split("/")[0],
+          globalModulesMatching = findPathToModule(basename, deps[basename]),
+          // _2 = console.log(`globalModulesMatching: ${globalModulesMatching.join(", ")}`),
+          resolved = resolveModuleInGlobalPackage(globalModulesMatching, basename, request);
+  
+      if (resolved) return resolved;
+  
+      throw err;
+    }
   }
 }
 
@@ -80,4 +86,3 @@ function resolveModuleInGlobalPackage(globalModulesMatching, basename, request) 
     if (fs.existsSync(fullpath + ".js")) return fullpath + ".js";
   }
 }
-
