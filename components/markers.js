@@ -157,13 +157,8 @@ export class StatusMessage extends Morph {
         fontSize: 14,
         fontFamily: "Inconsolata, 'DejaVu Sans Mono', monospace"
       },
-      ".StatusMessage [name=closeButton]": {
-        extent: pt(22, 22),
-        activeStyle: {fill: Color.white}
-      },
-      ".StatusMessage [name=expandButton]": {
-        extent: pt(22, 22),
-        activeStyle: {fill: Color.white}
+      ".StatusMessage .Button.activeStyle": {
+         fill: Color.white
       }
     });
   }
@@ -229,6 +224,7 @@ export class StatusMessage extends Morph {
             {
               name: "closeButton",
               type: "button",
+              extent: pt(22, 22),
               label: Icon.makeLabel("close")
             }
           ];
@@ -341,6 +337,7 @@ export class StatusMessageForMorph extends StatusMessage {
               var btn = this.addMorph({
                 name: "expandButton",
                 type: "button",
+                extent: pt(22, 22),
                 label: Icon.makeLabel("expand")
               });
               connect(btn, "fire", this, "expand");

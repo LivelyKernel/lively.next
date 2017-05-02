@@ -1,12 +1,11 @@
 /*global System*/
 import { Rectangle, Color, pt } from 'lively.graphics';
-import { Morph, morph, Text, GridLayout } from 'lively.morphic';
+import { Morph, StyleSheet, morph, Text, GridLayout, Button } from 'lively.morphic';
 import { arr, obj, promise } from "lively.lang";
 import { List, FilterableList } from "./list.js"
 import InputLine, { PasswordInputLine } from "../text/input-line.js"
 import { Icon } from "./icons.js"
 import { connect } from 'lively.bindings';
-
 
 export class AbstractPrompt extends Morph {
 
@@ -20,6 +19,44 @@ export class AbstractPrompt extends Morph {
       _isActive: {defaultValue: false},
       autoRemove: {defaultValue: true},
       answer: {defaultValue: null, derived: true},
+      styleSheets: {
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            ".Button.activeStyle.standard": {
+              borderWidth: 2,
+              fill: Color.transparent,
+              borderColor: Color.white,
+              nativeCursor: "pointer"
+            },
+            ".Button.activeStyle.cancel": {
+              borderWidth: 2,
+              fill: Color.transparent,
+              borderColor: Color.red.lighter(),
+              fontStyle: "bold",
+              nativeCursor: "pointer"
+            },
+            ".Button.activeStyle.ok": {
+              borderWidth: 2,
+              fill: Color.transparent,
+              borderColor: Color.green.lighter(),
+              fontStyle: "bold",
+              nativeCursor: "pointer"
+            },
+            ".Button.activeStyle.standard [name=label]": {
+              fontStyle: "bold",
+              fontColor: Color.white
+            },
+            ".Button.activeStyle.cancel [name=label]": {
+              fontColor: Color.red.lighter(),
+              fontStyle: "bold"
+            },
+            ".Button.activeStyle.ok [name=label]": {
+              fontColor: Color.green.lighter(),
+              fontStyle: "bold"
+            }
+          });
+        }
+      }
     }
   }
 
@@ -68,46 +105,6 @@ export class AbstractPrompt extends Morph {
     ]);
   }
 
-  get buttonStyle() {
-    return {
-      type: "button",
-      activeStyle: {
-        borderWidth: 2,
-        fill: Color.transparent,
-        fontColor: Color.white,
-        borderColor: Color.white,
-        fontStyle: "bold",
-        nativeCursor: "pointer"
-      }
-    }
-  }
-
-  get okButtonStyle() {
-    return {
-      activeStyle: {
-        borderWidth: 2,
-        fill: Color.transparent,
-        borderColor: Color.green.lighter(),
-        fontColor: Color.green.lighter(),
-        fontStyle: "bold",
-        nativeCursor: "pointer"
-      }
-    }
-  }
-
-  get cancelButtonStyle() {
-    return {
-      activeStyle: {
-        borderWidth: 2,
-        fill: Color.transparent,
-        borderColor: Color.red.lighter(),
-        fontColor: Color.red.lighter(),
-        fontStyle: "bold",
-        nativeCursor: "pointer"
-      }
-    }
-  }
-
 }
 
 // $world.inform(lively.lang.arr.range(0,40).join("\n"))
@@ -119,11 +116,11 @@ export class InformPrompt extends AbstractPrompt {
       name: "label", type: "label", value: props.label,
       fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray
     });
-    this.addMorph({
+    let okButton = this.addMorph({
+      styleClasses: ['ok'],
       name: "ok button", type: "button", label: "OK",
-      ...this.okButtonStyle
     });
-    connect(this.getSubmorphNamed("ok button"), 'fire', this, 'resolve');
+    connect(okButton, 'fire', this, 'resolve');
     this.initLayout();
   }
 
@@ -162,16 +159,19 @@ export class ConfirmPrompt extends AbstractPrompt {
       name: "label", type: "label", value: props.label,
       fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray
     });
-    this.addMorph({
+    let okButton = this.addMorph({
+      styleClasses: ['ok'],
       name: "ok button", type: "button",
-      label: "OK", ...this.okButtonStyle
+      label: "OK"
     });
-    this.addMorph({
+    let cancelButton = this.addMorph({
+      styleClasses: ['cancel'],
       name: "cancel button", type: "button",
-      label: "Cancel", ...this.cancelButtonStyle
+      label: "Cancel"
     });
-    connect(this.getSubmorphNamed("ok button"), 'fire', this, 'resolve');
-    connect(this.getSubmorphNamed("cancel button"), 'fire', this, 'reject');
+    
+    connect(okButton, 'fire', this, 'resolve');
+    connect(cancelButton, 'fire', this, 'reject');
     this.initLayout();
   }
 
@@ -216,8 +216,9 @@ export class MultipleChoicePrompt extends AbstractPrompt {
     choices.forEach((choice, i) => {
       var btn = this.addMorph({
         name: "button " + i, type: "button",
+        styleClasses: ['ok'],
         padding: Rectangle.inset(10, 8),
-        label: choice, ...this.okButtonStyle});
+        label: choice});
       btn.choice = choice;
       connect(btn, 'fire', this, 'resolve', {converter: function() { return this.sourceObj.choice; }});
     });
@@ -301,8 +302,8 @@ export class TextPrompt extends AbstractPrompt {
     if (inputWidth > this.width-25)
       this.width = Math.min(this.maxWidth, inputWidth+25);
 
-    this.addMorph({name: "ok button", type: "button", label: "OK", ...this.okButtonStyle});
-    this.addMorph({name: "cancel button", type: "button", label: "Cancel", ...this.cancelButtonStyle});
+    this.addMorph({name: "ok button", type: "button", label: "OK", styleClassesp: ['ok']});
+    this.addMorph({name: "cancel button", type: "button", label: "Cancel", styleClasses: ['cancel']});
 
     connect(this.getSubmorphNamed("ok button"), 'fire', this, 'resolve');
     connect(this.getSubmorphNamed("cancel button"), 'fire', this, 'reject');
@@ -528,8 +529,8 @@ export class PasswordPrompt extends AbstractPrompt {
       name: "input", placeholder: placeholder || "", borderWidth: 0
     }));
 
-    this.addMorph({name: "ok button", type: "button", label: "OK", ...this.okButtonStyle});
-    this.addMorph({name: "cancel button", type: "button", label: "Cancel", ...this.cancelButtonStyle});
+    this.addMorph({name: "ok button", type: "button", label: "OK", styleClasses: ['ok']});
+    this.addMorph({name: "cancel button", type: "button", label: "Cancel", styleClasses: ['cancel']});
 
     connect(this.get("ok button"), 'fire', this, 'resolve');
     connect(this.get("cancel button"), 'fire', this, 'reject');
@@ -621,11 +622,11 @@ export class ListPrompt extends AbstractPrompt {
 
     this.addMorph({
       name: "ok button", type: "button", label: "Select",
-      ...this.okButtonStyle
+      styleClasses: ['ok']
     });
     this.addMorph({
       name: "cancel button", type: "button", label: "Cancel",
-      ...this.cancelButtonStyle
+      styleClasses: ['cancel']
     });
     connect(this.get("ok button"), 'fire', this, 'resolve');
     connect(this.get("cancel button"), 'fire', this, 'reject');
@@ -681,15 +682,18 @@ export class EditListPrompt extends ListPrompt {
     super.build(props);
 
     var addBtn = this.addMorph({
-          name: "add item button", ...this.buttonStyle,
+          type: 'button',
+          styleClasses: ['standard'],
+          name: "add item button",
           label: Icon.makeLabel("plus", {fontSize: 12})
         }),
         rmBtn = this.addMorph({
+          styleClasses: ['standard'],
           name: "remove item button",
-          ...this.buttonStyle,
+          type: 'button',
           label: Icon.makeLabel("minus", {fontSize: 12})
         });
-
+        
     connect(addBtn, 'fire', this, 'addItemToList');
     connect(rmBtn, 'fire', this, 'removeSelectedItemsFromList');
 

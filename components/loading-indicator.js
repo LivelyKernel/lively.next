@@ -18,25 +18,24 @@ export default class LoadingIndicator extends Morph {
       ".LoadingIndicator [name=spinner]": {
         fill: Color.transparent,
         extent: pt(100, 104),
-        topLeft: pt(0, 0),
+        position: pt(0, 0),
         halosEnabled: false
       },
-      ".LoadingIndicator [name=label]": {
+      ".LoadingIndicator .center-text": {
         fontSize: 16,
         fontFamily: "Helvetica Neue, Arial",
         fontColor: Color.white,
         halosEnabled: false
       },
-      ".LoadingIndicator [name=closeButton]": {
-        fontFamily: "FontAwesome",
+      ".LoadingIndicator [name=closeButton] [name=label]": {
         fontColor: Color.white,
-        activeStyle: {
-          extent: pt(20, 20),
-          fill: Color.transparent,
-          borderWidth: 0,
-          fontColor: Color.white
-        },
-        visible: false
+        fontFamily: "FontAwesome"
+      },
+      ".LoadingIndicator [name=closeButton]": {
+        extent: pt(20, 20),
+        fill: Color.transparent,
+        borderWidth: 0,
+        fontColor: Color.white,
       }
     });
   }
@@ -123,7 +122,7 @@ export default class LoadingIndicator extends Morph {
 
   updateLabel() {
     var center = this.center; this.relayout();
-    setTimeout(() => this.center = center, 0);
+    this.center = center;
   }
 
   relayout() {
@@ -132,10 +131,8 @@ export default class LoadingIndicator extends Morph {
         w = Math.max(spinner.width, label.width, 120) + padding.left() + padding.right(),
         h = spinner.height + label.height + padding.top() + padding.bottom();
     this.extent = pt(w,h);
-    spinner.width = 100;
     spinner.topCenter = this.innerBounds().topCenter().addXY(0, padding.top());
     label.topCenter = spinner.bottomCenter.addXY(0, 4);
-    closeButton.width = 20;
     closeButton.right = w;
   }
 

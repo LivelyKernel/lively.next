@@ -45,7 +45,7 @@ async function initIconPicker() {
 
 initIconPicker();
 
-class StyleEditor extends Morph {
+export class StyleEditor extends Morph {
 
   constructor(props) {
     const {title, target} = props;
@@ -68,7 +68,6 @@ class StyleEditor extends Morph {
 
   build() {
     this.submorphs = [this.titleLabel(this.title)];
-    this.styleSheets = this.styler;
     connect(this, 'submorphChanged', this, 'equalizeControlWidths');
   }
 
@@ -89,14 +88,17 @@ class StyleEditor extends Morph {
     return colorField;
   }
 
-  get styler() {
+  static get styleSheet() {
     return new StyleSheet({
       '.StyleEditor .closeStylerButton': {
-        fontColor: Color.gray.darker(),
         nativeCursor: "pointer",
         fill: Color.transparent,
-        fontSize: 22,
+        extent: pt(20,25),
         borderWidth: 0
+      },
+      '.StyleEditor .closeStylerButton [name=label]':{
+        fontColor: Color.gray.darker(),
+        fontSize: 22
       },
       '.StyleEditor.closed': {
         dropShadow: true,
@@ -113,17 +115,18 @@ class StyleEditor extends Morph {
             {color: Color.rgb(229, 231, 233), offset: 1}
           ]
         }),
+        dropShadow: true,
         borderWidth: 1,
         borderRadius: 7,
         borderColor: Color.gray
       },
       '.StyleEditor .controlLabel': {
+        readOnly: true,
         fontSize: 12,
         fontWeight: "bold",
         fontColor: Color.black,
         padding: rect(5, 0, 0, 0),
-        fill: Color.transparent,
-        readOnly: true
+        fill: Color.transparent
       },
       '.StyleEditor .controlWrapper': {
         clipMode: "hidden",
@@ -218,11 +221,14 @@ class StyleEditor extends Morph {
 
     var btn = morph({
       type: "button", styleClasses: ['closeStylerButton'],
-      fontSize: 22,
       label: Icon.makeLabel("times-circle-o")
     });
+
+    // rms 29.4.17 FontAwesome screws up the font measuring currently (that means that our system comes up with a totally incorrect textBounds for a given icon).
+    // we therefore need to massage the button a little bit manually in order for it to
+    // look right...
+    btn.get('label').position = pt(0,0);
     
-    btn.fit();
     titleLabel.submorphs = [btn, instruction];
     titleLabel.animate({
         layout: new HorizontalLayout(), 
@@ -274,7 +280,7 @@ class StyleEditor extends Morph {
       styleClasses: ["controlWrapper"],
       layout: new VerticalLayout({spacing: 5}),
       submorphs: [
-        {type: "text", styleClasses: ["controlLabel"], textString: name},
+        {type: "label", autoFit: true, styleClasses: ["controlLabel"], textString: name},
         controlElement
       ]
     };
@@ -338,13 +344,14 @@ class StyleEditor extends Morph {
                 layout: new HorizontalLayout({autoResize: false}),
                 height: 25,
                 submorphs: [
-                  {type: "text", textString: title, styleClasses: ["controlLabel"]},
+                  {type: "label", name: 'property name', autoFit: true,
+                   textString: title, styleClasses: ["controlLabel"]},
                   toggler
                 ]
               }
             ]
           });
-
+//     (async () => { await flap.whenRendered(); flap.fit() })();
      connect(toggler, "toggle", flap, "toggle");
      flap.toggle(target[property]);
      return flap;
@@ -484,10 +491,10 @@ export class BodyStyleEditor extends StyleEditor {
       controls: {
         "Fill": () => this.getColorField({target, property: "fill"}),
         "Gradient": () => {
-          const g = new GradientEditor({target, property: "fill"});
+          const g = new GradientEditor({name: 'gradient editor', target, property: "fill"});
           g.gradientHandle && this.placeBehindMe(g.gradientHandle);
           connect(g, "openHandle", this, "placeBehindMe");
-          g.update();
+          (async () => {await g.whenRendered(); g.update()})();
           return g;
         }
       },

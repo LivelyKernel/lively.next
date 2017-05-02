@@ -348,6 +348,7 @@ export class ColorPalette extends Morph {
         layout: new VerticalLayout()
       },
       ".ColorPalette [name=paletteContainer]": {
+        layout: new TilingLayout(),
         fill: Color.transparent,
         rotation: num.toRadians(90)
       },
@@ -365,7 +366,7 @@ export class ColorPalette extends Morph {
       ".ColorPalette .HarmonyDisplay": {
         layout: new TilingLayout({spacing: 5}),
         fill: Color.transparent,
-        width: 260
+        extent: pt(260, 0)
       },
       ".ColorPalette .HarmonyVisualizer": {
         extent: pt(110, 110),
@@ -462,7 +463,7 @@ export class ColorPalette extends Morph {
         },
         submorphs: [
            this.solidColorPalette(), 
-           new HarmonyPalette({name: "harmony palette", visible: false})]
+           new HarmonyPalette({name: "harmony palette", visible: false, draggable: false})]
       }
    }
 
@@ -503,6 +504,7 @@ export class ColorPalette extends Morph {
       // custom allows to add new colors via color picker
       return {
          name: "solidColorPalette", visible: false,
+         draggable: false,
          submorphs: [this.getCurrentPalette(),
                      this.paletteConfig()]
       }
@@ -519,7 +521,6 @@ export class ColorPalette extends Morph {
              width =  mod * this.colorFieldWidth,
              paddedColors = [...colors, ...arr.withN((cols * mod) - colors.length, null)];
        return {width, height, name: "paletteContainer",
-               layout: new TilingLayout(),
                submorphs: paddedColors.map(c => {
                   let field = new ColorPaletteField({color: c && Color.rgbHex(c)});
                   connect(field, 'updateColor', this, 'color');

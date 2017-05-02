@@ -99,25 +99,15 @@ export class Leash extends Path {
       fill: {defaultValue: Color.transparent},
       styleSheets: {
         after: ["endpointStyle"],
-        get() {
-          return [
-            new StyleSheet({
-              '.Leash .LeashEndpoint': this.endpointStyle
-            })
-          ];
-        }
-      },
-      endpointStyle: {
-        after: ["submorphs"],
-        defaultValue: {
-          fill: Color.black,
-          origin: pt(3.5, 3.5),
-          extent: pt(10, 10),
-          nativeCursor: "-webkit-grab"
-        },
-        set(style) {
-          this.setProperty("endpointStyle", {...this.endpointStyle, style});
-          this.styleSheets = this.styleSheets;
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            ".Leash .LeashEndpoint": {
+              fill: Color.black,
+              origin: pt(3.5, 3.5),
+              extent: pt(10, 10),
+              nativeCursor: "-webkit-grab"
+            }
+          });
         }
       },
       vertices: {
@@ -259,29 +249,31 @@ export class PropertyInspector extends Morph {
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
-            '.PropertyInspector .buttonStyle': {
-              type: "button",
+            ".PropertyInspector .Button": {
               clipMode: "hidden",
-              activeStyle: {
-                fill: Color.transparent,
-                borderWidth: 0,
-                fontColor: Color.white.darker()
-              },
-              '.triggerStyle': {
-                fill: Color.transparent,
-                fontColor: Color.black
-              }
+              borderWidth: 0,
+              fill: Color.transparent,
             },
-            '.PropertyInspector': {
+            ".PropertyInspector .Button.activeStyle [name=label]": {
+              fontColor: Color.white.darker()
+            },
+            ".Button.triggerStyle [name=label]": {
+              fontColor: Color.black
+            },
+            ".PropertyInspector": {
               extent: pt(55, 25),
               borderRadius: 5,
               borderWidth: 1,
               borderColor: Color.gray,
               clipMode: "hidden"
             },
-            '.PropertyInspector [name=down]': {padding: rect(0, -5, 0, 10)},
-            '.PropertyInspector [name=up]': {padding: rect(0, 0, 0, -5)},
-            '.PropertyInspector [name=value]': {fill: Color.white, padding: Rectangle.inset(4), fontSize: 15}
+            ".PropertyInspector [name=down]": {padding: rect(0, -5, 0, 10)},
+            ".PropertyInspector [name=up]": {padding: rect(0, 0, 0, -5)},
+            ".PropertyInspector [name=value]": {
+              fill: Color.white,
+              padding: Rectangle.inset(4),
+              fontSize: 15
+            }
           });
         }
       },
@@ -310,7 +302,7 @@ export class PropertyInspector extends Morph {
             },
             {
               type: "button",
-              name: "up", styleClasses: ['buttonStyle'],
+              name: "up", styleClasses: ['buttonStyle'], autoFit: true,
               label: Icon.makeLabel("sort-asc", {padding: rect(2, 2, 0, 0), fontSize: 12})
             }
           ];
@@ -594,6 +586,7 @@ export class ModeSelector extends Morph {
           }
         }
       },
+      height: {defaultValue: 30},
       init: {},
       keys: {},
       values: {},
@@ -601,7 +594,7 @@ export class ModeSelector extends Morph {
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
-            ".ModeSelector": {fill: Color.transparent, height: 30, origin: pt(0, 5)},
+            ".ModeSelector": {fill: Color.transparent, origin: pt(0, 5)},
             ".ModeSelector [name=typeMarker]": {fill: Color.gray.darker(), borderRadius: 3},
             ".ModeSelector .label": {
               fontWeight: "bold",
@@ -637,15 +630,6 @@ export class ModeSelector extends Morph {
             true
           );
           connect(this, "extent", this, "relayout");
-          this.whenRendered().then(() => {
-            this.withAllSubmorphsDo(ea => {
-              if (ea.isLabel) {
-                ea._cachedTextBounds = null;
-                ea.fit();
-              }
-            });
-            this.layout.apply();
-          });
         }
       }
     };
@@ -659,7 +643,7 @@ export class ModeSelector extends Morph {
         styleClasses: ["label"],
         type: "label",
         value: name,
-        ...this.labelStyle,
+        autoFit: true,
         ...(tooltip && {tooltip}),
         onMouseDown: evt => {
           this.update(name, value);
@@ -668,20 +652,21 @@ export class ModeSelector extends Morph {
     });
   }
 
-  async relayout() {
-    return (
-      this.currentLabel &&
-      this.get("typeMarker").animate({bounds: this.currentLabel.bounds(), duration: 200})
-    );
+  async relayout(animated = true) {
+    let tm = this.get("typeMarker"),
+        bounds = this.currentLabel.bounds();
+    this.currentLabel && animated ? await tm.animate({bounds, duration: 200}) : tm.setBounds(bounds);
+     
   }
 
   async update(label, value, silent = false) {
-    const newLabel = this.get(label + "Label"), duration = 200;
+    const newLabel = this.get(label + "Label");
     if (newLabel == this.currentLabel) return;
     if (this.currentLabel) this.currentLabel.fontColor = Color.black;
     this.currentLabel = newLabel;
     newLabel.fontColor = Color.white;
-    await this.relayout(duration);
+    await this.whenRendered();
+    await this.relayout(!silent);
     !silent && signal(this, label, value);
     !silent && signal(this, "switchLabel", value);
   }

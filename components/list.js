@@ -1074,6 +1074,21 @@ export class DropDownList extends Button {
 
       listHeight: {defaultValue: 100},
 
+      styleSheets: {
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            ".Button.activeStyle": {
+              fill: new LinearGradient({
+                stops: [
+                  {offset: 0, color: Color.white},
+                  {offset: 1, color: new Color.rgb(236, 240, 241)}
+                ]
+              })
+            }
+          });
+        }
+      },
+
       listMorph: {
         after: ["labelMorph"],
         get() {
@@ -1084,7 +1099,7 @@ export class DropDownList extends Button {
             fontSize: this.fontSize,
             fontFamily: this.fontFamily,
             fontColor: this.fontColor,
-            border: this.border
+            border: this.border,
           });
           this.setProperty("listMorph", list);
           return list;
@@ -1123,14 +1138,8 @@ export class DropDownList extends Button {
 
   }
 
-  constructor(props = {}) {
+  constructor(props) {
     super(props);
-    this.activeStyle = {
-        fill: new LinearGradient({stops: [
-               {offset: 0, color: Color.white},
-               {offset: 1, color: new Color.rgb(236,240,241)}
-            ]})
-    }
     connect(this, "fire", this, "toggleList");
   }
 

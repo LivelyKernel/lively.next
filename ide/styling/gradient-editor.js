@@ -33,6 +33,7 @@ class GradientTypeSelector extends Morph {
         return {
           layout: {
             initialize() {
+              this.extent = pt(180, 40);
               this.layout = new GridLayout({
                grid: [[null, "radialMode", null, "linearMode", null]],
                        autoAssign: false, fitToCell: false})
@@ -77,10 +78,7 @@ export class GradientEditor extends Morph {
 
    constructor(props) {
       if (!props.target) throw Error("No target provided!");
-      super({
-         styleClasses: ['body'],
-         ...props
-      });
+      super(props);
       this.build();
    }
 
@@ -89,20 +87,20 @@ export class GradientEditor extends Morph {
       this.gradientHandle && this.gradientHandle.remove();
    }
 
-  getStyler() {
+  static get styleSheet() {
     return new StyleSheet({
       ".GradientEditor": {layout: new VerticalLayout({spacing: 3}), fill: Color.transparent},
       ".GradientEditor [name=addStopLabel]": {
         fontSize: 18,
         fontColor: Color.orange,
-        center: pt(-1, -17),
+        position: pt(-5, -22),
         extent: pt(10, 10),
         padding: Rectangle.inset(0),
         fixedWidth: true,
         fixedHeight: true
       },
       ".GradientEditor [name=stopControlPreview]": {extent: pt(2, 50), fill: Color.orange},
-      ".GradientEditor .propertyView": {
+      ".propertyView": {
         fill: Color.black.withA(0.7),
         borderRadius: 5,
         padding: Rectangle.inset(5),
@@ -113,11 +111,11 @@ export class GradientEditor extends Morph {
         fill: Color.gray.darker(),
         tooltip: "Drag to change proportional offset of stop"
       },
-      ".GradientEditor .StopControlHead": {
+      ".StopControlHead": {
         fill: Color.black.withA(0.3),
         borderRadius: 20,
         extent: pt(15, 15),
-        center: pt(1, -13)
+        position: pt(-6, -22)
       },
       ".pickerField": {
         imageUrl: WHEEL_URL,
@@ -146,8 +144,7 @@ export class GradientEditor extends Morph {
         nativeCursor: "pointer"
       },
       ".GradientEditor [name=gradientEditor]": {
-        width: 180,
-        height: 50,
+        extent: pt(180, 50),
         borderRadius: 5,
         borderWidth: 1,
         borderColor: Color.gray.darker()
@@ -222,7 +219,6 @@ export class GradientEditor extends Morph {
        connect(this, "targetProperty", this, "update");
        this.update();
        selector.update(this.targetProperty);
-       this.styleSheets = this.getStyler();
        this.targetProperty && this.updateGradientHandles(this.targetProperty.__proto__.constructor);
    }
 

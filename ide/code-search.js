@@ -237,8 +237,8 @@ export class CodeSearcher extends FilterableList {
           textPosition: {column, row: line-1}
         },
         browser = await Browser.browse(
-          browseSpec, browserOrProps,
-          browser? browser.systemInterface : this.systemInterface);
+          browseSpec, browserOrProps || {},
+          browser ? browser.systemInterface : this.systemInterface);
     browser.associatedSearchPanel = this;
     return browser.activate();
   }
