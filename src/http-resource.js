@@ -176,7 +176,11 @@ export default class WebDAVResource extends Resource {
     var res = await makeRequest(this);
     if (!res.ok)
       throw new Error(`Cannot read ${this.url}: ${res.statusText} ${res.status}`);
-    return res.text();
+    if (!this.binary) return res.text();
+    if (this.binary === "blob") return res.blob()
+    if (typeof res.arrayBuffer === "function") return res.arrayBuffer();
+    if (typeof res.buffer === "function") return res.buffer(); // node only
+    throw new Error(`Don't now how to read binary resource ${this}'`);
   }
 
   async write(content) {

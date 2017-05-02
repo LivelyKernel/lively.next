@@ -20,6 +20,7 @@ export default class Resource {
   constructor(url, opts = {}) {
     if (!url) throw new Error("Cannot create resource without url");
     this.url = String(url);
+    this.binary = false;
     this.lastModified = undefined;
     this.created = undefined;
     this.etag = undefined;
@@ -236,6 +237,19 @@ export default class Resource {
     return this;
   }
 
+  async rename(otherResource) {
+    await this.copyTo(otherResource);
+    this.remove();
+    return otherResource;
+  }
+
+  beBinary(bool) { return this.setBinary(true); };
+
+  setBinary(bool) {
+    this.binary = bool;
+    return this;
+  }
+  
   async read()               { nyi(this, "read"); }
   async write()              { nyi(this, "write"); }
   async mkdir()              { nyi(this, "mkdir"); }

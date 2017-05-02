@@ -1,7 +1,7 @@
 import Resource from "./resource.js";
 import { applyExclude } from "./helpers.js";
 
-import { readFile, writeFile, exists, mkdir, rmdir, unlink, readdir, lstat } from "fs";
+import { readFile, writeFile, exists, mkdir, rmdir, unlink, readdir, lstat, rename } from "fs";
 
 function wrapInPromise(func) {
   return (...args) =>
@@ -11,12 +11,14 @@ function wrapInPromise(func) {
 
 const readFileP = wrapInPromise(readFile),
       writeFileP = wrapInPromise(writeFile),
-      existsP = (path) => new Promise((resolve, reject) => exists(path, (exists) => resolve(!!exists))),
+      existsP = (path) => new Promise((resolve, reject) =>
+                            exists(path, (exists) => resolve(!!exists))),
       readdirP = wrapInPromise(readdir),
       mkdirP = wrapInPromise(mkdir),
       rmdirP = wrapInPromise(rmdir),
       unlinkP = wrapInPromise(unlink),
-      lstatP = wrapInPromise(lstat);
+      lstatP = wrapInPromise(lstat),
+      renameP = wrapInPromise(rename);
 
 export default class NodeJSFileResource extends Resource {
 
@@ -80,6 +82,32 @@ export default class NodeJSFileResource extends Resource {
 
   async isEmptyDirectory() {
     return (await this.dirList()).length === 0;
+  }
+
+  async rename(toResource) {
+    if (!(toResource instanceof this.constructor))
+      return super.rename(toResource);
+
+    // optimized for file system move
+    if (this.isFile()) {
+      toResource = toResource.asFile();
+      renameP(this.path(), toResource.path());
+
+    } else {
+      toResource = toResource.asDirectory();
+      await toResource.ensureExistance();
+      let files = [], dirs = [];
+      for (let subR of await this.dirList("infinity")) {
+        if (subR.isDirectory()) dirs.push(subR);
+        else files.push(subR);
+      }
+      for (let subdir of dirs)
+        await toResource.join(subdir.relativePathFrom(this)).ensureExistance();
+      for (let file of files)
+        await file.rename(toResource.join(file.relativePathFrom(this)));
+      await this.remove();
+    }
+    return toResource;
   }
 
   async remove() {
