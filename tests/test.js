@@ -1,6 +1,6 @@
 /*global, describe,it,afterEach,beforeEach*/
 import { expect } from "mocha-es6";
-import { getInstalledPackage, buildPackageMap, installPackage } from "../index.js";
+import { getInstalledPackage, installDependenciesOfPackage, buildPackageMap, installPackage } from "../index.js";
 const { resource, createFiles } = lively.resources;
 
 let baseDir = resource("local://lively.node-packages-test/");
@@ -48,8 +48,13 @@ describe("package installation lookup", function() {
   describe("installation", () => {
 
     it("installs a package via npm", async () => {
-      await installPackage("strip-ansi@^3", baseDir.join("package-install-dir"));
-      let installDir = baseDir.join("package-install-dir/strip-ansi@3.0.1/");
+      let {packageMap, newPackages} = await installPackage("strip-ansi@^3", baseDir.join("package-install-dir"));
+
+      expect(packageMap).containSubset({
+        "ansi-regex@2.1.1": {config: {name: "ansi-regex",version: "2.1.1",}},
+        "strip-ansi@3.0.1": {config: {name: "strip-ansi"}}});
+
+      let installDir = baseDir.join("package-install-dir/strip-ansi@3.0.1/");      
       expect().assert(await installDir.exists(), "strip-ansi does not exist")
       let files = (await installDir.dirList()).map(ea => ea.name());
       expect(files).equals(["index.js", "license", "package.json", "readme.md"]);
@@ -90,6 +95,20 @@ describe("package installation lookup", function() {
         .equals(["mkdirp@https___github.com_substack_node-mkdirp_f2003bb", "minimist@0.0.8"]);
     });
 
-  })
+    it("installs all package deps", async () => {
+      await createFiles(baseDir, {
+        "package-install-dir": {
+          "foo": {"package.json": JSON.stringify({name: "foo", version: "1.2.3", dependencies: {"strip-ansi@2.0.1": "^2"}})}
+        }
+      });
+      let {packageMap, newPackages} = await installDependenciesOfPackage(baseDir.join("package-install-dir/foo"), baseDir.join("package-install-dir"));
+      expect(newPackages.map(ea => ea.config.name)).equals(["strip-ansi", "ansi-regex"]);
+      expect(packageMap).to.have.keys(["strip-ansi@2.0.1", "foo@1.2.3", "ansi-regex@1.1.1"]);
+      expect((await baseDir.join("package-install-dir/").dirList()).map(ea => ea.name()))
+        .equals(["foo", "strip-ansi@2.0.1", "ansi-regex@1.1.1"]);
+    });
+
+    
+  });
 
 });

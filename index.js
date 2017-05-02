@@ -4,6 +4,48 @@ import { readPackageSpec, gitSpecFromVersion } from "./lookup.js";
 
 const { resource } = lively.resources;
 
+export async function installDependenciesOfPackage(
+  packageSpecOrDir,
+  dirToInstallDependenciesInto,
+  lookupDirs = [dirToInstallDependenciesInto],
+  dependencyFields = ["dependencies"],
+  packageMap
+) {
+  // Given a package spec of an installed package (retrieved via
+  // `readPackageSpec`), make sure all dependencies (specified in properties
+  // `dependencyFields` of package.json) are installed
+
+// global.z = {packageSpecOrDir,dirToInstallDependenciesInto,lookupDirs,dependencyFields,packageMap}
+// ({packageSpecOrDir,dirToInstallDependenciesInto,lookupDirs,dependencyFields,packageMap} = z)
+
+  let packageSpec = packageSpecOrDir;
+  if (typeof packageSpecOrDir === "string") {
+    if (packageSpecOrDir.startsWith("/")) packageSpecOrDir = "file://" + packageSpecOrDir;
+    packageSpecOrDir = resource(packageSpecOrDir);
+  }
+  if (packageSpecOrDir.isResource) {
+    packageSpec = await readPackageSpec(packageSpecOrDir);
+  }
+
+  let {config} = packageSpec,
+      deps = Object.assign({}, ...dependencyFields.map(key => config[key] || {})),
+      depNameAndVersions = [], newPackages;
+
+  for (let name in deps) {
+    let newPackagesSoFar = newPackages || [];
+    ({packageMap, newPackages} = await installPackage(
+      `${name}@${deps[name]}`,
+      dirToInstallDependenciesInto,
+      lookupDirs,
+      ["dependencies"],
+      packageMap
+    ));
+    newPackages = [...newPackages, ...newPackagesSoFar];
+  }
+
+  return {packageMap, newPackages};
+}
+
 export async function installPackage(
   pNameAndVersion,
   destinationDir,
@@ -23,28 +65,32 @@ export async function installPackage(
 
   await destinationDir.ensureExistance();
 
-  let queue = [pNameAndVersion.split("@")], packages = [];
+  let queue = [pNameAndVersion.split("@")], newPackages = [];
 
   while (queue.length) {
     let [name, version] = queue.shift(),
-        installed =
-          (await getInstalledPackage(name, version, packageMap)) ||
-          (await packageDownload(version ? name + "@" + version : name, destinationDir));
+        installed = await getInstalledPackage(name, version, packageMap);
+
+    if (!installed) {
+      installed = await packageDownload(version ? name + "@" + version : name, destinationDir);
+      packageMap = {...packageMap, [resource(installed.location).name()]: installed};
+      newPackages.push(installed);
+    }
 
     if (!installed) throw new Error(`cannot install package ${name}@${version}!`);
 
-    packages.push(installed);
 
     let {config} = installed,
         deps = Object.assign({}, ...dependencyFields.map(key => config[key] || {}));
 
     for (let name in deps) queue.push([name, deps[name]]);
   }
-  return packages;
+
+  return {packageMap, newPackages};
 }
 
 export async function buildPackageMap(packageDirs) {
-  // let packgeMap = await buildPackageMap(["/Users/robert/.central-node-packages"])
+  // let packageMap = await buildPackageMap(["/Users/robert/.central-node-packages"])
   return (await getInstalledPackages(packageDirs)).reduce((map, p) => {
     let {config: {name, version}} = p,
         id = `${name}@${version}`
