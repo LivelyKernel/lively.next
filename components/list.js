@@ -25,10 +25,10 @@ class ListItemMorph extends Label {
       autofit:               {defaultValue: false},
       fill:                  {defaultValue: null},
       itemIndex:             {defaultValue: undefined},
-      selectionFontColor:    {defaultValue: Color.white},
-      selectionColor:        {defaultValue: Color.blue},
-      nonSelectionFontColor: {defaultValue: Color.rgbHex("333")},
-      fontColor:             {defaultValue: Color.rgbHex("333")},
+      selectionFontColor:    {isStyleProp: true, defaultValue: Color.white},
+      selectionColor:        {isStyleProp: true, defaultValue: Color.blue},
+      nonSelectionFontColor: {isStyleProp: true, defaultValue: Color.rgbHex("333")},
+      fontColor:             {isStyleProp: true, defaultValue: Color.rgbHex("333")},
     }
   }
 
@@ -246,10 +246,10 @@ export class List extends Morph {
       fill:            {defaultValue: Color.white},
       clipMode:        {defaultValue: "auto"},
       
-      selectionFontColor:    {defaultValue: Color.white},
-      selectionColor:        {defaultValue: Color.blue},
-      nonSelectionFontColor: {defaultValue: Color.rgbHex("333")},
-      fontColor:             {defaultValue: Color.rgbHex("333")},
+      selectionFontColor:    {isStyleProp: true, defaultValue: Color.white},
+      selectionColor:        {isStyleProp: true, defaultValue: Color.blue},
+      nonSelectionFontColor: {isStyleProp: true, defaultValue: Color.rgbHex("333")},
+      fontColor:             {isStyleProp: true, defaultValue: Color.rgbHex("333")},
 
       extent: {
         set(value) {

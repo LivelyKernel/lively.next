@@ -74,9 +74,9 @@ export class Morph {
       halosEnabled:       {isStyleProp: true, defaultValue: !!config.halosEnabled},
       reactsToPointer:    {defaultValue: true},
 
-      position:           {defaultValue: pt(0,0)},
-      origin:             {defaultValue: pt(0,0)},
-      extent:             {defaultValue: pt(10, 10)},
+      position:           {isStyleProp: true, defaultValue: pt(0,0)},
+      origin:             {isStyleProp: true, defaultValue: pt(0,0)},
+      extent:             {isStyleProp: true, defaultValue: pt(10, 10)},
       width: {
         derived: true, after: ['extent'], before: ['submorphs'],
         get()         { return this.extent.x; },
@@ -152,8 +152,8 @@ export class Morph {
         get()   { return this.bounds().rightCenter(); },
         set(v)  { return this.align(this.rightCenter, v); }
       },
-      rotation:           {defaultValue:  0},
-      scale:              {defaultValue:  1},
+      rotation:           {isStyleProp: true, defaultValue:  0},
+      scale:              {isStyleProp: true, defaultValue:  1},
       opacity:            {isStyleProp: true, defaultValue: 1},
       fill:               {isStyleProp: true, defaultValue: Color.white},
       visible:            {isStyleProp: true, defaultValue: true},
@@ -209,6 +209,7 @@ export class Morph {
       },
 
       layout: {
+        isStyleProp: true, 
         after: ["submorphs", "extent", "origin", "position", "isLayoutable"],
         set(value) {
           if (value) value.container = this;
@@ -1932,6 +1933,7 @@ export class Image extends Morph {
     return {
 
       imageUrl: {
+        isStyleProp: true,
         after: ['extent'],
         defaultValue: System.decanonicalize("lively.morphic/lively-web-logo-small.svg"),
 
