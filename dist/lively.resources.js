@@ -1421,7 +1421,9 @@ var Resource$$1 = function () {
   }, {
     key: "writeJson",
     value: function writeJson(obj) {
-      return this.write(JSON.stringify(obj));
+      var pretty = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+      return this.write(pretty ? JSON.stringify(obj, null, 2) : JSON.stringify(obj));
     }
   }, {
     key: "readJson",
@@ -1447,7 +1449,7 @@ var Resource$$1 = function () {
         }, _callee11, this);
       }));
 
-      function readJson(_x9) {
+      function readJson(_x10) {
         return _ref11.apply(this, arguments);
       }
 
