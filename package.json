@@ -2,5 +2,5 @@
   "name": "flat-node-packages",
   "version": "0.1.0",
   "main": "index.js",
-  "bin": "./cli.js"
+  "bin": {"fnp": "./cli.js"}
 }
