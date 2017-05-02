@@ -513,8 +513,14 @@ export class Morph {
   get env() { return this._env; }
 
   get defaultProperties() {
-    if (!this.constructor._morphicDefaultPropertyValues) {
-      var defaults = this.constructor._morphicDefaultPropertyValues = {},
+    let klass = this.constructor,
+        superklass = klass[Symbol.for("lively-instance-superclass")];
+    if (
+      !klass._morphicDefaultPropertyValues ||
+      klass._morphicDefaultPropertyValues ==
+        (superklass && superklass._morphicDefaultPropertyValues)
+    ) {
+      var defaults = (this.constructor._morphicDefaultPropertyValues = {}),
           propDescriptors = this.propertiesAndPropertySettings().properties;
       for (var key in propDescriptors) {
         var descr = propDescriptors[key];
@@ -529,8 +535,20 @@ export class Morph {
   }
 
   defaultProperty(key) { return this.defaultProperties[key]; }
-  getProperty(key) { return this._morphicState[key]; }
-  setProperty(key, value, meta) { return this.addValueChange(key, value, meta); }
+  getProperty(key) { 
+    this._defaultStyleProperties = this._defaultStyleProperties || this.styleProperties;
+    let v = this._morphicState[key]; 
+    if (this._defaultStyleProperties.includes(key) && v == this.defaultProperty(key)) {
+      if (!this._styleSheetProps) {
+        this._styleSheetProps = obj.merge(this._styleSheetsInScope.map(ss => ss.getStyleProps(this)));
+      }
+      return this._styleSheetProps[key] || v;
+    }
+    return v; 
+  }
+  setProperty(key, value, meta) { 
+    return this.addValueChange(key, value, meta); 
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // debugging
