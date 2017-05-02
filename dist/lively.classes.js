@@ -564,7 +564,16 @@ function installMethods(klass, instanceMethods, classMethods) {
       writable: true,
       value: function value() {}
     });
+    klass.prototype[initializeSymbol].isDefaultInitializer = true;
     klass.prototype[initializeSymbol].displayName = "lively-initialize";
+  } else {
+    if (Object.getOwnPropertySymbols(klass.prototype).includes(initializeSymbol)) {
+      if (klass.prototype[initializeSymbol].isDefaultInitializer) {
+        if (klass[superclassSymbol].prototype[initializeSymbol]) {
+          delete klass.prototype[initializeSymbol];
+        }
+      }
+    }
   }
 
   // 5. undefine properties that were removed form class definition
