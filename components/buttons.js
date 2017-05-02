@@ -13,17 +13,38 @@ import { obj, arr } from "lively.lang/index.js";
 
 export class Button extends Morph {
 
+  static get styleSheet() {
+    return new StyleSheet({
+      ".Button": {borderWidth: 1, borderRadius: 15, extent: pt(100,24)},
+      ".Button.activeStyle": {
+        borderColor: Color.gray,
+        fill: Color.rgb(240, 240, 240),
+        nativeCursor: "pointer"
+      },
+      ".Button.triggerStyle": {
+        borderColor: Color.gray,
+        fill: Color.rgb(161, 161, 161),
+        nativeCursor: "pointer"
+      },
+      ".Button.inactiveStyle": {
+        borderColor: Color.gray.withA(0.5),
+        fill: Color.rgba(240, 240, 240, 0.5),
+        nativeCursor: "not-allowed"
+      },
+      ".Button.activeStyle [name=label]": {fontSize: 12, fontColor: Color.almostBlack},
+      ".Button.triggerStyle [name=label]": {fontSize: 12, fontColor: Color.almostBlack},
+      ".Button.inactiveStyle [name=label]": {fontSize: 12, fontColor: Color.almostBlack.withA(0.5)}
+    });
+  }
+
   static get properties() {
     return {
-      padding:      {defaultValue: Rectangle.inset(4,2)},
-      borderWidth:  {defaultValue: 1},
-      extent:       {defaultValue: pt(100,24)},
-      borderRadius: {defaultValue: 15},
-      borderColor:  {defaultValue: Color.rgb(204,204,204)},
+      fill: {defaultValue: Color.white},
+      padding:      {isStyleProp: true, defaultValue: Rectangle.inset(4,2)},
       draggable:    {defaultValue: false},
 
       activeMode: {
-        after: ["labelMorph", "activeStyle", "inactiveStyle"],
+        after: ["labelMorph"],
         get() {
            return this._buttonMode || 'active'
         },
@@ -97,150 +118,16 @@ export class Button extends Morph {
         }
       },
 
-      fontFamily: {
-        isStyleProp: true,
-        after: ["label"],
-        derived: true,
-        get() { return this.labelMorph.fontFamily; },
-        set(fontFamily) {
-          this.labelMorph.fontFamily = fontFamily;
-        }
-      },
-
-      fontSize: {
-        isStyleProp: true,
-        after: ["label"],
-        derived: true,
-        get() { return this.labelMorph.fontSize; },
-        set(fontSize) {
-          this.labelMorph.fontSize = fontSize;
-        }
-      },
-
-      fontStyle: {
-        isStyleProp: true,
-        after: ["label"],
-        derived: true,
-        get() { return this.labelMorph.fontStyle; },
-        set(fontStyle) {
-          this.labelMorph.fontStyle = fontStyle;
-        }
-      },
-
-      fontColor: {
-        isStyleProp: true,
-        after: ["label"],
-        derived: true,
-        get() { return this.labelMorph.fontColor; },
-        set(fontColor) {
-          this.labelMorph.fontColor = fontColor;
-        }
-      },
-
       labelWithTextAttributes: {
         after: ["labelMorph"], derived: true,
         get() { return this.labelMorph.textAndAttributes; },
         set(val) { this.labelMorph.textAndAttributes = val; }
-      },
-      
-      styleSheets: {
-        after: ['activeStyle', 'triggerStyle', 'inactiveStyle'],
-        initialize() {
-          this.styleSheets = this.styleSheets;
-        },
-        get() {
-          return [new StyleSheet({
-             '.Button.activeStyle': this.activeStyle,
-             '.Button.triggerStyle': this.triggerStyle,
-             '.Button.inactiveStyle': this.inactiveStyle
-          })];
-        }
-      },
-
-      // button styles
-      defaultActiveStyle: {
-        defaultValue: {
-          borderColor: Color.gray,
-          fill: Color.rgb(240, 240, 240),
-          fontColor: Color.almostBlack,
-          nativeCursor: "pointer"
-        }
-      },
-
-      activeStyle: {
-        after: ["labelMorph", "fontSize", "fontColor", "fontFamily"],
-        initialize() { this.activeStyle = {...this.defaultActiveStyle}; },
-        set(value) {
-          this.setProperty("activeStyle", {
-            ...this.defaultActiveStyle,
-            ...obj.select(this, ["fontSize", "fontFamily", "fontColor"]),
-            ...value
-          });
-          this.updateStyleSheets();
-        }
-      },
-
-      defaultInactiveStyle: {
-        defaultValue: {
-          borderColor: Color.gray.withA(0.5),
-          fill: Color.rgba(240, 240, 240, 0.5),
-          fontColor: Color.almostBlack.withA(0.5),
-          nativeCursor: "not-allowed"
-        }
-      },
-
-      inactiveStyle: {
-        after: ["labelMorph", "fontSize", "fontColor", "fontFamily"],
-        initialize() { this.inactiveStyle = {...this.defaultInactiveStyle}; },
-        set(value) {
-          this.setProperty("inactiveStyle", {
-            ...this.defaultInactiveStyle,
-            ...obj.select(this, ["fontSize", "fontFamily", "fontColor"]),
-            ...value,
-          });
-          this.updateStyleSheets();
-        }
-      },
-
-      defaultTriggerStyle: {
-        defaultValue: {fill: Color.rgb(161,161,161)}
-      },
-      triggerStyle: {
-        after: ["labelMorph", "fontSize", "fontColor", "fontFamily"],
-        initialize() { this.triggerStyle = obj.clone(this.defaultTriggerStyle); },
-        set(value) {
-          this.setProperty("triggerStyle", {
-            ...this.defaultTriggerStyle,
-            ...obj.select(this, ["fontSize", "fontFamily", "fontColor"]),
-            ...value,
-          });
-          this.updateStyleSheets();
-        }
-      },
-  
-      // rk 2017-05-10: FIXME, somehow trying to use a simple set property to
-      // have a lasting effect on the button .... :(
-      isLayoutable: {
-        isStyleProp: true, defaultValue: true,
-        set(bool) {
-          if (this.triggerStyle) this.triggerStyle.isLayoutable = bool;
-          if (this.activeStyle) this.activeStyle.isLayoutable = bool;
-          if (this.inactiveStyle) this.inactiveStyle.isLayoutable = bool;
-          this.setProperty("isLayoutable", bool);
-        }
       }
-    }
-  }
-
-  updateStyleSheets() {
-    if (this.triggerStyle && this.activeStyle && this.inactiveStyle) {
-       this.styleSheets = this.styleSheets;
     }
   }
 
   constructor(props) {
     super(props);
-    this.updateButtonStyle(this.activeStyle)
     this.activeMode = 'active';
     this.relayout();
     connect(this, 'extent', this, 'relayout');
@@ -263,16 +150,10 @@ export class Button extends Morph {
         minWidth = label.width + padL + padR;
     if (minHeight > this.height) this.height = minHeight;
     if (minWidth > this.width) this.width = minWidth;
-    // label.center = pt(padL + label.width/2, padT + label.height/2);
     label.center = this.innerBounds().insetByRect(padding).center();
     return this;
   }
-
-  updateButtonStyle(style) {
-    Object.assign(this, style);
-    this.labelMorph.nativeCursor = this.nativeCursor;
-  }
-
+  
   fit() {
     var padding = this.padding, label = this.labelMorph;
     label.fit();
