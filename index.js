@@ -1,73 +1,98 @@
 import semver from "./semver.min.js"
-import { resource } from "lively.resources";
 import { packageDownload } from "./download.js";
 import { readPackageSpec, gitSpecFromVersion } from "./lookup.js";
 
-export async function installPackage(pNameAndVersion, destinationDir) {
-  // tries to retrieve a package specified by name or name@versionRange (like
-  // foo@^1.2) from packageDirs.
+const { resource } = lively.resources;
 
-  if (typeof destinationDir === "string" && destinationDir.startsWith("/"))
-    destinationDir = "file://" + destinationDir;
+export async function installPackage(
+  pNameAndVersion,
+  destinationDir,
+  lookupDirs = [destinationDir],
+  dependencyFields = ["dependencies"],
+  packageMap
+) {
+  // will lookup or install a package matching pNameAndVersion.  Will
+  // recursivly install dependencies
 
-  destinationDir = resource(destinationDir);
+  if (!packageMap)
+    packageMap = await buildPackageMap(lookupDirs);
+
+  if (typeof destinationDir === "string")  
+    destinationDir = resource(destinationDir.startsWith("/") ?
+      "file://" + destinationDir : destinationDir);
+
   await destinationDir.ensureExistance();
 
-  let queue = [pNameAndVersion.split("@")],
-      packages = [];
+  let queue = [pNameAndVersion.split("@")], packages = [];
 
   while (queue.length) {
     let [name, version] = queue.shift(),
-        installed = await getInstalledPackage(name, version, destinationDir)
-                 || await packageDownload(version ? name + "@" + version : name, destinationDir);
-    if (!installed)
-      throw new Error(`cannot install package ${name}@${version}!`)
+        installed =
+          (await getInstalledPackage(name, version, packageMap)) ||
+          (await packageDownload(version ? name + "@" + version : name, destinationDir));
+
+    if (!installed) throw new Error(`cannot install package ${name}@${version}!`);
+
     packages.push(installed);
+
     let {config} = installed,
-        deps = config.dependencies || {};
-    for (let name in deps)
-      if (!await getInstalledPackage(name, config.dependencies[name], destinationDir))
-        queue.push([name, config.dependencies[name]]);
-    // console.log(queue)
+        deps = Object.assign({}, ...dependencyFields.map(key => config[key] || {}));
+
+    for (let name in deps) queue.push([name, deps[name]]);
   }
   return packages;
 }
 
-export async function getInstalledPackages(packageInstallDir) {
-  if (typeof packageInstallDir === "string" && packageInstallDir.startsWith("/"))
-    packageInstallDir = "file://" + packageInstallDir;
-  return Promise.all((await resource(packageInstallDir).dirList(1))
-                        .map(ea => readPackageSpec(ea)));
+export async function buildPackageMap(packageDirs) {
+  // let packgeMap = await buildPackageMap(["/Users/robert/.central-node-packages"])
+  return (await getInstalledPackages(packageDirs)).reduce((map, p) => {
+    let {config: {name, version}} = p,
+        id = `${name}@${version}`
+    map[id] = p;
+    return map;
+  }, {});
 }
 
-export async function getInstalledPackage(pName, versionRange, packageInstallDir, installedPackages) {
-  if (typeof packageInstallDir === "string" && packageInstallDir.startsWith("/"))
-      packageInstallDir = "file://" + packageInstallDir;
-  packageInstallDir = resource(packageInstallDir);
+export async function getInstalledPackages(packageInstallDirs) {
+  let packages = [];
+  for (let dir of packageInstallDirs) {
+    dir = resource(typeof dir === "string" && dir.startsWith("/") ?
+      dir = "file://" + dir : dir)
+    for (let file of await dir.dirList(1))
+      packages.push(await readPackageSpec(file));
+  }
+  return packages;
+}
 
-  if (!installedPackages) installedPackages = await packageInstallDir.dirList(1);
-  let gitSpec = gitSpecFromVersion(versionRange || "");
+export async function getInstalledPackage(pName, versionRange, packageMap) {
+  // tries to retrieve a package specified by name or name@versionRange (like
+  // foo@^1.2) from packageDirs.
 
-  let existing;
-  for (let p of installedPackages) {
-    let [name, version] = p.name().split("@");
+  // let pMap = await buildPackageMap(["/Users/robert/.central-node-packages"])
+  // await getInstalledPackage("leveldown", "^1", pMap)
+
+  let gitSpec = gitSpecFromVersion(versionRange || ""), found;
+
+  for (let key in packageMap) {
+    let pSpec = packageMap[key],
+        // {config: {name, version}} = 
+        [name, version] = key.split("@");
+
     if (name !== pName) continue;
+
     if (!versionRange || (gitSpec && gitSpec.inFileName === version)) {
-      existing = p;
+      found = pSpec;
       break;
     }
 
-    if (!semver.parse(version || "")) {
-      try {
-        version = (await p.join("package.json").readJson()).version;
-      } catch (err) {}
-    }
+    if (!semver.parse(version || ""))
+      version = pSpec.config.version;
     if (semver.satisfies(version, versionRange)) {
-      existing = p; break;
+      found = pSpec; break;
     }
   }
 
-  return existing ? readPackageSpec(existing) : null;
+  return found;
 }
 
 
@@ -86,13 +111,16 @@ node -r "lively.resources/dist/lively.resources.js" -e "lively.resources.resourc
 // process.env.CENTRAL_NODE_PACKAGE_DIR = "/Users/robert/.central-node-packages"
 // let packageDir = process.env.CENTRAL_NODE_PACKAGE_DIR
 // let packages = getInstalledPackages(packageDir)
-// let p = await getInstalledPackage("pouchdb", null, packageDir)
-// let p = await getInstalledPackage("lively.resources", undefined, packageDir);
-// let p = await getInstalledPackage("lively.user", undefined, packageDir);
+// let pMap = await buildPackageMap([packageDir])
+// let p = await getInstalledPackage("pouchdb", null, pMap)
+// let p = await getInstalledPackage("lively.resources", undefined, pMap);
+// let p = await getInstalledPackage("lively.user", undefined, pMap);
 
-// await depGraph(p, packageDir)
-// let stages = await buildStages(p, packageDir)
-// let build = new BuildProcess(stages, packageDir);
+// import { depGraph, buildStages } from "./dependencies.js";
+// import {BuildProcess} from "./build.js";
+// await depGraph(p, pMap)
+// let stages = await buildStages(p, pMap)
+// let build = new BuildProcess(stages, pMap);
 // await build.run()
 
 

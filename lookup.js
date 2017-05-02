@@ -1,4 +1,4 @@
-import { resource } from "lively.resources";
+const { resource } = lively.resources;
 
 export const lvInfoFileName = ".lv-npm-helper-info.json";
 

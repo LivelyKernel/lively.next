@@ -1,8 +1,7 @@
 /*global, describe,it,afterEach,beforeEach*/
 import { expect } from "mocha-es6";
-import { getInstalledPackage, installPackage } from "../index.js";
-import { resource } from "lively.resources";
-import { createFiles } from "lively.resources";
+import { getInstalledPackage, buildPackageMap, installPackage } from "../index.js";
+const { resource, createFiles } = lively.resources;
 
 let baseDir = resource("local://lively.node-packages-test/");
 
@@ -20,7 +19,8 @@ describe("package installation lookup", function() {
           "foo@1.2.3": {"package.json": JSON.stringify({name: "foo", version: "1.2.3"})}
         }
       });
-      let pInfo = await getInstalledPackage("foo", "^1", baseDir.join("package-install-dir"));
+      let pMap = await buildPackageMap([baseDir.join("package-install-dir")]),
+          pInfo = await getInstalledPackage("foo", "^1", pMap);
       expect(pInfo).containSubset({
         config: {name: "foo", version: "1.2.3"},
         location: baseDir.join("package-install-dir/foo@1.2.3/").url,
@@ -36,7 +36,11 @@ describe("package installation lookup", function() {
           "b": {"bar@0.1.2": {"package.json": JSON.stringify({name: "bar", version: "0.1.2"})}}
         }
       });
-      let pInfo = await getInstalledPackage("foo", "^1", [baseDir.join("package-install-dir/b"), baseDir.join("package-install-dir/a")]);
+      let pMap = await buildPackageMap([baseDir.join("package-install-dir/b"), baseDir.join("package-install-dir/a")]),
+          pInfo1 = await getInstalledPackage("foo", "^1", pMap),
+          pInfo2 = await getInstalledPackage("bar", null, pMap);
+      expect(pInfo1).deep.property("config.name", "foo");
+      expect(pInfo2).deep.property("config.name", "bar");
     });
 
   });

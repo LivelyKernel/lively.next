@@ -1,7 +1,8 @@
 import { tmpdir } from "os";
-import { resource } from "lively.resources";
 import * as util from "./util.js";
 import { readPackageSpec, pathForNameAndVersion, lvInfoFileName } from "./lookup.js";
+
+const { resource } = lively.resources;
 
 export async function packageDownload(packageNameAndRange, destinationDir) {
   // packageNameAndRange like "lively.modules@^0.7.45"

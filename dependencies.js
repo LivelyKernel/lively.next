@@ -1,9 +1,9 @@
-import { getInstalledPackage } from "./package-download.js";
-import { graph } from "lively.lang";
+import { getInstalledPackage } from "./index.js";
+const { graph } = lively.lang;
 
-export async function buildStages(packageSpec, packageInstallDir) {
+export async function buildStages(packageSpec, packageMap) {
   let {config: {name, version}} = packageSpec,
-      {deps, packages: packageDeps, resolvedVersions} = await depGraph(packageSpec, packageInstallDir);
+      {deps, packages: packageDeps, resolvedVersions} = await depGraph(packageSpec, packageMap);
 
   for (let dep in deps)
     for (let i = 0; i < deps[dep].length; i++)
@@ -12,7 +12,7 @@ export async function buildStages(packageSpec, packageInstallDir) {
   return lively.lang.graph.sortByReference(deps, `${name}@${version}`);
 }
 
-export async function depGraph(packageSpec, packageInstallDir) {
+export async function depGraph(packageSpec, packageMap) {
   // console.log(lively.lang.string.indent(pNameAndVersion, " ", depth));
   // let packages = getInstalledPackages(centralPackageDir);
 
@@ -25,7 +25,7 @@ export async function depGraph(packageSpec, packageInstallDir) {
     let nameAndVersion = queue.shift();
     if (nameAndVersion in resolvedVersions) continue;
     let [name, version] = nameAndVersion.split("@"),
-        {config} = await getInstalledPackage(name, version, packageInstallDir),
+        {config} = await getInstalledPackage(name, version, packageMap),
         resolvedNameAndVersion = `${config.name}@${config.version}`;
 
     resolvedVersions[nameAndVersion] = resolvedNameAndVersion;

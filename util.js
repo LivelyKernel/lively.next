@@ -3,8 +3,8 @@
 import { exec } from "child_process";
 import { join as j } from "path";
 import { tmpdir } from "os";
-import { resource } from "lively.resources";
 
+const { resource } = lively.resources;
 
 
 export async function npmSearchForVersions(packageNameAndRange) {

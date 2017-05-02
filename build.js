@@ -3,11 +3,10 @@
 import { join as j } from "path";
 import fs from "fs";
 import { tmpdir } from "os";
-import semver from "./semver.min.js"
-import { getInstalledPackages, installPackage, getInstalledPackage } from "./package-download.js";
-import { depGraph, buildStages } from "./dependencies.js";
-import { x, npmFallbackEnv } from "./util.js";
 import { execSync } from "child_process";
+import { getInstalledPackage } from "./index.js";
+import { buildStages } from "./dependencies.js";
+import { x, npmFallbackEnv } from "./util.js";
 
 const helperBinDir = System.decanonicalize("npm-helper/bin").replace(/file:\/\//, ""),
       nodeCentralPackageBin = j(helperBinDir, "node");
@@ -70,19 +69,19 @@ function linkBins(packageSpecs, linkState = {}) {
   return linkLocation;
 }
 
-class BuildProcess {
+export class BuildProcess {
 
-  constructor(buildStages, packageDir) {
+  constructor(buildStages, packageMap) {
     this.buildStages = buildStages; // 2d list, package specs in sorted order
-    this.packageDir = packageDir;
+    this.packageMap = packageMap;
     this.builtPackages = [];
     this.binLinkState = {};
     this.binLinkLocation = "";
   }
 
   async run() {
-    // let {buildStages, packageDir} = build
-    let {buildStages, packageDir} = this,
+    // let {buildStages, packageMap} = build
+    let {buildStages, packageMap} = this,
         i = 1, n = buildStages.length;
 
     // console.log(`Running build stage ${i++}/${n}`)
@@ -95,8 +94,8 @@ class BuildProcess {
         continue;
       }
       let next = stage[0],
-          packageSpec = await getInstalledPackage(...[...next.split("@"), packageDir]);
-      if (!packageSpec) throw new Error(`package ${next} cannot be found (in ${packageDir})`);
+          packageSpec = await getInstalledPackage(...[...next.split("@"), packageMap]);
+      if (!packageSpec) throw new Error(`package ${next} cannot be found (in ${packageMap})`);
       await this.build(packageSpec);
       stage.shift();
     }
