@@ -107,7 +107,10 @@ class Layout {
   }
 
   apply(animated) {
+    if (this.active) return;
+    this.active = true;
     this.lastBounds = this.container && this.container.bounds();
+    this.active = false;
   }
 }
 
