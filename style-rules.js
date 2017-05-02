@@ -28,25 +28,22 @@ export class StyleSheet {
     this._context = morph;
     this.styledMorphs = [];
     this.sizzle = new Sizzle(morph);
-    this.refreshMorph(morph);
+    this.addMorph(morph);
   }
 
   get context() { return this._context }
 
   refreshMorph(m) {
     m._styleSheetProps = null;
-    m._styleSheets = arr.flatten(
-      arr.compact(
-        [m, ...m.ownerChain()].reverse().map(
-          m =>
-            m.styleSheets &&
-            m.styleSheets.map(ss => {
-              if (!ss.context) ss.context = m;
-              return ss;
-            })
-        )
-      )
-    );
+    m._styleSheetsInScope = [];
+    for (let p of [m, ...m.ownerChain()].reverse()) {
+      if (!p.styleSheets) continue;
+      for (let ss of p.styleSheets) {
+        if (!ss.context) ss.context = p;
+        m._styleSheetsInScope.push(ss);
+      }
+    }
+    m.updateTransform(m);
   }
 
   reset() { this.cachedProps = {} }
@@ -68,17 +65,16 @@ export class StyleSheet {
     const {selector, args, prop, prevValue, value} = change;
     if (selector == "addMorphAt") {
       this.addMorph(args[0]);
-      args[0].withAllSubmorphsDo(m => this.refreshMorph(m));
-    } else if (selector == 'remove') {
-      morph.withAllSubmorphsDo(m => this.removeMorph(m))
+    } else if (selector == 'removeMorph') {
+      args[0].withAllSubmorphsDo(m => this.removeMorph(m))
     } else if (prop == "name" || prop == "styleClasses") {
+      if (obj.equals(prevValue,value)) return;
       morph.ownerChain().forEach(m =>  {
          m._styleSheetProps = null;
          delete this.cachedProps[m.id]
       })
-      morph.withAllSubmorphsDo(m => {
-        this.removeMorph(m); 
-      });
+      // quickly discard all morphs that are descendants of the changed morph
+      morph.withAllSubmorphsDo(m => this.removeMorph(m));
       this.addMorph(morph);
     }
   }
@@ -96,6 +92,7 @@ export class StyleSheet {
   getStyleProps(morph) {
     var props;
     if (props = this.cachedProps[morph.id]) {
+      props.layout && props.layout.apply();
       return props;
     }
     props = {};
@@ -116,6 +113,10 @@ export class StyleSheet {
     }
     this.cachedProps[morph.id] = props;
     props.layout && props.layout.apply();
+    if (morph._cachedTextBounds) {
+      morph._cachedTextBounds = null;
+      if (morph.autoFit) morph._needsFit = true;
+    }
     return props;
   }
 

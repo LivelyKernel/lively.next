@@ -380,18 +380,15 @@ export class Morph {
 
       styleSheets: {
         isStyleProp: true,
-        after: ['submorphs'],
+        before: ['submorphs'],
         set(sheets) {
           if (!obj.isArray(sheets)) {
             sheets = [sheets];
           }
           this.setProperty(
-            "styleSheets",
-            arr.compact(sheets).map(rule => {
-              rule.applyToAll(this);
-              return rule;
-            })
+            "styleSheets", sheets
           );
+          sheets.forEach(s => s.context = this);
         }
       },
 
@@ -439,6 +436,7 @@ export class Morph {
     this._cachedPaths = {};
     this._pathDependants = [];
     this._tickingScripts = [];
+    this._styleSheetsInScope = [];
     this.initializeProperties
     this.initializeProperties(props);
     if (props.bounds) this.setBounds(props.bounds);
@@ -471,6 +469,7 @@ export class Morph {
     this._cachedPaths = {};
     this._pathDependants = [];
     this._tickingScripts = [];
+    this._styleSheetsInScope = [];
     this.initializeProperties();
   }
 
@@ -748,7 +747,6 @@ export class Morph {
   }
 
   applyStyleSheets() {
-    this.styleSheets && this.styleSheets.forEach(ss => ss.applyToAll(this));
   }
 
   adjustOrigin(newOrigin) {

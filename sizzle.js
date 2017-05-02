@@ -20,6 +20,7 @@ export class SizzleExpression {
     this.morphIndex = {};
     this.exec(this.context);
   }
+  
 
   compileRule(rule) {
     this.compiledRule = rule.split(' ').map(token => this.createMatcher(token));
@@ -44,7 +45,7 @@ export class SizzleExpression {
           arr.equals(this.morphIndex[context.id], this.compiledRule) &&
           arr.last(this.compiledRule).matches(context)
         ) {
-          pushIfNotIncluded(this.matchedMorphs, context);
+          pushIfNotIncluded(this.matchedMorphs, context.id);
         }
         break;
       }
@@ -64,19 +65,19 @@ export class SizzleExpression {
     if (!indexedParent) {
        return false // the morph appears to be in a different context
     }
-    this.exec(morph, this.morphIndex[indexedParent.id]);
+    this.exec(indexedParent, this.morphIndex[indexedParent.id]);
   }
 
   removeFromIndex(morph) {
     delete this.morphIndex[morph.id];
-    arr.remove(this.matchedMorphs, morph);
+    arr.remove(this.matchedMorphs, morph.id);
   }
 
   matches(morph) {
     if (!this.hasIndexed(morph)) {
       this.addToIndex(morph)
     }
-    return this.matchedMorphs.includes(morph);
+    return this.matchedMorphs.includes(morph.id);
   }
 
 }
@@ -109,7 +110,9 @@ class Matcher {
 class NameMatcher extends Matcher {
 
   static appliesTo(token) {
-    let name = new RegExp("^\\[name=['\"]?(" + this.characterEncoding + ")['\"]?\\]").exec(token);
+    var name;
+    if (!this.re) this.re = new RegExp("^\\[name=['\"]?(" + this.characterEncoding + ")['\"]?\\]");
+    name = this.re.exec(token);
     return name && name[1];
   }
 
@@ -122,11 +125,11 @@ class NameMatcher extends Matcher {
 class ClassMatcher extends Matcher {
 
   static appliesTo(token) {
-    var re = new RegExp("^\\.(" + this.characterEncoding + ")"), 
-        match = true,
+    var match = true,
         classes = [];
+    if (!this.re) this.re = new RegExp("^\\.(" + this.characterEncoding + ")"); 
     while(match) {
-      match = re.exec(token);
+      match = this.re.exec(token);
       if(match) {
         classes.push(match[1]);
         token = token.replace(match[0], '');
@@ -144,7 +147,8 @@ class ClassMatcher extends Matcher {
 class IdMatcher extends Matcher {
 
   static appliesTo(token) {
-    let id = new RegExp("^#(" + this.characterEncoding + ")").exec(token);
+    if (!this.re) this.re = new RegExp("^#(" + this.characterEncoding + ")");
+    let id = this.re.exec(token);
     return id && id[1];
   }
 
@@ -188,7 +192,7 @@ export class Sizzle {
 
   select(rule) {
     this.fetchExpressionFor(rule).ensureContext(this.context);
-    return this.fetchExpressionFor(rule).matchedMorphs;
+    return this.fetchExpressionFor(rule).matchedMorphs.map(id => this.context.getMorphWithId(id));
   }
   
 }
