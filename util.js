@@ -14,6 +14,7 @@ export async function npmSearchForVersions(packageNameAndRange) {
         {name, version} = await resource(`http://registry.npmjs.org/${pname}/${range}`).readJson()
     return {name, version};
   } catch (err) {
+    console.error(err);
     throw new Error(`Cannot find npm package for ${packageNameAndRange}`);
   }
 }

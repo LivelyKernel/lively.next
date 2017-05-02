@@ -1,9 +1,32 @@
 /*global, describe,it,afterEach,beforeEach*/
 import { expect } from "mocha-es6";
-import { getInstalledPackage, installDependenciesOfPackage, buildPackageMap, installPackage } from "../index.js";
+import {
+  getInstalledPackage,
+  addDependencyToPackage,
+  installDependenciesOfPackage,
+  buildPackageMap,
+  installPackage
+} from "../index.js";
+import { tmpdir } from "os";
+import { execSync, exec } from "child_process";
 const { resource, createFiles } = lively.resources;
 
-let baseDir = resource("local://lively.node-packages-test/");
+
+let baseDir = resource("local://lively.node-packages-test/"),
+    baseDirFs = resource(`file://${tmpdir()}/lively.node-packages-test/`);
+
+
+// await createFiles(resource("file:///Users/robert/temp"), {
+//   "package-install-dir": {
+//     foo: {
+//       "package.json": JSON.stringify({
+//         name: "foo",
+//         version: "1.2.3",
+//         dependencies: {"strip-ansi": "^2"}
+//       })
+//     }
+//   }
+// });
 
 describe("package installation lookup", function() {
 
@@ -108,7 +131,56 @@ describe("package installation lookup", function() {
         .equals(["foo", "strip-ansi@2.0.1", "ansi-regex@1.1.1"]);
     });
 
+    it("add new dep", async () => {
+      await createFiles(baseDir, {
+        "package-install-dir": {
+          "foo": {"package.json": JSON.stringify({name: "foo", version: "1.2.3"})}
+        }
+      });
+      let {packageMap, newPackages} = await addDependencyToPackage(
+        baseDir.join("package-install-dir/foo"),
+        "strip-ansi@^2",
+        baseDir.join("package-install-dir")
+      );
+        
+      expect(await baseDir.join("package-install-dir/foo/package.json").readJson())
+        .containSubset({dependencies: {"strip-ansi": "^2"}});
+      expect(packageMap).to.have.keys(["strip-ansi@2.0.1", "foo@1.2.3", "ansi-regex@1.1.1"]);
+    });
+
     
   });
 
+  describe("resolving modules", () => {
+
+    beforeEach(async () => {
+      await baseDirFs.ensureExistance();
+      await createFiles(baseDirFs, {
+        "packages": {
+          foo: {
+            "package.json": JSON.stringify({name: "foo", version: "1.2.3"}),
+            "index.js": "module.exports.x = 23"
+          },
+          bar: {
+            "package.json": JSON.stringify({name: "bar", version: "0.1.0", dependencies: {foo: "*"}}),
+            "index.js": "console.log(require('foo').x + 1);"
+          }
+        }
+      });
+    });
+
+    afterEach(() => baseDirFs.remove());
+
+    it("in node at startup", async () => {
+      baseDirFs.join("packages/bar/").path();
+      let resolverMod = resource(System.decanonicalize("flat-node-packages/module-resolver.js")).path(),
+          out = execSync(`/Users/robert/.nvm/versions/node/v7.7.3/bin/node -r "${resolverMod}" -r './index.js'`, {
+            env: {FNP_PACKAGE_DIRS: `${baseDirFs.join("packages/").path()}`},
+            cwd: baseDirFs.join("packages/bar/").path()
+          });
+      expect(String(out).trim()).equals("24");
+    });
+
+  });
 });
+

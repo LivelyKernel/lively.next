@@ -7,13 +7,8 @@ var Module = require("module");
 var semver = require("./semver.min.js");
 var { x: execSync } = require("child_process");
 
-process.env.CENTRAL_NODE_PACKAGE_DIR = "/Users/robert/.central-node-packages"
-
-let centralPackageDir = process.env.CENTRAL_NODE_PACKAGE_DIR,
-    knownPackageDirs = fs.readdirSync(centralPackageDir)
 
 var originalResolve;
-
 installResolver();
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -21,22 +16,24 @@ installResolver();
 function installResolver() {
   if (!originalResolve) originalResolve = Module._resolveFilename;
   Module._resolveFilename = function(request, parent, isMain) {
+
     try {
       let result = originalResolve.call(this, request, parent, isMain);
       // console.log(`${request} => ${result}`);
       return result;
+
     } catch (err) {
       let parentId = parent ? parent.filename || parent.id : "",
           // _ = console.log(`[_resolveFilename] searching for "${request}" from ${parentId}`),
           config = findPackageConfig(parentId),
           deps = config && depMap(config),
           basename = request.split("/")[0],
-          globalModulesMatching = findPathToModule(basename, deps[basename]),
-          // _2 = console.log(`globalModulesMatching: ${globalModulesMatching.join(", ")}`),
-          resolved = resolveModuleInGlobalPackage(globalModulesMatching, basename, request);
-  
+          flatPackageDirs = (process.env.FNP_PACKAGE_DIRS || "").split(":"),
+          packageFound = resolveToPackageViaFlatPackageDirs(flatPackageDirs, basename, deps[basename]),
+          resolved = packageFound && resolveFlatPackageToModule(packageFound, basename, request);
+
       if (resolved) return resolved;
-  
+
       throw err;
     }
   }
@@ -66,23 +63,31 @@ function depMap(packageConfig) {
     }, {});
 }
 
-function findPathToModule(modName, modVersionRange = "*") {
-  return knownPackageDirs.filter(ea => {
-    let [name, version] = ea.split("@");
-    return name === modName && semver.satisfies(version, modVersionRange);
-  });
+function resolveToPackageViaFlatPackageDirs(flatPackageDirs, modName, modVersionRange = "*") {
+  // given a list of flatPackageDirs, will search them left to right and return
+  // {name, version, path} of the first package that matches
+  // modName@modVersionRange
+  for (let packageDir of flatPackageDirs) {
+    let dirs = fs.readdirSync(packageDir);
+    for (let d of dirs) {
+      let [name, version] = d.split("@");
+      if (name !== modName) continue;
+      if (version && version !== "*" && (!semver.satisfies(version, modVersionRange))) continue;
+      return {name, version, path: path.join(packageDir, d)}
+    }
+  }
+  return null;
 }
 
-function resolveModuleInGlobalPackage(globalModulesMatching, basename, request) {
-  for (let modName of globalModulesMatching) {
-    let dir = path.join(centralPackageDir, modName),
-        fullpath;
-    if (basename === request) {
-      let config = findPackageConfig(path.join(dir, "index.js"));
-      if (!config || !config.main) fullpath = path.join(dir, "index.js");
-      else fullpath = path.join(dir, config.main);
-    } else fullpath = path.join(dir, request.slice(basename.length));
-    if (fs.existsSync(fullpath)) return fullpath;
-    if (fs.existsSync(fullpath + ".js")) return fullpath + ".js";
-  }
+function resolveFlatPackageToModule({name, version, path: pathToPackage}, basename, request) {
+  // Given {name, version, path} from resolveFlatPackageToModule, will find the
+  // full path to the module inside of the package, using the module request
+  let fullpath;
+  if (basename === request) {
+    let config = findPackageConfig(path.join(pathToPackage, "index.js"));
+    if (!config || !config.main) fullpath = path.join(pathToPackage, "index.js");
+    else fullpath = path.join(pathToPackage, config.main);
+  } else fullpath = path.join(pathToPackage, request.slice(basename.length));
+  if (fs.existsSync(fullpath)) return fullpath;
+  if (fs.existsSync(fullpath + ".js")) return fullpath + ".js";
 }

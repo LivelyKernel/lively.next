@@ -2,5 +2,11 @@
   "name": "flat-node-packages",
   "version": "0.1.0",
   "main": "index.js",
-  "bin": {"fnp": "./cli.js"}
+  "bin": {
+			"fnp": "./cli.js",
+			"fnp_node": "./bin/node"
+  },
+  "dependencies": {
+    "fetch-ponyfill": "^4.0.0"
+  }
 }

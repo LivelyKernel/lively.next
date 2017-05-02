@@ -2,17 +2,44 @@
 
 # echo "calling node with args: $@"
 
-DIR=$(dirname $0)
-
-# FIXME remove shadowed node...
-declare -a PATH_PARTS
-PATH_PARTS=$(echo $PATH | tr -s ':' ' ')
-for PATH_PART in $PATH_PARTS
-do
-  if [ "$DIR" != "$PATH_PART" ] && [ -f "$PATH_PART/node" ]; then
-    real_node="$PATH_PART/node";
-    break;
-  fi
-done 
-
-$real_node -r "$DIR/../module-resolver.js" "$@"
+# MY_NAME=$( basename $0 )
+# MY_DIR=$(dirname $0)
+# 
+# # FIXME remove shadowed node...
+# if [ "$MY_NAME" == "node" ]; then
+#   declare -a PATH_PARTS
+#   PATH_PARTS=$(echo $PATH | tr -s ':' ' ')
+#   for PATH_PART in $PATH_PARTS
+#   do
+#     if [ "$MY_DIR" != "$PATH_PART" ] && [ -f "$PATH_PART/node" ]; then
+#       real_node="$PATH_PART/node";
+#       break;
+#     fi
+#   done 
+# else
+#   real_node=node
+# fi
+# 
+# if [ -z $real_node ]; then
+#    echo "Cannot find node executable"
+#    exit 1
+# fi
+# 
+# EXEC=$(readlink "$0")
+# if [ -n $EXEC ]; then
+#   real_dir=$(dirname $EXEC);
+# fi 
+# 
+# if [[ "$real_dir" =~ ^/ ]]; then
+#   # absolute path
+#   echo 1
+# else
+#   real_dir="$MY_DIR/$real_dir";
+# fi
+# 
+# # declare -a PATH_PARTS
+# # for ARG in $@
+# # do
+# # done 
+# 
+# $real_node -r "$real_dir/../module-resolver.js"

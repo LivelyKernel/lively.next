@@ -9,41 +9,79 @@ export async function installDependenciesOfPackage(
   dirToInstallDependenciesInto,
   lookupDirs = [dirToInstallDependenciesInto],
   dependencyFields = ["dependencies"],
-  packageMap
+  packageMap,
+  verbose = false
 ) {
   // Given a package spec of an installed package (retrieved via
   // `readPackageSpec`), make sure all dependencies (specified in properties
   // `dependencyFields` of package.json) are installed
-
-// global.z = {packageSpecOrDir,dirToInstallDependenciesInto,lookupDirs,dependencyFields,packageMap}
-// ({packageSpecOrDir,dirToInstallDependenciesInto,lookupDirs,dependencyFields,packageMap} = z)
 
   let packageSpec = packageSpecOrDir;
   if (typeof packageSpecOrDir === "string") {
     if (packageSpecOrDir.startsWith("/")) packageSpecOrDir = "file://" + packageSpecOrDir;
     packageSpecOrDir = resource(packageSpecOrDir);
   }
-  if (packageSpecOrDir.isResource) {
+  if (packageSpecOrDir.isResource)
     packageSpec = await readPackageSpec(packageSpecOrDir);
-  }
 
   let {config} = packageSpec,
       deps = Object.assign({}, ...dependencyFields.map(key => config[key] || {})),
-      depNameAndVersions = [], newPackages;
+      depNameAndVersions = [], newPackages = [];
 
   for (let name in deps) {
-    let newPackagesSoFar = newPackages || [];
+    let newPackagesSoFar = newPackages;
     ({packageMap, newPackages} = await installPackage(
       `${name}@${deps[name]}`,
       dirToInstallDependenciesInto,
       lookupDirs,
       ["dependencies"],
-      packageMap
+      packageMap,
+      verbose
     ));
     newPackages = [...newPackages, ...newPackagesSoFar];
   }
 
+  if (verbose && !newPackages.length)
+    console.log(`[fnp] no new packages need to be installed for ${config.name}`);
+
   return {packageMap, newPackages};
+}
+
+export async function addDependencyToPackage(
+  packageSpecOrDir,
+  depNameAndRange,
+  packageDepDir,
+  lookupDirs = [packageDepDir],
+  dependencyField = "dependencies", /*vs devDependencies etc.*/
+  verbose = false
+) {
+
+  let packageSpec = packageSpecOrDir;
+  if (typeof packageSpecOrDir === "string") {
+    if (packageSpecOrDir.startsWith("/")) packageSpecOrDir = "file://" + packageSpecOrDir;
+    packageSpecOrDir = resource(packageSpecOrDir);
+  }
+  if (packageSpecOrDir.isResource)
+    packageSpec = await readPackageSpec(packageSpecOrDir);
+
+  let {config, location} = packageSpec;
+
+  if (!config[dependencyField]) config[dependencyField] = {};
+  let [depName, depVersionRange] = depNameAndRange.split("@"),
+      depVersion = config[dependencyField][depName];
+  if (!depVersion || depVersion !== depVersionRange) {
+    config[dependencyField][depName] = depVersionRange;
+    await resource(location).join("package.json").writeJson(config, true);
+  }
+
+  return installPackage(
+    depNameAndRange,
+    packageDepDir,
+    lookupDirs,
+    undefined,
+    undefined,
+    verbose
+  );
 }
 
 export async function installPackage(
@@ -51,7 +89,8 @@ export async function installPackage(
   destinationDir,
   lookupDirs = [destinationDir],
   dependencyFields = ["dependencies"],
-  packageMap
+  packageMap,
+  verbose = false
 ) {
   // will lookup or install a package matching pNameAndVersion.  Will
   // recursivly install dependencies
@@ -72,6 +111,7 @@ export async function installPackage(
         installed = await getInstalledPackage(name, version, packageMap);
 
     if (!installed) {
+      verbose && console.log(`[fnp] installing package ${name}@${version}`);
       installed = await packageDownload(version ? name + "@" + version : name, destinationDir);
       packageMap = {...packageMap, [resource(installed.location).name()]: installed};
       newPackages.push(installed);
