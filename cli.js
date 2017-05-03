@@ -1,16 +1,15 @@
 #!/usr/bin/env node
 
+/*global require, global, process*/
 const parseArgs = require('./deps/minimist.js'),
-      System = require('./deps/system.src.js'),
-      babel = global.babel = require('./deps/babel.min.js'),
-      lvm = require('./deps/lively.modules.min.js'),
-      {resource} = lively.resources,
-      {string} = lively.lang,
-      args = process.argv.slice(2),
+      { string } = (typeof lively !== "undefined" && lively.lang) || require("./deps/lively.lang.min.js"),
+      { resource } = (typeof lively !== "undefined" && lively.resources) || require("./deps/lively.resources.js"),
       { join: j, isAbsolute, normalize } = require("path"),
       fs = require("fs"),
       { spawn } = require("child_process"),
-      fetchPonyfill = require("fetch-ponyfill");
+      fetchPonyfill = require("fetch-ponyfill"),
+      fnp = require("./index.js"),
+      args = process.argv.slice(2);
 
 if (printHelp(args)) process.exit(0);
 
@@ -39,15 +38,14 @@ function doList(args) {
     return process.exit(1);
   }
 
-  return withFnpFunctionDo("getInstalledPackages",
-    getInstalledPackages =>
-      getInstalledPackages(checkPackages(packagesFromArgs(args)))
-        .then(packageSpecs =>
-          console.log(
-            string.printTable(
-              packageSpecs.map(({config, location}) =>
-                [`${config.name}@${config.version}`, `${resource(location).path()}`]))))
-        .then(() => process.exit(0)));
+  return fnp.getInstalledPackages(checkPackages(packagesFromArgs(args)))
+          .then(packageSpecs =>
+            console.log(
+              string.printTable(
+                packageSpecs.map(({config, location}) =>
+                  [`${config.name}@${config.version}`, `${resource(location).path()}`]))))
+          .then(() => process.exit(0))
+          .catch(err => { console.error(err.stack); process.exit(1); });
 }
 
 function doNode(args) {
@@ -89,7 +87,7 @@ function doNode(args) {
 }
 
 function doInstall(args) {
-  args = parseArgs(args, {alias: {"save-dev": "D", "save": "S", "packages": "p"}});
+  args = parseArgs(args, {alias: {"save-dev": "D", "save": "S", "packages": "P"}});
 
   if (!args.packages) {
     console.error("No package directories specified. Use one or multiple --packages/-P to specify package directoriese.");
@@ -107,14 +105,14 @@ function doInstall(args) {
     }
 
     let packages = checkPackages(packagesFromArgs(args));
-    return withFnpFunctionDo("installDependenciesOfPackage", installDependenciesOfPackage =>
-      installDependenciesOfPackage(
+    return fnp.installDependenciesOfPackage(
         activeDir,
         packages[0],
         packages,
         ["dependencies", "devDependencies"],
         undefined, true/*verbose*/)
-      ).then(() => process.exit(0));
+     .then(() => process.exit(0))
+      .catch(err => { console.error(err.stack); process.exit(1); })
   }
 
   console.log(args);
@@ -136,12 +134,6 @@ list\t\tlist installed packages (use with one or multiple --packages/-P)
 install\t\tinstalls dependencies (with --save/-S and --save-dev/-D) also adds to package.json in current dir
   `)
   return true;
-}
-
-function withFnpFunctionDo(fnName, doFn) {
-  return lvm.importPackage(`file://${__dirname}/`)
-    .then(fnp => doFn(fnp[fnName]))
-    .catch(err => { console.error(err); process.exit(1); });
 }
 
 function packagesFromArgs(args) {

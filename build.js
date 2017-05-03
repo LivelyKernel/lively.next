@@ -1,29 +1,29 @@
 /*global System,process,global*/
 
-import { join as j } from "path";
-import fs from "fs";
-import { tmpdir } from "os";
-import { execSync } from "child_process";
-import { getInstalledPackage } from "./index.js";
-import { buildStages } from "./dependencies.js";
-import { x, npmFallbackEnv } from "./util.js";
+const { join: j } = require("path");
+const fs = require("fs");
+const { tmpdir } = require("os");
+const { execSync } = require("child_process");
+const { getInstalledPackage } = require("./index.js");
+const { buildStages } = require("./dependencies.js");
+const { x, npmFallbackEnv } = require("./util.js");
 
-const helperBinDir = System.decanonicalize("npm-helper/bin").replace(/file:\/\//, ""),
+const helperBinDir = j(__dirname, "bin"),
       nodeCentralPackageBin = j(helperBinDir, "node");
 
 const npmEnv = (() => {
   try {
-    let dir = j(tmpdir(), "npm-test-env-project");
+    var dir = j(tmpdir(), "npm-test-env-project");
     if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-    fs.writeFileSync(j(dir, "package.json"), `{"scripts": {"print-env": "${nodeCentralPackageBin} ./print-env.js"}}`);
+    fs.writeFileSync(j(dir, "package.json"), `{"scripts": {"print-env": "${process.env.npm_node_execpath || "node"} ./print-env.js"}}`);
     fs.writeFileSync(j(dir, "print-env.js"), `console.log(JSON.stringify(process.env))`);
-    let env = JSON.parse(execSync(`npm --silent run print-env`, {cwd: dir}))
+    let env = JSON.parse(String(execSync(`npm --silent run print-env`, {cwd: dir})))
     for (let key in env)
       if (!key.toLowerCase().startsWith("npm") || key.toLowerCase().startsWith("npm_package"))
         delete env[key];
     return env;
   } catch (err) {
-    console.warn(`Cannot figure out real npm env`);
+    console.warn(`Cannot figure out real npm env, ${err}`);
     return {};
   } finally {
     try {
@@ -69,7 +69,7 @@ function linkBins(packageSpecs, linkState = {}) {
   return linkLocation;
 }
 
-export class BuildProcess {
+class BuildProcess {
 
   constructor(buildStages, packageMap) {
     this.buildStages = buildStages; // 2d list, package specs in sorted order
@@ -94,7 +94,8 @@ export class BuildProcess {
         continue;
       }
       let next = stage[0],
-          packageSpec = await getInstalledPackage(...[...next.split("@"), packageMap]);
+          [nextName, nextVersion] = next.split("@"),
+          packageSpec = await getInstalledPackage(nextName, nextVersion, packageMap);
       if (!packageSpec) throw new Error(`package ${next} cannot be found (in ${packageMap})`);
       await this.build(packageSpec);
       stage.shift();
@@ -107,7 +108,7 @@ export class BuildProcess {
   }
 
   async build(packageSpec) {
-    this.binLinkLocation = linkBins([...this.builtPackages, packageSpec], this.binLinkState);
+    this.binLinkLocation = linkBins(this.builtPackages.concat([packageSpec]), this.binLinkState);
     let env = npmCreateEnvVars(packageSpec.config);
 
     if (this.hasBuiltScripts(packageSpec)) {
@@ -125,15 +126,17 @@ export class BuildProcess {
     if (!scripts || !scripts[scriptName]) return false;
     console.log(`[build ${config.name}] running ${scriptName}`);
 
-    env = {
-      ...process.env,
-      ...npmFallbackEnv,
-      ...npmEnv,
-      ...env,
-      npm_lifecycle_event: scriptName,
-      npm_lifecycle_script: scripts[scriptName].split(" ")[0],
-      PATH: `${this.binLinkLocation}:${helperBinDir}:${process.env.PATH}`
-    };
+    
+    env = Object.assign({},
+      process.env,
+      npmFallbackEnv,
+      npmEnv,
+      env,
+      {
+        npm_lifecycle_event: scriptName,
+        npm_lifecycle_script: scripts[scriptName].split(" ")[0],
+        PATH: `${this.binLinkLocation}:${helperBinDir}:${process.env.PATH}`
+      });
 
     try {
       return await x(`/bin/sh -c '${scripts[scriptName]}'`, {
@@ -153,4 +156,8 @@ export class BuildProcess {
     }
   }
 
+}
+
+module.exports = {
+  BuildProcess
 }

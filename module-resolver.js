@@ -4,7 +4,7 @@
 var path = require("path");
 var fs = require("fs");
 var Module = require("module");
-var semver = require("./semver.min.js");
+var semver = require("./deps/semver.min.js");
 var { x: execSync } = require("child_process");
 
 

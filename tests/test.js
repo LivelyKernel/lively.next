@@ -172,10 +172,21 @@ describe("package installation lookup", function() {
     afterEach(() => baseDirFs.remove());
 
     it("in node at startup", async () => {
-      baseDirFs.join("packages/bar/").path();
       let resolverMod = resource(System.decanonicalize("flat-node-packages/module-resolver.js")).path(),
-          out = execSync(`/Users/robert/.nvm/versions/node/v7.7.3/bin/node -r "${resolverMod}" -r './index.js'`, {
+          out = execSync(`${process.argv[0]} -r "${resolverMod}" -r './index.js'`, {
             env: {FNP_PACKAGE_DIRS: `${baseDirFs.join("packages/").path()}`},
+            cwd: baseDirFs.join("packages/bar/").path()
+          });
+      expect(String(out).trim()).equals("24");
+    });
+
+    it("in node with own bin", async () => {
+      let nodeBin = System.decanonicalize("flat-node-packages/bin/node").replace(/file:\/\//, ""),
+          out = execSync(`${nodeBin} -r './index.js'`, {
+            env: {
+              PATH: process.env.PATH,
+              FNP_PACKAGE_DIRS: `${baseDirFs.join("packages/").path()}`
+            },
             cwd: baseDirFs.join("packages/bar/").path()
           });
       expect(String(out).trim()).equals("24");

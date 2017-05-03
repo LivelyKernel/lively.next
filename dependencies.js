@@ -1,7 +1,14 @@
-import { getInstalledPackage } from "./index.js";
-const { graph } = lively.lang;
+const { getInstalledPackage } = require("./index.js");
 
-export async function buildStages(packageSpec, packageMap) {
+const { graph } = (typeof lively === "undefined" && lively.lang) || require("./deps/lively.lang.min.js");
+
+module.exports = {
+  buildStages,
+  depGraph,
+  graphvizDeps
+}
+
+async function buildStages(packageSpec, packageMap) {
   let {config: {name, version}} = packageSpec,
       {deps, packages: packageDeps, resolvedVersions} = await depGraph(packageSpec, packageMap);
 
@@ -12,7 +19,7 @@ export async function buildStages(packageSpec, packageMap) {
   return lively.lang.graph.sortByReference(deps, `${name}@${version}`);
 }
 
-export async function depGraph(packageSpec, packageMap) {
+async function depGraph(packageSpec, packageMap) {
   // console.log(lively.lang.string.indent(pNameAndVersion, " ", depth));
   // let packages = getInstalledPackages(centralPackageDir);
 
@@ -46,7 +53,7 @@ export async function depGraph(packageSpec, packageMap) {
   return {deps, packages, resolvedVersions};
 }
 
-export function graphvizDeps({deps, packages, resolvedVersions}) {
+function graphvizDeps({deps, packages, resolvedVersions}) {
   let graph = `digraph {\n`
             + `compound=true;\n`
             + `node [shape=record fontsize=10 fontname="Verdana"];\n`;

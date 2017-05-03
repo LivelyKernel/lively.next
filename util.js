@@ -1,13 +1,13 @@
 /*global process*/
 
-import { exec } from "child_process";
-import { join as j } from "path";
-import { tmpdir } from "os";
+const { exec } = require("child_process");
+const { join: j } = require("path");
+const { tmpdir } = require("os");
 
-const { resource } = lively.resources;
+const { resource } = (typeof lively !== "undefined" && lively.resources) || require("./deps/lively.resources.js");
 
 
-export async function npmSearchForVersions(packageNameAndRange) {
+async function npmSearchForVersions(packageNameAndRange) {
   // let packageNameAndRange = "lively.lang@~0.4"
   try {
     let [pname, range = "*"] = packageNameAndRange.split("@"),
@@ -19,7 +19,7 @@ export async function npmSearchForVersions(packageNameAndRange) {
   }
 }
 
-export async function npmDownloadArchive(packageNameAndRange, destinationDir) {
+async function npmDownloadArchive(packageNameAndRange, destinationDir) {
   destinationDir = resource(destinationDir);
   let {version, name} = await npmSearchForVersions(packageNameAndRange),
       archive=`${name}-${version}.tgz`,
@@ -37,7 +37,7 @@ export async function npmDownloadArchive(packageNameAndRange, destinationDir) {
 // await z.dirList()
 // https://registry.npmjs.org/lively.lang/-/lively.lang-0.3.5.tgz
 
-export async function untar(downloadedArchive, targetDir, name) {
+async function untar(downloadedArchive, targetDir, name) {
   // FIXME use tar module???
 
   if (!name) name = downloadedArchive.name().replace(/(\.tar|\.tar.tgz|.tgz)$/, "");
@@ -69,7 +69,7 @@ export async function untar(downloadedArchive, targetDir, name) {
 
 // await gitClone("https://github.com/LivelyKernel/lively.morphic", "local://lively.node-packages-test/test-download/lively.morphic.test")
 
-export async function gitClone(gitURL, intoDir, branch = "master") {
+async function gitClone(gitURL, intoDir, branch = "master") {
   intoDir = resource(intoDir).asDirectory();
   let name = intoDir.name(), tmp;
   if (!intoDir.url.startsWith("file://")) {
@@ -103,7 +103,7 @@ export async function gitClone(gitURL, intoDir, branch = "master") {
 
 
 
-export function x(cmd, opts = {}) {
+function x(cmd, opts = {}) {
   return new Promise((resolve, reject) => {
     let p = exec(cmd, opts, (code, stdout, stderr) =>
       (code && console.log(opts)) || code
@@ -119,7 +119,7 @@ export function x(cmd, opts = {}) {
 }
 
 
-export const npmFallbackEnv = {
+const npmFallbackEnv = {
   npm_config_access: '',
   npm_config_also: '',
   npm_config_always_auth: '',
@@ -224,3 +224,12 @@ export const npmFallbackEnv = {
   npm_execpath: '/Users/robert/.nvm/versions/node/v7.7.4/lib/node_modules/npm/bin/npm-cli.js',
   npm_node_execpath: '/Users/robert/.nvm/versions/node/v7.7.4/bin/node'
 }
+
+module.exports = {
+  gitClone,
+  untar,
+  npmDownloadArchive,
+  npmSearchForVersions,
+  x,
+  npmFallbackEnv
+};

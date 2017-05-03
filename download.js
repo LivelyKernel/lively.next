@@ -1,10 +1,14 @@
-import { tmpdir } from "os";
-import * as util from "./util.js";
-import { readPackageSpec, pathForNameAndVersion, lvInfoFileName } from "./lookup.js";
+const { tmpdir } = require("os");
+const util = require("./util.js");
+const { readPackageSpec, pathForNameAndVersion, lvInfoFileName } = require("./lookup.js");
 
-const { resource } = lively.resources;
+const { resource } = (typeof lively !== "undefined" && lively.resources) || require("./deps/lively.resources.js");
 
-export async function packageDownload(packageNameAndRange, destinationDir) {
+module.exports = {
+  packageDownload
+}
+
+async function packageDownload(packageNameAndRange, destinationDir) {
   // packageNameAndRange like "lively.modules@^0.7.45"
   // if no @ part than we assume @*
 
@@ -32,7 +36,7 @@ export async function packageDownload(packageNameAndRange, destinationDir) {
   } else {
     let dirName = config.name + "@" + config.version;
     packageDir = destinationDir.join(dirName).asDirectory();
-    pathSpec = {...pathSpec, location: packageDir};
+    pathSpec = Object.assign({}, pathSpec, {location: packageDir});
   }
 
   await downloadDir.rename(packageDir);

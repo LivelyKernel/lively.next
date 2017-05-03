@@ -1,10 +1,19 @@
-import semver from "./semver.min.js"
-import { packageDownload } from "./download.js";
-import { readPackageSpec, gitSpecFromVersion } from "./lookup.js";
+const semver = require("./deps/semver.min.js")
+const { packageDownload } = require("./download.js");
+const { readPackageSpec, gitSpecFromVersion } = require("./lookup.js");
 
-const { resource } = lively.resources;
+const { resource } = (typeof lively !== "undefined" && lively.resources) || require("./deps/lively.resources.js");
 
-export async function installDependenciesOfPackage(
+module.exports = {
+  installDependenciesOfPackage,
+  addDependencyToPackage,
+  installPackage,
+  buildPackageMap,
+  getInstalledPackages,
+  getInstalledPackage
+}
+
+async function installDependenciesOfPackage(
   packageSpecOrDir,
   dirToInstallDependenciesInto,
   lookupDirs = [dirToInstallDependenciesInto],
@@ -25,7 +34,7 @@ export async function installDependenciesOfPackage(
     packageSpec = await readPackageSpec(packageSpecOrDir);
 
   let {config} = packageSpec,
-      deps = Object.assign({}, ...dependencyFields.map(key => config[key] || {})),
+      deps = Object.assign({}, dependencyFields.reduce((map, key) => Object.assign(map, config[key]), {})),
       depNameAndVersions = [], newPackages = [];
 
   for (let name in deps) {
@@ -38,7 +47,7 @@ export async function installDependenciesOfPackage(
       packageMap,
       verbose
     ));
-    newPackages = [...newPackages, ...newPackagesSoFar];
+    newPackages = newPackages.concat(newPackagesSoFar);
   }
 
   if (verbose && !newPackages.length)
@@ -47,7 +56,7 @@ export async function installDependenciesOfPackage(
   return {packageMap, newPackages};
 }
 
-export async function addDependencyToPackage(
+async function addDependencyToPackage(
   packageSpecOrDir,
   depNameAndRange,
   packageDepDir,
@@ -84,7 +93,7 @@ export async function addDependencyToPackage(
   );
 }
 
-export async function installPackage(
+async function installPackage(
   pNameAndVersion,
   destinationDir,
   lookupDirs = [destinationDir],
@@ -113,7 +122,7 @@ export async function installPackage(
     if (!installed) {
       verbose && console.log(`[fnp] installing package ${name}@${version}`);
       installed = await packageDownload(version ? name + "@" + version : name, destinationDir);
-      packageMap = {...packageMap, [resource(installed.location).name()]: installed};
+      packageMap = Object.assign({}, packageMap, {[resource(installed.location).name()]: installed});
       newPackages.push(installed);
     }
 
@@ -121,7 +130,7 @@ export async function installPackage(
 
 
     let {config} = installed,
-        deps = Object.assign({}, ...dependencyFields.map(key => config[key] || {}));
+        deps = Object.assign({}, dependencyFields.reduce((map, key) => Object.assign(map, config[key]), {}));
 
     for (let name in deps) queue.push([name, deps[name]]);
   }
@@ -129,7 +138,7 @@ export async function installPackage(
   return {packageMap, newPackages};
 }
 
-export async function buildPackageMap(packageDirs) {
+async function buildPackageMap(packageDirs) {
   // let packageMap = await buildPackageMap(["/Users/robert/.central-node-packages"])
   return (await getInstalledPackages(packageDirs)).reduce((map, p) => {
     let {config: {name, version}} = p,
@@ -139,7 +148,7 @@ export async function buildPackageMap(packageDirs) {
   }, {});
 }
 
-export async function getInstalledPackages(packageInstallDirs) {
+async function getInstalledPackages(packageInstallDirs) {
   let packages = [];
   for (let dir of packageInstallDirs) {
     dir = resource(typeof dir === "string" && dir.startsWith("/") ?
@@ -150,7 +159,7 @@ export async function getInstalledPackages(packageInstallDirs) {
   return packages;
 }
 
-export async function getInstalledPackage(pName, versionRange, packageMap) {
+async function getInstalledPackage(pName, versionRange, packageMap) {
   // tries to retrieve a package specified by name or name@versionRange (like
   // foo@^1.2) from packageDirs.
 
