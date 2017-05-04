@@ -7,13 +7,10 @@ const parseArgs = require('../deps/minimist.js'),
       { join: j, isAbsolute, normalize } = require("path"),
       fs = require("fs"),
       { spawn } = require("child_process"),
-      fetchPonyfill = require("fetch-ponyfill"),
       fnp = require("../index.js"),
       args = process.argv.slice(2);
 
 if (printHelp(args)) process.exit(0);
-
-if (!global.fetch) Object.assign(global, fetchPonyfill());
 
 let activeDir = process.cwd(),
     command,

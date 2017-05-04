@@ -4,10 +4,6 @@ import { tmpdir } from "os";
 import { execSync, exec } from "child_process";
 const { resource, createFiles } = lively.resources;
 
-// const fetchPonyfill = impor("fetch-ponyfill");
-const fetchPonyfill = System._nodeRequire("fetch-ponyfill/fetch-node.js");
-if (!global.fetch) Object.assign(global, fetchPonyfill());
-
 let fnpDir = System.decanonicalize("flat-node-packages/").replace("file://", "");
 import Module from "module";
 Object.keys(Module._cache).filter(ea => ea.startsWith(fnpDir)).forEach(ea => delete Module._cache[ea])
@@ -98,6 +94,32 @@ describe("package installation lookup", function() {
             baseDir.join("package-install-dir/b").path(),
             baseDir.join("package-install-dir/a").path()
           ]),
+          pInfo1 = findMatchingPackageSpec("test-package-1", "^1", pMap),
+          pInfo2 = findMatchingPackageSpec("test-package-2", null, pMap);
+      expect(pInfo1).deep.property("config.name", "test-package-1");
+      expect(pInfo2).deep.property("config.name", "test-package-2");
+    });
+
+    it("package config can specify lookup dir", async () => {
+      await createFiles(baseDir, {
+        "package-install-dir": {
+          a: {
+            "test-package-1@1.2.3": {
+              "package.json": JSON.stringify({
+                name: "test-package-1",
+                version: "1.2.3",
+                fnp_package_dirs: ["../../b"]
+              })
+            }
+          },
+          b: {
+            "test-package-2@0.1.2": {
+              "package.json": JSON.stringify({name: "test-package-2", version: "0.1.2"})
+            }
+          }
+        }
+      });
+      let pMap = buildPackageMap([baseDir.join("package-install-dir/a").path()]),
           pInfo1 = findMatchingPackageSpec("test-package-1", "^1", pMap),
           pInfo2 = findMatchingPackageSpec("test-package-2", null, pMap);
       expect(pInfo1).deep.property("config.name", "test-package-1");

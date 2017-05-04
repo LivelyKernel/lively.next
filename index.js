@@ -1,10 +1,14 @@
 /*global require, module*/
 const { findMatchingPackageSpec, readPackageSpec, gitSpecFromVersion } = require("./lookup.js");
-const { basename, join: j } = require("path");
+const { basename, isAbsolute, normalize: normPath, join: j } = require("path");
 const fs = require("fs");
 const { inspect } = require("util");
 
+const fetchPonyfill = require("fetch-ponyfill/fetch-node.js");
+if (!global.fetch) Object.assign(global, fetchPonyfill());
+
 const debug = true;
+
 
 module.exports = {
   installDependenciesOfPackage,
@@ -175,11 +179,43 @@ async function installPackage(
 }
 
 function buildPackageMap(packageDirs) {
+  // looks up all the packages in can find in packageDirs and creates
+  // packageSpecs for them.  If a package specifies more fnp_package_dirs in its
+  // config then repeat the process until no more new package dirs are found.
+  // Finally, combine all the packages found into a single map, like
+  // {package-name@version: packageSpec, ...}.
+  // 
+  // Merging of the results of the different package dirs happens so that dirs
+  // specified first take precedence. I.e. if a dependency foo@1 is found via
+  // packageDirs and then another package specifies a dir that leads to the
+  // discovery of another foo@1, the first one ends up in tha packageDir
+
   // let packageMap = buildPackageMap(["/Users/robert/.central-node-packages"])
-  return getInstalledPackages(packageDirs).reduce((map, p) => {
-    let {config: {name, version}} = p;
-    return Object.assign(map, {[`${name}@${version}`]: p})
-  }, {});
+  let packageDirsSeen = packageDirs.reduce((all, ea) =>
+                          Object.assign(all, {[ea]: true}), {}),
+      newPackageDirs = [],
+      packageMaps = [];
+
+  while (packageDirs.length) {
+    let newPackageDirs = [],
+        packageMap = {};
+    packageMaps.push(packageMap);
+    for (let p of getInstalledPackages(packageDirs)) {
+      let {location, config: {name, version, fnp_package_dirs}} = p;
+      Object.assign(packageMap, {[`${name}@${version}`]: p});
+      if (fnp_package_dirs) {
+        for (let dir of fnp_package_dirs) {
+          if (!isAbsolute(dir)) dir = normPath(j(location, dir));
+          if (packageDirsSeen[dir]) continue;
+          console.log(`[fnp] project ${location} specifies pacakge dir ${dir}`)
+          packageDirsSeen[dir] = true;
+          newPackageDirs.push(dir)
+        }
+      }
+    }
+    packageDirs = newPackageDirs;
+  }
+  return packageMaps.reduceRight((all, ea) => Object.assign(all, ea), {});
 }
 
 function getInstalledPackages(packageInstallDirs) {
