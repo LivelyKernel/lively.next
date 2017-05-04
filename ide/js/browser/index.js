@@ -65,7 +65,7 @@ export default class Browser extends Window {
   }
 
   static get properties() {
-  
+
     return {
       systemInterface: {
         derived: true, readOnly: true, after: ["editorPlugin"],
@@ -80,7 +80,7 @@ export default class Browser extends Window {
         get() { return this.get("sourceEditor").pluginFind(p => p.isEditorPlugin); }
       }
     }
-  
+
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -300,7 +300,7 @@ export default class Browser extends Window {
 
             {name: "moduleCommands", bounds: moduleCommandBoxBounds,
              layout: new HorizontalLayout({spacing: 2, autoResize: false, direction: "rightToLeft"}),
-             borderRight: {color: Color.gray, width: 1}, 
+             borderRight: {color: Color.gray, width: 1},
              fill: Color.transparent,
               submorphs: [
                {...btnDarkStyle, name: "addModuleButton", label: Icon.makeLabel("plus"), tooltip: "add module"},
@@ -517,14 +517,14 @@ export default class Browser extends Window {
 
   async setEvalBackend(newRemote) {
     newRemote = newRemote || "local";
-    var oldSystemInterface = this.systemInterface,
-        pckg = this.selectedPackage.name,
-        mod = this.selectedModule.nameInPackage;
-    if (newRemote !== oldSystemInterface.name) {
+    let {selectedPackage, selectedModule, systemInterface} = this,
+        p = selectedPackage && selectedPackage.name,
+        mod = selectedModule && selectedModule.nameInPackage;
+    if (newRemote !== systemInterface.name) {
       this.editorPlugin.setSystemInterfaceNamed(newRemote);
       this.reset();
-      await this.selectPackageNamed(pckg);
-      await this.selectModuleNamed(mod);
+      p && await this.selectPackageNamed(p);
+      mod && await this.selectModuleNamed(mod);
       this.relayout();
     }
   }
@@ -560,8 +560,11 @@ export default class Browser extends Window {
 
     if (this.world()) await this.whenRendered();
 
-    if (optSystemInterface || systemInterface)
-      this.systemInterface = optSystemInterface || systemInterface;
+    if (optSystemInterface || systemInterface) {
+      let sysI = optSystemInterface || systemInterface,
+          sysIName = typeof sysI === "string" ? sysI : sysI.name;
+      await this.ui.evalBackendList.setAndSelectBackend(sysIName)
+    }
 
     if (packageName) {
       await this.selectPackageNamed(packageName);
@@ -569,8 +572,20 @@ export default class Browser extends Window {
 
     } else if (moduleName) {
       let system = this.systemInterface,
-          m = await system.getModule(moduleName);
+          m = await system.getModule(moduleName), p;
+
       if (m) {
+        moduleName = m.id;
+        p = await system.getPackageForModule(m.id);
+      } else {
+        let mNameParts = moduleName.split("/"),
+            pName = mNameParts.shift(),
+            mNameRest = mNameParts.join("/");
+        p = await system.getPackage(pName);
+        m = await system.getModule(`${p.url}/${mNameRest}`);
+      }
+
+      if (m && p) {
         moduleName = m.id;
         let p = await system.getPackageForModule(m.id);
         await this.selectPackageNamed(p.url);
@@ -831,6 +846,7 @@ export default class Browser extends Window {
   }
 
   async selectCodeEntity(spec) {
+    if (typeof spec === "string") spec = {name: spec};
     var {codeEntityTree} = this.ui, td = codeEntityTree.treeData,
         def = this.findCodeEntity(spec),
         path = []; while (def) { path.unshift(def); def = def.parent; };
@@ -1032,7 +1048,7 @@ export default class Browser extends Window {
 
 
   async historySetLocation(loc) {
-    // var codeEntities = this.get("codeStructureList"),
+    // var codeEntities = this.get("codeEntityTree").nodes
 
     if (!loc) return;
 
@@ -1143,6 +1159,7 @@ export default class Browser extends Window {
       {keys: "F2",                           command: "focus code entities"},
       {keys: "F3|Alt-Down",                  command: "focus source editor"},
       {keys: "Alt-R",                        command: "reload module"},
+      {keys: "Alt-Ctrl-R",                  command: {command: "reload module", args: {hard: true}}},
       {keys: "Alt-L",                        command: "load or add module"},
       {keys: "Ctrl-C Ctrl-T",                command: "run all tests in module"},
       {keys: "Ctrl-C T",                     command: "run tests at point"},
@@ -1178,24 +1195,42 @@ export default class Browser extends Window {
     this.openMenu([...items, ...await this.menuItems()], evt);
   }
 
-  menuItems() {
+  browseSnippetForSelection() {
+    // produces a string that, when evaluated, will open the browser at the
+    // same location it is at now
     let p = this.selectedPackage,
         m = this.selectedModule,
-        c = this.selectedCodeEntity;
+        c = this.selectedCodeEntity,
+        sysI = this.systemInterface;
+
+    let codeSnip = `$world.execCommand("open browser", {`
+    if (m) {
+      if (m) codeSnip += `moduleName: "${p.name}/${m.nameInPackage}"`;
+    } else {
+      if (p) codeSnip += `packageName: "${p.name}"`;
+    }
+    if (c) {
+      let codeEntities = this.get("codeEntityTree").nodes
+      let needsDeDup = codeEntities.filter(ea => ea.name === c.name).length > 1;
+      if (needsDeDup)
+        codeSnip += `, codeEntity: ${JSON.stringify(obj.select(c, ["name", "type"]))}`
+      else
+        codeSnip += `, codeEntity: "${c.name}"`
+    }
+
+    if (sysI.name !== "local") codeSnip += `, systemInterface: "${sysI.name}"`
+    codeSnip += `});`;
+
+    return codeSnip;
+  }
+
+  menuItems() {
+    let p = this.selectedPackage,
+        m = this.selectedModule;
 
     return [
-      ["browse snippet", () => {
-        let codeSnip = `$world.execCommand("open browser", {`
-        if (p) codeSnip += `packageName: "${p.name}"`;
-        if (m) codeSnip += `, moduleName: "${m.name}"`;
-        if (c) codeSnip += `, codeEntity: ${JSON.stringify(obj.select(c, ["name", "type"]))}`;
-        codeSnip += `});`
-        this.world().execCommand("open workspace", {content: codeSnip});
-      }],
-      m && ["open in text editor", () => {
-        var lineNumber = c ? this.ui.sourceEditor.indexToPosition(c.node.start).row : null;
-        this.world().execCommand("open file", {url: m.url, lineNumber});
-      }]
+      p && {command: "open browse snippet", target: this},
+      m && {command: "open selected module in text editor", target: this},
     ].filter(Boolean)
   }
 }

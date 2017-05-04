@@ -102,11 +102,14 @@ export default function browserCommands(browser) {
 
     {
       name: "reload module",
-      exec: async () => {
+      exec: async (_, opts = {hard: false}) => {
         var m = browser.selectedModule;
         if (!m) return browser.world().inform("No module selected", {requester: browser});
         try {
-          await browser.systemInterface.interactivelyReloadModule(null, m.name);
+          let reloadDeps = opts.hard ? true : false,
+              resetEnv = opts.hard ? true : false;
+          await browser.systemInterface.interactivelyReloadModule(
+            null, m.name, reloadDeps, resetEnv);
         } catch(err) {
           browser.world().inform(`Error while reloading ${m.name}:\n${err.stack || err}`, {requester: browser});
           return true;
@@ -239,6 +242,30 @@ export default function browserCommands(browser) {
 
         await Promise.all(selected.map(ea => system.showExportsAndImportsOf(ea.url)))
         return true
+      }
+    },
+
+    {
+      name: "open browse snippet",
+      exec: browser => {
+        let snip = browser.browseSnippetForSelection();
+        return browser.world().execCommand("open workspace", {content: snip});
+      }
+    },
+
+    {
+      name: "open selected module in text editor",
+      exec: (browser, opts = {/*module: null, codeEntity: null*/}) => {
+        let m = opts.module || browser.selectedModule,
+            c = opts.hasOwnProperty("codeEntity") ? opts.codeEntity : browser.selectedCodeEntity;
+        if (!m) {
+          browser.setStatusMessage("No module selected / specified");
+          return true;
+        }
+        var lineNumber = c ? browser.ui.sourceEditor.indexToPosition(c.node.start).row : null,
+            url = m.url;
+        if (url.startsWith("file://")) url = url.replace("file://", ""); // FIXME
+        return browser.world().execCommand("open file", {url, lineNumber});
       }
     },
 

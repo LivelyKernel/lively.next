@@ -507,7 +507,7 @@ var commands = [
       if (relayed) return relayed;
 
       var { default: Browser } = await System.import("lively.morphic/ide/js/browser/index.js"),
-          loc = obj.select(args, ["packageName", "moduleName", "textPosition", "codeEntity"]),
+          loc = obj.select(args, ["packageName", "moduleName", "textPosition", "codeEntity", "systemInterface"]),
           browser = await Browser.browse(loc, {extent: pt(700, 600)});
       browser.getWindow().activate();
       return browser;
