@@ -11,9 +11,11 @@ import { tmpdir } from "os";
 import { execSync, exec } from "child_process";
 const { resource, createFiles } = lively.resources;
 
+// const fetchPonyfill = impor("fetch-ponyfill");
+const fetchPonyfill = System._nodeRequire("fetch-ponyfill/fetch-node.js");
+if (!global.fetch) Object.assign(global, fetchPonyfill());
 
-let baseDir = resource("local://lively.node-packages-test/"),
-    baseDirFs = resource(`file://${tmpdir()}/lively.node-packages-test/`);
+let baseDir = resource(`file://${tmpdir()}/lively.node-packages-test/`);
 
 
 // await createFiles(resource("file:///Users/robert/temp"), {
@@ -32,6 +34,23 @@ describe("package installation lookup", function() {
 
   this.timeout(10000);
 
+
+  beforeEach(async () => {
+    await baseDir.ensureExistance();
+    await createFiles(baseDir, {
+      "packages": {
+        foo: {
+          "package.json": JSON.stringify({name: "foo", version: "1.2.3"}),
+          "index.js": "module.exports.x = 23"
+        },
+        bar: {
+          "package.json": JSON.stringify({name: "bar", version: "0.1.0", dependencies: {foo: "*"}}),
+          "index.js": "console.log(require('foo').x + 1);"
+        }
+      }
+    });
+  });
+
   afterEach(() => baseDir.remove());
 
   describe("lookup", () => {
@@ -39,14 +58,14 @@ describe("package installation lookup", function() {
     it("reads installed package", async () => {
       await createFiles(baseDir, {
         "package-install-dir": {
-          "foo@1.2.3": {"package.json": JSON.stringify({name: "foo", version: "1.2.3"})}
+          "test-package-1@1.2.3": {"package.json": JSON.stringify({name: "test-package-1", version: "1.2.3"})}
         }
       });
-      let pMap = await buildPackageMap([baseDir.join("package-install-dir")]),
-          pInfo = await getInstalledPackage("foo", "^1", pMap);
+      let pMap = buildPackageMap([baseDir.join("package-install-dir").path()]),
+          pInfo = getInstalledPackage("test-package-1", "^1", pMap);
       expect(pInfo).containSubset({
-        config: {name: "foo", version: "1.2.3"},
-        location: baseDir.join("package-install-dir/foo@1.2.3/").url,
+        config: {name: "test-package-1", version: "1.2.3"},
+        location: baseDir.join("package-install-dir/test-package-1@1.2.3").path(),
         scripts: undefined, bin: undefined
       });
     });
@@ -55,15 +74,18 @@ describe("package installation lookup", function() {
     it("looks up packages in multiple package dirs", async () => {
       await createFiles(baseDir, {
         "package-install-dir": {
-          "a": {"foo@1.2.3": {"package.json": JSON.stringify({name: "foo", version: "1.2.3"})}},
-          "b": {"bar@0.1.2": {"package.json": JSON.stringify({name: "bar", version: "0.1.2"})}}
+          "a": {"test-package-1@1.2.3": {"package.json": JSON.stringify({name: "test-package-1", version: "1.2.3"})}},
+          "b": {"test-package-2@0.1.2": {"package.json": JSON.stringify({name: "test-package-2", version: "0.1.2"})}}
         }
       });
-      let pMap = await buildPackageMap([baseDir.join("package-install-dir/b"), baseDir.join("package-install-dir/a")]),
-          pInfo1 = await getInstalledPackage("foo", "^1", pMap),
-          pInfo2 = await getInstalledPackage("bar", null, pMap);
-      expect(pInfo1).deep.property("config.name", "foo");
-      expect(pInfo2).deep.property("config.name", "bar");
+      let pMap = buildPackageMap([
+            baseDir.join("package-install-dir/b").path(),
+            baseDir.join("package-install-dir/a").path()
+          ]),
+          pInfo1 = getInstalledPackage("test-package-1", "^1", pMap),
+          pInfo2 = getInstalledPackage("test-package-2", null, pMap);
+      expect(pInfo1).deep.property("config.name", "test-package-1");
+      expect(pInfo2).deep.property("config.name", "test-package-2");
     });
 
   });
@@ -71,7 +93,10 @@ describe("package installation lookup", function() {
   describe("installation", () => {
 
     it("installs a package via npm", async () => {
-      let {packageMap, newPackages} = await installPackage("strip-ansi@^3", baseDir.join("package-install-dir"));
+      let {packageMap, newPackages} = await installPackage(
+        "strip-ansi@^3",
+        baseDir.join("package-install-dir").path()
+      );
 
       expect(packageMap).containSubset({
         "ansi-regex@2.1.1": {config: {name: "ansi-regex",version: "2.1.1",}},
@@ -86,49 +111,60 @@ describe("package installation lookup", function() {
     it("installs a package via git", async () => {
       await installPackage(
         "strip-ansi@https://github.com/chalk/strip-ansi#82707",
-        baseDir.join("package-install-dir")
-      );
+        baseDir.join("package-install-dir").path());
       let installDir = baseDir.join("package-install-dir/strip-ansi@https___github.com_chalk_strip-ansi_82707/");
       expect().assert(await installDir.exists(), installDir + " does not exist")
       let files = (await installDir.dirList()).map(ea => ea.name());
+      lively.lang.obj.inspect(files)
       expect(files).equals([
-        ".git",
         ".editorconfig",
+        ".git",
         ".gitattributes",
         ".gitignore",
+        ".lv-npm-helper-info.json",
         ".travis.yml",
         "index.js",
         "license",
         "package.json",
         "readme.md",
-        "test.js",
-        ".lv-npm-helper-info.json"
+        "test.js"
       ]);
     });
 
     it("installs all dependencies via npm", async () => {
-      await installPackage("mkdirp@0.5.1", baseDir.join("package-install-dir"));
+      await installPackage("mkdirp@0.5.1", baseDir.join("package-install-dir").path());
       expect((await baseDir.join("package-install-dir").dirList()).map(ea => ea.name()))
-        .equals(["mkdirp@0.5.1", "minimist@0.0.8"]);
+        .equals(["minimist@0.0.8", "mkdirp@0.5.1"]);
     });
 
     it("installs all dependencies via git and npm", async () => {
-      await installPackage("mkdirp@substack/node-mkdirp#f2003bb", baseDir.join("package-install-dir"));
+      await installPackage(
+        "mkdirp@substack/node-mkdirp#f2003bb",
+        baseDir.join("package-install-dir").path());
       expect((await baseDir.join("package-install-dir").dirList()).map(ea => ea.name()))
-        .equals(["mkdirp@https___github.com_substack_node-mkdirp_f2003bb", "minimist@0.0.8"]);
+        .equals(["minimist@0.0.8", "mkdirp@https___github.com_substack_node-mkdirp_f2003bb"]);
     });
 
     it("installs all package deps", async () => {
       await createFiles(baseDir, {
         "package-install-dir": {
-          "foo": {"package.json": JSON.stringify({name: "foo", version: "1.2.3", dependencies: {"strip-ansi@2.0.1": "^2"}})}
+          foo: {
+            "package.json": JSON.stringify({
+              name: "foo",
+              version: "1.2.3",
+              dependencies: {"strip-ansi@2.0.1": "^2"}
+            })
+          }
         }
       });
-      let {packageMap, newPackages} = await installDependenciesOfPackage(baseDir.join("package-install-dir/foo"), baseDir.join("package-install-dir"));
+      let {packageMap, newPackages} = await installDependenciesOfPackage(
+        baseDir.join("package-install-dir/foo").path(),
+        baseDir.join("package-install-dir").path()
+      );
       expect(newPackages.map(ea => ea.config.name)).equals(["strip-ansi", "ansi-regex"]);
       expect(packageMap).to.have.keys(["strip-ansi@2.0.1", "foo@1.2.3", "ansi-regex@1.1.1"]);
       expect((await baseDir.join("package-install-dir/").dirList()).map(ea => ea.name()))
-        .equals(["foo", "strip-ansi@2.0.1", "ansi-regex@1.1.1"]);
+        .equals(["ansi-regex@1.1.1", "foo", "strip-ansi@2.0.1"]);
     });
 
     it("add new dep", async () => {
@@ -138,9 +174,9 @@ describe("package installation lookup", function() {
         }
       });
       let {packageMap, newPackages} = await addDependencyToPackage(
-        baseDir.join("package-install-dir/foo"),
+        baseDir.join("package-install-dir/foo").path(),
         "strip-ansi@^2",
-        baseDir.join("package-install-dir")
+        baseDir.join("package-install-dir").path()
       );
         
       expect(await baseDir.join("package-install-dir/foo/package.json").readJson())
@@ -153,29 +189,11 @@ describe("package installation lookup", function() {
 
   describe("resolving modules", () => {
 
-    beforeEach(async () => {
-      await baseDirFs.ensureExistance();
-      await createFiles(baseDirFs, {
-        "packages": {
-          foo: {
-            "package.json": JSON.stringify({name: "foo", version: "1.2.3"}),
-            "index.js": "module.exports.x = 23"
-          },
-          bar: {
-            "package.json": JSON.stringify({name: "bar", version: "0.1.0", dependencies: {foo: "*"}}),
-            "index.js": "console.log(require('foo').x + 1);"
-          }
-        }
-      });
-    });
-
-    afterEach(() => baseDirFs.remove());
-
     it("in node at startup", async () => {
       let resolverMod = resource(System.decanonicalize("flat-node-packages/module-resolver.js")).path(),
           out = execSync(`${process.argv[0]} -r "${resolverMod}" -r './index.js'`, {
-            env: {FNP_PACKAGE_DIRS: `${baseDirFs.join("packages/").path()}`},
-            cwd: baseDirFs.join("packages/bar/").path()
+            env: {FNP_PACKAGE_DIRS: `${baseDir.join("packages/").path()}`},
+            cwd: baseDir.join("packages/bar/").path()
           });
       expect(String(out).trim()).equals("24");
     });
@@ -185,13 +203,13 @@ describe("package installation lookup", function() {
           out = execSync(`${nodeBin} -r './index.js'`, {
             env: {
               PATH: process.env.PATH,
-              FNP_PACKAGE_DIRS: `${baseDirFs.join("packages/").path()}`
+              FNP_PACKAGE_DIRS: `${baseDir.join("packages/").path()}`
             },
-            cwd: baseDirFs.join("packages/bar/").path()
+            cwd: baseDir.join("packages/bar/").path()
           });
       expect(String(out).trim()).equals("24");
     });
 
   });
-});
 
+});

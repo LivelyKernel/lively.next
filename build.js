@@ -1,12 +1,11 @@
-/*global System,process,global*/
-
+/*global System,process,global,require,module,__dirname*/
 const { join: j } = require("path");
 const fs = require("fs");
 const { tmpdir } = require("os");
 const { execSync } = require("child_process");
-const { getInstalledPackage } = require("./index.js");
 const { buildStages } = require("./dependencies.js");
 const { x, npmFallbackEnv } = require("./util.js");
+const { findMatchingPackageSpec } = require("./lookup.js");
 
 const helperBinDir = j(__dirname, "bin"),
       nodeCentralPackageBin = j(helperBinDir, "node");
@@ -33,6 +32,7 @@ const npmEnv = (() => {
     } catch (err) {}
   }
 })();
+
 
 function npmCreateEnvVars(configObj, env = {}, path = "npm_package") {
   if (Array.isArray(configObj))
@@ -71,6 +71,11 @@ function linkBins(packageSpecs, linkState = {}) {
 
 class BuildProcess {
 
+  static for(packageSpec, packageMap) {
+    let stages = buildStages(packageSpec, packageMap);
+    return new this(stages, packageMap);
+  }
+
   constructor(buildStages, packageMap) {
     this.buildStages = buildStages; // 2d list, package specs in sorted order
     this.packageMap = packageMap;
@@ -80,23 +85,25 @@ class BuildProcess {
   }
 
   async run() {
+
     // let {buildStages, packageMap} = build
     let {buildStages, packageMap} = this,
         i = 1, n = buildStages.length;
 
-    // console.log(`Running build stage ${i++}/${n}`)
+    console.log(`[fnp] Running build stage ${i++}/${n}`)
 
     while (buildStages.length) {
       let stage = buildStages[0];
       if (!stage.length) {
-        // console.log(`Running build stage ${i++}/${n}`);
         buildStages.shift();
+        buildStages.length && console.log(`[fnp] Running build stage ${i++}/${n}`);
         continue;
       }
       let next = stage[0],
-          [nextName, nextVersion] = next.split("@"),
-          packageSpec = await getInstalledPackage(nextName, nextVersion, packageMap);
-      if (!packageSpec) throw new Error(`package ${next} cannot be found (in ${packageMap})`);
+          [name, version] = next.split("@"),
+          packageSpec = findMatchingPackageSpec(name, version, packageMap);
+      if (!packageSpec) throw new Error(`[fnp build] package ${next} cannot be found in package map, skipping its build`);
+
       await this.build(packageSpec);
       stage.shift();
     }
@@ -112,11 +119,14 @@ class BuildProcess {
     let env = npmCreateEnvVars(packageSpec.config);
 
     if (this.hasBuiltScripts(packageSpec)) {
-      console.log(`[${packageSpec.config.name}] build starting`);
+      console.log(`[fnp] ${packageSpec.config.name} build starting`);
       await this.runScript("preinstall",  packageSpec, env);
       await this.runScript("install",     packageSpec, env);
       await this.runScript("postinstall", packageSpec, env);
-      console.log(`[${packageSpec.config.name}] build done`);
+      console.log(`[fnp] ${packageSpec.config.name} build done`);
+    } else {
+      let {name, version} = packageSpec.config;
+      console.log(`[fnp] no build scripts for ${name}@${version}`);
     }
 
     this.builtPackages.push(packageSpec);
@@ -124,8 +134,7 @@ class BuildProcess {
 
   async runScript(scriptName, {config, location, scripts}, env) {
     if (!scripts || !scripts[scriptName]) return false;
-    console.log(`[build ${config.name}] running ${scriptName}`);
-
+    console.log(`[fnp] build ${config.name}: running ${scriptName}`);
     
     env = Object.assign({},
       process.env,

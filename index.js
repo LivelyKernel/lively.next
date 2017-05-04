@@ -1,41 +1,48 @@
-const semver = require("./deps/semver.min.js")
-const { packageDownload } = require("./download.js");
-const { readPackageSpec, gitSpecFromVersion } = require("./lookup.js");
+/*global require, module*/
+const { findMatchingPackageSpec, readPackageSpec, gitSpecFromVersion } = require("./lookup.js");
+const { basename, join: j } = require("path");
+const fs = require("fs");
+const { inspect } = require("util");
 
-const { resource } = (typeof lively !== "undefined" && lively.resources) || require("./deps/lively.resources.js");
+const debug = true;
 
 module.exports = {
   installDependenciesOfPackage,
   addDependencyToPackage,
   installPackage,
+  buildPackage,
   buildPackageMap,
   getInstalledPackages,
-  getInstalledPackage
+  findMatchingPackageSpec
 }
 
 async function installDependenciesOfPackage(
   packageSpecOrDir,
   dirToInstallDependenciesInto,
-  lookupDirs = [dirToInstallDependenciesInto],
-  dependencyFields = ["dependencies"],
+  lookupDirs,
+  dependencyFields,
   packageMap,
-  verbose = false
+  verbose
 ) {
   // Given a package spec of an installed package (retrieved via
   // `readPackageSpec`), make sure all dependencies (specified in properties
   // `dependencyFields` of package.json) are installed
 
-  let packageSpec = packageSpecOrDir;
-  if (typeof packageSpecOrDir === "string") {
-    if (packageSpecOrDir.startsWith("/")) packageSpecOrDir = "file://" + packageSpecOrDir;
-    packageSpecOrDir = resource(packageSpecOrDir);
-  }
-  if (packageSpecOrDir.isResource)
-    packageSpec = await readPackageSpec(packageSpecOrDir);
+  if (!lookupDirs) lookupDirs = [dirToInstallDependenciesInto];
+  if (!dependencyFields) dependencyFields = ["dependencies"];
+
+  let packageSpec = typeof packageSpecOrDir === "string"
+    ? readPackageSpec(packageSpecOrDir)
+    : packageSpecOrDir;
+
+  if (!packageSpec)
+    throw new Error(`Cannot resolve package: ${inspect(packageSpec, {depth: 0})}`);
 
   let {config} = packageSpec,
-      deps = Object.assign({}, dependencyFields.reduce((map, key) => Object.assign(map, config[key]), {})),
-      depNameAndVersions = [], newPackages = [];
+      deps = Object.assign({},
+        dependencyFields.reduce((map, key) => Object.assign(map, config[key]), {})),
+      depNameAndVersions = [],
+      newPackages = [];
 
   for (let name in deps) {
     let newPackagesSoFar = newPackages;
@@ -50,28 +57,27 @@ async function installDependenciesOfPackage(
     newPackages = newPackages.concat(newPackagesSoFar);
   }
 
-  if (verbose && !newPackages.length)
+  if ((verbose || debug) && !newPackages.length)
     console.log(`[fnp] no new packages need to be installed for ${config.name}`);
 
   return {packageMap, newPackages};
 }
 
-async function addDependencyToPackage(
+function addDependencyToPackage(
   packageSpecOrDir,
   depNameAndRange,
   packageDepDir,
-  lookupDirs = [packageDepDir],
-  dependencyField = "dependencies", /*vs devDependencies etc.*/
+  lookupDirs,
+  dependencyField,
   verbose = false
 ) {
 
-  let packageSpec = packageSpecOrDir;
-  if (typeof packageSpecOrDir === "string") {
-    if (packageSpecOrDir.startsWith("/")) packageSpecOrDir = "file://" + packageSpecOrDir;
-    packageSpecOrDir = resource(packageSpecOrDir);
-  }
-  if (packageSpecOrDir.isResource)
-    packageSpec = await readPackageSpec(packageSpecOrDir);
+  if (!lookupDirs) lookupDirs = [packageDepDir];
+  if (!dependencyField) dependencyField = "dependencies"; /*vs devDependencies etc.*/
+
+  let packageSpec = typeof packageSpecOrDir === "string"
+    ? readPackageSpec(packageSpecOrDir)
+    : packageSpecOrDir;
 
   let {config, location} = packageSpec;
 
@@ -80,7 +86,7 @@ async function addDependencyToPackage(
       depVersion = config[dependencyField][depName];
   if (!depVersion || depVersion !== depVersionRange) {
     config[dependencyField][depName] = depVersionRange;
-    await resource(location).join("package.json").writeJson(config, true);
+    fs.writeFileSync(j(location, "package.json"), JSON.stringify(config, null, 2));
   }
 
   return installPackage(
@@ -93,103 +99,98 @@ async function addDependencyToPackage(
   );
 }
 
+async function buildPackage(packageSpecOrDir, packageMapOrDirs, verbose = false) {
+  let packageSpec = typeof packageSpecOrDir === "string"
+        ? readPackageSpec(packageSpecOrDir)
+        : packageSpecOrDir,
+      packageMap = Array.isArray(packageMapOrDirs)
+        ? buildPackageMap(packageMapOrDirs)
+        : packageMapOrDirs,
+      {name, version} = packageSpec.config;
+  packageMap[`${name}@${version}`] = packageSpec;
+  const { BuildProcess } = require("./build.js");
+  return await BuildProcess.for(packageSpec, packageMap).run();
+}
+
+
 async function installPackage(
   pNameAndVersion,
   destinationDir,
-  lookupDirs = [destinationDir],
-  dependencyFields = ["dependencies"],
+  lookupDirs,
+  dependencyFields,
   packageMap,
   verbose = false
 ) {
+  const { packageDownload } = require("./download.js");
+
   // will lookup or install a package matching pNameAndVersion.  Will
   // recursivly install dependencies
 
+  if (!lookupDirs) lookupDirs = [destinationDir];
+  if (!dependencyFields) dependencyFields = ["dependencies"];
+
   if (!packageMap)
-    packageMap = await buildPackageMap(lookupDirs);
+    packageMap = buildPackageMap(lookupDirs);
 
-  if (typeof destinationDir === "string")  
-    destinationDir = resource(destinationDir.startsWith("/") ?
-      "file://" + destinationDir : destinationDir);
+  if (!fs.existsSync(destinationDir))
+    fs.mkdirSync(destinationDir);
 
-  await destinationDir.ensureExistance();
-
-  let queue = [pNameAndVersion.split("@")], newPackages = [];
+  let queue = [pNameAndVersion.split("@")],
+      seen = {},
+      newPackages = [];
 
   while (queue.length) {
     let [name, version] = queue.shift(),
-        installed = await getInstalledPackage(name, version, packageMap);
+        installed = findMatchingPackageSpec(name, version, packageMap);
 
     if (!installed) {
-      verbose && console.log(`[fnp] installing package ${name}@${version}`);
+      (verbose || debug) && console.log(`[fnp] installing package ${name}@${version}`);
       installed = await packageDownload(version ? name + "@" + version : name, destinationDir);
-      packageMap = Object.assign({}, packageMap, {[resource(installed.location).name()]: installed});
+      if (!installed)
+        throw new Error(`Could not download package ${name + "@" + version}`);
+
+      packageMap = Object.assign({}, packageMap, {[basename(installed.location)]: installed});
       newPackages.push(installed);
+    } else {
+      (verbose || debug) && console.log(`[fnp] ${name}@${version} already installed in ${installed.location}`);
     }
 
     if (!installed) throw new Error(`cannot install package ${name}@${version}!`);
 
 
     let {config} = installed,
-        deps = Object.assign({}, dependencyFields.reduce((map, key) => Object.assign(map, config[key]), {}));
+        deps = Object.assign({},
+          dependencyFields.reduce((map, key) =>
+            Object.assign(map, config[key]), {}));
 
-    for (let name in deps) queue.push([name, deps[name]]);
+    for (let name in deps) {
+      if (deps[name] in seen) continue;
+      queue.push([name, deps[name]]);
+      seen[deps[name]] = true;
+    }
   }
 
   return {packageMap, newPackages};
 }
 
-async function buildPackageMap(packageDirs) {
-  // let packageMap = await buildPackageMap(["/Users/robert/.central-node-packages"])
-  return (await getInstalledPackages(packageDirs)).reduce((map, p) => {
-    let {config: {name, version}} = p,
-        id = `${name}@${version}`
-    map[id] = p;
-    return map;
+function buildPackageMap(packageDirs) {
+  // let packageMap = buildPackageMap(["/Users/robert/.central-node-packages"])
+  return getInstalledPackages(packageDirs).reduce((map, p) => {
+    let {config: {name, version}} = p;
+    return Object.assign(map, {[`${name}@${version}`]: p})
   }, {});
 }
 
-async function getInstalledPackages(packageInstallDirs) {
+function getInstalledPackages(packageInstallDirs) {
   let packages = [];
-  for (let dir of packageInstallDirs) {
-    dir = resource(typeof dir === "string" && dir.startsWith("/") ?
-      dir = "file://" + dir : dir)
-    for (let file of await dir.dirList(1))
-      packages.push(await readPackageSpec(file));
-  }
+  for (let dir of packageInstallDirs)
+    if (fs.existsSync(dir))
+      for (let file of fs.readdirSync(dir)) {
+        let spec = readPackageSpec(j(dir, file));
+        spec && packages.push(spec);
+      }
   return packages;
 }
-
-async function getInstalledPackage(pName, versionRange, packageMap) {
-  // tries to retrieve a package specified by name or name@versionRange (like
-  // foo@^1.2) from packageDirs.
-
-  // let pMap = await buildPackageMap(["/Users/robert/.central-node-packages"])
-  // await getInstalledPackage("leveldown", "^1", pMap)
-
-  let gitSpec = gitSpecFromVersion(versionRange || ""), found;
-
-  for (let key in packageMap) {
-    let pSpec = packageMap[key],
-        // {config: {name, version}} = 
-        [name, version] = key.split("@");
-
-    if (name !== pName) continue;
-
-    if (!versionRange || (gitSpec && gitSpec.inFileName === version)) {
-      found = pSpec;
-      break;
-    }
-
-    if (!semver.parse(version || ""))
-      version = pSpec.config.version;
-    if (semver.satisfies(version, versionRange)) {
-      found = pSpec; break;
-    }
-  }
-
-  return found;
-}
-
 
 /*
 DIR=/Users/robert/Lively/lively-dev2/npm-helper/bin
@@ -206,10 +207,10 @@ node -r "lively.resources/dist/lively.resources.js" -e "lively.resources.resourc
 // process.env.CENTRAL_NODE_PACKAGE_DIR = "/Users/robert/.central-node-packages"
 // let packageDir = process.env.CENTRAL_NODE_PACKAGE_DIR
 // let packages = getInstalledPackages(packageDir)
-// let pMap = await buildPackageMap([packageDir])
-// let p = await getInstalledPackage("pouchdb", null, pMap)
-// let p = await getInstalledPackage("lively.resources", undefined, pMap);
-// let p = await getInstalledPackage("lively.user", undefined, pMap);
+// let pMap = buildPackageMap([packageDir])
+// let p = getInstalledPackage("pouchdb", null, pMap)
+// let p = getInstalledPackage("lively.resources", undefined, pMap);
+// let p = getInstalledPackage("lively.user", undefined, pMap);
 
 // import { depGraph, buildStages } from "./dependencies.js";
 // import {BuildProcess} from "./build.js";

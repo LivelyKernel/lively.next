@@ -1,11 +1,11 @@
-const {buildPackageMap, getInstalledPackage} = require("./index.js");
+const {buildPackageMap, findMatchingPackageSpec} = require("./index.js");
 const { depGraph, buildStages } = require("./dependencies.js");
 const {BuildProcess} = require("./build.js");
 
 
 (async () => {
   let pMap = await buildPackageMap(["/Users/robert/.central-node-packages"]);
-  let found = await getInstalledPackage("pouchdb", null, pMap);
+  let found = await findMatchingPackageSpec("pouchdb", null, pMap);
   console.log(found);
 
   await depGraph(found, pMap);

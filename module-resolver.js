@@ -4,9 +4,8 @@
 var path = require("path");
 var fs = require("fs");
 var Module = require("module");
-var semver = require("./deps/semver.min.js");
 var { x: execSync } = require("child_process");
-
+var { buildPackageMap, findMatchingPackageSpec } = require("./index.js");
 
 var originalResolve;
 installResolver();
@@ -29,11 +28,11 @@ function installResolver() {
           deps = config && depMap(config),
           basename = request.split("/")[0],
           flatPackageDirs = (process.env.FNP_PACKAGE_DIRS || "").split(":"),
-          packageFound = resolveToPackageViaFlatPackageDirs(flatPackageDirs, basename, deps[basename]),
+          packageMap = buildPackageMap(flatPackageDirs),
+          packageFound = findMatchingPackageSpec(basename, deps[basename]),
           resolved = packageFound && resolveFlatPackageToModule(packageFound, basename, request);
 
       if (resolved) return resolved;
-
       throw err;
     }
   }
@@ -63,23 +62,7 @@ function depMap(packageConfig) {
     }, {});
 }
 
-function resolveToPackageViaFlatPackageDirs(flatPackageDirs, modName, modVersionRange = "*") {
-  // given a list of flatPackageDirs, will search them left to right and return
-  // {name, version, path} of the first package that matches
-  // modName@modVersionRange
-  for (let packageDir of flatPackageDirs) {
-    let dirs = fs.readdirSync(packageDir);
-    for (let d of dirs) {
-      let [name, version] = d.split("@");
-      if (name !== modName) continue;
-      if (version && version !== "*" && (!semver.satisfies(version, modVersionRange))) continue;
-      return {name, version, path: path.join(packageDir, d)}
-    }
-  }
-  return null;
-}
-
-function resolveFlatPackageToModule({name, version, path: pathToPackage}, basename, request) {
+function resolveFlatPackageToModule({config: {name, version}, location: pathToPackage}, basename, request) {
   // Given {name, version, path} from resolveFlatPackageToModule, will find the
   // full path to the module inside of the package, using the module request
   let fullpath;

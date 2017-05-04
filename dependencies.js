@@ -1,6 +1,6 @@
-const { getInstalledPackage } = require("./index.js");
+const { graph } = (typeof lively !== "undefined" && lively.lang) || require("./deps/lively.lang.min.js");
 
-const { graph } = (typeof lively === "undefined" && lively.lang) || require("./deps/lively.lang.min.js");
+const { findMatchingPackageSpec } = require("./lookup.js");
 
 module.exports = {
   buildStages,
@@ -8,9 +8,9 @@ module.exports = {
   graphvizDeps
 }
 
-async function buildStages(packageSpec, packageMap) {
+function buildStages(packageSpec, packageMap) {
   let {config: {name, version}} = packageSpec,
-      {deps, packages: packageDeps, resolvedVersions} = await depGraph(packageSpec, packageMap);
+      {deps, packages: packageDeps, resolvedVersions} = depGraph(packageSpec, packageMap);
 
   for (let dep in deps)
     for (let i = 0; i < deps[dep].length; i++)
@@ -19,7 +19,7 @@ async function buildStages(packageSpec, packageMap) {
   return lively.lang.graph.sortByReference(deps, `${name}@${version}`);
 }
 
-async function depGraph(packageSpec, packageMap) {
+function depGraph(packageSpec, packageMap) {
   // console.log(lively.lang.string.indent(pNameAndVersion, " ", depth));
   // let packages = getInstalledPackages(centralPackageDir);
 
@@ -31,8 +31,11 @@ async function depGraph(packageSpec, packageMap) {
   while (queue.length) {
     let nameAndVersion = queue.shift();
     if (nameAndVersion in resolvedVersions) continue;
+
     let [name, version] = nameAndVersion.split("@"),
-        {config} = await getInstalledPackage(name, version, packageMap),
+        pSpec = findMatchingPackageSpec(name, version, packageMap);
+    if (!pSpec) throw new Error(`Cannot resolve package ${nameAndVersion}`);
+    let {config} = pSpec,
         resolvedNameAndVersion = `${config.name}@${config.version}`;
 
     resolvedVersions[nameAndVersion] = resolvedNameAndVersion;

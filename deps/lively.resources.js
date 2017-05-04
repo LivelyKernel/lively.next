@@ -861,6 +861,7 @@ var Resource$$1 = function () {
 
     if (!url) throw new Error("Cannot create resource without url");
     this.url = String(url);
+    this.binary = false;
     this.lastModified = undefined;
     this.created = undefined;
     this.etag = undefined;
@@ -1217,15 +1218,21 @@ var Resource$$1 = function () {
       return copyTo;
     }()
   }, {
-    key: "read",
+    key: "rename",
     value: function () {
-      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(otherResource) {
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                nyi(this, "read");
-              case 1:
+                _context3.next = 2;
+                return this.copyTo(otherResource);
+
+              case 2:
+                this.remove();
+                return _context3.abrupt("return", otherResource);
+
+              case 4:
               case "end":
                 return _context3.stop();
             }
@@ -1233,21 +1240,32 @@ var Resource$$1 = function () {
         }, _callee3, this);
       }));
 
-      function read() {
+      function rename$$1(_x5) {
         return _ref3.apply(this, arguments);
       }
 
-      return read;
+      return rename$$1;
     }()
   }, {
-    key: "write",
+    key: "beBinary",
+    value: function beBinary(bool) {
+      return this.setBinary(true);
+    }
+  }, {
+    key: "setBinary",
+    value: function setBinary(bool) {
+      this.binary = bool;
+      return this;
+    }
+  }, {
+    key: "read",
     value: function () {
       var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
-                nyi(this, "write");
+                nyi(this, "read");
               case 1:
               case "end":
                 return _context4.stop();
@@ -1256,21 +1274,21 @@ var Resource$$1 = function () {
         }, _callee4, this);
       }));
 
-      function write() {
+      function read() {
         return _ref4.apply(this, arguments);
       }
 
-      return write;
+      return read;
     }()
   }, {
-    key: "mkdir",
+    key: "write",
     value: function () {
       var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
-                nyi(this, "mkdir");
+                nyi(this, "write");
               case 1:
               case "end":
                 return _context5.stop();
@@ -1279,21 +1297,21 @@ var Resource$$1 = function () {
         }, _callee5, this);
       }));
 
-      function mkdir() {
+      function write() {
         return _ref5.apply(this, arguments);
       }
 
-      return mkdir;
+      return write;
     }()
   }, {
-    key: "exists",
+    key: "mkdir",
     value: function () {
       var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
               case 0:
-                nyi(this, "exists");
+                nyi(this, "mkdir");
               case 1:
               case "end":
                 return _context6.stop();
@@ -1302,21 +1320,21 @@ var Resource$$1 = function () {
         }, _callee6, this);
       }));
 
-      function exists() {
+      function mkdir() {
         return _ref6.apply(this, arguments);
       }
 
-      return exists;
+      return mkdir;
     }()
   }, {
-    key: "remove",
+    key: "exists",
     value: function () {
       var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
               case 0:
-                nyi(this, "remove");
+                nyi(this, "exists");
               case 1:
               case "end":
                 return _context7.stop();
@@ -1325,21 +1343,21 @@ var Resource$$1 = function () {
         }, _callee7, this);
       }));
 
-      function remove() {
+      function exists() {
         return _ref7.apply(this, arguments);
       }
 
-      return remove;
+      return exists;
     }()
   }, {
-    key: "dirList",
+    key: "remove",
     value: function () {
-      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(depth, opts) {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
             switch (_context8.prev = _context8.next) {
               case 0:
-                nyi(this, "dirList");
+                nyi(this, "remove");
               case 1:
               case "end":
                 return _context8.stop();
@@ -1348,21 +1366,21 @@ var Resource$$1 = function () {
         }, _callee8, this);
       }));
 
-      function dirList(_x5, _x6) {
+      function remove() {
         return _ref8.apply(this, arguments);
       }
 
-      return dirList;
+      return remove;
     }()
   }, {
-    key: "readProperties",
+    key: "dirList",
     value: function () {
-      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(opts) {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(depth, opts) {
         return regeneratorRuntime.wrap(function _callee9$(_context9) {
           while (1) {
             switch (_context9.prev = _context9.next) {
               case 0:
-                nyi(this, "readProperties");
+                nyi(this, "dirList");
               case 1:
               case "end":
                 return _context9.stop();
@@ -1371,34 +1389,22 @@ var Resource$$1 = function () {
         }, _callee9, this);
       }));
 
-      function readProperties(_x7) {
+      function dirList(_x6, _x7) {
         return _ref9.apply(this, arguments);
       }
 
-      return readProperties;
+      return dirList;
     }()
   }, {
-    key: "writeJson",
-    value: function writeJson(obj) {
-      return this.write(JSON.stringify(obj));
-    }
-  }, {
-    key: "readJson",
+    key: "readProperties",
     value: function () {
-      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(obj) {
+      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(opts) {
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
             switch (_context10.prev = _context10.next) {
               case 0:
-                _context10.t0 = JSON;
-                _context10.next = 3;
-                return this.read();
-
-              case 3:
-                _context10.t1 = _context10.sent;
-                return _context10.abrupt("return", _context10.t0.parse.call(_context10.t0, _context10.t1));
-
-              case 5:
+                nyi(this, "readProperties");
+              case 1:
               case "end":
                 return _context10.stop();
             }
@@ -1406,8 +1412,45 @@ var Resource$$1 = function () {
         }, _callee10, this);
       }));
 
-      function readJson(_x8) {
+      function readProperties(_x8) {
         return _ref10.apply(this, arguments);
+      }
+
+      return readProperties;
+    }()
+  }, {
+    key: "writeJson",
+    value: function writeJson(obj) {
+      var pretty = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+      return this.write(pretty ? JSON.stringify(obj, null, 2) : JSON.stringify(obj));
+    }
+  }, {
+    key: "readJson",
+    value: function () {
+      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(obj) {
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+          while (1) {
+            switch (_context11.prev = _context11.next) {
+              case 0:
+                _context11.t0 = JSON;
+                _context11.next = 3;
+                return this.read();
+
+              case 3:
+                _context11.t1 = _context11.sent;
+                return _context11.abrupt("return", _context11.t0.parse.call(_context11.t0, _context11.t1));
+
+              case 5:
+              case "end":
+                return _context11.stop();
+            }
+          }
+        }, _callee11, this);
+      }));
+
+      function readJson(_x10) {
+        return _ref11.apply(this, arguments);
       }
 
       return readJson;
@@ -1667,9 +1710,41 @@ var WebDAVResource = function (_Resource) {
                 throw new Error("Cannot read " + this.url + ": " + res.statusText + " " + res.status);
 
               case 5:
+                if (this.binary) {
+                  _context.next = 7;
+                  break;
+                }
+
                 return _context.abrupt("return", res.text());
 
-              case 6:
+              case 7:
+                if (!(this.binary === "blob")) {
+                  _context.next = 9;
+                  break;
+                }
+
+                return _context.abrupt("return", res.blob());
+
+              case 9:
+                if (!(typeof res.arrayBuffer === "function")) {
+                  _context.next = 11;
+                  break;
+                }
+
+                return _context.abrupt("return", res.arrayBuffer());
+
+              case 11:
+                if (!(typeof res.buffer === "function")) {
+                  _context.next = 13;
+                  break;
+                }
+
+                return _context.abrupt("return", res.buffer());
+
+              case 13:
+                throw new Error("Don't now how to read binary resource " + this + "'");
+
+              case 14:
               case "end":
                 return _context.stop();
             }
@@ -2036,6 +2111,7 @@ var mkdirP = wrapInPromise(fs.mkdir);
 var rmdirP = wrapInPromise(fs.rmdir);
 var unlinkP = wrapInPromise(fs.unlink);
 var lstatP = wrapInPromise(fs.lstat);
+var renameP = wrapInPromise(fs.rename);
 
 var NodeJSFileResource = function (_Resource) {
   inherits(NodeJSFileResource, _Resource);
@@ -2359,118 +2435,347 @@ var NodeJSFileResource = function (_Resource) {
       return isEmptyDirectory;
     }()
   }, {
-    key: "remove",
+    key: "rename",
     value: function () {
-      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
-        var _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, subResource;
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(toResource) {
+        var files, dirs, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, subR, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, subdir, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, file;
 
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
             switch (_context8.prev = _context8.next) {
               case 0:
-                _context8.next = 2;
-                return this.exists();
+                if (toResource instanceof this.constructor) {
+                  _context8.next = 2;
+                  break;
+                }
+
+                return _context8.abrupt("return", get$1(NodeJSFileResource.prototype.__proto__ || Object.getPrototypeOf(NodeJSFileResource.prototype), "rename", this).call(this, toResource));
 
               case 2:
-                if (_context8.sent) {
-                  _context8.next = 5;
+                if (!this.isFile()) {
+                  _context8.next = 7;
                   break;
                 }
 
-                _context8.next = 41;
+                toResource = toResource.asFile();
+                renameP(this.path(), toResource.path());
+
+                _context8.next = 93;
                 break;
 
-              case 5:
-                if (!this.isDirectory()) {
-                  _context8.next = 39;
-                  break;
-                }
+              case 7:
+                toResource = toResource.asDirectory();
+                _context8.next = 10;
+                return toResource.ensureExistance();
 
+              case 10:
+                files = [], dirs = [];
                 _iteratorNormalCompletion2 = true;
                 _didIteratorError2 = false;
                 _iteratorError2 = undefined;
-                _context8.prev = 9;
-                _context8.next = 12;
-                return this.dirList();
+                _context8.prev = 14;
+                _context8.next = 17;
+                return this.dirList("infinity");
 
-              case 12:
+              case 17:
                 _context8.t0 = Symbol.iterator;
                 _iterator2 = _context8.sent[_context8.t0]();
 
-              case 14:
+              case 19:
                 if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
-                  _context8.next = 21;
+                  _context8.next = 25;
                   break;
                 }
 
-                subResource = _step2.value;
-                _context8.next = 18;
-                return subResource.remove();
+                subR = _step2.value;
 
-              case 18:
+                if (subR.isDirectory()) dirs.push(subR);else files.push(subR);
+
+              case 22:
                 _iteratorNormalCompletion2 = true;
-                _context8.next = 14;
+                _context8.next = 19;
                 break;
 
-              case 21:
-                _context8.next = 27;
+              case 25:
+                _context8.next = 31;
                 break;
-
-              case 23:
-                _context8.prev = 23;
-                _context8.t1 = _context8["catch"](9);
-                _didIteratorError2 = true;
-                _iteratorError2 = _context8.t1;
 
               case 27:
                 _context8.prev = 27;
-                _context8.prev = 28;
+                _context8.t1 = _context8["catch"](14);
+                _didIteratorError2 = true;
+                _iteratorError2 = _context8.t1;
+
+              case 31:
+                _context8.prev = 31;
+                _context8.prev = 32;
 
                 if (!_iteratorNormalCompletion2 && _iterator2.return) {
                   _iterator2.return();
                 }
 
-              case 30:
-                _context8.prev = 30;
+              case 34:
+                _context8.prev = 34;
 
                 if (!_didIteratorError2) {
-                  _context8.next = 33;
+                  _context8.next = 37;
                   break;
                 }
 
                 throw _iteratorError2;
 
-              case 33:
-                return _context8.finish(30);
-
-              case 34:
-                return _context8.finish(27);
-
-              case 35:
-                _context8.next = 37;
-                return rmdirP(this.path());
-
               case 37:
-                _context8.next = 41;
-                break;
+                return _context8.finish(34);
+
+              case 38:
+                return _context8.finish(31);
 
               case 39:
-                _context8.next = 41;
-                return unlinkP(this.path());
+                _iteratorNormalCompletion3 = true;
+                _didIteratorError3 = false;
+                _iteratorError3 = undefined;
+                _context8.prev = 42;
+                _iterator3 = dirs[Symbol.iterator]();
 
-              case 41:
-                return _context8.abrupt("return", this);
+              case 44:
+                if (_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done) {
+                  _context8.next = 51;
+                  break;
+                }
 
-              case 42:
+                subdir = _step3.value;
+                _context8.next = 48;
+                return toResource.join(subdir.relativePathFrom(this)).ensureExistance();
+
+              case 48:
+                _iteratorNormalCompletion3 = true;
+                _context8.next = 44;
+                break;
+
+              case 51:
+                _context8.next = 57;
+                break;
+
+              case 53:
+                _context8.prev = 53;
+                _context8.t2 = _context8["catch"](42);
+                _didIteratorError3 = true;
+                _iteratorError3 = _context8.t2;
+
+              case 57:
+                _context8.prev = 57;
+                _context8.prev = 58;
+
+                if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                  _iterator3.return();
+                }
+
+              case 60:
+                _context8.prev = 60;
+
+                if (!_didIteratorError3) {
+                  _context8.next = 63;
+                  break;
+                }
+
+                throw _iteratorError3;
+
+              case 63:
+                return _context8.finish(60);
+
+              case 64:
+                return _context8.finish(57);
+
+              case 65:
+                _iteratorNormalCompletion4 = true;
+                _didIteratorError4 = false;
+                _iteratorError4 = undefined;
+                _context8.prev = 68;
+                _iterator4 = files[Symbol.iterator]();
+
+              case 70:
+                if (_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done) {
+                  _context8.next = 77;
+                  break;
+                }
+
+                file = _step4.value;
+                _context8.next = 74;
+                return file.rename(toResource.join(file.relativePathFrom(this)));
+
+              case 74:
+                _iteratorNormalCompletion4 = true;
+                _context8.next = 70;
+                break;
+
+              case 77:
+                _context8.next = 83;
+                break;
+
+              case 79:
+                _context8.prev = 79;
+                _context8.t3 = _context8["catch"](68);
+                _didIteratorError4 = true;
+                _iteratorError4 = _context8.t3;
+
+              case 83:
+                _context8.prev = 83;
+                _context8.prev = 84;
+
+                if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                  _iterator4.return();
+                }
+
+              case 86:
+                _context8.prev = 86;
+
+                if (!_didIteratorError4) {
+                  _context8.next = 89;
+                  break;
+                }
+
+                throw _iteratorError4;
+
+              case 89:
+                return _context8.finish(86);
+
+              case 90:
+                return _context8.finish(83);
+
+              case 91:
+                _context8.next = 93;
+                return this.remove();
+
+              case 93:
+                return _context8.abrupt("return", toResource);
+
+              case 94:
               case "end":
                 return _context8.stop();
             }
           }
-        }, _callee8, this, [[9, 23, 27, 35], [28,, 30, 34]]);
+        }, _callee8, this, [[14, 27, 31, 39], [32,, 34, 38], [42, 53, 57, 65], [58,, 60, 64], [68, 79, 83, 91], [84,, 86, 90]]);
+      }));
+
+      function rename$$1(_x5) {
+        return _ref8.apply(this, arguments);
+      }
+
+      return rename$$1;
+    }()
+  }, {
+    key: "remove",
+    value: function () {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
+        var _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, subResource;
+
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+          while (1) {
+            switch (_context9.prev = _context9.next) {
+              case 0:
+                _context9.next = 2;
+                return this.exists();
+
+              case 2:
+                if (_context9.sent) {
+                  _context9.next = 5;
+                  break;
+                }
+
+                _context9.next = 41;
+                break;
+
+              case 5:
+                if (!this.isDirectory()) {
+                  _context9.next = 39;
+                  break;
+                }
+
+                _iteratorNormalCompletion5 = true;
+                _didIteratorError5 = false;
+                _iteratorError5 = undefined;
+                _context9.prev = 9;
+                _context9.next = 12;
+                return this.dirList();
+
+              case 12:
+                _context9.t0 = Symbol.iterator;
+                _iterator5 = _context9.sent[_context9.t0]();
+
+              case 14:
+                if (_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done) {
+                  _context9.next = 21;
+                  break;
+                }
+
+                subResource = _step5.value;
+                _context9.next = 18;
+                return subResource.remove();
+
+              case 18:
+                _iteratorNormalCompletion5 = true;
+                _context9.next = 14;
+                break;
+
+              case 21:
+                _context9.next = 27;
+                break;
+
+              case 23:
+                _context9.prev = 23;
+                _context9.t1 = _context9["catch"](9);
+                _didIteratorError5 = true;
+                _iteratorError5 = _context9.t1;
+
+              case 27:
+                _context9.prev = 27;
+                _context9.prev = 28;
+
+                if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                  _iterator5.return();
+                }
+
+              case 30:
+                _context9.prev = 30;
+
+                if (!_didIteratorError5) {
+                  _context9.next = 33;
+                  break;
+                }
+
+                throw _iteratorError5;
+
+              case 33:
+                return _context9.finish(30);
+
+              case 34:
+                return _context9.finish(27);
+
+              case 35:
+                _context9.next = 37;
+                return rmdirP(this.path());
+
+              case 37:
+                _context9.next = 41;
+                break;
+
+              case 39:
+                _context9.next = 41;
+                return unlinkP(this.path());
+
+              case 41:
+                return _context9.abrupt("return", this);
+
+              case 42:
+              case "end":
+                return _context9.stop();
+            }
+          }
+        }, _callee9, this, [[9, 23, 27, 35], [28,, 30, 34]]);
       }));
 
       function remove() {
-        return _ref8.apply(this, arguments);
+        return _ref9.apply(this, arguments);
       }
 
       return remove;
@@ -2478,29 +2783,29 @@ var NodeJSFileResource = function (_Resource) {
   }, {
     key: "readProperties",
     value: function () {
-      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(opts) {
-        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(opts) {
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
-            switch (_context9.prev = _context9.next) {
+            switch (_context10.prev = _context10.next) {
               case 0:
-                _context9.t0 = this;
-                _context9.next = 3;
+                _context10.t0 = this;
+                _context10.next = 3;
                 return this.stat();
 
               case 3:
-                _context9.t1 = _context9.sent;
-                return _context9.abrupt("return", _context9.t0._assignPropsFromStat.call(_context9.t0, _context9.t1));
+                _context10.t1 = _context10.sent;
+                return _context10.abrupt("return", _context10.t0._assignPropsFromStat.call(_context10.t0, _context10.t1));
 
               case 5:
               case "end":
-                return _context9.stop();
+                return _context10.stop();
             }
           }
-        }, _callee9, this);
+        }, _callee10, this);
       }));
 
-      function readProperties(_x5) {
-        return _ref9.apply(this, arguments);
+      function readProperties(_x6) {
+        return _ref10.apply(this, arguments);
       }
 
       return readProperties;

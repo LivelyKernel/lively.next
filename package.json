@@ -3,10 +3,14 @@
   "version": "0.1.0",
   "main": "index.js",
   "bin": {
-			"fnp": "./cli.js",
+			"fnp": "./bin/cli.js",
 			"fnp_node": "./bin/node"
   },
   "dependencies": {
     "fetch-ponyfill": "^4.0.0"
-  }
+  },
+		"systemjs": {
+				"meta": {"./deps/lively.resources.js": {"deps": ["fs"]}},
+				"map": {"fetch-ponyfill": "./deps/fetch-ponyfill@4.0.0"}
+		}
 }

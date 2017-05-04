@@ -1,30 +1,32 @@
 #!/usr/bin/env node
 
 /*global require, global, process*/
-const parseArgs = require('./deps/minimist.js'),
-      { string } = (typeof lively !== "undefined" && lively.lang) || require("./deps/lively.lang.min.js"),
-      { resource } = (typeof lively !== "undefined" && lively.resources) || require("./deps/lively.resources.js"),
+const parseArgs = require('../deps/minimist.js'),
+      { string } = (typeof lively !== "undefined" && lively.lang) || require("../deps/lively.lang.min.js"),
+      { resource } = (typeof lively !== "undefined" && lively.resources) || require("../deps/lively.resources.js"),
       { join: j, isAbsolute, normalize } = require("path"),
       fs = require("fs"),
       { spawn } = require("child_process"),
       fetchPonyfill = require("fetch-ponyfill"),
-      fnp = require("./index.js"),
+      fnp = require("../index.js"),
       args = process.argv.slice(2);
 
 if (printHelp(args)) process.exit(0);
 
-if (!resource)
-Object.assign(global, fetchPonyfill());
+if (!global.fetch) Object.assign(global, fetchPonyfill());
 
 let activeDir = process.cwd(),
     command,
     cmdIndex = args.findIndex(arg =>
-      ["list", "install", "node"].includes(arg) && (command = arg));
+      ["list", "install", "node", "env", "build"]
+        .includes(arg) && (command = arg));
 
 switch (command) {
   case 'list': doList(args.slice(cmdIndex+1)); break;
   case 'install': doInstall(args.slice(cmdIndex+1)); break;
+  case 'build': doBuild(args.slice(cmdIndex+1)); break;
   case 'node': doNode(args.slice(cmdIndex+1)); break;
+  case 'env': doEnv(args.slice(cmdIndex+1)); break;
   default: strangeInvocation();
 }
 
@@ -60,27 +62,16 @@ function doNode(args) {
     process.exit(1);
   }
 
-  // let proc = spawn(j(__dirname, "bin/node"), args["--"]);
-  // proc.stdout.pipe(process.stdout);
-  // proc.stderr.pipe(process.stderr);
-  // proc.on("exit", code => process.exit(code));
-  
   var tty = require('tty'),
       spawn = require('child_process').spawn;
   
   console.log(args["--"])
   // var child = spawn(j(__dirname, "bin/node"), args["--"], {stdio: [0,1,2]});
   var child = spawn("node", args["--"], {stdio: [0,1,2]});
-  // child.stdout.pipe(process.stdout);
-  // child.stderr.pipe(process.stderr);
-  // process.stdin.pipe(child.stdin);
-  process.stdin.resume();
-  // process.stdin.setRawMode(true);
-  // child.stdin.setRawMode(true);
-  
-  child.on('exit', function(code, signal) {
-      process.stdin.pause();
-      process.exit(code);
+  process.stdin.resume();  
+  child.on("exit", function(code, signal) {
+    process.stdin.pause();
+    process.exit(code);
   });
 
   // setTimeout(() => process.exit(0), 3000);
@@ -117,6 +108,39 @@ function doInstall(args) {
 
   console.log(args);
   process.exit(1);
+}
+
+function doBuild(args) {
+  args = parseArgs(args, {alias: {"packages": "P"}});
+
+  if (!args.packages) {
+    console.error("No package directories specified. Use one or multiple --packages/-P to specify package directoriese.");
+    return process.exit(1);
+  }
+
+  let argv = args._;
+
+  // install current package
+  if (!argv || !argv.length) {
+
+    if (!fs.existsSync(j(activeDir, "package.json"))) {
+      console.error(`No package.json is present in ${activeDir}, cannot build!`)
+      process.exit(1);
+    }
+
+    let packageDirs = checkPackages(packagesFromArgs(args));
+    return fnp.buildPackage(activeDir, packageDirs)
+      .then(() => process.exit(0))
+      .catch(err => { console.error(err.stack); process.exit(1); })
+  }
+
+  console.log(args);
+  process.exit(1);
+}
+
+function doEnv(args) {
+  console.log(`PATH=${j(__dirname)}:$PATH`)
+  process.exit(0);
 }
 
 function printHelp(args) {

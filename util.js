@@ -1,11 +1,15 @@
-/*global process*/
+/*global process, require, module*/
 
 const { exec } = require("child_process");
 const { join: j } = require("path");
 const { tmpdir } = require("os");
-
 const { resource } = (typeof lively !== "undefined" && lively.resources) || require("./deps/lively.resources.js");
 
+function maybeFileResource(url) {
+  if (typeof url === "string" && url.startsWith("/"))
+      url = "file://" + url;
+  return url.isResource ? url : resource(url);
+}
 
 async function npmSearchForVersions(packageNameAndRange) {
   // let packageNameAndRange = "lively.lang@~0.4"
@@ -20,7 +24,7 @@ async function npmSearchForVersions(packageNameAndRange) {
 }
 
 async function npmDownloadArchive(packageNameAndRange, destinationDir) {
-  destinationDir = resource(destinationDir);
+  destinationDir = maybeFileResource(destinationDir);
   let {version, name} = await npmSearchForVersions(packageNameAndRange),
       archive=`${name}-${version}.tgz`,
       archiveURL = `https://registry.npmjs.org/${name}/-/${archive}`
@@ -41,8 +45,8 @@ async function untar(downloadedArchive, targetDir, name) {
   // FIXME use tar module???
 
   if (!name) name = downloadedArchive.name().replace(/(\.tar|\.tar.tgz|.tgz)$/, "");
-  downloadedArchive = resource(downloadedArchive);
-  targetDir = resource(targetDir);
+  downloadedArchive = maybeFileResource(downloadedArchive);
+  targetDir = maybeFileResource(targetDir);
 
   let untarDir = resource(`file://${tmpdir()}/npm-helper-untar/`);
   await untarDir.ensureExistance();
@@ -70,7 +74,7 @@ async function untar(downloadedArchive, targetDir, name) {
 // await gitClone("https://github.com/LivelyKernel/lively.morphic", "local://lively.node-packages-test/test-download/lively.morphic.test")
 
 async function gitClone(gitURL, intoDir, branch = "master") {
-  intoDir = resource(intoDir).asDirectory();
+  intoDir = maybeFileResource(intoDir).asDirectory();
   let name = intoDir.name(), tmp;
   if (!intoDir.url.startsWith("file://")) {
     tmp = resource(`file://${tmpdir()}/npm-helper-gitclone/`);
@@ -97,8 +101,6 @@ async function gitClone(gitURL, intoDir, branch = "master") {
   }
   
   if (tmp) await tmp.join(name + "/").rename(intoDir);
-
-  return intoDir;
 }
 
 
@@ -106,7 +108,7 @@ async function gitClone(gitURL, intoDir, branch = "master") {
 function x(cmd, opts = {}) {
   return new Promise((resolve, reject) => {
     let p = exec(cmd, opts, (code, stdout, stderr) =>
-      (code && console.log(opts)) || code
+      code
         ? reject(new Error(`Command ${cmd} failed: ${code}\n${stdout}${stderr}`))
         : resolve(stdout));
     if (opts.verbose) {

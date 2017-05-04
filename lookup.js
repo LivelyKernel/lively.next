@@ -1,10 +1,16 @@
-const { resource } = (typeof lively !== "undefined" && lively.resources) || require("./deps/lively.resources.js");
+/*global require, module*/
+const semver = require("./deps/semver.min.js")
+const { basename, join: j } = require("path");
+const fs = require("fs");
 
 const lvInfoFileName = ".lv-npm-helper-info.json";
 
-async function readPackageSpec(packageDir, optPackageJSON) {
-  let hasBindingGyp = await packageDir.join("binding.gyp").exists(),
-      config = optPackageJSON || await packageDir.join("package.json").readJson(),
+function readPackageSpec(packageDir, optPackageJSON) {
+  if (!fs.statSync(packageDir).isDirectory() || !fs.existsSync(j(packageDir, "package.json")))
+    return null;
+
+  let hasBindingGyp = fs.existsSync(j(packageDir, "binding.gyp")),
+      config = optPackageJSON || JSON.parse(String(fs.readFileSync(j(packageDir, "package.json")))),
       scripts, bin;
 
   if (config.bin) {
@@ -20,10 +26,12 @@ async function readPackageSpec(packageDir, optPackageJSON) {
   }
 
   let info = {};
-  try { info = await packageDir.join(lvInfoFileName).readJson(); } catch (err) {}
+  try {
+    info = JSON.parse(String(fs.readFileSync(j(packageDir, lvInfoFileName))));
+  } catch (err) {}
 
   return Object.assign({}, info, {
-    location: packageDir.url,
+    location: packageDir,
     hasBindingGyp,
     scripts,
     bin,
@@ -56,16 +64,54 @@ function pathForNameAndVersion(nameAndVersion, destinationDir) {
 
   // "git clone -b my-branch git@github.com:user/myproject.git"
   if (gitSpec) {
-    let location = resource(destinationDir).join(`${name}@${gitSpec.inFileName}`).url;
+    let location = j(destinationDir, `${name}@${gitSpec.inFileName}`);
     return Object.assign({}, gitSpec, {location, name, version: gitSpec.gitURL});
   }
   
-  return {location: resource(destinationDir).join(nameAndVersion).url, name, version}
+  return {location: j(destinationDir, nameAndVersion), name, version}
+}
+
+
+function findMatchingPackageSpec(pName, versionRange, packageMap, verbose = false) {
+  // tries to retrieve a package specified by name or name@versionRange (like
+  // foo@^1.2) from packageDirs.
+
+  // let pMap = buildPackageMap(["/Users/robert/.central-node-packages"])
+  // await getInstalledPackage("leveldown", "^1", pMap)
+
+  let gitSpec = gitSpecFromVersion(versionRange || ""), found;
+
+  for (let key in packageMap) {
+    let pSpec = packageMap[key],
+        // {config: {name, version}} =
+        [name, version] = key.split("@");
+
+    if (name !== pName) continue;
+
+    if (!versionRange) { found = pSpec; break; }
+
+    if (gitSpec && (gitSpec.inFileName === version
+      || pSpec.inFileName === gitSpec.inFileName)) {
+       found = pSpec; break; 
+    }
+
+    if (!semver.parse(version || ""))
+      version = pSpec.config.version;
+    if (semver.satisfies(version, versionRange)) {
+      found = pSpec; break;
+    }
+  }
+
+  if (!found) console.log(pName, versionRange, gitSpec)
+  // (verbose || debug) && console.log(`[fnp] is ${pName}@${versionRange} installed? ${found ? "yes" : "no"}`);
+
+  return found;
 }
 
 module.exports = {
   lvInfoFileName,
   readPackageSpec,
   gitSpecFromVersion,
-  pathForNameAndVersion
+  pathForNameAndVersion,
+  findMatchingPackageSpec
 }
