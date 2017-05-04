@@ -20,6 +20,11 @@ export default class JavaScriptChecker {
 
     var options = {withComments: true, allowReturnOutsideFunction: true};
     options.type = astType;
+    // executable script?
+    if (src.startsWith("#!")) {
+      let firstLineEnd = src.indexOf("\n");
+      src = " ".repeat(firstLineEnd) + src.slice(firstLineEnd);
+    }
     return astModule.fuzzyParse(src, options);
   }
 
