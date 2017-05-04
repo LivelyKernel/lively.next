@@ -1,5 +1,5 @@
 
-// INLINED /Users/robin/Development/lively-dev-2/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -658,9 +658,9 @@
   typeof self === "object" ? self : this
 );
 
-// INLINED END /Users/robin/Development/lively-dev-2/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
 
-// INLINED /Users/robin/Development/lively-dev-2/lively.lang/dist/lively.lang.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
 
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -8433,9 +8433,9 @@ exports.uninstallGlobals = uninstallGlobals;
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.lang;
 })();
 
-// INLINED END /Users/robin/Development/lively-dev-2/lively.lang/dist/lively.lang.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
 
-// INLINED /Users/robin/Development/lively-dev-2/lively.notifications/dist/lively.notifications.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -8593,9 +8593,9 @@ exports.stopLogging = stopLogging;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /Users/robin/Development/lively-dev-2/lively.notifications/dist/lively.notifications.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
 
-// INLINED /Users/robin/Development/lively-dev-2/lively.ast/dist/lively.ast.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -23556,9 +23556,9 @@ exports.fuzzyParse = fuzzyParse;
   if (__define_suckz__) { GLOBAL.define = __define_suckz__; }
 })();
 
-// INLINED END /Users/robin/Development/lively-dev-2/lively.ast/dist/lively.ast.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
 
-// INLINED /Users/robin/Development/lively-dev-2/lively.classes/dist/lively.classes.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -24586,9 +24586,9 @@ exports.classToFunctionTransform = classToFunctionTransform;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /Users/robin/Development/lively-dev-2/lively.classes/dist/lively.classes.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
 
-// INLINED /Users/robin/Development/lively-dev-2/lively.source-transform/dist/lively.source-transform.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -25538,9 +25538,9 @@ exports.stringifyFunctionWithoutToplevelRecorder = stringifyFunctionWithoutTople
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.sourceTransform;
 })();
-// INLINED END /Users/robin/Development/lively-dev-2/lively.source-transform/dist/lively.source-transform.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
 
-// INLINED /Users/robin/Development/lively-dev-2/lively.vm/dist/lively.vm.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -27274,9 +27274,9 @@ exports.evalCodeTransformOfSystemRegisterSetters = evalCodeTransformOfSystemRegi
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
 })();
-// INLINED END /Users/robin/Development/lively-dev-2/lively.vm/dist/lively.vm.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
 
-// INLINED /Users/robin/Development/lively-dev-2/lively.resources/dist/lively.resources_no-deps.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -29895,9 +29895,9 @@ exports.Resource = Resource$$1;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.resources;
 })();
-// INLINED END /Users/robin/Development/lively-dev-2/lively.resources/dist/lively.resources_no-deps.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
 
-// INLINED /Users/robin/Development/lively-dev-2/lively.storage/dist/lively.storage_with-pouch.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.storage/dist/lively.storage_with-pouch.js
 
 (function() {
 
@@ -65574,9 +65574,9 @@ exports.Database = Database;
 
 })();
 
-// INLINED END /Users/robin/Development/lively-dev-2/lively.storage/dist/lively.storage_with-pouch.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.storage/dist/lively.storage_with-pouch.js
 
-// INLINED /Users/robin/Development/lively-dev-2/lively.modules/systemjs-init.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -65789,12 +65789,12 @@ exports.Database = Database;
 
 })();
 
-// INLINED END /Users/robin/Development/lively-dev-2/lively.modules/systemjs-init.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
-// INLINED /Users/robin/Development/lively-dev-2/lively.modules/node_modules/semver/semver.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -66999,7 +66999,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-// INLINED END /Users/robin/Development/lively-dev-2/lively.modules/node_modules/semver/semver.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
 semver = exports;
 })({}, {});
 
@@ -71617,10 +71617,10 @@ var ModuleInterface = function () {
       return _localDeclForRefAt;
     }()
   }, {
-    key: "_importForNSRefAt",
+    key: "_localDeclForName",
     value: function () {
-      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(pos) {
-        var scope, ast, nodes$$1, id, member, _ref16, decl, name, spec;
+      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(nameOfRef) {
+        var scope, found, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, ref, name;
 
         return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
@@ -71631,105 +71631,137 @@ var ModuleInterface = function () {
 
               case 2:
                 scope = _context14.sent;
-                ast = scope.node;
-                nodes$$1 = lively_ast.query.nodesAtIndex(ast, pos);
+                found = void 0;
+                _iteratorNormalCompletion2 = true;
+                _didIteratorError2 = false;
+                _iteratorError2 = undefined;
+                _context14.prev = 7;
+                _iterator2 = scope.resolvedRefMap.values()[Symbol.iterator]();
 
-                if (!(nodes$$1.length < 2)) {
-                  _context14.next = 7;
+              case 9:
+                if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
+                  _context14.next = 18;
                   break;
                 }
 
-                return _context14.abrupt("return", [null, null]);
+                ref = _step2.value;
+                name = ref.ref.name;
 
-              case 7:
-                id = nodes$$1[nodes$$1.length - 1], member = nodes$$1[nodes$$1.length - 2];
-
-                if (!(id.type != "Identifier" || member.type != "MemberExpression" || member.computed || member.object.type !== "Identifier")) {
-                  _context14.next = 10;
+                if (!(nameOfRef === name)) {
+                  _context14.next = 15;
                   break;
                 }
 
-                return _context14.abrupt("return", [null, null]);
-
-              case 10:
-                _ref16 = scope.resolvedRefMap.get(member.object) || {}, decl = _ref16.decl;
-
-                if (!(!decl || decl.type !== "ImportDeclaration")) {
-                  _context14.next = 13;
-                  break;
-                }
-
-                return _context14.abrupt("return", [null, null]);
-
-              case 13:
-                name = member.object.name, spec = decl.specifiers.find(function (s) {
-                  return s.local.name === name;
-                });
-                return _context14.abrupt("return", spec.type !== "ImportNamespaceSpecifier" ? [null, null] : [decl, spec.local, id.name]);
+                found = ref;return _context14.abrupt("break", 18);
 
               case 15:
+                _iteratorNormalCompletion2 = true;
+                _context14.next = 9;
+                break;
+
+              case 18:
+                _context14.next = 24;
+                break;
+
+              case 20:
+                _context14.prev = 20;
+                _context14.t0 = _context14["catch"](7);
+                _didIteratorError2 = true;
+                _iteratorError2 = _context14.t0;
+
+              case 24:
+                _context14.prev = 24;
+                _context14.prev = 25;
+
+                if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                  _iterator2.return();
+                }
+
+              case 27:
+                _context14.prev = 27;
+
+                if (!_didIteratorError2) {
+                  _context14.next = 30;
+                  break;
+                }
+
+                throw _iteratorError2;
+
+              case 30:
+                return _context14.finish(27);
+
+              case 31:
+                return _context14.finish(24);
+
+              case 32:
+                return _context14.abrupt("return", found && { decl: found.decl, id: found.declId, declModule: this });
+
+              case 33:
               case "end":
                 return _context14.stop();
             }
           }
-        }, _callee14, this);
+        }, _callee14, this, [[7, 20, 24, 32], [25,, 27, 31]]);
       }));
 
-      function _importForNSRefAt(_x15) {
+      function _localDeclForName(_x15) {
         return _ref15.apply(this, arguments);
       }
 
-      return _importForNSRefAt;
+      return _localDeclForName;
     }()
   }, {
-    key: "_resolveImportedDecl",
+    key: "_importForNSRefAt",
     value: function () {
-      var _ref17 = asyncToGenerator(regeneratorRuntime.mark(function _callee15(decl) {
-        var _decl$id, start, name, type, imports, im, imM;
+      var _ref16 = asyncToGenerator(regeneratorRuntime.mark(function _callee15(pos) {
+        var scope, ast, nodes$$1, id, member, _ref17, decl, name, spec;
 
         return regeneratorRuntime.wrap(function _callee15$(_context15) {
           while (1) {
             switch (_context15.prev = _context15.next) {
               case 0:
-                if (decl) {
-                  _context15.next = 2;
-                  break;
-                }
-
-                return _context15.abrupt("return", []);
+                _context15.next = 2;
+                return this.resolvedScope();
 
               case 2:
-                _decl$id = decl.id;
-                start = _decl$id.start;
-                name = _decl$id.name;
-                type = _decl$id.type;
-                _context15.next = 8;
-                return this.imports();
+                scope = _context15.sent;
+                ast = scope.node;
+                nodes$$1 = lively_ast.query.nodesAtIndex(ast, pos);
 
-              case 8:
-                imports = _context15.sent;
-                im = imports.find(function (i) {
-                  return i.local == name;
-                });
-
-                if (!im) {
-                  _context15.next = 17;
+                if (!(nodes$$1.length < 2)) {
+                  _context15.next = 7;
                   break;
                 }
 
-                imM = module$2(this.System, im.fromModule, this.id);
-                _context15.t0 = [decl];
-                _context15.next = 15;
-                return imM.bindingPathForExport(im.imported);
+                return _context15.abrupt("return", [null, null]);
+
+              case 7:
+                id = nodes$$1[nodes$$1.length - 1], member = nodes$$1[nodes$$1.length - 2];
+
+                if (!(id.type != "Identifier" || member.type != "MemberExpression" || member.computed || member.object.type !== "Identifier")) {
+                  _context15.next = 10;
+                  break;
+                }
+
+                return _context15.abrupt("return", [null, null]);
+
+              case 10:
+                _ref17 = scope.resolvedRefMap.get(member.object) || {}, decl = _ref17.decl;
+
+                if (!(!decl || decl.type !== "ImportDeclaration")) {
+                  _context15.next = 13;
+                  break;
+                }
+
+                return _context15.abrupt("return", [null, null]);
+
+              case 13:
+                name = member.object.name, spec = decl.specifiers.find(function (s) {
+                  return s.local.name === name;
+                });
+                return _context15.abrupt("return", spec.type !== "ImportNamespaceSpecifier" ? [null, null] : [decl, spec.local, id.name]);
 
               case 15:
-                _context15.t1 = _context15.sent;
-                return _context15.abrupt("return", _context15.t0.concat.call(_context15.t0, _context15.t1));
-
-              case 17:
-                return _context15.abrupt("return", [decl]);
-
-              case 18:
               case "end":
                 return _context15.stop();
             }
@@ -71737,57 +71769,59 @@ var ModuleInterface = function () {
         }, _callee15, this);
       }));
 
-      function _resolveImportedDecl(_x16) {
-        return _ref17.apply(this, arguments);
+      function _importForNSRefAt(_x16) {
+        return _ref16.apply(this, arguments);
       }
 
-      return _resolveImportedDecl;
+      return _importForNSRefAt;
     }()
   }, {
-    key: "bindingPathForExport",
+    key: "_resolveImportedDecl",
     value: function () {
-      var _ref18 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(name) {
-        var exports, ex, imM, decl;
+      var _ref18 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(decl) {
+        var _decl$id, start, name, type, imports, im, imM;
+
         return regeneratorRuntime.wrap(function _callee16$(_context16) {
           while (1) {
             switch (_context16.prev = _context16.next) {
               case 0:
-                _context16.next = 2;
-                return this.resolvedScope();
+                if (decl) {
+                  _context16.next = 2;
+                  break;
+                }
+
+                return _context16.abrupt("return", []);
 
               case 2:
-                _context16.next = 4;
-                return this.exports();
+                _decl$id = decl.id;
+                start = _decl$id.start;
+                name = _decl$id.name;
+                type = _decl$id.type;
+                _context16.next = 8;
+                return this.imports();
 
-              case 4:
-                exports = _context16.sent;
-                ex = exports.find(function (e) {
-                  return e.exported === name;
+              case 8:
+                imports = _context16.sent;
+                im = imports.find(function (i) {
+                  return i.local == name;
                 });
 
-                if (!ex.fromModule) {
+                if (!im) {
                   _context16.next = 17;
                   break;
                 }
 
-                imM = module$2(this.System, ex.fromModule, this.id);
-                decl = { decl: ex.node, id: ex.declId };
-
-                decl.declModule = this;
+                imM = module$2(this.System, im.fromModule, this.id);
                 _context16.t0 = [decl];
-                _context16.next = 13;
-                return imM.bindingPathForExport(ex.imported);
+                _context16.next = 15;
+                return imM.bindingPathForExport(im.imported);
 
-              case 13:
+              case 15:
                 _context16.t1 = _context16.sent;
                 return _context16.abrupt("return", _context16.t0.concat.call(_context16.t0, _context16.t1));
 
               case 17:
-                return _context16.abrupt("return", this._resolveImportedDecl({
-                  decl: ex.decl,
-                  id: ex.declId,
-                  declModule: ex && ex.decl ? this : null
-                }));
+                return _context16.abrupt("return", [decl]);
 
               case 18:
               case "end":
@@ -71797,24 +71831,23 @@ var ModuleInterface = function () {
         }, _callee16, this);
       }));
 
-      function bindingPathForExport(_x17) {
+      function _resolveImportedDecl(_x17) {
         return _ref18.apply(this, arguments);
       }
 
-      return bindingPathForExport;
+      return _resolveImportedDecl;
     }()
   }, {
-    key: "bindingPathForRefAt",
+    key: "bindingPathFor",
     value: function () {
-      var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee17(pos) {
-        var decl, _ref20, _ref21, imDecl, id, name, imM;
-
+      var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee17(nameOfRef) {
+        var decl;
         return regeneratorRuntime.wrap(function _callee17$(_context17) {
           while (1) {
             switch (_context17.prev = _context17.next) {
               case 0:
                 _context17.next = 2;
-                return this._localDeclForRefAt(pos);
+                return this._localDeclForName(nameOfRef);
 
               case 2:
                 decl = _context17.sent;
@@ -71831,34 +71864,6 @@ var ModuleInterface = function () {
                 return _context17.abrupt("return", _context17.sent);
 
               case 7:
-                _context17.next = 9;
-                return this._importForNSRefAt(pos);
-
-              case 9:
-                _ref20 = _context17.sent;
-                _ref21 = slicedToArray(_ref20, 3);
-                imDecl = _ref21[0];
-                id = _ref21[1];
-                name = _ref21[2];
-
-                if (imDecl) {
-                  _context17.next = 16;
-                  break;
-                }
-
-                return _context17.abrupt("return", []);
-
-              case 16:
-                imM = module$2(this.System, imDecl.source.value, this.id);
-                _context17.t0 = [{ decl: imDecl, declModule: this, id: id }];
-                _context17.next = 20;
-                return imM.bindingPathForExport(name);
-
-              case 20:
-                _context17.t1 = _context17.sent;
-                return _context17.abrupt("return", _context17.t0.concat.call(_context17.t0, _context17.t1));
-
-              case 22:
               case "end":
                 return _context17.stop();
             }
@@ -71866,29 +71871,59 @@ var ModuleInterface = function () {
         }, _callee17, this);
       }));
 
-      function bindingPathForRefAt(_x18) {
+      function bindingPathFor(_x18) {
         return _ref19.apply(this, arguments);
       }
 
-      return bindingPathForRefAt;
+      return bindingPathFor;
     }()
   }, {
-    key: "definitionForRefAt",
+    key: "bindingPathForExport",
     value: function () {
-      var _ref22 = asyncToGenerator(regeneratorRuntime.mark(function _callee18(pos) {
-        var path;
+      var _ref20 = asyncToGenerator(regeneratorRuntime.mark(function _callee18(name) {
+        var exports, ex, imM, decl;
         return regeneratorRuntime.wrap(function _callee18$(_context18) {
           while (1) {
             switch (_context18.prev = _context18.next) {
               case 0:
                 _context18.next = 2;
-                return this.bindingPathForRefAt(pos);
+                return this.resolvedScope();
 
               case 2:
-                path = _context18.sent;
-                return _context18.abrupt("return", path.length < 1 ? null : path[path.length - 1].decl);
+                _context18.next = 4;
+                return this.exports();
 
               case 4:
+                exports = _context18.sent;
+                ex = exports.find(function (e) {
+                  return e.exported === name;
+                });
+
+                if (!ex.fromModule) {
+                  _context18.next = 17;
+                  break;
+                }
+
+                imM = module$2(this.System, ex.fromModule, this.id);
+                decl = { decl: ex.node, id: ex.declId };
+
+                decl.declModule = this;
+                _context18.t0 = [decl];
+                _context18.next = 13;
+                return imM.bindingPathForExport(ex.imported);
+
+              case 13:
+                _context18.t1 = _context18.sent;
+                return _context18.abrupt("return", _context18.t0.concat.call(_context18.t0, _context18.t1));
+
+              case 17:
+                return _context18.abrupt("return", this._resolveImportedDecl({
+                  decl: ex.decl,
+                  id: ex.declId,
+                  declModule: ex && ex.decl ? this : null
+                }));
+
+              case 18:
               case "end":
                 return _context18.stop();
             }
@@ -71896,8 +71931,107 @@ var ModuleInterface = function () {
         }, _callee18, this);
       }));
 
-      function definitionForRefAt(_x19) {
-        return _ref22.apply(this, arguments);
+      function bindingPathForExport(_x19) {
+        return _ref20.apply(this, arguments);
+      }
+
+      return bindingPathForExport;
+    }()
+  }, {
+    key: "bindingPathForRefAt",
+    value: function () {
+      var _ref21 = asyncToGenerator(regeneratorRuntime.mark(function _callee19(pos) {
+        var decl, _ref22, _ref23, imDecl, id, name, imM;
+
+        return regeneratorRuntime.wrap(function _callee19$(_context19) {
+          while (1) {
+            switch (_context19.prev = _context19.next) {
+              case 0:
+                _context19.next = 2;
+                return this._localDeclForRefAt(pos);
+
+              case 2:
+                decl = _context19.sent;
+
+                if (!decl) {
+                  _context19.next = 7;
+                  break;
+                }
+
+                _context19.next = 6;
+                return this._resolveImportedDecl(decl);
+
+              case 6:
+                return _context19.abrupt("return", _context19.sent);
+
+              case 7:
+                _context19.next = 9;
+                return this._importForNSRefAt(pos);
+
+              case 9:
+                _ref22 = _context19.sent;
+                _ref23 = slicedToArray(_ref22, 3);
+                imDecl = _ref23[0];
+                id = _ref23[1];
+                name = _ref23[2];
+
+                if (imDecl) {
+                  _context19.next = 16;
+                  break;
+                }
+
+                return _context19.abrupt("return", []);
+
+              case 16:
+                imM = module$2(this.System, imDecl.source.value, this.id);
+                _context19.t0 = [{ decl: imDecl, declModule: this, id: id }];
+                _context19.next = 20;
+                return imM.bindingPathForExport(name);
+
+              case 20:
+                _context19.t1 = _context19.sent;
+                return _context19.abrupt("return", _context19.t0.concat.call(_context19.t0, _context19.t1));
+
+              case 22:
+              case "end":
+                return _context19.stop();
+            }
+          }
+        }, _callee19, this);
+      }));
+
+      function bindingPathForRefAt(_x20) {
+        return _ref21.apply(this, arguments);
+      }
+
+      return bindingPathForRefAt;
+    }()
+  }, {
+    key: "definitionForRefAt",
+    value: function () {
+      var _ref24 = asyncToGenerator(regeneratorRuntime.mark(function _callee20(pos) {
+        var path;
+        return regeneratorRuntime.wrap(function _callee20$(_context20) {
+          while (1) {
+            switch (_context20.prev = _context20.next) {
+              case 0:
+                _context20.next = 2;
+                return this.bindingPathForRefAt(pos);
+
+              case 2:
+                path = _context20.sent;
+                return _context20.abrupt("return", path.length < 1 ? null : path[path.length - 1].decl);
+
+              case 4:
+              case "end":
+                return _context20.stop();
+            }
+          }
+        }, _callee20, this);
+      }));
+
+      function definitionForRefAt(_x21) {
+        return _ref24.apply(this, arguments);
       }
 
       return definitionForRefAt;
@@ -71951,14 +72085,14 @@ var ModuleInterface = function () {
   }, {
     key: "search",
     value: function () {
-      var _ref23 = asyncToGenerator(regeneratorRuntime.mark(function _callee19(searchStr, options) {
+      var _ref25 = asyncToGenerator(regeneratorRuntime.mark(function _callee21(searchStr, options) {
         var _this11 = this;
 
         var src, re, flags, match, res, i, j, line, lineStart, _res$j, idx, length, lineEnd, p;
 
-        return regeneratorRuntime.wrap(function _callee19$(_context19) {
+        return regeneratorRuntime.wrap(function _callee21$(_context21) {
           while (1) {
-            switch (_context19.prev = _context19.next) {
+            switch (_context21.prev = _context21.next) {
               case 0:
                 options = _extends({ excludedModules: [] }, options);
 
@@ -71968,18 +72102,18 @@ var ModuleInterface = function () {
                   if (typeof ex === "function") return ex(_this11.id);
                   return false;
                 })) {
-                  _context19.next = 3;
+                  _context21.next = 3;
                   break;
                 }
 
-                return _context19.abrupt("return", []);
+                return _context21.abrupt("return", []);
 
               case 3:
-                _context19.next = 5;
+                _context21.next = 5;
                 return this.source();
 
               case 5:
-                src = _context19.sent;
+                src = _context21.sent;
                 re = void 0;
 
                 if (searchStr instanceof RegExp) {
@@ -72000,7 +72134,7 @@ var ModuleInterface = function () {
 
               case 11:
                 if (!(i < src.length && j < res.length)) {
-                  _context19.next = 24;
+                  _context21.next = 24;
                   break;
                 }
 
@@ -72011,11 +72145,11 @@ var ModuleInterface = function () {
                 _res$j = slicedToArray(res[j], 2), idx = _res$j[0], length = _res$j[1];
 
                 if (!(i !== idx)) {
-                  _context19.next = 16;
+                  _context21.next = 16;
                   break;
                 }
 
-                return _context19.abrupt("continue", 21);
+                return _context21.abrupt("continue", 21);
 
               case 16:
                 lineEnd = src.slice(lineStart).indexOf("\n");
@@ -72036,22 +72170,22 @@ var ModuleInterface = function () {
 
               case 21:
                 i++;
-                _context19.next = 11;
+                _context21.next = 11;
                 break;
 
               case 24:
-                return _context19.abrupt("return", res);
+                return _context21.abrupt("return", res);
 
               case 25:
               case "end":
-                return _context19.stop();
+                return _context21.stop();
             }
           }
-        }, _callee19, this);
+        }, _callee21, this);
       }));
 
-      function search(_x20, _x21) {
-        return _ref23.apply(this, arguments);
+      function search(_x22, _x23) {
+        return _ref25.apply(this, arguments);
       }
 
       return search;
