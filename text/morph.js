@@ -681,6 +681,10 @@ export class Text extends Morph {
     return p ? p.shortName : null;
   }
 
+  set editorModeName(nameOrMode) {
+    this.changeEditorMode(nameOrMode);
+  }
+
   async changeEditorMode(nameOrMode) {
     // let nameOrMode = "js"
     
@@ -723,11 +727,10 @@ export class Text extends Morph {
 
   get scrollExtent() {
     // rms: See: morph>>scrollExtent
-    const HTMLScrollbarOffset = pt(15,15);
     return this.textBounds().extent()
       .addPt(this.padding.topLeft())
       .addPt(this.padding.bottomRight())
-      .addPt(HTMLScrollbarOffset)
+      .addPt(this.scrollbarOffset)
       .maxPt(super.scrollExtent);
   }
 

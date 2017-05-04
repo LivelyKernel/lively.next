@@ -231,54 +231,43 @@ export default class TextEditor extends Morph {
   }
 
   async prepareEditorForFile(resource, content = "") {
-    var ed = this.ui.contentText, editorPlugin;
+    var ed = this.ui.contentText, mode, setupFn;
 
-    ed.plugins = [];
-
-    var url = (resource || {}).url,
-        fileType = "plain text";
+    var url = (resource || {}).url;
 
     if (content.length > 2**19/*0.5MB*/) {
       this.setStatusMessage(`File content very big, ${num.humanReadableByteSize(content.length)}. Styling is disabled`);
 
     } else if (url) {
 
-      var [_, ext] = url.match(/\.([^\.\s]+)$/) || [];
+      var basename = arr.last(url.split("/")),
+          [_, ext] = basename.match(/\.([^\.\s]+)$/) || [];
 
       // FIXME
-      switch (ext) {
-
-        case 'js':
-          var { default: JavaScriptEditorPlugin } = await System.import("lively.morphic/ide/js/editor-plugin.js");
-          editorPlugin = new JavaScriptEditorPlugin(config.codeEditor.defaultTheme);
-          editorPlugin.evalEnvironment = {
+      if (ext === "js") {
+        mode = "js";
+        setupFn = (ed, plugin) =>
+          plugin.evalEnvironment = {
             get targetModule() { return url; },
             context: ed,
             get format() { return lively.modules.module(this.targetModule).format() || "global"; }
-          }
-          break;
+          };
 
-        case 'json':
-          var { default: JSONEditorPlugin } = await System.import("lively.morphic/ide/json/editor-plugin.js");
-          editorPlugin = new JSONEditorPlugin(config.codeEditor.defaultTheme);
-          break;
+      } else if (["Dockerfile", ".bash_profile", ".profile", ".bashrc"].includes(basename)) {
+        mode = "sh";
 
-        case 'md':
-          var { default: MarkdownEditorPlugin } = await System.import("lively.morphic/ide/md/editor-plugin.js");
-          editorPlugin = new MarkdownEditorPlugin(config.codeEditor.defaultTheme);
-          break;
-
-        case 'sh':
-          var { default: ShellEditorPlugin } = await System.import("lively.morphic/ide/shell/editor-plugin.js");
-          editorPlugin = new ShellEditorPlugin(config.codeEditor.defaultTheme);
-          break;
-
-        default:
-          fileType = "plain text";
+      } else {
+        mode = ext;
       }
     }
 
-    if (editorPlugin) ed.addPlugin(editorPlugin);
+    try {
+      let plugin = await ed.changeEditorMode(mode);
+      if (setupFn) setupFn(ed, plugin);
+    } catch (err) {
+      console.warn(`Failed to set mode ${mode}: ${err}`);
+      ed.changeEditorMode(null);
+    }
 
     ed.textString = content;
     ed.gotoDocumentStart();
