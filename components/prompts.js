@@ -3,7 +3,7 @@ import { Rectangle, Color, pt } from 'lively.graphics';
 import { Morph, morph, Text, GridLayout } from 'lively.morphic';
 import { arr, obj, promise } from "lively.lang";
 import { List, FilterableList } from "./list.js"
-import { PasswordInputLine } from "../text/input-line.js"
+import InputLine, { PasswordInputLine } from "../text/input-line.js"
 import { Icon } from "./icons.js"
 import { connect } from 'lively.bindings';
 
@@ -54,12 +54,18 @@ export class AbstractPrompt extends Morph {
   build() { throw new Error("Not yet implemented"); }
   applyLayout() { throw new Error("Not yet implemented"); }
 
-  onKeyDown(evt) {
-    switch (evt.keyCombo) {
-      case 'Enter': this.resolve(); evt.stop(); break;
-      case 'Escape': this.reject(); evt.stop(); break;
-      default: return super.onKeyDown(evt);
-    }
+  get keybindings() {
+    return super.keybindings.concat([
+      {keys: "Enter", command: "resolve"},
+      {keys: "Escape", command: "reject"},
+    ])
+  }
+
+  get commands() {
+    return super.commands.concat([
+      {name: "resolve", exec: (_, arg) => { this.resolve(arg); return true; }},
+      {name: "reject", exec: (_, arg) => { this.reject(arg); return true; }}
+    ]);
   }
 
   get buttonStyle() {
@@ -140,11 +146,10 @@ export class InformPrompt extends AbstractPrompt {
      });
   }
 
-  onKeyDown(evt) {
-    switch (evt.keyCombo) {
-      case 'Escape': case 'Enter': this.resolve(); evt.stop(); break;
-      default: return super.onKeyDown(evt);
-    }
+  get keybindings() {
+    return super.keybindings.concat([
+      {keys: "Escape", command: "resolve"},
+    ]);
   }
 
 }
@@ -340,6 +345,175 @@ export class TextPrompt extends AbstractPrompt {
   focus() { this.getSubmorphNamed("input").focus(); }
 }
 
+export class EditPrompt extends AbstractPrompt {
+
+  static async example() {
+    await $world.editPrompt("enter", {input: "$world.show()", mode: "js", evalEnvironment: {context: 23}});
+    this.editorPlugin.evalEnvironment
+  }
+
+
+  static get properties() {
+    return {
+      extent: {defaultValue: pt(500, 300)},
+    }
+  }
+
+  get maxWidth() { return this.env.world.visibleBounds().width - 20; }
+
+  build({label, input, historyId, useLastInput, mode, textStyle, evalEnvironment}) {
+    this.addMorph({
+      fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray,
+      name: "label", type: "label", value: label
+    });
+
+    if (!textStyle) textStyle = {};
+    if (mode && !textStyle.fontFamily) textStyle.fontFamily = "Monaco, monospace";
+
+    var inputEditor = this.addMorph(new Text({
+      clipMode: "auto",
+      name: "editor", textString: input || "",
+      borderWidth: 0, borderRadius: 5, fill: Color.white,
+      fontSize: 12, fontColor: Color.rgbHex("#666"),
+      padding: Rectangle.inset(8,4), fixedHeight: false,
+      ...textStyle
+    }));
+    inputEditor.changeEditorMode(mode).then(() => {
+      if (evalEnvironment && inputEditor.editorPlugin)
+        Object.assign(inputEditor.editorPlugin.evalEnvironment, evalEnvironment);
+    });
+
+
+    // if (historyId && useLastInput) {
+    //   var lastInput = arr.last(inputLine.inputHistory.items)
+    //   if (lastInput) inputLine.textString = lastInput;
+    // }
+
+    var inputWidth = inputEditor.textBounds().width;
+    // if the input string we pre-fill is wide than we try to make it fit
+    if (inputWidth > this.width-25)
+      this.width = Math.min(this.maxWidth, inputWidth+25);
+
+    this.addMorph({name: "ok button", type: "button", label: "OK", ...this.okButtonStyle});
+    this.addMorph({name: "cancel button", type: "button", label: "Cancel", ...this.cancelButtonStyle});
+
+    connect(this.getSubmorphNamed("ok button"), 'fire', this, 'resolve');
+    connect(this.getSubmorphNamed("cancel button"), 'fire', this, 'reject');
+
+    this.initLayout();
+    
+    inputEditor.gotoDocumentEnd();
+    inputEditor.scrollCursorIntoView();
+  }
+
+  initLayout() {
+    // this.initLayout();
+    const label = this.getSubmorphNamed("label"),
+          editor = this.getSubmorphNamed("editor");
+    label.fit();
+
+    const minWidth = Math.max(editor.textBounds().width+20, label.width);
+    if (this.width < minWidth)
+      this.width = Math.min(this.maxWidth, minWidth + 10);
+
+    const l = this.layout = new GridLayout({
+      columns: [
+        0, {paddingLeft: 4},
+        1, {fixed: 100},
+        2, {paddingRight: 4, fixed: 100}
+      ],
+      rows: [
+        0, {fixed: label.height, paddingBottom: 2.5},
+        2, {paddingTop: 2.5, paddingBottom: 2.5, fixed: 25},
+      ],
+      grid: [
+        ["label", "label", "label"],
+        ["editor", "editor", "editor"],
+        [null, "ok button", "cancel button"]
+      ]
+    });
+  }
+
+  resolve(arg) {
+    let content = this.getSubmorphNamed("editor").textString.trim();
+    if (this.historyId) {
+      let hist = InputLine.getHistory(this.historyId);
+      hist.items = hist.items.filter(ea => ea !== content);
+      hist.items.push(content);
+      while (hist.items.length > hist.items.max) hist.items.shift();
+      hist.index = hist.items.length;
+      InputLine.setHistory(this.historyId, hist)
+    }
+    return super.resolve(content);
+  }
+
+  get keybindings() {
+    return [
+      {keys: {mac: "Meta-Enter|Meta-S", win: 'Ctrl-Enter|Ctrl-S'}, command: "resolve"},
+      {keys: "Escape", command: "reject"},
+      {keys: "Alt-P|Alt-Up", command: "history back"},
+      {keys: "Alt-N|Alt-Down", command: "history forward"},
+      {keys: "Alt-H", command: "browse history"},
+    ]
+  }
+
+  get commands() {
+    return super.commands.concat([
+      {
+        name: "history back",
+        exec: (_, arg) => {
+          if (this.historyId) {
+            let hist = InputLine.getHistory(this.historyId), {items, index} = hist;
+            hist.index = --index;
+            if (index < 0) hist.index = index = items.length - 1;
+            this.get("editor").undoManager.group();
+            this.get("editor").textString = items[index];
+            this.get("editor").undoManager.group();
+          }
+          return true;
+        }
+      },
+
+      {
+        name: "browse history",
+        exec: async (_, arg) => {
+          if (this.historyId) {
+            let hist = InputLine.getHistory(this.historyId),
+                {status, list, selections: [choice]} = await this.world().editListPrompt(
+                  "input history " + this.historyId, hist.items, {requester: this});
+            if (status !== "canceled") {
+              hist.items = list;
+              InputLine.setHistory(this.historyId, hist);
+              if (choice) {
+                hist.index = hist.items.indexOf(choice);
+                this.get("editor").textString = choice;
+              }
+            }
+          }
+          return true;
+        }
+      },
+    
+      {
+        name: "history forward",
+        exec: (_, arg) => {
+          if (this.historyId) {
+            let hist = InputLine.getHistory(this.historyId), {items, index} = hist;
+            hist.index = ++index;
+            if (index >= items.length) hist.index = index = 0;
+            this.get("editor").undoManager.group();
+            this.get("editor").textString = items[index];
+            this.get("editor").undoManager.group();
+          }
+          return true;
+        }
+      }
+    ]);
+  }
+
+  focus() { this.getSubmorphNamed("editor").focus(); }
+}
+
 export class PasswordPrompt extends AbstractPrompt {
 
   get maxWidth() { return 800; }
@@ -499,6 +673,10 @@ export class ListPrompt extends AbstractPrompt {
 
 export class EditListPrompt extends ListPrompt {
 
+  async static example() {
+    await $world.editListPrompt("hello", [1,2,3,4], {multiSelect: true});
+  }
+
   build(props) {
     super.build(props);
 
@@ -558,13 +736,30 @@ export class EditListPrompt extends ListPrompt {
     list.selectedIndex = insertAt;
   }
 
-  onKeyDown(evt) {
-    switch (evt.keyCombo) {
-      case 'Ctrl-G': this.get("list").selection = null; evt.stop(); break;
-      case 'Shift-=': case '+': this.addItemToList(); evt.stop(); break;
-      case '-': case 'Delete': case 'Backspace': this.removeSelectedItemsFromList(); evt.stop(); break;
-    }
-    return super.onKeyDown(evt);
+  get keybindings() {
+    return super.keybindings.concat([
+      {keys: {mac: "Meta-Enter", win: 'Ctrl-Enter'}, command: "resolve"},
+      {keys: 'Ctrl-G', command: "deselect"},
+      {keys: 'Shift-=|+', command: "add item to list"},
+      {keys: 'Delete|-|Backspace', command: "remove item from list"},
+    ])
+  }
+
+  get commands() {
+    return super.commands.concat([
+      {
+        name: "deselect",
+        exec: () => { this.get("list").selection = null; return true; }
+      },
+      {
+        name: "add item to list",
+        exec: () => { this.addItemToList(); return true; }
+      },
+      {
+        name: "remove item from list",
+        exec: () => { this.removeSelectedItemsFromList(); return true; }
+      }
+    ]);
   }
 
   resolve() {

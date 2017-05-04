@@ -11,6 +11,7 @@ import {
   ConfirmPrompt,
   MultipleChoicePrompt,
   TextPrompt,
+  EditPrompt,
   PasswordPrompt,
   ListPrompt,
   EditListPrompt
@@ -529,6 +530,10 @@ export class World extends Morph {
     //   useLastInput: BOOLEAN -- use history for default input?
     // }
     return this.openPrompt(new TextPrompt({label, ...opts}), opts);
+  }
+
+  editPrompt(label, opts = {requester: null, input: "", historyId: null, useLastInput: false, textStyle: null, mode: null, evalEnvironment: null}) {
+    return this.openPrompt(new EditPrompt({label, ...opts}), opts);
   }
 
   passwordPrompt(label, opts = {requester: null, input: ""}) {
