@@ -277,6 +277,7 @@ var config = {
       {keys: "Ctrl-C Ctrl-I", command: "change string inflection"},
       {keys: "Alt-Shift-4"/*Alt-Shift-$*/, command: 'spell check word'},
       {keys: "Alt-Shift-\\"/*Alt-Shift-|*/, command: "[shell] run shell command on region"},
+      {keys: "Alt-Shift-;", command: "run code on text morph"},
       {keys: {mac: "Meta-Shift-L O P E N", win: "Ctrl-Shift-L O P E N"}, command: "open file at cursor"},
     ]
 

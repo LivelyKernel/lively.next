@@ -1226,6 +1226,32 @@ var usefulEditorCommands = [
     }
   },
 
+
+  {
+    name: "run code on text morph",
+    doc: "...",
+    exec: async function(morph, opts) {
+      let env = {targetModule: "lively://code-on-text-morph", context: morph},
+          code = await morph
+            .world()
+            .editPrompt("Run code on selection. Use this.selection.text to access it", {
+              requester: morph,
+              mode: "js",
+              evalEnvironment: env,
+              historyId: "run-code-on-text-morph-hist"
+            }),
+          result, err;
+      try {
+        morph.undoManager.group();
+        let result = await lively.vm.runEval(code, env)
+        morph.undoManager.group();
+        err = result.isError ? result.value : null;
+      } catch (e) { err = e; }
+      if (err) morph.showError(err);
+      return result;
+    }
+  },
+
   {
     name: "change editor mode",
     async exec(ed) {
