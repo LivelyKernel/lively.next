@@ -19,5 +19,4 @@ if [ "${FILE:0:1}" != "/" ]; then
   fi
 fi
 
-echo $DIR
 node $DIR/lively-as-editor.js "$FILE"
