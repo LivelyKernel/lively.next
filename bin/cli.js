@@ -32,12 +32,13 @@ switch (command) {
 function doList(args) {
   args = parseArgs(args, {alias: {"packages": "P"}});
 
-  if (!args.packages) {
+  let packageDirs = currentPackages(args);
+  if (!packageDirs.length) {
     console.error("No package directories specified. Use one or multiple --packages/-P to specify package directoriese.");
     return process.exit(1);
   }
 
-  return fnp.getInstalledPackages(checkPackages(packagesFromArgs(args)))
+  return fnp.getInstalledPackages(packageDirs)
           .then(packageSpecs =>
             console.log(
               string.printTable(
@@ -77,7 +78,8 @@ function doNode(args) {
 function doInstall(args) {
   args = parseArgs(args, {alias: {"save-dev": "D", "save": "S", "packages": "P"}});
 
-  if (!args.packages) {
+  let packageDirs = currentPackages(args);
+  if (!packageDirs.length) {
     console.error("No package directories specified. Use one or multiple --packages/-P to specify package directoriese.");
     return process.exit(1);
   }
@@ -92,11 +94,10 @@ function doInstall(args) {
       process.exit(1);
     }
 
-    let packages = checkPackages(packagesFromArgs(args));
     return fnp.installDependenciesOfPackage(
         activeDir,
-        packages[0],
-        packages,
+        packageDirs[0],
+        packageDirs,
         ["dependencies", "devDependencies"],
         undefined, true/*verbose*/)
      .then(() => process.exit(0))
@@ -110,7 +111,8 @@ function doInstall(args) {
 function doBuild(args) {
   args = parseArgs(args, {alias: {"packages": "P"}});
 
-  if (!args.packages) {
+  let packageDirs = currentPackages(args);
+  if (!packageDirs.length) {
     console.error("No package directories specified. Use one or multiple --packages/-P to specify package directoriese.");
     return process.exit(1);
   }
@@ -125,7 +127,6 @@ function doBuild(args) {
       process.exit(1);
     }
 
-    let packageDirs = checkPackages(packagesFromArgs(args));
     return fnp.buildPackage(activeDir, packageDirs)
       .then(() => process.exit(0))
       .catch(err => { console.error(err.stack); process.exit(1); })
@@ -155,6 +156,15 @@ list\t\tlist installed packages (use with one or multiple --packages/-P)
 install\t\tinstalls dependencies (with --save/-S and --save-dev/-D) also adds to package.json in current dir
   `)
   return true;
+}
+
+function currentPackages(args) {
+  let packages = packagesFromArgs(args);
+  if (process.env.FNP_PACKAGE_DIRS) {
+    for (let dir of process.env.FNP_PACKAGE_DIRS.split(":"))
+      if (!packages.includes(dir)) packages.push(dir);
+  }
+  return checkPackages(packages);
 }
 
 function packagesFromArgs(args) {
