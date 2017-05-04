@@ -102,8 +102,7 @@ function findMatchingPackageSpec(pName, versionRange, packageMap, verbose = fals
     }
   }
 
-  if (!found) console.log(pName, versionRange, gitSpec)
-  // (verbose || debug) && console.log(`[fnp] is ${pName}@${versionRange} installed? ${found ? "yes" : "no"}`);
+  // verbose && console.log(`[fnp] is ${pName}@${versionRange} installed? ${found ? "yes" : "no"}`);
 
   return found;
 }

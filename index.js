@@ -13,7 +13,8 @@ module.exports = {
   buildPackage,
   buildPackageMap,
   getInstalledPackages,
-  findMatchingPackageSpec
+  findMatchingPackageSpec,
+  readPackageSpec
 }
 
 async function installDependenciesOfPackage(

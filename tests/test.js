@@ -1,12 +1,5 @@
 /*global, describe,it,afterEach,beforeEach*/
 import { expect } from "mocha-es6";
-import {
-  getInstalledPackage,
-  addDependencyToPackage,
-  installDependenciesOfPackage,
-  buildPackageMap,
-  installPackage
-} from "../index.js";
 import { tmpdir } from "os";
 import { execSync, exec } from "child_process";
 const { resource, createFiles } = lively.resources;
@@ -14,6 +7,30 @@ const { resource, createFiles } = lively.resources;
 // const fetchPonyfill = impor("fetch-ponyfill");
 const fetchPonyfill = System._nodeRequire("fetch-ponyfill/fetch-node.js");
 if (!global.fetch) Object.assign(global, fetchPonyfill());
+
+let fnpDir = System.decanonicalize("flat-node-packages/").replace("file://", "");
+import Module from "module";
+Object.keys(Module._cache).filter(ea => ea.startsWith(fnpDir)).forEach(ea => delete Module._cache[ea])
+
+const {
+  findMatchingPackageSpec,
+  addDependencyToPackage,
+  installDependenciesOfPackage,
+  buildPackageMap,
+  installPackage,
+  buildPackage,
+  readPackageSpec
+} = System._nodeRequire(`${fnpDir}/index.js`);
+
+
+/*
+  Invocation from command line:
+  eval `fnp_env`
+  FNP_PACKAGE_DIRS=deps mocha-es6 tests/test.js
+*/
+
+
+
 
 let baseDir = resource(`file://${tmpdir()}/lively.node-packages-test/`);
 
@@ -33,7 +50,6 @@ let baseDir = resource(`file://${tmpdir()}/lively.node-packages-test/`);
 describe("package installation lookup", function() {
 
   this.timeout(10000);
-
 
   beforeEach(async () => {
     await baseDir.ensureExistance();
@@ -62,7 +78,7 @@ describe("package installation lookup", function() {
         }
       });
       let pMap = buildPackageMap([baseDir.join("package-install-dir").path()]),
-          pInfo = getInstalledPackage("test-package-1", "^1", pMap);
+          pInfo = findMatchingPackageSpec("test-package-1", "^1", pMap);
       expect(pInfo).containSubset({
         config: {name: "test-package-1", version: "1.2.3"},
         location: baseDir.join("package-install-dir/test-package-1@1.2.3").path(),
@@ -82,8 +98,8 @@ describe("package installation lookup", function() {
             baseDir.join("package-install-dir/b").path(),
             baseDir.join("package-install-dir/a").path()
           ]),
-          pInfo1 = getInstalledPackage("test-package-1", "^1", pMap),
-          pInfo2 = getInstalledPackage("test-package-2", null, pMap);
+          pInfo1 = findMatchingPackageSpec("test-package-1", "^1", pMap),
+          pInfo2 = findMatchingPackageSpec("test-package-2", null, pMap);
       expect(pInfo1).deep.property("config.name", "test-package-1");
       expect(pInfo2).deep.property("config.name", "test-package-2");
     });
@@ -184,8 +200,62 @@ describe("package installation lookup", function() {
       expect(packageMap).to.have.keys(["strip-ansi@2.0.1", "foo@1.2.3", "ansi-regex@1.1.1"]);
     });
 
-    
   });
+
+  describe("building modules", () => {
+
+    beforeEach(() =>
+      createFiles(baseDir, {
+        "build-test": {
+          foo: {
+            "package.json": JSON.stringify({
+              name: "foo", version: "1.2.3",
+              scripts: {install: "node install.js"},
+              bin: {"foo-bin": "foo-bin"}
+            }),
+            "install.js": `require("fs").writeFileSync("./installed", "yes")`,
+            "index.js": "module.exports.x = 23",
+            "foo-bin": "#!/bin/bash\necho 'foo-bin!'"
+          },
+          bar: {
+            "package.json": JSON.stringify({
+              name: "bar",
+              version: "0.1.0",
+              dependencies: {foo: "*"}
+            }),
+            "index.js": "console.log(require('foo').x + 1);",
+          }
+        }
+      }))
+
+    it("runs install script", async () => {
+      await buildPackage(readPackageSpec(baseDir.join("build-test/foo/").path()), {});
+      expect(await baseDir.join("build-test/foo/installed").read()).equals("yes");
+    });
+    
+    it("runs install scripts of dependent packages", async () => {
+      let pmap = buildPackageMap([baseDir.join("build-test/").path()])
+      await buildPackage(readPackageSpec(baseDir.join("build-test/bar/").path()), pmap);
+      expect(await baseDir.join("build-test/foo/installed").read()).equals("yes");
+    });
+
+    it("bins are linked", async () => {
+      System._nodeRequire("fs").chmodSync(baseDir.join("build-test/foo/foo-bin").path(), "0755")
+      let barDir = baseDir.join("build-test/bar/");
+      let config = await barDir.join("package.json").readJson()
+      config.scripts = {install: "node install-bar.js"};
+      await barDir.join("package.json").writeJson(config);
+      await barDir.join("install-bar.js").write(
+        `require("fs").writeFileSync(
+          "./installed",
+          String(require("child_process").execSync("foo-bin")))`)
+      let pmap = buildPackageMap([baseDir.join("build-test/").path()])
+      await buildPackage(readPackageSpec(barDir.join("").path()), pmap);
+      expect(await barDir.join("installed").read()).equals("foo-bin!\n");
+    });
+
+  });
+
 
   describe("resolving modules", () => {
 

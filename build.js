@@ -62,6 +62,7 @@ function linkBins(packageSpecs, linkState = {}) {
       let realFile = bin[linkName];
       if (fs.existsSync(j(linkLocation, linkName))) 
         fs.unlinkSync(j(linkLocation, linkName));
+      // console.log(`[fnp build] linking ${j(location, realFile)} => ${j(linkLocation, linkName)}`)
       fs.symlinkSync(j(location, realFile), j(linkLocation, linkName));
     }
     linkState[location] = true;

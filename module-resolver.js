@@ -29,10 +29,11 @@ function installResolver() {
           basename = request.split("/")[0],
           flatPackageDirs = (process.env.FNP_PACKAGE_DIRS || "").split(":"),
           packageMap = buildPackageMap(flatPackageDirs),
-          packageFound = findMatchingPackageSpec(basename, deps[basename]),
+          packageFound = findMatchingPackageSpec(basename, deps[basename], packageMap),
           resolved = packageFound && resolveFlatPackageToModule(packageFound, basename, request);
 
       if (resolved) return resolved;
+
       throw err;
     }
   }
@@ -62,9 +63,11 @@ function depMap(packageConfig) {
     }, {});
 }
 
-function resolveFlatPackageToModule({config: {name, version}, location: pathToPackage}, basename, request) {
+function resolveFlatPackageToModule(requesterPackage, basename, request) {
   // Given {name, version, path} from resolveFlatPackageToModule, will find the
   // full path to the module inside of the package, using the module request
+  // let {config: {name, version}, location: pathToPackage} = requesterPackage
+  let {config: {name, version}, location: pathToPackage} = requesterPackage
   let fullpath;
   if (basename === request) {
     let config = findPackageConfig(path.join(pathToPackage, "index.js"));
