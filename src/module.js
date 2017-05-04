@@ -590,6 +590,15 @@ class ModuleInterface {
     return ref && {decl: ref.decl, id: ref.declId, declModule: this};
   }
 
+  async _localDeclForName(nameOfRef) {
+    let scope = await this.resolvedScope(), found;
+    for (let ref of scope.resolvedRefMap.values()) {
+      var {ref: {name}} = ref;
+      if (nameOfRef === name) { found = ref; break; }
+    }
+    return found && {decl: found.decl, id: found.declId, declModule: this};
+  }
+
   async _importForNSRefAt(pos) {
     // if pos points to "x" of a property "m.x" with an import * as "m"
     // then this returns [<importStmt>, <m>, "x"]
@@ -629,6 +638,11 @@ class ModuleInterface {
       return [decl].concat(await imM.bindingPathForExport(im.imported));
     }
     return [decl];
+  }
+
+  async bindingPathFor(nameOfRef) {
+    let decl = await this._localDeclForName(nameOfRef);
+    if (decl) return await this._resolveImportedDecl(decl);
   }
 
   async bindingPathForExport(name) {
