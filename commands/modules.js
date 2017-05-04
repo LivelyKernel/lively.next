@@ -26,10 +26,10 @@ export async function interactivelyChangeModule(system, moduleName, newSource, o
   return moduleName;
 }
 
-export async function interactivelyReloadModule(system, vmEditor, moduleName) {
+export async function interactivelyReloadModule(system, vmEditor, moduleName, reloadDeps = false, resetEnv = false) {
   vmEditor && vmEditor.setStatusMessage("Reloading " + moduleName);
   try {
-    await system.reloadModule(moduleName, {reloadDeps: false, resetEnv: false});
+    await system.reloadModule(moduleName, {reloadDeps, resetEnv});
     vmEditor && await vmEditor.updateModuleList();
     vmEditor && vmEditor.setStatusMessage("Reloded " + moduleName)
   } catch (err) {
