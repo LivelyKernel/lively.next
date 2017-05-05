@@ -682,7 +682,9 @@ export class Morph {
     } else if (prop == "name" || prop == "styleClasses") {
       if (!obj.equals(prevValue,value)) morph = this;
     }
+
     if (morph) {
+      morph.ownerChain().forEach(m => m.layout && m.layout.scheduleApply(morph));
       morph.withAllSubmorphsDo(m => {
         m._styleSheetProps = null;
         m._transform = null;
