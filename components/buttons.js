@@ -1,4 +1,4 @@
-import { pt, Color, Rectangle } from "lively.graphics";
+import { pt, LinearGradient, Color, Rectangle } from "lively.graphics";
 import { Morph, StyleSheet } from "lively.morphic";
 import { signal, disconnect, connect } from "lively.bindings";
 import { obj, arr } from "lively.lang/index.js";
@@ -15,10 +15,12 @@ export class Button extends Morph {
 
   static get styleSheet() {
     return new StyleSheet({
-      ".Button": {borderWidth: 1, borderRadius: 15, extent: pt(100,24)},
+      ".Button": {borderWidth: 1, borderRadius: 5, extent: pt(100,24)},
       ".Button.activeStyle": {
         borderColor: Color.gray,
-        fill: Color.rgb(240, 240, 240),
+        fill: new LinearGradient({
+          stops: [{offset: 0, color: Color.white}, {offset: 1, color: new Color.rgb(236, 240, 241)}]
+        }),
         nativeCursor: "pointer"
       },
       ".Button.triggerStyle": {
@@ -27,8 +29,11 @@ export class Button extends Morph {
         nativeCursor: "pointer"
       },
       ".Button.inactiveStyle": {
-        borderColor: Color.gray.withA(0.5),
-        fill: Color.rgba(240, 240, 240, 0.5),
+        borderColor: Color.gray,
+        opacity: .5,
+        fill: new LinearGradient({
+          stops: [{offset: 0, color: Color.white}, {offset: 1, color: new Color.rgb(236, 240, 241)}]
+        }),
         nativeCursor: "not-allowed"
       },
       ".Button.activeStyle [name=label]": {fontSize: 12, fontColor: Color.almostBlack},
