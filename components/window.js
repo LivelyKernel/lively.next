@@ -71,16 +71,8 @@ export default class Window extends Morph {
       controls: {
         after: ["submorphs"],
         initialize() {
-          this.controls = [
-            morph({
-              name: "button wrapper",
-              styleClasses: ["buttonGroup"],
-              submorphs: this.buttons()
-            }),
-            this.titleLabel()
-          ];
+          this.controls = this.getControls();
           if (this.resizable) this.controls.push(this.resizer());
-
           this.submorphs = [...this.submorphs, ...this.controls];
         }
       },
@@ -170,6 +162,17 @@ export default class Window extends Morph {
     title.textBounds().width < labelBounds.width - 2 * buttonOffset
       ? (title.center = labelBounds.center())
       : (title.leftCenter = minLabelBounds.leftCenter());
+  }
+
+  getControls() {
+    return [
+            morph({
+              name: "button wrapper",
+              styleClasses: ["buttonGroup"],
+              submorphs: this.buttons()
+            }),
+            this.titleLabel()
+          ];
   }
 
   buttons() {
