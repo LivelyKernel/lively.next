@@ -1493,7 +1493,11 @@ export class Morph {
   onCopy(evt) {}
   onPaste(evt) {}
 
-  onDragStart(evt) { this.undoStart("drag-move"); }
+  onDragStart(evt) { 
+    this.undoStart("drag-move");
+    let {lastDragPosition, clickedOnPosition} = evt.state;
+    this.moveBy(lastDragPosition.subPt(clickedOnPosition)); 
+  }
   onDragEnd(evt) { this.undoStop("drag-move"); }
   onDrag(evt) { this.moveBy(evt.state.dragDelta); }
 
