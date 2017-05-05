@@ -12,21 +12,19 @@ export class SizzleExpression {
     this.matchedMorphs = [];
     this.context = context;
     this.compileRule(rule);
-    this.exec(this.context);
   }
-
-  ensureContext(context) {
-    if (context.id in this.morphIndex) return;
-    this.morphIndex = {};
-    this.exec(this.context);
-  }
-  
 
   compileRule(rule) {
-    this.compiledRule = rule.split(' ').map(token => this.createMatcher(token));
+    this.compiledRule = [];
+    for (let token of rule.split(' ').reverse()) {
+       this.compiledRule.push(this.createMatcher(token));
+    }
     if (arr.any(this.compiledRule, matcher => !matcher)) {
       throw new Error('Can not compile ' + rule);
     }
+    this.context.withAllSubmorphsDo(m => {
+      this.addToIndex(m)
+    })
   }
 
   createMatcher(token) {
@@ -35,51 +33,54 @@ export class SizzleExpression {
     );
   }
 
-  exec(context, matchedMatchers = []) {
-    if (!this.morphIndex[context.id]) this.morphIndex[context.id] = [...matchedMatchers];
-    for (let matcher of this.compiledRule) {
-      // make sure that the descendants part of a rule is also enforced!
-      if (matcher.matches(context)) {
-        pushIfNotIncluded(this.morphIndex[context.id], matcher);
-        if (
-          arr.equals(this.morphIndex[context.id], this.compiledRule) &&
-          arr.last(this.compiledRule).matches(context)
-        ) {
-          pushIfNotIncluded(this.matchedMorphs, context.id);
-        }
-        break;
-      }
-    }
-    for (let m of context.submorphs) {
-      this.exec(m, this.morphIndex[context.id]);
-    }
+  hasIndexed(morph) {
+    let entry = this.morphIndex[morph.id];
+    return entry && entry.name == morph.name && obj.equals(entry.styleClasses, morph.styleClasses);
   }
 
-  hasIndexed(morph) {
-    return morph.id in this.morphIndex;
+  match(morph) {
+    var matchmap = {};
+    for (let rule of this.compiledRule) {
+      matchmap[rule.description] = rule.matches(morph);
+    }
+    return matchmap;
   }
 
   addToIndex(morph) {
-    if (this.hasIndexed(morph)) return;
-    let indexedParent = morph.ownerChain().find(m => m.id in this.morphIndex);
-    if (!indexedParent) {
-       return false // the morph appears to be in a different context
-    }
-    this.exec(indexedParent, this.morphIndex[indexedParent.id]);
+    return (this.morphIndex[morph.id] = {
+      name: morph.name,
+      styleClasses: morph.styleClasses,
+      ...this.match(morph)
+    });
   }
 
   removeFromIndex(morph) {
     delete this.morphIndex[morph.id];
-    arr.remove(this.matchedMorphs, morph.id);
   }
 
   matches(morph) {
-    if (!this.hasIndexed(morph)) {
-      this.addToIndex(morph)
+    // if (!this.hasIndexed(morph)) {
+    //   this.addToIndex(morph)
+    // }
+    let ownerChain = morph.ownerChain(),
+        [firstMatcher, ...remainingMatchers] = this.compiledRule;
+    // match leaf
+    if (!firstMatcher.matches(morph)) return false;
+    // ensure that other morphs in the hierarchy match the remainder of the rule
+    var isMatch = true;
+    for (let matcher of remainingMatchers) {
+      isMatch = false;
+      for (let idx in ownerChain) {
+        if (matcher.matches(ownerChain[idx])) {
+          ownerChain = arr.drop(ownerChain, idx + 1);
+          isMatch = true;
+          break;
+        }
+      }
+      if (!isMatch) return false; // break up early
     }
-    return this.matchedMorphs.includes(morph.id);
+    return isMatch;
   }
-
 }
 
 class Matcher {
@@ -89,12 +90,13 @@ class Matcher {
   static create(token) {
     var match;
     if (match = this.appliesTo(token)) {
-       return new this(match);
+       return new this(token, match);
     }
   }
 
-  constructor(token) {
+  constructor(description, token) {
     this.token = token;
+    this.description = description;
   }
 
   static appliesTo(token) {
@@ -165,6 +167,13 @@ export class Sizzle {
     this.cachedExpressions = {};
   }
 
+  hasIndexed(morph) {
+    for (let rule in this.cachedExpressions) {
+      if (this.cachedExpressions[rule].hasIndexed(morph)) return true;
+    }
+    return false;
+  }
+
   addToIndex(morph) {
     for (let rule in this.cachedExpressions) {
       this.cachedExpressions[rule].addToIndex(morph);
@@ -186,13 +195,12 @@ export class Sizzle {
   }
 
   matches(rule, morph) {
-    this.fetchExpressionFor(rule).ensureContext(this.context);
     return this.fetchExpressionFor(rule).matches(morph);  
   }
 
   select(rule) {
-    this.fetchExpressionFor(rule).ensureContext(this.context);
-    return this.fetchExpressionFor(rule).matchedMorphs.map(id => this.context.getMorphWithId(id));
+    let expr = this.fetchExpressionFor(rule);
+    return this.context.withAllSubmorphsSelect(m => expr.matches(m));
   }
   
 }
