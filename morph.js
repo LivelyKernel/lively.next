@@ -73,12 +73,12 @@ export class Morph {
       origin:             {defaultValue: pt(0,0)},
       extent:             {defaultValue: pt(10, 10)},
       width: {
-        derived: true, after: ['extent'],
+        derived: true, after: ['extent'], before: ['submorphs'],
         get()         { return this.extent.x; },
         set(v)        { return this.extent = pt(v, this.extent.y); }
       },
       height: {
-        derived: true, after: ['extent'],
+        derived: true, after: ['extent'], before: ['submorphs'],
         get()        { return this.extent.y; },
         set(v)       { return this.extent = pt(this.extent.x, v); }
       },
