@@ -4,19 +4,6 @@ import { Sizzle } from './sizzle.js';
 import { pushIfNotIncluded } from "lively.lang/array.js";
 import { ShadowObject } from "lively.morphic";
 
-/*
-
-Rules define how style properties of morphs within a certain submorph
-hierarchy are to be set. Rules are able to identify morphs either via
-their name or their morphClasses property. Rules are applied to a morph
-(including its submorphs) once a style rule is assigned to it. Rules will
-also be refreshed upon a morph in case its name or morphClasses property
-is changed. Rules can be nested, where the rule closest to a respective
-morph will override the property values of any other rules that affect
-that morph.
-
-*/
-
 export class StyleSheet {
 
   constructor(rules) {
@@ -46,6 +33,24 @@ export class StyleSheet {
         })
       }
     });
+  }
+
+  refreshMorphsFor(rule) {
+    for (let morph of this.sizzle.select(rule)) {
+       morph._styleSheetProps = null;
+       morph._transform = null;
+       morph.makeDirty();
+    }
+  }
+
+  removeRule(rule) {
+    delete this.rules[rule];
+    this.refreshMorphsFor(rule);
+  }
+
+  setRule(rule, props) {
+    this.rules[rule] = props;
+    this.refreshMorphsFor(rule);
   }
 
   getStyleProps(morph) {

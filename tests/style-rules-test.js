@@ -157,26 +157,6 @@ describe("Style Rules", () => {
     expect(m2.width).equals(100);
     expect(m1.width).equals(100 + m3.width);
   });
-
-  xit("removes morphs from index when they are removed from the indexed context", () => {
-    const m = new Morph({
-      styleClasses: ["root", "child"],
-      submorphs: [{name: "bob", styleClasses: ["leaf"]}],
-      styleSheets: [
-        new StyleSheet({
-          ".leaf": {fill: Color.green}
-        })
-      ]
-    }),
-          sizzle = m.styleSheets[0].sizzle,
-          bob = m.get("bob");
-    expect(bob.fill).to.equal(Color.green);
-    expect(bob.id in sizzle.cachedExpressions[".leaf"].morphIndex).to.be
-      .true;
-    bob.remove();
-    expect(bob.id in sizzle.cachedExpressions[".leaf"].morphIndex).to.be
-      .false;
-  });
   
   it('results in the same transform behaviors as if morphs where directly set', () => {
     let hierarchy = new Morph({
@@ -203,5 +183,37 @@ describe("Style Rules", () => {
       expect(hierarchy.styleSheets[0].sizzle.context).equals(hierarchy);
       expect(hierarchy.get('A').extent).equals(pt(30,30));
       expect(hierarchy.get('A').globalBounds()).equals(rect(60,60,30,30))
+  })
+
+  it('updates all affected morphs if style sheet rules are changed', () => {
+    var sheet, hierarchy = new Morph({
+      styleSheets: [
+        sheet = new StyleSheet({
+          ".root": {position: pt(20, 20)},
+          ".bob": {position: pt(40, 40)},
+          ".alice": {extent: pt(30, 30)}
+        })
+      ],
+      styleClasses: ["root"],
+      submorphs: [
+        {
+          name: 'B',
+          styleClasses: ["bob"],
+          submorphs: [
+            {
+              name: "A",
+              styleClasses: ["alice"]
+            }
+          ]
+        }
+      ]
+    });
+
+    sheet.setRule('.bob', {fill: Color.red});
+    sheet.removeRule('.alice');
+
+    expect(hierarchy.get('A').position).equals(pt(0,0));
+    expect(hierarchy.get('B').position).equals(pt(0,0));
+    expect(hierarchy.get('B').fill).equals(Color.red);
   })
 });
