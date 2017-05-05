@@ -36,6 +36,7 @@ module.exports = function start(hostname, port, rootDirectory, serverDir) {
             serverDir + "/plugins/eval.js",
             serverDir + "/plugins/l2l.js",
             serverDir + "/plugins/remote-shell.js",
+            serverDir + "/plugins/world-loading.js",
             serverDir + "/plugins/dav.js",
             serverDir + "/plugins/moduleBundler.js",
             serverDir + "/plugins/user.js",
