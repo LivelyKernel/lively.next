@@ -50,7 +50,7 @@ const editorCommands = [
   {
     name: "remove file",
     exec: async textEditor => {
-      let f = textEditor.location
+      let f = textEditor.locationResource;
       if (!f) {
         textEditor.setStatusMessage("No file selected");
         return true;

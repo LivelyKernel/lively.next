@@ -58,6 +58,8 @@ export class Renderer {
   stopRenderWorldLoop() {
     this.domEnvironment.window.cancelAnimationFrame(this.renderWorldLoopProcess);
     this.renderWorldLoopProcess = null;
+    this.domEnvironment.window.cancelAnimationFrame(this.renderWorldLoopLater);
+    this.renderWorldLoopLater = null;
   }
 
   renderLater(n = 10) {

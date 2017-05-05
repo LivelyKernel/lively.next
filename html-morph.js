@@ -85,7 +85,7 @@ export class HTMLMorph extends Morph {
 
       document: {
         readOnly: true,
-        get() { return this.env.renderer.domEnvironment.document; }
+        get() { return this.env.domEnv.document; }
       },
 
       scrollExtent: {

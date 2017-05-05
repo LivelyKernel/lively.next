@@ -250,7 +250,9 @@ export class Slider extends Morph {
 }
 
 export class PropertyInspector extends Morph {
+
   static get properties() {
+
     return {
       target: {},
       property: {},
@@ -276,7 +278,7 @@ export class PropertyInspector extends Morph {
           this.submorphs = [
             new ValueScrubber({
               name: "value",
-              value: this.target[this.property] || this.defaultValue,
+              value: (this.target && this.target[this.property]) || this.defaultValue || 0,
               min: this.min,
               max: this.max
             }),
@@ -297,6 +299,12 @@ export class PropertyInspector extends Morph {
         }
       }
     };
+
+  }
+
+  __deserialize__(snapshot, objRef) {
+    super.__deserialize__(snapshot, objRef);
+    if (!this.target) this.setProperty("target", {});
   }
 
   get styler() {

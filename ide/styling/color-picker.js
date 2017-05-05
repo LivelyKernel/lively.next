@@ -77,7 +77,7 @@ export class ColorPickerField extends Morph {
    }
 
    get targetProperty() {
-      const v  = this.target[this.property] || this.defaultValue;
+      const v  = (this.target && this.target[this.property]) || this.defaultValue;
       if (v && v.isGradient) return Color.blue
       return v;
    }
