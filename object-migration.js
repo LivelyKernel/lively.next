@@ -1,5 +1,7 @@
 import { Color, pt } from "lively.graphics";
 import { morph } from "lively.morphic";
+import { SnapshotInspector } from "lively.serializer2/debugging.js";
+import { removeUnreachableObjects } from "lively.serializer2/snapshot-navigation.js";
 
 export var migrations = [
 
@@ -37,6 +39,7 @@ to
     }
   },
 
+
   {
     date: "2017-04-29",
     name: "Window button fix",
@@ -62,6 +65,30 @@ morph breaks old windows without it.
           win.buttons().forEach(ea => ea.extent = pt(14,14));
           win.getWindow().relayoutWindowControls();
         });
+    }
+  },
+
+
+  {
+    date: "2017-05-03",
+    name: "Style Sheet Status Fix",
+    description: `
+State management of the style sheets has changes substantially, moving all of the style sheets that are being applied to the world.
+`,
+    snapshotConverter: idAndSnapshot => {
+      let {id: rootId, snapshot} = idAndSnapshot,
+          i = SnapshotInspector.forSnapshot(snapshot);
+      for (let id in snapshot) {
+        let { props } = snapshot[id];
+        if (!props || !props.styleSheets) continue;
+        if (!props.styleSheets.value) props.styleSheets.value = [];
+        props.styleSheets.value = props.styleSheets.value.filter(ea => {
+          let styleSheet = snapshot[ea.id];
+          return !!styleSheet.props.sizzle;
+        });
+      }
+      removeUnreachableObjects([rootId], snapshot);
+      return idAndSnapshot;
     }
   }
 
