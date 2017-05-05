@@ -6,6 +6,7 @@ export async function loadWorldFromURL(url, oldWorld, options) {
   let worldResource = url.isResource ? url :
         lively.resources.resource(System.decanonicalize(url)),
       world = await loadWorldFromResource(worldResource);
+  options = {browserURL: "/worlds/" + worldResource.name().replace(/\.json$/, ""), ...options};
   return loadWorld(world, oldWorld, options);
 }
 
@@ -39,6 +40,10 @@ export async function loadWorld(newWorld, oldWorld, options = {}) {
     localconfig && await loadLocalConfig();
   
     worldLoadDialog && newWorld.execCommand("load world");
+
+    if (options.browserURL) {
+      window.history.pushState({}, "lively.next", options.browserURL);
+    }
 
     return newWorld;
   } catch (e) {
