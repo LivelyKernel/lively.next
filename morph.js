@@ -481,14 +481,24 @@ export class Morph {
     }
   }
 
+  instrumentedByStyleSheet(prop) {
+    return this._morphicState[prop] == this.defaultProperty(prop) && prop in this._styleSheetProps;
+  }
+
   get __only_serialize__() {
     let defaults = this.defaultProperties,
         properties = this.propertiesAndPropertySettings().properties,
         propsToSerialize = ["_tickingScripts", "attributeConnections"];
     for (let key in properties) {
       let descr = properties[key];
-      if (descr.readOnly || descr.derived || this[key] === defaults[key]
-       || (descr.hasOwnProperty("serialize") && !descr.serialize)) continue;
+      if (
+        descr.readOnly ||
+        descr.derived ||
+        this[key] === defaults[key] ||
+        this.instrumentedByStyleSheet(key) ||
+        (descr.hasOwnProperty("serialize") && !descr.serialize)
+      )
+        continue;
       propsToSerialize.push(key);
     }
     return propsToSerialize;
