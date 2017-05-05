@@ -4,9 +4,6 @@
     <title>lively.next</title>
   </head>
   <body style="margin: 0;">
-    <script src="/lively.modules/node_modules/babel-standalone/babel.js"></script>
-    <script src="/lively.modules/node_modules/systemjs/dist/system.src.js"></script>
-    <script src="/lively.modules/dist/lively.modules.js"></script>
 
     <div id="dom-loading-indicator"
          style="position: fixed; top: 50%; left: 50%;
@@ -20,25 +17,44 @@
       </div>
     </div>
 
+    <script src="/lively.modules/node_modules/babel-standalone/babel.js"></script>
+    <script src="/lively.modules/node_modules/systemjs/dist/system.src.js"></script>
+    <script src="/lively.modules/dist/lively.modules.js"></script>
+
     <script>
       var origin = document.location.origin;
       Promise.resolve()
         .then(polyfills)
         .then(bootstrapLivelySystem)
-        .then(function() { return lively.modules.importPackage('lively.morphic'); })
+        .then(function() { return lively.modules.registerPackage('lively.2lively'); })
+        .then(function() { return ; })
         .then(function(morphic) {
           window.addEventListener('beforeunload', function(evt) {
             var msg = "Really?";
             evt.returnValue = msg;
             return msg;
           }, true);
-          return morphic.World.loadWorldFromURL("lively.morphic/worlds/default.json", null, {
-            verbose: true,
-            localconfig: true,
-            l2l: true,
-            shell: true,
-            worldLoadDialog: true
-          });
+          var worldNameMatch = document.location.pathname.match(/\/worlds\/(.+)/),
+              worldName = worldNameMatch ? worldNameMatch[1] : "default",
+              path = "lively.morphic/worlds/" + worldName + ".json";
+          return lively.resources.resource(origin + "/" + path).exists()
+          .then(function(exists) { return {exists: exists, path: path, showWorldLoadDialog: !worldNameMatch}})
+        })
+        .then(function(worldLocation) {
+          if (!worldLocation.exists) {
+            var msg = "No lively world exists at " + worldLocation.path;
+            document.body.innerHTML = "<h1>" + msg + "</h1>";
+            throw new Error(msg);
+          }
+          return lively.modules.importPackage('lively.morphic').then(function(morphic) {
+            return morphic.World.loadWorldFromURL(worldLocation.path, null, {
+              verbose: true,
+              localconfig: true,
+              l2l: true,
+              shell: true,
+              worldLoadDialog: worldLocation.showWorldLoadDialog
+            });
+          })
         })
         .then(function() { console.log("...lively.morphic world created"); })
         .catch(function(err) {
@@ -59,7 +75,7 @@
           .then(function() { console.log("starting bootstrap process..."); })
 
           .then(function () {
-            var System = lively.modules.getSystem("bootstrapped");
+            var System = lively.modules.getSystem("bootstrapped", {baseURL: origin});
             // System.debug = true;
             return lively.modules.changeSystem(System, true);
           })

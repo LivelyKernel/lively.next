@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>lively.next worlds</title>
+    <style>
+    .body {
+      width: 100%
+    }
+    .content {
+      font-family: Helvetica, sans-serif;
+      margin-left: auto;
+      margin-right: auto;
+      width: 70%;
+      max-width: 800px;
+    }
+    code, .example, div.code {
+      font-family: Monaco, monospace;
+      white-space: pre;
+      font-size: 80%;
+    }
+
+    .world-preview {
+      position: relative;
+      display: inline-block;
+    }
+    .image-title {
+      position: absolute;
+      bottom: 0;
+      width: 100%
+    }
+    </style>
+  </head>
+
+  <body style="margin: 0;">
+
+    <div id="dom-loading-indicator"
+         style="position: fixed; top: 50%; left: 50%;
+                margin-left: -160px; margin-top: -90px; z-index: 10;">
+      <div style="width: 320px; height: 180px; font-size: 30pt; border-radius: 10px;
+                  color: #ff7700; font-family: Helvetica Neue, Arial, sans-serif;
+                  padding: 10px; background: #666;">
+         <center><b>Loading</b></center>
+         <div style="background-image: url(/lively.morphic/lively-web-logo-small-animate.svg);
+                     background-size: cover; height: 100%; margin-left: 110px; margin-top: 20px;"></div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="public-worlds">
+        <center><h1>public worlds</h1></center>
+        <div class="list">none yet</div>
+      </div>
+      <div class="local-worlds">
+        <center><h1>your worlds</h1></center>
+        <div class="list">none yet</div>
+      </div>
+    </div>
+
+    <script src="/lively.modules/node_modules/babel-standalone/babel.js"></script>
+    <script src="/lively.modules/node_modules/systemjs/dist/system.src.js"></script>
+    <script src="/lively.modules/dist/lively.modules.min.js"></script>
+    <script src="/lively.storage/dist/lively.storage_with-pouch.js"></script>
+
+    <script src="/lively.2lively/dist/lively.2lively_client.js"></script>
+    <script>
+      lively.l2l.client = lively.l2l.L2LClient.ensure({
+        url: `${document.location.origin}/lively-socket.io`,
+        namespace: "l2l", info: {type: "world-listing"}
+      });
+    </script>
+
+    <script>
+      var System = lively.modules.getSystem("listing", {baseURL: String(document.location.origin)});
+      lively.modules.changeSystem(System, true);
+      polyfills()
+        .then(() => lively.modules.registerPackage("lively.morphic"))
+        .then(() => lively.modules.module("lively.morphic/web/static-world-listing.js").load())
+        .then(m => m.run())
+        .catch(err => console.error(err));
+        
+      function polyfills() {
+        var loads = [];
+        if (!("PointerEvent" in window))
+          loads.push(lively.resources.loadViaScript(`${document.location.origin}/lively.morphic/node_modules/pepjs/dist/pep.js`));
+        if (!("fetch" in window))
+          loads.push(lively.resources.loadViaScript(`//cdnjs.cloudflare.com/ajax/libs/fetch/1.0.0/fetch.js`));
+        return Promise.all(loads);
+      }
+    </script>
+
+  </body>
+</html>
