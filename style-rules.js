@@ -28,56 +28,15 @@ export class StyleSheet {
     this._context = morph;
     this.styledMorphs = [];
     this.sizzle = new Sizzle(morph);
-    this.addMorph(morph);
+    this.context.withAllSubmorphsDo(m => {
+       m._styleSheetProps = null;
+       m.makeDirty();
+    });
   }
 
   get context() { return this._context }
 
-  refreshMorph(m) {
-    m._styleSheetProps = null;
-    m._styleSheetsInScope = [];
-    for (let p of [m, ...m.ownerChain()].reverse()) {
-      if (!p.styleSheets) continue;
-      for (let ss of p.styleSheets) {
-        if (!ss.context) ss.context = p;
-        m._styleSheetsInScope.push(ss);
-      }
-    }
-    m.updateTransform(m);
-  }
-
   reset() { this.cachedProps = {} }
-
-  addMorph(m) {
-    this.sizzle.addToIndex(m);
-    m.withAllSubmorphsDo(m => {
-        this.refreshMorph(m); 
-    });
-  }
-
-  removeMorph(m) {
-    delete this.cachedProps[m.id]
-    this.sizzle.removeFromIndex(m);
-  }
-
-  onMorphChange(morph, change, context) {
-    if (!this.context) this.context = context;
-    const {selector, args, prop, prevValue, value} = change;
-    if (selector == "addMorphAt") {
-      this.addMorph(args[0]);
-    } else if (selector == 'removeMorph') {
-      args[0].withAllSubmorphsDo(m => this.removeMorph(m))
-    } else if (prop == "name" || prop == "styleClasses") {
-      if (obj.equals(prevValue,value)) return;
-      morph.ownerChain().forEach(m =>  {
-         m._styleSheetProps = null;
-         delete this.cachedProps[m.id]
-      })
-      // quickly discard all morphs that are descendants of the changed morph
-      morph.withAllSubmorphsDo(m => this.removeMorph(m));
-      this.addMorph(morph);
-    }
-  }
 
   unwrapNestedProps(props) {
     ["borderRadius", "borderWidth", "borderColor"].forEach(p => {
@@ -90,12 +49,7 @@ export class StyleSheet {
   }
 
   getStyleProps(morph) {
-    var props;
-    if (props = this.cachedProps[morph.id]) {
-      props.layout && props.layout.apply();
-      return props;
-    }
-    props = {};
+    var props = {};
     for (let rule in this.rules) {
       if (this.sizzle.matches(rule, morph)) {
         props = {...props, ...this.rules[rule]};
@@ -112,7 +66,7 @@ export class StyleSheet {
       props.dropShadow.morph = morph;
     }
     this.cachedProps[morph.id] = props;
-    props.layout && props.layout.apply();
+    props.layout && props.layout.scheduleApply();
     if (morph._cachedTextBounds) {
       morph._cachedTextBounds = null;
       if (morph.autoFit) morph._needsFit = true;

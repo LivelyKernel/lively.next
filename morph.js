@@ -1,4 +1,4 @@
-import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
+import { Color, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree, fun } from "lively.lang";
 import {
   renderRootMorph,
@@ -379,7 +379,7 @@ export class Morph {
       },
 
       styleSheets: {
-        isStyleProp: true,
+        // Although it has a lot to do with styles this should not be used in style sheets: isStyleProp: true,
         before: ['submorphs'],
         set(sheets) {
           if (!obj.isArray(sheets)) {
@@ -534,17 +534,33 @@ export class Morph {
     return this.constructor._morphicDefaultPropertyValues;
   }
 
+  getStyleSheetsInScope() {
+    let styleSheets = [];
+    for (let p of [this, ...this.ownerChain()].reverse()) {
+      if (!p.styleSheets) continue;
+      for (let ss of p.styleSheets) {
+        if (!ss.context) ss.context = p;
+        styleSheets.push(ss);
+      }
+    }
+    return styleSheets;
+  }
+
   defaultProperty(key) { return this.defaultProperties[key]; }
-  getProperty(key) { 
+  getProperty(key) {
     this._defaultStyleProperties = this._defaultStyleProperties || this.styleProperties;
-    let v = this._morphicState[key]; 
-    if (this._defaultStyleProperties.includes(key) && v == this.defaultProperty(key)) {
+    let v = this._morphicState[key], dv = this.defaultProperty(key),
+        isGeoObj = v && [Rectangle, Point].includes(v.constructor);
+    if (this._defaultStyleProperties.includes(key) && (isGeoObj ? v.equals(dv) : v == dv)) {
       if (!this._styleSheetProps) {
-        this._styleSheetProps = obj.merge(this._styleSheetsInScope.map(ss => ss.getStyleProps(this)));
+        this._styleSheetsInScope = this.getStyleSheetsInScope();
+        this._styleSheetProps = obj.merge(
+          this._styleSheetsInScope.map(ss => ss.getStyleProps(this))
+        );
       }
       return this._styleSheetProps[key] || v;
     }
-    return v; 
+    return v;
   }
   setProperty(key, value, meta) { 
     return this.addValueChange(key, value, meta); 
@@ -635,6 +651,7 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   onChange(change) {
+  
     const anim = change.meta && change.meta.animation;
     if (['position', 'rotation', 'scale', 'origin', 'reactsToPointer'].includes(change.prop))
         this.updateTransform({[change.prop]: change.value});
@@ -646,12 +663,36 @@ export class Morph {
       }
     }
     this.layout && this.layout.onChange(change);
-    this.styleSheets && this.styleSheets.forEach(r => r.onMorphChange(this, change, this));
+    this.resetStyleSheetInfo(change)
+  }
+
+  resetStyleSheetInfo(change) {
+    if (!this._styleSheetProps) return;
+    const {selector, args, prop, prevValue, value} = change;
+    var morph;
+    if (selector == "addMorphAt") {
+      morph = args[0];
+      if (obj.equals(morph.getStyleSheetsInScope(), morph._styleSheetsInScope)) morph = null;
+    } else if (selector == 'removeMorph') {
+      morph = args[0];
+    } else if (prop == "name" || prop == "styleClasses") {
+      if (!obj.equals(prevValue,value)) morph = this;
+    }
+    if (morph) {
+      morph.withAllSubmorphsDo(m => {
+        m._styleSheetProps = null;
+        m._transform = null;
+        m.makeDirty();
+      });
+    }
   }
 
   onSubmorphChange(change, submorph) {
     this.layout && this.layout.onSubmorphChange(submorph, change);
-    this.styleSheets && this.styleSheets.forEach(r => r.onMorphChange(submorph, change, this));
+  }
+
+  onOwnerChange(newOwner) {
+    
   }
 
   get changes() { return this.env.changeManager.changesFor(this); }
@@ -1707,7 +1748,9 @@ return ;
 
   needsRerender() { return this._dirty; }
 
-  aboutToRender(renderer) { this._dirty = false; this._rendering = true; }
+  aboutToRender(renderer) {
+    this._dirty = false; this._rendering = true; 
+  }
   onAfterRender(node) {}
 
   whenRendered() {
@@ -1716,7 +1759,9 @@ return ;
       .then(() => this);
   }
 
-  render(renderer) { return renderer.renderMorph(this); }
+  render(renderer) { 
+    return renderer.renderMorph(this);
+  }
 
   renderAsRoot(renderer) { return renderRootMorph(this, renderer); }
 

@@ -11,6 +11,7 @@ import { isNumber } from "lively.lang/object.js";
 class Layout {
 
   constructor({spacing, border, container, autoResize, ignore} = {}) {
+    this.applyRequests = [];
     this.border = {top: 0, left: 0, right: 0, bottom: 0, ...border};
     this.spacing = spacing || 0;
     this.ignore = ignore || [];
@@ -49,19 +50,37 @@ class Layout {
     this.layoutableSubmorphBounds = this.layoutableSubmorphs.map(m => m.submorphBounds());
   }
 
+  onContainerRender() {
+    this.forceLayout();
+  }
+
+  forceLayout() {
+    if (this.applyRequests && this.applyRequests.length > 0) {
+      this.applyRequests = [];
+      this.apply(this.lastAnim);
+    }
+  }
+
+  scheduleApply(submorph, animation, change = {}) {
+    if (this.active) return;
+    if (!this.applyRequests) this.applyRequests = [];
+    if (animation) this.lastAnim = animation;
+    this.applyRequests.push({submorph, animation, change});
+  }
+
   onSubmorphResized(submorph, change) {
     if (this.container.submorphs.includes(submorph)
         || this.submorphBoundsChanged
         || this.boundsChanged(this.container))
-      this.apply(change.meta.animation);
+      this.scheduleApply(submorph, change.meta.animation, change)
   }
-  onSubmorphAdded(submorph, anim) { 
+  onSubmorphAdded(submorph, animation) { 
     this.refreshBoundsCache();
-    this.apply(anim); 
+    this.scheduleApply(submorph, animation)
   }
-  onSubmorphRemoved(submorph, anim) { 
+  onSubmorphRemoved(submorph, animation) { 
     this.refreshBoundsCache();
-    this.apply(anim); 
+    this.scheduleApply(submorph, animation)
   }
 
   onChange({selector, args, prop, value, prevValue, meta}) {
