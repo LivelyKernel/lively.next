@@ -367,7 +367,7 @@ export default class EventDispatcher {
         // Start dragging when we are holding the hand pressed and and move it
         // beyond targetMorph.dragTriggerDistance
         } else if (state.clickedOnMorph && state.clickedOnPosition
-                && targetMorph.draggable
+                && state.clickedOnMorph.draggable
                 && !state.draggedMorph
                 && !hand.carriesMorphs()
                 && state.clickedOnPosition) {
