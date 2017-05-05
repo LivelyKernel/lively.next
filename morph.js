@@ -677,8 +677,6 @@ export class Morph {
     if (selector == "addMorphAt") {
       morph = args[0];
       if (obj.equals(morph.getStyleSheetsInScope(), morph._styleSheetsInScope)) morph = null;
-    } else if (selector == 'removeMorph') {
-      morph = args[0];
     } else if (prop == "name" || prop == "styleClasses") {
       if (!obj.equals(prevValue,value)) morph = this;
     }
