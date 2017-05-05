@@ -1,9 +1,10 @@
-/*global declare, it, describe, beforeEach, afterEach, before, after*/
+/*global System, declare, it, xit, describe, beforeEach, afterEach, before, after*/
 import { StyleSheet } from "../style-rules.js";
-import { Morph, HorizontalLayout } from "../index.js";
+import { Morph, MorphicEnv, HorizontalLayout, morph } from "../index.js";
 import { expect } from "mocha-es6";
 import { pt, rect, Color, Rectangle } from "lively.graphics";
 import { Sizzle } from "../sizzle.js";
+import { createDOMEnvironment } from "../rendering/dom-helper.js";
 
 describe("Sizzle", () => {
   it("does not confuse AND-classes with structural class relation", () => {
@@ -12,7 +13,21 @@ describe("Sizzle", () => {
   });
 });
 
+var env, world;
+
+function createDummyWorld() {
+  world = morph({type: 'world', name: "world"});
+  return world;
+}
+
 describe("Style Rules", () => {
+
+  if (System.get("@system-env").node)
+    this.timeout(10000);
+
+  beforeEach(async () => env = await MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
+  afterEach(() =>  MorphicEnv.popDefault().uninstall());
+
   it("applies a style to a morph", () => {
     const m1 = new Morph({
       styleClasses: ["root"],
@@ -34,8 +49,8 @@ describe("Style Rules", () => {
       ".bob": {fill: Color.red},
       ".alice": {fill: Color.yellow}
     });
-    expect(m1._styleSheetsInScope).equals(m1.styleSheets);
     expect(m1.fill).equals(Color.orange);
+    expect(m1._styleSheetsInScope).equals(m1.styleSheets);
     expect(m1._styleSheetProps.fill).not.undefined;
     expect(m2.fill).equals(Color.yellow);
   });
@@ -123,7 +138,7 @@ describe("Style Rules", () => {
     expect(m3.borderColor).equals(Color.red);
   });
 
-  it("updates layouts on changing submorphs", () => {
+  it("updates layouts on changing submorphs", async () => {
     const m1 = new Morph({name: "m1", styleClasses: ["root"]}),
           m2 = new Morph({name: "m2", styleClasses: ["child"]}),
           m3 = new Morph({name: "m3", styleClasses: ["child"]});
@@ -134,15 +149,16 @@ describe("Style Rules", () => {
     });
     m1.addMorph(m3);
     m1.addMorph(m2);
+    world.addMorph(m1);
+    await m1.whenRendered();
     expect(m1.width).equals(m2.width + m3.width);
-    let l = m1.layout;
     m2.styleClasses = ["new"];
-    expect(l).to.not.equals(m1.layout);
+    await world.whenRendered();
     expect(m2.width).equals(100);
     expect(m1.width).equals(100 + m3.width);
   });
 
-  it("removes morphs from index when they are removed from the indexed context", () => {
+  xit("removes morphs from index when they are removed from the indexed context", () => {
     const m = new Morph({
       styleClasses: ["root", "child"],
       submorphs: [{name: "bob", styleClasses: ["leaf"]}],
@@ -161,7 +177,7 @@ describe("Style Rules", () => {
     expect(bob.id in sizzle.cachedExpressions[".leaf"].morphIndex).to.be
       .false;
   });
-
+  
   it('results in the same transform behaviors as if morphs where directly set', () => {
     let hierarchy = new Morph({
       styleSheets: [
