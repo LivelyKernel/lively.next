@@ -558,7 +558,11 @@ export class Morph {
           this._styleSheetsInScope.map(ss => ss.getStyleProps(this))
         );
       }
-      return this._styleSheetProps[key] || v;
+      if (key in this._styleSheetProps) {
+        return this._styleSheetProps[key]
+      } else {
+        return v;
+      }
     }
     return v;
   }
