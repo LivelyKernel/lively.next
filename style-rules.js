@@ -49,8 +49,8 @@ export class StyleSheet {
   }
 
   getStyleProps(morph) {
-    var props = {};
-    for (let rule in this.rules) {
+    var props = {}, rule;
+    for (rule in this.rules) {
       if (this.sizzle.matches(rule, morph)) {
         props = {...props, ...this.rules[rule]};
       }

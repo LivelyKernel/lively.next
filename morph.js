@@ -549,14 +549,16 @@ export class Morph {
   defaultProperty(key) { return this.defaultProperties[key]; }
   getProperty(key) {
     this._defaultStyleProperties = this._defaultStyleProperties || this.styleProperties;
-    let v = this._morphicState[key], dv = this.defaultProperty(key),
-        isGeoObj = v && [Rectangle, Point].includes(v.constructor);
+    const v = this._morphicState[key], 
+          dv = this.defaultProperty(key),
+          isGeoObj = v && [Rectangle, Point].includes(v.constructor);
     if (this._defaultStyleProperties.includes(key) && (isGeoObj ? v.equals(dv) : v == dv)) {
       if (!this._styleSheetProps) {
         this._styleSheetsInScope = this.getStyleSheetsInScope();
-        this._styleSheetProps = obj.merge(
-          this._styleSheetsInScope.map(ss => ss.getStyleProps(this))
-        );
+        this._styleSheetProps = {};
+        for (const ss of this._styleSheetsInScope) {
+          Object.assign(this._styleSheetProps, ss.getStyleProps(this));
+        }
       }
       if (key in this._styleSheetProps) {
         return this._styleSheetProps[key]
