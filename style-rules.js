@@ -8,7 +8,6 @@ export class StyleSheet {
 
   constructor(rules) {
     this.rules = rules;
-    this.cachedProps = {};
   }
 
   set context(morph) {
@@ -22,8 +21,6 @@ export class StyleSheet {
   }
 
   get context() { return this._context }
-
-  reset() { this.cachedProps = {} }
 
   unwrapNestedProps(props) {
     ["borderRadius", "borderWidth", "borderColor"].forEach(p => {
@@ -70,7 +67,6 @@ export class StyleSheet {
       props.dropShadow = new ShadowObject(props.dropShadow);
       props.dropShadow.morph = morph;
     }
-    this.cachedProps[morph.id] = props;
     props.layout && props.layout.scheduleApply();
     if (morph._cachedTextBounds) {
       morph._cachedTextBounds = null;
