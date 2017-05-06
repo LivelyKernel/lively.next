@@ -12,13 +12,13 @@ import {
   installPackage,
   buildPackage,
   readPackageSpec
-} from "flat-node-packages/index.js"
+} from "flatn/index.js"
 
 
 /*
   Invocation from command line:
-  eval `fnp_env`
-  FNP_PACKAGE_DIRS=deps mocha-es6 tests/test.js
+  eval `flatn_env`
+  FLATN_PACKAGE_DIRS=deps mocha-es6 tests/test.js
 */
 
 
@@ -102,7 +102,7 @@ describe("flat packages", function() {
               "package.json": JSON.stringify({
                 name: "test-package-1",
                 version: "1.2.3",
-                fnp_package_dirs: ["../../b"]
+                flatn_package_dirs: ["../../b"]
               })
             }
           },
@@ -276,13 +276,13 @@ describe("flat packages", function() {
   describe("resolving modules", () => {
 
     it("in node at startup", async () => {
-      // FNP_PACKAGE_DIRS=/var/folders/03/64_rfvgj0j19w_ynyl3tmtkr0000gn/T/lively.node-packages-test/packages/ /Users/robert/.nvm/versions/node/v7.7.3/bin/node -r /Users/robert/Lively/lively-dev2/flat-node-packages/module-resolver.js -r /var/folders/03/64_rfvgj0j19w_ynyl3tmtkr0000gn/T/lively.node-packages-test/packages/bar/
-      let resolverMod = resource(System.decanonicalize("flat-node-packages/module-resolver.js")).path(),
+      // FLATN_PACKAGE_DIRS=/var/folders/03/64_rfvgj0j19w_ynyl3tmtkr0000gn/T/lively.node-packages-test/packages/ /Users/robert/.nvm/versions/node/v7.7.3/bin/node -r /Users/robert/Lively/lively-dev2/flatn/module-resolver.js -r /var/folders/03/64_rfvgj0j19w_ynyl3tmtkr0000gn/T/lively.node-packages-test/packages/bar/
+      let resolverMod = resource(System.decanonicalize("flatn/module-resolver.js")).path(),
           out = execSync(
               `${process.argv[0]} -r "${resolverMod}" -r './index.js'`,
               {
                 env: {
-                  FNP_PACKAGE_DIRS: `${baseDir.join("packages/").path()}`,
+                  FLATN_PACKAGE_DIRS: `${baseDir.join("packages/").path()}`,
                   PATH: process.env.PATH
                 },
                 cwd: baseDir.join("packages/bar/").path()
@@ -292,11 +292,11 @@ describe("flat packages", function() {
     });
 
     it("in node with own bin", async () => {
-      let nodeBin = System.decanonicalize("flat-node-packages/bin/node").replace(/file:\/\//, ""),
+      let nodeBin = System.decanonicalize("flatn/bin/node").replace(/file:\/\//, ""),
           out = execSync(`${nodeBin} -r './index.js'`, {
             env: {
               PATH: process.env.PATH,
-              FNP_PACKAGE_DIRS: `${baseDir.join("packages/").path()}`
+              FLATN_PACKAGE_DIRS: `${baseDir.join("packages/").path()}`
             },
             cwd: baseDir.join("packages/bar/").path()
           });

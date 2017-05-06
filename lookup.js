@@ -102,7 +102,7 @@ function findMatchingPackageSpec(pName, versionRange, packageMap, verbose = fals
     }
   }
 
-  // verbose && console.log(`[fnp] is ${pName}@${versionRange} installed? ${found ? "yes" : "no"}`);
+  // verbose && console.log(`[flatn] is ${pName}@${versionRange} installed? ${found ? "yes" : "no"}`);
 
   return found;
 }

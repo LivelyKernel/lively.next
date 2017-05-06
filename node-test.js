@@ -1,4 +1,4 @@
-const {buildPackageMap, findMatchingPackageSpec} = require("./flat-node-packages.bundle-cjs.js");
+const {buildPackageMap, findMatchingPackageSpec} = require("./flatn-cjs.js");
 // const { depGraph, buildStages } = require("./dependencies.js");
 // const {BuildProcess} = require("./build.js");
 

@@ -9,7 +9,7 @@ import { findMatchingPackageSpec } from "./lookup.js";
 
 const dir = typeof __dirname !== "undefined"
         ? __dirname
-        : System.decanonicalize("flat-node-packages/").replace("file://", ""),
+        : System.decanonicalize("flatn/").replace("file://", ""),
       helperBinDir = j(dir, "bin"),
       nodeCentralPackageBin = j(helperBinDir, "node");
 
@@ -75,7 +75,7 @@ function linkBins(packageSpecs, linkState = {}) {
         fs.lstatSync(j(linkLocation, linkName));
         fs.unlinkSync(j(linkLocation, linkName));
       } catch (err) {}
-      // console.log(`[fnp build] linking ${j(location, realFile)} => ${j(linkLocation, linkName)}`)
+      // console.log(`[flatn build] linking ${j(location, realFile)} => ${j(linkLocation, linkName)}`)
       fs.symlinkSync(j(location, realFile), j(linkLocation, linkName));
     }
     linkState[location] = true;
@@ -104,19 +104,19 @@ class BuildProcess {
     let {buildStages, packageMap} = this,
         i = 1, n = buildStages.length;
 
-    console.log(`[fnp] Running build stage ${i++}/${n}`)
+    console.log(`[flatn] Running build stage ${i++}/${n}`)
 
     while (buildStages.length) {
       let stage = buildStages[0];
       if (!stage.length) {
         buildStages.shift();
-        buildStages.length && console.log(`[fnp] Running build stage ${i++}/${n}`);
+        buildStages.length && console.log(`[flatn] Running build stage ${i++}/${n}`);
         continue;
       }
       let next = stage[0],
           [name, version] = next.split("@"),
           packageSpec = findMatchingPackageSpec(name, version, packageMap);
-      if (!packageSpec) throw new Error(`[fnp build] package ${next} cannot be found in package map, skipping its build`);
+      if (!packageSpec) throw new Error(`[flatn build] package ${next} cannot be found in package map, skipping its build`);
 
       await this.build(packageSpec);
       stage.shift();
@@ -133,14 +133,14 @@ class BuildProcess {
     let env = npmCreateEnvVars(packageSpec.config);
 
     if (this.hasBuiltScripts(packageSpec)) {
-      console.log(`[fnp] ${packageSpec.config.name} build starting`);
+      console.log(`[flatn] ${packageSpec.config.name} build starting`);
       await this.runScript("preinstall",  packageSpec, env);
       await this.runScript("install",     packageSpec, env);
       await this.runScript("postinstall", packageSpec, env);
-      console.log(`[fnp] ${packageSpec.config.name} build done`);
+      console.log(`[flatn] ${packageSpec.config.name} build done`);
     } else {
       let {name, version} = packageSpec.config;
-      console.log(`[fnp] no build scripts for ${name}@${version}`);
+      console.log(`[flatn] no build scripts for ${name}@${version}`);
     }
 
     this.builtPackages.push(packageSpec);
@@ -148,7 +148,7 @@ class BuildProcess {
 
   async runScript(scriptName, {config, location, scripts}, env) {
     if (!scripts || !scripts[scriptName]) return false;
-    console.log(`[fnp] build ${config.name}: running ${scriptName}`);
+    console.log(`[flatn] build ${config.name}: running ${scriptName}`);
     
     env = Object.assign({},
       process.env,

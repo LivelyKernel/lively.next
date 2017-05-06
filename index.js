@@ -71,7 +71,7 @@ async function installDependenciesOfPackage(
   }
 
   if ((verbose || debug) && !newPackages.length)
-    console.log(`[fnp] no new packages need to be installed for ${config.name}`);
+    console.log(`[flatn] no new packages need to be installed for ${config.name}`);
 
   return {packageMap, newPackages};
 }
@@ -155,7 +155,7 @@ async function installPackage(
         installed = findMatchingPackageSpec(name, version, packageMap);
 
     if (!installed) {
-      (verbose || debug) && console.log(`[fnp] installing package ${name}@${version}`);
+      (verbose || debug) && console.log(`[flatn] installing package ${name}@${version}`);
       installed = await packageDownload(version ? name + "@" + version : name, destinationDir);
       if (!installed)
         throw new Error(`Could not download package ${name + "@" + version}`);
@@ -163,7 +163,7 @@ async function installPackage(
       packageMap = Object.assign({}, packageMap, {[basename(installed.location)]: installed});
       newPackages.push(installed);
     } else {
-      (verbose || debug) && console.log(`[fnp] ${name}@${version} already installed in ${installed.location}`);
+      (verbose || debug) && console.log(`[flatn] ${name}@${version} already installed in ${installed.location}`);
     }
 
     if (!installed) throw new Error(`cannot install package ${name}@${version}!`);
@@ -186,7 +186,7 @@ async function installPackage(
 
 function buildPackageMap(packageDirs) {
   // looks up all the packages in can find in packageDirs and creates
-  // packageSpecs for them.  If a package specifies more fnp_package_dirs in its
+  // packageSpecs for them.  If a package specifies more flatn_package_dirs in its
   // config then repeat the process until no more new package dirs are found.
   // Finally, combine all the packages found into a single map, like
   // {package-name@version: packageSpec, ...}.
@@ -207,13 +207,13 @@ function buildPackageMap(packageDirs) {
         packageMap = {};
     packageMaps.push(packageMap);
     for (let p of getInstalledPackages(packageDirs)) {
-      let {location, config: {name, version, fnp_package_dirs}} = p;
+      let {location, config: {name, version, flatn_package_dirs}} = p;
       Object.assign(packageMap, {[`${name}@${version}`]: p});
-      if (fnp_package_dirs) {
-        for (let dir of fnp_package_dirs) {
+      if (flatn_package_dirs) {
+        for (let dir of flatn_package_dirs) {
           if (!isAbsolute(dir)) dir = normPath(j(location, dir));
           if (packageDirsSeen[dir]) continue;
-          console.log(`[fnp] project ${location} specifies pacakge dir ${dir}`)
+          console.log(`[flatn] project ${location} specifies pacakge dir ${dir}`)
           packageDirsSeen[dir] = true;
           newPackageDirs.push(dir)
         }

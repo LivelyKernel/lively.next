@@ -15,9 +15,9 @@ let files = [
 
 // await p.reload()
 
-let pkg = getPackage("flat-node-packages"),
+let pkg = getPackage("flatn"),
     bundledSource = await bundleToCjs(pkg, files),
-    dist = resource(pkg.url).join(`${pkg.name}.bundle-cjs.js`);
+    dist = resource(pkg.url).join(`${pkg.name}-cjs.js`);
 await dist.parent().ensureExistance();
 await dist.write(bundledSource);
 

@@ -34,9 +34,4 @@ if [[ ! "$real_dir" =~ ^/ ]]; then
   real_dir="$MY_DIR/$real_dir";
 fi
 
-# declare -a PATH_PARTS
-# for ARG in $@
-# do
-# done 
-
 $real_node -r "$real_dir/../module-resolver.js" "$@"

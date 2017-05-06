@@ -7,7 +7,7 @@ const parseArgs = require('../deps/minimist.js'),
       { join: j, isAbsolute, normalize } = require("path"),
       fs = require("fs"),
       { spawn } = require("child_process"),
-      fnp = require("../flat-node-packages.bundle-cjs.js"),
+      flatn = require("../flatn-cjs.js"),
       args = process.argv.slice(2);
 
 if (printHelp(args)) process.exit(0);
@@ -38,7 +38,7 @@ function doList(args) {
     return process.exit(1);
   }
 
-  return Promise.resolve(fnp.getInstalledPackages(packageDirs))
+  return Promise.resolve(flatn.getInstalledPackages(packageDirs))
           .then(packageSpecs =>
             console.log(
               string.printTable(
@@ -94,7 +94,7 @@ function doInstall(args) {
       process.exit(1);
     }
 
-    return fnp.installDependenciesOfPackage(
+    return flatn.installDependenciesOfPackage(
         activeDir,
         packageDirs[0],
         packageDirs,
@@ -127,7 +127,7 @@ function doBuild(args) {
       process.exit(1);
     }
 
-    return fnp.buildPackage(activeDir, packageDirs)
+    return flatn.buildPackage(activeDir, packageDirs)
       .then(() => process.exit(0))
       .catch(err => { console.error(err.stack); process.exit(1); })
   }
@@ -146,9 +146,9 @@ function printHelp(args) {
     return false;
 
   console.log(`
-fnp – flat-node-packages
+flatn – flat node dependencies
 
-Usage: fnp command [opts]
+Usage: flatn command [opts]
 
 Commands:
 help\t\tprint this help
@@ -160,8 +160,8 @@ install\t\tinstalls dependencies (with --save/-S and --save-dev/-D) also adds to
 
 function currentPackages(args) {
   let packages = packagesFromArgs(args);
-  if (process.env.FNP_PACKAGE_DIRS) {
-    for (let dir of process.env.FNP_PACKAGE_DIRS.split(":"))
+  if (process.env.FLATN_PACKAGE_DIRS) {
+    for (let dir of process.env.FLATN_PACKAGE_DIRS.split(":"))
       if (!packages.includes(dir)) packages.push(dir);
   }
   return checkPackages(packages);
@@ -175,7 +175,7 @@ function packagesFromArgs(args) {
 function checkPackages(packages) {
   packages.forEach(p => {
     if (fs.existsSync(p)) return;
-    console.error(`[fnp] package path ${p} does not exist!`)
+    console.error(`[flatn] package path ${p} does not exist!`)
     process.exit(1);
   });
   return packages;
