@@ -57,6 +57,7 @@ class Layout {
   forceLayout() {
     if (this.applyRequests && this.applyRequests.length > 0) {
       this.applyRequests = [];
+      this.refreshBoundsCache();
       this.apply(this.lastAnim);
     }
   }
@@ -75,11 +76,9 @@ class Layout {
       this.scheduleApply(submorph, change.meta.animation, change)
   }
   onSubmorphAdded(submorph, animation) { 
-    this.refreshBoundsCache();
     this.scheduleApply(submorph, animation)
   }
   onSubmorphRemoved(submorph, animation) { 
-    this.refreshBoundsCache();
     this.scheduleApply(submorph, animation)
   }
 
@@ -93,7 +92,7 @@ class Layout {
         this.onSubmorphAdded(args[0], anim);
         break;
     }
-    if (prop == "extent" && !(value && value.equals(prevValue))) this.apply(anim);
+    if (prop == "extent" && !(value && value.equals(prevValue))) this.scheduleApply(anim);
   }
 
   affectsLayout(submorph, {prop, value, prevValue}) {
@@ -103,8 +102,12 @@ class Layout {
   }
 
   onSubmorphChange(submorph, change) {
-    if ("extent" == change.prop && !change.value.equals(change.prevValue)) this.onSubmorphResized(submorph, change);
-    if (this.affectsLayout(submorph, change)) this.apply(change.meta.animation);
+    if ("extent" == change.prop && !change.value.equals(change.prevValue)) {
+       this.onSubmorphResized(submorph, change);
+    }
+    if (this.affectsLayout(submorph, change)) {
+       this.scheduleApply(change.meta.animation);
+    }
   }
 
   changePropertyAnimated(target, propName, value, animate) {
