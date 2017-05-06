@@ -23,37 +23,28 @@ class ListItemMorph extends Label {
     return {
       clipMode:              {defaultValue: "hidden"},
       autofit:               {defaultValue: false},
-      fill:                  {defaultValue: null},
+      isSelected:            {defaultValue: false},
+      fill: {
+        derived: true,
+        get() {
+          return this.isSelected ? this.selectionColor : Color.transparent;
+        }
+      },
       itemIndex:             {defaultValue: undefined},
       selectionFontColor:    {isStyleProp: true, defaultValue: Color.white},
       selectionColor:        {isStyleProp: true, defaultValue: Color.blue},
       nonSelectionFontColor: {isStyleProp: true, defaultValue: Color.rgbHex("333")},
-      fontColor:             {isStyleProp: true, defaultValue: Color.rgbHex("333")},
+      fontColor: {
+        derived: true,
+        get() {
+          return this.isSelected ? this.selectionFontColor : this.nonSelectionFontColor;
+        }
+      }
     }
   }
 
   displayItem(item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, style) {
     let label = item.label || item.string || "no item.string";
-
-    if (style) {
-      let {
-        fontFamily,
-        selectionColor,
-        selectionFontColor,
-        nonSelectionFontColor,
-        fontSize,
-        padding
-      } = style;
-      if (selectionFontColor && this.selectionFontColor !== selectionFontColor)
-        this.selectionFontColor = selectionFontColor;
-      if (nonSelectionFontColor && this.nonSelectionFontColor !== nonSelectionFontColor)
-        this.nonSelectionFontColor = nonSelectionFontColor;
-      if (selectionColor && this.selectionColor !== selectionColor)
-        this.selectionColor = selectionColor;
-      if (fontSize && this.fontSize !== fontSize) this.fontSize = fontSize;
-      if (fontFamily && this.fontFamily !== fontFamily) this.fontFamily = fontFamily;
-      if (padding && !this.padding.equals(padding)) this.padding = padding;
-    }
     if (item.annotation) this.valueAndAnnotation = {value: label, annotation: item.annotation};
     else if (typeof label === "string") this.textString = label;
     else this.value = label;
@@ -69,8 +60,7 @@ class ListItemMorph extends Label {
       // this is faster:
       this.extent = pt(goalWidth, itemHeight);
     }
-    this.fill = isSelected ? this.selectionColor : null;
-    this.fontColor = isSelected ? this.selectionFontColor : this.nonSelectionFontColor;
+    this.isSelected = isSelected;
   }
 
   onMouseDown(evt) {
@@ -509,10 +499,6 @@ export class List extends Morph {
         }
 
         let style = {
-          fontFamily,
-          selectionColor,
-          selectionFontColor,
-          nonSelectionFontColor,
           fontSize,
           padding: itemPadding
         }, itemMorph = itemMorphs[i];
@@ -618,6 +604,7 @@ export class List extends Morph {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import { connect } from "lively.bindings";
+import { CustomLayout } from "../layout.js";
 
 export class FilterableList extends Morph {
 
@@ -626,10 +613,13 @@ export class FilterableList extends Morph {
       ".list.dark [name=list]": {
         fill: Color.transparent,
         hideScrollbars: true,
+        padding: Rectangle.inset(2, 0)
+      },
+      ".list.dark .ListItemMorph": {
+        fontFamily: "Inconsolata, monospace",
         nonSelectionFontColor: Color.gray,
         selectionFontColor: Color.black,
         selectionColor: Color.gray.lighter(),
-        padding: Rectangle.inset(2, 0)
       },
       ".list.dark [name=input]": {
         borderWidth: 0,
@@ -663,7 +653,6 @@ export class FilterableList extends Morph {
               fixedHeight: false,
               autofit: false
             });
-          input.whenRendered().then(() => this.relayout());
           this.submorphs = [
             input,
             new morph({name: 'padding', fill: Color.transparent, height: 5}),
@@ -689,6 +678,7 @@ export class FilterableList extends Morph {
 
       theme: {
         isStyleProp: true,
+        defaultValue: 'default',
         before: ["styleSheets"],
         set(val) {
           this.setProperty('theme', val);
@@ -698,7 +688,8 @@ export class FilterableList extends Morph {
 
       fontFamily: {
         isStyleProp: true,
-        derived: true, after: ["submorphs"], defaultValue: "Helvetica Neue, Arial, sans-serif",
+        derived: true, after: ["submorphs"], 
+        defaultValue: "Helvetica Neue, Arial, sans-serif",
         get() { return this.listMorph.fontFamily; },
         set(val) {
           this.listMorph.fontFamily = val;
@@ -874,12 +865,13 @@ export class FilterableList extends Morph {
     connect(this.inputMorph, "inputChanged", this, "updateFilter");
     connect(this.listMorph, "selection", this, "selectionChanged");
     this.updateFilter();
-    connect(this, 'items', this, "relayout");
-    connect(this, 'extent', this, "relayout");
-    connect(this, "padding", this, "relayout");
-    connect(this, "fontSize", this, "relayout");
-    connect(this, "itemPadding", this, "relayout");
-    connect(this, "inputPadding", this, "relayout");
+    this.layout = new CustomLayout({relayout: () => this.relayout()});
+    // connect(this, 'items', this, "relayout");
+    // connect(this, 'extent', this, "relayout");
+    // connect(this, "padding", this, "relayout");
+    // connect(this, "fontSize", this, "relayout");
+    // connect(this, "itemPadding", this, "relayout");
+    // connect(this, "inputPadding", this, "relayout");
   }
 
   resetConnections() {
@@ -894,6 +886,7 @@ export class FilterableList extends Morph {
 
   relayout() {
     let {listMorph, inputMorph, paddingMorph, borderWidth: offset} = this;
+    inputMorph.fitIfNeeded();
     inputMorph.topLeft = pt(offset, offset);
     inputMorph.width = listMorph.width = this.width - 2*offset;
     if (paddingMorph) {
@@ -954,7 +947,6 @@ export class FilterableList extends Morph {
 
     list.items = filteredItems;
     list.selectedIndexes = newSelectedIndexes.length ? newSelectedIndexes : filteredItems.length ? [0] : [];
-    this.relayout();
     this.scrollSelectionIntoView();
 
     signal(this, "filterChanged", {parsedInput, items: list.items});
@@ -1077,6 +1069,13 @@ export class DropDownList extends Button {
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
+            ".DropDownList [name=dropDownList]": {
+              fontSize: 12,
+              fontFamily: "Helvetica Neue, Arial, sans-serif",
+              fontColor: Color.black,
+              borderWidth: 1,
+              borderColor: Color.gray
+            },
             ".Button.activeStyle": {
               fill: new LinearGradient({
                 stops: [
@@ -1094,13 +1093,7 @@ export class DropDownList extends Button {
         get() {
           let list = this.getProperty("listMorph");
           if (list) return list;
-          list = new List({
-            name: "list",
-            fontSize: this.fontSize,
-            fontFamily: this.fontFamily,
-            fontColor: this.fontColor,
-            border: this.border,
-          });
+          list = new List({name: "dropDownList"});
           this.setProperty("listMorph", list);
           return list;
         }
@@ -1145,6 +1138,13 @@ export class DropDownList extends Button {
 
   isListVisible() { return this.listMorph.owner === this; }
 
+  removeWhenFocusLost(evt) {
+    setTimeout(() => {
+      if (!this.listMorph.withAllSubmorphsDetect(m => m == $world.focusedMorph))
+         this.listMorph.fadeOut(200);
+    }, 100);
+  }
+
   toggleList() {
     var list = this.listMorph;
     if (this.isListVisible()) {
@@ -1155,6 +1155,7 @@ export class DropDownList extends Button {
       signal(this, "activated");
       this.addMorph(list);
       once(list, 'onItemMorphClicked', this, 'toggleList');
+      once(list, 'onBlur', this, 'removeWhenFocusLost');
       list.topLeft = this.innerBounds().bottomLeft();
       list.extent = pt(this.width, this.listHeight);
       list.focus();
