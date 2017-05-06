@@ -136,6 +136,21 @@ class Layout {
   }
 }
 
+export class CustomLayout extends Layout {
+  
+  constructor(config = {}) {
+     this.relayout = config.relayout;
+     super(config);
+  }
+
+  apply(animate) {
+     if (this.active || !this.container) return;
+     super.apply(animate);
+     this.relayout(this.container);
+  }
+  
+}
+
 /* TODO: This is just a very simple constraint layout, that should
    eventually be replaced by just dynamically appying constraints
    to morph properties that relate to other morph's properties */
