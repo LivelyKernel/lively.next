@@ -276,11 +276,18 @@ describe("flat packages", function() {
   describe("resolving modules", () => {
 
     it("in node at startup", async () => {
+      // FNP_PACKAGE_DIRS=/var/folders/03/64_rfvgj0j19w_ynyl3tmtkr0000gn/T/lively.node-packages-test/packages/ /Users/robert/.nvm/versions/node/v7.7.3/bin/node -r /Users/robert/Lively/lively-dev2/flat-node-packages/module-resolver.js -r /var/folders/03/64_rfvgj0j19w_ynyl3tmtkr0000gn/T/lively.node-packages-test/packages/bar/
       let resolverMod = resource(System.decanonicalize("flat-node-packages/module-resolver.js")).path(),
-          out = execSync(`${process.argv[0]} -r "${resolverMod}" -r './index.js'`, {
-            env: {FNP_PACKAGE_DIRS: `${baseDir.join("packages/").path()}`},
-            cwd: baseDir.join("packages/bar/").path()
-          });
+          out = execSync(
+              `${process.argv[0]} -r "${resolverMod}" -r './index.js'`,
+              {
+                env: {
+                  FNP_PACKAGE_DIRS: `${baseDir.join("packages/").path()}`,
+                  PATH: process.env.PATH
+                },
+                cwd: baseDir.join("packages/bar/").path()
+              })
+
       expect(String(out).trim()).equals("24");
     });
 

@@ -1,6 +1,5 @@
 /*global require*/
 "format cjs";
-
 var path = require("path");
 var fs = require("fs");
 var Module = require("module");

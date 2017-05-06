@@ -539,19 +539,24 @@ var dir = typeof __dirname !== "undefined"
       nodeCentralPackageBin = j(helperBinDir, "node");
 
 var npmEnv = (() => {
+  let cacheFile = j(tmpdir(), "npm-env.json"), env;
+  if (fs.existsSync(cacheFile)) {
+    let cached = JSON.parse(String(fs.readFileSync(cacheFile)))
+    if (Date.now() - cached.time < 1000*60) return cached.env;
+  }
   try {
     var dir = j(tmpdir(), "npm-test-env-project");
     if (!fs.existsSync(dir)) fs.mkdirSync(dir);
     fs.writeFileSync(j(dir, "package.json"), `{"scripts": {"print-env": "${process.env.npm_node_execpath || "node"} ./print-env.js"}}`);
     fs.writeFileSync(j(dir, "print-env.js"), `console.log(JSON.stringify(process.env))`);
-    let env = JSON.parse(String(execSync(`npm --silent run print-env`, {cwd: dir})))
+    let PATH = process.env.PATH.split(":").filter(ea => ea !== helperBinDir).join(":")
+    env = JSON.parse(String(execSync(`npm --silent run print-env`, {cwd: dir, env: Object.assign({}, process.env, {PATH})})));
     for (let key in env)
       if (!key.toLowerCase().startsWith("npm") || key.toLowerCase().startsWith("npm_package"))
         delete env[key];
-    return env;
   } catch (err) {
     console.warn(`Cannot figure out real npm env, ${err}`);
-    return {};
+    env = {};
   } finally {
     try {
       fs.unlinkSync(j(dir, "package.json"));
@@ -559,6 +564,8 @@ var npmEnv = (() => {
       fs.rmdirSync(dir);
     } catch (err) {}
   }
+  fs.writeFileSync(cacheFile, JSON.stringify({time: Date.now(), env}));
+  return env;
 })();
 
 
@@ -934,12 +941,13 @@ function buildPackageMap(packageDirs) {
 
 function getInstalledPackages(packageInstallDirs) {
   let packages = [];
-  for (let dir of packageInstallDirs)
+  for (let dir of packageInstallDirs) {
     if (fs.existsSync(dir))
       for (let file of fs.readdirSync(dir)) {
         let spec = readPackageSpec(j(dir, file));
         spec && packages.push(spec);
       }
+  }
   return packages;
 }
 

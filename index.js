@@ -226,12 +226,13 @@ function buildPackageMap(packageDirs) {
 
 function getInstalledPackages(packageInstallDirs) {
   let packages = [];
-  for (let dir of packageInstallDirs)
+  for (let dir of packageInstallDirs) {
     if (fs.existsSync(dir))
       for (let file of fs.readdirSync(dir)) {
         let spec = readPackageSpec(j(dir, file));
         spec && packages.push(spec);
       }
+  }
   return packages;
 }
 

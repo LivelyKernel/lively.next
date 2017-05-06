@@ -38,12 +38,12 @@ function doList(args) {
     return process.exit(1);
   }
 
-  return fnp.getInstalledPackages(packageDirs)
+  return Promise.resolve(fnp.getInstalledPackages(packageDirs))
           .then(packageSpecs =>
             console.log(
               string.printTable(
                 packageSpecs.map(({config, location}) =>
-                  [`${config.name}@${config.version}`, `${resource(location).path()}`]))))
+                  [`${config.name}@${config.version}`, `${location}`]))))
           .then(() => process.exit(0))
           .catch(err => { console.error(err.stack); process.exit(1); });
 }
