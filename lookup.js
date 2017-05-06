@@ -1,7 +1,7 @@
 /*global require, module*/
-const semver = require("./deps/semver.min.js")
-const { basename, join: j } = require("path");
-const fs = require("fs");
+import semver from "./deps/semver.min.js";
+import { basename, join as j } from "path";
+import fs from "fs";
 
 const lvInfoFileName = ".lv-npm-helper-info.json";
 
@@ -107,7 +107,7 @@ function findMatchingPackageSpec(pName, versionRange, packageMap, verbose = fals
   return found;
 }
 
-module.exports = {
+export {
   lvInfoFileName,
   readPackageSpec,
   gitSpecFromVersion,

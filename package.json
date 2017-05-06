@@ -1,15 +1,13 @@
 {
   "name": "flat-node-packages",
   "version": "0.1.0",
-  "main": "index.js",
+  "main": "flat-node-packages.bundle-cjs.js",
   "bin": {
     "fnp": "./bin/cli.js",
     "fnp_node": "./bin/node",
     "fnp_env": "./bin/fnp_env"
   },
-  "dependencies": {
-    "fetch-ponyfill": "^4.0.0"
-  },
+  "dependencies": {},
   "systemjs": {
     "meta": {
       "./deps/lively.resources.js": {
@@ -19,7 +17,7 @@
       }
     },
     "map": {
-      "fetch-ponyfill": "./deps/fetch-ponyfill@4.0.0"
+      "fetch-ponyfill": "./node_modules/fetch-ponyfill"
     }
   }
 }

@@ -1,13 +1,16 @@
 /*global System,process,global,require,module,__dirname*/
-const { join: j } = require("path");
-const fs = require("fs");
-const { tmpdir } = require("os");
-const { execSync } = require("child_process");
-const { buildStages } = require("./dependencies.js");
-const { x, npmFallbackEnv } = require("./util.js");
-const { findMatchingPackageSpec } = require("./lookup.js");
+import { join as j } from "path";
+import fs from "fs";
+import { tmpdir } from "os";
+import { execSync } from "child_process";
+import { buildStages } from "./dependencies.js";
+import { x, npmFallbackEnv } from "./util.js";
+import { findMatchingPackageSpec } from "./lookup.js";
 
-const helperBinDir = j(__dirname, "bin"),
+const dir = typeof __dirname !== "undefined"
+        ? __dirname
+        : System.decanonicalize("flat-node-packages/").replace("file://", ""),
+      helperBinDir = j(dir, "bin"),
       nodeCentralPackageBin = j(helperBinDir, "node");
 
 const npmEnv = (() => {
@@ -171,6 +174,4 @@ class BuildProcess {
 
 }
 
-module.exports = {
-  BuildProcess
-}
+export { BuildProcess };

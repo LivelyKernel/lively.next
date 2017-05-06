@@ -1658,7 +1658,6 @@ function makeRequest(resource) {
   if (body) fetchOpts.body = body;
   fetchOpts.redirect = 'follow';
   fetchOpts.headers = _extends({}, headers, moreHeaders);
-
   return fetch(url, fetchOpts);
 }
 

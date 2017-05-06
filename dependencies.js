@@ -1,8 +1,8 @@
-const { graph } = (typeof lively !== "undefined" && lively.lang) || require("./deps/lively.lang.min.js");
+import { graph } from "./deps/lively.lang.min.js"
 
-const { findMatchingPackageSpec } = require("./lookup.js");
+import { findMatchingPackageSpec } from "./lookup.js";
 
-module.exports = {
+export {
   buildStages,
   depGraph,
   graphvizDeps

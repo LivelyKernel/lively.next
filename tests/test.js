@@ -4,11 +4,7 @@ import { tmpdir } from "os";
 import { execSync, exec } from "child_process";
 const { resource, createFiles } = lively.resources;
 
-let fnpDir = System.decanonicalize("flat-node-packages/").replace("file://", "");
-import Module from "module";
-Object.keys(Module._cache).filter(ea => ea.startsWith(fnpDir)).forEach(ea => delete Module._cache[ea])
-
-const {
+import {
   findMatchingPackageSpec,
   addDependencyToPackage,
   installDependenciesOfPackage,
@@ -16,7 +12,7 @@ const {
   installPackage,
   buildPackage,
   readPackageSpec
-} = System._nodeRequire(`${fnpDir}/index.js`);
+} from "flat-node-packages/index.js"
 
 
 /*
@@ -24,8 +20,6 @@ const {
   eval `fnp_env`
   FNP_PACKAGE_DIRS=deps mocha-es6 tests/test.js
 */
-
-
 
 
 let baseDir = resource(`file://${tmpdir()}/lively.node-packages-test/`);
@@ -43,9 +37,9 @@ let baseDir = resource(`file://${tmpdir()}/lively.node-packages-test/`);
 //   }
 // });
 
-describe("package installation lookup", function() {
+describe("flat packages", function() {
 
-  this.timeout(10000);
+  this.timeout(20 * 1000);
 
   beforeEach(async () => {
     await baseDir.ensureExistance();

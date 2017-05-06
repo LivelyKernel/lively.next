@@ -1,11 +1,11 @@
 /*global require, module*/
-const { tmpdir } = require("os");
-const util = require("./util.js");
-const { readPackageSpec, pathForNameAndVersion, lvInfoFileName } = require("./lookup.js");
+import { tmpdir } from "os";
+import { gitClone, npmDownloadArchive, untar } from "./util.js";
+import { readPackageSpec, pathForNameAndVersion, lvInfoFileName } from "./lookup.js";
 
-const { resource } = (typeof lively !== "undefined" && lively.resources) || require("./deps/lively.resources.js");
+import { resource } from "./deps/lively.resources.js"
 
-module.exports = {
+export {
   packageDownload
 }
 
@@ -69,7 +69,7 @@ async function packageDownloadViaGit({gitURL: url, name, branch}, targetDir) {
   branch = branch || "master"
   url = url.replace(/#[^#]+$/, "");
   let dir = targetDir.join(name).asDirectory()
-  await util.gitClone(url, dir, branch);
+  await gitClone(url, dir, branch);
   return dir;
 }
 
@@ -79,6 +79,6 @@ async function packageDownloadViaNpm(packageNameAndRange, targetDir) {
   let {
     downloadedArchive,
     name, version
-  } = await util.npmDownloadArchive(packageNameAndRange, targetDir);
-  return util.untar(downloadedArchive, targetDir, name);
+  } = await npmDownloadArchive(packageNameAndRange, targetDir);
+  return untar(downloadedArchive, targetDir, name);
 }

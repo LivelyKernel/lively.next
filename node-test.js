@@ -1,6 +1,6 @@
-const {buildPackageMap, findMatchingPackageSpec} = require("./index.js");
-const { depGraph, buildStages } = require("./dependencies.js");
-const {BuildProcess} = require("./build.js");
+const {buildPackageMap, findMatchingPackageSpec} = require("./flat-node-packages.bundle-cjs.js");
+// const { depGraph, buildStages } = require("./dependencies.js");
+// const {BuildProcess} = require("./build.js");
 
 
 (async () => {
@@ -8,7 +8,7 @@ const {BuildProcess} = require("./build.js");
   let found = await findMatchingPackageSpec("pouchdb", null, pMap);
   console.log(found);
 
-  await depGraph(found, pMap);
+  // await depGraph(found, pMap);
   // let stages = await buildStages(p, pMap)
   // let build = new BuildProcess(stages, pMap);
   // await build.run()

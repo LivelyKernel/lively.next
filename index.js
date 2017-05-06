@@ -1,16 +1,24 @@
 /*global require, module*/
-const { findMatchingPackageSpec, readPackageSpec, gitSpecFromVersion } = require("./lookup.js");
-const { basename, isAbsolute, normalize: normPath, join: j } = require("path");
-const fs = require("fs");
-const { inspect } = require("util");
+import { findMatchingPackageSpec, readPackageSpec, gitSpecFromVersion } from "./lookup.js";
+import { packageDownload } from "./download.js";
+import { BuildProcess } from "./build.js";
+import { basename, isAbsolute, normalize as normPath, join as j } from "path";
+import fs from "fs";
+import { inspect } from "util";
 
-const fetchPonyfill = require("fetch-ponyfill/fetch-node.js");
-if (!global.fetch) Object.assign(global, fetchPonyfill());
+// FIXME for resources
+import node_fetch from "./deps/node-fetch.js";
+if (!global.fetch) {
+  Object.assign(
+    global,
+    {fetch: node_fetch.default},
+    ["Response", "Headers", "Request"].reduce((all, name) =>
+      Object.assign(all, node_fetch[name]), {}));
+}
 
 const debug = true;
 
-
-module.exports = {
+export {
   installDependenciesOfPackage,
   addDependencyToPackage,
   installPackage,
@@ -113,7 +121,6 @@ async function buildPackage(packageSpecOrDir, packageMapOrDirs, verbose = false)
         : packageMapOrDirs,
       {name, version} = packageSpec.config;
   packageMap[`${name}@${version}`] = packageSpec;
-  const { BuildProcess } = require("./build.js");
   return await BuildProcess.for(packageSpec, packageMap).run();
 }
 
@@ -126,7 +133,6 @@ async function installPackage(
   packageMap,
   verbose = false
 ) {
-  const { packageDownload } = require("./download.js");
 
   // will lookup or install a package matching pNameAndVersion.  Will
   // recursivly install dependencies

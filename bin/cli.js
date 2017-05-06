@@ -7,7 +7,7 @@ const parseArgs = require('../deps/minimist.js'),
       { join: j, isAbsolute, normalize } = require("path"),
       fs = require("fs"),
       { spawn } = require("child_process"),
-      fnp = require("../index.js"),
+      fnp = require("../flat-node-packages.bundle-cjs.js"),
       args = process.argv.slice(2);
 
 if (printHelp(args)) process.exit(0);

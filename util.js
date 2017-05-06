@@ -1,9 +1,9 @@
 /*global process, require, module*/
 
-const { exec } = require("child_process");
-const { join: j } = require("path");
-const { tmpdir } = require("os");
-const { resource } = (typeof lively !== "undefined" && lively.resources) || require("./deps/lively.resources.js");
+import { exec } from "child_process";
+import { join as j } from "path";
+import { tmpdir } from "os";
+import { resource } from "./deps/lively.resources.js";
 
 function maybeFileResource(url) {
   if (typeof url === "string" && url.startsWith("/"))
@@ -129,7 +129,7 @@ const npmFallbackEnv = {
   npm_config_bin_links: 'true',
   npm_config_browser: '',
   npm_config_ca: '',
-  npm_config_cache: j(process.env.HOME, '.npm'),
+  npm_config_cache: j(process.env.HOME || "", '.npm'),
   npm_config_cache_lock_retries: '10',
   npm_config_cache_lock_stale: '60000',
   npm_config_cache_lock_wait: '10000',
@@ -153,8 +153,8 @@ const npmFallbackEnv = {
   npm_config_global: '',
   npm_config_global_style: '',
 
-  npm_config_globalconfig: j(process.env.HOME, 'npmrc'),
-  npm_config_globalignorefile: j(process.env.HOME, 'npmignore'),
+  npm_config_globalconfig: j(process.env.HOME || "", 'npmrc'),
+  npm_config_globalignorefile: j(process.env.HOME || "", 'npmignore'),
   npm_config_group: '20',
   npm_config_ham_it_up: '',
   npm_config_heading: 'npm',
@@ -165,7 +165,7 @@ const npmFallbackEnv = {
   npm_config_init_author_name: '',
   npm_config_init_author_url: '',
   npm_config_init_license: 'ISC',
-  npm_config_init_module: j(process.env.HOME, '.npm-init.js'),
+  npm_config_init_module: j(process.env.HOME || "", '.npm-init.js'),
   npm_config_init_version: '1.0.0',
   npm_config_json: '',
   npm_config_key: '',
@@ -183,7 +183,7 @@ const npmFallbackEnv = {
   npm_config_only: '',
   npm_config_optional: 'true',
   npm_config_parseable: '',
-  npm_config_prefix: process.env.HOME,
+  npm_config_prefix: process.env.HOME || "",
   npm_config_production: '',
   npm_config_progress: 'true',
   npm_config_proprietary_attribs: 'true',
@@ -219,7 +219,7 @@ const npmFallbackEnv = {
   npm_config_usage: '',
   npm_config_user: '501',
   npm_config_user_agent: 'npm/4.4.4 node/v7.7.4 darwin x64',
-  npm_config_userconfig: j(process.env.HOME, '.npmrc'),
+  npm_config_userconfig: j(process.env.HOME || "", '.npmrc'),
   npm_config_version: '',
   npm_config_versions: '',
   npm_config_viewer: 'man',
@@ -227,7 +227,7 @@ const npmFallbackEnv = {
   npm_node_execpath: '/Users/robert/.nvm/versions/node/v7.7.4/bin/node'
 }
 
-module.exports = {
+export {
   gitClone,
   untar,
   npmDownloadArchive,

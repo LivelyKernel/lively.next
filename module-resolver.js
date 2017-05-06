@@ -5,7 +5,7 @@ var path = require("path");
 var fs = require("fs");
 var Module = require("module");
 var { x: execSync } = require("child_process");
-var { buildPackageMap, findMatchingPackageSpec } = require("./index.js");
+var { buildPackageMap, findMatchingPackageSpec } = require("./flat-node-packages.bundle-cjs.js");
 
 var originalResolve;
 installResolver();
