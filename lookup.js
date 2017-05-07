@@ -50,7 +50,7 @@ function gitSpecFromVersion(version = "") {
      gitRepoUrl += "#master";
   }
   return gitRepoUrl
-    ? {branch, gitURL: gitRepoUrl, inFileName: gitRepoUrl.replace(/[:\/\+#]/g, "_")}
+    ? {branch, gitURL: gitRepoUrl, versionInFileName: gitRepoUrl.replace(/[:\/\+#]/g, "_")}
     : null;
 }
 
@@ -64,7 +64,7 @@ function pathForNameAndVersion(nameAndVersion, destinationDir) {
 
   // "git clone -b my-branch git@github.com:user/myproject.git"
   if (gitSpec) {
-    let location = j(destinationDir, `${name}@${gitSpec.inFileName}`);
+    let location = j(destinationDir, `${name}@${gitSpec.versionInFileName}`);
     return Object.assign({}, gitSpec, {location, name, version: gitSpec.gitURL});
   }
   
@@ -72,45 +72,9 @@ function pathForNameAndVersion(nameAndVersion, destinationDir) {
 }
 
 
-function findMatchingPackageSpec(pName, versionRange, packageMap, verbose = false) {
-  // tries to retrieve a package specified by name or name@versionRange (like
-  // foo@^1.2) from packageDirs.
-
-  // let pMap = buildPackageMap(["/Users/robert/.central-node-packages"])
-  // await getInstalledPackage("leveldown", "^1", pMap)
-
-  let gitSpec = gitSpecFromVersion(versionRange || ""), found;
-
-  for (let key in packageMap) {
-    let pSpec = packageMap[key],
-        // {config: {name, version}} =
-        [name, version] = key.split("@");
-
-    if (name !== pName) continue;
-
-    if (!versionRange) { found = pSpec; break; }
-
-    if (gitSpec && (gitSpec.inFileName === version
-      || pSpec.inFileName === gitSpec.inFileName)) {
-       found = pSpec; break; 
-    }
-
-    if (!semver.parse(version || ""))
-      version = pSpec.config.version;
-    if (semver.satisfies(version, versionRange)) {
-      found = pSpec; break;
-    }
-  }
-
-  // verbose && console.log(`[flatn] is ${pName}@${versionRange} installed? ${found ? "yes" : "no"}`);
-
-  return found;
-}
-
 export {
   lvInfoFileName,
   readPackageSpec,
   gitSpecFromVersion,
-  pathForNameAndVersion,
-  findMatchingPackageSpec
+  pathForNameAndVersion
 }

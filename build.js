@@ -5,7 +5,6 @@ import { tmpdir } from "os";
 import { execSync } from "child_process";
 import { buildStages } from "./dependencies.js";
 import { x, npmFallbackEnv } from "./util.js";
-import { findMatchingPackageSpec } from "./lookup.js";
 
 const dir = typeof __dirname !== "undefined"
         ? __dirname
@@ -115,7 +114,7 @@ class BuildProcess {
       }
       let next = stage[0],
           [name, version] = next.split("@"),
-          packageSpec = findMatchingPackageSpec(name, version, packageMap);
+          packageSpec = packageMap.lookup(name, version);
       if (!packageSpec) throw new Error(`[flatn build] package ${next} cannot be found in package map, skipping its build`);
 
       await this.build(packageSpec);

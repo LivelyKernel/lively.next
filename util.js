@@ -227,11 +227,26 @@ const npmFallbackEnv = {
   npm_node_execpath: '/Users/robert/.nvm/versions/node/v7.7.4/bin/node'
 }
 
+function gitSpecFromVersion(version = "") {
+  let gitMatch = version.match(/([^:]+):\/\/.*/),
+      githubMatch = version.match(/([^\/]+)\/([^#]+).*/),
+      gitRepoUrl = gitMatch ? version : githubMatch ? "https://github.com/" + version : null,
+      [_, branch] = (gitRepoUrl && gitRepoUrl.match(/#([^#]*)$/) || []);
+  if (gitRepoUrl && !branch) {
+     branch = "master";
+     gitRepoUrl += "#master";
+  }
+  return gitRepoUrl
+    ? {branch, gitURL: gitRepoUrl, versionInFileName: gitRepoUrl.replace(/[:\/\+#]/g, "_")}
+    : null;
+}
+
 export {
   gitClone,
   untar,
   npmDownloadArchive,
   npmSearchForVersions,
   x,
-  npmFallbackEnv
+  npmFallbackEnv,
+  gitSpecFromVersion
 };

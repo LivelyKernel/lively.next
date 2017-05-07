@@ -228,12 +228,27 @@ var npmFallbackEnv = {
   npm_node_execpath: '/Users/robert/.nvm/versions/node/v7.7.4/bin/node'
 }
 
+function gitSpecFromVersion(version = "") {
+  let gitMatch = version.match(/([^:]+):\/\/.*/),
+      githubMatch = version.match(/([^\/]+)\/([^#]+).*/),
+      gitRepoUrl = gitMatch ? version : githubMatch ? "https://github.com/" + version : null,
+      [_, branch] = (gitRepoUrl && gitRepoUrl.match(/#([^#]*)$/) || []);
+  if (gitRepoUrl && !branch) {
+     branch = "master";
+     gitRepoUrl += "#master";
+  }
+  return gitRepoUrl
+    ? {branch, gitURL: gitRepoUrl, versionInFileName: gitRepoUrl.replace(/[:\/\+#]/g, "_")}
+    : null;
+}
+
 module.exports.gitClone = gitClone;
 module.exports.untar = untar;
 module.exports.npmDownloadArchive = npmDownloadArchive;
 module.exports.npmSearchForVersions = npmSearchForVersions;
 module.exports.x = x;
 module.exports.npmFallbackEnv = npmFallbackEnv;
+module.exports.gitSpecFromVersion = gitSpecFromVersion;
 // <<< file:///Users/robert/Lively/lively-dev2/flatn/util.js
 
 // >>> file:///Users/robert/Lively/lively-dev2/flatn/lookup.js
@@ -290,7 +305,7 @@ function gitSpecFromVersion(version = "") {
      gitRepoUrl += "#master";
   }
   return gitRepoUrl
-    ? {branch, gitURL: gitRepoUrl, inFileName: gitRepoUrl.replace(/[:\/\+#]/g, "_")}
+    ? {branch, gitURL: gitRepoUrl, versionInFileName: gitRepoUrl.replace(/[:\/\+#]/g, "_")}
     : null;
 }
 
@@ -304,7 +319,7 @@ function pathForNameAndVersion(nameAndVersion, destinationDir) {
 
   // "git clone -b my-branch git@github.com:user/myproject.git"
   if (gitSpec) {
-    let location = j(destinationDir, `${name}@${gitSpec.inFileName}`);
+    let location = j(destinationDir, `${name}@${gitSpec.versionInFileName}`);
     return Object.assign({}, gitSpec, {location, name, version: gitSpec.gitURL});
   }
   
@@ -312,58 +327,345 @@ function pathForNameAndVersion(nameAndVersion, destinationDir) {
 }
 
 
-function findMatchingPackageSpec(pName, versionRange, packageMap, verbose = false) {
-  // tries to retrieve a package specified by name or name@versionRange (like
-  // foo@^1.2) from packageDirs.
-
-  // let pMap = buildPackageMap(["/Users/robert/.central-node-packages"])
-  // await getInstalledPackage("leveldown", "^1", pMap)
-
-  let gitSpec = gitSpecFromVersion(versionRange || ""), found;
-
-  for (let key in packageMap) {
-    let pSpec = packageMap[key],
-        // {config: {name, version}} =
-        [name, version] = key.split("@");
-
-    if (name !== pName) continue;
-
-    if (!versionRange) { found = pSpec; break; }
-
-    if (gitSpec && (gitSpec.inFileName === version
-      || pSpec.inFileName === gitSpec.inFileName)) {
-       found = pSpec; break; 
-    }
-
-    if (!semver.parse(version || ""))
-      version = pSpec.config.version;
-    if (semver.satisfies(version, versionRange)) {
-      found = pSpec; break;
-    }
-  }
-
-  // verbose && console.log(`[flatn] is ${pName}@${versionRange} installed? ${found ? "yes" : "no"}`);
-
-  return found;
-}
-
 module.exports.lvInfoFileName = lvInfoFileName;
 module.exports.readPackageSpec = readPackageSpec;
 module.exports.gitSpecFromVersion = gitSpecFromVersion;
 module.exports.pathForNameAndVersion = pathForNameAndVersion;
-module.exports.findMatchingPackageSpec = findMatchingPackageSpec;
 // <<< file:///Users/robert/Lively/lively-dev2/flatn/lookup.js
+
+// >>> file:///Users/robert/Lively/lively-dev2/flatn/package-spec.js
+/*global require, module*/
+var semver = require("./deps/semver.min.js");
+var { basename } = require("path");
+var { join: j } = require("path");
+var fs = require("fs");
+
+var lvInfoFileName = ".lv-npm-helper-info.json";
+
+// PackageSpec.fromDir("/Users/robert/Lively/lively-dev2/lively.server")
+
+class PackageSpec {
+
+  static fromDir(packageDir) {
+    let spec = new this(packageDir)
+    return spec.read() ? spec : null;
+  }
+
+  constructor(location) {
+    this.location = location;
+    this.isDevPackage = false;
+    this.config = {};
+
+    this.hasBindingGyp = false;
+    this.scripts = null;
+    this.bin = null;
+
+    this.branch = null;
+    this.gitURL = null;
+    this.versionInFileName = null;
+  }
+
+  get name() { return this.config.name || ""; }
+  get version() { return this.config.version || ""; }
+
+  read() {
+    let packageDir = this.location;
+
+    if (!fs.statSync(packageDir).isDirectory() || !fs.existsSync(j(packageDir, "package.json")))
+      return false;
+
+    let hasBindingGyp = fs.existsSync(j(packageDir, "binding.gyp")),
+        config = JSON.parse(String(fs.readFileSync(j(packageDir, "package.json")))),
+        scripts, bin;
+
+    if (config.bin) {
+      bin = typeof config.bin === "string"
+        ? {[config.name]: config.bin}
+        : Object.assign({}, config.bin);
+    }
+
+    if (config.scripts || hasBindingGyp) {
+      scripts = Object.assign({}, config.scripts);
+      if (hasBindingGyp && !scripts.install)
+        scripts.install = "node-gyp rebuild";
+    }
+
+    Object.assign(this, {
+      location: packageDir,
+      hasBindingGyp,
+      scripts,
+      bin,
+      config
+    });
+
+    try {
+      let infoF = j(packageDir, lvInfoFileName);
+      if (fs.existsSync(infoF)) {
+        let { branch, gitURL, versionInFileName } = JSON.parse(String(fs.readFileSync(infoF)))
+        Object.assign(this, {branch, gitURL, versionInFileName});
+      }
+    } catch (err) {}
+
+    return true;
+  }
+
+
+  matches(pName, versionRange, gitSpec) {
+    // does this package spec match the package pName@versionRange?
+
+    let {name, version, isDevPackage} = this;
+
+    if (name !== pName) return false;
+
+    if (!versionRange || isDevPackage) return true;
+
+    if (gitSpec && (gitSpec.versionInFileName === version
+      || this.versionInFileName === gitSpec.versionInFileName)) {
+       return true
+    }
+
+    if (semver.parse(version || "") && semver.satisfies(version, versionRange))
+      return true;
+
+    return false;
+  }
+
+}
+
+module.exports.PackageSpec = PackageSpec;
+
+
+
+
+// function pathForNameAndVersion(nameAndVersion, destinationDir) {
+//   // pathForNameAndVersion("foo-bar@1.2.3", "file:///x/y")
+//   // pathForNameAndVersion("foo-bar@foo/bar", "file:///x/y")
+//   // pathForNameAndVersion("foo-bar@git+https://github.com/foo/bar#master", "file:///x/y")
+//
+//   let [name, version] = nameAndVersion.split("@"),
+//       gitSpec = gitSpecFromVersion(version);
+//
+//   // "git clone -b my-branch git@github.com:user/myproject.git"
+//   if (gitSpec) {
+//     let location = j(destinationDir, `${name}@${gitSpec.versionInFileName}`);
+//     return Object.assign({}, gitSpec, {location, name, version: gitSpec.gitURL});
+//   }
+//
+//   return {location: j(destinationDir, nameAndVersion), name, version}
+// }
+//
+
+//
+// export {
+//   lvInfoFileName,
+//   readPackageSpec,
+//   gitSpecFromVersion,
+//   pathForNameAndVersion,
+// }
+// <<< file:///Users/robert/Lively/lively-dev2/flatn/package-spec.js
+
+// >>> file:///Users/robert/Lively/lively-dev2/flatn/package-map.js
+
+var { basename } = require("path");
+var { isAbsolute } = require("path");
+var { normalize: normPath } = require("path");
+var { join: j } = require("path");
+var fs = require("fs");
+
+
+/*
+lively.lang.fun.timeToRun(() => {
+  let pm = PackageMap.build(["/Users/robert/Lively/lively-dev2"])
+  pm.lookup("lively.morphic")
+}, 100);
+*/
+
+class PackageMap {
+
+  static empty() { return new this(); }
+
+  static keyFor(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+    return `all: ${packageCollectionDirs} ea: ${individualPackageDirs} dev: ${devPackageDirs}`
+  }
+
+  static build(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+    return new this().buildDependencyMap(
+      packageCollectionDirs,
+      individualPackageDirs,
+      devPackageDirs);
+  }
+
+  constructor() {
+    this.dependencyMap = {};
+    this.byPackageNames = {};
+    this.key = "";
+    this.devPackageDirs = [];
+    this.individualPackageDirs = [];
+    this.packageCollectionDirs = [];
+  }
+
+  withPackagesDo(doFn) {
+    let result = [];
+    for (let key in this.dependencyMap)
+      result.push(doFn(key, this.dependencyMap[key]))
+    return result;
+  }
+
+  findPackage(matchFn) {
+    for (let key in this.dependencyMap) {
+      let pkg = this.dependencyMap[key]
+      if (matchFn(key, pkg)) return pkg
+    }
+    return null;
+  }
+
+  allPackages() {
+    let pkgs = [];
+    for (let key in this.dependencyMap)
+      pkgs.push(this.dependencyMap[key]);
+    return pkgs;
+  }
+
+  addPackage(packageSpec, isDev = false) {
+    // returns false if package already installed, true otherwise
+
+    let {location, name, version} = packageSpec,
+        {packageCollectionDirs, devPackageDirs, individualPackageDirs} = this;
+
+    if (individualPackageDirs.includes(location) || devPackageDirs.includes(location)) {
+      return false;
+    } else if (packageCollectionDirs.includes(basename(location))) {
+      if (this.allPackages().find(pkg => pkg.location === location))
+        return false;
+    } else {
+      if (isDev) devPackageDirs = devPackageDirs.concat(location);
+      else individualPackageDirs = individualPackageDirs.concat(location);
+    }
+
+    // FIXME key changes....
+    this.buildDependencyMap(packageCollectionDirs, individualPackageDirs, devPackageDirs);
+    return true;
+  }
+
+  buildDependencyMap(packageCollectionDirs, individualPackageDirs = [], devPackageDirs = []) {
+    // looks up all the packages in can find in packageDirs and creates
+    // packageSpecs for them.  If a package specifies more flatn_package_dirs in its
+    // config then repeat the process until no more new package dirs are found.
+    // Finally, combine all the packages found into a single map, like
+    // {package-name@version: packageSpec, ...}.
+    // 
+    // Merging of the results of the different package dirs happens so that dirs
+    // specified first take precedence. I.e. if a dependency foo@1 is found via
+    // packageDirs and then another package specifies a dir that leads to the
+    // discovery of another foo@1, the first one ends up in tha packageDir
+
+    let key = this.constructor.keyFor(
+      packageCollectionDirs,
+      individualPackageDirs,
+      devPackageDirs
+    );
+
+    let pkgMap = {},
+        byPackageNames = {},
+        seen = {packageDirs: {}, collectionDirs: {}};
+
+    // 1. find all the packages in collection dirs and separate package dirs;
+    for (let p of discoverPackagesInCollectionDirs(packageCollectionDirs, seen)) {
+      let {name, version} = p;
+      pkgMap[`${name}@${version}`] = p;
+      (byPackageNames[name] || (byPackageNames[name] = [])).push(`${name}@${version}`);
+    }
+
+    for (let dir of individualPackageDirs)
+      for (let p of discoverPackagesInPackageDir(dir, seen)) {
+        let {name, version} = p;
+        pkgMap[`${name}@${version}`] = p;
+        (byPackageNames[name] || (byPackageNames[name] = [])).push(`${name}@${version}`);
+      }
+
+    // 2. read dev packages, those shadow all normal dependencies with the same package name;
+
+    for (let dir of devPackageDirs)
+      for (let p of discoverPackagesInPackageDir(dir, seen)) {
+        let {name, version} = p;
+        pkgMap[`${name}`] = p;
+        p.isDevPackage = true;
+        let versionsOfPackage = byPackageNames[name] || (byPackageNames[name] = []);
+        if (versionsOfPackage) for (let key of versionsOfPackage) delete pkgMap[key];
+        versionsOfPackage.push(name);
+      }
+
+    this.dependencyMap = pkgMap;
+    this.byPackageNames = byPackageNames;
+    this.packageCollectionDirs = packageCollectionDirs;
+    this.individualPackageDirs = individualPackageDirs;
+    this.devPackageDirs = devPackageDirs;
+    this.key = key;
+
+    return this;
+  }
+
+  lookup(name, versionRange) {
+    // Query the package map if it has a package name@version
+    // Compatibility is either a semver match or if package comes from a git
+    // repo then if the git commit matches.  Additionally dev packages are
+    // supported.  If a dev package with `name` is found it always matches
+
+    let gitSpec = gitSpecFromVersion(versionRange || "");
+    return this.findPackage((key, pkg) => pkg.matches(name, versionRange, gitSpec));
+  }
+}
+
+
+function discoverPackagesInCollectionDirs(
+  packageCollectionDirs,
+  seen = {packageDirs: {}, collectionDirs: {}}
+) {
+  let found = [];
+  for (let dir of packageCollectionDirs)
+    if (fs.existsSync(dir))
+      for (let packageDir of fs.readdirSync(dir))
+        found.push(...discoverPackagesInPackageDir(j(dir, packageDir), seen));
+  return found
+}
+
+function discoverPackagesInPackageDir(
+  packageDir,
+  seen = {packageDirs: {}, collectionDirs: {}}
+) {
+  let spec = fs.existsSync(packageDir) && PackageSpec.fromDir(packageDir);
+  if (!spec) return [];
+
+  let found = [spec],
+      {location, config: {flatn_package_dirs}} = spec;
+
+  if (flatn_package_dirs) {
+    for (let dir of flatn_package_dirs) {
+      if (!isAbsolute(dir)) dir = normPath(j(location, dir));
+      if (seen.collectionDirs[dir]) continue;
+      console.log(`[flatn] project ${location} specifies package dir ${dir}`);
+      seen.collectionDirs[dir] = true;
+      found.push(...discoverPackagesInCollectionDirs([dir], seen));
+    }
+  }
+
+  return found;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+module.exports.PackageMap = PackageMap;
+// <<< file:///Users/robert/Lively/lively-dev2/flatn/package-map.js
 
 // >>> file:///Users/robert/Lively/lively-dev2/flatn/dependencies.js
 var { graph } = require("./deps/lively.lang.min.js");
-
-
 
 module.exports.buildStages = buildStages;
 module.exports.depGraph = depGraph;
 module.exports.graphvizDeps = graphvizDeps;
 
 function buildStages(packageSpec, packageMap) {
+console.log(packageMap.lookup)
   let {config: {name, version}} = packageSpec,
       {deps, packages: packageDeps, resolvedVersions} = depGraph(packageSpec, packageMap);
 
@@ -388,7 +690,7 @@ function depGraph(packageSpec, packageMap) {
     if (nameAndVersion in resolvedVersions) continue;
 
     let [name, version] = nameAndVersion.split("@"),
-        pSpec = findMatchingPackageSpec(name, version, packageMap);
+        pSpec = packageMap.lookup(name, version);
     if (!pSpec) throw new Error(`Cannot resolve package ${nameAndVersion}`);
     let {config} = pSpec,
         resolvedNameAndVersion = `${config.name}@${config.version}`;
@@ -531,7 +833,6 @@ var { execSync } = require("child_process");
 
 
 
-
 var dir = typeof __dirname !== "undefined"
         ? __dirname
         : System.decanonicalize("flatn/").replace("file://", ""),
@@ -640,7 +941,7 @@ class BuildProcess {
       }
       let next = stage[0],
           [name, version] = next.split("@"),
-          packageSpec = findMatchingPackageSpec(name, version, packageMap);
+          packageSpec = packageMap.lookup(name, version);
       if (!packageSpec) throw new Error(`[flatn build] package ${next} cannot be found in package map, skipping its build`);
 
       await this.build(packageSpec);
@@ -715,8 +1016,8 @@ module.exports.BuildProcess = BuildProcess;
 
 
 
-
 var { basename } = require("path");
+var { dirname } = require("path");
 var { isAbsolute } = require("path");
 var { normalize: normPath } = require("path");
 var { join: j } = require("path");
@@ -725,6 +1026,7 @@ var { inspect } = require("util");
 
 // FIXME for resources
 var node_fetch = require("./deps/node-fetch.js");
+
 if (!global.fetch) {
   Object.assign(
     global,
@@ -740,92 +1042,13 @@ module.exports.addDependencyToPackage = addDependencyToPackage;
 module.exports.installPackage = installPackage;
 module.exports.buildPackage = buildPackage;
 module.exports.buildPackageMap = buildPackageMap;
-module.exports.getInstalledPackages = getInstalledPackages;
-module.exports.findMatchingPackageSpec = findMatchingPackageSpec;
 module.exports.readPackageSpec = readPackageSpec;
 
-async function installDependenciesOfPackage(
-  packageSpecOrDir,
-  dirToInstallDependenciesInto,
-  lookupDirs,
-  dependencyFields,
-  packageMap,
-  verbose
-) {
-  // Given a package spec of an installed package (retrieved via
-  // `readPackageSpec`), make sure all dependencies (specified in properties
-  // `dependencyFields` of package.json) are installed
 
-  if (!lookupDirs) lookupDirs = [dirToInstallDependenciesInto];
-  if (!dependencyFields) dependencyFields = ["dependencies"];
-
-  let packageSpec = typeof packageSpecOrDir === "string"
-    ? readPackageSpec(packageSpecOrDir)
-    : packageSpecOrDir;
-
-  if (!packageSpec)
-    throw new Error(`Cannot resolve package: ${inspect(packageSpec, {depth: 0})}`);
-
-  let {config} = packageSpec,
-      deps = Object.assign({},
-        dependencyFields.reduce((map, key) => Object.assign(map, config[key]), {})),
-      depNameAndVersions = [],
-      newPackages = [];
-
-  for (let name in deps) {
-    let newPackagesSoFar = newPackages;
-    ({packageMap, newPackages} = await installPackage(
-      `${name}@${deps[name]}`,
-      dirToInstallDependenciesInto,
-      lookupDirs,
-      ["dependencies"],
-      packageMap,
-      verbose
-    ));
-    newPackages = newPackages.concat(newPackagesSoFar);
-  }
-
-  if ((verbose || debug) && !newPackages.length)
-    console.log(`[flatn] no new packages need to be installed for ${config.name}`);
-
-  return {packageMap, newPackages};
+function buildPackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+  return PackageMap.build(packageCollectionDirs, individualPackageDirs, devPackageDirs);
 }
 
-function addDependencyToPackage(
-  packageSpecOrDir,
-  depNameAndRange,
-  packageDepDir,
-  lookupDirs,
-  dependencyField,
-  verbose = false
-) {
-
-  if (!lookupDirs) lookupDirs = [packageDepDir];
-  if (!dependencyField) dependencyField = "dependencies"; /*vs devDependencies etc.*/
-
-  let packageSpec = typeof packageSpecOrDir === "string"
-    ? readPackageSpec(packageSpecOrDir)
-    : packageSpecOrDir;
-
-  let {config, location} = packageSpec;
-
-  if (!config[dependencyField]) config[dependencyField] = {};
-  let [depName, depVersionRange] = depNameAndRange.split("@"),
-      depVersion = config[dependencyField][depName];
-  if (!depVersion || depVersion !== depVersionRange) {
-    config[dependencyField][depName] = depVersionRange;
-    fs.writeFileSync(j(location, "package.json"), JSON.stringify(config, null, 2));
-  }
-
-  return installPackage(
-    depNameAndRange,
-    packageDepDir,
-    lookupDirs,
-    undefined,
-    undefined,
-    verbose
-  );
-}
 
 async function buildPackage(packageSpecOrDir, packageMapOrDirs, verbose = false) {
   let packageSpec = typeof packageSpecOrDir === "string"
@@ -835,7 +1058,9 @@ async function buildPackage(packageSpecOrDir, packageMapOrDirs, verbose = false)
         ? buildPackageMap(packageMapOrDirs)
         : packageMapOrDirs,
       {name, version} = packageSpec.config;
-  packageMap[`${name}@${version}`] = packageSpec;
+  // packageMap[`${name}@${version}`] = packageSpec;
+  // let key = isDev ? name : `${name}@${version}`;
+  // packageMap.add(key, packageSpec);
   return await BuildProcess.for(packageSpec, packageMap).run();
 }
 
@@ -843,20 +1068,19 @@ async function buildPackage(packageSpecOrDir, packageMapOrDirs, verbose = false)
 async function installPackage(
   pNameAndVersion,
   destinationDir,
-  lookupDirs,
-  dependencyFields,
   packageMap,
+  dependencyFields,
+  isDev = false,
   verbose = false
 ) {
 
   // will lookup or install a package matching pNameAndVersion.  Will
-  // recursivly install dependencies
+  // recursively install dependencies
 
-  if (!lookupDirs) lookupDirs = [destinationDir];
+  // if (!packageMap) throw new Error(`[flatn] install of ${pNameAndVersion}: No package map specified!`);
+  if (!packageMap) packageMap = PackageMap.empty();
+
   if (!dependencyFields) dependencyFields = ["dependencies"];
-
-  if (!packageMap)
-    packageMap = buildPackageMap(lookupDirs);
 
   if (!fs.existsSync(destinationDir))
     fs.mkdirSync(destinationDir);
@@ -867,7 +1091,7 @@ async function installPackage(
 
   while (queue.length) {
     let [name, version] = queue.shift(),
-        installed = findMatchingPackageSpec(name, version, packageMap);
+        installed = packageMap.lookup(name, version);
 
     if (!installed) {
       (verbose || debug) && console.log(`[flatn] installing package ${name}@${version}`);
@@ -875,7 +1099,8 @@ async function installPackage(
       if (!installed)
         throw new Error(`Could not download package ${name + "@" + version}`);
 
-      packageMap = Object.assign({}, packageMap, {[basename(installed.location)]: installed});
+      packageMap.addPackage(installed, isDev);
+
       newPackages.push(installed);
     } else {
       (verbose || debug) && console.log(`[flatn] ${name}@${version} already installed in ${installed.location}`);
@@ -899,57 +1124,89 @@ async function installPackage(
   return {packageMap, newPackages};
 }
 
-function buildPackageMap(packageDirs) {
-  // looks up all the packages in can find in packageDirs and creates
-  // packageSpecs for them.  If a package specifies more flatn_package_dirs in its
-  // config then repeat the process until no more new package dirs are found.
-  // Finally, combine all the packages found into a single map, like
-  // {package-name@version: packageSpec, ...}.
-  // 
-  // Merging of the results of the different package dirs happens so that dirs
-  // specified first take precedence. I.e. if a dependency foo@1 is found via
-  // packageDirs and then another package specifies a dir that leads to the
-  // discovery of another foo@1, the first one ends up in tha packageDir
 
-  // let packageMap = buildPackageMap(["/Users/robert/.central-node-packages"])
-  let packageDirsSeen = packageDirs.reduce((all, ea) =>
-                          Object.assign(all, {[ea]: true}), {}),
-      newPackageDirs = [],
-      packageMaps = [];
+function addDependencyToPackage(
+  packageSpecOrDir,
+  depNameAndRange,
+  packageDepDir,
+  packageMap,
+  dependencyField,
+  verbose = false
+) {
 
-  while (packageDirs.length) {
-    let newPackageDirs = [],
-        packageMap = {};
-    packageMaps.push(packageMap);
-    for (let p of getInstalledPackages(packageDirs)) {
-      let {location, config: {name, version, flatn_package_dirs}} = p;
-      Object.assign(packageMap, {[`${name}@${version}`]: p});
-      if (flatn_package_dirs) {
-        for (let dir of flatn_package_dirs) {
-          if (!isAbsolute(dir)) dir = normPath(j(location, dir));
-          if (packageDirsSeen[dir]) continue;
-          console.log(`[flatn] project ${location} specifies pacakge dir ${dir}`)
-          packageDirsSeen[dir] = true;
-          newPackageDirs.push(dir)
-        }
-      }
-    }
-    packageDirs = newPackageDirs;
+  if (!dependencyField) dependencyField = "dependencies"; /*vs devDependencies etc.*/
+
+  let packageSpec = typeof packageSpecOrDir === "string"
+    ? readPackageSpec(packageSpecOrDir)
+    : packageSpecOrDir;
+
+  let {config, location} = packageSpec;
+
+  if (!config[dependencyField]) config[dependencyField] = {};
+  let [depName, depVersionRange] = depNameAndRange.split("@"),
+      depVersion = config[dependencyField][depName];
+  if (!depVersion || depVersion !== depVersionRange) {
+    config[dependencyField][depName] = depVersionRange;
+    fs.writeFileSync(j(location, "package.json"), JSON.stringify(config, null, 2));
   }
-  return packageMaps.reduceRight((all, ea) => Object.assign(all, ea), {});
+
+  return installPackage(
+    depNameAndRange,
+    packageDepDir,
+    packageMap,
+    undefined,
+    false,
+    verbose
+  );
 }
 
-function getInstalledPackages(packageInstallDirs) {
-  let packages = [];
-  for (let dir of packageInstallDirs) {
-    if (fs.existsSync(dir))
-      for (let file of fs.readdirSync(dir)) {
-        let spec = readPackageSpec(j(dir, file));
-        spec && packages.push(spec);
-      }
+
+async function installDependenciesOfPackage(
+  packageSpecOrDir,
+  dirToInstallDependenciesInto,
+  packageMap,
+  dependencyFields,
+  verbose
+) {
+  // Given a package spec of an installed package (retrieved via
+  // `readPackageSpec`), make sure all dependencies (specified in properties
+  // `dependencyFields` of package.json) are installed
+
+  let packageSpec = typeof packageSpecOrDir === "string"
+    ? readPackageSpec(packageSpecOrDir)
+    : packageSpecOrDir;
+
+  if (!packageSpec)
+    throw new Error(`Cannot resolve package: ${inspect(packageSpec, {depth: 0})}`);
+
+  if (!dirToInstallDependenciesInto) dirToInstallDependenciesInto = dirname(packageSpec.location);
+  if (!dependencyFields) dependencyFields = ["dependencies"];
+
+  let {config} = packageSpec,
+      deps = Object.assign({},
+        dependencyFields.reduce((map, key) => Object.assign(map, config[key]), {})),
+      depNameAndVersions = [],
+      newPackages = [];
+
+  for (let name in deps) {
+    let newPackagesSoFar = newPackages;
+    ({packageMap, newPackages} = await installPackage(
+      `${name}@${deps[name]}`,
+      dirToInstallDependenciesInto,
+      packageMap,
+      ["dependencies"],
+      false,
+      verbose
+    ));
+    newPackages = newPackages.concat(newPackagesSoFar);
   }
-  return packages;
+
+  if ((verbose || debug) && !newPackages.length)
+    console.log(`[flatn] no new packages need to be installed for ${config.name}`);
+
+  return {packageMap, newPackages};
 }
+
 
 /*
 DIR=/Users/robert/Lively/lively-dev2/npm-helper/bin

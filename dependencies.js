@@ -1,7 +1,5 @@
 import { graph } from "./deps/lively.lang.min.js"
 
-import { findMatchingPackageSpec } from "./lookup.js";
-
 export {
   buildStages,
   depGraph,
@@ -9,6 +7,7 @@ export {
 }
 
 function buildStages(packageSpec, packageMap) {
+console.log(packageMap.lookup)
   let {config: {name, version}} = packageSpec,
       {deps, packages: packageDeps, resolvedVersions} = depGraph(packageSpec, packageMap);
 
@@ -33,7 +32,7 @@ function depGraph(packageSpec, packageMap) {
     if (nameAndVersion in resolvedVersions) continue;
 
     let [name, version] = nameAndVersion.split("@"),
-        pSpec = findMatchingPackageSpec(name, version, packageMap);
+        pSpec = packageMap.lookup(name, version);
     if (!pSpec) throw new Error(`Cannot resolve package ${nameAndVersion}`);
     let {config} = pSpec,
         resolvedNameAndVersion = `${config.name}@${config.version}`;
