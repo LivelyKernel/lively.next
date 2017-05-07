@@ -6,7 +6,8 @@ import { query } from "lively.ast";
 
 let files = [
   "util.js",
-  "lookup.js",
+  "package-spec.js",
+  "package-map.js",
   "dependencies.js",
   "download.js",
   "build.js",
@@ -17,7 +18,7 @@ let files = [
 
 let pkg = getPackage("flatn"),
     bundledSource = await bundleToCjs(pkg, files),
-    dist = resource(pkg.url).join(`${pkg.name}-cjs.js`);
+    dist = resource(pkg.url).join(`flatn-cjs.js`);
 await dist.parent().ensureExistance();
 await dist.write(bundledSource);
 

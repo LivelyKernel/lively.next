@@ -96,34 +96,6 @@ class PackageSpec {
 }
 
 export {
-  PackageSpec
+  PackageSpec,
+  lvInfoFileName
 }
-
-
-
-
-// function pathForNameAndVersion(nameAndVersion, destinationDir) {
-//   // pathForNameAndVersion("foo-bar@1.2.3", "file:///x/y")
-//   // pathForNameAndVersion("foo-bar@foo/bar", "file:///x/y")
-//   // pathForNameAndVersion("foo-bar@git+https://github.com/foo/bar#master", "file:///x/y")
-//
-//   let [name, version] = nameAndVersion.split("@"),
-//       gitSpec = gitSpecFromVersion(version);
-//
-//   // "git clone -b my-branch git@github.com:user/myproject.git"
-//   if (gitSpec) {
-//     let location = j(destinationDir, `${name}@${gitSpec.versionInFileName}`);
-//     return Object.assign({}, gitSpec, {location, name, version: gitSpec.gitURL});
-//   }
-//
-//   return {location: j(destinationDir, nameAndVersion), name, version}
-// }
-//
-
-//
-// export {
-//   lvInfoFileName,
-//   readPackageSpec,
-//   gitSpecFromVersion,
-//   pathForNameAndVersion,
-// }

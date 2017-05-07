@@ -1,4 +1,4 @@
-/*global, describe,it,afterEach,beforeEach*/
+/*global, describe,it,afterEach,beforeEach,System,process*/
 import { expect } from "mocha-es6";
 import { tmpdir } from "os";
 import { execSync, exec } from "child_process";
@@ -9,9 +9,10 @@ import {
   installDependenciesOfPackage,
   buildPackageMap,
   installPackage,
-  buildPackage,
-  readPackageSpec
+  buildPackage
 } from "flatn/index.js"
+
+import { PackageSpec } from "flatn/package-spec.js"
 
 
 /*
@@ -221,14 +222,14 @@ describe("flat packages", function() {
       }))
   
     it("runs install script", async () => {
-      let pkg = readPackageSpec(baseDir.join("build-test/foo/").path());
+      let pkg = PackageSpec.fromDir(baseDir.join("build-test/foo/").path());
       await buildPackage(pkg, buildPackageMap([], [pkg.location]));
       expect(await baseDir.join("build-test/foo/installed").read()).equals("yes");
     });
   
     it("runs install scripts of dependent packages", async () => {
       let pmap = buildPackageMap([baseDir.join("build-test/").path()])
-      await buildPackage(readPackageSpec(baseDir.join("build-test/bar/").path()), pmap);
+      await buildPackage(PackageSpec.fromDir(baseDir.join("build-test/bar/").path()), pmap);
       expect(await baseDir.join("build-test/foo/installed").read()).equals("yes");
     });
   
@@ -243,7 +244,7 @@ describe("flat packages", function() {
           "./installed",
           String(require("child_process").execSync("foo-bin")))`)
       let pmap = buildPackageMap([baseDir.join("build-test/").path()])
-      await buildPackage(readPackageSpec(barDir.join("").path()), pmap);
+      await buildPackage(PackageSpec.fromDir(barDir.join("").path()), pmap);
       expect(await barDir.join("installed").read()).equals("foo-bin!\n");
     });
   

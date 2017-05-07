@@ -251,88 +251,6 @@ module.exports.npmFallbackEnv = npmFallbackEnv;
 module.exports.gitSpecFromVersion = gitSpecFromVersion;
 // <<< file:///Users/robert/Lively/lively-dev2/flatn/util.js
 
-// >>> file:///Users/robert/Lively/lively-dev2/flatn/lookup.js
-/*global require, module*/
-var semver = require("./deps/semver.min.js");
-var { basename } = require("path");
-var { join: j } = require("path");
-var fs = require("fs");
-
-var lvInfoFileName = ".lv-npm-helper-info.json";
-
-function readPackageSpec(packageDir, optPackageJSON) {
-  if (!fs.statSync(packageDir).isDirectory() || !fs.existsSync(j(packageDir, "package.json")))
-    return null;
-
-  let hasBindingGyp = fs.existsSync(j(packageDir, "binding.gyp")),
-      config = optPackageJSON || JSON.parse(String(fs.readFileSync(j(packageDir, "package.json")))),
-      scripts, bin;
-
-  if (config.bin) {
-    bin = typeof config.bin === "string"
-      ? {[config.name]: config.bin}
-      : Object.assign({}, config.bin);
-  }
-
-  if (config.scripts || hasBindingGyp) {
-    scripts = Object.assign({}, config.scripts);
-    if (hasBindingGyp && !scripts.install)
-      scripts.install = "node-gyp rebuild";
-  }
-
-  let info = {};
-  try {
-    info = JSON.parse(String(fs.readFileSync(j(packageDir, lvInfoFileName))));
-  } catch (err) {}
-
-  return Object.assign({}, info, {
-    location: packageDir,
-    hasBindingGyp,
-    scripts,
-    bin,
-    config
-  });
-}
-
-
-function gitSpecFromVersion(version = "") {
-  let gitMatch = version.match(/([^:]+):\/\/.*/),
-      githubMatch = version.match(/([^\/]+)\/([^#]+).*/),
-      gitRepoUrl = gitMatch ? version : githubMatch ? "https://github.com/" + version : null,
-      [_, branch] = (gitRepoUrl && gitRepoUrl.match(/#([^#]*)$/) || []);
-  if (gitRepoUrl && !branch) {
-     branch = "master";
-     gitRepoUrl += "#master";
-  }
-  return gitRepoUrl
-    ? {branch, gitURL: gitRepoUrl, versionInFileName: gitRepoUrl.replace(/[:\/\+#]/g, "_")}
-    : null;
-}
-
-function pathForNameAndVersion(nameAndVersion, destinationDir) {
-  // pathForNameAndVersion("foo-bar@1.2.3", "file:///x/y")
-  // pathForNameAndVersion("foo-bar@foo/bar", "file:///x/y")
-  // pathForNameAndVersion("foo-bar@git+https://github.com/foo/bar#master", "file:///x/y")
-
-  let [name, version] = nameAndVersion.split("@"),
-      gitSpec = gitSpecFromVersion(version);
-
-  // "git clone -b my-branch git@github.com:user/myproject.git"
-  if (gitSpec) {
-    let location = j(destinationDir, `${name}@${gitSpec.versionInFileName}`);
-    return Object.assign({}, gitSpec, {location, name, version: gitSpec.gitURL});
-  }
-  
-  return {location: j(destinationDir, nameAndVersion), name, version}
-}
-
-
-module.exports.lvInfoFileName = lvInfoFileName;
-module.exports.readPackageSpec = readPackageSpec;
-module.exports.gitSpecFromVersion = gitSpecFromVersion;
-module.exports.pathForNameAndVersion = pathForNameAndVersion;
-// <<< file:///Users/robert/Lively/lively-dev2/flatn/lookup.js
-
 // >>> file:///Users/robert/Lively/lively-dev2/flatn/package-spec.js
 /*global require, module*/
 var semver = require("./deps/semver.min.js");
@@ -433,35 +351,7 @@ class PackageSpec {
 }
 
 module.exports.PackageSpec = PackageSpec;
-
-
-
-
-// function pathForNameAndVersion(nameAndVersion, destinationDir) {
-//   // pathForNameAndVersion("foo-bar@1.2.3", "file:///x/y")
-//   // pathForNameAndVersion("foo-bar@foo/bar", "file:///x/y")
-//   // pathForNameAndVersion("foo-bar@git+https://github.com/foo/bar#master", "file:///x/y")
-//
-//   let [name, version] = nameAndVersion.split("@"),
-//       gitSpec = gitSpecFromVersion(version);
-//
-//   // "git clone -b my-branch git@github.com:user/myproject.git"
-//   if (gitSpec) {
-//     let location = j(destinationDir, `${name}@${gitSpec.versionInFileName}`);
-//     return Object.assign({}, gitSpec, {location, name, version: gitSpec.gitURL});
-//   }
-//
-//   return {location: j(destinationDir, nameAndVersion), name, version}
-// }
-//
-
-//
-// export {
-//   lvInfoFileName,
-//   readPackageSpec,
-//   gitSpecFromVersion,
-//   pathForNameAndVersion,
-// }
+module.exports.lvInfoFileName = lvInfoFileName;
 // <<< file:///Users/robert/Lively/lively-dev2/flatn/package-spec.js
 
 // >>> file:///Users/robert/Lively/lively-dev2/flatn/package-map.js
@@ -665,7 +555,6 @@ module.exports.depGraph = depGraph;
 module.exports.graphvizDeps = graphvizDeps;
 
 function buildStages(packageSpec, packageMap) {
-console.log(packageMap.lookup)
   let {config: {name, version}} = packageSpec,
       {deps, packages: packageDeps, resolvedVersions} = depGraph(packageSpec, packageMap);
 
@@ -736,6 +625,7 @@ function graphvizDeps({deps, packages, resolvedVersions}) {
 
 // >>> file:///Users/robert/Lively/lively-dev2/flatn/download.js
 /*global require, module*/
+var { join: j } = require("path");
 var { tmpdir } = require("os");
 
 
@@ -754,6 +644,24 @@ function maybeFileResource(url) {
       url = "file://" + url;
   return url.isResource ? url : resource(url);
 }
+
+function pathForNameAndVersion(nameAndVersion, destinationDir) {
+  // pathForNameAndVersion("foo-bar@1.2.3", "file:///x/y")
+  // pathForNameAndVersion("foo-bar@foo/bar", "file:///x/y")
+  // pathForNameAndVersion("foo-bar@git+https://github.com/foo/bar#master", "file:///x/y")
+
+  let [name, version] = nameAndVersion.split("@"),
+      gitSpec = gitSpecFromVersion(version);
+
+  // "git clone -b my-branch git@github.com:user/myproject.git"
+  if (gitSpec) {
+    let location = j(destinationDir, `${name}@${gitSpec.versionInFileName}`);
+    return Object.assign({}, gitSpec, {location, name, version: gitSpec.gitURL});
+  }
+
+  return {location: j(destinationDir, nameAndVersion), name, version}
+}
+
 
 async function packageDownload(packageNameAndRange, destinationDir) {
   // packageNameAndRange like "lively.modules@^0.7.45"
@@ -799,7 +707,7 @@ async function packageDownload(packageNameAndRange, destinationDir) {
   if (pathSpec.gitURL)
     await packageDir.join(lvInfoFileName).writeJson(pathSpec);
 
-  return readPackageSpec(packageDir.path(), config);
+  return PackageSpec.fromDir(packageDir.path(), config);
 }
 
 
@@ -1016,6 +924,7 @@ module.exports.BuildProcess = BuildProcess;
 
 
 
+
 var { basename } = require("path");
 var { dirname } = require("path");
 var { isAbsolute } = require("path");
@@ -1026,7 +935,6 @@ var { inspect } = require("util");
 
 // FIXME for resources
 var node_fetch = require("./deps/node-fetch.js");
-
 if (!global.fetch) {
   Object.assign(
     global,
@@ -1042,7 +950,6 @@ module.exports.addDependencyToPackage = addDependencyToPackage;
 module.exports.installPackage = installPackage;
 module.exports.buildPackage = buildPackage;
 module.exports.buildPackageMap = buildPackageMap;
-module.exports.readPackageSpec = readPackageSpec;
 
 
 function buildPackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
@@ -1052,7 +959,7 @@ function buildPackageMap(packageCollectionDirs, individualPackageDirs, devPackag
 
 async function buildPackage(packageSpecOrDir, packageMapOrDirs, verbose = false) {
   let packageSpec = typeof packageSpecOrDir === "string"
-        ? readPackageSpec(packageSpecOrDir)
+        ? PackageSpec.fromDir(packageSpecOrDir)
         : packageSpecOrDir,
       packageMap = Array.isArray(packageMapOrDirs)
         ? buildPackageMap(packageMapOrDirs)
@@ -1137,7 +1044,7 @@ function addDependencyToPackage(
   if (!dependencyField) dependencyField = "dependencies"; /*vs devDependencies etc.*/
 
   let packageSpec = typeof packageSpecOrDir === "string"
-    ? readPackageSpec(packageSpecOrDir)
+    ? PackageSpec.fromDir(packageSpecOrDir)
     : packageSpecOrDir;
 
   let {config, location} = packageSpec;
@@ -1173,7 +1080,7 @@ async function installDependenciesOfPackage(
   // `dependencyFields` of package.json) are installed
 
   let packageSpec = typeof packageSpecOrDir === "string"
-    ? readPackageSpec(packageSpecOrDir)
+    ? PackageSpec.fromDir(packageSpecOrDir)
     : packageSpecOrDir;
 
   if (!packageSpec)

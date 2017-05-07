@@ -1,7 +1,8 @@
 /*global require, module*/
+import { join as j } from "path";
 import { tmpdir } from "os";
-import { gitClone, npmDownloadArchive, untar } from "./util.js";
-import { readPackageSpec, pathForNameAndVersion, lvInfoFileName } from "./lookup.js";
+import { gitClone, npmDownloadArchive, untar, gitSpecFromVersion } from "./util.js";
+import { PackageSpec, lvInfoFileName } from "./package-spec.js";
 
 import { resource } from "./deps/lively.resources.js"
 
@@ -15,6 +16,24 @@ function maybeFileResource(url) {
       url = "file://" + url;
   return url.isResource ? url : resource(url);
 }
+
+function pathForNameAndVersion(nameAndVersion, destinationDir) {
+  // pathForNameAndVersion("foo-bar@1.2.3", "file:///x/y")
+  // pathForNameAndVersion("foo-bar@foo/bar", "file:///x/y")
+  // pathForNameAndVersion("foo-bar@git+https://github.com/foo/bar#master", "file:///x/y")
+
+  let [name, version] = nameAndVersion.split("@"),
+      gitSpec = gitSpecFromVersion(version);
+
+  // "git clone -b my-branch git@github.com:user/myproject.git"
+  if (gitSpec) {
+    let location = j(destinationDir, `${name}@${gitSpec.versionInFileName}`);
+    return Object.assign({}, gitSpec, {location, name, version: gitSpec.gitURL});
+  }
+
+  return {location: j(destinationDir, nameAndVersion), name, version}
+}
+
 
 async function packageDownload(packageNameAndRange, destinationDir) {
   // packageNameAndRange like "lively.modules@^0.7.45"
@@ -60,7 +79,7 @@ async function packageDownload(packageNameAndRange, destinationDir) {
   if (pathSpec.gitURL)
     await packageDir.join(lvInfoFileName).writeJson(pathSpec);
 
-  return readPackageSpec(packageDir.path(), config);
+  return PackageSpec.fromDir(packageDir.path(), config);
 }
 
 

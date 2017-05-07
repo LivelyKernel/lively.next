@@ -1,14 +1,15 @@
 /*global require, module*/
-import { readPackageSpec, gitSpecFromVersion } from "./lookup.js";
 import { packageDownload } from "./download.js";
+import { PackageSpec } from "./package-spec.js";
+import { PackageMap } from "./package-map.js";
 import { BuildProcess } from "./build.js";
+
 import { basename, dirname, isAbsolute, normalize as normPath, join as j } from "path";
 import fs from "fs";
 import { inspect } from "util";
 
 // FIXME for resources
 import node_fetch from "./deps/node-fetch.js";
-import { PackageMap } from "./package-map.js";
 if (!global.fetch) {
   Object.assign(
     global,
@@ -25,7 +26,6 @@ export {
   installPackage,
   buildPackage,
   buildPackageMap,
-  readPackageSpec
 }
 
 
@@ -36,7 +36,7 @@ function buildPackageMap(packageCollectionDirs, individualPackageDirs, devPackag
 
 async function buildPackage(packageSpecOrDir, packageMapOrDirs, verbose = false) {
   let packageSpec = typeof packageSpecOrDir === "string"
-        ? readPackageSpec(packageSpecOrDir)
+        ? PackageSpec.fromDir(packageSpecOrDir)
         : packageSpecOrDir,
       packageMap = Array.isArray(packageMapOrDirs)
         ? buildPackageMap(packageMapOrDirs)
@@ -121,7 +121,7 @@ function addDependencyToPackage(
   if (!dependencyField) dependencyField = "dependencies"; /*vs devDependencies etc.*/
 
   let packageSpec = typeof packageSpecOrDir === "string"
-    ? readPackageSpec(packageSpecOrDir)
+    ? PackageSpec.fromDir(packageSpecOrDir)
     : packageSpecOrDir;
 
   let {config, location} = packageSpec;
@@ -153,11 +153,11 @@ async function installDependenciesOfPackage(
   verbose
 ) {
   // Given a package spec of an installed package (retrieved via
-  // `readPackageSpec`), make sure all dependencies (specified in properties
+  // `PackageSpec.fromDir`), make sure all dependencies (specified in properties
   // `dependencyFields` of package.json) are installed
 
   let packageSpec = typeof packageSpecOrDir === "string"
-    ? readPackageSpec(packageSpecOrDir)
+    ? PackageSpec.fromDir(packageSpecOrDir)
     : packageSpecOrDir;
 
   if (!packageSpec)

@@ -7,7 +7,6 @@ export {
 }
 
 function buildStages(packageSpec, packageMap) {
-console.log(packageMap.lookup)
   let {config: {name, version}} = packageSpec,
       {deps, packages: packageDeps, resolvedVersions} = depGraph(packageSpec, packageMap);
 
