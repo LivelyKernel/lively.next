@@ -153,7 +153,7 @@ function doList(genericArgs, args) {
 
   let {packageCollectionDirs, individualPackageDirs, devPackageDirs} = readGenericArgs(genericArgs);
   flatn.setPackageDirsOfEnv(packageCollectionDirs, individualPackageDirs, devPackageDirs);
-console.log(process.env.LINES)
+
   return Promise.resolve(
     flatn
       .buildPackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs)
@@ -176,6 +176,7 @@ console.log(process.env.LINES)
 
 function doInstall(genericArgs, args) {
   let cmdArgs = parseArgs(args, {
+    boolean: ["save-dev", "save"],
     alias: {
       "save-dev": "D",
       save: "S",
@@ -192,10 +193,10 @@ function doInstall(genericArgs, args) {
   let {packageCollectionDirs, individualPackageDirs, devPackageDirs} = readGenericArgs(genericArgs);
   flatn.setPackageDirsOfEnv(packageCollectionDirs, individualPackageDirs, devPackageDirs);
 
-  let argv = args._;
+  let packagesToInstall = cmdArgs._;
 
   // plain invocation: install current package
-  if (!argv || !argv.length) {
+  if (!packagesToInstall || !packagesToInstall.length) {
 
     if (!fs.existsSync(j(activeDir, "package.json"))) {
       console.error(`No package.json is present in ${activeDir}, cannot install!`)
@@ -238,12 +239,49 @@ function doInstall(genericArgs, args) {
      .catch(err => { console.error(err.stack); process.exit(1); })
   }
 
-  console.log(args);
-  process.exit(1);
+
+  packagesToInstall.reduce((installP, pNameAndRange) =>
+      installP.then(() =>
+        flatn.addDependencyToPackage(
+          activeDir,
+          pNameAndRange,
+          packageCollectionDirs[0],
+          flatn.buildPackageMap(
+            packageCollectionDirs,
+            individualPackageDirs,
+            devPackageDirs),
+          cmdArgs["save-dev"] ? "dev-dependencies" : "dependencies",
+          true)),
+    Promise.resolve())
+  .then(() => process.exit(0))
+  .catch(err => {
+    console.error(err.stack);
+    process.exit(1);
+  });
 }
 
-function doEnv(args) {
-  console.log(`PATH=${j(__dirname)}:$PATH`)
+function doEnv(genericArgs, args) {
+  let cmdArgs = parseArgs(args);
+  unexpectedArgs(cmdArgs, [], "env");
+
+  let {packageCollectionDirs, individualPackageDirs, devPackageDirs} = readGenericArgs(genericArgs);
+  flatn.setPackageDirsOfEnv(packageCollectionDirs, individualPackageDirs, devPackageDirs);
+
+  let {PATH, FLATN_DEV_PACKAGE_DIRS, FLATN_PACKAGE_DIRS, FLATN_PACKAGE_COLLECTION_DIRS} = process.env;
+  FLATN_DEV_PACKAGE_DIRS = FLATN_DEV_PACKAGE_DIRS || "";
+  FLATN_PACKAGE_DIRS = FLATN_PACKAGE_DIRS || "";
+  FLATN_PACKAGE_COLLECTION_DIRS = FLATN_PACKAGE_COLLECTION_DIRS || "";
+  let bindir = normalize(j(__dirname, "../bin"))
+  if (!PATH.includes(bindir+":")) PATH = bindir + ":" + PATH;
+  
+  let printedEnv = "";
+  console.log(`
+PATH=${PATH}
+FLATN_PACKAGE_COLLECTION_DIRS=${FLATN_PACKAGE_COLLECTION_DIRS}
+FLATN_PACKAGE_DIRS=${FLATN_PACKAGE_DIRS}
+FLATN_DEV_PACKAGE_DIRS=${FLATN_DEV_PACKAGE_DIRS}
+  `)
+
   process.exit(0);
 }
 

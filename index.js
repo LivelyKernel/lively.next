@@ -44,13 +44,10 @@ function packageDirsFromEnv() {
   }
 }
 
-function setPackageDirsOfEnv(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
-  if (packageCollectionDirs.length)
-    process.env.FLATN_PACKAGE_COLLECTION_DIRS = packageCollectionDirs.join(":");
-  if (individualPackageDirs.length)
-    process.env.FLATN_PACKAGE_DIRS = individualPackageDirs.join(":");
-  if (devPackageDirs.length)
-    process.env.FLATN_DEV_PACKAGE_DIRS = devPackageDirs.join(":");
+function setPackageDirsOfEnv(packageCollectionDirs, individualPackageDirs, devPackageDirs) {  
+  process.env.FLATN_PACKAGE_COLLECTION_DIRS = packageCollectionDirs.join(":");
+  process.env.FLATN_PACKAGE_DIRS = individualPackageDirs.join(":");
+  process.env.FLATN_DEV_PACKAGE_DIRS = devPackageDirs.join(":");
 }
 
 
@@ -162,8 +159,8 @@ function addDependencyToPackage(
     depNameAndRange,
     packageDepDir,
     packageMap,
-    undefined,
-    false,
+    [dependencyField]/*dependencyFields*/,
+    false/*isDev*/,
     verbose
   );
 }
