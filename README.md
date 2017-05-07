@@ -64,6 +64,8 @@ $ node -p 'require("foo").doSomething(here)'`
 
 ## Command line usage
 
+`npm install -g flatn` then
+
 ```
 flatn – flat node dependencies
 
