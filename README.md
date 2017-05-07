@@ -24,6 +24,23 @@ Packages under development can be separately specified.  Those packages will the
 
 By importing `[module-resolver.js](module-resolver.js)` into your nodejs process and specifying the package directories via environment variables, nodejs will then use those directories when it tries to load modules.  Alternatively to manually importing `module-resolver.js` you can use `[bin/node](bin/node)` to start nodejs.
 
+### Example
+
+Let's say we have a local package `foo` with package.json
+
+```json
+{
+  "name": "foo",
+  "version": "0.1.0",
+  "dependencies": {
+    "chalk": "^1"
+  }
+}
+```
+
+We want to use a custom folder inside the projects directory to store the dependencies.  By running `mkdir deps && flatn --packages deps install` we install the undersore dependency inside the deps folder.  We can now set the `FLATN_PACKAGE_COLLECTION_DIRS` environment variable and run nodejs: `eval $( flatn --packages deps env ) && node -p 'require("chalk").blue.bgRed.bold("it works!!!");'`
+
+
 ## Command line usage
 
 ```

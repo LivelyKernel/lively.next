@@ -30,6 +30,7 @@ await dist.write(bundledSource);
 
 async function bundleToCjs(pkg, bundleFiles) {
   let modules = bundleFiles.map(ea => module(pkg.url + "/" + ea)),
+      _ = modules.forEach(m => m.reset()),
       moduleImports = await Promise.all(modules.map(ea => ea.imports())),
       moduleExports = await Promise.all(modules.map(ea => ea.exports())),
       moduleSources = await Promise.all(modules.map(ea => ea.source())),

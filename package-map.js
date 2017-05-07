@@ -56,8 +56,20 @@ class PackageMap {
     return pkgs;
   }
 
+  coversDirectory(dir) {
+    let {packageCollectionDirs, devPackageDirs, individualPackageDirs} = this;
+    if (individualPackageDirs.includes(dir) || devPackageDirs.includes(dir))
+      return true
+    if (packageCollectionDirs.includes(basename(dir)))
+      return true;
+    return false;
+  }
+
   addPackage(packageSpec, isDev = false) {
     // returns false if package already installed, true otherwise
+
+    if (typeof packageSpec === "string")
+      packageSpec = PackageSpec.fromDir(packageSpec);
 
     let {location, name, version} = packageSpec,
         {packageCollectionDirs, devPackageDirs, individualPackageDirs} = this;

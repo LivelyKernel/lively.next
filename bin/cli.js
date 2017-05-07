@@ -195,6 +195,14 @@ function doInstall(genericArgs, args) {
 
   let packagesToInstall = cmdArgs._;
 
+  let packageMap = flatn.buildPackageMap(
+                    packageCollectionDirs,
+                    individualPackageDirs,
+                    devPackageDirs);
+
+  if (!packageMap.coversDirectory(activeDir))
+    packageMap.addPackage(activeDir)
+
   // plain invocation: install current package
   if (!packagesToInstall || !packagesToInstall.length) {
 
@@ -203,15 +211,9 @@ function doInstall(genericArgs, args) {
       process.exit(1);
     }
 
-    let packageMap;
-
     return Promise.resolve()
       .then(() => console.log("[flatn] Phase 1/2: downloading packages"))
       .then(() => {
-        packageMap = flatn.buildPackageMap(
-          packageCollectionDirs,
-          individualPackageDirs,
-          devPackageDirs);
         return flatn.installDependenciesOfPackage(
             activeDir,
             packageCollectionDirs[0],
@@ -276,10 +278,10 @@ function doEnv(genericArgs, args) {
   
   let printedEnv = "";
   console.log(`
-PATH=${PATH}
-FLATN_PACKAGE_COLLECTION_DIRS=${FLATN_PACKAGE_COLLECTION_DIRS}
-FLATN_PACKAGE_DIRS=${FLATN_PACKAGE_DIRS}
-FLATN_DEV_PACKAGE_DIRS=${FLATN_DEV_PACKAGE_DIRS}
+export PATH=${PATH}
+export FLATN_PACKAGE_COLLECTION_DIRS=${FLATN_PACKAGE_COLLECTION_DIRS}
+export FLATN_PACKAGE_DIRS=${FLATN_PACKAGE_DIRS}
+export FLATN_DEV_PACKAGE_DIRS=${FLATN_DEV_PACKAGE_DIRS}
   `)
 
   process.exit(0);
