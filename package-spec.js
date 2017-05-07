@@ -7,6 +7,7 @@ const lvInfoFileName = ".lv-npm-helper-info.json";
 
 // PackageSpec.fromDir("/Users/robert/Lively/lively-dev2/lively.server")
 
+
 class PackageSpec {
 
   static fromDir(packageDir) {
@@ -61,17 +62,31 @@ class PackageSpec {
       config
     });
 
-    try {
-      let infoF = j(packageDir, lvInfoFileName);
-      if (fs.existsSync(infoF)) {
-        let { branch, gitURL, versionInFileName } = JSON.parse(String(fs.readFileSync(infoF)))
-        Object.assign(this, {branch, gitURL, versionInFileName});
-      }
-    } catch (err) {}
-
+    let info = this.readLvInfo();
+    if (info) {
+      let {branch, gitURL, versionInFileName} = info;
+      Object.assign(this, {branch, gitURL, versionInFileName});
+    }
     return true;
   }
 
+  readLvInfo() {
+    try {
+      let infoF = j(this.location, lvInfoFileName);
+      if (fs.existsSync(infoF)) {
+        return JSON.parse(String(fs.readFileSync(infoF)));
+      }
+    } catch (err) {}
+    return null;
+  }
+
+  writeLvInfo(spec) {
+    fs.writeFileSync(j(this.location, lvInfoFileName), JSON.stringify(spec));
+  }
+
+  changeLvInfo(changeFn) {
+    this.writeLvInfo(changeFn(this.readLvInfo()));
+  }
 
   matches(pName, versionRange, gitSpec) {
     // does this package spec match the package pName@versionRange?
@@ -96,6 +111,5 @@ class PackageSpec {
 }
 
 export {
-  PackageSpec,
-  lvInfoFileName
+  PackageSpec
 }

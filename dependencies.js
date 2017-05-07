@@ -6,7 +6,7 @@ export {
   graphvizDeps
 }
 
-function buildStages(packageSpec, packageMap) {
+function buildStages(packageSpec, packageMap, dependencyFields) {
   let {config: {name, version}} = packageSpec,
       {deps, packages: packageDeps, resolvedVersions} = depGraph(packageSpec, packageMap);
 
@@ -17,7 +17,7 @@ function buildStages(packageSpec, packageMap) {
   return lively.lang.graph.sortByReference(deps, `${name}@${version}`);
 }
 
-function depGraph(packageSpec, packageMap) {
+function depGraph(packageSpec, packageMap, dependencyFields = ["dependencies"]) {
   // console.log(lively.lang.string.indent(pNameAndVersion, " ", depth));
   // let packages = getInstalledPackages(centralPackageDir);
 
@@ -33,6 +33,7 @@ function depGraph(packageSpec, packageMap) {
     let [name, version] = nameAndVersion.split("@"),
         pSpec = packageMap.lookup(name, version);
     if (!pSpec) throw new Error(`Cannot resolve package ${nameAndVersion}`);
+
     let {config} = pSpec,
         resolvedNameAndVersion = `${config.name}@${config.version}`;
 
@@ -43,8 +44,12 @@ function depGraph(packageSpec, packageMap) {
       packages[config.name].push(resolvedNameAndVersion);
 
     if (!deps[resolvedNameAndVersion]) {
-      deps[resolvedNameAndVersion] = Object.keys(config.dependencies || {}).map(name => {
-        let fullName = name + "@" + config.dependencies[name];
+      let localDeps = Object.assign({},
+          dependencyFields.reduce((map, key) =>
+            Object.assign(map, config[key]), {}));
+
+      deps[resolvedNameAndVersion] = Object.keys(localDeps).map(name => {
+        let fullName = name + "@" + localDeps[name];
         queue.push(fullName);
         return fullName;
       });

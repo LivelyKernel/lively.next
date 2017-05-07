@@ -83,7 +83,7 @@ class PackageMap {
     // config then repeat the process until no more new package dirs are found.
     // Finally, combine all the packages found into a single map, like
     // {package-name@version: packageSpec, ...}.
-    // 
+    //
     // Merging of the results of the different package dirs happens so that dirs
     // specified first take precedence. I.e. if a dependency foo@1 is found via
     // packageDirs and then another package specifies a dir that leads to the

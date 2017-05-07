@@ -29,7 +29,7 @@ async function npmDownloadArchive(packageNameAndRange, destinationDir) {
   let {version, name} = await npmSearchForVersions(packageNameAndRange),
       archive=`${name}-${version}.tgz`,
       archiveURL = `https://registry.npmjs.org/${name}/-/${archive}`
-  console.log(`[${packageNameAndRange}] downloading ${archiveURL}`);
+  console.log(`[flatn] downloading archive from npm for ${packageNameAndRange}: ${archiveURL}`);
   let downloadedArchive = destinationDir.join(archive);
   await resource(archiveURL).beBinary().copyTo(downloadedArchive);
   return {downloadedArchive, name, version};
@@ -262,6 +262,7 @@ var lvInfoFileName = ".lv-npm-helper-info.json";
 
 // PackageSpec.fromDir("/Users/robert/Lively/lively-dev2/lively.server")
 
+
 class PackageSpec {
 
   static fromDir(packageDir) {
@@ -316,17 +317,31 @@ class PackageSpec {
       config
     });
 
-    try {
-      let infoF = j(packageDir, lvInfoFileName);
-      if (fs.existsSync(infoF)) {
-        let { branch, gitURL, versionInFileName } = JSON.parse(String(fs.readFileSync(infoF)))
-        Object.assign(this, {branch, gitURL, versionInFileName});
-      }
-    } catch (err) {}
-
+    let info = this.readLvInfo();
+    if (info) {
+      let {branch, gitURL, versionInFileName} = info;
+      Object.assign(this, {branch, gitURL, versionInFileName});
+    }
     return true;
   }
 
+  readLvInfo() {
+    try {
+      let infoF = j(this.location, lvInfoFileName);
+      if (fs.existsSync(infoF)) {
+        return JSON.parse(String(fs.readFileSync(infoF)));
+      }
+    } catch (err) {}
+    return null;
+  }
+
+  writeLvInfo(spec) {
+    fs.writeFileSync(j(this.location, lvInfoFileName), JSON.stringify(spec));
+  }
+
+  changeLvInfo(changeFn) {
+    this.writeLvInfo(changeFn(this.readLvInfo()));
+  }
 
   matches(pName, versionRange, gitSpec) {
     // does this package spec match the package pName@versionRange?
@@ -351,7 +366,6 @@ class PackageSpec {
 }
 
 module.exports.PackageSpec = PackageSpec;
-module.exports.lvInfoFileName = lvInfoFileName;
 // <<< file:///Users/robert/Lively/lively-dev2/flatn/package-spec.js
 
 // >>> file:///Users/robert/Lively/lively-dev2/flatn/package-map.js
@@ -443,7 +457,7 @@ class PackageMap {
     // config then repeat the process until no more new package dirs are found.
     // Finally, combine all the packages found into a single map, like
     // {package-name@version: packageSpec, ...}.
-    // 
+    //
     // Merging of the results of the different package dirs happens so that dirs
     // specified first take precedence. I.e. if a dependency foo@1 is found via
     // packageDirs and then another package specifies a dir that leads to the
@@ -554,7 +568,7 @@ module.exports.buildStages = buildStages;
 module.exports.depGraph = depGraph;
 module.exports.graphvizDeps = graphvizDeps;
 
-function buildStages(packageSpec, packageMap) {
+function buildStages(packageSpec, packageMap, dependencyFields) {
   let {config: {name, version}} = packageSpec,
       {deps, packages: packageDeps, resolvedVersions} = depGraph(packageSpec, packageMap);
 
@@ -565,7 +579,7 @@ function buildStages(packageSpec, packageMap) {
   return lively.lang.graph.sortByReference(deps, `${name}@${version}`);
 }
 
-function depGraph(packageSpec, packageMap) {
+function depGraph(packageSpec, packageMap, dependencyFields = ["dependencies"]) {
   // console.log(lively.lang.string.indent(pNameAndVersion, " ", depth));
   // let packages = getInstalledPackages(centralPackageDir);
 
@@ -581,6 +595,7 @@ function depGraph(packageSpec, packageMap) {
     let [name, version] = nameAndVersion.split("@"),
         pSpec = packageMap.lookup(name, version);
     if (!pSpec) throw new Error(`Cannot resolve package ${nameAndVersion}`);
+
     let {config} = pSpec,
         resolvedNameAndVersion = `${config.name}@${config.version}`;
 
@@ -591,8 +606,12 @@ function depGraph(packageSpec, packageMap) {
       packages[config.name].push(resolvedNameAndVersion);
 
     if (!deps[resolvedNameAndVersion]) {
-      deps[resolvedNameAndVersion] = Object.keys(config.dependencies || {}).map(name => {
-        let fullName = name + "@" + config.dependencies[name];
+      let localDeps = Object.assign({},
+          dependencyFields.reduce((map, key) =>
+            Object.assign(map, config[key]), {}));
+
+      deps[resolvedNameAndVersion] = Object.keys(localDeps).map(name => {
+        let fullName = name + "@" + localDeps[name];
         queue.push(fullName);
         return fullName;
       });
@@ -627,7 +646,6 @@ function graphvizDeps({deps, packages, resolvedVersions}) {
 /*global require, module*/
 var { join: j } = require("path");
 var { tmpdir } = require("os");
-
 
 
 
@@ -704,10 +722,10 @@ async function packageDownload(packageNameAndRange, destinationDir) {
 
   await downloadDir.rename(packageDir);
 
-  if (pathSpec.gitURL)
-    await packageDir.join(lvInfoFileName).writeJson(pathSpec);
+  let packageSpec = PackageSpec.fromDir(packageDir.path(), config);
+  packageSpec.writeLvInfo(Object.assign({build: false}, pathSpec));
 
-  return PackageSpec.fromDir(packageDir.path(), config);
+  return packageSpec;
 }
 
 
@@ -819,17 +837,18 @@ function linkBins(packageSpecs, linkState = {}) {
 
 class BuildProcess {
 
-  static for(packageSpec, packageMap) {
-    let stages = buildStages(packageSpec, packageMap);
-    return new this(stages, packageMap);
+  static for(packageSpec, packageMap, dependencyFields, forceBuild = false) {
+    let stages = buildStages(packageSpec, packageMap, dependencyFields);
+    return new this(stages, packageMap, forceBuild);
   }
 
-  constructor(buildStages, packageMap) {
+  constructor(buildStages, packageMap, forceBuild) {
     this.buildStages = buildStages; // 2d list, package specs in sorted order
     this.packageMap = packageMap;
     this.builtPackages = [];
     this.binLinkState = {};
     this.binLinkLocation = "";
+    this.forceBuild = forceBuild;
   }
 
   async run() {
@@ -866,15 +885,23 @@ class BuildProcess {
     this.binLinkLocation = linkBins(this.builtPackages.concat([packageSpec]), this.binLinkState);
     let env = npmCreateEnvVars(packageSpec.config);
 
+
     if (this.hasBuiltScripts(packageSpec)) {
-      console.log(`[flatn] ${packageSpec.config.name} build starting`);
-      await this.runScript("preinstall",  packageSpec, env);
-      await this.runScript("install",     packageSpec, env);
-      await this.runScript("postinstall", packageSpec, env);
-      console.log(`[flatn] ${packageSpec.config.name} build done`);
+      let needsBuilt = this.forceBuild || packageSpec.isDevPackage || !(packageSpec.readLvInfo() || {}).build;
+      if (needsBuilt) {
+        console.log(`[flatn] ${packageSpec.config.name} build starting`);
+        await this.runScript("preinstall",  packageSpec, env);
+        await this.runScript("install",     packageSpec, env);
+        await this.runScript("postinstall", packageSpec, env);
+        packageSpec.changeLvInfo(info => Object.assign({}, info, {build: true}));
+        console.log(`[flatn] ${packageSpec.config.name} build done`);
+      } else {
+        console.log(`[flatn] ${packageSpec.config.name} already built`);
+      }
+
     } else {
       let {name, version} = packageSpec.config;
-      console.log(`[flatn] no build scripts for ${name}@${version}`);
+      // console.log(`[flatn] no build scripts for ${name}@${version}`);
     }
 
     this.builtPackages.push(packageSpec);
@@ -943,32 +970,55 @@ if (!global.fetch) {
       Object.assign(all, node_fetch[name]), {}));
 }
 
-var debug = true;
+var debug = false;
 
 module.exports.installDependenciesOfPackage = installDependenciesOfPackage;
 module.exports.addDependencyToPackage = addDependencyToPackage;
 module.exports.installPackage = installPackage;
 module.exports.buildPackage = buildPackage;
 module.exports.buildPackageMap = buildPackageMap;
+module.exports.setPackageDirsOfEnv = setPackageDirsOfEnv;
+module.exports.packageDirsFromEnv = packageDirsFromEnv;
 
 
 function buildPackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
   return PackageMap.build(packageCollectionDirs, individualPackageDirs, devPackageDirs);
 }
 
+function packageDirsFromEnv() {
+  let env = process.env;
+  return {
+    packageCollectionDirs: (env.FLATN_PACKAGE_COLLECTION_DIRS || "").split(":").filter(Boolean),
+    individualPackageDirs: (env.FLATN_PACKAGE_DIRS || "").split(":").filter(Boolean),
+    devPackageDirs: (env.FLATN_DEV_PACKAGE_DIRS || "").split(":").filter(Boolean)
+  }
+}
 
-async function buildPackage(packageSpecOrDir, packageMapOrDirs, verbose = false) {
+function setPackageDirsOfEnv(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+  if (packageCollectionDirs.length)
+    process.env.FLATN_PACKAGE_COLLECTION_DIRS = packageCollectionDirs.join(":");
+  if (individualPackageDirs.length)
+    process.env.FLATN_PACKAGE_DIRS = individualPackageDirs.join(":");
+  if (devPackageDirs.length)
+    process.env.FLATN_DEV_PACKAGE_DIRS = devPackageDirs.join(":");
+}
+
+
+async function buildPackage(
+  packageSpecOrDir,
+  packageMapOrDirs,
+  dependencyFields = ["dependencies"],
+  verbose = false,
+  forceBuild = false
+) {
   let packageSpec = typeof packageSpecOrDir === "string"
-        ? PackageSpec.fromDir(packageSpecOrDir)
-        : packageSpecOrDir,
+    ? PackageSpec.fromDir(packageSpecOrDir)
+    : packageSpecOrDir,
       packageMap = Array.isArray(packageMapOrDirs)
         ? buildPackageMap(packageMapOrDirs)
         : packageMapOrDirs,
       {name, version} = packageSpec.config;
-  // packageMap[`${name}@${version}`] = packageSpec;
-  // let key = isDev ? name : `${name}@${version}`;
-  // packageMap.add(key, packageSpec);
-  return await BuildProcess.for(packageSpec, packageMap).run();
+  return await BuildProcess.for(packageSpec, packageMap, dependencyFields, forceBuild).run();
 }
 
 
@@ -1022,9 +1072,10 @@ async function installPackage(
             Object.assign(map, config[key]), {}));
 
     for (let name in deps) {
-      if (deps[name] in seen) continue;
+      let nameAndVersion = `${name}@${deps[name]}`;
+      if (nameAndVersion in seen) continue;
       queue.push([name, deps[name]]);
-      seen[deps[name]] = true;
+      seen[nameAndVersion] = true;
     }
   }
 
@@ -1076,7 +1127,7 @@ async function installDependenciesOfPackage(
   verbose
 ) {
   // Given a package spec of an installed package (retrieved via
-  // `readPackageSpec`), make sure all dependencies (specified in properties
+  // `PackageSpec.fromDir`), make sure all dependencies (specified in properties
   // `dependencyFields` of package.json) are installed
 
   let packageSpec = typeof packageSpecOrDir === "string"

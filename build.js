@@ -84,17 +84,18 @@ function linkBins(packageSpecs, linkState = {}) {
 
 class BuildProcess {
 
-  static for(packageSpec, packageMap) {
-    let stages = buildStages(packageSpec, packageMap);
-    return new this(stages, packageMap);
+  static for(packageSpec, packageMap, dependencyFields, forceBuild = false) {
+    let stages = buildStages(packageSpec, packageMap, dependencyFields);
+    return new this(stages, packageMap, forceBuild);
   }
 
-  constructor(buildStages, packageMap) {
+  constructor(buildStages, packageMap, forceBuild) {
     this.buildStages = buildStages; // 2d list, package specs in sorted order
     this.packageMap = packageMap;
     this.builtPackages = [];
     this.binLinkState = {};
     this.binLinkLocation = "";
+    this.forceBuild = forceBuild;
   }
 
   async run() {
@@ -131,15 +132,23 @@ class BuildProcess {
     this.binLinkLocation = linkBins(this.builtPackages.concat([packageSpec]), this.binLinkState);
     let env = npmCreateEnvVars(packageSpec.config);
 
+
     if (this.hasBuiltScripts(packageSpec)) {
-      console.log(`[flatn] ${packageSpec.config.name} build starting`);
-      await this.runScript("preinstall",  packageSpec, env);
-      await this.runScript("install",     packageSpec, env);
-      await this.runScript("postinstall", packageSpec, env);
-      console.log(`[flatn] ${packageSpec.config.name} build done`);
+      let needsBuilt = this.forceBuild || packageSpec.isDevPackage || !(packageSpec.readLvInfo() || {}).build;
+      if (needsBuilt) {
+        console.log(`[flatn] ${packageSpec.config.name} build starting`);
+        await this.runScript("preinstall",  packageSpec, env);
+        await this.runScript("install",     packageSpec, env);
+        await this.runScript("postinstall", packageSpec, env);
+        packageSpec.changeLvInfo(info => Object.assign({}, info, {build: true}));
+        console.log(`[flatn] ${packageSpec.config.name} build done`);
+      } else {
+        console.log(`[flatn] ${packageSpec.config.name} already built`);
+      }
+
     } else {
       let {name, version} = packageSpec.config;
-      console.log(`[flatn] no build scripts for ${name}@${version}`);
+      // console.log(`[flatn] no build scripts for ${name}@${version}`);
     }
 
     this.builtPackages.push(packageSpec);

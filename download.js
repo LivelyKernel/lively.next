@@ -2,7 +2,7 @@
 import { join as j } from "path";
 import { tmpdir } from "os";
 import { gitClone, npmDownloadArchive, untar, gitSpecFromVersion } from "./util.js";
-import { PackageSpec, lvInfoFileName } from "./package-spec.js";
+import { PackageSpec } from "./package-spec.js";
 
 import { resource } from "./deps/lively.resources.js"
 
@@ -76,10 +76,10 @@ async function packageDownload(packageNameAndRange, destinationDir) {
 
   await downloadDir.rename(packageDir);
 
-  if (pathSpec.gitURL)
-    await packageDir.join(lvInfoFileName).writeJson(pathSpec);
+  let packageSpec = PackageSpec.fromDir(packageDir.path(), config);
+  packageSpec.writeLvInfo(Object.assign({build: false}, pathSpec));
 
-  return PackageSpec.fromDir(packageDir.path(), config);
+  return packageSpec;
 }
 
 

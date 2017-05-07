@@ -4,7 +4,7 @@ var path = require("path");
 var fs = require("fs");
 var Module = require("module");
 var { x: execSync } = require("child_process");
-var { buildPackageMap } = require("./flatn-cjs.js");
+var { buildPackageMap, packageDirsFromEnv } = require("./flatn-cjs.js");
 
 var originalResolve;
 installResolver();
@@ -26,8 +26,8 @@ function installResolver() {
           config = findPackageConfig(parentId),
           deps = config && depMap(config),
           basename = request.split("/")[0],
-          flatPackageDirs = (process.env.FLATN_PACKAGE_DIRS || "").split(":"),
-          packageMap = buildPackageMap(flatPackageDirs),
+          {packageCollectionDirs, individualPackageDirs, devPackageDirs} = packageDirsFromEnv(),
+          packageMap = buildPackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs),
           packageFound = packageMap.lookup(basename, deps[basename]),
           resolved = packageFound && resolveFlatPackageToModule(packageFound, basename, request);
 

@@ -18,7 +18,7 @@ if (!global.fetch) {
       Object.assign(all, node_fetch[name]), {}));
 }
 
-const debug = true;
+const debug = false;
 
 export {
   installDependenciesOfPackage,
@@ -26,6 +26,8 @@ export {
   installPackage,
   buildPackage,
   buildPackageMap,
+  setPackageDirsOfEnv,
+  packageDirsFromEnv
 }
 
 
@@ -33,19 +35,40 @@ function buildPackageMap(packageCollectionDirs, individualPackageDirs, devPackag
   return PackageMap.build(packageCollectionDirs, individualPackageDirs, devPackageDirs);
 }
 
+function packageDirsFromEnv() {
+  let env = process.env;
+  return {
+    packageCollectionDirs: (env.FLATN_PACKAGE_COLLECTION_DIRS || "").split(":").filter(Boolean),
+    individualPackageDirs: (env.FLATN_PACKAGE_DIRS || "").split(":").filter(Boolean),
+    devPackageDirs: (env.FLATN_DEV_PACKAGE_DIRS || "").split(":").filter(Boolean)
+  }
+}
 
-async function buildPackage(packageSpecOrDir, packageMapOrDirs, verbose = false) {
+function setPackageDirsOfEnv(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+  if (packageCollectionDirs.length)
+    process.env.FLATN_PACKAGE_COLLECTION_DIRS = packageCollectionDirs.join(":");
+  if (individualPackageDirs.length)
+    process.env.FLATN_PACKAGE_DIRS = individualPackageDirs.join(":");
+  if (devPackageDirs.length)
+    process.env.FLATN_DEV_PACKAGE_DIRS = devPackageDirs.join(":");
+}
+
+
+async function buildPackage(
+  packageSpecOrDir,
+  packageMapOrDirs,
+  dependencyFields = ["dependencies"],
+  verbose = false,
+  forceBuild = false
+) {
   let packageSpec = typeof packageSpecOrDir === "string"
-        ? PackageSpec.fromDir(packageSpecOrDir)
-        : packageSpecOrDir,
+    ? PackageSpec.fromDir(packageSpecOrDir)
+    : packageSpecOrDir,
       packageMap = Array.isArray(packageMapOrDirs)
         ? buildPackageMap(packageMapOrDirs)
         : packageMapOrDirs,
       {name, version} = packageSpec.config;
-  // packageMap[`${name}@${version}`] = packageSpec;
-  // let key = isDev ? name : `${name}@${version}`;
-  // packageMap.add(key, packageSpec);
-  return await BuildProcess.for(packageSpec, packageMap).run();
+  return await BuildProcess.for(packageSpec, packageMap, dependencyFields, forceBuild).run();
 }
 
 
@@ -99,9 +122,10 @@ async function installPackage(
             Object.assign(map, config[key]), {}));
 
     for (let name in deps) {
-      if (deps[name] in seen) continue;
+      let nameAndVersion = `${name}@${deps[name]}`;
+      if (nameAndVersion in seen) continue;
       queue.push([name, deps[name]]);
-      seen[deps[name]] = true;
+      seen[nameAndVersion] = true;
     }
   }
 

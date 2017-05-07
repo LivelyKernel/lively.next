@@ -1,6 +1,7 @@
 /*global, describe,it,afterEach,beforeEach,System,process*/
 import { expect } from "mocha-es6";
 import { tmpdir } from "os";
+import { join as j } from "path";
 import { execSync, exec } from "child_process";
 const { resource, createFiles } = lively.resources;
 
@@ -297,34 +298,55 @@ describe("flat packages", function() {
   
   });
 
-  // describe("dev packages", () => {
-  //
-  //   beforeEach(async () => {
-  //     await createFiles(baseDir, {
-  //       "deps": {
-  //         "test-package-1@1.2.3": {
-  //           "package.json": JSON.stringify({
-  //             name: "test-package-1",
-  //             version: "1.2.3",
-  //             flatn_package_dirs: ["../../b"]
-  //           })
-  //         },
-  //         "dev": {
-  //           "dev-package": {
-  //             "package.json": JSON.stringify({name: "dev-package", version: "0.1.2"})
-  //           }
-  //         }
-  //       }
-  //     });
-  //   });
-  //
-  //   it("lookup", async () => {
-  //     let pMap = buildPackageMap([baseDir.join("package-install-dir/a").path()]),
-  //         pInfo1 = pMap.lookup("test-package-1", "^1"),
-  //         pInfo2 = pMap.lookup("test-package-2", null);
-  //     expect(pInfo1).deep.property("config.name", "test-package-1");
-  //     expect(pInfo2).deep.property("config.name", "test-package-2");
-  //   });
-  // });
+  describe("dev packages", () => {
+  
+    beforeEach(async () => {
+
+      await createFiles(baseDir, {
+        "deps": {
+          "test-package-1@1.2.3": {
+            "package.json": JSON.stringify({
+              name: "test-package-1",
+              version: "1.2.3",
+              dependencies: {"dev-package": "^0.1"},
+              flatn_package_dirs: ["../../b"]
+            })
+          },
+        },
+        "dev": {
+          "dev-package": {
+            "package.json": JSON.stringify({name: "dev-package", version: "1.1.2"})
+          }
+        }
+      });
+    });
+  
+    it("lookup", async () => {
+      let pMap = buildPackageMap(
+        [baseDir.join("deps").path()], [],
+        [baseDir.join("dev/dev-package").path()]),
+          pInfo1 = pMap.lookup("test-package-1", "^1"),
+          pInfo2 = pMap.lookup("dev-package", null);
+
+      expect(pInfo1).property("name", "test-package-1");
+      expect(pInfo2).property("name", "dev-package");
+    });
+
+    it("dev packages are used independent of version", async () => {
+      let pMap = buildPackageMap(
+        [baseDir.join("deps").path()], [],
+        [baseDir.join("dev/dev-package").path()]);
+      let {packageMap, newPackages} = await installDependenciesOfPackage(
+        baseDir.join("deps/test-package-1@1.2.3").path(),
+        baseDir.join("deps").path(),
+        pMap
+      );
+      expect((await baseDir.join("deps").dirList()).map(ea => ea.name()))
+        .equals([ 'test-package-1@1.2.3' ]);
+      expect((await baseDir.join("dev").dirList()).map(ea => ea.name()))
+        .equals(["dev-package"]);
+    });
+
+  });
 
 });
