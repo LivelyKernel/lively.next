@@ -153,7 +153,7 @@ export default class Window extends Morph {
     this.resizer().bottomRight = innerB.bottomRight();
 
     // targetMorph
-    if (this.targetMorph && this.targetMorph.isLayoutable) this.targetMorph.setBounds(this.targetMorphBounds());
+    if (!this.minimized && this.targetMorph && this.targetMorph.isLayoutable) this.targetMorph.setBounds(this.targetMorphBounds());
 
     // title
     title.textBounds().width < labelBounds.width - 2 * buttonOffset
@@ -277,21 +277,22 @@ export default class Window extends Morph {
         easing = Expo.easeOut;
 
     if (minimized) {
+      this.minimized = false;
       this.minimizedBounds = bounds;
       this.animate({bounds: nonMinizedBounds || bounds, duration, easing});
       collapseButton.tooltip = "collapse window";
     } else {
+      this.minimized = true;
       this.nonMinizedBounds = bounds;
       var minimizedBounds = this.minimizedBounds || bounds.withExtent(pt(width, 25)),
           labelBounds = this.titleLabel().textBounds(),
-          buttonOffset = arr.last(this.buttons()).bounds().right() + 3;
+          buttonOffset = this.get('button wrapper').bounds().right() + 3;
       if (labelBounds.width + 2 * buttonOffset < minimizedBounds.width)
         minimizedBounds = minimizedBounds.withWidth(labelBounds.width + buttonOffset + 3);
       this.minimizedBounds = minimizedBounds;
       collapseButton.tooltip = "uncollapse window";
       this.animate({bounds: minimizedBounds, duration, easing});
     }
-    this.minimized = !minimized;
     this.resizer().visible = !this.minimized;
   }
 
@@ -363,6 +364,7 @@ export default class Window extends Morph {
   }
 
   deactivate() {
+    if (this.styleClasses.includes('inactive')) return;
     this.styleClasses = ["inactive"];
     this.titleLabel().fontWeight = "normal";
     this.relayoutWindowControls();
