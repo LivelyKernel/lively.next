@@ -133,6 +133,15 @@ class EvalBackendList extends DropDownList {
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
+            ".DropDownList [name=dropDownList]": {
+              fontSize: 12,
+              fontFamily: "Helvetica Neue, Arial, sans-serif",
+              fontColor: Color.black,
+              borderWidth: 1,
+              borderColor: Color.gray,
+              fill: Color.white.withA(.8),
+              dropShadow: true
+            },
             ".EvalBackendList": {extent: pt(120, 20)},
             ".EvalBackendList [name=label]": {fontSize: 10},
             ".Button.activeStyle": {

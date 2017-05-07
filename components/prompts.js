@@ -22,6 +22,7 @@ export class AbstractPrompt extends Morph {
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
+            ".Button": {borderRadius: 15},
             ".Button.activeStyle.standard": {
               borderWidth: 2,
               fill: Color.transparent,
@@ -302,7 +303,7 @@ export class TextPrompt extends AbstractPrompt {
     if (inputWidth > this.width-25)
       this.width = Math.min(this.maxWidth, inputWidth+25);
 
-    this.addMorph({name: "ok button", type: "button", label: "OK", styleClassesp: ['ok']});
+    this.addMorph({name: "ok button", type: "button", label: "OK", styleClasses: ['ok']});
     this.addMorph({name: "cancel button", type: "button", label: "Cancel", styleClasses: ['cancel']});
 
     connect(this.getSubmorphNamed("ok button"), 'fire', this, 'resolve');

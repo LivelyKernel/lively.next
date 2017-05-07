@@ -13,6 +13,7 @@ export default class Window extends Morph {
     let windowButtonSize = pt(13, 13);
     return new StyleSheet({
       ".Window .buttonGroup": {
+        draggable: false,
         fill: Color.transparent,
         position: pt(0, 0),
         layout: new HorizontalLayout({autoResize: true, spacing: 6})
@@ -21,7 +22,8 @@ export default class Window extends Morph {
         fill: Color.gray.lighter().lighter(),
         borderRadius: 7,
         borderColor: Color.gray,
-        borderWidth: 1
+        borderWidth: 1,
+        dropShadow: {distance: 10, blur: 40, color: Color.black.withA(.1)}
       },
       ".Window.inactive .windowButton": {
         borderColor: Color.gray.darker(),
@@ -61,7 +63,8 @@ export default class Window extends Morph {
         fill: Color.lightGray,
         borderRadius: 7,
         borderColor: Color.gray,
-        borderWidth: 1
+        borderWidth: 1,
+        dropShadow: {distance: 10, blur: 40, color: Color.black.withA(.3)},
       }
     });
   }
@@ -74,12 +77,6 @@ export default class Window extends Morph {
           this.controls = this.getControls();
           if (this.resizable) this.controls.push(this.resizer());
           this.submorphs = [...this.submorphs, ...this.controls];
-        }
-      },
-
-      dropShadow: {
-        initialize() {
-          this.dropShadow = new ShadowObject(true);
         }
       },
       styleClasses: {defaultValue: ["active"]},
