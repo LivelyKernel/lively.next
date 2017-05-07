@@ -38,7 +38,28 @@ Let's say we have a local package `foo` with package.json
 }
 ```
 
-We want to use a custom folder inside the projects directory to store the dependencies.  By running `mkdir deps && flatn --packages deps install` we install the undersore dependency inside the deps folder.  We can now set the `FLATN_PACKAGE_COLLECTION_DIRS` environment variable and run nodejs: `eval $( flatn --packages deps env ) && node -p 'require("chalk").blue.bgRed.bold("it works!!!");'`
+#### Install + require
+
+We want to use a custom folder inside the projects directory to store the dependencies.  By running
+```sh
+$ mkdir deps
+$ flatn --packages deps install
+```
+
+we install the "chalk" dependency inside the deps folder.  We can now set the `FLATN_PACKAGE_COLLECTION_DIRS` environment variable and run nodejs:
+```sh
+$ eval $( flatn --packages deps env )
+$ node -p 'require("chalk").blue.bgRed.bold("it works!!!");'`
+```
+
+#### Using local packages without install
+
+Let's say we have another module `bar` that is local and that we want to use from foo:
+
+```sh
+$ eval $( flatn --packages deps --dev-package /path/to/foo env )
+$ node -p 'require("foo").doSomething(here)'`
+```
 
 
 ## Command line usage
