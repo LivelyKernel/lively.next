@@ -13,7 +13,7 @@
     "lively.graphics": "https://github.com/LivelyKernel/lively.graphics",
     "lively.lang": "^1.0.0",
     "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2",
-    "pepjs": "^0.4.1",
+    "pepjs": "^0.4.3",
     "svg-intersections": "0.2.5",
     "three": "^0.84.0",
     "virtual-dom": "^2.1.1"
