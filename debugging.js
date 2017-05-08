@@ -247,6 +247,7 @@ export class SnapshotInspector {
   }
 
   replaceReferencesTo(id, replaceFn) {
+    // replaceFn(obj, key, val) => newVal
     let refs = graph.invert(this.referenceGraph())[id];
     for (let refId of refs) {
       let localPath = this.findPathFromToId(refId, id);

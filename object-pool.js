@@ -480,7 +480,8 @@ export class ObjectRef {
     if (pool.reinitializeIds && newObj.hasOwnProperty(idPropertyName))
       newObj[idPropertyName] = pool.reinitializeIds(this.id, this);
 
-    pool.plugin_additionallyDeserializeAfterProperties(this, newObj, snapshot, serializedObjMap, path);
+    pool.plugin_additionallyDeserializeAfterProperties(
+      this, newObj, snapshot, serializedObjMap, path);
 
     return this;
   }
