@@ -108,7 +108,6 @@ export class Renderer {
 
   renderMorph(morph) {
     let submorphs = this.renderSubmorphs(morph);
-    morph.layout && morph.layout.onContainerRender();
     return h("div", {
       ...defaultAttributes(morph, this),
       style: defaultStyle(morph)

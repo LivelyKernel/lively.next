@@ -1779,7 +1779,17 @@ return ;
     return renderer.renderMorph(this);
   }
 
-  renderAsRoot(renderer) { return renderRootMorph(this, renderer); }
+  applyLayoutIfNeeded() {
+     for (let i in this.submorphs) {
+       this.submorphs[i].applyLayoutIfNeeded();
+     }
+     this.layout && this.layout.forceLayout();
+  }
+
+  renderAsRoot(renderer) { 
+     this.applyLayoutIfNeeded();
+     return renderRootMorph(this, renderer); 
+  }
 
   renderPreview(opts = {}) {
     // Creates a DOM node that is a "preview" of he morph, i.e. a
