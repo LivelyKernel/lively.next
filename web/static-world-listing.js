@@ -42,11 +42,12 @@ async function addPreview(resource, location/*public,local*/) {
   // let resource = (await this.worldResources())[0]
 
   let snapshot = await resource.readJson(),
-      n = resource.name().replace(/\.json$/, "").replace(/%20/g, " ");
+      n = resource.name().replace(/\.json$/, "").replace(/%20/g, " "),
+      locationQuery = location === "local" ? `?location=${location}` : "";
 
   $(`.${location}-worlds .list`).insertAdjacentHTML(
     "beforeEnd",
-    `<a class="world-preview" href="/worlds/${n}?location=${location}">
+    `<a class="world-preview" href="/worlds/${n}${locationQuery}">
       <img src="${snapshot.preview}"></img>
       <div class="image-title">
         <center>${n}</center>

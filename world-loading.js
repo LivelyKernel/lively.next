@@ -6,7 +6,10 @@ export async function loadWorldFromURL(url, oldWorld, options) {
   let worldResource = url.isResource ? url :
         lively.resources.resource(System.decanonicalize(url)),
       world = await loadWorldFromResource(worldResource);
-  options = {browserURL: "/worlds/" + worldResource.name().replace(/\.json$/, ""), ...options};
+  options = {
+    browserURL: "/worlds/" + worldResource.name().replace(/\.json$/, ""),
+    ...options
+  };
   return loadWorld(world, oldWorld, options);
 }
 

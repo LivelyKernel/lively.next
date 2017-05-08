@@ -34,25 +34,42 @@
             evt.returnValue = msg;
             return msg;
           }, true);
-          var worldNameMatch = document.location.pathname.match(/\/worlds\/(.+)/),
+          var isLocal = location.search.includes("location=local"),
+              worldNameMatch = document.location.pathname.match(/\/worlds\/(.+)/),
               worldName = worldNameMatch ? worldNameMatch[1] : "default",
-              path = "lively.morphic/worlds/" + worldName + ".json";
-          return lively.resources.resource(origin + "/" + path).exists()
-          .then(function(exists) { return {exists: exists, path: path, showWorldLoadDialog: !worldNameMatch}})
+              resource, urlPath;
+          if (isLocal) {
+            urlPath = worldName + ".json";
+            resource = lively.resources.resource("lively.storage://worlds/" + urlPath);
+          } else {
+            urlPath = "lively.morphic/worlds/" + worldName + ".json";
+            resource = lively.resources.resource(origin + "/" + urlPath)
+          }
+          return resource.exists().then(function(exists) {
+            return {
+              exists: exists,
+              resource: resource,
+              showWorldLoadDialog: !worldNameMatch,
+              isLocal: isLocal
+            };
+          });
         })
         .then(function(worldLocation) {
           if (!worldLocation.exists) {
-            var msg = "No lively world exists at " + worldLocation.path;
+            var msg = "No lively world exists at " + worldLocation.resource.url;
             document.body.innerHTML = "<h1>" + msg + "</h1>";
             throw new Error(msg);
           }
           return lively.modules.importPackage('lively.morphic').then(function(morphic) {
-            return morphic.World.loadWorldFromURL(worldLocation.path, null, {
+            return morphic.World.loadWorldFromURL(worldLocation.resource, null, {
               verbose: true,
               localconfig: true,
               l2l: true,
               shell: true,
-              worldLoadDialog: worldLocation.showWorldLoadDialog
+              worldLoadDialog: worldLocation.showWorldLoadDialog,
+              browserURL: "/worlds/"
+                        + worldLocation.resource.name().replace(/\.json($|\?)/, "")
+                        + (worldLocation.isLocal ? "?location=local" : ""),
             });
           })
         })
