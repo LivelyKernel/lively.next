@@ -369,8 +369,7 @@ export default class EventDispatcher {
         } else if (state.clickedOnMorph && state.clickedOnPosition
                 && state.clickedOnMorph.draggable
                 && !state.draggedMorph
-                && !hand.carriesMorphs()
-                && state.clickedOnPosition) {
+                && !hand.carriesMorphs()) {
 
           var dist = state.clickedOnPosition.dist(defaultEvent.position),
               dragTarget = state.clickedOnMorph;
