@@ -1603,7 +1603,7 @@ export class Morph {
     evt.hand.dropMorphsOn(this);
   }
 
-  onBeingDroppedOn(recipient) {
+  onBeingDroppedOn(hand, recipient) {
     // called when `this` was dropped onto morph `recipient`
   }
 

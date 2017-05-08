@@ -678,7 +678,7 @@ export class Hand extends Morph {
         dropTarget.addMorph(morph);      
         Object.assign(morph, this.prevMorphProps.get(morph));
         signal(this, "drop", morph);
-        morph.onBeingDroppedOn(dropTarget);
+        morph.onBeingDroppedOn(this, dropTarget);
       } catch (err) {
         console.error(err);
         this.world().showError(`Error dropping ${morph} onto ${dropTarget}:\n${err.stack}`);
