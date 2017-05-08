@@ -83,6 +83,11 @@ export var defaultTrackerActions = {
    (ackFn && (typeof ackFn == 'function')) ? ackFn(socket.rooms) : console.log('Error: missing or invalid ack function')
 
   },
+  async getRoomList(tracker,{sender},ackFn,socket){
+    var io = tracker.io,
+    roomList = io.nsps["/" + tracker.namespace].adapter.rooms
+    ackFn({roomList, length: roomList.length})    
+  },
   async listRoom(tracker, {sender, data: {roomName}}, ackFn, socket) {
       var io = tracker.io
       var contents
