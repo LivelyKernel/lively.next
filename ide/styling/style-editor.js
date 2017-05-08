@@ -789,7 +789,7 @@ export class HTMLEditor extends Morph {
     return [
       {
         name: "save html",
-        exec() {
+        exec: () => {
           this.target.html = this.get("html editor").textString;
           return true;
         }
