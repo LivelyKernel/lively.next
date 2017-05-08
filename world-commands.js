@@ -161,6 +161,24 @@ var commands = [
   },
 
   {
+    name: "resize windows to fit visible world bounds",
+    exec: world => {
+      let windows = world.getWindows().filter(ea => !ea.minimized);
+      if (!windows.length) return true;
+      let visibleBounds = world.visibleBounds(),
+          windowBoundsCombined = windows.reduce((bounds, win) =>
+            win.bounds().union(bounds), new Rectangle(0,0,0,0)),
+          scaleX = visibleBounds.width / windowBoundsCombined.width,
+          scaleY = visibleBounds.height / windowBoundsCombined.height;
+      windows.forEach(ea => {
+        let {x, y, width, height} = ea.bounds();
+        ea.setBounds(new Rectangle(x * scaleX, y * scaleY, width * scaleX, height * scaleY));
+      });
+      return true;
+    }
+  },
+
+  {
     name: "window switcher",
     exec: async (world) => {
       var p = world.activePrompt();
