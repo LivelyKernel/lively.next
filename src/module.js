@@ -171,6 +171,12 @@ class ModuleInterface {
   // loading
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  get() {
+    // opts = {format, instrument}
+    var {id, System} = this;
+    return System.get(id);
+  }
+
   async load(opts) {
     // opts = {format, instrument}
     var {id, System} = this;
