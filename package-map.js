@@ -5,7 +5,7 @@ import { gitSpecFromVersion } from "./util.js";
 
 /*
 lively.lang.fun.timeToRun(() => {
-  let pm = PackageMap.build(["/Users/robert/Lively/lively-dev2"])
+  let pm = PackageMap.build(["/Users/robert/Lively/lively-dev2/lively.next-node_modules"])
   pm.lookup("lively.morphic")
 }, 100);
 */
@@ -120,14 +120,14 @@ class PackageMap {
         seen = {packageDirs: {}, collectionDirs: {}};
 
     // 1. find all the packages in collection dirs and separate package dirs;
-    for (let p of discoverPackagesInCollectionDirs(packageCollectionDirs, seen)) {
+    for (let p of this._discoverPackagesInCollectionDirs(packageCollectionDirs, seen)) {
       let {name, version} = p;
       pkgMap[`${name}@${version}`] = p;
       (byPackageNames[name] || (byPackageNames[name] = [])).push(`${name}@${version}`);
     }
 
     for (let dir of individualPackageDirs)
-      for (let p of discoverPackagesInPackageDir(dir, seen)) {
+      for (let p of this._discoverPackagesInPackageDir(dir, seen)) {
         let {name, version} = p;
         pkgMap[`${name}@${version}`] = p;
         (byPackageNames[name] || (byPackageNames[name] = [])).push(`${name}@${version}`);
@@ -136,7 +136,7 @@ class PackageMap {
     // 2. read dev packages, those shadow all normal dependencies with the same package name;
 
     for (let dir of devPackageDirs)
-      for (let p of discoverPackagesInPackageDir(dir, seen)) {
+      for (let p of this._discoverPackagesInPackageDir(dir, seen)) {
         let {name, version} = p;
         pkgMap[`${name}`] = p;
         p.isDevPackage = true;
@@ -164,45 +164,44 @@ class PackageMap {
     let gitSpec = gitSpecFromVersion(versionRange || "");
     return this.findPackage((key, pkg) => pkg.matches(name, versionRange, gitSpec));
   }
-}
-
-
-function discoverPackagesInCollectionDirs(
-  packageCollectionDirs,
-  seen = {packageDirs: {}, collectionDirs: {}}
-) {
-  let found = [];
-  for (let dir of packageCollectionDirs)
-    if (fs.existsSync(dir))
-      for (let packageDir of fs.readdirSync(dir))
-        found.push(...discoverPackagesInPackageDir(j(dir, packageDir), seen));
-  return found
-}
-
-function discoverPackagesInPackageDir(
-  packageDir,
-  seen = {packageDirs: {}, collectionDirs: {}}
-) {
-  let spec = fs.existsSync(packageDir) && PackageSpec.fromDir(packageDir);
-  if (!spec) return [];
-
-  let found = [spec],
-      {location, config: {flatn_package_dirs}} = spec;
-
-  if (flatn_package_dirs) {
-    for (let dir of flatn_package_dirs) {
-      if (!isAbsolute(dir)) dir = normPath(j(location, dir));
-      if (seen.collectionDirs[dir]) continue;
-      console.log(`[flatn] project ${location} specifies package dir ${dir}`);
-      seen.collectionDirs[dir] = true;
-      found.push(...discoverPackagesInCollectionDirs([dir], seen));
+  
+  _discoverPackagesInCollectionDirs(
+    packageCollectionDirs,
+    seen = {packageDirs: {}, collectionDirs: {}}
+  ) {
+    let found = [];
+    for (let dir of packageCollectionDirs)
+      if (fs.existsSync(dir))
+        for (let packageDir of fs.readdirSync(dir))
+          found.push(...this._discoverPackagesInPackageDir(j(dir, packageDir), seen));
+    return found
+  }
+  
+  _discoverPackagesInPackageDir(
+    packageDir,
+    seen = {packageDirs: {}, collectionDirs: {}}
+  ) {
+    let spec = fs.existsSync(packageDir) && PackageSpec.fromDir(packageDir);
+    if (!spec) return [];
+  
+    let found = [spec],
+        {location, config: {flatn_package_dirs}} = spec;
+  
+    if (flatn_package_dirs) {
+      for (let dir of flatn_package_dirs) {
+        if (!isAbsolute(dir)) dir = normPath(j(location, dir));
+        if (seen.collectionDirs[dir]) continue;
+        console.log(`[flatn] project ${location} specifies package dir ${dir}`);
+        seen.collectionDirs[dir] = true;
+        found.push(...this._discoverPackagesInCollectionDirs([dir], seen));
+      }
     }
+  
+    return found;
   }
 
-  return found;
 }
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 export {
   PackageMap
