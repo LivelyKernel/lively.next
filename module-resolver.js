@@ -4,7 +4,7 @@ var path = require("path");
 var fs = require("fs");
 var Module = require("module");
 var { x: execSync } = require("child_process");
-var { buildPackageMap, packageDirsFromEnv } = require("./flatn-cjs.js");
+var { ensurePackageMap, packageDirsFromEnv } = require("./flatn-cjs.js");
 
 var originalResolve;
 installResolver();
@@ -21,17 +21,19 @@ function installResolver() {
       return result;
 
     } catch (err) {
+
       let parentId = parent ? parent.filename || parent.id : "",
           // _ = console.log(`[_resolveFilename] searching for "${request}" from ${parentId}`),
           config = findPackageConfig(parentId),
-          deps = config && depMap(config),
+          deps = config ? depMap(config) : {},
           basename = request.split("/")[0],
           {packageCollectionDirs, individualPackageDirs, devPackageDirs} = packageDirsFromEnv(),
-          packageMap = buildPackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs),
+          packageMap = ensurePackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs),
           packageFound = packageMap.lookup(basename, deps[basename]),
           resolved = packageFound && resolveFlatPackageToModule(packageFound, basename, request);
 
       if (resolved) return resolved;
+      console.error(`Failing to require "${request}" from ${parentId}`)
 
       throw err;
     }
@@ -68,11 +70,18 @@ function resolveFlatPackageToModule(requesterPackage, basename, request) {
   // let {config: {name, version}, location: pathToPackage} = requesterPackage
   let {config: {name, version}, location: pathToPackage} = requesterPackage
   let fullpath;
+
   if (basename === request) {
     let config = findPackageConfig(path.join(pathToPackage, "index.js"));
     if (!config || !config.main) fullpath = path.join(pathToPackage, "index.js");
     else fullpath = path.join(pathToPackage, config.main);
   } else fullpath = path.join(pathToPackage, request.slice(basename.length));
-  if (fs.existsSync(fullpath)) return fullpath;
+  if (fs.existsSync(fullpath)) {
+    return !fs.statSync(fullpath).isDirectory() ?
+      fullpath :
+      fs.existsSync(fullpath + ".js") ?
+        fullpath + ".js" : path.join(fullpath, "index.js");
+  }
   if (fs.existsSync(fullpath + ".js")) return fullpath + ".js";
+  if (fs.existsSync(fullpath + ".json")) return fullpath + ".json";
 }

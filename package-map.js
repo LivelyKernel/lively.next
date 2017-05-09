@@ -14,8 +14,16 @@ class PackageMap {
 
   static empty() { return new this(); }
 
+  static cache() { return this._cache || (this._cache = {}); }
+
   static keyFor(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
     return `all: ${packageCollectionDirs} ea: ${individualPackageDirs} dev: ${devPackageDirs}`
+  }
+
+  static ensure(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+    let key = this.keyFor(packageCollectionDirs, individualPackageDirs, devPackageDirs);
+    return this.cache[key] || (this.cache[key] = this.build(
+                                 packageCollectionDirs, individualPackageDirs, devPackageDirs));
   }
 
   static build(packageCollectionDirs, individualPackageDirs, devPackageDirs) {

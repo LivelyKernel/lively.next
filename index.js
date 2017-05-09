@@ -26,6 +26,7 @@ export {
   installPackage,
   buildPackage,
   buildPackageMap,
+  ensurePackageMap,
   setPackageDirsOfEnv,
   packageDirsFromEnv
 }
@@ -33,6 +34,10 @@ export {
 
 function buildPackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
   return PackageMap.build(packageCollectionDirs, individualPackageDirs, devPackageDirs);
+}
+
+function ensurePackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+  return PackageMap.ensure(packageCollectionDirs, individualPackageDirs, devPackageDirs);
 }
 
 function packageDirsFromEnv() {

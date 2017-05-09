@@ -388,8 +388,16 @@ class PackageMap {
 
   static empty() { return new this(); }
 
+  static cache() { return this._cache || (this._cache = {}); }
+
   static keyFor(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
     return `all: ${packageCollectionDirs} ea: ${individualPackageDirs} dev: ${devPackageDirs}`
+  }
+
+  static ensure(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+    let key = this.keyFor(packageCollectionDirs, individualPackageDirs, devPackageDirs);
+    return this.cache[key] || (this.cache[key] = this.build(
+                                 packageCollectionDirs, individualPackageDirs, devPackageDirs));
   }
 
   static build(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
@@ -989,12 +997,17 @@ module.exports.addDependencyToPackage = addDependencyToPackage;
 module.exports.installPackage = installPackage;
 module.exports.buildPackage = buildPackage;
 module.exports.buildPackageMap = buildPackageMap;
+module.exports.ensurePackageMap = ensurePackageMap;
 module.exports.setPackageDirsOfEnv = setPackageDirsOfEnv;
 module.exports.packageDirsFromEnv = packageDirsFromEnv;
 
 
 function buildPackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
   return PackageMap.build(packageCollectionDirs, individualPackageDirs, devPackageDirs);
+}
+
+function ensurePackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+  return PackageMap.ensure(packageCollectionDirs, individualPackageDirs, devPackageDirs);
 }
 
 function packageDirsFromEnv() {
