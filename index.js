@@ -274,7 +274,9 @@ function doesModuleExist(name, isNormalized) {
   return _doesModuleExist(defaultSystem, name, isNormalized);
 }
 function printSystemConfig() { return _printSystemConfig(defaultSystem); }
-function whenLoaded(moduleName, callback) { return _whenLoaded(defaultSystem, moduleName, callback); }
+function whenLoaded(moduleName, callback) {
+  return _whenLoaded(defaultSystem, moduleName, callback);
+}
 export {
   defaultSystem as System,
   getSystem,
@@ -323,7 +325,9 @@ export {
 // changing modules
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import { moduleSourceChange as _moduleSourceChange } from "./src/change.js";
-function moduleSourceChange(moduleName, newSource, options) { return _moduleSourceChange(defaultSystem, moduleName, newSource, options); }
+function moduleSourceChange(moduleName, newSource, options) {
+  return _moduleSourceChange(defaultSystem, moduleName, newSource, options);
+}
 export { moduleSourceChange };
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -338,16 +342,29 @@ export { requireMap };
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // hooks
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-import { isInstalled as _isHookInstalled, install as _installHook, remove as _removeHook } from "./src/hooks.js";
-function isHookInstalled(methodName, hookOrName) { return _isHookInstalled(defaultSystem, methodName, hookOrName); }
-function installHook(hookName, hook) { return _installHook(defaultSystem, hookName, hook); }
-function removeHook(methodName, hookOrName) { return _removeHook(defaultSystem, methodName, hookOrName); }
+import {
+  isInstalled as _isHookInstalled,
+  install as _installHook,
+  remove as _removeHook
+} from "./src/hooks.js";
+function isHookInstalled(methodName, hookOrName) {
+  return _isHookInstalled(defaultSystem, methodName, hookOrName);
+}
+function installHook(hookName, hook) {
+  return _installHook(defaultSystem, hookName, hook);
+}
+function removeHook(methodName, hookOrName) {
+  return _removeHook(defaultSystem, methodName, hookOrName);
+}
 export { isHookInstalled, installHook, removeHook };
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // instrumentation
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-import { wrapModuleLoad as _wrapModuleLoad, unwrapModuleLoad as _unwrapModuleLoad } from "./src/instrumentation.js";
+import {
+  wrapModuleLoad as _wrapModuleLoad,
+  unwrapModuleLoad as _unwrapModuleLoad
+} from "./src/instrumentation.js";
 function wrapModuleLoad() { _wrapModuleLoad(defaultSystem); }
 function unwrapModuleLoad() { _unwrapModuleLoad(defaultSystem); }
 export { wrapModuleLoad, unwrapModuleLoad };
