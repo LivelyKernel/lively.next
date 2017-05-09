@@ -9,7 +9,7 @@ flatn installs packages into one or multiple directories and tells nodejs how to
 
 - makes developing multiple inter-dependent packages easy (no symlinking, junction-pointing)
 - more efficient package storage
-- friendlier to non-nodejs module systems (like SystemJS)
+- simple package lookup, friendlier to non-nodejs module systems (like SystemJS)
 
 ![](flatn.png)
 
