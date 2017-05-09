@@ -2,7 +2,7 @@
 
 
 
-flat node dependencies (flatn) is a nodejs package organizer that supports flat file system structures for nodejs package dependencies.  It is fully compatible with npm and provides an alternative for workflows where npm falls short.
+flat node dependencies (flatn) is a nodejs package organizer that supports flat file system structures for nodejs package dependencies.  It is compatible with npm and provides an alternative for workflows where npm falls short.
 
 __TL;DR__
 flatn installs packages into one or multiple directories and tells nodejs how to resolve packages in there so normal `require(...)` statements still work.
