@@ -4,26 +4,34 @@ flat node dependencies (flatn) is a nodejs package organizer that supports flat 
 
 ![](flatn.png)
 
+__TL;DR__
+flatn installs packages into one or multiple directories and tells nodejs how to resolve packages in there so normal `require(...)` statements still work.
+
+
 ## Rationale
 
 npm installs package dependencies into node_modules folder inside of packages that require them.  The internal module resolve mechanism in nodejs then traverses the file system tree upward when it wants to load (require) one module from another one, looking into the node_modules folder to the matching package.
 
 This has a number of negative consequences:
-1. When you develop multiple packages that depend on each other you typically don't want them to be installed like normal dependencies but rather link the packages to each other.  `npm link` allows to do this but installs the links globally, so you cannot use multiple versions of you packages under development at the same time.
+1. __During development__: When you develop multiple packages that depend on each other you typically don't want them to be installed like normal dependencies but rather link the packages to each other.  `npm link` allows to do this but installs the links globally, so you cannot use multiple versions of you packages under development at the same time.
 
-2. In the current npm version 4, linked packages (either symlinked by hand or via `npm link` sometimes seem to lead to very slow install / update operations, sometimes freezing the install / update process completely.
+2. __Performance__: In the current npm version 4, linked packages (either symlinked by hand or via `npm link` sometimes seem to lead to very slow install / update operations, sometimes freezing the install / update process completely.
 
-3. Local packages that depend on the same dependencies each install a seperate version of them, even when `npm link`ed.  Depending on how many packages you develop this can waste considerable disk space (gigabytes) and considerably slows down install / update processes.
+3. __Sharing__: Local packages that depend on the same dependencies each install a seperate version of them, even when `npm link`ed.  Depending on how many packages you develop this can waste considerable disk space (gigabytes) and considerably slows down install / update processes.
 
-4. Since npm version 3, npm tries to partially flatten out the dependency tree to avoid redundancies.  However, this has now the drawback that you cannot rely on the package.json dependency fields to find packages anymore deeper down in the tree.  You basically need to resolve packages via nodejs or use your own implementation of the npm lookup algorithm if you want to find packages with a different module system.  This complicates using node_modules especially in the browser context and with EcmaScript modules and System loaders such as SystemJS.
+4. __Simplicity of module resolution algorithm and usage with other module systems__: Since npm version 3, npm tries to partially flatten out the dependency tree to avoid redundancies.  However, this has now the drawback that you cannot rely on the package.json dependency fields to find packages anymore deeper down in the tree.  You basically need to resolve packages via nodejs or use your own implementation of the npm lookup algorithm if you want to find packages with a different module system.  This complicates using node_modules especially in the browser context and with EcmaScript modules and System loaders such as SystemJS.
 
 ### Solution
 
-To solve these problems, flattn can install packages in one or multiple shared directories that differ from the normal node_modules folders.  This directory / directories can either be local to your own packages or reside somewhere else on your file system.  This allows to minimize the number of installed packages and provides a reliable and simple mechanism to find packages:  Each package is stored with a folder name like package-name@version inside the specified directories
+1. __Custom package directories__: To solve these problems, flattn can install packages in one or multiple shared directories that differ from the normal node_modules folders.  This directory / directories can either be local to your own packages or reside somewhere else on your file system.
 
-Packages under development can be separately specified.  Those packages will then be used, independently of what version they currently specify in their package.json to allow system wide "linking".
+2. __Directories can be shared but are not global__ By specifying which directories to use via environment variables or command line arguments, installed packages can be shared by multiple local packages.  This allows to minimize the number of installed dependencies.
 
-By importing `[module-resolver.js](module-resolver.js)` into your nodejs process and specifying the package directories via environment variables, nodejs will then use those directories when it tries to load modules.  Alternatively to manually importing `module-resolver.js` you can use `[bin/node](bin/node)` to start nodejs.
+3. __Directory structure is flat and straightforward__: No nested package structures are necessary, packages are installed via name@version inside the specified directories, github dependencies are supported. Finding packages is done by comparing the version of the package with the version requirement of the callsite.
+
+Unlike `yarn install --flat` multiple versions of the same dependency can coexist.
+
+By importing [module-resolver.js](module-resolver.js) into your nodejs process and specifying the package directories via environment variables, nodejs will then use those directories when it tries to load modules.  Alternatively to manually importing `module-resolver.js` you can use [bin/node](bin/node) to start nodejs.
 
 ### Example
 
