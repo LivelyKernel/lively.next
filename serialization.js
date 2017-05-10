@@ -46,7 +46,8 @@ export async function saveWorldToResource(world = World.defaultWorld(), toResour
   // pretty printing bloats 2x!
   let i;
   if (showIndicator) {
-    i = LoadingIndicator.open(typeof showIndicator === "string" ? showIndicator : "Snapshotting...");
+    i = LoadingIndicator.open(typeof showIndicator === "string" ?
+      showIndicator : "Snapshotting...");
     await i.whenRendered(); await promise.delay(100);
   }
 
@@ -57,8 +58,6 @@ export async function saveWorldToResource(world = World.defaultWorld(), toResour
     return toResource.writeJson(snap);
   } finally { i && i.remove() }
 }
-
-// await saveWorldToResource();
 
 
 export function copyMorph(morph) {
