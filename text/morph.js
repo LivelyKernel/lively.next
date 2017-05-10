@@ -668,7 +668,7 @@ export class Text extends Morph {
   get editorPlugin() { return this.pluginFind(ea => ea.isEditorPlugin); }
 
   async lookupEditorPluginNamed(modeName) {
-    // let modeName = "js"    
+    // let modeName = "js"
     let isAbsURL = /^[^:\\]+:\/\//.test(modeName);
     let url = isAbsURL ? modeName : `lively.morphic/ide/${modeName}/editor-plugin.js`;
     if (!await lively.modules.doesModuleExist(url)) return null;
@@ -687,7 +687,7 @@ export class Text extends Morph {
 
   async changeEditorMode(nameOrMode) {
     // let nameOrMode = "js"
-    
+
     let pluginsWithoutModes = this.plugins.filter(ea => !ea.isEditorPlugin);
 
     if (!nameOrMode) {
@@ -1490,8 +1490,8 @@ export class Text extends Morph {
     viewState._needsFit = false;
     if ((fixedHeight && fixedWidth) || !this.textLayout/*not init'ed yet*/) return;
     let textBounds = this.textBounds().outsetByRect(this.padding);
-    if (!fixedHeight) this.height = textBounds.height;
-    if (!fixedWidth) this.width = textBounds.width;
+    if (!fixedHeight && this.height != textBounds.height) this.height = textBounds.height;
+    if (!fixedWidth && this.width != textBounds.width) this.width = textBounds.width;
     return this;
   }
 
