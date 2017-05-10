@@ -104,13 +104,13 @@ class BuildProcess {
     let {buildStages, packageMap} = this,
         i = 1, n = buildStages.length;
 
-    console.log(`[flatn] Running build stage ${i++}/${n}`)
+    // console.log(`[flatn] Running build stage ${i++}/${n}`)
 
     while (buildStages.length) {
       let stage = buildStages[0];
       if (!stage.length) {
         buildStages.shift();
-        buildStages.length && console.log(`[flatn] Running build stage ${i++}/${n}`);
+        // buildStages.length && console.log(`[flatn] Running build stage ${i++}/${n}`);
         continue;
       }
       let next = stage[0],
@@ -123,40 +123,44 @@ class BuildProcess {
     }
   }
 
-  hasBuiltScripts({config}) {
-    return config.scripts && Object.keys(config.scripts).some(scriptName =>
+  normalizeScripts({scripts, location}) {
+    if (!scripts || !scripts.install) {
+      let hasBindingGyp = fs.existsSync(j(location, "binding.gyp"));
+      if (hasBindingGyp) {
+        scripts = Object.assign({install: "node-gyp rebuild"}, scripts)
+      }    
+    }
+    return scripts;
+  }
+
+  hasBuiltScripts(scripts) {
+    return scripts && Object.keys(scripts).some(scriptName =>
       ["preinstall", "install", "postinstall"].includes(scriptName));
   }
 
   async build(packageSpec) {
     this.binLinkLocation = linkBins(this.builtPackages.concat([packageSpec]), this.binLinkState);
-    let env = npmCreateEnvVars(packageSpec.config);
+    let env = npmCreateEnvVars(await packageSpec.readConfig());
 
-
-    if (this.hasBuiltScripts(packageSpec)) {
-      let needsBuilt = this.forceBuild || packageSpec.isDevPackage || !(packageSpec.readLvInfo() || {}).build;
-      if (needsBuilt) {
-        console.log(`[flatn] ${packageSpec.config.name} build starting`);
-        await this.runScript("preinstall",  packageSpec, env);
-        await this.runScript("install",     packageSpec, env);
-        await this.runScript("postinstall", packageSpec, env);
+    let needsBuilt = this.forceBuild || packageSpec.isDevPackage || !(packageSpec.readLvInfo() || {}).build;
+    if (needsBuilt) {
+      let scripts = this.normalizeScripts(packageSpec);
+      if (this.hasBuiltScripts(scripts)) {
+        console.log(`[flatn] ${packageSpec.name} build starting`);
+        await this.runScript(scripts, "preinstall",  packageSpec, env);
+        await this.runScript(scripts, "install",     packageSpec, env);
+        await this.runScript(scripts, "postinstall", packageSpec, env);
         packageSpec.changeLvInfo(info => Object.assign({}, info, {build: true}));
-        console.log(`[flatn] ${packageSpec.config.name} build done`);
-      } else {
-        console.log(`[flatn] ${packageSpec.config.name} already built`);
+        console.log(`[flatn] ${packageSpec.name} build done`);
       }
-
-    } else {
-      let {name, version} = packageSpec.config;
-      // console.log(`[flatn] no build scripts for ${name}@${version}`);
     }
 
     this.builtPackages.push(packageSpec);
   }
 
-  async runScript(scriptName, {config, location, scripts}, env) {
+  async runScript(scripts, scriptName, {name, location}, env) {
     if (!scripts || !scripts[scriptName]) return false;
-    console.log(`[flatn] build ${config.name}: running ${scriptName}`);
+    console.log(`[flatn] build ${name}: running ${scriptName}`);
     
     env = Object.assign({},
       process.env,
@@ -177,7 +181,7 @@ class BuildProcess {
       });
 
     } catch (err) {
-      console.error(`[build ${config.name}] error running ${scripts[scriptName]}:\n${err}`);
+      console.error(`[build ${name}] error running ${scripts[scriptName]}:\n${err}`);
       if (err.stdout || err.stderr) {
         console.log("The command output:");
         console.log(err.stdout);

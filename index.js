@@ -1,7 +1,6 @@
 /*global require, module*/
 import { packageDownload } from "./download.js";
-import { PackageSpec } from "./package-spec.js";
-import { PackageMap } from "./package-map.js";
+import { PackageMap, PackageSpec } from "./package-map.js";
 import { BuildProcess } from "./build.js";
 
 import { basename, dirname, isAbsolute, normalize as normPath, join as j } from "path";
@@ -69,7 +68,7 @@ async function buildPackage(
       packageMap = Array.isArray(packageMapOrDirs)
         ? buildPackageMap(packageMapOrDirs)
         : packageMapOrDirs,
-      {name, version} = packageSpec.config;
+      {name, version} = packageSpec;
   return await BuildProcess.for(packageSpec, packageMap, dependencyFields, forceBuild).run();
 }
 
@@ -118,10 +117,9 @@ async function installPackage(
     if (!installed) throw new Error(`cannot install package ${name}@${version}!`);
 
 
-    let {config} = installed,
-        deps = Object.assign({},
+    let deps = Object.assign({},
           dependencyFields.reduce((map, key) =>
-            Object.assign(map, config[key]), {}));
+            Object.assign(map, installed[key]), {}));
 
     for (let name in deps) {
       let nameAndVersion = `${name}@${deps[name]}`;
@@ -150,12 +148,15 @@ function addDependencyToPackage(
     ? PackageSpec.fromDir(packageSpecOrDir)
     : packageSpecOrDir;
 
-  let {config, location} = packageSpec;
+  let {location} = packageSpec;
 
-  if (!config[dependencyField]) config[dependencyField] = {};
+  if (!packageSpec[dependencyField]) packageSpec[dependencyField] = {};
   let [depName, depVersionRange] = depNameAndRange.split("@"),
-      depVersion = config[dependencyField][depName];
+      depVersion = packageSpec[dependencyField][depName];
   if (!depVersion || depVersion !== depVersionRange) {
+    packageSpec[dependencyField][depName] = depVersionRange;
+    let config = JSON.parse(String(fs.readFileSync(j(location, "package.json"))));
+    if (!config[dependencyField]) config[dependencyField] = {}
     config[dependencyField][depName] = depVersionRange;
     fs.writeFileSync(j(location, "package.json"), JSON.stringify(config, null, 2));
   }
@@ -192,9 +193,8 @@ async function installDependenciesOfPackage(
   if (!dirToInstallDependenciesInto) dirToInstallDependenciesInto = dirname(packageSpec.location);
   if (!dependencyFields) dependencyFields = ["dependencies"];
 
-  let {config} = packageSpec,
-      deps = Object.assign({},
-        dependencyFields.reduce((map, key) => Object.assign(map, config[key]), {})),
+  let deps = Object.assign({},
+        dependencyFields.reduce((map, key) => Object.assign(map, packageSpec[key]), {})),
       depNameAndVersions = [],
       newPackages = [];
 
@@ -212,7 +212,7 @@ async function installDependenciesOfPackage(
   }
 
   if ((verbose || debug) && !newPackages.length)
-    console.log(`[flatn] no new packages need to be installed for ${config.name}`);
+    console.log(`[flatn] no new packages need to be installed for ${packageSpec.name}`);
 
   return {packageMap, newPackages};
 }

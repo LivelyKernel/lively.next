@@ -9,8 +9,7 @@ var { ensurePackageMap, packageDirsFromEnv } = require("./flatn-cjs.js");
 var originalResolve;
 installResolver();
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
+let counter = 0;
 function installResolver() {
   if (!originalResolve) originalResolve = Module._resolveFilename;
   Module._resolveFilename = function(request, parent, isMain) {
@@ -21,7 +20,6 @@ function installResolver() {
       return result;
 
     } catch (err) {
-
       let parentId = parent ? parent.filename || parent.id : "",
           // _ = console.log(`[_resolveFilename] searching for "${request}" from ${parentId}`),
           config = findPackageConfig(parentId),
@@ -68,7 +66,7 @@ function resolveFlatPackageToModule(requesterPackage, basename, request) {
   // Given {name, version, path} from resolveFlatPackageToModule, will find the
   // full path to the module inside of the package, using the module request
   // let {config: {name, version}, location: pathToPackage} = requesterPackage
-  let {config: {name, version}, location: pathToPackage} = requesterPackage
+  let {name, version, location: pathToPackage} = requesterPackage
   let fullpath;
 
   if (basename === request) {

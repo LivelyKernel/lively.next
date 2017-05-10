@@ -7,7 +7,7 @@ export {
 }
 
 function buildStages(packageSpec, packageMap, dependencyFields) {
-  let {config: {name, version}} = packageSpec,
+  let {name, version} = packageSpec,
       {deps, packages: packageDeps, resolvedVersions} = depGraph(packageSpec, packageMap);
 
   for (let dep in deps)
@@ -21,7 +21,7 @@ function depGraph(packageSpec, packageMap, dependencyFields = ["dependencies"]) 
   // console.log(lively.lang.string.indent(pNameAndVersion, " ", depth));
   // let packages = getInstalledPackages(centralPackageDir);
 
-  let pNameAndVersion = `${packageSpec.config.name}@${packageSpec.config.version}`,
+  let pNameAndVersion = `${packageSpec.name}@${packageSpec.version}`,
       queue = [pNameAndVersion],
       resolvedVersions = {},
       deps = {}, packages = {};
@@ -34,19 +34,18 @@ function depGraph(packageSpec, packageMap, dependencyFields = ["dependencies"]) 
         pSpec = packageMap.lookup(name, version);
     if (!pSpec) throw new Error(`Cannot resolve package ${nameAndVersion}`);
 
-    let {config} = pSpec,
-        resolvedNameAndVersion = `${config.name}@${config.version}`;
+    let resolvedNameAndVersion = `${pSpec.name}@${pSpec.version}`;
 
     resolvedVersions[nameAndVersion] = resolvedNameAndVersion;
 
-    if (!packages[config.name]) packages[config.name] = [];
-    if (!packages[config.name].includes(resolvedNameAndVersion))
-      packages[config.name].push(resolvedNameAndVersion);
+    if (!packages[pSpec.name]) packages[pSpec.name] = [];
+    if (!packages[pSpec.name].includes(resolvedNameAndVersion))
+      packages[pSpec.name].push(resolvedNameAndVersion);
 
     if (!deps[resolvedNameAndVersion]) {
       let localDeps = Object.assign({},
           dependencyFields.reduce((map, key) =>
-            Object.assign(map, config[key]), {}));
+            Object.assign(map, pSpec[key]), {}));
 
       deps[resolvedNameAndVersion] = Object.keys(localDeps).map(name => {
         let fullName = name + "@" + localDeps[name];
