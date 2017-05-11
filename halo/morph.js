@@ -402,26 +402,36 @@ export default class Halo extends Morph {
       this.buttonControls.map(b => b.onKeyUp(evt));
   }
 
-  getMesh({x, y}) {
-     var {height, width} = this.world().visibleBounds(),
-         defaultGuideProps = {
-        borderStyle: "dotted",
-        borderWidth: 2,
-        borderColor: Color.orange
-     },
-     mesh = this.get('mesh') || this.addMorph(new Morph({
-        name: "mesh",
-        styleClasses: ["halo-mesh"],
-        extent: pt(width, height),
-        fill: null,
-        submorphs: [
-          new Path({name: "vertical", ...defaultGuideProps}),
-          new Path({name: "horizontal", ...defaultGuideProps})
-        ]
-      }));
-    mesh.globalPosition = pt(0,0)
-    mesh.getSubmorphNamed("vertical").vertices = [pt(x,0), pt(x, height)];
-    mesh.getSubmorphNamed("horizontal").vertices = [pt(0,y), pt(width, y)];
+  getMesh({x, y}, offset = pt(0, 0)) {
+    var {height, width} = this.world().visibleBounds(),
+        defaultGuideProps = {
+          borderStyle: "dotted",
+          borderWidth: 2,
+          borderColor: Color.orange
+        },
+        mesh =
+          this.get("mesh") ||
+          this.addMorph(
+            new Morph({
+              name: "mesh",
+              styleClasses: ["halo-mesh"],
+              extent: pt(width, height),
+              fill: null,
+              submorphs: [
+                new Path({name: "vertical", ...defaultGuideProps}),
+                new Path({name: "horizontal", ...defaultGuideProps})
+              ]
+            })
+          );
+    mesh.globalPosition = offset;
+    mesh.getSubmorphNamed("vertical").vertices = [
+      pt(x, 0).subPt(offset),
+      pt(x, height).subPt(offset)
+    ];
+    mesh.getSubmorphNamed("horizontal").vertices = [
+      pt(0, y).subPt(offset),
+      pt(width, y).subPt(offset)
+    ];
     return mesh;
   }
 
@@ -1367,9 +1377,10 @@ class ResizeHandle extends HaloItem {
 
   updateAlignmentGuide(active) {
     var mesh = this.halo.getSubmorphNamed("mesh");
-    if (!active) { mesh && mesh.remove(); return; }
-
-    mesh = this.halo.getMesh(this.globalPosition.addPt(this.extent.scaleBy(.5)));
+    if (!active) { mesh && mesh.remove(); return; };
+    let {x,y} = this.halo.target.extent,
+        offset = pt(x % 10, y % 10);
+    mesh = this.halo.getMesh(this.globalPosition.addPt(this.extent.scaleBy(.5)), offset);
 
     this.focus();
     return mesh;
