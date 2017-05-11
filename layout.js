@@ -201,11 +201,20 @@ export class VerticalLayout extends FloatLayout {
   get spacing() { return this._spacing }
   set spacing(offset) { this._spacing = offset; this.apply(); }
 
+  get resizeSubmorphs() { return this._resizeSubmorphs }
+  set resizeSubmorphs(bool) { this._resizeSubmorphs = bool; this.apply(); }
+
   apply(animate = false) {
     if (this.active || !this.container) return;
     super.apply(animate);
-    var pos = pt(this.spacing, this.spacing),
-        submorphs = this.layoutableSubmorphs,
+    let {
+          container,
+          autoResize,
+          resizeSubmorphs,
+          spacing,
+          layoutableSubmorphs: submorphs
+        } = this,
+        pos = pt(spacing, spacing),
         maxWidth = 0;
 
     this.active = true;
@@ -216,11 +225,14 @@ export class VerticalLayout extends FloatLayout {
       } else {
         m.topLeft = pos;
       }
-      pos = m.bottomLeft.addPt(pt(0, this.spacing));
+      pos = m.bottomLeft.addPt(pt(0, spacing));
+      if (resizeSubmorphs)
+        m.width = container.width - spacing*2
       maxWidth = Math.max(m.bounds().width, maxWidth);
     });
-    if (this.autoResize && submorphs.length > 0) {
-      const newExtent = pt(maxWidth + 2 * this.spacing, pos.y);
+
+    if (autoResize && submorphs.length > 0) {
+      const newExtent = pt(maxWidth + 2 * spacing, pos.y);
       if (animate) {
         const {duration, easing} = animate;
         this.container.animate({extent: newExtent, duration, easing});

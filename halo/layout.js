@@ -752,31 +752,78 @@ export class FlexLayoutHalo extends Morph {
   get target() { return this.state.target }
   get container() { return this.state.container }
 
-  updateResizePolicy(auto) {
-      if (auto) this.originalExtent = this.container.extent;
-      this.target.autoResize = auto;
-      if (!auto) this.container.extent = this.originalExtent || this.container.extent;
-      this.alignWithTarget()
+  updateAutoResizePolicy(auto) {
+    if (auto) this.originalExtent = this.container.extent;
+    this.target.autoResize = auto;
+    if (!auto) this.container.extent = this.originalExtent || this.container.extent;
+    this.alignWithTarget();
+  }
+
+  updateResizeSubmorphsPolicy(bool) {
+    this.target.resizeSubmorphs = bool;
+    this.alignWithTarget();
   }
 
   optionControls() {
-      const layout = this.target,
-            spacing = new PropertyInspector({
-                min: 0, target: layout, defaultValue: 0,
-                unit: "px", property: "spacing"}),
-            autoResize = new CheckBox({
-                name: "autoResize", checked: layout.autoResize});
-      connect(autoResize, "toggle", this, "updateResizePolicy");
-      return [[{type: "text", textString: "Resize Container",
-               padding: rect(5,0,10,10), fill: Color.transparent,
-               fontColor: Color.gray.darker(),
-               readOnly: true}, autoResize],
-               [{type: "text", textString: "Submorph Spacing",
-               padding: Rectangle.inset(5), fill: Color.transparent,
-               fontColor: Color.gray.darker(),
-               readOnly: true}, spacing]]
-              .map(x => { return {submorphs: x, fill: Color.transparent,
-                                  layout: new HorizontalLayout({spacing: 3})}})
+    const layout = this.target,
+          spacing = new PropertyInspector({
+            min: 0,
+            target: layout,
+            defaultValue: 0,
+            unit: "px",
+            property: "spacing"
+          }),
+          autoResizeCb = new CheckBox({
+            name: "autoResize",
+            checked: layout.autoResize
+          }),
+          resizeSubmorphsCb = new CheckBox({
+            name: "resizeSubmorphs",
+            checked: layout.resizeSubmorphs
+          });
+    connect(autoResizeCb, "toggle", this, "updateAutoResizePolicy");
+    connect(resizeSubmorphsCb, "toggle", this, "updateResizeSubmorphsPolicy");
+    return [
+      [
+        {
+          type: "text",
+          textString: "Resize container",
+          padding: rect(5, 0, 10, 10),
+          fill: Color.transparent,
+          fontColor: Color.gray.darker(),
+          readOnly: true
+        },
+        autoResizeCb
+      ],
+      [
+        {
+          type: "text",
+          textString: "Resize submorphs",
+          padding: rect(5, 0, 10, 10),
+          fill: Color.transparent,
+          fontColor: Color.gray.darker(),
+          readOnly: true
+        },
+        resizeSubmorphsCb
+      ],
+      [
+        {
+          type: "text",
+          textString: "Submorph Spacing",
+          padding: Rectangle.inset(5),
+          fill: Color.transparent,
+          fontColor: Color.gray.darker(),
+          readOnly: true
+        },
+        spacing
+      ]
+    ].map(x => {
+      return {
+        submorphs: x,
+        fill: Color.transparent,
+        layout: new HorizontalLayout({spacing: 3})
+      };
+    });
   }
 
 }
