@@ -35,7 +35,7 @@
             return msg;
           }, true);
           var isLocal = location.search.includes("location=local"),
-              worldNameMatch = document.location.pathname.match(/\/worlds\/(.+)/),
+              worldNameMatch = decodeURIComponent(document.location.pathname).match(/\/worlds\/(.+)/),
               worldName = worldNameMatch ? worldNameMatch[1] : "default",
               resource, urlPath;
           if (isLocal) {
