@@ -28,7 +28,7 @@ function installResolver() {
           {packageCollectionDirs, individualPackageDirs, devPackageDirs} = packageDirsFromEnv(),
           packageMap = ensurePackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs),
           packageFound = packageMap.lookup(basename, deps[basename]),
-          resolved = packageFound && resolveFlatPackageToModule(packageFound, basename, request);
+          resolved = packageFound && findModuleInPackage(packageFound, basename, request);
 
       if (resolved) return resolved;
       console.error(`Failing to require "${request}" from ${parentId}`)
@@ -62,7 +62,7 @@ function depMap(packageConfig) {
     }, {});
 }
 
-function resolveFlatPackageToModule(requesterPackage, basename, request) {
+function findModuleInPackage(requesterPackage, basename, request) {
   // Given {name, version, path} from resolveFlatPackageToModule, will find the
   // full path to the module inside of the package, using the module request
   // let {config: {name, version}, location: pathToPackage} = requesterPackage
