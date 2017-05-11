@@ -216,8 +216,19 @@ export class Button extends Morph {
           });
           this.updateStyleSheets();
         }
+      },
+  
+      // rk 2017-05-10: FIXME, somehow trying to use a simple set property to
+      // have a lasting effect on the button .... :(
+      isLayoutable: {
+        isStyleProp: true, defaultValue: true,
+        set(bool) {
+          if (this.triggerStyle) this.triggerStyle.isLayoutable = bool;
+          if (this.activeStyle) this.activeStyle.isLayoutable = bool;
+          if (this.inactiveStyle) this.inactiveStyle.isLayoutable = bool;
+          this.setProperty("isLayoutable", bool);
+        }
       }
-
     }
   }
 
