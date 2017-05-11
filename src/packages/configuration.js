@@ -42,15 +42,13 @@ export default class PackageConfiguration {
       this.applySystemJSConfig(sysConfig);
     }
 
-    packageInSystem.referencedAs = packageInSystem.referencedAs || [];
-    arr.pushIfNotIncluded(packageInSystem.referencedAs, name);
-
     if (!main.match(/\.[^\/\.]+/)) main += ".js";
     packageInSystem.main = main;
 
     // System.packages doesn't allow us to store our own properties
     pkg.version = version;
     pkg.config = config;
+    pkg._name = name;
     pkg.mergeWithConfig(packageInSystem);
 
     return livelyConfig ? this.applyLivelyConfig(livelyConfig) : {subPackages: []};
@@ -73,7 +71,6 @@ export default class PackageConfiguration {
   applyLivelyConfig(livelyConfig) {
     // configures System object from lively config JSON object.
     // - adds System.package entry for package
-    // - adds name to System.package[pkg.url].referencedAs
     // - installs hook from {hooks: [{name, source}]}
     // - merges livelyConfig.packageMap into System.package[pkg.url].map
     //   entries in packageMap are specifically meant to be sub-packages!

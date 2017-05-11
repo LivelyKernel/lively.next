@@ -203,22 +203,21 @@ function normalizeHook(proceed, name, parent, parentAddress) {
   // name = name.replace(/([^:])\/\/+/g, "$1\/");
   name = name.replace(doubleSlashRe, (match) => match[0] === ":" ? match : match[0]+"/");
 
-  return proceed(name, parent, parentAddress)
-    .then(result => {
+  return proceed(name, parent, parentAddress).then(result => {
 
-      // lookup package main
-      var base = result.replace(jsExtRe, "");
-      if (base in System.packages) {
-        var main = System.packages[base].main;
-        if (main) return base.replace(trailingSlashRe, "") + "/" + main.replace(dotSlashStartRe, "");
-      }
+    // lookup package main
+    var base = result.replace(jsExtRe, "");
+    if (base in System.packages) {
+      var main = System.packages[base].main;
+      if (main) return base.replace(trailingSlashRe, "") + "/" + main.replace(dotSlashStartRe, "");
+    }
 
-      // Fix issue with accidentally adding .js
-      var m = result.match(jsonJsExtRe);
-      if (m) return m[1];
+    // Fix issue with accidentally adding .js
+    var m = result.match(jsonJsExtRe);
+    if (m) return m[1];
 
-      return result;
-    })
+    return result;
+  });
 }
 
 function decanonicalizeHook(proceed, name, parent, isPlugin) {
