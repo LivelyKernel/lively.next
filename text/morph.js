@@ -707,6 +707,7 @@ export class Text extends Morph {
 
   invalidateTextLayout(resetCharBoundsCache = false) {
     let vs = this.viewState;
+    if (!vs) return;
     if (!this.fixedWidth || !this.fixedHeight)
       vs._needsFit = true;
     let tl = this.textLayout;
@@ -1521,7 +1522,11 @@ export class Text extends Morph {
 
   aboutToRender(renderer) {
     super.aboutToRender(renderer);
+  }
+
+  applyLayoutIfNeeded() {
     this.fitIfNeeded();
+    super.applyLayoutIfNeeded();
   }
 
   render(renderer) {

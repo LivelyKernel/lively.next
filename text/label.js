@@ -238,6 +238,10 @@ export class Label extends Morph {
     return this;
   }
 
+  fitIfNeeded() {
+    if (this._needsFit) { this.fit(); }
+  }
+
   get textAndAttributesOfLines() {
     return splitTextAndAttributesIntoLines(this.textAndAttributes, "\n");
   }
@@ -308,6 +312,12 @@ export class Label extends Morph {
       padding.top() + padding.bottom() + height);
   }
 
+  invalidateTextLayout() {
+    this._cachedTextBounds = null;
+    if (this.autofit) this._needsFit = true;
+    this.makeDirty();
+  }
+
   textBounds() {
     // this.env.fontMetric.sizeFor(style, string)
     var {textAndAttributes, _cachedTextBounds} = this;
@@ -321,8 +331,12 @@ export class Label extends Morph {
     this.makeDirty();
   }
 
+  applyLayoutIfNeeded() {
+    this.fitIfNeeded();
+    super.applyLayoutIfNeeded();
+  }
+
   render(renderer) {
-    if (this._needsFit) this.fit();
 
     var renderedText = [],
         nLines = this.textAndAttributesOfLines.length;

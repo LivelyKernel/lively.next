@@ -569,6 +569,7 @@ export class Morph {
         for (const ss of this._styleSheetsInScope) {
           Object.assign(this._styleSheetProps, ss.getStyleProps(this));
         }
+        if (this.isText || this.isLabel) this.invalidateTextLayout();
       }
       if (key in this._styleSheetProps) {
         return this._styleSheetProps[key]

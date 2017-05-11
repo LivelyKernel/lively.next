@@ -68,11 +68,6 @@ export class StyleSheet {
       props.dropShadow.morph = morph;
     }
     props.layout && props.layout.scheduleApply();
-    if (morph._cachedTextBounds) {
-      morph._cachedTextBounds = null;
-      if (morph.autoFit) morph._needsFit = true;
-    }
     return props;
   }
-
 }
