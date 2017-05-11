@@ -539,6 +539,7 @@ export class LabeledCheckBox extends Morph {
 
   constructor(props) {
     super(props);
+    connect(this, "alignCheckBox", this, "extent");
     connect(this, "alignCheckBox", this, "relayout");
     connect(this.labelMorph, "value", this, "relayout");
     connect(this.checkboxMorph, "checked", this, "checked");
@@ -549,7 +550,7 @@ export class LabeledCheckBox extends Morph {
   relayout() {
     var l = this.labelMorph, cb = this.checkboxMorph;
     if (this.alignCheckBox === "left") {
-      cb.leftCenter = pt(0, l.height / 2);
+      cb.leftCenter = pt(0, Math.max(this.height, l.height) / 2);
       l.leftCenter = cb.rightCenter;
     } else {
       l.position = pt(0, 0);
