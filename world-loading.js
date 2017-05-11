@@ -5,9 +5,11 @@ import { resource, registerExtension as registerResourceExension } from "lively.
 export async function loadWorldFromURL(url, oldWorld, options) {
   let worldResource = url.isResource ? url :
         lively.resources.resource(System.decanonicalize(url)),
-      world = await loadWorldFromResource(worldResource);
+      world = await loadWorldFromResource(worldResource),
+      defaultBrowserURL = "/worlds/" + worldResource.name().replace(/\.json$/, ""),
+      query = worldResource.url.startsWith("lively.storage://") ? "?location=local" : "";
   options = {
-    browserURL: "/worlds/" + worldResource.name().replace(/\.json$/, ""),
+    browserURL: defaultBrowserURL + query,
     ...options
   };
   return loadWorld(world, oldWorld, options);
