@@ -20,7 +20,7 @@ npm installs package dependencies into node_modules folder inside of packages th
 This has a number of negative consequences:
 1. __During development__: When you develop multiple packages that depend on each other you typically don't want them to be installed like normal dependencies but rather link the packages to each other.  `npm link` allows to do this but installs the links globally, so you cannot use multiple versions of you packages under development at the same time.
 
-2. __Performance__: In the current npm version 4, linked packages (either symlinked by hand or via `npm link` sometimes seem to lead to very slow install / update operations, sometimes freezing the install / update process completely.
+2. __Performance__: In the current npm version 4, linked packages (either symlinked by hand or via `npm link`) sometimes seem to lead to very slow install / update operations, sometimes freezing the install / update process completely.
 
 3. __Sharing__: Local packages that depend on the same dependencies each install a seperate version of them, even when `npm link`ed.  Depending on how many packages you develop this can waste considerable disk space (gigabytes) and considerably slows down install / update processes.
 
