@@ -396,45 +396,128 @@ describe("package registry", () => {
     await registry.update();
   });
 
-  it("can lookup package", async () => {
-    expect(registry.lookup("p1")).containSubset({
-      url: testDir + "packages/p1@0.2.2/",
-      name: "p1",
-      version: "0.2.2"
+  describe("lookup", () => {
+  
+    it("from packageBaseDirs", async () => {
+      expect(registry.lookup("p1")).containSubset({
+        url: testDir + "packages/p1@0.2.2/",
+        name: "p1",
+        version: "0.2.2"
+      });
+      expect(registry.lookup("p1", "^0.2")).containSubset({
+        url: testDir + "packages/p1@0.2.2/",
+        name: "p1",
+        version: "0.2.2"
+      });
+      expect(registry.lookup("p1", "^0.1")).containSubset({
+        url: testDir + "packages/p1@0.1.0/",
+        name: "p1",
+        version: "0.1.0"
+      });
+      expect(registry.lookup("p1", "latest")).containSubset({
+        url: testDir + "packages/p1@0.2.2/",
+        name: "p1",
+        version: "0.2.2"
+      });
     });
-    expect(registry.lookup("p1", "^0.2")).containSubset({
-      url: testDir + "packages/p1@0.2.2/",
-      name: "p1",
-      version: "0.2.2"
+
+    it("find dependency of package", async () => {
+      expect(registry.findPackageDependency(registry.lookup("p1", "0.1.0"), "p2"))
+        .property("nameAndVersion", "p2@2.0.0");
+      expect(registry.findPackageDependency(registry.lookup("p1", "0.2.2"), "p2"))
+        .property("nameAndVersion", "p2@1.0.0");
     });
-    expect(registry.lookup("p1", "^0.1")).containSubset({
-      url: testDir + "packages/p1@0.1.0/",
-      name: "p1",
-      version: "0.1.0"
+
+    it("resolve path", async () => {
+      expect(registry.resolvePath("p1/index.js")).equals(testDir + "packages/p1@0.2.2/index.js");
+      expect(registry.resolvePath("p1@0.1.0/index.js")).equals(testDir + "packages/p1@0.1.0/index.js");
+      expect(registry.resolvePath("foo/index.js")).equals(null);
+  
+      expect(registry.resolvePath("p2/index.js", testDir + "packages/p1@0.2.2/index.js")).equals(testDir + "packages/p2@1.0.0/index.js");
+      expect(registry.resolvePath("./bar.js", testDir + "packages/p1@0.2.2/index.js")).equals(testDir + "packages/p1@0.2.2/bar.js");
+      expect(registry.resolvePath("../bar.js", testDir + "packages/p1@0.2.2/index.js")).equals(testDir + "packages/bar.js");
+      expect(registry.resolvePath("p2", testDir + "packages/p1@0.2.2/index.js")).equals(testDir + "packages/p2@1.0.0/");
     });
-    expect(registry.lookup("p1", "latest")).containSubset({
-      url: testDir + "packages/p1@0.2.2/",
-      name: "p1",
-      version: "0.2.2"
-    });
+
   });
 
-  it("find dependency of package", async () => {
-    expect(registry.findPackageDependency(registry.lookup("p1", "0.1.0"), "p2"))
-      .property("nameAndVersion", "p2@2.0.0");
-    expect(registry.findPackageDependency(registry.lookup("p1", "0.2.2"), "p2"))
-      .property("nameAndVersion", "p2@1.0.0");
+
+  describe("adding packages", () => {
+  
+    it("individually", async () => {
+      await createFiles(testDir, {
+          additionalPackages: {
+            "p3": {
+              "index.js": "export var z = 99;",
+              "package.json": '{"name": "p3", "version": "2.0.0"}'
+            },
+            "p1": {
+              "index.js": "export var x = 4 + y; import { y } from 'p2';",
+              "package.json": '{"name": "p1", "version": "0.3.0", "dependencies": {"p2": "^1.0"}}'
+            },
+          }
+      });
+      await registry.addPackageDir(testDir + "additionalPackages/p3");
+      expect(registry.lookup("p3")).property("url", testDir + "additionalPackages/p3/");
+      await registry.addPackageDir(testDir + "additionalPackages/p1");
+      expect(registry.lookup("p1")).property("url", testDir + "additionalPackages/p1/");
+    });
+
   });
 
-  it("resolve path", async () => {
-    expect(registry.resolvePath("p1/index.js")).equals(testDir + "packages/p1@0.2.2/index.js");
-    expect(registry.resolvePath("p1@0.1.0/index.js")).equals(testDir + "packages/p1@0.1.0/index.js");
-    expect(registry.resolvePath("foo/index.js")).equals(null);
 
-    expect(registry.resolvePath("p2/index.js", testDir + "packages/p1@0.2.2/index.js")).equals(testDir + "packages/p2@1.0.0/index.js");
-    expect(registry.resolvePath("./bar.js", testDir + "packages/p1@0.2.2/index.js")).equals(testDir + "packages/p1@0.2.2/bar.js");
-    expect(registry.resolvePath("../bar.js", testDir + "packages/p1@0.2.2/index.js")).equals(testDir + "packages/bar.js");
-    expect(registry.resolvePath("p2", testDir + "packages/p1@0.2.2/index.js")).equals(testDir + "packages/p2@1.0.0/");
+  describe("update", () => {
+  
+    it("of package in packageBaseDirs", async () => {
+      let dir = resource(testDir + "packages/p1@0.2.2/");
+      await dir.join("package.json").writeJson({"name": "p1", "version": "0.3.0", "dependencies": {"p2": "^1.0"}});
+      let pkg = registry.findPackageWithURL(dir.url);
+      await registry.updatePackageFromPackageJson(pkg);
+      expect(registry.packageMap).containSubset({
+        p1: {
+          latest: "0.3.0",
+          versions: {
+            "0.1.0": {
+              url: testDir + "packages/p1@0.1.0/",
+              version: "0.1.0"
+            },
+            "0.3.0": {
+              url: testDir + "packages/p1@0.2.2/",
+              version: "0.3.0"
+            }
+          }
+        }
+      });
+      expect(registry.packageMap.p1.versions).to.have.keys("0.1.0", "0.3.0");
+    });
+
   });
+
+  describe("removal", () => {
+  
+    it("of package in packageBaseDirs", async () => {
+      let pkg = registry.lookup("p1", "0.2.2");
+      await registry.removePackage(pkg);
+      expect(registry.packageMap.p1.versions).to.have.keys("0.1.0");
+      expect(registry.packageMap.p1.latest).equals("0.1.0");
+    });
+    
+    it("of package with individualPackageDir", async () => {
+      await createFiles(testDir, {
+          additionalPackages: {
+            "p3": {
+              "index.js": "export var z = 99;",
+              "package.json": '{"name": "p3", "version": "2.0.0"}'
+            }
+          }
+      });
+      let p3 = await registry.addPackageDir(testDir + "additionalPackages/p3");
+      await registry.removePackage(p3);
+      expect(registry.packageMap).to.not.have.key("p3");
+      expect(registry.devPackageDirs).equals([]);
+      expect(registry.individualPackageDirs).equals([]);
+    });
+
+  })
 
 });

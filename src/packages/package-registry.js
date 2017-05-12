@@ -13,21 +13,66 @@ function isAbsolute(path) {
     path.match(urlStartRe));
 }
 
-function ensureresource(path) {
+function ensureResource(path) {
   return path.isResource ? path : resource(path);
 }
 
 export class PackageRegistry {
 
   static forDirectory(System, dir) {
-    return new this(System, {packageBaseDirs: [ensureresource(dir)]});
+    return new this(System, {packageBaseDirs: [ensureResource(dir)]});
+  }
+
+  static fromJSON(System, jso) {
+    return new this(System).fromJSON(jso);
   }
 
   constructor(System, opts = {}) {
     this.System = System;
-    this.packageBaseDirs = opts.packageBaseDirs;
+    this.packageBaseDirs = opts.packageBaseDirs || [];
+    this.devPackageDirs = opts.devPackageDirs || [];
+    this.individualPackageDirs = opts.individualPackageDirs || [];
     this._readyPromise = null;
     this.packageMap = {};
+  }
+
+  toJSON() {
+    let packageMapJso = {};
+    for (let pName in this.packageMap) {
+      let spec = this.packageMap[pName];
+      packageMapJso[pName] = {};
+      packageMapJso[pName].latest = spec.latest;
+      packageMapJso[pName].versions = {};
+      for (let version in spec.versions) {
+        packageMapJso[pName].versions[version] = spec.versions[version].toJSON();
+      }
+    }
+
+    return {
+      packageMap: packageMapJso,
+      individualPackageDirs: this.individualPackageDirs.map(ea => ea.url),
+      devPackageDirs: this.devPackageDirs.map(ea => ea.url),
+      packageBaseDirs: this.packageBaseDirs.map(ea => ea.url)
+    }
+  }
+
+  fromJSON(jso) {
+    let packageMap = {}, {System} = this;
+    for (let pName in jso.packageMap) {
+      let spec = jso.packageMap[pName];
+      packageMap[pName] = {};
+      packageMap[pName].latest = spec.latest;
+      packageMap[pName].versions = {};
+      for (let version in spec.versions) {
+        packageMap[pName].versions[version] = Package.fromJSON(System, spec.versions[version]);
+      }
+    }
+
+    this.packageMap = packageMap;
+    this.individualPackageDirs = jso.individualPackageDirs.map(ensureResource);
+    this.devPackageDirs = jso.devPackageDirs.map(ensureResource);
+    this.packageBaseDirs = jso.packageBaseDirs.map(ensureResource);
+    return this
   }
 
   whenReady() { return this._readyPromise || Promise.resolve(); }
@@ -92,6 +137,20 @@ export class PackageRegistry {
       return true;
 
     return false;
+  }
+
+  coversDirectory(dir) {
+    let {packageBaseDirs, devPackageDirs, individualPackageDirs} = this;
+
+    if (individualPackageDirs.some(ea => ea.equals(dir))) return "individualPackageDirs";
+    if (devPackageDirs.some(ea => ea.equals(dir))) return "devPackageDirs";
+    let parent = dir.parent();
+    if (packageBaseDirs.some(ea => ea.equals(parent))) {
+      return this.allPackages().find(pkg =>
+        ensureResource(pkg.url).equals(dir)) ?
+          "packageCollectionDirs" : "maybe packageCollectionDirs";
+    }
+    return null;
   }
 
   lookup(pkgName, versionRange) {
@@ -200,34 +259,120 @@ export class PackageRegistry {
 
     try {
 
-      for (let dir of this.packageBaseDirs) {
-        let subdDirs = await dir.dirList(1)
-        for (let subDir of subdDirs) {
-          if (!subDir.isDirectory()) continue;
-          try {
-            let config = await subDir.join("package.json").readJson(),
-                {name, version, dependencies, devDependencies} = config,
-                packageEntry =
-                  packageMap[name] ||
-                  (packageMap[name] = {versions: {}, latest: null});
-            packageEntry.versions[version] = new Package(
-              System, subDir.url, name, version, config);
-          } catch (err) {}
-        }
-      }
+      for (let dir of this.packageBaseDirs)
+        for (let subDir of await dir.dirList(1))
+          await this._internalAddPackageDir(subDir, false);
 
-      for (let pName in packageMap) {
-        let packageEntry = packageMap[pName];
-        // packageEntry.latest = arr.last(this.sortPackagesByVersion(
-        //                         obj.values(packageEntry.versions)));
-        packageEntry.latest = arr.last(semver.sort(Object.keys(packageEntry.versions), true));
-      }
+      for (let dir of this.individualPackageDirs)
+        await this._internalAddPackageDir(dir, false);
 
+      for (let dir of this.devPackageDirs)
+        await this._internalAddPackageDir(dir, false);
+
+      this._updateLatestPackages();
       this._readyPromise = null;
       deferred.resolve();
 
     } catch (err) { this._readyPromise = null; deferred.reject(err); }
 
     return this;
+  }
+
+  async updatePackageFromPackageJson(pkg, updateLatestPackage = true) {
+    // for name or version changes
+    return this.updatePackageFromConfig(
+      pkg,
+      await ensureResource(pkg.url).join("package.json").readJson(),
+      updateLatestPackage);
+  }
+
+  updatePackageFromConfig(pkg, config, updateLatestPackage = true) {
+    // for name or version changes
+    let {url: oldURL, name: oldName, version: oldVersion} = pkg,
+        {name, version, dependencies, devDependencies} = config;
+    pkg.name = name;
+    pkg.version = version;
+    pkg.dependencies = dependencies;
+    pkg.devDependencies = devDependencies;
+    return this.updatePackage(pkg, oldName, oldVersion, oldURL, updateLatestPackage)
+  }
+
+  updatePackage(pkg, oldName, oldVersion, oldURL, updateLatestPackage = true) {
+    // for name or version changes
+
+    if (
+      (oldName    && pkg.name === oldName) ||
+      (oldVersion && pkg.version !== oldVersion) ||
+      (oldURL     && pkg.url !== oldURL)
+    ) {
+      this.removePackage({name: oldName, version: oldVersion, url: oldURL}, false);
+    }
+
+    let dir = ensureResource(pkg.url),
+        known = this.coversDirectory(ensureResource(pkg.url));
+    if (!known) this.individualPackageDirs.push(dir)
+
+    let {name, version} = pkg,
+        {packageMap} = this,
+        packageEntry = packageMap[name] ||
+          (packageMap[name] = {versions: {}, latest: null});
+    packageEntry.versions[version] = pkg;
+
+    if (updateLatestPackage) this._updateLatestPackages(pkg.name);
+  }
+
+  addPackageDir(dir, isDev = false) {
+    dir = ensureResource(dir).asDirectory();
+    let known = this.coversDirectory(dir);
+    if (known && known !== "maybe packageCollectionDirs")
+      return this.findPackageWithURL(dir);
+
+    let prop = isDev ? "devPackageDirs" : "individualPackageDirs"
+    this[prop] = arr.uniqBy(this[prop].concat(dir), (a,b) => a.equals(b));
+    return this._internalAddPackageDir(dir, true);
+  }
+
+  removePackage(pkg, updateLatestPackage = true) {
+    let {url, name, version} = pkg,
+        dir = ensureResource(url),
+        known = this.coversDirectory(dir);
+    if (known === "devPackageDirs")
+      this.devPackageDirs = this.devPackageDirs.filter(ea => !ea.equals(dir));
+    else if (known === "individualPackageDirs")
+      this.individualPackageDirs = this.individualPackageDirs.filter(ea => !ea.equals(dir));
+
+    let {packageMap} = this;
+    if (packageMap[name]) {
+      delete packageMap[name].versions[version];
+      if (Object.keys(packageMap[name].versions).length === 0)
+        delete packageMap[name];
+    }
+    
+    if (updateLatestPackage) this._updateLatestPackages(pkg.name);
+  }
+
+  async _internalAddPackageDir(dir, updateLatestPackage = false) {
+    if (!dir.isDirectory()) return null;
+    let {System, packageMap} = this;
+    try {
+      let config = await dir.join("package.json").readJson(),
+          {name, version, dependencies, devDependencies} = config,
+          pkg = new Package(System, dir.url, name, version, config);
+      console.log(`[lively.modules] package registry ${name}@${version} in ${dir.url}`);
+      this.updatePackage(pkg, undefined, undefined, undefined, updateLatestPackage);
+      return pkg;
+    } catch (err) { return null; }
+  }
+
+  _updateLatestPackages(name) {
+    let {packageMap} = this;
+    if (name && packageMap[name]) {
+      packageMap[name].latest = arr.last(semver.sort(
+        Object.keys(packageMap[name].versions), true));
+      return;
+    }
+    for (let eaName in packageMap)
+      packageMap[eaName].latest = arr.last(semver.sort(
+        Object.keys(packageMap[eaName].versions), true));
   }
 }

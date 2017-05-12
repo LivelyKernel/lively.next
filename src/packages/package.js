@@ -10,6 +10,7 @@ import {
 } from "./internal.js";
 import ModulePackageMapping from "./module-package-mapping.js";
 import PackageConfiguration from "./configuration.js";
+import { isURL } from "../url-helpers.js";
 
 
 function allPackageNames(System) {
@@ -44,6 +45,10 @@ export class Package {
     return pAddress ? getPackage(System, pAddress, true/*normalized*/) : null;
   }
 
+  static fromJSON(System, jso) {
+    return new this(System).fromJSON(jso);
+  }
+
   constructor(System, packageURL, name, version, config = {}) {
     this.url = packageURL;
     this._name = name || config.name;
@@ -53,6 +58,34 @@ export class Package {
     this.map = {};
     this.dependencies = config.dependencies || {};
     this.devDependencies = config.devDependencies || {};
+  }
+
+  toJSON() {
+    let {System} = this,
+        jso = obj.select(this, [
+          "url",
+          "_name",
+          "version",
+          "map",
+          "dependencies",
+          "devDependencies"
+        ]);
+    if (jso.url.startsWith(System.baseURL))
+      jso.url = jso.url.slice(System.baseURL.length).replace(/^\//, "")
+    return jso;
+  }
+  
+  fromJSON(jso) {
+    let {System} = this;
+    this.url =             jso.url;
+    this._name =           jso._name;
+    this.version =         jso.version;
+    this.map =             jso.map || {};
+    this.dependencies =    jso.dependencies || {};
+    this.devDependencies = jso.devDependencies || {};
+    if (!isURL(this.url))
+      this.url = resource(System.baseURL).join(this.url).url;
+    return this;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
