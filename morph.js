@@ -1,4 +1,4 @@
-import { Color, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
+import { Color, RadialGradient, LinearGradient, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree, fun } from "lively.lang";
 import {
   renderRootMorph,
@@ -379,7 +379,6 @@ export class Morph {
       },
 
       styleSheets: {
-        // Although it has a lot to do with styles this should not be used in style sheets: isStyleProp: true,
         before: ['submorphs'],
         set(sheets) {
           if (!obj.isArray(sheets)) {
@@ -388,7 +387,6 @@ export class Morph {
           this.setProperty(
             "styleSheets", sheets
           );
-          sheets.forEach(s => s.context = this);
         }
       },
 
@@ -436,7 +434,7 @@ export class Morph {
     this._cachedPaths = {};
     this._pathDependants = [];
     this._tickingScripts = [];
-    this._styleSheetsInScope = [];
+    this._styleSheetsInScope = null;
     this.initializeProperties
     this.initializeProperties(props);
     if (props.bounds) this.setBounds(props.bounds);
@@ -469,7 +467,7 @@ export class Morph {
     this._cachedPaths = {};
     this._pathDependants = [];
     this._tickingScripts = [];
-    this._styleSheetsInScope = [];
+    this._styleSheetsInScope = null;
     this.initializeProperties();
   }
 
@@ -545,15 +543,26 @@ export class Morph {
   }
 
   getStyleSheetsInScope() {
-    let styleSheets = [];
-    for (let p of [this, ...this.ownerChain()].reverse()) {
-      if (!p.styleSheets) continue;
-      for (let ss of p.styleSheets) {
-        if (!ss.context) ss.context = p;
-        styleSheets.push(ss);
+    //let styleSheets = [];
+    // for (let p of [this, ...this.ownerChain()].reverse()) {
+    //   if (!p.styleSheets) continue;
+    //   for (let ss of p.styleSheets) {
+    //     if (!ss.context) {
+    //       ss.context = p;
+    //     }
+    //     styleSheets.push(ss);
+    //   }
+    // }
+    let ownerStyleSheets = this.owner
+      ? this.owner._styleSheetsInScope || this.owner.getStyleSheetsInScope()
+      : [],
+        styleSheets = (this.styleSheets || []);
+    styleSheets.forEach(ss => {
+      if (!ss.context) {
+        ss.context = this;
       }
-    }
-    return styleSheets;
+    });
+    return [...ownerStyleSheets, ...styleSheets];
   }
 
   defaultProperty(key) { return this.defaultProperties[key]; }
@@ -627,6 +636,10 @@ export class Morph {
       "_tickingScripts",
       "_transform",
       "_invTransform",
+      "_styleSheetProps",
+      "_styleSheetsInScope",
+      "_renderer",
+      "_tooltipViewer",
       "layout"
     ]
 
@@ -689,7 +702,11 @@ export class Morph {
     var morph;
     if (selector == "addMorphAt") {
       morph = args[0];
-      if (obj.equals(morph.getStyleSheetsInScope(), morph._styleSheetsInScope)) morph = null;
+      if (obj.equals(morph.getStyleSheetsInScope(), morph._styleSheetsInScope)) {
+        morph = null;
+      } else {
+        console.log(morph.getStyleSheetsInScope(), morph._styleSheetsInScope)
+      }
     } else if (prop == "name" || prop == "styleClasses") {
       if (!obj.equals(prevValue,value)) morph = this;
     }
@@ -697,6 +714,7 @@ export class Morph {
     if (morph) {
       morph.ownerChain().forEach(m => m.layout && m.layout.scheduleApply(morph));
       morph.withAllSubmorphsDo(m => {
+        m._styleSheetsInScope = null;
         m._styleSheetProps = null;
         m._transform = null;
         m.makeDirty();
