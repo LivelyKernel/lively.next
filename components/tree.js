@@ -1,7 +1,7 @@
 import { arr, fun, obj, tree, string, promise } from "lively.lang";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { Label } from "lively.morphic/text/label.js";
-import { Morph } from "lively.morphic";
+import { Morph, morph, StyleSheet } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 import { zip } from "lively.lang/array.js";
 
@@ -69,28 +69,31 @@ export class TreeNode extends Morph {
       label: {
         after: ["submorphs"], derived: true, readOnly: true,
         get() {
-          return this.getSubmorphNamed("label") || (this.addMorph({
+          return this.getSubmorphNamed("label") || this.addMorph({
             type: Label, name: "label", autofit: false,
             fontSize: this.fontSize, fontWeight: this.fontWeight, fontFamily: this.fontFamily,
             fill: null
-          }));
+          });
         }
       },
 
       labelValue: {
         after: ["label"], derived: true,
         get() { var l = this.label; return l.owner ? l.value : ""; },
-        set(val) { var l = this.label; l.value = val; }
-      },
+        set(val) {
+          var l = this.label;
+          l.value = val;
+          this.displayedMorph = l;
+        }
+      }, 
 
       displayedMorph: {
         after: ["submorphs", "toggle"], derived: true,
         get() { return arr.without(this.submorphs, this.getSubmorphNamed("toggle"))[0]; },
         set(m) {
           var prev = this.displayedMorph;
-          if (prev === m) return;
-          prev && prev.remove();
-          m.owner !== this && this.addMorph(m);
+          if (m != this.label) this.label.value = '';
+          this.submorphs = arr.uniq(arr.compact([this.getSubmorphNamed('toggle'), this.label, m]))
         }
       },
 
@@ -110,7 +113,7 @@ export class TreeNode extends Morph {
         after: ["label", "toggle", 'displayedMorph'],
         set(fontFamily) {
           this.setProperty("fontFamily", fontFamily);
-          this.displayedMorph.fontFamily = fontFamily;
+          (this.displayedMorph || this.label).fontFamily = fontFamily;
         }
       },
 
@@ -118,7 +121,7 @@ export class TreeNode extends Morph {
         after: ["label", "toggle", 'displayedMorph'],
         set(fontSize) {
           this.setProperty("fontSize", fontSize);
-          this.displayedMorph.fontSize = fontSize;
+          (this.displayedMorph || this.label).fontSize = fontSize;
           var toggle = this.getSubmorphNamed("toggle");
           if (toggle) toggle.fontSize = fontSize-3;
         }
@@ -129,7 +132,7 @@ export class TreeNode extends Morph {
         defaultValue: Color.rgbHex("333"),
         set(fontColor) {
           this.setProperty("fontColor", fontColor);
-          this.displayedMorph.fontColor = fontColor;
+          (this.displayedMorph || this.label).fontColor = fontColor;
           var toggle = this.getSubmorphNamed("toggle");
           if (toggle) toggle.fontColor = fontColor;
         }
@@ -139,7 +142,6 @@ export class TreeNode extends Morph {
         after: ['displayedMorph', "label", "toggle"],
         set(fontWeight) {
           this.setProperty("fontWeight", fontWeight);
-          // rms: this still seems to be initialized before displayedMorph is set
           (this.displayedMorph || this.label).fontWeight = fontWeight;
           var toggle = this.getSubmorphNamed("toggle");
           if (toggle) toggle.fontWeight = fontWeight;
@@ -192,18 +194,14 @@ export class TreeNode extends Morph {
     this.isCollapsable = isCollapsable;
     this.isCollapsed = isCollapsed;
 
-    var {label} = this,
-        toggle = this.getSubmorphNamed("toggle"),
+    var toggle = this.getSubmorphNamed("toggle"),
         displayedMorph;
 
     if (!isCollapsable && toggle) { toggle.remove(); }
-    if (!displayedNode) displayedNode = "";
-    if (displayedNode.isMorph) {
-      if (label.owner) label.remove();
+    if (displayedNode && displayedNode.isMorph) {
       displayedMorph = this.displayedMorph = displayedNode;
-
     } else {
-      if (!label.owner) this.addMorph(label);
+      let {label} = this;
       displayedMorph = this.displayedMorph = label;
       this.labelValue = displayedNode;
       displayedMorph.fit()
@@ -532,6 +530,8 @@ export class Tree extends Morph {
 
     // resize container to allow scrolling
     container.extent = pt(maxWidth, y+padding.bottom());
+
+    dummyNodeMorph.remove();
 
   }
 
@@ -940,11 +940,11 @@ var treeCommands = [
 
   {
     name: "collapse selected node",
-    exec: tree => {
+    exec: async tree => {
       var sel = tree.selection;
       if (!sel) return true;
       if (!tree.treeData.isCollapsed(sel))
-        tree.onNodeCollapseChanged({node: tree.selection, isCollapsed: true})
+        await tree.onNodeCollapseChanged({node: tree.selection, isCollapsed: true})
       else {
         tree.selection = tree.treeData.parentNode(sel);
         tree.scrollSelectionIntoView();
@@ -955,9 +955,9 @@ var treeCommands = [
 
   {
     name: "uncollapse selected node",
-    exec: tree => {
+    exec: async tree => {
       if (tree.selection)
-        tree.onNodeCollapseChanged({node: tree.selection, isCollapsed: false})
+        await tree.onNodeCollapseChanged({node: tree.selection, isCollapsed: false})
       return true;
     }
   },
