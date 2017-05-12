@@ -66,9 +66,18 @@ export class World extends Morph {
   get grabbable() { return false; }
   set grabbable(_) {}
 
+  existingHandForPointerId(pointerId) {
+    return this.submorphs.find(m => m instanceof Hand && m.pointerId === pointerId);
+  }
+
   handForPointerId(pointerId) {
-    return this.submorphs.find(m => m instanceof Hand && m.pointerId === pointerId)
+    return this.existingHandForPointerId(pointerId)
         || this.addMorph(new Hand(pointerId), this.submorphs[0]);
+  }
+
+  removeHandForPointerId(pointerId) {
+    let hand = this.existingHandForPointerId(pointerId);
+    if (hand && this.hands.length > 1) hand.remove();
   }
 
   world() { return this }

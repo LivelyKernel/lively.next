@@ -162,7 +162,7 @@ etc. At each step we call the morphic event handler method. This method can has
 the ability to `stop()` an event, i.e. that morphs further down the dispatch
 chain (including the actual target) won’t receive the event.
 
-There are some events that aren’t “capturing”, i.e. that are not being send to
+There are some events that aren’t “capturing”, i.e. that are not being sent to
 the entire owner chain of the target morph. Currently these are dragstart,
 dragend, drag, focus, blur, grab, hoverin, hoverout.
 
@@ -266,15 +266,16 @@ export default class EventDispatcher {
     // triggered with. E.g. we have our own drag behvior. This is the place where
     // dom events get mapped to those morph events, zero to many.
     // Also for some kinds of event we need to accumulate
+    // For touch events we do not want a halo per finger
 
     var type         = domEvt.type,
         state        = this.eventState,
         eventTargets = [targetMorph].concat(targetMorph.ownerChain()),
-        hand         = "pointerId" in domEvt ? 
-                            this.world.handForPointerId(domEvt.pointerId) : 
-                            this.world.firstHand,
-        halo         = domEvt.pointerId ? this.world.haloForPointerId(domEvt.pointerId) : null,
-        layoutHalo   = domEvt.pointerId ? this.world.layoutHaloForPointerId(domEvt.pointerId) : null,
+        touch        = domEvt.pointerType === 'touch',
+        pointerId    = domEvt.pointerId,
+        hand         = pointerId ? this.world.handForPointerId(pointerId) : this.world.firstHand,
+        halo         = pointerId && !touch ? this.world.haloForPointerId(pointerId) : null,
+        layoutHalo   = pointerId && !touch ? this.world.layoutHaloForPointerId(pointerId) : null,
         klass        = keyLikeEvents.includes(type) ? KeyEvent : Event,
         defaultEvent = new klass(type, domEvt, this, eventTargets, hand, halo, layoutHalo),
         events       = [defaultEvent],
@@ -333,6 +334,11 @@ export default class EventDispatcher {
           state.prevClick = { clickedOnMorph, clickedOnPosition, clickedAtTime, clickCount };
           state.clickedOnMorph = null;
           state.clickCount = 0;
+
+          // remove hand created for this finger
+          if (touch) {
+            this.world.removeHandForPointerId(pointerId);
+          };
         });
 
         // drag release
