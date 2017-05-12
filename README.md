@@ -38,6 +38,32 @@ Unlike `yarn install --flat` multiple versions of the same dependency can coexis
 
 By importing [module-resolver.js](module-resolver.js) into your nodejs process and specifying the package directories via environment variables, nodejs will then use those directories when it tries to load modules.  Alternatively to manually importing `module-resolver.js` you can use [bin/node](bin/node) to start nodejs.
 
+### Comparison with npm and yarn
+
+#### npm
+
+The package install strategy of npm version 1 and 2 was to install all dependencies of a package it listed in `package.json` into a `node_modules` folder in the packages base directory.  Sub-packages were installed in the same way recursively.   The downside of this approach is that for lots of dependencies the node_modules folder structure can grow very large and very deep.
+
+npm version >= 3 improves that by using a [deduplication and localization strategy](https://docs.npmjs.com/how-npm-works/npm3).  This alleviates the deep folder problem but still keeps a the `node_modules` tree structure around.  The downside of this approach is that the location of particular packages is not transparent anymore.  In order to find a package in the dependency tree one has to essentially execute the [node.js module lookup algorithm](https://nodejs.org/api/modules.html#modules_loading_from_node_modules_folders).  This becomes a problem when using packages and their dependencies in the browser or with other module systems (like [SystemJS](https://github.com/systemjs/systemjs) or [lively.modules](https://github.com/LivelyKernel/lively.modules)).
+
+Also, sharing of installed packages across local projects is not possible.  If you have mutliple packages you develop and that are therefore not installed via npm, dependencies of those are not shared, each gets its own `node_modules` tree.  Depending on how many local projects you have this can waste gigabytes.
+
+Furthermore, local packages do not know about each other.  If you have a `packaga-a` that requires a `package-b` you either have to place `package-b` directly inside the node_modules of `package-a` or [npm link](https://docs.npmjs.com/cli/link) `package-b` or symlink package-b => package-a.  npm link is global so you cannot have multiple versions of `package-b`.  As of npm version 5, symlinking freezes `npm update` and `npm install` processes or leads to endless recursive calls (which sometimes also happens with npm link)...
+
+The name and location of the `node_module` folder cannot be customized.
+
+#### yarn
+
+The [yarn package](https://yarnpkg.com/) manager is an alternative to npm.  It uses a local cache to avoid downloading dependencies multiple times and on install links the dependencies required by the projects into `node_modules` folders.  This avoids having mutliple copies of one dependency in the system and wasting space.  To find the exact location of a particular package, one still needs to follow the nodejs module lookup algorithm.
+
+Yarn has an option to [install flat dependencies](https://yarnpkg.com/en/docs/cli/install#toc-yarn-install-flat).  However, in the case of version conflicts, the user has to specify a resolution that picks one of the conflicting versions.  This can potentially lead to runtime issues as packages have to use the wrong version of their dependencies.
+
+The name and location of the `node_module` folder cannot be customized (but there is a [PR].
+
+#### flatn
+
+flatn uses a different strategy by allowing a fully custom location or multiple locations for package dependencies.  Those dependencies can then be shared by local packages.  No symlinking happens but the [node.js runtime is extended](https://github.com/rksm/flatn/blob/master/module-resolver.js) to lookup the dependencies in the right location.  Additionally, flatn provides an option to specify development packages that are then made known to the runtime similarly and that are not constrained by their version specifiers.
+
 ### Example
 
 Let's say we have a local package `foo` with package.json
