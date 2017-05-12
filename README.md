@@ -5,7 +5,7 @@
 flat node dependencies (flatn) is a nodejs package organizer that supports flat file system structures for nodejs package dependencies.  It is compatible with npm and provides an alternative for workflows where npm falls short.
 
 __TL;DR__
-flatn installs packages into one or multiple directories and tells nodejs how to resolve packages in there so normal `require(...)` statements still work.
+flatn installs packages into one or multiple directories and tells nodejs how to resolve packages in there so normal `require(...)` statements work.
 
 - makes developing multiple inter-dependent packages easy (no symlinking, junction-pointing)
 - more efficient package storage
@@ -32,7 +32,7 @@ This has a number of negative consequences:
 
 2. __Directories can be shared but are not global__ By specifying which directories to use via environment variables or command line arguments, installed packages can be shared by multiple local packages.  This allows to minimize the number of installed dependencies.
 
-3. __Directory structure is flat and straightforward__: No nested package structures are necessary, packages are installed via name@version inside the specified directories, github dependencies are supported. Finding packages is done by comparing the version of the package with the version requirement of the callsite.
+3. __Directory structure is flat and straightforward__: No nested package structures are necessary, packages are installed via name@version inside the specified directories, github dependencies are supported. Finding packages is done by comparing the version of the package with the version requirement of the callsite. _Versions of package dependencies are still resolved correctly, i.e. flatn supports the case that packages might require the same dependency in multiple versions._
 
 Unlike `yarn install --flat` multiple versions of the same dependency can coexist.
 
