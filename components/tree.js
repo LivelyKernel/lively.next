@@ -46,6 +46,8 @@ export class TreeNode extends Morph {
 
       myNode: {},
 
+      styleClasses: {defaultValue: ['deselected']},
+
       tree: {
         derived: true, readOnly: true,
         get() { var o = this.owner; return o ? o.owner : null; }
@@ -97,18 +99,6 @@ export class TreeNode extends Morph {
         }
       },
 
-      selectionFontColor: {
-        defaultValue: Color.white,
-      },
-
-      nonSelectionFontColor: {
-        defaultValue: Color.rgbHex("333"),
-      },
-
-      selectionColor: {
-        defaultValue: Color.blue,
-      },
-
       fontFamily: {
         after: ["label", "toggle", 'displayedMorph'],
         set(fontFamily) {
@@ -118,7 +108,7 @@ export class TreeNode extends Morph {
       },
 
       fontSize: {
-        after: ["label", "toggle", 'displayedMorph'],
+        after: ["toggle", 'displayedMorph'],
         set(fontSize) {
           this.setProperty("fontSize", fontSize);
           (this.displayedMorph || this.label).fontSize = fontSize;
@@ -128,8 +118,8 @@ export class TreeNode extends Morph {
       },
 
       fontColor: {
-        after: ["label", "toggle", 'displayedMorph'],
-        defaultValue: Color.rgbHex("333"),
+        after: ["toggle", 'displayedMorph'],
+        defaultValue: Color.black,
         set(fontColor) {
           this.setProperty("fontColor", fontColor);
           (this.displayedMorph || this.label).fontColor = fontColor;
@@ -139,7 +129,7 @@ export class TreeNode extends Morph {
       },
 
       fontWeight: {
-        after: ['displayedMorph', "label", "toggle"],
+        after: ['displayedMorph', "toggle"],
         set(fontWeight) {
           this.setProperty("fontWeight", fontWeight);
           (this.displayedMorph || this.label).fontWeight = fontWeight;
@@ -187,8 +177,6 @@ export class TreeNode extends Morph {
     if (this.myNode) this.myNode.renderedNode = null;
     this.myNode = null;
 
-    this.fill = isSelected ? this.selectionColor : null;
-
     this.position = pos;
 
     this.isCollapsable = isCollapsable;
@@ -212,7 +200,8 @@ export class TreeNode extends Morph {
       }
     }
 
-    this.fontColor = isSelected ? this.selectionFontColor : this.nonSelectionFontColor;
+    this.styleClasses = isSelected ? ['selected'] : ['deselected'];
+    
 
     if (toggle) {
       toggle.fit();
@@ -286,6 +275,12 @@ export class Tree extends Morph {
   static get properties() {
 
     return {
+      styleSheets: {
+        after: ['selectionColor', 'selectionFontColor', 'nonSelectionFontColor'],
+        initialize() {
+          this.updateStyleSheet();
+        }
+      },
       clipMode: {defaultValue: "auto"},
       padding: {defaultValue: Rectangle.inset(2)},
 
@@ -344,6 +339,30 @@ export class Tree extends Morph {
         set(fontWeight) { this.setProperty("fontWeight", fontWeight); this.update(); }
       },
 
+      selectionColor: {
+        defaultValue: Color.blue,
+        set(c) {
+          this.setProperty('selectionColor', c);
+          this.updateStyleSheet();
+        }
+      },
+
+      selectionFontColor: {
+        defaultValue: Color.white,
+        set(c) {
+          this.setProperty('selectionFontColor', c);
+          this.updateStyleSheet();
+        }
+      },
+
+      nonSelectionFontColor: {
+        defaultValue: Color.rgbHex('333'),
+        set(c) {
+          this.setProperty('nonSelectionFontColor', c);
+          this.updateStyleSheet();
+        }
+      },
+
       submorphs: {
         initialize() {
           this.submorphs = [{
@@ -367,6 +386,20 @@ export class Tree extends Morph {
     }
   }
 
+  updateStyleSheet() {
+    this.styleSheets = new StyleSheet({
+      ".TreeNode.selected": {
+        fill: this.selectionColor
+      },
+      ".TreeNode.selected .Label": {
+        fontColor: this.selectionFontColor
+      },
+      ".TreeNode.deselected .Label": {
+        fontColor: this.nonSelectionFontColor
+      }
+    });
+  }
+
   constructor(props = {}) {
     if (!props.treeData)
       throw new Error("Cannot create tree without TreeData!");
@@ -384,7 +417,6 @@ export class Tree extends Morph {
     return {
       fontFamily: this.fontFamily,
       fontSize: this.fontSize,
-      fontColor: this.fontColor,
       fontWeight: this.fontWeight,
       autofit: !this.resizeNodes
     }
