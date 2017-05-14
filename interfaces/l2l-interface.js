@@ -11,10 +11,19 @@ export class L2LCoreInterface extends RemoteCoreInterface {
 
   get name() { return `l2l ${this.targetId}`; }
 
-  async runEval(source, options) {
-    let {default: L2LClient} = await lively.modules.module("lively.2lively/client.js").load(),
-        l2lClient = L2LClient.default();
+  get client() {
+    let {default: L2LClient} = lively.modules.module("lively.2lively/client.js").get();
+    return L2LClient.default();
+  }
 
+  async isConnected() {
+    let {client, targetId} = this,
+        {data: clients} = await client.sendToAndWait(client.trackerId, "getClients", {});
+    return clients.some(([id]) => targetId === id);
+  }
+
+  async runEval(source, options) {
+    let l2lClient = this.client;
     if (!l2lClient) {
       throw new Error("No lively.2lively default client available!");
     }
