@@ -230,13 +230,12 @@ var npmFallbackEnv = {
 
 function gitSpecFromVersion(version = "") {
   let gitMatch = version.match(/([^:]+):\/\/.*/),
-      githubMatch = version.match(/([^\/]+)\/([^#]+).*/),
-      gitRepoUrl = gitMatch ? version : githubMatch ? "https://github.com/" + version : null,
-      [_, branch] = (gitRepoUrl && gitRepoUrl.match(/#([^#]*)$/) || []);
-  if (gitRepoUrl && !branch) {
-     branch = "master";
-     gitRepoUrl += "#master";
-  }
+      githubMatch = version.match(/(?:github:)?([^\/]+)\/([^#]+)(?:#(.+))?/),
+      [_, githubUser, githubRepo, githubBranch] = githubMatch || [],
+      gitRepoUrl = gitMatch ? version : githubMatch ? `https://github.com/${githubUser}/${githubRepo}` : null,
+      branch = githubMatch && githubBranch || "master";
+  if (gitRepoUrl) gitRepoUrl += "#" + branch;
+
   return gitRepoUrl
     ? {branch, gitURL: gitRepoUrl, versionInFileName: gitRepoUrl.replace(/[:\/\+#]/g, "_")}
     : null;
