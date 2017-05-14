@@ -19,7 +19,7 @@ export default class WorldLoadingPlugin {
   resetHTMLCache() { this.cachedHTML = {}; }
 
   async handleRequest(req, res, next) {
-    if (req.url === "/" || req.url === "/index.html") {
+    if ((req.url === "/" || req.url === "/index.html") && req.method.toUpperCase() === "GET") {
       res.writeHead(301,  {location: "/worlds/"});
       res.end();
       return;
