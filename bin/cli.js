@@ -2,7 +2,7 @@
 
 /*global require, global, process*/
 const parseArgs = require('../deps/minimist.js'),
-      { string } = (typeof lively !== "undefined" && lively.lang) || require("../deps/lively.lang.min.js"),
+      { string, arr } = (typeof lively !== "undefined" && lively.lang) || require("../deps/lively.lang.min.js"),
       { resource } = (typeof lively !== "undefined" && lively.resources) || require("../deps/lively.resources.js"),
       { join: j, isAbsolute, normalize } = require("path"),
       fs = require("fs"),
@@ -17,6 +17,8 @@ let activeDir = process.cwd(),
     cmdIndex = args.findIndex(arg =>
       ["list", "install", "node", "env"]
         .includes(arg) && (command = arg));
+
+processFlatnConfig();
 
 switch (command) {
   case 'list':    doList(   args.slice(0, cmdIndex), args.slice(cmdIndex+1)); break;
@@ -109,6 +111,38 @@ function unexpectedArgs(args, expected, commandName) {
   if (unexpected.length) {
     console.error(`command "${commandName}" does not expect arguments ${unexpected.map(JSON.stringify).join(", ")}`);
     process.exit(1);
+  }
+}
+
+
+function processFlatnConfig() {
+  let configFile = j(activeDir, ".flatn.json"),
+      globalConfigFile = j(process.env.HOME, ".flatn.json"),
+      config = fs.existsSync(configFile) ? JSON.parse(fs.readFileSync(configFile)) : null,
+      globalConfig = fs.existsSync(globalConfigFile) ? JSON.parse(fs.readFileSync(globalConfigFile)) : null;
+  if (!config && !globalConfig) return;
+  let fullConfig = {};
+
+  if (globalConfig) {
+    // console.log(`Using config from ${globalConfigFile}`);
+    fullConfig.FLATN_PACKAGE_COLLECTION_DIRS = (globalConfig.FLATN_PACKAGE_COLLECTION_DIRS || []).map(makeAbsolute(process.env.HOME));
+    fullConfig.FLATN_PACKAGE_DIRS =            (globalConfig.FLATN_PACKAGE_DIRS || []).map(makeAbsolute(process.env.HOME));
+    fullConfig.FLATN_DEV_PACKAGE_DIRS =        (globalConfig.FLATN_DEV_PACKAGE_DIRS || []).map(makeAbsolute(process.env.HOME));
+  }
+
+  if (config) {
+    // console.log(`Using config from ${configFile}`)
+    fullConfig.FLATN_PACKAGE_COLLECTION_DIRS = (config.FLATN_PACKAGE_COLLECTION_DIRS || []).map(makeAbsolute(activeDir));
+    fullConfig.FLATN_PACKAGE_DIRS =            (config.FLATN_PACKAGE_DIRS || []).map(makeAbsolute(activeDir));
+    fullConfig.FLATN_DEV_PACKAGE_DIRS =        (config.FLATN_DEV_PACKAGE_DIRS || []).map(makeAbsolute(activeDir));
+  }
+
+  process.env.FLATN_PACKAGE_COLLECTION_DIRS = arr.uniq(fullConfig.FLATN_PACKAGE_COLLECTION_DIRS.concat((process.env.FLATN_PACKAGE_COLLECTION_DIRS || "").split(":"))).join(":");
+  process.env.FLATN_PACKAGE_DIRS = arr.uniq(fullConfig.FLATN_PACKAGE_DIRS.concat((process.env.FLATN_PACKAGE_DIRS || "").split(":"))).join(":");
+  process.env.FLATN_DEV_PACKAGE_DIRS = arr.uniq(fullConfig.FLATN_DEV_PACKAGE_DIRS.concat((process.env.FLATN_DEV_PACKAGE_DIRS || "").split(":"))).join(":");
+  
+  function makeAbsolute(baseDir) {
+    return path => isAbsolute(path) ? path : j(baseDir, path);
   }
 }
 
