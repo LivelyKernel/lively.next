@@ -37,6 +37,7 @@ module.exports = function start(hostname, port, rootDirectory, serverDir) {
             serverDir + "/plugins/l2l.js",
             serverDir + "/plugins/remote-shell.js",
             serverDir + "/plugins/world-loading.js",
+            serverDir + "/plugins/lib-lookup.js",
             serverDir + "/plugins/dav.js",
             serverDir + "/plugins/moduleBundler.js",
             serverDir + "/plugins/user.js",
@@ -48,6 +49,7 @@ module.exports = function start(hostname, port, rootDirectory, serverDir) {
       .then(server => console.log(`[lively.server] ${step++}. ${server} running`))
       .catch(err => {
         console.error(`Error starting server: ${err.stack}`);
+        console.log(err)
         process.exit(1);
       })
   );
