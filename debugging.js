@@ -309,11 +309,12 @@ export class SnapshotInspector {
         conns = (this.classes.AttributeConnection || {}).objects || [],
         report = conns
           .map(c => {
-            let [_, {props: {sourceObj, sourceAttrName, targetObj, targetMethodName}}] = c;
+            let [connId, {props: {sourceObj, sourceAttrName, targetObj, targetMethodName}}] = c;
             return (
               `${this.explainId(sourceObj.value.id)}.${sourceAttrName.value} => `
             + `${this.explainId(targetObj.value.id)}.${targetMethodName.value}\n`
             + `  ${sourceObj.value.id} => ${targetObj.value.id}\n`
+            + `  connection id: ${connId}\n`
             );
           }).join("\n");
 
