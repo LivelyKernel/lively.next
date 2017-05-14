@@ -26,12 +26,9 @@ function pathForNameAndVersion(nameAndVersion, destinationDir) {
       gitSpec = gitSpecFromVersion(version);
 
   // "git clone -b my-branch git@github.com:user/myproject.git"
-  if (gitSpec) {
-    let location = j(destinationDir, `${name}@${gitSpec.versionInFileName}`);
-    return Object.assign({}, gitSpec, {location, name, version: gitSpec.gitURL});
-  }
-
-  return {location: j(destinationDir, nameAndVersion), name, version}
+  return gitSpec ?
+    Object.assign({}, gitSpec, {location: null, name, version: gitSpec.gitURL}) :
+    {location: null, name, version};
 }
 
 
@@ -59,19 +56,16 @@ async function packageDownload(packageNameAndRange, destinationDir, attempt = 0)
 
 
     let packageJSON = downloadDir.join("package.json"), config;
-    if (await packageJSON.exists()) {
-      config = await downloadDir.join("package.json").readJson();
-    } else {
-      // FIXME, doesn't really work for git downloads...
-      let [name, version] = downloadDir.name().split("@");
-      config = {name, version};
-    }
+    if (!await packageJSON.exists())
+      throw new Error(`Downloaded package ${packageNameAndRange} does not have a package.json file at ${packageJSON}`);
 
+    config = await downloadDir.join("package.json").readJson();
     let packageDir;
     if (pathSpec.gitURL) {
-      packageDir = maybeFileResource(pathSpec.location).asDirectory();
+      let dirName = config.name + "/" + pathSpec.versionInFileName;
+      packageDir = maybeFileResource(destinationDir).join(dirName).asDirectory();
     } else {
-      let dirName = config.name + "@" + config.version;
+      let dirName = config.name + "/" + config.version;
       packageDir = destinationDir.join(dirName).asDirectory();
       pathSpec = Object.assign({}, pathSpec, {location: packageDir});
     }

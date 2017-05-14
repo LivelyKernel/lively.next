@@ -41,8 +41,9 @@ describe("flat packages", function() {
     it("reads installed package", async () => {
       await createFiles(baseDir, {
         "package-install-dir": {
-          "test-package-1@1.2.3": {
-            "package.json": JSON.stringify({name: "test-package-1", version: "1.2.3"})}
+          "test-package-1": {
+            "1.2.3": {"package.json": JSON.stringify({name: "test-package-1", version: "1.2.3"})}
+          }
         }
       });
       let pMap = buildPackageMap([baseDir.join("package-install-dir").path()]),
@@ -50,7 +51,7 @@ describe("flat packages", function() {
       expect(pInfo).containSubset({
         name: "test-package-1",
         version: "1.2.3",
-        location: baseDir.join("package-install-dir/test-package-1@1.2.3").path(),
+        location: baseDir.join("package-install-dir/test-package-1/1.2.3").path(),
         dependencies: undefined,
         devDependencies: undefined,
         scripts: undefined, bin: undefined,
@@ -66,8 +67,8 @@ describe("flat packages", function() {
     it("looks up packages in multiple package dirs", async () => {
       await createFiles(baseDir, {
         "package-install-dir": {
-          "a": {"test-package-1@1.2.3": {"package.json": JSON.stringify({name: "test-package-1", version: "1.2.3"})}},
-          "b": {"test-package-2@0.1.2": {"package.json": JSON.stringify({name: "test-package-2", version: "0.1.2"})}}
+          "a": {"test-package-1": {"1.2.3": {"package.json": JSON.stringify({name: "test-package-1", version: "1.2.3"})}}},
+          "b": {"test-package-2": {"0.1.2": {"package.json": JSON.stringify({name: "test-package-2", version: "0.1.2"})}}}
         }
       });
       let pMap = buildPackageMap([
@@ -84,17 +85,21 @@ describe("flat packages", function() {
       await createFiles(baseDir, {
         "package-install-dir": {
           a: {
-            "test-package-1@1.2.3": {
-              "package.json": JSON.stringify({
-                name: "test-package-1",
-                version: "1.2.3",
-                flatn_package_dirs: ["../../b"]
-              })
+            "test-package-1": {
+              "1.2.3": {
+                "package.json": JSON.stringify({
+                  name: "test-package-1",
+                  version: "1.2.3",
+                  flatn_package_dirs: ["../../../b"]
+                })
+              }
             }
           },
           b: {
-            "test-package-2@0.1.2": {
-              "package.json": JSON.stringify({name: "test-package-2", version: "0.1.2"})
+            "test-package-2": {
+              "0.1.2": {
+                "package.json": JSON.stringify({name: "test-package-2", version: "0.1.2"})
+              }
             }
           }
         }
@@ -115,24 +120,35 @@ describe("flat packages", function() {
           {packageMap, newPackages} = await installPackage("strip-ansi@^3", basePath);
 
       expect(packageMap.individualPackageDirs).equals([
-        basePath + "/strip-ansi@3.0.1/",
-        basePath + "/ansi-regex@2.1.1/"]);
+        basePath + "/strip-ansi/3.0.1/",
+        basePath + "/ansi-regex/2.1.1/"]);
 
       expect(packageMap.dependencyMap).containSubset({
         "ansi-regex@2.1.1": {name: "ansi-regex",version: "2.1.1",},
         "strip-ansi@3.0.1": {name: "strip-ansi"}});
 
-      let installDir = baseDir.join("package-install-dir/strip-ansi@3.0.1/");
+      let installDir = baseDir.join("package-install-dir/strip-ansi/3.0.1/");
       expect().assert(await installDir.exists(), "strip-ansi does not exist");
       let files = (await installDir.dirList()).map(ea => ea.name());
-      expect(files).equals([".lv-npm-helper-info.json", "index.js", "license", "package.json", "readme.md"]);
+      expect(files).equals([
+        ".lv-npm-helper-info.json",
+        "index.js",
+        "license",
+        "package.json",
+        "readme.md"
+      ]);
+
+      expect(installDir.join("package.json").readJson()).containSubset({
+        "_from" : "acorn@>=4.0.3 <5.0.0",
+        "_id" : "strip-ansi@3.0.1"
+      });
     });
 
     it("installs a package via git", async () => {
       await installPackage(
         "strip-ansi@https://github.com/chalk/strip-ansi#82707",
         baseDir.join("package-install-dir").path());
-      let installDir = baseDir.join("package-install-dir/strip-ansi@https___github.com_chalk_strip-ansi_82707/");
+      let installDir = baseDir.join("package-install-dir/strip-ansi/https___github.com_chalk_strip-ansi_82707/");
       expect().assert(await installDir.exists(), installDir + " does not exist")
       let files = (await installDir.dirList()).map(ea => ea.name());
       expect(files).equals([
@@ -151,20 +167,27 @@ describe("flat packages", function() {
     });
 
     it("installs all dependencies via npm", async () => {
-      await installPackage("mkdirp@0.5.1", baseDir.join("package-install-dir").path());
-      expect((await baseDir.join("package-install-dir").dirList()).map(ea => ea.name()))
-        .equals(["minimist@0.0.8", "mkdirp@0.5.1"]);
+      let installDir = baseDir.join("package-install-dir");
+      await installPackage("mkdirp@0.5.1", installDir.path());
+      let dirs = await baseDir.join("package-install-dir").dirList(2);
+      expect(dirs.map(ea => ea.relativePathFrom(installDir)))
+        .equals(["minimist/", "mkdirp/", "minimist/0.0.8/", "mkdirp/0.5.1/"]);
     });
 
     it("installs all dependencies via git and npm", async () => {
-      await installPackage(
-        "mkdirp@substack/node-mkdirp#f2003bb",
-        baseDir.join("package-install-dir").path());
-      expect((await baseDir.join("package-install-dir").dirList()).map(ea => ea.name()))
-        .equals(["minimist@0.0.8", "mkdirp@https___github.com_substack_node-mkdirp_f2003bb"]);
+      let installDir = baseDir.join("package-install-dir");
+      await installPackage("mkdirp@substack/node-mkdirp#f2003bb", installDir.path());
+      let dirs = await baseDir.join("package-install-dir").dirList(2);
+      expect(dirs.map(ea => ea.relativePathFrom(installDir))).equals([
+        "minimist/",
+        "mkdirp/",
+        "minimist/0.0.8/",
+        "mkdirp/https___github.com_substack_node-mkdirp_f2003bb/"
+      ]);
     });
 
     it("installs all package deps", async () => {
+      let installDir = baseDir.join("package-install-dir");
       await createFiles(baseDir, {
         "package-install-dir": {
           foo: {
@@ -177,12 +200,19 @@ describe("flat packages", function() {
         }
       });
       let {packageMap, newPackages} = await installDependenciesOfPackage(
-        baseDir.join("package-install-dir/foo").path());
+        installDir.join("foo").path());
       expect(newPackages.map(ea => ea.name)).equals(["strip-ansi", "ansi-regex"]);
       expect(packageMap.dependencyMap).to.have.keys(
         ["strip-ansi@2.0.1", "ansi-regex@1.1.1"]);
-      expect((await baseDir.join("package-install-dir/").dirList()).map(ea => ea.name()))
-        .equals(["ansi-regex@1.1.1", "foo", "strip-ansi@2.0.1"]);
+      let dirs = (await installDir.dirList(2)).map(ea => ea.relativePathFrom(installDir));
+      expect(dirs).equals([
+        "ansi-regex/",
+        "foo/",
+        "strip-ansi/",
+        "ansi-regex/1.1.1/",
+        "foo/package.json",
+        "strip-ansi/2.0.1/"
+      ]);
     });
 
     it("add new dep", async () => {
@@ -196,88 +226,95 @@ describe("flat packages", function() {
         "strip-ansi@^2",
         baseDir.join("package-install-dir").path()
       );
-  
+
       expect(await baseDir.join("package-install-dir/foo/package.json").readJson())
         .containSubset({dependencies: {"strip-ansi": "^2"}});
       expect(packageMap.dependencyMap).to.have.keys(["strip-ansi@2.0.1", "ansi-regex@1.1.1"]);
     });
-  
+
   });
 
   describe("building modules", () => {
-  
+
     beforeEach(() =>
       createFiles(baseDir, {
         "build-test": {
           foo: {
-            "package.json": JSON.stringify({
-              name: "foo", version: "1.2.3",
-              scripts: {install: "node install.js"},
-              bin: {"foo-bin": "foo-bin"}
-            }),
-            "install.js": `require("fs").writeFileSync("./installed", "yes")`,
-            "index.js": "module.exports.x = 23",
-            "foo-bin": "#!/bin/bash\necho 'foo-bin!'"
+            "1.2.3": {
+              "package.json": JSON.stringify({
+                name: "foo", version: "1.2.3",
+                scripts: {install: "node install.js"},
+                bin: {"foo-bin": "foo-bin"}
+              }),
+              "install.js": `require("fs").writeFileSync("./installed", "yes")`,
+              "index.js": "module.exports.x = 23",
+              "foo-bin": "#!/bin/bash\necho 'foo-bin!'"
+            }
           },
           bar: {
-            "package.json": JSON.stringify({
-              name: "bar",
-              version: "0.1.0",
-              dependencies: {foo: "*"}
-            }),
-            "index.js": "console.log(require('foo').x + 1);",
+            "0.1.0": {
+              "package.json": JSON.stringify({
+                name: "bar",
+                version: "0.1.0",
+                dependencies: {foo: "*"}
+              }),
+              "index.js": "console.log(require('foo').x + 1);",
+            }
           }
         }
       }))
-  
+
     it("runs install script", async () => {
-      let pkg = PackageSpec.fromDir(baseDir.join("build-test/foo/").path());
+      let pkg = PackageSpec.fromDir(baseDir.join("build-test/foo/1.2.3/").path());
       await buildPackage(pkg, buildPackageMap([], [pkg.location]));
-      expect(await baseDir.join("build-test/foo/installed").read()).equals("yes");
+      expect(await baseDir.join("build-test/foo/1.2.3/installed").read()).equals("yes");
     });
-  
+
     it("runs install scripts of dependent packages", async () => {
       let pmap = buildPackageMap([baseDir.join("build-test/").path()])
-      await buildPackage(PackageSpec.fromDir(baseDir.join("build-test/bar/").path()), pmap);
-      expect(await baseDir.join("build-test/foo/installed").read()).equals("yes");
+      await buildPackage(PackageSpec.fromDir(baseDir.join("build-test/bar/0.1.0/").path()), pmap);
+      expect(await baseDir.join("build-test/foo/1.2.3/installed").read()).equals("yes");
     });
-  
+
     it("bins are linked", async () => {
-      System._nodeRequire("fs").chmodSync(baseDir.join("build-test/foo/foo-bin").path(), "0755")
-      let barDir = baseDir.join("build-test/bar/");
+      System._nodeRequire("fs").chmodSync(baseDir.join("build-test/foo/1.2.3/foo-bin").path(), "0755")
+      let barDir = baseDir.join("build-test/bar/0.1.0/");
       let config = await barDir.join("package.json").readJson()
       config.scripts = {install: "node install-bar.js"};
       await barDir.join("package.json").writeJson(config);
       await barDir.join("install-bar.js").write(
         `require("fs").writeFileSync(
           "./installed",
-          String(require("child_process").execSync("foo-bin")))`)
+          String(require("child_process").execSync("foo-bin")))`);
       let pmap = buildPackageMap([baseDir.join("build-test/").path()])
-      await buildPackage(PackageSpec.fromDir(barDir.join("").path()), pmap);
+      await buildPackage(PackageSpec.fromDir(barDir.path()), pmap);
       expect(await barDir.join("installed").read()).equals("foo-bin!\n");
     });
-  
+
   });
 
   describe("resolving modules", () => {
-  
+
     beforeEach(async () => {
       await createFiles(baseDir, {
         "packages": {
           foo: {
-            "package.json": JSON.stringify({name: "foo", version: "1.2.3"}),
-            "index.js": "module.exports.x = 23"
+            "1.2.3": {
+              "package.json": JSON.stringify({name: "foo", version: "1.2.3"}),
+              "index.js": "module.exports.x = 23"
+            }
           },
           bar: {
-            "package.json": JSON.stringify({name: "bar", version: "0.1.0", dependencies: {foo: "*"}}),
-            "index.js": "console.log(require('foo').x + 1);"
+            "0.1.0": {
+              "package.json": JSON.stringify({name: "bar", version: "0.1.0", dependencies: {foo: "*"}}),
+              "index.js": "console.log(require('foo').x + 1);"
+            }
           }
         }
       })
     });
-  
+
     it("in node at startup", async () => {
-      // FLATN_PACKAGE_DIRS=/var/folders/03/64_rfvgj0j19w_ynyl3tmtkr0000gn/T/lively.node-packages-test/packages/ /Users/robert/.nvm/versions/node/v7.7.3/bin/node -r /Users/robert/Lively/lively-dev2/flatn/module-resolver.js -r /var/folders/03/64_rfvgj0j19w_ynyl3tmtkr0000gn/T/lively.node-packages-test/packages/bar/
       let resolverMod = resource(System.decanonicalize("flatn/module-resolver.js")).path(),
           out = execSync(
               `${process.argv[0]} -r "${resolverMod}" -r './index.js'`,
@@ -286,12 +323,11 @@ describe("flat packages", function() {
                   FLATN_PACKAGE_COLLECTION_DIRS: `${baseDir.join("packages/").path()}`,
                   PATH: process.env.PATH
                 },
-                cwd: baseDir.join("packages/bar/").path()
+                cwd: baseDir.join("packages/bar/0.1.0/").path()
               });
-  
       expect(String(out).trim()).equals("24");
     });
-  
+
     it("in node with own bin", async () => {
       let nodeBin = System.decanonicalize("flatn/bin/node").replace(/file:\/\//, ""),
           out = execSync(`${nodeBin} -r './index.js'`, {
@@ -299,27 +335,29 @@ describe("flat packages", function() {
               PATH: process.env.PATH,
               FLATN_PACKAGE_COLLECTION_DIRS: `${baseDir.join("packages/").path()}`
             },
-            cwd: baseDir.join("packages/bar/").path()
+            cwd: baseDir.join("packages/bar/0.1.0/").path()
           });
       expect(String(out).trim()).equals("24");
     });
-  
+
   });
 
   describe("dev packages", () => {
-  
+
     beforeEach(async () => {
 
       await createFiles(baseDir, {
         "deps": {
-          "test-package-1@1.2.3": {
-            "package.json": JSON.stringify({
-              name: "test-package-1",
-              version: "1.2.3",
-              dependencies: {"dev-package": "^0.1"},
-              flatn_package_dirs: ["../../b"]
-            })
-          },
+          "test-package-1": {
+            "1.2.3": {
+              "package.json": JSON.stringify({
+                name: "test-package-1",
+                version: "1.2.3",
+                dependencies: {"dev-package": "^0.1"},
+                flatn_package_dirs: ["../../b"]
+              })
+            }
+          }
         },
         "dev": {
           "dev-package": {
@@ -328,7 +366,7 @@ describe("flat packages", function() {
         }
       });
     });
-  
+
     it("lookup", async () => {
       let pMap = buildPackageMap(
         [baseDir.join("deps").path()], [],
@@ -345,14 +383,17 @@ describe("flat packages", function() {
         [baseDir.join("deps").path()], [],
         [baseDir.join("dev/dev-package").path()]);
       let {packageMap, newPackages} = await installDependenciesOfPackage(
-        baseDir.join("deps/test-package-1@1.2.3").path(),
+        baseDir.join("deps/test-package-1/1.2.3").path(),
         baseDir.join("deps").path(),
         pMap
       );
-      expect((await baseDir.join("deps").dirList()).map(ea => ea.name()))
-        .equals([ 'test-package-1@1.2.3' ]);
-      expect((await baseDir.join("dev").dirList()).map(ea => ea.name()))
-        .equals(["dev-package"]);
+
+      let depsDir = baseDir.join("deps");
+      expect((await depsDir.dirList(2)).map(ea => ea.relativePathFrom(depsDir)))
+        .equals(["test-package-1/", "test-package-1/1.2.3/"]);
+      let devDir = baseDir.join("dev");
+      expect((await devDir.dirList(2)).map(ea => ea.relativePathFrom(devDir)))
+        .equals(["dev-package/", "dev-package/package.json"]);
     });
 
   });

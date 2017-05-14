@@ -228,17 +228,28 @@ var npmFallbackEnv = {
   npm_node_execpath: '/Users/robert/.nvm/versions/node/v7.7.4/bin/node'
 }
 
+// gitSpecFromVersion("git+ssh://user@hostname/project.git#commit-ish")
+// gitSpecFromVersion("https://rksm/flatn#commit-ish")
+// gitSpecFromVersion("rksm/flatn#commit-ish")
 function gitSpecFromVersion(version = "") {
-  let gitMatch = version.match(/([^:]+):\/\/.*/),
-      githubMatch = version.match(/(?:github:)?([^\/]+)\/([^#]+)(?:#(.+))?/),
-      [_, githubUser, githubRepo, githubBranch] = githubMatch || [],
-      gitRepoUrl = gitMatch ? version : githubMatch ? `https://github.com/${githubUser}/${githubRepo}` : null,
-      branch = githubMatch && githubBranch || "master";
-  if (gitRepoUrl) gitRepoUrl += "#" + branch;
+  let gitMatch = version.match(/^([^:]+:\/\/[^#]+)(?:#(.+))?/),
+      [_1, gitRepo, gitBranch] = gitMatch || [],
+      githubMatch = version.match(/^(?:github:)?([^\/]+)\/([^#\/]+)(?:#(.+))?/),
+      [_2, githubUser, githubRepo, githubBranch] = githubMatch || [];
+  if (!githubMatch && !gitMatch) return null;
 
-  return gitRepoUrl
-    ? {branch, gitURL: gitRepoUrl, versionInFileName: gitRepoUrl.replace(/[:\/\+#]/g, "_")}
-    : null;
+  if (!githubMatch)
+    return {
+      branch: gitBranch,
+      gitURL: gitRepo,
+      versionInFileName: gitRepo.replace(/[:\/\+#]/g, "_") + "_" + gitBranch
+    };
+
+  let gitURL = `https://github.com/${githubUser}/${githubRepo}`;
+  return {
+    branch: githubBranch, gitURL,
+    versionInFileName: gitURL.replace(/[:\/\+#]/g, "_") + "_" + githubBranch
+  }
 }
 
 module.exports.gitClone = gitClone;
@@ -344,7 +355,7 @@ function fs_writeJson(location, jso) {
 
 function fs_dirList(location) {
   if (location.isResource) return location.dirList(1);
-  return fs.readdirSync(location);
+  return fs.readdirSync(location).map(ea => join(location, ea));
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -455,7 +466,7 @@ class PackageMap {
     }
   }
 
-    buildDependencyMap(packageCollectionDirs, individualPackageDirs = [], devPackageDirs = []) {
+  buildDependencyMap(packageCollectionDirs, individualPackageDirs = [], devPackageDirs = []) {
     // looks up all the packages in can find in packageDirs and creates
     // packageSpecs for them.  If a package specifies more flatn_package_dirs in its
     // config then repeat the process until no more new package dirs are found.
@@ -528,12 +539,23 @@ class PackageMap {
     packageCollectionDirs,
     seen = {packageDirs: {}, collectionDirs: {}}
   ) {
+    // package collection dir structure is like
+    // packages
+    // |-package-1
+    // | |-0.1.0
+    // | | \-package.json
+    // | \-0.1.1
+    // |   \-package.json
+    // |-package-2
+    // ...
+
     let found = [];
     for (let dir of packageCollectionDirs)
       if (fs_exists(dir))
         for (let packageDir of fs_dirList(dir))
-          found.push(...this._discoverPackagesInPackageDir(join(dir, packageDir), seen));
-    return found
+          for (let versionDir of fs_dirList(packageDir))
+            found.push(...this._discoverPackagesInPackageDir(versionDir, seen));
+    return found;
   }
 
   _discoverPackagesInPackageDir(
@@ -658,7 +680,8 @@ class AsyncPackageMap extends PackageMap {
     for (let dir of packageCollectionDirs) {
       if (await dir.exists())
         for (let packageDir of await dir.dirList())
-          found.push(...await this._discoverPackagesInPackageDir(packageDir, seen));
+          for (let versionDir of await packageDir.dirList())
+            found.push(...await this._discoverPackagesInPackageDir(versionDir, seen));
     }
     return found
   }
@@ -718,7 +741,7 @@ class PackageSpec {
     this.version = "";
     this.dependencies = {};
     this.devDependencies = {};
-    
+
     // from git spec
     this.branch = null;
     this.gitURL = null;
@@ -727,7 +750,6 @@ class PackageSpec {
 
   matches(pName, versionRange, gitSpec) {
     // does this package spec match the package pName@versionRange?
-
     let {name, version, isDevPackage} = this;
 
     if (name !== pName) return false;
@@ -746,24 +768,27 @@ class PackageSpec {
   }
 
   read() {
-    let self = this, packageDir = this.location;
+    let self = this,
+        packageDir = this.location,
+        configFile = join(packageDir, "package.json");
 
     if (!fs_isDirectory(packageDir)) return false;
 
-    let hasConfig = fs_exists(join(packageDir, "package.json"));
+    let hasConfig = fs_exists(configFile);
 
     return hasConfig instanceof Promise ? hasConfig.then(step2) : step2(hasConfig);
 
     function step2(hasConfig) {
       if (!hasConfig) return false;
-      let config = fs_readJson(join(packageDir, "package.json"));
-
+      let config = fs_readJson(configFile);
       return config instanceof Promise ? config.then(step3) : step3(config);
     }
 
     function step3(config) {
       let {
-        name, version, bin, scripts, dependencies, devDependencies
+        name, version, bin, scripts,
+        dependencies, devDependencies,
+        flatn_package_dirs
       } = config;
 
       if (bin) {
@@ -774,7 +799,8 @@ class PackageSpec {
       Object.assign(self, {
         location: packageDir,
         name, version, bin, scripts,
-        dependencies, devDependencies
+        dependencies, devDependencies,
+        flatn_package_dirs
       });
 
       let info = self.readLvInfo();
@@ -816,7 +842,6 @@ class PackageSpec {
   }
 
 }
-
 
 
 module.exports.PackageMap = PackageMap;
@@ -934,12 +959,9 @@ function pathForNameAndVersion(nameAndVersion, destinationDir) {
       gitSpec = gitSpecFromVersion(version);
 
   // "git clone -b my-branch git@github.com:user/myproject.git"
-  if (gitSpec) {
-    let location = j(destinationDir, `${name}@${gitSpec.versionInFileName}`);
-    return Object.assign({}, gitSpec, {location, name, version: gitSpec.gitURL});
-  }
-
-  return {location: j(destinationDir, nameAndVersion), name, version}
+  return gitSpec ?
+    Object.assign({}, gitSpec, {location: null, name, version: gitSpec.gitURL}) :
+    {location: null, name, version};
 }
 
 
@@ -967,19 +989,16 @@ async function packageDownload(packageNameAndRange, destinationDir, attempt = 0)
 
 
     let packageJSON = downloadDir.join("package.json"), config;
-    if (await packageJSON.exists()) {
-      config = await downloadDir.join("package.json").readJson();
-    } else {
-      // FIXME, doesn't really work for git downloads...
-      let [name, version] = downloadDir.name().split("@");
-      config = {name, version};
-    }
+    if (!await packageJSON.exists())
+      throw new Error(`Downloaded package ${packageNameAndRange} does not have a package.json file at ${packageJSON}`);
 
+    config = await downloadDir.join("package.json").readJson();
     let packageDir;
     if (pathSpec.gitURL) {
-      packageDir = maybeFileResource(pathSpec.location).asDirectory();
+      let dirName = config.name + "/" + pathSpec.versionInFileName;
+      packageDir = maybeFileResource(destinationDir).join(dirName).asDirectory();
     } else {
-      let dirName = config.name + "@" + config.version;
+      let dirName = config.name + "/" + config.version;
       packageDir = destinationDir.join(dirName).asDirectory();
       pathSpec = Object.assign({}, pathSpec, {location: packageDir});
     }
@@ -1441,35 +1460,4 @@ async function installDependenciesOfPackage(
 
   return {packageMap, newPackages};
 }
-
-
-/*
-DIR=/Users/robert/Lively/lively-dev2/npm-helper/bin
-export PATH=$DIR:$PATH
-export CENTRAL_NODE_PACKAGE_DIR="/Users/robert/.central-node-packages";
-node -r "lively.resources/dist/lively.resources.js" -e "lively.resources.resource('file://'+__dirname).dirList().then(files => console.log(files.map(ea => ea.path())))"
-*/
-
-// await installPackage("pouchdb", packageDir)
-// await installPackage("lively.resources", packageDir)
-// await installPackage("lively.user@LivelyKernel/lively.user#master", packageDir)
-// await installPackage("pouchdb", packageDir)
-
-// process.env.CENTRAL_NODE_PACKAGE_DIR = "/Users/robert/.central-node-packages"
-// let packageDir = process.env.CENTRAL_NODE_PACKAGE_DIR
-// let packages = getInstalledPackages(packageDir)
-// let pMap = buildPackageMap([packageDir])
-// let p = getInstalledPackage("pouchdb", null, pMap)
-// let p = getInstalledPackage("lively.resources", undefined, pMap);
-// let p = getInstalledPackage("lively.user", undefined, pMap);
-
-// import { depGraph, buildStages } from "./dependencies.js";
-// import {BuildProcess} from "./build.js";
-// await depGraph(p, pMap)
-// let stages = await buildStages(p, pMap)
-// let build = new BuildProcess(stages, pMap);
-// await build.run()
-
-
-// context.env
-// await x(`/bin/sh -c 'env'`, {cwd: context.location, env: context.env});// <<< file:///Users/robert/Lively/lively-dev2/flatn/index.js
+// <<< file:///Users/robert/Lively/lively-dev2/flatn/index.js

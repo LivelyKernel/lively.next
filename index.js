@@ -216,35 +216,3 @@ async function installDependenciesOfPackage(
 
   return {packageMap, newPackages};
 }
-
-
-/*
-DIR=/Users/robert/Lively/lively-dev2/npm-helper/bin
-export PATH=$DIR:$PATH
-export CENTRAL_NODE_PACKAGE_DIR="/Users/robert/.central-node-packages";
-node -r "lively.resources/dist/lively.resources.js" -e "lively.resources.resource('file://'+__dirname).dirList().then(files => console.log(files.map(ea => ea.path())))"
-*/
-
-// await installPackage("pouchdb", packageDir)
-// await installPackage("lively.resources", packageDir)
-// await installPackage("lively.user@LivelyKernel/lively.user#master", packageDir)
-// await installPackage("pouchdb", packageDir)
-
-// process.env.CENTRAL_NODE_PACKAGE_DIR = "/Users/robert/.central-node-packages"
-// let packageDir = process.env.CENTRAL_NODE_PACKAGE_DIR
-// let packages = getInstalledPackages(packageDir)
-// let pMap = buildPackageMap([packageDir])
-// let p = getInstalledPackage("pouchdb", null, pMap)
-// let p = getInstalledPackage("lively.resources", undefined, pMap);
-// let p = getInstalledPackage("lively.user", undefined, pMap);
-
-// import { depGraph, buildStages } from "./dependencies.js";
-// import {BuildProcess} from "./build.js";
-// await depGraph(p, pMap)
-// let stages = await buildStages(p, pMap)
-// let build = new BuildProcess(stages, pMap);
-// await build.run()
-
-
-// context.env
-// await x(`/bin/sh -c 'env'`, {cwd: context.location, env: context.env});
