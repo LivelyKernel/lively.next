@@ -7,7 +7,9 @@ var babel = require('rollup-plugin-babel');
 var uglify = require("uglify-js");
 
 var targetFile = "dist/lively.2lively_client.js";
-// output format - 'amd', 'cjs', 'es6', 'iife', 'umd'
+var targetFileMin = "dist/lively.2lively_client.min.js";
+var targetFileNoDeps = "dist/lively.2lively_client_no-deps.js";
+
 module.exports = Promise.resolve()
   .then(() => rollup.rollup({
     entry: "client.js",
@@ -38,9 +40,6 @@ module.exports = Promise.resolve()
   .then(bundled => {
 
 var noDeps = `(function() {
-
-${fs.readFileSync(require.resolve("socket.io-client/dist/socket.io.slim.min.js")).toString()}
-
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
@@ -48,13 +47,23 @@ ${fs.readFileSync(require.resolve("socket.io-client/dist/socket.io.slim.min.js")
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.l2l.client;
 })();`;
 
-return {noDeps: noDeps};
+var complete = `(function() {
+  ${fs.readFileSync(require.resolve("socket.io-client/dist/socket.io.slim.min.js")).toString()}
+  var GLOBAL = typeof window !== "undefined" ? window :
+      typeof global!=="undefined" ? global :
+        typeof self!=="undefined" ? self : this;
+  ${bundled.code}
+  if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.l2l.client;
+})();`;
+
+return {noDeps, complete};
 
   })
 
   // 4. inject dependencies
   .then(sources => {
-    fs.writeFileSync(targetFile, sources.noDeps);
-    // fs.writeFileSync(targetFileMin, uglify.minify(sources.complete, {fromString: true}).code);
+    fs.writeFileSync(targetFile, sources.complete);
+    fs.writeFileSync(targetFileMin, uglify.minify(sources.complete, {fromString: true}).code);
+    fs.writeFileSync(targetFileNoDeps, sources.noDeps);
   })
   .catch(err => { console.error(err.stack || err); throw err; })
