@@ -165,6 +165,10 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
     if (!interfaceSpec) interfaceSpec = "local";
     let systemInterface;
 
+    // "l2l FA3V-ASBDFD3-..."
+    if (typeof interfaceSpec === "string" && interfaceSpec.startsWith("l2l "))
+      interfaceSpec = {type: "l2l", id: interfaceSpec.split(" ")[1]}
+
     if (typeof interfaceSpec !== "string") {
       if (interfaceSpec.type === "l2l")
         systemInterface = l2lInterfaceFor(interfaceSpec.id, interfaceSpec.info)

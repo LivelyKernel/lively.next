@@ -7,6 +7,7 @@ import { DropDownList, config } from "lively.morphic";
 import L2LClient from "lively.2lively/client.js";
 
 class EvalBackendList extends DropDownList {
+
   static get properties() {
     return {
       fontSize: {defaultValue: 10},
@@ -24,6 +25,34 @@ class EvalBackendList extends DropDownList {
       chooser.backends = [...chooser.backends, backend];
     this.selection = backend;
   }
+
+  async ensureSimilarBackend() {
+    if (!this.selection || typeof this.selection === "string") return;
+
+    // only for l2l connection
+    let {selection: {value: {id, type, info}}} = this,
+        l2lBackends = await this.evalbackendChooser.l2lEvalBackends();
+
+    if (l2lBackends.some(ea => ea.value.id === id)) return;
+    
+    let similar;
+    if (info && info.type) {
+      similar = l2lBackends.find(ea => {
+        if (!ea.value.info) return false;
+        if (ea.value.info.type !== info.type) return false;
+        if (info.user) return ea.value.info.user === info.user;
+        return true;
+      });
+    }
+
+    // if (!similar) {
+    //   similar = l2lBackends.find(ea => ea.value.type === type);
+    // }
+
+    if (similar)
+      this.selection = similar.value;
+  }
+
 }
 
 
@@ -65,6 +94,9 @@ export default class EvalBackendChooser {
     connect(list, 'activated', this, 'updateItemsOfEvalBackendDropdown', {
       updater: function($upd) { $upd(this.sourceObj, this.sourceObj.selection); }
     });
+
+    list.startStepping(5000, "ensureSimilarBackend");
+
     return list;
   }
 
@@ -82,13 +114,14 @@ export default class EvalBackendChooser {
           l2lClient.sendTo(l2lClient.trackerId, "getClients", {}, resolve));
     clients = clients.filter(ea => ea[0] !== l2lClient.id)
     return clients.map(([id, {info = {}}]) => {
-      let name = `l2l ${id.slice(0, 5)}${info ? " - " + info.type : ""}`;
+      let string = `l2l ${id.slice(0, 5)}${info ? " - " + info.type : ""}`,
+          name = `l2l ${id}`;
       return {
-        string: name,
+        string,
         value: {id, info, type: "l2l", name},
         isListItem: true
       }
-    })
+    });
   }
 
   async updateItemsOfEvalBackendDropdown(dropdown, currentBackend) {
@@ -146,7 +179,8 @@ export default class EvalBackendChooser {
     choice = "local" === choice ? undefined : choice;
 
     // if (choice) this.backends = arr.uniq([choice, ...this.backends]);
-    this.updateItemsOfEvalBackendDropdown(requester.getSubmorphNamed("eval backend list"), choice);
+    this.updateItemsOfEvalBackendDropdown(
+      requester.getSubmorphNamed("eval backend list"), choice);
 
     let name = !choice ? "local" : typeof choice === "string" ? choice : choice.name
     requester.setStatusMessage(`Eval backend is now ${name}`);
