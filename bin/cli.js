@@ -193,15 +193,44 @@ function doInstall(genericArgs, args) {
   let {packageCollectionDirs, individualPackageDirs, devPackageDirs} = readGenericArgs(genericArgs);
   flatn.setPackageDirsOfEnv(packageCollectionDirs, individualPackageDirs, devPackageDirs);
 
-  let packagesToInstall = cmdArgs._;
-
-  let packageMap = flatn.buildPackageMap(
+  let packagesToInstall = cmdArgs._,
+      packageMap = flatn.buildPackageMap(
                     packageCollectionDirs,
                     individualPackageDirs,
-                    devPackageDirs);
+                    devPackageDirs),
+      isPackageDir = fs.existsSync(j(activeDir, "package.json"));
 
-  if (!packageMap.coversDirectory(activeDir))
-    packageMap.addPackage(activeDir)
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // simply installing a package into the first packageCollectionDirs
+  if (!isPackageDir) {
+
+    if (!packageCollectionDirs) {
+      console.error("No package collection dir specified!");
+      process.exit(1);
+    }
+
+    return packagesToInstall.reduce((installP, pNameAndRange) =>
+      installP.then(() =>
+        flatn.installPackage(
+          pNameAndRange,
+          packageCollectionDirs[0],
+          flatn.buildPackageMap(
+            packageCollectionDirs,
+            individualPackageDirs,
+            devPackageDirs),
+          ["dependencies"])),
+        Promise.resolve())
+      .then(() => process.exit(0))
+      .catch(err => {
+        console.error(err.stack);
+        process.exit(1);
+      });
+  }
+
+  // if the current directory is a package that we don't know about yet we add
+  // it to the package map
+  if (isPackageDir && !packageMap.coversDirectory(activeDir))
+    packageMap.addPackage(activeDir);
 
   // plain invocation: install current package
   if (!packagesToInstall || !packagesToInstall.length) {
