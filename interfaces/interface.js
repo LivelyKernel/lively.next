@@ -139,7 +139,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
         });
 
       if (result && result.isError)
-        throw new Error(String(result.value));
+        throw new Error(String(result.value || result.error));
   
       if (!result || !result.value) return null;
 
