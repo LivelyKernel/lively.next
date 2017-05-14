@@ -292,8 +292,8 @@ function doInstall(genericArgs, args) {
 }
 
 function doEnv(genericArgs, args) {
-  let cmdArgs = parseArgs(args);
-  unexpectedArgs(cmdArgs, [], "env");
+  let cmdArgs = parseArgs(args, {boolean: ["json"]});
+  unexpectedArgs(cmdArgs, ["json"], "env");
 
   let {packageCollectionDirs, individualPackageDirs, devPackageDirs} = readGenericArgs(genericArgs);
   flatn.setPackageDirsOfEnv(packageCollectionDirs, individualPackageDirs, devPackageDirs);
@@ -305,13 +305,17 @@ function doEnv(genericArgs, args) {
   let bindir = normalize(j(__dirname, "../bin"))
   if (!PATH.includes(bindir+":")) PATH = bindir + ":" + PATH;
   
-  let printedEnv = "";
-  console.log(`
+  let printedEnv = "",
+      output = cmdArgs.json ? JSON.stringify({
+        FLATN_PACKAGE_COLLECTION_DIRS: FLATN_PACKAGE_COLLECTION_DIRS ? FLATN_PACKAGE_COLLECTION_DIRS.split(":") : [],
+        FLATN_PACKAGE_DIRS: FLATN_PACKAGE_DIRS ? FLATN_PACKAGE_DIRS.split(":") : [],
+        FLATN_DEV_PACKAGE_DIRS: FLATN_DEV_PACKAGE_DIRS ? FLATN_DEV_PACKAGE_DIRS.split(":") : []      }, null, 2) : `
 export PATH=${PATH}
 export FLATN_PACKAGE_COLLECTION_DIRS=${FLATN_PACKAGE_COLLECTION_DIRS}
 export FLATN_PACKAGE_DIRS=${FLATN_PACKAGE_DIRS}
 export FLATN_DEV_PACKAGE_DIRS=${FLATN_DEV_PACKAGE_DIRS}
-  `)
+`;
+  console.log(output)
 
   process.exit(0);
 }
@@ -327,12 +331,16 @@ flatn – flat node dependencies
 Usage: flatn [generic args] command [command args]
 
 Generic args:
-  --packages / -C\tSpecifies a directory whose subdirectories are expected to be all packages ("package collection" dir)
+  --packages / -C\tSpecifies a directory whose subdirectories are expected to be all packages ("package collection" dir).
+                 \tThe equivalent environment variable is FLATN_PACKAGE_COLLECTION_DIRS.
   --dev-package / -D\tSpecifies a development package. Dev packages will always
                     \tbe built and will override all packages with the same name.  When a module
                     \trequires the name of a dev package, the package will always match, no matter
                     \tits version.
-  --package/ -P\tSpecifies the path to a single package
+                    \tThe equivalent environment variable is FLATN_DEV_PACKAGE_DIRS.
+  --package/ -P\t\tSpecifies the path to a single package.
+               \t\tThe equivalent environment variable is FLATN_PACKAGE_DIRS.
+
 (Repeat -C/-D/-P multiple times to specify any number of directories.)
 
 
@@ -341,7 +349,6 @@ Commands:
 help\t\tPrint this help
 list\t\tList all packages that can be reached via the flatn package directories
     \t\tspecified in the environment and via generic arguments.
-
 install\t\tUsage without name: Downloads dependencies of the package in the
        \t\tcurrent directory and runs build tasks (with --save and --save-dev) also adds
        \t\tto package.json in current dir
@@ -351,6 +358,7 @@ install name\tInstalls the package name in the first collection package dir
 node\t\tStarts a new nodejs process that resolves modules usin the specified
     \t\tpackage directories. To path arguments to nodejs use "--" followed by any
     \t\tnormal nodejs argument(s).
+env\t\tPrint the environment variables of the current configuration. Optional argument: --json
 
 Environment:
 Use the environment variables
@@ -369,7 +377,6 @@ function strangeInvocation() {
   console.error("Unknown arguments: ", args.join(" "));
   process.exit(1)
 }
-
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // helper
