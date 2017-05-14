@@ -6,7 +6,6 @@ import { query } from "lively.ast";
 
 let files = [
   "util.js",
-  "package-spec.js",
   "package-map.js",
   "dependencies.js",
   "download.js",
