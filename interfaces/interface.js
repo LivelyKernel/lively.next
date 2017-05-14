@@ -15,7 +15,7 @@ export class AbstractCoreInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async dynamicCompletionsForPrefix(moduleName, prefix, options) { todo("dynamicCompletionsForPrefix") }
-  runEval(source, options)                                       { todo("runEval") }
+  runEval(source, options) { todo("runEval") }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // resources
@@ -133,7 +133,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
           });`,
         {
           targetModule: "lively://remote-lively-system/runEvalAndStringify",
-          promiseTimeout: 5000,
+          promiseTimeout: 30*1000,
           waitForPromise: true,
           ...opts
         });
@@ -152,7 +152,13 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
       if (val === "true") return true;
       if (val === "false") return false;
   
-      try { return JSON.parse(val); } catch (e) { return val; }
+      let parsedResult;
+      try { parsedResult = JSON.parse(val); } catch (e) { return val; }
+      
+      if (parsedResult && parsedResult.isError)
+        throw new Error(String(parsedResult.value));
+
+      return parsedResult;
     }).then(
       result => { delete this.currentEval; return result; },
       err => { delete this.currentEval; return Promise.reject(err); });
