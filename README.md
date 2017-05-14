@@ -112,12 +112,16 @@ flatn – flat node dependencies
 Usage: flatn [generic args] command [command args]
 
 Generic args:
-  --packages / -C	Specifies a directory whose subdirectories are expected to be all packages ("package collection" dir)
+  --packages / -C	Specifies a directory whose subdirectories are expected to be all packages ("package collection" dir).
+                 	The equivalent environment variable is FLATN_PACKAGE_COLLECTION_DIRS.
   --dev-package / -D	Specifies a development package. Dev packages will always
                     	be built and will override all packages with the same name.  When a module
                     	requires the name of a dev package, the package will always match, no matter
                     	its version.
-  --package/ -P	Specifies the path to a single package
+                    	The equivalent environment variable is FLATN_DEV_PACKAGE_DIRS.
+  --package/ -P		Specifies the path to a single package.
+               		The equivalent environment variable is FLATN_PACKAGE_DIRS.
+
 (Repeat -C/-D/-P multiple times to specify any number of directories.)
 
 
@@ -126,7 +130,6 @@ Commands:
 help		Print this help
 list		List all packages that can be reached via the flatn package directories
     		specified in the environment and via generic arguments.
-
 install		Usage without name: Downloads dependencies of the package in the
        		current directory and runs build tasks (with --save and --save-dev) also adds
        		to package.json in current dir
@@ -136,6 +139,7 @@ install name	Installs the package name in the first collection package dir
 node		Starts a new nodejs process that resolves modules usin the specified
     		package directories. To path arguments to nodejs use "--" followed by any
     		normal nodejs argument(s).
+env		Print the environment variables of the current configuration. Optional argument: --json
 
 Environment:
 Use the environment variables
