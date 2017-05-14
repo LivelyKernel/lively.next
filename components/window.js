@@ -90,7 +90,7 @@ export default class Window extends Morph {
       resizable: {defaultValue: true},
 
       title: {
-        after: ["submorphs"],
+        after: ["controls"],
         derived: true,
         get() {
           return this.titleLabel().textString;
@@ -109,6 +109,7 @@ export default class Window extends Morph {
             if (length >= maxLength) break;
           }
           this.titleLabel().value = truncated;
+          this.relayoutWindowControls();
         }
       },
 
@@ -363,5 +364,34 @@ export default class Window extends Morph {
   deactivate() {
     this.titleLabel().fontWeight = "normal";
     this.relayoutWindowControls();
+  }
+
+  get keybindings() {
+    return super.keybindings.concat([
+      {
+        keys: {
+          mac: "Meta-Shift-L R E N",
+          win: "Ctrl-Shift-L R E N",
+        },
+        command: "[window] change title"
+      }
+    ]);
+  }
+
+  get commands() {
+    return super.commands.concat([
+      {
+        name: "[window] change title",
+        exec: async (win, args = {}) =>  {
+          let title = args.title ||
+            (await win.world().prompt("Enter new title", {
+                input: win.title,
+                historyId: "lively.morphic-window-title-hist"
+              }));
+          if (title) win.title = title;
+          return true;
+        }
+      }
+    ])
   }
 }
