@@ -1,6 +1,6 @@
 {
   "name": "flatn",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "flatn-cjs.js",
   "bin": {
     "flatn": "./bin/cli.js",
