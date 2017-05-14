@@ -31,7 +31,7 @@ function installResolver() {
           resolved = packageFound && findModuleInPackage(packageFound, basename, request);
 
       if (resolved) return resolved;
-      console.error(`Failing to require "${request}" from ${parentId}`)
+      process.env.FLATN_VERBOSE && console.error(`Failing to require "${request}" from ${parentId}`);
 
       throw err;
     }
