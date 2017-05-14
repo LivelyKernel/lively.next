@@ -1,7 +1,10 @@
 {
   "name": "flatn",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "flatn-cjs.js",
+  "scripts": {
+    "test": "mocha-es6 tests/test.js"
+  },
   "bin": {
     "flatn": "./bin/cli.js",
     "flatn_node": "./bin/node",

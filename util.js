@@ -227,17 +227,28 @@ const npmFallbackEnv = {
   npm_node_execpath: '/Users/robert/.nvm/versions/node/v7.7.4/bin/node'
 }
 
+// gitSpecFromVersion("git+ssh://user@hostname/project.git#commit-ish")
+// gitSpecFromVersion("https://rksm/flatn#commit-ish")
+// gitSpecFromVersion("rksm/flatn#commit-ish")
 function gitSpecFromVersion(version = "") {
-  let gitMatch = version.match(/([^:]+):\/\/.*/),
-      githubMatch = version.match(/(?:github:)?([^\/]+)\/([^#]+)(?:#(.+))?/),
-      [_, githubUser, githubRepo, githubBranch] = githubMatch || [],
-      gitRepoUrl = gitMatch ? version : githubMatch ? `https://github.com/${githubUser}/${githubRepo}` : null,
-      branch = githubMatch && githubBranch || "master";
-  if (gitRepoUrl) gitRepoUrl += "#" + branch;
+  let gitMatch = version.match(/^([^:]+:\/\/[^#]+)(?:#(.+))?/),
+      [_1, gitRepo, gitBranch] = gitMatch || [],
+      githubMatch = version.match(/^(?:github:)?([^\/]+)\/([^#\/]+)(?:#(.+))?/),
+      [_2, githubUser, githubRepo, githubBranch] = githubMatch || [];
+  if (!githubMatch && !gitMatch) return null;
 
-  return gitRepoUrl
-    ? {branch, gitURL: gitRepoUrl, versionInFileName: gitRepoUrl.replace(/[:\/\+#]/g, "_")}
-    : null;
+  if (!githubMatch)
+    return {
+      branch: gitBranch,
+      gitURL: gitRepo,
+      versionInFileName: gitRepo.replace(/[:\/\+#]/g, "_") + "_" + gitBranch
+    };
+
+  let gitURL = `https://github.com/${githubUser}/${githubRepo}`;
+  return {
+    branch: githubBranch, gitURL,
+    versionInFileName: gitURL.replace(/[:\/\+#]/g, "_") + "_" + githubBranch
+  }
 }
 
 export {

@@ -13,7 +13,7 @@ import {
   buildPackage
 } from "flatn/index.js"
 
-import { PackageSpec } from "flatn/package-spec.js"
+import { PackageSpec } from "flatn/package-map.js"
 
 
 /*
@@ -48,9 +48,17 @@ describe("flat packages", function() {
       let pMap = buildPackageMap([baseDir.join("package-install-dir").path()]),
           pInfo = pMap.lookup("test-package-1", "^1");
       expect(pInfo).containSubset({
-        config: {name: "test-package-1", version: "1.2.3"},
+        name: "test-package-1",
+        version: "1.2.3",
         location: baseDir.join("package-install-dir/test-package-1@1.2.3").path(),
-        scripts: undefined, bin: undefined
+        dependencies: undefined,
+        devDependencies: undefined,
+        scripts: undefined, bin: undefined,
+        isDevPackage: false,
+        versionInFileName: null,
+        branch: null,
+        flatn_package_dirs: undefined,
+        gitURL: null,
       });
     });
 
@@ -68,8 +76,8 @@ describe("flat packages", function() {
           ]),
           pInfo1 = pMap.lookup("test-package-1", "^1"),
           pInfo2 = pMap.lookup("test-package-2", null);
-      expect(pInfo1).deep.property("config.name", "test-package-1");
-      expect(pInfo2).deep.property("config.name", "test-package-2");
+      expect(pInfo1).property("name", "test-package-1");
+      expect(pInfo2).property("name", "test-package-2");
     });
 
     it("package config can specify lookup dir", async () => {
@@ -94,8 +102,8 @@ describe("flat packages", function() {
       let pMap = buildPackageMap([baseDir.join("package-install-dir/a").path()]),
           pInfo1 = pMap.lookup("test-package-1", "^1"),
           pInfo2 = pMap.lookup("test-package-2", null);
-      expect(pInfo1).deep.property("config.name", "test-package-1");
-      expect(pInfo2).deep.property("config.name", "test-package-2");
+      expect(pInfo1).property("name", "test-package-1");
+      expect(pInfo2).property("name", "test-package-2");
     });
 
   });
@@ -111,13 +119,13 @@ describe("flat packages", function() {
         basePath + "/ansi-regex@2.1.1/"]);
 
       expect(packageMap.dependencyMap).containSubset({
-        "ansi-regex@2.1.1": {config: {name: "ansi-regex",version: "2.1.1",}},
-        "strip-ansi@3.0.1": {config: {name: "strip-ansi"}}});
+        "ansi-regex@2.1.1": {name: "ansi-regex",version: "2.1.1",},
+        "strip-ansi@3.0.1": {name: "strip-ansi"}});
 
       let installDir = baseDir.join("package-install-dir/strip-ansi@3.0.1/");
-      expect().assert(await installDir.exists(), "strip-ansi does not exist")
+      expect().assert(await installDir.exists(), "strip-ansi does not exist");
       let files = (await installDir.dirList()).map(ea => ea.name());
-      expect(files).equals(["index.js", "license", "package.json", "readme.md"]);
+      expect(files).equals([".lv-npm-helper-info.json", "index.js", "license", "package.json", "readme.md"]);
     });
 
     it("installs a package via git", async () => {
@@ -170,7 +178,7 @@ describe("flat packages", function() {
       });
       let {packageMap, newPackages} = await installDependenciesOfPackage(
         baseDir.join("package-install-dir/foo").path());
-      expect(newPackages.map(ea => ea.config.name)).equals(["strip-ansi", "ansi-regex"]);
+      expect(newPackages.map(ea => ea.name)).equals(["strip-ansi", "ansi-regex"]);
       expect(packageMap.dependencyMap).to.have.keys(
         ["strip-ansi@2.0.1", "ansi-regex@1.1.1"]);
       expect((await baseDir.join("package-install-dir/").dirList()).map(ea => ea.name()))
@@ -275,11 +283,11 @@ describe("flat packages", function() {
               `${process.argv[0]} -r "${resolverMod}" -r './index.js'`,
               {
                 env: {
-                  FLATN_PACKAGE_DIRS: `${baseDir.join("packages/").path()}`,
+                  FLATN_PACKAGE_COLLECTION_DIRS: `${baseDir.join("packages/").path()}`,
                   PATH: process.env.PATH
                 },
                 cwd: baseDir.join("packages/bar/").path()
-              })
+              });
   
       expect(String(out).trim()).equals("24");
     });
@@ -289,7 +297,7 @@ describe("flat packages", function() {
           out = execSync(`${nodeBin} -r './index.js'`, {
             env: {
               PATH: process.env.PATH,
-              FLATN_PACKAGE_DIRS: `${baseDir.join("packages/").path()}`
+              FLATN_PACKAGE_COLLECTION_DIRS: `${baseDir.join("packages/").path()}`
             },
             cwd: baseDir.join("packages/bar/").path()
           });

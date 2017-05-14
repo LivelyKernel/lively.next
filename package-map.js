@@ -510,7 +510,8 @@ class PackageSpec {
 
     function step3(config) {
       let {
-        name, version, bin, scripts, dependencies, devDependencies
+        name, version, bin, scripts, dependencies, devDependencies,
+        flatn_package_dirs
       } = config;
 
       if (bin) {
@@ -521,7 +522,8 @@ class PackageSpec {
       Object.assign(self, {
         location: packageDir,
         name, version, bin, scripts,
-        dependencies, devDependencies
+        dependencies, devDependencies,
+        flatn_package_dirs
       });
 
       let info = self.readLvInfo();
