@@ -3,7 +3,7 @@ import { join as j } from "path";
 import { tmpdir } from "os";
 import { gitClone, npmDownloadArchive, untar, gitSpecFromVersion } from "./util.js";
 import { PackageSpec } from "./package-map.js";
-
+import semver from "./deps/semver.min.js"
 import { resource } from "./deps/lively.resources.js"
 
 export {
@@ -59,7 +59,7 @@ async function packageDownload(packageNameAndRange, destinationDir, attempt = 0)
     if (!await packageJSON.exists())
       throw new Error(`Downloaded package ${packageNameAndRange} does not have a package.json file at ${packageJSON}`);
 
-    config = await downloadDir.join("package.json").readJson();
+    config = await packageJSON.readJson();
     let packageDir;
     if (pathSpec.gitURL) {
       let dirName = config.name + "/" + pathSpec.versionInFileName;
@@ -69,6 +69,9 @@ async function packageDownload(packageNameAndRange, destinationDir, attempt = 0)
       packageDir = destinationDir.join(dirName).asDirectory();
       pathSpec = Object.assign({}, pathSpec, {location: packageDir});
     }
+
+    await addNpmSpecificConfigAdditions(
+      packageJSON, config, packageNameAndRange, pathSpec.gitURL);
 
     await downloadDir.rename(packageDir);
 
@@ -102,4 +105,19 @@ async function packageDownloadViaNpm(packageNameAndRange, targetDir) {
     name, version
   } = await npmDownloadArchive(packageNameAndRange, targetDir);
   return untar(downloadedArchive, targetDir, name);
+}
+
+function addNpmSpecificConfigAdditions(configFile, config, packageNameAndRange, gitURL) {
+  // npm adds some magic "_" properties to the package.json. There is no
+  // specification of it and the official stance is that it is npm internal but
+  // some packages depend on that. In order to allow npm scripts like install to
+  // work smoothly we add a subset of those props here.
+    let [_, version] = packageNameAndRange.split("@"),
+        _id = gitURL ?
+          packageNameAndRange :
+          `${config.name}@${config.version}`,
+        _from = gitURL ?
+          `${config.name}@${gitURL}` :
+          `${config.name}@${semver.validRange(version)}`;
+    return configFile.writeJson({_id, _from, ...config}, true);
 }

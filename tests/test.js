@@ -138,8 +138,8 @@ describe("flat packages", function() {
         "readme.md"
       ]);
 
-      expect(installDir.join("package.json").readJson()).containSubset({
-        "_from" : "acorn@>=4.0.3 <5.0.0",
+      expect(await installDir.join("package.json").readJson()).containSubset({
+        "_from" : "strip-ansi@>=3.0.0 <4.0.0",
         "_id" : "strip-ansi@3.0.1"
       });
     });
