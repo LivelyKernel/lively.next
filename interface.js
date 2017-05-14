@@ -9,7 +9,7 @@ export default class L2LConnection {
   constructor(ns) {
     this.id = string.newUUID();
     this.actions = {};
-    this.options = {ackTimeout: 500, debug: false};
+    this.options = {ackTimeout: 3500, debug: false};
     this._incomingOrderNumberingBySenders = new Map();
     this._outgoingOrderNumberingByTargets = new Map();
     this._outOfOrderCacheBySenders = new Map();
