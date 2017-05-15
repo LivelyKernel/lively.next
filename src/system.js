@@ -43,6 +43,9 @@ function livelySystemEnv(System) {
       }, null, 2);
     },
 
+    get packageRegistry() { return System["__lively.modules__packageRegistry"]; },
+    set packageRegistry(x) { System["__lively.modules__packageRegistry"] = x; },
+
     // this is where the canonical state of the module system is held...
     packages:                System["__lively.modules__packages"]                || (System["__lively.modules__packages"]                = {}),
     loadedModules:           System["__lively.modules__loadedModules"]           || (System["__lively.modules__loadedModules"]           = {}),
@@ -80,6 +83,7 @@ function removeSystem(nameOrSystem) {
 import { wrapModuleLoad } from "./instrumentation.js"
 import { wrapResource } from "./resource.js"
 import { emit } from "lively.notifications";
+import { join, urlResolve } from "./url-helpers.js";
 
 function makeSystem(cfg) { return prepareSystem(new SystemClass(), cfg); }
 
@@ -111,6 +115,9 @@ function prepareSystem(System, config) {
 
   if (!isHookInstalled(System, "decanonicalize", "decanonicalizeHook"))
     installHook(System, "decanonicalize", decanonicalizeHook);
+
+  if (!isHookInstalled(System, "normalizeSync", "decanonicalizeHook"))
+    installHook(System, "normalizeSync", decanonicalizeHook);
 
   if (!isHookInstalled(System, "newModule", "newModule_volatile"))
     installHook(System, "newModule", newModule_volatile);
@@ -193,8 +200,7 @@ const dotSlashStartRe = /^\.?\//,
       jsonJsExtRe = /\.json\.js$/i,
       doubleSlashRe = /.\/{2,}/g;
 
-function normalizeHook(proceed, name, parent, parentAddress) {
-  var System = this;
+function preNormalize(System, name, parent) {
   if (name === "..") name = '../index.js'; // Fix ".."
 
   // rk 2016-07-19: sometimes SystemJS doStringMap() will resolve path into
@@ -203,52 +209,83 @@ function normalizeHook(proceed, name, parent, parentAddress) {
   // name = name.replace(/([^:])\/\/+/g, "$1\/");
   name = name.replace(doubleSlashRe, (match) => match[0] === ":" ? match : match[0]+"/");
 
-  return proceed(name, parent, parentAddress).then(result => {
-
-    // lookup package main
-    var base = result.replace(jsExtRe, "");
-    if (base in System.packages) {
-      var main = System.packages[base].main;
-      if (main) return base.replace(trailingSlashRe, "") + "/" + main.replace(dotSlashStartRe, "");
-    }
-
-    // Fix issue with accidentally adding .js
-    var m = result.match(jsonJsExtRe);
-    if (m) return m[1];
-
-    return result;
-  });
-}
-
-function decanonicalizeHook(proceed, name, parent, isPlugin) {
-  var System = this;
-  if (name === "..") name = '../index.js'; // Fix ".."
-
   // systemjs' decanonicalize has by default not the fancy
   // '{node: "events", "~node": "@empty"}' mapping but we need it
   var pkg = parent && normalize_packageOfURL(parent, System);
   if (pkg) {
-    var mappedObject = (pkg.map && pkg.map[name]) || System.map[name];
-    if (typeof mappedObject === "object") {
-      name = normalize_doMapWithObject(mappedObject, pkg, System) || name;
+    var {systemPackage, packageURL} = pkg;
+    var mappedObject = (systemPackage.map && systemPackage.map[name]) || System.map[name];
+    if (mappedObject) {
+      if (typeof mappedObject === "object") {
+        mappedObject = normalize_doMapWithObject(mappedObject, systemPackage, System);
+      }
+      if (typeof mappedObject === "string" && mappedObject !== "") {
+        name = mappedObject;
+      }
+      // relative to package
+      if (name.startsWith(".")) name = urlResolve(join(packageURL, name));
     }
   }
 
-  var result = proceed(name, parent, isPlugin);
+  // <snip> experimental
+  let {packageRegistry} = System.get("@lively-env");
+  if (packageRegistry) {
+    let resolved = packageRegistry.resolvePath(name, parent);
+    if (resolved && resolved.endsWith("/") && !name.endsWith("/")) resolved = resolved.slice(0, -1);
+    if (resolved) name = resolved;
+  }
+  // </snap> experimental
 
+  return name;
+}
+
+function postNormalize(System, normalizeResult) {
   // lookup package main
-  var base = result.replace(jsExtRe, "");
-  if (base in System.packages) {
-    var main = System.packages[base].main;
-    if (main) return base.replace(trailingSlashRe, "") + "/" + main.replace(dotSlashStartRe, "");
+  var base = normalizeResult.replace(jsExtRe, "");
+
+  // rk 2017-05-13: FIXME, we currently use a form like
+  // System.decanonicalize("lively.lang/") to figure out the package base path...
+  if (normalizeResult.endsWith("/")) return normalizeResult;
+
+  let {packageRegistry} = System.get("@lively-env");
+  if (packageRegistry) {
+    let referencedPackage = packageRegistry.findPackageWithURL(base);
+    if (referencedPackage) {
+      let main = (referencedPackage.main || "index.js").replace(dotSlashStartRe, "");
+      return base.replace(trailingSlashRe, "") + "/" + main;
+    }
+
+  } else {
+    if (base in System.packages) {
+      var main = System.packages[base].main;
+      if (main) return base.replace(trailingSlashRe, "") + "/" + main.replace(dotSlashStartRe, "");
+    }
   }
 
   // Fix issue with accidentally adding .js
-  var m = result.match(jsonJsExtRe);
+  var m = normalizeResult.match(jsonJsExtRe);
   if (m) return m[1];
 
-  return result;
+  return normalizeResult;
+}
 
+function normalizeHook(proceed, name, parent, parentAddress) {
+  var System = this,
+      stage1 = preNormalize(System, name, parent);
+    return proceed(stage1, parent, parentAddress).then(stage2 => {
+      let stage3 = postNormalize(System, stage2 || stage1);
+      System.debug && console.log(`[normalize] ${name} => ${stage3}`);
+      return stage3;
+    });
+}
+
+function decanonicalizeHook(proceed, name, parent, isPlugin) {
+  let System = this,
+      stage1 = preNormalize(System, name, parent),
+      stage2 = proceed(stage1, parent, isPlugin),
+      stage3 = postNormalize(System, stage2);
+    System.debug && console.log(`[normalizeSync] ${name} => ${stage3}`);
+    return stage3;
 }
 
 function normalize_doMapWithObject(mappedObject, pkg, loader) {
@@ -297,8 +334,9 @@ function normalize_packageOfURL(url, System) {
       pName = matchingPackages.length ?
         matchingPackages.reduce((matchingPkg, ea) =>
           matchingPkg.penalty > ea.penalty ? ea: matchingPkg).url :
-        null;
-  return pName ? System.packages[pName] : null;
+        null,
+      systemPackage = pName && System.packages[pName];
+  return systemPackage ? {systemPackage, packageURL: pName} : null;
 }
 
 function newModule_volatile(proceed, exports) {

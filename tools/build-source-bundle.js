@@ -4,7 +4,7 @@ var fs = require("fs");
 var path = require("path");
 var rollup = require('rollup');
 var babel = require('rollup-plugin-babel');
-var uglify = require("uglify-js");
+var uglify = require("uglify-es");
 
 var targetFile1 = "dist/lively.modules_no-deps.js";
 var targetFile2 = "dist/lively.modules.js";
@@ -112,6 +112,8 @@ ${parts[key].source}
   .then(sources => {
     fs.writeFileSync(targetFile1, sources.noDeps);
     fs.writeFileSync(targetFile2, sources.complete);
-    fs.writeFileSync(targetFile3, uglify.minify(sources.complete, {fromString: true}).code);
+    let minified = uglify.minify(sources.complete, {});
+    if (minified.error) throw minified.error;
+    fs.writeFileSync(targetFile3, minified.code);
   })
   .catch(err => { console.error(err.stack || err); throw err; });

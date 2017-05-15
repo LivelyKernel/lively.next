@@ -58,6 +58,8 @@ export class Package {
     this.map = {};
     this.dependencies = config.dependencies || {};
     this.devDependencies = config.devDependencies || {};
+    this.main = config.main;
+    this.systemjs = config.systemjs;
   }
 
   toJSON() {
@@ -68,7 +70,9 @@ export class Package {
           "version",
           "map",
           "dependencies",
-          "devDependencies"
+          "devDependencies",
+          "main",
+          "systemjs"
         ]);
     if (jso.url.startsWith(System.baseURL))
       jso.url = jso.url.slice(System.baseURL.length).replace(/^\//, "")
@@ -81,8 +85,10 @@ export class Package {
     this._name =           jso._name;
     this.version =         jso.version;
     this.map =             jso.map || {};
+    this.main =            jso.main;
     this.dependencies =    jso.dependencies || {};
     this.devDependencies = jso.devDependencies || {};
+    this.systemjs =        jso.systemjs;
     if (!isURL(this.url))
       this.url = resource(System.baseURL).join(this.url).url;
     return this;
@@ -106,6 +112,25 @@ export class Package {
 
   get address() { return this.url; }
   set address(v) { return this.url = v; }
+
+  get runtimeConfig() {
+    let {
+          name,
+          version,
+          dependencies,
+          devDependencies,
+          main, systemjs
+        } = this,
+        config = {
+          name: name,
+          version: version,
+          dependencies: dependencies || {},
+          devDependencies: devDependencies || {},
+        };
+    if (main) config.main = main;
+    if (systemjs) config.systemjs = systemjs;
+    return config;
+  }
 
   path() {
     var base = this.System.baseURL;
@@ -236,22 +261,24 @@ export class Package {
     var cfg = optPkgConfig || await this.tryToLoadPackageConfig(),
         packageConfigResult = new PackageConfiguration(this).applyConfig(cfg);
 
-    for (let supPkgURL of packageConfigResult.subPackages) {
-      // stop here to support circular deps
-      let supPkg = getPackage(System, supPkgURL);
-      if (packageLoadStack.includes(supPkg.url)) {
-        if (System.debug || true) {
-          var shortStack = packageLoadStack
-                        && packageLoadStack.map(ea =>
-                            ea.indexOf(System.baseURL) === 0 ?
-                              ea.slice(System.baseURL.length) : ea)
-          System.debug && console.log(`[lively.modules package register]`
-                                    + ` ${url} is a circular dependency, stopping registering `
-                                    + `subpackages, stack: ${shortStack}`);
+    if (!System["__lively.modules__packageRegistry"]) {
+      for (let supPkgURL of packageConfigResult.subPackages) {
+        // stop here to support circular deps
+        let supPkg = getPackage(System, supPkgURL);
+        if (packageLoadStack.includes(supPkg.url)) {
+          if (System.debug || true) {
+            var shortStack = packageLoadStack
+                          && packageLoadStack.map(ea =>
+                              ea.indexOf(System.baseURL) === 0 ?
+                                ea.slice(System.baseURL.length) : ea)
+            System.debug && console.log(`[lively.modules package register]`
+                                      + ` ${url} is a circular dependency, stopping registering `
+                                      + `subpackages, stack: ${shortStack}`);
+          }
+        } else {
+          packageLoadStack.push(supPkg.url);
+          await supPkg.register(null, packageLoadStack);
         }
-      } else {
-        packageLoadStack.push(supPkg.url);
-        await supPkg.register(null, packageLoadStack);
       }
     }
 
@@ -261,6 +288,18 @@ export class Package {
     emit("lively.modules/packageregistered", {"package": this.url}, Date.now(), System);
 
     return registerP;
+  }
+
+  register2(config = this.runtimeConfig) {
+    var {System, url} = this,
+        packageConfigURL = url + "/package.json";
+
+    System.config({
+      meta: {[packageConfigURL]: {format: "json"}},
+      packages: {[url]: {meta: {"package.json": {format: "json"}}}}
+    });
+
+    return new PackageConfiguration(this).applyConfig(config);
   }
 
   remove(opts) {

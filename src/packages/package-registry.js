@@ -1,7 +1,8 @@
-import { semver } from "lively.modules";
+import { semver } from "../../index.js";
 import { arr, obj, promise } from "lively.lang";
 import { Package } from "../packages.js";
 import { resource } from "lively.resources";
+import { isURL } from "../url-helpers.js";
 
 const urlStartRe = /^[a-z\.-_\+]+:/i
 function isAbsolute(path) {
@@ -37,9 +38,17 @@ export class PackageRegistry {
   }
 
   toJSON() {
-    let packageMapJso = {};
-    for (let pName in this.packageMap) {
-      let spec = this.packageMap[pName];
+    let {
+          System,
+          packageMap,
+          individualPackageDirs,
+          devPackageDirs,
+          packageBaseDirs
+        } = this,
+        packageMapJso = {};
+
+    for (let pName in packageMap) {
+      let spec = packageMap[pName];
       packageMapJso[pName] = {};
       packageMapJso[pName].latest = spec.latest;
       packageMapJso[pName].versions = {};
@@ -50,9 +59,14 @@ export class PackageRegistry {
 
     return {
       packageMap: packageMapJso,
-      individualPackageDirs: this.individualPackageDirs.map(ea => ea.url),
-      devPackageDirs: this.devPackageDirs.map(ea => ea.url),
-      packageBaseDirs: this.packageBaseDirs.map(ea => ea.url)
+      individualPackageDirs: individualPackageDirs.map(serializeURL),
+      devPackageDirs: devPackageDirs.map(serializeURL),
+      packageBaseDirs: packageBaseDirs.map(serializeURL)
+    }
+
+    function serializeURL({url}) {
+      return !url.startsWith(System.baseURL) ? url :
+        url.slice(System.baseURL.length).replace(/^\//, "");
     }
   }
 
@@ -69,10 +83,15 @@ export class PackageRegistry {
     }
 
     this.packageMap = packageMap;
-    this.individualPackageDirs = jso.individualPackageDirs.map(ensureResource);
-    this.devPackageDirs = jso.devPackageDirs.map(ensureResource);
-    this.packageBaseDirs = jso.packageBaseDirs.map(ensureResource);
-    return this
+    this.individualPackageDirs = jso.individualPackageDirs.map(deserializeURL);
+    this.devPackageDirs = jso.devPackageDirs.map(deserializeURL);
+    this.packageBaseDirs = jso.packageBaseDirs.map(deserializeURL);
+    return this;
+    
+    function deserializeURL(url) {
+      return isURL(url) ? resource(url) :
+        resource(System.baseURL).join(url);
+    }
   }
 
   whenReady() { return this._readyPromise || Promise.resolve(); }
@@ -162,11 +181,12 @@ export class PackageRegistry {
     // let gitSpec = gitSpecFromVersion(versionRange || "");
     // return this.findPackage((key, pkg) => pkg.matches(name, versionRange, gitSpec));
     // let gitSpec = gitSpecFromVersion(versionRange || "");
-
     let pkgData = this.packageMap[pkgName];
     if (!pkgData) return null;
     if (!versionRange || versionRange === "latest")
       return pkgData.versions[pkgData.latest];
+    if (!semver.parse(versionRange))
+      throw new Error(`PackageRegistry>>lookup of ${pkgName}: Invalid version - ${versionRange}`);
     let pkgs = obj.values(pkgData.versions).filter(pkg =>
       this.matches(pkg, pkgName, versionRange));
     if (pkgs.length <= 1) return pkgs[0];
@@ -176,6 +196,7 @@ export class PackageRegistry {
   findPackageDependency(basePkg, name, version) {
     // name@version is dependency of basePkg
     if (!version) version = basePkg.dependencies[name] || basePkg.devDependencies[name];
+    if (!semver.parse(version)) version = null;
     return this.lookup(name, version);
   }
 
@@ -260,8 +281,9 @@ export class PackageRegistry {
     try {
 
       for (let dir of this.packageBaseDirs)
-        for (let subDir of await dir.dirList(1))
-          await this._internalAddPackageDir(subDir, false);
+        for (let dirWithVersions of await dir.dirList(1))
+          for (let subDir of (await dirWithVersions.dirList(1)).filter(ea => ea.isDirectory()))
+            await this._internalAddPackageDir(subDir, false);
 
       for (let dir of this.individualPackageDirs)
         await this._internalAddPackageDir(dir, false);
@@ -289,11 +311,13 @@ export class PackageRegistry {
   updatePackageFromConfig(pkg, config, updateLatestPackage = true) {
     // for name or version changes
     let {url: oldURL, name: oldName, version: oldVersion} = pkg,
-        {name, version, dependencies, devDependencies} = config;
+        {name, version, dependencies, devDependencies, main, systemjs} = config;
     pkg.name = name;
     pkg.version = version;
     pkg.dependencies = dependencies;
     pkg.devDependencies = devDependencies;
+    pkg.main = main;
+    pkg.systemjs = systemjs;
     return this.updatePackage(pkg, oldName, oldVersion, oldURL, updateLatestPackage)
   }
 
@@ -347,7 +371,7 @@ export class PackageRegistry {
       if (Object.keys(packageMap[name].versions).length === 0)
         delete packageMap[name];
     }
-    
+
     if (updateLatestPackage) this._updateLatestPackages(pkg.name);
   }
 
@@ -356,7 +380,7 @@ export class PackageRegistry {
     let {System, packageMap} = this;
     try {
       let config = await dir.join("package.json").readJson(),
-          {name, version, dependencies, devDependencies} = config,
+          {name, version} = config,
           pkg = new Package(System, dir.url, name, version, config);
       console.log(`[lively.modules] package registry ${name}@${version} in ${dir.url}`);
       this.updatePackage(pkg, undefined, undefined, undefined, updateLatestPackage);
