@@ -29,7 +29,7 @@ async function npmDownloadArchive(packageNameAndRange, destinationDir) {
   let {version, name} = await npmSearchForVersions(packageNameAndRange),
       archive=`${name}-${version}.tgz`,
       archiveURL = `https://registry.npmjs.org/${name}/-/${archive}`
-  console.log(`[flatn] downloading archive from npm for ${packageNameAndRange}: ${archiveURL}`);
+  console.log(`[flatn] downloading ${packageNameAndRange} - ${archiveURL}`);
   let downloadedArchive = destinationDir.join(archive);
   await resource(archiveURL).beBinary().copyTo(downloadedArchive);
   return {downloadedArchive, name, version};
@@ -938,7 +938,7 @@ var { tmpdir } = require("os");
 
 
 
-
+var semver = require("./deps/semver.min.js");
 var { resource } = require("./deps/lively.resources.js");
 
 module.exports.packageDownload = packageDownload;
@@ -992,7 +992,7 @@ async function packageDownload(packageNameAndRange, destinationDir, attempt = 0)
     if (!await packageJSON.exists())
       throw new Error(`Downloaded package ${packageNameAndRange} does not have a package.json file at ${packageJSON}`);
 
-    config = await downloadDir.join("package.json").readJson();
+    config = await packageJSON.readJson();
     let packageDir;
     if (pathSpec.gitURL) {
       let dirName = config.name + "/" + pathSpec.versionInFileName;
@@ -1002,6 +1002,9 @@ async function packageDownload(packageNameAndRange, destinationDir, attempt = 0)
       packageDir = destinationDir.join(dirName).asDirectory();
       pathSpec = Object.assign({}, pathSpec, {location: packageDir});
     }
+
+    await addNpmSpecificConfigAdditions(
+      packageJSON, config, packageNameAndRange, pathSpec.gitURL);
 
     await downloadDir.rename(packageDir);
 
@@ -1035,6 +1038,21 @@ async function packageDownloadViaNpm(packageNameAndRange, targetDir) {
     name, version
   } = await npmDownloadArchive(packageNameAndRange, targetDir);
   return untar(downloadedArchive, targetDir, name);
+}
+
+function addNpmSpecificConfigAdditions(configFile, config, packageNameAndRange, gitURL) {
+  // npm adds some magic "_" properties to the package.json. There is no
+  // specification of it and the official stance is that it is npm internal but
+  // some packages depend on that. In order to allow npm scripts like install to
+  // work smoothly we add a subset of those props here.
+    let [_, version] = packageNameAndRange.split("@"),
+        _id = gitURL ?
+          packageNameAndRange :
+          `${config.name}@${config.version}`,
+        _from = gitURL ?
+          `${config.name}@${gitURL}` :
+          `${config.name}@${semver.validRange(version)}`;
+    return configFile.writeJson(Object.assign({_id, _from}, config), true);
 }
 // <<< file:///Users/robert/Lively/lively-dev2/flatn/download.js
 
@@ -1101,7 +1119,7 @@ function npmCreateEnvVars(configObj, env = {}, path = "npm_package") {
   return env;
 }
 
-function linkBins(packageSpecs, linkState = {}) {
+function linkBins(packageSpecs, linkState = {}, verbose = false) {
   let linkLocation = j(tmpdir(), "npm-helper-bin-dir");
   if (!fs.existsSync(linkLocation)) fs.mkdirSync(linkLocation);
   packageSpecs.forEach(({bin, location}) => {
@@ -1116,7 +1134,7 @@ function linkBins(packageSpecs, linkState = {}) {
         fs.lstatSync(j(linkLocation, linkName));
         fs.unlinkSync(j(linkLocation, linkName));
       } catch (err) {}
-      // console.log(`[flatn build] linking ${j(location, realFile)} => ${j(linkLocation, linkName)}`)
+      verbose && console.log(`[flatn build] linking ${j(location, realFile)} => ${j(linkLocation, linkName)}`)
       fs.symlinkSync(j(location, realFile), j(linkLocation, linkName));
     }
     linkState[location] = true;
@@ -1131,13 +1149,14 @@ class BuildProcess {
     return new this(stages, packageMap, forceBuild);
   }
 
-  constructor(buildStages, packageMap, forceBuild) {
+  constructor(buildStages, packageMap, forceBuild, verbose = false) {
     this.buildStages = buildStages; // 2d list, package specs in sorted order
     this.packageMap = packageMap;
     this.builtPackages = [];
     this.binLinkState = {};
     this.binLinkLocation = "";
     this.forceBuild = forceBuild;
+    this.verbose = verbose;
   }
 
   async run() {
@@ -1146,13 +1165,13 @@ class BuildProcess {
     let {buildStages, packageMap} = this,
         i = 1, n = buildStages.length;
 
-    // console.log(`[flatn] Running build stage ${i++}/${n}`)
+    this.verbose && console.log(`[flatn] Running build stage ${i++}/${n}`)
 
     while (buildStages.length) {
       let stage = buildStages[0];
       if (!stage.length) {
         buildStages.shift();
-        // buildStages.length && console.log(`[flatn] Running build stage ${i++}/${n}`);
+        this.verbose && buildStages.length && console.log(`[flatn] Running build stage ${i++}/${n}`);
         continue;
       }
       let next = stage[0],
@@ -1181,10 +1200,15 @@ class BuildProcess {
   }
 
   async build(packageSpec) {
-    this.binLinkLocation = linkBins(this.builtPackages.concat([packageSpec]), this.binLinkState);
-    let env = npmCreateEnvVars(await packageSpec.readConfig());
+    this.binLinkLocation = linkBins(
+      this.builtPackages.concat([packageSpec]),
+      this.binLinkState,
+      this.verbose);
 
-    let needsBuilt = this.forceBuild || packageSpec.isDevPackage || !(packageSpec.readLvInfo() || {}).build;
+    let env = npmCreateEnvVars(await packageSpec.readConfig());
+    let needsBuilt =
+      this.forceBuild || packageSpec.isDevPackage || !(packageSpec.readLvInfo() || {}).build;
+
     if (needsBuilt) {
       let scripts = this.normalizeScripts(packageSpec);
       if (this.hasBuiltScripts(scripts)) {
@@ -1192,7 +1216,7 @@ class BuildProcess {
         await this.runScript(scripts, "preinstall",  packageSpec, env);
         await this.runScript(scripts, "install",     packageSpec, env);
         await this.runScript(scripts, "postinstall", packageSpec, env);
-        packageSpec.changeLvInfo(info => Object.assign({}, info, {build: true}));
+        await packageSpec.changeLvInfo(info => Object.assign({}, info, {build: true}));
         console.log(`[flatn] ${packageSpec.name} build done`);
       }
     }
@@ -1202,7 +1226,7 @@ class BuildProcess {
 
   async runScript(scripts, scriptName, {name, location}, env) {
     if (!scripts || !scripts[scriptName]) return false;
-    console.log(`[flatn] build ${name}: running ${scriptName}`);
+    this.verbose && console.log(`[flatn] build ${name}: running ${scriptName}`);
     
     env = Object.assign({},
       process.env,
@@ -1274,12 +1298,27 @@ module.exports.ensurePackageMap = ensurePackageMap;
 module.exports.setPackageDirsOfEnv = setPackageDirsOfEnv;
 module.exports.packageDirsFromEnv = packageDirsFromEnv;
 
+function ensurePathFormat(dirOrArray) {
+  // for flatn pure we expect directories to be specified in normal file system
+  // form like /home/foo/bar/, not as lively.resources or as URL file://...
+  // This ensures that...
+  if (Array.isArray(dirOrArray)) return dirOrArray.map(ensurePathFormat);
+  if (dirOrArray.isResource) return dirOrArray.path()
+  if (dirOrArray.startsWith("file://")) dirOrArray = dirOrArray.replace("file://", "");
+  return dirOrArray;
+}
 
 function buildPackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+  packageCollectionDirs = ensurePathFormat(packageCollectionDirs);
+  individualPackageDirs = ensurePathFormat(individualPackageDirs);
+  devPackageDirs = ensurePathFormat(devPackageDirs);
   return PackageMap.build(packageCollectionDirs, individualPackageDirs, devPackageDirs);
 }
 
 function ensurePackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+  packageCollectionDirs = ensurePathFormat(packageCollectionDirs);
+  individualPackageDirs = ensurePathFormat(individualPackageDirs);
+  devPackageDirs = ensurePathFormat(devPackageDirs);
   return PackageMap.ensure(packageCollectionDirs, individualPackageDirs, devPackageDirs);
 }
 
@@ -1293,6 +1332,9 @@ function packageDirsFromEnv() {
 }
 
 function setPackageDirsOfEnv(packageCollectionDirs, individualPackageDirs, devPackageDirs) {  
+  packageCollectionDirs = ensurePathFormat(packageCollectionDirs);
+  individualPackageDirs = ensurePathFormat(individualPackageDirs);
+  devPackageDirs = ensurePathFormat(devPackageDirs);
   process.env.FLATN_PACKAGE_COLLECTION_DIRS = packageCollectionDirs.join(":");
   process.env.FLATN_PACKAGE_DIRS = individualPackageDirs.join(":");
   process.env.FLATN_DEV_PACKAGE_DIRS = devPackageDirs.join(":");
@@ -1306,6 +1348,11 @@ async function buildPackage(
   verbose = false,
   forceBuild = false
 ) {
+  if (typeof packageSpecOrDir === "string" || packageSpecOrDir.isResource)
+    packageSpecOrDir = ensurePathFormat(packageSpecOrDir);
+  if (Array.isArray(packageMapOrDirs))
+    packageMapOrDirs = ensurePathFormat(packageMapOrDirs);
+
   let packageSpec = typeof packageSpecOrDir === "string"
     ? PackageSpec.fromDir(packageSpecOrDir)
     : packageSpecOrDir,
@@ -1329,10 +1376,12 @@ async function installPackage(
   // will lookup or install a package matching pNameAndVersion.  Will
   // recursively install dependencies
 
-  // if (!packageMap) throw new Error(`[flatn] install of ${pNameAndVersion}: No package map specified!`);
+  if (!packageMap) console.warn(`[flatn] install of ${pNameAndVersion}: No package map specified, using empty package map.`);
   if (!packageMap) packageMap = PackageMap.empty();
 
   if (!dependencyFields) dependencyFields = ["dependencies"];
+
+  destinationDir = ensurePathFormat(destinationDir);
 
   if (!fs.existsSync(destinationDir))
     fs.mkdirSync(destinationDir);
@@ -1386,6 +1435,11 @@ function addDependencyToPackage(
   verbose = false
 ) {
 
+  if (typeof packageSpecOrDir === "string" || packageSpecOrDir.isResource)
+    packageSpecOrDir = ensurePathFormat(packageSpecOrDir);
+
+  packageDepDir = ensurePathFormat(packageDepDir);
+
   if (!dependencyField) dependencyField = "dependencies"; /*vs devDependencies etc.*/
 
   let packageSpec = typeof packageSpecOrDir === "string"
@@ -1426,6 +1480,11 @@ async function installDependenciesOfPackage(
   // Given a package spec of an installed package (retrieved via
   // `PackageSpec.fromDir`), make sure all dependencies (specified in properties
   // `dependencyFields` of package.json) are installed
+  if (typeof packageSpecOrDir === "string" || packageSpecOrDir.isResource)
+    packageSpecOrDir = ensurePathFormat(packageSpecOrDir);
+
+  if (dirToInstallDependenciesInto)
+    dirToInstallDependenciesInto = ensurePathFormat(dirToInstallDependenciesInto);
 
   let packageSpec = typeof packageSpecOrDir === "string"
     ? PackageSpec.fromDir(packageSpecOrDir)
