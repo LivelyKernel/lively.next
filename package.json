@@ -3,21 +3,16 @@
   "version": "0.1.21",
   "repository": "https://github.com/LivelyKernel/lively.resources",
   "systemjs": {
+    "main": "index.js",
     "map": {
       "fs": {
         "node": "@node/fs",
         "~node": "@empty"
       },
       "fetch-ponyfill": {
-        "node": "./node_modules/fetch-ponyfill/fetch-node.js",
-        "~node": "./node_modules/fetch-ponyfill/build/fetch-browser.js"
+        "node": "fetch-ponyfill/fetch-node.js",
+        "~node": "fetch-ponyfill/build/fetch-browser.js"
       }
-    }
-  },
-  "lively": {
-    "main": "index.js",
-    "packageMap" : {
-      "mocha-es6": "./node_modules/mocha-es6"
     }
   },
   "scripts": {
