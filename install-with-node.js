@@ -4,17 +4,18 @@ global.babel = require("./deps/babel.min.js");
 require("./deps/system.src.js");
 require("./deps/lively.modules.js");
 
-// System.debug = true;
-var installDir = process.argv[2],
-    dependenciesDir = require("path").join(installDir, "lively.next-node_modules"),
-    verbose = false;
-
-if (!installDir) {
+if (!process.argv[2]) {
   console.error("No installation dir specified!")
   process.exit(1);
 }
 
-installDir = require('path').resolve(installDir);
+// System.debug = true;
+var path = require('path'),
+    installDir = path.resolve(process.argv[2]),
+    dependenciesDir = path.join(installDir, "lively.next-node_modules"),
+    verbose = false;
+
+
 
 console.log("Installing lively.system packages into %s", installDir);
 

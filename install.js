@@ -40,6 +40,23 @@ export async function install(baseDir, dependenciesDir, verbose) {
           new Package(join(baseDir, spec.name), spec, log).readConfig())),
         packageMap = await buildPackageMap([dependenciesDir], [], packages.map(ea => ea.directory));
 
+    console.log("=> Preparing flatn environment");
+    let flatnBinDir = join(packageMap.lookup("flatn").location, "bin"),
+        env = process.env;
+    if (!env.PATH.includes(flatnBinDir)) {
+      console.log(`Adding ${flatnBinDir} to PATH`);
+      env.PATH = flatnBinDir + ":" + env.PATH;
+    }
+    if (env.FLATN_DEV_PACKAGE_DIRS !== packageMap.devPackageDirs.join(":")) {
+      console.log("Setting FLATN_DEV_PACKAGE_DIRS");
+      env.FLATN_DEV_PACKAGE_DIRS = packageMap.devPackageDirs.join(":");
+    }
+    if (env.FLATN_PACKAGE_COLLECTION_DIRS !== packageMap.packageCollectionDirs.join(":")) {
+      console.log("Setting FLATN_PACKAGE_COLLECTION_DIRS");
+      env.FLATN_PACKAGE_COLLECTION_DIRS = packageMap.packageCollectionDirs.join(":");
+    }
+
+    
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // creating packages
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
