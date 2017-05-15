@@ -1,16 +1,18 @@
 /* global System */
 import { Database } from "lively.storage";
-import user from 'lively.user/user.js';
+import user from './user.js';
 
-var dbPath = System.decanonicalize("lively.user/user.db").replace(/^file:\/\//, ""),
+var dbPath = System.decanonicalize("lively./user.db").replace(/^file:\/\//, ""),
     userdb = Database.ensureDB(dbPath);
 
 if (System._nodeRequire) {
-  var bcryptPath = System.decanonicalize("lively.user/node_modules/bcryptjs/index.js").replace(/^file:\/\//, "");
+  var bcryptPath = System.decanonicalize("bcryptjs/index.js").replace(/^file:\/\//, "");
   var bcrypt = System._nodeRequire(bcryptPath);
-  var jwtpath = System.decanonicalize("lively.user/node_modules/jsonwebtoken/index.js").replace(/^file:\/\//, "");
+  var jwtpath = System.decanonicalize("jsonwebtoken/index.js").replace(/^file:\/\//, "");
   var jwt = System._nodeRequire(jwtpath);
 }
+
+// FIXME!!!
 //replace with uuid, visible only to server
 var key = "mysecret"
 // var adminpassword = 'adminpassword'
@@ -145,4 +147,4 @@ export const UserServices = {
      await addUser(data,'adminpassword')
      ackFn({name: data.name, status: 'created ' + data.name  + 'successfully'})
   }
-} 
+}

@@ -1,1 +1,1 @@
-export * from 'lively.user/interface.js';
+export * from './interface.js';

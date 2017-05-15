@@ -1,5 +1,5 @@
 import L2LClient from "lively.2lively/client.js";
-import * as bcrypt from "lively.user/node_modules/bcryptjs/index.js";
+import * as bcrypt from "bcryptjs/index.js";
 
 
 var defaultClient = L2LClient.default()
