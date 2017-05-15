@@ -12,6 +12,8 @@ function maybeFileResource(url) {
   return url.isResource ? url : resource(url);
 }
 
+var fixGnuTar = undefined;
+
 async function npmSearchForVersions(packageNameAndRange) {
   // let packageNameAndRange = "lively.lang@~0.4"
   try {
@@ -68,8 +70,16 @@ async function untar(downloadedArchive, targetDir, name) {
 
   // console.log(`[${name}] extracting ${downloadedArchive.path()} => ${targetDir.join(name).asDirectory().url}`);
 
+			  
+			  if (fixGnuTar === undefined) {
+  try {
+    await x(`tar --version | grep -q 'gnu'`);
+    fixGnuTar = "--warning=no-unknown-keyword "
+  } catch (err) { fixGnuTar = ""; }
+			  }
+
   await x(`mkdir "${name}" && `
-        + `tar xzf "${downloadedArchive.path()}" --warning=no-unknown-keyword --strip-components 1 -C "${name}" && `
+        + `tar xzf "${downloadedArchive.path()}" ${fixGnuTar}--strip-components 1 -C "${name}" && `
         + `rm "${downloadedArchive.path()}"`, {cwd: untarDir.path()});
 
   await targetDir.join(name).asDirectory().remove();
