@@ -1,10 +1,12 @@
 language: node_js
 
-node_js:
-  - "6"
+sudo: false
 
-before_install:
-    - "npm install -g npm@^2"
+node_js:
+  - "7"
+
+install:
+  - "npm install -g mocha-es6"
 
 notifications:
   email: "robert.krahn@gmail.com"

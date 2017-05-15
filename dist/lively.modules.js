@@ -1,5 +1,5 @@
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
+// INLINED /Users/robert/Lively/lively-dev4/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -658,9 +658,9 @@
   typeof self === "object" ? self : this
 );
 
-// INLINED END /Users/robert/Lively/lively-dev3/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
+// INLINED END /Users/robert/Lively/lively-dev4/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.lang/dist/lively.lang.js
+// INLINED /Users/robert/Lively/lively-dev4/lively.lang/dist/lively.lang.js
 
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -8433,9 +8433,9 @@ exports.uninstallGlobals = uninstallGlobals;
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.lang;
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev3/lively.lang/dist/lively.lang.js
+// INLINED END /Users/robert/Lively/lively-dev4/lively.lang/dist/lively.lang.js
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.notifications/dist/lively.notifications.js
+// INLINED /Users/robert/Lively/lively-dev4/lively.notifications/dist/lively.notifications.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -8593,9 +8593,9 @@ exports.stopLogging = stopLogging;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /Users/robert/Lively/lively-dev3/lively.notifications/dist/lively.notifications.js
+// INLINED END /Users/robert/Lively/lively-dev4/lively.notifications/dist/lively.notifications.js
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.ast/dist/lively.ast.js
+// INLINED /Users/robert/Lively/lively-dev4/lively.ast/dist/lively.ast.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -23556,9 +23556,9 @@ exports.fuzzyParse = fuzzyParse;
   if (__define_suckz__) { GLOBAL.define = __define_suckz__; }
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev3/lively.ast/dist/lively.ast.js
+// INLINED END /Users/robert/Lively/lively-dev4/lively.ast/dist/lively.ast.js
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.classes/dist/lively.classes.js
+// INLINED /Users/robert/Lively/lively-dev4/lively.classes/dist/lively.classes.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -24586,9 +24586,9 @@ exports.classToFunctionTransform = classToFunctionTransform;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /Users/robert/Lively/lively-dev3/lively.classes/dist/lively.classes.js
+// INLINED END /Users/robert/Lively/lively-dev4/lively.classes/dist/lively.classes.js
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.source-transform/dist/lively.source-transform.js
+// INLINED /Users/robert/Lively/lively-dev4/lively.source-transform/dist/lively.source-transform.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -25538,9 +25538,9 @@ exports.stringifyFunctionWithoutToplevelRecorder = stringifyFunctionWithoutTople
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.sourceTransform;
 })();
-// INLINED END /Users/robert/Lively/lively-dev3/lively.source-transform/dist/lively.source-transform.js
+// INLINED END /Users/robert/Lively/lively-dev4/lively.source-transform/dist/lively.source-transform.js
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.vm/dist/lively.vm.js
+// INLINED /Users/robert/Lively/lively-dev4/lively.vm/dist/lively.vm.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -27274,9 +27274,9 @@ exports.evalCodeTransformOfSystemRegisterSetters = evalCodeTransformOfSystemRegi
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
 })();
-// INLINED END /Users/robert/Lively/lively-dev3/lively.vm/dist/lively.vm.js
+// INLINED END /Users/robert/Lively/lively-dev4/lively.vm/dist/lively.vm.js
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.resources/dist/lively.resources_no-deps.js
+// INLINED /Users/robert/Lively/lively-dev4/lively.resources/dist/lively.resources_no-deps.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -29895,9 +29895,9 @@ exports.Resource = Resource$$1;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.resources;
 })();
-// INLINED END /Users/robert/Lively/lively-dev3/lively.resources/dist/lively.resources_no-deps.js
+// INLINED END /Users/robert/Lively/lively-dev4/lively.resources/dist/lively.resources_no-deps.js
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.storage/dist/lively.storage_with-pouch.js
+// INLINED /Users/robert/Lively/lively-dev4/lively.storage/dist/lively.storage_with-pouch.js
 
 (function() {
 
@@ -65574,9 +65574,9 @@ exports.Database = Database;
 
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev3/lively.storage/dist/lively.storage_with-pouch.js
+// INLINED END /Users/robert/Lively/lively-dev4/lively.storage/dist/lively.storage_with-pouch.js
 
-// INLINED /Users/robert/Lively/lively-dev3/lively.modules/systemjs-init.js
+// INLINED /Users/robert/Lively/lively-dev4/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -65789,12 +65789,12 @@ exports.Database = Database;
 
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev3/lively.modules/systemjs-init.js
+// INLINED END /Users/robert/Lively/lively-dev4/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
-// INLINED /Users/robert/Lively/lively-dev3/lively.next-node_modules/semver/5.3.0/semver.js
+// INLINED /Users/robert/Lively/lively-dev4/lively.next-node_modules/semver/5.3.0/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -66999,7 +66999,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-// INLINED END /Users/robert/Lively/lively-dev3/lively.next-node_modules/semver/5.3.0/semver.js
+// INLINED END /Users/robert/Lively/lively-dev4/lively.next-node_modules/semver/5.3.0/semver.js
 semver = exports;
 })({}, {});
 
@@ -72711,15 +72711,18 @@ function preNormalize(System, name, parent) {
 
   if (packageRegistry) {
     var resolved = packageRegistry.resolvePath(name, parent);
-    if (resolved && resolved.endsWith("/") && !name.endsWith("/")) resolved = resolved.slice(0, -1);
-    if (resolved) name = resolved;
+    if (resolved) {
+      if (resolved.endsWith("/") && !name.endsWith("/")) resolved = resolved.slice(0, -1);
+      if (!resolved.endsWith("/") && name.endsWith("/")) resolved = resolved + "/";
+      name = resolved;
+    }
   }
   // </snap> experimental
 
   return name;
 }
 
-function postNormalize(System, normalizeResult) {
+function postNormalize(System, normalizeResult, isSync) {
   // lookup package main
   var base = normalizeResult.replace(jsExtRe, "");
 
@@ -72754,7 +72757,7 @@ function normalizeHook(proceed, name, parent, parentAddress) {
   var System = this,
       stage1 = preNormalize(System, name, parent);
   return proceed(stage1, parent, parentAddress).then(function (stage2) {
-    var stage3 = postNormalize(System, stage2 || stage1);
+    var stage3 = postNormalize(System, stage2 || stage1, false);
     System.debug && console.log("[normalize] " + name + " => " + stage3);
     return stage3;
   });
@@ -72764,7 +72767,7 @@ function decanonicalizeHook(proceed, name, parent, isPlugin) {
   var System = this,
       stage1 = preNormalize(System, name, parent),
       stage2 = proceed(stage1, parent, isPlugin),
-      stage3 = postNormalize(System, stage2);
+      stage3 = postNormalize(System, stage2, true);
   System.debug && console.log("[normalizeSync] " + name + " => " + stage3);
   return stage3;
 }
@@ -72994,14 +72997,20 @@ var PackageRegistry$$1 = function () {
     key: "fromJSON",
     value: function fromJSON(jso) {
       var packageMap = {},
-          System$$1 = this.System;
+          System$$1 = this.System,
+          base = lively_resources.resource(System$$1.baseURL);
       for (var pName in jso.packageMap) {
         var spec = jso.packageMap[pName];
         packageMap[pName] = {};
         packageMap[pName].latest = spec.latest;
         packageMap[pName].versions = {};
         for (var version in spec.versions) {
-          packageMap[pName].versions[version] = Package.fromJSON(System$$1, spec.versions[version]);
+          var pkgSpec = spec.versions[version],
+              url = pkgSpec.url;
+          if (!isAbsolute(url)) url = base.join(url).url;
+          var pkg = getPackage$1(System$$1, url);
+          pkg.fromJSON(pkgSpec);
+          packageMap[pName].versions[version] = pkg;
         }
       }
 
@@ -73156,7 +73165,7 @@ var PackageRegistry$$1 = function () {
     key: "findPackageWithURL",
     value: function findPackageWithURL(url) {
       // url === pkg.url
-      if (!url.endsWith("/")) url += "/";
+      if (!url.endsWith("/")) url = url.replace(/\/+$/, "");
       return this.findPackage(function (ea) {
         return ea.url === url;
       });
@@ -73258,16 +73267,26 @@ var PackageRegistry$$1 = function () {
 
                 this._readyPromise = deferred.promise;
 
-                _context.prev = 4;
+                this.packageBaseDirs = this.packageBaseDirs.map(function (ea) {
+                  return ea.asDirectory();
+                });
+                this.individualPackageDirs = this.individualPackageDirs.map(function (ea) {
+                  return ea.asDirectory();
+                });
+                this.devPackageDirs = this.devPackageDirs.map(function (ea) {
+                  return ea.asDirectory();
+                });
+
+                _context.prev = 7;
                 _iteratorNormalCompletion = true;
                 _didIteratorError = false;
                 _iteratorError = undefined;
-                _context.prev = 8;
+                _context.prev = 11;
                 _iterator = this.packageBaseDirs[Symbol.iterator]();
 
-              case 10:
+              case 13:
                 if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-                  _context.next = 72;
+                  _context.next = 75;
                   break;
                 }
 
@@ -73275,17 +73294,17 @@ var PackageRegistry$$1 = function () {
                 _iteratorNormalCompletion4 = true;
                 _didIteratorError4 = false;
                 _iteratorError4 = undefined;
-                _context.prev = 15;
-                _context.next = 18;
+                _context.prev = 18;
+                _context.next = 21;
                 return dir.dirList(1);
 
-              case 18:
+              case 21:
                 _context.t0 = Symbol.iterator;
                 _iterator4 = _context.sent[_context.t0]();
 
-              case 20:
+              case 23:
                 if (_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done) {
-                  _context.next = 55;
+                  _context.next = 58;
                   break;
                 }
 
@@ -73293,11 +73312,11 @@ var PackageRegistry$$1 = function () {
                 _iteratorNormalCompletion5 = true;
                 _didIteratorError5 = false;
                 _iteratorError5 = undefined;
-                _context.prev = 25;
-                _context.next = 28;
+                _context.prev = 28;
+                _context.next = 31;
                 return dirWithVersions.dirList(1);
 
-              case 28:
+              case 31:
                 _context.t1 = function (ea) {
                   return ea.isDirectory();
                 };
@@ -73305,268 +73324,268 @@ var PackageRegistry$$1 = function () {
                 _context.t2 = Symbol.iterator;
                 _iterator5 = _context.sent.filter(_context.t1)[_context.t2]();
 
-              case 31:
+              case 34:
                 if (_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done) {
-                  _context.next = 38;
+                  _context.next = 41;
                   break;
                 }
 
                 subDir = _step5.value;
-                _context.next = 35;
+                _context.next = 38;
                 return this._internalAddPackageDir(subDir, false);
 
-              case 35:
-                _iteratorNormalCompletion5 = true;
-                _context.next = 31;
-                break;
-
               case 38:
-                _context.next = 44;
+                _iteratorNormalCompletion5 = true;
+                _context.next = 34;
                 break;
 
-              case 40:
-                _context.prev = 40;
-                _context.t3 = _context["catch"](25);
+              case 41:
+                _context.next = 47;
+                break;
+
+              case 43:
+                _context.prev = 43;
+                _context.t3 = _context["catch"](28);
                 _didIteratorError5 = true;
                 _iteratorError5 = _context.t3;
 
-              case 44:
-                _context.prev = 44;
-                _context.prev = 45;
+              case 47:
+                _context.prev = 47;
+                _context.prev = 48;
 
                 if (!_iteratorNormalCompletion5 && _iterator5.return) {
                   _iterator5.return();
                 }
 
-              case 47:
-                _context.prev = 47;
+              case 50:
+                _context.prev = 50;
 
                 if (!_didIteratorError5) {
-                  _context.next = 50;
+                  _context.next = 53;
                   break;
                 }
 
                 throw _iteratorError5;
 
-              case 50:
+              case 53:
+                return _context.finish(50);
+
+              case 54:
                 return _context.finish(47);
 
-              case 51:
-                return _context.finish(44);
-
-              case 52:
-                _iteratorNormalCompletion4 = true;
-                _context.next = 20;
-                break;
-
               case 55:
-                _context.next = 61;
+                _iteratorNormalCompletion4 = true;
+                _context.next = 23;
                 break;
 
-              case 57:
-                _context.prev = 57;
-                _context.t4 = _context["catch"](15);
+              case 58:
+                _context.next = 64;
+                break;
+
+              case 60:
+                _context.prev = 60;
+                _context.t4 = _context["catch"](18);
                 _didIteratorError4 = true;
                 _iteratorError4 = _context.t4;
 
-              case 61:
-                _context.prev = 61;
-                _context.prev = 62;
+              case 64:
+                _context.prev = 64;
+                _context.prev = 65;
 
                 if (!_iteratorNormalCompletion4 && _iterator4.return) {
                   _iterator4.return();
                 }
 
-              case 64:
-                _context.prev = 64;
+              case 67:
+                _context.prev = 67;
 
                 if (!_didIteratorError4) {
-                  _context.next = 67;
+                  _context.next = 70;
                   break;
                 }
 
                 throw _iteratorError4;
 
-              case 67:
+              case 70:
+                return _context.finish(67);
+
+              case 71:
                 return _context.finish(64);
 
-              case 68:
-                return _context.finish(61);
-
-              case 69:
-                _iteratorNormalCompletion = true;
-                _context.next = 10;
-                break;
-
               case 72:
-                _context.next = 78;
+                _iteratorNormalCompletion = true;
+                _context.next = 13;
                 break;
 
-              case 74:
-                _context.prev = 74;
-                _context.t5 = _context["catch"](8);
+              case 75:
+                _context.next = 81;
+                break;
+
+              case 77:
+                _context.prev = 77;
+                _context.t5 = _context["catch"](11);
                 _didIteratorError = true;
                 _iteratorError = _context.t5;
 
-              case 78:
-                _context.prev = 78;
-                _context.prev = 79;
+              case 81:
+                _context.prev = 81;
+                _context.prev = 82;
 
                 if (!_iteratorNormalCompletion && _iterator.return) {
                   _iterator.return();
                 }
 
-              case 81:
-                _context.prev = 81;
+              case 84:
+                _context.prev = 84;
 
                 if (!_didIteratorError) {
-                  _context.next = 84;
+                  _context.next = 87;
                   break;
                 }
 
                 throw _iteratorError;
 
-              case 84:
+              case 87:
+                return _context.finish(84);
+
+              case 88:
                 return _context.finish(81);
 
-              case 85:
-                return _context.finish(78);
-
-              case 86:
+              case 89:
                 _iteratorNormalCompletion2 = true;
                 _didIteratorError2 = false;
                 _iteratorError2 = undefined;
-                _context.prev = 89;
+                _context.prev = 92;
                 _iterator2 = this.individualPackageDirs[Symbol.iterator]();
 
-              case 91:
+              case 94:
                 if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
-                  _context.next = 98;
+                  _context.next = 101;
                   break;
                 }
 
                 _dir = _step2.value;
-                _context.next = 95;
+                _context.next = 98;
                 return this._internalAddPackageDir(_dir, false);
 
-              case 95:
-                _iteratorNormalCompletion2 = true;
-                _context.next = 91;
-                break;
-
               case 98:
-                _context.next = 104;
+                _iteratorNormalCompletion2 = true;
+                _context.next = 94;
                 break;
 
-              case 100:
-                _context.prev = 100;
-                _context.t6 = _context["catch"](89);
+              case 101:
+                _context.next = 107;
+                break;
+
+              case 103:
+                _context.prev = 103;
+                _context.t6 = _context["catch"](92);
                 _didIteratorError2 = true;
                 _iteratorError2 = _context.t6;
 
-              case 104:
-                _context.prev = 104;
-                _context.prev = 105;
+              case 107:
+                _context.prev = 107;
+                _context.prev = 108;
 
                 if (!_iteratorNormalCompletion2 && _iterator2.return) {
                   _iterator2.return();
                 }
 
-              case 107:
-                _context.prev = 107;
+              case 110:
+                _context.prev = 110;
 
                 if (!_didIteratorError2) {
-                  _context.next = 110;
+                  _context.next = 113;
                   break;
                 }
 
                 throw _iteratorError2;
 
-              case 110:
+              case 113:
+                return _context.finish(110);
+
+              case 114:
                 return _context.finish(107);
 
-              case 111:
-                return _context.finish(104);
-
-              case 112:
+              case 115:
                 _iteratorNormalCompletion3 = true;
                 _didIteratorError3 = false;
                 _iteratorError3 = undefined;
-                _context.prev = 115;
+                _context.prev = 118;
                 _iterator3 = this.devPackageDirs[Symbol.iterator]();
 
-              case 117:
+              case 120:
                 if (_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done) {
-                  _context.next = 124;
+                  _context.next = 127;
                   break;
                 }
 
                 _dir2 = _step3.value;
-                _context.next = 121;
+                _context.next = 124;
                 return this._internalAddPackageDir(_dir2, false);
 
-              case 121:
-                _iteratorNormalCompletion3 = true;
-                _context.next = 117;
-                break;
-
               case 124:
-                _context.next = 130;
+                _iteratorNormalCompletion3 = true;
+                _context.next = 120;
                 break;
 
-              case 126:
-                _context.prev = 126;
-                _context.t7 = _context["catch"](115);
+              case 127:
+                _context.next = 133;
+                break;
+
+              case 129:
+                _context.prev = 129;
+                _context.t7 = _context["catch"](118);
                 _didIteratorError3 = true;
                 _iteratorError3 = _context.t7;
 
-              case 130:
-                _context.prev = 130;
-                _context.prev = 131;
+              case 133:
+                _context.prev = 133;
+                _context.prev = 134;
 
                 if (!_iteratorNormalCompletion3 && _iterator3.return) {
                   _iterator3.return();
                 }
 
-              case 133:
-                _context.prev = 133;
+              case 136:
+                _context.prev = 136;
 
                 if (!_didIteratorError3) {
-                  _context.next = 136;
+                  _context.next = 139;
                   break;
                 }
 
                 throw _iteratorError3;
 
-              case 136:
+              case 139:
+                return _context.finish(136);
+
+              case 140:
                 return _context.finish(133);
 
-              case 137:
-                return _context.finish(130);
-
-              case 138:
+              case 141:
 
                 this._updateLatestPackages();
                 this._readyPromise = null;
                 deferred.resolve();
 
-                _context.next = 147;
+                _context.next = 150;
                 break;
 
-              case 143:
-                _context.prev = 143;
-                _context.t8 = _context["catch"](4);
+              case 146:
+                _context.prev = 146;
+                _context.t8 = _context["catch"](7);
                 this._readyPromise = null;deferred.reject(_context.t8);
 
-              case 147:
+              case 150:
                 return _context.abrupt("return", this);
 
-              case 148:
+              case 151:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, this, [[4, 143], [8, 74, 78, 86], [15, 57, 61, 69], [25, 40, 44, 52], [45,, 47, 51], [62,, 64, 68], [79,, 81, 85], [89, 100, 104, 112], [105,, 107, 111], [115, 126, 130, 138], [131,, 133, 137]]);
+        }, _callee, this, [[7, 146], [11, 77, 81, 89], [18, 60, 64, 72], [28, 43, 47, 55], [48,, 50, 54], [65,, 67, 71], [82,, 84, 88], [92, 103, 107, 115], [108,, 110, 114], [118, 129, 133, 141], [134,, 136, 140]]);
       }));
 
       function update() {
@@ -73626,9 +73645,9 @@ var PackageRegistry$$1 = function () {
 
       pkg.name = name;
       pkg.version = version;
-      pkg.dependencies = dependencies;
-      pkg.devDependencies = devDependencies;
-      pkg.main = main;
+      pkg.dependencies = dependencies || {};
+      pkg.devDependencies = devDependencies || {};
+      pkg.main = systemjs && systemjs.main || main || "index.js";
       pkg.systemjs = systemjs;
       return this.updatePackage(pkg, oldName, oldVersion, oldURL, updateLatestPackage);
     }
@@ -73723,23 +73742,24 @@ var PackageRegistry$$1 = function () {
                 config = _context3.sent;
                 name = config.name;
                 version = config.version;
-                pkg = new Package(System$$1, dir.url, name, version, config);
+                pkg = getPackage$1(System$$1, dir.url);
 
                 System$$1.debug && console.log("[lively.modules] package registry " + name + "@" + version + " in " + dir.url);
-                this.updatePackage(pkg, undefined, undefined, undefined, updateLatestPackage);
+                this.updatePackageFromConfig(pkg, config, updateLatestPackage);
+                pkg.register2(config);
                 return _context3.abrupt("return", pkg);
 
-              case 15:
-                _context3.prev = 15;
+              case 16:
+                _context3.prev = 16;
                 _context3.t0 = _context3["catch"](3);
                 return _context3.abrupt("return", null);
 
-              case 18:
+              case 19:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, this, [[3, 15]]);
+        }, _callee3, this, [[3, 16]]);
       }));
 
       function _internalAddPackageDir(_x8) {
