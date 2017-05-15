@@ -1,7 +1,11 @@
 language: node_js
 
-node_js:
-  - "6"
+node_js: 7
+
+sudo: false
+
+install:
+  - "npm install -g mocha-es6"
 
 notifications:
   email: "robert.krahn@gmail.com"
