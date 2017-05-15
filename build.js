@@ -59,7 +59,7 @@ function npmCreateEnvVars(configObj, env = {}, path = "npm_package") {
   return env;
 }
 
-function linkBins(packageSpecs, linkState = {}) {
+function linkBins(packageSpecs, linkState = {}, verbose = false) {
   let linkLocation = j(tmpdir(), "npm-helper-bin-dir");
   if (!fs.existsSync(linkLocation)) fs.mkdirSync(linkLocation);
   packageSpecs.forEach(({bin, location}) => {
@@ -74,7 +74,7 @@ function linkBins(packageSpecs, linkState = {}) {
         fs.lstatSync(j(linkLocation, linkName));
         fs.unlinkSync(j(linkLocation, linkName));
       } catch (err) {}
-      // console.log(`[flatn build] linking ${j(location, realFile)} => ${j(linkLocation, linkName)}`)
+      verbose && console.log(`[flatn build] linking ${j(location, realFile)} => ${j(linkLocation, linkName)}`)
       fs.symlinkSync(j(location, realFile), j(linkLocation, linkName));
     }
     linkState[location] = true;
@@ -89,13 +89,14 @@ class BuildProcess {
     return new this(stages, packageMap, forceBuild);
   }
 
-  constructor(buildStages, packageMap, forceBuild) {
+  constructor(buildStages, packageMap, forceBuild, verbose = false) {
     this.buildStages = buildStages; // 2d list, package specs in sorted order
     this.packageMap = packageMap;
     this.builtPackages = [];
     this.binLinkState = {};
     this.binLinkLocation = "";
     this.forceBuild = forceBuild;
+    this.verbose = verbose;
   }
 
   async run() {
@@ -104,13 +105,13 @@ class BuildProcess {
     let {buildStages, packageMap} = this,
         i = 1, n = buildStages.length;
 
-    // console.log(`[flatn] Running build stage ${i++}/${n}`)
+    this.verbose && console.log(`[flatn] Running build stage ${i++}/${n}`)
 
     while (buildStages.length) {
       let stage = buildStages[0];
       if (!stage.length) {
         buildStages.shift();
-        // buildStages.length && console.log(`[flatn] Running build stage ${i++}/${n}`);
+        this.verbose && buildStages.length && console.log(`[flatn] Running build stage ${i++}/${n}`);
         continue;
       }
       let next = stage[0],
@@ -139,10 +140,15 @@ class BuildProcess {
   }
 
   async build(packageSpec) {
-    this.binLinkLocation = linkBins(this.builtPackages.concat([packageSpec]), this.binLinkState);
-    let env = npmCreateEnvVars(await packageSpec.readConfig());
+    this.binLinkLocation = linkBins(
+      this.builtPackages.concat([packageSpec]),
+      this.binLinkState,
+      this.verbose);
 
-    let needsBuilt = this.forceBuild || packageSpec.isDevPackage || !(packageSpec.readLvInfo() || {}).build;
+    let env = npmCreateEnvVars(await packageSpec.readConfig());
+    let needsBuilt =
+      this.forceBuild || packageSpec.isDevPackage || !(packageSpec.readLvInfo() || {}).build;
+
     if (needsBuilt) {
       let scripts = this.normalizeScripts(packageSpec);
       if (this.hasBuiltScripts(scripts)) {
@@ -150,7 +156,7 @@ class BuildProcess {
         await this.runScript(scripts, "preinstall",  packageSpec, env);
         await this.runScript(scripts, "install",     packageSpec, env);
         await this.runScript(scripts, "postinstall", packageSpec, env);
-        packageSpec.changeLvInfo(info => Object.assign({}, info, {build: true}));
+        await packageSpec.changeLvInfo(info => Object.assign({}, info, {build: true}));
         console.log(`[flatn] ${packageSpec.name} build done`);
       }
     }
@@ -160,7 +166,7 @@ class BuildProcess {
 
   async runScript(scripts, scriptName, {name, location}, env) {
     if (!scripts || !scripts[scriptName]) return false;
-    console.log(`[flatn] build ${name}: running ${scriptName}`);
+    this.verbose && console.log(`[flatn] build ${name}: running ${scriptName}`);
     
     env = Object.assign({},
       process.env,
