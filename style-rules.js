@@ -6,13 +6,29 @@ import { ShadowObject } from "lively.morphic";
 
 export class StyleSheet {
 
-  constructor(rules) {
+  constructor(name, rules) {
+    if (obj.isObject(name) && !rules) {
+      rules = name;
+      name = null;
+    }
     this.rules = rules;
+    this.name = name;
+  }
+
+  copy() {
+    let copiedRules = {};
+    for (let rule in this.rules) {
+       copiedRules[rule] = {...this.rules[rule]};
+    }
+    return new StyleSheet(this.name, copiedRules)
+  }
+
+  get __only_serialize__() {
+    return ['rules', 'context'];
   }
 
   set context(morph) {
     this._context = morph;
-    this.styledMorphs = [];
     this.sizzle = new Sizzle(morph);
     this.context.withAllSubmorphsDo(m => {
        m._styleSheetProps = null;
@@ -23,7 +39,7 @@ export class StyleSheet {
   get context() { return this._context }
 
   unwrapNestedProps(props) {
-    ["borderRadius", "borderWidth", "borderColor"].forEach(p => {
+    ["borderRadius", "borderWidth", "borderColor", 'borderStyle'].forEach(p => {
       if (p in props) {
         ["Right", 'Left', 'Top', 'Bottom'].forEach(side => {
            props[p + side] = props[p];
@@ -50,11 +66,17 @@ export class StyleSheet {
     this.refreshMorphsFor(rule);
   }
 
+  toggleRule(rule) {
+    this.rules[rule]._deactivated = !this.rules[rule]._deactivated;
+    this.refreshMorphsFor(rule);
+  }
+
   getStyleProps(morph) {
     var props = {}, rule;
     for (rule in this.rules) {
+      if (this.rules[rule]._deactivated) continue;
       if (this.sizzle.matches(rule, morph)) {
-        props = {...props, ...this.rules[rule]};
+        props = obj.dissoc({...props, ...this.rules[rule]}, ['_deactivated']);
       }
     }
     this.unwrapNestedProps(props)
