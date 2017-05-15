@@ -1,6 +1,6 @@
 {
   "name": "flatn",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "main": "flatn-cjs.js",
   "scripts": {
     "test": "mocha-es6 tests/test.js"
