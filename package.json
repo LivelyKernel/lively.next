@@ -16,12 +16,6 @@
     "babel-preset-es2015-rollup": "^1.1.1",
     "babel-regenerator-runtime": "^6.5.0"
   },
-  "lively": {
-    "packageMap": {
-      "lively.lang": "./node_modules/lively.lang",
-      "mocha-es6": "./node_modules/mocha-es6"
-    }
-  },
   "scripts": {
     "test": "mocha-es6 tests/{test,*-test}.js",
     "build": "node build.js"
