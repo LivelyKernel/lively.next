@@ -30,12 +30,27 @@ export {
   packageDirsFromEnv
 }
 
+function ensurePathFormat(dirOrArray) {
+  // for flatn pure we expect directories to be specified in normal file system
+  // form like /home/foo/bar/, not as lively.resources or as URL file://...
+  // This ensures that...
+  if (Array.isArray(dirOrArray)) return dirOrArray.map(ensurePathFormat);
+  if (dirOrArray.isResource) return dirOrArray.path()
+  if (dirOrArray.startsWith("file://")) dirOrArray = dirOrArray.replace("file://", "");
+  return dirOrArray;
+}
 
 function buildPackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+  packageCollectionDirs = ensurePathFormat(packageCollectionDirs);
+  individualPackageDirs = ensurePathFormat(individualPackageDirs);
+  devPackageDirs = ensurePathFormat(devPackageDirs);
   return PackageMap.build(packageCollectionDirs, individualPackageDirs, devPackageDirs);
 }
 
 function ensurePackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+  packageCollectionDirs = ensurePathFormat(packageCollectionDirs);
+  individualPackageDirs = ensurePathFormat(individualPackageDirs);
+  devPackageDirs = ensurePathFormat(devPackageDirs);
   return PackageMap.ensure(packageCollectionDirs, individualPackageDirs, devPackageDirs);
 }
 
@@ -49,6 +64,9 @@ function packageDirsFromEnv() {
 }
 
 function setPackageDirsOfEnv(packageCollectionDirs, individualPackageDirs, devPackageDirs) {  
+  packageCollectionDirs = ensurePathFormat(packageCollectionDirs);
+  individualPackageDirs = ensurePathFormat(individualPackageDirs);
+  devPackageDirs = ensurePathFormat(devPackageDirs);
   process.env.FLATN_PACKAGE_COLLECTION_DIRS = packageCollectionDirs.join(":");
   process.env.FLATN_PACKAGE_DIRS = individualPackageDirs.join(":");
   process.env.FLATN_DEV_PACKAGE_DIRS = devPackageDirs.join(":");
@@ -62,6 +80,11 @@ async function buildPackage(
   verbose = false,
   forceBuild = false
 ) {
+  if (typeof packageSpecOrDir === "string" || packageSpecOrDir.isResource)
+    packageSpecOrDir = ensurePathFormat(packageSpecOrDir);
+  if (Array.isArray(packageMapOrDirs))
+    packageMapOrDirs = ensurePathFormat(packageMapOrDirs);
+
   let packageSpec = typeof packageSpecOrDir === "string"
     ? PackageSpec.fromDir(packageSpecOrDir)
     : packageSpecOrDir,
@@ -85,10 +108,12 @@ async function installPackage(
   // will lookup or install a package matching pNameAndVersion.  Will
   // recursively install dependencies
 
-  // if (!packageMap) throw new Error(`[flatn] install of ${pNameAndVersion}: No package map specified!`);
+  if (!packageMap) console.warn(`[flatn] install of ${pNameAndVersion}: No package map specified, using empty package map.`);
   if (!packageMap) packageMap = PackageMap.empty();
 
   if (!dependencyFields) dependencyFields = ["dependencies"];
+
+  destinationDir = ensurePathFormat(destinationDir);
 
   if (!fs.existsSync(destinationDir))
     fs.mkdirSync(destinationDir);
@@ -142,6 +167,11 @@ function addDependencyToPackage(
   verbose = false
 ) {
 
+  if (typeof packageSpecOrDir === "string" || packageSpecOrDir.isResource)
+    packageSpecOrDir = ensurePathFormat(packageSpecOrDir);
+
+  packageDepDir = ensurePathFormat(packageDepDir);
+
   if (!dependencyField) dependencyField = "dependencies"; /*vs devDependencies etc.*/
 
   let packageSpec = typeof packageSpecOrDir === "string"
@@ -182,6 +212,11 @@ async function installDependenciesOfPackage(
   // Given a package spec of an installed package (retrieved via
   // `PackageSpec.fromDir`), make sure all dependencies (specified in properties
   // `dependencyFields` of package.json) are installed
+  if (typeof packageSpecOrDir === "string" || packageSpecOrDir.isResource)
+    packageSpecOrDir = ensurePathFormat(packageSpecOrDir);
+
+  if (dirToInstallDependenciesInto)
+    dirToInstallDependenciesInto = ensurePathFormat(dirToInstallDependenciesInto);
 
   let packageSpec = typeof packageSpecOrDir === "string"
     ? PackageSpec.fromDir(packageSpecOrDir)
