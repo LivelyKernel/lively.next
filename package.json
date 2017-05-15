@@ -15,7 +15,7 @@
     "systemjs": "^0.19.40"
   },
   "devDependencies": {
-    "mocha-es6": "^0.4"
+    "mocha-es6": "^0.5"
   },
   "scripts": {
     "test": "mocha-es6 tests/*-test.js --pre-script ./tests/node-pre.js",
