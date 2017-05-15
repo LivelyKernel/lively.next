@@ -2,7 +2,6 @@
 
 { # this ensures the entire script is downloaded #
 
-
 if [ -z "$LIVELY_INSTALLER_REPO" ]; then
   LIVELY_INSTALLER_REPO="https://github.com/LivelyKernel/lively.installer"
 fi
@@ -15,59 +14,42 @@ if [ -z "$LIVELY_INSTALLER_DIR" ]; then
   LIVELY_INSTALLER_DIR="$PWD/lively.installer"
 fi
 
-install_from_git() {
-  if [ -d "$LIVELY_INSTALLER_DIR/.git" ]; then
-    echo "=> lively.installer is already installed in $LIVELY_INSTALLER_DIR, trying to update using git"
+LIVELY_FLATN_DIR="$PWD/flatn"
+LIVELY_FLATN_VERSION=master
+LIVELY_FLATN_REPO="https://github.com/rksm/flatn"
+
+install_with_git() {
+  NAME=$1
+  REPO=$2
+  DEST_DIR=$3
+  VERSION=$4
+
+  if [ -d "$DEST_DIR/.git" ]; then
+    echo "=> $NAME is already installed in $DEST_DIR, trying to update using git"
     printf "\r=> "
-    cd "$LIVELY_INSTALLER_DIR" && (command git fetch 2> /dev/null || {
-      echo >&2 "Failed to update lively.installer, run 'git fetch' in $LIVELY_INSTALLER_DIR yourself." && exit 1
+    cd "$DEST_DIR" && (command git fetch 2> /dev/null || {
+      echo >&2 "Failed to update $NAME, run 'git fetch' in $DEST_DIR yourself." && exit 1
     })
     git pull 2> /dev/null
 
   else
 
-    # Cloning to $LIVELY_INSTALLER_DIR
-    echo "=> Downloading lively.installer from git to '$LIVELY_INSTALLER_DIR'"
+    # Cloning to $DEST_DIR
+    echo "=> Downloading $NAME from git to '$DEST_DIR'"
     printf "\r=> "
-    mkdir -p "$LIVELY_INSTALLER_DIR"
-    command git clone $LIVELY_INSTALLER_REPO "$LIVELY_INSTALLER_DIR"
+    mkdir -p "$DEST_DIR"
+    command git clone $REPO "$DEST_DIR"
   fi
-  # cd "$LIVELY_INSTALLER_DIR" && command git checkout --quiet "$LIVELY_INSTALLER_VERSION"
-  cd "$LIVELY_INSTALLER_DIR" && command git checkout "$LIVELY_INSTALLER_VERSION"
-  if [ ! -z "$(cd "$LIVELY_INSTALLER_DIR" && git show-ref refs/heads/master)" ]; then
+  # cd "$DEST_DIR" && command git checkout --quiet "$VERSION"
+  cd "$DEST_DIR" && command git checkout "$VERSION"
+  if [ ! -z "$(cd "$DEST_DIR" && git show-ref refs/heads/master)" ]; then
     if git branch --quiet 2>/dev/null; then
-      cd "$LIVELY_INSTALLER_DIR" && command git branch --quiet -D master >/dev/null 2>&1
+      cd "$DEST_DIR" && command git branch --quiet -D master >/dev/null 2>&1
     fi
   fi
   return
 }
 
-npm_install() {
-  cd $LIVELY_INSTALLER_DIR;
-  npm install;
-  cd ..
-  return
-}
-
-
-npm_version_test() {
-  export NPM_VERSION=$(npm -v)
-
-node -e "$(cat <<'EOF'
-var version = process.env.NPM_VERSION,
-    match = version.match(/([0-9]+)\.([0-9]+)\.([0-9]+)/);
-if (!match || Number(match[1]) > 2) {
-  console.log('npm version 2 is required, you have version ' + version);
-  process.exit(1);
-}
-EOF
-)";
-
-  if [[ $? -ne 0 ]]; then
-    echo >&2 "stopping, unsupported npm version"
-    exit 1
-  fi
-}
 
 install_installer() {
 
@@ -83,10 +65,17 @@ install_installer() {
     exit 1
   fi
 
-  # npm_version_test
+  install_with_git \
+    lively.installer \
+    $LIVELY_INSTALLER_REPO \
+    $LIVELY_INSTALLER_DIR \
+    $LIVELY_INSTALLER_VERSION
 
-  install_from_git
-  npm_install
+  install_with_git \
+    flatn \
+    $LIVELY_FLATN_REPO \
+    $LIVELY_FLATN_DIR \
+    $LIVELY_FLATN_VERSION
 
   echo "=> lively.installer sucessfully downloaded & intialized"
 }
@@ -101,4 +90,4 @@ install_rest() {
 install_installer
 install_rest
 
-} # this ensures the entire script is downloaded #
+} # this ensures the entire script is only run when completely downloaded #

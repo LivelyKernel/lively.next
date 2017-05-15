@@ -48,6 +48,10 @@
     "repoURL": "https://github.com/LivelyKernel/lively.installer"
   },
   {
+    "name": "flatn",
+    "repoURL": "https://github.com/rksm/flatn"
+  },
+  {
     "name": "lively.serializer2",
     "repoURL": "https://github.com/LivelyKernel/lively.serializer2"
   },

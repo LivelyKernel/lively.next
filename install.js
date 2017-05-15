@@ -1,14 +1,16 @@
 import { exec } from "./shell-exec.js";
 import { join, getPackageSpec, readPackageSpec } from "./helpers.js";
 import { Package } from "./package.js";
-var resource = lively.resources.resource;
+import { buildPackageMap, installDependenciesOfPackage, buildPackage } from "flatn";
 
-var packageSpecFile = getPackageSpec();
+var resource = lively.resources.resource,
+    packageSpecFile = getPackageSpec();
 
 // var baseDir = "/home/lively/lively-web.org/lively.next/";
-// var baseDir = "/Users/robert/Lively/lively-dev4/";
+// var baseDir = "/Users/robert/Lively/lively-dev3/";
+// var dependenciesDir = "/Users/robert/Lively/lively-dev3/lively.next-node_modules";
 
-export async function install(baseDir) {
+export async function install(baseDir, dependenciesDir, verbose) {
 
   try {
     var log = [];
@@ -28,12 +30,15 @@ export async function install(baseDir) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     console.log("=> Ensuring existance of " + baseDir);
     if (baseDir.startsWith("/")) baseDir = "file://" + baseDir;
+    if (dependenciesDir.startsWith("/")) dependenciesDir = "file://" + dependenciesDir;
     await resource(baseDir).asDirectory().ensureExistance();
+    await resource(dependenciesDir).asDirectory().ensureExistance();
 
     console.log("=> Reading package specs from " + packageSpecFile);
     var knownProjects = await readPackageSpec(packageSpecFile),
         packages = await Promise.all(knownProjects.map(spec =>
-          new Package(join(baseDir, spec.name), spec, log).readConfig()))
+          new Package(join(baseDir, spec.name), spec, log).readConfig())),
+        packageMap = await buildPackageMap([dependenciesDir], [], packages.map(ea => ea.directory));
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // creating packages
@@ -49,46 +54,39 @@ export async function install(baseDir) {
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // npm install
+    // installing dependencies
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    console.log(`=> npm link`);
+    console.log(`=> installing dependencies`);
     for (let p of packages) {
-      console.log(`npm linking of ${p.name} into global node_modules`);
-      await p.npmLinkIntoGlobal();
-    }
-    for (let p of packages) {
-      console.log(`npm linking dependencies of ${p.name} into its node_modules`);
-      await p.linkToDependenciesWithNpm(packages);
+      console.log(`installing dependencies of ${p.name}`);
+      await installDependenciesOfPackage(
+        p.directory, dependenciesDir, packageMap, ["dependencies"], verbose);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // npm install
+    // build scripts
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    console.log(`=> npm install`);
+    console.log(`=> running install scripts of ${packageMap.allPackages().length} packages`);
 
     pBar && pBar.setValue(0)
     i = 0; for (let p of packages) {
       pBar && pBar.setLabel(`npm setup ${p.name}`);
-      if (await p.npmInstallNeeded()) {
-        console.log(`npm install of ${p.name}...`);
-        await p.npmInstallOrFix();
-      } else {
-        console.log(`npm install of ${p.name} not required`);
-      }
+      console.log(`build ${p.name} and its dependencies`);
+      await buildPackage(p.directory, packageMap, ["dependencies"]);
       pBar && pBar.setValue(++i / packages.length)
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // initial world files
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    console.log(`=> setting up initial lively world`);
-    await saveConflictingInitialFiles(baseDir, async () => {
-      var baseDirForExec = baseDir.replace(/^file:\/\//, ""),
-          {code, output} = await exec(`cp ${baseDirForExec}/lively.morphic/examples/initial/* ${baseDirForExec}`);
-      if (code) console.error("workspace setup failed", output);
-      var {code, output} = await exec(`cp ${baseDirForExec}/lively.morphic/assets/favicon.ico ${baseDirForExec}`);
-      if (code) console.error("asset setup failed", output);
-    });
+    // console.log(`=> setting up initial lively world`);
+    // await saveConflictingInitialFiles(baseDir, async () => {
+    //   var baseDirForExec = baseDir.replace(/^file:\/\//, ""),
+    //       {code, output} = await exec(`cp ${baseDirForExec}/lively.morphic/examples/initial/* ${baseDirForExec}`);
+    //   if (code) console.error("workspace setup failed", output);
+    //   var {code, output} = await exec(`cp ${baseDirForExec}/lively.morphic/assets/favicon.ico ${baseDirForExec}`);
+    //   if (code) console.error("asset setup failed", output);
+    // });
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -97,7 +95,9 @@ export async function install(baseDir) {
 
     var livelyServerDir = baseDir
     if (hasUI) $world.inform("Packages successfully updated!\n" + packages.map(ea => ea.name).join("\n"));
-    else console.log(`=> Done!\npackages installed and / or updated! You can start a lively server by running './start.sh' inside ${livelyServerDir}.\nAfterwards your first lively.next world is ready to run at http://localhost:9011/index.html`);
+    else console.log(`=> Done!\npackages installed and / or updated! `
+                   + `You can start a lively server by running './start.sh' inside ${livelyServerDir}.\n`
+                   + `Afterwards your first lively.next world is ready to run at http://localhost:9011/index.html`);
 
   } catch (e) {
     console.error("Error occurred during installation: " + e.stack);
@@ -127,7 +127,6 @@ async function saveConflictingInitialFiles(baseDir, whileFn) {
     if (!await initial.exists()) continue;
     if (await initial.read() !== await existing.read()) conflictingFiles.push(fn)
   }
-
 
   if (!conflictingFiles.length) {
     await whileFn();

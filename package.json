@@ -1,6 +1,6 @@
 {
   "name": "lively.installer",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/LivelyKernel/lively.installer"
@@ -19,6 +19,14 @@
   },
   "dependencies": {
     "lively.modules": "*",
-    "systemjs": "^0.19.31"
+    "systemjs": "^0.19.31",
+    "flatn": "*"
+  },
+  "systemjs": {
+    "map": {
+      "lively.modules": "./deps/lively.modules.js",
+      "babel": "./deps/babel.min.js",
+      "systemjs": "./deps/system.src.js"
+    }
   }
 }
