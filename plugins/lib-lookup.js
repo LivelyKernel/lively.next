@@ -39,39 +39,39 @@ export default class LibLookupPlugin {
 
   async handleRequest(req, res, next) {
     let {libPath, fsRootDir} = this, {url: path} = req;
+
+    if (path === "/package-registry.json") return this.sendPackageRegistry(req, res);
+
     if (!path.startsWith(libPath) || path === libPath) return next();
 
     path = decodeURIComponent(path);
-    let [_, _2, fullPackageName, ...rest] = path.split("/");
-    console.log(fullPackageName)
-    let [packageName, version] = fullPackageName.split("@"),
+    let [_, _2, fullPackageName, ...rest] = path.split("/"),
+        [packageName, version] = fullPackageName.split("@"),
         fullLibPath = join(fsRootDir, libPath);
 
-// fs.existsSync(join(fullLibPath, fullPackageName))
+    if (version) {
+      if (fs.existsSync(join(fullLibPath, packageName, version))) return next();
+    } else {
+      if (fs.existsSync(join(fullLibPath, packageName, ...rest))) return next();
+    }
+    
 
-    if (fs.existsSync(join(fullLibPath, fullPackageName))) return next();
-
-    let registry = System.get("@lively-env").packageRegistry;
+    let registry = this.packageRegistry;
     if (!registry) return next();
 
-    let pkg = registry.lookup(packageName, version)
+    let pkg = registry.lookup(packageName, version);
     if (!pkg) return next();
 
-    let pkgURL = resource(pkg.url).path();
-    let index = pkgURL.indexOf(fullLibPath)
+    let pkgURL = resource(pkg.url).path(),
+        index = pkgURL.indexOf(fullLibPath)
+
     if (index !== 0) return next();
     
     let newPath = join(libPath, pkgURL.slice(fullLibPath.length), ...rest);
     req.url = newPath;
-    console.log("!!!!!", newPath)
-
-    // next();
 
     res.writeHead(301,  {location: newPath});
     res.end();
-
-// let s = LivelyServer.servers.values().next().value
-
   }
 
 }
