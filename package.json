@@ -10,17 +10,7 @@
   "homepage": "https://github.com/LivelyKernel/lively.notifications#readme",
   "main": "dist/lively.notifications.js",
   "systemjs": {
-    "main": "./index.js",
-    "map": {
-      "lively.notifications": "."
-    }
-  },
-  "lively": {
-    "main": "index.js",
-    "packageMap": {
-      "lively.lang": "./node_modules/lively.lang",
-      "mocha-es6": "./node_modules/mocha-es6"
-    }
+    "main": "./index.js"
   },
   "scripts": {
     "build": "node build.js",
