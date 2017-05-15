@@ -2,10 +2,8 @@
   "name": "lively.keyboard",
   "version": "0.1.0",
   "main": "index.js",
-  "lively": {
-    "main": "index.js",
-    "packageMap": {
-      "lively.lang": "./node_modules/lively.lang",
+  "systemjs": {
+    "map": {
       "bowser": "./bowser.min.js"
     }
   },
