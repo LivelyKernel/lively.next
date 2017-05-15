@@ -20,7 +20,9 @@ export class SizzleExpression {
        this.compiledRule.push(this.createMatcher(token));
     }
     if (arr.any(this.compiledRule, matcher => !matcher)) {
-      throw new Error('Can not compile ' + rule);
+      //throw new Error('Can not compile ' + rule);
+      this.compileError = true;
+      return;
     }
     this.context.withAllSubmorphsDo(m => {
       this.addToIndex(m)
@@ -59,9 +61,7 @@ export class SizzleExpression {
   }
 
   matches(morph) {
-    // if (!this.hasIndexed(morph)) {
-    //   this.addToIndex(morph)
-    // }
+    if (this.compileError) return false;
     let ownerChain = morph.ownerChain(),
         [firstMatcher, ...remainingMatchers] = this.compiledRule;
     // match leaf

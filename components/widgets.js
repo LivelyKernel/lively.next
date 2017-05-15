@@ -783,3 +783,178 @@ export class DropDownSelector extends Morph {
     this.menu.isHaloItem = this.isHaloItem;
   }
 }
+
+export class SearchField extends Text {
+
+  static get properties() {
+    return {
+      layout: {
+        initialize() {
+          this.layout = new HorizontalLayout({direction: 'rightToLeft'});
+        }
+      },
+      fuzzy: {
+        derived: true, after: ["filterFunction", "sortFunction"],
+        set(fuzzy) {
+          // fuzzy => bool or prop;
+          this.setProperty("fuzzy", fuzzy);
+          if (!fuzzy) {
+            if (this.sortFunction === this.fuzzySortFunction)
+              this.sortFunction = null;
+            if (this.filterFunction === this.fuzzyFilterFunction)
+              this.filterFunction = this.defaultFilterFunction;
+          } else  {
+            if (!this.sortFunction) this.sortFunction = this.fuzzySortFunction
+            if (this.filterFunction == this.defaultFilterFunction)
+              this.filterFunction = this.fuzzyFilterFunction;
+          }
+        }
+      },
+
+      filterFunction: {
+        get() {
+          let filterFunction = this.getProperty("filterFunction");
+          if (!filterFunction) return this.defaultFilterFunction;
+          if (typeof filterFunction === "string")
+            filterFunction = eval(`(${filterFunction})`);
+          return filterFunction;
+        }
+      },
+
+      sortFunction: {},
+
+      defaultFilterFunction: {
+        readOnly: true,
+        get() {
+          return this._defaultFilterFunction
+              || (this._defaultFilterFunction = (parsedInput, item) =>
+                    parsedInput.lowercasedTokens.every(token =>
+                      item.string.toLowerCase().includes(token)));
+        }
+      },
+
+      fuzzySortFunction: {
+        get() {
+          return this._fuzzySortFunction
+              || (this._fuzzySortFunction = (parsedInput, item) => {
+                var prop = typeof this.fuzzy === "string" ? this.fuzzy : "string";
+                // preioritize those completions that are close to the input
+                var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
+                var base = 0;
+                parsedInput.lowercasedTokens.forEach(t => {
+                  if (fuzzyValue.startsWith(t)) base -= 10;
+                  else if (fuzzyValue.includes(t)) base -= 5;
+                });
+                return arr.sum(parsedInput.lowercasedTokens.map(token =>
+                  string.levenshtein(fuzzyValue.toLowerCase(), token))) + base
+              })
+        }
+      },
+
+      fuzzyFilterFunction: {
+        get() {
+          return this._fuzzyFilterFunction
+              || (this._fuzzyFilterFunction = (parsedInput, item) => {
+            var prop = typeof this.fuzzy === "string" ? this.fuzzy : "string";
+            var tokens = parsedInput.lowercasedTokens;
+            if (tokens.every(token => item.string.toLowerCase().includes(token))) return true;
+            // "fuzzy" match against item.string or another prop of item
+            var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
+            return arr.sum(parsedInput.lowercasedTokens.map(token =>
+                    string.levenshtein(fuzzyValue, token))) <= 3;
+          });
+        }
+      },
+      submorphs: {
+        after: ['placeHolder'],
+        initialize() {
+           this.submorphs = [
+            {
+              type: "label",
+              name: 'placeholder',
+              isLayoutable: false,
+              opacity: .3,
+              value: "Search",
+              reactsToPointer: false,
+              padding: rect(6, 3, 2, 2)
+            },
+            Icon.makeLabel("times-circle", {
+              padding: rect(2,2,4,2),
+              fontSize: 14,
+              visible: false,
+              name: "placeholder icon",
+              fontColor: Color.gray,
+              nativeCursor: 'pointer'
+            })
+           ];
+           connect(this.get('placeholder icon'), 'onMouseDown', this, 'clearInput');
+        }
+      }
+    }
+  }
+
+  parseInput() {
+    var filterText = this.textString,
+      // parser that allows escapes
+        parsed = Array.from(filterText).reduce(
+          (state, char) => {
+            // filterText = "foo bar\\ x"
+            if (char === "\\" && !state.escaped) {
+              state.escaped = true;
+              return state;
+            }
+  
+            if (char === " " && !state.escaped) {
+              if (!state.spaceSeen && state.current) {
+                state.tokens.push(state.current);
+                state.current = "";
+              }
+              state.spaceSeen = true;
+            } else {
+              state.spaceSeen = false;
+              state.current += char;
+            }
+            state.escaped = false;
+            return state;
+          },
+          {tokens: [], current: "", escaped: false, spaceSeen: false}
+        );
+    parsed.current && parsed.tokens.push(parsed.current);
+    var lowercasedTokens = parsed.tokens.map(ea => ea.toLowerCase());
+    return {tokens: parsed.tokens, lowercasedTokens};
+  }
+
+  clearInput() {
+    this.textString = '';
+    signal(this, "searchInput", this.parseInput());
+    this.onBlur();
+  }
+
+  matches(string) {
+    if (!this.textString) return true;
+    return this.filterFunction.call(this, this.parseInput(), {string});
+  }
+
+  onChange(change) {
+    super.onChange(change);
+    let inputChange = change.selector === "insertText" || change.selector === "deleteText",
+        validInput = this.isFocused() && this.textString;
+    if (this.get('placeholder icon')) this.get('placeholder icon').visible = !!this.textString;
+    this.active && inputChange && signal(this, "searchInput", this.parseInput());
+  }
+
+  onBlur(evt) {
+    super.onBlur(evt)
+    this.active = false;
+    this.get('placeholder').visible = !this.textString;
+    this.animate({styleClasses: ["idle"], duration: 500});
+
+  }
+  
+  onFocus(evt) {
+    super.onFocus(evt);
+    this.animate({styleClasses: ["selected"], duration: 500});
+    this.get('placeholder').visible = false;
+    this.active = true;
+  }
+}
