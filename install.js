@@ -4,11 +4,12 @@ import { Package } from "./package.js";
 import { buildPackageMap, installDependenciesOfPackage, buildPackage } from "flatn";
 
 var resource = lively.resources.resource,
-    packageSpecFile = getPackageSpec();
+    packageSpecFile = getPackageSpec(),
+    timestamp = new Date().toJSON().replace(/[\.\:]/g, "_");
 
 // var baseDir = "/home/lively/lively-web.org/lively.next/";
-// var baseDir = "/Users/robert/Lively/lively-dev3/";
-// var dependenciesDir = "/Users/robert/Lively/lively-dev3/lively.next-node_modules";
+// var baseDir = "/Users/robert/Lively/lively-dev4/";
+// var dependenciesDir = "/Users/robert/Lively/lively-dev4/lively.next-node_modules";
 
 export async function install(baseDir, dependenciesDir, verbose) {
 
@@ -56,7 +57,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
       env.FLATN_PACKAGE_COLLECTION_DIRS = packageMap.packageCollectionDirs.join(":");
     }
 
-    
+
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // creating packages
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -96,14 +97,22 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // initial world files
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // console.log(`=> setting up initial lively world`);
-    // await saveConflictingInitialFiles(baseDir, async () => {
-    //   var baseDirForExec = baseDir.replace(/^file:\/\//, ""),
-    //       {code, output} = await exec(`cp ${baseDirForExec}/lively.morphic/examples/initial/* ${baseDirForExec}`);
-    //   if (code) console.error("workspace setup failed", output);
-    //   var {code, output} = await exec(`cp ${baseDirForExec}/lively.morphic/assets/favicon.ico ${baseDirForExec}`);
-    //   if (code) console.error("asset setup failed", output);
-    // });
+    console.log(`=> setting up scripts and assets`);
+    let toRemove = [
+      "rebuild.sh",
+      "backup.sh",
+      "package.json",
+      "index.js",
+      "index.html",
+      "mirror.js",
+      "mirror.html",
+      "fix-links.js"]
+    for (let fn of toRemove)
+      await safelyRemove(resource(baseDir), resource(baseDir).join(fn));
+
+    await resource(baseDir).join("lively.installer/assets/start.sh").copyTo(resource(baseDir).join("start.sh"));
+    await resource(baseDir).join("lively.installer/assets/update.sh").copyTo(resource(baseDir).join("update.sh"));
+    await resource(baseDir).join("lively.morphic/assets/favicon.ico").copyTo(resource(baseDir).join("favicon.ico"));
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -129,42 +138,17 @@ export async function install(baseDir, dependenciesDir, verbose) {
 }
 
 
-async function saveConflictingInitialFiles(baseDir, whileFn) {
+async function safelyRemove(baseDir, file) {
   // stores conflicting files of the base directory into a backup dir
 
-  var initialLivelyFilesDir = join(baseDir, `/lively.morphic/examples/initial/`),
-      existingFiles = (await resource(baseDir).dirList(1))
-        .filter(ea => !ea.isDirectory())
-        .map(ea => ea.name()),
-      conflictingFiles = [];
+  if (!await file.exists()) return;
 
-  for (let fn of existingFiles) {
-    var existing = resource(baseDir).join(fn),
-        initial = resource(initialLivelyFilesDir).join(fn);
-    if (!await initial.exists()) continue;
-    if (await initial.read() !== await existing.read()) conflictingFiles.push(fn)
-  }
-
-  if (!conflictingFiles.length) {
-    await whileFn();
-    return [];
-  }
-
-  var timestamp = new Date().toJSON().replace(/[\.\:]/g, "_"),
-      backupDir = resource(baseDir).join(`${timestamp}_install-backup/`);
-
+  let backupDir = baseDir.join(`${timestamp}_install-backup/`);
   await backupDir.ensureExistance();
-  for (let fn of conflictingFiles)
-    resource(baseDir).join(fn).copyTo(resource(backupDir.join(fn)));
 
-  try {
-    await whileFn();
-  } finally {
-    console.log(`[lively.installer] There are conflicting files in the base directory:`)
-    for (let fn of conflictingFiles) {
-      var local = resource(baseDir).join(fn);
-      console.log(local.url);
-    }
-    console.log(`[lively.installer] These files were updated and your version of of them was put into ${backupDir.url}.`);
-  }
+  let backupFile = backupDir.join(file.relativePathFrom(baseDir));
+  await backupFile.parent().ensureExistance();
+  await file.rename(backupFile);
+
+  console.log(">>> Moving old file ${file.url} to ${backupDir.url}");
 }
