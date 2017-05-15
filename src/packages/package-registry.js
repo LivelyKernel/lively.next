@@ -382,7 +382,7 @@ export class PackageRegistry {
       let config = await dir.join("package.json").readJson(),
           {name, version} = config,
           pkg = new Package(System, dir.url, name, version, config);
-      console.log(`[lively.modules] package registry ${name}@${version} in ${dir.url}`);
+      System.debug && console.log(`[lively.modules] package registry ${name}@${version} in ${dir.url}`);
       this.updatePackage(pkg, undefined, undefined, undefined, updateLatestPackage);
       return pkg;
     } catch (err) { return null; }

@@ -7560,7 +7560,7 @@ var PackageRegistry$$1 = function () {
       var pkgData = this.packageMap[pkgName];
       if (!pkgData) return null;
       if (!versionRange || versionRange === "latest") return pkgData.versions[pkgData.latest];
-      if (!semver.parse(versionRange)) throw new Error("PackageRegistry>>loookup of " + pkgName + ": Invalid version - " + versionRange);
+      if (!semver.parse(versionRange)) throw new Error("PackageRegistry>>lookup of " + pkgName + ": Invalid version - " + versionRange);
       var pkgs = lively_lang.obj.values(pkgData.versions).filter(function (pkg) {
         return _this.matches(pkg, pkgName, versionRange);
       });
@@ -8148,7 +8148,7 @@ var PackageRegistry$$1 = function () {
                 version = config.version;
                 pkg = new Package(System$$1, dir.url, name, version, config);
 
-                console.log("[lively.modules] package registry " + name + "@" + version + " in " + dir.url);
+                System$$1.debug && console.log("[lively.modules] package registry " + name + "@" + version + " in " + dir.url);
                 this.updatePackage(pkg, undefined, undefined, undefined, updateLatestPackage);
                 return _context3.abrupt("return", pkg);
 
