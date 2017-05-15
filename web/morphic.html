@@ -17,8 +17,8 @@
       </div>
     </div>
 
-    <script src="/lively.modules/node_modules/babel-standalone/babel.js"></script>
-    <script src="/lively.modules/node_modules/systemjs/dist/system.src.js"></script>
+    <script src="/lively.next-node_modules/babel-standalone/babel.js"></script>
+    <script src="/lively.next-node_modules/systemjs/dist/system.src.js"></script>
     <script src="/lively.modules/dist/lively.modules.js"></script>
 
     <script>
@@ -27,8 +27,7 @@
         .then(polyfills)
         .then(bootstrapLivelySystem)
         .then(function() { return lively.modules.registerPackage('lively.2lively'); })
-        .then(function() { return ; })
-        .then(function(morphic) {
+        .then(function() {
           window.addEventListener('beforeunload', function(evt) {
             var msg = "Really?";
             evt.returnValue = msg;
@@ -86,15 +85,16 @@
 
         // for loading an instrumented version of the packages comprising the lively.system
         return Promise.resolve()
-          .then(function() { console.log("loading initial system so we can bootstrap..."); })
-          .then(function () { return lively.modules.importPackage(origin + '/lively-system-interface/'); })
-
           .then(function() { console.log("starting bootstrap process..."); })
 
-          .then(function () {
+          .then(function() { return lively.resources.resource(origin).join("package-registry-cache.json").readJson(); })
+          .then(function (packageCached) {
             var System = lively.modules.getSystem("bootstrapped", {baseURL: origin});
             // System.debug = true;
-            return lively.modules.changeSystem(System, true);
+            lively.modules.changeSystem(System, true);
+            let registry = System["__lively.modules__packageRegistry"] = lively.modules.PackageRegistry.fromJSON(System, packageCached);
+            registry.allPackages().forEach(pkg => pkg.register2());
+            return System;
           })
           .then(function() {
             return importPackageAndDo(
@@ -144,11 +144,11 @@
           .then(doFunc || function() {})
           .then(function() { console.log("...%s loaded...", name); })
       }
-      
+
       function polyfills() {
         var loads = [];
         if (!("PointerEvent" in window))
-          loads.push(lively.resources.loadViaScript(`${origin}/lively.morphic/node_modules/pepjs/dist/pep.js`));
+          loads.push(lively.resources.loadViaScript(`${origin}/lively.next-node_modules/pepjs/dist/pep.js`));
         if (!("fetch" in window))
           loads.push(lively.resources.loadViaScript(`//cdnjs.cloudflare.com/ajax/libs/fetch/1.0.0/fetch.js`));
         return Promise.all(loads);

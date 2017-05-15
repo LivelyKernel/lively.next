@@ -59,7 +59,7 @@ async function createDOMEnvironment_browser() {
 
 function createDOMEnvironment_node() {
   var morphicDir = System.decanonicalize("lively.morphic/").replace(/file:\/\//, ""),
-      jsdom = System._nodeRequire(morphicDir + "node_modules/jsdom"),
+      jsdom = System._nodeRequire("jsdom"),
       virtualConsole = jsdom.createVirtualConsole().sendTo(console);
   return new Promise((resolve, reject) => {
     jsdom.env(

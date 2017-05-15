@@ -38,41 +38,31 @@
   "systemjs": {
     "main": "index.js",
     "map": {
-      "dom-to-image": "./node_modules/dom-to-image/dist/dom-to-image.min.js",
-      "three.js": "./node_modules/three/build/three.js",
+      "dom-to-image": "dom-to-image/dist/dom-to-image.min.js",
+      "three.js": "three/build/three.js",
       "svg-intersections": "./dist/svg-intersections.js",
-      "virtual-dom": "./node_modules/virtual-dom/dist/virtual-dom.js",
-      "bowser": "./node_modules/bowser/bowser.js",
+      "virtual-dom": "virtual-dom/dist/virtual-dom.js",
+      "bowser": "bowser/bowser.js",
       "gsap": {
-        "~node": "./node_modules/gsap/src/minified/TweenMax.min.js",
+        "~node": "gsap/src/minified/TweenMax.min.js",
         "node": "@empty"
       },
       "gsap-css": {
-        "~node": "./node_modules/gsap/src/minified/plugins/CSSPlugin.min.js",
+        "~node": "gsap/src/minified/plugins/CSSPlugin.min.js",
         "node": "@empty"
       }
     },
     "meta": {
-      "node_modules/virtual-dom/dist/virtual-dom.js": {
+      "virtual-dom/dist/virtual-dom.js": {
         "format": "amd"
       },
-      "node_modules/bowser/bowser.js": {
+      "bowser/bowser.js": {
         "format": "global",
         "exports": "bowser"
       },
-      "node_modules/gsap/src/minified/*": {
+      "gsap/src/minified/*": {
         "format": "global"
       }
-    }
-  },
-  "lively": {
-    "main": "index.js",
-    "packageMap": {
-      "lively.serializer2": "./node_modules/lively.serializer2",
-      "lively.graphics": "./node_modules/lively.graphics",
-      "lively.lang": "./node_modules/lively.lang",
-      "lively.bindings": "./node_modules/lively.bindings",
-      "mocha-es6": "./node_modules/mocha-es6"
     }
   },
   "scripts": {

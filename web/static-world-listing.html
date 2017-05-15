@@ -64,8 +64,8 @@
       </div>
     </div>
 
-    <script src="/lively.modules/node_modules/babel-standalone/babel.js"></script>
-    <script src="/lively.modules/node_modules/systemjs/dist/system.src.js"></script>
+    <script src="/lively.next-node_modules/babel-standalone/babel.js"></script>
+    <script src="/lively.next-node_modules/systemjs/dist/system.src.js"></script>
     <script src="/lively.modules/dist/lively.modules.min.js"></script>
     <script src="/lively.storage/dist/lively.storage_with-pouch.js"></script>
 
@@ -78,18 +78,23 @@
     </script>
 
     <script>
-      var System = lively.modules.getSystem("listing", {baseURL: String(document.location.origin)});
-      lively.modules.changeSystem(System, true);
+      var origin = document.location.origin;
       polyfills()
-        .then(() => lively.modules.registerPackage("lively.morphic"))
-        .then(() => lively.modules.module("lively.morphic/web/static-world-listing.js").load())
-        .then(m => m.run())
-        .catch(err => console.error(err));
-        
+        .then(function() { return lively.resources.resource(origin).join("package-registry-cache.json").readJson(); })
+        .then(function(packageCached) {
+          var System = lively.modules.getSystem("listing", {baseURL: String(origin)});
+          lively.modules.changeSystem(System, true);
+          let registry = System["__lively.modules__packageRegistry"] = lively.modules.PackageRegistry.fromJSON(System, packageCached);            registry.allPackages().forEach(pkg => pkg.register2());
+        })
+        .then(function() { return lively.modules.registerPackage("lively.morphic"); })
+        .then(function() { return lively.modules.module("lively.morphic/web/static-world-listing.js").load(); })
+        .then(function(m) { return m.run(); })
+        .catch(function(err) { console.error(err); });
+
       function polyfills() {
         var loads = [];
         if (!("PointerEvent" in window))
-          loads.push(lively.resources.loadViaScript(`${document.location.origin}/lively.morphic/node_modules/pepjs/dist/pep.js`));
+          loads.push(lively.resources.loadViaScript(`${origin}/lively.next-node_modules/pepjs/dist/pep.js`));
         if (!("fetch" in window))
           loads.push(lively.resources.loadViaScript(`//cdnjs.cloudflare.com/ajax/libs/fetch/1.0.0/fetch.js`));
         return Promise.all(loads);

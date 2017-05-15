@@ -1,6 +1,6 @@
 /*global require, process*/
 
-var systemjs = require('../../lively.modules/node_modules/systemjs');
+var systemjs = require('systemjs');
 var lang = require('lively.lang');
 var ast = require('../../lively.ast');
 var classes = require('lively.classes');
