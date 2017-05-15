@@ -31,14 +31,5 @@
         "node": "socket.io-client/lib/index.js"
       }
     }
-  },
-  "lively": {
-    "packageMap": {
-      "lively.user": "./node_modules/lively.user",
-      "lively.lang": "./node_modules/lively.lang",
-      "lively.storage": "./node_modules/lively.storage",
-      "lively.server": "./node_modules/lively.server",
-      "mocha-es6": "./node_modules/mocha-es6"
-    }
   }
 }
