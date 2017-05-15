@@ -1,5 +1,5 @@
 import { Color, Rectangle, pt } from "lively.graphics";
-import { morph, FilterableList } from "lively.morphic";
+import { morph, StyleSheet, FilterableList } from "lively.morphic";
 import { connect } from "lively.bindings";
 import { arr, string } from "lively.lang";
 
@@ -136,6 +136,11 @@ export class CompletionController {
     }
 
     return {
+       styleSheets: new StyleSheet({
+          ".ListItemMorph": {
+            fontFamily, fontSize
+          }
+        }),
       fontFamily, fontSize,
       position: bounds.topLeft(),
       extent: bounds.extent(),

@@ -94,7 +94,7 @@ export class Tooltip extends Morph {
           this.submorphs = [
             new Label({
               width: 200,
-              autoFit: true,
+              autofit: true,
               fill: Color.transparent,
               fontColor: Color.white
             })

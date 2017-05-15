@@ -14,7 +14,7 @@ import { obj, arr } from "lively.lang/index.js";
 export class Button extends Morph {
 
   static get styleSheet() {
-    return new StyleSheet({
+    return new StyleSheet('Button Style', {
       ".Button": {borderWidth: 1, borderRadius: 5, extent: pt(100,24)},
       ".Button.activeStyle": {
         borderColor: Color.gray,
@@ -70,7 +70,7 @@ export class Button extends Morph {
       },
       // button label
       labelMorph: {
-        after: ["submorphs"], derived: true,
+        after: ["submorphs"],
         initialize() {
           this.labelMorph = this.addMorph({
             type: "label", name: "label",
@@ -93,7 +93,8 @@ export class Button extends Morph {
       },
 
       icon: {
-        after: ['labelMorph'], derived: true,
+        after: ['labelMorph'], 
+        derived: true,
         initialize() {
           this.iconMorph = this.addMorph({
             type: "label", name: "iconMorph",
@@ -104,7 +105,7 @@ export class Button extends Morph {
         get() { return this.iconMorph.textString },
         set(codeOrIconMorph) {
           if (codeOrIconMorph.isMorph) {
-            this.iconMorph = codeOrIconMorph;
+            this.labelMorph = codeOrIconMorph;
           } else {
             this.labelMorph.value = codeOrIconMorph;
           }

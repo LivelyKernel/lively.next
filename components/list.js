@@ -628,7 +628,10 @@ export class FilterableList extends Morph {
         fontColor: Color.gray.darker(),
         padding: rect(10, 2)
       },
-      ".list.default [name=list]": {padding: Rectangle.inset(2, 0)},
+      ".list.default [name=list]": {
+         //fontFamily: "Inconsolata, monospace",
+         padding: Rectangle.inset(2, 0)
+      },
       ".list.default [name=input]": {
         borderWidth: 0,
         borderColor: Color.gray
@@ -866,12 +869,6 @@ export class FilterableList extends Morph {
     connect(this.listMorph, "selection", this, "selectionChanged");
     this.updateFilter();
     this.layout = new CustomLayout({relayout: () => this.relayout()});
-    // connect(this, 'items', this, "relayout");
-    // connect(this, 'extent', this, "relayout");
-    // connect(this, "padding", this, "relayout");
-    // connect(this, "fontSize", this, "relayout");
-    // connect(this, "itemPadding", this, "relayout");
-    // connect(this, "inputPadding", this, "relayout");
   }
 
   resetConnections() {
@@ -1061,9 +1058,7 @@ export class DropDownList extends Button {
   static get properties() {
     return {
 
-      borderRadius: {defaultValue: 5},
       padding:      {defaultValue: Rectangle.inset(3,2)},
-
       listHeight: {defaultValue: 100},
 
       styleSheets: {

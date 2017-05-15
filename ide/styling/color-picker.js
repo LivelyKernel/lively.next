@@ -373,7 +373,7 @@ class ColorDetails extends Morph {
           },
           this.hashViewer(),
           {type: 'label', name: 'R', 
-           autoFit: true,
+           autofit: true,
            padding: rect(10,0,0,0),
            styleClasses: ['ColorPropertyView']}];
           this.update(this);

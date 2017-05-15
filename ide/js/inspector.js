@@ -1,16 +1,18 @@
+/* globals Power4 */
 import { Color, rect, pt, Rectangle } from "lively.graphics";
-import { obj, arr, promise, string } from "lively.lang";
-import { connect, disconnect } from "lively.bindings";
-import { Morph, HorizontalLayout, morph, config } from "lively.morphic";
+import { obj, Path, arr, promise, string } from "lively.lang";
+import { connect, once, disconnect } from "lively.bindings";
+import { Morph, ShadowObject, Icon, StyleSheet, TilingLayout, HorizontalLayout, morph, config } from "lively.morphic";
 import { Tree, TreeData } from "lively.morphic/components/tree.js";
 import { HorizontalResizer } from "lively.morphic/components/resizers.js";
 import JavaScriptEditorPlugin from "./editor-plugin.js";
 import { debounce, throttle } from "lively.lang/function.js";
 import { ColorPicker } from "../styling/color-picker.js";
 import { isBoolean, isString, isNumber } from "lively.lang/object.js";
-import { ValueScrubber } from "../../components/widgets.js";
+import { ValueScrubber, SearchField, LabeledCheckBox } from "../../components/widgets.js";
 import { last } from "lively.lang/array.js";
-
+import { StyleSheetEditor } from "../../style-rules.js";
+import { GridLayout } from "../../layout.js";
 
 var inspectorCommands = [
 
@@ -72,7 +74,9 @@ function printValue(value) {
     var printed = string.print(value);
     if (tooLong) printed = printed.slice(0, -1) + ", ...]";
     result = printed;
-  } else result = string.print(value);
+      } else {
+        result = string.print(value);
+    }
   result = result.replace(/\n/g, "");
   return result;
 }

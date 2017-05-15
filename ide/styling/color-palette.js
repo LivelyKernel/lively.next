@@ -277,6 +277,11 @@ export class ColorPalette extends Morph {
            this.styleSheets = this.styler
          }
        },
+      layout: {
+        initialize() {
+          this.layout = this.layouter;
+        }
+      },
        submorphs: {
          after: ['color', 'styleSheets'],
          initialize() {
@@ -311,7 +316,6 @@ export class ColorPalette extends Morph {
    fadeIntoWorld(pos) {
       super.fadeIntoWorld(pos);
       this.initPosition = pos;
-      this.relayout();
       return this;
    }
 
@@ -324,28 +328,28 @@ export class ColorPalette extends Morph {
         extent: pt(200, 300),
         borderRadius: 5,
         reactsToPointer: false,
-        layout: new VerticalLayout()
+        layout: new VerticalLayout({resizeContainer: false})
       },
       ".ColorPalette": {
         fill: Color.transparent,
         dropShadow: true,
         borderRadius: 5,
         extent: pt(200, 300),
-        layout: new VerticalLayout({ignore: ["arrow"]})
+        layout: new VerticalLayout({resizeContainer: false, ignore: ["arrow"]})
       },
       ".ColorPalette [name=arrow]": {fill, grabbable: false, draggable: false},
       ".ColorPalette .paletteFormatter": {
-        layout: new HorizontalLayout({spacing: 5}),
+        layout: new HorizontalLayout({resizeContainer: false, spacing: 5}),
         fill: Color.transparent
       },
       ".ColorPalette [name=harmonyControl]": {
-        layout: new VerticalLayout({spacing: 5}),
+        layout: new VerticalLayout({resizeContainer: false, spacing: 5}),
         fill: Color.transparent
       },
       ".ColorPalette [name=paletteView]": {clipMode: "hidden", fill: Color.transparent},
       ".ColorPalette [name=solidColorPalette]": {
         fill: Color.transparent,
-        layout: new VerticalLayout()
+        layout: new VerticalLayout({resizeContainer: false})
       },
       ".ColorPalette [name=paletteContainer]": {
         layout: new TilingLayout(),
@@ -380,13 +384,6 @@ export class ColorPalette extends Morph {
         origin: pt(50, 50),
         position: pt(50, 50)
       },
-      // '.ColorPalette .PivotColorControl': {
-      //    draggable: false,
-      //    fill: Color.transparent,
-      //    borderColor: Color.black,
-      //    borderWidth: 3,
-      //    extent: pt(18,18)
-      // },
       ".ColorPalette .PivotColorControl": {
         fill: Color.transparent,
         borderColor: Color.white,

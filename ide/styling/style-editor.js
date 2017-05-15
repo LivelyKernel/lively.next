@@ -280,7 +280,7 @@ export class StyleEditor extends Morph {
       styleClasses: ["controlWrapper"],
       layout: new VerticalLayout({spacing: 5}),
       submorphs: [
-        {type: "label", autoFit: true, styleClasses: ["controlLabel"], textString: name},
+        {type: "label", autofit: true, styleClasses: ["controlLabel"], textString: name},
         controlElement
       ]
     };
@@ -344,7 +344,7 @@ export class StyleEditor extends Morph {
                 layout: new HorizontalLayout({autoResize: false}),
                 height: 25,
                 submorphs: [
-                  {type: "label", name: 'property name', autoFit: true,
+                  {type: "label", name: 'property name', autofit: true,
                    textString: title, styleClasses: ["controlLabel"]},
                   toggler
                 ]

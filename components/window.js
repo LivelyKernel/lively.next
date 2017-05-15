@@ -11,7 +11,7 @@ export default class Window extends Morph {
 
   static get styleSheet() {
     let windowButtonSize = pt(13, 13);
-    return new StyleSheet({
+    return new StyleSheet('System Window Style',{
       ".Window .buttonGroup": {
         draggable: false,
         fill: Color.transparent,
@@ -34,7 +34,7 @@ export default class Window extends Morph {
       ".Window.active .closeButton": {
         borderRadius: 14,
         extent: windowButtonSize,
-        borderColor: Color.darkRed,
+        borderColor: Color.red.darker(),
         fill: Color.rgb(255, 96, 82)
       },
       ".Window .defaultLabelStyle": {
@@ -52,7 +52,7 @@ export default class Window extends Morph {
       ".Window.active .maximizeButton": {
         borderRadius: 14,
         extent: windowButtonSize,
-        borderColor: Color.darkGreen,
+        borderColor: Color.green.darker(),
         fill: Color.green
       },
       ".Window .windowTitleLabel": {

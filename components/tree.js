@@ -391,10 +391,22 @@ export class Tree extends Morph {
       ".TreeNode.selected": {
         fill: this.selectionColor
       },
-      ".TreeNode.selected .Label": {
+      ".TreeNode.selected [name=label]": {
         fontColor: this.selectionFontColor
       },
-      ".TreeNode.deselected .Label": {
+      ".TreeNode.selected [name=keyString]": {
+        fontColor: this.selectionFontColor
+      },
+      ".TreeNode.selected [name=toggle]": {
+        fontColor: this.selectionFontColor
+      },
+      ".TreeNode.deselected [name=label]": {
+        fontColor: this.nonSelectionFontColor
+      },
+      ".TreeNode.deselected [name=keyString]": {
+        fontColor: this.nonSelectionFontColor
+      },
+      ".TreeNode.deselected [name=toggle]": {
         fontColor: this.nonSelectionFontColor
       }
     });

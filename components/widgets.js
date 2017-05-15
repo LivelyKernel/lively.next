@@ -1,4 +1,4 @@
-import {obj, num, arr, properties} from "lively.lang";
+import {obj, string, num, arr, properties} from "lively.lang";
 import {pt, Color, Rectangle, rect} from "lively.graphics";
 import {signal, connect, disconnect} from "lively.bindings";
 import {
@@ -302,7 +302,7 @@ export class PropertyInspector extends Morph {
             },
             {
               type: "button",
-              name: "up", styleClasses: ['buttonStyle'], autoFit: true,
+              name: "up", styleClasses: ['buttonStyle'], autofit: true,
               label: Icon.makeLabel("sort-asc", {padding: rect(2, 2, 0, 0), fontSize: 12})
             }
           ];
@@ -644,7 +644,7 @@ export class ModeSelector extends Morph {
         styleClasses: ["label"],
         type: "label",
         value: name,
-        autoFit: true,
+        autofit: true,
         ...(tooltip && {tooltip}),
         onMouseDown: evt => {
           this.update(name, value);
