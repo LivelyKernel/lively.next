@@ -8,13 +8,6 @@
     "type": "git",
     "url": "https://github.com/LivelyKernel/lively.graphics"
   },
-  "lively": {
-    "main": "index.js",
-    "packageMap": {
-      "lively.lang": "./node_modules/lively.lang",
-      "mocha-es6": "./node_modules/mocha-es6"
-    }
-  },
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
     "build": "node build.js"
