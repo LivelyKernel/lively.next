@@ -231,15 +231,18 @@ function preNormalize(System, name, parent) {
   let {packageRegistry} = System.get("@lively-env");
   if (packageRegistry) {
     let resolved = packageRegistry.resolvePath(name, parent);
-    if (resolved && resolved.endsWith("/") && !name.endsWith("/")) resolved = resolved.slice(0, -1);
-    if (resolved) name = resolved;
+    if (resolved) {
+      if (resolved.endsWith("/") && !name.endsWith("/")) resolved = resolved.slice(0, -1);
+      if (!resolved.endsWith("/") && name.endsWith("/")) resolved = resolved + "/";
+      name = resolved;
+    }
   }
   // </snap> experimental
 
   return name;
 }
 
-function postNormalize(System, normalizeResult) {
+function postNormalize(System, normalizeResult, isSync) {
   // lookup package main
   var base = normalizeResult.replace(jsExtRe, "");
 
@@ -273,7 +276,7 @@ function normalizeHook(proceed, name, parent, parentAddress) {
   var System = this,
       stage1 = preNormalize(System, name, parent);
     return proceed(stage1, parent, parentAddress).then(stage2 => {
-      let stage3 = postNormalize(System, stage2 || stage1);
+      let stage3 = postNormalize(System, stage2 || stage1, false);
       System.debug && console.log(`[normalize] ${name} => ${stage3}`);
       return stage3;
     });
@@ -283,7 +286,7 @@ function decanonicalizeHook(proceed, name, parent, isPlugin) {
   let System = this,
       stage1 = preNormalize(System, name, parent),
       stage2 = proceed(stage1, parent, isPlugin),
-      stage3 = postNormalize(System, stage2);
+      stage3 = postNormalize(System, stage2, true);
     System.debug && console.log(`[normalizeSync] ${name} => ${stage3}`);
     return stage3;
 }
