@@ -13,11 +13,7 @@
   "dependencies": {},
   "systemjs": {
     "meta": {
-      "./deps/lively.resources.js": {
-        "deps": [
-          "fs"
-        ]
-      }
+      "./deps/lively.resources.js": {"deps": ["fs"]}
     }
   }
 }

@@ -574,7 +574,7 @@ class PackageSpec {
     let read = this.readLvInfo();
     return read instanceof Promise ?
       read.then(read => this.writeLvInfo(changeFn(read))) :
-      this.writeLvInfo(read);
+      this.writeLvInfo(changeFn(read));
   }
 
 }

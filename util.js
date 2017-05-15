@@ -28,7 +28,7 @@ async function npmDownloadArchive(packageNameAndRange, destinationDir) {
   let {version, name} = await npmSearchForVersions(packageNameAndRange),
       archive=`${name}-${version}.tgz`,
       archiveURL = `https://registry.npmjs.org/${name}/-/${archive}`
-  console.log(`[flatn] downloading archive from npm for ${packageNameAndRange}: ${archiveURL}`);
+  console.log(`[flatn] downloading ${packageNameAndRange} - ${archiveURL}`);
   let downloadedArchive = destinationDir.join(archive);
   await resource(archiveURL).beBinary().copyTo(downloadedArchive);
   return {downloadedArchive, name, version};
