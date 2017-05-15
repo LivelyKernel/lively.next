@@ -16,10 +16,10 @@
     "pepjs": "^0.4.3",
     "svg-intersections": "0.2.5",
     "three": "^0.84.0",
-    "virtual-dom": "^2.1.1"
+    "virtual-dom": "^2.1.1",
+    "jsdom": "^9.4.0"
   },
   "devDependencies": {
-    "jsdom": "^9.4.0",
     "babel-plugin-external-helpers": "^6.8.0",
     "babel-plugin-syntax-object-rest-spread": "^6.13.0",
     "babel-plugin-transform-async-to-generator": "^6.16.0",
