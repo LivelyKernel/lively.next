@@ -119,5 +119,5 @@ function addNpmSpecificConfigAdditions(configFile, config, packageNameAndRange, 
         _from = gitURL ?
           `${config.name}@${gitURL}` :
           `${config.name}@${semver.validRange(version)}`;
-    return configFile.writeJson({_id, _from, ...config}, true);
+    return configFile.writeJson(Object.assign({_id, _from}, config), true);
 }
