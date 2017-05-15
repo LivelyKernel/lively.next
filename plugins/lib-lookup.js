@@ -29,6 +29,14 @@ export default class LibLookupPlugin {
     return _fsRootDir;
   }
 
+  get packageRegistry() { return System.get("@lively-env").packageRegistry; }
+
+  sendPackageRegistry(req, res) {
+    let r = this.packageRegistry;
+    res.writeHead(200,  {"Content-Type": "application/json"});
+    res.end(JSON.stringify(r.toJSON()));
+  }
+
   async handleRequest(req, res, next) {
     let {libPath, fsRootDir} = this, {url: path} = req;
     if (!path.startsWith(libPath) || path === libPath) return next();
