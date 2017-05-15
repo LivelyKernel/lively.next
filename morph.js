@@ -543,16 +543,6 @@ export class Morph {
   }
 
   getStyleSheetsInScope() {
-    //let styleSheets = [];
-    // for (let p of [this, ...this.ownerChain()].reverse()) {
-    //   if (!p.styleSheets) continue;
-    //   for (let ss of p.styleSheets) {
-    //     if (!ss.context) {
-    //       ss.context = p;
-    //     }
-    //     styleSheets.push(ss);
-    //   }
-    // }
     let ownerStyleSheets = this.owner
       ? this.owner._styleSheetsInScope || this.owner.getStyleSheetsInScope()
       : [],
@@ -704,10 +694,8 @@ export class Morph {
       morph = args[0];
       if (obj.equals(morph.getStyleSheetsInScope(), morph._styleSheetsInScope)) {
         morph = null;
-      } else {
-        console.log(morph.getStyleSheetsInScope(), morph._styleSheetsInScope)
       }
-    } else if (prop == "name" || prop == "styleClasses") {
+    } else if (['styleClasses', 'name', 'styleSheets'].includes(prop)) {
       if (!obj.equals(prevValue,value)) morph = this;
     }
 

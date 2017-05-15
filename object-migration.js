@@ -1,6 +1,5 @@
 import { Color, pt } from "lively.graphics";
 import { morph } from "lively.morphic";
-import { SnapshotInspector } from "lively.serializer2/debugging.js";
 import { removeUnreachableObjects } from "lively.serializer2/snapshot-navigation.js";
 
 export var migrations = [
@@ -76,11 +75,10 @@ morph breaks old windows without it.
 State management of the style sheets has changes substantially, moving all of the style sheets that are being applied to the world.
 `,
     snapshotConverter: idAndSnapshot => {
-      let {id: rootId, snapshot} = idAndSnapshot,
-          i = SnapshotInspector.forSnapshot(snapshot);
+      let {id: rootId, snapshot} = idAndSnapshot;
       for (let id in snapshot) {
         let { props } = snapshot[id];
-        if (!props || !props.styleSheets) continue;
+        if (!props || !props.styleSheets || !props.styleSheets.styledMorphs) continue;
         if (!props.styleSheets.value) props.styleSheets.value = [];
         props.styleSheets.value = props.styleSheets.value.filter(ea => {
           let styleSheet = snapshot[ea.id];
