@@ -7,14 +7,8 @@
     "lively.lang": "*",
     "mocha-es6": "*"
   },
-  "lively": {
-    "main": "index.js",
-    "packageMap": {
-      "lively.morphic": "./node_modules/lively.morphic",
-      "lively.graphics": "./node_modules/lively.graphics",
-      "lively.lang": "./node_modules/lively.lang",
-      "mocha-es6": "./node_modules/mocha-es6"
-    }
+  "systemjs": {
+    "main": "index.js"
   },
   "scripts": {
     "test": "mocha-es6 tests/*-test.js"
