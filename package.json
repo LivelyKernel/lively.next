@@ -25,14 +25,8 @@
   "lively": {
     "main": "server.js",
     "packageMap": {
-      "lively.modules": "./node_modules/lively.modules",
-      "lively.resources": "./node_modules/lively.resources",				
-      "lively.2lively": "./node_modules/lively.2lively",
-      "lively-system-interface": "./node_modules/lively-system-interface",
-      "lively.shell": "./node_modules/lively.shell",
-      "mocha-es6": "./node_modules/mocha-es6",
-      "socket.io": "./node_modules/socket.io",
-      "socket.io-client": "./node_modules/socket.io-client"
+      "socket.io": "../lively.next-node_modules/socket.io@1.7.4",
+      "socket.io-client": "../lively.next-node_modules/socket.io-client@1.7.4"
     }
   }
 }

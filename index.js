@@ -15,6 +15,10 @@ module.exports = function start(hostname, port, rootDirectory, serverDir) {
   });
   lively.modules.changeSystem(System, true);
 
+  let packageCached = JSON.parse(require("fs").readFileSync(rootDirectory + "/package-registry-cache.json"));
+  let registry = System["__lively.modules__packageRegistry"] = lively.modules.PackageRegistry.fromJSON(System, packageCached);  
+  registry.allPackages().forEach(pkg => pkg.register2());
+
   return (
     lively.modules.registerPackage(serverDir)
       .then(() => console.log(`[lively.server] ${step++}. preparing system...`))
