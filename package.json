@@ -53,10 +53,5 @@
         "~node": "@empty"
       }
     }
-  },
-  "lively": {
-    "packageMap": {
-      "lively.modules": "./node_modules/lively.modules"
-    }
   }
 }
