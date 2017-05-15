@@ -195,8 +195,8 @@ function doList(genericArgs, args) {
     .then(packageSpecs =>
       console.log(
         string.printTable(
-          packageSpecs.map(({config, location}) => [
-            `${config.name}@${config.version}`,
+          packageSpecs.map(({name, version, location}) => [
+            `${name}@${version}`,
             `${location}`
           ]))))
     .then(() => process.exit(0))
