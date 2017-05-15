@@ -1318,16 +1318,16 @@ function ensurePathFormat(dirOrArray) {
 }
 
 function buildPackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
-  packageCollectionDirs = ensurePathFormat(packageCollectionDirs);
-  individualPackageDirs = ensurePathFormat(individualPackageDirs);
-  devPackageDirs = ensurePathFormat(devPackageDirs);
+  if (packageCollectionDirs) packageCollectionDirs = ensurePathFormat(packageCollectionDirs);
+  if (individualPackageDirs) individualPackageDirs = ensurePathFormat(individualPackageDirs);
+  if (devPackageDirs) devPackageDirs = ensurePathFormat(devPackageDirs);
   return PackageMap.build(packageCollectionDirs, individualPackageDirs, devPackageDirs);
 }
 
 function ensurePackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
-  packageCollectionDirs = ensurePathFormat(packageCollectionDirs);
-  individualPackageDirs = ensurePathFormat(individualPackageDirs);
-  devPackageDirs = ensurePathFormat(devPackageDirs);
+  if (packageCollectionDirs) packageCollectionDirs = ensurePathFormat(packageCollectionDirs);
+  if (individualPackageDirs) individualPackageDirs = ensurePathFormat(individualPackageDirs);
+  if (devPackageDirs) devPackageDirs = ensurePathFormat(devPackageDirs);
   return PackageMap.ensure(packageCollectionDirs, individualPackageDirs, devPackageDirs);
 }
 
