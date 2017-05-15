@@ -8,12 +8,10 @@ import { getSystem, removeSystem, printSystemConfig, loadedModules } from "../sr
 import { getPackage, applyConfig, getPackages } from "../src/packages.js";
 import module from "../src/module.js";
 import { resource, createFiles } from "lively.resources";
+import { PackageRegistry } from "../src/packages/package-registry.js";
 
-var testDir = System.decanonicalize("lively.modules/tests/package-tests-temp/");
-// await resource(testDir).exists()
-// await resource(testDir).remove()
-
-var project1aDir = testDir + "dep1/",
+var testDir = System.decanonicalize("lively.modules/tests/package-tests-temp/"),
+    project1aDir = testDir + "dep1/",
     project1bDir = testDir + "dep2/",
     project2Dir = testDir + "project2/",
     project1a = {
@@ -65,8 +63,7 @@ describe("package loading", function() {
         address: noTrailingSlash(project1aDir),
         main: "entry-a.js",
         meta: {"package.json": {format: "json"}},
-        map: {},
-        referencedAs: ["some-project"]
+        map: {}
       }]);
     });
 
@@ -93,7 +90,7 @@ describe("package loading", function() {
       expect(getPackages(S)).to.containSubset([
         {
           address: noTrailingSlash(project1aDir),
-          name: `some-project`, referencedAs: [`some-project`],
+          name: `some-project`,
           modules: [
             {deps: [`${project1aDir}other.js`], name: `${project1aDir}entry-a.js`},
             {deps: [],name: `${project1aDir}other.js`},
@@ -101,7 +98,7 @@ describe("package loading", function() {
         },
         {
           address: noTrailingSlash(project2Dir),
-          name: `project2`, referencedAs: [`project2`],
+          name: `project2`,
           modules: [
             {deps: [`${project1aDir}entry-a.js`], name: `${project2Dir}index.js`},
             {deps: [], name: `${project2Dir}package.json`}],
@@ -115,14 +112,14 @@ describe("package loading", function() {
       expect(getPackages(S).map(ea => Object.assign(ea, {System: null}))).to.containSubset([
         {
           address: noTrailingSlash(project2Dir),
-          name: `project2`, referencedAs: [`project2`],
+          name: `project2`,
           modules: [
             {deps: [`${project1bDir}entry-b.js`], name: `${project2Dir}index.js`},
             {deps: [], name: `${project2Dir}package.json`}],
         },
         {
           address: noTrailingSlash(project1bDir),
-          name: `some-project`, referencedAs: [`some-project`]
+          name: `some-project`,
         }])
     })
   });
@@ -206,7 +203,7 @@ describe("package loading", function() {
       await modifyJSON(project2Dir + "package.json", {lively: {preferLoadedPackages: false, packageMap: {"some-project": "../dep2/"}}});
       await getPackage(S, project2Dir).register();
       expect(S.packages).to.containSubset({
-        [noTrailingSlash(project1bDir)]: {main: "entry-b.js", map: {}, referencedAs: ["some-project"]},
+        [noTrailingSlash(project1bDir)]: {main: "entry-b.js", map: {}},
         [noTrailingSlash(project2Dir)]: {map: {"some-project": "../dep2/"}}
       });
       var m = await S.import("project2");
@@ -264,17 +261,18 @@ describe("package loading", function() {
       expect(S.get(newURL + "/package.json")).containSubset({main: "entry-a.js", name: "some-project"});
     });
 
-    it.only("renameTo changes package name and address", async () => {
+    it("renameTo changes package name and address", async () => {
       await getPackage(S, project1aDir).register();
       await S.import("some-project");
       let p = getPackage(S, "some-project"),
           newURL = testDir + "some-project-renamed",
           newP = await p.rename("some-project-renamed");
+
       expect(newP).equals(getPackage(S, newURL), "getPAckage not working with renamed package");
       expect(newP.name).equals("some-project-renamed");
       expect(await resource(project1aDir).exists()).equals(false, "original project dir still exists");
       expect(await resource(newURL).exists()).equals(true, "new project dir does not exist");
-      expect(JSON.parse(await resource(newURL + "/package.json").read())).containSubset({main: "entry-a.js", name: "some-project-renamed"});
+      expect(await resource(newURL + "/package.json").readJson()).containSubset({main: "entry-a.js", name: "some-project-renamed"});
       expect(S.get(newURL + "/package.json")).containSubset({main: "entry-a.js", name: "some-project-renamed"});
     });
 
@@ -367,5 +365,159 @@ describe("mutual dependent packages", () => {
     expect(module(System, `${p1Dir}index.js`).env().recorder).property("y").equals(2);
     expect(module(System, `${p2Dir}index.js`).recorder).property("x").equals(3);
   });
+
+});
+
+let registry;
+describe("package registry", () => {
+
+  beforeEach(async () => {
+    await createFiles(testDir, {
+      packages: {
+        "p1@0.2.2": {
+          "index.js": "export var x = 3 + y; import { y } from 'p2';",
+          "package.json": '{"name": "p1", "version": "0.2.2", "dependencies": {"p2": "^1.0"}}'
+        },
+        "p1@0.1.0": {
+          "index.js": "export var x = 2 + y; import { y } from 'p2';",
+          "package.json": '{"name": "p1", "version": "0.1.0"}'
+        },
+        "p2@2.0.0": {
+          "index.js": "export var y = 24;",
+          "package.json": '{"name": "p2", "version": "2.0.0"}'
+        },
+        "p2@1.0.0": {
+          "index.js": "export var y = 23;",
+          "package.json": '{"name": "p2", "version": "1.0.0"}'
+        },
+      }
+    });
+    registry = PackageRegistry.forDirectory(System, resource(testDir).join("packages/"));
+    await registry.update();
+  });
+
+  describe("lookup", () => {
+  
+    it("from packageBaseDirs", async () => {
+      expect(registry.lookup("p1")).containSubset({
+        url: testDir + "packages/p1@0.2.2/",
+        name: "p1",
+        version: "0.2.2"
+      });
+      expect(registry.lookup("p1", "^0.2")).containSubset({
+        url: testDir + "packages/p1@0.2.2/",
+        name: "p1",
+        version: "0.2.2"
+      });
+      expect(registry.lookup("p1", "^0.1")).containSubset({
+        url: testDir + "packages/p1@0.1.0/",
+        name: "p1",
+        version: "0.1.0"
+      });
+      expect(registry.lookup("p1", "latest")).containSubset({
+        url: testDir + "packages/p1@0.2.2/",
+        name: "p1",
+        version: "0.2.2"
+      });
+    });
+
+    it("find dependency of package", async () => {
+      expect(registry.findPackageDependency(registry.lookup("p1", "0.1.0"), "p2"))
+        .property("nameAndVersion", "p2@2.0.0");
+      expect(registry.findPackageDependency(registry.lookup("p1", "0.2.2"), "p2"))
+        .property("nameAndVersion", "p2@1.0.0");
+    });
+
+    it("resolve path", async () => {
+      expect(registry.resolvePath("p1/index.js")).equals(testDir + "packages/p1@0.2.2/index.js");
+      expect(registry.resolvePath("p1@0.1.0/index.js")).equals(testDir + "packages/p1@0.1.0/index.js");
+      expect(registry.resolvePath("foo/index.js")).equals(null);
+  
+      expect(registry.resolvePath("p2/index.js", testDir + "packages/p1@0.2.2/index.js")).equals(testDir + "packages/p2@1.0.0/index.js");
+      expect(registry.resolvePath("./bar.js", testDir + "packages/p1@0.2.2/index.js")).equals(testDir + "packages/p1@0.2.2/bar.js");
+      expect(registry.resolvePath("../bar.js", testDir + "packages/p1@0.2.2/index.js")).equals(testDir + "packages/bar.js");
+      expect(registry.resolvePath("p2", testDir + "packages/p1@0.2.2/index.js")).equals(testDir + "packages/p2@1.0.0/");
+    });
+
+  });
+
+
+  describe("adding packages", () => {
+  
+    it("individually", async () => {
+      await createFiles(testDir, {
+          additionalPackages: {
+            "p3": {
+              "index.js": "export var z = 99;",
+              "package.json": '{"name": "p3", "version": "2.0.0"}'
+            },
+            "p1": {
+              "index.js": "export var x = 4 + y; import { y } from 'p2';",
+              "package.json": '{"name": "p1", "version": "0.3.0", "dependencies": {"p2": "^1.0"}}'
+            },
+          }
+      });
+      await registry.addPackageDir(testDir + "additionalPackages/p3");
+      expect(registry.lookup("p3")).property("url", testDir + "additionalPackages/p3/");
+      await registry.addPackageDir(testDir + "additionalPackages/p1");
+      expect(registry.lookup("p1")).property("url", testDir + "additionalPackages/p1/");
+    });
+
+  });
+
+
+  describe("update", () => {
+  
+    it("of package in packageBaseDirs", async () => {
+      let dir = resource(testDir + "packages/p1@0.2.2/");
+      await dir.join("package.json").writeJson({"name": "p1", "version": "0.3.0", "dependencies": {"p2": "^1.0"}});
+      let pkg = registry.findPackageWithURL(dir.url);
+      await registry.updatePackageFromPackageJson(pkg);
+      expect(registry.packageMap).containSubset({
+        p1: {
+          latest: "0.3.0",
+          versions: {
+            "0.1.0": {
+              url: testDir + "packages/p1@0.1.0/",
+              version: "0.1.0"
+            },
+            "0.3.0": {
+              url: testDir + "packages/p1@0.2.2/",
+              version: "0.3.0"
+            }
+          }
+        }
+      });
+      expect(registry.packageMap.p1.versions).to.have.keys("0.1.0", "0.3.0");
+    });
+
+  });
+
+  describe("removal", () => {
+  
+    it("of package in packageBaseDirs", async () => {
+      let pkg = registry.lookup("p1", "0.2.2");
+      await registry.removePackage(pkg);
+      expect(registry.packageMap.p1.versions).to.have.keys("0.1.0");
+      expect(registry.packageMap.p1.latest).equals("0.1.0");
+    });
+    
+    it("of package with individualPackageDir", async () => {
+      await createFiles(testDir, {
+          additionalPackages: {
+            "p3": {
+              "index.js": "export var z = 99;",
+              "package.json": '{"name": "p3", "version": "2.0.0"}'
+            }
+          }
+      });
+      let p3 = await registry.addPackageDir(testDir + "additionalPackages/p3");
+      await registry.removePackage(p3);
+      expect(registry.packageMap).to.not.have.key("p3");
+      expect(registry.devPackageDirs).equals([]);
+      expect(registry.individualPackageDirs).equals([]);
+    });
+
+  })
 
 });

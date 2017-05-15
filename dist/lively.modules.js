@@ -1,5 +1,5 @@
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -658,9 +658,9 @@
   typeof self === "object" ? self : this
 );
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/babel-regenerator-runtime/runtime.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.lang/dist/lively.lang.js
 
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -8433,9 +8433,9 @@ exports.uninstallGlobals = uninstallGlobals;
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.lang;
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.lang/dist/lively.lang.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.notifications/dist/lively.notifications.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -8593,9 +8593,9 @@ exports.stopLogging = stopLogging;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.notifications/dist/lively.notifications.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.ast/dist/lively.ast.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -23556,9 +23556,9 @@ exports.fuzzyParse = fuzzyParse;
   if (__define_suckz__) { GLOBAL.define = __define_suckz__; }
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.ast/dist/lively.ast.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.classes/dist/lively.classes.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -24586,9 +24586,9 @@ exports.classToFunctionTransform = classToFunctionTransform;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.classes/dist/lively.classes.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.source-transform/dist/lively.source-transform.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -25538,9 +25538,9 @@ exports.stringifyFunctionWithoutToplevelRecorder = stringifyFunctionWithoutTople
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.sourceTransform;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.source-transform/dist/lively.source-transform.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.vm/dist/lively.vm.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -27274,9 +27274,9 @@ exports.evalCodeTransformOfSystemRegisterSetters = evalCodeTransformOfSystemRegi
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.vm/dist/lively.vm.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.resources/dist/lively.resources_no-deps.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -29895,9 +29895,9 @@ exports.Resource = Resource$$1;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.resources;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.resources/dist/lively.resources_no-deps.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.storage/dist/lively.storage_with-pouch.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.storage/dist/lively.storage_with-pouch.js
 
 (function() {
 
@@ -65574,9 +65574,9 @@ exports.Database = Database;
 
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.storage/dist/lively.storage_with-pouch.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.storage/dist/lively.storage_with-pouch.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -65789,12 +65789,12 @@ exports.Database = Database;
 
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
-// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
+// INLINED /Users/robert/Lively/lively-dev3/lively.next-node_modules/semver/5.3.0/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -66999,7 +66999,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
+// INLINED END /Users/robert/Lively/lively-dev3/lively.next-node_modules/semver/5.3.0/semver.js
 semver = exports;
 })({}, {});
 
@@ -68833,7 +68833,7 @@ function normalizeInsidePackage(System, urlOrNameOrMap, packageURL) {
 }
 
 function normalizePackageURL(System, packageURL) {
-  if (allPackageNames$1(System).some(function (ea) {
+  if (allPackageNames(System).some(function (ea) {
     return ea === packageURL;
   })) return packageURL;
 
@@ -68849,7 +68849,7 @@ function normalizePackageURL(System, packageURL) {
   return String(url).replace(/\/$/, "");
 }
 
-function allPackageNames$1(System) {
+function allPackageNames(System) {
   var sysPackages = System.packages,
       livelyPackages = packageStore(System);
   return lively_lang.arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages)));
@@ -68886,152 +68886,6 @@ function findPackageNamed(System, name) {
     return ea.name === name;
   });
 }
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// This deals with which modules are mapped to which packages. There is
-// actually not a static ownership of packages to modules but based on the
-// currently loaded packages we compute what modules are mapped to which package
-// based on the module id / url and the package url. Since it is to expensive
-// to compute every time a module wants to know its package or a package its
-// modules we have a cache that is invalidated whenever new packages are loaded or
-// existing ones removed.
-
-var ModulePackageMapping = function () {
-  createClass(ModulePackageMapping, null, [{
-    key: "forSystem",
-    value: function forSystem(System) {
-      var existing = System["__lively.modules__modulePackageMapCache"];
-      if (existing) return existing;
-      var instance = new this(System);
-      System["__lively.modules__modulePackageMapCache"] = instance;
-      return instance;
-    }
-  }]);
-
-  function ModulePackageMapping(System) {
-    classCallCheck(this, ModulePackageMapping);
-
-    this.System = System;
-    this._notificationHandlers = null;
-    this.clearCache();
-    this.subscribeToSystemChanges();
-  }
-
-  createClass(ModulePackageMapping, [{
-    key: "subscribeToSystemChanges",
-    value: function subscribeToSystemChanges() {
-      var _this = this;
-
-      if (this._notificationHandlers) return;
-      var S = this.System;
-      this._notificationHandlers = [lively_notifications.subscribe("lively.modules/moduleloaded", function (evt) {
-        return _this.addModuleIdToCache(evt.module);
-      }, S), lively_notifications.subscribe("lively.modules/moduleunloaded", function (evt) {
-        return _this.removeModuleFromCache(evt.module);
-      }, S), lively_notifications.subscribe("lively.modules/packageregistered", function (evt) {
-        return _this.clearCache();
-      }, S), lively_notifications.subscribe("lively.modules/packageremoved", function (evt) {
-        return _this.clearCache();
-      }, S)];
-    }
-  }, {
-    key: "unsubscribeFromSystemChanges",
-    value: function unsubscribeFromSystemChanges() {
-      if (!this._notificationHandlers) return;
-      var S = this.System;
-      lively_notifications.unsubscribe("lively.modules/moduleloaded", this._notificationHandlers[0], S), lively_notifications.unsubscribe("lively.modules/moduleunloaded", this._notificationHandlers[1], S), lively_notifications.unsubscribe("lively.modules/packageregistered", this._notificationHandlers[2], S), lively_notifications.unsubscribe("lively.modules/packageremoved", this._notificationHandlers[3], S);
-      this._notificationHandlers = null;
-    }
-  }, {
-    key: "clearCache",
-    value: function clearCache() {
-      this._cacheInitialized = false;
-      this.packageToModule = {};
-      this.modulesToPackage = {};
-    }
-  }, {
-    key: "ensureCache",
-    value: function ensureCache() {
-      // The cache is invalidated when packages are added or removed.
-      // If a new module gets loaded it is added to the caches.
-      // When a module gets removed it is also removed from both maps.
-      var System = this.System,
-          _cacheInitialized = this._cacheInitialized,
-          packageToModule = this.packageToModule,
-          modulesToPackage = this.modulesToPackage;
-
-      if (_cacheInitialized) return this;
-
-      var packageNames = allPackageNames$1(System);
-      if (!packageNames.includes("no group")) packageNames.push("no group");
-
-      for (var j = 0; j < packageNames.length; j++) {
-        packageToModule[packageNames[j]] = [];
-      } // bulk load the cache
-      var modules = knownModuleNames(System);
-      for (var i = 0; i < modules.length; i++) {
-        var moduleId = modules[i],
-            itsPackage = void 0;
-        for (var _j = 0; _j < packageNames.length; _j++) {
-          var packageName = packageNames[_j];
-          if (moduleId.startsWith(packageName) && (!itsPackage || itsPackage.length < packageName.length)) itsPackage = packageName;
-        }
-        if (!itsPackage) itsPackage = "no group";
-
-        packageToModule[itsPackage].push(moduleId);
-        modulesToPackage[moduleId] = itsPackage;
-      }
-
-      this._cacheInitialized = true;
-
-      return this;
-    }
-  }, {
-    key: "addModuleIdToCache",
-    value: function addModuleIdToCache(moduleId) {
-      this.ensureCache();
-      var packageToModule = this.packageToModule,
-          modulesToPackage = this.modulesToPackage;
-
-      if (modulesToPackage[moduleId]) return modulesToPackage[moduleId];
-
-      var packageNames = Object.keys(packageToModule),
-          itsPackage = void 0;
-      for (var j = 0; j < packageNames.length; j++) {
-        var packageName = packageNames[j];
-        if (moduleId.startsWith(packageName) && (!itsPackage || itsPackage.length < packageName.length)) itsPackage = packageName;
-      }
-      if (!itsPackage) itsPackage = "no group";
-      var modules = packageToModule[itsPackage] || (packageToModule[itsPackage] = []);
-      modules.push(moduleId);
-      return modulesToPackage[moduleId] = itsPackage;
-    }
-  }, {
-    key: "removeModuleFromCache",
-    value: function removeModuleFromCache(moduleId) {
-      if (!this._cacheInitialized) return;
-      var packageToModule = this.packageToModule,
-          modulesToPackage = this.modulesToPackage;
-
-      var itsPackage = modulesToPackage[moduleId];
-      if (!itsPackage) return;
-      delete modulesToPackage[moduleId];
-      if (packageToModule[itsPackage]) lively_lang.arr.remove(packageToModule[itsPackage], moduleId);
-    }
-  }, {
-    key: "getPackageURLForModuleId",
-    value: function getPackageURLForModuleId(moduleId) {
-      return this.modulesToPackage[moduleId] || this.addModuleIdToCache(moduleId);
-    }
-  }, {
-    key: "getModuleIdsForPackageURL",
-    value: function getModuleIdsForPackageURL(packageURL) {
-      this.ensureCache();
-      return this.packageToModule[packageURL] || [];
-    }
-  }]);
-  return ModulePackageMapping;
-}();
 
 var PackageConfiguration = function () {
   function PackageConfiguration(pkg) {
@@ -69074,15 +68928,13 @@ var PackageConfiguration = function () {
         this.applySystemJSConfig(sysConfig);
       }
 
-      packageInSystem.referencedAs = packageInSystem.referencedAs || [];
-      lively_lang.arr.pushIfNotIncluded(packageInSystem.referencedAs, name);
-
       if (!main.match(/\.[^\/\.]+/)) main += ".js";
       packageInSystem.main = main;
 
       // System.packages doesn't allow us to store our own properties
       pkg.version = version;
       pkg.config = config;
+      pkg._name = name;
       pkg.mergeWithConfig(packageInSystem);
 
       return livelyConfig ? this.applyLivelyConfig(livelyConfig) : { subPackages: [] };
@@ -69107,7 +68959,6 @@ var PackageConfiguration = function () {
     value: function applyLivelyConfig(livelyConfig) {
       // configures System object from lively config JSON object.
       // - adds System.package entry for package
-      // - adds name to System.package[pkg.url].referencedAs
       // - installs hook from {hooks: [{name, source}]}
       // - merges livelyConfig.packageMap into System.package[pkg.url].map
       //   entries in packageMap are specifically meant to be sub-packages!
@@ -69223,7 +69074,153 @@ var PackageConfiguration = function () {
   return PackageConfiguration;
 }();
 
-function allPackageNames$$1(System) {
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// This deals with which modules are mapped to which packages. There is
+// actually not a static ownership of packages to modules but based on the
+// currently loaded packages we compute what modules are mapped to which package
+// based on the module id / url and the package url. Since it is to expensive
+// to compute every time a module wants to know its package or a package its
+// modules we have a cache that is invalidated whenever new packages are loaded or
+// existing ones removed.
+
+var ModulePackageMapping = function () {
+  createClass(ModulePackageMapping, null, [{
+    key: "forSystem",
+    value: function forSystem(System) {
+      var existing = System["__lively.modules__modulePackageMapCache"];
+      if (existing) return existing;
+      var instance = new this(System);
+      System["__lively.modules__modulePackageMapCache"] = instance;
+      return instance;
+    }
+  }]);
+
+  function ModulePackageMapping(System) {
+    classCallCheck(this, ModulePackageMapping);
+
+    this.System = System;
+    this._notificationHandlers = null;
+    this.clearCache();
+    this.subscribeToSystemChanges();
+  }
+
+  createClass(ModulePackageMapping, [{
+    key: "subscribeToSystemChanges",
+    value: function subscribeToSystemChanges() {
+      var _this = this;
+
+      if (this._notificationHandlers) return;
+      var S = this.System;
+      this._notificationHandlers = [lively_notifications.subscribe("lively.modules/moduleloaded", function (evt) {
+        return _this.addModuleIdToCache(evt.module);
+      }, S), lively_notifications.subscribe("lively.modules/moduleunloaded", function (evt) {
+        return _this.removeModuleFromCache(evt.module);
+      }, S), lively_notifications.subscribe("lively.modules/packageregistered", function (evt) {
+        return _this.clearCache();
+      }, S), lively_notifications.subscribe("lively.modules/packageremoved", function (evt) {
+        return _this.clearCache();
+      }, S)];
+    }
+  }, {
+    key: "unsubscribeFromSystemChanges",
+    value: function unsubscribeFromSystemChanges() {
+      if (!this._notificationHandlers) return;
+      var S = this.System;
+      lively_notifications.unsubscribe("lively.modules/moduleloaded", this._notificationHandlers[0], S), lively_notifications.unsubscribe("lively.modules/moduleunloaded", this._notificationHandlers[1], S), lively_notifications.unsubscribe("lively.modules/packageregistered", this._notificationHandlers[2], S), lively_notifications.unsubscribe("lively.modules/packageremoved", this._notificationHandlers[3], S);
+      this._notificationHandlers = null;
+    }
+  }, {
+    key: "clearCache",
+    value: function clearCache() {
+      this._cacheInitialized = false;
+      this.packageToModule = {};
+      this.modulesToPackage = {};
+    }
+  }, {
+    key: "ensureCache",
+    value: function ensureCache() {
+      // The cache is invalidated when packages are added or removed.
+      // If a new module gets loaded it is added to the caches.
+      // When a module gets removed it is also removed from both maps.
+      var System = this.System,
+          _cacheInitialized = this._cacheInitialized,
+          packageToModule = this.packageToModule,
+          modulesToPackage = this.modulesToPackage;
+
+      if (_cacheInitialized) return this;
+
+      var packageNames = allPackageNames(System);
+      if (!packageNames.includes("no group")) packageNames.push("no group");
+
+      for (var j = 0; j < packageNames.length; j++) {
+        packageToModule[packageNames[j]] = [];
+      } // bulk load the cache
+      var modules = knownModuleNames(System);
+      for (var i = 0; i < modules.length; i++) {
+        var moduleId = modules[i],
+            itsPackage = void 0;
+        for (var _j = 0; _j < packageNames.length; _j++) {
+          var packageName = packageNames[_j];
+          if (moduleId.startsWith(packageName) && (!itsPackage || itsPackage.length < packageName.length)) itsPackage = packageName;
+        }
+        if (!itsPackage) itsPackage = "no group";
+
+        packageToModule[itsPackage].push(moduleId);
+        modulesToPackage[moduleId] = itsPackage;
+      }
+
+      this._cacheInitialized = true;
+
+      return this;
+    }
+  }, {
+    key: "addModuleIdToCache",
+    value: function addModuleIdToCache(moduleId) {
+      this.ensureCache();
+      var packageToModule = this.packageToModule,
+          modulesToPackage = this.modulesToPackage;
+
+      if (modulesToPackage[moduleId]) return modulesToPackage[moduleId];
+
+      var packageNames = Object.keys(packageToModule),
+          itsPackage = void 0;
+      for (var j = 0; j < packageNames.length; j++) {
+        var packageName = packageNames[j];
+        if (moduleId.startsWith(packageName) && (!itsPackage || itsPackage.length < packageName.length)) itsPackage = packageName;
+      }
+      if (!itsPackage) itsPackage = "no group";
+      var modules = packageToModule[itsPackage] || (packageToModule[itsPackage] = []);
+      modules.push(moduleId);
+      return modulesToPackage[moduleId] = itsPackage;
+    }
+  }, {
+    key: "removeModuleFromCache",
+    value: function removeModuleFromCache(moduleId) {
+      if (!this._cacheInitialized) return;
+      var packageToModule = this.packageToModule,
+          modulesToPackage = this.modulesToPackage;
+
+      var itsPackage = modulesToPackage[moduleId];
+      if (!itsPackage) return;
+      delete modulesToPackage[moduleId];
+      if (packageToModule[itsPackage]) lively_lang.arr.remove(packageToModule[itsPackage], moduleId);
+    }
+  }, {
+    key: "getPackageURLForModuleId",
+    value: function getPackageURLForModuleId(moduleId) {
+      return this.modulesToPackage[moduleId] || this.addModuleIdToCache(moduleId);
+    }
+  }, {
+    key: "getModuleIdsForPackageURL",
+    value: function getModuleIdsForPackageURL(packageURL) {
+      this.ensureCache();
+      return this.packageToModule[packageURL] || [];
+    }
+  }]);
+  return ModulePackageMapping;
+}();
+
+function allPackageNames$1(System) {
   var sysPackages = System.packages,
       livelyPackages = packageStore(System);
   return lively_lang.arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages)));
@@ -69257,28 +69254,60 @@ var Package = function () {
       var pAddress = ModulePackageMapping.forSystem(System).getPackageURLForModuleId(moduleId);
       return pAddress ? getPackage$1(System, pAddress, true /*normalized*/) : null;
     }
+  }, {
+    key: "fromJSON",
+    value: function fromJSON(System, jso) {
+      return new this(System).fromJSON(jso);
+    }
   }]);
 
-  function Package(System, packageURL) {
+  function Package(System, packageURL, name, version) {
+    var config = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
     classCallCheck(this, Package);
 
-    // the name from the packages config, set once the config is loaded
-    this._name = undefined;
-    // The names under which the package is referenced by other packages
-    this.referencedAs = [];
     this.url = packageURL;
+    this._name = name || config.name;
+    this.version = version || config.version;
     this.System = System;
-    this.version = null;
     this.registerProcess = null;
     this.map = {};
-    this.config = {};
+    this.dependencies = config.dependencies || {};
+    this.devDependencies = config.devDependencies || {};
+    this.main = config.main;
+    this.systemjs = config.systemjs;
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // accessing
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
   createClass(Package, [{
+    key: "toJSON",
+    value: function toJSON() {
+      var System = this.System,
+          jso = lively_lang.obj.select(this, ["url", "_name", "version", "map", "dependencies", "devDependencies", "main", "systemjs"]);
+
+      if (jso.url.startsWith(System.baseURL)) jso.url = jso.url.slice(System.baseURL.length).replace(/^\//, "");
+      return jso;
+    }
+  }, {
+    key: "fromJSON",
+    value: function fromJSON(jso) {
+      var System = this.System;
+
+      this.url = jso.url;
+      this._name = jso._name;
+      this.version = jso.version;
+      this.map = jso.map || {};
+      this.main = jso.main;
+      this.dependencies = jso.dependencies || {};
+      this.devDependencies = jso.devDependencies || {};
+      this.systemjs = jso.systemjs;
+      if (!isURL(this.url)) this.url = lively_resources.resource(System.baseURL).join(this.url).url;
+      return this;
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // accessing
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  }, {
     key: "path",
     value: function path() {
       var base = this.System.baseURL;
@@ -69309,7 +69338,7 @@ var Package = function () {
               case 0:
                 System = this.System;
                 url = this.url;
-                allPackages = allPackageNames$$1(System);
+                allPackages = allPackageNames$1(System);
                 packagesToIgnore = allPackages.filter(function (purl) {
                   return purl !== url && !url.startsWith(purl);
                 } /*parent packages*/);
@@ -69344,7 +69373,7 @@ var Package = function () {
         }, _callee, this);
       }));
 
-      function resources(_x2) {
+      function resources(_x3) {
         return _ref.apply(this, arguments);
       }
 
@@ -69375,14 +69404,8 @@ var Package = function () {
       config = _extends({}, config);
       var _config = config,
           name = _config.name,
-          referencedAs = _config.referencedAs,
           map = _config.map;
 
-
-      if (referencedAs) {
-        delete config.referencedAs;
-        this.referencedAs = lively_lang.arr.uniq(this.referencedAs.concat(referencedAs));
-      }
 
       if (name) {
         delete config.name;
@@ -69567,15 +69590,21 @@ var Package = function () {
               case 10:
                 cfg = _context4.t0;
                 packageConfigResult = new PackageConfiguration(this).applyConfig(cfg);
+
+                if (System["__lively.modules__packageRegistry"]) {
+                  _context4.next = 45;
+                  break;
+                }
+
                 _iteratorNormalCompletion = true;
                 _didIteratorError = false;
                 _iteratorError = undefined;
-                _context4.prev = 15;
+                _context4.prev = 16;
                 _iterator = packageConfigResult.subPackages[Symbol.iterator]();
 
-              case 17:
+              case 18:
                 if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-                  _context4.next = 30;
+                  _context4.next = 31;
                   break;
                 }
 
@@ -69585,7 +69614,7 @@ var Package = function () {
                 supPkg = getPackage$1(System, supPkgURL);
 
                 if (!packageLoadStack.includes(supPkg.url)) {
-                  _context4.next = 24;
+                  _context4.next = 25;
                   break;
                 }
 
@@ -69596,54 +69625,54 @@ var Package = function () {
 
                   System.debug && console.log("[lively.modules package register]" + (" " + url + " is a circular dependency, stopping registering ") + ("subpackages, stack: " + shortStack));
                 }
-                _context4.next = 27;
+                _context4.next = 28;
                 break;
 
-              case 24:
+              case 25:
                 packageLoadStack.push(supPkg.url);
-                _context4.next = 27;
+                _context4.next = 28;
                 return supPkg.register(null, packageLoadStack);
 
-              case 27:
+              case 28:
                 _iteratorNormalCompletion = true;
-                _context4.next = 17;
+                _context4.next = 18;
                 break;
 
-              case 30:
-                _context4.next = 36;
+              case 31:
+                _context4.next = 37;
                 break;
 
-              case 32:
-                _context4.prev = 32;
-                _context4.t1 = _context4["catch"](15);
+              case 33:
+                _context4.prev = 33;
+                _context4.t1 = _context4["catch"](16);
                 _didIteratorError = true;
                 _iteratorError = _context4.t1;
 
-              case 36:
-                _context4.prev = 36;
+              case 37:
                 _context4.prev = 37;
+                _context4.prev = 38;
 
                 if (!_iteratorNormalCompletion && _iterator.return) {
                   _iterator.return();
                 }
 
-              case 39:
-                _context4.prev = 39;
+              case 40:
+                _context4.prev = 40;
 
                 if (!_didIteratorError) {
-                  _context4.next = 42;
+                  _context4.next = 43;
                   break;
                 }
 
                 throw _iteratorError;
 
-              case 42:
-                return _context4.finish(39);
-
               case 43:
-                return _context4.finish(36);
+                return _context4.finish(40);
 
               case 44:
+                return _context4.finish(37);
+
+              case 45:
                 registerP = this.registerProcess.promise;
 
                 this.registerProcess.resolve(cfg);
@@ -69652,20 +69681,36 @@ var Package = function () {
 
                 return _context4.abrupt("return", registerP);
 
-              case 49:
+              case 50:
               case "end":
                 return _context4.stop();
             }
           }
-        }, _callee4, this, [[15, 32, 36, 44], [37,, 39, 43]]);
+        }, _callee4, this, [[16, 33, 37, 45], [38,, 40, 44]]);
       }));
 
-      function register(_x4) {
+      function register(_x5) {
         return _ref4.apply(this, arguments);
       }
 
       return register;
     }()
+  }, {
+    key: "register2",
+    value: function register2() {
+      var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.runtimeConfig;
+      var System = this.System,
+          url = this.url,
+          packageConfigURL = url + "/package.json";
+
+
+      System.config({
+        meta: defineProperty({}, packageConfigURL, { format: "json" }),
+        packages: defineProperty({}, url, { meta: { "package.json": { format: "json" } } })
+      });
+
+      return new PackageConfiguration(this).applyConfig(config);
+    }
   }, {
     key: "remove",
     value: function remove(opts) {
@@ -69676,13 +69721,10 @@ var Package = function () {
 
       url = url.replace(/\/$/, "");
       var conf = System.getConfig(),
-          packageConfigURL = url + "/package.json",
-          p = getPackages$1(System).find(function (ea) {
-        return ea.address === url;
-      });
+          packageConfigURL = url + "/package.json";
 
-      if (p) p.modules.forEach(function (mod) {
-        return module$2(System, mod.name).unload(opts);
+      this.modules().forEach(function (mod) {
+        return mod.unload(opts);
       });
 
       removeFromPackageStore(System, this);
@@ -69729,7 +69771,7 @@ var Package = function () {
         }, _callee5, this);
       }));
 
-      function fork(_x6, _x7) {
+      function fork(_x8, _x9) {
         return _ref5.apply(this, arguments);
       }
 
@@ -69759,7 +69801,7 @@ var Package = function () {
         }, _callee6, this);
       }));
 
-      function rename(_x8) {
+      function rename(_x10) {
         return _ref6.apply(this, arguments);
       }
 
@@ -69798,7 +69840,7 @@ var Package = function () {
                   if (removeOriginal) delete System.packages[oldURL];
                 }
 
-                Object.assign(newP, lively_lang.obj.select(this, ["_name", "referencedAs", "map", "config"]));
+                Object.assign(newP, lively_lang.obj.select(this, ["_name", "map", "config"]));
                 _context7.next = 14;
                 return newPackageDir.ensureExistance();
 
@@ -69969,69 +70011,66 @@ var Package = function () {
 
               case 85:
                 if (!newName) {
-                  _context7.next = 109;
+                  _context7.next = 106;
                   break;
                 }
 
                 newP.name = newName;
-                newP.referencedAs = lively_lang.arr.without(newP.referencedAs, this.name).concat(newName);
 
                 newP.config.name = newName;
                 configFile = lively_resources.resource(newURL).join("package.json");
-                _context7.prev = 90;
-                _context7.next = 93;
+                _context7.prev = 89;
+                _context7.next = 92;
                 return configFile.exists();
 
-              case 93:
+              case 92:
                 if (!_context7.sent) {
-                  _context7.next = 105;
+                  _context7.next = 102;
                   break;
                 }
 
-                _context7.t3 = JSON;
-                _context7.next = 97;
-                return configFile.read();
+                _context7.next = 95;
+                return configFile.readJson();
 
-              case 97:
-                _context7.t4 = _context7.sent;
-                c = _context7.t3.parse.call(_context7.t3, _context7.t4);
+              case 95:
+                c = _context7.sent;
 
                 if (!(c.name === this.name)) {
-                  _context7.next = 103;
+                  _context7.next = 100;
                   break;
                 }
 
                 c.name = newName;
-                _context7.next = 103;
-                return configFile.write(JSON.stringify(c, null, 2));
+                _context7.next = 100;
+                return configFile.writeJson(c, true);
 
-              case 103:
+              case 100:
                 runtimeC = System.get(configFile.url);
 
                 if (runtimeC) {
                   System.set(configFile.url, System.newModule(_extends({}, runtimeC, { name: newName })));
                 }
 
-              case 105:
-                _context7.next = 109;
+              case 102:
+                _context7.next = 106;
                 break;
 
-              case 107:
-                _context7.prev = 107;
-                _context7.t5 = _context7["catch"](90);
+              case 104:
+                _context7.prev = 104;
+                _context7.t3 = _context7["catch"](89);
 
-              case 109:
+              case 106:
                 return _context7.abrupt("return", newP);
 
-              case 110:
+              case 107:
               case "end":
                 return _context7.stop();
             }
           }
-        }, _callee7, this, [[22, 41, 45, 53], [46,, 48, 52], [56, 68, 72, 80], [73,, 75, 79], [90, 107]]);
+        }, _callee7, this, [[22, 41, 45, 53], [46,, 48, 52], [56, 68, 72, 80], [73,, 75, 79], [89, 104]]);
       }));
 
-      function changeAddress(_x9) {
+      function changeAddress(_x11) {
         return _ref7.apply(this, arguments);
       }
 
@@ -70098,23 +70137,32 @@ var Package = function () {
         }, _callee8, this);
       }));
 
-      function search(_x12) {
+      function search(_x14) {
         return _ref8.apply(this, arguments);
       }
 
       return search;
     }()
   }, {
+    key: "isPackage",
+    get: function get() {
+      return true;
+    }
+  }, {
     key: "name",
     get: function get() {
       if (this._name) return this._name;
       var config = this.System.get(this.url + "/package.json");
       if (config && config.name) return config.name;
-      if (this.referencedAs[0]) return this.referencedAs[0];
       return lively_lang.arr.last(this.url.replace(/[\/]+$/, "").split("/"));
     },
     set: function set(v) {
       return this._name = v;
+    }
+  }, {
+    key: "nameAndVersion",
+    get: function get() {
+      return this.name + "@" + this.version;
     }
   }, {
     key: "address",
@@ -70123,6 +70171,26 @@ var Package = function () {
     },
     set: function set(v) {
       return this.url = v;
+    }
+  }, {
+    key: "runtimeConfig",
+    get: function get() {
+      var name = this.name,
+          version = this.version,
+          dependencies = this.dependencies,
+          devDependencies = this.devDependencies,
+          main = this.main,
+          systemjs = this.systemjs,
+          config = {
+        name: name,
+        version: version,
+        dependencies: dependencies || {},
+        devDependencies: devDependencies || {}
+      };
+
+      if (main) config.main = main;
+      if (systemjs) config.systemjs = systemjs;
+      return config;
     }
   }]);
   return Package;
@@ -70138,7 +70206,7 @@ function importPackage$1(System, packageURL) {
 function registerPackage$1(System, packageURL, optPkgConfig) {
   return getPackage$1(System, packageURL).register(optPkgConfig);
 }
-function removePackage$1(System, packageURL) {
+function removePackage$2(System, packageURL) {
   return getPackage$1(System, packageURL).remove();
 }
 function reloadPackage$1(System, packageURL, opts) {
@@ -70158,7 +70226,7 @@ function getPackages$1(System) {
   // }, ... ]
   // ```
   return Package.allPackages(System).map(function (p) {
-    return _extends({}, lively_lang.obj.select(p, ["name", "main", "map", "meta", "referencedAs", "url", "address", "version"]), {
+    return _extends({}, lively_lang.obj.select(p, ["name", "main", "map", "meta", "url", "address", "version"]), {
       modules: p.modules().map(function (m) {
         return { name: m.id, deps: m.directRequirements().map(function (ea) {
             return ea.id;
@@ -70169,7 +70237,8 @@ function getPackages$1(System) {
 }
 
 function applyConfig$1(System, packageConfig, packageURL) {
-  var configResult = new PackageConfiguration(getPackage$1(System, packageURL)).applyConfig(packageConfig);
+  var p = getPackage$1(System, packageURL),
+      configResult = new PackageConfiguration(p).applyConfig(packageConfig);
   configResult.subPackages = configResult.subPackages.map(function (url) {
     return getPackage$1(System, url);
   });
@@ -70894,6 +70963,15 @@ var ModuleInterface = function () {
     // loading
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  }, {
+    key: "get",
+    value: function get() {
+      // opts = {format, instrument}
+      var id = this.id,
+          System = this.System;
+
+      return System.get(id);
+    }
   }, {
     key: "load",
     value: function () {
@@ -72448,6 +72526,13 @@ function livelySystemEnv(System) {
     },
 
 
+    get packageRegistry() {
+      return System["__lively.modules__packageRegistry"];
+    },
+    set packageRegistry(x) {
+      System["__lively.modules__packageRegistry"] = x;
+    },
+
     // this is where the canonical state of the module system is held...
     packages: System["__lively.modules__packages"] || (System["__lively.modules__packages"] = {}),
     loadedModules: System["__lively.modules__loadedModules"] || (System["__lively.modules__loadedModules"] = {}),
@@ -72509,6 +72594,8 @@ function prepareSystem(System, config) {
   if (!isInstalled(System, "normalizeHook")) install(System, "normalize", normalizeHook);
 
   if (!isInstalled(System, "decanonicalize", "decanonicalizeHook")) install(System, "decanonicalize", decanonicalizeHook);
+
+  if (!isInstalled(System, "normalizeSync", "decanonicalizeHook")) install(System, "normalizeSync", decanonicalizeHook);
 
   if (!isInstalled(System, "newModule", "newModule_volatile")) install(System, "newModule", newModule_volatile);
 
@@ -72586,8 +72673,7 @@ var jsExtRe = /\.js$/;
 var jsonJsExtRe = /\.json\.js$/i;
 var doubleSlashRe = /.\/{2,}/g;
 
-function normalizeHook(proceed, name, parent, parentAddress) {
-  var System = this;
+function preNormalize(System, name, parent) {
   if (name === "..") name = '../index.js'; // Fix ".."
 
   // rk 2016-07-19: sometimes SystemJS doStringMap() will resolve path into
@@ -72598,51 +72684,89 @@ function normalizeHook(proceed, name, parent, parentAddress) {
     return match[0] === ":" ? match : match[0] + "/";
   });
 
-  return proceed(name, parent, parentAddress).then(function (result) {
-
-    // lookup package main
-    var base = result.replace(jsExtRe, "");
-    if (base in System.packages) {
-      var main = System.packages[base].main;
-      if (main) return base.replace(trailingSlashRe, "") + "/" + main.replace(dotSlashStartRe, "");
-    }
-
-    // Fix issue with accidentally adding .js
-    var m = result.match(jsonJsExtRe);
-    if (m) return m[1];
-
-    return result;
-  });
-}
-
-function decanonicalizeHook(proceed, name, parent, isPlugin) {
-  var System = this;
-  if (name === "..") name = '../index.js'; // Fix ".."
-
   // systemjs' decanonicalize has by default not the fancy
   // '{node: "events", "~node": "@empty"}' mapping but we need it
   var pkg = parent && normalize_packageOfURL(parent, System);
   if (pkg) {
-    var mappedObject = pkg.map && pkg.map[name] || System.map[name];
-    if ((typeof mappedObject === "undefined" ? "undefined" : _typeof(mappedObject)) === "object") {
-      name = normalize_doMapWithObject(mappedObject, pkg, System) || name;
+    var systemPackage = pkg.systemPackage,
+        packageURL = pkg.packageURL;
+
+    var mappedObject = systemPackage.map && systemPackage.map[name] || System.map[name];
+    if (mappedObject) {
+      if ((typeof mappedObject === "undefined" ? "undefined" : _typeof(mappedObject)) === "object") {
+        mappedObject = normalize_doMapWithObject(mappedObject, systemPackage, System);
+      }
+      if (typeof mappedObject === "string" && mappedObject !== "") {
+        name = mappedObject;
+      }
+      // relative to package
+      if (name.startsWith(".")) name = urlResolve(join(packageURL, name));
     }
   }
 
-  var result = proceed(name, parent, isPlugin);
+  // <snip> experimental
 
+  var _System$get = System.get("@lively-env"),
+      packageRegistry = _System$get.packageRegistry;
+
+  if (packageRegistry) {
+    var resolved = packageRegistry.resolvePath(name, parent);
+    if (resolved && resolved.endsWith("/") && !name.endsWith("/")) resolved = resolved.slice(0, -1);
+    if (resolved) name = resolved;
+  }
+  // </snap> experimental
+
+  return name;
+}
+
+function postNormalize(System, normalizeResult) {
   // lookup package main
-  var base = result.replace(jsExtRe, "");
-  if (base in System.packages) {
-    var main = System.packages[base].main;
-    if (main) return base.replace(trailingSlashRe, "") + "/" + main.replace(dotSlashStartRe, "");
+  var base = normalizeResult.replace(jsExtRe, "");
+
+  // rk 2017-05-13: FIXME, we currently use a form like
+  // System.decanonicalize("lively.lang/") to figure out the package base path...
+  if (normalizeResult.endsWith("/")) return normalizeResult;
+
+  var _System$get2 = System.get("@lively-env"),
+      packageRegistry = _System$get2.packageRegistry;
+
+  if (packageRegistry) {
+    var referencedPackage = packageRegistry.findPackageWithURL(base);
+    if (referencedPackage) {
+      var _main = (referencedPackage.main || "index.js").replace(dotSlashStartRe, "");
+      return base.replace(trailingSlashRe, "") + "/" + _main;
+    }
+  } else {
+    if (base in System.packages) {
+      var main = System.packages[base].main;
+      if (main) return base.replace(trailingSlashRe, "") + "/" + main.replace(dotSlashStartRe, "");
+    }
   }
 
   // Fix issue with accidentally adding .js
-  var m = result.match(jsonJsExtRe);
+  var m = normalizeResult.match(jsonJsExtRe);
   if (m) return m[1];
 
-  return result;
+  return normalizeResult;
+}
+
+function normalizeHook(proceed, name, parent, parentAddress) {
+  var System = this,
+      stage1 = preNormalize(System, name, parent);
+  return proceed(stage1, parent, parentAddress).then(function (stage2) {
+    var stage3 = postNormalize(System, stage2 || stage1);
+    System.debug && console.log("[normalize] " + name + " => " + stage3);
+    return stage3;
+  });
+}
+
+function decanonicalizeHook(proceed, name, parent, isPlugin) {
+  var System = this,
+      stage1 = preNormalize(System, name, parent),
+      stage2 = proceed(stage1, parent, isPlugin),
+      stage3 = postNormalize(System, stage2);
+  System.debug && console.log("[normalizeSync] " + name + " => " + stage3);
+  return stage3;
 }
 
 function normalize_doMapWithObject(mappedObject, pkg, loader) {
@@ -72689,8 +72813,9 @@ function normalize_packageOfURL(url, System) {
   }),
       pName = matchingPackages.length ? matchingPackages.reduce(function (matchingPkg, ea) {
     return matchingPkg.penalty > ea.penalty ? ea : matchingPkg;
-  }).url : null;
-  return pName ? System.packages[pName] : null;
+  }).url : null,
+      systemPackage = pName && System.packages[pName];
+  return systemPackage ? { systemPackage: systemPackage, packageURL: pName } : null;
 }
 
 function newModule_volatile(proceed, exports) {
@@ -72796,6 +72921,849 @@ function knownModuleNames(System) {
   var fromSystem = System.loads ? Object.keys(System.loads) : Object.keys(System._loader.moduleRecords);
   return lively_lang.arr.uniq(fromSystem.concat(Object.keys(loadedModules$1(System))));
 }
+
+var urlStartRe = /^[a-z\.-_\+]+:/i;
+function isAbsolute(path) {
+  return path.startsWith("/") || path.startsWith("http:") || path.startsWith("https:") || path.startsWith("file:") || path.match(urlStartRe);
+}
+
+function ensureResource(path) {
+  return path.isResource ? path : lively_resources.resource(path);
+}
+
+var PackageRegistry$$1 = function () {
+  createClass(PackageRegistry$$1, null, [{
+    key: "forDirectory",
+    value: function forDirectory(System$$1, dir) {
+      return new this(System$$1, { packageBaseDirs: [ensureResource(dir)] });
+    }
+  }, {
+    key: "fromJSON",
+    value: function fromJSON(System$$1, jso) {
+      return new this(System$$1).fromJSON(jso);
+    }
+  }]);
+
+  function PackageRegistry$$1(System$$1) {
+    var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    classCallCheck(this, PackageRegistry$$1);
+
+    this.System = System$$1;
+    this.packageBaseDirs = opts.packageBaseDirs || [];
+    this.devPackageDirs = opts.devPackageDirs || [];
+    this.individualPackageDirs = opts.individualPackageDirs || [];
+    this._readyPromise = null;
+    this.packageMap = {};
+  }
+
+  createClass(PackageRegistry$$1, [{
+    key: "toJSON",
+    value: function toJSON() {
+      var System$$1 = this.System,
+          packageMap = this.packageMap,
+          individualPackageDirs = this.individualPackageDirs,
+          devPackageDirs = this.devPackageDirs,
+          packageBaseDirs = this.packageBaseDirs,
+          packageMapJso = {};
+
+
+      for (var pName in packageMap) {
+        var spec = packageMap[pName];
+        packageMapJso[pName] = {};
+        packageMapJso[pName].latest = spec.latest;
+        packageMapJso[pName].versions = {};
+        for (var version in spec.versions) {
+          packageMapJso[pName].versions[version] = spec.versions[version].toJSON();
+        }
+      }
+
+      return {
+        packageMap: packageMapJso,
+        individualPackageDirs: individualPackageDirs.map(serializeURL),
+        devPackageDirs: devPackageDirs.map(serializeURL),
+        packageBaseDirs: packageBaseDirs.map(serializeURL)
+      };
+
+      function serializeURL(_ref) {
+        var url = _ref.url;
+
+        return !url.startsWith(System$$1.baseURL) ? url : url.slice(System$$1.baseURL.length).replace(/^\//, "");
+      }
+    }
+  }, {
+    key: "fromJSON",
+    value: function fromJSON(jso) {
+      var packageMap = {},
+          System$$1 = this.System;
+      for (var pName in jso.packageMap) {
+        var spec = jso.packageMap[pName];
+        packageMap[pName] = {};
+        packageMap[pName].latest = spec.latest;
+        packageMap[pName].versions = {};
+        for (var version in spec.versions) {
+          packageMap[pName].versions[version] = Package.fromJSON(System$$1, spec.versions[version]);
+        }
+      }
+
+      this.packageMap = packageMap;
+      this.individualPackageDirs = jso.individualPackageDirs.map(deserializeURL);
+      this.devPackageDirs = jso.devPackageDirs.map(deserializeURL);
+      this.packageBaseDirs = jso.packageBaseDirs.map(deserializeURL);
+      return this;
+
+      function deserializeURL(url) {
+        return isURL(url) ? lively_resources.resource(url) : lively_resources.resource(System$$1.baseURL).join(url);
+      }
+    }
+  }, {
+    key: "whenReady",
+    value: function whenReady() {
+      return this._readyPromise || Promise.resolve();
+    }
+  }, {
+    key: "isReady",
+    value: function isReady() {
+      return !this._readyPromise;
+    }
+  }, {
+    key: "withPackagesDo",
+    value: function withPackagesDo(doFn) {
+      for (var pName in this.packageMap) {
+        var versions = this.packageMap[pName].versions;
+        for (var versionName in versions) {
+          doFn(versions[versionName]);
+        }
+      }
+    }
+  }, {
+    key: "findPackage",
+    value: function findPackage(matchFn) {
+      for (var pName in this.packageMap) {
+        var versions = this.packageMap[pName].versions;
+        for (var versionName in versions) {
+          var pkg = versions[versionName];
+          if (matchFn(pkg)) return pkg;
+        }
+      }
+      return null;
+    }
+  }, {
+    key: "filterPackages",
+    value: function filterPackages(matchFn) {
+      var result = [];
+      this.withPackagesDo(function (pkg) {
+        return matchFn(pkg) && result.push(pkg);
+      });
+      return result;
+    }
+  }, {
+    key: "allPackages",
+    value: function allPackages() {
+      var result = [];
+      for (var pName in this.packageMap) {
+        var versions = this.packageMap[pName].versions;
+        for (var versionName in versions) {
+          result.push(versions[versionName]);
+        }
+      }
+      return result;
+    }
+  }, {
+    key: "sortPackagesByVersion",
+    value: function sortPackagesByVersion(pkgs) {
+      return pkgs.sort(function (a, b) {
+        return semver.compare(a.version, b.version, true);
+      });
+    }
+  }, {
+    key: "matches",
+    value: function matches(pkg, pName, versionRange) {
+      // does this package match the package pName@versionRange?
+
+      var name = pkg.name,
+          version = pkg.version;
+
+
+      if (name !== pName) return false;
+
+      if (!versionRange) return true;
+
+      // if (gitSpec && (gitSpec.versionInFileName === version
+      //   || this.versionInFileName === gitSpec.versionInFileName)) {
+      //    return true
+      // }
+
+      if (semver.parse(version || "") && semver.satisfies(version, versionRange, true)) return true;
+
+      return false;
+    }
+  }, {
+    key: "coversDirectory",
+    value: function coversDirectory(dir) {
+      var packageBaseDirs = this.packageBaseDirs,
+          devPackageDirs = this.devPackageDirs,
+          individualPackageDirs = this.individualPackageDirs;
+
+
+      if (individualPackageDirs.some(function (ea) {
+        return ea.equals(dir);
+      })) return "individualPackageDirs";
+      if (devPackageDirs.some(function (ea) {
+        return ea.equals(dir);
+      })) return "devPackageDirs";
+      var parent = dir.parent();
+      if (packageBaseDirs.some(function (ea) {
+        return ea.equals(parent);
+      })) {
+        return this.allPackages().find(function (pkg) {
+          return ensureResource(pkg.url).equals(dir);
+        }) ? "packageCollectionDirs" : "maybe packageCollectionDirs";
+      }
+      return null;
+    }
+  }, {
+    key: "lookup",
+    value: function lookup(pkgName, versionRange) {
+      var _this = this;
+
+      // Query the package map if it has a package name@version
+      // Compatibility is either a semver match or if package comes from a git
+      // repo then if the git commit matches.  Additionally dev packages are
+      // supported.  If a dev package with `name` is found it always matches
+
+      // let gitSpec = gitSpecFromVersion(versionRange || "");
+      // return this.findPackage((key, pkg) => pkg.matches(name, versionRange, gitSpec));
+      // let gitSpec = gitSpecFromVersion(versionRange || "");
+      var pkgData = this.packageMap[pkgName];
+      if (!pkgData) return null;
+      if (!versionRange || versionRange === "latest") return pkgData.versions[pkgData.latest];
+      if (!semver.parse(versionRange)) throw new Error("PackageRegistry>>loookup of " + pkgName + ": Invalid version - " + versionRange);
+      var pkgs = lively_lang.obj.values(pkgData.versions).filter(function (pkg) {
+        return _this.matches(pkg, pkgName, versionRange);
+      });
+      if (pkgs.length <= 1) return pkgs[0];
+      return lively_lang.arr.last(this.sortPackagesByVersion(pkgs));
+    }
+  }, {
+    key: "findPackageDependency",
+    value: function findPackageDependency(basePkg, name, version) {
+      // name@version is dependency of basePkg
+      if (!version) version = basePkg.dependencies[name] || basePkg.devDependencies[name];
+      if (!semver.parse(version)) version = null;
+      return this.lookup(name, version);
+    }
+  }, {
+    key: "findPackageWithURL",
+    value: function findPackageWithURL(url) {
+      // url === pkg.url
+      if (!url.endsWith("/")) url += "/";
+      return this.findPackage(function (ea) {
+        return ea.url === url;
+      });
+    }
+  }, {
+    key: "findPackageHavingURL",
+    value: function findPackageHavingURL(url) {
+      // does url identify a resource inside pkg, maybe pkg.url === url?
+      var penaltySoFar = Infinity,
+          found = null;
+      this.withPackagesDo(function (pkg) {
+        var pkgURL = pkg.url;if (pkgURL.endsWith("/")) pkgURL.slice(0, -1);
+        if (url.indexOf(pkg.url) !== 0) return;
+        var penalty = url.slice(pkgURL.length).length;
+        if (penalty >= penaltySoFar) return;
+        penaltySoFar = penalty;
+        found = pkg;
+      });
+      return found;
+    }
+  }, {
+    key: "findPackageForPath",
+    value: function findPackageForPath(pathRequest, optParentPkg) {
+      if (isAbsolute(pathRequest)) return this.findPackageHavingURL(pathRequest);
+
+      if (pathRequest.startsWith(".")) return null; // relative
+
+      // ry to figure out package name and maybe version
+
+      var _pathRequest$split = pathRequest.split("/"),
+          _pathRequest$split2 = slicedToArray(_pathRequest$split, 1),
+          pkgName = _pathRequest$split2[0];
+
+      if (!pkgName) return null;
+      var atIndex = pkgName.indexOf("@"),
+          version = void 0;
+      if (atIndex > -1) {
+        version = pkgName.slice(atIndex + 1);
+        pkgName = pkgName.slice(0, atIndex);
+      }
+      if (!version && optParentPkg) return this.findPackageDependency(optParentPkg, pkgName);
+
+      return this.lookup(pkgName, version);
+    }
+  }, {
+    key: "resolvePath",
+    value: function resolvePath(path, parentIdOrPkg) {
+      // takes a path like foo/index.js or ./foo/index.js and an optional
+      // parentId or package like http://org/baz.js and tries to resolve the path
+
+      if (isAbsolute(path)) return path;
+
+      var parentPackage = parentIdOrPkg && parentIdOrPkg.isPackage || null;
+
+      if (!parentPackage && parentIdOrPkg) {
+        if (path.startsWith(".")) {
+          var res = lively_resources.resource(parentIdOrPkg);
+          if (!res.isDirectory()) res = res.parent();
+          return res.join(path).withRelativePartsResolved().url;
+        }
+        parentPackage = this.findPackageHavingURL(parentIdOrPkg);
+      }
+
+      var p = this.findPackageForPath(path, parentPackage);
+      if (!p) return null;
+
+      var slashIndex = path.indexOf("/"),
+          pathInPackage = slashIndex === -1 || slashIndex === path.length - 1 ? "" : path.slice(slashIndex);
+
+      return pathInPackage ? lively_resources.resource(p.url).join(pathInPackage).url : p.url;
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // reading stuff in
+
+  }, {
+    key: "update",
+    value: function () {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+        var _this2 = this;
+
+        var System$$1, packageMap, deferred, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, dir, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, dirWithVersions, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, subDir, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, _dir, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, _dir2;
+
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                if (this.isReady()) {
+                  _context.next = 2;
+                  break;
+                }
+
+                return _context.abrupt("return", this.whenReady().then(function () {
+                  return _this2.update();
+                }));
+
+              case 2:
+                System$$1 = this.System, packageMap = this.packageMap, deferred = lively_lang.promise.deferred();
+
+                this._readyPromise = deferred.promise;
+
+                _context.prev = 4;
+                _iteratorNormalCompletion = true;
+                _didIteratorError = false;
+                _iteratorError = undefined;
+                _context.prev = 8;
+                _iterator = this.packageBaseDirs[Symbol.iterator]();
+
+              case 10:
+                if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+                  _context.next = 72;
+                  break;
+                }
+
+                dir = _step.value;
+                _iteratorNormalCompletion4 = true;
+                _didIteratorError4 = false;
+                _iteratorError4 = undefined;
+                _context.prev = 15;
+                _context.next = 18;
+                return dir.dirList(1);
+
+              case 18:
+                _context.t0 = Symbol.iterator;
+                _iterator4 = _context.sent[_context.t0]();
+
+              case 20:
+                if (_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done) {
+                  _context.next = 55;
+                  break;
+                }
+
+                dirWithVersions = _step4.value;
+                _iteratorNormalCompletion5 = true;
+                _didIteratorError5 = false;
+                _iteratorError5 = undefined;
+                _context.prev = 25;
+                _context.next = 28;
+                return dirWithVersions.dirList(1);
+
+              case 28:
+                _context.t1 = function (ea) {
+                  return ea.isDirectory();
+                };
+
+                _context.t2 = Symbol.iterator;
+                _iterator5 = _context.sent.filter(_context.t1)[_context.t2]();
+
+              case 31:
+                if (_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done) {
+                  _context.next = 38;
+                  break;
+                }
+
+                subDir = _step5.value;
+                _context.next = 35;
+                return this._internalAddPackageDir(subDir, false);
+
+              case 35:
+                _iteratorNormalCompletion5 = true;
+                _context.next = 31;
+                break;
+
+              case 38:
+                _context.next = 44;
+                break;
+
+              case 40:
+                _context.prev = 40;
+                _context.t3 = _context["catch"](25);
+                _didIteratorError5 = true;
+                _iteratorError5 = _context.t3;
+
+              case 44:
+                _context.prev = 44;
+                _context.prev = 45;
+
+                if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                  _iterator5.return();
+                }
+
+              case 47:
+                _context.prev = 47;
+
+                if (!_didIteratorError5) {
+                  _context.next = 50;
+                  break;
+                }
+
+                throw _iteratorError5;
+
+              case 50:
+                return _context.finish(47);
+
+              case 51:
+                return _context.finish(44);
+
+              case 52:
+                _iteratorNormalCompletion4 = true;
+                _context.next = 20;
+                break;
+
+              case 55:
+                _context.next = 61;
+                break;
+
+              case 57:
+                _context.prev = 57;
+                _context.t4 = _context["catch"](15);
+                _didIteratorError4 = true;
+                _iteratorError4 = _context.t4;
+
+              case 61:
+                _context.prev = 61;
+                _context.prev = 62;
+
+                if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                  _iterator4.return();
+                }
+
+              case 64:
+                _context.prev = 64;
+
+                if (!_didIteratorError4) {
+                  _context.next = 67;
+                  break;
+                }
+
+                throw _iteratorError4;
+
+              case 67:
+                return _context.finish(64);
+
+              case 68:
+                return _context.finish(61);
+
+              case 69:
+                _iteratorNormalCompletion = true;
+                _context.next = 10;
+                break;
+
+              case 72:
+                _context.next = 78;
+                break;
+
+              case 74:
+                _context.prev = 74;
+                _context.t5 = _context["catch"](8);
+                _didIteratorError = true;
+                _iteratorError = _context.t5;
+
+              case 78:
+                _context.prev = 78;
+                _context.prev = 79;
+
+                if (!_iteratorNormalCompletion && _iterator.return) {
+                  _iterator.return();
+                }
+
+              case 81:
+                _context.prev = 81;
+
+                if (!_didIteratorError) {
+                  _context.next = 84;
+                  break;
+                }
+
+                throw _iteratorError;
+
+              case 84:
+                return _context.finish(81);
+
+              case 85:
+                return _context.finish(78);
+
+              case 86:
+                _iteratorNormalCompletion2 = true;
+                _didIteratorError2 = false;
+                _iteratorError2 = undefined;
+                _context.prev = 89;
+                _iterator2 = this.individualPackageDirs[Symbol.iterator]();
+
+              case 91:
+                if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
+                  _context.next = 98;
+                  break;
+                }
+
+                _dir = _step2.value;
+                _context.next = 95;
+                return this._internalAddPackageDir(_dir, false);
+
+              case 95:
+                _iteratorNormalCompletion2 = true;
+                _context.next = 91;
+                break;
+
+              case 98:
+                _context.next = 104;
+                break;
+
+              case 100:
+                _context.prev = 100;
+                _context.t6 = _context["catch"](89);
+                _didIteratorError2 = true;
+                _iteratorError2 = _context.t6;
+
+              case 104:
+                _context.prev = 104;
+                _context.prev = 105;
+
+                if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                  _iterator2.return();
+                }
+
+              case 107:
+                _context.prev = 107;
+
+                if (!_didIteratorError2) {
+                  _context.next = 110;
+                  break;
+                }
+
+                throw _iteratorError2;
+
+              case 110:
+                return _context.finish(107);
+
+              case 111:
+                return _context.finish(104);
+
+              case 112:
+                _iteratorNormalCompletion3 = true;
+                _didIteratorError3 = false;
+                _iteratorError3 = undefined;
+                _context.prev = 115;
+                _iterator3 = this.devPackageDirs[Symbol.iterator]();
+
+              case 117:
+                if (_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done) {
+                  _context.next = 124;
+                  break;
+                }
+
+                _dir2 = _step3.value;
+                _context.next = 121;
+                return this._internalAddPackageDir(_dir2, false);
+
+              case 121:
+                _iteratorNormalCompletion3 = true;
+                _context.next = 117;
+                break;
+
+              case 124:
+                _context.next = 130;
+                break;
+
+              case 126:
+                _context.prev = 126;
+                _context.t7 = _context["catch"](115);
+                _didIteratorError3 = true;
+                _iteratorError3 = _context.t7;
+
+              case 130:
+                _context.prev = 130;
+                _context.prev = 131;
+
+                if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                  _iterator3.return();
+                }
+
+              case 133:
+                _context.prev = 133;
+
+                if (!_didIteratorError3) {
+                  _context.next = 136;
+                  break;
+                }
+
+                throw _iteratorError3;
+
+              case 136:
+                return _context.finish(133);
+
+              case 137:
+                return _context.finish(130);
+
+              case 138:
+
+                this._updateLatestPackages();
+                this._readyPromise = null;
+                deferred.resolve();
+
+                _context.next = 147;
+                break;
+
+              case 143:
+                _context.prev = 143;
+                _context.t8 = _context["catch"](4);
+                this._readyPromise = null;deferred.reject(_context.t8);
+
+              case 147:
+                return _context.abrupt("return", this);
+
+              case 148:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this, [[4, 143], [8, 74, 78, 86], [15, 57, 61, 69], [25, 40, 44, 52], [45,, 47, 51], [62,, 64, 68], [79,, 81, 85], [89, 100, 104, 112], [105,, 107, 111], [115, 126, 130, 138], [131,, 133, 137]]);
+      }));
+
+      function update() {
+        return _ref2.apply(this, arguments);
+      }
+
+      return update;
+    }()
+  }, {
+    key: "updatePackageFromPackageJson",
+    value: function () {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(pkg) {
+        var updateLatestPackage = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                _context2.t0 = this;
+                _context2.t1 = pkg;
+                _context2.next = 4;
+                return ensureResource(pkg.url).join("package.json").readJson();
+
+              case 4:
+                _context2.t2 = _context2.sent;
+                _context2.t3 = updateLatestPackage;
+                return _context2.abrupt("return", _context2.t0.updatePackageFromConfig.call(_context2.t0, _context2.t1, _context2.t2, _context2.t3));
+
+              case 7:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function updatePackageFromPackageJson(_x2) {
+        return _ref3.apply(this, arguments);
+      }
+
+      return updatePackageFromPackageJson;
+    }()
+  }, {
+    key: "updatePackageFromConfig",
+    value: function updatePackageFromConfig(pkg, config) {
+      var updateLatestPackage = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+      // for name or version changes
+      var oldURL = pkg.url,
+          oldName = pkg.name,
+          oldVersion = pkg.version,
+          name = config.name,
+          version = config.version,
+          dependencies = config.dependencies,
+          devDependencies = config.devDependencies,
+          main = config.main,
+          systemjs = config.systemjs;
+
+      pkg.name = name;
+      pkg.version = version;
+      pkg.dependencies = dependencies;
+      pkg.devDependencies = devDependencies;
+      pkg.main = main;
+      pkg.systemjs = systemjs;
+      return this.updatePackage(pkg, oldName, oldVersion, oldURL, updateLatestPackage);
+    }
+  }, {
+    key: "updatePackage",
+    value: function updatePackage(pkg, oldName, oldVersion, oldURL) {
+      var updateLatestPackage = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
+
+      // for name or version changes
+
+      if (oldName && pkg.name === oldName || oldVersion && pkg.version !== oldVersion || oldURL && pkg.url !== oldURL) {
+        this.removePackage({ name: oldName, version: oldVersion, url: oldURL }, false);
+      }
+
+      var dir = ensureResource(pkg.url),
+          known = this.coversDirectory(ensureResource(pkg.url));
+      if (!known) this.individualPackageDirs.push(dir);
+
+      var name = pkg.name,
+          version = pkg.version,
+          packageMap = this.packageMap,
+          packageEntry = packageMap[name] || (packageMap[name] = { versions: {}, latest: null });
+
+      packageEntry.versions[version] = pkg;
+
+      if (updateLatestPackage) this._updateLatestPackages(pkg.name);
+    }
+  }, {
+    key: "addPackageDir",
+    value: function addPackageDir(dir) {
+      var isDev = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+      dir = ensureResource(dir).asDirectory();
+      var known = this.coversDirectory(dir);
+      if (known && known !== "maybe packageCollectionDirs") return this.findPackageWithURL(dir);
+
+      var prop = isDev ? "devPackageDirs" : "individualPackageDirs";
+      this[prop] = lively_lang.arr.uniqBy(this[prop].concat(dir), function (a, b) {
+        return a.equals(b);
+      });
+      return this._internalAddPackageDir(dir, true);
+    }
+  }, {
+    key: "removePackage",
+    value: function removePackage(pkg) {
+      var updateLatestPackage = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+      var url = pkg.url,
+          name = pkg.name,
+          version = pkg.version,
+          dir = ensureResource(url),
+          known = this.coversDirectory(dir);
+
+      if (known === "devPackageDirs") this.devPackageDirs = this.devPackageDirs.filter(function (ea) {
+        return !ea.equals(dir);
+      });else if (known === "individualPackageDirs") this.individualPackageDirs = this.individualPackageDirs.filter(function (ea) {
+        return !ea.equals(dir);
+      });
+
+      var packageMap = this.packageMap;
+
+      if (packageMap[name]) {
+        delete packageMap[name].versions[version];
+        if (Object.keys(packageMap[name].versions).length === 0) delete packageMap[name];
+      }
+
+      if (updateLatestPackage) this._updateLatestPackages(pkg.name);
+    }
+  }, {
+    key: "_internalAddPackageDir",
+    value: function () {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(dir) {
+        var updateLatestPackage = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+        var System$$1, packageMap, config, name, version, pkg;
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                if (dir.isDirectory()) {
+                  _context3.next = 2;
+                  break;
+                }
+
+                return _context3.abrupt("return", null);
+
+              case 2:
+                System$$1 = this.System, packageMap = this.packageMap;
+                _context3.prev = 3;
+                _context3.next = 6;
+                return dir.join("package.json").readJson();
+
+              case 6:
+                config = _context3.sent;
+                name = config.name;
+                version = config.version;
+                pkg = new Package(System$$1, dir.url, name, version, config);
+
+                console.log("[lively.modules] package registry " + name + "@" + version + " in " + dir.url);
+                this.updatePackage(pkg, undefined, undefined, undefined, updateLatestPackage);
+                return _context3.abrupt("return", pkg);
+
+              case 15:
+                _context3.prev = 15;
+                _context3.t0 = _context3["catch"](3);
+                return _context3.abrupt("return", null);
+
+              case 18:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this, [[3, 15]]);
+      }));
+
+      function _internalAddPackageDir(_x8) {
+        return _ref4.apply(this, arguments);
+      }
+
+      return _internalAddPackageDir;
+    }()
+  }, {
+    key: "_updateLatestPackages",
+    value: function _updateLatestPackages(name) {
+      var packageMap = this.packageMap;
+
+      if (name && packageMap[name]) {
+        packageMap[name].latest = lively_lang.arr.last(semver.sort(Object.keys(packageMap[name].versions), true));
+        return;
+      }
+      for (var eaName in packageMap) {
+        packageMap[eaName].latest = lively_lang.arr.last(semver.sort(Object.keys(packageMap[eaName].versions), true));
+      }
+    }
+  }]);
+  return PackageRegistry$$1;
+}();
 
 var buildPackageMap = function () {
   var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(dir) {
@@ -73304,8 +74272,8 @@ function importPackage$$1(packageURL) {
 function registerPackage$$1(packageURL) {
   return registerPackage$1(exports.System, packageURL);
 }
-function removePackage$$1(packageURL) {
-  return removePackage$1(exports.System, packageURL);
+function removePackage$1(packageURL) {
+  return removePackage$2(exports.System, packageURL);
 }
 function reloadPackage$$1(packageURL, opts) {
   return reloadPackage$1(exports.System, packageURL, opts);
@@ -73368,7 +74336,7 @@ exports.doesModuleExist = doesModuleExist$$1;
 exports.isModuleLoaded = isModuleLoaded$$1;
 exports.importPackage = importPackage$$1;
 exports.registerPackage = registerPackage$$1;
-exports.removePackage = removePackage$$1;
+exports.removePackage = removePackage$1;
 exports.reloadPackage = reloadPackage$$1;
 exports.getPackages = getPackages$$1;
 exports.getPackage = getPackage$$1;
@@ -73381,6 +74349,7 @@ exports.removeHook = removeHook;
 exports.wrapModuleLoad = wrapModuleLoad$$1;
 exports.unwrapModuleLoad = unwrapModuleLoad$$1;
 exports.cjs = dependencies;
+exports.PackageRegistry = PackageRegistry$$1;
 exports.semver = semver;
 
 }((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.notifications,lively.vm,lively.resources,lively.classes,semver));

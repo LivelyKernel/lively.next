@@ -321,6 +321,8 @@ export {
   applyPackageConfig
 };
 
+export { PackageRegistry } from "./src/packages/package-registry.js";
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // changing modules
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
