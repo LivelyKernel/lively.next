@@ -2,10 +2,11 @@
   "name": "lively.storage",
   "version": "0.1.7",
   "description": "Database interface for lively.next",
-  "main": "dist/lively.storage.js",
-  "scripts": {
-    "test": "mocha-es6 tests/*-test.js",
-    "build": "node ./tools/build.js"
+  "homepage": "https://github.com/LivelyKernel/lively.storage",
+  "author": "Robert Krahn",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/LivelyKernel/lively.storage/issues"
   },
   "repository": {
     "type": "git",
@@ -16,12 +17,6 @@
     "lively.next",
     "database"
   ],
-  "author": "Robert Krahn",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/LivelyKernel/lively.storage/issues"
-  },
-  "homepage": "https://github.com/LivelyKernel/lively.storage",
   "dependencies": {
     "lively.lang": "^1.0.0",
     "lively.resources": "^0.1.18",
@@ -43,20 +38,17 @@
     "rollup": "^0.36.1",
     "rollup-plugin-babel": "^2.7.1"
   },
+  "scripts": {
+    "test": "mocha-es6 tests/*-test.js",
+    "build": "node ./tools/build.js"
+  },
+  "main": "dist/lively.storage.js",
   "systemjs": {
     "main": "index.js",
     "map": {
-      "pouchdb": "./node_modules/pouchdb/dist/pouchdb.js",
+      "pouchdb": "pouchdb/dist/pouchdb.js",
       "pouchdb-adapter-mem": "./dist/pouchdb-adapter-mem.js",
-      "pouchdb-find": "./node_modules/pouchdb-find/dist/pouchdb.find.js"
-    }
-  },
-  "lively": {
-    "main": "index.js",
-    "packageMap": {
-      "lively.lang": "./node_modules/lively.lang",
-      "lively.resources": "./node_modules/lively.resources",
-      "mocha-es6": "./node_modules/mocha-es6"
+      "pouchdb-find": "pouchdb-find/dist/pouchdb.find.js"
     }
   }
 }
