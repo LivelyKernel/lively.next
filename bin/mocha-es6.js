@@ -1,38 +1,38 @@
 #! /usr/bin/env node
 
+/*global require, process, __dirname*/
 require("systemjs")
 
 var modules   = require("lively.modules")
+var resource  = lively.resources.resource;
 var parseArgs = require('minimist');
 var glob      = require('glob');
 var mochaEs6  = require("../mocha-es6.js")
 var path      = require("path");
 var fs        = require("fs");
+var flatn     = require("flatn");
 var dir       = process.cwd();
 var mochaDir  = path.join(__dirname, "..");
+var depDir    = path.join(dir, ".dependencies")
 var step      = 1;
 var args;
 
 lively.lang.promise.chain([
   () => { // prep
     modules.System.trace = true
-    cacheMocha("file://" + mochaDir);
+    cacheMocha(modules.System, "file://" + mochaDir);
     modules.unwrapModuleLoad();
     readProcessArgs();
   },
-  () => console.log(`${step++}. Linking node_modules to local projects`),
-  () => require("./link-node_modules-into-packages.js")(dir),
   () => runPreScript(),
   () => console.log(`${step++}. Looking for test files via globs ${args.files.join(", ")}`),
   () => findTestFiles(args.files),
   (files, state) => state.testFiles = files,
+  () => console.log(`${step++}. Preparing lively.modules`),
+  () => setupFlatn(),
+  () => setupLivelyModulesTestSystem(),
   (_, state) => console.log(`${step++}. Running tests in\n  ${state.testFiles.join("\n  ")}`),
-  (_, state) => {
-    lively.modules.changeSystem(lively.modules.getSystem("system-for-test"), true);
-    cacheMocha("file://" + mochaDir);
-    mochaEs6.installSystemInstantiateHook();
-    return mochaEs6.runTestFiles(state.testFiles, {package: "file://" + dir});
-  },
+  (_, state) => mochaEs6.runTestFiles(state.testFiles, {package: "file://" + dir}),
   failureCount => process.exit(failureCount)
 ]).catch(err => {
   console.error(err.stack || err);
@@ -68,7 +68,7 @@ function findTestFiles(files) {
     .then(files => files.map(f => "file://" + path.join(dir, f)))
 }
 
-function cacheMocha(mochaDirURL) {
+function cacheMocha(System, mochaDirURL) {
   if (typeof System !== "undefined" && !System.get(mochaDirURL + "/mocha-es6.js")) {
     System.config({
       map: {
@@ -83,4 +83,46 @@ function cacheMocha(mochaDirURL) {
     System.set(mochaDirURL + "/dist/mocha.js", System.newModule(mochaEs6.mocha));
     System.set(mochaDirURL + "/dist/chai.js", System.newModule(mochaEs6.chai));
   }
+}
+
+function setupLivelyModulesTestSystem() {
+  var baseURL = "file://" + dir,
+      System = lively.modules.getSystem("system-for-test", {baseURL}),
+      registry = System["__lively.modules__packageRegistry"] = new modules.PackageRegistry(System);
+  registry.packageBaseDirs = ["file://" + depDir].map(resource)
+  registry.individualPackageDirs = [baseURL].map(resource)
+  lively.modules.changeSystem(System, true);
+  cacheMocha(System, "file://" + mochaDir);
+  mochaEs6.installSystemInstantiateHook();
+  return registry.update()
+}
+
+function setupFlatn() {
+  // 1. env
+  console.log("Preparing flatn environment");
+  let flatnBinDir = path.join(require.resolve("flatn"), "../bin"),
+      env = process.env;
+  if (!env.PATH.includes(flatnBinDir)) {
+    console.log(`Adding ${flatnBinDir} to PATH`);
+    env.PATH = flatnBinDir + ":" + env.PATH;
+  }
+  if (!env.FLATN_DEV_PACKAGE_DIRS || !env.FLATN_DEV_PACKAGE_DIRS.includes(dir)) {
+    console.log("Setting FLATN_DEV_PACKAGE_DIRS");
+    let dirs = env.FLATN_DEV_PACKAGE_DIRS ? env.FLATN_DEV_PACKAGE_DIRS.split(":") : [];
+    env.FLATN_DEV_PACKAGE_DIRS = [dir].concat(dirs).join(":");
+  }
+  if (env.FLATN_PACKAGE_COLLECTION_DIRS) {
+    depDir = env.FLATN_PACKAGE_COLLECTION_DIRS.split(":")[0]
+    console.log("Using existing FLATN_PACKAGE_COLLECTION_DIR " + depDir);
+  } else {
+    console.log("Setting FLATN_PACKAGE_COLLECTION_DIRS");
+    env.FLATN_PACKAGE_COLLECTION_DIRS = [depDir].join(":");
+  }
+
+  return flatn.installDependenciesOfPackage(
+    dir,
+    depDir,
+    flatn.buildPackageMap([depDir], [], [dir]),
+    ["dependencies", "devDependencies"],
+    true);
 }

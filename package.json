@@ -1,13 +1,14 @@
 {
   "name": "mocha-es6",
   "main": "index.js",
-  "version": "0.4.5",
+  "version": "0.5.0",
   "dependencies": {
+    "flatn": "^1.1.0",
     "glob": "^7.0.3",
-    "lively.modules": "*",
-    "lively.ast": "*",
+    "lively.modules": ">=0.8.0",
+    "lively.ast": ">=0.9.13",
     "minimist": "^1.2.0",
-    "systemjs": "^0.19.31"
+    "systemjs": "^0.19.47"
   },
   "devDependencies": {
     "babel-plugin-external-helpers": "^6.18.0",
