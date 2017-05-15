@@ -114,7 +114,7 @@ export class BrowserModuleTranslationCache extends ModuleTranslationCache {
 
   constructor(dbName = "lively.modules-module-translation-cache") {
     super();
-    this.version = 1;
+    this.version = 2;
     this.sourceCodeCacheStoreName = "sourceCodeStore";
     this.dbName = dbName;
     this.db = this.openDb()

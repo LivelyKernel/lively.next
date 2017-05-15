@@ -1,5 +1,5 @@
 
-// INLINED /Users/robert/Lively/lively-dev4/lively.modules/systemjs-init.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -212,12 +212,12 @@
 
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev4/lively.modules/systemjs-init.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
-// INLINED /Users/robert/Lively/lively-dev4/lively.next-node_modules/semver/5.3.0/semver.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -1422,7 +1422,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-// INLINED END /Users/robert/Lively/lively-dev4/lively.next-node_modules/semver/5.3.0/semver.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/node_modules/semver/semver.js
 semver = exports;
 })({}, {});
 
@@ -2350,7 +2350,7 @@ var BrowserModuleTranslationCache = function (_ModuleTranslationCac2) {
 
     var _this2 = possibleConstructorReturn(this, (BrowserModuleTranslationCache.__proto__ || Object.getPrototypeOf(BrowserModuleTranslationCache)).call(this));
 
-    _this2.version = 1;
+    _this2.version = 2;
     _this2.sourceCodeCacheStoreName = "sourceCodeStore";
     _this2.dbName = dbName;
     _this2.db = _this2.openDb();
