@@ -68,7 +68,7 @@ async function untar(downloadedArchive, targetDir, name) {
   // console.log(`[${name}] extracting ${downloadedArchive.path()} => ${targetDir.join(name).asDirectory().url}`);
 
   await x(`mkdir "${name}" && `
-        + `tar xzf "${downloadedArchive.path()}" --strip-components 1 -C "${name}" && `
+        + `tar xzf "${downloadedArchive.path()}" --warning=no-unknown-keyword --strip-components 1 -C "${name}" && `
         + `rm "${downloadedArchive.path()}"`, {cwd: untarDir.path()});
 
   await targetDir.join(name).asDirectory().remove();
