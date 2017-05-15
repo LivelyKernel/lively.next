@@ -6,17 +6,6 @@
   "systemjs": {
     "main": "index.js"
   },
-  "lively": {
-    "main": "index.js",
-    "packageMap": {
-      "lively.lang": "./node_modules/lively.lang",
-      "lively.ast": "./node_modules/lively.ast",
-      "lively.notifications": "./node_modules/lively.notifications",
-      "lively.source-transform": "./node_modules/lively.source-transform",
-      "lively.classes": "./node_modules/lively.classes",
-      "mocha-es6": "./node_modules/mocha-es6"
-    }
-  },
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
     "build": "node tools/build.js"
