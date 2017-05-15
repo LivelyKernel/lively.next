@@ -57,8 +57,14 @@ async function untar(downloadedArchive, targetDir, name) {
     downloadedArchive = tmpDir;
   }
 
-  if (untarDir.join(name).exists())
-    await untarDir.join(name).remove();
+  if (untarDir.join(name).exists()) {
+    try {
+      await untarDir.join(name).remove();
+    } catch (err) {
+      // sometimes remove above errors with EPERM...
+      await x(`rm -rf "${name}"`, {cwd: untarDir.path()});
+    }
+  }
 
   // console.log(`[${name}] extracting ${downloadedArchive.path()} => ${targetDir.join(name).asDirectory().url}`);
 
@@ -1014,7 +1020,10 @@ async function packageDownload(packageNameAndRange, destinationDir, attempt = 0)
     return packageSpec;
 
   } catch (err) {
-    if (attempt >= 3) throw err;
+    if (attempt >= 3) {
+      console.error(`Download of ${packageNameAndRange} failed:`, err.stack);
+      throw err;
+    }
     console.log(`[flatn] retrying download of ${packageNameAndRange}`);
     return packageDownload(packageNameAndRange, destinationDir, attempt+1)
   }

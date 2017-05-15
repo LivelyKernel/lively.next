@@ -81,7 +81,10 @@ async function packageDownload(packageNameAndRange, destinationDir, attempt = 0)
     return packageSpec;
 
   } catch (err) {
-    if (attempt >= 3) throw err;
+    if (attempt >= 3) {
+      console.error(`Download of ${packageNameAndRange} failed:`, err.stack);
+      throw err;
+    }
     console.log(`[flatn] retrying download of ${packageNameAndRange}`);
     return packageDownload(packageNameAndRange, destinationDir, attempt+1)
   }
