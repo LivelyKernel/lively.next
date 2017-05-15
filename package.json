@@ -12,7 +12,7 @@
     "socket.io-client": "^1.6.0"
   },
   "devDependencies": {
-    "mocha-es6": "^0.4",
+    "mocha-es6": "^0.5",
     "lively.server": "https://github.com/LivelyKernel/lively.server.git",
     "lively.2lively": "https://github.com/LivelyKernel/lively.2lively.git"
   },
