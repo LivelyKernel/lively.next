@@ -136,7 +136,7 @@ export default class Halo extends Morph {
       });
     }
     const targetBounds = this.target.globalBounds(),
-          worldBounds = this.target.world().innerBounds(),
+          worldBounds = this.target.world().visibleBounds(),
           {x, y, width, height} = targetBounds.intersection(worldBounds);
     this.layout && this.layout.disable();
     this.setBounds(targetBounds.insetBy(-36).intersection(worldBounds));
