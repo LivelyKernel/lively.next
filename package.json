@@ -40,7 +40,7 @@
     "doc-comments": "^0.1.4",
     "lively.classes": "*",
     "lively.source-transform": "*",
-    "mocha-es6": "^0.4",
+    "mocha-es6": "^0.5",
     "rollup": "^0.36.1",
     "rollup-plugin-babel": "^2.6.1",
     "uglify-js": "github:mishoo/UglifyJS2#harmony"
