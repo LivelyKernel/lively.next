@@ -1,6 +1,6 @@
 import { semver } from "../../index.js";
 import { arr, obj, promise } from "lively.lang";
-import { Package } from "../packages.js";
+import { getPackage } from "../packages.js";
 import { resource } from "lively.resources";
 import { isURL } from "../url-helpers.js";
 
@@ -71,14 +71,19 @@ export class PackageRegistry {
   }
 
   fromJSON(jso) {
-    let packageMap = {}, {System} = this;
+    let packageMap = {}, {System} = this, base = resource(System.baseURL);
     for (let pName in jso.packageMap) {
       let spec = jso.packageMap[pName];
       packageMap[pName] = {};
       packageMap[pName].latest = spec.latest;
       packageMap[pName].versions = {};
       for (let version in spec.versions) {
-        packageMap[pName].versions[version] = Package.fromJSON(System, spec.versions[version]);
+        let pkgSpec = spec.versions[version],
+            url = pkgSpec.url;
+        if (!isAbsolute(url)) url = base.join(url).url;
+        let pkg = getPackage(System, url);
+        pkg.fromJSON(pkgSpec);
+        packageMap[pName].versions[version] = pkg;
       }
     }
 
@@ -202,7 +207,7 @@ export class PackageRegistry {
 
   findPackageWithURL(url) {
     // url === pkg.url
-    if (!url.endsWith("/")) url += "/";
+    if (!url.endsWith("/")) url = url.replace(/\/+$/, "");
     return this.findPackage(ea => ea.url === url);
   }
 
@@ -278,6 +283,10 @@ export class PackageRegistry {
         deferred = promise.deferred();
     this._readyPromise = deferred.promise;
 
+    this.packageBaseDirs = this.packageBaseDirs.map(ea => ea.asDirectory());
+    this.individualPackageDirs = this.individualPackageDirs.map(ea => ea.asDirectory());
+    this.devPackageDirs = this.devPackageDirs.map(ea => ea.asDirectory());
+
     try {
 
       for (let dir of this.packageBaseDirs)
@@ -288,12 +297,14 @@ export class PackageRegistry {
       for (let dir of this.individualPackageDirs)
         await this._internalAddPackageDir(dir, false);
 
+
       for (let dir of this.devPackageDirs)
         await this._internalAddPackageDir(dir, false);
 
       this._updateLatestPackages();
       this._readyPromise = null;
       deferred.resolve();
+
 
     } catch (err) { this._readyPromise = null; deferred.reject(err); }
 
@@ -314,9 +325,9 @@ export class PackageRegistry {
         {name, version, dependencies, devDependencies, main, systemjs} = config;
     pkg.name = name;
     pkg.version = version;
-    pkg.dependencies = dependencies;
-    pkg.devDependencies = devDependencies;
-    pkg.main = main;
+    pkg.dependencies = dependencies || {};
+    pkg.devDependencies = devDependencies || {};
+    pkg.main = systemjs && systemjs.main || main || "index.js";
     pkg.systemjs = systemjs;
     return this.updatePackage(pkg, oldName, oldVersion, oldURL, updateLatestPackage)
   }
@@ -381,9 +392,10 @@ export class PackageRegistry {
     try {
       let config = await dir.join("package.json").readJson(),
           {name, version} = config,
-          pkg = new Package(System, dir.url, name, version, config);
+          pkg = getPackage(System, dir.url);
       System.debug && console.log(`[lively.modules] package registry ${name}@${version} in ${dir.url}`);
-      this.updatePackage(pkg, undefined, undefined, undefined, updateLatestPackage);
+      this.updatePackageFromConfig(pkg, config, updateLatestPackage);
+      pkg.register2(config);
       return pkg;
     } catch (err) { return null; }
   }
