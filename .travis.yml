@@ -3,8 +3,8 @@ language: node_js
 node_js:
   - "7"
 
-# skip npm install
-install: true
+install:
+  - npm install -g mocha-es6
 
 notifications:
   email: "robert.krahn@gmail.com"
