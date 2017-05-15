@@ -150,5 +150,5 @@ async function safelyRemove(baseDir, file) {
   await backupFile.parent().ensureExistance();
   await file.rename(backupFile);
 
-  console.log(">>> Moving old file ${file.url} to ${backupDir.url}");
+  console.log(`>>> Moving old file ${file.url} to ${backupDir.url} <<<`);
 }
