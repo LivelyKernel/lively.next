@@ -21,12 +21,5 @@
     "test": "mocha-es6 tests/*-test.js --pre-script ./tests/node-pre.js",
     "start": "$npm_node_execpath bin/start-server.js --port 9011 --hostname 0.0.0.0"
   },
-  "systemjs": {},
-  "lively": {
-    "main": "server.js",
-    "packageMap": {
-      "socket.io": "../lively.next-node_modules/socket.io@1.7.4",
-      "socket.io-client": "../lively.next-node_modules/socket.io-client@1.7.4"
-    }
-  }
+  "systemjs": {}
 }
