@@ -1,7 +1,10 @@
 language: node_js
 
 node_js:
-  - "6"
+  - "7"
+
+# skip npm install
+install: true
 
 notifications:
   email: "robert.krahn@gmail.com"
