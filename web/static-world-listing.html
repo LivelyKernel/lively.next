@@ -80,7 +80,7 @@
     <script>
       var origin = document.location.origin;
       polyfills()
-        .then(function() { return lively.resources.resource(origin).join("package-registry-cache.json").readJson(); })
+        .then(function() { return lively.resources.resource(origin).join("package-registry.json").readJson(); })
         .then(function(packageCached) {
           var System = lively.modules.getSystem("listing", {baseURL: String(origin)});
           lively.modules.changeSystem(System, true);

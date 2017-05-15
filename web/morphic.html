@@ -19,7 +19,7 @@
 
     <script src="/lively.next-node_modules/babel-standalone/babel.js"></script>
     <script src="/lively.next-node_modules/systemjs/dist/system.src.js"></script>
-    <script src="/lively.modules/dist/lively.modules.js"></script>
+    <script src="/lively.modules/dist/lively.modules.min.js"></script>
 
     <script>
       var origin = document.location.origin;
@@ -87,7 +87,7 @@
         return Promise.resolve()
           .then(function() { console.log("starting bootstrap process..."); })
 
-          .then(function() { return lively.resources.resource(origin).join("package-registry-cache.json").readJson(); })
+          .then(function() { return lively.resources.resource(origin).join("package-registry.json").readJson(); })
           .then(function (packageCached) {
             var System = lively.modules.getSystem("bootstrapped", {baseURL: origin});
             // System.debug = true;
