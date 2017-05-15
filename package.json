@@ -25,17 +25,6 @@
       }
     }
   },
-  "lively": {
-    "main": "index.js",
-    "packageMap": {
-      "lively.modules": "./node_modules/lively.modules",
-      "lively.resources": "./node_modules/lively.resources",
-      "lively.lang": "./node_modules/lively.lang",
-      "lively.ast": "./node_modules/lively.ast",
-      "lively.vm": "./node_modules/lively.vm",
-      "mocha-es6": "./node_modules/mocha-es6"
-    }
-  },
   "scripts": {
     "test": "mocha-es6 tests/*-test.js"
   }
