@@ -24,12 +24,12 @@ lively.lang.promise.chain([
     modules.unwrapModuleLoad();
     readProcessArgs();
   },
+  () => setupFlatn(),
   () => runPreScript(),
   () => console.log(`${step++}. Looking for test files via globs ${args.files.join(", ")}`),
   () => findTestFiles(args.files),
   (files, state) => state.testFiles = files,
   () => console.log(`${step++}. Preparing lively.modules`),
-  () => setupFlatn(),
   () => setupLivelyModulesTestSystem(),
   (_, state) => console.log(`${step++}. Running tests in\n  ${state.testFiles.join("\n  ")}`),
   (_, state) => mochaEs6.runTestFiles(state.testFiles, {package: "file://" + dir}),
@@ -89,17 +89,19 @@ function setupLivelyModulesTestSystem() {
   var baseURL = "file://" + dir,
       System = lively.modules.getSystem("system-for-test", {baseURL}),
       registry = System["__lively.modules__packageRegistry"] = new modules.PackageRegistry(System);
-  registry.packageBaseDirs = ["file://" + depDir].map(resource)
-  registry.individualPackageDirs = [baseURL].map(resource)
+  registry.packageBaseDirs = ["file://" + depDir].map(resource);
+  registry.devPackageDirs = [baseURL].map(resource);
   lively.modules.changeSystem(System, true);
   cacheMocha(System, "file://" + mochaDir);
   mochaEs6.installSystemInstantiateHook();
+  // System.debug = true;
   return registry.update()
 }
 
 function setupFlatn() {
   // 1. env
   console.log("Preparing flatn environment");
+  require("flatn/module-resolver.js");
   let flatnBinDir = path.join(require.resolve("flatn"), "../bin"),
       env = process.env;
   if (!env.PATH.includes(flatnBinDir)) {
