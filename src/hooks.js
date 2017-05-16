@@ -3,6 +3,7 @@ import { arr, fun } from "lively.lang";
 function install(System, hookName, hook) {
   System[hookName] = fun.wrap(System[hookName], hook);
   System[hookName].hookFunc = hook;
+  hook.hookName = hookName; // function.name is not reliable when minified!
 }
 
 function remove(System, methodName, hookOrName) {
@@ -13,7 +14,7 @@ function remove(System, methodName, hookOrName) {
   }
 
   var found = typeof hookOrName === "string" ?
-    chain.find(wrapper => wrapper.hookFunc && wrapper.hookFunc.name === hookOrName) :
+    chain.find(wrapper => wrapper.hookFunc && wrapper.hookFunc.hookName === hookOrName) :
     chain.find(wrapper => wrapper.hookFunc === hookOrName);
 
   if (!found) return false;
@@ -30,7 +31,7 @@ function isInstalled(System, methodName, hookOrName) {
   var f = System[methodName];
   while (f) {
     if (f.hookFunc) {
-      if (typeof hookOrName === "string" && f.hookFunc.name === hookOrName) return true;
+      if (typeof hookOrName === "string" && f.hookFunc.hookName === hookOrName) return true;
       else if (f.hookFunc === hookOrName) return true;
     }
     f = f.originalFunction;
