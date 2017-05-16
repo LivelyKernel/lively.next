@@ -157,7 +157,7 @@ export class PackageRegistry {
     //    return true
     // }
 
-    if (semver.parse(version || "") && semver.satisfies(version, versionRange, true))
+    if (semver.validRange(version || "", true) && semver.satisfies(version, versionRange, true))
       return true;
 
     return false;
@@ -168,7 +168,7 @@ export class PackageRegistry {
 
     if (individualPackageDirs.some(ea => ea.equals(dir))) return "individualPackageDirs";
     if (devPackageDirs.some(ea => ea.equals(dir))) return "devPackageDirs";
-    let parent = dir.parent();
+    let parent = dir.parent().parent();
     if (packageBaseDirs.some(ea => ea.equals(parent))) {
       return this.allPackages().find(pkg =>
         ensureResource(pkg.url).equals(dir)) ?
@@ -190,7 +190,8 @@ export class PackageRegistry {
     if (!pkgData) return null;
     if (!versionRange || versionRange === "latest")
       return pkgData.versions[pkgData.latest];
-    if (!semver.parse(versionRange))
+
+    if (!semver.validRange(versionRange, true))
       throw new Error(`PackageRegistry>>lookup of ${pkgName}: Invalid version - ${versionRange}`);
     let pkgs = obj.values(pkgData.versions).filter(pkg =>
       this.matches(pkg, pkgName, versionRange));
@@ -201,13 +202,13 @@ export class PackageRegistry {
   findPackageDependency(basePkg, name, version) {
     // name@version is dependency of basePkg
     if (!version) version = basePkg.dependencies[name] || basePkg.devDependencies[name];
-    if (!semver.parse(version)) version = null;
+    if (!semver.validRange(version, true)) version = null;
     return this.lookup(name, version);
   }
 
   findPackageWithURL(url) {
     // url === pkg.url
-    if (!url.endsWith("/")) url = url.replace(/\/+$/, "");
+    if (url.endsWith("/")) url = url.replace(/\/+$/, "");
     return this.findPackage(ea => ea.url === url);
   }
 

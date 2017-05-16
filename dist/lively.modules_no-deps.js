@@ -7525,7 +7525,7 @@ var PackageRegistry$$1 = function () {
       //    return true
       // }
 
-      if (semver.parse(version || "") && semver.satisfies(version, versionRange, true)) return true;
+      if (semver.validRange(version || "", true) && semver.satisfies(version, versionRange, true)) return true;
 
       return false;
     }
@@ -7543,7 +7543,7 @@ var PackageRegistry$$1 = function () {
       if (devPackageDirs.some(function (ea) {
         return ea.equals(dir);
       })) return "devPackageDirs";
-      var parent = dir.parent();
+      var parent = dir.parent().parent();
       if (packageBaseDirs.some(function (ea) {
         return ea.equals(parent);
       })) {
@@ -7569,7 +7569,8 @@ var PackageRegistry$$1 = function () {
       var pkgData = this.packageMap[pkgName];
       if (!pkgData) return null;
       if (!versionRange || versionRange === "latest") return pkgData.versions[pkgData.latest];
-      if (!semver.parse(versionRange)) throw new Error("PackageRegistry>>lookup of " + pkgName + ": Invalid version - " + versionRange);
+
+      if (!semver.validRange(versionRange, true)) throw new Error("PackageRegistry>>lookup of " + pkgName + ": Invalid version - " + versionRange);
       var pkgs = lively_lang.obj.values(pkgData.versions).filter(function (pkg) {
         return _this.matches(pkg, pkgName, versionRange);
       });
@@ -7581,14 +7582,14 @@ var PackageRegistry$$1 = function () {
     value: function findPackageDependency(basePkg, name, version) {
       // name@version is dependency of basePkg
       if (!version) version = basePkg.dependencies[name] || basePkg.devDependencies[name];
-      if (!semver.parse(version)) version = null;
+      if (!semver.validRange(version, true)) version = null;
       return this.lookup(name, version);
     }
   }, {
     key: "findPackageWithURL",
     value: function findPackageWithURL(url) {
       // url === pkg.url
-      if (!url.endsWith("/")) url = url.replace(/\/+$/, "");
+      if (url.endsWith("/")) url = url.replace(/\/+$/, "");
       return this.findPackage(function (ea) {
         return ea.url === url;
       });
