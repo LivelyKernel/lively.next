@@ -1435,9 +1435,11 @@ semver = exports;
 
 semver = 'default' in semver ? semver['default'] : semver;
 
-function install(System, hookName, hook) {
-  System[hookName] = lively_lang.fun.wrap(System[hookName], hook);
-  System[hookName].hookFunc = hook;
+function install(System, methodName, hook) {
+  var hookName = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : hook.name;
+
+  var wrapper = System[methodName] = lively_lang.fun.wrap(System[methodName], hook);
+  wrapper.hookFunc = hook;
   hook.hookName = hookName; // function.name is not reliable when minified!
 }
 
