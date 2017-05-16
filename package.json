@@ -21,5 +21,8 @@
     "test": "mocha-es6 tests/*-test.js --pre-script ./tests/node-pre.js",
     "start": "$npm_node_execpath bin/start-server.js --port 9011 --hostname 0.0.0.0"
   },
-  "systemjs": {}
+  "main": "./index.js",
+  "systemjs": {
+    "main": "./server.js"
+  }
 }
