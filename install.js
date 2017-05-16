@@ -114,6 +114,8 @@ export async function install(baseDir, dependenciesDir, verbose) {
     await resource(baseDir).join("lively.installer/assets/update.sh").copyTo(resource(baseDir).join("update.sh"));
     await resource(baseDir).join("lively.morphic/assets/favicon.ico").copyTo(resource(baseDir).join("favicon.ico"));
 
+    await exec("chmod a+x start.sh update.sh", {cwd: resource(baseDir).path()});
+
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     pBar && pBar.remove();
