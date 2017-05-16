@@ -67015,6 +67015,7 @@ semver = 'default' in semver ? semver['default'] : semver;
 function install(System, hookName, hook) {
   System[hookName] = lively_lang.fun.wrap(System[hookName], hook);
   System[hookName].hookFunc = hook;
+  hook.hookName = hookName; // function.name is not reliable when minified!
 }
 
 function remove$1(System, methodName, hookOrName) {
@@ -67026,7 +67027,7 @@ function remove$1(System, methodName, hookOrName) {
   }
 
   var found = typeof hookOrName === "string" ? chain.find(function (wrapper) {
-    return wrapper.hookFunc && wrapper.hookFunc.name === hookOrName;
+    return wrapper.hookFunc && wrapper.hookFunc.hookName === hookOrName;
   }) : chain.find(function (wrapper) {
     return wrapper.hookFunc === hookOrName;
   });
@@ -67046,7 +67047,7 @@ function isInstalled(System, methodName, hookOrName) {
   var f = System[methodName];
   while (f) {
     if (f.hookFunc) {
-      if (typeof hookOrName === "string" && f.hookFunc.name === hookOrName) return true;else if (f.hookFunc === hookOrName) return true;
+      if (typeof hookOrName === "string" && f.hookFunc.hookName === hookOrName) return true;else if (f.hookFunc === hookOrName) return true;
     }
     f = f.originalFunction;
   }
@@ -72936,6 +72937,15 @@ function ensureResource(path) {
 
 var PackageRegistry$$1 = function () {
   createClass(PackageRegistry$$1, null, [{
+    key: "ofSystem",
+    value: function ofSystem(System$$1) {
+      var registry = System$$1.get("@lively-env").packageRegistry;
+      if (!registry) {
+        registry = System$$1["__lively.modules__packageRegistry"] = new this(System$$1);
+      }
+      return registry;
+    }
+  }, {
     key: "forDirectory",
     value: function forDirectory(System$$1, dir) {
       return new this(System$$1, { packageBaseDirs: [ensureResource(dir)] });
@@ -73102,7 +73112,7 @@ var PackageRegistry$$1 = function () {
       //    return true
       // }
 
-      if (semver.validRange(version || "", true) && semver.satisfies(version, versionRange, true)) return true;
+      if (semver.parse(version || "") && semver.satisfies(version, versionRange, true)) return true;
 
       return false;
     }
@@ -73120,7 +73130,7 @@ var PackageRegistry$$1 = function () {
       if (devPackageDirs.some(function (ea) {
         return ea.equals(dir);
       })) return "devPackageDirs";
-      var parent = dir.parent().parent();
+      var parent = dir.parent();
       if (packageBaseDirs.some(function (ea) {
         return ea.equals(parent);
       })) {
@@ -73146,8 +73156,7 @@ var PackageRegistry$$1 = function () {
       var pkgData = this.packageMap[pkgName];
       if (!pkgData) return null;
       if (!versionRange || versionRange === "latest") return pkgData.versions[pkgData.latest];
-
-      if (!semver.validRange(versionRange, true)) throw new Error("PackageRegistry>>lookup of " + pkgName + ": Invalid version - " + versionRange);
+      if (!semver.parse(versionRange)) throw new Error("PackageRegistry>>lookup of " + pkgName + ": Invalid version - " + versionRange);
       var pkgs = lively_lang.obj.values(pkgData.versions).filter(function (pkg) {
         return _this.matches(pkg, pkgName, versionRange);
       });
@@ -73159,14 +73168,14 @@ var PackageRegistry$$1 = function () {
     value: function findPackageDependency(basePkg, name, version) {
       // name@version is dependency of basePkg
       if (!version) version = basePkg.dependencies[name] || basePkg.devDependencies[name];
-      if (!semver.validRange(version, true)) version = null;
+      if (!semver.parse(version)) version = null;
       return this.lookup(name, version);
     }
   }, {
     key: "findPackageWithURL",
     value: function findPackageWithURL(url) {
       // url === pkg.url
-      if (url.endsWith("/")) url = url.replace(/\/+$/, "");
+      if (!url.endsWith("/")) url = url.replace(/\/+$/, "");
       return this.findPackage(function (ea) {
         return ea.url === url;
       });
