@@ -1,6 +1,6 @@
 {
   "name": "lively.resources",
-  "version": "0.1.22",
+  "version": "0.1.23",
   "repository": "https://github.com/LivelyKernel/lively.resources",
   "systemjs": {
     "main": "index.js",

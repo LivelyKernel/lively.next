@@ -87,8 +87,12 @@ export async function ensureFetch() {
   var thisModuleId = System.decanonicalize("lively.resources"),
       fetchInterface;
   if (System.get("@system-env").node) {
-    var moduleId = (await System.normalize("fetch-ponyfill", thisModuleId)).replace("file://", "")
-    fetchInterface = System._nodeRequire(moduleId)
+    try {
+      fetchInterface = System._nodeRequire("fetch-ponyfill");
+    } catch (err) {
+      var moduleId = (await System.normalize("fetch-ponyfill", thisModuleId)).replace("file://", "")
+      fetchInterface = System._nodeRequire(moduleId)
+    }
   } else {
     fetchInterface = await System.import("fetch-ponyfill", thisModuleId)
   } 

@@ -2547,36 +2547,47 @@ var ensureFetch = function () {
             thisModuleId = System.decanonicalize("lively.resources");
 
             if (!System.get("@system-env").node) {
-              _context2.next = 10;
+              _context2.next = 16;
               break;
             }
 
-            _context2.next = 6;
+            _context2.prev = 4;
+
+            fetchInterface = System._nodeRequire("fetch-ponyfill");
+            _context2.next = 14;
+            break;
+
+          case 8:
+            _context2.prev = 8;
+            _context2.t0 = _context2["catch"](4);
+            _context2.next = 12;
             return System.normalize("fetch-ponyfill", thisModuleId);
 
-          case 6:
+          case 12:
             moduleId = _context2.sent.replace("file://", "");
 
             fetchInterface = System._nodeRequire(moduleId);
-            _context2.next = 13;
-            break;
-
-          case 10:
-            _context2.next = 12;
-            return System.import("fetch-ponyfill", thisModuleId);
-
-          case 12:
-            fetchInterface = _context2.sent;
-
-          case 13:
-            Object.assign(System.global, fetchInterface());
 
           case 14:
+            _context2.next = 19;
+            break;
+
+          case 16:
+            _context2.next = 18;
+            return System.import("fetch-ponyfill", thisModuleId);
+
+          case 18:
+            fetchInterface = _context2.sent;
+
+          case 19:
+            Object.assign(System.global, fetchInterface());
+
+          case 20:
           case "end":
             return _context2.stop();
         }
       }
-    }, _callee2, this);
+    }, _callee2, this, [[4, 8]]);
   }));
 
   return function ensureFetch() {
