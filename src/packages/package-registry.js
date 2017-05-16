@@ -215,7 +215,7 @@ export class PackageRegistry {
 
   findPackageWithURL(url) {
     // url === pkg.url
-    if (!url.endsWith("/")) url = url.replace(/\/+$/, "");
+    if (url.endsWith("/")) url = url.replace(/\/+$/, "");
     return this.findPackage(ea => ea.url === url);
   }
 
