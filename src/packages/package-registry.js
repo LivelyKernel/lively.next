@@ -20,6 +20,14 @@ function ensureResource(path) {
 
 export class PackageRegistry {
 
+  static ofSystem(System) {
+    let registry = System.get("@lively-env").packageRegistry;
+    if (!registry) {
+      registry = System["__lively.modules__packageRegistry"] = new this(System);
+    }
+    return registry;
+  }
+
   static forDirectory(System, dir) {
     return new this(System, {packageBaseDirs: [ensureResource(dir)]});
   }
