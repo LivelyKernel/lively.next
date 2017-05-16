@@ -1,12 +1,11 @@
 # flatn [![Build Status](https://travis-ci.org/rksm/flatn.svg?branch=master)](https://travis-ci.org/rksm/flatn)
 
 
-
 flat node dependencies (flatn) is a nodejs package organizer that supports flat file system structures for nodejs package dependencies.  It is compatible with npm and provides an alternative for workflows where npm falls short.
 
-__TL;DR__
 flatn installs packages into one or multiple directories and tells nodejs how to resolve packages in there so normal `require(...)` statements work.
 
+- flat node_modules, actually you can give that directory a custom name
 - makes developing multiple inter-dependent packages easy (no symlinking, junction-pointing)
 - more efficient package storage
 - simple package lookup, friendlier to non-nodejs module systems (like SystemJS)
