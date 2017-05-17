@@ -120,7 +120,8 @@ async function installPackage(
 
   let queue = [pNameAndVersion.split("@")],
       seen = {},
-      newPackages = [];
+      newPackages = [],
+      installedNew = 0;
 
   while (queue.length) {
     let [name, version] = queue.shift(),
@@ -128,7 +129,7 @@ async function installPackage(
 
     if (!installed) {
       (verbose || debug) && console.log(`[flatn] installing package ${name}@${version}`);
-      installed = await packageDownload(version ? name + "@" + version : name, destinationDir);
+      installed = await packageDownload(version ? name + "@" + version : name, destinationDir, verbose);
       if (!installed)
         throw new Error(`Could not download package ${name + "@" + version}`);
 
@@ -153,6 +154,9 @@ async function installPackage(
       seen[nameAndVersion] = true;
     }
   }
+
+  if (newPackages.length > 0)
+    console.log(`[flatn] installed ${newPackages.length} new packages into ${destinationDir}`);
 
   return {packageMap, newPackages};
 }

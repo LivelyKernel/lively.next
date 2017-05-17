@@ -69,14 +69,15 @@ async function untar(downloadedArchive, targetDir, name) {
   }
 
   // console.log(`[${name}] extracting ${downloadedArchive.path()} => ${targetDir.join(name).asDirectory().url}`);
-
 			  
-			  if (fixGnuTar === undefined) {
-  try {
-    await x(`tar --version | grep -q 'gnu'`);
-    fixGnuTar = "--warning=no-unknown-keyword "
-  } catch (err) { fixGnuTar = ""; }
-			  }
+  if (fixGnuTar === undefined) {
+    try {
+      await x(`tar --version | grep -q 'gnu'`);
+      fixGnuTar = "--warning=no-unknown-keyword ";
+    } catch (err) {
+      fixGnuTar = "";
+    }
+  }
 
   await x(`mkdir "${name}" && `
         + `tar xzf "${downloadedArchive.path()}" ${fixGnuTar}--strip-components 1 -C "${name}" && `
@@ -380,7 +381,7 @@ class PackageMap {
 
   static empty() { return new this(); }
 
-  static cache() { return this._cache || (this._cache = {}); }
+  static get cache() { return this._cache || (this._cache = {}); }
 
   static keyFor(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
     return `all: ${packageCollectionDirs} ea: ${individualPackageDirs} dev: ${devPackageDirs}`
@@ -981,7 +982,7 @@ function pathForNameAndVersion(nameAndVersion, destinationDir) {
 }
 
 
-async function packageDownload(packageNameAndRange, destinationDir, attempt = 0) {
+async function packageDownload(packageNameAndRange, destinationDir, verbose, attempt = 0) {
   // packageNameAndRange like "lively.modules@^0.7.45"
   // if no @ part than we assume @*
 
@@ -1000,8 +1001,8 @@ async function packageDownload(packageNameAndRange, destinationDir, attempt = 0)
 
     let pathSpec = pathForNameAndVersion(packageNameAndRange, destinationDir.path()),
         downloadDir = pathSpec.gitURL
-          ? await packageDownloadViaGit(pathSpec, tmp)
-          : await packageDownloadViaNpm(packageNameAndRange, tmp);
+          ? await packageDownloadViaGit(pathSpec, tmp, verbose)
+          : await packageDownloadViaNpm(packageNameAndRange, tmp, verbose);
 
 
     let packageJSON = downloadDir.join("package.json"), config;
@@ -1035,12 +1036,12 @@ async function packageDownload(packageNameAndRange, destinationDir, attempt = 0)
       throw err;
     }
     console.log(`[flatn] retrying download of ${packageNameAndRange}`);
-    return packageDownload(packageNameAndRange, destinationDir, attempt+1)
+    return packageDownload(packageNameAndRange, destinationDir, verbose, attempt+1);
   }
 }
 
 
-async function packageDownloadViaGit({gitURL: url, name, branch}, targetDir) {
+async function packageDownloadViaGit({gitURL: url, name, branch}, targetDir, verbose) {
   // packageNameAndRepo like "lively.modules@https://github.com/LivelyKernel/lively.modules"
   branch = branch || "master"
   url = url.replace(/#[^#]+$/, "");
@@ -1049,13 +1050,13 @@ async function packageDownloadViaGit({gitURL: url, name, branch}, targetDir) {
   return dir;
 }
 
-async function packageDownloadViaNpm(packageNameAndRange, targetDir) {
+async function packageDownloadViaNpm(packageNameAndRange, targetDir, verbose) {
   // packageNameAndRange like "lively.modules@^0.7.45"
   // if no @ part than we assume @*
   let {
     downloadedArchive,
     name, version
-  } = await npmDownloadArchive(packageNameAndRange, targetDir);
+  } = await npmDownloadArchive(packageNameAndRange, targetDir, verbose);
   return untar(downloadedArchive, targetDir, name);
 }
 
@@ -1091,36 +1092,38 @@ var dir = typeof __dirname !== "undefined"
       helperBinDir = j(dir, "bin"),
       nodeCentralPackageBin = j(helperBinDir, "node");
 
-var npmEnv = (() => {
-  let cacheFile = j(tmpdir(), "npm-env.json"), env;
-  if (fs.existsSync(cacheFile)) {
-    let cached = JSON.parse(String(fs.readFileSync(cacheFile)))
-    if (Date.now() - cached.time < 1000*60) return cached.env;
-  }
-  try {
-    var dir = j(tmpdir(), "npm-test-env-project");
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-    fs.writeFileSync(j(dir, "package.json"), `{"scripts": {"print-env": "${process.env.npm_node_execpath || "node"} ./print-env.js"}}`);
-    fs.writeFileSync(j(dir, "print-env.js"), `console.log(JSON.stringify(process.env))`);
-    let PATH = process.env.PATH.split(":").filter(ea => ea !== helperBinDir).join(":")
-    env = JSON.parse(String(execSync(`npm --silent run print-env`, {cwd: dir, env: Object.assign({}, process.env, {PATH})})));
-    for (let key in env)
-      if (!key.toLowerCase().startsWith("npm") || key.toLowerCase().startsWith("npm_package"))
-        delete env[key];
-  } catch (err) {
-    console.warn(`Cannot figure out real npm env, ${err}`);
-    env = {};
-  } finally {
+var _npmEnv;
+function npmEnv() {
+  return _npmEnv || (_npmEnv = (() => {
+    let cacheFile = j(tmpdir(), "npm-env.json"), env;
+    if (fs.existsSync(cacheFile)) {
+      let cached = JSON.parse(String(fs.readFileSync(cacheFile)))
+      if (Date.now() - cached.time < 1000*60) return cached.env;
+    }
     try {
-      fs.unlinkSync(j(dir, "package.json"));
-      fs.unlinkSync(j(dir, "print-env.js"));
-      fs.rmdirSync(dir);
-    } catch (err) {}
-  }
-  fs.writeFileSync(cacheFile, JSON.stringify({time: Date.now(), env}));
-  return env;
-})();
-
+      var dir = j(tmpdir(), "npm-test-env-project");
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+      fs.writeFileSync(j(dir, "package.json"), `{"scripts": {"print-env": "${process.env.npm_node_execpath || "node"} ./print-env.js"}}`);
+      fs.writeFileSync(j(dir, "print-env.js"), `console.log(JSON.stringify(process.env))`);
+      let PATH = process.env.PATH.split(":").filter(ea => ea !== helperBinDir).join(":")
+      env = JSON.parse(String(execSync(`npm --silent run print-env`, {cwd: dir, env: Object.assign({}, process.env, {PATH})})));
+      for (let key in env)
+        if (!key.toLowerCase().startsWith("npm") || key.toLowerCase().startsWith("npm_package"))
+          delete env[key];
+    } catch (err) {
+      console.warn(`Cannot figure out real npm env, ${err}`);
+      env = {};
+    } finally {
+      try {
+        fs.unlinkSync(j(dir, "package.json"));
+        fs.unlinkSync(j(dir, "print-env.js"));
+        fs.rmdirSync(dir);
+      } catch (err) {}
+    }
+    fs.writeFileSync(cacheFile, JSON.stringify({time: Date.now(), env}));
+    return env;
+  })());
+}
 
 function npmCreateEnvVars(configObj, env = {}, path = "npm_package") {
   if (Array.isArray(configObj))
@@ -1246,16 +1249,20 @@ class BuildProcess {
   async runScript(scripts, scriptName, {name, location}, env) {
     if (!scripts || !scripts[scriptName]) return false;
     this.verbose && console.log(`[flatn] build ${name}: running ${scriptName}`);
-    
+
+    let pathParts = process.env.PATH.split(":");
+    pathParts.unshift(helperBinDir);
+    pathParts.unshift(this.binLinkLocation);
+
     env = Object.assign({},
       process.env,
       npmFallbackEnv,
-      npmEnv,
+      npmEnv(),
       env,
       {
         npm_lifecycle_event: scriptName,
         npm_lifecycle_script: scripts[scriptName].split(" ")[0],
-        PATH: `${this.binLinkLocation}:${helperBinDir}:${process.env.PATH}`
+        PATH: pathParts.join(":")
       });
 
     try {
@@ -1407,7 +1414,8 @@ async function installPackage(
 
   let queue = [pNameAndVersion.split("@")],
       seen = {},
-      newPackages = [];
+      newPackages = [],
+      installedNew = 0;
 
   while (queue.length) {
     let [name, version] = queue.shift(),
@@ -1415,7 +1423,7 @@ async function installPackage(
 
     if (!installed) {
       (verbose || debug) && console.log(`[flatn] installing package ${name}@${version}`);
-      installed = await packageDownload(version ? name + "@" + version : name, destinationDir);
+      installed = await packageDownload(version ? name + "@" + version : name, destinationDir, verbose);
       if (!installed)
         throw new Error(`Could not download package ${name + "@" + version}`);
 
@@ -1440,6 +1448,9 @@ async function installPackage(
       seen[nameAndVersion] = true;
     }
   }
+
+  if (newPackages.length > 0)
+    console.log(`[flatn] installed ${newPackages.length} new packages into ${destinationDir}`);
 
   return {packageMap, newPackages};
 }
