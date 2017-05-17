@@ -100,7 +100,7 @@ class PackageMap {
 
   static empty() { return new this(); }
 
-  static cache() { return this._cache || (this._cache = {}); }
+  static get cache() { return this._cache || (this._cache = {}); }
 
   static keyFor(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
     return `all: ${packageCollectionDirs} ea: ${individualPackageDirs} dev: ${devPackageDirs}`

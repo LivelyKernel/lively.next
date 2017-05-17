@@ -32,7 +32,7 @@ function pathForNameAndVersion(nameAndVersion, destinationDir) {
 }
 
 
-async function packageDownload(packageNameAndRange, destinationDir, attempt = 0) {
+async function packageDownload(packageNameAndRange, destinationDir, verbose, attempt = 0) {
   // packageNameAndRange like "lively.modules@^0.7.45"
   // if no @ part than we assume @*
 
@@ -51,8 +51,8 @@ async function packageDownload(packageNameAndRange, destinationDir, attempt = 0)
 
     let pathSpec = pathForNameAndVersion(packageNameAndRange, destinationDir.path()),
         downloadDir = pathSpec.gitURL
-          ? await packageDownloadViaGit(pathSpec, tmp)
-          : await packageDownloadViaNpm(packageNameAndRange, tmp);
+          ? await packageDownloadViaGit(pathSpec, tmp, verbose)
+          : await packageDownloadViaNpm(packageNameAndRange, tmp, verbose);
 
 
     let packageJSON = downloadDir.join("package.json"), config;
@@ -86,12 +86,12 @@ async function packageDownload(packageNameAndRange, destinationDir, attempt = 0)
       throw err;
     }
     console.log(`[flatn] retrying download of ${packageNameAndRange}`);
-    return packageDownload(packageNameAndRange, destinationDir, attempt+1)
+    return packageDownload(packageNameAndRange, destinationDir, verbose, attempt+1);
   }
 }
 
 
-async function packageDownloadViaGit({gitURL: url, name, branch}, targetDir) {
+async function packageDownloadViaGit({gitURL: url, name, branch}, targetDir, verbose) {
   // packageNameAndRepo like "lively.modules@https://github.com/LivelyKernel/lively.modules"
   branch = branch || "master"
   url = url.replace(/#[^#]+$/, "");
@@ -100,13 +100,13 @@ async function packageDownloadViaGit({gitURL: url, name, branch}, targetDir) {
   return dir;
 }
 
-async function packageDownloadViaNpm(packageNameAndRange, targetDir) {
+async function packageDownloadViaNpm(packageNameAndRange, targetDir, verbose) {
   // packageNameAndRange like "lively.modules@^0.7.45"
   // if no @ part than we assume @*
   let {
     downloadedArchive,
     name, version
-  } = await npmDownloadArchive(packageNameAndRange, targetDir);
+  } = await npmDownloadArchive(packageNameAndRange, targetDir, verbose);
   return untar(downloadedArchive, targetDir, name);
 }
 
