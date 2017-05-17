@@ -2,36 +2,43 @@
 
 # echo "calling node with args: $@"
 
-MY_NAME=$(basename $0)
+# for 2., see below
+if [[ "$1" == "--flatn-test" ]]; then
+  exit 0;
+fi
+
+# 1. find flatn directory so we can require module-resolver
 MY_DIR=$(dirname $0)
 
-# FIXME remove shadowed node...
-if [ "$MY_NAME" == "node" ]; then
-  declare -a PATH_PARTS
-  PATH_PARTS=$(echo $PATH | tr -s ':' ' ')
-  for PATH_PART in $PATH_PARTS
-  do
-    if [ "$MY_DIR" != "$PATH_PART" ] && [ -f "$PATH_PART/node" ]; then
+EXEC=$(readlink "$0")
+if [ -n "$EXEC" ]; then
+  FLATN_DIR=$(dirname $EXEC);
+fi 
+
+if [[ ! "$FLATN_DIR" =~ ^/ ]]; then
+  FLATN_DIR="$MY_DIR/$FLATN_DIR";
+fi
+
+# 2. find the real node executable, in path, ignoring potentially multiple
+# flatn nodes
+
+PATH_PARTS=$(echo $PATH | tr -s ':' ' ')
+for PATH_PART in $PATH_PARTS
+do
+  if [ -f "$PATH_PART/node" ]; then
+    $PATH_PART/node --flatn-test > /dev/null 2>&1
+    rc=$?;
+    if [[ $rc != 0 ]]; then
       real_node="$PATH_PART/node";
+      # echo "found real node $real_node"
       break;
     fi
-  done 
-else
-  real_node=node
-fi
+  fi
+done 
 
 if [ -z $real_node ]; then
    echo "Cannot find node executable"
    exit 1
 fi
 
-EXEC=$(readlink "$0")
-if [ -n "$EXEC" ]; then
-  real_dir=$(dirname $EXEC);
-fi 
-
-if [[ ! "$real_dir" =~ ^/ ]]; then
-  real_dir="$MY_DIR/$real_dir";
-fi
-
-$real_node -r "$real_dir/../module-resolver.js" "$@"
+$real_node -r "$FLATN_DIR/../module-resolver.js" "$@"
