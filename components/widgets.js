@@ -101,12 +101,12 @@ export class Leash extends Path {
       styleSheets: {
         after: ["endpointStyle"],
         get() {
-          return new StyleSheet(
+          return [new StyleSheet(
             {
               endpointStyle: this.endpointStyle
             },
             this
-          );
+          )];
         }
       },
       endpointStyle: {
