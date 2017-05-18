@@ -30,6 +30,7 @@ var config = {
     {keys: {mac: 'Meta-S', win: 'Ctrl-S'}, command: "save world"},
 
     {keys: "Meta-H", command: "show halo for focused morph"},
+    {keys: "Meta-Shift-L C O P Y", command: "copy morph"},
     {keys: "Alt-M", command: "select morph"},
     {keys: "Escape", command: "escape"},
     {keys: {win: "Ctrl-Escape", mac: "Meta-Escape"}, command: "close active window or morph"},

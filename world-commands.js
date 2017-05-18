@@ -80,6 +80,22 @@ var commands = [
   },
 
   {
+    name: "copy morph",
+    exec: world => {
+      var morph = world.focusedMorph;
+      if (!morph || morph === world) {
+        $world.setStatusMessage("no morph selected");
+        return true;
+      }
+      let target = morph.getWindow() || morph,
+          copy = target.copy();
+      copy.openInWorld(target.globalPosition.addXY(10,10));
+      if (copy.isWindow) copy.activate();
+      return copy;
+    }
+  },
+
+  {
     name: "select morph",
     exec: async (world, opts = {root: world, justReturn: false, filterFn: null, prependItems: [], prompt: null}) => {
       var filterFn = opts.filterFn || (() => true),
