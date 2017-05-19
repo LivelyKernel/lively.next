@@ -11,6 +11,18 @@ export class L2LCoreInterface extends RemoteCoreInterface {
 
   get name() { return `l2l ${this.targetId}`; }
 
+  get description() {
+    let {targetId, targetInfo} = this,
+        id = targetId.slice(0,5),
+        name = `l2l ${id}`;
+    if (targetInfo) {
+      let {location, type, userName} = targetInfo;
+      if (type) name += `, ${type}`;
+      if (location) name += `, ${location.replace(/^https?:\/\//, "")}`;
+    }
+    return name;
+  }
+
   get client() {
     let {default: L2LClient} = lively.modules.module("lively.2lively/client.js").get();
     return L2LClient.default();

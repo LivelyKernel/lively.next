@@ -27,6 +27,8 @@ export class Interface {
     this.coreInterface = coreInterface;
   }
 
+  get isSystemInterface() { return true; }
+
   get name() { return this.coreInterface.name; }
 
   dynamicCompletionsForPrefix(mod, prefix, opts) { return this.coreInterface.dynamicCompletionsForPrefix(mod, prefix, opts); }
@@ -107,5 +109,7 @@ export class Interface {
 }
 
 export var localInterface = new Interface(new LocalCoreInterface());
-export var serverInterfaceFor = url => new Interface(new HTTPCoreInterface(url));
-export var l2lInterfaceFor = (targetId, targetInfo) => new Interface(new L2LCoreInterface(targetId, targetInfo));
+const httpInterfaces = {}
+export var serverInterfaceFor = url => httpInterfaces[url] || (httpInterfaces[url] = new Interface(new HTTPCoreInterface(url)));
+const l2lInterfaces = {};
+export var l2lInterfaceFor = (targetId, targetInfo) => httpInterfaces[targetId] || (httpInterfaces[targetId] = new Interface(new L2LCoreInterface(targetId, targetInfo)));

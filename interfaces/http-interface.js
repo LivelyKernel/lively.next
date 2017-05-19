@@ -12,6 +12,8 @@ export class HTTPCoreInterface extends RemoteCoreInterface {
 
   get name() { return this.url; }
 
+  get description() { return this.url.replace(/^https?:\/\//, ""); }
+
   runEval(source, options) {
     return this.server.runEval(source, options);
   }
