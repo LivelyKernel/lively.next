@@ -7,45 +7,42 @@ export default class GithubTheme extends Theme {
   background() { return Color.white; }
 
   style(token) {
-
     switch (token) {
-      // case Token.id:     return { fontColor: Color.rgbHex("#795da3") };
-      // case Token.function:     return { fontColor: Color.rgbHex("#795da3") };
-      // case Token.namespace:     return { fontColor: Color.rgbHex("#795da3") };
-      // case Token.selector:     return { fontColor: Color.rgbHex("#795da3") };
-      // case Token.variable:     return { fontColor: Color.rgbHex("#795da3") };
+      case "comment": return {fontStyle: "italic", fontColor: "#999988"}
+      case "string": return {fontColor: "#334499"}
+      case "variable-2": return {fontColor: "#121289"}
+      
+      case "keyword":  return { fontColor: "#a71d5d" };
 
-      case Token.keyword:  return { fontColor: Color.rgbHex("#a71d5d") };
+      case "boolean":
+      case "constant": return { fontColor: "rgb(88, 92, 246)" };
+      case "global":   return { fontColor: '#795da3' };
 
-      case Token.boolean:
-      case Token.constant: return { fontColor: Color.rgb(88, 92, 246) };
-      case Token.global:   return { fontColor: Color.rgbHex('#795da3') };
+      case "dynamic":  return { fontColor: "rgb(237,106,67)" };
+      case "property":     return { fontColor: "#795da3" };
+      case "context":  return { fontColor: "#bfbfbf" };
 
-      case Token.dynamic:  return { fontColor: Color.rgb(237,106,67) };
-      case Token.property:     return { fontColor: Color.rgbHex("#795da3") };
-      case Token.context:  return { fontColor: Color.rgbHex("#bfbfbf") };
+      case "number":
+      case "numeric":  return { fontColor: "#0086b3" };
+      case "symbol":
+      case "regex":    return { fontColor: "#009926" };
+      case "operator":  return { fontColor: "#0066a3" };
 
-      case Token.number:
-      case Token.numeric:  return { fontColor: Color.rgbHex("#0086b3") };
-      case Token.symbol:
-      case Token.string:   return { fontColor: Color.rgbHex("#183691") };
-      case Token.regex:    return { fontColor: Color.rgbHex("#009926") };
-      case Token.operator:  return { fontColor: Color.rgbHex("#0066a3") };
+      case "doctype":
+      case "comment":  return { fontColor: "#969896" };
 
-      case Token.doctype:
-      case Token.comment:  return { fontColor: Color.rgbHex("#969896") };
+      case "error":    return { backgroundColor: "#ff4c4c" };
 
-      case Token.error:    return { backgroundColor: Color.rgbHex("#ff4c4c") };
+      case "coord":    return { backgroundColor: "#cccccc" };
+      case "inserted":    return { backgroundColor: "#6cff6c" };
+      case "deleted":    return { backgroundColor: "#ff6c6c" };
 
-      case Token.coord:    return { backgroundColor: Color.rgbHex("#cccccc") };
-      case Token.inserted:    return { backgroundColor: Color.rgbHex("#6cff6c") };
-      case Token.deleted:    return { backgroundColor: Color.rgbHex("#ff6c6c") };
+      case "url":    return { textDecoration: "underline", fontColor: "#2c2cff" };
+      case "important":    return { fontStyle: "italic", fontColor: Color.orange };
+      case "bold":    return { fontWeight: "bold" };
 
-      case Token.url:    return { textDecoration: "underline", fontColor: Color.rgbHex("#2c2cff") };
-      case Token.important:    return { fontStyle: "italic", fontColor: Color.orange };
-      case Token.bold:    return { fontWeight: "bold" };
-
-      default:             return { fontColor: Color.rgbHex("#333") };
+      case "atom":
+      default:             return { fontColor: "#333" };
     }
   }
 }

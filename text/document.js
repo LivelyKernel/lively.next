@@ -793,6 +793,7 @@ export class Line extends TreeNode {
     this.width = spec.width;
     this.height = spec.height;
     this.hasEstimatedExtent = false;
+    this.modeState = null;
 
     // line text settings
     this.textAlign = "left";
@@ -892,10 +893,13 @@ export class Line extends TreeNode {
     return this;
   }
 
+
   changeText(newText, textAndAttributes = null) {
     let {parent, text, height} = this,
         deltaLength = (newText.length+1) - (text.length+1),
         deltaHeight = -height;
+    if (this.modeState && this.modeState._string !== newText)
+      this.modeState = null;
     this.height = 0;
     this.width = 0;
     this.hasEstimatedExtent = false;
@@ -943,7 +947,7 @@ export class Line extends TreeNode {
         printed = `${indent}line ${index} (size: 1 width: ${Math.round(width)} height: ${Math.round(height)} text length: ${stringSize}`,
         printedContent = arr.toTuples(textAndAttributes, 2).map(printTextAttrTuple).join(",");
     return printed + (short ? ")" : ` content: [${printedContent}])`);
-    
+
     function printTextAttrTuple([content, attrs]) {
       return (typeof content === "string" ?
         `"${content}"` : String(content)) + `,${JSON.stringify(attrs)}`;

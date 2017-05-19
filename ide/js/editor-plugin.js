@@ -1,4 +1,4 @@
-import { string } from "lively.lang";
+import { string, arr } from "lively.lang";
 import { lessEqPosition } from "../../text/position.js";
 import JavaScriptTokenizer from "./highlighter.js";
 import JavaScriptChecker from "./checker.js";
@@ -25,6 +25,11 @@ import {
   l2lInterfaceFor
 } from "lively-system-interface";
 
+import { createMode } from "./mode.js";
+import { tokenizeLines, tokenizeDocument, defineMode } from "../editor-modes.js";
+
+
+const jsMode = defineMode("javascript", createMode);
 
 export default class JavaScriptEditorPlugin extends EditorPlugin {
 
@@ -34,6 +39,7 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
     super(theme)
     this.highlighter = new JavaScriptTokenizer();
     this.checker = new JavaScriptChecker();
+    this.mode = jsMode;
     this._tokens = [];
     this._ast = null;
     this.evalEnvironment = {format: "esm", targetModule: null, context: null}
@@ -58,20 +64,53 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
 
     textMorph.fill = this.theme.background();
 
-    let tokens = this._tokens = this.highlighter.tokenize(textMorph.textString),
+    let {firstVisibleRow, lastVisibleRow} = textMorph.viewState,
+        {lines, tokens} = tokenizeDocument(
+          jsMode,
+          textMorph.document,
+          firstVisibleRow,
+          lastVisibleRow,
+          this._tokenizerValidBefore),
+        startRow = lines[0].row,
         attributes = [];
 
-    for (let {token, start, end} of tokens)
-      attributes.push({start, end}, this.theme.styleCached(token));
+    for (let i = 0; i < tokens.length; i++) {
+      let lineTokens = tokens[i],
+          row = startRow+i;
+      for (let i = 0; i < lineTokens.length; i = i+4) {
+        let startColumn = lineTokens[i],
+            endColumn = lineTokens[i+1],
+            token = lineTokens[i+2];
+        attributes.push(
+          {start: {row, column: startColumn}, end: {row, column: endColumn}},
+          this.theme.styleCached(token));
+      }
+    }
     textMorph.setTextAttributesWithSortedRanges(attributes);
+
+    this._tokenizerValidBefore = {row: arr.last(lines).row+1, column: 0};
 
     if (this.checker)
       this.checker.onDocumentChange({}, textMorph, this);
   }
 
+  tokensOfRow(row) {
+    let {lines, tokens} = tokenizeDocument(
+          jsMode,
+          this.textMorph.document,
+          row, row),
+        tokensOfLine = arr.last(tokens);
+    return tokensOfLine;
+  }
+  
   tokenAt(pos) {
-    return this._tokens.find(({start,end}) =>
-      lessEqPosition(start, pos) && lessEqPosition(pos, end));
+    let tokensOfRow = this.tokensOfRow(pos.row);
+    for (let i = tokensOfRow.length; i = i-4;)
+      if (tokensOfRow[i+0] <= pos.column && pos.column <= tokensOfRow[i+1]) {
+        let token = tokensOfRow[i+2];
+        if (token) return token;
+      }
+    return null;
   }
 
   getNavigator() { return new JavaScriptNavigator(); }

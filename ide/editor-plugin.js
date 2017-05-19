@@ -59,6 +59,7 @@ export default class EditorPlugin {
     this.theme = theme;
     this._ast = null;
     this._tokens = [];
+    this._tokenizerValidBefore = null;
   }
 
   get isEditorPlugin() { return true }
@@ -81,7 +82,20 @@ export default class EditorPlugin {
     this.textMorph = null;
   }
 
-  onTextChange() { this.requestHighlight(); }
+  onTextChange(change) {
+    if (change) {
+      let {_tokenizerValidBefore: validMarker} = this, row, column;
+      if (change.selector === "insertText") ({row, column} = change.args[1]);
+      else if (change.selector === "deleteText") ({row, column} = change.args[0].start);
+      else { row = 0; column = 0; }
+      if (!validMarker || row < validMarker.row
+       || (row === validMarker.row && column < validMarker.column)) {
+         row = Math.max(0, row);
+         this._tokenizerValidBefore = {row, column};
+       }
+    }
+    this.requestHighlight();
+  }
 
   requestHighlight(immediate = false) {
     if (immediate) this.highlight();
