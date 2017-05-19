@@ -46,7 +46,6 @@ morph breaks old windows without it.
 `,
     objectConverter: ({snapshot, id}, pool) => {
       let rootMorph = pool.refForId(id).realObj;
-      // inspect(rootMorph)
       if (rootMorph && rootMorph.isMorph)
         rootMorph.withAllSubmorphsDo(win => {
           if (!win.isWindow || win.submorphs.some(m => m.name === "button wrapper")) return;

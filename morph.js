@@ -935,15 +935,18 @@ export class Morph {
       submorph.resumeSteppingAll();
     });
 
-
     return submorph;
   }
 
   addMorph(submorph, insertBeforeMorph) {
     // insert at right position in submorph list, according to insertBeforeMorph
     var submorphs = this.submorphs,
-        insertBeforeMorphIndex = insertBeforeMorph ? submorphs.indexOf(insertBeforeMorph) : -1,
-        insertionIndex = insertBeforeMorphIndex === -1 ? submorphs.length : insertBeforeMorphIndex;
+        insertBeforeMorphIndex = insertBeforeMorph
+          ? submorphs.indexOf(insertBeforeMorph)
+          : -1,
+        insertionIndex = insertBeforeMorphIndex === -1
+          ? submorphs.length
+          : insertBeforeMorphIndex;
 
     return this.addMorphAt(submorph, insertionIndex);
   }
