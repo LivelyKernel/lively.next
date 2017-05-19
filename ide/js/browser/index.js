@@ -329,7 +329,7 @@ export default class Browser extends Window {
             {name: "sourceEditor", bounds: sourceEditorBounds, ...textStyle},
 
             {name: "browserCommands", bounds: browserCommandsBounds,
-             layout: new GridLayout({grid:[["commands", null, "eval backend list"]]}),
+             layout: new GridLayout({grid:[["commands", null, "eval backend button"]]}),
              fill: Color.transparent,
              reactsToPointer: false,
              borderBottom: {color: Color.gray, width: 1},
@@ -415,7 +415,8 @@ export default class Browser extends Window {
         .forEach(ea => ea.height = hresizer.top-moduleList.bottom);
 
       codeEntityCommands.left = codeEntityTree.left = moduleList.right;
-      browserCommands.layout.col(2).width = evalBackendList.width;
+      if (evalBackendList)
+        browserCommands.layout.col(2).width = evalBackendList.width;
       browserCommands.width = hresizer.width = container.width;
       metaInfoText.top = hresizer.bottom + 1;
       metaInfoText.width = browserCommands.width + 1;
@@ -457,7 +458,7 @@ export default class Browser extends Window {
       searchButton:          this.getSubmorphNamed("searchButton"),
       metaInfoText:          this.getSubmorphNamed("metaInfoText"),
       sourceEditor:          this.getSubmorphNamed("sourceEditor"),
-      evalBackendList:       this.getSubmorphNamed("eval backend list")
+      evalBackendList:       this.getSubmorphNamed("eval backend button")
     }
   }
 
@@ -561,9 +562,9 @@ export default class Browser extends Window {
     if (this.world()) await this.whenRendered();
 
     if (optSystemInterface || systemInterface) {
-      let sysI = optSystemInterface || systemInterface,
-          sysIName = typeof sysI === "string" ? sysI : sysI.name;
-      await this.ui.evalBackendList.setAndSelectBackend(sysIName)
+      this.systemInterface = optSystemInterface || systemInterface;
+      if (this.ui.evalBackendList)
+        await this.ui.evalBackendList.updateFromTarget();
     }
 
     if (packageName) {

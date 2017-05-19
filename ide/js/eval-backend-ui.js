@@ -1,10 +1,128 @@
 /*global localStorage*/
-
-import { pt, Point, Color, Rectangle } from "lively.graphics";
-import { arr, obj } from "lively.lang";
+import { pt, Color } from "lively.graphics";
+import { arr, string, obj } from "lively.lang";
 import { connect, noUpdate } from "lively.bindings";
-import { DropDownList, config } from "lively.morphic";
+import { DropDownList, Button, config } from "lively.morphic";
 import L2LClient from "lively.2lively/client.js";
+import { serverInterfaceFor, localInterface, l2lInterfaceFor } from "lively-system-interface";
+
+export class EvalBackendButton extends Button {
+
+  static get properties() {
+
+    return {
+
+      defaultActiveStyle: {
+        defaultValue: {
+          borderRadius: 4,
+          borderColor: Color.rgb(204,204,204),
+          fill: "linear-gradient(180deg,rgba(255,255,255,1) 0%,rgba(236,240,241,1) 100%)",
+          fontColor: Color.rgb(64,64,64),
+          nativeCursor: "pointer",
+          fontSize: 10,
+          fontFamily: "Sans-Serif",
+        }
+      },
+
+      currentBackendName: {
+        after: ["label"], defaultValue: "local",
+        set(name) {
+          this.setProperty("currentBackendName", name);
+          let backend = this.currentBackend,
+              descr = backend && backend.coreInterface && backend.coreInterface.description,
+              label = string.truncate(descr || name || "local", 25);
+          this.label = label;
+        }
+      },
+
+      currentBackend: {
+        derived: true,
+        get() { return this.evalbackendChooser.backendWithName(this.currentBackendName); },
+        set(backend) {
+          this.currentBackendName = backend ? backend.name : "local";
+        }
+      },
+
+      evalbackendChooser: {
+        readOnly: true, derived: true,
+        get() { return EvalBackendChooser.default; }
+      },
+      
+      fontSize: {defaultValue: 10},
+      extent: {defaultValue: pt(120, 20)},
+      target: {}
+    }
+  }
+
+  async trigger() {
+    let backends = await this.evalbackendChooser.allEvalBackends(),
+        {currentBackend} = this,
+        preselect = 1,
+        items = [
+          "edit...",
+          ...backends.map((ea, i) => {
+            if (currentBackend === ea) preselect = i+1;
+            return {
+              isListItem: true,
+              label: [ea.coreInterface.description || ea.name, {fontSize: "90%"}],
+              value: ea
+            };
+          })];
+
+    let {selected: [sysInterface]} = await this.world().filterableListPrompt(
+      "choose eval backend", items, {
+        requester: this.target,
+        preselect
+      });
+
+    if (sysInterface === "edit...") {
+      var {status, list, selections: [choice]} =
+        await this.world().editListPrompt("choose and edit eval backends",
+          this.evalbackendChooser.customBackends.map(ea => {
+            return {
+              isListItem: true,
+              label: [ea.coreInterface.description || ea.name, {fontSize: "90%"}],
+              value: ea
+            };
+          }), {historyId: "js-eval-backend-history"});
+      if ("canceled" === status) return;
+      this.evalbackendChooser.customBackends = list;
+      if (!choice) return;
+      sysInterface = typeof choice === "string"
+        ? this.evalbackendChooser.backendWithName(choice)
+        : choice;
+    }
+    
+    this.currentBackend = sysInterface;
+  }
+
+  async ensureSimilarBackend() {
+    if (!this.currentBackendName || !this.currentBackendName.startsWith("l2l")) return;
+
+    // only for l2l connection
+    let {currentBackend: {targetId: id, targetInfo: info}} = this,
+        l2lBackends = await this.evalbackendChooser.l2lEvalBackends();
+
+    if (l2lBackends.some(ea => ea.targetId === id)) return;
+
+    let similar;
+    if (info && info.type) {
+      similar = l2lBackends.find(ea => {
+        if (!ea.targetInfo) return false;
+        if (ea.targetInfo.type !== info.type) return false;
+        if (info.user) return ea.targetInfo.user === info.user;
+        return true;
+      });
+    }
+
+    if (similar) this.currentBackend = similar;
+  }
+
+  updateFromTarget() {
+    this.currentBackend = this.target.systemInterface;
+  }
+}
+
 
 class EvalBackendList extends DropDownList {
 
@@ -17,42 +135,8 @@ class EvalBackendList extends DropDownList {
     }
   }
 
-  setAndSelectBackend(backend) {
-    if (!backend) backend = "local";
-    if (typeof backend !== "string") backend = backend.name || "unknown backend"
-    let chooser = this.evalbackendChooser;
-    if (!chooser.backends.includes(backend))
-      chooser.backends = [...chooser.backends, backend];
-    this.selection = backend;
-  }
-
-  async ensureSimilarBackend() {
-    if (!this.selection || typeof this.selection === "string") return;
-
-    // only for l2l connection
-    let {selection: {value: {id, type, info}}} = this,
-        l2lBackends = await this.evalbackendChooser.l2lEvalBackends();
-
-    if (l2lBackends.some(ea => ea.value.id === id)) return;
-    
-    let similar;
-    if (info && info.type) {
-      similar = l2lBackends.find(ea => {
-        if (!ea.value.info) return false;
-        if (ea.value.info.type !== info.type) return false;
-        if (info.user) return ea.value.info.user === info.user;
-        return true;
-      });
-    }
-
-    // if (!similar) {
-    //   similar = l2lBackends.find(ea => ea.value.type === type);
-    // }
-
-    if (similar)
-      this.selection = similar.value;
-  }
-
+  setAndSelectBackend(backend) {}
+  async ensureSimilarBackend() {}
 }
 
 
@@ -62,16 +146,19 @@ export default class EvalBackendChooser {
     return this._default || (this._default = new this());
   }
 
-  get backends() {
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  get customBackends() {
     var stored = [];
     try {
-      var stringified = localStorage["lively.morphic-ide/js/EvalBackendChooser-history"];
-      stored = JSON.parse(stringified);
+      let stringified = localStorage["lively.morphic-ide/js/EvalBackendChooser-history"],
+          stored = JSON.parse(stringified);
+      return stored.map(ea => ea.startsWith("http") ? serverInterfaceFor(ea) : null).filter(Boolean);
     } catch (e) {}
     return stored || [];
   }
 
-  set backends(backends) {
+  set customBackends(backends) {
       // localStorage["lively.morphic-ide/js/EvalBackendChooser-history"] =  JSON.stringify(["http://localhost:9011/eval"]);
     backends = backends.filter(ea => !!ea && ea !== "local" && ea !== "edit...");
     try {
@@ -79,112 +166,79 @@ export default class EvalBackendChooser {
     } catch (e) {}
   }
 
-  buildEvalBackendDropdownFor(morph) {
-    var list = new EvalBackendList({
-      evalbackendChooser: this,
-      name: "eval backend list",
-      target: morph
-    });
-
-    connect(list, 'selection', this, 'interactivelyChangeEvalBackend', {
-      updater: function($upd, choice) { $upd(choice, this.sourceObj.target); }
-    });
-
-    // for updating the list items when list is opened:
-    connect(list, 'activated', this, 'updateItemsOfEvalBackendDropdown', {
-      updater: function($upd) { $upd(this.sourceObj, this.sourceObj.selection); }
-    });
-
-    list.startStepping(5000, "ensureSimilarBackend");
-
-    return list;
+  backendWithName(name) {
+    if (!name || name === "local") return localInterface;
+    if (name.startsWith("http")) return serverInterfaceFor(name);
+    if (name.startsWith("l2l")) return l2lInterfaceFor(name.split(" ")[1]);
+    return localInterface;
   }
 
-  ensureEvalBackendDropdown(morph, currentBackend) {
-    var dropdown = morph.getSubmorphNamed("eval backend list");
-    if (!dropdown) dropdown = this.buildEvalBackendDropdownFor(morph);
-    this.updateItemsOfEvalBackendDropdown(dropdown, currentBackend)
-    return dropdown;
+  get httpEvalBackends() {
+    return [serverInterfaceFor(config.remotes.server)];
   }
 
   async l2lEvalBackends() {
-    // FIXME this is temporary... needs cleanup
     let l2lClient = L2LClient.forLivelyInBrowser(),
         {data: clients} = await new Promise((resolve, reject) =>
           l2lClient.sendTo(l2lClient.trackerId, "getClients", {}, resolve));
     clients = clients.filter(ea => ea[0] !== l2lClient.id)
-    return clients.map(([id, {info = {}}]) => {
-      let string = `l2l ${id.slice(0, 5)}${info ? " - " + info.type : ""}`,
-          name = `l2l ${id}`;
-      return {
-        string,
-        value: {id, info, type: "l2l", name},
-        isListItem: true
-      }
-    });
-  }
-
-  async updateItemsOfEvalBackendDropdown(dropdown, currentBackend) {
-    currentBackend = currentBackend || "local";
-    if (typeof currentBackend !== "string" && !currentBackend.isListItem) {
-      currentBackend = {
-        isListItem: true,
-        string: currentBackend.name || "unknown",
-        value: currentBackend
-      }
-    }
-
-    let l2lBackends = await this.l2lEvalBackends(),
-        items = arr.uniqBy([
-          "edit...", "local",
-          currentBackend,
-          ...this.backends,
-          ...obj.values(config.remotes),
-          ...l2lBackends
-        ], (a, b) => {
-          let valA = a.value || a;
-          let valB = b.value || b;
-          return valA == valB || obj.equals(valA, valB)
+    return await Promise.all(clients.map(async ([id, {info = {}}]) => {
+      if (!info.known) {
+        Promise.resolve().then(async () => {
+          let {data: {value: location}} = await l2lClient.sendToAndWait(
+                id, "remote-eval", {source: "String(document.location.href)"});
+          info.location = location;
+          info.known = true;
         });
-
-    setTimeout(() => {
-      noUpdate({sourceObj: dropdown, sourceAttribute: "selection"}, () => {
-        dropdown.items = items;
-        dropdown.selection = currentBackend;
-        // dropdown.label = currentBackend;
-      });
-    }, 20);
+      }
+      return l2lInterfaceFor(id, info);
+    }));
   }
 
-  async interactivelyChangeEvalBackend(choice, requester/*morph*/) {
+  async allEvalBackends() {
+    return arr.uniq([
+      localInterface,
+      ...this.customBackends,
+      ...this.httpEvalBackends,
+      ...await this.l2lEvalBackends(),
+    ]);
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-  
+
+  buildEvalBackendDropdownFor(morph) {
+    var btn = new EvalBackendButton({
+      name: "eval backend button",
+      target: morph,
+    });
+    setTimeout(() => btn.updateFromTarget(), 0);
+
+    connect(btn, 'currentBackend', this, 'changeEvalBackend', {
+      updater: function($upd, choice) { $upd(choice, this.sourceObj.target); }
+    });
+
+
+    btn.startStepping(5000, "ensureSimilarBackend");
+
+    return btn;
+  }
+
+  ensureEvalBackendDropdown(morph, currentBackend) {
+    var dropdown = morph.getSubmorphNamed("eval backend button");
+    if (!dropdown) dropdown = this.buildEvalBackendDropdownFor(morph);
+    return dropdown;
+  }
+
+  async changeEvalBackend(choice, requester/*morph*/) {
     if (!requester) {
-      console.warn(`Called EvalBackendChooser.interactivelyChangeEvalBackend without requester!`);
+      console.warn(`Called EvalBackendChooser.changeEvalBackend without requester!`);
       return;
     }
-
-    if (!choice) choice = "local";
-
-    if (choice === "edit...") { // query user
-      var {status, list, selections: [choice]} =
-        await requester.world().editListPrompt("choose and edit eval backends",
-          this.backends,
-          {historyId: "js-eval-backend-history"});
-      if ("canceled" === choice) {
-        requester.setStatusMessage("Canceled");
-        return;
-      }
-      this.backends = list;
+    if (!choice) choice = localInterface;
+    if (requester.systemInterface !== choice) {
+      requester.setStatusMessage(`Eval backend is now ${choice.name}`);
+      requester.setEvalBackend(choice);
     }
-
-    choice = "local" === choice ? undefined : choice;
-
-    // if (choice) this.backends = arr.uniq([choice, ...this.backends]);
-    this.updateItemsOfEvalBackendDropdown(
-      requester.getSubmorphNamed("eval backend list"), choice);
-
-    let name = !choice ? "local" : typeof choice === "string" ? choice : choice.name
-    requester.setStatusMessage(`Eval backend is now ${name}`);
-    requester.setEvalBackend(choice);
     requester.focus();
   }
 
@@ -192,8 +246,8 @@ export default class EvalBackendChooser {
     return {
         name: "activate eval backend dropdown list",
         exec: () => {
-          var list = requester.getSubmorphNamed("eval backend list");
-          list.toggleList(); list.listMorph.focus();
+          var btn = requester.getSubmorphNamed("eval backend button");
+          btn && btn.trigger();
           return true;
         }
       }

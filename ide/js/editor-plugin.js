@@ -202,26 +202,32 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
 
   setSystemInterfaceNamed(interfaceSpec) {
     if (!interfaceSpec) interfaceSpec = "local";
+
     let systemInterface;
 
-    // "l2l FA3V-ASBDFD3-..."
-    if (typeof interfaceSpec === "string" && interfaceSpec.startsWith("l2l "))
-      interfaceSpec = {type: "l2l", id: interfaceSpec.split(" ")[1]}
+    if (interfaceSpec.isSystemInterface) {
+      systemInterface = interfaceSpec;
 
-    if (typeof interfaceSpec !== "string") {
-      if (interfaceSpec.type === "l2l")
-        systemInterface = l2lInterfaceFor(interfaceSpec.id, interfaceSpec.info)
+    } else {
+      // "l2l FA3V-ASBDFD3-..."
+      if (typeof interfaceSpec === "string" && interfaceSpec.startsWith("l2l "))
+        interfaceSpec = {type: "l2l", id: interfaceSpec.split(" ")[1]}
+  
+      if (typeof interfaceSpec !== "string") {
+        if (interfaceSpec.type === "l2l")
+          systemInterface = l2lInterfaceFor(interfaceSpec.id, interfaceSpec.info)
+      }
+  
+      if (typeof interfaceSpec !== "string") {
+        $world.setStatusMessage(`Unknown system interface ${interfaceSpec}`)
+        interfaceSpec = "local";
+      }
+  
+      if (!systemInterface)
+        systemInterface = !interfaceSpec || interfaceSpec === "local" ?
+          localInterface :
+          serverInterfaceFor(interfaceSpec)
     }
-
-    if (typeof interfaceSpec !== "string") {
-      $world.setStatusMessage(`Unknown system interface ${interfaceSpec}`)
-      interfaceSpec = "local";
-    }
-
-    if (!systemInterface)
-      systemInterface = !interfaceSpec || interfaceSpec === "local" ?
-        localInterface :
-        serverInterfaceFor(interfaceSpec)
 
     return this.setSystemInterface(systemInterface);
   }

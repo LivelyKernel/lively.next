@@ -213,7 +213,7 @@ export default class TestRunner extends HTMLMorph {
         get() { return this.editorPlugin.systemInterface(); },
         set(systemInterface) {
           this.editorPlugin.setSystemInterface(systemInterface);
-          this.get("eval backend list").setAndSelectBackend(systemInterface.name);
+          this.get("eval backend button").updateFromTarget();
         }
       }
     }
@@ -245,12 +245,12 @@ export default class TestRunner extends HTMLMorph {
   }
 
   relayout() {
-    this.get("eval backend list").topRight = this.innerBounds().topRight();
+    this.get("eval backend button").topRight = this.innerBounds().topRight();
   }
 
   setEvalBackend(choice) {
     this.editorPlugin.setSystemInterfaceNamed(choice);
-    this.get("eval backend list").setAndSelectBackend(this.systemInterface);
+    this.get("eval backend button").setAndSelectBackend(this.systemInterface);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

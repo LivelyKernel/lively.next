@@ -82,7 +82,7 @@ export default class Workspace extends Window {
 
   relayoutWindowControls() {
     super.relayoutWindowControls();
-    var list = this.getSubmorphNamed("eval backend list"),
+    var list = this.getSubmorphNamed("eval backend button"),
         title = this.titleLabel();
     if (list) {
       list.topRight = this.innerBounds().topRight().addXY(-5, 2);
