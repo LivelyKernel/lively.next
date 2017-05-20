@@ -70,25 +70,27 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
           textMorph.document,
           firstVisibleRow,
           lastVisibleRow,
-          this._tokenizerValidBefore),
-        startRow = lines[0].row,
-        attributes = [];
+          this._tokenizerValidBefore);
 
-    for (let i = 0; i < tokens.length; i++) {
-      let lineTokens = tokens[i],
-          row = startRow+i;
-      for (let i = 0; i < lineTokens.length; i = i+4) {
-        let startColumn = lineTokens[i],
-            endColumn = lineTokens[i+1],
-            token = lineTokens[i+2];
-        attributes.push(
-          {start: {row, column: startColumn}, end: {row, column: endColumn}},
-          this.theme.styleCached(token));
+    if (lines.length) {
+      let startRow = lines[0].row,
+          attributes = [];  
+      for (let i = 0; i < tokens.length; i++) {
+        let lineTokens = tokens[i],
+            row = startRow+i;
+        for (let i = 0; i < lineTokens.length; i = i+4) {
+          let startColumn = lineTokens[i],
+              endColumn = lineTokens[i+1],
+              token = lineTokens[i+2];
+          attributes.push(
+            {start: {row, column: startColumn}, end: {row, column: endColumn}},
+            this.theme.styleCached(token));
+        }
       }
+      textMorph.setTextAttributesWithSortedRanges(attributes);    
+      this._tokenizerValidBefore = {row: arr.last(lines).row+1, column: 0};
     }
-    textMorph.setTextAttributesWithSortedRanges(attributes);
 
-    this._tokenizerValidBefore = {row: arr.last(lines).row+1, column: 0};
 
     if (this.checker)
       this.checker.onDocumentChange({}, textMorph, this);
@@ -105,6 +107,7 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
   
   tokenAt(pos) {
     let tokensOfRow = this.tokensOfRow(pos.row);
+    if (!tokensOfRow.length) return null;
     for (let i = tokensOfRow.length; i = i-4;)
       if (tokensOfRow[i+0] <= pos.column && pos.column <= tokensOfRow[i+1]) {
         let token = tokensOfRow[i+2];

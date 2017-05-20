@@ -44,6 +44,7 @@ function tokenizeLine(mode, stream, line, state) {
   let {text} = line
   if (!text) return {tokens: [], state};
   stream.reset(text, 2/*indent...FIXME*/);
+  state = line.modeState = mode.copyState(state);
   let tokens = [],
       prevLine = line.prevLine();
   state._string = text;
@@ -54,7 +55,6 @@ if (counter++>10000) throw new Error("endless tokenizeLine");
     tokens.push(stream.start, stream.pos, name, stream.current());
     stream.start = stream.pos;
   }
-  state = mode.copyState(state);
   return {tokens, state};
 }
 
@@ -81,10 +81,13 @@ export function tokenizeDocument(mode, document, fromRow, toRow, validBeforePos)
     lines = linesToTokenize(document, fromRow, toRow, null);
     tokens = tokenizeLines(mode, lines);      
   }
+
   return {tokens, lines};
 }
 
 function linesToTokenize(document, fromRow, toRow, validBeforePos) {
+  if (validBeforePos && validBeforePos.row >= toRow) return [];
+
   let startRow = validBeforePos ?
         Math.max(0, validBeforePos.row-1) : fromRow,
       line = document.getLine(startRow),

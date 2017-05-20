@@ -74,12 +74,19 @@ export default class EditorPlugin {
   attach(editor) {
     this.textMorph = editor;
     connect(editor, "textChange", this, "onTextChange");
+    connect(editor, "viewChange", this, "onViewChange");
     this.textMorph.whenRendered().then(() => this.highlight());
   }
 
   detach(editor) {
     disconnect(editor, "textChange", this, "onTextChange");
     this.textMorph = null;
+  }
+
+  onViewChange() {
+    // this.requestHighlight();
+    let {firstVisibleRow, lastVisibleRow} = this.textMorph.viewState
+    this.requestHighlight();
   }
 
   onTextChange(change) {
