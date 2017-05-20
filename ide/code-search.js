@@ -1,6 +1,6 @@
 import { fun, arr, obj, string } from 'lively.lang';
 import { pt, LinearGradient, Color, Rectangle } from "lively.graphics";
-import { config, Text, show, Window } from '../index.js';
+import { config, StyleSheet, Text, show, Window } from '../index.js';
 import { FilterableList, List } from "lively.morphic/components/list.js";
 import { LabeledCheckBox } from "lively.morphic/components/widgets.js";
 import LoadingIndicator from "lively.morphic/components/loading-indicator.js";
@@ -33,8 +33,8 @@ export async function doSearch(
       isListItem: true,
       value: ea,
       get string() {
-        return nameAndLine
-             + string.pad(ea.lineString, result.maxModuleNameLength - nameAndLine.length, true);
+        return nameAndLine + ea.lineString;
+             //+ string.pad(, result.maxModuleNameLength - nameAndLine.length, true);
       }
     });
     return result;
@@ -66,6 +66,16 @@ export class CodeSearcher extends FilterableList {
       inputPadding: {defaultValue: Rectangle.inset(4,3)},
       itemPadding: {defaultValue: Rectangle.inset(4,2)},
       borderWidth: {defaultValue: 0},
+
+      styleSheets: {
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            ".list .ListItemMorph": {
+              fontFamily: "Inconsolata, monospace"
+            }
+          });
+        }
+      },
 
       historyId:  {defaultValue: "lively.morphic-code searcher"},
 
