@@ -1288,7 +1288,17 @@ var usefulEditorCommands = [
 
       await ed.changeEditorMode(choice.url);
     }
+  },
+  
+  {
+    name: "report token at cursor",
+    async exec(morph) {
+      let {token, start, end} = morph.tokenAt(morph.cursorPosition) || {};      
+      morph.setStatusMessage(token ? `${token} ${start.column} => ${end.column}` : "no token");
+      return true;
+    }
   }
+
 ];
 commands.push(...usefulEditorCommands);
 

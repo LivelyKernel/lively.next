@@ -280,6 +280,7 @@ var config = {
       {keys: "Alt-Shift-\\"/*Alt-Shift-|*/, command: "[shell] run shell command on region"},
       {keys: "Alt-Shift-;", command: "run code on text morph"},
       {keys: {mac: "Meta-Shift-L O P E N", win: "Ctrl-Shift-L O P E N"}, command: "open file at cursor"},
+      {keys: "Meta-F1", command: "report token at cursor"},
     ]
 
   },
