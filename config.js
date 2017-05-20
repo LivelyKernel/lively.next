@@ -287,11 +287,11 @@ var config = {
   },
 
   codeEditor: {
-    defaultTheme: "github",
+    defaultTheme: "default",
     defaultStyle: {
-      fontFamily: "Inconsolata, monospace",
+      fontFamily: "Monaco, Inconsolata, monospace",
       padding: Rectangle.inset(4, 2, 4, 2),
-      fontSize: 14,
+      fontSize: 12,
       clipMode: "auto",
     }
   },
