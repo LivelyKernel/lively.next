@@ -897,12 +897,25 @@ export class Line extends TreeNode {
   changeText(newText, textAndAttributes = null) {
     let {parent, text, height} = this,
         deltaLength = (newText.length+1) - (text.length+1),
-        deltaHeight = -height;
+        deltaHeight = 0;
+
+    // tokenizer invalidation
     if (this.modeState && this.modeState._string !== newText)
       this.modeState = null;
-    this.height = 0;
-    this.width = 0;
-    this.hasEstimatedExtent = false;
+
+    // text layout invalidation: if the line had width/height before, keep that
+    // but mark as estimated so that the renderer can update later.  This saves
+    // us line estimations + inconsistencies during redraw
+
+    if (this.height || this.width) {
+      this.hasEstimatedExtent = true;
+    } else {
+      this.height = 0;
+      this.width = 0;
+      this.hasEstimatedExtent = false;
+      deltaHeight = -height;
+    }
+
     this._text = newText;
     this._textAttributes = null;
     this.textAndAttributes = textAndAttributes || (textAndAttributes = [newText, null]);
@@ -1491,6 +1504,7 @@ export default class Document {
     if (!textAndAttributes || !textAndAttributes.length)
       return {start: pos, end: pos};
 
+    if (debug && !debug.debugDocumentUpdate) debug = false;
     if (debug && !debug.log) debug = console;
 
     let {row, column} = pos;
@@ -1501,8 +1515,11 @@ export default class Document {
         attrsForLines = splitTextAndAttributesIntoLines(textAndAttributes, newline);
 
     if (debug) {
-      if (!debug.log) debug = {log: console.log.bind(console), dump: console.log.bind(console)};
-
+      if (!debug.log)
+        debug = {
+          log: console.log.bind(console),
+          dump: console.log.bind(console)
+        };
     }
 
     if (!line) { // text empty
@@ -1670,6 +1687,7 @@ export default class Document {
     if (fromCol < 0) fromCol = 0;
     if (toCol < 0) toCol = 0;
 
+    if (debug && !debug.debugDocumentUpdate) debug = false;
     if (debug) {
       if (!debug.log) debug = {
         log: console.log.bind(console),
