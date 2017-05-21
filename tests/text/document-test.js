@@ -203,6 +203,81 @@ describe("document as text tree", () => {
     });
 
   });
+  
+  describe("replace", () => {
+
+    it("replaces single line", () => {
+      var doc = new Document(["aaa", "bbb"]);
+      doc.replace(range(0,0,0,3), ["test", {x: 23}]);
+      doc.consistencyCheck();
+      expect(doc.print()).equals(
+          `root (size: 2 width: 0 height: 0 text length: 9)\n`
+        + ` line 0 (size: 1 width: 0 height: 0 text length: 5 content: ["test",{"x":23}])\n`
+        + ` line 1 (size: 1 width: 0 height: 0 text length: 4 content: ["bbb",null])`);
+      var doc = new Document(["aaa", "bbb"]);
+      doc.replace(range(1,0,1,3), "test");
+      doc.consistencyCheck();
+      expect(doc.print()).equals(
+          `root (size: 2 width: 0 height: 0 text length: 9)\n`
+        + ` line 0 (size: 1 width: 0 height: 0 text length: 4 content: ["aaa",null])\n`
+        + ` line 1 (size: 1 width: 0 height: 0 text length: 5 content: ["test",null])`);
+    });
+    
+    it("replaces across lines", () => {
+      var doc = new Document(["aaa", "bbb"]);
+      doc.replace(range(0,1,1,1), "test");
+      doc.consistencyCheck();
+      expect(doc.print()).equals(
+          `root (size: 1 width: 0 height: 0 text length: 8)\n`
+        + ` line 0 (size: 1 width: 0 height: 0 text length: 8 content: ["atestbb",null])`);
+      var doc = new Document(["aaa", "bbb"]);
+      doc.replace(range(0,1,1,1), ["test", {x: 23}]);
+      doc.consistencyCheck();
+      expect(doc.print()).equals(
+          `root (size: 1 width: 0 height: 0 text length: 8)\n`
+        + ` line 0 (size: 1 width: 0 height: 0 text length: 8 content: ["a",null,"test",{"x":23},"bb",null])`);
+    });
+    
+    it("replacement has multiple lines", () => {
+      var doc = new Document(["aaa", "bbb"]);
+      doc.replace(range(0,1,0,2), "test\nfoo\nbar");
+      doc.consistencyCheck();
+      expect(doc.print()).equals(
+        `root (size: 4 width: 0 height: 0 text length: 19)\n`
+      + ` leaf (size: 2 width: 0 height: 0 text length: 10)\n`
+      + `  line 0 (size: 1 width: 0 height: 0 text length: 6 content: ["atest",null])\n`
+      + `  line 1 (size: 1 width: 0 height: 0 text length: 4 content: ["foo",null])\n`
+      + ` leaf (size: 2 width: 0 height: 0 text length: 9)\n`
+      + `  line 2 (size: 1 width: 0 height: 0 text length: 5 content: ["bara",null])\n`
+      + `  line 3 (size: 1 width: 0 height: 0 text length: 4 content: ["bbb",null])`);
+    });
+
+    it("replacementment longer as doc", () => {
+      var doc = new Document(["aaa", "bbb"]);
+      doc.replace(range(1,1,2,0), "test\nfoo\nbar");
+      doc.consistencyCheck();
+      expect(doc.print()).equals(
+        `root (size: 4 width: 0 height: 0 text length: 18)\n`
+      + ` leaf (size: 2 width: 0 height: 0 text length: 10)\n`
+      + `  line 0 (size: 1 width: 0 height: 0 text length: 4 content: ["aaa",null])\n`
+      + `  line 1 (size: 1 width: 0 height: 0 text length: 6 content: ["btest",null])\n`
+      + ` leaf (size: 2 width: 0 height: 0 text length: 8)\n`
+      + `  line 2 (size: 1 width: 0 height: 0 text length: 4 content: ["foo",null])\n`
+      + `  line 3 (size: 1 width: 0 height: 0 text length: 4 content: ["bar",null])`);
+    });
+
+    it("insert after end", () => {
+      var doc = new Document(["aaa"]);
+      doc.replace(range(1,1,2,0), "foo\nbar");
+      doc.consistencyCheck();
+      expect(doc.print()).equals(
+        `root (size: 3 width: 0 height: 0 text length: 12)\n`
+      + ` line 0 (size: 1 width: 0 height: 0 text length: 4 content: ["aaa",null])\n`
+      + ` line 1 (size: 1 width: 0 height: 0 text length: 4 content: ["foo",null])\n`
+      + ` line 2 (size: 1 width: 0 height: 0 text length: 4 content: ["bar",null])`);
+    });
+
+  });
 
 
   describe("bugs", () => {

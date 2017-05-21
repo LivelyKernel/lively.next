@@ -95,8 +95,7 @@ export default class EditorPlugin {
     // now that all token states thereafter are invalid
     if (change) {
       let {_tokenizerValidBefore: validMarker} = this, row, column;
-      if (change.selector === "insertText") ({row, column} = change.args[1]);
-      else if (change.selector === "deleteText") ({row, column} = change.args[0].start);
+      if (change.selector === "replace") ({row, column} = change.args[0].start);
       else { row = 0; column = 0; }
       if (!validMarker || row < validMarker.row
        || (row === validMarker.row && column < validMarker.column)) {

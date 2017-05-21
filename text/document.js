@@ -1708,6 +1708,88 @@ export default class Document {
     this.insertLines([newLine], row+1);
     return {start: {row, column}, end: {row: row+1, column: 0}};
   }
+  
+  replace({start, end}, replacement, debug) {
+    if (!replacement.length) {
+      this.remove({start, end}, debug);
+      return {removed: {start, end}, inserted: {start, end: start}};
+    }
+
+    let startClipped = this.clipPositionToLines(start),
+        endClipped = this.clipPositionToLines(end);
+
+    if (startClipped.row === endClipped.row)
+      this.remove({start: startClipped, end: endClipped}, debug);
+
+    if (startClipped.row === endClipped.row || lessEqPosition(this.endPosition, start)) {
+      let inserted;
+      if (typeof replacement === "string") {
+        if (replacement.length)
+          inserted = replacement.length && this.insertText(replacement, start);
+      } else {
+        if (replacement.length && (replacement.length !== 2 || replacement[0].length))
+          inserted = this.insertTextAndAttributes(replacement, start, debug);
+      }
+      if (!inserted) inserted = {start: startClipped, end: startClipped};
+      return {removed: {start, end}, inserted}
+    }
+
+    start = startClipped; end = endClipped;
+    let {row: startRow, column: startColumn} = start,
+        {row: endRow, column: endColumn} = end;
+
+    let textAndAttributesByLine;
+    if (typeof replacement === "string") {
+      textAndAttributesByLine = [];
+      let lines = replacement.split(newline);
+      for (let i = 0; i < lines.length; i++)
+        textAndAttributesByLine.push([lines[i], null]);
+    } else textAndAttributesByLine = splitTextAndAttributesIntoLines(replacement, newline);
+
+    let nothingToInsert =
+      !textAndAttributesByLine.length ||
+      (textAndAttributesByLine.length === 1 &&
+        (!textAndAttributesByLine[0].length || !textAndAttributesByLine[0][0].length));
+    if (nothingToInsert) textAndAttributesByLine = [];
+
+    // splitTextAndAttributesIntoLines(["hhelo", null, " wor\nd", null], newline)
+
+    let line = this.getLine(startRow),
+        lastLine = this.getLine(endRow),
+        [before, _] = splitTextAndAttributesAt(line.textAndAttributes, startColumn);
+    line.changeTextAndAttributes(
+      nothingToInsert
+        ? before
+        : concatTextAndAttributes(before, textAndAttributesByLine.shift(), true));
+
+    let row = startRow;
+    while (true) {
+      if (!textAndAttributesByLine.length) break;
+      line = line.nextLine(); row++;
+      if (line === lastLine) break;
+      line.changeTextAndAttributes(textAndAttributesByLine.shift())
+    }
+
+    if (!textAndAttributesByLine.length) {
+      this.remove({start: {row, column: line.stringSize}, end});
+      return {
+        removed: {start, end},
+        inserted: {start, end: {row, column: line.stringSize}}
+      };
+    }
+
+    // last line
+    console.assert(row == endRow, "not end row");
+    console.assert(line.row == row, "row != last line.row");
+    this.remove({start: {row, column: 0}, end});
+    let {end: insertionEnd} = this.insertTextAndAttributes(
+      arr.flatten(textAndAttributesByLine, 1),
+      {row, column: 0});
+    return {
+      removed: {start, end},
+      inserted: {start, end: insertionEnd}
+    }
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // word accessors

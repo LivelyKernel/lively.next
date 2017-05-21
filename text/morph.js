@@ -7,7 +7,7 @@ import Document, { objectReplacementChar } from "./document.js";
 import { signal } from "lively.bindings";
 import { Anchor } from "./anchors.js";
 import { Range } from "./range.js";
-import { eqPosition } from "./position.js";
+import { eqPosition, lessPosition } from "./position.js";
 import KeyHandler from "../events/KeyHandler.js";
 import { Label } from "./label.js";
 import InputLine from "./input-line.js";
@@ -100,7 +100,8 @@ export class Text extends Morph {
             textWidth: 0,
             firstVisibleRow: 0,
             lastVisibleRow: 0,
-            heightBefore: 0
+            heightBefore: 0,
+            wasScrolled: false
           }
         }
       },
@@ -148,20 +149,12 @@ export class Text extends Morph {
 
       fixedWidth: {
         isStyleProp: true,
-        after: ["clipMode", "viewState"], defaultValue: false,
-        set(value) {
-          this.setProperty("fixedWidth", value);
-          this.invalidateTextLayout(true);
-        }
+        after: ["clipMode", "viewState"], defaultValue: false
       },
 
       fixedHeight: {
         isStyleProp: true,
-        after: ["clipMode", "viewState"], defaultValue: false,
-        set(value) {
-          this.setProperty("fixedHeight", value);
-          this.invalidateTextLayout(true);
-        }
+        after: ["clipMode", "viewState"], defaultValue: false
       },
 
       readOnly: {
@@ -188,7 +181,6 @@ export class Text extends Morph {
         defaultValue: Rectangle.inset(0),
         set(value) {
           this.setProperty("padding", typeof value === "number" ? Rectangle.inset(value) : value);
-          this.invalidateTextLayout();
         }
       },
 
@@ -274,9 +266,9 @@ export class Text extends Morph {
         derived: true, after: ["document"],
         get() { return this.document.textAndAttributes; },
         set(textAndAttributes) {
-          // 1. remove everything
-          this.deleteText({start: {row: 0, column: 0}, end: this.documentEndPosition});
-          this.insertText(textAndAttributes, this.documentEndPosition);
+          this.replace(
+            {start: {row: 0, column: 0}, end: this.documentEndPosition},
+            textAndAttributes);
         }
       },
 
@@ -351,31 +343,23 @@ export class Text extends Morph {
         after: ["defaultTextStyle"]
       },
       textAlign: {
+        // values:
+        // center, justify, left, right
         isStyleProp: true, isDefaultTextStyleProp: true,
         after: ["document", "defaultTextStyle", "viewState"],
-        set(textAlign) {
-          // values:
-          // center, justify, left, right
-          this.setProperty("textAlign", textAlign);
-          this.invalidateTextLayout(true);
-        }
       },
 
       lineWrapping: {
+        // possible values:
+        // false: no line wrapping, lines are as long as authored
+        // true or "by-words": break lines at word boundaries. If not possible break line
+        // anywhere to enforce text width
+        // only-by-words: break lines at word boundaries. If not possible, line will be
+        // wider than text
+        // by-chars: Break line whenever character sequence reaches text width
         isStyleProp: true,
         defaultValue: false,
-        after: ["document", "viewState"],
-        set(lineWrapping) {
-          // possible values:
-          // false: no line wrapping, lines are as long as authored
-          // true or "by-words": break lines at word boundaries. If not possible break line
-          // anywhere to enforce text width
-          // only-by-words: break lines at word boundaries. If not possible, line will be
-          // wider than text
-          // by-chars: Break line whenever character sequence reaches text width
-          this.setProperty("lineWrapping", lineWrapping);
-          this.invalidateTextLayout(true);
-        }
+        after: ["document", "viewState"]
       },
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -510,8 +494,7 @@ export class Text extends Morph {
   get isText() { return true }
 
   onChange(change) {
-    let textChange = change.selector === "insertText"
-                  || change.selector === "deleteText",
+    let textChange = change.selector === "replace",
         viewChange = change.prop === "extent" || change.prop === "scroll";
 
     if (change.prop === "scroll")
@@ -525,9 +508,16 @@ export class Text extends Morph {
      || change.prop === "fontStyle"
      || change.prop === "textDecoration"
      || change.prop === "textStyleClasses"
-    ) this.invalidateTextLayout(true);
+     || change.prop === "fixedHeight"
+     || change.prop === "fixedWidth"
+     || change.prop === "lineWrapping"
+    ) this.invalidateTextLayout(true/*reset char bounds*/);
+
+    if (change.prop === "padding")
+      this.invalidateTextLayout(false);
 
     super.onChange(change);
+
     textChange && signal(this, "textChange", change);
     viewChange && signal(this, "viewChange", change);
   }
@@ -904,106 +894,103 @@ export class Text extends Morph {
   insertText(
     textOrtextAndAttributes,
     pos = this.cursorPosition,
-    extendTextAttributes = true
+    extendTextAttributes = true,
+    invalidateTextLayout = true
   ) {
+      let {insertedRange: range} = this.replace(
+        {start: pos, end: pos},
+        textOrtextAndAttributes,
+        extendTextAttributes,
+        invalidateTextLayout)
+      return range;
+  }
+
+  deleteText(range, invalidateTextLayout = true) {
+    let {removedTextAndAttributes} = this.replace(
+      range, [], false, invalidateTextLayout)
+    return removedTextAndAttributes;
+  }
+
+  replace(range,
+          textOrtextAndAttributes,
+          extendTextAttributes = true,
+          invalidateTextLayout = true, undoGroup = true
+  ) {
+    range = range.isRange ? range : new Range(range);
+
+    // convert insertion into text and attibutes
     let textAndAttributes = typeof textOrtextAndAttributes === "string"
       ? [textOrtextAndAttributes, null]
       : Array.isArray(textOrtextAndAttributes)
           ? textOrtextAndAttributes
           : [String(textOrtextAndAttributes || ""), null];
 
-    if (!textAndAttributes.length || textAndAttributes.length == 2 && !textAndAttributes[0])
-      return Range.fromPositions(pos, pos);
+    let nothingToInsert =
+      !textAndAttributes.length ||
+      (textAndAttributes.length == 2 && !textAndAttributes[0]),
+        nothingToDelete = range.isEmpty();
 
-    if (extendTextAttributes && pos.column > 0) {
-      let attrToExtend = this.textAttributeAt({row: pos.row, column: pos.column-1});
-      if (attrToExtend) {
+    if (nothingToInsert && nothingToDelete) return range;
+
+    if (extendTextAttributes && range.start.column > 0) {
+      let attrToExtend = this.textAttributeAt({
+        row: range.start.row,
+        column: range.start.column - 1
+      });
+      if (attrToExtend)
         for (let i = 0; i < textAndAttributes.length; i = i+2)
           textAndAttributes[i+1] = {...textAndAttributes[i+1], ...attrToExtend};
-      }
     }
 
-    // the document manages the actual content
+    undoGroup && this.undoManager.undoStart(this, "replace");
 
-    this.undoManager.undoStart(this, "insertText");
-
-    let range = this.document.insertTextAndAttributes(
-        textAndAttributes, pos, this.debug && this.debugHelper());
+    let removedTextAndAttributes = this.textAndAttributesInRange(range),
+        {inserted: insertedRange} = this.document.replace(
+          range, textAndAttributes, this.debug && this.debugHelper(this.debug));
 
     this.addMethodCallChangeDoing({
       target: this,
-      selector: "insertText",
-      args: [textAndAttributes, pos],
+      selector: "replace",
+      args: [range, textAndAttributes],
       undo: {
         target: this,
-        selector: "deleteText",
-        args: [range],
+        selector: "replace",
+        args: [insertedRange, removedTextAndAttributes],
       }
     }, () => {
-      this.invalidateTextLayout();
-      this.textLayout.resetLineCharBoundsCacheOfRange(this, range);
-      this.anchors.forEach(ea => ea.onInsert(range));
-      // When auto multi select commands run, we replace the actual selection
-      // with individual normal selections
-      if (this._multiSelection) this._multiSelection.updateFromAnchors();
-      else this.selection.updateFromAnchors();
+      if (invalidateTextLayout) {
+        this.invalidateTextLayout();
+        this.textLayout.resetLineCharBoundsCacheOfRange(this, insertedRange);
+      }
+
+      if (!eqPosition(range.end, insertedRange.end)) {
+        if (lessPosition(insertedRange.end, range.end)) {
+          let [removedRange] = new Range(range).subtract(insertedRange);
+          this.anchors.forEach(ea => ea.onDelete(removedRange));
+        } else {
+          let [addedRange] = new Range(insertedRange).subtract(range);
+          this.anchors.forEach(ea => ea.onInsert(addedRange));
+        }
+        // When auto multi select commands run, we replace the actual selection
+        // with individual normal selections
+        if (this._multiSelection) this._multiSelection.updateFromAnchors();
+        else this.selection.updateFromAnchors();
+      }
 
       this.consistencyCheck();
     });
 
-    this.undoManager.undoStop();
+    undoGroup && this.undoManager.undoStop();
 
-    return new Range(range);
-  }
-
-  deleteText(range) {
-    range = range.isRange ? range : new Range(range);
-
-    if (range.isEmpty()) return;
-
-    this.undoManager.undoStart(this, "deleteText");
-    var {document: doc, textLayout} = this,
-        textAndAttributes = this.textAndAttributesInRange(range);
-
-    doc.remove(range, this.debug && this.debugHelper());
-
-    this.addMethodCallChangeDoing({
-      target: this,
-      selector: "deleteText",
-      args: [range],
-      undo: {
-        target: this,
-        selector: "insertText",
-        args: [textAndAttributes, range.start, false],
-      }
-    }, () => {
-      this.invalidateTextLayout();
-      this.textLayout.resetLineCharBoundsCacheOfRow(this, range.start.row);
-      this.textLayout.resetLineCharBoundsCacheOfRow(this, range.end.row);
-      this.anchors.forEach(ea => ea.onDelete(range));
-      // When auto multi select commands run, we replace the actual selection
-      // with individual normal selections
-      if (this._multiSelection) this._multiSelection.updateFromAnchors();
-      else this.selection.updateFromAnchors();
-
-      this.consistencyCheck();
-    });
-    this.undoManager.undoStop();
-    return textAndAttributes;
-  }
-
-  replace(range, text, undoGroup = false) {
-    if (undoGroup) this.undoManager.group();
-    this.deleteText(range);
-    var range = this.insertText(text, range.start);
-    if (undoGroup) this.undoManager.group();
-    return range;
+    return insertedRange;
   }
 
   modifyLines(startRow, endRow, modifyFn) {
     var lines = arr.range(startRow, endRow).map(row => this.getLine(row)),
         modifiedText = lines.map(modifyFn).join("\n") + "\n";
-    this.deleteText({start: {row: startRow, column: 0}, end: {row: endRow+1, column: 0}})
+    this.deleteText(
+      {start: {row: startRow, column: 0}, end: {row: endRow + 1, column: 0}},
+      false);
     this.insertText(modifiedText, {row: startRow, column: 0});
   }
 
@@ -1854,23 +1841,20 @@ export class Text extends Morph {
   parseIntoLines(text) { return text.split("\n"); }
 
   computeTextRangeForChanges(changes) {
-    if (!changes.length) return Range.at(this.cursorPosition);
+    let defaultRange = Range.at(this.cursorPosition);
+    if (!changes.length) return defaultRange;
 
     var morph = this,
         change = changes[0],
-        range = change.selector === "insertText" ?
-          insertRange(change.args[0], change.args[1]) :
-          change.selector === "deleteText" ?
-            Range.at(change.args[0].start) :
-            Range.at(this.cursorPosition);
+        range = change.selector === "replace" ?
+          insertRange(change.args[1], change.args[0].start) :
+          defaultRange;
 
     for (let i = 1; i < changes.length; i++) {
       let change = changes[i];
-      range = change.selector === "deleteText" ?
-        range.without(change.args[0]) :
-        change.selector === "insertText" ?
-          range.merge(insertRange(change.args[0], change.args[1])) :
-          range;
+      range = change.selector === "replace" ?
+        range.merge(insertRange(change.args[1], change.args[0].start)) :
+        range;
     }
 
     return range;
@@ -1898,13 +1882,12 @@ export class Text extends Morph {
   ensureUndoManager() {
     if (this.undoManager) return this.undoManager;
     let selectors = [
-      "addTextAttribute",
-      "removeTextAttribute",
-      "setStyleInRange",
-      "insertText",
-      "deleteText"];
-    var filterFn = change => selectors.includes(change.selector);
-    return this.undoManager = new UndoManager(filterFn);
+      "addTextAttribute", 
+      "removeTextAttribute", 
+      "setStyleInRange", 
+      "replace"];
+    return this.undoManager = new UndoManager(
+      change => selectors.includes(change.selector));
   }
 
   textUndo() {
@@ -1994,10 +1977,20 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // debugging
 
-  debugHelper() {
-    if (this._debugHelper) return this._debugHelper;
+  debugHelper(opts) {
+    opts = {
+      debugDocumentUpdate: true,
+      debugTextLayout: true,
+      ...opts
+    }
+
+    if (this._debugHelper)
+      return Object.assign(this._debugHelper, opts);
+
     return this._debugHelper = {
-      logged: [], groups: [],
+      ...opts,
+      logged: [],
+      groups: [],
       reset() {
         this.groups = [[]];
         this.logged = this.groups[0];
