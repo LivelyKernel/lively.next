@@ -674,8 +674,8 @@ export class Text extends Morph {
 
   async lookupEditorPluginNamed(modeName) {
     // let modeName = "js"
-    let isAbsURL = /^[^:\\]+:\/\//.test(modeName);
-    let url = isAbsURL ? modeName : `lively.morphic/ide/${modeName}/editor-plugin.js`;
+    let isAbsURL = /^[^:\\]+:\/\//.test(modeName),
+        url = isAbsURL ? modeName : `lively.morphic/ide/${modeName}/editor-plugin.js`;
     if (!await lively.modules.doesModuleExist(url)) return null;
     let {default: Mode} = await lively.modules.module(url).load();
     return Mode;
