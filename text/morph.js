@@ -511,7 +511,11 @@ export class Text extends Morph {
 
   onChange(change) {
     let textChange = change.selector === "insertText"
-                  || change.selector === "deleteText";
+                  || change.selector === "deleteText",
+        viewChange = change.prop === "extent" || change.prop === "scroll";
+
+    if (change.prop === "scroll")
+      this.viewState.wasScrolled = true;
 
     if ((change.prop === "extent" && this.lineWrapping)
      || change.prop === "textAlign"
@@ -525,6 +529,7 @@ export class Text extends Morph {
 
     super.onChange(change);
     textChange && signal(this, "textChange", change);
+    viewChange && signal(this, "viewChange", change);
   }
 
   rejectsInput() { return this.readOnly /*|| !this.isFocused()*/ }
