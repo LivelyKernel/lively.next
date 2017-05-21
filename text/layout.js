@@ -43,7 +43,8 @@ export default class TextLayout {
           fontMetric, textRenderer, document,
           defaultTextStyle,
           extent: {x: morphWidth, y: morphHeight},
-          clipMode, textAlign, padding, lineWrapping
+          clipMode, textAlign, padding, lineWrapping,
+          debug
         } = morph,
         paddingLeft = padding.left(),
         paddingRight = padding.right(),
@@ -51,8 +52,13 @@ export default class TextLayout {
         paddingBottom = padding.bottom(),
         { lines, stringSize } = document;
 
+    if (debug) {
+      debug = morph.debugHelper(debug);
+      if (!debug.debugTextLayout) debug = false;
+    }
+
     // fast and exact version for small texts:
-    if (morph.lineCount() < 10 && morph.document.stringSize < 3000) {
+    if (!debug && morph.lineCount() < 10 && morph.document.stringSize < 3000) {
       var directRenderLineFn = textRenderer.directRenderLineFn(morph),
           directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph),
           linesBounds = fontMetric.manuallyComputeBoundsOfLines(
@@ -68,7 +74,8 @@ export default class TextLayout {
       return;
     }
 
-    var directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph);
+    var directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph),
+        nMeasured = 0;
 
     morphWidth = morphWidth - paddingLeft - paddingRight;
 
@@ -76,6 +83,7 @@ export default class TextLayout {
       var line = lines[i];
       if (!force && line.height > 0) continue;
 
+      nMeasured++;
       var textAttributes = line.textAttributes, styles = [];
 
       // find all styles that apply to line
@@ -99,18 +107,21 @@ export default class TextLayout {
 
       var estimatedHeight = charHeight,
           charCount = line.text.length || 1,
-          charWidth = Math.round(charWidthSum/measureCount),
+          charWidth = Math.round(charWidthSum / measureCount),
           unwrappedWidth = charCount * charWidth,
           estimatedWidth = !lineWrapping ? unwrappedWidth : Math.min(unwrappedWidth, morphWidth);
       if (lineWrapping) {
         var charsPerline = Math.max(3, morphWidth / charWidth),
             wrappedLineCount = Math.ceil(charCount / charsPerline) || 1,
-        estimatedHeight = Math.round(wrappedLineCount * charHeight);
+            estimatedHeight = Math.round(wrappedLineCount * charHeight);
       }
+      debug && debug.log(`${line.row}: ${line.height} => ${estimatedHeight}`)
       line.changeExtent(estimatedWidth, estimatedHeight, true);
     }
 
     morph.viewState._textLayoutStale = false;
+
+    debug && debug.log(`estimateLineHeights, ${nMeasured}/${lines.length} updated`)
   }
 
   defaultCharExtent(morph) {
