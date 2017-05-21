@@ -53,7 +53,10 @@ class DefaultTheme {
   }
 
   get "diff-hunk-header"() {
-    return {backgroundColor: Color.rgba(204, 204, 204, 0.4), fontWeight: "bold"};
+    return {
+      backgroundColor: Color.rgba(204, 204, 204, 0.4),
+      fontWeight: "bold"
+    };
   }
   get "coord"() { return {backgroundColor: Color.rgba(204,204,204, .4), fontWeight: "bold"}; }
   get "inserted"()  { return {backgroundColor: "rgba(108,255,108, .3)"}; }

@@ -1,6 +1,5 @@
 import { string, arr } from "lively.lang";
 import { lessEqPosition } from "../../text/position.js";
-import JavaScriptTokenizer from "./highlighter.js";
 import JavaScriptChecker from "./checker.js";
 import JavaScriptNavigator from "./navigator.js";
 
@@ -35,9 +34,8 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
 
   static get shortName() { return "js"; }
 
-  constructor(theme) {
-    super(theme)
-    this.highlighter = new JavaScriptTokenizer();
+  constructor() {
+    super()
     this.checker = new JavaScriptChecker();
     this.mode = jsMode;
     this._tokens = [];

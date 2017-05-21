@@ -17,8 +17,8 @@ export default class DiffEditorPlugin extends EditorPlugin {
 
   static get shortName() { return "diff"; }
 
-  constructor(theme) {
-    super(theme);
+  constructor() {
+    super();
     this.tokenizer = new DiffTokenizer();
     this.tokens = [];
     this.patches = [];
@@ -68,8 +68,8 @@ export default class DiffEditorPlugin extends EditorPlugin {
           end = {row, column};
         }
       }
-      if (tokens.type !== "default")
-        attributes.push({start, end}, this.theme.styleCached(type));
+      if (tokens.type !== "default" && this.theme[type])
+        attributes.push({start, end}, this.theme[type]);
     }
     return attributes;
   }

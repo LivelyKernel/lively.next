@@ -34,8 +34,8 @@ export default class JSONEditorPlugin extends JavaScriptEditorPlugin {
 
   static get shortName() { return "json"; }
 
-  constructor(theme = "chrome") {
-    super(theme);
+  constructor() {
+    super();
     this.tokenizer = new JSONTokenizer();
     this._tokens = [];
   }
@@ -54,8 +54,8 @@ export default class JSONEditorPlugin extends JavaScriptEditorPlugin {
     let tokens = this._tokens = this.tokenizer.tokenize(textMorph.textString),
         attributes = [];
     for (let {type, start, end} of tokens)
-      if (type !== "default")
-        attributes.push({start, end}, this.theme.styleCached(type));
+      if (type !== "default" && this.theme[type])
+        attributes.push({start, end}, this.theme[type]);
 
     textMorph.setTextAttributesWithSortedRanges(attributes);
 

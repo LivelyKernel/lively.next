@@ -37,8 +37,8 @@ export default class ShellEditorPlugin extends EditorPlugin {
 
   static get shortName() { return "shell"; }
 
-  constructor(theme) {
-    super(theme)
+  constructor() {
+    super()
     this.tokenizer = new ShellTokenizer();
     this.state = {cwd:  defaultDir, command: null}
   }
@@ -57,8 +57,8 @@ export default class ShellEditorPlugin extends EditorPlugin {
     let tokens = this._tokens = this.tokenizer.tokenize(textMorph.textString),
         attributes = [];
     for (let {token, start, end} of tokens)
-      if (tokens.type !== "default")
-        attributes.push({start, end}, this.theme.styleCached(token));
+      if (tokens.type !== "default" && this.theme[token])
+        attributes.push({start, end}, this.theme[token]);
     textMorph.setTextAttributesWithSortedRanges(attributes);
   }
 

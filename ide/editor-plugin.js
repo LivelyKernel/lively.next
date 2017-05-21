@@ -7,16 +7,9 @@
 import { fun, arr } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
 
-import ChromeTheme from "./themes/chrome.js";
-import TomorrowNightTheme from "./themes/tomorrow-night.js";
-import GithubTheme from "./themes/github.js";
+import DefaultTheme from "./themes/default.js";
 
-const themes = {
-  "chrome": ChromeTheme,
-  "tomorrowNight": TomorrowNightTheme,
-  "github" : GithubTheme
-};
-
+import { tokenizeDocument } from "./editor-modes.js";
 
 export function guessTextModeName(editor, filename = "", hint) {
   var mode = hint || "text",
@@ -55,8 +48,10 @@ export default class EditorPlugin {
 
   static get shortName() { return null; /*override*/}
 
-  constructor(theme = "chrome") {
-    this.theme = theme;
+  constructor() {
+    this.theme = DefaultTheme.instance;
+    this.checker = null;
+    this.mode = null;
     this._ast = null;
     this._tokens = [];
     this._tokenizerValidBefore = null;
@@ -65,11 +60,6 @@ export default class EditorPlugin {
   get isEditorPlugin() { return true }
 
   get shortName() { return this.constructor.shortName; }
-
-  get theme() { return this._theme }
-  set theme(t) {
-    this._theme = typeof t === "string" ? new themes[t]() : t;
-  }
 
   attach(editor) {
     this.textMorph = editor;
