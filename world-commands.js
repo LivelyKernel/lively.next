@@ -332,7 +332,7 @@ var commands = [
     name: "open workspace",
     exec: async (world, opts = {}) => {
       if (!opts.language) {
-        let workspaceLanguages = ["text", "javascript", "shell"];
+        let workspaceLanguages = ["javascript", "text", "shell"];
         let {selected: [language]} = await world.filterableListPrompt(
           "Open workspace for...", workspaceLanguages);
         if (language) opts.language = language;
