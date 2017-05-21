@@ -1098,13 +1098,17 @@ export default class Document {
   }
 
   clipRow(row) { return Math.max(0, Math.min(row, this.rowCount-1)); }
+
   clipPositionToLines({row, column}) {
     let nLines = this.rowCount;
 
     if (nLines === 0) return {row: 0, column: 0};
 
     if (row < 0) row = 0;
-    else if (row >= nLines) row = nLines-1;
+    else if (row >= nLines) {
+      row = nLines-1;
+      column = Infinity;
+    }
 
     if (column < 0) column = 0;
     else {
