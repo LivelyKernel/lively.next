@@ -11,8 +11,7 @@ import {
   jsEditorCommands,
   astEditorCommands,
   insertStringWithBehaviorCommand,
-  deleteBackwardsWithBehavior,
-  tabBehavior
+  deleteBackwardsWithBehavior
 } from "./commands.js";
 
 import EditorPlugin from "../editor-plugin.js";
@@ -24,11 +23,8 @@ import {
   l2lInterfaceFor
 } from "lively-system-interface";
 
-import { createMode } from "./mode.js";
-import { tokenizeLines, tokenizeDocument, defineMode } from "../editor-modes.js";
-
-
-const jsMode = defineMode("javascript", createMode);
+import "./mode.js"
+import { getMode } from "../editor-modes.js";
 
 export default class JavaScriptEditorPlugin extends EditorPlugin {
 
@@ -37,7 +33,7 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
   constructor() {
     super()
     this.checker = new JavaScriptChecker();
-    this.mode = jsMode;
+    this.mode = getMode({}, {name: "javascript"});
     this._tokens = [];
     this._ast = null;
     this.evalEnvironment = {format: "esm", targetModule: null, context: null}
@@ -55,65 +51,6 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
     super.detach(editor);
   }
 
-  highlight() {
-    let textMorph = this.textMorph;
-
-    if (!this.theme || !textMorph || !textMorph.document) return;
-
-    textMorph.fill = this.theme.background();
-
-    let {firstVisibleRow, lastVisibleRow} = textMorph.viewState,
-        {lines, tokens} = tokenizeDocument(
-          jsMode,
-          textMorph.document,
-          firstVisibleRow,
-          lastVisibleRow,
-          this._tokenizerValidBefore);
-
-    if (lines.length) {
-      let startRow = lines[0].row,
-          attributes = [];  
-      for (let i = 0; i < tokens.length; i++) {
-        let lineTokens = tokens[i],
-            row = startRow+i;
-        for (let i = 0; i < lineTokens.length; i = i+4) {
-          let startColumn = lineTokens[i],
-              endColumn = lineTokens[i+1],
-              token = lineTokens[i+2];
-          attributes.push(
-            {start: {row, column: startColumn}, end: {row, column: endColumn}},
-            this.theme.styleCached(token));
-        }
-      }
-      textMorph.setTextAttributesWithSortedRanges(attributes);    
-      this._tokenizerValidBefore = {row: arr.last(lines).row+1, column: 0};
-    }
-
-
-    if (this.checker)
-      this.checker.onDocumentChange({}, textMorph, this);
-  }
-
-  tokensOfRow(row) {
-    let {lines, tokens} = tokenizeDocument(
-          jsMode,
-          this.textMorph.document,
-          row, row),
-        tokensOfLine = arr.last(tokens);
-    return tokensOfLine;
-  }
-  
-  tokenAt(pos) {
-    let tokensOfRow = this.tokensOfRow(pos.row);
-    if (!tokensOfRow.length) return null;
-    for (let i = tokensOfRow.length; i = i-4;)
-      if (tokensOfRow[i+0] <= pos.column && pos.column <= tokensOfRow[i+1]) {
-        let token = tokensOfRow[i+2];
-        if (token) return token;
-      }
-    return null;
-  }
-
   getNavigator() { return new JavaScriptNavigator(); }
 
   getCompleters(otherCompleters) { return completers.concat(otherCompleters); }
@@ -121,7 +58,7 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
   getCommands(otherCommands) {
     var idx = otherCommands.findIndex(({name}) => name === "insertstring");
     otherCommands.splice(idx, 1, {...otherCommands[idx], name: "insertstring_default"});
-    return [insertStringWithBehaviorCommand, deleteBackwardsWithBehavior, tabBehavior]
+    return [insertStringWithBehaviorCommand, deleteBackwardsWithBehavior]
       .concat(otherCommands)
       .concat(jsIdeCommands)
       .concat(jsEditorCommands)
@@ -170,10 +107,6 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
   getSnippets() {
     return jsSnippets.map(([trigger, expansion]) =>
       new Snippet({trigger, expansion}));
-  }
-
-  getComment() {
-    return {lineCommentStart: "//", blockCommentStart: "/*", blockCommentEnd: "*/"}
   }
 
   sanatizedJsEnv(envMixin) {

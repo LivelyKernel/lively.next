@@ -1,36 +1,156 @@
 import { arr } from "lively.lang";
 export var modes = modes || {};
 
+// code in here is mostly derived from codemirror
+// Copyright (C) 2017 by Marijn Haverbeke <marijnh@gmail.com> and others
+// https://codemirror.net/LICENSE
+// 
+// see also
+// https://github.com/codemirror/CodeMirror/blob/master/src/modes.js
+// https://github.com/codemirror/CodeMirror/blob/master/src/input/indent.js
+
 export var passIndent = {}; // return in indent to pass
 
-function defaultCopyState(state) {
-  let copy = {};
-  for (let key in state) {
-    state.hasOwnProperty(key)
-      copy[key] = Array.isArray(state[key]) ?
-        state[key].slice() : state[key];
+export function copyState(mode, state) {
+  if (state === true) return state
+  if (mode.copyState) return mode.copyState(state)
+  let nstate = {}
+  for (let n in state) {
+    let val = state[n]
+    if (val instanceof Array) val = val.concat([])
+    nstate[n] = val
   }
-  return copy;
+  return nstate
 }
 
-export function defineMode(name, setupFn, config, parserConfig) {
-  config = {indentUnit: 2, ...config};
-  let mode = setupFn(config || {}, parserConfig || {});
-  if (typeof mode.copyState !== "function") mode.copyState = defaultCopyState;
-  return modes[name] = mode;
+export function startState(mode, a1, a2) {
+  return mode.startState ? mode.startState(a1, a2) : true
 }
+
+export function defineMode(name, setupFn) {
+  return modes[name] = setupFn;
+}
+
+export function getMode(editorConfig, spec) {
+  if (typeof spec === "string") spec = {name: spec};
+  if (!spec.name)
+    throw new Error("parserConfig does not have a name of the mode to get")
+  let mode = modes[spec.name];
+  if (!mode)
+    throw new Error(`mode ${spec.name} not known`);
+
+  editorConfig = {indentUnit: 2, ...editorConfig};
+  return mode(editorConfig, spec);
+}
+
+export var mimeModes = {};
 
 export function defineMIME(type, mode) {}
 
 export function registerHelper(method, mode, re) {}
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// indentation
+// 
+// Indent the given line. The how parameter can be "smart",
+// "add"/null, "subtract", or "prev". When aggressive is false
+// (typically set to true for forced single-line indents), empty
+// lines are not indented, and places where the mode returns Pass
+// are left alone.
+export function indentLines(textMorph, mode, fromRow, toRow, how, aggressive, options) {
+  let validBeforePos = textMorph.editorPlugin._tokenizerValidBefore;
+  if (validBeforePos && validBeforePos.row >= fromRow) validBeforePos.row = fromRow-1;
+  let {lines, state: startState} = linesToTokenize(
+                                    textMorph.document, fromRow, toRow, validBeforePos);
+  if (!lines.length) return false;
+  var state = !startState
+    ? mode.startState()
+    : typeof mode.copyState === "function"
+        ? mode.copyState(startState)
+        : copyState(mode, startState);
+  let stream = new StringStream("", 2);
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i], row = line.row;
+    if (row >= fromRow && row <= toRow)
+      indentLine(textMorph, mode, line, state, how, aggressive, options);
+    ({state} = tokenizeLine(mode, stream, lines[i], state));
+  }
+  return true
+}
+
+function indentLine(textMorph, mode, line, stateBefore, how, aggressive, options) {
+  let textDocument = textMorph.document;
+
+  options = {
+    indentWithTabs: false,
+    indentUnit: 2,
+    tabSize: 2,
+    ignoreFollowingText: false,
+    ...options
+  }
+
+  if (how == null) how = "add"
+  if (how == "smart") {
+    // Fall back to "prev" when the mode doesn't have an indentation
+    // method.
+    if (!mode.indent) how = "prev"
+  }
+
+  let tabSize = options.tabSize,
+      curSpace = countColumn(line.text, null, tabSize)
+  if (line.modeState) line.modeState = null
+  let curSpaceString = line.text.match(/^\s*/)[0], indentation
+  if (!aggressive && !/\S/.test(line.text)) {
+    indentation = 0
+    how = "not"
+  } else if (how == "smart") {
+    indentation = mode.indent(stateBefore, options.ignoreFollowingText ? "" : line.text.slice(curSpaceString.length), line.text)
+    if (indentation == passIndent || indentation > 150) {
+      if (!aggressive) return;
+      how = "prev"
+    }
+  }
+
+  if (how == "prev") {
+    if (line.row > 0) indentation = countColumn(line.prevLine().text, null, tabSize);
+    else indentation = 0
+  } else if (how == "add") {
+    indentation = curSpace + options.indentUnit
+  } else if (how == "subtract") {
+    indentation = curSpace - options.indentUnit
+  } else if (typeof how == "number") {
+    indentation = curSpace + how
+  }
+  indentation = Math.max(0, indentation)
+
+  let indentString = "", pos = 0
+  if (options.indentWithTabs)
+    for (let i = Math.floor(indentation / tabSize); i; --i) {
+      pos += tabSize;
+      indentString += "\t";
+    }
+  if (pos < indentation) indentString += " ".repeat(indentation - pos);
+
+  if (indentString != curSpaceString) {
+    textMorph.replace(
+      {
+        start: {row: line.row, column: 0},
+        end: {row: line.row, column: curSpaceString.length}
+      },
+      indentString);
+    return true;
+  }
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-export function tokenizeLines(mode, lines) {
+export function tokenizeLines(mode, lines, startState) {
   if (!lines.length) return [];
-  var state = lines[0].modeState ?
-     mode.copyState(lines[0].modeState) : mode.startState();
+  var state = !startState
+    ? mode.startState()
+    : typeof mode.copyState === "function"
+        ? mode.copyState(startState)
+        : copyState(mode, startState);
   let stream = new StringStream("", 2),
       result = [];
   for (let i = 0; i < lines.length; i++) {
@@ -44,7 +164,9 @@ function tokenizeLine(mode, stream, line, state) {
   let {text} = line
   if (!text) return {tokens: [], state};
   stream.reset(text, 2/*indent...FIXME*/);
-  state = line.modeState = mode.copyState(state);
+  state = line.modeState = typeof mode.copyState === "function"
+    ? mode.copyState(state)
+    : copyState(mode, state);
   let tokens = [],
       prevLine = line.prevLine();
   state._string = text;
@@ -73,25 +195,28 @@ function printTokens(tokens) {
 
 
 export function tokenizeDocument(mode, document, fromRow, toRow, validBeforePos) {
-  let lines, tokens;
+  let lines, tokens, state;
   try {
-    lines = linesToTokenize(document, fromRow, toRow, validBeforePos);
-    tokens = tokenizeLines(mode, lines);
+    ({lines, state} = linesToTokenize(document, fromRow, toRow, validBeforePos));
+    tokens = tokenizeLines(mode, lines, state);
   } catch (err) {
-    lines = linesToTokenize(document, fromRow, toRow, null);
-    tokens = tokenizeLines(mode, lines);      
+    ({lines, state} = linesToTokenize(document, fromRow, toRow, null));
+    tokens = tokenizeLines(mode, lines, state);
   }
+
+  // lines.length && console.log(`${lines[0].row} => ${lively.lang.arr.last(lines).row}`)
 
   return {tokens, lines};
 }
 
 function linesToTokenize(document, fromRow, toRow, validBeforePos) {
-  if (validBeforePos && validBeforePos.row >= toRow) return [];
+  if (validBeforePos && validBeforePos.row >= toRow) return {lines: [], state:null};
 
   let startRow = validBeforePos ?
         Math.max(0, validBeforePos.row-1) : fromRow,
       line = document.getLine(startRow),
-      lines = [line];
+      lines = [line],
+      startState = null;
 
   // find line that has a modeState
   let linesBefore = 0, nextLine;
@@ -99,19 +224,19 @@ let counter = 0;
   while ((nextLine = line.prevLine()) && linesBefore++ < 50) {
 if (counter++>10000) throw new Error("endless linesToTokenize 1");
     line = nextLine;
+    if (line.modeState) { startState = line.modeState; break; }
     lines.unshift(line)
-    if (line.modeState) break;
   }
 
   // if modeState not found try to find the line with the smallest indent to start
-  if (!line.modeState) {
+  if (!startState) {
     let lineWithMinIndent = line, minIndent = Infinity;
 let counter2 = 0;
     while ((nextLine = line.prevLine()) && linesBefore++ < 100) {
 if (counter2++>10000) throw new Error("endless tokenizeLine 2");
       line = nextLine;
+      if (line.modeState) { startState = line.modeState; break; }
       lines.unshift(line)
-      if (line.modeState) break;
       let indent = line.text.match(/^\s*/)[0].length;
       if (indent === 0) break;
       if (indent < minIndent) {
@@ -119,12 +244,12 @@ if (counter2++>10000) throw new Error("endless tokenizeLine 2");
         lineWithMinIndent = line;
       }
     }
-    if (!line.modeState && minIndent > 0) {
+    if (!startState && minIndent > 0) {
       lines = lines.slice(lines.indexOf(lineWithMinIndent));
       line = lines[0];
     }
   }
-  
+
   if (toRow > startRow) {
     let lastLine = arr.last(lines);
     for (let row = startRow; row <= toRow; row++) {
@@ -134,7 +259,7 @@ if (counter2++>10000) throw new Error("endless tokenizeLine 2");
     }
   }
 
-  return lines;
+  return {lines, state: startState};
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

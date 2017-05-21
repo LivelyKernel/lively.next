@@ -1,3 +1,6 @@
+// Copyright (C) 2017 by Marijn Haverbeke <marijnh@gmail.com> and others
+// https://codemirror.net/LICENSE
+
 import { passIndent, defineMode, defineMIME, registerHelper } from "../editor-modes.js";
 
 function expressionAllowed(stream, state, backUp) {
@@ -5,11 +8,11 @@ function expressionAllowed(stream, state, backUp) {
     (state.lastType == "quasi" && /\{\s*$/.test(stream.string.slice(0, stream.pos - (backUp || 0))))
 }
 
-let defaultConfig = {
+const defaultConfig = {
   indentUnit: 2
 }
 
-let defaultParserConfig = {
+const defaultParserConfig = {
   name: "javascript",
   statementIndent: 2,
   jsonld: false,
@@ -21,7 +24,7 @@ let defaultParserConfig = {
   doubleIndentSwitch: null,
 }
 
-export function createMode(config, parserConfig) {
+defineMode("javascript", function createMode(config, parserConfig) {
   config = {...defaultConfig, ...config}
   parserConfig = {...defaultParserConfig, ...parserConfig}
 
@@ -803,7 +806,7 @@ if (counter++ > 100000) throw new Error("endless");
       if (top == expression || top == expressionNoComma) state.cc.pop()
     }
   };
-}
+});
 
 registerHelper("wordChars", "javascript", /[\w$]/);
 

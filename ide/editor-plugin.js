@@ -44,6 +44,16 @@ export function guessTextModeName(editor, filename = "", hint) {
   return mode;
 }
 
+
+function rangedToken(row, startColumn, endColumn, token) {
+  return {
+    start: {row, column: startColumn},
+    end: {row, column: endColumn},
+    token
+  }
+}
+
+
 export default class EditorPlugin {
 
   static get shortName() { return null; /*override*/}
@@ -70,6 +80,7 @@ export default class EditorPlugin {
 
   detach(editor) {
     disconnect(editor, "textChange", this, "onTextChange");
+    disconnect(editor, "viewChange", this, "onViewChange");
     this.textMorph = null;
   }
 
@@ -80,6 +91,8 @@ export default class EditorPlugin {
   }
 
   onTextChange(change) {
+    // update _tokenizerValidBefore, set it to the start of the change so we
+    // now that all token states thereafter are invalid
     if (change) {
       let {_tokenizerValidBefore: validMarker} = this, row, column;
       if (change.selector === "insertText") ({row, column} = change.args[1]);
@@ -99,7 +112,77 @@ export default class EditorPlugin {
     else fun.debounceNamed(this.id + "-requestHighlight", 300, () => this.highlight())();
   }
 
-  highlight() { throw new Error("not yet implemented"); }
+  highlight() {
+    let {textMorph, theme, mode, _tokenizerValidBefore} = this;
+
+    if (!theme || !textMorph || !textMorph.document || !mode) return;
+
+    textMorph.fill = theme.background;
+
+    let {firstVisibleRow, lastVisibleRow} = textMorph.viewState,
+        {lines, tokens} = tokenizeDocument(
+          mode,
+          textMorph.document,
+          firstVisibleRow,
+          lastVisibleRow,
+          _tokenizerValidBefore);
+
+    if (lines.length) {
+      let row = lines[0].row,
+          attributes = [];  
+      for (let i = 0; i < tokens.length; row++, i++) {
+        let lineTokens = tokens[i];
+        for (let i = 0; i < lineTokens.length; i = i+4) {
+          let startColumn = lineTokens[i],
+              endColumn = lineTokens[i+1],
+              token = lineTokens[i+2],
+              style = theme[token] || theme.default;
+          style && attributes.push(
+            {start: {row, column: startColumn}, end: {row, column: endColumn}},
+            style);
+        }
+      }
+      textMorph.setTextAttributesWithSortedRanges(attributes);    
+      this._tokenizerValidBefore = {row: arr.last(lines).row+1, column: 0};
+    }
+
+
+    if (this.checker)
+      this.checker.onDocumentChange({}, textMorph, this);
+  }
+
+  tokensOfRow(row) {
+    let {lines, tokens} = tokenizeDocument(
+          this.mode,
+          this.textMorph.document,
+          row, row),
+        tokensOfLine = arr.last(tokens), result = [];
+    for (let i = 0; i < tokensOfLine.length; i = i+4) {
+      let from = tokensOfLine[i], to = tokensOfLine[i+1], token = tokensOfLine[i+2]
+      result.push(rangedToken(row, from, to, token))
+    }
+    return result;
+  }
+
+  tokenAt(pos) {
+    let tokensOfRow = this.tokensOfRow(pos.row);
+    for (let i = tokensOfRow.length; i--; ) {
+      let token = tokensOfRow[i];
+      if (token.token && token.start.column <= pos.column && pos.column <= token.end.column)
+        return token;
+    }
+    return null;
+  }
+
+  getComment() {
+    if (!this.mode) return null;
+    let {lineComment, blockCommentStart, blockCommentEnd} = this.mode,
+        commentSpec = {};
+    if (lineComment) commentSpec.lineCommentStart = lineComment;
+    if (blockCommentStart) commentSpec.blockCommentStart = blockCommentStart;
+    if (blockCommentEnd) commentSpec.blockCommentEnd = blockCommentEnd;
+    return commentSpec;
+  }
 
   toString() {
     return `${this.constructor.name}(${this.textMorph})`
