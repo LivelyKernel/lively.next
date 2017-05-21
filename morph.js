@@ -1250,6 +1250,15 @@ export class Morph {
   get globalPosition() { return this.worldPoint(pt(0,0)) }
   set globalPosition(p) { return this.position = (this.owner ? this.owner.localize(p) : p); }
 
+  ensureToBeInWorldBounds() {
+    let w = this.world();
+    if (!w) return;
+    let bnds = this.globalBounds(),
+        translatedBnds = w.innerBounds().translateForInclusion(bnds),
+        delta = translatedBnds.topLeft().subPt(bnds.topLeft());
+    this.moveBy(delta);
+  }
+
   getTransform() {
     if (!this._transform) this.updateTransform();
     return this._transform;
