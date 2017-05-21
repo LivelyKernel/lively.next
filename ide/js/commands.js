@@ -553,23 +553,6 @@ export var deleteBackwardsWithBehavior = {
     return true;
   }
 }
-export var tabBehavior = {
-  name: "tab - snippet expand or indent",
-  handlesCount: true,
-  scrollCursorIntoView: true,
-  exec: function(morph, args, count) {
-    if (!morph.selection.isEmpty()) {
-      return morph.execCommand("[javascript] auto format code", args, count);
-    }
-
-    var snippet = morph.snippets.find(snippet => snippet.canExpand(morph));
-    if (snippet) {
-      snippet.expandAtCursor(morph);
-      return true;
-    }
-    return morph.execCommand("insertstring", {string: morph.tab}, count);
-  }
-};
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // ast commands

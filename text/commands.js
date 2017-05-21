@@ -4,6 +4,7 @@ import { chain, arr, string, date } from "lively.lang";
 import { pt } from "lively.graphics";
 import { Range } from "./range.js"
 import { eqPosition } from "./position.js";
+import { indentLines } from "../ide/editor-modes.js";
 
 var commands = [
 
@@ -214,6 +215,29 @@ var commands = [
   },
 
   {
+    name: "indent according to mode",
+    exec(morph, args = {}) {
+      let mode = morph.editorPlugin && morph.editorPlugin.mode;
+      if (!mode) return true;
+      let firstRow, lastRow,
+          undo = args.hasOwnProperty("undo") ? args.undo : true;
+
+      if (args.hasOwnProperty("firstRow") && args.hasOwnProperty("lastRow"))
+        ({firstRow, lastRow} = args);
+      else if (morph.selection.isEmpty())
+         firstRow = lastRow = morph.cursorPosition.row;
+      else
+        ({first: firstRow, last: lastRow} = morph.selection.selectedRows);
+
+      undo && morph.undoManager.group();
+      indentLines(morph, mode, firstRow, lastRow, "smart", true, args);
+      undo && morph.undoManager.group();
+
+      return true;
+    }
+  },
+
+  {
     name: "tab - snippet expand or indent",
     scrollCursorIntoView: true,
     exec: function(morph) {
@@ -222,7 +246,9 @@ var commands = [
         snippet.expandAtCursor(morph);
         return true;
       }
-      return morph.execCommand("insertstring", {string: morph.tab});
+      return morph.selection.isEmpty() ?
+        morph.execCommand("insertstring", {string: morph.tab}) :
+        morph.execCommand("indent according to mode");
     }
   },
 
@@ -907,17 +933,15 @@ var commands = [
 
       if (!currentLine.trim() && indent) // remove trailing spaces of empty lines
         var deleted = morph.deleteText({start: {row, column: 0}, end: {row, column: indent}});
-      let prefill = "\n" + " ".repeat(indent);
 
-      // if we are inside a line comment then make the next line also be a comment
-      let {token, start, end} = morph.tokenAt(morph.cursorPosition) || {},
-          editorPlugin = token && morph.pluginFind(ea => ea.isEditorPlugin),
-          {lineCommentStart} = (editorPlugin && editorPlugin.getComment && editorPlugin.getComment()) || {},
-          isLineComment = lineCommentStart && morph.textInRange({start, end}).startsWith(lineCommentStart);
-      if (isLineComment) prefill += lineCommentStart + " ";
-
-      morph.selection.text = prefill;
+      morph.selection.text = "\n";
       morph.selection.collapseToEnd();
+      morph.execCommand("indent according to mode", {
+        undo: false,
+        ignoreFollowingText: true,
+        firstRow: row + 1,
+        lastRow: row + 1
+      });
       morph.undoManager.group();
       return true;
     }
