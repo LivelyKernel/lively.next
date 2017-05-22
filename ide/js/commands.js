@@ -517,9 +517,7 @@ export var insertStringWithBehaviorCommand = {
     // to find the matching opening pair part. If this can be found we do not
     // insert anything, just jump over the char
     if (right in closePairs && string === right) {
-      var pos = morph.document.indexToPosition(morph.document.positionToIndex(sel.end)+1),
-          matched = morph.findMatchingBackward(pos, "left", closePairs);
-      if (matched) { sel.goRight(1); return true; }
+       sel.goRight(1); return true; 
     }
 
     // Normal close, not matching, just insert default
