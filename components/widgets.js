@@ -2,7 +2,7 @@ import {obj, string, num, arr, properties} from "lively.lang";
 import {pt, Color, Rectangle, rect} from "lively.graphics";
 import {signal, connect, disconnect} from "lively.bindings";
 import {
-  Morph,
+  Morph, CustomLayout,
   Button,
   List,
   Text,
@@ -788,9 +788,10 @@ export class SearchField extends Text {
 
   static get properties() {
     return {
+      fixedWidth: {defaultValue: true},
       layout: {
         initialize() {
-          this.layout = new HorizontalLayout({direction: 'rightToLeft'});
+          this.layout = new HorizontalLayout({direction: 'rightToLeft'})
         }
       },
       fuzzy: {

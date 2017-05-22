@@ -276,7 +276,7 @@ export class Tree extends Morph {
 
     return {
       styleSheets: {
-        after: ['selectionColor', 'selectionFontColor', 'nonSelectionFontColor'],
+        after: ['selectionColor', 'selectionFontColor', 'nonSelectionFontColor', 'fontColor'],
         initialize() {
           this.updateStyleSheet();
         }
@@ -388,26 +388,20 @@ export class Tree extends Morph {
 
   updateStyleSheet() {
     this.styleSheets = new StyleSheet({
+      ".TreeNode [name=keyString]": {
+        fontSize: this.fontSize,
+        fontColor: this.fontColor
+      },
       ".TreeNode.selected": {
         fill: this.selectionColor
       },
-      ".TreeNode.selected [name=label]": {
-        fontColor: this.selectionFontColor
+      ".TreeNode.selected .Label": {
+        fontColor: this.selectionFontColor,
+        borderColor:  this.selectionFontColor
       },
-      ".TreeNode.selected [name=keyString]": {
-        fontColor: this.selectionFontColor
-      },
-      ".TreeNode.selected [name=toggle]": {
-        fontColor: this.selectionFontColor
-      },
-      ".TreeNode.deselected [name=label]": {
-        fontColor: this.nonSelectionFontColor
-      },
-      ".TreeNode.deselected [name=keyString]": {
-        fontColor: this.nonSelectionFontColor
-      },
-      ".TreeNode.deselected [name=toggle]": {
-        fontColor: this.nonSelectionFontColor
+      ".TreeNode.deselected .Label": {
+        fontColor: this.nonSelectionFontColor,
+        borderColor:  this.nonSelectionFontColor
       }
     });
   }

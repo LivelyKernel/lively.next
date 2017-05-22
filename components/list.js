@@ -629,7 +629,7 @@ export class FilterableList extends Morph {
         padding: rect(10, 2)
       },
       ".list.default [name=list]": {
-         //fontFamily: "Inconsolata, monospace",
+         //fontFamily: this.fontFamily,
          padding: Rectangle.inset(2, 0)
       },
       ".list.default [name=input]": {
