@@ -1501,8 +1501,11 @@ export default class Document {
     // inserts text and attribute pairs of `textAndAttributes` into the
     // document at text position `pos`.
 
-    if (!textAndAttributes || !textAndAttributes.length)
-      return {start: pos, end: pos};
+    if (
+      !textAndAttributes ||
+      !textAndAttributes.length ||
+      (textAndAttributes.length === 2 && !textAndAttributes[0])    
+    ) return {start: pos, end: pos};
 
     if (debug && !debug.debugDocumentUpdate) debug = false;
     if (debug && !debug.log) debug = console;

@@ -906,8 +906,8 @@ export class Text extends Morph {
   }
 
   deleteText(range, invalidateTextLayout = true) {
-    let {removedTextAndAttributes} = this.replace(
-      range, [], false, invalidateTextLayout)
+    let removedTextAndAttributes = this.textAndAttributesInRange(range);
+    this.replace(range, [], false, invalidateTextLayout);
     return removedTextAndAttributes;
   }
 
