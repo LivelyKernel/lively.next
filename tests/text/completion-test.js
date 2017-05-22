@@ -6,20 +6,16 @@ import { pt } from "lively.graphics";
 import { CompletionController, WordCompleter } from "../../text/completion.js";
 import { DynamicJavaScriptCompleter } from "../../ide/js/completers.js";
 import { expect } from "mocha-es6";
-import JavaScriptEditorPlugin from "../../ide/js/editor-plugin.js";
 
 var describeInBrowser = System.get("@system-env").browser ? describe :
-  (title) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xit(title); }
+  (title) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xdescribe(title); }
 
 var text;
 
 describeInBrowser("completion controller", () => {
 
   beforeEach(() =>
-    text = new Text({
-      textString: "abc\nafg\n",
-      plugins: [new JavaScriptEditorPlugin()]
-    }));
+    text = new Text({textString: "abc\nafg\n"}));
 
   it("computes word completions", async () => {
     text.cursorPosition = {row: 2, column: 0}
@@ -28,8 +24,11 @@ describeInBrowser("completion controller", () => {
     expect(items).containSubset([{value: {completion: "afg"}}, {value: {completion: "abc"}}]);
   });
 
-  it("computes dynamic JS completions", async () => {
+  ("computes dynamic JS completions", async () => {
     if (!System.get(System.decanonicalize("lively.vm/index.js"))) return;
+    if (!System.get(System.decanonicalize("lively-system-interface"))) return;
+    let {default: JavaScriptEditorPlugin} = await System.import("lively.morphic/ide/js/editor-plugin.js")
+    text.plugins = [new JavaScriptEditorPlugin()];
     text.textString = "this.";
     text.gotoDocumentEnd();
     var controller = new CompletionController(text, [new DynamicJavaScriptCompleter()]),
