@@ -354,7 +354,7 @@ export class ObjectEditor extends Morph {
     return [
       {name: "objectCommands",
        fill: Color.transparent, reactsToPointer: false,
-       layout: new HorizontalLayout({direction: "centered", spacing: 2}),
+       layout: new HorizontalLayout({autoResize: false, direction: "centered", spacing: 2}),
        submorphs: [
          {...topBtnStyle, name: "inspectObjectButton", fontSize: 18, label: Icon.makeLabel("gears"), tooltip: "open object inspector"},
          {...topBtnStyle, name: "publishButton", fontSize: 18, label: Icon.makeLabel("cloud-upload"), tooltip: "publish object to PartsBin"},
@@ -366,7 +366,7 @@ export class ObjectEditor extends Morph {
        borderBottom: {width: 1, color: Color.gray}},
 
       {name: "classAndMethodControls",
-       layout: new HorizontalLayout({direction: "centered", spacing: 2}), submorphs: [
+       layout: new HorizontalLayout({autoResize: false, direction: "centered", spacing: 2}), submorphs: [
          {...btnStyle, name: "addMethodButton", label: Icon.makeLabel("plus"), tooltip: "add a new method"},
          {...btnStyle, name: "forkPackageButton", fontSize: 14, label: Icon.makeLabel("code-fork"), tooltip: "fork package"},
          {...btnStyle, name: "openInBrowserButton", fontSize: 14, label: Icon.makeLabel("external-link"), tooltip: "open selected class in system browser"},
@@ -1190,7 +1190,7 @@ class ImportController extends Morph {
 
     this.submorphs = [
       {...listStyle, name: "importsList", multiSelect: true, borderBottom: {width: 1, color: Color.gray}},
-      {name: "buttons", layout: new HorizontalLayout({direction: "centered", spacing: 2}),
+      {name: "buttons", layout: new HorizontalLayout({autoResize: false, direction: "centered", spacing: 2}),
         submorphs: [
         {...btnStyle, name: "addImportButton", label: Icon.makeLabel("plus"), tooltip: "add new import"},
         {...btnStyle, name: "removeImportButton", label: Icon.makeLabel("minus"), tooltip: "remove selected import(s)"},
