@@ -1804,9 +1804,19 @@ export default class Document {
     console.assert(row == endRow, "not end row");
     console.assert(line.row == row, "row != last line.row");
     this.remove({start: {row, column: 0}, end});
+
+    // add newlines to textAndAttributesByLine
+    let textAndAttributesForInsert = [];
+    for (let i = 0; i < textAndAttributesByLine.length; i++) {
+      let lineTextAndAttributes = textAndAttributesByLine[i];
+      if (!lineTextAndAttributes.length) lineTextAndAttributes = ["", null];
+      lineTextAndAttributes[lineTextAndAttributes.length-2] =
+        lineTextAndAttributes[lineTextAndAttributes.length-2] + "\n";
+      textAndAttributesForInsert.push(...lineTextAndAttributes);
+    }
+    // insert rest normally
     let {end: insertionEnd} = this.insertTextAndAttributes(
-      arr.flatten(textAndAttributesByLine, 1),
-      {row, column: 0});
+      textAndAttributesForInsert, {row, column: 0});
     return {
       removed: {start, end},
       inserted: {start, end: insertionEnd}
