@@ -37,6 +37,8 @@ export default class ShellEditorPlugin extends EditorPlugin {
 
   static get shortName() { return "shell"; }
 
+  // static get mode() { return getMode({}, {name: "shell"}); }
+
   constructor() {
     super()
     this.tokenizer = new ShellTokenizer();

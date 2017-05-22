@@ -8,10 +8,7 @@ export default class HTMLEditorPlugin extends EditorPlugin {
 
   static get shortName() { return "html"; }
 
-  constructor() {
-    super()
-    this.mode = getMode({}, {name: "htmlmixed"});
-  }
+  static get mode() { return getMode({}, {name: "htmlmixed"}); }
 
   get isHTMLEditorPlugin() { return true }
 }

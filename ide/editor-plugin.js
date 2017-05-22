@@ -58,14 +58,19 @@ export default class EditorPlugin {
 
   static get shortName() { return null; /*override*/}
 
+  static get mode() { return null; /*override*/}
+
   constructor() {
     this.theme = DefaultTheme.instance;
     this.checker = null;
-    this.mode = null;
+    this.mode = this.constructor.mode;
     this._ast = null;
     this._tokens = [];
     this._tokenizerValidBefore = null;
+    this.__dont_serialize__ = ["mode"];
   }
+
+  __deserialize__() { this.mode = this.constructor.mode; }
 
   get isEditorPlugin() { return true }
 

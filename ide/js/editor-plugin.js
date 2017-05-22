@@ -30,10 +30,11 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
 
   static get shortName() { return "js"; }
 
+  static get mode() { return getMode({}, {name: "javascript"}); }
+
   constructor() {
     super()
     this.checker = new JavaScriptChecker();
-    this.mode = getMode({}, {name: "javascript"});
     this._tokens = [];
     this._ast = null;
     this.evalEnvironment = {format: "esm", targetModule: null, context: null}

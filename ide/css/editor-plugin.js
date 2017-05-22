@@ -8,10 +8,7 @@ export default class CSSEditorPlugin extends EditorPlugin {
 
   static get shortName() { return "css"; }
 
-  constructor() {
-    super()
-    this.mode = getMode({}, {name: "css"});
-  }
+  static get mode() { return getMode({}, {name: "css"}); }
 
   get isCSSEditorPlugin() { return true }
 }
