@@ -97,9 +97,9 @@ export class CompletionController {
         cursorBounds = m.charBoundsFromTextPosition(m.cursorPosition),
         globalCursorBounds = m.getGlobalTransform().transformRectToRect(cursorBounds);
     return globalCursorBounds.topLeft()
-      .addXY(m.padding.left()-2, -m.padding.top())
+      .addXY(-m.padding.left(), -m.padding.top())
       .addXY(-m.scroll.x, -m.scroll.y)
-      .addPt(pt(m.borderWidth-2, m.borderWidth));
+      .addPt(pt(m.borderWidth + 2, m.borderWidth));
   }
 
   async completionListSpec() {
@@ -225,6 +225,7 @@ export class CompletionController {
       input.gotoDocumentEnd();
       menu.moveBy(pt(-input.textBounds().width, 0));
     }
+    return menu;
   }
 
   insertCompletion(completion, prefix, customInsertionFn) {
