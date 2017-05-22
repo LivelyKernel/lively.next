@@ -8,7 +8,7 @@ import { DynamicJavaScriptCompleter } from "../../ide/js/completers.js";
 import { expect } from "mocha-es6";
 
 var describeInBrowser = System.get("@system-env").browser ? describe :
-  (title) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xdescribe(title); }
+  (title) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xit(title); }
 
 var text;
 
