@@ -54,6 +54,18 @@ function rangedToken(row, startColumn, endColumn, token) {
 }
 
 
+// optional hooks:
+// 
+// getComment() { /*{lineCommentStart: STRING, blockCommentStart: STRING, blockCommentEnd: STRING}*/ }
+// 
+// getCompleters(otherCompleters) { /*list of completers, see lively.morphic/text/completion.js*/ }
+// 
+// getCommands(otherCommands) { /*list of interactive commands, {name, exec} */ }
+// 
+// getMenuItems(items) { /* list of menu items, {command, alias, target} or [name, () => { stuff }]*/ }
+// 
+// getSnippets() { /* list of snippets, see lively.morphic/text/snippets.js */ }
+
 export default class EditorPlugin {
 
   static get shortName() { return null; /*override*/}
@@ -150,7 +162,6 @@ export default class EditorPlugin {
       this._tokenizerValidBefore = {row: arr.last(lines).row+1, column: 0};
     }
 
-
     if (this.checker)
       this.checker.onDocumentChange({}, textMorph, this);
   }
@@ -188,19 +199,28 @@ export default class EditorPlugin {
     return commentSpec;
   }
 
+  doNewline(cursorPos, lineString, indentDepth) {
+    let morph = this.textMorph,
+        {row, column} = cursorPos,
+        before = lineString[column-1],
+        after = lineString[column],
+        fill = " ".repeat(indentDepth) + "\n";
+    morph.selection.text = "\n";
+    morph.selection.collapseToEnd();
+    if (before === "{" && after === "}") {
+      morph.selection.text = "\n" + " ".repeat(indentDepth);
+      morph.selection.collapse();
+    }
+    morph.execCommand("indent according to mode", {
+      undo: false,
+      ignoreFollowingText: false,
+      firstRow: row + 1,
+      lastRow: row + 1
+    });
+  }
+
   toString() {
     return `${this.constructor.name}(${this.textMorph})`
   }
 
-  // optional hooks:
-  // 
-  // getComment() { /*{lineCommentStart: STRING, blockCommentStart: STRING, blockCommentEnd: STRING}*/ }
-  // 
-  // getCompleters(otherCompleters) { /*list of completers, see lively.morphic/text/completion.js*/ }
-  // 
-  // getCommands(otherCommands) { /*list of interactive commands, {name, exec} */ }
-  // 
-  // getMenuItems(items) { /* list of menu items, {command, alias, target} or [name, () => { stuff }]*/ }
-  // 
-  // getSnippets() { /* list of snippets, see lively.morphic/text/snippets.js */ }
 }

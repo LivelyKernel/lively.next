@@ -926,22 +926,26 @@ var commands = [
   {
     name: "newline",
     exec: function(morph) {
-      var {row} = morph.cursorPosition,
-          currentLine = morph.getLine(row),
+      var pos = morph.cursorPosition,
+          currentLine = morph.getLine(pos.row),
           indent = currentLine.match(/^\s*/)[0].length;
       morph.undoManager.group();
 
-      if (!currentLine.trim() && indent) // remove trailing spaces of empty lines
-        var deleted = morph.deleteText({start: {row, column: 0}, end: {row, column: indent}});
+      // remove trailing spaces of empty lines
+      if (!currentLine.trim() && indent) {
+        morph.deleteText({
+          start: {row: pos.row, column: 0},
+          end: {row: pos.row, column: indent}
+        });
+        pos.column = 0;
+      }
 
-      morph.selection.text = "\n";
-      morph.selection.collapseToEnd();
-      morph.execCommand("indent according to mode", {
-        undo: false,
-        ignoreFollowingText: true,
-        firstRow: row + 1,
-        lastRow: row + 1
-      });
+      if (morph.editorPlugin && typeof morph.editorPlugin.doNewline === "function") {
+        morph.editorPlugin.doNewline(pos, currentLine, indent);
+      } else {
+        morph.selection.text = "\n" + " ".repeat(indent);
+        morph.selection.collapseToEnd();
+      }
       morph.undoManager.group();
       return true;
     }
