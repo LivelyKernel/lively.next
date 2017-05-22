@@ -92,6 +92,8 @@ describe("text rendering", () => {
   });
 
   inBrowser("can resize on content change", async () => {
+    await sut.whenRendered();
+
     sut.clipMode = "visible";
     sut.lineWrapping = false;
     sut.fixedWidth = false;
@@ -115,7 +117,7 @@ describe("text rendering", () => {
   });
 
   describe("rich text", () => {
-    
+
     var style_a = { fontSize: 12, fontStyle: "italic" },
         style_b = { fontSize: 14, fontWeight: "bold" };
 
@@ -127,9 +129,9 @@ describe("text rendering", () => {
   
       let lines = getRenderedTextNodes(sut),
           chunks = lines[0].childNodes;
-  
+
       expect(chunks).property("length").equals(5);
-  
+
       let styles = Array.from(chunks).map(ea => {
         let jsStyle =        env.domEnv.window.getComputedStyle(
                                 ea.nodeType === ea.TEXT_NODE ? ea.parentNode : ea),
@@ -145,7 +147,7 @@ describe("text rendering", () => {
         if (textDecoration == "") textDecoration = "none";
         return { fontFamily, fontSize, fontWeight, fontStyle, textDecoration };
       });
-  
+
       let strings = Array.from(chunks).map(ea => ea.textContent);
   
       expect(printStyleNormalized(styles[0])).equals(printStyleNormalized(obj.dissoc(defaultStyle,                                 ["fontColor", "fixedCharacterSpacing"])));

@@ -275,12 +275,14 @@ describeInBrowser("scroll", () => {
       extent: pt(100,2*lineHeight),
       textString: [0,1,2,3,4,5,6,7,8,9].join("\n"),
     });
-    expect(sut.scrollExtent).equals(
-      pt(100 + 15, sut.document.lines.length * lineHeight + padTop+padBot + 15),
-        "scrollExtent not as expected");
+    expect(sut.scrollExtent.x).equals(100 + 15, "scrollExtent x not as expected");
+    expect(sut.scrollExtent.y).closeTo(
+      sut.document.lines.length * lineHeight + padTop+padBot + 15, 3,
+      "scrollExtent y not as expected");
     sut.cursorPosition = { column: 0, row: 3 }
     sut.scrollCursorIntoView();
-    expect(sut.scroll).equals(pt(0,2*lineHeight+padTop+3));
+    expect(sut.scroll.x).equals(0, "scroll x");
+    expect(sut.scroll.y).closeTo(2*lineHeight+padTop+3, 3, "scroll y");
     sut.cursorPosition = {column: 0, row: 0};
     sut.scrollCursorIntoView();
     expect(sut.scroll).equals(pt(0,0))
