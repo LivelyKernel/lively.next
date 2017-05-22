@@ -1,5 +1,4 @@
-import { string, arr } from "lively.lang";
-import { lessEqPosition } from "../../text/position.js";
+import { string } from "lively.lang";
 import JavaScriptChecker from "./checker.js";
 import JavaScriptNavigator from "./navigator.js";
 
@@ -9,9 +8,7 @@ import { snippets as jsSnippets } from "./snippets.js";
 import {
   jsIdeCommands,
   jsEditorCommands,
-  astEditorCommands,
-  insertStringWithBehaviorCommand,
-  deleteBackwardsWithBehavior
+  astEditorCommands
 } from "./commands.js";
 
 import EditorPlugin from "../editor-plugin.js";
@@ -57,13 +54,12 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
   getCompleters(otherCompleters) { return completers.concat(otherCompleters); }
 
   getCommands(otherCommands) {
-    var idx = otherCommands.findIndex(({name}) => name === "insertstring");
-    otherCommands.splice(idx, 1, {...otherCommands[idx], name: "insertstring_default"});
-    return [insertStringWithBehaviorCommand, deleteBackwardsWithBehavior]
-      .concat(otherCommands)
-      .concat(jsIdeCommands)
-      .concat(jsEditorCommands)
-      .concat(astEditorCommands);
+    return [
+      ...otherCommands,
+      ...jsIdeCommands,
+      ...jsEditorCommands,
+      ...astEditorCommands
+    ];
   }
 
   async getMenuItems(items) {

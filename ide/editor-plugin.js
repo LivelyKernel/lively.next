@@ -199,7 +199,13 @@ export default class EditorPlugin {
     return commentSpec;
   }
 
-  doNewline(cursorPos, lineString, indentDepth) {
+  toString() {
+    return `${this.constructor.name}(${this.textMorph})`
+  }
+
+  // interactive command hooks
+
+  cmd_newline(cursorPos, lineString, indentDepth) {
     let morph = this.textMorph,
         {row, column} = cursorPos,
         before = lineString[column-1],
@@ -217,10 +223,85 @@ export default class EditorPlugin {
       firstRow: row + 1,
       lastRow: row + 1
     });
+    return true;
   }
 
-  toString() {
-    return `${this.constructor.name}(${this.textMorph})`
+  cmd_delete_backwards() {
+    var morph = this.textMorph,
+        sel = morph.selection,
+        line = morph.getLine(sel.end.row),
+        left = line[sel.end.column-1],
+        right = line[sel.end.column];
+    if (sel.isEmpty() && left in openPairs && right === openPairs[left]) {
+      sel.growRight(1); sel.growLeft(1);
+    }
+    return false;
+  }
+  
+  cmd_insertstring(string) {
+    var morph = this.textMorph,
+        sel = morph.selection,
+        sels = sel.isMultiSelection ? sel.selections : [sel],
+        offsetColumn = 0,
+        isOpen = string in openPairs,
+        isClose = string in closePairs;
+
+    if (!isOpen && !isClose) return false;
+
+    var line = morph.getLine(sel.end.row),
+        left = line[sel.end.column-1],
+        right = line[sel.end.column];
+
+    if (!sel.isEmpty()) {
+      if (!isOpen) return false;
+      // we've selected something and are inserting an open pair => instead of
+      // replacing the selection we insert the open part in front of it and
+      // closing behind, then select everything
+      var undo = morph.undoManager.ensureNewGroup(morph);
+      morph.insertText(openPairs[string], sel.end);
+      morph.insertText(string, sel.start);
+      morph.undoManager.group(undo);
+      sel.growRight(-1);
+      return true;
+    }
+
+    // if input is closing part of a pair and we are in front of it then try
+    // to find the matching opening pair part. If this can be found we do not
+    // insert anything, just jump over the char
+    if (right in closePairs && string === right) {
+       sel.goRight(1); return true; 
+    }
+
+    // Normal close, not matching, just insert default
+    if (isClose && !isOpen) return false;
+
+    // insert pair
+    offsetColumn = 1;
+    var undo = morph.undoManager.ensureNewGroup(morph);
+    morph.insertText(string + openPairs[string]);
+    morph.undoManager.group(undo);
+    sel.goLeft(1);
+    return true;
   }
 
 }
+
+
+var openPairs = {
+  "{": "}",
+  "[": "]",
+  "(": ")",
+  "\"": "\"",
+  "'": "'",
+  "`": "`",
+}
+
+var closePairs = {
+  "}": "{",
+  "]": "[",
+  ")": "(",
+   "\"": "\"",
+  "'": "'",
+  "`": "`",
+}
+

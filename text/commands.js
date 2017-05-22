@@ -166,6 +166,13 @@ var commands = [
     doc: "Delete the character in front of the cursor or the selection.",
     exec: function(morph) {
       if (morph.rejectsInput()) return false;
+
+      if (
+        morph.editorPlugin &&
+        typeof morph.editorPlugin.cmd_newline === "function" &&
+        morph.editorPlugin.cmd_delete_backwards()
+      ) return true;
+
       var sel = morph.selection;
       if (sel.isEmpty()) sel.growLeft(1);
       sel.text = "";
@@ -940,12 +947,15 @@ var commands = [
         pos.column = 0;
       }
 
-      if (morph.editorPlugin && typeof morph.editorPlugin.doNewline === "function") {
-        morph.editorPlugin.doNewline(pos, currentLine, indent);
-      } else {
-        morph.selection.text = "\n" + " ".repeat(indent);
-        morph.selection.collapseToEnd();
-      }
+      // allow modes to handle newline
+      if (
+        morph.editorPlugin &&
+        typeof morph.editorPlugin.cmd_newline === "function" &&
+        morph.editorPlugin.cmd_newline(pos, currentLine, indent)
+      ) return true;
+
+      morph.selection.text = "\n" + " ".repeat(indent);
+      morph.selection.collapseToEnd();
       morph.undoManager.group();
       return true;
     }
@@ -959,6 +969,13 @@ var commands = [
           isValid = typeof string === "string" && string.length;
       if (!isValid) console.warn(`command insertstring called with not string value`);
       if (morph.rejectsInput() || !isValid) return false;
+
+      if (
+        morph.editorPlugin &&
+        typeof morph.editorPlugin.cmd_insertstring === "function" &&
+        morph.editorPlugin.cmd_insertstring(string)
+      ) return true;
+
       let sel = morph.selection, isDelete = !sel.isEmpty();
       if (isDelete) morph.undoManager.group();
       sel.text = string;
@@ -1230,7 +1247,7 @@ var usefulEditorCommands = [
       return true;
     }
   },
-  
+
   {
     name: "open file at cursor",
     exec: async function(ed, opts) {
@@ -1317,11 +1334,11 @@ var usefulEditorCommands = [
       await ed.changeEditorMode(choice.url);
     }
   },
-  
+
   {
     name: "report token at cursor",
     async exec(morph) {
-      let {token, start, end} = morph.tokenAt(morph.cursorPosition) || {};      
+      let {token, start, end} = morph.tokenAt(morph.cursorPosition) || {};
       morph.setStatusMessage(token ? `${token} ${start.column} => ${end.column}` : "no token");
       return true;
     }
