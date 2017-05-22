@@ -112,7 +112,7 @@ describeInBrowser("undo", function() {
     expect(text.undoManager.undos).to.have.length(1, "undos");
     expect(text.undoManager.undos[0].changes).to.have.length(2, "changes");
     expect(text.undoManager.undos[0]).containSubset(
-      {changes: [{selector: "insertText"}, {selector: "insertText"}]}, "change details")
+      {changes: [{selector: "replace"}, {selector: "replace"}]}, "change details")
   });
 
   it("can group previous undo", () => {
@@ -125,7 +125,7 @@ describeInBrowser("undo", function() {
     expect(text.undoManager.undos).to.have.length(1);
     expect(text.undoManager.undos[0].changes).to.have.length(2);
     expect(text.undoManager.undos[0]).containSubset(
-      {changes: [{selector: "insertText"}, {selector: "insertText"}]})
+      {changes: [{selector: "replace"}, {selector: "replace"}]})
   });
 
   it("ignores non-text changes", () => {
@@ -136,7 +136,7 @@ describeInBrowser("undo", function() {
     text.undoManager.group();
     expect(text.undoManager.undos).to.have.length(1);
     expect(text.undoManager.undos[0].changes).to.have.length(1);
-    expect(text.undoManager.undos[0]).containSubset({changes: [{selector: "insertText"}]})
+    expect(text.undoManager.undos[0]).containSubset({changes: [{selector: "replace"}]})
   });
 
   it("new line delete undo", () => {

@@ -122,8 +122,8 @@ describe("text rendering", () => {
         style_b = { fontSize: 14, fontWeight: "bold" };
 
     inBrowser("renders styles", async () => {
-      sut.setStyleInRange(style_a, Range.create(0, 1, 0, 3));
-      sut.setStyleInRange(style_b, Range.create(0, 2, 0, 4));
+      sut.addTextAttribute(style_a, Range.create(0, 1, 0, 3));
+      sut.addTextAttribute(style_b, Range.create(0, 2, 0, 4));
   
       await promise.delay(20);
   
@@ -149,14 +149,13 @@ describe("text rendering", () => {
       });
 
       let strings = Array.from(chunks).map(ea => ea.textContent);
+      expect(strings).equals(["h", "e", "l", "l", "o"]);
   
       expect(printStyleNormalized(styles[0])).equals(printStyleNormalized(obj.dissoc(defaultStyle,                                 ["fontColor", "fixedCharacterSpacing"])));
       expect(printStyleNormalized(styles[1])).equals(printStyleNormalized(obj.dissoc({...defaultStyle, ...style_a},                ["fontColor", "fixedCharacterSpacing"])));
       expect(printStyleNormalized(styles[2])).equals(printStyleNormalized(obj.dissoc({...defaultStyle, ...style_a, ...style_b},    ["fontColor", "fixedCharacterSpacing"])));
       expect(printStyleNormalized(styles[3])).equals(printStyleNormalized(obj.dissoc({...defaultStyle, ...style_b},                ["fontColor", "fixedCharacterSpacing"])));
       expect(printStyleNormalized(styles[4])).equals(printStyleNormalized(obj.dissoc(defaultStyle,                                 ["fontColor", "fixedCharacterSpacing"])));
-  
-      expect(strings).equals(["h", "e", "l", "l", "o"]);
     });
 
     inBrowser("renders css classes", async () => {
@@ -196,7 +195,7 @@ describe("text rendering", () => {
       
       sut.render(sut.env.renderer);
 
-      expect(l.firstFullVisibleLine(sut)).equals(2);
+      expect(l.firstFullVisibleLine(sut)).equals(1);
       expect(l.lastFullVisibleLine(sut)).equals(3);
     });
 

@@ -3,7 +3,7 @@ import { Text } from "../../text/morph.js";
 import { expect, chai } from "mocha-es6";
 import { arr } from "lively.lang";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
-import { dummyFontMetric as fontMetric, expectSelection } from "../test-helpers.js";
+import { expectSelection } from "../test-helpers.js";
 import bowser from "bowser";
 
 var describeInBrowser = System.get("@system-env").browser ? describe :
@@ -21,7 +21,6 @@ function text(string, props) {
     fontSize: 10,
     extent: pt(100,100),
     padding: Rectangle.inset(2),
-    fontMetric,
     ...props
   });
 }

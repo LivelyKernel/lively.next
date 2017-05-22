@@ -6,7 +6,7 @@ import { pt } from "lively.graphics";
 import { CompletionController, WordCompleter } from "../../text/completion.js";
 import { DynamicJavaScriptCompleter } from "../../ide/js/completers.js";
 import { expect } from "mocha-es6";
-import { dummyFontMetric as fontMetric } from "../test-helpers.js";
+import JavaScriptEditorPlugin from "../../ide/js/editor-plugin.js";
 
 var describeInBrowser = System.get("@system-env").browser ? describe :
   (title) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xit(title); }
@@ -15,7 +15,11 @@ var text;
 
 describeInBrowser("completion controller", () => {
 
-  beforeEach(() => text = new Text({textString: "abc\nafg\n", fontMetric}));
+  beforeEach(() =>
+    text = new Text({
+      textString: "abc\nafg\n",
+      plugins: [new JavaScriptEditorPlugin()]
+    }));
 
   it("computes word completions", async () => {
     text.cursorPosition = {row: 2, column: 0}
@@ -39,7 +43,7 @@ describeInBrowser("completion controller", () => {
 describeInBrowser("completion widget", () => {
 
   beforeEach(() =>
-    text = new Text({textString: "abc\nafg\n", fontMetric, extent: pt(400,300)}).openInWorld());
+    text = new Text({textString: "abc\nafg\n", extent: pt(400,300)}).openInWorld());
   afterEach(async () => {
     await promise.delay(30);
     let complMenu = text.world().get("text completion menu")
@@ -63,7 +67,7 @@ describeInBrowser("completion widget", () => {
     expect(menu.get("input").textString).equals("a", "input line content doesn't show prefix");
     var pos = text.charBoundsFromTextPosition(text.cursorPosition).topLeft();
     pos = text.worldPoint(pos);
-    expect(menu.position.x).closeTo(pos.x, 10, "menu position x")
-    expect(menu.position.y).closeTo(pos.y, 10, "menu position y")
+    expect(menu.position.x).closeTo(pos.x, 50, "menu position x")
+    expect(menu.position.y).closeTo(pos.y, 50, "menu position y")
   });
 })

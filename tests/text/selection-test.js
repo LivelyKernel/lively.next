@@ -2,7 +2,7 @@
 import { Selection, MultiSelection } from "../../text/selection.js";
 import { Text } from "../../text/morph.js";
 import { expect, chai } from "mocha-es6";
-import { dummyFontMetric as fontMetric, expectSelection } from "../test-helpers.js";
+import { expectSelection } from "../test-helpers.js";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 
 var describeInBrowser = System.get("@system-env").browser ? describe :
@@ -26,7 +26,6 @@ function text(string, props) {
     fontSize: 10,
     extent: pt(100,100),
     padding: 3,
-    fontMetric,
     ...props
   });
 
@@ -35,7 +34,7 @@ function text(string, props) {
 
 describeInBrowser("text selection", () => {
 
-  beforeEach(() => t = new Text({textString: "hello\nworld", fontMetric}));
+  beforeEach(() => t = new Text({textString: "hello\nworld"}));
 
   it("has a range", () => {
     expect(new Selection(t).range.toString()).equals("Range(0/0 -> 0/0)");

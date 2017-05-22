@@ -74,7 +74,7 @@ export class CompletionController {
 
     var maxCol = 0,
         sorted = arr.sortByKey(withHighestPriority, "priority").reverse(),
-        highestPriority = sorted[0].priority || 0,
+        highestPriority = (sorted.length && sorted[0].priority) || 0,
         items = sorted.map(ea => {
           ea.highestPriority = highestPriority;
           var string = ea.completion.replace(/\n/g, ""),
