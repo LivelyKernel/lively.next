@@ -526,10 +526,16 @@ export class CellGroup {
       if (animate) {
         var extent = this.resize ? bounds.extent() : target.extent,
             {duration, easing} = animate;
-        target.animate({[this.alignedProperty || this.align]: bounds[this.align]().addPt(offset), extent, duration, easing});
+        target.animate({
+          [this.alignedProperty || this.align]: bounds[this.align]().addPt(offset),
+          extent,
+          duration,
+          easing
+        });
       } else {
         if (this.resize) target.extent = bounds.extent();
         target[this.alignedProperty || this.align] = bounds[this.align]().addPt(offset);
+        if (target.layout) target.layout.forceLayout();
       }
     }
   }
