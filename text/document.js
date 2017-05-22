@@ -1809,14 +1809,15 @@ export default class Document {
     this.remove({start: {row, column: 0}, end});
 
     // add newlines to textAndAttributesByLine
-    let textAndAttributesForInsert = [];
-    for (let i = 0; i < textAndAttributesByLine.length; i++) {
+    let textAndAttributesForInsert = [], length = textAndAttributesByLine.length;
+    for (let i = 0; i < length-1; i++) {
       let lineTextAndAttributes = textAndAttributesByLine[i];
       if (!lineTextAndAttributes.length) lineTextAndAttributes = ["", null];
       lineTextAndAttributes[lineTextAndAttributes.length-2] =
         lineTextAndAttributes[lineTextAndAttributes.length-2] + "\n";
       textAndAttributesForInsert.push(...lineTextAndAttributes);
     }
+    textAndAttributesForInsert.push(...textAndAttributesByLine[length-1]);
     // insert rest normally
     let {end: insertionEnd} = this.insertTextAndAttributes(
       textAndAttributesForInsert, {row, column: 0});
