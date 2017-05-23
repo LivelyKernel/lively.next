@@ -1,4 +1,4 @@
-import { requiredModulesOfSnapshot, serialize, deserialize } from "lively.serializer2";
+import { requiredModulesOfSnapshot, ObjectPool, serialize, deserialize } from "lively.serializer2";
 import { World, Morph } from "./index.js";
 import { resource } from "lively.resources";
 import { newMorphId } from "./morph.js";
@@ -73,6 +73,7 @@ import ObjectPackage from "lively.classes/object-classes.js";
 import LoadingIndicator from "./components/loading-indicator.js";
 import { promise } from "lively.lang";
 import { migrations } from "./object-migration.js";
+import { ObjectMigrationPlugin } from "lively.serializer2/plugins.js";
 
 export async function createMorphSnapshot(aMorph, options = {}) {
   let {
@@ -131,6 +132,10 @@ export async function createMorphSnapshot(aMorph, options = {}) {
 }
 
 export async function loadMorphFromSnapshot(snapshot, options) {
+
+  let pool = ObjectPool.fromSnapshot(snapshot.snapshot, options),
+      migrationsPlugin = new ObjectMigrationPlugin(migrations)
+  migrationsPlugin.runBeforeMigrations(snapshot, pool);
 
   // embedded package definitions
   if (snapshot.packages) {
