@@ -543,7 +543,7 @@ class PropertyToolShortcut extends PropertyControl {
             type: "label", value: this.keyString + ':', name: 'keyString',
             padding: rect(0,0,10,0), fontSize: 14, 
             fontFamily: config.codeEditor.defaultStyle.fontFamily},
-            Icon.makeLabel('arrow-right', {padding: rect(1,1,4,1)}),
+            Icon.makeLabel('arrow-right', {fontSize: 15, padding: rect(1,1,4,1)}),
             {type: "label", value: this.title, fontSize: 14, 
              fontWeight: 'bold',
              name: 'valueString', fill: Color.transparent, opacity: .8,
@@ -748,7 +748,7 @@ export default class Inspector extends Morph {
               fontColor: Color.white,
             },
             '.toggle.active': {
-              fontColor: Color.rgbHex('8edfff')
+              fontColor: Color.rgbHex('00e0ff')
             }
           });
           }

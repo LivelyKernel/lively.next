@@ -1788,7 +1788,7 @@ return ;
 
   applyLayoutIfNeeded() {
      if (!this._dirty) return;
-     for (let i in this.submorphs) {
+     for (var i in this.submorphs) {
        this.submorphs[i].applyLayoutIfNeeded();
      }
      this.layout && this.layout.forceLayout();

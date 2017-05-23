@@ -90,16 +90,7 @@ export class CodeSearcher extends FilterableList {
               fontColor: Color.gray.darker(),
               defaultTextStyle: {fontSize: 20},
               autofit: true,
-              fill: new LinearGradient({
-                vector: Math.PI,
-                stops: [{
-                  color: Color.white.withA(0),
-                  offset: 0
-                }, {
-                  color: Color.white.withA(.5),
-                  offset: .4,
-                }]
-              })
+              fill: Color.white.withA(.5)
             }),
             new List({
               name: "list",

@@ -343,7 +343,7 @@ export default class Browser extends Window {
 
             {name: "browserCommands", bounds: browserCommandsBounds,
              layout: new GridLayout({
-                grid: [["commands", null, "eval backend list", null]],
+                grid: [["commands", null, "eval backend button", null]],
                 rows: [0, {paddingBottom: 2}],
                 columns: [2, {fixed: 100}, 3, {fixed: 5}],
                 groups: {commands: {resize: false}}

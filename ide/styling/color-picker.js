@@ -484,6 +484,7 @@ export class ColorPicker extends Window {
         initialize() {
           this.targetMorph = this.colorPalette();
           this.titleLabel().fontColor = Color.gray;
+          this.whenRendered().then(() => this.update());
         }
       },
       styleSheets: {
@@ -531,6 +532,7 @@ export class ColorPicker extends Window {
      this.get('field picker').update(this);
      this.get('hue picker').update(this);
      this.get('details').update(this);
+     this.get('alpha slider').update(this);
      // would be better if this.color is the canonical place
      // rms: as long as lively.graphics/color loses the hue information
      //      when lightness or saturation drop to 0, this.color can not serve
@@ -581,6 +583,7 @@ export class ColorPicker extends Window {
           fontWeight: "bold"
         },
         new Slider({
+          name: 'alpha slider',
           target: this,
           min: 0,
           max: 1,

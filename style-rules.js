@@ -375,7 +375,7 @@ class StyleSheetControl extends Morph {
     }
     this.submorphs = [
       {
-        type: "label",
+        type: "text",
         name: 'name',
         ...this.isDraft ? {readOnly: false} : {reactsToPointer: false},
         fontColor: Color.rgbHex("5499c7"),
@@ -399,7 +399,7 @@ class StyleSheetControl extends Morph {
       connect(this.get("close"), "onMouseDown", this, "removeStyleSheet");
       connect(this.get("rename"), "onMouseDown", this, "renameStyleSheet");
     } else {
-      connect(this.get('name'), 'onMouseDown', this, 'startNameInput');
+      connect(this.get('name'), 'onFocus', this, 'startNameInput');
       connect(this.get('name'), 'onBlur', this, 'submit');
     }
   }
@@ -507,7 +507,7 @@ class StyleRuleControl extends Morph {
       this.addStyleClass("error");
       if (!this.getSubmorphNamed("error")) {
         this.addMorph(
-          Icon.makeLabel("warning", {name: "error", fill: Color.green, fontColor: Color.red}),
+          Icon.makeLabel("warning", {name: "error", fontColor: Color.red}),
           this.getSubmorphNamed("rule toggler")
         );
       }
@@ -866,6 +866,8 @@ export class StyleSheetEditor extends Morph {
         padding: rect(0, 0, 5, 0),
         autofit: true,
         borderWidth: 1,
+        fontSize: 14,
+        fontFamily: config.codeEditor.defaultStyle.fontFamily,
         borderColor: Color.transparent,
         fill: Color.transparent,
         fontColor: Color.rgbHex("5499c7")
@@ -883,7 +885,6 @@ export class StyleSheetEditor extends Morph {
       },
       ".StyleRuleControl": {
         layout: new HorizontalLayout({spacing: 2}),
-        //extent: pt(0, 18),
         fill: Color.transparnet
       },
       ".StyleRuleControl [name=close]": {
@@ -948,12 +949,12 @@ export class StyleSheetEditor extends Morph {
       },
       // style sheet control
       ".StyleSheetControl .Label": {
-        fontSize: 12,
+        fontSize: 14,
         padding: rect(0, 0, 5, 0),
         autofit: true
       },
       ".StyleSheetControl .Text": {
-        fontSize: 12,
+        fontSize: 14,
         padding: rect(0, 0, 5, 0),
         fontColor: Color.rgbHex("5499c7"),
         fill: Color.transparent

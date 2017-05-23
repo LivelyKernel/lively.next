@@ -8,7 +8,7 @@ class DefaultTheme {
 
   get default() { return {fontColor: "#333"}; }
 
-  get header()        { return {fontColor: "blue"}; }
+  get header()        { return {fontColor: "#6b94be"}; }
   get quote()         { return {fontColor: "#090"}; }
   get negative()      { return {fontColor: "#d44"}; }
   get positive()      { return {fontColor: "#292"}; }

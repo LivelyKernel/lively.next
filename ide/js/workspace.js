@@ -85,6 +85,7 @@ export default class Workspace extends Window {
     var list = this.getSubmorphNamed("eval backend button"),
         title = this.titleLabel();
     if (list) {
+      list.height = 21;
       list.topRight = this.innerBounds().topRight().addXY(-5, 2);
       if (list.left < title.right + 3) list.left = title.right + 3;
     }

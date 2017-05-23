@@ -938,7 +938,7 @@ export class SearchField extends Text {
 
   onChange(change) {
     super.onChange(change);
-    let inputChange = change.selector === "insertText" || change.selector === "deleteText",
+    let inputChange = change.selector === "replace",
         validInput = this.isFocused() && this.textString;
     if (this.get('placeholder icon')) this.get('placeholder icon').visible = !!this.textString;
     this.active && inputChange && signal(this, "searchInput", this.parseInput());

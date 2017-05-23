@@ -1,9 +1,10 @@
 import { arr, fun, obj, tree, string, promise } from "lively.lang";
 import { pt, Rectangle, Color } from "lively.graphics";
 import { Label } from "lively.morphic/text/label.js";
-import { Morph, morph, StyleSheet } from "lively.morphic";
+import { Morph, config, morph, StyleSheet } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 import { zip } from "lively.lang/array.js";
+
 
 /*
 
@@ -321,7 +322,7 @@ export class Tree extends Morph {
       },
 
       fontFamily: {
-        defaultValue: "Inconsolata, monospace",
+        defaultValue: config.codeEditor.defaultStyle.fontFamily,
         set(fontFamily) { this.setProperty("fontFamily", fontFamily); this.update(); }
       },
 
@@ -391,6 +392,9 @@ export class Tree extends Morph {
       ".TreeNode [name=keyString]": {
         fontSize: this.fontSize,
         fontColor: this.fontColor
+      },      
+      ".TreeNode [name=valueString]": {
+        fontSize: this.fontSize
       },
       ".TreeNode.selected": {
         fill: this.selectionColor
@@ -1109,10 +1113,13 @@ var treeCommands = [
       var td = treeMorph.treeData,
           content = string.printTree(td.root, td.nodeToString.bind(td), td.getChildrenIfUncollapsed.bind(td)),
           title = treeMorph.getWindow() ?
-            "printed " + treeMorph.getWindow().title :
-            treeMorph.name;
-
-      return treeMorph.world().execCommand("open text window", {title, content, name: title, fontFamily: "Inconsolata, monospace"});
+          "printed " + treeMorph.getWindow().title :
+      treeMorph.name;
+      
+      return treeMorph.world().execCommand("open text window", {
+        title, content, name: title, 
+        fontFamily: config.codeEditor.defaultStyle.fontFamily
+      });
     }
   }
 

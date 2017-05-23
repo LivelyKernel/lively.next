@@ -31,28 +31,31 @@ export default class Window extends Morph {
         borderRadius: 14,
         extent: windowButtonSize
       },
-      ".Window.active .closeButton": {
-        borderRadius: 14,
-        extent: windowButtonSize,
-        borderColor: Color.red.darker(),
-        fill: Color.rgb(255, 96, 82)
-      },
       ".Window .defaultLabelStyle": {
         fill: Color.transparent,
         opacity: 0.5,
         fontSize: 11,
         position: pt(2,1)
       },
-      ".Window.active .minimizeButton": {
+      ".Window.active .closeButton": {
+        borderWidth: 1,
         borderRadius: 14,
         extent: windowButtonSize,
-        borderColor: Color.brown,
+        borderColor: Color.rgb(207, 69, 69),
+        fill: Color.rgb(255, 96, 82)
+      },
+      ".Window.active .minimizeButton": {
+        borderWidth: 1,
+        borderRadius: 14,
+        extent: windowButtonSize,
+        borderColor: Color.rgb(224, 177, 77),
         fill: Color.rgb(255, 190, 6)
       },
       ".Window.active .maximizeButton": {
+        borderWidth: 1,
         borderRadius: 14,
         extent: windowButtonSize,
-        borderColor: Color.green.darker(),
+        borderColor: Color.rgb(91,181,91),
         fill: Color.green
       },
       ".Window .windowTitleLabel": {

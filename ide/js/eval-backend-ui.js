@@ -1,8 +1,8 @@
 /*global localStorage*/
 import { pt, LinearGradient, Point, Color, Rectangle } from "lively.graphics";
-import { arr, obj } from "lively.lang";
+import { arr, obj, string } from "lively.lang";
 import { connect, noUpdate } from "lively.bindings";
-import { DropDownList, config, StyleSheet } from "lively.morphic";
+import { DropDownList, config, StyleSheet, Button } from "lively.morphic";
 import L2LClient from "lively.2lively/client.js";
 import { serverInterfaceFor, localInterface, l2lInterfaceFor } from "lively-system-interface";
 
@@ -232,6 +232,7 @@ export default class EvalBackendChooser {
   buildEvalBackendDropdownFor(morph) {
     var btn = new EvalBackendButton({
       name: "eval backend button",
+      height: 20,
       target: morph,
     });
     setTimeout(() => btn.updateFromTarget(), 0);
