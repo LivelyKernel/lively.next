@@ -63,6 +63,29 @@ morph breaks old windows without it.
           win.getWindow().relayoutWindowControls();
         });
     }
+  },
+
+  {
+    date: "2017-05-22",
+    name: "Removal of ChromeTheme and GithubTheme",
+    description: `
+For now only a simple default theme...
+`,
+    snapshotConverter: idAndSnapshot => {
+      let {snapshot} = idAndSnapshot;
+      for (let key in snapshot) {
+        let serialized = snapshot[key],
+            klass = serialized["lively.serializer-class-info"];
+        if (!klass) continue;
+        if (klass.className === "ChromeTheme" || klass.className === "GithubTheme") {
+          klass.className = "DefaultTheme";
+          klass.module.pathInPackage = "ide/themes/default.js";
+        } else if (klass.className === "JavaScriptTokenizer") {
+          delete serialized["lively.serializer-class-info"]
+        }
+      }
+      return idAndSnapshot;
+    }
   }
 
 ];
