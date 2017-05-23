@@ -100,7 +100,13 @@ export default class FontMetric {
   charBoundsFor(style, str) {
     let nCols = str.length,
         bounds = new Array(nCols),
-        { cachedBoundsInfo: { bounds: cachedBounds, str: cachedStr, style: cachedStyle } } = this,
+        {
+          cachedBoundsInfo: {
+            bounds: cachedBounds,
+            str: cachedStr,
+            style: cachedStyle
+          }
+        } = this,
         isMonospace = !this.isProportional(style.fontFamily);
 
     if (isMonospace) {
@@ -179,31 +185,46 @@ export default class FontMetric {
     return fd.isFontSupported(font);
   }
 
-  defaultCharExtent(styleOpts, rendertTextLayerFn) {
-    return this._domMeasure.defaultCharExtent(styleOpts, rendertTextLayerFn);
-  }
-
-  fastLineMeasureOfTextMorph(textMorph) {
-
+  defaultCharExtent(morph, styleOpts, rendertTextLayerFn) {
+    return this._domMeasure.defaultCharExtent(morph, styleOpts, rendertTextLayerFn);
   }
 
   manuallyComputeCharBoundsOfLine(
-    line, offsetX = 0, offsetY = 0, styleOpts,
+    morph, line, offsetX = 0, offsetY = 0, styleOpts,
     rendertTextLayerFn, renderLineFn
   ) {
     return this._domMeasure.computeCharBBoxes(
-      line, offsetX = 0, offsetY = 0, styleOpts,
-      rendertTextLayerFn, renderLineFn, this);
+      morph,
+      line,
+      (offsetX = 0),
+      (offsetY = 0),
+      styleOpts,
+      rendertTextLayerFn,
+      renderLineFn,
+      this);
   }
 
   manuallyComputeBoundsOfLines(
-    lines, offsetX = 0, offsetY = 0, styleOpts,
+    morph, lines, offsetX = 0, offsetY = 0, styleOpts,
     rendertTextLayerFn, renderLineFn
   ) {
     return this._domMeasure.computeBBoxesOfLines(
-      lines, offsetX = 0, offsetY = 0, styleOpts,
+      morph, lines, offsetX = 0, offsetY = 0, styleOpts,
       rendertTextLayerFn, renderLineFn);
   }
+
+}
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// font measuring inside text
+
+function textlayerNodeForFontMeasure(morph) {
+  let {text_layer_node, fontmetric_text_layer_node} = morph.viewState;
+  if (text_layer_node && !fontmetric_text_layer_node && text_layer_node.parentNode)
+    fontmetric_text_layer_node = morph.viewState.fontmetric_text_layer_node =
+      text_layer_node.parentNode.querySelector(".newtext-text-layer.font-measure");
+  return fontmetric_text_layer_node;
 }
 
 
@@ -311,7 +332,7 @@ class DOMTextMeasure {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // interface
 
-  defaultCharExtent(styleOpts, rendertTextLayerFn) {
+  defaultCharExtent(morph, styleOpts, rendertTextLayerFn) {
     let styleKey = this.generateStyleKey(styleOpts),
         {defaultCharWidthHeightCache} = this,
         found = defaultCharWidthHeightCache[styleKey];
@@ -321,91 +342,118 @@ class DOMTextMeasure {
     let {doc} = this,
         testString = "abcdefghijklmnopqrstufwxyz ABCDEFGHIJKLMNOPQRSTUFWXYZ 1234567890 {}[];,./<>?'\"!@#$%^&*()-=_+";
 
-    return this.withTextLayerNodeDo(textNode => {
-      let span = doc.createElement("span");
-      span.className = "line";
-      textNode.appendChild(span);
-      span.textContent = testString;
-      let {width, height} = span.getBoundingClientRect();
-      if (!this.debug) textNode.removeChild(span);
-      return defaultCharWidthHeightCache[styleKey] = {width: width/testString.length, height};
-    }, rendertTextLayerFn, styleOpts, styleKey);
+    return this.withTextLayerNodeDo(
+      morph,
+      rendertTextLayerFn, styleOpts, styleKey,
+      textNode => {
+        let span = doc.createElement("span");
+        span.className = "line";
+        textNode.appendChild(span);
+        span.textContent = testString;
+        let {width, height} = span.getBoundingClientRect();
+        if (!this.debug) textNode.removeChild(span);
+        return defaultCharWidthHeightCache[styleKey] = {width: width/testString.length, height};
+      });
   }
 
   computeBBoxesOfLines(
-    lines, offsetX = 0, offsetY = 0, styleOpts,
+    morph, lines, offsetX = 0, offsetY = 0, styleOpts,
     rendertTextLayerFn, renderLineFn
   ) {
     let styleKey = this.generateStyleKey(styleOpts),
         result = new Array(lines.length),
         allInCache = true;
     for (let i = 0; i < lines.length; i++) {
-      let cached = this.lineBBoxCache[styleKey + "_" + lines[i].text];
+      let line = lines[i],
+          cached = !line.textAttributes.length // if line has attributes, don't use cache
+                && this.lineBBoxCache[styleKey + "_" + lines[i].text];
       if (cached && cached.height && cached.width) result[i] = cached;
       else allInCache = false;
     }
 
     if (allInCache) return result;
 
-    return this.withTextLayerNodeDo(textNode => {
-      // render in once go, then read, not intermixed!
-      let lineNodes = new Array(lines.length),
-          results = new Array(lines.length),
-          {doc: document} = this;
-      for (let i = 0; i < lines.length; i++) {
-        if (results[i]) continue;
-        let lineNode = renderLineFn(lines[i]);
-        // FIXME!!!!
-        lineNode.style.display = "inline-block";
-        textNode.appendChild(lineNode);
-        lineNodes[i] = lineNode;
-      }
-      for (let i = 0; i < lineNodes.length; i++) {
-        if (results[i]) continue;
-        let node = lineNodes[i],
-            offset = cumulativeOffset(node),
-            {left, top, width, height} = node.getBoundingClientRect(),
-            {scrollTop, scrollLeft} = document.body;
-        this.lineBBoxCache[styleKey + "_" + lines[i].text] = results[i] = {
-          x: left - offset.left + offsetX + scrollLeft,
-          y: top - offset.top + offsetY + scrollTop,
-          width, height
-        };
-      }
-      // if (!this.debug)
-        for (let i = 0; i < lineNodes.length; i++)
-          textNode.removeChild(lineNodes[i]);
-
-      return results;
-    }, rendertTextLayerFn, styleOpts, styleKey);
+    return this.withTextLayerNodeDo(
+      morph, rendertTextLayerFn, styleOpts, styleKey,
+      (textNode, textNodeOffsetLeft, textNodeOffsetTop) => {
+        // render in once go, then read, not intermixed!
+        let lineNodes = new Array(lines.length),
+            results = new Array(lines.length),
+            {doc: document} = this;
+        for (let i = 0; i < lines.length; i++) {
+          if (results[i]) continue;
+          let lineNode = renderLineFn(lines[i]);
+          // FIXME!!!!
+          lineNode.style.display = "inline-block";
+          textNode.appendChild(lineNode);
+          lineNodes[i] = lineNode;
+        }
+        for (let i = 0; i < lineNodes.length; i++) {
+          if (results[i]) continue;
+          let node = lineNodes[i],
+              offset = cumulativeOffset(node),
+              {left, top, width, height} = node.getBoundingClientRect(),
+              {scrollTop, scrollLeft} = document.body;
+          this.lineBBoxCache[styleKey + "_" + lines[i].text] = results[i] = {
+            x: left - offset.left + offsetX + scrollLeft - textNodeOffsetLeft,
+            y: top - offset.top + offsetY + scrollTop - textNodeOffsetTop,
+            width, height
+          };
+        }
+        // if (!this.debug)
+          for (let i = 0; i < lineNodes.length; i++)
+            textNode.removeChild(lineNodes[i]);
+  
+        return results;
+      });
   }
 
   computeCharBBoxes(
-    line, offsetX = 0, offsetY = 0, styleOpts,
+    morph, line, offsetX = 0, offsetY = 0, styleOpts,
     renderTextLayerFn, renderLineFn, fontMetric
   ) {
-    let styleKey = this.generateStyleKey(styleOpts);
-    return this.withTextLayerNodeDo(textNode => {
-      let lineNode = renderLineFn(line),
-          _ = textNode.appendChild(lineNode),
-          offset = cumulativeOffset(lineNode),
-          {doc: document} = this,
-          {scrollTop, scrollLeft} = document.body,
-          result = (line.stringSize > 1000
-                 && charBoundsOfBigMonospacedLine(
-                  fontMetric, line, lineNode, offsetX, offsetY, styleOpts, renderTextLayerFn))
-              || charBoundsOfLine(line, lineNode,
-                  -offset.left + offsetX + scrollLeft,
-                    -offset.top + offsetY + scrollTop);
-      if (!this.debug)
-        lineNode.parentNode.removeChild(lineNode);
-      return result;
-    }, renderTextLayerFn, styleOpts, styleKey);
+    return this.withTextLayerNodeDo(
+      morph, renderTextLayerFn, styleOpts,
+      this.generateStyleKey(styleOpts),
+      (textNode, textNodeOffsetLeft, textNodeOffsetTop) => {
+        let lineNode = renderLineFn(line),
+            _ = textNode.appendChild(lineNode),
+            offset = cumulativeOffset(lineNode),
+            {doc: document} = this,
+            {scrollTop, scrollLeft} = document.body,
+
+            result = (line.stringSize > 1000
+                   && charBoundsOfBigMonospacedLine(
+                    morph, fontMetric, line, lineNode,
+                    offsetX - textNodeOffsetLeft,
+                    offsetY - textNodeOffsetTop,
+                    styleOpts, renderTextLayerFn))
+
+                || charBoundsOfLine(line, lineNode,
+                    -offset.left + offsetX + scrollLeft - textNodeOffsetLeft,
+                    -offset.top + offsetY + scrollTop - textNodeOffsetTop);
+
+        if (!this.debug)
+          lineNode.parentNode.removeChild(lineNode);
+        return result;
+      });
   }
 
-  withTextLayerNodeDo(doFn, rendertTextLayerFn, styleOpts, styleKey) {
+  withTextLayerNodeDo(morph, rendertTextLayerFn, styleOpts, styleKey, doFn) {
+
     let {doc: document, textlayerNodeCache: cache, element: root} = this,
-        textNode = cache[styleKey];
+        textNodeOffsetLeft = 0, textNodeOffsetTop = 0,
+        // try to use the already rendered morph, it already has a layer node
+        // for font measuring:
+        textNode = textlayerNodeForFontMeasure(morph);
+
+    if (textNode) {
+      let layerBounds = textNode.getBoundingClientRect();
+      textNodeOffsetLeft = layerBounds.left;
+      textNodeOffsetTop = layerBounds.top;
+
+    } else textNode = cache[styleKey];
+
     if (!textNode) {
       this.textlayerNodeCacheCount++;
       textNode = cache[styleKey] = rendertTextLayerFn(styleOpts, []);
@@ -420,12 +468,14 @@ class DOMTextMeasure {
         clipNode.id = styleKey;
         clipNode.appendChild(textNode);
         root.appendChild(clipNode);
-      } else {
-        root.appendChild(textNode);
-      }
+
+      } else { root.appendChild(textNode); }
     }
 
-    try { return doFn(textNode); } finally {
+    try {
+      return doFn(textNode, textNodeOffsetLeft, textNodeOffsetTop);
+
+    } finally {
       if (!this.debug && this.textlayerNodeCacheCount > this.maxTextlayerNodeCacheCount) {
         let toRemove = Math.ceil(this.maxTextlayerNodeCacheCount/2), node;
         while (toRemove-- && (node = root.childNodes[0])) {
@@ -444,7 +494,7 @@ const GLOBAL = typeof System !== "undefined"
   : window || global || self || this;
 
 function charBoundsOfBigMonospacedLine(
-  fontMetric, line, lineNode,
+  morph, fontMetric, line, lineNode,
   offsetX = 0, offsetY = 0,
   styleOpts, directRenderTextLayerFn
 ) {
@@ -462,12 +512,14 @@ function charBoundsOfBigMonospacedLine(
   if (lineWrapping)
     ({width: lineWidth, height: lineHeight} = lineNode.getBoundingClientRect());
 
-  let {width, height} = fontMetric.defaultCharExtent({defaultTextStyle, width: 10000}, directRenderTextLayerFn),
-      x = offsetX, y = offsetY,
+  let {width, height} = fontMetric._domMeasure.defaultCharExtent(
+        morph, {defaultTextStyle, width: 10000}, directRenderTextLayerFn),
+      x = offsetX,
+      y = offsetY,
       result = new Array(textLength);
 
   for (let i = 0; i < textLength; i++) {
-    if (x + width >= lineWidth) { x = 0; y = y + height; }
+    if (x + width > lineWidth) { x = 0; y = y + height; }
     result[i] = {x, y, width, height};
     x = x + width;
   }

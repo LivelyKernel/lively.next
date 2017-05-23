@@ -328,7 +328,7 @@ export class Tree extends Morph {
       },
 
       fontFamily: {
-        defaultValue: "Inconsolata, monospace",
+        defaultValue: "Monaco, monospace",
         set(fontFamily) { this.setProperty("fontFamily", fontFamily); this.update(); }
       },
 
@@ -1074,7 +1074,7 @@ var treeCommands = [
             "printed " + treeMorph.getWindow().title :
             treeMorph.name;
 
-      return treeMorph.world().execCommand("open text window", {title, content, name: title, fontFamily: "Inconsolata, monospace"});
+      return treeMorph.world().execCommand("open text window", {title, content, name: title, fontFamily: "Monaco, monospace"});
     }
   }
 

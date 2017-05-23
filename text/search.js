@@ -154,17 +154,22 @@ export class SearchWidget extends Morph {
       submorphs: {
         after: ["extent"],
         initialize() {
-          let btnStyle = {extent: pt(24,24), 
-                          triggerStyle: {
-                            fontSize: 18,
-                            fill: Color.transparent
-                          },
-                          opacity: .9,
-                          activeStyle: {
-                             fontSize: 18, borderWidth: 0, 
-                             fill: Color.transparent, fontColor: Color.white}},
-              fontSize = 14, fontFamily = "Inconsolata, monospace";
-
+          let btnStyle = {
+                extent: pt(24, 24),
+                triggerStyle: {
+                  fontSize: 18,
+                  fill: Color.transparent
+                },
+                opacity: 0.9,
+                activeStyle: {
+                  fontSize: 18,
+                  borderWidth: 0,
+                  fill: Color.transparent,
+                  fontColor: Color.white
+                }
+              },
+              fontSize = 14,
+              fontFamily = "Monaco, monospace";
           this.submorphs = [
             new Button({name: "acceptButton", label: Icon.textAttribute("check-circle-o"), ...btnStyle}).fit(),
             new Button({name: "cancelButton", label: Icon.textAttribute("times-circle-o"), ...btnStyle}).fit(),

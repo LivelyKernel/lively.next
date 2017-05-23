@@ -588,8 +588,8 @@ export class ListPrompt extends AbstractPrompt {
     this.extent = extent || pt(500,400);
     labelFontFamily = labelFontFamily || "Helvetica Neue, Arial, sans-serif";
     labelFontSize = labelFontSize || 15;
-    listFontFamily = listFontFamily || "Inconsolata, monospace";
-    listFontSize = listFontSize || labelFontSize;
+    listFontFamily = listFontFamily || "Monaco, monospace";
+    listFontSize = listFontSize || 12;
 
     var labelProps = {
       name: "label", type: "label", value: label,

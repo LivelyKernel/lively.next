@@ -91,6 +91,8 @@ export class Text extends Morph {
         get() {
           return {
             _needsFit: true,
+            text_layer_node: null,
+            fontmetric_text_layer_node: null,
             dom_nodes: [],
             dom_nodeFirstRow: [],
             scrollTop: 0,
@@ -101,7 +103,8 @@ export class Text extends Morph {
             firstVisibleRow: 0,
             lastVisibleRow: 0,
             heightBefore: 0,
-            wasScrolled: false
+            wasScrolled: false,
+            afterTextRenderHook: null
           }
         }
       },

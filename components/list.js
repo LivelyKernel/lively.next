@@ -230,7 +230,7 @@ var listCommands = [
           }).join("\n");
 
       return list.world().execCommand("open text window",
-        {title, content, name: title, fontFamily: "Inconsolata, monospace"});
+        {title, content, name: title, fontFamily: "Monaco, monospace"});
     }
   }
 ];

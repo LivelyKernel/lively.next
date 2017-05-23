@@ -204,8 +204,8 @@ export class StatusMessage extends Morph {
               fixedWidth: false,
               fixedHeight: false,
               clipMode: "visible",
-              fontSize: 14,
-              fontFamily: "Inconsolata, 'DejaVu Sans Mono', monospace"
+              fontSize: 12,
+              fontFamily: "Monaco, Inconsolata, 'DejaVu Sans Mono', monospace"
             },
             closeButton: {
               extent: pt(22, 22),

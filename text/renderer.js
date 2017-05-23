@@ -221,7 +221,9 @@ AfterTextRenderHook.prototype.updateLineHeightOfLines = function(textlayerNode) 
 
 AfterTextRenderHook.prototype.hook = function(node, propName, prevValue) {
   if (!node || !node.parentNode) return;
-  this.morph.viewState.text_layer_node = node;
+  let vs = this.morph.viewState;
+  vs.text_layer_node = node;
+  vs.fontmetric_text_layer_node = null;
   this.called = true;
   // the childNodes = line nodes of node are updated after the hook was called,
   // so delay...
@@ -278,7 +280,12 @@ export default class Renderer {
     } else selectionLayer = this.renderSelectionLayer(morph, morph.selection, false, cursorWidth);
 
     let textLayer = this.renderTextLayer(morph, renderer),
+        textLayerForFontMeasure = this.renderJustTextLayerNode(h, morph, null, []),
         markerLayer = this.renderMarkerLayer(morph, renderer);
+
+    textLayer.properties.className += " actual";
+    textLayerForFontMeasure.properties.className += " font-measure";
+    // textLayerForFontMeasure.properties.style.visibility = "hidden";
 
     return h("div", {
         ...defaultAttributes(morph, renderer),
@@ -290,6 +297,7 @@ export default class Renderer {
         }
       }, [
         ...selectionLayer, markerLayer,
+        textLayerForFontMeasure,
         textLayer,
         renderer.renderSubmorphs(morph)
       ]
@@ -319,7 +327,7 @@ export default class Renderer {
       // delayed
       if (hook.called) return;
       let node = renderer.getNodeForMorph(morph),
-          textlayerNode = node && node.querySelector(".newtext-text-layer");
+          textlayerNode = node && node.querySelector(".actual.newtext-text-layer");
       textlayerNode && hook.hook(textlayerNode);
     })
 

@@ -88,7 +88,7 @@ describe("text rendering", () => {
 
     expect(textBounds.top()).equals(-sut.scroll.y, "text layer not scrolled");
     expect(textBounds.height).closeTo(lineHeight*17 + (padTop+padBot), 30, "text layer does not have size of all lines");
-    expect(node.querySelector(".newtext-text-layer").textContent).equals("101112", "text  layer renders more than necessary");
+    expect(node.querySelector(".newtext-text-layer.actual").textContent).equals("101112", "text  layer renders more than necessary");
   });
 
   inBrowser("can resize on content change", async () => {
@@ -99,9 +99,7 @@ describe("text rendering", () => {
     sut.fixedWidth = false;
     var padLeft = sut.padding.left(),
         padRight = sut.padding.right(),
-        {width: cWidth, height: cHeight} = sut.fontMetric.defaultCharExtent(
-          {defaultTextStyle: sut.defaultTextStyle},
-          sut.textRenderer.directRenderTextLayerFn(sut));
+        {width: cWidth, height: cHeight} = sut.textLayout.defaultCharExtent(sut);
     sut.textString = "Hello hello";
 
     await sut.whenRendered();

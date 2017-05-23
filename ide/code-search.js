@@ -61,8 +61,8 @@ export class CodeSearcher extends FilterableList {
 
       fill:       {defaultValue: Color.transparent},
       extent:     {defaultValue: pt(800,500)},
-      fontFamily: {defaultValue: "Inconsolata, monospace"},
-      fontSize:   {defaultValue: 14},
+      fontFamily: {defaultValue: "Monaco, monospace"},
+      fontSize:   {defaultValue: 12},
       inputPadding: {defaultValue: Rectangle.inset(4,3)},
       itemPadding: {defaultValue: Rectangle.inset(4,2)},
       borderWidth: {defaultValue: 0},

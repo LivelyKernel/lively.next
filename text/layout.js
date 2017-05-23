@@ -62,7 +62,7 @@ export default class TextLayout {
       var directRenderLineFn = textRenderer.directRenderLineFn(morph),
           directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph),
           linesBounds = fontMetric.manuallyComputeBoundsOfLines(
-            lines, 0, 0, {
+            morph, lines, 0, 0, {
               defaultTextStyle, width: morphWidth, height: morphHeight,
               clipMode, lineWrapping, textAlign,
               paddingLeft, paddingRight, paddingTop, paddingBottom
@@ -96,7 +96,7 @@ export default class TextLayout {
           charWidthSum = 0,
           charHeight = 0;
       for (var h = 0; h < measureCount; h++) {
-        var {width, height} = fontMetric.defaultCharExtent({
+        var {width, height} = fontMetric.defaultCharExtent(morph, {
           defaultTextStyle: styles[h],
           width: 1000,
           paddingBottom, paddingTop, paddingRight, paddingLeft
@@ -127,7 +127,7 @@ export default class TextLayout {
   defaultCharExtent(morph) {
     let {textRenderer, fontMetric, defaultTextStyle} = morph,
         directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph);
-    return fontMetric.defaultCharExtent({defaultTextStyle, width: 1000}, directRenderTextLayerFn);
+    return fontMetric.defaultCharExtent(morph, {defaultTextStyle, width: 1000}, directRenderTextLayerFn);
   }
 
   textBounds(morph) {
@@ -245,7 +245,7 @@ export default class TextLayout {
         directRenderLineFn = textRenderer.directRenderLineFn(morph),
         directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph),
         charBounds = fontMetric.manuallyComputeCharBoundsOfLine(
-          line, 0, 0, {
+          morph, line, 0, 0, {
             defaultTextStyle, width, height, clipMode, lineWrapping, textAlign,
             paddingLeft, paddingRight, paddingTop, paddingBottom
           }, directRenderTextLayerFn, directRenderLineFn);

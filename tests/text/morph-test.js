@@ -266,7 +266,7 @@ describeInBrowser("scroll", () => {
   afterEach(() => removeSut());
 
   it("cursor into view", () => {
-    var lineHeight = fontMetric.defaultCharExtent(sut, sut.textRenderer.directRenderTextLayerFn(sut)).height,
+    var lineHeight = sut.textLayout.defaultCharExtent(sut).height,
         padTop = sut.padding.top(),
         padBot = sut.padding.bottom();
     Object.assign(sut, {
@@ -348,7 +348,7 @@ describeInBrowser("text mouse events", () => {
     padRight = sut.padding.right();
     padTop = sut.padding.top();
     padBot = sut.padding.bottom();
-    ({height: h, width: w} = fontMetric.defaultCharExtent(sut, sut.textRenderer.directRenderTextLayerFn(sut)));
+    ({height: h, width: w} = sut.textLayout.defaultCharExtent(sut));
     await sut.whenRendered();
   });
   afterEach(() => removeSut());
