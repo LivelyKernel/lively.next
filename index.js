@@ -5,8 +5,6 @@ import "./object-extensions.js";
 import { ObjectPool } from "./object-pool.js";
 import { version as serializerVersion } from "./package.json";
 import { removeUnreachableObjects } from "./snapshot-navigation.js";
-import ClassHelper from "./class-helper.js";
-import { arr } from "lively.lang";
 import { allPlugins } from "./plugins.js";
 
 function normalizeOptions(options) {
