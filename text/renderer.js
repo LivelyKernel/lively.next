@@ -42,6 +42,7 @@ function installCSS(domEnv) {
     .newtext-text-layer {
       box-sizing: border-box;
       position: absolute;
+      width: 100%;
       z-index: 0;
     }
 
@@ -147,7 +148,9 @@ let nextTick = (function(window, prefixes, i, p, fnc, to) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // Render hook to update layout / size of text document lines once those are
 // rendered and DOM measuring can be used
-function AfterTextRenderHook(morph) {
+function AfterTextRenderHook() {}
+
+AfterTextRenderHook.prototype.reset = function(morph) {
   this.morph = morph;
   this.called = false;
   this.needsRerender = false;
@@ -218,10 +221,11 @@ AfterTextRenderHook.prototype.updateLineHeightOfLines = function(textlayerNode) 
 
 AfterTextRenderHook.prototype.hook = function(node, propName, prevValue) {
   if (!node || !node.parentNode) return;
+  this.morph.viewState.text_layer_node = node;
   this.called = true;
   // the childNodes = line nodes of node are updated after the hook was called,
   // so delay...
-  nextTick(() => this.updateLineHeightOfLines(node));
+  this.updateLineHeightOfLines(node);
 }
 
 
@@ -305,7 +309,9 @@ export default class Renderer {
     let node = this.renderJustTextLayerNode(h, morph, null, children);
 
     // install hook so we can update text layout from real DOM once it is rendered
-    let hook = new AfterTextRenderHook(morph);
+    let hook = morph.viewState.afterTextRenderHook
+            || (morph.viewState.afterTextRenderHook = new AfterTextRenderHook());
+    hook.reset(morph);
     node.properties["after-text-render-hook"] = hook;
     nextTick(() => {
       // The hook only gets called on prop changes of textlayer node. We
@@ -347,7 +353,7 @@ export default class Renderer {
 
     // ...and now other attribues
     let style = {
-        height:          textHeight + "px",
+          height:          textHeight + "px",
           fontFamily:      morph.fontFamily,
           fontWeight:      morph.fontWeight,
           fontStyle:       morph.fontStyle,
