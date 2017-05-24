@@ -1,4 +1,8 @@
-import { requiredModulesOfSnapshot, ObjectPool, serialize, deserialize } from "lively.serializer2";
+import {
+  requiredModulesOfSnapshot,
+  deserializeWithMigrations,
+  serialize
+} from "lively.serializer2";
 import { World, Morph } from "./index.js";
 import { resource } from "lively.resources";
 import { newMorphId } from "./morph.js";
@@ -19,7 +23,7 @@ export function serializeMorph(m, options) {
 }
 
 export function deserializeMorph(idAndSnapshot, options) {
-  return deserialize(idAndSnapshot, normalizeOptions(options));
+  return deserializeWithMigrations(idAndSnapshot, migrations, normalizeOptions(options));
 }
 
 
@@ -131,34 +135,11 @@ export async function createMorphSnapshot(aMorph, options = {}) {
   return snapshot;
 }
 
-export async function loadMorphFromSnapshot(snapshot, options) {
-
-  let pool = ObjectPool.fromSnapshot(snapshot.snapshot, options),
-      migrationsPlugin = new ObjectMigrationPlugin(migrations)
-  migrationsPlugin.runBeforeMigrations(snapshot, pool);
-
-  // embedded package definitions
-  if (snapshot.packages) {
-    let packages = findPackagesInFileSpec(snapshot.packages);
-    for (let {files, url} of packages) {
-      let r = await createFiles(url, files);
-      await reloadPackage(url, {forgetEnv: false, forgetDeps: false});
-      // ensure object package instance
-      ObjectPackage.withId(getPackage(url).name);
-    }
-  }
-
-  // referenced packages / modules, e.g. b/c instances have classes from them
-  // load required modules
-  await Promise.all(
-    requiredModulesOfSnapshot(snapshot)
-      .map(modId =>
-        (System.get(modId) ? null : System.import(modId))
-                .catch(e => console.error(`Error loading ${modId}`, e))));
-
+export function loadMorphFromSnapshot(snapshot, options) {
   return deserializeMorph(snapshot, {
     reinitializeIds: true,
     ignoreClassNotFound: false,
+    onDeserializationStart: loadPackagesAndModulesOfSnapshot,
     migrations,
     ...options
   });
@@ -180,7 +161,7 @@ async function resourceToJSON(currentResource, base) {
   }
 }
 
-export function findPackagesInFileSpec(files, path = []) {
+function findPackagesInFileSpec(files, path = []) {
   // is a serialized json blob we store packages into a package field that
   // refers to a file spec object. This method extracts all the package file
   // specs from the file tree.
@@ -194,4 +175,25 @@ export function findPackagesInFileSpec(files, path = []) {
     result.push(...findPackagesInFileSpec(files[name], path.concat(name)));
   }
   return result;
+}
+
+async function loadPackagesAndModulesOfSnapshot(snapshot) {
+  // embedded package definitions
+  if (snapshot.packages) {
+    let packages = findPackagesInFileSpec(snapshot.packages);
+    for (let {files, url} of packages) {
+      let r = await createFiles(url, files);
+      await reloadPackage(url, {forgetEnv: false, forgetDeps: false});
+      // ensure object package instance
+      ObjectPackage.withId(getPackage(url).name);
+    }
+  }
+
+  // referenced packages / modules, e.g. b/c instances have classes from them
+  // load required modules
+  await Promise.all(
+    requiredModulesOfSnapshot(snapshot)
+      .map(modId =>
+        (System.get(modId) ? null : System.import(modId))
+                .catch(e => console.error(`Error loading ${modId}`, e))));
 }

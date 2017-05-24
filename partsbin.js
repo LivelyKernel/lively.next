@@ -3,7 +3,6 @@
 import { resource } from "lively.resources";
 import {
   createMorphSnapshot,
-  findPackagesInFileSpec,
   loadMorphFromSnapshot
 } from "lively.morphic/serialization.js";
 
@@ -99,22 +98,4 @@ export async function createNewObjectPackage(object, packageName, options) {
       existing = other.find(ea => ea.name() === packageName);
   if (existing)
     throw new Error(`An object package with the name ${packageName} already exists in the PartsBin directory ${partsbinFolder}`);  
-}
-
-export async function findPackagesInParts(options) {
-  let parts = await getAllPartResources(options),
-      packages = [];
-  for (let p of parts) {
-    try {
-      let content = JSON.parse(await p.read()),
-          partName = p.name().replace(/\.json/, "");
-      if (content.packages)
-        packages.push(
-          ...findPackagesInFileSpec(content.packages)
-            .map(ea => Object.assign(ea, {partName})));
-    } catch (e) {
-      console.error(`Error readin part resource ${p}`);
-    }
-  }
-  return packages;
 }
