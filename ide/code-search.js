@@ -208,7 +208,8 @@ export class CodeSearcher extends FilterableList {
     if (newSearch) {
       this.currentSearchTerm = searchTerm;
       var includeUnloaded = this.getSubmorphNamed("searchInUnloadedModulesCheckbox").checked;
-      this.ensureIndicator("searching...")
+      this.ensureIndicator("searching...");
+
       this.items = await doSearch(
         this.systemInterface,
         searchTerm,

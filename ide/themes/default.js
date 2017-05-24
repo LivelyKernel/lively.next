@@ -33,7 +33,7 @@ class DefaultTheme {
   get "variable-3"()  { return {fontColor: "#085"}; }
   get "comment"()     { return {fontColor: "#666"}; }
   get "string"()      { return {fontColor: "#181"}; }
-  get "string-2"()    { return {fontColor: "#f50"}; }
+  get "string-2"()    { return {fontColor: "#0B2"}; }
   get "meta"()        { return {fontColor: "#555"}; }
   get "qualifier"()   { return {fontColor: "#555"}; }
   get "builtin"()     { return {fontColor: "#30a"}; }
