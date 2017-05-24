@@ -72,7 +72,7 @@ export class AbstractCoreInterface {
     return this.setConfig(jso);
   }
 
-  async resourcesOfPackage(packageOrAddress, {exclude, ignoredPackages}) { todo("resourcesOfPackage"); }
+  async resourcesOfPackage(packageOrAddress, exclude) { todo("resourcesOfPackage"); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-  
   // package related
@@ -234,9 +234,16 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
   }
 
   getPackages(options) {
+    options = {excluded: [], ...options};
+    options.excluded = options.excluded.map(String);
     return this.runEvalAndStringify(`
-      var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
-      await livelySystem.localInterface.getPackages(${JSON.stringify(options)})
+      var livelySystem = System.get(System.decanonicalize("lively-system-interface")),
+          options = ${JSON.stringify(options)};
+      options.excluded = options.excluded.map(ea => {
+        let evaled = lively.vm.syncEval(ea).value;
+        return typeof evaled === "function" ? evaled : ea;
+      });
+      await livelySystem.localInterface.getPackages(options)
         .map(ea => Object.assign({}, ea, {System: null}));`);
   }
 
@@ -274,7 +281,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
       await livelySystem.localInterface.packageConfChange(${JSON.stringify(source)}, ${JSON.stringify(confFile)})`);
   }
 
-  async resourcesOfPackage(packageOrAddress, exclude = [".git", "node_modules", ".module_cache"]) {
+  async resourcesOfPackage(packageOrAddress, exclude = [".git", "node_modules", ".module_cache", "lively.next-node_modules"]) {
     if (packageOrAddress.address) packageOrAddress = packageOrAddress.address;
     return this.runEvalAndStringify(`
       var livelySystem = System.get(System.decanonicalize("lively-system-interface"));

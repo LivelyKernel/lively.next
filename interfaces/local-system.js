@@ -69,11 +69,14 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   }
 
   getPackages(options) {
-    options = {excluded: [], ...options};
-    var excluded = options.excluded,
-        excludedURLs = options.excluded.concat(options.excluded.map(url =>
-          System.decanonicalize(url.replace(/\/?$/, "/")).replace(/\/$/, "")));
-    return modules.getPackages().filter(({url}) => !excludedURLs.includes(url));
+    typeof lively.vm.syncEval("url => url").valuee
+    let {excluded = []} = {...options},
+        excludedURLs = excluded.filter(ea => typeof ea === "string"),
+        excludeFns = excluded.filter(ea => typeof ea === "function");
+    excludedURLs = excludedURLs.concat(excludedURLs.map(url => 
+      System.decanonicalize(url.replace(/\/?$/, "/")).replace(/\/$/, "")));
+    return modules.getPackages().filter(p =>
+      !excludedURLs.includes(p.url) && !excludeFns.some(fn => fn(p.url)));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
