@@ -18,7 +18,7 @@ var config = {
 
   ide: {
     js: {
-      ignoredPackages: ["lively.web", "no group"]
+      ignoredPackages: ["lively.web", "no group", url => url.includes("lively.next-node_modules") || url.includes("node_modules")]
     }
   },
 
