@@ -219,51 +219,6 @@ class LivelyClassPropertiesPlugin {
 }
 
 
-export class ObjectMigrationPlugin {
-
-  constructor(migrations) {
-    this.migrations = migrations;
-    this.before = migrations.filter(ea => typeof ea.snapshotConverter === "function");
-    this.after = migrations.filter(ea => typeof ea.objectConverter === "function");
-  }
-
-  runBeforeMigrations(idAndSnapshot, pool) {
-    for (let i = 0; i < this.before.length; i++) {
-      let migration = this.before[i];
-      try {
-        idAndSnapshot = migration.snapshotConverter(idAndSnapshot, pool);
-      } catch (err) {
-        console.error(`migration ${migration.name} failed:`)
-        console.error(err);
-      }
-
-    }
-    return idAndSnapshot;
-  }
-
-  runAfterMigrations(idAndSnapshot, pool) {
-    for (let i = 0; i < this.after.length; i++) {
-      let migration = this.after[i];
-      try {
-        migration.objectConverter(idAndSnapshot, pool);
-      } catch (err) {
-        console.error(`migration ${migration.name} failed:`)
-        console.error(err);
-      }
-    }
-  }
-
-  beforeDeserialization(pool, idAndSnapshot) {
-    // FIXME this is currently done manually in lively.morphic/serialization.js
-    // to allow intercepting before packages/modules are loaded
-    // this.runBeforeMigrations(idAndSnapshot, pool);
-  }
-
-  afterDeserialization(pool, idAndSnapshot) {
-    this.runAfterMigrations(idAndSnapshot, pool);
-  }
-}
-
 export var plugins = {
   livelyClassPropertiesPlugin: new LivelyClassPropertiesPlugin(),
   dontSerializePropsPlugin:    new DontSerializePropsPlugin(),

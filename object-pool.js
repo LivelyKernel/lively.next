@@ -2,7 +2,7 @@ import { arr, obj, string } from "lively.lang";
 import { isPrimitive } from "./util.js";
 import ClassHelper from "./class-helper.js";
 import ExpressionSerializer from "./plugins/expression-serializer.js";
-import { allPlugins, ObjectMigrationPlugin } from "./plugins.js";
+import { allPlugins } from "./plugins.js";
 
 
 /*
@@ -105,12 +105,6 @@ export class ObjectPool {
       afterSerialization: [],
       beforeSerialization: [],
     };
-
-    if (options.migrations) {
-      if (!options.plugins) options.plugins = [];
-      options.plugins = options.plugins.filter(ea => !(ea instanceof ObjectMigrationPlugin));
-      options.plugins.push(new ObjectMigrationPlugin(options.migrations));
-    }
 
     if (options.plugins) {
       options.plugins.forEach(p => {

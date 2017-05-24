@@ -2,7 +2,7 @@
 import { expect, chai } from "mocha-es6";
 
 import { obj, arr } from "lively.lang";
-import { ObjectPool, requiredModulesOfSnapshot, ObjectRef, serialize } from "../index.js";
+import { ObjectPool, deserializeWithMigrations, requiredModulesOfSnapshot, ObjectRef, serialize } from "../index.js";
 import { Plugin, plugins } from "../plugins.js";
 
 function serializationRoundtrip(obj) {
@@ -431,7 +431,7 @@ describe("object migrations", () => {
             }
           }
         ],
-        copy = new ObjectPool({migrations}).resolveFromSnapshotAndId(new ObjectPool().snapshotObject(obj));
+        copy = deserializeWithMigrations(serialize(obj), migrations);
 
     expect(copy).deep.equals({_rev: 0, foo: {_rev: 0, baz: 24}});
   });
@@ -446,7 +446,7 @@ describe("object migrations", () => {
             }
           }
         ],
-        copy = new ObjectPool({migrations}).resolveFromSnapshotAndId(new ObjectPool().snapshotObject(obj));
+        copy = deserializeWithMigrations(serialize(obj), migrations);
 
     expect(obj).deep.equals({foo: {bar: 23}});
     expect(copy).deep.equals({_rev: 0, foo: {_rev: 0, bar: 24}});

@@ -1,6 +1,3 @@
-export { ObjectRef, ObjectPool } from "./object-pool.js";
-export { requiredModulesOfSnapshot } from "./snapshot-navigation.js";
-
 import "./object-extensions.js";
 import { ObjectPool } from "./object-pool.js";
 import { version as serializerVersion } from "./package.json";
@@ -14,7 +11,32 @@ function normalizeOptions(options) {
   return options;
 }
 
+function normalizeMigrations(migrations = []) {
+  return {
+    before: migrations.filter(ea => typeof ea.snapshotConverter === "function"),
+    after: migrations.filter(ea => typeof ea.objectConverter === "function")
+  }
+}
+
+function runMigrations(migrations, method, idAndSnapshot, pool) {
+  for (let i = 0; i < migrations.length; i++) {
+    let migration = migrations[i];
+    try {
+      idAndSnapshot = migration[method](idAndSnapshot, pool);
+    } catch (err) {
+      console.error(`migration ${migration.name} failed:`)
+      console.error(err);
+    }
+  }
+  return idAndSnapshot;
+}
+
 const majorAndMinorVersionRe = /\.[^\.]+$/; // x.y.z => x.y
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+export { ObjectRef, ObjectPool } from "./object-pool.js";
+export { requiredModulesOfSnapshot } from "./snapshot-navigation.js";
 
 export function serialize(obj, options) {
   options = normalizeOptions(options);
@@ -38,6 +60,23 @@ export function deserialize(idAndSnapshot, options) {
                + `${serializerVersion}. Deserialization might fail...!`);
   let objPool = options.objPool || new ObjectPool(options);
   return objPool.resolveFromSnapshotAndId(idAndSnapshot);
+}
+
+export function deserializeWithMigrations(idAndSnapshot, migrations, options) {
+  options = normalizeOptions(options);
+  let objPool = options.objPool || (options.objPool = new ObjectPool(options)),
+      {before, after} = normalizeMigrations(migrations),
+      wait;
+  runMigrations(before, "snapshotConverter", idAndSnapshot, objPool);
+  if (typeof options.onDeserializationStart === "function")
+    wait = options.onDeserializationStart(idAndSnapshot, options);
+  return wait instanceof Promise ? wait.then(step2) : step2();
+
+  function step2() {
+    let deserialized = deserialize(idAndSnapshot, options);
+    runMigrations(after, "objectConverter", idAndSnapshot, objPool);
+    return deserialized;
+  }
 }
 
 export function copy(obj, options) {
