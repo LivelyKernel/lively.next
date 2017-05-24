@@ -166,7 +166,7 @@ export class StatusMessage extends Morph {
       dropShadow: {defaultValue: new ShadowObject(true)},
 
       message: {
-        after: ["submorphs"],
+        after: ["submorphs", "styleSheets"],
         set(value) {
           this.setProperty("message", value);
           var text = this.getSubmorphNamed("messageText");
