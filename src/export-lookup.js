@@ -95,7 +95,9 @@ export default class ExportLookup {
     options = options || {}
     var System = this.System,
         excludedPackages = options.excludedPackages || [],
-        excludedPackageURLs = excludedPackages.concat(excludedPackages.map(url =>
+        excludedURLs = excludedPackages.filter(ea => typeof ea === "string"),
+        excludeFns = excludedPackages.filter(ea => typeof ea === "function"),
+        excludedPackageURLs = excludedURLs.concat(excludedURLs.map(url =>
           System.decanonicalize(url.replace(/\/?$/, "/")).replace(/\/$/, ""))),
         livelyEnv = System.get("@lively-env") || {},
         mods = Object.keys(livelyEnv.loadedModules || {}),
@@ -105,8 +107,9 @@ export default class ExportLookup {
     await Promise.all(mods.map(moduleId => {
       if (cache[moduleId]) {
         var result = cache[moduleId].rawExports;
-        return excludedPackageURLs.includes(result.packageURL) ? null :
-          exportsByModule[moduleId] = cache[moduleId];
+        return excludedPackageURLs.includes(result.packageURL)
+            || excludeFns.some(fn => fn(result.packageURL))
+             ? null : exportsByModule[moduleId] = cache[moduleId];
       }
 
       var mod = module(System, moduleId),
@@ -122,7 +125,8 @@ export default class ExportLookup {
             exports: []
           };
 
-      if (excludedPackageURLs.includes(packageURL)) return;
+      if (excludedPackageURLs.includes(packageURL)
+          || excludeFns.some(fn => fn(packageURL))) return;
 
       var format = mod.format();
       if (["register", "es6", "esm"].includes(format)) {
