@@ -135,7 +135,11 @@ class StyleHalo extends Morph {
 
   relayout(evt) {
     const [controls, layoutControl] = this.submorphs;
-    this.setBounds(this.target.globalBounds().insetBy(-50));
+    if (this.target == $world) {
+      this.setBounds($world.visibleBounds());
+    } else {
+      this.setBounds(this.target.globalBounds().insetBy(-50));
+    }
     controls.setTransform(this.target.transformToMorph(this));
     controls.position = this.localizePointFrom(this.target.origin.negated(), this.target);
     controls.submorphs.forEach(s => s.update && s.update(evt));
@@ -260,6 +264,8 @@ class StyleHalo extends Morph {
           return;
         if (evt.state.clickedOnMorph != this)
           return;
+        if (halo.target == $world)
+          return halo.remove();
         if (this.borderSelected) {
           halo.openBorderStyler();
         } else if (this.bodySelected) {
@@ -323,6 +329,10 @@ class StyleHalo extends Morph {
   alignLayoutEditor() {
     if (this.layoutStyleEditor.opened)
       return;
+    if (this.target == $world) {
+      this.layoutStyleEditor.bottomCenter = this.innerBounds().insetBy(20).bottomCenter();
+      return;
+    }
     const topCenter = this.targetBounds.bottomCenter().addXY(0, 50);
     this.layoutStyleEditor.topCenter = this.localize(topCenter);
   }
@@ -339,6 +349,10 @@ class StyleHalo extends Morph {
 
   alignBorderStyler() {
     if (this.borderStyler.opened) return;
+    if (this.target == $world) {
+      this.borderStyler.topCenter = this.innerBounds().insetBy(20).topCenter();
+      return;
+    }
     const vb = this.env.world.visibleBounds(),
           visiblePart = vb.intersection(this.targetBounds),
           pos = visiblePart.insetByRect(rect(-100, -50, 0, -50))[this.getSideInWorld()]();
@@ -373,6 +387,10 @@ class StyleHalo extends Morph {
   alignBodyStyler() {
     if (this.bodyStyler.opened)
       return;
+    if (this.target == $world) {
+      this.bodyStyler.center = this.innerBounds().center()
+      return;
+    }
     const vb = this.env.world.visibleBounds(),
           visiblePart = vb.intersection(this.targetBounds),
           pos = this.localize(visiblePart.center());
