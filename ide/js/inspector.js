@@ -1,12 +1,9 @@
 /* globals Power4 */
-import { Color, rect, pt, Rectangle } from "lively.graphics";
-import { obj, num, Path, arr, promise, string } from "lively.lang";
-import { connect, once, disconnect } from "lively.bindings";
-import { Morph, ShadowObject, Icon, StyleSheet, TilingLayout, HorizontalLayout, morph, config } from "lively.morphic";
+import { Color, rect, pt } from "lively.graphics";
+import { obj, num, arr, promise, string } from "lively.lang";
+import { connect } from "lively.bindings";
+import { Morph, ShadowObject, Icon, StyleSheet, HorizontalLayout, config } from "lively.morphic";
 import { Tree, TreeData } from "lively.morphic/components/tree.js";
-import { HorizontalResizer } from "lively.morphic/components/resizers.js";
-import JavaScriptEditorPlugin from "./editor-plugin.js";
-import { debounce, throttle } from "lively.lang/function.js";
 import { ColorPicker } from "../styling/color-picker.js";
 import { isBoolean, isString, isNumber } from "lively.lang/object.js";
 import { ValueScrubber, SearchField, LabeledCheckBox } from "../../components/widgets.js";
@@ -829,16 +826,14 @@ export default class Inspector extends Morph {
   }
 
   build() {
-    var jsPlugin = new JavaScriptEditorPlugin(config.codeEditor.defaultTheme),
-        treeStyle = {
+    var treeStyle = {
           borderWidth: 1, borderColor: Color.gray,
           fontSize: 14, fontFamily: config.codeEditor.defaultStyle.fontFamily
         },
         textStyle = {
           borderWidth: 1, borderColor: Color.gray,
           type: "text", ...config.codeEditor.defaultStyle,
-          textString: "",
-          plugins: [jsPlugin]
+          textString: ""
         };
     var searchBarBounds = rect(0,0,this.width, 30);
 
@@ -886,11 +881,14 @@ export default class Inspector extends Morph {
     });
 
     // FIXME? how to specify that directly??
-    jsPlugin.evalEnvironment = {
-      targetModule: "lively://lively.morphic/inspector",
-      get context() { return jsPlugin.textMorph.owner.selectedObject },
-      format: "esm"
-    }
+    let ed = this.getSubmorphNamed("codeEditor");
+    ed.changeEditorMode("js").then(() =>
+      ed.evalEnvironment = {
+        targetModule: "lively://lively.morphic/inspector",
+        get context() { return ed.owner.selectedObject },
+        format: "esm"
+      }
+    ).catch(err => $world.logError(err));
 
     this.editorOpen = false;
     connect(this.get('resizer'), 'onDrag', this, 'adjustProportions');
