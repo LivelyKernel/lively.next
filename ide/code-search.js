@@ -154,11 +154,11 @@ export class CodeSearcher extends FilterableList {
   }
 
   relayout() {
-    super.relayout();
     var input = this.getSubmorphNamed("input"),
         cb = this.getSubmorphNamed("searchInUnloadedModulesCheckbox");
     input.fontSize = 20;
     input.extent = pt(this.width, 27);
+    super.relayout();
     cb && (cb.rightCenter = input.rightCenter);
   }
 

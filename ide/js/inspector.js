@@ -737,6 +737,7 @@ export default class Inspector extends Morph {
             ".toggle": {
               nativeCursor: 'pointer',
               fill: Color.black.withA(.5), 
+              draggable: false,
               fontSize: 15,
               borderRadius: 5, 
               padding: rect(5,2,1,1)

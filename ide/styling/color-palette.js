@@ -301,6 +301,7 @@ export class ColorPalette extends Morph {
             connect(this.get('harmony palette'), 'pivotBrightness', this, 'pivotBrightness');
             this.selectSolidMode();
             this.active = true;
+            this.whenRendered().then(() => this.relayout());
          }
        }
      }
