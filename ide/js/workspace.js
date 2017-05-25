@@ -85,6 +85,7 @@ export default class Workspace extends Window {
     var list = this.getSubmorphNamed("eval backend button"),
         title = this.titleLabel();
     if (list) {
+      list.height = 21;
       list.topRight = this.innerBounds().topRight().addXY(-5, 2);
       if (list.left < title.right + 3) list.left = title.right + 3;
     }
@@ -94,24 +95,19 @@ export default class Workspace extends Window {
     }
   }
 
-  buttons() {
-    let buttons = super.buttons(),
-        label = this.getSubmorphNamed("pickFileButton");
-    if (!label) {
-      label = this.addMorph(
+  getControls() {
+    let label = this.addMorph(
         Object.assign(Icon.makeLabel("file-o"), {
           name: "pickFileButton",
           nativeCursor: "pointer",
           fontSize: 14,
           fill: Color.rgbHex("#DDD"),
-          tooltip: "set file for workspace",
-          leftCenter: arr.last(buttons).rightCenter.addXY(6, -1)
+          tooltip: "set file for workspace"
         }));
       connect(label, 'onHoverIn', label, 'fontSize', {converter: () => 16});
       connect(label, 'onHoverOut', label, 'fontSize', {converter: () => 14});
       connect(label, 'onMouseDown', this, 'execCommand', {converter: () => "[workspace] query for file"});
-    }
-    return [...buttons, label];
+    return [...super.getControls(), label];
   }
 
   get commands() {

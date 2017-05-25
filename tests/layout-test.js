@@ -21,6 +21,7 @@ function createDummyWorld() {
     ]})]
   });
   m = world.submorphs[0];
+  world.applyLayoutIfNeeded()
   return world;
 }
 
@@ -49,6 +50,7 @@ describe("layout", () => {
     it("adjusts layout when submorph changes extent", () => {
       const [item1, item2, item3] = m.submorphs;
       item2.extent = pt(100,100);
+      m.applyLayoutIfNeeded();
       expect(item1.position).equals(pt(0,0));
       expect(item2.position).equals(item1.bottomLeft);
       expect(item3.position).equals(item2.bottomLeft);
@@ -57,6 +59,7 @@ describe("layout", () => {
     it("adjusts layout when submorph is removed", () => {
       const [item1, item2, item3] = m.submorphs;
       item2.remove();
+      m.applyLayoutIfNeeded();
       expect(item3.position).equals(item1.bottomLeft);
     });
 
@@ -64,6 +67,7 @@ describe("layout", () => {
       const [item1, item2, item3] = m.submorphs,
             item4 = new Morph({extent: pt(200,200)});
       m.addMorphAt(item4, 1);
+      m.applyLayoutIfNeeded();
       expect(item4.position).equals(item1.bottomLeft);
       expect(item2.position).equals(item4.bottomLeft);
     });
@@ -91,6 +95,7 @@ describe("layout", () => {
       var extentBefore = m.extent;
       item1.width = 10;
       item2.height = 10;
+      m.applyLayoutIfNeeded()
       expect(m.extent).equals(extentBefore);
     })
 
@@ -99,6 +104,7 @@ describe("layout", () => {
       m.layout.autoResize = false;
       m.submorphs = [];
       m.layout.autoResize = true;
+      m.applyLayoutIfNeeded();
       expect(m.extent).equals(extentBefore);
     })
 
@@ -109,6 +115,7 @@ describe("layout", () => {
 
      beforeEach(() => {
        m.layout = new HorizontalLayout();
+       m.applyLayoutIfNeeded();
      });
 
     it("renders submorphs horizontally", () => {
@@ -130,6 +137,7 @@ describe("layout", () => {
 
     it("enforces minimum height and minimum width", () => {
       m.extent = pt(50,50);
+      m.applyLayoutIfNeeded();
       expect(m.height).equals(75);
       expect(m.width).equals(250);
     });
@@ -141,6 +149,7 @@ describe("layout", () => {
      beforeEach(() => {
        m.layout = new TilingLayout();
        m.width = 200;
+       m.applyLayoutIfNeeded();
      });
 
     it("tiles submorphs to fit the bounds", () => {
@@ -153,6 +162,7 @@ describe("layout", () => {
     it("updates layout on changed extent", () => {
       const [m1, m2, m3] = m.submorphs;
       m.extent = pt(400, 100);
+      m.applyLayoutIfNeeded();
       expect(m1.position).equals(pt(0,0));
       expect(m2.position).equals(m1.topRight);
       expect(m3.position).equals(m2.topRight);
@@ -226,6 +236,7 @@ describe("layout", () => {
       grid.col(1).fixed = true;
       grid.row(1).fixed = true;
       layout.container.resizeBy(pt(100,100))
+      layout.container.applyLayoutIfNeeded();
       expect(grid.col(0).row(0).dynamicWidth).equals(300);
       expect(grid.col(0).row(0).width).equals(150);
       closeToPoint(grid.col(1).row(1).bounds().extent(), pt(100,100));
@@ -297,6 +308,7 @@ describe("layout", () => {
     it("expands container when fixed size exceeds initial extent", () => {
       const [m1, m2, m3] = m.submorphs;
       m.layout.col(0).fixed = 500;
+      m.applyLayoutIfNeeded();
       expect(m.extent).equals(pt(500,300));
     });
 
@@ -317,12 +329,14 @@ describe("layout", () => {
       m.layout.col(1).min = 50;
       m.layout.row(1).min = 50;
       m.extent = pt(25,25);
+      m.applyLayoutIfNeeded();
       expect(m.extent).equals(pt(50,50));
       expect(m.layout.col(0).proportion).equals(1/2);
       expect(m.layout.col(2).proportion).equals(1/2);
       expect(m.layout.row(0).proportion).equals(1/2);
       expect(m.layout.row(2).proportion).equals(1/2);
       m.extent = pt(200,200);
+      m.applyLayoutIfNeeded();
       expect(m.layout.col(1).proportion).equals(1/3, 'col 1');
       expect(m.layout.col(2).proportion).equals(1/3, 'col 3');
       expect(m.layout.col(0).proportion).equals(1/3, 'col 0');
@@ -383,14 +397,17 @@ describe("layout", () => {
     it("updates layout on changed extent", () => {
       const [m1, m2, m3] = m.submorphs;
       m.resizeBy(pt(300,300));
+      m.applyLayoutIfNeeded();
       expect(m1.position).equals(pt(200, 0));
       expect(m2.position).equals(pt(0, 200));
       expect(m3.position).equals(pt(400, 400));
       m.resizeBy(pt(-300,0));
+      m.applyLayoutIfNeeded();
       expect(m1.position).equals(pt(100, 0));
       expect(m2.position).equals(pt(0, 200));
       expect(m3.position).equals(pt(200, 400));
       m.resizeBy(pt(0,-300));
+      m.applyLayoutIfNeeded();
       expect(m1.position).equals(pt(100, 0));
       expect(m2.position).equals(pt(0, 100));
       expect(m3.position).equals(pt(200, 200));
@@ -424,14 +441,17 @@ describe("layout", () => {
                           [[null, "m1", null],
                            ["m2", null, null],
                            [null, null,"m3"]]});
+      m.applyLayoutIfNeeded();
       expect(m.layout.col(0).proportion).equals(1/3);
       m.extent = pt(0, 0);
+      m.applyLayoutIfNeeded();
       expect(m.layout.col(0).proportion).equals(1/3, 'preserve proportion');
       expect(m.extent).equals(pt(0,0));
       expect(m1.position).equals(pt(0, 0));
       expect(m2.position).equals(pt(0, 0));
       expect(m3.position).equals(pt(0, 0), "m3 position");
       m.extent = pt(300, 300);
+      m.applyLayoutIfNeeded();
       expect(m.layout.col(0).proportion).equals(1/3, 'preserve proportion');
       expect(m.layout.col(0).width).equals(100, 'proportion defines length');
       expect(m.extent).equals(pt(300,300));
@@ -451,12 +471,14 @@ describe("layout", () => {
       m.layout.col(0).min = 50;
       m.layout.row(0).min = 50;
       m.extent = pt(25, 25); // too small!
+      m.applyLayoutIfNeeded();
       expect(m.extent).equals(pt(50,50), 'framed extent');
       expect(m.layout.col(0).proportion).equals(1/3);
       expect(m1.position).equals(pt(50, 0));
       expect(m2.position).equals(pt(0, 50));
       expect(m3.position).equals(pt(50, 50), "m3 position");
       m.extent = pt(100, 100);
+      m.applyLayoutIfNeeded();
       expect(m.extent).equals(pt(100,100));
       expect(m1.position).equals(pt(50, 0));
       expect(m2.position).equals(pt(0, 50));
@@ -532,6 +554,7 @@ describe("layout", () => {
                      ["m2", null, null, null],
                      [null, null, null, "m3"]]});
       m.width = 400;
+      m.applyLayoutIfNeeded(); // that is a problem, if it comes later than the col tweaking
       m.layout.col(2).fixed = true;
       m.layout.col(1).fixed = true;
       expect(m.layout.col(3).width).equals(100)
@@ -541,7 +564,7 @@ describe("layout", () => {
       expect(m2.width).equals(150);
       expect(m3.width).equals(50);
       m.layout.col(3).width += 60;
-      m.layout.apply()
+      m.layout.apply();
       expect(m2.width).equals(150);
       expect(m3.width).equals(110);
       m.layout.col(3).width -= 60;
@@ -555,13 +578,14 @@ describe("layout", () => {
       expect(m2.width).equals(150);
       expect(m3.width).equals(0);
       m.layout.col(3).width -= 50;
-      m.layout.apply();
+      m.applyLayoutIfNeeded();
       expect(m3.width).equals(0, 'prevent negative widths');
       expect(m2.width).closeTo(150, 0.0001);
       expect(m.layout.col(3).width).equals(0);
       expect(m.layout.col(0).width).equals(150);
       m.layout.col(3).fixed = m.layout.col(2).fixed = m.layout.col(1).fixed = 100;
       m.width = 400;
+      m.layout.apply();
       expect(m.layout.col(0).dynamicLength).equals(100);
       m.layout.col(0).width += 300;
       m.layout.apply();
@@ -654,6 +678,7 @@ describe("layout", () => {
                            [null, null, "m3"]]
                       });
       m.addMorph({name: "m4", extent: pt(22,22)});
+      m.applyLayoutIfNeeded();
       expect(m.getSubmorphNamed("m4").bounds()).equals(rect(200,100,100,100));
     })
   });

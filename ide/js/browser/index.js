@@ -1,7 +1,7 @@
-import { Color, LinearGradient, pt, Rectangle } from "lively.graphics";
+import { Color, rect, LinearGradient, pt, Rectangle } from "lively.graphics";
 import { arr, obj, fun, promise, string } from "lively.lang";
 import { connect, disconnect, noUpdate } from "lively.bindings";
-import { morph, show, Label, HorizontalLayout, GridLayout,
+import { morph, StyleSheet, show, Label, HorizontalLayout, GridLayout,
          DropDownList, config, Window } from "lively.morphic";
 import InputLine from "../../../text/input-line.js";
 import JSONEditorPlugin from "lively.morphic/ide/json/editor-plugin.js";
@@ -67,20 +67,53 @@ export default class Browser extends Window {
   static get properties() {
 
     return {
+      name: {defaultValue: "browser"},
+      extent: {defaultValue: pt(700,600)},
+      styleSheets: {
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            ".Button.default [name=label]": {
+              fontSize: 10,
+              padding: rect(1,1,1,1)
+            },
+            ".Button.dark [name=label]": {
+              fontColor: Color.white,
+              fontSize: 10
+            },
+            ".Button.triggerStyle.default": {
+              fill: Color.gray,
+            },
+            ".Button.dark": {
+              fill: Color.black.withA(0.5),
+              borderWidth: 0,
+              borderRadius: 5,
+              nativeCursor: "pointer",
+              extent: pt(20, 18)
+            }
+          });
+        }
+      },
       systemInterface: {
-        derived: true, readOnly: true, after: ["editorPlugin"],
-        get() { return this.editorPlugin.systemInterface(); },
+        derived: true,
+        readOnly: true,
+        after: ["editorPlugin"],
+        get() {
+          return this.editorPlugin.systemInterface();
+        },
         set(systemInterface) {
           this.editorPlugin.setSystemInterface(systemInterface);
         }
       },
 
       editorPlugin: {
-        after: ["submorphs"], readOnly: true, derived: true,
-        get() { return this.get("sourceEditor").pluginFind(p => p.isEditorPlugin); }
+        after: ["submorphs"],
+        readOnly: true,
+        derived: true,
+        get() {
+          return this.get("sourceEditor").pluginFind(p => p.isEditorPlugin);
+        }
       }
     }
-
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -88,11 +121,7 @@ export default class Browser extends Window {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   constructor(props = {}) {
-    super({
-      name: "browser",
-      extent: pt(700,600),
-      ...props
-    });
+    super(props);
     this.targetMorph = this.build();
     this.onLoad();
   }
@@ -240,28 +269,12 @@ export default class Browser extends Window {
 
         btnStyle = {
           type: "button",
-          fontSize: 10,
-          activeStyle: {
-            fill: new LinearGradient({stops: [
-               {offset: 0, color: Color.white},
-               {offset: 1, color: new Color.rgb(236,240,241)}
-            ]}),
-            border: {color: Color.gray, style: "solid", radius: 5},
-            nativeCursor: "pointer"
-          },
-          extent: pt(20,18),
+          styleClasses: ['default']
         },
 
         btnDarkStyle = {
           type: "button",
-          fontSize: 10,
-          activeStyle: {
-            fill: Color.black.withA(.5),
-            fontColor: Color.white,
-            border: {width: 0, radius: 5},
-            nativeCursor: "pointer"
-          },
-          extent: pt(20,18),
+          styleClasses: ['dark'],
         },
 
         bounds = this.targetMorphBounds(),
@@ -323,13 +336,18 @@ export default class Browser extends Window {
               ...textStyle,
               fontSize: config.codeEditor.defaultStyle.fontSize - 2,
               clipMode: "hidden",
-              borderWidth: 0,
+              borderWidth: 1,
               readOnly: false
             },
             {name: "sourceEditor", bounds: sourceEditorBounds, ...textStyle},
 
             {name: "browserCommands", bounds: browserCommandsBounds,
-             layout: new GridLayout({grid:[["commands", null, "eval backend button"]]}),
+             layout: new GridLayout({
+                grid: [["commands", null, "eval backend button", null]],
+                rows: [0, {paddingBottom: 2}],
+                columns: [2, {fixed: 100}, 3, {fixed: 5}],
+                groups: {commands: {resize: false}}
+             }),
              fill: Color.transparent,
              reactsToPointer: false,
              borderBottom: {color: Color.gray, width: 1},
@@ -365,9 +383,12 @@ export default class Browser extends Window {
         codeEntityCommands = container.getSubmorphNamed("codeEntityCommands"),
         codeEntityTree =     container.getSubmorphNamed("codeEntityTree"),
         sourceEditor =       container.getSubmorphNamed("sourceEditor"),
-        metaInfoText =       container.getSubmorphNamed("metaInfoText"),
-        l =                  browserCommands.layout;
-    l.col(2).fixed = 100; l.row(0).paddingTop = 1; l.row(0).paddingBottom = 1;
+        metaInfoText =       container.getSubmorphNamed("metaInfoText");
+
+    (async () => { 
+      await container.whenRendered(); 
+      container.getSubmorphNamed('commands').submorphs.map(b => b.isButton && b.fit());
+    })()
 
     hresizer.addScalingAbove(moduleList);
     hresizer.addScalingAbove(codeEntityTree);
@@ -387,6 +408,7 @@ export default class Browser extends Window {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   relayout() {
+    if (this.minimized) return;
     if (this._inLayout) return;
 
     this._inLayout = true;
@@ -496,7 +518,7 @@ export default class Browser extends Window {
 
   indicateNoUnsavedChanges() {
     Object.assign(this.get("sourceEditor"),
-      {border: {width: 2, color: Color.gray}});
+      {border: {width: 2, color: Color.transparent}});
   }
 
   hasUnsavedChanges() {

@@ -51,7 +51,6 @@ class StyleHalo extends Morph {
 
   constructor(target, pointerId) {
     super({
-      styleClasses: ["formatter"],
       bounds: target.globalBounds().insetBy(-10),
       target
     });
@@ -69,7 +68,7 @@ class StyleHalo extends Morph {
     this.styleSheets = this.styler;
     this.submorphs = [
       {
-        styleClasses: ["formatter"],
+        styleClasses: ["StyleHalo"],
         position: pt(10, 10),
         submorphs: [this.getBorderHalo(), this.borderRadiusHalo()]
       }
@@ -90,14 +89,14 @@ class StyleHalo extends Morph {
 
   get styler() {
     return new StyleSheet({
-      formatter: {draggable: false, fill: Color.transparent},
-      borderHalo: {
+      '.StyleHalo': {draggable: false, fill: Color.transparent},
+      '.StyleHalo [name=borderHalo]': {
         draggable: false,
         borderWidth: Math.max(3, this.target.borderWidth),
         fill: Color.transparent,
         borderColor: Color.orange.withA(0.4)
       },
-      borderRadiusHalo: {
+      '.StyleHalo [name=borderRadiusHalo]': {
         fill: Color.red,
         isHaloItem: true,
         nativeCursor: "ew-resize",
@@ -503,7 +502,7 @@ class VertexHandle extends Morph {
     super({
       halo,
       index,
-      styleClasses: ["vertexHandles", "sharp"],
+      styleClasses: ["sharp"],
       center: position.addXY(bw, bw)
     });
     this.initialize();
@@ -524,7 +523,7 @@ class VertexHandle extends Morph {
 
   get styler() {
     return new StyleSheet({
-      vertexHandles: {
+      '.VertexHandle': {
         nativeCursor: "-webkit-grab",
         extent: pt(10, 10),
         draggable: true,
@@ -533,10 +532,10 @@ class VertexHandle extends Morph {
         borderWidth: 1,
         borderColor: Color.rgb(231, 76, 60)
       },
-      selected: {fill: Color.red, borderColor: Color.red.darker()},
-      sharp: {borderRadius: 0},
-      smooth: {borderRadius: 10},
-      controlPoint: {
+      '.VertexHandle .selected': {fill: Color.red, borderColor: Color.red.darker()},
+      '.VertexHandle .sharp': {borderRadius: 0},
+      '.VertexHandle .smooth': {borderRadius: 10},
+      ".VertexHandle .controlPoint": {
         borderWidth: 1,
         borderColor: Color.gray.darker(),
         draggable: false,
@@ -613,14 +612,14 @@ class VertexHandle extends Morph {
   }
 
   select() {
-    this.styleClasses = ["vertexHandles", "selected"];
+    this.styleClasses = ["selected"];
     const {previous, next} = this.vertex.controlPoints;
     if (!previous.equals(pt(0, 0)) || !next.equals(pt(0, 0)))
       this.showControlPoints();
   }
 
   deselect() {
-    this.styleClasses = ["vertexHandles"];
+    this.styleClasses = [];
     this.hideControlPoints();
   }
 
@@ -710,14 +709,7 @@ class SvgStyleHalo extends StyleHalo {
 
   get svgStyler() {
     return new StyleSheet({
-      propertyDisplay: {
-        fill: Color.black.withA(0.7),
-        borderRadius: 5,
-        padding: Rectangle.inset(5),
-        fontColor: Color.white,
-        position: pt(10, 10)
-      },
-      handlePlaceholder: {
+      '[name=handlePlaceholder]': {
         origin: pt(5, 5),
         extent: pt(10, 10),
         fill: Color.green,

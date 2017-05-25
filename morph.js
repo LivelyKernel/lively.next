@@ -1,4 +1,4 @@
-import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
+import { Color, RadialGradient, LinearGradient, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree, fun } from "lively.lang";
 import {
   renderRootMorph,
@@ -74,9 +74,9 @@ export class Morph {
       halosEnabled:       {isStyleProp: true, defaultValue: !!config.halosEnabled},
       reactsToPointer:    {defaultValue: true},
 
-      position:           {defaultValue: pt(0,0)},
-      origin:             {defaultValue: pt(0,0)},
-      extent:             {defaultValue: pt(10, 10)},
+      position:           {isStyleProp: true, defaultValue: pt(0,0)},
+      origin:             {isStyleProp: true, defaultValue: pt(0,0)},
+      extent:             {isStyleProp: true, defaultValue: pt(10, 10)},
       width: {
         derived: true, after: ['extent'], before: ['submorphs'],
         get()         { return this.extent.x; },
@@ -152,8 +152,8 @@ export class Morph {
         get()   { return this.bounds().rightCenter(); },
         set(v)  { return this.align(this.rightCenter, v); }
       },
-      rotation:           {defaultValue:  0},
-      scale:              {defaultValue:  1},
+      rotation:           {isStyleProp: true, defaultValue:  0},
+      scale:              {isStyleProp: true, defaultValue:  1},
       opacity:            {isStyleProp: true, defaultValue: 1},
       fill:               {isStyleProp: true, defaultValue: Color.white},
       visible:            {isStyleProp: true, defaultValue: true},
@@ -209,6 +209,7 @@ export class Morph {
       },
 
       layout: {
+        isStyleProp: true, 
         after: ["submorphs", "extent", "origin", "position", "isLayoutable"],
         set(value) {
           if (value) value.container = this;
@@ -378,18 +379,13 @@ export class Morph {
       },
 
       styleSheets: {
-        isStyleProp: true,
-        after: ['submorphs'],
+        before: ['submorphs'],
         set(sheets) {
           if (!obj.isArray(sheets)) {
             sheets = [sheets];
           }
           this.setProperty(
-            "styleSheets",
-            arr.compact(sheets).map(rule => {
-              rule.applyToAll(this);
-              return rule;
-            })
+            "styleSheets", sheets
           );
         }
       },
@@ -438,6 +434,7 @@ export class Morph {
     this._cachedPaths = {};
     this._pathDependants = [];
     this._tickingScripts = [];
+    this._styleSheetsInScope = null;
     this.initializeProperties
     this.initializeProperties(props);
     if (props.bounds) this.setBounds(props.bounds);
@@ -470,6 +467,7 @@ export class Morph {
     this._cachedPaths = {};
     this._pathDependants = [];
     this._tickingScripts = [];
+    this._styleSheetsInScope = null;
     this.initializeProperties();
   }
 
@@ -481,14 +479,24 @@ export class Morph {
     }
   }
 
+  instrumentedByStyleSheet(prop) {
+    return this._morphicState[prop] == this.defaultProperty(prop) && prop in this._styleSheetProps;
+  }
+
   get __only_serialize__() {
     let defaults = this.defaultProperties,
         properties = this.propertiesAndPropertySettings().properties,
         propsToSerialize = ["_tickingScripts", "attributeConnections"];
     for (let key in properties) {
       let descr = properties[key];
-      if (descr.readOnly || descr.derived || this[key] === defaults[key]
-       || (descr.hasOwnProperty("serialize") && !descr.serialize)) continue;
+      if (
+        descr.readOnly ||
+        descr.derived ||
+        this[key] === defaults[key] ||
+        this.instrumentedByStyleSheet(key) ||
+        (descr.hasOwnProperty("serialize") && !descr.serialize)
+      )
+        continue;
       propsToSerialize.push(key);
     }
     return propsToSerialize;
@@ -513,8 +521,14 @@ export class Morph {
   get env() { return this._env; }
 
   get defaultProperties() {
-    if (!this.constructor._morphicDefaultPropertyValues) {
-      var defaults = this.constructor._morphicDefaultPropertyValues = {},
+    let klass = this.constructor,
+        superklass = klass[Symbol.for("lively-instance-superclass")];
+    if (
+      !klass._morphicDefaultPropertyValues ||
+      klass._morphicDefaultPropertyValues ==
+        (superklass && superklass._morphicDefaultPropertyValues)
+    ) {
+      var defaults = (this.constructor._morphicDefaultPropertyValues = {}),
           propDescriptors = this.propertiesAndPropertySettings().properties;
       for (var key in propDescriptors) {
         var descr = propDescriptors[key];
@@ -528,9 +542,45 @@ export class Morph {
     return this.constructor._morphicDefaultPropertyValues;
   }
 
+  getStyleSheetsInScope() {
+    let ownerStyleSheets = this.owner
+      ? this.owner._styleSheetsInScope || this.owner.getStyleSheetsInScope()
+      : [],
+        styleSheets = (this.styleSheets || []);
+    styleSheets.forEach(ss => {
+      if (!ss.context) {
+        ss.context = this;
+      }
+    });
+    return [...ownerStyleSheets, ...styleSheets];
+  }
+
   defaultProperty(key) { return this.defaultProperties[key]; }
-  getProperty(key) { return this._morphicState[key]; }
-  setProperty(key, value, meta) { return this.addValueChange(key, value, meta); }
+  getProperty(key) {
+    this._defaultStyleProperties = this._defaultStyleProperties || this.styleProperties;
+    const v = this._morphicState[key], 
+          dv = this.defaultProperty(key),
+          isGeoObj = v && [Rectangle, Point].includes(v.constructor);
+    if (this._defaultStyleProperties.includes(key) && (isGeoObj ? v.equals(dv) : v == dv)) {
+      if (!this._styleSheetProps) {
+        this._styleSheetsInScope = this.getStyleSheetsInScope();
+        this._styleSheetProps = {};
+        for (const ss of this._styleSheetsInScope) {
+          Object.assign(this._styleSheetProps, ss.getStyleProps(this));
+        }
+        if (this.isText || this.isLabel) this.invalidateTextLayout();
+      }
+      if (key in this._styleSheetProps) {
+        return this._styleSheetProps[key]
+      } else {
+        return v;
+      }
+    }
+    return v;
+  }
+  setProperty(key, value, meta) { 
+    return this.addValueChange(key, value, meta); 
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // debugging
@@ -576,6 +626,10 @@ export class Morph {
       "_tickingScripts",
       "_transform",
       "_invTransform",
+      "_styleSheetProps",
+      "_styleSheetsInScope",
+      "_renderer",
+      "_tooltipViewer",
       "layout"
     ]
 
@@ -617,6 +671,7 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   onChange(change) {
+  
     const anim = change.meta && change.meta.animation;
     if (['position', 'rotation', 'scale', 'origin', 'reactsToPointer'].includes(change.prop))
         this.updateTransform({[change.prop]: change.value});
@@ -628,12 +683,39 @@ export class Morph {
       }
     }
     this.layout && this.layout.onChange(change);
-    this.styleSheets && this.styleSheets.forEach(r => r.onMorphChange(this, change, this));
+    this.resetStyleSheetInfo(change)
+  }
+
+  resetStyleSheetInfo(change) {
+    if (!this._styleSheetProps) return;
+    const {selector, args, prop, prevValue, value} = change;
+    var morph;
+    if (selector == "addMorphAt") {
+      morph = args[0];
+      if (obj.equals(morph.getStyleSheetsInScope(), morph._styleSheetsInScope)) {
+        morph = null;
+      }
+    } else if (['styleClasses', 'name', 'styleSheets'].includes(prop)) {
+      if (!obj.equals(prevValue,value)) morph = this;
+    }
+
+    if (morph) {
+      morph.ownerChain().forEach(m => m.layout && m.layout.scheduleApply(morph));
+      morph.withAllSubmorphsDo(m => {
+        m._styleSheetsInScope = null;
+        m._styleSheetProps = null;
+        m._transform = null;
+        m.makeDirty();
+      });
+    }
   }
 
   onSubmorphChange(change, submorph) {
     this.layout && this.layout.onSubmorphChange(submorph, change);
-    this.styleSheets && this.styleSheets.forEach(r => r.onMorphChange(submorph, change, this));
+  }
+
+  onOwnerChange(newOwner) {
+    
   }
 
   get changes() { return this.env.changeManager.changesFor(this); }
@@ -747,7 +829,6 @@ export class Morph {
   }
 
   applyStyleSheets() {
-    this.styleSheets && this.styleSheets.forEach(ss => ss.applyToAll(this));
   }
 
   adjustOrigin(newOrigin) {
@@ -1538,7 +1619,7 @@ export class Morph {
   onDropHoverUpdate(evt) {}
   onDropHoverOut(evt) {}
 
-  onBeingDroppedOn(recipient) {
+  onBeingDroppedOn(hand, recipient) {
     // called when `this` was dropped onto morph `recipient`
   }
 
@@ -1699,7 +1780,9 @@ return ;
 
   needsRerender() { return this._dirty; }
 
-  aboutToRender(renderer) { this._dirty = false; this._rendering = true; }
+  aboutToRender(renderer) {
+    this._dirty = false; this._rendering = true; 
+  }
   onAfterRender(node) {}
 
   whenRendered() {
@@ -1708,9 +1791,22 @@ return ;
       .then(() => this);
   }
 
-  render(renderer) { return renderer.renderMorph(this); }
+  render(renderer) { 
+    return renderer.renderMorph(this);
+  }
 
-  renderAsRoot(renderer) { return renderRootMorph(this, renderer); }
+  applyLayoutIfNeeded() {
+     if (!this._dirty) return;
+     for (var i in this.submorphs) {
+       this.submorphs[i].applyLayoutIfNeeded();
+     }
+     this.layout && this.layout.forceLayout();
+  }
+
+  renderAsRoot(renderer) { 
+     this.applyLayoutIfNeeded();
+     return renderRootMorph(this, renderer); 
+  }
 
   renderPreview(opts = {}) {
     // Creates a DOM node that is a "preview" of he morph, i.e. a
@@ -1941,6 +2037,7 @@ export class Image extends Morph {
     return {
 
       imageUrl: {
+        isStyleProp: true,
         after: ['extent'],
         defaultValue: System.decanonicalize("lively.morphic/lively-web-logo-small.svg"),
 

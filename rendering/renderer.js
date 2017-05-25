@@ -107,10 +107,11 @@ export class Renderer {
   }
 
   renderMorph(morph) {
+    let submorphs = this.renderSelectedSubmorphs(morph, morph.submorphs);
     return h("div", {
       ...defaultAttributes(morph, this),
       style: defaultStyle(morph)
-    }, this.renderSelectedSubmorphs(morph, morph.submorphs));
+    }, submorphs);
   }
 
   renderSubmorphs(morph) {

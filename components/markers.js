@@ -144,6 +144,28 @@ class BoundsMarker extends Morph {
 }
 
 export class StatusMessage extends Morph {
+
+  static get styleSheet() {
+    return new StyleSheet({
+      ".StatusMessage [name=messageText]": {
+        draggable: false,
+        readOnly: true,
+        selectable: true,
+        fixedWidth: false,
+        fixedHeight: false,
+        clipMode: "visible",
+        fontSize: 14,
+        fontFamily: "Inconsolata, 'DejaVu Sans Mono', monospace"
+      },
+      ".StatusMessage .Button": {
+         borderRadius: 15
+      },
+      ".StatusMessage .Button.activeStyle": {
+         fill: Color.white
+      }
+    });
+  }
+
   static get properties() {
     return {
       stayOpen: {defaultValue: false},
@@ -194,31 +216,6 @@ export class StatusMessage extends Morph {
         }
       },
 
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            messageText: {
-              draggable: false,
-              readOnly: true,
-              selectable: true,
-              fixedWidth: false,
-              fixedHeight: false,
-              clipMode: "visible",
-              fontSize: 12,
-              fontFamily: "Monaco, Inconsolata, 'DejaVu Sans Mono', monospace"
-            },
-            closeButton: {
-              extent: pt(22, 22),
-              activeStyle: {fill: Color.white},
-            },
-            expandButton: {
-              extent: pt(22, 22),
-              activeStyle: {fill: Color.white}
-            }
-          })
-        }
-      },
-
       submorphs: {
         after: ["extent"],
         initialize() {
@@ -230,6 +227,7 @@ export class StatusMessage extends Morph {
             {
               name: "closeButton",
               type: "button",
+              extent: pt(22, 22),
               label: Icon.makeLabel("close")
             }
           ];
@@ -342,6 +340,7 @@ export class StatusMessageForMorph extends StatusMessage {
               var btn = this.addMorph({
                 name: "expandButton",
                 type: "button",
+                extent: pt(22, 22),
                 label: Icon.makeLabel("expand")
               });
               connect(btn, "fire", this, "expand");

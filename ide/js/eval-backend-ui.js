@@ -1,8 +1,8 @@
 /*global localStorage*/
-import { pt, Color } from "lively.graphics";
-import { arr, string, obj } from "lively.lang";
+import { pt, LinearGradient, Point, Color, Rectangle } from "lively.graphics";
+import { arr, obj, string } from "lively.lang";
 import { connect, noUpdate } from "lively.bindings";
-import { DropDownList, Button, config } from "lively.morphic";
+import { DropDownList, config, StyleSheet, Button } from "lively.morphic";
 import L2LClient from "lively.2lively/client.js";
 import { serverInterfaceFor, localInterface, l2lInterfaceFor } from "lively-system-interface";
 
@@ -128,10 +128,33 @@ class EvalBackendList extends DropDownList {
 
   static get properties() {
     return {
-      fontSize: {defaultValue: 10},
-      extent: {defaultValue: pt(120, 20)},
       target: {},
-      evalbackendChooser: {}
+      evalbackendChooser: {},
+      styleSheets: {
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            ".DropDownList [name=dropDownList]": {
+              fontSize: 12,
+              fontFamily: "Helvetica Neue, Arial, sans-serif",
+              fontColor: Color.black,
+              borderWidth: 1,
+              borderColor: Color.gray,
+              fill: Color.white.withA(.8),
+              dropShadow: true
+            },
+            ".EvalBackendList": {extent: pt(120, 20)},
+            ".EvalBackendList [name=label]": {fontSize: 10},
+            ".Button.activeStyle": {
+              fill: new LinearGradient({
+                stops: [
+                  {offset: 0, color: Color.white},
+                  {offset: 1, color: new Color.rgb(236, 240, 241)}
+                ]
+              })
+            }
+          });
+        }
+      }
     }
   }
 
@@ -209,6 +232,7 @@ export default class EvalBackendChooser {
   buildEvalBackendDropdownFor(morph) {
     var btn = new EvalBackendButton({
       name: "eval backend button",
+      height: 20,
       target: morph,
     });
     setTimeout(() => btn.updateFromTarget(), 0);

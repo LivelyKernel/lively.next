@@ -1,8 +1,8 @@
-import {obj, num, arr, properties} from "lively.lang";
+import {obj, string, num, arr, properties} from "lively.lang";
 import {pt, Color, Rectangle, rect} from "lively.graphics";
 import {signal, connect, disconnect} from "lively.bindings";
 import {
-  Morph,
+  Morph, CustomLayout,
   Button,
   List,
   Text,
@@ -76,7 +76,6 @@ class LeashEndpoint extends Ellipse {
     return {
       index: {},
       leash: {},
-      styleClasses: {defaultValue: ["endpointStyle"]},
       vertex: {
         get() {
           return this.leash.vertices[this.index];
@@ -100,26 +99,15 @@ export class Leash extends Path {
       fill: {defaultValue: Color.transparent},
       styleSheets: {
         after: ["endpointStyle"],
-        get() {
-          return [new StyleSheet(
-            {
-              endpointStyle: this.endpointStyle
-            },
-            this
-          )];
-        }
-      },
-      endpointStyle: {
-        after: ["submorphs"],
-        defaultValue: {
-          fill: Color.black,
-          origin: pt(3.5, 3.5),
-          extent: pt(10, 10),
-          nativeCursor: "-webkit-grab"
-        },
-        set(style) {
-          this.setProperty("endpointStyle", {...this.endpointStyle, style});
-          this.styleSheets = this.styleSheets;
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            ".Leash .LeashEndpoint": {
+              fill: Color.black,
+              origin: pt(3.5, 3.5),
+              extent: pt(10, 10),
+              nativeCursor: "-webkit-grab"
+            }
+          });
         }
       },
       vertices: {
@@ -258,10 +246,35 @@ export class PropertyInspector extends Morph {
       property: {},
       min: {defaultValue: -Infinity},
       max: {defaultValue: Infinity},
-      styleClasses: {defaultValue: ["root"]},
       styleSheets: {
         initialize() {
-          this.styleSheets = this.styler;
+          this.styleSheets = new StyleSheet({
+            ".PropertyInspector .Button": {
+              clipMode: "hidden",
+              borderWidth: 0,
+              fill: Color.transparent,
+            },
+            ".PropertyInspector .Button.activeStyle [name=label]": {
+              fontColor: Color.white.darker()
+            },
+            ".Button.triggerStyle [name=label]": {
+              fontColor: Color.black
+            },
+            ".PropertyInspector": {
+              extent: pt(55, 25),
+              borderRadius: 5,
+              borderWidth: 1,
+              borderColor: Color.gray,
+              clipMode: "hidden"
+            },
+            ".PropertyInspector [name=down]": {padding: rect(0, -5, 0, 10)},
+            ".PropertyInspector [name=up]": {padding: rect(0, 0, 0, -5)},
+            ".PropertyInspector [name=value]": {
+              fill: Color.white,
+              padding: Rectangle.inset(4),
+              fontSize: 15
+            }
+          });
         }
       },
       layout: {
@@ -284,12 +297,12 @@ export class PropertyInspector extends Morph {
             }),
             {
               type: "button",
-              name: "down",
+              name: "down", styleClasses: ['buttonStyle'],
               label: Icon.makeLabel("sort-desc", {padding: rect(2, 2, 0, 0), fontSize: 12})
             },
             {
               type: "button",
-              name: "up",
+              name: "up", styleClasses: ['buttonStyle'], autofit: true,
               label: Icon.makeLabel("sort-asc", {padding: rect(2, 2, 0, 0), fontSize: 12})
             }
           ];
@@ -305,34 +318,6 @@ export class PropertyInspector extends Morph {
   __deserialize__(snapshot, objRef) {
     super.__deserialize__(snapshot, objRef);
     if (!this.target) this.setProperty("target", {});
-  }
-
-  get styler() {
-    const buttonStyle = {
-      type: "button",
-      clipMode: "hidden",
-      activeStyle: {
-        fill: Color.transparent,
-        borderWidth: 0,
-        fontColor: Color.white.darker()
-      },
-      triggerStyle: {
-        fill: Color.transparent,
-        fontColor: Color.black
-      }
-    };
-    return new StyleSheet({
-      root: {
-        extent: pt(55, 25),
-        borderRadius: 5,
-        borderWidth: 1,
-        borderColor: Color.gray,
-        clipMode: "hidden"
-      },
-      down: {padding: rect(0, -5, 0, 10), ...buttonStyle},
-      up: {padding: rect(0, 0, 0, -5), ...buttonStyle},
-      value: {fill: Color.white, padding: Rectangle.inset(4), fontSize: 15}
-    });
   }
 
   update() {
@@ -554,6 +539,7 @@ export class LabeledCheckBox extends Morph {
 
   constructor(props) {
     super(props);
+    connect(this, "alignCheckBox", this, "extent");
     connect(this, "alignCheckBox", this, "relayout");
     connect(this.labelMorph, "value", this, "relayout");
     connect(this.checkboxMorph, "checked", this, "checked");
@@ -564,7 +550,7 @@ export class LabeledCheckBox extends Morph {
   relayout() {
     var l = this.labelMorph, cb = this.checkboxMorph;
     if (this.alignCheckBox === "left") {
-      cb.leftCenter = pt(0, l.height / 2);
+      cb.leftCenter = pt(0, Math.max(this.height, l.height) / 2);
       l.leftCenter = cb.rightCenter;
     } else {
       l.position = pt(0, 0);
@@ -601,11 +587,24 @@ export class ModeSelector extends Morph {
           }
         }
       },
+      height: {defaultValue: 30},
       init: {},
       keys: {},
       values: {},
       tooltips: {},
-      styleClasses: {defaultValue: ["root"]},
+      styleSheets: {
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            ".ModeSelector": {fill: Color.transparent, origin: pt(0, 5)},
+            ".ModeSelector [name=typeMarker]": {fill: Color.gray.darker(), borderRadius: 3},
+            ".ModeSelector .label": {
+              fontWeight: "bold",
+              nativeCursor: "pointer",
+              padding: Rectangle.inset(4)
+            }
+          });
+        }
+      },
       layout: {
         after: ["items"],
         initialize() {
@@ -613,55 +612,28 @@ export class ModeSelector extends Morph {
             rows: [0, {paddingBottom: 10}],
             grid: [[...arr.interpose(this.keys.map(k => k + "Label"), null)]],
             autoAssign: false,
-            align: "center",
             fitToCell: false
+          });
+          this.layout.row(0).items.forEach(c => {
+            c.group.align = "center";
           });
         }
       },
       submorphs: {
         initialize() {
-          this.build();
+          this.submorphs = [
+            {name: "typeMarker"},
+            ...this.createLabels(this.keys, this.values, this.tooltips)
+          ];
           this.update(
             this.init ? this.init : this.keys[0],
             this.values[this.keys.includes(this.init) ? this.keys.indexOf(this.init) : 0],
             true
           );
           connect(this, "extent", this, "relayout");
-          this.whenRendered().then(() => {
-            this.withAllSubmorphsDo(ea => {
-              if (ea.isLabel) {
-                ea._cachedTextBounds = null;
-                ea.fit();
-              }
-            });
-            this.layout.apply();
-          });
         }
       }
     };
-  }
-
-  build() {
-    this.submorphs = [
-      {name: "typeMarker"},
-      ...this.createLabels(this.keys, this.values, this.tooltips)
-    ];
-    this.layout.row(0).items.forEach(c => {
-      c.group.align = "center";
-    });
-    this.styleSheets = this.styler;
-  }
-
-  get styler() {
-    return new StyleSheet({
-      root: {fill: Color.transparent, height: 30, origin: pt(0, 5)},
-      typeMarker: {fill: Color.gray.darker(), borderRadius: 3},
-      label: {
-        fontWeight: "bold",
-        nativeCursor: "pointer",
-        padding: Rectangle.inset(4)
-      }
-    });
   }
 
   createLabels(keys, values, tooltips = {}) {
@@ -672,7 +644,7 @@ export class ModeSelector extends Morph {
         styleClasses: ["label"],
         type: "label",
         value: name,
-        ...this.labelStyle,
+        autofit: true,
         ...(tooltip && {tooltip}),
         onMouseDown: evt => {
           this.update(name, value);
@@ -681,20 +653,21 @@ export class ModeSelector extends Morph {
     });
   }
 
-  async relayout() {
-    return (
-      this.currentLabel &&
-      this.get("typeMarker").animate({bounds: this.currentLabel.bounds(), duration: 200})
-    );
+  async relayout(animated = true) {
+    let tm = this.get("typeMarker"),
+        bounds = this.currentLabel.bounds();
+    this.currentLabel && animated ? await tm.animate({bounds, duration: 200}) : tm.setBounds(bounds);
+     
   }
 
   async update(label, value, silent = false) {
-    const newLabel = this.get(label + "Label"), duration = 200;
+    const newLabel = this.get(label + "Label");
     if (newLabel == this.currentLabel) return;
     if (this.currentLabel) this.currentLabel.fontColor = Color.black;
     this.currentLabel = newLabel;
     newLabel.fontColor = Color.white;
-    await this.relayout(duration);
+    await this.whenRendered();
+    await this.relayout(!silent);
     !silent && signal(this, label, value);
     !silent && signal(this, "switchLabel", value);
   }
@@ -808,5 +781,181 @@ export class DropDownSelector extends Morph {
     this.menu = this.world().openWorldMenu(evt, this.getMenuEntries());
     this.menu.globalPosition = this.globalPosition;
     this.menu.isHaloItem = this.isHaloItem;
+  }
+}
+
+export class SearchField extends Text {
+
+  static get properties() {
+    return {
+      fixedWidth: {defaultValue: true},
+      layout: {
+        initialize() {
+          this.layout = new HorizontalLayout({direction: 'rightToLeft'})
+        }
+      },
+      fuzzy: {
+        derived: true, after: ["filterFunction", "sortFunction"],
+        set(fuzzy) {
+          // fuzzy => bool or prop;
+          this.setProperty("fuzzy", fuzzy);
+          if (!fuzzy) {
+            if (this.sortFunction === this.fuzzySortFunction)
+              this.sortFunction = null;
+            if (this.filterFunction === this.fuzzyFilterFunction)
+              this.filterFunction = this.defaultFilterFunction;
+          } else  {
+            if (!this.sortFunction) this.sortFunction = this.fuzzySortFunction
+            if (this.filterFunction == this.defaultFilterFunction)
+              this.filterFunction = this.fuzzyFilterFunction;
+          }
+        }
+      },
+
+      filterFunction: {
+        get() {
+          let filterFunction = this.getProperty("filterFunction");
+          if (!filterFunction) return this.defaultFilterFunction;
+          if (typeof filterFunction === "string")
+            filterFunction = eval(`(${filterFunction})`);
+          return filterFunction;
+        }
+      },
+
+      sortFunction: {},
+
+      defaultFilterFunction: {
+        readOnly: true,
+        get() {
+          return this._defaultFilterFunction
+              || (this._defaultFilterFunction = (parsedInput, item) =>
+                    parsedInput.lowercasedTokens.every(token =>
+                      item.string.toLowerCase().includes(token)));
+        }
+      },
+
+      fuzzySortFunction: {
+        get() {
+          return this._fuzzySortFunction
+              || (this._fuzzySortFunction = (parsedInput, item) => {
+                var prop = typeof this.fuzzy === "string" ? this.fuzzy : "string";
+                // preioritize those completions that are close to the input
+                var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
+                var base = 0;
+                parsedInput.lowercasedTokens.forEach(t => {
+                  if (fuzzyValue.startsWith(t)) base -= 10;
+                  else if (fuzzyValue.includes(t)) base -= 5;
+                });
+                return arr.sum(parsedInput.lowercasedTokens.map(token =>
+                  string.levenshtein(fuzzyValue.toLowerCase(), token))) + base
+              })
+        }
+      },
+
+      fuzzyFilterFunction: {
+        get() {
+          return this._fuzzyFilterFunction
+              || (this._fuzzyFilterFunction = (parsedInput, item) => {
+            var prop = typeof this.fuzzy === "string" ? this.fuzzy : "string";
+            var tokens = parsedInput.lowercasedTokens;
+            if (tokens.every(token => item.string.toLowerCase().includes(token))) return true;
+            // "fuzzy" match against item.string or another prop of item
+            var fuzzyValue = String(Path(prop).get(item)).toLowerCase();
+            return arr.sum(parsedInput.lowercasedTokens.map(token =>
+                    string.levenshtein(fuzzyValue, token))) <= 3;
+          });
+        }
+      },
+      submorphs: {
+        after: ['placeHolder'],
+        initialize() {
+           this.submorphs = [
+            {
+              type: "label",
+              name: 'placeholder',
+              isLayoutable: false,
+              opacity: .3,
+              value: "Search",
+              reactsToPointer: false,
+              padding: rect(6, 3, 2, 2)
+            },
+            Icon.makeLabel("times-circle", {
+              padding: rect(2,2,4,2),
+              fontSize: 14,
+              visible: false,
+              name: "placeholder icon",
+              fontColor: Color.gray,
+              nativeCursor: 'pointer'
+            })
+           ];
+           connect(this.get('placeholder icon'), 'onMouseDown', this, 'clearInput');
+        }
+      }
+    }
+  }
+
+  parseInput() {
+    var filterText = this.textString,
+      // parser that allows escapes
+        parsed = Array.from(filterText).reduce(
+          (state, char) => {
+            // filterText = "foo bar\\ x"
+            if (char === "\\" && !state.escaped) {
+              state.escaped = true;
+              return state;
+            }
+  
+            if (char === " " && !state.escaped) {
+              if (!state.spaceSeen && state.current) {
+                state.tokens.push(state.current);
+                state.current = "";
+              }
+              state.spaceSeen = true;
+            } else {
+              state.spaceSeen = false;
+              state.current += char;
+            }
+            state.escaped = false;
+            return state;
+          },
+          {tokens: [], current: "", escaped: false, spaceSeen: false}
+        );
+    parsed.current && parsed.tokens.push(parsed.current);
+    var lowercasedTokens = parsed.tokens.map(ea => ea.toLowerCase());
+    return {tokens: parsed.tokens, lowercasedTokens};
+  }
+
+  clearInput() {
+    this.textString = '';
+    signal(this, "searchInput", this.parseInput());
+    this.onBlur();
+  }
+
+  matches(string) {
+    if (!this.textString) return true;
+    return this.filterFunction.call(this, this.parseInput(), {string});
+  }
+
+  onChange(change) {
+    super.onChange(change);
+    let inputChange = change.selector === "replace",
+        validInput = this.isFocused() && this.textString;
+    if (this.get('placeholder icon')) this.get('placeholder icon').visible = !!this.textString;
+    this.active && inputChange && signal(this, "searchInput", this.parseInput());
+  }
+
+  onBlur(evt) {
+    super.onBlur(evt)
+    this.active = false;
+    this.get('placeholder').visible = !this.textString;
+    this.animate({styleClasses: ["idle"], duration: 500});
+
+  }
+  
+  onFocus(evt) {
+    super.onFocus(evt);
+    this.animate({styleClasses: ["selected"], duration: 500});
+    this.get('placeholder').visible = false;
+    this.active = true;
   }
 }

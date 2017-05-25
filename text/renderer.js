@@ -185,7 +185,7 @@ AfterTextRenderHook.prototype.updateLineHeightOfLines = function(textlayerNode) 
 
   viewState.textWidth = textlayerNode.scrollWidth;
   let lineNode;
-  for (let i = 0; i < textlayerNode.childNodes.length; i++) {
+  for (let i in textlayerNode.childNodes) {
     if (textlayerNode.childNodes[i].className === "line") {
       lineNode = textlayerNode.childNodes[i]; break;
     }

@@ -3,7 +3,7 @@ import { Rectangle, Color, pt } from "lively.graphics";
 import { arr, obj, promise } from "lively.lang";
 import { once, signal } from "lively.bindings";
 import { StatusMessage, StatusMessageForMorph } from './components/markers.js';
-import { Morph, inspect, config, MorphicEnv, Window, Menu } from "./index.js";
+import { Morph, FilterableList, inspect, config, MorphicEnv, Window, Menu, Button } from "./index.js";
 import { TooltipViewer } from "./components/tooltips.js";
 
 import {
@@ -22,9 +22,30 @@ import { loadObjectFromPartsbinFolder } from "./partsbin.js";
 import { uploadFile } from "./events/html-drop-handler.js";
 import worldCommands from "./world-commands.js";
 import { loadWorldFromURL, loadWorld } from "./world-loading.js";
+import LoadingIndicator from "./components/loading-indicator.js";
+import { StyleEditor } from "./ide/styling/style-editor.js";
+import { GradientEditor } from "./ide/styling/gradient-editor.js";
 
 
 export class World extends Morph {
+
+  static get properties() {
+    return {
+      styleSheets: {
+        initialize() {
+          this.styleSheets = [
+            Button.styleSheet,
+            StatusMessage.styleSheet,
+            Window.styleSheet,
+            FilterableList.styleSheet,
+            LoadingIndicator.styleSheet,
+            StyleEditor.styleSheet,
+            GradientEditor.styleSheet
+          ];
+        }
+      }
+    };
+  }
 
   static defaultWorld() { return MorphicEnv.default().world; }
 
@@ -682,7 +703,7 @@ export class Hand extends Morph {
         let {pointerAndShadow} = this._grabbedMorphProperties.get(morph) || {}
         Object.assign(morph, pointerAndShadow);
         signal(this, "drop", morph);
-        morph.onBeingDroppedOn(dropTarget);
+        morph.onBeingDroppedOn(this, dropTarget);
       } catch (err) {
         console.error(err);
         this.world().showError(`Error dropping ${morph} onto ${dropTarget}:\n${err.stack}`);

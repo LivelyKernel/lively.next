@@ -11,6 +11,7 @@ import { isNumber } from "lively.lang/object.js";
 class Layout {
 
   constructor({spacing, border, container, autoResize, ignore} = {}) {
+    this.applyRequests = [];
     this.border = {top: 0, left: 0, right: 0, bottom: 0, ...border};
     this.spacing = spacing || 0;
     this.ignore = ignore || [];
@@ -18,6 +19,10 @@ class Layout {
     this.active = false;
     this.container = container;
     this.autoResize = autoResize != undefined ? autoResize : true;
+  }
+
+  copy() {
+    return new this.constructor(this);
   }
 
   description() { return "Describe the layout behavior here."; }
@@ -31,7 +36,7 @@ class Layout {
     this.apply(animation);
   }
 
-  get boundsChanged() { return !this.container.bounds().equals(this.lastBounds); }
+  boundsChanged(container) { return !container.bounds().equals(this.lastBounds); }
 
   get layoutableSubmorphs() {
     return this.container.submorphs.filter(m => m.isLayoutable && !this.ignore.includes(m.name));
@@ -45,19 +50,36 @@ class Layout {
     this.layoutableSubmorphBounds = this.layoutableSubmorphs.map(m => m.submorphBounds());
   }
 
+  onContainerRender() {
+    this.forceLayout();
+  }
+
+  forceLayout() {
+    if (this.applyRequests && this.applyRequests.length > 0) {
+      this.applyRequests = [];
+      this.refreshBoundsCache();
+      this.apply(this.lastAnim);
+    }
+  }
+
+  scheduleApply(submorph, animation, change = {}) {
+    if (this.active) return;
+    if (!this.applyRequests) this.applyRequests = [];
+    if (animation) this.lastAnim = animation;
+    this.applyRequests.push({submorph, animation, change});
+  }
+
   onSubmorphResized(submorph, change) {
     if (this.container.submorphs.includes(submorph)
         || this.submorphBoundsChanged
-        || this.boundsChanged)
-      this.apply(change.meta.animation);
+        || this.boundsChanged(this.container))
+      this.scheduleApply(submorph, change.meta.animation, change)
   }
-  onSubmorphAdded(submorph, anim) { 
-    this.refreshBoundsCache();
-    this.apply(anim); 
+  onSubmorphAdded(submorph, animation) { 
+    this.scheduleApply(submorph, animation)
   }
-  onSubmorphRemoved(submorph, anim) { 
-    this.refreshBoundsCache();
-    this.apply(anim); 
+  onSubmorphRemoved(submorph, animation) { 
+    this.scheduleApply(submorph, animation)
   }
 
   onChange({selector, args, prop, value, prevValue, meta}) {
@@ -70,7 +92,7 @@ class Layout {
         this.onSubmorphAdded(args[0], anim);
         break;
     }
-    if (prop == "extent" && !(value && value.equals(prevValue))) this.apply(anim);
+    if (prop == "extent" && !(value && value.equals(prevValue))) this.scheduleApply(anim);
   }
 
   affectsLayout(submorph, {prop, value, prevValue}) {
@@ -80,8 +102,12 @@ class Layout {
   }
 
   onSubmorphChange(submorph, change) {
-    if ("extent" == change.prop && !change.value.equals(change.prevValue)) this.onSubmorphResized(submorph, change);
-    if (this.affectsLayout(submorph, change)) this.apply(change.meta.animation);
+    if ("extent" == change.prop && !change.value.equals(change.prevValue)) {
+       this.onSubmorphResized(submorph, change);
+    }
+    if (this.affectsLayout(submorph, change)) {
+       this.scheduleApply(change.meta.animation);
+    }
   }
 
   changePropertyAnimated(target, propName, value, animate) {
@@ -103,8 +129,26 @@ class Layout {
   }
 
   apply(animated) {
+    if (this.active) return;
+    this.active = true;
     this.lastBounds = this.container && this.container.bounds();
+    this.active = false;
   }
+}
+
+export class CustomLayout extends Layout {
+  
+  constructor(config = {}) {
+     this.relayout = config.relayout;
+     super(config);
+  }
+
+  apply(animate) {
+     if (this.active || !this.container) return;
+     super.apply(animate);
+     this.relayout(this.container);
+  }
+  
 }
 
 /* TODO: This is just a very simple constraint layout, that should
@@ -338,7 +382,7 @@ export class TilingLayout extends Layout {
     if (this.active) return;
     this.active = true;
     super.apply(animate);
-    var width = this.getOptimalWidth(),
+    var width = this.getOptimalWidth(this.container),
         currentRowHeight = 0,
         currentRowWidth = this.border.left,
         {spacing, layoutableSubmorphs} = this,
@@ -380,8 +424,8 @@ export class TilingLayout extends Layout {
           this.border.top + this.border.bottom;
   }
 
-  getOptimalWidth() {
-    var width = this.container.width - this.border.left - this.border.right,
+  getOptimalWidth(container) {
+    var width = container.width - this.border.left - this.border.right,
         maxSubmorphWidth = this.getMinWidth();
     return Math.max(width, maxSubmorphWidth);
   }
@@ -398,7 +442,7 @@ export class CenteredTilingLayout extends TilingLayout {
     this.active = true;
     super.apply(animate);
 
-    var width = this.getOptimalWidth(),
+    var width = this.getOptimalWidth(this.container),
         {spacing, layoutableSubmorphs} = this,
         y = spacing + this.border.top;
 
@@ -482,10 +526,16 @@ export class CellGroup {
       if (animate) {
         var extent = this.resize ? bounds.extent() : target.extent,
             {duration, easing} = animate;
-        target.animate({[this.alignedProperty || this.align]: bounds[this.align]().addPt(offset), extent, duration, easing});
+        target.animate({
+          [this.alignedProperty || this.align]: bounds[this.align]().addPt(offset),
+          extent,
+          duration,
+          easing
+        });
       } else {
         if (this.resize) target.extent = bounds.extent();
         target[this.alignedProperty || this.align] = bounds[this.align]().addPt(offset);
+        if (target.layout) target.layout.forceLayout();
       }
     }
   }

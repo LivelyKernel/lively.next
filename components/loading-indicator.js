@@ -13,6 +13,33 @@ const imageUrl = System.decanonicalize("lively.morphic/") + "lively-web-logo-sma
 
 export default class LoadingIndicator extends Morph {
 
+  static get styleSheet() {
+    return new StyleSheet({
+      ".LoadingIndicator [name=spinner]": {
+        fill: Color.transparent,
+        extent: pt(100, 104),
+        position: pt(0, 0),
+        halosEnabled: false
+      },
+      ".LoadingIndicator .center-text": {
+        fontSize: 16,
+        fontFamily: "Helvetica Neue, Arial",
+        fontColor: Color.white,
+        halosEnabled: false
+      },
+      ".LoadingIndicator [name=closeButton] [name=label]": {
+        fontColor: Color.white,
+        fontFamily: "FontAwesome"
+      },
+      ".LoadingIndicator [name=closeButton]": {
+        extent: pt(20, 20),
+        fill: Color.transparent,
+        borderWidth: 0,
+        fontColor: Color.white,
+      }
+    });
+  }
+
   static open(label, props) {
     return new this({...props, label}).openInWorld();
   }
@@ -52,36 +79,6 @@ export default class LoadingIndicator extends Morph {
         derived: true, after: ["submorphs"],
         get() { return this.getSubmorphNamed("label").fontSize; },
         set(val) { this.getSubmorphNamed("label").fontSize = val; }
-      },
-
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            spinner: {
-              fill: Color.transparent,
-              extent: pt(100, 104),
-              topLeft: pt(0, 0),
-              halosEnabled: false
-            },
-            label: {
-              fontSize: 16,
-              fontFamily: "Helvetica Neue, Arial",
-              fontColor: Color.white,
-              halosEnabled: false
-            },
-            closeButton: {
-              fontFamily: "FontAwesome",
-              fontColor: Color.white,
-              activeStyle: {
-                extent: pt(20, 20),
-                fill: Color.transparent,
-                borderWidth: 0,
-                fontColor: Color.white
-              },
-              visible: false
-            }
-          });
-        }
       },
 
       submorphs: {
@@ -125,7 +122,7 @@ export default class LoadingIndicator extends Morph {
 
   updateLabel() {
     var center = this.center; this.relayout();
-    setTimeout(() => this.center = center, 0);
+    this.center = center;
   }
 
   relayout() {
@@ -134,10 +131,8 @@ export default class LoadingIndicator extends Morph {
         w = Math.max(spinner.width, label.width, 120) + padding.left() + padding.right(),
         h = spinner.height + label.height + padding.top() + padding.bottom();
     this.extent = pt(w,h);
-    spinner.width = 100;
     spinner.topCenter = this.innerBounds().topCenter().addXY(0, padding.top());
     label.topCenter = spinner.bottomCenter.addXY(0, 4);
-    closeButton.width = 20;
     closeButton.right = w;
   }
 

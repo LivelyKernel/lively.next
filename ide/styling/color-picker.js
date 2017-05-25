@@ -27,42 +27,67 @@ export class ColorPickerField extends Morph {
       this.build();
    }
 
-   build() {
-      const topRight = this.innerBounds().topRight(),
-            bottomLeft = this.innerBounds().bottomLeft(),
-            colorFieldExtent = pt(40,25);
+  build() {
+    const topRight = this.innerBounds().topRight(),
+          bottomLeft = this.innerBounds().bottomLeft(),
+          colorFieldExtent = pt(40, 25);
 
-      this.submorphs = [
-        {extent: colorFieldExtent, clipMode: "hidden",
-         onMouseDown: (evt) => this.openPalette(evt),
-         onHoverIn() {
-            this.get("dropDownIndicator").animate({opacity: 1, duration: 300});
-         },
-         onHoverOut() {
-            this.get("dropDownIndicator").animate({opacity: 0, duration: 300});
-         },
-         submorphs: [{
-               name: "topLeft",
-               extent: colorFieldExtent
-           }, {
-               name: "bottomRight", type: "polygon",
-               extent: colorFieldExtent,
-               origin: pt(0,0),
-               vertices: [pt(0,0), colorFieldExtent.withX(0), colorFieldExtent],
-        }, Icon.makeLabel("chevron-down", {
-               opacity: 0,
-               name: "dropDownIndicator",
-               center: pt(30,12.5)
-          })]},
-        {fill: Color.transparent, extent: pt(25, 25),
-         onHoverIn() { this.fill = Color.black.withA(.2); },
-         onHoverOut() { this.fill = Color.transparent; },
-         submorphs: [{
-          type: "image", autoResize: false, imageUrl: WHEEL_URL, extent: pt(20,20), nativeCursor: "pointer",
-          fill: Color.transparent, position: pt(3,3), onMouseDown: (evt) => this.openPicker(evt)}]}];
-      this.update();
-      connect(this.target, "onChange", this, "update");
-   }
+    this.submorphs = [
+      {
+        extent: colorFieldExtent,
+        clipMode: "hidden",
+        onMouseDown: evt => this.openPalette(evt),
+        onHoverIn() {
+          this.get("dropDownIndicator").animate({opacity: 1, duration: 300});
+        },
+        onHoverOut() {
+          this.get("dropDownIndicator").animate({opacity: 0, duration: 300});
+        },
+        submorphs: [
+          {
+            name: "topLeft",
+            extent: colorFieldExtent
+          },
+          {
+            name: "bottomRight",
+            type: "polygon",
+            extent: colorFieldExtent,
+            origin: pt(0, 0),
+            vertices: [pt(0, 0), colorFieldExtent.withX(0), colorFieldExtent]
+          },
+          Icon.makeLabel("chevron-down", {
+            opacity: 0,
+            name: "dropDownIndicator",
+            center: pt(30, 12.5)
+          })
+        ]
+      },
+      {
+        fill: Color.transparent,
+        extent: pt(25, 25),
+        onHoverIn() {
+          this.fill = Color.black.withA(0.2);
+        },
+        onHoverOut() {
+          this.fill = Color.transparent;
+        },
+        submorphs: [
+          {
+            type: "image",
+            autoResize: false,
+            imageUrl: WHEEL_URL,
+            extent: pt(20, 20),
+            nativeCursor: "pointer",
+            fill: Color.transparent,
+            position: pt(3, 3),
+            onMouseDown: evt => this.openPicker(evt)
+          }
+        ]
+      }
+    ];
+    this.update();
+    connect(this.target, "onChange", this, "update");
+  }
 
    onHoverIn() {
       if (!this.palette)
@@ -182,7 +207,7 @@ class FieldPicker extends Morph {
               fill: Color.transparent,
               borderColor: Color.black,
               borderWidth: 3,
-              extent: pt(18,18),
+              extent: pt(16,16),
               submorphs: [{
                 type: "ellipse",
                 fill: Color.transparent,
@@ -347,24 +372,22 @@ class ColorDetails extends Morph {
             fill: this.color,
           },
           this.hashViewer(),
-          this.rgbViewer(),
-          this.hsbViewer()];
+          {type: 'label', name: 'R', 
+           autofit: true,
+           padding: rect(10,0,0,0),
+           styleClasses: ['ColorPropertyView']}];
+          this.update(this);
         }
       }
     }
   }
 
-   update(colorPicker) { 
-     const color = colorPicker.color,
-           [r, g, b] = color.toTuple8Bit(),
+   update({color}) { 
+     const [r, g, b] = color.toTuple8Bit(),
            [h, s, v] = color.toHSB();
      this.get('colorViewer').fill = color;
      this.get('hashViewer').value = color.toHexString();
-     for(let [l, [c, q]] of zip([this.get('R'), this.get('G'), this.get('B'),
-                                 this.get('H'), this.get('S'), this.get('V')],
-                            [[r, 0], [g, 0], [b, 0], [h, 0], [s, 2], [v, 2]])) {
-       l.value = c.toFixed(q);
-     }
+     this.get('R').value = `R ${r.toFixed(0)}\n\nG ${g.toFixed(0)}\n\nB ${b.toFixed(0)}\n\nH ${h.toFixed(0)}\n\nS ${s.toFixed(2)}\n\nV ${v.toFixed(2)}`
    }
 
    keyValue({name, key, value, update, editable}) {
@@ -393,7 +416,6 @@ class ColorDetails extends Morph {
     const [r, g, b] = this.color.toTuple8Bit();
     return new Morph({
       name: "rgbViewer",
-      layout: new VerticalLayout(),
       fill: Color.transparent,
       submorphs: [this.keyValue({key: "R", value: r.toFixed()}),
                   this.keyValue({key: "G", value: g.toFixed()}),
@@ -405,7 +427,6 @@ class ColorDetails extends Morph {
     const [h, s, b] = this.color.toHSB();
     return new Morph({
       name: "hsbViewer",
-      layout: new VerticalLayout(),
       fill: Color.transparent,
       submorphs: [this.keyValue({key: "H", value: h.toFixed()}),
                   this.keyValue({key: "S", value: s.toFixed(2)}),
@@ -419,10 +440,8 @@ export class ColorPicker extends Window {
 
   static get properties() {
     return {
-      name: {defaultValue: "Color Picker"},
       extent: {defaultValue: pt(400, 320)},
       fill: {defaultValue: Color.black.withA(.7)},
-      resizable: {defaultValue: false},
       isHaloItem: {defaultValue: true},
       borderWidth: {defaultValue: 0},
       color: {
@@ -465,21 +484,34 @@ export class ColorPicker extends Window {
         initialize() {
           this.targetMorph = this.colorPalette();
           this.titleLabel().fontColor = Color.gray;
+          this.whenRendered().then(() => this.update());
         }
       },
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
-            key: {fill: Color.transparent, 
-                  fontColor: Color.gray, 
-                  fontWeight: 'bold'},
-            large: {fontSize: 20},
-            active: {fontColor: Color.orange, borderColor: Color.orange},
-            value: {fill: Color.transparent, fontColor: Color.gray.lighter()},
-            editable: {borderRadius: 4, borderWidth: 1, 
-                       padding: rect(2,2,2,2), 
-                       borderColor: Color.gray.lighter()}
-         });
+              ".ColorPicker .key": {
+                fill: Color.transparent,
+                fontColor: Color.gray,
+                fontWeight: "bold"
+              },
+              ".ColorPicker.Window": {
+                fill: Color.black.withA(0.7),
+                borderColor: Color.gray.darker()
+              },
+              ".ColorPicker .large": {fontSize: 20},
+              ".ColorPicker .active": {fontColor: Color.orange, borderColor: Color.orange},
+              ".ColorPicker .ColorPropertyView": {
+                fill: Color.transparent,
+                fontColor: Color.gray.lighter()
+              },
+              ".ColorPicker .editable": {
+                borderRadius: 4,
+                borderWidth: 1,
+                padding: rect(2, 2, 2, 2),
+                borderColor: Color.gray.lighter()
+              }
+            });
         }
       }
     }
@@ -490,14 +522,17 @@ export class ColorPicker extends Window {
          this.close();
      }
   }
-
+  
   close() {
      super.close();
      signal(this, 'close');
   }
-
+  
   update() {
-     this.targetMorph.withAllSubmorphsDo(p => p.update && p.update(this));
+     this.get('field picker').update(this);
+     this.get('hue picker').update(this);
+     this.get('details').update(this);
+     this.get('alpha slider').update(this);
      // would be better if this.color is the canonical place
      // rms: as long as lively.graphics/color loses the hue information
      //      when lightness or saturation drop to 0, this.color can not serve
@@ -505,7 +540,7 @@ export class ColorPicker extends Window {
      //      the picker's color.
      signal(this, "color", this.color);
   }
-
+  
   colorPalette() {
     let colorDetails = this.colorDetails(),
         fieldPicker = this.fieldPicker(),
@@ -518,14 +553,13 @@ export class ColorPicker extends Window {
           draggable: false,
           layout: new GridLayout({
             autoAssign: false,
-            rows: [0, {fixed: colorDetails.height}, 
-                   1, {fixed: 20}],
+            rows: [1, {fixed: 30}],
             columns: [0, {paddingLeft: 10}, 
                       1, {fixed: 55, paddingLeft: 10, paddingRight: 5}, 
                       2, {fixed: 100}],
-            groups: {field: {alignedProperty: 'position'},
+            groups: {"field picker": {alignedProperty: 'position'},
                      "hue picker": {alignedProperty: 'position'}},
-            grid: [["field", "hue picker", "details"],
+            grid: [["field picker", "hue picker", "details"],
                    ["alphaSlider", "alphaSlider", "alphaSlider"]]}),
             submorphs: [fieldPicker, huePicker, colorDetails, alphaSlider]
         })
@@ -534,31 +568,44 @@ export class ColorPicker extends Window {
     connect(huePicker, 'hue', this, 'hue');
     return colorPalette;
   }
-
+  
   alphaSlider() {
     return {
-       name: "alphaSlider",
-       fill: Color.transparent, layout: new HorizontalLayout({spacing: 3}),
-       submorphs: [
-        {type: "label", padding: Rectangle.inset(3), value: "Alpha", fontColor: Color.gray, fontWeight: 'bold'},
+      name: "alphaSlider",
+      fill: Color.transparent,
+      layout: new HorizontalLayout({spacing: 3}),
+      submorphs: [
+        {
+          type: "label",
+          padding: Rectangle.inset(3),
+          value: "Alpha",
+          fontColor: Color.gray,
+          fontWeight: "bold"
+        },
         new Slider({
-             target: this, min: 0, max: 1,
-             property: "alpha", width: 170
-      })]
-    }
+          name: 'alpha slider',
+          target: this,
+          min: 0,
+          max: 1,
+          property: "alpha",
+          width: 170
+        })
+      ]
+    };
   }
-
+  
   fieldPicker() {
-    return this.getSubmorphNamed('field') || new FieldPicker({
-        name: 'field', 
+    return new FieldPicker({
+        name: 'field picker', 
         saturation: this.saturation,
-        brightness: this.brightness});
+        brightness: this.brightness
+      });
   }
-
+  
   huePicker() {
-    return this.getSubmorphNamed("hue picker") || new HuePicker({name: 'hue picker', hue: this.hue});
+    return new HuePicker({name: "hue picker", hue: this.hue});
   }
-
+  
   colorDetails() {
     return new ColorDetails({name: "details", color: this.color})
   }
