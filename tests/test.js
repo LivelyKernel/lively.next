@@ -4,8 +4,14 @@ import { expect, chai } from "mocha-es6";
 import { obj, arr } from "lively.lang";
 import { ObjectPool, deserializeWithMigrations, requiredModulesOfSnapshot, ObjectRef, serialize } from "../index.js";
 import { Plugin, plugins } from "../plugins.js";
+import { removeUnreachableObjects } from "../snapshot-navigation.js";
 
 function serializationRoundtrip(obj) {
+  let snap = objPool.snapshotObject(obj),
+      id = objPool.ref(obj).id;
+  removeUnreachableObjects([id], snap.snapshot);  
+  return ObjectPool.resolveFromSnapshotAndId(
+    JSON.parse(JSON.stringify(snap)), objPool.options);
   return ObjectPool.resolveFromSnapshotAndId(
     JSON.parse(JSON.stringify(objPool.snapshotObject(obj))), objPool.options);
 }
@@ -134,21 +140,30 @@ describe("marshalling", () => {
 
   describe("built-in js objects", () => {
 
-    let pluginsForBuiltins = [plugins.customSerializePlugin, plugins.classPlugin, plugins.additionallySerializePlugin];
+    let pluginsForBuiltins = [
+      plugins.customSerializePlugin,
+      plugins.classPlugin,
+      plugins.additionallySerializePlugin];
 
     it("Map", () => {
-      let obj = {}, obj2 = {bar: 23},
-          map = new Map([["a", 1], [obj2, 2], ["c", obj]]);
-      obj.map = map;
-      obj.obj2 = obj2;
+      let obj = {}, obj2 = {bar: 23};
+      obj.map = new Map([["a", 1], [obj2, 2], ["c", obj]]);
       objPool = ObjectPool.withObject(obj, {plugins: pluginsForBuiltins});
+    
+      let id = objPool.ref(obj).id,
+          snap = objPool.snapshotObject(obj);
+      removeUnreachableObjects([id], snap.snapshot)
 
-      let objCopy = serializationRoundtrip(obj),
+      let objCopy = ObjectPool.resolveFromSnapshotAndId(snap, objPool.options),
+      // let objCopy = serializationRoundtrip(obj),
           copiedMap = objCopy.map;
+
       expect(copiedMap).instanceof(Map);
-      expect(copiedMap.get("a")).equals(1);
-      expect(copiedMap.get(objCopy.obj2)).equals(2);
-      expect(copiedMap.get("c")).equals(objCopy);
+      let entries = Array.from(copiedMap.entries())
+      expect(entries).length(3)
+      expect(entries[0]).equals(["a", 1])
+      expect(entries[1]).containSubset([{bar:23}, 2])
+      expect(entries[2]).equals(["c", objCopy])
     });
 
     it("Set", () => {
@@ -423,8 +438,6 @@ describe("object migrations", () => {
           {
             snapshotConverter: snap => {
               let {snapshot} = snap;
-              debugger;
-              console.log(snap)
               for (let key in snapshot)
                 if (snapshot[key].props.hasOwnProperty("baz"))
                   snapshot[key].props.baz.value++;

@@ -23,6 +23,16 @@ function referencesOfId(snapshot, id, withPath) {
     if (verbatim || !value || !isReference(value)) continue;
     result.push(withPath ? {key: key, id: value.id} : value.id);
   }
+
+  // FIXME hack for maps and sets...
+  if (ref.hasOwnProperty("entries")) {
+    for (let i = 0; i < ref.entries.length; i++) {
+      let entry = ref.entries[i];
+      if (Array.isArray(entry)) { result.push(...referencesInArray(snapshot, entry, withPath && entry)); continue; }
+      else if (!entry || !isReference(entry)) {}
+      else result.push(withPath ? {key: entry, id: entry.id} : entry.id);
+    }
+  }
   return result;
 }
 

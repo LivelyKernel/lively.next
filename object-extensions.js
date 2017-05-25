@@ -54,10 +54,10 @@ Object.defineProperty(Map.prototype, "__serialize__", {
       i++;
       // serialize all entries into snapshot.entries
       let serializedKey = ref.snapshotProperty(
-        ref.id, key, path.concat("key", String(i)), snapshots, pool),
+            ref.id, key, path.concat("key", String(i)), snapshots, pool),
           serializedValue = ref.snapshotProperty(
             ref.id, value, path.concat("value", String(i)), snapshots, pool);
-      entries.push([serializedKey, serializedValue])
+      entries.push(serializedKey, serializedValue)
     }
     return ref.asRefForSerializedObjMap(rev);
   }
@@ -67,8 +67,8 @@ Object.defineProperty(Map.prototype, "__deserialize__", {
   value: function(snapshot, ref, serializedObjMap, pool, path) {
     // deserialize entries from snapshot.entries
     var {entries} = snapshot;
-    for (let i = 0; i < entries.length; i++) {
-      let [key, value] = entries[i],
+    for (let i = 0; i < entries.length; i = i+2) {
+      let key = entries[i], value = entries[i+1],
           deserializedKey = ref.recreateProperty(
             "key." + i, key, serializedObjMap, pool, path.concat("key", i)),
           deserializedValue = ref.recreateProperty(
