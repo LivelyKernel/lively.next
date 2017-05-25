@@ -254,25 +254,34 @@ class StyleMapper {
              viewBox: [0, 0, width || 1, height || 1].join(" ")};
   }
 
-  static getPathAttributes(path, fill=false) {
-     var vertices = path.vertices.map(({x,y,controlPoints}) => {
-              return {controlPoints, ...path.origin.addXY(x, y)}
-         }),
-         {x: startX, y: startY, controlPoints: {next: {x: startNextX, y: startNextY}}} = arr.first(vertices),
-           startNext = pt(startX + startNextX, startY + startNextY),
-          {x: endX, y: endY, controlPoints: {previous: {x: endPrevX, y: endPrevY}}} = arr.last(vertices),
-           endPrev = pt(endX + endPrevX, endY + endPrevY),
-           interVertices = vertices.slice(1, -1);
-     return {"stroke-width": path.borderWidth, ...this.getSvgBorderStyle(path),
-             fill: path.fill ? ((path.fill.isGradient) ? "url(#gradient-fill" + path.id + ")" : path.fill.toString())
-                               : "transparent",
-             "paint-order": "stroke",
-             stroke: (path.borderColor.isGradient ? "url(#gradient-borderColor" + path.id + ")" : path.borderColor.toString()),
-              d: "M" + `${startX}, ${startY} ` + "C " + `${startNext.x}, ${startNext.y} ` +
-                  interVertices.map(({x,y, controlPoints: {previous: p, next: n}}) => {
-                    return `${x + p.x},${y + p.y} ${x},${y} C ${x + n.x},${y + n.y}`
-                  }).join(" ") + ` ${endPrev.x},${endPrev.y} ${endX},${endY}`
-              }
+  static getPathAttributes(path, fill = false) {
+    var vertices = path.vertices.map(({x, y, controlPoints}) => ({controlPoints, ...path.origin.addXY(x, y)})),
+        {x: startX, y: startY, controlPoints: {next: {x: startNextX, y: startNextY}}} = vertices[0],
+        startNext = pt(startX + startNextX, startY + startNextY),
+        {x: endX, y: endY, controlPoints: {previous: {x: endPrevX, y: endPrevY}}} = arr.last(vertices),
+        endPrev = pt(endX + endPrevX, endY + endPrevY),
+        interVertices = vertices.slice(1, -1),
+
+        {id, fill, borderColor, borderWidth} = path,
+        fill = path.fill
+             ? path.fill.isGradient ? "url(#gradient-fill" + id + ")" : fill.toString()
+             : "transparent",
+        stroke = borderColor.isGradient
+          ? "url(#gradient-borderColor" + id + ")"
+          : borderColor.toString(),
+        d = `M${startX}, ${startY} C `
+          + `${startNext.x}, ${startNext.y} `
+          + interVertices.map(({x, y, controlPoints: {previous: p, next: n}}) => {
+               return `${x + p.x},${y + p.y} ${x},${y} C ${x + n.x},${y + n.y}`;
+             }).join(" ")
+          + ` ${endPrev.x},${endPrev.y} ${endX},${endY}`;
+
+    return {
+      "stroke-width": borderWidth,
+      ...this.getSvgBorderStyle(path),
+      "paint-order": "stroke",
+      fill, stroke, d
+    };
   }
 
   static getSvgBorderStyle(svg) {
@@ -676,8 +685,8 @@ export function defaultAttributes(morph, renderer) {
     // doesn't work b/c of https://github.com/Matt-Esch/virtual-dom/issues/338
     // check the pull request mentioned in the issue, once that's merged we
     // might be able to remove the hook
-  		scrollLeft: morph.scroll.x,
-  		scrollTop: morph.scroll.y,
+    scrollLeft: morph.scroll.x,
+    scrollTop: morph.scroll.y,
     "morph-after-render-hook": new MorphAfterRenderHook(morph, renderer)
   };
 }
