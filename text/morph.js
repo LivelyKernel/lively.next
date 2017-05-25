@@ -381,7 +381,7 @@ export class Text extends Morph {
         defaultValue: [],
         set(anchors) {
           let newAnchors = arr.withoutAll(anchors, this.anchors),
-              toRemove = arr.withoutAll(this.anchors, newAnchors);
+              toRemove = arr.withoutAll(this.anchors, anchors);
           toRemove.forEach(ea => this.removeAnchor(ea));
           newAnchors.forEach(ea => this.addAnchor(ea));
         }
@@ -558,10 +558,10 @@ export class Text extends Morph {
     }
 
     if (!anchor.isAnchor) {
-      let {id, column, row} = anchor;
+      let {id, column, row, insertBehavior} = anchor;
       anchor = new Anchor(id,
-                row || column ? {row, column} : undefined,
-                anchor.insertBehavior || "move");
+        typeof row === "number" && typeof column === "number" ? {row, column} : undefined,
+        insertBehavior || "move");
     }
 
     var existing = anchor.id && this.anchors.find(ea => ea.id === anchor.id);
@@ -994,7 +994,6 @@ export class Text extends Morph {
         this.invalidateTextLayout();
         this.textLayout.resetLineCharBoundsCacheOfRange(this, insertedRange);
       }
-
       if (!eqPosition(range.end, insertedRange.end)) {
         if (lessPosition(insertedRange.end, range.end)) {
           let [removedRange] = new Range(range).subtract(insertedRange);
