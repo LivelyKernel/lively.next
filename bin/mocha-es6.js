@@ -1,4 +1,4 @@
-#! /usr/bin/env node
+#! /usr/bin/env node --trace-warnings
 
 /*global require, process, __dirname*/
 require("systemjs")
@@ -31,18 +31,19 @@ lively.lang.promise.chain([
   (files, state) => state.testFiles = files,
   () => console.log(`${step++}. Preparing lively.modules`),
   () => setupLivelyModulesTestSystem(),
+  () => setupL2l(),
   (_, state) => console.log(`${step++}. Running tests in\n  ${state.testFiles.join("\n  ")}`),
   (_, state) => mochaEs6.runTestFiles(state.testFiles, {package: "file://" + dir}),
-  failureCount => process.exit(failureCount)
+  failureCount => !args.l2l && process.exit(failureCount)
 ]).catch(err => {
   console.error(err.stack || err);
-  process.exit(1);
-})
+  if (!args.l2l) process.exit(1);
+});
 
 function readProcessArgs() {
-  args = parseArgs(process.argv.slice(2), {
-    alias: {}
-  });
+  args = parseArgs(
+    process.argv.slice(2),
+    {alias: {}, boolean: ["l2l"]});
   args.files = args._;
 }
 
@@ -135,4 +136,15 @@ function setupFlatn() {
     flatn.buildPackageMap(packageCollectionDirs, packageDirs, devPackageDirs),
     ["dependencies", "devDependencies"],
     false/*verbose*/);
+}
+
+function setupL2l() {
+  // node
+  if (!args.l2l) return;
+  global.io = require("socket.io-client");
+  require("lively.2lively/dist/lively.2lively_client_no-deps.js");
+  let url = `http://localhost:9011/lively-socket.io`;
+  lively.l2l.client = lively.l2l.L2LClient.ensure({
+    url, namespace: "l2l", info: {type: "l2l from node repl"}});
+  lively.l2l.client.whenRegistered(20 * 1000).then(() => console.log("[l2l] online")).catch(err => console.error("[l2l] failed:", err));
 }
