@@ -742,7 +742,7 @@ function initDOMState(renderer, world) {
   renderer.rootNode.appendChild(renderer.domNode);
   renderer.ensureDefaultCSS()
     .then(() => promise.delay(500))
-    .then(() => world.env.fontMetric.reset())
+    .then(() => world.env.fontMetric && world.env.fontMetric.reset())
     .then(() => world.withAllSubmorphsDo(ea => (ea.isText || ea.isLabel) && ea.forceRerender()))
     .catch(err => console.error(err));
 }
