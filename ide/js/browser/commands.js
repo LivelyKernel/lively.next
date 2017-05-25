@@ -1,7 +1,10 @@
 import { arr } from "lively.lang";
 import { extractTestDescriptors } from "mocha-es6/test-analysis.js";
-import { findTestModulesInPackage } from "../../test-runner.js";
+import { loadTestModuleAndExtractTestState } from "mocha-es6";
 
+function isTestModule(m, source) {
+  return m && source.match(/import.*['"]mocha(-es6)?['"]/) && source.match(/it\(['"]/)
+}
 
 export default function browserCommands(browser) {
   var pList = browser.get("packageList"),
@@ -27,6 +30,9 @@ export default function browserCommands(browser) {
     {
       name: "jump to codeentity",
       exec: async browser => {
+        if (isTestModule(browser.selectedModule, browser.ui.sourceEditor.textString))
+          return browser.execCommand("jump to test");
+
         var codeEntities = browser.ui.codeEntityTree.treeData.defs,
             currentIdx = codeEntities.indexOf(browser.ui.codeEntityTree.selection),
             items = codeEntities.map(def => {
@@ -47,8 +53,53 @@ export default function browserCommands(browser) {
                                       historyId: "js-browser-codeentity-jump-hist"
                                     });
         if (choice) {
-          browser.getSubmorphNamed("sourceEditor").saveMark();
+          browser.ui.sourceEditor.saveMark();
           browser.selectCodeEntity(choice);
+        }
+        return true;
+      }
+    },
+
+    {
+      name: "jump to test",
+      exec: async browser => {
+        let {selectedModule: m, ui: {sourceEditor}} = browser;
+        if (!m) return true;
+
+        let source = sourceEditor.textString,
+            items = [], testsByFile = [],
+            lines = source.split("\n"),
+            {cursorPosition: {row: currentRow}} = sourceEditor,
+            preselect = 0;
+
+        await loadTestModuleAndExtractTestState(m.url, testsByFile);
+        let tests = testsByFile[0].tests.filter(ea => ea.fullTitle);
+        for (let i = 0; i < tests.length; i++) {
+          let value = tests[i],
+              {depth, fullTitle, title, type} = value,
+              fnName = type === "suite" ? "describe" : "it",
+              row = value.row = lines.findIndex(
+                line => line.match(new RegExp(`${fnName}.*".*${title}.*"`)));
+          if (row <= currentRow) preselect = i;
+          items.push({
+            isListItem: true,
+            value,
+            label: [
+              `${"\u2002".repeat(depth-1)}${fullTitle}`, null,
+              `line ${row} ${type}`, {fontSize: "70%", textStyleClasses: ["annotation"]}
+            ]
+          })
+        }
+        let {selected: [choice]} = await browser.world().filterableListPrompt(
+          `tests of ${m.nameInPackage}`, items, {
+            requester: browser,
+            preselect
+          });
+        if (choice) {
+          sourceEditor.saveMark();
+          sourceEditor.cursorPosition = {row: choice.row, column: 0};
+          sourceEditor.execCommand("goto line start");
+          sourceEditor.centerRow(choice.row);
         }
         return true;
       }
