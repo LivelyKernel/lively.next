@@ -77,7 +77,7 @@ State management of the style sheets has changes substantially, moving all of th
       let {id: rootId, snapshot} = idAndSnapshot;
       for (let id in snapshot) {
         let { props } = snapshot[id];
-        if (!props || !props.styleSheets || !props.styleSheets.styledMorphs) continue;
+        if (!props || !props.styleSheets) continue;
         if (!props.styleSheets.value) props.styleSheets.value = [];
         props.styleSheets.value = props.styleSheets.value.filter(ea => {
           let styleSheet = snapshot[ea.id];
