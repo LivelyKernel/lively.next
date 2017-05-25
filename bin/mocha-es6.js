@@ -88,14 +88,18 @@ function cacheMocha(System, mochaDirURL) {
 function setupLivelyModulesTestSystem() {
   var baseURL = "file://" + dir,
       System = lively.modules.getSystem("system-for-test", {baseURL}),
-      registry = System["__lively.modules__packageRegistry"] = new modules.PackageRegistry(System);
-  registry.packageBaseDirs = ["file://" + depDir].map(resource);
-  registry.devPackageDirs = [baseURL].map(resource);
+      registry = System["__lively.modules__packageRegistry"] = new modules.PackageRegistry(System),
+      env = process.env;
+  registry.packageBaseDirs = env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").map(resourcify);
+  registry.individualPackageDirs = (env.FLATN_PACKAGE_DIRS || "").split(":").map(resourcify);
+  registry.devPackageDirs = env.FLATN_DEV_PACKAGE_DIRS.split(":").map(resourcify);
   lively.modules.changeSystem(System, true);
   cacheMocha(System, "file://" + mochaDir);
   mochaEs6.installSystemInstantiateHook();
   // System.debug = true;
-  return registry.update()
+  return registry.update();
+
+  function resourcify(path) { return resource("file://" + path).asDirectory(); }
 }
 
 function setupFlatn() {
@@ -120,11 +124,15 @@ function setupFlatn() {
     console.log("Setting FLATN_PACKAGE_COLLECTION_DIRS");
     env.FLATN_PACKAGE_COLLECTION_DIRS = [depDir].join(":");
   }
+  
+  let devPackageDirs = env.FLATN_DEV_PACKAGE_DIRS.split(":"),
+      packageDirs = (env.FLATN_PACKAGE_DIRS || "").split(":"),
+      packageCollectionDirs = env.FLATN_PACKAGE_COLLECTION_DIRS.split(":");
 
   return flatn.installDependenciesOfPackage(
     dir,
     depDir,
-    flatn.buildPackageMap([depDir], [], [dir]),
+    flatn.buildPackageMap(packageCollectionDirs, packageDirs, devPackageDirs),
     ["dependencies", "devDependencies"],
-    true);
+    false/*verbose*/);
 }
