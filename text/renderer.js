@@ -42,7 +42,6 @@ function installCSS(domEnv) {
     .newtext-text-layer {
       box-sizing: border-box;
       position: absolute;
-      width: 100%;
       z-index: 0;
     }
 
@@ -55,16 +54,19 @@ function installCSS(domEnv) {
     .newtext-text-layer.wrap-by-words {
       white-space: pre-wrap;
       overflow-wrap: break-word;
+      width: 100%;
     }
 
     .newtext-text-layer.only-wrap-by-words {
       white-space: pre-wrap;
       overflow-wrap: break-all;
+      width: 100%;
     }
 
     .newtext-text-layer.wrap-by-chars {
       white-space: pre-wrap;
       word-break: break-all;
+      width: 100%;
     }
 
     .newtext-text-layer.no-wrapping {
@@ -173,7 +175,7 @@ AfterTextRenderHook.prototype.updateLineHeightOfNode = function(morph, docLine, 
   return docLine.height;
 }
 
-AfterTextRenderHook.prototype.updateLineHeightOfLines = function(textlayerNode) {
+AfterTextRenderHook.prototype.updateExtentsOfLines = function(textlayerNode) {
   // figure out what lines are displayed in the text layer node and map those
   // back to document lines.  Those are then updated via lineNode.getBoundingClientRect
 
@@ -198,7 +200,6 @@ AfterTextRenderHook.prototype.updateLineHeightOfLines = function(textlayerNode) 
   let row = Number(lineNode.dataset ? lineNode.dataset.row : lineNode.getAttribute("data-row"));
   if (typeof row !== "number" || isNaN(row)) return;
   viewState.dom_nodeFirstRow = row;
-
   let actualTextHeight = 0,
       line = morph.document.getLine(row);
 
@@ -226,7 +227,7 @@ AfterTextRenderHook.prototype.hook = function(node, propName, prevValue) {
   this.called = true;
   // the childNodes = line nodes of node are updated after the hook was called,
   // so delay...
-  this.updateLineHeightOfLines(node);
+  this.updateExtentsOfLines(node);
 }
 
 
