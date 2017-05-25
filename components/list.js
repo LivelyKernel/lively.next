@@ -570,12 +570,12 @@ export class List extends Morph {
   }
 
   scrollIndexIntoView(idx) {
-    var {itemHeight, width, scroll} = this,
+    var {itemHeight, width, scroll, scrollbarOffset} = this,
         itemBounds = new Rectangle(0, idx*itemHeight, width, itemHeight),
         visibleBounds = this.innerBounds().insetByRect(this.padding).translatedBy(scroll),
         offsetX = 0, offsetY = 0
-    if (itemBounds.bottom() > visibleBounds.bottom())
-      offsetY = itemBounds.bottom() - visibleBounds.bottom()
+    if (itemBounds.bottom() > visibleBounds.bottom() - scrollbarOffset.y)
+      offsetY = itemBounds.bottom() - (visibleBounds.bottom() - scrollbarOffset.y)
     if (itemBounds.top() < visibleBounds.top())
       offsetY = itemBounds.top() - visibleBounds.top()
     this.scroll = scroll.addXY(offsetX, offsetY);

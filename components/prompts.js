@@ -560,13 +560,14 @@ export class ListPrompt extends AbstractPrompt {
 
   constructor(props = {}) {
     super(obj.dissoc(props, ["preselect", "items", "onSelection"]));
-    this.get("list").items = props.items || [];
+    let list = this.get("list");
+    list.items = props.items || [];
     if (typeof props.preselect === "number") {
-      this.get("list").selectedIndex = props.preselect;
-      this.get("list").scrollSelectionIntoView();
+      list.selectedIndex = props.preselect;
+      list.scrollSelectionIntoView();
     }
     if (typeof props.onSelection === "function")
-      connect(this.get("list"), "selection", props, "onSelection");
+      connect(list, "selection", props, "onSelection");
   }
 
   build({label,
