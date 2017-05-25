@@ -1027,6 +1027,7 @@ export class Text extends Morph {
         if (embeddedMorphMap) {
           let existing = embeddedMorphMap.get(content);
           if (existing && existing.anchor) {
+            this.removeAnchor(existing.anchor);
             disconnect(existing.anchor, 'position', content, 'position');
           }
           embeddedMorphMap.set(content, {...existing, anchor: null});

@@ -141,6 +141,7 @@ var commands = [
       if (eventState.menu) eventState.menu.remove();
       var halos = world.halos();
       halos.forEach(h => h.remove());
+      world.hands.forEach(ea => ea.cancelGrab());
       var focusTarget = (arr.last(halos) && arr.last(halos).target) || world.focusedMorph || world;
       focusTarget.focus();
       return false;

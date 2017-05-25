@@ -600,14 +600,19 @@ export class World extends Morph {
 
 export class Hand extends Morph {
 
+  static get properties() {
+    return {
+      fill: {defaultValue: Color.orange},
+      extent: {defaultValue: pt(4,4)},
+      reactsToPointer: {defaultValue: false},
+      _grabbedMorphProperties: {
+        serialize: false,
+        initialize: function() { this._grabbedMorphProperties = new WeakMap(); }
+      }
+    }
+  }
   constructor(pointerId) {
-    super({
-      fill: Color.orange,
-      extent: pt(4,4),
-      reactsToPointer: false,
-      pointerId
-    });
-    this.reset();
+    super({pointerId});
   }
 
   __deserialize__(snapshot, objRef) {
@@ -617,7 +622,7 @@ export class Hand extends Morph {
 
   reset() {
     // stores properties of morphs while those are being carried
-    this.prevMorphProps = new WeakMap();
+    this._grabbedMorphProperties = new WeakMap();
   }
 
   get isHand() { return true }
@@ -641,9 +646,28 @@ export class Hand extends Morph {
     this.carriesMorphs() && evt.halo && evt.halo.grabHalo().update();
   }
 
+  async cancelGrab(animate = true) {
+    if (!this.grabbedMorphs.length) return;
+    let anims = []
+    for (let m of this.grabbedMorphs) {
+      let {prevOwner, prevIndex, prevPosition, pointerAndShadow} = this._grabbedMorphProperties.get(m) || {};
+      Object.assign(m, pointerAndShadow);
+      if (!prevOwner) { m.remove(); continue; }
+      prevOwner.addMorphAt(m, prevIndex);
+      if (animate) anims.push(m.animate({position: prevPosition}));
+      else m.position = prevPosition;
+    }
+    return anims.length ? Promise.all(anims) : null;
+  }
+
   grab(morph) {
     if (obj.isArray(morph)) return morph.forEach(m => this.grab(m));
-    this.prevMorphProps.set(morph, obj.select(morph, ["dropShadow", "reactsToPointer"]))
+    this._grabbedMorphProperties.set(morph, {
+      prevOwner: morph.owner,
+      prevPosition: morph.position,
+      prevIndex: morph.owner ? morph.owner.submorphs.indexOf(morph) : -1,
+      pointerAndShadow: obj.select(morph, ["dropShadow", "reactsToPointer"])
+    })
     // So that the morphs doesn't steal events
     morph.reactsToPointer = false;
     morph.dropShadow = true;
@@ -655,7 +679,8 @@ export class Hand extends Morph {
     this.grabbedMorphs.forEach(morph => {
       try {
         dropTarget.addMorph(morph);      
-        Object.assign(morph, this.prevMorphProps.get(morph));
+        let {pointerAndShadow} = this._grabbedMorphProperties.get(morph) || {}
+        Object.assign(morph, pointerAndShadow);
         signal(this, "drop", morph);
         morph.onBeingDroppedOn(dropTarget);
       } catch (err) {
