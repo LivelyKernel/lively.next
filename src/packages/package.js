@@ -146,7 +146,7 @@ export class Package {
 
   async resources(
     matches /*= url => url.match(/\.js$/)*/,
-    exclude = [".git", "node_modules", ".module_cache"],
+    exclude = [".git", "node_modules", ".module_cache", "lively.next-node_modules"],
   ) {
     let {System, url} = this,
         allPackages = allPackageNames(System),
@@ -420,7 +420,7 @@ export class Package {
     var modules = options.includeUnloaded ?
       (await this.resources(
         url => url.endsWith(".js"),
-        [".git", "node_modules", "dist", ".module_cache"]))
+        [".git", "node_modules", "dist", ".module_cache", "lively.next-node_modules"]))
           .map(({url}) => module(this.System, url)) :
       this.modules().filter(ea => ea.isLoaded());
     return Promise.all(
