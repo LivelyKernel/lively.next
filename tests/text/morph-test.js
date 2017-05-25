@@ -676,7 +676,7 @@ describeInBrowser("text movement and selection commands", () => {
 
 });
 
-describe("morph inside textAndAttributes", () => {
+describeInBrowser("morph inside textAndAttributes", () => {
 
   var m;
   beforeEach(() => {
