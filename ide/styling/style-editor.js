@@ -776,7 +776,7 @@ export class HTMLEditor extends Morph {
         name: "html editor",
         textString: this.target.html,
         fontColor: Color.white,
-        fontFamily: "Inconsolata, monospace",
+        fontFamily: "Monaco, monospace",
         padding: Rectangle.inset(10, 10, 10, 2),
         fontSize: 14,
         fill: Color.transparent,

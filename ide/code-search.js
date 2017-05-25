@@ -71,7 +71,7 @@ export class CodeSearcher extends FilterableList {
         initialize() {
           this.styleSheets = new StyleSheet({
             ".list .ListItemMorph": {
-              fontFamily: "Inconsolata, monospace"
+              fontFamily: "Monaco, monospace"
             }
           });
         }

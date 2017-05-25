@@ -155,7 +155,7 @@ export class StatusMessage extends Morph {
         fixedHeight: false,
         clipMode: "visible",
         fontSize: 14,
-        fontFamily: "Inconsolata, 'DejaVu Sans Mono', monospace"
+        fontFamily: "Monaco, 'DejaVu Sans Mono', monospace"
       },
       ".StatusMessage .Button": {
          borderRadius: 15

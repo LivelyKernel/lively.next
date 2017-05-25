@@ -616,7 +616,7 @@ export class FilterableList extends Morph {
         padding: Rectangle.inset(2, 0)
       },
       ".list.dark .ListItemMorph": {
-        fontFamily: "Inconsolata, monospace",
+        fontFamily: "Monaco, monospace",
         nonSelectionFontColor: Color.gray,
         selectionFontColor: Color.black,
         selectionColor: Color.gray.lighter(),

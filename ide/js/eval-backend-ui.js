@@ -209,7 +209,7 @@ export default class EvalBackendChooser {
       if (!info.known) {
         Promise.resolve().then(async () => {
           let {data: {value: location}} = await l2lClient.sendToAndWait(
-                id, "remote-eval", {source: "String(document.location.href)"});
+                id, "remote-eval", {source: "typeof require !== 'undefined' && typeof process !== 'undefined' ? require('os').hostname() : String(document.location.href)"});
           info.location = location;
           info.known = true;
         });

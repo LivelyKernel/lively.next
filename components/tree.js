@@ -327,7 +327,7 @@ export class Tree extends Morph {
       },
 
       fontSize: {
-        defaultValue: 15,
+        defaultValue: 12,
         set(fontSize) { this.setProperty("fontSize", fontSize); this.update(); }
       },
 
