@@ -34,38 +34,41 @@ const globalDomEventsWeListenTo = [
 ];
 
 const typeToMethodMap = {
-  "pointerdown":       "onMouseDown",
-  "pointerup":         "onMouseUp",
-  "pointermove":       "onMouseMove",
-  "hoverin":           "onHoverIn",
-  "hoverout":          "onHoverOut",
-  "morphicdrag":       "onDrag",
-  "morphicdragstart":  "onDragStart",
-  "morphicdragend":    "onDragEnd",
-  "grab":              "onGrab",
-  "morphicdrop":       "onDrop",
-  "keydown":           "onKeyDown",
-  "keyup":             "onKeyUp",
-  "input":             "onTextInput",
-  "compositionstart":  "onCompositionStart",
-  "compositionupdate": "onCompositionUpdate",
-  "compositionend":    "onCompositionEnd",
-  "blur":              "onBlur",
-  "focus":             "onFocus",
-  "contextmenu":       "onContextMenu",
-  "cut":               "onCut",
-  "copy":              "onCopy",
-  "paste":             "onPaste",
-  "scroll":            "onScroll",
-  "wheel" :            "onMouseWheel",
+  "pointerdown":            "onMouseDown",
+  "pointerup":              "onMouseUp",
+  "pointermove":            "onMouseMove",
+  "hoverin":                "onHoverIn",
+  "hoverout":               "onHoverOut",
+  "morphicdrag":            "onDrag",
+  "morphicdragstart":       "onDragStart",
+  "morphicdragend":         "onDragEnd",
+  "grab":                   "onGrab",
+  "morphicdrop":            "onDrop",
+  "morphicdrophoverin":     "onDropHoverIn",
+  "morphicdrophoverout":    "onDropHoverOut",
+  "morphicdrophoverupdate": "onDropHoverUpdate",
+  "keydown":                "onKeyDown",
+  "keyup":                  "onKeyUp",
+  "input":                  "onTextInput",
+  "compositionstart":       "onCompositionStart",
+  "compositionupdate":      "onCompositionUpdate",
+  "compositionend":         "onCompositionEnd",
+  "blur":                   "onBlur",
+  "focus":                  "onFocus",
+  "contextmenu":            "onContextMenu",
+  "cut":                    "onCut",
+  "copy":                   "onCopy",
+  "paste":                  "onPaste",
+  "scroll":                 "onScroll",
+  "wheel" :                 "onMouseWheel",
 
-  "drag":              "onNativeDrag",
-  "dragstart":         "onNativeDragstart",
-  "dragend":           "onNativeDragend",
-  "dragover":          "onNativeDragover",
-  "dragenter":         "onNativeDragenter",
-  "dragleave":         "onNativeDragleave",
-  "drop":              "onNativeDrop"
+  "drag":                   "onNativeDrag",
+  "dragstart":              "onNativeDragstart",
+  "dragend":                "onNativeDragend",
+  "dragover":               "onNativeDragover",
+  "dragenter":              "onNativeDragenter",
+  "dragleave":              "onNativeDragleave",
+  "drop":                   "onNativeDrop"
 }
 
 const focusTargetingEvents = [
@@ -197,7 +200,8 @@ export default class EventDispatcher {
       hover: {hoveredOverMorphs: [], unresolvedPointerOut: false},
       scroll: {interactiveScrollInProgress: null},
       keyInputState: null,
-      html5Drag: {}
+      html5Drag: {},
+      dropHoverTarget: null
     };
     this.resetKeyInputState()
   }
@@ -352,7 +356,12 @@ export default class EventDispatcher {
           // grabbed morph itself, i.e. the drop target must not be a child morph
           // of the hand
           if (hand.isAncestorOf(targetMorph)) {
-            targetMorph = hand.findDropTarget(defaultEvent.position) || this.world;
+            targetMorph = hand.findDropTarget(defaultEvent.position, hand.grabbedMorphs)
+                       || this.world;
+          }
+          if (state.dropHoverTarget) {
+            events.push(new Event("morphicdrophoverout", domEvt, this, [state.dropHoverTarget], hand, halo, layoutHalo));
+            state.dropHoverTarget = null;
           }
           events.push(new Event("morphicdrop", domEvt, this, [targetMorph], hand, halo, layoutHalo));
           defaultEvent.targetMorphs = [this.world];
@@ -367,6 +376,17 @@ export default class EventDispatcher {
 
         if (hand.carriesMorphs()) {
           defaultEvent.targetMorphs = [this.world];
+          let dropTargetMorph = hand.findDropTarget(defaultEvent.position, hand.grabbedMorphs)
+                             || this.world;
+
+          if (state.dropHoverTarget === dropTargetMorph) {
+            events.push(new Event("morphicdrophoverupdate", domEvt, this, [dropTargetMorph], hand, halo, layoutHalo));
+          } else {
+            if (state.dropHoverTarget)
+              events.push(new Event("morphicdrophoverout", domEvt, this, [state.dropHoverTarget], hand, halo, layoutHalo));
+            state.dropHoverTarget = dropTargetMorph;
+            events.push(new Event("morphicdrophoverin", domEvt, this, [dropTargetMorph], hand, halo, layoutHalo));
+          }
 
         } else if (state.draggedMorph) {
           defaultEvent.targetMorphs = [this.world];

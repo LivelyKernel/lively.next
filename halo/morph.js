@@ -826,8 +826,10 @@ class GrabHaloItem extends HaloItem {
   valueForPropertyDisplay() {
     let {hand, halo, prevDropTarget} = this,
         world = hand.world(),
-        dropTarget = hand.findDropTarget(hand.position, m =>
-          !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem));
+        dropTarget = hand.findDropTarget(
+          hand.position,
+          [halo.target],
+          m => !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem));
 
     halo.toggleMorphHighlighter(dropTarget && dropTarget != world, dropTarget, true);
     if (prevDropTarget && prevDropTarget != dropTarget)
@@ -852,8 +854,10 @@ class GrabHaloItem extends HaloItem {
   stop(hand) {
     let {halo, prevDropTarget} = this,
         undo = halo.target.undoInProgress,
-        dropTarget = hand.findDropTarget(hand.position, m =>
-          !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem));
+        dropTarget = hand.findDropTarget(
+          hand.position,
+          [halo.target],
+          m => !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem));
     MorphHighlighterForHalo.interceptDrop(halo, dropTarget, halo.target);
     undo.addTarget(dropTarget);
     dropTarget.onDrop({hand});
@@ -1099,9 +1103,11 @@ class CopyHaloItem extends HaloItem {
   }
 
   stop(hand) {
-    var dropTarget = hand.findDropTarget(hand.position, m =>
-          !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem)),
-        {halo} = this,
+    var {halo} = this,
+        dropTarget = hand.findDropTarget(
+          hand.position, 
+          [halo.target],
+          m => !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem)),
         undo = halo.target.undoInProgress;
     undo.addTarget(dropTarget);
     hand.dropMorphsOn(dropTarget);

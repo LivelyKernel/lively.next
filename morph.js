@@ -1529,6 +1529,15 @@ export class Morph {
     evt.hand.dropMorphsOn(this);
   }
 
+  wantsToBeDroppedOn(dropTarget) {
+    // called when `this` is grabbed and a drop target for `this` needs to be found
+    return true;
+  }
+
+  onDropHoverIn(evt) {}
+  onDropHoverUpdate(evt) {}
+  onDropHoverOut(evt) {}
+
   onBeingDroppedOn(recipient) {
     // called when `this` was dropped onto morph `recipient`
   }
