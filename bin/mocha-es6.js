@@ -1,4 +1,4 @@
-#! /usr/bin/env node --trace-warnings
+#! /usr/bin/env node
 
 /*global require, process, __dirname*/
 require("systemjs")
