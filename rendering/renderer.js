@@ -110,18 +110,22 @@ export class Renderer {
     return h("div", {
       ...defaultAttributes(morph, this),
       style: defaultStyle(morph)
-    }, this.renderSubmorphs(morph));
+    }, this.renderSelectedSubmorphs(morph, morph.submorphs));
   }
 
   renderSubmorphs(morph) {
-    return h("div", {
-          style: {
-            position: "absolute",
-            transform: `translate(${morph.origin.x - morph.borderWidthLeft}px,${morph.origin.y - morph.borderWidthTop}px)`
-          }
-        }, morph.submorphs.map(m => this.render(m)));
+    return this.renderSelectedSubmorphs(morph, morph.submorphs);
   }
 
+  renderSelectedSubmorphs(morph, submorphs) {
+    let {borderWidthLeft, borderWidthTop, origin: {x: oX, y: oY}} = morph;
+    return h("div", {
+      style: {
+        position: "absolute",
+        transform: `translate(${oX - borderWidthLeft}px,${oY - borderWidthTop}px)`
+      }
+    }, submorphs.map(m => this.render(m)));
+  }
 
   renderImage(image) {
     return h("div", {

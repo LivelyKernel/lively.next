@@ -225,6 +225,23 @@ export function modifyAttributesInRange(doc, range, modifyFn) {
 
 }
 
+export function textAndAttributesWithSubRanges(start, textAndAttributes) {
+  // textAndAttributesWithSubRanges(that.selection.start, that.textAndAttributesInRange())
+  let {column, row} = start,
+      ranges = [], textAndAttributesIntoLines = [];
+  for (let lineTextAndAttributes of splitTextAndAttributesIntoLines(textAndAttributes)) {
+    for (let i = 0; i < lineTextAndAttributes.length; i=i+2) {
+      let endColumn = column + lineTextAndAttributes[i].length;
+      ranges.push({start: {row, column}, end: {row, column: endColumn}});
+      textAndAttributesIntoLines.push(lineTextAndAttributes[i], lineTextAndAttributes[i+1]);
+      column = endColumn;
+    }
+    column = 0;
+    row++;
+  }
+  return {ranges, textAndAttributes: textAndAttributesIntoLines}
+}
+
 function textAndAttributesDo(textAndAttributes, doFn) {
   for (let i = 0; i < textAndAttributes.length; i=i+2)
     doFn(textAndAttributes[i], textAndAttributes[i+1]);

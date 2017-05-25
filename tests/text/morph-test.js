@@ -658,3 +658,71 @@ describeInBrowser("text movement and selection commands", () => {
   })
 
 });
+
+describe("morph inside textAndAttributes", () => {
+
+  var m;
+  beforeEach(() => {
+    sut = text("text\nfor tests", {
+      fill: Color.gray.lighter(2),
+      extent: pt(400, 400),
+      fixedWidth: true, fixedHeight: true,
+      cursorPosition: {row: 0, column: 0}
+    }).openInWorld(pt(100,100));
+    m = $world.addMorph({extent: pt(200, 100), fill: Color.blue});
+  });
+
+  afterEach(() => { sut.remove(); m.remove(); });
+
+  it("new morph gets embedded", async () => {
+    sut.insertText([m, null, "\n", null], {column: 0, row: 1});
+    expect(m.owner).equals(sut);
+    expect(sut.embeddedMorphs).includes(m);
+    await m.whenRendered();
+    expect(sut.env.domEnv.document.querySelectorAll("#" + m.id)).length(1);
+  });
+
+  it("morph that already is submorph gets embedded", async () => {
+    sut.addMorph(m);
+    sut.insertText([m, null, "\n", null], {column: 0, row: 1});
+    expect(m.owner).equals(sut);
+    expect(sut.embeddedMorphs).includes(m);
+    await m.whenRendered();
+    expect(sut.env.domEnv.document.querySelectorAll("#" + m.id)).length(1);
+  });
+  
+  it("remove removes morph from text", async () => {
+    sut.insertText([m, null, "\n", null], {column: 0, row: 1});
+    expect(sut.textString).equals(`text\n�\nfor tests`)
+    m.remove()
+    expect(sut.textString).equals(`text\n\nfor tests`)
+    expect(sut.embeddedMorphs).not.includes(m);
+  });
+  
+  it("text deletion removes morph from text", async () => {
+    sut.insertText([m, null, "\n", null], {column: 0, row: 1});
+    expect(sut.textString).equals(`text\n�\nfor tests`)
+    sut.deleteText({start: {row: 1, column: 0}, end: {row: 1, column: 1}});
+    expect(sut.textString).equals(`text\n\nfor tests`)
+    expect(sut.embeddedMorphs).not.includes(m);
+    expect(sut.submorphs).not.includes(m);
+  });
+  
+  it("position of embedded morph is correct", async () => {
+    sut.insertText([m, null, "\n", null], {column: 0, row: 1});
+    expect(m.position).equals(sut.charBoundsFromTextPosition({column: 0, row: 1}).topLeft(), "1");
+    sut.cursorPosition = {column: 0, row: 1};
+    sut.execCommand("insertstring", {string: "\n"});
+    expect(m.position).equals(sut.charBoundsFromTextPosition({column: 0, row: 2}).topLeft(), "2");
+    sut.execCommand("delete backwards");
+    expect(m.position).equals(sut.charBoundsFromTextPosition({column: 0, row: 1}).topLeft(), "3");
+
+    let {anchor} = sut.embeddedMorphMap.get(m),
+        oldPos = m.position;
+    m.remove();
+    expect(anchor.attributeConnections).equals(undefined);
+    sut.insertText("\n", {column: 0, row: 1});
+    expect(m.position).equals(oldPos, "4");
+  });
+
+});

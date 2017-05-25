@@ -4,7 +4,7 @@ import { Rectangle, rect, Color, pt } from "lively.graphics";
 import { Selection, MultiSelection } from "./selection.js";
 import { string, obj, fun, promise, arr } from "lively.lang";
 import Document, { objectReplacementChar } from "./document.js";
-import { signal } from "lively.bindings";
+import { signal, connect, disconnect } from "lively.bindings";
 import { Anchor } from "./anchors.js";
 import { Range } from "./range.js";
 import { eqPosition, lessPosition } from "./position.js";
@@ -18,6 +18,7 @@ import TextLayout from "./layout.js";
 import Renderer from "./renderer.js";
 import commands from "./commands.js";
 import { RichTextControl } from "./ui.js";
+import { textAndAttributesWithSubRanges } from "./attributes.js";
 
 
 
@@ -111,6 +112,15 @@ export class Text extends Morph {
 
       viewState: {
         initialize() { this.viewState = this.defaultViewState; }
+      },
+
+      embeddedMorphMap: {
+        initialize() { this.embeddedMorphMap = new Map(); }
+      },
+
+      embeddedMorphs: {
+        derived: true, readOnly: true, after: ["embeddedMorphMap"],
+        get() { return this.embeddedMorphMap ? Array.from(this.embeddedMorphMap.keys()) : []; }
       },
 
       textLayout: {
@@ -524,6 +534,19 @@ export class Text extends Morph {
     textChange && signal(this, "textChange", change);
     viewChange && signal(this, "viewChange", change);
   }
+  
+  removeMorph(morph) {
+    let {embeddedMorphMap} = this;
+    if (embeddedMorphMap && embeddedMorphMap.has(morph)) {
+      let {anchor} = embeddedMorphMap.get(morph);
+      if (anchor) {
+        let {position: {row, column}} = anchor;
+        this.replace({start: {row, column}, end: {row, column: column+1}}, [])
+      }
+      embeddedMorphMap.delete(morph);
+    }
+    return super.removeMorph(morph);
+  }
 
   rejectsInput() { return this.readOnly /*|| !this.isFocused()*/ }
 
@@ -935,14 +958,20 @@ export class Text extends Morph {
 
     if (nothingToInsert && nothingToDelete) return range;
 
+    let attrToExtend;
     if (extendTextAttributes && range.start.column > 0) {
-      let attrToExtend = this.textAttributeAt({
+      attrToExtend = this.textAttributeAt({
         row: range.start.row,
         column: range.start.column - 1
       });
-      if (attrToExtend)
-        for (let i = 0; i < textAndAttributes.length; i = i+2)
-          textAndAttributes[i+1] = {...textAndAttributes[i+1], ...attrToExtend};
+    }
+
+    let morphsInAddedText = [];
+    for (let i = 0; i < textAndAttributes.length; i = i+2) {
+      let content = textAndAttributes[i],
+          attrs = textAndAttributes[i+1];
+      if (content.isMorph) morphsInAddedText.push(content);
+      if (attrToExtend) textAndAttributes[i+1] = {...attrs, ...attrToExtend};
     }
 
     undoGroup && this.undoManager.undoStart(this, "replace");
@@ -980,12 +1009,72 @@ export class Text extends Morph {
         else this.selection.updateFromAnchors();
       }
 
+      this._updateEmbeddedMorphsDuringReplace(morphsInAddedText, insertedRange, textAndAttributes, removedTextAndAttributes)
+
       this.consistencyCheck();
     });
 
     undoGroup && this.undoManager.undoStop();
 
     return insertedRange;
+  }
+
+  _updateEmbeddedMorphsDuringReplace(morphsInAddedText, insertedRange, newTextAndAttributes, removedTextAndAttributes) {    
+    let {embeddedMorphMap} = this;
+    for (let i = 0; i < removedTextAndAttributes.length; i = i+2) {
+      let content = removedTextAndAttributes[i];
+      if (content.isMorph) {
+        if (embeddedMorphMap) {
+          let existing = embeddedMorphMap.get(content);
+          if (existing && existing.anchor) {
+            disconnect(existing.anchor, 'position', content, 'position');
+          }
+          embeddedMorphMap.set(content, {...existing, anchor: null});
+        }
+        content.remove();
+      }
+    }
+    if (morphsInAddedText.length) {
+      let {ranges, textAndAttributes} = textAndAttributesWithSubRanges(insertedRange.start, newTextAndAttributes);
+      for (let i = 0; i < ranges.length; i++) {
+        let morph = textAndAttributes[i*2];
+        if (!morph.isMorph) continue;
+        console.assert(morphsInAddedText.includes(morph), "????");
+        let {start} = ranges[i];
+        
+        if (morph.owner !== this) this.addMorph(morph);
+        if (embeddedMorphMap && !embeddedMorphMap.has(morph)) {
+          let anchor = this.addAnchor({id: "embedded-" + morph.id, ...start});
+          connect(anchor, 'position', morph, 'position', {
+            converter: function(textPos) {
+              return this.targetObj.owner.charBoundsFromTextPosition(textPos).topLeft();
+            }
+          }).update(anchor.position);
+          embeddedMorphMap.set(morph, {anchor});
+        }
+      }
+
+      // let {start, end} = insertedRange, found;
+      // while (start && (found = this.search(objectReplacementChar, {inRange: {start, end}}))) {
+      //   let {range} = found,
+      //       morph = this.textAndAttributesInRange(range)[0];
+      //   start = lessPosition(range.end, end) ? range.end : null;
+      //   if (!morph.isMorph) {
+      //     console.warn(`[inserting morph into text] content marked as morph is not a morph: ${morph}`);
+      //     continue;
+      //   }
+      //   if (morph.owner !== this) this.addMorph(morph);
+      //   if (embeddedMorphMap && !embeddedMorphMap.has(morph)) {
+      //     let anchor = this.addAnchor({id: "embedded-" + morph.id, ...range.start});
+      //     connect(anchor, 'position', morph, 'position', {
+      //       converter: function(textPos) {
+      //         return this.targetObj.owner.charBoundsFromTextPosition(textPos).topLeft();
+      //       }
+      //     }).update(anchor.position);
+      //     embeddedMorphMap.set(morph, {anchor});
+      //   }
+      // }
+    }
   }
 
   modifyLines(startRow, endRow, modifyFn) {

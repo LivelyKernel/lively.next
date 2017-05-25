@@ -213,7 +213,6 @@ AfterTextRenderHook.prototype.updateLineHeightOfLines = function(textlayerNode) 
   }
 
   if (this.needsRerender) {
-
     morph.fitIfNeeded();
     morph.makeDirty();
   } else morph._dirty = false;
@@ -287,6 +286,11 @@ export default class Renderer {
     textLayerForFontMeasure.properties.className += " font-measure";
     // textLayerForFontMeasure.properties.style.visibility = "hidden";
 
+    let {embeddedMorphMap} = morph,
+        submorphsNotInText = embeddedMorphMap
+          ? morph.submorphs.filter(ea => !embeddedMorphMap.has(ea))
+          : morph.submorphs;
+
     return h("div", {
         ...defaultAttributes(morph, renderer),
         style: {
@@ -299,11 +303,10 @@ export default class Renderer {
         ...selectionLayer, markerLayer,
         textLayerForFontMeasure,
         textLayer,
-        renderer.renderSubmorphs(morph)
+        renderer.renderSelectedSubmorphs(morph, submorphsNotInText)
       ]
     );
   }
-
 
   renderTextLayer(morph, renderer) {
     // this method renders the text content = lines
@@ -476,26 +479,10 @@ export default class Renderer {
         attr = textAndAttributes[i+1];
 
         if (typeof content !== "string") {
-
-          if (content && content.isMorph) {
-            let rendered;
-            if (renderer) {
-              rendered = content.render(renderer);
-              rendered.properties.style.position = "";
-              rendered.properties.style.transform = "";
-            } else {
-              let {extent} = content,
-                  width = extent.x + "px",
-                  height = extent.y + "px";
-
-              rendered = h("div", {className: "Morph", style: {width, height}}, []);
-            }
-            renderedChunks.push(rendered);
-
-          } else {
-            renderedChunks.push(objectReplacementChar)
-          }
-
+          renderedChunks.push(
+            content.isMorph
+              ? this.renderEmbeddedSubmorph(h, renderer, content)
+              : objectReplacementChar);
           continue;
         }
 
@@ -540,6 +527,20 @@ export default class Renderer {
     } else renderedChunks.push(h("br"));
 
     return h("div", {className: "line", dataset: {row: line.row}}, renderedChunks);
+  }
+
+  renderEmbeddedSubmorph(h, renderer, morph) {
+    let rendered;
+    if (renderer) {
+      rendered = renderer.render(morph);
+      rendered.properties.style.position = "";
+      rendered.properties.style.transform = "";
+      return rendered;
+    }
+    let {extent, styleClasses} = morph,
+        width = extent.x + "px",
+        height = extent.y + "px";
+    return h("div", {className: styleClasses.join(" "), style: {width, height}}, []);
   }
 
   renderSelectionLayer(morph, selection, diminished = false, cursorWidth = 2) {
