@@ -257,6 +257,23 @@ describeInBrowser("anchors", () => {
     expect(a.position).deep.equals({row: 0, column: 1}, "4 crossing anchor");
   });
 
+  it("setting anchors", () => {
+    let t = text("hello\nworld", {}),
+        {startAnchor, endAnchor} = t.selections[0];    
+    t.anchors = [startAnchor, endAnchor];
+    expect(t.anchors).equals([startAnchor, endAnchor]);
+  });
+
+  it("anchor with backspace", () => {
+    var t = text("hello\nworld", {}),
+        a = t.addAnchor({id: "test", column: 0, row: 1, insertBehavior: "move"});
+    t.cursorPosition = {row: 1, column: 0};
+    t.execCommand("delete backwards")
+    expect(a.position).deep.equals({column: 5,row: 0});
+    t.execCommand("insertstring", {string: "\n"})
+    expect(a.position).deep.equals({column: 0, row: 1});
+  });
+
 });
 
 
@@ -697,6 +714,7 @@ describe("morph inside textAndAttributes", () => {
     m.remove()
     expect(sut.textString).equals(`text\n\nfor tests`)
     expect(sut.embeddedMorphs).not.includes(m);
+    expect(sut.anchors.filter(ea => !ea.id.includes("selection-"))).length(0);
   });
   
   it("text deletion removes morph from text", async () => {

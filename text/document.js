@@ -1780,9 +1780,10 @@ export default class Document {
     // splitTextAndAttributesIntoLines(["hhelo", null, " wor\nd", null], newline)
 
     let line = this.getLine(startRow),
+        firstLine = line,
         lastLine = this.getLine(endRow),
-        [before, _] = splitTextAndAttributesAt(line.textAndAttributes, startColumn);
-    line.changeTextAndAttributes(
+        [before, _] = splitTextAndAttributesAt(firstLine.textAndAttributes, startColumn);
+    firstLine.changeTextAndAttributes(
       nothingToInsert
         ? before
         : concatTextAndAttributes(before, textAndAttributesByLine.shift(), true));
@@ -1796,10 +1797,11 @@ export default class Document {
     }
 
     if (!textAndAttributesByLine.length) {
+      let column = line.stringSize-1;
       this.remove({start: {row, column: line.stringSize}, end});
       return {
         removed: {start, end},
-        inserted: {start, end: {row, column: line.stringSize}}
+        inserted: {start, end: {row, column}}
       };
     }
 

@@ -207,15 +207,20 @@ describe("document as text tree", () => {
   describe("replace", () => {
 
     it("replaces single line", () => {
-      var doc = new Document(["aaa", "bbb"]);
-      doc.replace(range(0,0,0,3), ["test", {x: 23}]);
+      var doc = new Document(["aaa", "bbb"]),
+          {removed, inserted} = doc.replace(range(0,0,0,3), ["test", {x: 23}]);
+      expect(range(0,0,0,3)).deep.equals(removed);
+      expect(range(0,0,0,4)).deep.equals(inserted);
+
       doc.consistencyCheck();
       expect(doc.print()).equals(
           `root (size: 2 width: 0 height: 0 text length: 9)\n`
         + ` line 0 (size: 1 width: 0 height: 0 text length: 5 content: ["test",{"x":23}])\n`
         + ` line 1 (size: 1 width: 0 height: 0 text length: 4 content: ["bbb",null])`);
-      var doc = new Document(["aaa", "bbb"]);
-      doc.replace(range(1,0,1,3), "test");
+      var doc = new Document(["aaa", "bbb"]),
+          {removed, inserted} = doc.replace(range(1,0,1,3), "test");
+      expect(range(1,0,1,3)).deep.equals(removed);
+      expect(range(1,0,1,4)).deep.equals(inserted);
       doc.consistencyCheck();
       expect(doc.print()).equals(
           `root (size: 2 width: 0 height: 0 text length: 9)\n`
@@ -224,14 +229,16 @@ describe("document as text tree", () => {
     });
     
     it("replaces across lines", () => {
-      var doc = new Document(["aaa", "bbb"]);
-      doc.replace(range(0,1,1,1), "test");
+      var doc = new Document(["aaa", "bbb"]),
+          {inserted} = doc.replace(range(0,1,1,1), "test");
+      expect(inserted).deep.equals(range(0,1,0,5));
       doc.consistencyCheck();
       expect(doc.print()).equals(
           `root (size: 1 width: 0 height: 0 text length: 8)\n`
         + ` line 0 (size: 1 width: 0 height: 0 text length: 8 content: ["atestbb",null])`);
-      var doc = new Document(["aaa", "bbb"]);
-      doc.replace(range(0,1,1,1), ["test", {x: 23}]);
+      var doc = new Document(["aaa", "bbb"]),
+          {inserted} = doc.replace(range(0,1,1,1), ["test", {x: 23}]);
+      expect(inserted).deep.equals(range(0,1,0,5));
       doc.consistencyCheck();
       expect(doc.print()).equals(
           `root (size: 1 width: 0 height: 0 text length: 8)\n`
@@ -239,8 +246,9 @@ describe("document as text tree", () => {
     });
     
     it("replacement has multiple lines", () => {
-      var doc = new Document(["aaa", "bbb"]);
-      doc.replace(range(0,1,0,2), "test\nfoo\nbar");
+      var doc = new Document(["aaa", "bbb"]),
+          {inserted} = doc.replace(range(0,1,0,2), "test\nfoo\nbar");
+      expect(inserted).deep.equals(range(0,1,2,3));
       doc.consistencyCheck();
       expect(doc.print()).equals(
         `root (size: 4 width: 0 height: 0 text length: 19)\n`
@@ -253,8 +261,9 @@ describe("document as text tree", () => {
     });
 
     it("replacementment longer as doc", () => {
-      var doc = new Document(["aaa", "bbb"]);
-      doc.replace(range(1,1,2,0), "test\nfoo\nbar");
+      var doc = new Document(["aaa", "bbb"]),
+          {inserted} = doc.replace(range(1,1,2,0), "test\nfoo\nbar");
+      expect(inserted).deep.equals(range(1,1,3,3));
       doc.consistencyCheck();
       expect(doc.print()).equals(
         `root (size: 4 width: 0 height: 0 text length: 18)\n`
@@ -267,8 +276,9 @@ describe("document as text tree", () => {
     });
 
     it("insert after end", () => {
-      var doc = new Document(["aaa"]);
-      doc.replace(range(1,1,2,0), "foo\nbar");
+      var doc = new Document(["aaa"]),
+          {inserted} = doc.replace(range(1,1,2,0), "foo\nbar");
+      expect(inserted).deep.equals(range(0,3,2,3));
       doc.consistencyCheck();
       expect(doc.print()).equals(
         `root (size: 3 width: 0 height: 0 text length: 12)\n`
