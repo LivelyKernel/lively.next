@@ -20,7 +20,7 @@ function createDummyWorld() {
   return world;
 }
 
-describe("Style Rules", () => {
+describe("Style Rules", function() {
 
   if (System.get("@system-env").node)
     this.timeout(10000);
