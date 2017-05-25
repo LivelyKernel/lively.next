@@ -80,8 +80,10 @@ State management of the style sheets has changes substantially, moving all of th
         if (!props || !props.styleSheets) continue;
         if (!props.styleSheets.value) props.styleSheets.value = [];
         props.styleSheets.value = props.styleSheets.value.filter(ea => {
-          let styleSheet = snapshot[ea.id];
-          return !!styleSheet.props.sizzle;
+          let styleSheet = snapshot[ea.id],
+              rules = styleSheet.props.rules,
+              rulesObj = snapshot[rules.value.id];
+          return !styleSheet.props.styledMorphs && !('lively.serializer-class-info' in rulesObj);
         });
       }
       removeUnreachableObjects([rootId], snapshot);
