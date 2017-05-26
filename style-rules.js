@@ -127,7 +127,15 @@ class PropertyDraft extends Morph {
       styleSheet: {},
       rule: {},
       styleClasses: {defaultValue: ["createProp"]},
-      styledClasses: {defaultValue: [Morph, Text, Button]},
+      styledClasses: {
+        after: ['rule'],
+        initialize() {
+          this.styledClasses = arr.union(
+               [Morph, Text, Button],
+               new Sizzle($world).select(this.rule)
+                   .map(m => m.constructor));
+        }
+      },
       globalPropertySettings: {
         after: ['styledClasses'],
         initialize() {
@@ -169,6 +177,7 @@ class PropertyDraft extends Morph {
           connect(this.get("key input"), "onKeyUp", this, "onPropNameInput");
           connect(this.get("key input"), "onBlur", this, "stopPropNameInput");
           connect(this.get("key input"), "onMouseDown", this, "startPropNameInput");
+          connect(this.get('value input'), "onFocus", this, 'startEnteringValue');
           connect(this.get('value input'), "onkeyDown", this, 'enterValue');
           connect(this.get("value input"), "onBlur", this, "submitValue");
         }
@@ -176,6 +185,10 @@ class PropertyDraft extends Morph {
     };
   }
 
+  startEnterValue() {
+    this.get('value input').textString = '';
+  }
+  
   enterValue(evt) {
     if (evt.key == 'Enter') {
       this.focus();
@@ -250,7 +263,6 @@ class PropertyDraft extends Morph {
       if (!defaultValue) {
         this.get('value input').readOnly = false;
         this.get('value input').nativeCursor = 'auto';
-        this.get('value input').textString = '';
         this.get('value input').focus();
       } else {
         this.submit(propName, defaultValue);
@@ -357,6 +369,7 @@ class StyleSheetControl extends Morph {
     return {
       value: {},
       key: {},
+      styledMorph: {},
       isDraft: {defaultValue: false},
       submorphs: {
         after: ['isDraft'],
@@ -400,7 +413,14 @@ class StyleSheetControl extends Morph {
       connect(this.get("rename"), "onMouseDown", this, "renameStyleSheet");
     } else {
       connect(this.get('name'), 'onFocus', this, 'startNameInput');
+      connect(this.get('name'), 'onKeyDown', this, 'onNameInput');
       connect(this.get('name'), 'onBlur', this, 'submit');
+    }
+  }
+
+  onNameInput(evt) {
+    if (evt.key == 'Enter') {
+      this.focus();
     }
   }
 
@@ -410,8 +430,10 @@ class StyleSheetControl extends Morph {
   }
 
   submit() {
+    let name = this.get("name").textString.replace(/\r?\n|\r/g, '')
     signal(this, "addStyleSheet", {
-      styleSheet: new StyleSheet({name: this.get("name").textString})
+      styleSheet: new StyleSheet(name, {}),
+      styledMorph: this.styledMorph
     });
   }
 
@@ -441,6 +463,7 @@ class StyleSheetControl extends Morph {
   }
 
   removeStyleSheet() {
+    $world.logError('remove')
     signal(this, 'removeStyleSheet', this);
   }
 
@@ -597,6 +620,7 @@ class StyleSheetData extends TreeData {
     let styleSheets = this.root.children;
     arr.pushAt(styleSheets, {
        type: 'new-style-sheet',
+       styledMorph: this.targetMorph
     }, styleSheets.length - 1);
     signal(this, 'update');
   }
@@ -627,15 +651,18 @@ class StyleSheetData extends TreeData {
   }
 
   removeStyleSheet(node) {
+    debugger;
     let styleSheets = this.root.children;
     this.targetMorph.styleSheets = arr.without(this.targetMorph.styleSheets, node.value)
     arr.remove(styleSheets, styleSheets.find((n) => n.displayedMorph == node));
     signal(this, 'update');
   }
 
-  addStyleSheet(sheetName, styledMorph) {
-    let ss = new StyleSheet(sheetName, {});
-    styledMorph.styleSheets = [...styledMorph.styleSheets, ss];
+  addStyleSheet({styleSheet, styledMorph}) {
+    let styleSheets = this.root.children;
+    styledMorph.styleSheets = [...styledMorph.styleSheets || [], styleSheet];
+    arr.replaceAt(styleSheets, this.parseStyleSheet(styleSheet), 
+       arr.findIndex(styleSheets, n => n.type == 'new-style-sheet'));
     signal(this, 'update');
   }
 
@@ -803,10 +830,6 @@ class StyleSheetData extends TreeData {
     });
   }
 
-  removeStyleSheet(args) {
-    signal(this, 'removeStyleSheet', args)
-  }
-
   isLeaf(node) { return !node.children }
   isCollapsed(node) { return node.isCollapsed; }
   collapse(node, bool) { node.isCollapsed = bool; }
@@ -849,6 +872,10 @@ export class StyleSheetEditor extends Morph {
       ".StyleSheetEditor": {
         fill: Color.transparent,
         extent: pt(200, 300)
+      },
+      ".StyleRuleDraft .Text": {
+        fontSize: 14,
+        fontFamily: config.codeEditor.defaultStyle.fontFamily
       },
       ".StyleRuleDraft .Text.empty": {
         fill: Color.transparent,
@@ -1110,6 +1137,10 @@ export class StyleSheet {
     if ("dropShadow" in props) {
       props.dropShadow = new ShadowObject(props.dropShadow);
       props.dropShadow.morph = morph;
+    }
+    if ("padding" in props) {
+      props.padding = props.padding.isRect ? 
+        props.padding : rect(props.padding, props.padding);
     }
     props.layout && props.layout.scheduleApply();
     return props;
