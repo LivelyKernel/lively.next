@@ -931,26 +931,28 @@ localStorage["oe helper"] = JSON.stringify(store);
     }
   }
 
-  async interactivelyRunSelectedMethod() {
-    var { selectedMethod } = this.state;
+  async interactivelyRunSelectedMethod(opts = {}) {
+    var { selectedMethod } = this.state,
+        {silent = false} = opts;
+
     if (!selectedMethod) {
-      this.setStatusMessage("no message selected");
+      !silent && this.setStatusMessage("no message selected");
       return;
     }
 
     if (typeof this.target[selectedMethod.name] !== "function") {
-      this.setStatusMessage(`${selectedMethod.name} is not a method of ${this.target}`);
+      !silent && this.setStatusMessage(`${selectedMethod.name} is not a method of ${this.target}`);
       return;
     }
 
     try {
       var result = await this.target[selectedMethod.name]();
-      var msg = `Running ${selectedMethod.name}`;
-      if (typeof result !== "undefined") msg += `, returns ${result}`;
-      this.setStatusMessage(msg);
-    } catch (e) {
-      this.showError(e);
-    }
+      if (!silent) {
+        var msg = `Running ${selectedMethod.name}`;
+        if (typeof result !== "undefined") msg += `, returns ${result}`;
+        this.setStatusMessage(msg);
+      }
+    } catch (e) { !silent && this.showError(e); }
   }
 
 
