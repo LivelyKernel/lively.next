@@ -93,13 +93,14 @@ describe("tree", function() {
   describe("morphs as tree nodes", () => {
 
     it("inserts morph when node specifies one in display()", async () => {
-      var m = morph({extent: pt(50,50), fill: Color.red});
-      tree.treeData.root.children[1].morph = m;
+      // let tree = createTree();
       // tree.openInWorld()
       // tree.remove()
+      var m = morph({extent: pt(50,50), fill: Color.red});
+      tree.treeData.root.children[1].morph = m;
       tree.update();
 
-      expect(tree.nodeMorphs[1].submorphs[1]).equals(m, "morph not rendered in display node morph");
+      expect(tree.nodeMorphs[1].submorphs[2]).equals(m, "morph not rendered in display node morph");
       await tree.onNodeCollapseChanged({node: tree.treeData.root.children[1], isCollapsed: false})
       expect(tree.nodes[3].name).equals("child 2 - 1", "node not uncollapsed");
       expect(tree.nodeMorphs[2].top).gte(tree.nodeMorphs[1].bottom, "vertical layout wrong");
