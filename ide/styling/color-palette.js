@@ -1,7 +1,7 @@
-import { Color, Complementary, Triadic, Tetradic,
+import { Color, rect, Complementary, Triadic, Tetradic,
          Quadratic, Analogous, Neutral, pt, Point,
          flatDesignColors, materialDesignColors, webSafeColors } from "lively.graphics";
-import { Morph, VerticalLayout, HorizontalLayout,
+import { Morph, CustomLayout, VerticalLayout, HorizontalLayout,
          Text, TilingLayout, Ellipse, Image } from "../../index.js";
 import { DropDownSelector, ModeSelector, Slider } from "../../components/widgets.js";
 import { connect, signal } from "lively.bindings";
@@ -225,6 +225,8 @@ class HarmonyPalette extends Morph {
   }
 }
 
+// new Popover({name: 'Color Palette', targetMorph: new ColorPalette({color: Color.red})})
+
 export class ColorPalette extends Morph {
 
    static get properties() {
@@ -277,41 +279,26 @@ export class ColorPalette extends Morph {
            this.styleSheets = this.styler
          }
        },
-      layout: {
-        initialize() {
-          this.layout = this.layouter;
-        }
-      },
        submorphs: {
          after: ['color', 'styleSheets'],
          initialize() {
             const [h,s,b] = this.color.toHSB();
             this.cachedPalette = {};
-            this.submorphs = [{type: "polygon", name: "arrow",
-                              vertices: [pt(-1,0),pt(0,-.5), pt(1,0)],
-                              bottomCenter: pt(this.width/2, 0)},
-                             {name: 'body',
-                              submorphs: [
-                                 this.fillTypeSelector(),
-                                 this.paletteView()]
-                              }];
+            this.submorphs = [this.fillTypeSelector(), this.paletteView()];
             this.pivotColor = Color.hsb(h,s,1);
+            connect(
+              this.get('paletteView'), 'extent', 
+              this.get('fillTypeSelector'), 'width', 
+              {converter: ({x}) => x}
+            )
             connect(this.get('harmony palette'), 'harmony', this, 'harmony');
             connect(this.get('pivot control'), 'pivotColor', this, 'pivotColor');
             connect(this.get('harmony palette'), 'pivotBrightness', this, 'pivotBrightness');
             this.selectSolidMode();
             this.active = true;
-            this.whenRendered().then(() => this.relayout());
          }
        }
      }
-   }
-
-   onDrag(evt) {
-      const a = this.get('arrow'),
-            dt = a.getTransform().transformDirection(evt.state.dragDelta.negated());
-      this.moveBy(evt.state.dragDelta);
-      a.vertices[1].moveBy(dt);
    }
 
    fadeIntoWorld(pos) {
@@ -324,19 +311,10 @@ export class ColorPalette extends Morph {
       const fill = Color.gray,
             colorFieldWidth = this.colorFieldWidth;
     return new StyleSheet({
-      ".ColorPalette [name=body]": {
-        fill,
-        extent: pt(200, 300),
-        borderRadius: 5,
-        reactsToPointer: false,
-        layout: new VerticalLayout({resizeContainer: false})
-      },
       ".ColorPalette": {
         fill: Color.transparent,
-        dropShadow: true,
-        borderRadius: 5,
         extent: pt(200, 300),
-        layout: new VerticalLayout({resizeContainer: false, ignore: ["arrow"]})
+        layout: new VerticalLayout({resizeContainer: true})
       },
       ".ColorPalette [name=arrow]": {fill, grabbable: false, draggable: false},
       ".ColorPalette .paletteFormatter": {
@@ -347,15 +325,17 @@ export class ColorPalette extends Morph {
         layout: new VerticalLayout({resizeContainer: false, spacing: 5}),
         fill: Color.transparent
       },
-      ".ColorPalette [name=paletteView]": {clipMode: "hidden", fill: Color.transparent},
+      ".ColorPalette [name=paletteView]": {
+          clipMode: "hidden", fill: Color.transparent,
+          layout: new VerticalLayout()
+      },
       ".ColorPalette [name=solidColorPalette]": {
         fill: Color.transparent,
         layout: new VerticalLayout({resizeContainer: false})
       },
       ".ColorPalette [name=paletteContainer]": {
         layout: new TilingLayout(),
-        fill: Color.transparent,
-        rotation: num.toRadians(90)
+        fill: Color.transparent
       },
       ".ColorPalette .vacantColorField": {
         extent: pt(colorFieldWidth, colorFieldWidth),
@@ -406,62 +386,13 @@ export class ColorPalette extends Morph {
       signal(this, 'close');
    }
 
-   relayout() {
-      const arrow = this.get('arrow'),
-            harmonyPalette = this.get('harmony palette'),
-            fillTypeSelector = this.get("fillTypeSelector"),
-            paletteView = this.get("paletteView"),
-            world = this.world(),
-            buttonSize = this.width/15;
-      paletteView.relayout();
-      fillTypeSelector.animate({width: paletteView.bounds().width, duration});
-      harmonyPalette.update(this);
-      arrow.vertices = [pt(-1,1), pt(0,.5), pt(1,1)];
-      arrow.extent = pt(buttonSize, buttonSize);
-      if (world) {
-          arrow.remove();
-          const heightInWorld = world.visibleBounds().height - this.initPosition.y;
-          this.globalPosition = world.visibleBounds()
-                                     .translateForInclusion(this.globalBounds())
-                                     .topLeft();
-          if (this.initPosition) {
-              if (heightInWorld < this.height) {
-                 this.animate({bottomCenter: this.owner
-                                         .localize(this.initPosition)
-                                         .addXY(0,1 - buttonSize)
-                                         .withX(this.bottomCenter.x), duration});
-                 arrow.rotation = Math.PI;
-              } else {
-                this.animate({topCenter: this.owner
-                       .localize(this.initPosition)
-                       .addXY(0, -1)
-                       .withX(this.topCenter.x), duration});
-                 arrow.rotation = 0;
-              }
-              this.addMorph(arrow, this.get('body'));
-              arrow.animate({bottomCenter: this.localize(this.initPosition), duration});
-          }
-          this.addMorph(arrow, this.get('body'))
-          if (arrow.bottomLeft.x < 0) {
-             this.animate({position: this.position.addXY(arrow.bottomLeft.x, 0), duration});
-             arrow.animate({bottomLeft: arrow.bottomLeft.withX(0), duration});
-          }
-          if (arrow.bottomRight.x > this.width) {
-             this.animate({position: this.position.addXY(arrow.bottomRight.x - this.width, 0), duration})
-             arrow.animate({bottomRight: arrow.bottomRight.withX(this.width), duration});
-          }
-      }
-   }
-
    paletteView() {
       return {
         name: "paletteView",
-        relayout() {
-           this.animate({extent: this.submorphs.find(p => p.visible).extent, duration});
-        },
         submorphs: [
            this.solidColorPalette(), 
-           new HarmonyPalette({name: "harmony palette", visible: false, draggable: false})]
+           new HarmonyPalette({name: "harmony palette", isLayoutable: false,
+                               visible: false, draggable: false})]
       }
    }
 
@@ -469,33 +400,29 @@ export class ColorPalette extends Morph {
       var duration = 200,
           paletteView = this.get("paletteView");
        if (this.get("solidColorPalette").visible) return;
-       paletteView.submorphs.forEach(m => m.animate({opacity: 0, visible: false, duration}));
-       this.get("solidColorPalette").animate({opacity: 1, visible: true, duration});
-       this.relayout();
+       paletteView.submorphs.forEach(m => m.animate({isLayoutable: false, opacity: 0, visible: false, duration}));
+       this.get("solidColorPalette").animate({isLayoutable: true, opacity: 1, visible: true, duration});
    }
 
    selectHarmonyMode() {
       var duration = 200,
           paletteView = this.get("paletteView");
       if (this.get("harmony palette").visible) return;
-      paletteView.submorphs.forEach(m => m.animate({opacity: 0, visible: false, duration}));
-      this.get("harmony palette").animate({opacity: 1, visible: true, duration});
-      this.relayout();
+      paletteView.submorphs.forEach(m => m.animate({isLayoutable: false, opacity: 0, visible: false, duration}));
+      this.get("harmony palette").animate({isLayoutable: true, opacity: 1, visible: true, duration});
    }
 
-   fillTypeSelector() {
-      const selector = new ModeSelector({
-                               reactsToPointer: false,
-                               name: "fillTypeSelector",
-                               items: ["Color Palette", "Color Harmonies"],
-                               tooltips: {"Color Harmonies": this.getPaletteDescription("harmony")}
-                           });
-      selector.width = this.width;
-      connect(selector, "Color Palette", this, "selectSolidMode");
-      connect(selector, "Color Harmonies", this, "selectHarmonyMode");
-      return selector;
-
-   }
+  fillTypeSelector() {
+    const selector = new ModeSelector({
+      reactsToPointer: false,
+      name: "fillTypeSelector",
+      items: ["Color Palette", "Color Harmonies"],
+      tooltips: {"Color Harmonies": this.getPaletteDescription("harmony")}
+    });
+    connect(selector, "Color Palette", this, "selectSolidMode");
+    connect(selector, "Color Harmonies", this, "selectHarmonyMode");
+    return selector;
+  }
 
    solidColorPalette() {
       // switch between different palettes (material, flat, harmonies, custom)
@@ -519,6 +446,7 @@ export class ColorPalette extends Morph {
              width =  mod * this.colorFieldWidth,
              paddedColors = [...colors, ...arr.withN((cols * mod) - colors.length, null)];
        return {width, height, name: "paletteContainer",
+               rotation: num.toRadians(90),
                submorphs: paddedColors.map(c => {
                   let field = new ColorPaletteField({color: c && Color.rgbHex(c)});
                   connect(field, 'updateColor', this, 'color');
@@ -526,13 +454,11 @@ export class ColorPalette extends Morph {
                })};
    }
 
-   switchPalette({name, colors, mod}) {
-      const colorPalette = this.get("solidColorPalette"),
-            [_, config] = colorPalette.submorphs;
-      this.cachedPalette[name] = this.cachedPalette[name] || this.getPalette(colors, mod, name);
-      colorPalette.submorphs = [this.cachedPalette[name], config];
-      this.relayout();
-   }
+  switchPalette({name, colors, mod}) {
+    const colorPalette = this.get("solidColorPalette"), [_, config] = colorPalette.submorphs;
+    this.cachedPalette[name] = this.cachedPalette[name] || this.getPalette(colors, mod, name);
+    colorPalette.submorphs = [this.cachedPalette[name], config];
+  }
 
    getPaletteDescription(paletteName) {
       const descriptions = {
@@ -583,4 +509,140 @@ export class ColorPalette extends Morph {
       }
    }
 
+}
+
+// new Popover().fadeIntoWorld()
+
+/*
+relayout() {
+      const arrow = this.get('arrow'),
+            harmonyPalette = this.get('harmony palette'),
+            fillTypeSelector = this.get("fillTypeSelector"),
+            paletteView = this.get("paletteView"),
+            world = this.world(),
+            buttonSize = this.width/15;
+      paletteView.relayout();
+      fillTypeSelector.animate({width: paletteView.bounds().width, duration});
+      harmonyPalette.update(this);
+      arrow.vertices = [pt(-1,1), pt(0,.5), pt(1,1)];
+      arrow.extent = pt(buttonSize, buttonSize);
+      if (world) {
+          arrow.remove();
+          const heightInWorld = world.visibleBounds().height - this.initPosition.y;
+          this.globalPosition = world.visibleBounds()
+                                     .translateForInclusion(this.globalBounds())
+                                     .topLeft();
+          if (this.initPosition) {
+              if (heightInWorld < this.height) {
+                 this.animate({bottomCenter: this.owner
+                                         .localize(this.initPosition)
+                                         .addXY(0,1 - buttonSize)
+                                         .withX(this.bottomCenter.x), duration});
+                 arrow.rotation = Math.PI;
+              } else {
+                this.animate({topCenter: this.owner
+                       .localize(this.initPosition)
+                       .addXY(0, -1)
+                       .withX(this.topCenter.x), duration});
+                 arrow.rotation = 0;
+              }
+              this.addMorph(arrow, this.get('body'));
+              arrow.animate({bottomCenter: this.localize(this.initPosition), duration});
+          }
+          this.addMorph(arrow, this.get('body'))
+          if (arrow.bottomLeft.x < 0) {
+             this.animate({position: this.position.addXY(arrow.bottomLeft.x, 0), duration});
+             arrow.animate({bottomLeft: arrow.bottomLeft.withX(0), duration});
+          }
+          if (arrow.bottomRight.x > this.width) {
+             this.animate({position: this.position.addXY(arrow.bottomRight.x - this.width, 0), duration})
+             arrow.animate({bottomRight: arrow.bottomRight.withX(this.width), duration});
+          }
+      }
+   }
+*/
+
+export class Popover extends Morph {
+  static get properties() {
+    return {
+      targetMorph: {
+        defaultValue: {
+          extent: pt(200, 200),
+          fill: Color.transparent,
+          submorphs: [
+            {
+              name: "placeholder",
+              type: "label",
+              value: "No Target Specified"
+            }
+          ]
+        }
+      },
+      styleSheets: {
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            ".Popover": {
+              dropShadow: true,
+              fill: Color.transparent,
+              borderRadius: 4
+            },
+            "[name=body]": {
+              layout: new VerticalLayout({resizeContainer: true}),
+              fill: Color.rgbHex('c9c9c9'),
+              borderRadius: 4,
+              clipMode: 'hidden'
+            },
+            "[name=arrow]": {
+              fill: Color.rgbHex('c9c9c9'),
+              dropShadow: {blur: 3, color: Color.black.withA(.4)}
+            },
+            "[name=placeholder]": {
+              fontColor: Color.gray.darker(),
+              padding: 50,
+              fontWeight: "bold",
+              fontSize: 15
+            }
+          });
+        }
+      },
+      layout: {
+        initialize() {
+          this.layout = new CustomLayout({
+            relayout(self, animated) {
+              let body = self.get('body'),
+                  arrow = self.get('arrow'),
+                  offset = arrow.height;
+              
+              if (animated) {
+                let duration = animated.duration;
+                self.animate({extent: body.extent, duration});
+                self.origin = pt(self.width/2,-offset);
+                body.animate({topCenter: pt(0,offset), duration})
+                arrow.animate({bottomCenter: pt(0,offset), duration});
+              } else {
+                self.extent = body.extent;
+                self.origin = pt(self.width/2,-offset);
+                body.topCenter = pt(0,offset);
+                arrow.bottomCenter = pt(0,offset);
+              }
+            }
+          })
+        }
+      },
+      submorphs: {
+        after: ["targetMorph"],
+        initialize() {
+          this.submorphs = [
+            {
+              type: "polygon",
+              name: "arrow",
+              extent: pt(20,20),
+              vertices: [pt(-1, 0), pt(0, -0.5), pt(1, 0)]
+            },
+            {name: "body", submorphs: [this.targetMorph]},
+          ];
+        }
+      }
+    };
+  }
 }

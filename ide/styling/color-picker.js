@@ -8,7 +8,7 @@ import {pt, Rectangle, Color, LinearGradient, rect} from "lively.graphics";
 import {signal, connect, disconnect} from "lively.bindings";
 import {Slider} from "../../components/widgets.js";
 import { obj } from "lively.lang";
-import {ColorPalette} from "./color-palette.js";
+import {ColorPalette, Popover} from "./color-palette.js";
 import { StyleSheet } from '../../style-rules.js';
 import { zip } from "lively.lang/array.js";
 
@@ -91,7 +91,7 @@ export class ColorPickerField extends Morph {
 
    onHoverIn() {
       if (!this.palette)
-           this.palette = new ColorPalette({color: this.targetProperty});
+           this.palette = new Popover({name: 'Color Palette', targetMorph: new ColorPalette({color: Color.red})});
    }
 
    onKeyDown(evt) {
@@ -129,15 +129,16 @@ export class ColorPickerField extends Morph {
       this.picker && this.picker.remove();
    }
 
-   async openPalette(evt) {
-      const p = this.palette || new ColorPalette({color: this.targetProperty});
-      p.position = pt(0,0);
-      connect(p, "color", this.target, this.property);
-      connect(p, "color", this, "update");
-      this.palette = await p.fadeIntoWorld(this.globalBounds().bottomCenter());
-      this.removePicker();
-   }
-
+  async openPalette(evt) {
+    const p =
+      this.palette ||
+      new Popover({name: "Color Palette", targetMorph: new ColorPalette({color: Color.red})});
+    connect(p, "color", this.target, this.property);
+    connect(p, "color", this, "update");
+    p.topLeft = pt(0,0);
+    this.palette = await p.fadeIntoWorld(this.globalBounds().insetBy(10).bottomCenter());
+    this.removePicker();
+  }
    removePalette() {
      this.palette && this.palette.remove();
    }
