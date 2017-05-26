@@ -560,7 +560,7 @@ export class Morph {
     this._defaultStyleProperties = this._defaultStyleProperties || this.styleProperties;
     const v = this._morphicState[key], 
           dv = this.defaultProperty(key),
-          isGeoObj = v && [Rectangle, Point].includes(v.constructor);
+          isGeoObj = v && [Rectangle, Point, Color].includes(v.constructor);
     if (this._defaultStyleProperties.includes(key) && (isGeoObj ? v.equals(dv) : v == dv)) {
       if (!this._styleSheetProps) {
         this._styleSheetsInScope = this.getStyleSheetsInScope();
