@@ -630,7 +630,7 @@ export class ModeSelector extends Morph {
             this.values[this.keys.includes(this.init) ? this.keys.indexOf(this.init) : 0],
             true
           );
-          connect(this, "extent", this, "relayout");
+          connect(this, "extent", this, "relayout", {converter: () => false});
         }
       }
     };
@@ -654,6 +654,7 @@ export class ModeSelector extends Morph {
   }
 
   async relayout(animated = true) {
+    this.layout.forceLayout();
     let tm = this.get("typeMarker"),
         bounds = this.currentLabel.bounds();
     this.currentLabel && animated ? await tm.animate({bounds, duration: 200}) : tm.setBounds(bounds);
@@ -948,13 +949,13 @@ export class SearchField extends Text {
     super.onBlur(evt)
     this.active = false;
     this.get('placeholder').visible = !this.textString;
-    this.animate({styleClasses: ["idle"], duration: 500});
+    this.animate({styleClasses: ["idle"], duration: 300});
 
   }
   
   onFocus(evt) {
     super.onFocus(evt);
-    this.animate({styleClasses: ["selected"], duration: 500});
+    this.animate({styleClasses: ["selected"], duration: 300});
     this.get('placeholder').visible = false;
     this.active = true;
   }
