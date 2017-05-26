@@ -146,7 +146,9 @@ export class CustomLayout extends Layout {
   apply(animate) {
      if (this.active || !this.container) return;
      super.apply(animate);
+     this.active = true;
      this.relayout(this.container);
+     this.active = false;
   }
   
 }
