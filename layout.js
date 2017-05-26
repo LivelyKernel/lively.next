@@ -92,11 +92,11 @@ class Layout {
         this.onSubmorphAdded(args[0], anim);
         break;
     }
-    if (prop == "extent" && !(value && value.equals(prevValue))) this.scheduleApply(anim);
+    if (["extent"].includes(prop) && !obj.equals(value, prevValue))
+      this.scheduleApply(anim);
   }
-
   affectsLayout(submorph, {prop, value, prevValue}) {
-    return ["position", "scale", "rotation"].includes(prop)
+    return ["position", "scale", "rotation", "isLayoutable"].includes(prop)
            && !obj.equals(value, prevValue)
            && this.container.submorphs.includes(submorph);
   }
@@ -147,7 +147,7 @@ export class CustomLayout extends Layout {
      if (this.active || !this.container) return;
      super.apply(animate);
      this.active = true;
-     this.relayout(this.container);
+     this.relayout(this.container, animate);
      this.active = false;
   }
   
