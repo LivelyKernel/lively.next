@@ -41,7 +41,7 @@ export default class Window extends Morph {
         borderWidth: 1,
         borderRadius: 14,
         extent: windowButtonSize,
-        borderColor: Color.rgb(207, 69, 69),
+        borderColor: Color.rgb(223, 75, 75),
         fill: Color.rgb(255, 96, 82)
       },
       ".Window.active .minimizeButton": {

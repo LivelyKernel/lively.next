@@ -53,6 +53,26 @@ class ListItemMorph extends Label {
     this.itemIndex = itemIndex;
     this.position = pos;
 
+    if (style) {
+      let {
+        fontFamily,
+        selectionColor,
+        selectionFontColor,
+        nonSelectionFontColor,
+        fontSize,
+        padding
+      } = style;
+      if (selectionFontColor && this.selectionFontColor !== selectionFontColor)
+        this.selectionFontColor = selectionFontColor;
+      if (nonSelectionFontColor && this.nonSelectionFontColor !== nonSelectionFontColor)
+        this.nonSelectionFontColor = nonSelectionFontColor;
+      if (selectionColor && this.selectionColor !== selectionColor)
+        this.selectionColor = selectionColor;
+      if (fontSize && this.fontSize !== fontSize) this.fontSize = fontSize;
+      if (fontFamily && this.fontFamily !== fontFamily) this.fontFamily = fontFamily;
+      if (padding && !this.padding.equals(padding)) this.padding = padding;
+    }
+
     {
       // if its wider, its wider...
       // this is more correct but slower:
@@ -661,6 +681,11 @@ export class FilterableList extends Morph {
             new morph({name: 'padding', fill: Color.transparent, height: 5}),
             new List({name: "list", items: [], clipMode: "auto"})
           ];
+          // rms 24.5.17 in order to ensure that the list correctly conforms to
+          //   global style sheets that become active once list is opened in world
+          //   NOTE: this is a temporary fix, results in not so nice looking moving of
+          //         elements
+          this.get('list').whenRendered().then(() => this.get('list').update());
         }
       },
 
@@ -889,7 +914,7 @@ export class FilterableList extends Morph {
     if (paddingMorph) {
       paddingMorph.topLeft = inputMorph.bottomLeft;
     }
-    listMorph.topLeft = paddingMorph ? paddingMorph.bottomLeft : inputMorph.bottomLeft;
+    listMorph.position = paddingMorph ? paddingMorph.bottomLeft : inputMorph.bottomLeft;
     listMorph.height = this.height -listMorph.top - offset;
   }
 
