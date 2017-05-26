@@ -1,4 +1,4 @@
-import { promise, num } from "lively.lang";
+import { promise, obj, num } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
 import {
   defaultStyle,
@@ -222,7 +222,7 @@ export class Renderer {
 
     return h("div",
       {
-        ...defaultAttributes(morph, this),
+        ...obj.dissoc(defaultAttributes(morph, this), ['animation']),
         style: {
           transform,
           transformOrigin,
