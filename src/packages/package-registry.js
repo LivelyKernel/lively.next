@@ -366,6 +366,7 @@ export class PackageRegistry {
   updatePackage(pkg, oldName, oldVersion, oldURL, updateLatestPackage = true) {
     // for name or version changes
 
+    let oldLocation = this.coversDirectory(ensureResource(oldURL));
     if (
       (oldName    && pkg.name === oldName) ||
       (oldVersion && pkg.version !== oldVersion) ||
@@ -376,7 +377,11 @@ export class PackageRegistry {
 
     let dir = ensureResource(pkg.url),
         known = this.coversDirectory(ensureResource(pkg.url));
-    if (!known) this.individualPackageDirs.push(dir)
+    if (!known) {
+      console.log(`[PackageRegistry>>updatePackage] adding ${pkg.url} to individualPackageDirs b/c it is not known`);
+      if (oldLocation === "devPackageDirs") this.devPackageDirs.push(dir);
+      else this.individualPackageDirs.push(dir);
+    }
 
     let {name, version} = pkg,
         {packageMap} = this,

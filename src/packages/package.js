@@ -345,13 +345,12 @@ export class Package {
   async changeAddress(newURL, newName = null, removeOriginal = true) {
     newURL = newURL.replace(/\/?/, "");
 
-    let {System, url: oldURL} = this,
+    let {System, url: oldURL, name: oldName, version: oldVersion} = this,
         oldPackageDir = resource(oldURL).asDirectory(),
         newP = new Package(System, newURL),
         newPackageDir = await resource(newURL).asDirectory();
 
     ModulePackageMapping.forSystem(System).clearCache();
-    packageStore(System)[newURL] = newP;
     if (System.packages[oldURL]) {
       System.packages[newURL] = System.packages[oldURL];
       if (removeOriginal)
@@ -409,6 +408,8 @@ export class Package {
         }
       } catch (e) {}
     }
+
+    PackageRegistry.ofSystem(System).updatePackage(this, oldName, oldVersion, oldURL);
 
     return newP;
   }
