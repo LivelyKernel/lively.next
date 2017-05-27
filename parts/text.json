@@ -1,12 +1,15 @@
 {
-  "id": "Text_29E91A2D_56BC_4EC1_B85D_0D44339EEBFE",
+  "id": "Text_722F4EB8_06B8_4E3E_AE1F_C973EECEF1EB",
   "snapshot": {
-    "Text_29E91A2D_56BC_4EC1_B85D_0D44339EEBFE": {
-      "rev": 62528,
+    "Text_722F4EB8_06B8_4E3E_AE1F_C973EECEF1EB": {
+      "rev": 61071,
       "props": {
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(181.0,51.0)"
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
         },
         "name": {
           "key": "name",
@@ -15,13 +18,21 @@
         "nativeCursor": {
           "key": "nativeCursor"
         },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(1260.8,233.8)"
+        },
         "origin": {
           "key": "origin",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(429.5,409.5)"
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(123.0,53.0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -30,10 +41,6 @@
             "Morph",
             "morph"
           ]
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
         },
         "borderColorBottom": {
           "key": "borderColorBottom",
@@ -83,92 +90,142 @@
           "key": "borderWidthTop",
           "value": 1
         },
+        "embeddedMorphMap": {
+          "key": "embeddedMorphMap",
+          "value": {
+            "__ref__": true,
+            "id": "5802D55A-3627-4A9E-ADAF-870E7076CA94",
+            "rev": 0
+          }
+        },
         "padding": {
           "key": "padding",
           "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,8,0,0)"
         },
-        "selection": {
-          "key": "selection",
-          "value": {
-            "__ref__": true,
-            "id": "789E18EF-1E88-4FC8-8CCD-3B0B347D4B45",
-            "rev": 0
-          }
+        "fontSize": {
+          "key": "fontSize",
+          "value": 30
         },
-        "defaultTextStyle": {
-          "key": "defaultTextStyle",
-          "value": {
-            "__ref__": true,
-            "id": "A760B1EF-6EC5-4ABC-AB42-A051320449D4",
-            "rev": 0
-          }
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
         },
         "anchors": {
           "key": "anchors",
           "value": [
             {
               "__ref__": true,
-              "id": "3F33C901-C461-4024-8737-99B58E9779AC",
+              "id": "8A376A89-0931-43B9-AB8A-903E7DA73E2E",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "8375016A-D37E-42E6-AA0C-92528C756CB7",
+              "id": "F0C0FFEB-C465-4BFA-9FB1-8022A3D3797E",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "AA5EF069-EA8D-4C96-90B5-D4DE71391031",
+              "id": "CB0ADAF5-1294-4553-B936-1EFA9CE5CCB8",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "51465CD6-A9C9-4500-8E5A-FDCA42DB23AE",
+              "id": "8E0DE428-822D-4B72-80DD-42CE2FEF8447",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "B34CAD25-667B-46B0-925E-16ACD325CD15",
+              "id": "8A682DAC-847D-44E6-A733-2BB7F51D400D",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "CEFA8772-F858-4AC3-9F78-DFF2713D36A7",
+              "id": "C73114B2-F55D-43A2-96A7-CBC7C0A5C6E0",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "selection-start-C6F8384B-0374-42F4-A6E4-9DB2CE3A7885",
+              "id": "1AA29CEF-12D0-4191-8342-7450F147C4B4",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "selection-end-C6F8384B-0374-42F4-A6E4-9DB2CE3A7885",
+              "id": "70883E8E-F896-4883-9AAF-EEAD64DD0FE5",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "selection-start-A39836EA-A98E-42C0-996E-277DB849C4FF",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "selection-end-A39836EA-A98E-42C0-996E-277DB849C4FF",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "saved-mark-085AE3D6-0C5A-48CC-941E-240B5E742640",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "saved-mark-1CA8258E-82CB-4FDC-ADFA-FFC751E4D76B",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "saved-mark-9DCB163E-81B3-40B3-B8D4-9FC76DB3695A",
               "rev": 0
             }
           ]
         },
         "savedMarks": {
           "key": "savedMarks",
-          "value": []
+          "value": [
+            {
+              "__ref__": true,
+              "id": "saved-mark-085AE3D6-0C5A-48CC-941E-240B5E742640",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "saved-mark-1CA8258E-82CB-4FDC-ADFA-FFC751E4D76B",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "saved-mark-9DCB163E-81B3-40B3-B8D4-9FC76DB3695A",
+              "rev": 0
+            }
+          ]
         },
         "plugins": {
           "key": "plugins",
           "value": []
         },
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections"
+        "selections": {
+          "key": "selections",
+          "verbatim": true,
+          "value": [
+            {
+              "start": {
+                "row": 0,
+                "column": 7
+              },
+              "end": {
+                "row": 0,
+                "column": 7
+              }
+            }
+          ]
         },
         "textAndAttributes": {
           "key": "textAndAttributes",
           "verbatim": true,
           "value": [
-            "Lively rocks!",
-            {}
+            "rich text",
+            null
           ]
         }
       },
@@ -183,123 +240,15 @@
         }
       }
     },
-    "789E18EF-1E88-4FC8-8CCD-3B0B347D4B45": {
+    "5802D55A-3627-4A9E-ADAF-870E7076CA94": {
       "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "textMorph": {
-          "key": "textMorph",
-          "value": {
-            "__ref__": true,
-            "id": "Text_29E91A2D_56BC_4EC1_B85D_0D44339EEBFE",
-            "rev": 62528
-          }
-        },
-        "selections": {
-          "key": "selections",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "8807B488-9F0E-45E9-8E1D-51E087291610",
-              "rev": 0
-            }
-          ]
-        },
-        "cursorBlinkProcess": {
-          "key": "cursorBlinkProcess",
-          "value": null
-        },
-        "_cursorVisible": {
-          "key": "_cursorVisible",
-          "value": true
-        }
-      },
+      "props": {},
+      "entries": [],
       "lively.serializer-class-info": {
-        "className": "MultiSelection",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "text/selection.js"
-        }
+        "className": "Map"
       }
     },
-    "8807B488-9F0E-45E9-8E1D-51E087291610": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "textMorph": {
-          "key": "textMorph",
-          "value": {
-            "__ref__": true,
-            "id": "Text_29E91A2D_56BC_4EC1_B85D_0D44339EEBFE",
-            "rev": 62528
-          }
-        },
-        "_goalColumn": {
-          "key": "_goalColumn",
-          "value": 5
-        },
-        "_isReverse": {
-          "key": "_isReverse",
-          "value": false
-        },
-        "startAnchor": {
-          "key": "startAnchor",
-          "value": {
-            "__ref__": true,
-            "id": "3F33C901-C461-4024-8737-99B58E9779AC",
-            "rev": 0
-          }
-        },
-        "endAnchor": {
-          "key": "endAnchor",
-          "value": {
-            "__ref__": true,
-            "id": "8375016A-D37E-42E6-AA0C-92528C756CB7",
-            "rev": 0
-          }
-        },
-        "_range": {
-          "key": "_range",
-          "value": {
-            "__ref__": true,
-            "id": "170AD1BF-14F0-4023-BE1A-4DDC2B94C3CB",
-            "rev": 0
-          }
-        },
-        "_cursorVisible": {
-          "key": "_cursorVisible",
-          "value": true
-        },
-        "cursorBlinkProcess": {
-          "key": "cursorBlinkProcess",
-          "value": null
-        },
-        "_goalX": {
-          "key": "_goalX",
-          "value": 70
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "Selection",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "text/selection.js"
-        }
-      }
-    },
-    "3F33C901-C461-4024-8737-99B58E9779AC": {
+    "8A376A89-0931-43B9-AB8A-903E7DA73E2E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -314,7 +263,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "70D2D048-0DB0-4486-986A-4FDED2D26650",
+            "id": "EE600781-FAD5-438F-8138-98F5792253EE",
             "rev": 0
           }
         },
@@ -334,7 +283,7 @@
         }
       }
     },
-    "70D2D048-0DB0-4486-986A-4FDED2D26650": {
+    "EE600781-FAD5-438F-8138-98F5792253EE": {
       "rev": 0,
       "props": {
         "row": {
@@ -343,11 +292,11 @@
         },
         "column": {
           "key": "column",
-          "value": 5
+          "value": 7
         }
       }
     },
-    "8375016A-D37E-42E6-AA0C-92528C756CB7": {
+    "F0C0FFEB-C465-4BFA-9FB1-8022A3D3797E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -362,7 +311,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "987805EE-464E-4ECC-877E-94697FD78FC0",
+            "id": "8C7E3100-AFB5-4CDD-B4A2-3AC12B01A9A0",
             "rev": 0
           }
         },
@@ -382,7 +331,7 @@
         }
       }
     },
-    "987805EE-464E-4ECC-877E-94697FD78FC0": {
+    "8C7E3100-AFB5-4CDD-B4A2-3AC12B01A9A0": {
       "rev": 0,
       "props": {
         "row": {
@@ -391,83 +340,11 @@
         },
         "column": {
           "key": "column",
-          "value": 5
+          "value": 7
         }
       }
     },
-    "170AD1BF-14F0-4023-BE1A-4DDC2B94C3CB": {
-      "rev": 0,
-      "props": {
-        "start": {
-          "key": "start",
-          "value": {
-            "__ref__": true,
-            "id": "70D2D048-0DB0-4486-986A-4FDED2D26650",
-            "rev": 0
-          }
-        },
-        "end": {
-          "key": "end",
-          "value": {
-            "__ref__": true,
-            "id": "987805EE-464E-4ECC-877E-94697FD78FC0",
-            "rev": 0
-          }
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "Range",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "text/range.js"
-        }
-      }
-    },
-    "A760B1EF-6EC5-4ABC-AB42-A051320449D4": {
-      "rev": 0,
-      "props": {
-        "nativeCursor": {
-          "key": "nativeCursor"
-        },
-        "fontFamily": {
-          "key": "fontFamily",
-          "value": "Sans-Serif"
-        },
-        "fontSize": {
-          "key": "fontSize",
-          "value": 30
-        },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
-        },
-        "fontWeight": {
-          "key": "fontWeight",
-          "value": "normal"
-        },
-        "fontStyle": {
-          "key": "fontStyle",
-          "value": "normal"
-        },
-        "textDecoration": {
-          "key": "textDecoration",
-          "value": "none"
-        },
-        "textStyleClasses": {
-          "key": "textStyleClasses"
-        },
-        "backgroundColor": {
-          "key": "backgroundColor"
-        },
-        "textAlign": {
-          "key": "textAlign"
-        }
-      }
-    },
-    "AA5EF069-EA8D-4C96-90B5-D4DE71391031": {
+    "CB0ADAF5-1294-4553-B936-1EFA9CE5CCB8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -482,7 +359,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "811EBBC7-0D45-4D67-BAE3-8CA6AE6FC937",
+            "id": "0B520FD0-F729-480A-AEE5-77ED24CAABB0",
             "rev": 0
           }
         },
@@ -502,12 +379,12 @@
         }
       }
     },
-    "811EBBC7-0D45-4D67-BAE3-8CA6AE6FC937": {
+    "0B520FD0-F729-480A-AEE5-77ED24CAABB0": {
       "rev": 0,
       "props": {
         "column": {
           "key": "column",
-          "value": 26
+          "value": 35
         },
         "row": {
           "key": "row",
@@ -515,7 +392,7 @@
         }
       }
     },
-    "51465CD6-A9C9-4500-8E5A-FDCA42DB23AE": {
+    "8E0DE428-822D-4B72-80DD-42CE2FEF8447": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -530,7 +407,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "0E65635E-A12A-4DC3-AA1C-A2DDB8323D3C",
+            "id": "0E9D152F-7491-4E42-97D7-464CF0535D4C",
             "rev": 0
           }
         },
@@ -550,12 +427,12 @@
         }
       }
     },
-    "0E65635E-A12A-4DC3-AA1C-A2DDB8323D3C": {
+    "0E9D152F-7491-4E42-97D7-464CF0535D4C": {
       "rev": 0,
       "props": {
         "column": {
           "key": "column",
-          "value": 26
+          "value": 35
         },
         "row": {
           "key": "row",
@@ -563,7 +440,7 @@
         }
       }
     },
-    "B34CAD25-667B-46B0-925E-16ACD325CD15": {
+    "8A682DAC-847D-44E6-A733-2BB7F51D400D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -578,7 +455,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "EDE5BC62-9F28-4D41-95B8-732F255FA97E",
+            "id": "FCB75DA1-2E0C-4C7E-B4BE-09EA967F9D71",
             "rev": 0
           }
         },
@@ -598,12 +475,12 @@
         }
       }
     },
-    "EDE5BC62-9F28-4D41-95B8-732F255FA97E": {
+    "FCB75DA1-2E0C-4C7E-B4BE-09EA967F9D71": {
       "rev": 0,
       "props": {
         "column": {
           "key": "column",
-          "value": 13
+          "value": 22
         },
         "row": {
           "key": "row",
@@ -611,7 +488,7 @@
         }
       }
     },
-    "CEFA8772-F858-4AC3-9F78-DFF2713D36A7": {
+    "C73114B2-F55D-43A2-96A7-CBC7C0A5C6E0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -626,7 +503,7 @@
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "631CC05C-76A5-4C65-80FD-88C7EC021020",
+            "id": "0B9600B6-32CE-4402-9901-308503F06D8A",
             "rev": 0
           }
         },
@@ -646,12 +523,12 @@
         }
       }
     },
-    "631CC05C-76A5-4C65-80FD-88C7EC021020": {
+    "0B9600B6-32CE-4402-9901-308503F06D8A": {
       "rev": 0,
       "props": {
         "column": {
           "key": "column",
-          "value": 13
+          "value": 22
         },
         "row": {
           "key": "row",
@@ -659,18 +536,22 @@
         }
       }
     },
-    "selection-start-C6F8384B-0374-42F4-A6E4-9DB2CE3A7885": {
+    "1AA29CEF-12D0-4191-8342-7450F147C4B4": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "id": {
           "key": "id",
-          "value": "selection-start-C6F8384B-0374-42F4-A6E4-9DB2CE3A7885"
+          "value": null
         },
         "position": {
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "D8C4DB76-8064-48A4-8731-2A727D3546BC",
+            "id": "E93248AA-359B-4DAE-BD52-E03FD29C9179",
             "rev": 0
           }
         },
@@ -690,31 +571,35 @@
         }
       }
     },
-    "D8C4DB76-8064-48A4-8731-2A727D3546BC": {
+    "E93248AA-359B-4DAE-BD52-E03FD29C9179": {
       "rev": 0,
       "props": {
-        "row": {
-          "key": "row",
-          "value": 0
-        },
         "column": {
           "key": "column",
+          "value": 9
+        },
+        "row": {
+          "key": "row",
           "value": 0
         }
       }
     },
-    "selection-end-C6F8384B-0374-42F4-A6E4-9DB2CE3A7885": {
+    "70883E8E-F896-4883-9AAF-EEAD64DD0FE5": {
       "rev": 0,
       "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
         "id": {
           "key": "id",
-          "value": "selection-end-C6F8384B-0374-42F4-A6E4-9DB2CE3A7885"
+          "value": null
         },
         "position": {
           "key": "position",
           "value": {
             "__ref__": true,
-            "id": "29D9F2C4-960B-4749-9853-0E194E315054",
+            "id": "70EA1CEE-1ADB-4A10-B4FE-5630000014CB",
             "rev": 0
           }
         },
@@ -734,15 +619,235 @@
         }
       }
     },
-    "29D9F2C4-960B-4749-9853-0E194E315054": {
+    "70EA1CEE-1ADB-4A10-B4FE-5630000014CB": {
       "rev": 0,
       "props": {
+        "column": {
+          "key": "column",
+          "value": 9
+        },
         "row": {
           "key": "row",
           "value": 0
+        }
+      }
+    },
+    "selection-start-A39836EA-A98E-42C0-996E-277DB849C4FF": {
+      "rev": 0,
+      "props": {
+        "id": {
+          "key": "id",
+          "value": "selection-start-A39836EA-A98E-42C0-996E-277DB849C4FF"
         },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "E00ED543-791A-43D8-BC53-6457AF100BA1",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "E00ED543-791A-43D8-BC53-6457AF100BA1": {
+      "rev": 0,
+      "props": {
         "column": {
           "key": "column",
+          "value": 9
+        },
+        "row": {
+          "key": "row",
+          "value": 0
+        }
+      }
+    },
+    "selection-end-A39836EA-A98E-42C0-996E-277DB849C4FF": {
+      "rev": 0,
+      "props": {
+        "id": {
+          "key": "id",
+          "value": "selection-end-A39836EA-A98E-42C0-996E-277DB849C4FF"
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "C0D5EE82-E881-4531-BFBE-FD02E61A90D3",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "C0D5EE82-E881-4531-BFBE-FD02E61A90D3": {
+      "rev": 0,
+      "props": {
+        "column": {
+          "key": "column",
+          "value": 9
+        },
+        "row": {
+          "key": "row",
+          "value": 0
+        }
+      }
+    },
+    "saved-mark-085AE3D6-0C5A-48CC-941E-240B5E742640": {
+      "rev": 0,
+      "props": {
+        "id": {
+          "key": "id",
+          "value": "saved-mark-085AE3D6-0C5A-48CC-941E-240B5E742640"
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "9770A215-9F57-428A-918A-1F63B9B131AA",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "9770A215-9F57-428A-918A-1F63B9B131AA": {
+      "rev": 0,
+      "props": {
+        "column": {
+          "key": "column",
+          "value": 9
+        },
+        "row": {
+          "key": "row",
+          "value": 0
+        }
+      }
+    },
+    "saved-mark-1CA8258E-82CB-4FDC-ADFA-FFC751E4D76B": {
+      "rev": 0,
+      "props": {
+        "id": {
+          "key": "id",
+          "value": "saved-mark-1CA8258E-82CB-4FDC-ADFA-FFC751E4D76B"
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "63AA2C47-4E36-44A8-840F-8AD09C0250F7",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "63AA2C47-4E36-44A8-840F-8AD09C0250F7": {
+      "rev": 0,
+      "props": {
+        "column": {
+          "key": "column",
+          "value": 9
+        },
+        "row": {
+          "key": "row",
+          "value": 0
+        }
+      }
+    },
+    "saved-mark-9DCB163E-81B3-40B3-B8D4-9FC76DB3695A": {
+      "rev": 0,
+      "props": {
+        "id": {
+          "key": "id",
+          "value": "saved-mark-9DCB163E-81B3-40B3-B8D4-9FC76DB3695A"
+        },
+        "position": {
+          "key": "position",
+          "value": {
+            "__ref__": true,
+            "id": "6C584526-4A46-45A6-9D34-CFFF7900F2E3",
+            "rev": 0
+          }
+        },
+        "insertBehavior": {
+          "key": "insertBehavior",
+          "value": "move"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Anchor",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/anchors.js"
+        }
+      }
+    },
+    "6C584526-4A46-45A6-9D34-CFFF7900F2E3": {
+      "rev": 0,
+      "props": {
+        "column": {
+          "key": "column",
+          "value": 9
+        },
+        "row": {
+          "key": "row",
           "value": 0
         }
       }
@@ -750,5 +855,5 @@
   },
   "requiredVersion": "~0.1",
   "packages": {},
-  "preview": "data:image/png;base64,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"
+  "preview": "data:image/png;base64,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"
 }
