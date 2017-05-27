@@ -179,7 +179,8 @@ export default class Browser extends Window {
     // remove unncessary stuff
     // FIXME offer option in object ref or pool or removeFn to automate this stuff!
     var ref = pool.ref(this.ui.moduleList);
-    ref.currentSnapshot.props.items.value = [];
+    if (ref.currentSnapshot.props.items)
+      ref.currentSnapshot.props.items.value = [];
     if (ref.currentSnapshot.props.selection)
       ref.currentSnapshot.props.selection.value = null;
 
@@ -188,21 +189,22 @@ export default class Browser extends Window {
       ref.currentSnapshot.props.selection.value = null;
 
     var ref = pool.ref(this.ui.codeEntityTree.nodeItemContainer);
-    ref.currentSnapshot.props.submorphs.value = [];
+    if (ref.currentSnapshot.props.submorphs)
+      ref.currentSnapshot.props.submorphs.value = [];
 
     var ref = pool.ref(this.ui.codeEntityTree.treeData);
     ref.currentSnapshot.props.defs.value = [];
     ref.currentSnapshot.props.root.value = {};
     ref.currentSnapshot.props.root.verbatim = true;
 
-    var ref = pool.ref(this.ui.sourceEditor);
-    ref.currentSnapshot.props.textAndAttributes.value = [];
-    ref.currentSnapshot.props.attributeConnections.value = [];
-    ref.currentSnapshot.props.plugins.value = [];
-    ref.currentSnapshot.props.anchors.value =
-      ref.currentSnapshot.props.anchors.value.filter(({id}) =>
-        id.startsWith("selection-"));
-    ref.currentSnapshot.props.savedMarks.value = [];
+    var ref = pool.ref(this.ui.sourceEditor),
+        props = ref.currentSnapshot.props;
+    if (props.textAndAttributes) props.textAndAttributes.value = [];
+    if (props.attributeConnections) props.attributeConnections.value = [];
+    if (props.plugins) props.plugins.value = [];
+    if (props.anchors) props.anchors.value =
+      props.anchors.value.filter(({id}) => id.startsWith("selection-"));
+    if (props.savedMarks) props.savedMarks.value = [];
 
     // remember browse state
     var {

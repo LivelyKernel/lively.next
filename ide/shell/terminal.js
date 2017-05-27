@@ -163,21 +163,23 @@ export default class Terminal extends Morph {
     super.__additionally_serialize__(snapshot, objRef, pool, addFn);
 
     // remove unncessary state    
-    var ref = pool.ref(this.ui.output);
-    ref.currentSnapshot.props.attributeConnections.value = [];
-    ref.currentSnapshot.props.plugins.value = [];
-    ref.currentSnapshot.props.anchors.value =
-      ref.currentSnapshot.props.anchors.value.filter(({id}) =>
+    var ref = pool.ref(this.ui.output),
+        props = ref.currentSnapshot.props;
+    if (props.attributeConnections) props.attributeConnections.value = [];
+    if (props.plugins) props.plugins.value = [];
+    if (props.anchors) props.anchors.value =
+      props.anchors.value.filter(({id}) =>
         id.startsWith("selection-"));
-    ref.currentSnapshot.props.savedMarks.value = [];
+    if (props.savedMarks) props.savedMarks.value = [];
 
-    var ref = pool.ref(this.ui.input);
-    ref.currentSnapshot.props.attributeConnections.value = [];
-    ref.currentSnapshot.props.plugins.value = [];
-    ref.currentSnapshot.props.anchors.value =
-      ref.currentSnapshot.props.anchors.value.filter(({id}) =>
+    var ref = pool.ref(this.ui.input),
+        props = ref.currentSnapshot.props;
+    if (props.attributeConnections) props.attributeConnections.value = [];
+    if (props.plugins) props.plugins.value = [];
+    if (props.anchors) props.anchors.value =
+      props.anchors.value.filter(({id}) =>
         id.startsWith("selection-"));
-    ref.currentSnapshot.props.savedMarks.value = [];
+    if(props.savedMarks) props.savedMarks.value = [];
 
     // save essential state
     snapshot.props._serializedState = {

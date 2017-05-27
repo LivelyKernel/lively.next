@@ -72,11 +72,13 @@ export class World extends Morph {
   __additionally_serialize__(snapshot, objRef, pool, addFn) {
     super.__additionally_serialize__(snapshot, objRef, pool, addFn);
     // remove epi morphs
-    let submorphs = snapshot.props.submorphs.value;
-    for (let i = submorphs.length; i--; ) {
-      let {id} = submorphs[i];
-      if (pool.refForId(id).realObj.isHand)
-        arr.removeAt(submorphs, i);
+    if (snapshot.props.submorphs) {
+      let submorphs = snapshot.props.submorphs.value;
+      for (let i = submorphs.length; i--; ) {
+        let {id} = submorphs[i];
+        if (pool.refForId(id).realObj.isHand)
+          arr.removeAt(submorphs, i);
+      }
     }
   }
 

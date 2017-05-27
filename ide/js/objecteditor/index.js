@@ -265,23 +265,26 @@ export class ObjectEditor extends Morph {
     } = this;
 
     // remove unncessary state
-    var ref = pool.ref(sourceEditor);
-    ref.currentSnapshot.props.textAndAttributes.value = [];
-    ref.currentSnapshot.props.attributeConnections.value = [];
-    ref.currentSnapshot.props.plugins.value = [];
-    ref.currentSnapshot.props.anchors.value =
-      ref.currentSnapshot.props.anchors.value.filter(({id}) =>
-        id.startsWith("selection-"));
-    ref.currentSnapshot.props.savedMarks.value = [];
+    var ref = pool.ref(sourceEditor),
+        props = ref.currentSnapshot.props;;
+    if (props.textAndAttributes) props.textAndAttributes.value = [];
+    if (props.attributeConnections) props.attributeConnections.value = [];
+    if (props.plugins) props.plugins.value = [];
+    if (props.anchors) props.anchors.value =
+      props.anchors.value.filter(ea => ea.id.startsWith("selection-"));
+    if (props.savedMarks) props.savedMarks.value = [];
 
     var ref = pool.ref(classTree);
     if (ref.currentSnapshot.props.selection)
       ref.currentSnapshot.props.selection.value = null;
     var ref = pool.ref(classTree.nodeItemContainer);
-    ref.currentSnapshot.props.submorphs.value = [];
+    if (ref.currentSnapshot.props.submorphs)
+      ref.currentSnapshot.props.submorphs.value = [];
     var ref = pool.ref(classTree.treeData);
-    ref.currentSnapshot.props.root.value = {};
-    ref.currentSnapshot.props.root.verbatim = true;
+    if (ref.currentSnapshot.props.root) {
+      ref.currentSnapshot.props.root.value = {};
+      ref.currentSnapshot.props.root.verbatim = true;
+    }
 
     var ref = pool.ref(importsList);
     ref.currentSnapshot.props.items.value = [];
@@ -305,7 +308,6 @@ export class ObjectEditor extends Morph {
 
   async onLoad() {
     this.reset();
-
     if (this._serializedState) {
       var s = this._serializedState;
       delete this._serializedState;
@@ -661,13 +663,14 @@ export class ObjectEditor extends Morph {
 
   async selectMethod(klass, methodSpec, highlight = true, putCursorInBody = false) {
     if (typeof methodSpec === "string") methodSpec = {name: methodSpec};
+    if (typeof klass === "string") klass = this.classChainOfTarget().find(ea => ea.name === klass);
 
     if (klass && !methodSpec && isClass(klass.owner)) {
       methodSpec = klass;
       klass = klass.owner
     }
 
-    var tree = this.get("classTree");
+    var tree = this.ui.classTree;
     if (this.state.selectedClass !== klass || !tree.selection)
       await this.selectClass(klass);
 
@@ -779,11 +782,7 @@ export class ObjectEditor extends Morph {
       this.state.moduleChangeWarning = null;
     }
 
-
-var store = JSON.parse(localStorage["oe helper"] || '{"saves": []}')
-store.saves.push(editor.textString);
-if (store.saves.length > 300) store.saves = store.saves.slice(-300)
-localStorage["oe helper"] = JSON.stringify(store);
+    this.backupSourceInLocalStorage(editor.textString);
 
     this.state.isSaving = true;
     try {
@@ -791,10 +790,15 @@ localStorage["oe helper"] = JSON.stringify(store);
       await editor.saveExcursion(async () => {
         await this.refresh();
         await this.updateSource(editor.textString, this.selectedModule.id);
-        // if (selectedMethod) await this.selectMethod(selectedClass, selectedMethod, false);
-        // else await this.selectClass(selectedClass);
       });
     } finally { this.state.isSaving = false; }
+  }
+  
+  backupSourceInLocalStorage(source) {
+    var store = JSON.parse(localStorage["oe helper"] || '{"saves": []}')
+    store.saves.push(source);
+    if (store.saves.length > 300) store.saves = store.saves.slice(-300);
+    localStorage["oe helper"] = JSON.stringify(store);
   }
 
   async interactivelyAddMethod() {
