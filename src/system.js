@@ -201,6 +201,8 @@ const dotSlashStartRe = /^\.?\//,
       doubleSlashRe = /.\/{2,}/g;
 
 function preNormalize(System, name, parent) {
+console.log(`> [preNormalize] ${name}`);
+
   if (name === "..") name = '../index.js'; // Fix ".."
 
   // rk 2016-07-19: sometimes SystemJS doStringMap() will resolve path into
@@ -239,37 +241,47 @@ function preNormalize(System, name, parent) {
   }
   // </snap> experimental
 
+console.log(`>> [preNormalize] ${name}`);
   return name;
 }
 
 function postNormalize(System, normalizeResult, isSync) {
+console.log(`> [postNormalize] ${normalizeResult}`);
   // lookup package main
   var base = normalizeResult.replace(jsExtRe, "");
 
   // rk 2017-05-13: FIXME, we currently use a form like
   // System.decanonicalize("lively.lang/") to figure out the package base path...
-  if (normalizeResult.endsWith("/")) return normalizeResult;
+  if (normalizeResult.endsWith("/")) {
+    console.log(`>> [postNormalize] ${normalizeResult}`);
+    return normalizeResult;
+  }
 
   let {packageRegistry} = System.get("@lively-env");
   if (packageRegistry) {
     let referencedPackage = packageRegistry.findPackageWithURL(base);
     if (referencedPackage) {
-      let main = (referencedPackage.main || "index.js").replace(dotSlashStartRe, "");
-      return base.replace(trailingSlashRe, "") + "/" + main;
+      var main = (referencedPackage.main || "index.js").replace(dotSlashStartRe, ""),
+          withMain = base.replace(trailingSlashRe, "") + "/" + main;
+      console.log(`>> [postNormalize] ${withMain} (main 1)`);
+      return withMain;
     }
 
   } else {
     if (base in System.packages) {
       var main = System.packages[base].main;
-      if (main) return base.replace(trailingSlashRe, "") + "/" + main.replace(dotSlashStartRe, "");
+      if (main) {
+        var withMain = base.replace(trailingSlashRe, "") + "/" + main.replace(dotSlashStartRe, "");
+        console.log(`>> [postNormalize] ${withMain} (main 2)`);
+        return withMain;
+      }
     }
   }
 
   // Fix issue with accidentally adding .js
   var m = normalizeResult.match(jsonJsExtRe);
-  if (m) return m[1];
-
-  return normalizeResult;
+  console.log(`>> [postNormalize] ${m ? m[1] : normalizeResult}`);
+  return m ? m[1] : normalizeResult;
 }
 
 function normalizeHook(proceed, name, parent, parentAddress) {
