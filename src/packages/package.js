@@ -3,29 +3,30 @@ import { emit } from "lively.notifications";
 import module from "../../src/module.js";
 import { resource } from "lively.resources";
 import {
-  packageStore,
   removeFromPackageStore,
-  normalizePackageURL,
-  addToPackageStore
+  normalizePackageURL
 } from "./internal.js";
 import ModulePackageMapping from "./module-package-mapping.js";
 import PackageConfiguration from "./configuration.js";
 import { isURL } from "../url-helpers.js";
+import { PackageRegistry } from "./package-registry.js";
 
+
+
+  // arr.withoutAll(
+  //   allPackageNames(System),
+  //   System["__lively.modules__packageRegistry"].allPackages().map(ea => ea.url))
 
 function allPackageNames(System) {
-  let sysPackages = System.packages,
-      livelyPackages = packageStore(System);
-  return arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages)))
+  return Object.keys(PackageRegistry.ofSystem(System).byURL);
 }
 
 export function getPackage(System, packageURL, isNormalized = false) {
-  let url = isNormalized ? packageURL : normalizePackageURL(System, packageURL);
-  return packageStore(System).hasOwnProperty(url) ?
-    packageStore(System)[url] :
-    addToPackageStore(System, new Package(System, url));
+  let url = isNormalized ? packageURL : normalizePackageURL(System, packageURL),
+      registry = PackageRegistry.ofSystem(System);
+  return registry.findPackageWithURL(url) 
+      || registry.addPackageDir(packageURL, true/*isDev...*/, true/*sync*/);
 }
-
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -34,7 +35,7 @@ export function getPackage(System, packageURL, isNormalized = false) {
 
 export class Package {
 
-  static allPackages(System) { return obj.values(packageStore(System)); }
+  static allPackages(System) { return obj.values(PackageRegistry.ofSystem(System).byURL); }
 
   static forModule(System, module) {
     return this.forModuleId(System, module.id);
