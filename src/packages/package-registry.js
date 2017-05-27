@@ -388,7 +388,7 @@ export class PackageRegistry {
     this.resetByURL();
   }
 
-  addPackageDir(dir, isDev = false) {
+  addPackageDir(dir, isDev = false, sync = false) {
     dir = ensureResource(dir).asDirectory();
     let known = this.coversDirectory(dir);
     if (known && known !== "maybe packageCollectionDirs")
@@ -396,7 +396,15 @@ export class PackageRegistry {
 
     let prop = isDev ? "devPackageDirs" : "individualPackageDirs"
     this[prop] = arr.uniqBy(this[prop].concat(dir), (a,b) => a.equals(b));
-    return this._internalAddPackageDir(dir, true);
+    
+    if (sync) {
+      let {System, packageMap} = this,
+          pkg = getPackage(System, dir.url);
+      pkg.register2();
+      return pkg;
+    } else {
+      return this._internalAddPackageDir(dir, true);
+    }
   }
 
   removePackage(pkg, updateLatestPackage = true) {
