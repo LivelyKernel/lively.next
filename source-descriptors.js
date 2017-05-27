@@ -269,15 +269,21 @@ export class RuntimeSourceDescriptor {
     return this;
   }
 
-  _basicChangeSource(newSource) {
-    var {meta, moduleSource, sourceLocation: {start, end}} = this,
-        newModuleSource = moduleSource.slice(0, start) + newSource + moduleSource.slice(end),
-        newSourceLocation = {start, end: start + newSource.length}
+  withModifiedSource(newSource) {
+    var {moduleSource, sourceLocation: {start, end}} = this;
+    return {
+      moduleSource: moduleSource.slice(0, start) + newSource + moduleSource.slice(end),
+      sourceLocation: {start, end: start + newSource.length}    
+    }
+  }
 
+  _basicChangeSource(newSource) {
+    var {meta} = this,
+        {moduleSource, sourceLocation} = this.withModifiedSource(newSource);
     this.reset();
-    this.meta = {...meta, moduleSource: newModuleSource, ...newSourceLocation};
-    this._sourceLocation = newSourceLocation;
-    this._moduleSource = newModuleSource;
+    this.meta = {...meta, moduleSource, ...sourceLocation};
+    this._sourceLocation = sourceLocation;
+    this._moduleSource = moduleSource;
     this._source = newSource;
     return this;
   }
