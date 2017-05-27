@@ -50,14 +50,6 @@ export function allPackageNames(System) {
   return arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages)))
 }
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// We add instances of Package to the System which basically serves as
-// "database" for all module / package related state.
-// This also makes it easy to completely replace the module / package state by
-// simply replacing the System instance
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-// System.get("@lively-env").packages["http://localhost:9011/lively-system-interface/node_modules/lively.vm"] = new Package(System, System.decanonicalize("lively.vm/"))
 
 export function packageStore(System) {
   return System.get("@lively-env").packages;

@@ -18,9 +18,17 @@ function ensureResource(path) {
   return path.isResource ? path : resource(path);
 }
 
+
 export class PackageRegistry {
 
   static ofSystem(System) {
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // We add a PackageRegistry to the System which basically serves as
+    // "database" for all module / package related state.
+    // This also makes it easy to completely replace the module / package state by
+    // simply replacing the System instance
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
     let registry = System.get("@lively-env").packageRegistry;
     if (!registry) {
       registry = System["__lively.modules__packageRegistry"] = new this(System);
@@ -43,7 +51,19 @@ export class PackageRegistry {
     this.individualPackageDirs = opts.individualPackageDirs || [];
     this._readyPromise = null;
     this.packageMap = {};
+    this._byURL = null;
   }
+
+  get byURL() {
+    if (!this._byURL) {
+      this._byURL = {}
+      for (let p of this.allPackages())
+        this._byURL[p.url] = p;
+    }
+    return this._byURL;
+  }
+
+  resetByURL() { this._byURL = null; }
 
   toJSON() {
     let {
@@ -100,7 +120,7 @@ export class PackageRegistry {
     this.devPackageDirs = jso.devPackageDirs.map(deserializeURL);
     this.packageBaseDirs = jso.packageBaseDirs.map(deserializeURL);
     return this;
-    
+
     function deserializeURL(url) {
       return isURL(url) ? resource(url) :
         resource(System.baseURL).join(url);
@@ -215,22 +235,24 @@ export class PackageRegistry {
   }
 
   findPackageWithURL(url) {
-    // url === pkg.url
-    if (url.endsWith("/")) url = url.replace(/\/+$/, "");
-    return this.findPackage(ea => ea.url === url);
+    if (url.isResource) url = url.url;
+    if (url.endsWith("/")) url = url.slice(0, -1);
+    return this.byURL[url];
   }
 
   findPackageHavingURL(url) {
     // does url identify a resource inside pkg, maybe pkg.url === url?
-    let penaltySoFar = Infinity, found = null;
-    this.withPackagesDo(pkg => {
-      let pkgURL = pkg.url; if (pkgURL.endsWith("/")) pkgURL.slice(0, -1);
-      if (url.indexOf(pkg.url) !== 0) return;
+    if (url.isResource) url = url.url;
+    if (url.endsWith("/")) url = url.slice(0, -1);
+    let penaltySoFar = Infinity, found = null,
+        {byURL} = this, packageURLs = Object.keys(byURL);
+    for (let pkgURL in packageURLs) {
+      if (url.indexOf(pkgURL) !== 0) continue;
       let penalty = url.slice(pkgURL.length).length;
-      if (penalty >= penaltySoFar) return;
+      if (penalty >= penaltySoFar) continue;
       penaltySoFar = penalty;
-      found = pkg;
-    });
+      found = byURL[pkgURL];
+    }
     return found;
   }
 
@@ -363,6 +385,7 @@ export class PackageRegistry {
     packageEntry.versions[version] = pkg;
 
     if (updateLatestPackage) this._updateLatestPackages(pkg.name);
+    this.resetByURL();
   }
 
   addPackageDir(dir, isDev = false) {
@@ -393,6 +416,7 @@ export class PackageRegistry {
     }
 
     if (updateLatestPackage) this._updateLatestPackages(pkg.name);
+    this.resetByURL();
   }
 
   async _internalAddPackageDir(dir, updateLatestPackage = false) {

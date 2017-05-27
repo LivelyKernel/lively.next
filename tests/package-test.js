@@ -9,6 +9,7 @@ import { getPackage, applyConfig, getPackages } from "../src/packages.js";
 import module from "../src/module.js";
 import { resource, createFiles } from "lively.resources";
 import { PackageRegistry } from "../src/packages/package-registry.js";
+import { packageStore, normalizePackageURL } from "../src/packages/internal.js";
 
 var testDir = System.decanonicalize("lively.modules/tests/package-tests-temp/"),
     project1aDir = testDir + "dep1/",
@@ -42,6 +43,7 @@ describe("package loading", function() {
 
   beforeEach(async () => {
     S = getSystem("test", {baseURL: testDir});
+    PackageRegistry.ofSystem(S);
     await createFiles(testDir, testResources)
   });
 
@@ -107,6 +109,7 @@ describe("package loading", function() {
     })
 
     it("doesnt group modules with package name as belonging to package", async () => {
+      await getPackage(S, project1bDir).import();
       await getPackage(S, project2Dir).import();
       S.set(testDir + "project2.js", S.newModule({}));
       expect(getPackages(S).map(ea => Object.assign(ea, {System: null}))).to.containSubset([
@@ -138,11 +141,11 @@ describe("package loading", function() {
     });
 
     it("finds loaded modules of registered package", async () => {
-      await getPackage(S, project2Dir).import();
+      await getPackage(S, project1aDir).register();
+      await getPackage(S, project2Dir).register();
 
-      var p = getPackage(S, project1aDir);
-      await p.register();
-      expect(arr.pluck(p.modules(), "id")).equals([project1aDir + "package.json"], "register")
+      let p = getPackage(S, project1aDir);
+      expect(arr.pluck(p.modules(), "id")).equals([project1aDir + "package.json"], "register");
       await p.import();
 
       expect(arr.pluck(p.modules(), "id"))
@@ -152,7 +155,7 @@ describe("package loading", function() {
           p2 = getPackage(S, innerDir);
       await p2.import();
       expect(arr.pluck(p2.modules(), "id"))
-        .equals(["package.json", "index.js"].map(ea => innerDir + ea), "import inner")
+        .equals(["package.json", "index.js"].map(ea => innerDir + ea), "import inner");
 
       expect(arr.pluck(p.modules(), "id"))
         .equals(["package.json", "entry-a.js", "other.js"].map(ea => project1aDir + ea), "after sub-project loaded")
@@ -182,32 +185,30 @@ describe("package loading", function() {
       expect(m.version).to.equal("a");
     });
 
-    it("uses specified dependency when preferLoaded is false", async () => {
+    it("uses specified dependency when mapped", async () => {
+      await getPackage(S, project1bDir).register();
       await getPackage(S, project1aDir).register();
-      await modifyJSON(project2Dir + "package.json", {lively: {preferLoadedPackages: false}});
+      await modifyJSON(project2Dir + "package.json", {systemjs: {map: {"some-project": project1bDir}}});
       await getPackage(S, project2Dir).register();
       var m = await S.import("project2");
       expect(m.version).to.equal("b");
+      expect(S.packages).to.containSubset({
+        [noTrailingSlash(project1bDir)]: {main: "entry-b.js", map: {}},
+        [noTrailingSlash(project2Dir)]: {map: {"some-project": project1bDir}}
+      });
     });
 
-    it("deals with package map directory entry", async () => {
+    it("uses specified dependency when mapped relative", async () => {
+      await getPackage(S, project1bDir).register();
       await getPackage(S, project1aDir).register();
-      await modifyJSON(project2Dir + "package.json", {lively: {preferLoadedPackages: false, packageMap: {"some-project": project1bDir}}});
+      await modifyJSON(project2Dir + "package.json", {systemjs: {map: {"some-project": "../dep2/"}}});
       await getPackage(S, project2Dir).register();
       var m = await S.import("project2");
-      expect(m.version).to.equal("b")
-    });
-
-    it("deals with package map relative entry", async () => {
-      await getPackage(S, project1aDir).register();
-      await modifyJSON(project2Dir + "package.json", {lively: {preferLoadedPackages: false, packageMap: {"some-project": "../dep2/"}}});
-      await getPackage(S, project2Dir).register();
+      expect(m.version).to.equal("b");
       expect(S.packages).to.containSubset({
         [noTrailingSlash(project1bDir)]: {main: "entry-b.js", map: {}},
         [noTrailingSlash(project2Dir)]: {map: {"some-project": "../dep2/"}}
       });
-      var m = await S.import("project2");
-      expect(m.version).to.equal("b");
     });
 
     it("Concurrent loading will not load multiple versions", async () => {
@@ -227,6 +228,8 @@ describe("package loading", function() {
               lively: {packageMap: {"project2": project2bDir}}
             })
           };
+      await getPackage(S, project2bDir).register();
+      await getPackage(S, project1aDir).register();
       await createFiles(project2bDir, project2b);
       await createFiles(project5Dir, project5);
       await Promise.all([
@@ -235,7 +238,7 @@ describe("package loading", function() {
       ]);
       var packageCounts = arr.groupByKey(getPackages(S), "name").count();
       Object.keys(packageCounts).forEach(name =>
-        expect(packageCounts[name]).equals(1, `package ${name} loaded mutiple times`));
+        expect(packageCounts[name]).equals(1, `package ${name} loaded multiple times`));
     });
 
   });
@@ -401,7 +404,7 @@ describe("package registry", () => {
   });
 
   describe("lookup", () => {
-  
+
     it("from packageBaseDirs", async () => {
       expect(registry.lookup("p1")).containSubset({
         url: testDir + "packages/p1/0.2.2",
@@ -437,10 +440,10 @@ describe("package registry", () => {
       expect(registry.resolvePath("p1@0.1.0/index.js")).equals(testDir + "packages/p1/0.1.0/index.js");
       expect(registry.resolvePath("foo/index.js")).equals(null);
 
-      expect(registry.resolvePath("p2/index.js", testDir + "packages/p1/0.2.2/index.js")).equals(testDir + "packages/p2/1.0.0/index.js");
+      expect(registry.resolvePath("p2/index.js", testDir + "packages/p1/0.2.2/index.js")).equals(testDir + "packages/p2/2.0.0/index.js");
       expect(registry.resolvePath("./bar.js", testDir + "packages/p1/0.2.2/index.js")).equals(testDir + "packages/p1/0.2.2/bar.js");
       expect(registry.resolvePath("../bar.js", testDir + "packages/p1/0.2.2/index.js")).equals(testDir + "packages/p1/bar.js");
-      expect(registry.resolvePath("p2", testDir + "packages/p1/0.2.2/index.js")).equals(testDir + "packages/p2/1.0.0");
+      expect(registry.resolvePath("p2", testDir + "packages/p1/0.2.2/index.js")).equals(testDir + "packages/p2/2.0.0");
     });
 
   });
