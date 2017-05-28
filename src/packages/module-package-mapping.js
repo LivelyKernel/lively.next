@@ -1,7 +1,7 @@
 import { arr, promise, obj } from "lively.lang";
 import { unsubscribe, subscribe } from "lively.notifications";
+import { Package } from './package.js'
 import { knownModuleNames } from '../system.js'
-import { allPackageNames } from "./internal.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // This deals with which modules are mapped to which packages. There is
@@ -54,17 +54,24 @@ export default class ModulePackageMapping {
     this._cacheInitialized = false;
     this.packageToModule = {};
     this.modulesToPackage = {};
+    this.modulesWithoutPackage = {};
   }
 
   ensureCache() {
     // The cache is invalidated when packages are added or removed.
     // If a new module gets loaded it is added to the caches.
     // When a module gets removed it is also removed from both maps.
-    let {System, _cacheInitialized, packageToModule, modulesToPackage} = this;
+    let {
+      System,
+      _cacheInitialized,
+      packageToModule,
+      modulesToPackage,
+      modulesWithoutPackage
+    } = this;
+
     if (_cacheInitialized) return this;
 
-    let packageNames = allPackageNames(System);
-    if (!packageNames.includes("no group")) packageNames.push("no group");
+    let packageNames = Package.allPackageURLs(System);
 
     for (let j = 0; j < packageNames.length; j++)
       packageToModule[packageNames[j]] = [];
@@ -79,10 +86,12 @@ export default class ModulePackageMapping {
          && (!itsPackage || itsPackage.length < packageName.length))
            itsPackage = packageName;
       }
-      if (!itsPackage) itsPackage = "no group";
-
-      packageToModule[itsPackage].push(moduleId);
-      modulesToPackage[moduleId] = itsPackage;
+      if (!itsPackage) {
+        modulesWithoutPackage[moduleId] = {};
+      } else {
+        packageToModule[itsPackage].push(moduleId);
+        modulesToPackage[moduleId] = itsPackage;
+      }
     }
 
     this._cacheInitialized = true;
@@ -92,8 +101,9 @@ export default class ModulePackageMapping {
 
   addModuleIdToCache(moduleId) {
     this.ensureCache();
-    let {packageToModule, modulesToPackage} = this;
+    let {packageToModule, modulesToPackage, modulesWithoutPackage} = this;
     if (modulesToPackage[moduleId]) return modulesToPackage[moduleId];
+    if (modulesWithoutPackage[moduleId]) return null;
 
     let packageNames = Object.keys(packageToModule), itsPackage;
     for (let j = 0; j < packageNames.length; j++) {
@@ -102,15 +112,23 @@ export default class ModulePackageMapping {
        && (!itsPackage || itsPackage.length < packageName.length))
          itsPackage = packageName;
     }
-    if (!itsPackage) itsPackage = "no group";
-    let modules = packageToModule[itsPackage] || (packageToModule[itsPackage] = []);
-    modules.push(moduleId);
-    return modulesToPackage[moduleId] = itsPackage;
+    if (!itsPackage) {
+      modulesWithoutPackage[moduleId] = {};
+      return null;
+    } else {
+      let modules = packageToModule[itsPackage] || (packageToModule[itsPackage] = []);
+      modules.push(moduleId);
+      return modulesToPackage[moduleId] = itsPackage;
+    }
   }
 
   removeModuleFromCache(moduleId) {
     if (!this._cacheInitialized) return;
-    let {packageToModule, modulesToPackage} = this;
+    let {packageToModule, modulesToPackage, modulesWithoutPackage} = this;
+    if (modulesWithoutPackage.hasOwnProperty(moduleId)) {
+      delete modulesWithoutPackage[moduleId];
+      return;
+    }
     var itsPackage = modulesToPackage[moduleId];
     if (!itsPackage) return;
     delete modulesToPackage[moduleId];

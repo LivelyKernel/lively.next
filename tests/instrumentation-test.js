@@ -4,7 +4,7 @@ import { expect } from "mocha-es6";
 
 import { getSystem, removeSystem } from "../src/system.js";
 import module from "../src/module.js";
-import { registerPackage } from "../src/packages.js";
+import { registerPackage } from "../src/packages/package.js";
 import { runEval } from "lively.vm";
 import { createFiles, resource } from "lively.resources";
 

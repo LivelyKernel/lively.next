@@ -6,7 +6,7 @@ import { removeDir, createFiles } from "./helpers.js";
 
 import { getSystem, searchLoadedModules, loadedModules } from "../src/system.js";
 import mod from "../src/module.js";
-import { importPackage, removePackage, getPackage } from "../src/packages.js";
+import { importPackage, removePackage, getPackage } from "../src/packages/package.js";
 
 const dir = System.decanonicalize("lively.modules/tests/"),
       testProjectDir = dir + "search-test-project/",

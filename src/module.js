@@ -4,7 +4,7 @@ import { computeRequireMap } from  "./dependencies.js";
 import { moduleSourceChange } from "./change.js";
 import { scheduleModuleExportsChange, runScheduledExportChanges } from "./import-export.js";
 import { livelySystemEnv } from "./system.js";
-import { Package } from "./packages.js";
+import { Package } from "./packages/package.js";
 import { isURL } from './url-helpers.js';
 import { emit, subscribe } from "lively.notifications";
 import { defaultClassToFunctionConverterName } from "lively.vm";

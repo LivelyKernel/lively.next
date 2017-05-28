@@ -6,7 +6,7 @@ import { subscribe, unsubscribe } from "lively.notifications";
 import { removeDir, createFiles } from "./helpers.js";
 import { getSystem, removeSystem } from "../src/system.js";
 import module from "../src/module.js";
-import { getPackage } from "../src/packages.js";
+import { getPackage } from "../src/packages/package.js";
 import { promise } from "lively.lang";
 
 var dir = System.decanonicalize("lively.modules/tests/"),

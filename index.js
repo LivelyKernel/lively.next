@@ -293,22 +293,24 @@ export {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // packages
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 import {
+  Package,
+  getPackage as _getPackage,
+  ensurePackage as _ensurePackage,
+  getPackageSpecs,
+  applyConfig as _applyPackageConfig,
   importPackage as _importPackage,
   registerPackage as _registerPackage,
-  removePackage as _removePackage,
-  reloadPackage as _reloadPackage,
-  applyConfig as _applyPackageConfig,
-  getPackages as _getPackages,
-  getPackage as _getPackage
-} from "./src/packages.js";
+} from "./src/packages/package.js";
 
 function importPackage(packageURL) { return _importPackage(defaultSystem, packageURL); }
-function registerPackage(packageURL) { return _registerPackage(defaultSystem, packageURL); }
-function removePackage(packageURL) { return _removePackage(defaultSystem, packageURL); }
-function reloadPackage(packageURL, opts) { return _reloadPackage(defaultSystem, packageURL, opts); }
-function getPackages() { return _getPackages(defaultSystem); }
-function getPackage(packageURL) { return _getPackage(defaultSystem, packageURL); }
+function registerPackage(packageURL, optPkgConfig) { return _registerPackage(defaultSystem, packageURL, optPkgConfig); }
+function removePackage(packageURL) { return _getPackage(defaultSystem, packageURL).remove(); }
+function reloadPackage(packageURL, opts) { return _getPackage(defaultSystem, packageURL).reload(opts); }
+function getPackages() { return getPackageSpecs(defaultSystem); }
+function getPackage(packageURL, isNormalized = false) { return _getPackage(defaultSystem, packageURL, isNormalized); }
+function ensurePackage(packageURL) { return _ensurePackage(defaultSystem, packageURL); }
 function applyPackageConfig(packageConfig, packageURL) { return _applyPackageConfig(defaultSystem, packageConfig, packageURL); }
 
 export {
@@ -318,6 +320,7 @@ export {
   reloadPackage,
   getPackages,
   getPackage,
+  ensurePackage,
   applyPackageConfig
 };
 

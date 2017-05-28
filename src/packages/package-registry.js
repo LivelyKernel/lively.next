@@ -1,6 +1,6 @@
 import { semver } from "../../index.js";
 import { arr, obj, promise } from "lively.lang";
-import { getPackage } from "../packages.js";
+import { getPackage, Package } from "./package.js";
 import { resource } from "lively.resources";
 import { isURL } from "../url-helpers.js";
 
@@ -65,6 +65,8 @@ export class PackageRegistry {
 
   resetByURL() { this._byURL = null; }
 
+  allPackageURLs() { return Object.keys(this.byURL); }
+
   toJSON() {
     let {
           System,
@@ -109,8 +111,7 @@ export class PackageRegistry {
         let pkgSpec = spec.versions[version],
             url = pkgSpec.url;
         if (!isAbsolute(url)) url = base.join(url).url;
-        let pkg = getPackage(System, url);
-        pkg.fromJSON(pkgSpec);
+        let pkg = new Package.fromJSON(System, {...pkgSpec, url});
         packageMap[pName].versions[version] = pkg;
       }
     }
@@ -119,6 +120,8 @@ export class PackageRegistry {
     this.individualPackageDirs = jso.individualPackageDirs.map(deserializeURL);
     this.devPackageDirs = jso.devPackageDirs.map(deserializeURL);
     this.packageBaseDirs = jso.packageBaseDirs.map(deserializeURL);
+    this.resetByURL();
+
     return this;
 
     function deserializeURL(url) {
@@ -192,6 +195,7 @@ export class PackageRegistry {
   }
 
   coversDirectory(dir) {
+    dir = ensureResource(dir).asDirectory();
     let {packageBaseDirs, devPackageDirs, individualPackageDirs} = this;
 
     if (individualPackageDirs.some(ea => ea.equals(dir))) return "individualPackageDirs";
@@ -244,9 +248,8 @@ export class PackageRegistry {
     // does url identify a resource inside pkg, maybe pkg.url === url?
     if (url.isResource) url = url.url;
     if (url.endsWith("/")) url = url.slice(0, -1);
-    let penaltySoFar = Infinity, found = null,
-        {byURL} = this, packageURLs = Object.keys(byURL);
-    for (let pkgURL in packageURLs) {
+    let penaltySoFar = Infinity, found = null, {byURL} = this;
+    for (let pkgURL in byURL) {
       if (url.indexOf(pkgURL) !== 0) continue;
       let penalty = url.slice(pkgURL.length).length;
       if (penalty >= penaltySoFar) continue;
@@ -310,106 +313,61 @@ export class PackageRegistry {
     if (!this.isReady())
       return this.whenReady().then(() => this.update());
 
-    let {System, packageMap} = this,
-        deferred = promise.deferred();
+    let deferred = promise.deferred();
     this._readyPromise = deferred.promise;
 
     this.packageBaseDirs = this.packageBaseDirs.map(ea => ea.asDirectory());
     this.individualPackageDirs = this.individualPackageDirs.map(ea => ea.asDirectory());
     this.devPackageDirs = this.devPackageDirs.map(ea => ea.asDirectory());
 
+    let discovered = {};
+
     try {
 
       for (let dir of this.packageBaseDirs)
         for (let dirWithVersions of await dir.dirList(1))
           for (let subDir of (await dirWithVersions.dirList(1)).filter(ea => ea.isDirectory()))
-            await this._internalAddPackageDir(subDir, false);
+            discovered = await this._discoverPackagesIn(subDir, discovered, "packageCollectionDirs");
 
       for (let dir of this.individualPackageDirs)
-        await this._internalAddPackageDir(dir, false);
-
+        discovered = await this._discoverPackagesIn(dir, discovered, "individualPackageDirs");
 
       for (let dir of this.devPackageDirs)
-        await this._internalAddPackageDir(dir, false);
+        discovered = await this._discoverPackagesIn(dir, discovered, "devPackageDirs");
+
+      for (let url in discovered) {
+        let {pkg, config, covered} = discovered[url];
+        this.System.debug && console.log(`[PackageRegistry] Adding discovered package ${url} (from ${covered})`);
+        this._addPackageWithConfig(pkg, config, url + "/", covered);
+      }
 
       this._updateLatestPackages();
-      this._readyPromise = null;
       deferred.resolve();
-
-
-    } catch (err) { this._readyPromise = null; deferred.reject(err); }
+    }
+    catch (err) { deferred.reject(err); }
+    finally { this.resetByURL(); this._readyPromise = null; }
 
     return this;
   }
 
-  async updatePackageFromPackageJson(pkg, updateLatestPackage = true) {
-    // for name or version changes
-    return this.updatePackageFromConfig(
-      pkg,
-      await ensureResource(pkg.url).join("package.json").readJson(),
-      updateLatestPackage);
-  }
+  async addPackageAt(url, isDev = false) {
+    let urlString = typeof url === "string" ? url : url.url;
+    if (urlString.endsWith("/")) urlString.slice(0, -1);
+    if (this.byURL[urlString])
+      throw new Error(`package in ${urlString} already added to registry`);
 
-  updatePackageFromConfig(pkg, config, updateLatestPackage = true) {
-    // for name or version changes
-    let {url: oldURL, name: oldName, version: oldVersion} = pkg,
-        {name, version, dependencies, devDependencies, main, systemjs} = config;
-    pkg.name = name;
-    pkg.version = version;
-    pkg.dependencies = dependencies || {};
-    pkg.devDependencies = devDependencies || {};
-    pkg.main = systemjs && systemjs.main || main || "index.js";
-    pkg.systemjs = systemjs;
-    return this.updatePackage(pkg, oldName, oldVersion, oldURL, updateLatestPackage)
-  }
-
-  updatePackage(pkg, oldName, oldVersion, oldURL, updateLatestPackage = true) {
-    // for name or version changes
-
-    let oldLocation = this.coversDirectory(ensureResource(oldURL));
-    if (
-      (oldName    && pkg.name === oldName) ||
-      (oldVersion && pkg.version !== oldVersion) ||
-      (oldURL     && pkg.url !== oldURL)
-    ) {
-      this.removePackage({name: oldName, version: oldVersion, url: oldURL}, false);
+    let discovered = await this._discoverPackagesIn(ensureResource(url).asDirectory(), {});
+    for (let url in discovered) {
+      if (this.byURL[url]) continue;
+      let {pkg, config} = discovered[url],
+          covered = this._addPackageDir(url, isDev, true/*uniqCheck*/);
+      this._addPackageWithConfig(pkg, config, url + "/", covered);
     }
 
-    let dir = ensureResource(pkg.url),
-        known = this.coversDirectory(ensureResource(pkg.url));
-    if (!known) {
-      console.log(`[PackageRegistry>>updatePackage] adding ${pkg.url} to individualPackageDirs b/c it is not known`);
-      if (oldLocation === "devPackageDirs") this.devPackageDirs.push(dir);
-      else this.individualPackageDirs.push(dir);
-    }
-
-    let {name, version} = pkg,
-        {packageMap} = this,
-        packageEntry = packageMap[name] ||
-          (packageMap[name] = {versions: {}, latest: null});
-    packageEntry.versions[version] = pkg;
-
-    if (updateLatestPackage) this._updateLatestPackages(pkg.name);
     this.resetByURL();
-  }
+    this._updateLatestPackages();
 
-  addPackageDir(dir, isDev = false, sync = false) {
-    dir = ensureResource(dir).asDirectory();
-    let known = this.coversDirectory(dir);
-    if (known && known !== "maybe packageCollectionDirs")
-      return this.findPackageWithURL(dir);
-
-    let prop = isDev ? "devPackageDirs" : "individualPackageDirs"
-    this[prop] = arr.uniqBy(this[prop].concat(dir), (a,b) => a.equals(b));
-    
-    if (sync) {
-      let {System, packageMap} = this,
-          pkg = getPackage(System, dir.url);
-      pkg.register2();
-      return pkg;
-    } else {
-      return this._internalAddPackageDir(dir, true);
-    }
+    return this.findPackageWithURL(url);
   }
 
   removePackage(pkg, updateLatestPackage = true) {
@@ -428,23 +386,26 @@ export class PackageRegistry {
         delete packageMap[name];
     }
 
-    if (updateLatestPackage) this._updateLatestPackages(pkg.name);
     this.resetByURL();
+    if (updateLatestPackage) this._updateLatestPackages(pkg.name);
   }
 
-  async _internalAddPackageDir(dir, updateLatestPackage = false) {
-    if (!dir.isDirectory()) return null;
-    let {System, packageMap} = this;
-    try {
-      let config = await dir.join("package.json").readJson(),
-          {name, version} = config,
-          pkg = getPackage(System, dir.url);
-      System.debug && console.log(`[lively.modules] package registry ${name}@${version} in ${dir.url}`);
-      this.updatePackageFromConfig(pkg, config, updateLatestPackage);
-      pkg.register2(config);
-      return pkg;
-    } catch (err) { return null; }
+  updateNameAndVersionOf(pkg, oldName, oldVersion, newName, newVersion) {
+    let {packageMap} = this;
+    if (!packageMap[oldName]) {
+      console.warn(`[PackageRegistry>>updateNameAndVersionOf] ${oldName}@${oldVersion} not found in registry (${pkg.url})`);
+    } else if (!packageMap[oldName].versions[oldVersion]) {
+      console.warn(`[PackageRegistry>>updateNameAndVersionOf] No version entry ${oldVersion} of ${oldName} found in registry (${pkg.url})`);
+    }
+    this._addToPackageMap(pkg, newName, newVersion);
+    if (packageMap[oldName] && packageMap[oldName].versions[oldVersion]) {
+      delete packageMap[oldName].versions[oldVersion]
+      if (Object.keys(packageMap[oldName].versions).length === 0)
+        delete packageMap[oldName];
+    }
+    this._updateLatestPackages(pkg.name);
   }
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   _updateLatestPackages(name) {
     let {packageMap} = this;
@@ -457,4 +418,125 @@ export class PackageRegistry {
       packageMap[eaName].latest = arr.last(semver.sort(
         Object.keys(packageMap[eaName].versions), true));
   }
+
+  async _discoverPackagesIn(dir, discovered, covered) {
+    if (!dir.isDirectory()) return discovered;
+    let url = dir.asFile().url;
+    if (discovered.hasOwnProperty(url)) return discovered;
+
+    try {
+      let pkg = new Package(this.System, url),
+          config = await pkg.tryToLoadPackageConfig();
+      pkg.setConfig(config);
+      discovered[url] = {pkg, config, covered};
+      if (this.System.debug) {
+        let {name, version} = config;
+        console.log(`[lively.modules] package ${name}@${version} discovered in ${dir.url}`);
+      }
+      return discovered;
+    } catch (err) { return discovered; }
+  }
+
+  _addToPackageMap(pkg, name, version, allowOverride = true) {
+    if (!name) throw new Error(`Cannot add package without name`);
+    // if (!version) throw new Error(`Cannot add package without version`);
+    if (!version) version = "0.0.0";
+    let {packageMap} = this,
+        packageEntry = packageMap[name] ||
+          (packageMap[name] = {versions: {}, latest: null}),
+        isOverride = packageEntry.versions[version];
+    if (isOverride) {
+      let msg = `Redefining version ${version} of package ${pkg.url}`;
+      if (!allowOverride) throw new Error(msg + " not allowed");
+      else console.warn(msg);
+    }
+    packageEntry.versions[version] = pkg;
+  }
+
+  _addPackageWithConfig(pkg, config, dir, covered = null) {
+    if (!covered) {
+      // if (oldLocation === "devPackageDirs") this.devPackageDirs.push(dir);
+      this._addPackageDir(dir, false/*isDev*/, true/*uniqCheck*/);
+    }
+    pkg.registerWithConfig(config);
+    this._addToPackageMap(pkg, pkg.name, pkg.version);
+    return pkg;
+  }
+
+  _addPackageDir(dir, isDev = false, uniqCheck = true) {
+    dir = ensureResource(dir).asDirectory();
+    let prop = isDev ? "devPackageDirs" : "individualPackageDirs",
+        dirs = this[prop].concat(dir);
+    this[prop] = uniqCheck ? arr.uniqBy(dirs, (a,b) => a.equals(b)) : dirs;
+    return prop;
+  }
+
 }
+
+
+  // async updatePackageFromPackageJson(pkg, updateLatestPackage = true) {
+  //   // for name or version changes
+  //   return this.updatePackageFromConfig(
+  //     pkg,
+  //     await ensureResource(pkg.url).join("package.json").readJson(),
+  //     updateLatestPackage);
+  // }
+  //
+  // updatePackageFromConfig(pkg, config, updateLatestPackage = true) {
+  //   // for name or version changes
+  //   let {url: oldURL, name: oldName, version: oldVersion} = pkg,
+  //       {name, version, dependencies, devDependencies, main, systemjs} = config;
+  //   pkg.name = name;
+  //   pkg.version = version;
+  //   pkg.dependencies = dependencies || {};
+  //   pkg.devDependencies = devDependencies || {};
+  //   pkg.main = systemjs && systemjs.main || main || "index.js";
+  //   pkg.systemjs = systemjs;
+  //   return this.updatePackage(pkg, oldName, oldVersion, oldURL, updateLatestPackage)
+  // }
+  //
+  // updatePackage(pkg, oldName, oldVersion, oldURL, updateLatestPackage = true) {
+  //   // for name or version changes
+  //
+  //   let oldLocation = this.coversDirectory(ensureResource(oldURL));
+  //   if (
+  //     (oldName    && pkg.name === oldName) ||
+  //     (oldVersion && pkg.version !== oldVersion) ||
+  //     (oldURL     && pkg.url !== oldURL)
+  //   ) {
+  //     this.removePackage({name: oldName, version: oldVersion, url: oldURL}, false);
+  //   }
+  //
+  //   let dir = ensureResource(pkg.url),
+  //       known = this.coversDirectory(ensureResource(pkg.url));
+  //   if (!known) {
+  //     console.log(`[PackageRegistry>>updatePackage] adding ${pkg.url} to individualPackageDirs b/c it is not known`);
+  //     if (oldLocation === "devPackageDirs") this.devPackageDirs.push(dir);
+  //     else this.individualPackageDirs.push(dir);
+  //   }
+  //
+  //   let {name, version} = pkg,
+  //       {packageMap} = this,
+  //       packageEntry = packageMap[name] ||
+  //         (packageMap[name] = {versions: {}, latest: null});
+  //   packageEntry.versions[version] = pkg;
+  //
+  //   if (updateLatestPackage) this._updateLatestPackages(pkg.name);
+  //   this.resetByURL();
+  // }
+
+
+
+  //   async _internalAddPackageDir(dir, updateLatestPackage = false) {
+  //   if (!dir.isDirectory()) return null;
+  //   try {
+  //     let config = await dir.join("package.json").readJson(),
+  //         {name, version} = config,
+  //         pkg = getPackage(this.System, dir.url);
+  //     this.System.debug && console.log(`[lively.modules] package registry ${name}@${version} in ${dir.url}`);
+  //     this.updatePackageFromConfig(pkg, config, updateLatestPackage);
+  //     pkg.registerWithConfig(config);
+  //     return pkg;
+  //   } catch (err) { return null; }
+  // }
+

@@ -1,6 +1,5 @@
 import { arr, obj } from "lively.lang";
 import { isURL } from "../url-helpers.js";
-import { normalizeInsidePackage, findPackageNamed } from "./internal.js";
 import { install as installHook, isInstalled as isHookInstalled } from "../hooks.js";
 
 export default class PackageConfiguration {
@@ -30,7 +29,12 @@ export default class PackageConfiguration {
 
     System.config({
       map: {[name]: packageURL},
-      packages: {[packageURL]: sysConfig}
+      packages: {
+        [packageURL]: {
+          ...sysConfig,
+          meta: {"package.json": {format: "json"}, ...sysConfig.meta}
+        }
+      }
     });
 
     let packageInSystem = System.getConfig().packages[packageURL] || {};
@@ -79,7 +83,6 @@ export default class PackageConfiguration {
     this.applyLivelyConfigMeta(livelyConfig);
     this.applyLivelyConfigHooks(livelyConfig);
     this.applyLivelyConfigBundles(livelyConfig);
-    return this.applyLivelyConfigPackageMap(livelyConfig);
   }
 
   applyLivelyConfigHooks(livelyConfig) {
@@ -120,46 +123,6 @@ export default class PackageConfiguration {
       }
     });
     this.System.config(c);
-  }
-
-  applyLivelyConfigPackageMap(livelyConfig) {
-    var subPackages = livelyConfig.packageMap ?
-      Object.keys(livelyConfig.packageMap).map(name =>
-        this.subpackageURLs(livelyConfig, name)) : [];
-    return {subPackages};
-  }
-
-  subpackageURLs(livelyConfig, subPackageName) {
-    // find out what other packages are dependencies of this.pkg
-
-    let {System, packageURL, pkg} = this,
-        preferLoadedPackages = livelyConfig.hasOwnProperty("preferLoadedPackages") ?
-          livelyConfig.preferLoadedPackages : true,
-        normalized = System.decanonicalize(subPackageName, packageURL);
-
-    if (preferLoadedPackages) {
-      let subpackageURL,
-          existing = findPackageNamed(System, subPackageName);
-
-      if (existing)                        subpackageURL = existing.url;
-      else if (pkg.map[subPackageName])    subpackageURL = normalizeInsidePackage(System, pkg.map[subPackageName], packageURL);
-      else if (System.map[subPackageName]) subpackageURL = normalizeInsidePackage(System, System.map[subPackageName], packageURL);
-      else if (System.get(normalized))     subpackageURL = System.decanonicalize(subPackageName, packageURL + "/");
-
-      if (subpackageURL) {
-        if (System.get(subpackageURL)) subpackageURL = subpackageURL.split("/").slice(0,-1).join("/"); // force to be dir
-        System.debug && console.log("[lively.module package] Package %s required by %s already in system as %s", subPackageName, pkg, subpackageURL);
-        return subpackageURL;
-      }
-    }
-
-    pkg.addMapping(subPackageName, livelyConfig.packageMap[subPackageName])
-
-    // lookup
-    var subpackageURL = normalizeInsidePackage(System, livelyConfig.packageMap[subPackageName], pkg.url);
-    System.debug && console.log("[lively.module package] Package %s required by %s NOT in system, will be loaded as %s", subPackageName, pkg, subpackageURL);
-
-    return subpackageURL;
   }
 
 }

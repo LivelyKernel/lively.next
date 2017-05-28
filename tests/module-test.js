@@ -5,7 +5,7 @@ import { promise } from "lively.lang";
 
 import module, { isModuleLoaded, doesModuleExist } from "../src/module.js";
 import { getSystem, removeSystem, loadedModules, whenLoaded } from "../src/system.js";
-import { registerPackage, importPackage } from "../src/packages.js";
+import { registerPackage, importPackage } from "../src/packages/package.js";
 import { createFiles, resource } from "lively.resources";
 
 var dir = "local://lively.modules-module-test/",

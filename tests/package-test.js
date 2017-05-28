@@ -4,12 +4,11 @@ import { expect } from "mocha-es6";
 import { modifyJSON, noTrailingSlash, inspect as i } from "./helpers.js";
 
 import { obj, arr } from "lively.lang";
-import { getSystem, removeSystem, printSystemConfig, loadedModules } from "../src/system.js";
-import { getPackage, applyConfig, getPackages } from "../src/packages.js";
-import module from "../src/module.js";
 import { resource, createFiles } from "lively.resources";
+import module from "../src/module.js";
+import { getSystem, removeSystem, printSystemConfig, loadedModules } from "../src/system.js";
+import { Package, getPackage, ensurePackage, applyConfig, getPackageSpecs } from "../src/packages/package.js";
 import { PackageRegistry } from "../src/packages/package-registry.js";
-import { packageStore, normalizePackageURL } from "../src/packages/internal.js";
 
 var testDir = System.decanonicalize("lively.modules/tests/package-tests-temp/"),
     project1aDir = testDir + "dep1/",
@@ -18,11 +17,11 @@ var testDir = System.decanonicalize("lively.modules/tests/package-tests-temp/"),
     project1a = {
       "entry-a.js": "import { y } from './other.js'; var x = y + 1, version = 'a'; export { x, version };",
       "other.js": "export var y = 1;",
-      "package.json": '{"name": "some-project", "main": "entry-a.js"}'
+      "package.json": '{"name": "some-project", "main": "entry-a.js", "version": "1.0.0"}'
     },
     project1b = {
       "entry-b.js": "var x = 23, version = 'b'; export { x, version };",
-      "package.json": '{"name": "some-project", "main": "entry-b.js"}'
+      "package.json": '{"name": "some-project", "main": "entry-b.js", "version": "2.0.0"}'
     },
     project2 = {
       "index.js": "export { x, version } from 'some-project';",
@@ -43,7 +42,6 @@ describe("package loading", function() {
 
   beforeEach(async () => {
     S = getSystem("test", {baseURL: testDir});
-    PackageRegistry.ofSystem(S);
     await createFiles(testDir, testResources)
   });
 
@@ -57,10 +55,10 @@ describe("package loading", function() {
   describe("basics", () => {
 
     it("registers and loads a package", async () => {
-      await getPackage(S, project1aDir).register();
+      await ensurePackage(S, project1aDir);
       let mod = await S.import("some-project");
       expect(mod).to.have.property("x", 2);
-      let p = getPackages(S);
+      let p = getPackageSpecs(S);
       expect(p).to.containSubset([{
         address: noTrailingSlash(project1aDir),
         main: "entry-a.js",
@@ -70,26 +68,37 @@ describe("package loading", function() {
     });
 
     it("tracks package config", async () => {
-      await getPackage(S, project1aDir).register();
-      let p = getPackage(S, "some-project");
-      expect(p.config).to.deep.equal({"name": "some-project", "main": "entry-a.js"});
+      let p = await ensurePackage(S, project1aDir);
+      expect(p.config).to.deep.equal({
+        "name": "some-project",
+        "main": "entry-a.js",
+        version: "1.0.0"
+      });
       applyConfig(S, {lively: {foo: "bar"}}, "some-project")
-      expect(p.config).to.deep.equal(
-        {"name": "some-project", "main": "entry-a.js", "lively": {"foo": "bar"}});
+      expect(p.config).to.deep.equal({
+        dependencies: {},
+        devDependencies: {},
+        lively: {foo: "bar"},
+        main: "entry-a.js",
+        name: "some-project",
+        version: "1.0.0"
+      });
     });
 
     it("registers and loads dependent packages", async () => {
       await Promise.all([
-        getPackage(S, project1bDir).register(),
-        getPackage(S, project2Dir).register()]);
+        ensurePackage(S, project1bDir),
+        ensurePackage(S, project2Dir)]);
       var mod = await S.import("project2")
       expect(mod).to.have.property("x", 23);
     });
 
     it("enumerates packages", async () => {
-      await getPackage(S, project1aDir).register();
-      await getPackage(S, project2Dir).import();
-      expect(getPackages(S)).to.containSubset([
+      let p1 = await ensurePackage(S, project1aDir),
+          p2 = await ensurePackage(S, project2Dir);
+      await p2.import();
+
+      expect(getPackageSpecs(S)).to.containSubset([
         {
           address: noTrailingSlash(project1aDir),
           name: `some-project`,
@@ -105,14 +114,14 @@ describe("package loading", function() {
             {deps: [`${project1aDir}entry-a.js`], name: `${project2Dir}index.js`},
             {deps: [], name: `${project2Dir}package.json`}],
         }
-      ])
+      ]);
     })
 
     it("doesnt group modules with package name as belonging to package", async () => {
-      await getPackage(S, project1bDir).import();
-      await getPackage(S, project2Dir).import();
+      await (await ensurePackage(S, project1bDir)).import();
+      await (await ensurePackage(S, project2Dir)).import();
       S.set(testDir + "project2.js", S.newModule({}));
-      expect(getPackages(S).map(ea => Object.assign(ea, {System: null}))).to.containSubset([
+      expect(getPackageSpecs(S).map(ea => Object.assign(ea, {System: null}))).to.containSubset([
         {
           address: noTrailingSlash(project2Dir),
           name: `project2`,
@@ -141,10 +150,9 @@ describe("package loading", function() {
     });
 
     it("finds loaded modules of registered package", async () => {
-      await getPackage(S, project1aDir).register();
-      await getPackage(S, project2Dir).register();
+      let p = await ensurePackage(S, project1aDir);
+      await ensurePackage(S, project2Dir);
 
-      let p = getPackage(S, project1aDir);
       expect(arr.pluck(p.modules(), "id")).equals([project1aDir + "package.json"], "register");
       await p.import();
 
@@ -152,8 +160,10 @@ describe("package loading", function() {
         .equals(["package.json", "entry-a.js", "other.js"].map(ea => project1aDir + ea), "import")
 
       var innerDir = project1aDir + "my-projects/sub-project/",
-          p2 = getPackage(S, innerDir);
+          p2 = await ensurePackage(S, innerDir);
       await p2.import();
+      await p2.tryToLoadPackageConfig()
+
       expect(arr.pluck(p2.modules(), "id"))
         .equals(["package.json", "index.js"].map(ea => innerDir + ea), "import inner");
 
@@ -163,11 +173,8 @@ describe("package loading", function() {
 
     it("finds resources of registered package", async () => {
       var innerDir = project1aDir + "my-projects/sub-project/",
-          p2 = getPackage(S, innerDir);
-      var p = getPackage(S, project1aDir);
-      p.register();
-      p2.register();
-
+          p2 = await ensurePackage(S, innerDir),
+          p = await ensurePackage(S, project1aDir);
       expect(arr.pluck(await p.resources(), "url"))
         .equals(["entry-a.js", "other.js", "package.json"].map(ea => project1aDir + ea));
     });
@@ -179,17 +186,17 @@ describe("package loading", function() {
   describe("with pre-loaded dependent packages", function() {
 
     it("uses existing dependency by default", async () => {
-      await getPackage(S, project1aDir).register();
-      await getPackage(S, project2Dir).register();
+      await ensurePackage(S, project1aDir);
+      await ensurePackage(S, project2Dir);
       var m = await S.import("project2");
       expect(m.version).to.equal("a");
     });
 
     it("uses specified dependency when mapped", async () => {
-      await getPackage(S, project1bDir).register();
-      await getPackage(S, project1aDir).register();
+      await ensurePackage(S, project1bDir);
+      await ensurePackage(S, project1aDir);
       await modifyJSON(project2Dir + "package.json", {systemjs: {map: {"some-project": project1bDir}}});
-      await getPackage(S, project2Dir).register();
+      await ensurePackage(S, project2Dir);
       var m = await S.import("project2");
       expect(m.version).to.equal("b");
       expect(S.packages).to.containSubset({
@@ -199,10 +206,10 @@ describe("package loading", function() {
     });
 
     it("uses specified dependency when mapped relative", async () => {
-      await getPackage(S, project1bDir).register();
-      await getPackage(S, project1aDir).register();
+      await ensurePackage(S, project1bDir);
+      await ensurePackage(S, project1aDir);
       await modifyJSON(project2Dir + "package.json", {systemjs: {map: {"some-project": "../dep2/"}}});
-      await getPackage(S, project2Dir).register();
+      await ensurePackage(S, project2Dir);
       var m = await S.import("project2");
       expect(m.version).to.equal("b");
       expect(S.packages).to.containSubset({
@@ -228,17 +235,35 @@ describe("package loading", function() {
               lively: {packageMap: {"project2": project2bDir}}
             })
           };
-      await getPackage(S, project2bDir).register();
-      await getPackage(S, project1aDir).register();
+      await ensurePackage(S, project2bDir);
+      await ensurePackage(S, project1aDir);
       await createFiles(project2bDir, project2b);
       await createFiles(project5Dir, project5);
       await Promise.all([
-        getPackage(S, project2Dir).import(),
-        getPackage(S, project5Dir).import()
+        ensurePackage(S, project2Dir).then(p => p.import()),
+        ensurePackage(S, project5Dir).then(p => p.import())
       ]);
-      var packageCounts = arr.groupByKey(getPackages(S), "name").count();
+      var packageCounts = arr.groupByKey(getPackageSpecs(S), "name").count();
       Object.keys(packageCounts).forEach(name =>
         expect(packageCounts[name]).equals(1, `package ${name} loaded multiple times`));
+    });
+
+  });
+
+  describe("removal", () => {
+    
+    it("of package in packageBaseDirs", async () => {
+      let registry = PackageRegistry.ofSystem(S),
+          pkg = await ensurePackage(S, project1aDir);
+      expect(registry.lookup(pkg.name, pkg.version)).equals(pkg);
+      expect(registry.devPackageDirs).containSubset([{url: project1aDir}]);
+      pkg.remove();
+      
+      expect(() => getPackage(S, project1aDir)).throws(/not found/);
+      expect(registry.lookup(pkg.name, pkg.version)).equals(null);
+      expect(registry.packageMap).to.not.have.keys(pkg.name);
+      expect(registry.devPackageDirs).equals([]);
+      expect(registry.individualPackageDirs).equals([]);
     });
 
   });
@@ -246,13 +271,13 @@ describe("package loading", function() {
   describe("package copying and renaming", () => {
 
     it("changeAddress renames resources and affects runtime", async () => {
-      await getPackage(S, project1aDir).register();
+      await ensurePackage(S, project1aDir);
       await S.import("some-project");
       let p = getPackage(S, "some-project"),
           newURL = testDir + "some-project-renamed",
           newP = await p.changeAddress(newURL, null/*name*/, true/*delete old*/);
 
-      expect(newP).equals(getPackage(S, newURL), "getPAckage not working with renamed package");
+      expect(newP).equals(getPackage(S, newURL), "getPackage not working with renamed package");
       expect(newP.name).equals("some-project");
       expect(await resource(project1aDir).exists()).equals(false, "original project dir still exists");
       expect(await resource(newURL).exists()).equals(true, "new project dir does not exist");
@@ -265,7 +290,7 @@ describe("package loading", function() {
     });
 
     it("renameTo changes package name and address", async () => {
-      await getPackage(S, project1aDir).register();
+      await ensurePackage(S, project1aDir);
       await S.import("some-project");
       let p = getPackage(S, "some-project"),
           newURL = testDir + "some-project-renamed",
@@ -280,7 +305,7 @@ describe("package loading", function() {
     });
 
     it("fork creates a new similar package with a changed name", async () => {
-      await getPackage(S, project1aDir).register();
+      await ensurePackage(S, project1aDir);
       await S.import("some-project");
       let p = getPackage(S, "some-project"),
           newURL = testDir + "some-project-copied",
@@ -306,25 +331,53 @@ describe("package loading", function() {
 describe("package configuration test", () => {
 
   var S;
-  beforeEach(() => S = getSystem("test", {baseURL: testDir}));
-  afterEach(() => removeSystem("test"));
 
-  it("installs hooks", () =>
-    Promise.resolve()
-      .then(() => applyConfig(S, {lively: {hooks: [{target: "normalize", source: "(proceed, name, parent, parentAddress) => proceed(name + 'x', parent, parentAddress)"}]}}, "barr"))
-      .then(_ => (S.defaultJSExtensions = true) && S.normalize("foo"))
-      .then(n => expect(n).to.match(/foox.js$/)));
+  beforeEach(async () => {
+    S = getSystem("test", {baseURL: testDir});
+    await createFiles(testDir, testResources)
+  });
+
+  afterEach(() => {
+    removeSystem("test");
+    return resource(testDir).remove();
+  });
+
+  it("installs hooks", async () => {
+    await ensurePackage(S, project1aDir);
+    await applyConfig(S, {
+      ...await resource(project1aDir).join("package.json").readJson(),
+      lively: {
+        hooks: [
+          {
+            target: "normalize",
+            source: `(proceed, name, parent, parentAddress) => `
+                    + `proceed(name + 'x', parent, parentAddress)`
+          }
+        ]
+      }
+    }, "some-project");
+    S.defaultJSExtensions = true;
+    expect(await S.normalize("foo")).to.match(/foox.js$/);
+  });
 
   it("installs meta data in package", async () => {
-    var p = await applyConfig(S, {lively: {meta: {"foo": {format: "global"}}}}, "some-project-url");
-    var pURL = S.decanonicalize("some-project-url/").replace(/\/$/, "")
-    expect(S.getConfig().packages[pURL].meta).to.deep.equal({"foo": {format: "global"}});
+    await ensurePackage(S, project1aDir);
+    var p = await applyConfig(S, {
+      ...await resource(project1aDir).join("package.json").readJson(),
+      lively: {meta: {"foo": {format: "global"}}}
+    }, "some-project");
+    var pURL = S.decanonicalize("some-project/").replace(/\/$/, "")
+    expect(S.getConfig().packages[pURL].meta).containSubset({"foo": {format: "global"}});
   });
 
   it("installs absolute addressed meta data in System.meta", async () => {
+    await ensurePackage(S, project1aDir);
     var testName = testDir + "foo";
-    await applyConfig(S, {lively: {meta: {[testName]: {format: "global"}}}}, "some-project-url");
-    expect(S.getConfig().packages).to.not.have.property("some-project-url")
+    await applyConfig(S, {
+      ...await resource(project1aDir).join("package.json").readJson(),
+      lively: {meta: {[testName]: {format: "global"}}}
+    }, "some-project");
+    expect(S.getConfig().packages).to.not.have.property("some-project")
     expect(S.getConfig().meta).property(testName).deep.equals({format: "global"});
   });
 
@@ -349,10 +402,10 @@ describe("mutual dependent packages", () => {
       },
       testResources = {p1, p2}
 
-  var System;
+  var S;
 
   beforeEach(async () => {
-    System = getSystem("test", {baseURL: testDir});
+    S = getSystem("test", {baseURL: testDir});
     await createFiles(testDir, testResources);
   });
 
@@ -364,15 +417,19 @@ describe("mutual dependent packages", () => {
 
 
   it("can be imported", async () => {
-    await getPackage(System, p1Dir).import()
-    expect(module(System, `${p1Dir}index.js`).env().recorder).property("y").equals(2);
-    expect(module(System, `${p2Dir}index.js`).recorder).property("x").equals(3);
+    let p = await ensurePackage(S, p1Dir);
+    await ensurePackage(S, p2Dir);
+    await p.import()
+    expect(module(S, `${p1Dir}index.js`).env().recorder).property("y").equals(2);
+    expect(module(S, `${p2Dir}index.js`).recorder).property("x").equals(3);
   });
 
 });
 
 let registry;
 describe("package registry", () => {
+
+  var S;
 
   beforeEach(async () => {
     await createFiles(testDir, {
@@ -399,9 +456,17 @@ describe("package registry", () => {
         },
       }
     });
-    registry = PackageRegistry.forDirectory(System, resource(testDir).join("packages/"));
+    S = getSystem("test", {baseURL: testDir});
+    registry = PackageRegistry.ofSystem(S);
+    registry.packageBaseDirs = [resource(testDir).join("packages/")];
     await registry.update();
   });
+
+  afterEach(() => {
+    removeSystem("test");
+    return resource(testDir).remove();
+  });
+
 
   describe("lookup", () => {
 
@@ -440,10 +505,10 @@ describe("package registry", () => {
       expect(registry.resolvePath("p1@0.1.0/index.js")).equals(testDir + "packages/p1/0.1.0/index.js");
       expect(registry.resolvePath("foo/index.js")).equals(null);
 
-      expect(registry.resolvePath("p2/index.js", testDir + "packages/p1/0.2.2/index.js")).equals(testDir + "packages/p2/2.0.0/index.js");
+      expect(registry.resolvePath("p2/index.js", testDir + "packages/p1/0.2.2/index.js")).equals(testDir + "packages/p2/1.0.0/index.js");
       expect(registry.resolvePath("./bar.js", testDir + "packages/p1/0.2.2/index.js")).equals(testDir + "packages/p1/0.2.2/bar.js");
       expect(registry.resolvePath("../bar.js", testDir + "packages/p1/0.2.2/index.js")).equals(testDir + "packages/p1/bar.js");
-      expect(registry.resolvePath("p2", testDir + "packages/p1/0.2.2/index.js")).equals(testDir + "packages/p2/2.0.0");
+      expect(registry.resolvePath("p2", testDir + "packages/p1/0.2.2/index.js")).equals(testDir + "packages/p2/1.0.0");
     });
 
   });
@@ -464,9 +529,9 @@ describe("package registry", () => {
             },
           }
       });
-      await registry.addPackageDir(testDir + "additionalPackages/p3");
+      await registry.addPackageAt(testDir + "additionalPackages/p3", false/*isDev*/);
       expect(registry.lookup("p3")).property("url", testDir + "additionalPackages/p3");
-      await registry.addPackageDir(testDir + "additionalPackages/p1");
+      await registry.addPackageAt(testDir + "additionalPackages/p1", true);
       expect(registry.lookup("p1")).property("url", testDir + "additionalPackages/p1");
     });
 
@@ -476,10 +541,11 @@ describe("package registry", () => {
   describe("update", () => {
   
     it("of package in packageBaseDirs", async () => {
-      let dir = resource(testDir + "packages/p1/0.2.2/");
-      await dir.join("package.json").writeJson({"name": "p1", "version": "0.3.0", "dependencies": {"p2": "^1.0"}});
-      let pkg = registry.findPackageWithURL(dir.url);
-      await registry.updatePackageFromPackageJson(pkg);
+      let dir = resource(testDir + "packages/p1/0.2.2/"),
+          pkg = registry.findPackageWithURL(dir.url);
+      pkg.updateConfig({"name": "p1", "version": "0.3.0", "dependencies": {"p2": "^1.0"}});
+      // await dir.join("package.json").writeJson({"name": "p1", "version": "0.3.0", "dependencies": {"p2": "^1.0"}});
+      // await registry.updatePackageFromPackageJson(pkg);
       expect(registry.packageMap).containSubset({
         p1: {
           latest: "0.3.0",
@@ -502,13 +568,6 @@ describe("package registry", () => {
 
   describe("removal", () => {
   
-    it("of package in packageBaseDirs", async () => {
-      let pkg = registry.lookup("p1", "0.2.2");
-      await registry.removePackage(pkg);
-      expect(registry.packageMap.p1.versions).to.have.keys("0.1.0");
-      expect(registry.packageMap.p1.latest).equals("0.1.0");
-    });
-    
     it("of package with individualPackageDir", async () => {
       await createFiles(testDir, {
           additionalPackages: {
@@ -518,13 +577,13 @@ describe("package registry", () => {
             }
           }
       });
-      let p3 = await registry.addPackageDir(testDir + "additionalPackages/p3");
+      
+      let p3 = await ensurePackage(registry.System, testDir + "additionalPackages/p3");
       await registry.removePackage(p3);
       expect(registry.packageMap).to.not.have.key("p3");
       expect(registry.devPackageDirs).equals([]);
       expect(registry.individualPackageDirs).equals([]);
     });
-
-  })
-
+  
+  });
 });

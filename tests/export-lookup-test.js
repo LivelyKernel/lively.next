@@ -5,7 +5,7 @@ import { createFiles, resource } from "lively.resources";
 import { getSystem, removeSystem } from "../src/system.js";
 import module from "../src/module.js";
 import ExportLookup from "../src/export-lookup.js";
-import { importPackage } from '../src/packages.js';
+import { importPackage } from '../src/packages/package.js';
 
 
 var dir = "local://lively.modules.export-lookup-test/",

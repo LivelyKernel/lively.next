@@ -201,7 +201,7 @@ const dotSlashStartRe = /^\.?\//,
       doubleSlashRe = /.\/{2,}/g;
 
 function preNormalize(System, name, parent) {
-console.log(`> [preNormalize] ${name}`);
+// console.log(`> [preNormalize] ${name}`);
 
   if (name === "..") name = '../index.js'; // Fix ".."
 
@@ -213,24 +213,26 @@ console.log(`> [preNormalize] ${name}`);
 
   // systemjs' decanonicalize has by default not the fancy
   // '{node: "events", "~node": "@empty"}' mapping but we need it
-  var pkg = parent && normalize_packageOfURL(parent, System);
-  if (pkg) {
-    var {systemPackage, packageURL} = pkg;
-    var mappedObject = (systemPackage.map && systemPackage.map[name]) || System.map[name];
-    if (mappedObject) {
-      if (typeof mappedObject === "object") {
-        mappedObject = normalize_doMapWithObject(mappedObject, systemPackage, System);
+  let {packageRegistry} = System.get("@lively-env");
+  if (packageRegistry) {
+    var pkg = parent && packageRegistry.findPackageHavingURL(parent);
+    if (pkg) {
+      var {map, url: packageURL} = pkg;
+      var mappedObject = (map && map[name]) || System.map[name];
+      if (mappedObject) {
+        if (typeof mappedObject === "object") {
+          mappedObject = normalize_doMapWithObject(mappedObject, pkg, System);
+        }
+        if (typeof mappedObject === "string" && mappedObject !== "") {
+          name = mappedObject;
+        }
+        // relative to package
+        if (name.startsWith(".")) name = urlResolve(join(packageURL, name));
       }
-      if (typeof mappedObject === "string" && mappedObject !== "") {
-        name = mappedObject;
-      }
-      // relative to package
-      if (name.startsWith(".")) name = urlResolve(join(packageURL, name));
     }
   }
 
   // <snip> experimental
-  let {packageRegistry} = System.get("@lively-env");
   if (packageRegistry) {
     let resolved = packageRegistry.resolvePath(name, parent);
     if (resolved) {
@@ -241,19 +243,19 @@ console.log(`> [preNormalize] ${name}`);
   }
   // </snap> experimental
 
-console.log(`>> [preNormalize] ${name}`);
+// console.log(`>> [preNormalize] ${name}`);
   return name;
 }
 
 function postNormalize(System, normalizeResult, isSync) {
-console.log(`> [postNormalize] ${normalizeResult}`);
+// console.log(`> [postNormalize] ${normalizeResult}`);
   // lookup package main
   var base = normalizeResult.replace(jsExtRe, "");
 
   // rk 2017-05-13: FIXME, we currently use a form like
   // System.decanonicalize("lively.lang/") to figure out the package base path...
   if (normalizeResult.endsWith("/")) {
-    console.log(`>> [postNormalize] ${normalizeResult}`);
+// console.log(`>> [postNormalize] ${normalizeResult}`);
     return normalizeResult;
   }
 
@@ -263,7 +265,7 @@ console.log(`> [postNormalize] ${normalizeResult}`);
     if (referencedPackage) {
       var main = (referencedPackage.main || "index.js").replace(dotSlashStartRe, ""),
           withMain = base.replace(trailingSlashRe, "") + "/" + main;
-      console.log(`>> [postNormalize] ${withMain} (main 1)`);
+// console.log(`>> [postNormalize] ${withMain} (main 1)`);
       return withMain;
     }
 
@@ -272,7 +274,7 @@ console.log(`> [postNormalize] ${normalizeResult}`);
       var main = System.packages[base].main;
       if (main) {
         var withMain = base.replace(trailingSlashRe, "") + "/" + main.replace(dotSlashStartRe, "");
-        console.log(`>> [postNormalize] ${withMain} (main 2)`);
+// console.log(`>> [postNormalize] ${withMain} (main 2)`);
         return withMain;
       }
     }
@@ -280,7 +282,7 @@ console.log(`> [postNormalize] ${normalizeResult}`);
 
   // Fix issue with accidentally adding .js
   var m = normalizeResult.match(jsonJsExtRe);
-  console.log(`>> [postNormalize] ${m ? m[1] : normalizeResult}`);
+// console.log(`>> [postNormalize] ${m ? m[1] : normalizeResult}`);
   return m ? m[1] : normalizeResult;
 }
 
