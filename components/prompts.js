@@ -560,6 +560,10 @@ export class PasswordPrompt extends AbstractPrompt {
 
 export class ListPrompt extends AbstractPrompt {
 
+  async static example() {
+    await $world.listPrompt("hello", [1,2,3,4], {multiSelect: true});
+  }
+
   constructor(props = {}) {
     super(obj.dissoc(props, ["preselect", "items", "onSelection"]));
     let list = this.get("list");
@@ -585,7 +589,7 @@ export class ListPrompt extends AbstractPrompt {
          historyId,
          useLastInput,
          fuzzy, filterFunction, sortFunction,
-         actions, selectedAction
+         actions, selectedAction, theme
    }) {
 
     this.extent = extent || pt(500,400);
@@ -608,7 +612,8 @@ export class ListPrompt extends AbstractPrompt {
       historyId, useLastInput,
       borderWidth: 0, borderColor: Color.gray,
       fontSize: listFontSize, fontFamily: listFontFamily,
-      padding, itemPadding, inputPadding: Rectangle.inset(10,2), theme: "dark"
+      padding, itemPadding, inputPadding: Rectangle.inset(10,2),
+      theme: 'dark'
     }
 
     if (filterable && fuzzy) listProps.fuzzy = fuzzy;

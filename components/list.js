@@ -248,11 +248,29 @@ var listCommands = [
 
 export class List extends Morph {
 
+  static get styleSheet() {
+    return new StyleSheet({
+      ".List.dark": {
+        fill: Color.transparent,
+        hideScrollbars: true,
+        padding: Rectangle.inset(2, 0)
+      },
+      ".List.dark .ListItemMorph": {
+        fontFamily: "Monaco, monospace",
+        nonSelectionFontColor: Color.gray,
+        selectionFontColor: Color.black,
+        selectionColor: Color.gray.lighter(),
+      },
+      ".List.default": {
+        padding: Rectangle.inset(2, 0)
+      }
+    });
+  }
+
   static get properties() {
 
     return {
 
-      styleClasses:    {defaultValue: ['list']},
       fill:            {defaultValue: Color.white},
       clipMode:        {defaultValue: "auto"},
       
@@ -260,6 +278,21 @@ export class List extends Morph {
       selectionColor:        {isStyleProp: true, defaultValue: Color.blue},
       nonSelectionFontColor: {isStyleProp: true, defaultValue: Color.rgbHex("333")},
       fontColor:             {isStyleProp: true, defaultValue: Color.rgbHex("333")},
+
+      theme: {
+        after: ['styleClasses'],
+        set(val) {
+          this.removeStyleClass(this.theme);
+          this.setProperty('theme', val);
+          this.addStyleClass(val);
+        }
+      },
+
+      styleSheets: {
+        initialize() {
+          this.styleSheets = List.styleSheet;
+        }
+      },
 
       extent: {
         set(value) {
@@ -630,29 +663,14 @@ export class FilterableList extends Morph {
 
   static get styleSheet() {
     return new StyleSheet({
-      ".list.dark [name=list]": {
-        fill: Color.transparent,
-        hideScrollbars: true,
-        padding: Rectangle.inset(2, 0)
-      },
-      ".list.dark .ListItemMorph": {
-        fontFamily: "Monaco, monospace",
-        nonSelectionFontColor: Color.gray,
-        selectionFontColor: Color.black,
-        selectionColor: Color.gray.lighter(),
-      },
-      ".list.dark [name=input]": {
+      ".FilterableList.dark [name=input]": {
         borderWidth: 0,
         borderRadius: 20,
         fill: Color.gray.withA(0.8),
         fontColor: Color.gray.darker(),
         padding: rect(10, 2)
       },
-      ".list.default [name=list]": {
-         //fontFamily: this.fontFamily,
-         padding: Rectangle.inset(2, 0)
-      },
-      ".list.default [name=input]": {
+      ".FilterableList.default [name=input]": {
         borderWidth: 0,
         borderColor: Color.gray
       }
@@ -667,6 +685,17 @@ export class FilterableList extends Morph {
       borderWidth: {defaultValue: 1},
       borderColor: {defaultValue: 1},
       updateSelectionsAfterFilter: {defaultValue: false},
+
+      theme: {
+        after: ['styleClasses', 'listMorph'],
+        set(val) {
+          this.removeStyleClass(this.theme);
+          this.listMorph.removeStyleClass(this.theme);
+          this.addStyleClass(val);
+          this.listMorph.addStyleClass(val);
+          this.setProperty('theme', val);
+        }
+      },
 
       submorphs: {
         initialize() {
@@ -702,16 +731,6 @@ export class FilterableList extends Morph {
       inputMorph: {
         derived: true, readOnly: true, after: ["submorphs"],
         get() { return this.getSubmorphNamed("input"); },
-      },
-
-      theme: {
-        isStyleProp: true,
-        defaultValue: 'default',
-        before: ["styleSheets"],
-        set(val) {
-          this.setProperty('theme', val);
-          this.styleClasses = ['list', val];
-        }
       },
 
       fontFamily: {
@@ -1038,8 +1057,6 @@ export class FilterableList extends Morph {
           if (!morph.actions) return true;
         
           let similarStyle = {...morph.style, extent: morph.extent};
-          if (similarStyle.theme === "dark")
-            similarStyle.fill = Color.gray.darker();
           let chooser = new FilterableList(similarStyle);
           chooser.openInWorld(morph.globalPosition);
           chooser.items = morph.actions;
