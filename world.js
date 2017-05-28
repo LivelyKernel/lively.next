@@ -150,8 +150,10 @@ export class World extends Morph {
   onMouseDown(evt) {
     var target = evt.state.clickedOnMorph,
         isCommandKey = evt.isCommandKey(),
-        isShiftKey = evt.isShiftDown();
+        isShiftKey = evt.isShiftDown(),
+        activeWindow = this.activeWindow();
 
+    if (activeWindow) activeWindow.deactivate();
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // halo activation + removal
     // note that the logic for cycling halos from morph to underlying morph is
@@ -616,7 +618,8 @@ export class World extends Morph {
       historyId: null,
       fuzzy: false,
       actions: ["default"],
-      selectedAction: "default"
+      selectedAction: "default",
+      theme: 'dark',
       // sortFunction: (parsedInput, item) => ...
       // filterFunction: (parsedInput, item) => ...
     }) {
