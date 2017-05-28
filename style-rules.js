@@ -441,7 +441,7 @@ class StyleSheetControl extends Morph {
     let nameInput = this.get('name');
     nameInput.reactsToPointer = true;
     this.renameButton = this.get('rename');
-    this.renameButton.replaceWith(Icon.makeLabel("checkmark", {
+    this.renameButton.replaceWith(Icon.makeLabel("check", {
         styleClasses: ["Control"],
         fontColor: Color.rgbHex("5499c7"),
         tooltip: "Save Name",
@@ -459,7 +459,7 @@ class StyleSheetControl extends Morph {
     this.focus();
     this.value.name = this.get('name').textString;
     this.get('name').reactsToPointer = false;
-    this.get('finish rename').replace(this.renameButton);
+    this.get('finish rename').replaceWith(this.renameButton);
   }
 
   removeStyleSheet() {
