@@ -72,7 +72,7 @@ export function copyMorph(morph) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import { createFiles } from "lively.resources";
-import { reloadPackage, getPackage } from "lively.modules";
+import { ensurePackage } from "lively.modules";
 import ObjectPackage from "lively.classes/object-classes.js";
 import LoadingIndicator from "./components/loading-indicator.js";
 import { promise } from "lively.lang";
@@ -182,10 +182,11 @@ async function loadPackagesAndModulesOfSnapshot(snapshot) {
   if (snapshot.packages) {
     let packages = findPackagesInFileSpec(snapshot.packages);
     for (let {files, url} of packages) {
-      let r = await createFiles(url, files);
-      await reloadPackage(url, {forgetEnv: false, forgetDeps: false});
+      let r = await createFiles(url, files),
+          p = await ensurePackage(url);
+      await p.reload({forgetEnv: false, forgetDeps: false});
       // ensure object package instance
-      ObjectPackage.withId(getPackage(url).name);
+      ObjectPackage.withId(p.name);
     }
   }
 

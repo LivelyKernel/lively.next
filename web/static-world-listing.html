@@ -66,7 +66,7 @@
 
     <script src="/lively.next-node_modules/babel-standalone/babel.js"></script>
     <script src="/lively.next-node_modules/systemjs/dist/system.src.js"></script>
-    <script src="/lively.modules/dist/lively.modules.min.js"></script>
+    <script src="/lively.modules/dist/lively.modules.js"></script>
     <script src="/lively.storage/dist/lively.storage_with-pouch.js"></script>
 
     <script src="/lively.2lively/dist/lively.2lively_client.js"></script>
@@ -84,7 +84,7 @@
         .then(function(packageCached) {
           var System = lively.modules.getSystem("listing", {baseURL: String(origin)});
           lively.modules.changeSystem(System, true);
-          let registry = System["__lively.modules__packageRegistry"] = lively.modules.PackageRegistry.fromJSON(System, packageCached);            registry.allPackages().forEach(pkg => pkg.register2());
+          System["__lively.modules__packageRegistry"] = lively.modules.PackageRegistry.fromJSON(System, packageCached);
         })
         .then(function() { return lively.modules.registerPackage("lively.morphic"); })
         .then(function() { return lively.modules.module("lively.morphic/web/static-world-listing.js").load(); })

@@ -393,7 +393,7 @@ export class World extends Morph {
   halos() { return this.submorphs.filter(m => m.isHalo); }
 
   haloForPointerId(pointerId) {
-    return this.submorphs.find(m => m.isHalo && m.state.pointerId === pointerId);
+    return this.submorphs.find(m => m.isHalo && m.state && m.state.pointerId === pointerId);
   }
 
   async showHaloFor(target, pointerId = this.firstHand && this.firstHand.pointerId) {
@@ -406,7 +406,7 @@ export class World extends Morph {
   }
 
   layoutHaloForPointerId(pointerId = this.firstHand && this.firstHand.pointerId) {
-    return this.submorphs.find(m => m.isLayoutHalo && m.state.pointerId === pointerId);
+    return this.submorphs.find(m => m.isLayoutHalo && m.state && m.state.pointerId === pointerId);
   }
 
   showLayoutHaloFor(morph, pointerId = this.firstHand && this.firstHand.pointerId) {

@@ -92,8 +92,7 @@
             var System = lively.modules.getSystem("bootstrapped", {baseURL: origin});
             // System.debug = true;
             lively.modules.changeSystem(System, true);
-            let registry = System["__lively.modules__packageRegistry"] = lively.modules.PackageRegistry.fromJSON(System, packageCached);
-            registry.allPackages().forEach(pkg => pkg.register2());
+            System["__lively.modules__packageRegistry"] = lively.modules.PackageRegistry.fromJSON(System, packageCached);
             return System;
           })
           .then(function() {
@@ -128,6 +127,11 @@
                 lively.modules = m;
                 lively.modules.unwrapModuleLoad();
                 lively.modules.wrapModuleLoad();
+                let oldRegistry = System["__lively.modules__packageRegistry"];
+                delete System["__lively.modules__packageRegistry"];
+                let newRegistry = System["__lively.modules__packageRegistry"] = m.PackageRegistry.ofSystem(System);
+                Object.assign(newRegistry, lively.lang.obj.select(oldRegistry, ["packageMap", "individualPackageDirs", "devPackageDirs", "packageBaseDirs"]))
+                newRegistry.resetByURL();
               })})
 
           .then(function() {
