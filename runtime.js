@@ -1,13 +1,5 @@
 import { arr, obj } from "lively.lang";
-import {
-  defaultPropertiesKey,
-  defaultPropertiesSettingKey,
-  propertiesAndSettingsCacheSym,
-  defaultInstanceInitializerMethod as defaultPropertyInstanceInitializerMethod,
-  hasManagedProperties,
-  prepareClassForProperties,
-  propertiesAndSettingsInHierarchyOf
-} from "./properties.js";
+import { prepareClassForManagedPropertiesAfterCreation } from "./properties.js";
 
 export const initializeSymbol       = Symbol.for("lively-instance-initialize"),
              instanceRestorerSymbol = Symbol.for("lively-instance-restorer"),
@@ -81,18 +73,17 @@ function installMethods(klass, instanceMethods, classMethods) {
   // install methods from two lists (static + instance) of {key, value} or
   // {key, get/set} descriptors
 
-  classMethods && classMethods.forEach(ea =>
+  classMethods && classMethods.forEach(ea => {
     ea.value ?
-        installValueDescriptor(klass, klass, ea) :
-        installGetterSetterDescriptor(klass, ea));
+      installValueDescriptor(klass, klass, ea) :
+      installGetterSetterDescriptor(klass, ea);
+  });
 
-  let props = hasManagedProperties(klass) ?
-        propertiesAndSettingsInHierarchyOf(klass) : null
-
-  instanceMethods && instanceMethods.forEach(ea =>
+  instanceMethods && instanceMethods.forEach(ea => {
     ea.value ?
       installValueDescriptor(klass.prototype, klass, ea) :
-      installGetterSetterDescriptor(klass.prototype, ea));
+      installGetterSetterDescriptor(klass.prototype, ea);
+  });
 
   // 4. define initializer method, in our class system the constructor is
   // generic and re-directs to the initializer method. This way we can change
@@ -117,43 +108,20 @@ function installMethods(klass, instanceMethods, classMethods) {
   }
 
   // 5. undefine properties that were removed form class definition
-  let existingInstanceMethods = {
-    "constructor": true, "arguments": true, "caller": true,
-    [defaultPropertyInstanceInitializerMethod]: true
-  }
-  instanceMethods.forEach(m => existingInstanceMethods[m.key] = true);
-  if (props) Object.assign(existingInstanceMethods, props.properties);
-  let instanceAttributes = Object.getOwnPropertyNames(klass.prototype);
+  let instanceMethodsInClass = instanceMethods.map(m => m.key)
+                                  .concat(["constructor", "arguments", "caller"]),
+      instanceAttributes = Object.getOwnPropertyNames(klass.prototype);
   for (let i = 0; i < instanceAttributes.length; i++) {
     let name = instanceAttributes[i];
-    if (!existingInstanceMethods.hasOwnProperty(name))
-      delete klass.prototype[name];
+    if (!instanceMethodsInClass.includes(name)) delete klass.prototype[name];
   }
 
-  let existingClassMethods = {
-    "length": true, "name": true, "prototype": true, "arguments": true, "caller": true,
-    [defaultPropertiesKey]: true, [defaultPropertiesSettingKey]: true
-  }
-  classMethods.forEach(m => existingClassMethods[m.key] = true);
-  let classAttributes = Object.getOwnPropertyNames(klass);
+  let classMethodsInClass = classMethods.map(m => m.key)
+                              .concat(["length", "name", "prototype", "arguments", "caller"]),
+      classAttributes = Object.getOwnPropertyNames(klass);
   for (let i = 0; i < classAttributes.length; i++) {
     let name = classAttributes[i];
-    if (!existingClassMethods.hasOwnProperty(name))
-      delete klass[name];
-  }
-
-  // 6. If the class allows managed properties (auto getters/setters etc., see
-  // managed-properties.js) then setup those
-  if (props) {
-    var {properties, propertySettings} = props;
-    if (!properties || typeof properties !== "object") {
-      console.warn(`Class ${klass.name} indicates it has managed properties but its `
-                 + `properties accessor (${defaultPropertiesKey}) does not return `
-                 + `a valid property descriptor map`);
-    } else {
-      klass[propertiesAndSettingsCacheSym] = {properties, propertySettings};
-      prepareClassForProperties(klass, propertySettings, properties);
-    }
+    if (!classMethodsInClass.includes(name)) delete klass[name];
   }
 }
 
@@ -235,6 +203,7 @@ export function initializeClass(
           // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''} was defined via module bindings`)
           setSuperclass(klass, val);
           installMethods(klass, instanceMethods, classMethods);
+          prepareClassForManagedPropertiesAfterCreation(klass);
         });
     }
   }
@@ -248,6 +217,10 @@ export function initializeClass(
          + `  constructor${constructorArgs ? constructorArgs[0] : "()"} { /*...*/ }`
          + `\n}`;
   }
+
+  // 7. If the class allows managed properties (auto getters/setters etc., see
+  // managed-properties.js) then setup those
+  prepareClassForManagedPropertiesAfterCreation(klass);
 
   return klass;
 }

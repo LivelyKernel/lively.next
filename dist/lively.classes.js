@@ -244,7 +244,7 @@ var toConsumableArray = function (arr) {
 //   defaultGetter: FUNCTION(STRING) - default getter to be used
 //   defaultSetter: FUNCTION(STRING, VALUE) - default setter to be used
 // }
-//
+// 
 // ????????????
 //   propertyDescriptorCacheKey: STRING|SYMBOL - where the result of
 //                                               initializeProperties() should go
@@ -254,7 +254,7 @@ var toConsumableArray = function (arr) {
 // properties:
 // {STRING: DESCRIPTOR, ...}
 // properties are merged in the proto chain
-//
+// 
 // descriptor: {
 //   get: FUNCTION       - optional
 //   set: FUNCTION       - optional
@@ -279,9 +279,7 @@ var toConsumableArray = function (arr) {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-var defaultPropertiesSettingKey = "propertySettings";
 var defaultPropertiesKey = "properties";
-var defaultInstanceInitializerMethod = "initializeProperties";
 var propertiesAndSettingsCacheSym = Symbol.for("lively.classes-properties-and-settings");
 
 var defaultPropertySettings = {
@@ -294,6 +292,21 @@ function hasManagedProperties(klass) {
   return klass.hasOwnProperty(defaultPropertiesKey);
 }
 
+function prepareClassForManagedPropertiesAfterCreation(klass) {
+  if (!hasManagedProperties(klass)) return;
+
+  var _propertiesAndSetting = propertiesAndSettingsInHierarchyOf(klass),
+      properties = _propertiesAndSetting.properties,
+      propertySettings = _propertiesAndSetting.propertySettings;
+
+  klass[propertiesAndSettingsCacheSym] = { properties: properties, propertySettings: propertySettings };
+  if (!properties || (typeof properties === "undefined" ? "undefined" : _typeof(properties)) !== "object") {
+    console.warn("Class " + klass.name + " indicates it has managed properties but its " + ("properties accessor (" + defaultPropertiesKey + ") does not return ") + "a valid property descriptor map");
+    return;
+  }
+  prepareClassForProperties(klass, propertySettings, properties);
+}
+
 function prepareClassForProperties(klass, propertySettings, properties) {
   ensurePropertyInitializer(klass);
 
@@ -303,42 +316,36 @@ function prepareClassForProperties(klass, propertySettings, properties) {
       myProto = klass.prototype,
       keys = Object.keys(properties);
 
-  var _loop = function _loop(key) {
-    descriptor = properties[key];
+
+  keys.forEach(function (key) {
+    var descriptor = properties[key];
 
     // ... define a getter to the property for the outside world...
-
-    getter = descriptor.get || typeof defaultGetter === "function" && function () {
-      return defaultGetter.call(this, key);
-    } || function () {
-      return this[valueStoreProperty][key];
-    };
-
-    myProto.__defineGetter__(key, getter);
+    var hasGetter = myProto.hasOwnProperty(key) && myProto.__lookupGetter__(key);
+    if (!hasGetter) {
+      var getter = descriptor.get || typeof defaultGetter === "function" && function () {
+        return defaultGetter.call(this, key);
+      } || function () {
+        return this[valueStoreProperty][key];
+      };
+      myProto.__defineGetter__(key, getter);
+    }
 
     // ...define a setter if necessary
-    descrHasSetter = descriptor.hasOwnProperty("set");
-    setterNeeded = descrHasSetter || !descriptor.readOnly;
-
-    if (setterNeeded) {
-      setter = descriptor.set || typeof defaultSetter === "function" && function (val) {
-        defaultSetter.call(this, key, val);
-      } || function (val) {
-        this[valueStoreProperty][key] = val;
-      };
-
-      myProto.__defineSetter__(key, setter);
+    var hasSetter = myProto.hasOwnProperty(key) && myProto.__lookupSetter__(key);
+    if (!hasSetter) {
+      var descrHasSetter = descriptor.hasOwnProperty("set"),
+          setterNeeded = descrHasSetter || !descriptor.readOnly;
+      if (setterNeeded) {
+        var setter = descriptor.set || typeof defaultSetter === "function" && function (val) {
+          defaultSetter.call(this, key, val);
+        } || function (val) {
+          this[valueStoreProperty][key] = val;
+        };
+        myProto.__defineSetter__(key, setter);
+      }
     }
-  };
-
-  for (var key in properties) {
-    var descriptor;
-    var getter;
-    var descrHasSetter, setterNeeded;
-    var setter;
-
-    _loop(key);
-  }
+  });
 }
 
 function ensurePropertyInitializer(klass) {
@@ -536,19 +543,15 @@ function installGetterSetterDescriptor(klass, descr) {
 }
 
 function installMethods(klass, instanceMethods, classMethods) {
-  var _existingClassMethods;
-
   // install methods from two lists (static + instance) of {key, value} or
   // {key, get/set} descriptors
 
   classMethods && classMethods.forEach(function (ea) {
-    return ea.value ? installValueDescriptor(klass, klass, ea) : installGetterSetterDescriptor(klass, ea);
+    ea.value ? installValueDescriptor(klass, klass, ea) : installGetterSetterDescriptor(klass, ea);
   });
 
-  var props = hasManagedProperties(klass) ? propertiesAndSettingsInHierarchyOf(klass) : null;
-
   instanceMethods && instanceMethods.forEach(function (ea) {
-    return ea.value ? installValueDescriptor(klass.prototype, klass, ea) : installGetterSetterDescriptor(klass.prototype, ea);
+    ea.value ? installValueDescriptor(klass.prototype, klass, ea) : installGetterSetterDescriptor(klass.prototype, ea);
   });
 
   // 4. define initializer method, in our class system the constructor is
@@ -574,43 +577,22 @@ function installMethods(klass, instanceMethods, classMethods) {
   }
 
   // 5. undefine properties that were removed form class definition
-  var existingInstanceMethods = defineProperty({
-    "constructor": true, "arguments": true, "caller": true
-  }, defaultInstanceInitializerMethod, true);
-  instanceMethods.forEach(function (m) {
-    return existingInstanceMethods[m.key] = true;
-  });
-  if (props) Object.assign(existingInstanceMethods, props.properties);
-  var instanceAttributes = Object.getOwnPropertyNames(klass.prototype);
+  var instanceMethodsInClass = instanceMethods.map(function (m) {
+    return m.key;
+  }).concat(["constructor", "arguments", "caller"]),
+      instanceAttributes = Object.getOwnPropertyNames(klass.prototype);
   for (var i = 0; i < instanceAttributes.length; i++) {
     var name = instanceAttributes[i];
-    if (!existingInstanceMethods.hasOwnProperty(name)) delete klass.prototype[name];
+    if (!instanceMethodsInClass.includes(name)) delete klass.prototype[name];
   }
 
-  var existingClassMethods = (_existingClassMethods = {
-    "length": true, "name": true, "prototype": true, "arguments": true, "caller": true
-  }, defineProperty(_existingClassMethods, defaultPropertiesKey, true), defineProperty(_existingClassMethods, defaultPropertiesSettingKey, true), _existingClassMethods);
-  classMethods.forEach(function (m) {
-    return existingClassMethods[m.key] = true;
-  });
-  var classAttributes = Object.getOwnPropertyNames(klass);
+  var classMethodsInClass = classMethods.map(function (m) {
+    return m.key;
+  }).concat(["length", "name", "prototype", "arguments", "caller"]),
+      classAttributes = Object.getOwnPropertyNames(klass);
   for (var _i = 0; _i < classAttributes.length; _i++) {
     var _name = classAttributes[_i];
-    if (!existingClassMethods.hasOwnProperty(_name)) delete klass[_name];
-  }
-
-  // 6. If the class allows managed properties (auto getters/setters etc., see
-  // managed-properties.js) then setup those
-  if (props) {
-    var properties = props.properties,
-        propertySettings = props.propertySettings;
-
-    if (!properties || (typeof properties === "undefined" ? "undefined" : _typeof(properties)) !== "object") {
-      console.warn("Class " + klass.name + " indicates it has managed properties but its " + ("properties accessor (" + defaultPropertiesKey + ") does not return ") + "a valid property descriptor map");
-    } else {
-      klass[propertiesAndSettingsCacheSym] = { properties: properties, propertySettings: propertySettings };
-      prepareClassForProperties(klass, propertySettings, properties);
-    }
+    if (!classMethodsInClass.includes(_name)) delete klass[_name];
   }
 }
 
@@ -690,6 +672,7 @@ function initializeClass(constructorFunc, superclassSpec) {
         // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''} was defined via module bindings`)
         setSuperclass(klass, val);
         installMethods(klass, instanceMethods, classMethods);
+        prepareClassForManagedPropertiesAfterCreation(klass);
       });
     }
   }
@@ -701,6 +684,10 @@ function initializeClass(constructorFunc, superclassSpec) {
         superclass = this[superclassSymbol];
     return "class " + className + " " + (superclass ? "extends " + superclass.name : "") + " {\n" + ("  constructor" + (constructorArgs ? constructorArgs[0] : "()") + " { /*...*/ }") + "\n}";
   };
+
+  // 7. If the class allows managed properties (auto getters/setters etc., see
+  // managed-properties.js) then setup those
+  prepareClassForManagedPropertiesAfterCreation(klass);
 
   return klass;
 }
@@ -728,8 +715,6 @@ initializeClass._set = function _set(object, property, value, receiver) {
   }
   return value;
 };
-
-
 
 var runtime = Object.freeze({
 	initializeSymbol: initializeSymbol,

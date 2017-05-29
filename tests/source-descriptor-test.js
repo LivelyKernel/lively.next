@@ -4,7 +4,7 @@ import { expect } from "mocha-es6";
 import { getSystem, removeSystem } from "lively.modules";
 import { createFiles, resource } from "lively.resources";
 import module from "lively.modules/src/module.js";
-import { importPackage } from "lively.modules/src/packages/package.js";
+import { importPackage } from "lively.modules/src/packages.js";
 import { RuntimeSourceDescriptor } from "../source-descriptors.js";
 
 var testDir = "local://source-descriptor-test/";

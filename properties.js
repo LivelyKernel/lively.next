@@ -13,7 +13,7 @@
 //   defaultGetter: FUNCTION(STRING) - default getter to be used
 //   defaultSetter: FUNCTION(STRING, VALUE) - default setter to be used
 // }
-//
+// 
 // ????????????
 //   propertyDescriptorCacheKey: STRING|SYMBOL - where the result of
 //                                               initializeProperties() should go
@@ -23,7 +23,7 @@
 // properties:
 // {STRING: DESCRIPTOR, ...}
 // properties are merged in the proto chain
-//
+// 
 // descriptor: {
 //   get: FUNCTION       - optional
 //   set: FUNCTION       - optional
@@ -55,16 +55,6 @@ const defaultPropertiesSettingKey = "propertySettings",
       defaultInstanceInitializerMethod = "initializeProperties",
       propertiesAndSettingsCacheSym = Symbol.for("lively.classes-properties-and-settings");
 
-export {
-  defaultPropertiesKey,
-  defaultPropertiesSettingKey,
-  propertiesAndSettingsCacheSym,
-  defaultInstanceInitializerMethod,
-  hasManagedProperties,
-  prepareClassForProperties,
-  propertiesAndSettingsInHierarchyOf
-}
-
 const defaultPropertySettings = {
   defaultSetter: null,
   defaultGetter: null,
@@ -73,6 +63,20 @@ const defaultPropertySettings = {
 
 function hasManagedProperties(klass) {
   return klass.hasOwnProperty(defaultPropertiesKey);
+}
+
+export function prepareClassForManagedPropertiesAfterCreation(klass) {
+  if (!hasManagedProperties(klass)) return;
+
+  var {properties, propertySettings} = propertiesAndSettingsInHierarchyOf(klass);
+  klass[propertiesAndSettingsCacheSym] = {properties, propertySettings};
+  if (!properties || typeof properties !== "object") {
+    console.warn(`Class ${klass.name} indicates it has managed properties but its `
+               + `properties accessor (${defaultPropertiesKey}) does not return `
+               + `a valid property descriptor map`);
+    return;
+  }
+  prepareClassForProperties(klass, propertySettings, properties);
 }
 
 function prepareClassForProperties(klass, propertySettings, properties) {
@@ -86,27 +90,32 @@ function prepareClassForProperties(klass, propertySettings, properties) {
       myProto = klass.prototype,
       keys = Object.keys(properties);
 
-  for (let key in properties) {
+  keys.forEach(key => {
     var descriptor = properties[key];
 
     // ... define a getter to the property for the outside world...
-    var getter = descriptor.get
-              || (typeof defaultGetter === "function"
-                  && function() { return defaultGetter.call(this, key); })
-              || function() { return this[valueStoreProperty][key]; };
-    myProto.__defineGetter__(key, getter);
+    var hasGetter = myProto.hasOwnProperty(key) && myProto.__lookupGetter__(key);
+    if (!hasGetter) {
+      var getter = descriptor.get
+                || (typeof defaultGetter === "function" && function() { return defaultGetter.call(this, key); })
+                || function() { return this[valueStoreProperty][key]; };
+      myProto.__defineGetter__(key, getter);
+    }
 
     // ...define a setter if necessary
-    var descrHasSetter = descriptor.hasOwnProperty("set"),
-        setterNeeded = descrHasSetter || !descriptor.readOnly;
-    if (setterNeeded) {
-      var setter = descriptor.set
-                || (typeof defaultSetter === "function"
-                    && function(val) { defaultSetter.call(this, key, val); })
-                || function(val) { this[valueStoreProperty][key] = val; };
-      myProto.__defineSetter__(key, setter);
-    }    
-  }
+    var hasSetter = myProto.hasOwnProperty(key) && myProto.__lookupSetter__(key);
+    if (!hasSetter) {
+      var descrHasSetter = descriptor.hasOwnProperty("set"),
+          setterNeeded = descrHasSetter || !descriptor.readOnly;
+      if (setterNeeded) {
+        var setter = descriptor.set
+                  || (typeof defaultSetter === "function" && function(val) { defaultSetter.call(this, key, val); })
+                  || function(val) { this[valueStoreProperty][key] = val; };
+        myProto.__defineSetter__(key, setter);
+      }
+    }
+
+  });
 }
 
 
@@ -209,8 +218,9 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
         initAction.value = values[key];
       }
     }
-  }
 
+  }
+  
   // 2. Run init code for properties
   // and if we have values we will initialize the properties from it. Values
   // is expected to be a JS object mapping property names to property values
@@ -241,3 +251,4 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
   }
 
 }
+
