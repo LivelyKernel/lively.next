@@ -5,7 +5,7 @@ import { expect } from "mocha-es6";
 import ObjectPackage, { ensureLocalPackage, addScript, ensureObjectClass } from "../object-classes.js";
 import { createFiles, resource } from "lively.resources";
 import { getSystem, removeSystem } from "lively.modules";
-import { importPackage } from "lively.modules/src/packages.js";
+import { importPackage } from "lively.modules/src/packages/package.js";
 import module from "lively.modules/src/module.js";
 
 
@@ -57,7 +57,7 @@ describe("object package", function() {
     packagesToRemove.push(p);
     await p.adoptObject(obj);
     expect(obj.constructor.name).equals("PackageForTest");
-    let {id} = ObjectPackage.lookupPackageForObject(obj);
+    let {id} = ObjectPackage.lookupPackageForObject(obj, opts);
     expect(await resource(`${testBaseURL}/${id}/index.js`).read())
       .matches(/export default class PackageForTest/);
   });
@@ -69,7 +69,7 @@ describe("object package", function() {
     packagesToRemove.push(p);
     await p.adoptObject(obj);
 
-    let {id} = ObjectPackage.lookupPackageForObject(obj),
+    let {id} = ObjectPackage.lookupPackageForObject(obj, opts),
         source = await resource(`${testBaseURL}/${id}/index.js`).read();
     expect(source).matches(/import \{ Foo \} from/);
     expect(source).matches(/export default class PackageForTest/);
