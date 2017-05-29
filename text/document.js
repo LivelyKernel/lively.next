@@ -1752,7 +1752,7 @@ export default class Document {
         if (replacement.length)
           inserted = replacement.length && this.insertText(replacement, start);
       } else {
-        if (replacement.length && (replacement.length !== 2 || replacement[0].length))
+        if (replacement.length && (replacement.length !== 2 || replacement[0]))
           inserted = this.insertTextAndAttributes(replacement, start, debug);
       }
       if (!inserted) inserted = {start: startClipped, end: startClipped};
