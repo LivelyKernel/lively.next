@@ -17,7 +17,7 @@ var  {
 
 let spec = {
   "module1.js": "import {B} from './module2.js'; export class A { constructor() { this.x = 3; } }",
-  "module2.js": "import {A} from './module1.js';debugger; export class B extends A {}"
+  "module2.js": "import {A} from './module1.js'; export class B extends A {}"
 }
 
 let testDir = resource("local://classesinmoduletest/")
