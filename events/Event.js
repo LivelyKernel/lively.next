@@ -150,9 +150,9 @@ export class Event {
     return isCmd || domEvt.metaKey || domEvt.keyIdentifier === 'Meta';
   }
 
-  isShiftDown(domEvt) { return this.domEvt && !!this.domEvt.shiftKey }
-  isCtrlDown(domEvt) { return this.domEvt && !!this.domEvt.ctrlKey }
-  isAltDown(domEvt) { return this.domEvt && !!this.domEvt.altKey }
+  isShiftDown() { return this.domEvt && !!this.domEvt.shiftKey }
+  isCtrlDown() { return this.domEvt && !!this.domEvt.ctrlKey }
+  isAltDown() { return this.domEvt && !!this.domEvt.altKey }
 
   get keyCombo() { return this._keyCombo || (this._keyCombo = Keys.eventToKeyCombo(this.domEvt)); }
   set keyCombo(keyCombo) { return this._keyCombo = keyCombo; }
