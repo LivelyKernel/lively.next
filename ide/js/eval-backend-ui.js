@@ -208,8 +208,13 @@ export default class EvalBackendChooser {
     return await Promise.all(clients.map(async ([id, {info = {}}]) => {
       if (!info.known) {
         Promise.resolve().then(async () => {
-          let {data: {value: location}} = await l2lClient.sendToAndWait(
-                id, "remote-eval", {source: "typeof require !== 'undefined' && typeof process !== 'undefined' ? require('os').hostname() : String(document.location.href)"});
+          let source = `let isNode = typeof System !== "undefined"`
+                       `  ? System.get("@system-env").node`
+                       `  : typeof require !== "undefined" && typeof process !== "undefined"`
+                       `      ? require("os").hostname()`
+                       `      : String(document.location.href);`,
+              {data: {value: location}} = await l2lClient.sendToAndWait(
+                                            id, "remote-eval", {source});
           info.location = location;
           info.known = true;
         });
