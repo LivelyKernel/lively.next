@@ -2072,7 +2072,7 @@ export class Image extends Morph {
     if (this.isLoaded) return Promise.resolve(this);
     return new Promise((resolve, reject) => {
       let url = this.imageUrl;
-      let image = this.imageElement(image => {
+      this.imageElement(image => {
         if (this.imageUrl !== url) reject(new Error(`url changed (${url} => ${this.imageUrl})`));
         this.naturalExtent = pt(image.width, image.height);
         this.isLoaded = true;
@@ -2095,30 +2095,41 @@ export class Image extends Morph {
   // accessing DOM related things
 
   imageElement(onloadFn) {
-    let doc = this.env.domEnv.document,
-        image = doc.createElement("img");
-    if (typeof onloadFn === "function")
-      image.onload = () => onloadFn(image);
-    image.src = this.imageUrl;
-    return image;
+    return new Promise((resolve, reject) => {
+      let doc = this.env.domEnv.document,
+          image = doc.createElement("img");
+      image.onload = () => {
+        resolve(image);
+        if (typeof onloadFn === "function")
+          onloadFn(image);
+      }
+      image.src = this.imageUrl;
+    });
   }
 
-  canvasElementAndContext() {
+  async canvasElementAndContext() {
     let doc = this.env.domEnv.document,
-        image = this.imageElement(),
+        image = await this.imageElement(),
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d');
+    canvas.width = image.width;
+    canvas.height = image.height;
+    ctx.drawImage(image, 0, 0, image.width, image.height);
     return {canvas, ctx, image};
   }
 
 
-  imageData() {
-    // this.arrayBuffer();
-    let {ctx, canvas, image} = this.canvasElementAndContext();
-    return ctx.getImageData(0,0, image.width, image.height);
+  async imageData(bounds) {
+    let {ctx, image} = await this.canvasElementAndContext();
+    if (!bounds) bounds = rect(0, 0, image.width, image.height);
+    let {x, y, width, height} = bounds;
+    console.log(x, y);
+    return ctx.getImageData(x, y, width, height);
   }
 
-  arrayBuffer() { return this.imageData().data.buffer; }
+  async pixelAt(pos) { return (await this.imageData(pos.extent(pt(1,1)))).data; }
+
+  async colorAt(pos) { return Color.fromTuple8Bit(await this.pixelAt(pos)); }
 
   loadArrayBuffer(arrayBuffer, type = "image/jpeg") {
     let arrayBufferView = new Uint8Array(arrayBuffer),
