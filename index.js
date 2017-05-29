@@ -301,13 +301,15 @@ import {
   getPackageSpecs,
   applyConfig as _applyPackageConfig,
   importPackage as _importPackage,
+  removePackage as _removePackage,
+  reloadPackage as _reloadPackage,
   registerPackage as _registerPackage,
 } from "./src/packages/package.js";
 
 function importPackage(packageURL) { return _importPackage(defaultSystem, packageURL); }
 function registerPackage(packageURL, optPkgConfig) { return _registerPackage(defaultSystem, packageURL, optPkgConfig); }
-function removePackage(packageURL) { return _getPackage(defaultSystem, packageURL).remove(); }
-function reloadPackage(packageURL, opts) { return _getPackage(defaultSystem, packageURL).reload(opts); }
+function removePackage(packageURL) { return _removePackage(defaultSystem, packageURL); }
+function reloadPackage(packageURL, opts) { return _reloadPackage(defaultSystem, packageURL, opts); }
 function getPackages() { return getPackageSpecs(defaultSystem); }
 function getPackage(packageURL, isNormalized = false) { return _getPackage(defaultSystem, packageURL, isNormalized); }
 function ensurePackage(packageURL) { return _ensurePackage(defaultSystem, packageURL); }

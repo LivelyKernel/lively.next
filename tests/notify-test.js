@@ -6,7 +6,7 @@ import { subscribe, unsubscribe } from "lively.notifications";
 import { removeDir, createFiles } from "./helpers.js";
 import { getSystem, removeSystem } from "../src/system.js";
 import module from "../src/module.js";
-import { getPackage } from "../src/packages/package.js";
+import { ensurePackage } from "../src/packages/package.js";
 import { promise } from "lively.lang";
 
 var dir = System.decanonicalize("lively.modules/tests/"),
@@ -94,7 +94,7 @@ describe("notify", () => {
   
   it("when package gets registered", async () => {
     expect(packageregistered).to.deep.equal([]);
-    await getPackage(system, testProjectDir).register();
+    await ensurePackage(system, testProjectDir);
     expect(packageregistered).to.containSubset([{
       type: "lively.modules/packageregistered",
       "package": testProjectDir
@@ -103,8 +103,8 @@ describe("notify", () => {
 
   it("when package gets removed", async () => {
     expect(packageremoved).to.deep.equal([]);
-    await getPackage(system, testProjectDir).register();
-    getPackage(system, testProjectDir).remove();
+    let p = await ensurePackage(system, testProjectDir);
+    p.remove();
     expect(packageremoved).to.containSubset([{
       type: "lively.modules/packageremoved",
       "package": testProjectDir

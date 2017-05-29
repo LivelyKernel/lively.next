@@ -4,7 +4,7 @@ import module from "../../src/module.js";
 import { resource } from "lively.resources";
 import ModulePackageMapping from "./module-package-mapping.js";
 import PackageConfiguration from "./configuration.js";
-import { isURL } from "../url-helpers.js";
+import { isURL, join } from "../url-helpers.js";
 import { PackageRegistry } from "./package-registry.js";
 
 
@@ -27,7 +27,7 @@ function normalizePackageURL(System, packageURL, allPackageURLs = []) {
   return String(url).replace(/\/$/, "");
 }
 
-function _lookupPackage(System, packageURL, isNormalized = false) {
+function lookupPackage(System, packageURL, isNormalized = false) {
   let registry = PackageRegistry.ofSystem(System),
       allPackageURLs = registry.allPackageURLs(),
       url = isNormalized
@@ -37,14 +37,14 @@ function _lookupPackage(System, packageURL, isNormalized = false) {
 }
 
 function ensurePackage(System, packageURL, isNormalized = false) {
-  let {pkg, url, registry} = _lookupPackage(System, packageURL, isNormalized);
-  return pkg || registry.addPackageAt(url, true/*isDev*/);
+  let {pkg, url, registry} = lookupPackage(System, packageURL, isNormalized);
+  return pkg || registry.addPackageAt(url, "devPackageDirs");
 }
 
 function getPackage(System, packageURL, isNormalized = false) {
-  let {pkg, url} = _lookupPackage(System, packageURL, isNormalized);
+  let {pkg, url} = lookupPackage(System, packageURL, isNormalized);
   if (pkg) return pkg;
-  throw new Error(`[gwetPackage] package ${packageURL} (as ${url}) not found`);
+  throw new Error(`[getPackage] package ${packageURL} (as ${url}) not found`);
 }
 
 function applyConfig(System, packageConfig, packageURL) {
@@ -56,6 +56,15 @@ function importPackage(System, packageURL) {
   return Promise.resolve(ensurePackage(System, packageURL))
           .then(p => p.import());
 }
+
+function removePackage(System, packageURL) {
+  return getPackage(System, packageURL).remove();
+}
+
+function reloadPackage(System, packageURL, opts) {
+  return getPackage(System, packageURL).reload(opts);
+}
+
 function registerPackage(System, packageURL, optPkgConfig) {
   return Promise.resolve(ensurePackage(System, packageURL))
           .then(p => p.register(optPkgConfig));
@@ -172,7 +181,7 @@ class Package {
     this.devDependencies = jso.devDependencies || {};
     this.systemjs =        jso.systemjs;
     if (!isURL(this.url))
-      this.url = resource(System.baseURL).join(this.url).url;
+      this.url = join(System.baseURL, this.url);
     this.registerWithConfig();
     return this;
   }
@@ -366,12 +375,11 @@ class Package {
 
   registerWithConfig(config = this.runtimeConfig) {
     var {System, url} = this,
-        result = new PackageConfiguration(this).applyConfig(config);
+        result = new PackageConfiguration(this).applyConfig(config),
+        packageConfigURL = join(url, "package.json");
 
-    let covered = PackageRegistry.ofSystem(System).coversDirectory(url);
-    if (!covered) // necessary?
-      // throw new Error(`package ${url} is not covered by package registry`);
-      console.warn(`package ${url} is not covered by package registry`);
+    if (!System.get(packageConfigURL))
+      System.set(packageConfigURL, System.newModule({...config, default: config}));
 
     emit("lively.modules/packageregistered", {"package": url}, Date.now(), System);
 
@@ -403,7 +411,15 @@ class Package {
     emit("lively.modules/packageremoved", {"package": this.url}, Date.now(), System);
   }
 
-  reload(opts) { this.remove(opts); return this.import(); }
+  reload(opts) {
+    let {System, url} = this,
+        registry = PackageRegistry.ofSystem(System),
+        covered = registry.coversDirectory(url);
+
+    this.remove(opts);
+    registry.addPackageAt(url, covered || "devPackageDirs", {[url]: this});
+    return this.import();
+  }
 
   async fork(newName, newURL) {
     if (!newURL) {
@@ -492,8 +508,8 @@ class Package {
 
     // PackageRegistry update;
     covered = covered || "individualPackageDirs";
-    if (covered === "individualPackageDirs" || "devPackageDirs") {
-      registry._addPackageDir(newURL, covered === "devPackageDirs", true/*uniqCheck*/);
+    if (covered === "individualPackageDirs" || covered === "devPackageDirs") {
+      registry._addPackageDir(newURL, covered, true/*uniqCheck*/);
     }
     registry._addPackageWithConfig(newP, config, newURL, covered);
     registry.resetByURL();
@@ -526,8 +542,11 @@ class Package {
 export {
   ensurePackage,
   importPackage,
+  removePackage,
+  reloadPackage,
   registerPackage,
   getPackage,
+  lookupPackage,
   applyConfig,
   getPackageSpecs,
   Package

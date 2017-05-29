@@ -32,10 +32,14 @@ export default class PackageConfiguration {
       packages: {
         [packageURL]: {
           ...sysConfig,
-          meta: {"package.json": {format: "json"}, ...sysConfig.meta}
+          meta: {"package.json": {format: "json"}, ...sysConfig.meta},
+          configured: true
         }
       }
     });
+    // configured flag so SystemJS doesn't try to load a potentially
+    // non-existing package.json
+    System.packages[packageURL].configured = true;
 
     let packageInSystem = System.getConfig().packages[packageURL] || {};
     if (!packageInSystem.map) packageInSystem.map = {};

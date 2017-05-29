@@ -1,6 +1,7 @@
 import { semver } from "../../index.js";
 import { arr, obj, promise } from "lively.lang";
 import { getPackage, Package } from "./package.js";
+import ModulePackageMapping from "./module-package-mapping.js";
 import { resource } from "lively.resources";
 import { isURL } from "../url-helpers.js";
 
@@ -121,6 +122,7 @@ export class PackageRegistry {
     this.devPackageDirs = jso.devPackageDirs.map(deserializeURL);
     this.packageBaseDirs = jso.packageBaseDirs.map(deserializeURL);
     this.resetByURL();
+    ModulePackageMapping.forSystem(System).clearCache();
 
     return this;
 
@@ -345,26 +347,31 @@ export class PackageRegistry {
       deferred.resolve();
     }
     catch (err) { deferred.reject(err); }
-    finally { this.resetByURL(); this._readyPromise = null; }
+    finally {
+      this._readyPromise = null;
+      this.resetByURL();
+      ModulePackageMapping.forSystem(this.System).clearCache();
+    }
 
     return this;
   }
 
-  async addPackageAt(url, isDev = false) {
+  async addPackageAt(url, preferedLocation = "individualPackageDirs", existingPackageMap) {
     let urlString = typeof url === "string" ? url : url.url;
     if (urlString.endsWith("/")) urlString.slice(0, -1);
     if (this.byURL[urlString])
       throw new Error(`package in ${urlString} already added to registry`);
 
-    let discovered = await this._discoverPackagesIn(ensureResource(url).asDirectory(), {});
+    let discovered = await this._discoverPackagesIn(ensureResource(url).asDirectory(), {}, undefined, existingPackageMap);
     for (let url in discovered) {
       if (this.byURL[url]) continue;
       let {pkg, config} = discovered[url],
-          covered = this._addPackageDir(url, isDev, true/*uniqCheck*/);
+          covered = this._addPackageDir(url, preferedLocation, true/*uniqCheck*/);
       this._addPackageWithConfig(pkg, config, url + "/", covered);
     }
 
     this.resetByURL();
+    ModulePackageMapping.forSystem(this.System).clearCache();
     this._updateLatestPackages();
 
     return this.findPackageWithURL(url);
@@ -387,6 +394,7 @@ export class PackageRegistry {
     }
 
     this.resetByURL();
+    ModulePackageMapping.forSystem(this.System).clearCache();
     if (updateLatestPackage) this._updateLatestPackages(pkg.name);
   }
 
@@ -419,13 +427,16 @@ export class PackageRegistry {
         Object.keys(packageMap[eaName].versions), true));
   }
 
-  async _discoverPackagesIn(dir, discovered, covered) {
+  async _discoverPackagesIn(dir, discovered, covered, existingPackageMap = null) {
     if (!dir.isDirectory()) return discovered;
     let url = dir.asFile().url;
     if (discovered.hasOwnProperty(url)) return discovered;
 
+    console.log(existingPackageMap && existingPackageMap)
+
     try {
-      let pkg = new Package(this.System, url),
+      let pkg = (existingPackageMap && existingPackageMap[url])
+              || new Package(this.System, url),
           config = await pkg.tryToLoadPackageConfig();
       pkg.setConfig(config);
       discovered[url] = {pkg, config, covered};
@@ -456,16 +467,23 @@ export class PackageRegistry {
   _addPackageWithConfig(pkg, config, dir, covered = null) {
     if (!covered) {
       // if (oldLocation === "devPackageDirs") this.devPackageDirs.push(dir);
-      this._addPackageDir(dir, false/*isDev*/, true/*uniqCheck*/);
+      this._addPackageDir(dir, "individualPackageDirs"/*preferedLocation*/, true/*uniqCheck*/);
     }
     pkg.registerWithConfig(config);
     this._addToPackageMap(pkg, pkg.name, pkg.version);
     return pkg;
   }
 
-  _addPackageDir(dir, isDev = false, uniqCheck = true) {
+  _addPackageDir(dir, preferedLocation = "individualPackageDirs", uniqCheck = true) {
     dir = ensureResource(dir).asDirectory();
-    let prop = isDev ? "devPackageDirs" : "individualPackageDirs",
+
+    if (preferedLocation === "packageCollectionDirs"
+    || preferedLocation === "maybe packageCollectionDirs") {
+      let covers = this.coversDirectory(dir) || "";
+      if (covers.includes("packageCollectionDirs"))
+        return "packageCollectionDirs";
+    }
+    let prop = preferedLocation,
         dirs = this[prop].concat(dir);
     this[prop] = uniqCheck ? arr.uniqBy(dirs, (a,b) => a.equals(b)) : dirs;
     return prop;

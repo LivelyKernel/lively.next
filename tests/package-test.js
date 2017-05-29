@@ -252,7 +252,7 @@ describe("package loading", function() {
 
   describe("removal", () => {
     
-    it("of package in packageBaseDirs", async () => {
+    it("of package in devPackageDirs", async () => {
       let registry = PackageRegistry.ofSystem(S),
           pkg = await ensurePackage(S, project1aDir);
       expect(registry.lookup(pkg.name, pkg.version)).equals(pkg);
@@ -264,6 +264,20 @@ describe("package loading", function() {
       expect(registry.packageMap).to.not.have.keys(pkg.name);
       expect(registry.devPackageDirs).equals([]);
       expect(registry.individualPackageDirs).equals([]);
+    });
+
+  });
+  
+  describe("reload", () => {
+    
+    it("of package in devPackageDirs", async () => {
+      let registry = PackageRegistry.ofSystem(S),
+          pkg = await ensurePackage(S, project1aDir);
+      expect(registry.lookup(pkg.name, pkg.version)).equals(pkg);
+      expect(registry.devPackageDirs).containSubset([{url: project1aDir}]);
+      await pkg.reload();
+      expect(registry.lookup(pkg.name, pkg.version)).equals(pkg);
+      expect(registry.devPackageDirs).containSubset([{url: project1aDir}]);
     });
 
   });
@@ -529,9 +543,9 @@ describe("package registry", () => {
             },
           }
       });
-      await registry.addPackageAt(testDir + "additionalPackages/p3", false/*isDev*/);
+      await registry.addPackageAt(testDir + "additionalPackages/p3", "individualPackageDirs");
       expect(registry.lookup("p3")).property("url", testDir + "additionalPackages/p3");
-      await registry.addPackageAt(testDir + "additionalPackages/p1", true);
+      await registry.addPackageAt(testDir + "additionalPackages/p1", "devPackageDirs");
       expect(registry.lookup("p1")).property("url", testDir + "additionalPackages/p1");
     });
 
@@ -586,4 +600,19 @@ describe("package registry", () => {
     });
   
   });
+  
+  describe("reload", () => {
+  
+    it("of package in packageCollectionDir", async () => {
+      let p = registry.lookup("p1", "0.2.2");
+      expect(registry.coversDirectory(p.url)).equals("packageCollectionDirs")
+      await p.reload();
+
+      expect(registry.coversDirectory(p.url)).equals("packageCollectionDirs");
+      expect(registry.devPackageDirs).length(0);
+      expect(registry.lookup("p1", "0.2.2")).equals(p);
+    });
+  
+  });
+
 });

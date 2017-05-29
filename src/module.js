@@ -764,8 +764,8 @@ class ModuleInterface {
       var p = this.package();
       res[j] = {
         moduleId: this.id,
-        packageName: p.name,
-        pathInPackage: this.pathInPackage(),
+        packageName: p ? p.name : undefined,
+        pathInPackage: p ? this.pathInPackage() : this.id,
         isLoaded: this.isLoaded(),
         length,
         line, column: i - lineStart,

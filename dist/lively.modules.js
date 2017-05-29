@@ -69028,9 +69028,13 @@ var PackageConfiguration = function () {
       System.config({
         map: defineProperty({}, name, packageURL),
         packages: defineProperty({}, packageURL, _extends({}, sysConfig, {
-          meta: _extends({ "package.json": { format: "json" } }, sysConfig.meta)
+          meta: _extends({ "package.json": { format: "json" } }, sysConfig.meta),
+          configured: true
         }))
       });
+      // configured flag so SystemJS doesn't try to load a potentially
+      // non-existing package.json
+      System.packages[packageURL].configured = true;
 
       var packageInSystem = System.getConfig().packages[packageURL] || {};
       if (!packageInSystem.map) packageInSystem.map = {};
@@ -69262,6 +69266,7 @@ var PackageRegistry$$1 = function () {
       this.devPackageDirs = jso.devPackageDirs.map(deserializeURL);
       this.packageBaseDirs = jso.packageBaseDirs.map(deserializeURL);
       this.resetByURL();
+      ModulePackageMapping.forSystem(System$$1).clearCache();
 
       return this;
 
@@ -69841,17 +69846,21 @@ var PackageRegistry$$1 = function () {
 
               case 153:
                 _context.prev = 153;
-                this.resetByURL();this._readyPromise = null;return _context.finish(153);
 
-              case 157:
-                return _context.abrupt("return", this);
+                this._readyPromise = null;
+                this.resetByURL();
+                ModulePackageMapping.forSystem(this.System).clearCache();
+                return _context.finish(153);
 
               case 158:
+                return _context.abrupt("return", this);
+
+              case 159:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, this, [[8, 150, 153, 157], [12, 79, 83, 91], [19, 62, 66, 74], [29, 45, 49, 57], [50,, 52, 56], [67,, 69, 73], [84,, 86, 90], [94, 106, 110, 118], [111,, 113, 117], [121, 133, 137, 145], [138,, 140, 144]]);
+        }, _callee, this, [[8, 150, 153, 158], [12, 79, 83, 91], [19, 62, 66, 74], [29, 45, 49, 57], [50,, 52, 56], [67,, 69, 73], [84,, 86, 90], [94, 106, 110, 118], [111,, 113, 117], [121, 133, 137, 145], [138,, 140, 144]]);
       }));
 
       function update() {
@@ -69864,7 +69873,8 @@ var PackageRegistry$$1 = function () {
     key: "addPackageAt",
     value: function () {
       var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(url) {
-        var isDev = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+        var preferedLocation = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "individualPackageDirs";
+        var existingPackageMap = arguments[2];
 
         var urlString, discovered, _url, _discovered$_url, pkg, config, covered;
 
@@ -69885,7 +69895,7 @@ var PackageRegistry$$1 = function () {
 
               case 4:
                 _context2.next = 6;
-                return this._discoverPackagesIn(ensureResource(url).asDirectory(), {});
+                return this._discoverPackagesIn(ensureResource(url).asDirectory(), {}, undefined, existingPackageMap);
 
               case 6:
                 discovered = _context2.sent;
@@ -69907,7 +69917,7 @@ var PackageRegistry$$1 = function () {
                 return _context2.abrupt("continue", 8);
 
               case 12:
-                _discovered$_url = discovered[_url], pkg = _discovered$_url.pkg, config = _discovered$_url.config, covered = this._addPackageDir(_url, isDev, true /*uniqCheck*/);
+                _discovered$_url = discovered[_url], pkg = _discovered$_url.pkg, config = _discovered$_url.config, covered = this._addPackageDir(_url, preferedLocation, true /*uniqCheck*/);
 
                 this._addPackageWithConfig(pkg, config, _url + "/", covered);
                 _context2.next = 8;
@@ -69916,11 +69926,12 @@ var PackageRegistry$$1 = function () {
               case 16:
 
                 this.resetByURL();
+                ModulePackageMapping.forSystem(this.System).clearCache();
                 this._updateLatestPackages();
 
                 return _context2.abrupt("return", this.findPackageWithURL(url));
 
-              case 19:
+              case 20:
               case "end":
                 return _context2.stop();
             }
@@ -69958,6 +69969,7 @@ var PackageRegistry$$1 = function () {
       }
 
       this.resetByURL();
+      ModulePackageMapping.forSystem(this.System).clearCache();
       if (updateLatestPackage) this._updateLatestPackages(pkg.name);
     }
   }, {
@@ -69996,6 +70008,7 @@ var PackageRegistry$$1 = function () {
     key: "_discoverPackagesIn",
     value: function () {
       var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(dir, discovered, covered) {
+        var existingPackageMap = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
         var url, pkg, config, name, version;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
@@ -70019,12 +70032,15 @@ var PackageRegistry$$1 = function () {
                 return _context3.abrupt("return", discovered);
 
               case 5:
-                _context3.prev = 5;
-                pkg = new Package(this.System, url);
-                _context3.next = 9;
+
+                console.log(existingPackageMap && existingPackageMap);
+
+                _context3.prev = 6;
+                pkg = existingPackageMap && existingPackageMap[url] || new Package(this.System, url);
+                _context3.next = 10;
                 return pkg.tryToLoadPackageConfig();
 
-              case 9:
+              case 10:
                 config = _context3.sent;
 
                 pkg.setConfig(config);
@@ -70036,17 +70052,17 @@ var PackageRegistry$$1 = function () {
                 }
                 return _context3.abrupt("return", discovered);
 
-              case 16:
-                _context3.prev = 16;
-                _context3.t0 = _context3["catch"](5);
+              case 17:
+                _context3.prev = 17;
+                _context3.t0 = _context3["catch"](6);
                 return _context3.abrupt("return", discovered);
 
-              case 19:
+              case 20:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, this, [[5, 16]]);
+        }, _callee3, this, [[6, 17]]);
       }));
 
       function _discoverPackagesIn(_x5, _x6, _x7) {
@@ -70080,7 +70096,7 @@ var PackageRegistry$$1 = function () {
 
       if (!covered) {
         // if (oldLocation === "devPackageDirs") this.devPackageDirs.push(dir);
-        this._addPackageDir(dir, false /*isDev*/, true /*uniqCheck*/);
+        this._addPackageDir(dir, "individualPackageDirs" /*preferedLocation*/, true /*uniqCheck*/);
       }
       pkg.registerWithConfig(config);
       this._addToPackageMap(pkg, pkg.name, pkg.version);
@@ -70089,11 +70105,16 @@ var PackageRegistry$$1 = function () {
   }, {
     key: "_addPackageDir",
     value: function _addPackageDir(dir) {
-      var isDev = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+      var preferedLocation = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "individualPackageDirs";
       var uniqCheck = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
       dir = ensureResource(dir).asDirectory();
-      var prop = isDev ? "devPackageDirs" : "individualPackageDirs",
+
+      if (preferedLocation === "packageCollectionDirs" || preferedLocation === "maybe packageCollectionDirs") {
+        var covers = this.coversDirectory(dir) || "";
+        if (covers.includes("packageCollectionDirs")) return "packageCollectionDirs";
+      }
+      var prop = preferedLocation,
           dirs = this[prop].concat(dir);
       this[prop] = uniqCheck ? lively_lang.arr.uniqBy(dirs, function (a, b) {
         return a.equals(b);
@@ -70220,7 +70241,7 @@ function normalizePackageURL(System, packageURL) {
   return String(url).replace(/\/$/, "");
 }
 
-function _lookupPackage(System, packageURL) {
+function lookupPackage(System, packageURL) {
   var isNormalized = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
   var registry = PackageRegistry$$1.ofSystem(System),
@@ -70232,23 +70253,23 @@ function _lookupPackage(System, packageURL) {
 function ensurePackage$1(System, packageURL) {
   var isNormalized = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
-  var _lookupPackage2 = _lookupPackage(System, packageURL, isNormalized),
-      pkg = _lookupPackage2.pkg,
-      url = _lookupPackage2.url,
-      registry = _lookupPackage2.registry;
+  var _lookupPackage = lookupPackage(System, packageURL, isNormalized),
+      pkg = _lookupPackage.pkg,
+      url = _lookupPackage.url,
+      registry = _lookupPackage.registry;
 
-  return pkg || registry.addPackageAt(url, true /*isDev*/);
+  return pkg || registry.addPackageAt(url, "devPackageDirs");
 }
 
 function getPackage$1(System, packageURL) {
   var isNormalized = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
-  var _lookupPackage3 = _lookupPackage(System, packageURL, isNormalized),
-      pkg = _lookupPackage3.pkg,
-      url = _lookupPackage3.url;
+  var _lookupPackage2 = lookupPackage(System, packageURL, isNormalized),
+      pkg = _lookupPackage2.pkg,
+      url = _lookupPackage2.url;
 
   if (pkg) return pkg;
-  throw new Error("[gwetPackage] package " + packageURL + " (as " + url + ") not found");
+  throw new Error("[getPackage] package " + packageURL + " (as " + url + ") not found");
 }
 
 function applyConfig$1(System, packageConfig, packageURL) {
@@ -70261,6 +70282,15 @@ function importPackage$1(System, packageURL) {
     return p.import();
   });
 }
+
+function removePackage$2(System, packageURL) {
+  return getPackage$1(System, packageURL).remove();
+}
+
+function reloadPackage$1(System, packageURL, opts) {
+  return getPackage$1(System, packageURL).reload(opts);
+}
+
 function registerPackage$1(System, packageURL, optPkgConfig) {
   return Promise.resolve(ensurePackage$1(System, packageURL)).then(function (p) {
     return p.register(optPkgConfig);
@@ -70388,7 +70418,7 @@ var Package = function () {
       this.dependencies = jso.dependencies || {};
       this.devDependencies = jso.devDependencies || {};
       this.systemjs = jso.systemjs;
-      if (!isURL(this.url)) this.url = lively_resources.resource(System.baseURL).join(this.url).url;
+      if (!isURL(this.url)) this.url = join(System.baseURL, this.url);
       this.registerWithConfig();
       return this;
     }
@@ -70735,13 +70765,11 @@ var Package = function () {
       var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.runtimeConfig;
       var System = this.System,
           url = this.url,
-          result = new PackageConfiguration(this).applyConfig(config);
+          result = new PackageConfiguration(this).applyConfig(config),
+          packageConfigURL = join(url, "package.json");
 
 
-      var covered = PackageRegistry$$1.ofSystem(System).coversDirectory(url);
-      if (!covered) // necessary?
-        // throw new Error(`package ${url} is not covered by package registry`);
-        console.warn("package " + url + " is not covered by package registry");
+      if (!System.get(packageConfigURL)) System.set(packageConfigURL, System.newModule(_extends({}, config, { default: config })));
 
       lively_notifications.emit("lively.modules/packageregistered", { "package": url }, Date.now(), System);
 
@@ -70779,7 +70807,15 @@ var Package = function () {
   }, {
     key: "reload",
     value: function reload(opts) {
-      this.remove(opts);return this.import();
+      var System = this.System,
+          url = this.url,
+          registry = PackageRegistry$$1.ofSystem(System),
+          covered = registry.coversDirectory(url);
+
+
+      this.remove(opts);
+      registry.addPackageAt(url, covered || "devPackageDirs", defineProperty({}, url, this));
+      return this.import();
     }
   }, {
     key: "fork",
@@ -71109,8 +71145,8 @@ var Package = function () {
 
                 // PackageRegistry update;
                 covered = covered || "individualPackageDirs";
-                if (covered === "individualPackageDirs" || "devPackageDirs") {
-                  registry._addPackageDir(newURL, covered === "devPackageDirs", true /*uniqCheck*/);
+                if (covered === "individualPackageDirs" || covered === "devPackageDirs") {
+                  registry._addPackageDir(newURL, covered, true /*uniqCheck*/);
                 }
                 registry._addPackageWithConfig(newP, config, newURL, covered);
                 registry.resetByURL();
@@ -73244,8 +73280,8 @@ var ModuleInterface = function () {
 
                 res[j] = {
                   moduleId: this.id,
-                  packageName: p.name,
-                  pathInPackage: this.pathInPackage(),
+                  packageName: p ? p.name : undefined,
+                  pathInPackage: p ? this.pathInPackage() : this.id,
                   isLoaded: this.isLoaded(),
                   length: length,
                   line: line, column: i - lineStart,
@@ -74438,10 +74474,10 @@ function registerPackage$$1(packageURL, optPkgConfig) {
   return registerPackage$1(exports.System, packageURL, optPkgConfig);
 }
 function removePackage$1(packageURL) {
-  return getPackage$1(exports.System, packageURL).remove();
+  return removePackage$2(exports.System, packageURL);
 }
-function reloadPackage(packageURL, opts) {
-  return getPackage$1(exports.System, packageURL).reload(opts);
+function reloadPackage$$1(packageURL, opts) {
+  return reloadPackage$1(exports.System, packageURL, opts);
 }
 function getPackages() {
   return getPackageSpecs(exports.System);
@@ -74506,7 +74542,7 @@ exports.isModuleLoaded = isModuleLoaded$$1;
 exports.importPackage = importPackage$$1;
 exports.registerPackage = registerPackage$$1;
 exports.removePackage = removePackage$1;
-exports.reloadPackage = reloadPackage;
+exports.reloadPackage = reloadPackage$$1;
 exports.getPackages = getPackages;
 exports.getPackage = getPackage$$1;
 exports.ensurePackage = ensurePackage$$1;
