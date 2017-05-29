@@ -3,7 +3,7 @@ import { parse, isValidIdentifier, stringify, parseFunction } from "lively.ast";
 import { resource } from "lively.resources";
 import { runEval } from "lively.vm";
 import { RuntimeSourceDescriptor } from "./source-descriptors.js";
-import { registerPackage, importPackage, getPackage } from "lively.modules/src/packages.js";
+import { ensurePackage, importPackage, lookupPackage } from "lively.modules/src/packages/package.js";
 import module from "lively.modules/src/module.js";
 import { toJsIdentifier } from "./util.js";
 import { ImportInjector } from "lively.modules/src/import-modification.js";
@@ -35,7 +35,7 @@ export function isObjectClass(klass, options) {
   let {System} = normalizeOptions(options),
       modMeta = klass[Symbol.for("lively-module-meta")],
       pname = modMeta ? modMeta.package.name : null,
-      pkg = pname ? getPackage(System, pname) : null;
+      {pkg} = pname ? lookupPackage(System, pname) : {};
   return pkg ? !!ObjectPackage.forSystemPackage(pkg) : false
 }
 
@@ -53,7 +53,7 @@ export default class ObjectPackage {
     let {System} = normalizeOptions(options),
         modMeta = klass[Symbol.for("lively-module-meta")],
         pname = modMeta ? modMeta.package.name : null,
-        pkg = pname ? getPackage(System, pname) : null;
+        {pkg} = pname ? lookupPackage(System, pname) : {};
     return pkg ? ObjectPackage.forSystemPackage(pkg) : null;
   }
 
@@ -77,7 +77,7 @@ export default class ObjectPackage {
   get baseURL() { return this.options.baseURL; }
   get packageURL() { return this.baseURL + `/${this.id}`; }
   get config() { return {name: this.name, version: "0.1.0", lively: {isObjectPackage: true}}; }
-  get systemPackage() { return getPackage(this.System, this.packageURL, true); }
+  get systemPackage() { return lookupPackage(this.System, this.packageURL, true).pkg; }
   get objectModule() {
     return this._objectModule
         || (this._objectModule = new ObjectModule("index.js", this));
@@ -106,7 +106,8 @@ export default class ObjectPackage {
     await this.objectModule.ensureExistance();
 
     let {System, packageURL, config} = this;
-    await registerPackage(System, packageURL, config);
+    let p = await ensurePackage(System, packageURL);
+    p.registerWithConfig(config);
 
     console.log(`${this.packageURL} REGISTERED`);
 
