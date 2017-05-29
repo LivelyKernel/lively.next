@@ -22,6 +22,17 @@ export default function browserCommands(browser) {
     {name: "focus module list", exec: () => focusList(mList)},
     {name: "focus source editor", exec: () => { editor.focus(); editor.show(); return true; }},
 
+    {
+      name: "resize editor panel",
+      exec: () => {
+        let {ui: {hresizer}} = browser,
+            ratio = hresizer.getRelativeDivide(),
+            newRatio = ratio > .39 ? .15 : .4;
+        hresizer.divideRelativeToParent(newRatio);
+        return true;
+      }
+    },
+
     {name: "browser history backward", exec: browser => { browser.historyBackward(); return true; }},
     {name: "browser history forward", exec: browser => { browser.historyForward(); return true; }},
 
