@@ -1,5 +1,5 @@
 /*global System*/
-import { config, Morph } from "lively.morphic";
+import { config, morph, Morph } from "lively.morphic";
 import { Rectangle, rect, Color, pt } from "lively.graphics";
 import { Selection, MultiSelection } from "./selection.js";
 import { string, obj, fun, promise, arr } from "lively.lang";
@@ -19,7 +19,6 @@ import Renderer from "./renderer.js";
 import commands from "./commands.js";
 import { RichTextControl } from "./ui.js";
 import { textAndAttributesWithSubRanges } from "./attributes.js";
-
 
 
 export class Text extends Morph {
@@ -534,7 +533,7 @@ export class Text extends Morph {
     textChange && signal(this, "textChange", change);
     viewChange && signal(this, "viewChange", change);
   }
-  
+
   removeMorph(morph) {
     let {embeddedMorphMap} = this;
     if (embeddedMorphMap && embeddedMorphMap.has(morph)) {
@@ -1019,7 +1018,7 @@ export class Text extends Morph {
     return insertedRange;
   }
 
-  _updateEmbeddedMorphsDuringReplace(morphsInAddedText, insertedRange, newTextAndAttributes, removedTextAndAttributes) {    
+  _updateEmbeddedMorphsDuringReplace(morphsInAddedText, insertedRange, newTextAndAttributes, removedTextAndAttributes) {
     let {embeddedMorphMap} = this;
     for (let i = 0; i < removedTextAndAttributes.length; i = i+2) {
       let content = removedTextAndAttributes[i];
@@ -1042,7 +1041,7 @@ export class Text extends Morph {
         if (!morph.isMorph) continue;
         console.assert(morphsInAddedText.includes(morph), "????");
         let {start} = ranges[i];
-        
+
         if (morph.owner !== this) this.addMorph(morph);
         if (embeddedMorphMap && !embeddedMorphMap.has(morph)) {
           let anchor = this.addAnchor({id: "embedded-" + morph.id, ...start});
@@ -1700,6 +1699,123 @@ export class Text extends Morph {
     return super.onContextMenu(evt);
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  onDrop(evt) {
+    let morphs = evt.hand.grabbedMorphs.slice();
+    super.onDrop(evt);
+    let textPos = this.textPositionFromPoint(this.localize(evt.hand.position))
+    this.insertText([morphs[0], null], textPos);
+  }
+
+  onDropHoverIn(evt) {
+    let grabbed = evt.hand.grabbedMorphs[0];
+    if (grabbed) { grabbed.opacity = .3; }
+
+    let {startRow, endRow} = this.whatsVisible,
+        realEndRow = Math.min(this.documentEndPosition.row, endRow),
+        {bounds: dropGrid} = arr.range(startRow, realEndRow).reduce(({bounds, offset}, row) => {
+          let charBounds = this.textLayout.charBoundsOfRow(this, row).slice();
+          if (charBounds.length >= 1 && arr.last(charBounds).width == 0)
+            arr.last(charBounds).width = 12;
+          // if (charBounds.length === 1 && charBounds[0].width == 0) charBounds[0].width = 12
+          if (charBounds.length > 1) {
+            let last = arr.last(charBounds);
+            charBounds.push({
+              x: last.x+last.width,
+              y: last.y,
+              height: last.height,
+              width: last.width || 12
+            });
+          }
+          let rowBounds = charBounds.map((ea, column) => {
+            let bounds = Rectangle.fromLiteral(ea).translatedBy(offset),
+                globalBounds = this.getGlobalTransform().transformRectToRect(bounds);
+            return {
+              textPos: {row, column}, bounds, globalBounds,
+              morph: morph({
+                reactsToPointer: false,
+                acceptsDrops: false,
+                bounds: bounds,
+                border: {width: 1, color: Color.green},
+                fill: null,
+              })
+            }
+          }), maxHeight = arr.max(rowBounds, ea => ea.bounds.height).bounds.height;
+          return {
+            bounds: bounds.concat(rowBounds),
+            offset: offset.addXY(0, maxHeight)
+          }
+        }, {bounds: [], offset: pt(this.padding.left(), this.padding.top())});
+
+    let dropHoverCache = evt.state.dropHover || (evt.state.dropHover = new WeakMap()),
+        dropHoverState = dropHoverCache.get(this);
+    if (!dropHoverState) { dropHoverState = {}; dropHoverCache.set(this, dropHoverState); }
+    dropHoverState.dropGrid = dropGrid;
+    dropGrid.forEach(ea => this.addMorph(ea.morph));
+  }
+
+  onDropHoverUpdate(evt) {
+    let grabbed = evt.hand.grabbedMorphs[0];
+    if (!grabbed) return;
+    let dropHoverCache = evt.state.dropHover;
+    if (!dropHoverCache) return;
+    let dropHoverState = dropHoverCache.get(this);
+    if (!dropHoverState || !dropHoverState.dropGrid) return;
+
+    let pos = evt.positionIn(this),
+        dropAt, minSpec, minDist = Infinity;
+    for (let dropSpec of dropHoverState.dropGrid) {
+      if (dropSpec.bounds.containsPoint(pos)) {
+        dropAt = dropSpec; break;
+      }
+      let dist = dropSpec.bounds.closestPointToPt(pos).dist(pos);
+      if (dist < minDist) { minDist = dist; minSpec = dropSpec; }
+    }
+    if (!dropAt) dropAt = minSpec;
+
+    if (!dropAt) return;
+    let placeholder = dropHoverState.placeholder;
+    if (!placeholder)
+      dropHoverState.placeholder = placeholder = morph({fill: grabbed.fill,
+                                                        extent: grabbed.extent,
+                                                        reactsToPointer: false,
+                                                        acceptsDrops: false});
+    if (obj.equals(placeholder._textPos || {}, dropAt.textPos)) return;
+    if (this !== placeholder.owner) {
+      this.addMorph(placeholder)
+    }
+    placeholder.position = dropAt.bounds.topLeft();
+
+    // placeholder.remove();
+    // placeholder._textPos = dropAt.textPos;
+    // this.insertText([placeholder, null], dropAt.textPos);
+    // if (placeholder.owner === this) placeholder.remove();
+    // this.
+  }
+
+  onDropHoverOut(evt) {
+    let grabbed = evt.hand.grabbedMorphs[0];
+    if (grabbed) { grabbed.opacity = 1; }
+
+    let dropHoverCache = evt.state.dropHover;
+    if (!dropHoverCache) return;
+    let dropHoverState = dropHoverCache.get(this);
+    if (!dropHoverState) return;
+    dropHoverCache.delete(this);
+    if (dropHoverState.dropGrid) {
+      dropHoverState.dropGrid.forEach(ea => ea.morph.remove());
+      dropHoverState.dropGrid = null
+    }
+    if (dropHoverState.placeholder) {
+      dropHoverState.placeholder.remove();
+      dropHoverState.placeholder = null;
+    }
+  }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   async menuItems() {
     var items = [
       {command: "text undo", alias: "undo", target: this, showKeyShortcuts: true},
@@ -1979,9 +2095,9 @@ export class Text extends Morph {
   ensureUndoManager() {
     if (this.undoManager) return this.undoManager;
     let selectors = [
-      "addTextAttribute", 
-      "removeTextAttribute", 
-      "setStyleInRange", 
+      "addTextAttribute",
+      "removeTextAttribute",
+      "setStyleInRange",
       "replace"];
     return this.undoManager = new UndoManager(
       change => selectors.includes(change.selector));
