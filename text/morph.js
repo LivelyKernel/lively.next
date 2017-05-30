@@ -360,6 +360,18 @@ export class Text extends Morph {
         isStyleProp: true, isDefaultTextStyleProp: true,
         after: ["document", "defaultTextStyle", "viewState"],
       },
+      lineHeight: {
+        isStyleProp: true, isDefaultTextStyleProp: true,
+        after: ["document", "defaultTextStyle", "viewState"],
+      },
+      letterSpacing: {
+        isStyleProp: true, isDefaultTextStyleProp: true,
+        after: ["document", "defaultTextStyle", "viewState"],
+      },
+      wordSpacing: {
+        isStyleProp: true, isDefaultTextStyleProp: true,
+        after: ["document", "defaultTextStyle", "viewState"],
+      },
 
       lineWrapping: {
         // possible values:
@@ -513,6 +525,9 @@ export class Text extends Morph {
       this.viewState.wasScrolled = true;
 
     if ((change.prop === "extent" && this.lineWrapping)
+     || change.prop === "wordSpacing"
+     || change.prop === "letterSpacing"
+     || change.prop === "lineHeight"
      || change.prop === "textAlign"
      || change.prop === "fontFamily"
      || change.prop === "fontSize"

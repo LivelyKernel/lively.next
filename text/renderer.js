@@ -42,14 +42,12 @@ function installCSS(domEnv) {
     .newtext-text-layer {
       box-sizing: border-box;
       position: absolute;
+      white-space: pre;
       z-index: 0;
+      width: 100%;
     }
 
     .newtext-before-filler {}
-
-    .newtext-text-layer {
-      white-space: pre;
-    }
 
     .newtext-text-layer.wrap-by-words {
       white-space: pre-wrap;
@@ -344,18 +342,30 @@ export default class Renderer {
     let {
           height,
           padding: {x: padLeft, y: padTop, width: padWidth, height: padHeight},
+          lineWrapping,
+          backgroundColor,
+          fontColor,
+          textAlign,
+          fontSize,
+          textDecoration,
+          fontStyle,
+          fontWeight,
+          fontFamily,
+          lineHeight,
+          wordSpacing,
+          letterSpacing,
           document: doc
         } = morph,
         padRight = padLeft + padWidth,
         padBottom = padTop + padHeight,
-        textHeight = Math.max(morph.document.height, morph.height);
+        textHeight = Math.max(morph.document.height, morph.height),
+        textLayerClasses = "newtext-text-layer";
 
     // assemble attributes of node
 
     // start with lineWrapping
-    let textLayerClasses = "newtext-text-layer";
 
-    switch (morph.lineWrapping) {
+    switch (lineWrapping) {
       case true:
       case "by-words":      textLayerClasses = textLayerClasses + " wrap-by-words"; break;
       case "only-by-words": textLayerClasses = textLayerClasses + " only-wrap-by-words"; break;
@@ -364,22 +374,24 @@ export default class Renderer {
     }
 
     // ...and now other attribues
-    let style = {
-          height:          textHeight + "px",
-          fontFamily:      morph.fontFamily,
-          fontWeight:      morph.fontWeight,
-          fontStyle:       morph.fontStyle,
-          textDecoration:  morph.textDecoration,
-          fontSize:        morph.fontSize + "px",
-          textAlign:       morph.textAlign,
-          color:           morph.fontColor,
-          backgroundColor: morph.backgroundColor,
-          paddingLeft:     padLeft + "px",
-          paddingRight:    padRight + "px",
-          paddingTop:      padTop + "px",
-          paddingBottom:   padBottom + "px"
-        },
-        textAttrs = {className: textLayerClasses, style};
+    let style = {height:          textHeight + "px"}    
+    if (padLeft > 0)     style.paddingLeft = padLeft + "px";
+    if (padRight > 0)    style.paddingRight = padRight + "px";
+    if (padTop > 0)      style.paddingTop = padTop + "px";
+    if (padBottom > 0)   style.paddingBottom = padBottom + "px";
+    if (letterSpacing)   style.letterSpacing =   letterSpacing;
+    if (wordSpacing)     style.wordSpacing =     wordSpacing;
+    if (lineHeight)      style.lineHeight =      lineHeight;
+    if (fontFamily)      style.fontFamily =      fontFamily;
+    if (fontWeight)      style.fontWeight =      fontWeight;
+    if (fontStyle)       style.fontStyle =       fontStyle;
+    if (textDecoration)  style.textDecoration =  textDecoration;
+    if (fontSize)        style.fontSize =        fontSize + "px";
+    if (textAlign)       style.textAlign =       textAlign;
+    if (fontColor)       style.color =           fontColor;
+    if (backgroundColor) style.backgroundColor = backgroundColor;
+
+    let textAttrs = {className: textLayerClasses, style};
 
     if (additionalStyle) {
       let {clipMode, height, width} = additionalStyle;
@@ -472,7 +484,8 @@ export default class Renderer {
         content, attr,
         fontSize, fontFamily, fontWeight, fontStyle, textDecoration, fontColor,
         backgroundColor, nativeCursor, textStyleClasses, link,
-        tagname, nodeStyle, nodeAttrs;
+        tagname, nodeStyle, nodeAttrs,
+        lineHeight, textAlign, wordSpacing, letterSpacing;
 
     if (size > 0) {
       for (let i = 0; i < size; i = i+2) {
@@ -499,6 +512,10 @@ export default class Renderer {
         nativeCursor =     attr.nativeCursor;
         textStyleClasses = attr.textStyleClasses;
         link =             attr.link;
+        lineHeight =       attr.lineHeight || lineHeight;
+        textAlign =        attr.textAlign || textAlign;
+        wordSpacing =      attr.wordSpacing || wordSpacing;
+        letterSpacing =    attr.letterSpacing || letterSpacing;
 
         tagname = "span";
         nodeStyle = {};
@@ -527,7 +544,15 @@ export default class Renderer {
 
     } else renderedChunks.push(h("br"));
 
-    return h("div", {className: "line", dataset: {row: line.row}}, renderedChunks);
+    var lineStyle = {};
+    if (lineHeight) lineStyle.lineHeight = lineHeight;
+    if (textAlign) lineStyle.textAlign = textAlign;
+    if (letterSpacing) lineStyle.letterSpacing = letterSpacing;
+    if (wordSpacing) lineStyle.wordSpacing = wordSpacing;
+
+    return h("div",
+      {className: "line", style: lineStyle, dataset: {row: line.row}},
+      renderedChunks);
   }
 
   renderEmbeddedSubmorph(h, renderer, morph) {
