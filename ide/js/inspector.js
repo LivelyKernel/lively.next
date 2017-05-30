@@ -1,7 +1,7 @@
 /* globals Power4 */
 import { Color, rect, pt } from "lively.graphics";
 import { obj, num, arr, promise, string } from "lively.lang";
-import { connect } from "lively.bindings";
+import { connect, disconnect, once, signal } from "lively.bindings";
 import { Morph, ShadowObject, Icon, StyleSheet, HorizontalLayout, config } from "lively.morphic";
 import { Tree, TreeData } from "lively.morphic/components/tree.js";
 import { ColorPicker } from "../styling/color-picker.js";
@@ -228,7 +228,8 @@ class NumberPropertyControl extends PropertyControl {
             fontFamily: config.codeEditor.defaultStyle.fontFamily},
             new ValueScrubber({
                fontSize: 14, name: 'valueString', nativeCursor: '-webkit-grab',
-               fontColor: Color.rgbHex("#0086b3"), fontFamily: config.codeEditor.defaultStyle.fontFamily,
+               fontColor: Color.rgbHex("#0086b3"), 
+               fontFamily: config.codeEditor.defaultStyle.fontFamily,
                target: this.target, extent: pt(20, 15),
                value: this.value || this.valueString, fill: Color.transparent,
             })];
@@ -348,6 +349,7 @@ class GradientPropertyControl extends PropertyControl {
           this.get('valueString').fontColor = c.withA(.7);
         }
       },
+      fontSize: {defaultValue: 15},
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({

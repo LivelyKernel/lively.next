@@ -396,6 +396,9 @@ export class Tree extends Morph {
       ".TreeNode [name=valueString]": {
         fontSize: this.fontSize
       },
+      ".TreeNode [name=toggle]": {
+        fontSize: this.fontSize
+      },
       ".TreeNode.selected": {
         fill: this.selectionColor
       },

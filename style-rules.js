@@ -1020,6 +1020,7 @@ export class StyleSheetEditor extends Morph {
               tree;
           this.submorphs = [
             tree = new Tree({
+              fontSize: 14,
               selectionColor: Color.transparent,
               selectionFontColor: Color.black,
               name: "propertyTree",
