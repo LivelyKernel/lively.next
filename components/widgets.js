@@ -2,7 +2,7 @@ import {obj, string, num, arr, properties} from "lively.lang";
 import {pt, Color, Rectangle, rect} from "lively.graphics";
 import {signal, connect, disconnect} from "lively.bindings";
 import {
-  Morph, CustomLayout,
+  Morph, ShadowObject, CustomLayout,
   Button,
   List,
   Text,
@@ -610,12 +610,10 @@ export class ModeSelector extends Morph {
         initialize() {
           this.layout = new GridLayout({
             rows: [0, {paddingBottom: 10}],
-            grid: [[...arr.interpose(this.keys.map(k => k + "Label"), null)]],
+            columns: [0, {fixed: 5}, this.keys.length + 2, {fixed: 5}],
+            grid: [[null, ...arr.interpose(this.keys.map(k => k + "Label"), null), null]],
             autoAssign: false,
             fitToCell: false
-          });
-          this.layout.row(0).items.forEach(c => {
-            c.group.align = "center";
           });
         }
       },
@@ -625,12 +623,12 @@ export class ModeSelector extends Morph {
             {name: "typeMarker"},
             ...this.createLabels(this.keys, this.values, this.tooltips)
           ];
+          connect(this, "extent", this, "relayout", {converter: () => false});
           this.update(
             this.init ? this.init : this.keys[0],
             this.values[this.keys.includes(this.init) ? this.keys.indexOf(this.init) : 0],
             true
           );
-          connect(this, "extent", this, "relayout", {converter: () => false});
         }
       }
     };
@@ -657,8 +655,7 @@ export class ModeSelector extends Morph {
     this.layout.forceLayout();
     let tm = this.get("typeMarker"),
         bounds = this.currentLabel.bounds();
-    this.currentLabel && animated ? await tm.animate({bounds, duration: 200}) : tm.setBounds(bounds);
-     
+    animated ? await tm.animate({bounds, duration: 200}) : tm.setBounds(bounds); 
   }
 
   async update(label, value, silent = false) {
@@ -667,8 +664,7 @@ export class ModeSelector extends Morph {
     if (this.currentLabel) this.currentLabel.fontColor = Color.black;
     this.currentLabel = newLabel;
     newLabel.fontColor = Color.white;
-    await this.whenRendered();
-    await this.relayout(!silent);
+    this.relayout(!silent);
     !silent && signal(this, label, value);
     !silent && signal(this, "switchLabel", value);
   }
