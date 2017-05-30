@@ -1706,6 +1706,115 @@ export class Text extends Morph {
     this.selection.lead = this.textPositionFromPoint(this.localize(evt.position))
   }
 
+  onMouseUp(evt) { 
+    let empty = this.selection.isEmpty();
+    let equal = this.selection.range.equals(this.priorSelectionRange);
+    if (empty && equal) {
+      let indexPair = this.selectMatchingBrackets(this.textString, 
+                          this.positionToIndex(this.selection.range.start));
+      if (indexPair) this.selection = {start: indexPair[0], end: indexPair[1] + 1}
+    }
+  } 
+
+  selectMatchingBrackets(str, i1) { 
+    //  Selection caret before is char i1
+    //  Returns an array[startIndex, endIndex] if it finds matching brackets
+    //  This code matches bracket-like characters, and also
+    //  Quote. double-quote and back-tick
+    //  '//' - selects from there to end of line
+    //  '/*' - selects a JS long comment
+    //  begin or end of line - selects the line
+    //  begin or end of entire string - selects the whole string
+    
+    //  PRELUDE definitions.  See below for start of code
+    var rightBrackets = "*)}]>'\"`";
+    var leftBrackets = "*({[<'\"`";
+    function isWhiteSpace(c) { return c === '\t' || c === ' '; }
+    function isAlpha(s) {
+        var regEx = /^[a-zA-Z0-9\-]+$/;
+        return (s || '').match(regEx);
+    };
+    function periodWithDigit(c, prev) {
+        // return true iff c is a period and prev is a digit
+        if (c != ".") return false;
+        return "0123456789".indexOf(prev) >= 0;
+    };
+    function matchBrackets(str, chin, chout, start, dir) {
+        // starting at index start, look right (dir = -1) or left (dir = -1)
+        // for matching bracket chracters. chin is the open-bracket character
+        // that takes us into a deeper level, chout is the close-bracket 
+        // character that takes us out a level and untimately ends the match
+        var i = start;
+        var depth = 1;
+        while ((dir < 0) ? i - 1 >= 0 : i + 1 < str.length ) {
+            i += dir;
+            if (str[i] == chin && chin != chout) depth++;
+            if (str[i] == chout) depth--;
+            if (depth == 0) return i;
+        }
+        return i;
+    }
+    function findLine(str, start, dir, endChar) {
+        // start points to a CR or LF (== endChar)
+        var i = start;
+        while ((dir < 0) ? i - 1 >= 0 : i + 1 < str.length ) {
+            i += dir;
+            if (str[i] == endChar) return dir>0 ? [start, i] : [i+1, start];
+        }
+        return dir>0 ? [start+1, str.length-1] : [0, start];
+    }
+    // selectmatchingBrackets START OF CODE...
+    if (!str) return i1;
+    if (i1 == 0 || i1 == str.length) {
+      return [0, str.length-1]
+    }
+    // look left for open backets
+    var i2 = i1 - 1;
+    if (i1 > 0) { 
+        if(str[i1-1] == "\n" || str[i1-1] == "\r") return findLine(str, i1, 1, str[i1-1]);
+        var i = leftBrackets.indexOf(str[i1-1]);
+        if (str[i1 - 1] == "*" && (i1-2 < 0 || str[i1-2] != "/"))
+        i = -1; // spl check for /*
+        if (i >= 0) {
+            var i2 = matchBrackets(str, leftBrackets[i], rightBrackets[i], i1 - 1, 1);
+            return [i1, i2 - 1];
+        }
+    }
+    // look right for close brackets
+    if (i1 < str.length) { 
+        if(str[i1] == "\n" || str[i1] == "\r") return findLine(str, i1, -1, str[i1]);
+        var i = rightBrackets.indexOf(str[i1]);
+        if (str[i1]== "*" && (i1+1 >= str.length || str[i1+1] != "/"))
+        i = -1; // spl check for */
+        if (i >= 0) {
+            i1 = matchBrackets(str, rightBrackets[i], leftBrackets[i],i1,-1);
+            return [i1+1, i2];
+        }
+    }
+    // is a '//' left of me?
+    if (str[i1-1] === '/' && str[i1-2] === '/') {
+        while (i2+1<str.length && str[i2+1] !== '\n' && str[i2+1] !== '\r') { i2++ }
+        return [i1, i2];
+    }
+    // inside of whitespaces?
+    var myI1 = i1;
+    var myI2 = i2;
+    while (myI1-1 >= 0 && isWhiteSpace(str[myI1-1])) myI1 --;
+    while (myI2 < str.length && isWhiteSpace(str[myI2+1])) myI2 ++;
+    if (myI2-myI1 >= 1) return [myI1, myI2];
+
+    var prev = (i1<str.length) ? str[i1] : "";
+    while (i1-1 >= 0 && (isAlpha(str[i1-1]) || periodWithDigit(str[i1-1], prev))) {
+        prev = str[i1-1];
+        i1--;
+    }
+    while (i2+1 < str.length && (isAlpha(str[i2+1]) || periodWithDigit(str[i2+1], prev))) {
+        prev = str[i2+1];
+        i2++;
+    }
+    return [i1, i2];
+    }
+  
   onContextMenu(evt) {
     var posClicked = this.textPositionFromPoint(this.localize(evt.position));
     var sels = this.selection.selections || [this.selection];
