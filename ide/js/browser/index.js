@@ -1119,8 +1119,8 @@ export default class Browser extends Window {
     var m = module(evt.module),
         {selectedModule, selectedPackage} = this;
 
-    if (!selectedPackage || m.package().address !== selectedPackage.address)
-      return;
+    if (!selectedPackage) return;
+    if (!m.package() || m.package().address !== selectedPackage.address) return;
 
     var mInList = this.get("moduleList").values.find(ea => ea.url === m.id);
     if (selectedModule && selectedModule.url === m.id && mInList) {
