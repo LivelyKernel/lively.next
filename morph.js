@@ -495,8 +495,7 @@ export class Morph {
         this[key] === defaults[key] ||
         this.instrumentedByStyleSheet(key) ||
         (descr.hasOwnProperty("serialize") && !descr.serialize)
-      )
-        continue;
+      ) continue;
       propsToSerialize.push(key);
     }
     return propsToSerialize;
@@ -519,6 +518,53 @@ export class Morph {
   get id() { return this._id; }
 
   get env() { return this._env; }
+
+  spec() {
+    let defaults = this.defaultProperties,
+        properties = this.propertiesAndPropertySettings().properties,
+        ignored = {submorphs: true},
+        spec = {};
+    "attributeConnections"
+    for (let key in properties) {
+      let descr = properties[key];
+      if (
+        descr.readOnly ||
+        descr.derived ||
+        this[key] === defaults[key] ||
+        (this[key] && typeof this[key].equals === "function" && this[key].equals(defaults[key])) ||
+        this.instrumentedByStyleSheet(key) ||
+        (descr.hasOwnProperty("serialize") && !descr.serialize) ||
+        key in ignored
+      ) continue;
+      spec[key] = this[key];
+    }
+    if (this.submorphs.length) {
+      spec.submorphs = this.submorphs.map(ea => ea.spec());
+    }
+    spec.type = this.constructor.name.toLowerCase();
+    return spec;
+  }
+  
+  printSpec(spec = null, depth = 0) {
+    spec = spec || this.spec();
+    let priority = {name: true, type: true, submorphs: true};
+    let singleIndent = "  ";
+    let propIndent = singleIndent.repeat(depth+1);
+    let printed = singleIndent.repeat(depth) + "{\n"
+               + `${propIndent}name: "${spec.name}",\n`
+               + `${propIndent}type: "${spec.type}",\n`;
+    for (let key in spec)
+      if (!priority[key])
+        printed = printed + `${propIndent}${key}: ${string.print(spec[key])},\n`
+    if (spec.submorphs) {
+      printed += `${propIndent}submorphs: [\n`
+      for (let subspec of spec.submorphs)
+        printed += this.printSpec(subspec, depth+1);
+      printed += `]\n`
+    }
+    printed += singleIndent.repeat(depth) + "}\n";
+    return printed;
+  }
 
   get defaultProperties() {
     let klass = this.constructor,
