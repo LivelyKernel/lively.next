@@ -2187,7 +2187,7 @@ export class Image extends Morph {
   }
 
   async convertToBase64() {
-    // this.imageUrl = "http://www.amir.ninja/content/images/2015/12/Hello-World.png"
+    // this.imageUrl = "http://blog.openclassrooms.com/en/wp-content/uploads/sites/4/2015/11/hello-world-v02.jpg"
     // await this.convertToBase64();
     var urlString = this.imageUrl,
         type = urlString.slice(urlString.lastIndexOf('.') + 1, urlString.length).toLowerCase();
@@ -2239,7 +2239,7 @@ export class Image extends Morph {
 
     // Example:
     /*
-    await this.loadUrl("http://www.amir.ninja/content/images/2015/12/Hello-World.png", false)
+    await this.loadUrl("http://blog.openclassrooms.com/en/wp-content/uploads/sites/4/2015/11/hello-world-v02.jpg", false)
     let from = this.naturalExtent;
     await this.convertToBase64();
     this.extent = pt(300,300)
