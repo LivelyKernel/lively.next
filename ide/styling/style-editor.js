@@ -28,6 +28,8 @@ import { GradientEditor } from "./gradient-editor.js";
 import { StyleSheet } from "../../style-rules.js";
 import KeyHandler from "../../events/KeyHandler.js";
 import { loadObjectFromPartsbinFolder } from "../../partsbin.js";
+import { Icons } from "../../components/icons.js";
+import InputLine from "../../text/input-line.js";
 
 const duration = 200,
       focusHalo = {
@@ -36,14 +38,108 @@ const duration = 200,
           distance: 0,
           rotation: 45
         };
-var iconPicker;
 
-async function initIconPicker() {
-  iconPicker = await loadObjectFromPartsbinFolder('IconPicker');
-  iconPicker.isHaloItem = true;
+export class IconPicker extends Morph {
+
+  static get properties() {
+
+    return {
+      isHaloItem:   {defaultValue: true},
+      name:         {defaultValue: "icon picker"},
+      extent:       {defaultValue: pt(250, 400)},
+      borderRadius: {defaultValue: 5},
+      dropShadow:   {initialize() { this.dropShadow = true; /*???*/}},
+      fill:         {
+        defaultValue: new LinearGradient({
+          stops: [
+            {color: Color.rgb(242, 243, 244), offset: 0},
+            {color: Color.rgb(229, 231, 233), offset: 1}
+          ]
+        })
+      },
+
+      submorphs: {
+        initialize() {
+          
+          let {width, height} = this, margin = 4, searchBarHeight = 20;
+          this.submorphs = [
+            {
+              name: "search-input",
+              type: InputLine,
+              placeholder: "Search",
+              fontSize: 18,
+              position: pt(margin, margin),
+              extent: pt(width-2*margin, searchBarHeight),
+              borderRadius: 20,
+              padding: Rectangle.inset(7,4,0,0)
+            },
+            
+            {
+              textAndAttributes: this.iconAsTextAttributes(),
+              name: "icon-list",
+              type: "text",
+              extent: pt(width-2*margin, height - searchBarHeight - 5*margin),
+              position: pt(margin, searchBarHeight + 4*margin),
+              padding: Rectangle.inset(8),
+              fill: Color.gray,
+              fontFamily: "FontAwesome",
+              textStyleClasses: ["fa"],
+              clipMode: "auto",
+              lineWrapping: "by-chars",
+              fontSize: 25,
+              textAlign: "justify",
+              readOnly: true
+            }
+          ];
+
+          let [searchInput, iconList] = this.submorphs;
+          connect(searchInput, 'inputChanged', this, 'filterIcons');
+          connect(iconList, 'onMouseUp', this, 'iconSelectClick');
+        }
+      }
+    }
+  }
+
+  iconAsTextAttributes(filterFn) {
+    let iconNames = Object.keys(Icons);
+    if (filterFn) iconNames = iconNames.filter(filterFn);
+    return arr.flatmap(iconNames,
+      name => [
+        Icons[name].code,
+      {iconCode: Icons[name].code, iconName: name},
+      " ", null
+    ]);
+  }
+
+  filterIcons() {
+    let {input} = this.getSubmorphNamed("search-input");
+    this.getSubmorphNamed("icon-list").textAndAttributes = this.iconAsTextAttributes(
+      input.trim() ? name => name.toLowerCase().includes(input.toLowerCase()) : null);
+  }
+
+  iconSelectClick(evt) {
+    // let iconList = this.get("icon-list");
+    let iconList = this.getSubmorphNamed("icon-list"),
+        textPos = iconList.textPositionFromPoint(evt.positionIn(iconList)),
+        iconName = this.iconAtTextPos(textPos);
+    this.setStatusMessage(iconName);
+    signal(this, "select", iconName);
+  }
+
+  iconAtTextPos({row, column}) {
+    // let iconList = this.get("icon-list");
+    let iconList = this.getSubmorphNamed("icon-list"),
+        range = {start: {row, column: column-1}, end: {row, column: column+1}},
+        found = iconList.textAndAttributesInRange(range);
+    while (found.length) {
+      if (found[1]) break;
+      found = found.slice(2)
+    }
+    return found.length ? found[1].iconName : null;
+  }
+
 }
 
-initIconPicker();
 
 export class StyleEditor extends Morph {
 
@@ -1095,7 +1191,7 @@ export class ButtonBodyEditor extends BodyStyleEditor {
           triggerStyle: {fontSize: 28},
           activeStyle: {fill: Color.white, borderRadius: 5, fontSize: 28},
           action: async () => {
-             this.iconPicker = iconPicker
+             this.iconPicker = new IconPicker();
              connect(this.iconPicker, 'select', this, 'setButtonIcon');
              this.iconPicker.openInWorld();
           }
