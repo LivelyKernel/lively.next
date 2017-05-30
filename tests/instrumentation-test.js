@@ -126,7 +126,7 @@ describe("instrumentation", () => {
       var exports = await S.import(`${testProjectDir}file4.js`),
           Foo = module4.recorder.Foo;
       expect(Foo[Symbol.for("lively-instance-superclass")]).equals(Object)
-      expect(Foo[Symbol.for("lively-module-meta")]).deep.equals({
+      expect(Foo[Symbol.for("lively-module-meta")]).containSubset({
         package: {
           name: "test-project-1",
           version: "1.2.3"
