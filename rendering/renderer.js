@@ -66,10 +66,10 @@ export class Renderer {
     this.renderWorldLoopLaterCounter = n;
     if (this.renderWorldLoopLater) return;
     this.renderWorldLoopLater = this.requestAnimationFrame(() => {
-      this.renderStep();
-      this.renderWorldLoopLater = null;
       if (this.renderWorldLoopLaterCounter > 0)
         this.renderLater(this.renderWorldLoopLaterCounter-1);
+      this.renderStep();
+      this.renderWorldLoopLater = null;
     });
   }
 
