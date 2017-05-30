@@ -202,7 +202,7 @@ describe("create or extend classes", function() {
     it("adds module meta data", async () => {
       varRecorder.module = {package() { return {name: "foo"}; }, pathInPackage() { return "bar"; }};
       var Foo = await evalClass("class Foo {}");
-      expect(Foo[Symbol.for("lively-module-meta")]).deep.equals(
+      expect(Foo[Symbol.for("lively-module-meta")]).containSubset(
         {package: {name: "foo", version: undefined}, pathInPackage: "bar"});
     });
 

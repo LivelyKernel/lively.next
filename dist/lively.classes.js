@@ -652,9 +652,13 @@ function initializeClass(constructorFunc, superclassSpec) {
   // (de)serialize class instances in lively.serializer
   if (currentModule) {
     var p = currentModule.package();
+    var prevMeta = klass[moduleMetaSymbol];
+    var t = Date.now();
     klass[moduleMetaSymbol] = {
       package: p ? { name: p.name, version: p.version } : {},
-      pathInPackage: currentModule.pathInPackage()
+      pathInPackage: p ? currentModule.pathInPackage() : currentModule.id,
+      lastChange: prevMeta && prevMeta.lastChange && t <= prevMeta.lastChange ? prevMeta.lastChange + 1 : t,
+      lastSuperclassChange: 0
     };
 
     // if we have a module, we can listen to toplevel changes of it in case the
@@ -670,6 +674,14 @@ function initializeClass(constructorFunc, superclassSpec) {
       klass[moduleSubscribeToToplevelChangesSym] = currentModule.subscribeToToplevelDefinitionChanges(function (name, val) {
         if (name !== superclassSpec.referencedAs) return;
         // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''} was defined via module bindings`)
+
+        // Only run through the (expensive) updates if superclass really has changes
+        var superMeta = val && val[moduleMetaSymbol],
+            myMeta = klass[moduleMetaSymbol];
+        if (superMeta) {
+          if (superMeta.lastChange === myMeta.lastSuperclassChange) return;
+          myMeta.lastSuperclassChange = superMeta.lastChange;
+        }
         setSuperclass(klass, val);
         installMethods(klass, instanceMethods, classMethods);
         prepareClassForManagedPropertiesAfterCreation(klass);
