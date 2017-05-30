@@ -108,8 +108,6 @@ export class LocalCoreInterface extends AbstractCoreInterface {
     S.set(confFile, S.newModule(config)); // FIXME, do this in lively.modules
 
     var p = await this.getPackageForModule(confFile);
-    if (p && config.systemjs) S.packages[p.address] = config.systemjs;
-    if (p && config.systemjs) S.config({packages: {[p.address]: config.systemjs}})
     if (p) modules.applyPackageConfig(config, p.address);
   }
 
