@@ -362,7 +362,7 @@ export class PropertyAnimation {
      // which requires us to do some magic in order to let the animations
      // play nicely. This usually involves that we capture the original
      // value of a property, before it was animated
-     return ['fill']
+     return ['fill', 'origin']
   }
 
   asPromise() {
@@ -543,7 +543,7 @@ export class PropertyAnimation {
     }
     return [obj.isEmpty(before) ? false : before, obj.isEmpty(after) ? false : after]
   }
-
+  
   gatherAnimationProps() {
      return {css: StyleMapper.getStyleProps(this.morph),
              svg: this.morph.isSvgMorph && StyleMapper.getSvgAttributes(this.morph),
@@ -570,6 +570,15 @@ export class PropertyAnimation {
       this.active = true;
       let [before, after] = this.getAnimationProps("css");
       this.tween(node, before, after);
+      if (this.config.origin) {
+        let b = this.capturedProperties.origin,
+            a = this.config.origin;
+        this.tween(node.childNodes[0], {
+          transform: `translate3d(${b.x}px, ${b.y}px, 0px)`
+        },{
+          transform: `translate3d(${a.x}px, ${a.y}px, 0px)`
+       });
+      }
     }
   }
 
