@@ -3,7 +3,6 @@ import { expect } from "mocha-es6";
 import { createDOMEnvironment } from "../../rendering/dom-helper.js";
 import { World, MorphicEnv } from "../../index.js";
 import { Text } from "../../text/morph.js";
-import { dummyFontMetric as fontMetric } from "../test-helpers.js";
 import { Rectangle, Color, pt } from "lively.graphics";
 import { obj, promise } from "lively.lang";
 import { Range } from "../../text/range.js";
@@ -34,41 +33,24 @@ function text(string, props) {
   });
 }
 
-var world, sut;
-function createDummyWorld() {
-  world = new World({name: "world", extent: pt(300,300), submorphs: [
-    text("hello", {
-      position: pt(10.10),
-      fill: Color.gray.lighter(2)
-    })]})
-  sut = world.get("text");
-  return world;
-}
-
-var env;
-async function createMorphicEnv() {
-  env = new MorphicEnv(await createDOMEnvironment());
-  env.domEnv.document.body.style = "margin: 0";
-  MorphicEnv.pushDefault(env);
-  await env.setWorld(createDummyWorld());
-}
-
-async function destroyMorphicEnv() { MorphicEnv.popDefault().uninstall(); }
-
 function printStyleNormalized(style) { return obj.inspect(style).replace(/ /g, ""); }
 
 function getRenderedTextNodes(morph) {
-  let root = env.renderer.getNodeForMorph(morph);
+  let root = morph.env.renderer.getNodeForMorph(morph);
   return Array.from(root.querySelectorAll(".newtext-text-layer .line"));
 }
 
+var sut;
+
 describe("text rendering", () => {
 
-  beforeEach(() => createMorphicEnv());
-  afterEach(() => destroyMorphicEnv());
+  beforeEach(() =>
+    sut = text("hello", {position: pt(10.10),fill: Color.gray.lighter(2)}).openInWorld());
+
+  afterEach(() => sut && sut.remove());
 
   inBrowser("only renders visible part of scrolled text", async () => {
-    
+
     var lineHeight = sut.document.lines[0].height,
         padTop = sut.padding.top(),
         padBot = sut.padding.bottom();
@@ -131,7 +113,7 @@ describe("text rendering", () => {
       expect(chunks).property("length").equals(5);
 
       let styles = Array.from(chunks).map(ea => {
-        let jsStyle =        env.domEnv.window.getComputedStyle(
+        let jsStyle =        sut.env.domEnv.window.getComputedStyle(
                                 ea.nodeType === ea.TEXT_NODE ? ea.parentNode : ea),
             fontFamily =     jsStyle.getPropertyValue("font-family"),
             fontSize =       parseInt(jsStyle.getPropertyValue("font-size").slice(0, -2)),
@@ -176,7 +158,7 @@ describe("text rendering", () => {
   describe("visible line detection", () => {
 
     inBrowser("determines last and first full visible line based on padding and scroll", () => {
-      var {width: w, height: h} = fontMetric;
+      var {width: w, height: h} = sut.textLayout.defaultCharExtent(sut);
       Object.assign(sut, {
         textString: "111111\n222222\n333333\n444444\n555555",
         padding, borderWidth: 0, fill: Color.lightGray,
