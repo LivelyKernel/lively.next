@@ -786,6 +786,29 @@ export class SearchField extends Text {
   static get properties() {
     return {
       fixedWidth: {defaultValue: true},
+      styleSheets: {
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            ".SearchField": {
+              borderRadius: 15,
+              borderWidth: 1,
+              borderColor: Color.gray,
+              padding: rect(6, 3, 0, 0)
+            },
+            ".idle": {
+              fontColor: Color.gray.darker()
+            },
+            ".selected": {
+              fontColor: Color.black,
+              dropShadow: {
+                blur: 6,
+                color: Color.rgb(52, 152, 219),
+                distance: 0
+              }
+            }
+          });        
+        }
+      },
       layout: {
         initialize() {
           this.layout = new HorizontalLayout({direction: 'rightToLeft'})
@@ -863,6 +886,7 @@ export class SearchField extends Text {
           });
         }
       },
+      placeHolder: {defaultValue: 'Search'},
       submorphs: {
         after: ['placeHolder'],
         initialize() {
@@ -872,7 +896,7 @@ export class SearchField extends Text {
               name: 'placeholder',
               isLayoutable: false,
               opacity: .3,
-              value: "Search",
+              value: this.placeHolder,
               reactsToPointer: false,
               padding: rect(6, 3, 2, 2)
             },

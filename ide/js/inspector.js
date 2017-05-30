@@ -719,19 +719,6 @@ export default class Inspector extends Morph {
             "[name=searchBar] .LabeledCheckBox": {
               fill: Color.transparent
             },
-            "[name=searchBar] [name=searchField]": {
-              borderRadius: 15,
-              borderWidth: 1,
-              borderColor: Color.gray,
-              padding: rect(6,3,0,0)
-            },
-            '[name=searchBar] .idle': {
-              fontColor: Color.gray.darker()
-            },
-            "[name=searchBar] .selected": {
-              fontColor: Color.black,
-              dropShadow: new ShadowObject({blur: 6, color: Color.rgb(52,152,219), distance: 0})
-            },
             "[name=resizer]": {
               fill: Color.gray.lighter(),
               nativeCursor: 'ns-resize'
