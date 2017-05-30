@@ -316,7 +316,7 @@ function doInstall(genericArgs, args) {
             individualPackageDirs,
             devPackageDirs),
           cmdArgs["save-dev"] ? "dev-dependencies" : "dependencies",
-          true)),
+          false/*verbose*/)),
     Promise.resolve())
   .then(() => process.exit(0))
   .catch(err => {
