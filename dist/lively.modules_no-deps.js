@@ -4429,15 +4429,12 @@ var PackageRegistry$$1 = function () {
                 return _context3.abrupt("return", discovered);
 
               case 5:
-
-                console.log(existingPackageMap && existingPackageMap);
-
-                _context3.prev = 6;
+                _context3.prev = 5;
                 pkg = existingPackageMap && existingPackageMap[url] || new Package(this.System, url);
-                _context3.next = 10;
+                _context3.next = 9;
                 return pkg.tryToLoadPackageConfig();
 
-              case 10:
+              case 9:
                 config = _context3.sent;
 
                 pkg.setConfig(config);
@@ -4449,17 +4446,17 @@ var PackageRegistry$$1 = function () {
                 }
                 return _context3.abrupt("return", discovered);
 
-              case 17:
-                _context3.prev = 17;
-                _context3.t0 = _context3["catch"](6);
+              case 16:
+                _context3.prev = 16;
+                _context3.t0 = _context3["catch"](5);
                 return _context3.abrupt("return", discovered);
 
-              case 20:
+              case 19:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, this, [[6, 17]]);
+        }, _callee3, this, [[5, 16]]);
       }));
 
       function _discoverPackagesIn(_x5, _x6, _x7) {

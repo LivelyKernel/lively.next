@@ -253,7 +253,7 @@ export class PackageRegistry {
     let penaltySoFar = Infinity, found = null, {byURL} = this;
     for (let pkgURL in byURL) {
       if (url.indexOf(pkgURL) !== 0) continue;
-      let penalty = url.slice(pkgURL.length).length;
+      var penalty = url.slice(pkgURL.length).length;
       if (penalty >= penaltySoFar) continue;
       penaltySoFar = penalty;
       found = byURL[pkgURL];
@@ -431,8 +431,6 @@ export class PackageRegistry {
     if (!dir.isDirectory()) return discovered;
     let url = dir.asFile().url;
     if (discovered.hasOwnProperty(url)) return discovered;
-
-    console.log(existingPackageMap && existingPackageMap)
 
     try {
       let pkg = (existingPackageMap && existingPackageMap[url])
