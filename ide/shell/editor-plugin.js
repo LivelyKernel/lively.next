@@ -1,47 +1,25 @@
 /*global localStorage*/
-import { arr, string } from "lively.lang";
+import { arr } from "lively.lang";
 import { signal } from "lively.bindings";
 import EditorPlugin from "../editor-plugin.js";
 import { defaultDirectory, runCommand } from "./shell-interface.js";
 import { shellCompleters } from "./completers.js";
 
-import prism from "https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/prism.js";
-import "https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/components/prism-bash.js";
+import "./mode.js"
+import { getMode } from "../editor-modes.js";
 
 var defaultDir;
 Promise.resolve(defaultDirectory()).then(dir => defaultDir = dir);
 
-class ShellTokenizer {
-
-  tokenize(string) {
-    var pos = {row: 0, column: 0},
-        tokens = prism.tokenize(string, prism.languages.bash),
-        styles = [];
-    for (var i = 0; i < tokens.length; i++) {
-      var token = tokens[i],
-          currentTokens = [token];
-      if (typeof token === "string")
-        token = tokens[i] = {matchedStr: token, type: "default"}
-      token.start = {...pos};
-      var lines = token.matchedStr.split("\n");
-      if (lines.length === 1) pos.column += lines[0].length;
-      else pos = {row: pos.row + lines.length-1, column: arr.last(lines).length}
-      token.end = {...pos};
-    }
-    return tokens;
-  }
-
-}
 
 export default class ShellEditorPlugin extends EditorPlugin {
 
   static get shortName() { return "shell"; }
 
-  // static get mode() { return getMode({}, {name: "shell"}); }
+  static get mode() { return getMode({}, {name: "shell"}); }
 
   constructor() {
     super()
-    this.tokenizer = new ShellTokenizer();
     this.state = {cwd:  defaultDir, command: null}
   }
 
@@ -51,18 +29,6 @@ export default class ShellEditorPlugin extends EditorPlugin {
 
   get options() { return this.state; }
   set options(o) { return this.state = Object.assign(this.state, o); }
-
-  highlight() {
-    let textMorph = this.textMorph;
-    if (!this.theme || !textMorph || !textMorph.document) return;
-
-    let tokens = this._tokens = this.tokenizer.tokenize(textMorph.textString),
-        attributes = [];
-    for (let {token, start, end} of tokens)
-      if (tokens.type !== "default" && this.theme[token])
-        attributes.push({start, end}, this.theme[token]);
-    textMorph.setTextAttributesWithSortedRanges(attributes);
-  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // shell related
@@ -206,7 +172,5 @@ export default class ShellEditorPlugin extends EditorPlugin {
   getCompleters(completers) {
     return completers.concat(shellCompleters);
   }
-  
-  getComment() { return {lineCommentStart: "#"}; }
 
 }
