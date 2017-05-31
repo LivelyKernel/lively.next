@@ -86,7 +86,7 @@ export default class Halo extends Morph {
     return this.getSubmorphNamed("border-box") || this.addMorphBack({
       isHalo: true,
       name: "border-box", fill: Color.transparent,
-      borderColor: Color.red, borderWidth: 2
+      borderColor: Color.red, borderWidth: 1
     });
   }
 
@@ -143,10 +143,12 @@ export default class Halo extends Morph {
     this.borderBox.setBounds(this.localize(pt(x,y)).extent(pt(width,height)));
     if (this.state.activeButton) {
       this.buttonControls.forEach(ea => ea.visible = false);
+      this.ensureResizeHandles().forEach(h => h.visible = false);
       this.state.activeButton.visible = true;
       this.updatePropertyDisplay(this.state.activeButton);
     } else {
       if (this.changingName) this.nameHalo().toggleActive([false]);
+      this.ensureResizeHandles().forEach(h => h.visible = true);
       this.buttonControls.forEach(b => { b.visible = true;});
       this.propertyDisplay.disable();
     }
