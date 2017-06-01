@@ -123,6 +123,7 @@ export class RichTextControl extends Morph {
     loadObjectFromPartsbinFolder("tab-buttons").then(tabs => {
       this.getSubmorphNamed("text align tabs").replaceWith(tabs);
       connect(tabs, "activeTab", this, "changeTextAlign");
+      connect(tabs, "extent", this, "relayout");
       Object.assign(tabs, {
         tabs: [
           {name: "left", label: Icon.textAttribute("align-left")},
@@ -193,6 +194,7 @@ export class RichTextControl extends Morph {
     btns[6].topLeft = pt(btns[5].right + 2*offset, offset); btns[6].extent = pt(l,l);
     btns[7].topLeft = pt(btns[6].right + offset, offset); btns[7].extent = pt(l,l);
     btns[8].topLeft = pt(btns[7].right + offset, offset); btns[8].extent = pt(100, l);
+
     btns[9].bottomLeft = btns[8].bottomRight.addXY(offset, 0);
 
     btns[10].topLeft = pt(btns[9].right + 2*offset, 0); btns[10].extent = pt(2,h);
