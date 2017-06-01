@@ -319,10 +319,8 @@ export var jsIdeCommands = [
       };
 
       let module = lively.modules.module,
-          prettier = await module("https://prettier.github.io/prettier/prettier.min.js").load({
-            format: "global",
-            instrument: false
-          }),
+          prettierURL = System.normalizeSync("prettier", System.normalizeSync("lively.morphic")),
+          prettier = await module(prettierURL).load({format: "global",instrument: false}),
           {findNodeByAstIndex} = await module("lively.ast/lib/acorn-extension.js").load(),
           {parse, printAst, withMozillaAstDo} = await module("lively.ast").load(),
           {nodesAt} = await module("lively.ast/lib/query.js").load(),
