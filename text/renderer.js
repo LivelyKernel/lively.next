@@ -44,7 +44,7 @@ function installCSS(domEnv) {
       position: absolute;
       white-space: pre;
       z-index: 0;
-      width: 100%;
+      min-width: 100%;
     }
 
     .newtext-before-filler {}
@@ -52,19 +52,16 @@ function installCSS(domEnv) {
     .newtext-text-layer.wrap-by-words {
       white-space: pre-wrap;
       overflow-wrap: break-word;
-      width: 100%;
     }
 
     .newtext-text-layer.only-wrap-by-words {
       white-space: pre-wrap;
       overflow-wrap: break-all;
-      width: 100%;
     }
 
     .newtext-text-layer.wrap-by-chars {
       white-space: pre-wrap;
       word-break: break-word;
-      width: 100%;
     }
 
     .newtext-text-layer.no-wrapping {
