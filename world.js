@@ -153,7 +153,7 @@ export class World extends Morph {
         isShiftKey = evt.isShiftDown(),
         activeWindow = this.activeWindow();
 
-    if (activeWindow) activeWindow.deactivate();
+    if (activeWindow && target == this) activeWindow.deactivate();
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // halo activation + removal
     // note that the logic for cycling halos from morph to underlying morph is
