@@ -4,6 +4,7 @@ import { show, DropDownList, inspect, morph, Morph } from "../index.js";
 import { pt, LinearGradient, Rectangle, Color } from "lively.graphics";
 import { connect, noUpdate } from "lively.bindings"
 import { Icon } from "lively.morphic/components/icons.js";
+import { loadObjectFromPartsbinFolder } from "../partsbin.js";
 
 
 const cachedControls = new WeakMap();
@@ -57,6 +58,9 @@ export class RichTextControl extends Morph {
   reset() {
     this.get("font button").items = this.basicFontItems();
     this.get("font button").selection = this.get("font button").items[0].value;
+
+    connect(this.target, "selectionChange", this, "setFontFromTarget");
+    connect(this.target, "selectionChange", this, "setTextAlignFromTarget");
   }
 
   removeFocus() {
@@ -77,9 +81,17 @@ export class RichTextControl extends Morph {
   }
 
   build() {
+    // this.build(); this.relayout();
+
     this.removeAllMorphs();
 
-    var fill = "linear-gradient(180deg,rgba(255,255,255,1) 0%,rgba(236,240,241,1) 100%)";
+    var fill = new LinearGradient({
+      stops: [
+        {color: Color.white, offset: 0},
+        {color: Color.rgb(236,240,241), offset: 1}
+      ]
+    });
+
     var btnStyle = {
       type: "button", borderRadius: 5, padding: Rectangle.inset(0),
       grabbable: false, draggable: false,
@@ -94,6 +106,8 @@ export class RichTextControl extends Morph {
     this.addMorph({name: "link button",      ...btnStyle, label: Icon.makeLabel("link"), tooltip: "add or edit link"});
     this.addMorph({name: "fontcolor button", ...btnStyle, label: Icon.makeLabel("tint"), tooltip: "change font color"});
 
+    this.addMorph({name: "divider 1", fill: Color.gray, extent: pt(4,30)});
+
     this.addMorph({name: "inc fontsize button", ...btnStyle, label: Icon.makeLabel("plus"), tooltip: "increase font size"});
     this.addMorph({name: "dec fontsize button", ...btnStyle, label: Icon.makeLabel("minus"), tooltip: "decrease font size"});
     // this.addMorph({name: "font button",      ...btnStyle, label: Icon.makeLabel("font"), tooltip: ""});
@@ -101,12 +115,30 @@ export class RichTextControl extends Morph {
     this.addMorph(new DropDownList({
       selection: fontItems[0], items: fontItems,
       width: 100, name: "font button", fill,
-      tooltip: "change font family"
+      tooltip: "change font family",
+      listAlign: "top"
     }));
-  
+
+    this.addMorph({name: "text align tabs", width: 120, height: 24});
+    loadObjectFromPartsbinFolder("tab-buttons").then(tabs => {
+      this.getSubmorphNamed("text align tabs").replaceWith(tabs);
+      connect(tabs, "activeTab", this, "changeTextAlign");
+      Object.assign(tabs, {
+        tabs: [
+          {name: "left", label: Icon.textAttribute("align-left")},
+          {name: "center", label: Icon.textAttribute("align-center")},
+          {name: "right", label: Icon.textAttribute("align-right")},
+          {name: "justify", label: Icon.textAttribute("align-justify")}
+        ],
+        name: "text align tabs"
+      })
+    });
+
+    this.addMorph({name: "divider 2", fill: Color.gray, extent: pt(4,30)});
 
     this.addMorph({name: "copy style button", ...btnStyle, label: Icon.makeLabel("copy"), tooltip: "copy style"});
     this.addMorph({name: "paste style button", ...btnStyle, label: Icon.makeLabel("paint-brush"), tooltip: "paste style"});
+    this.addMorph({name: "clear style button", ...btnStyle, label: Icon.makeLabel("remove"), tooltip: "clear style"});
     // this.addMorph({type: "triangle", name: "arrow", fill: this.fill, grabbable: false, draggable: false});
 
     connect(this.get("bold button"),      "fire", this, "toggleBold");
@@ -117,43 +149,64 @@ export class RichTextControl extends Morph {
     connect(this.get("dec fontsize button"), "fire", this, "decFontSize");
     connect(this.get("link button"),      "fire", this, "changeLink");
     connect(this.get("font button"),      "selection", this, "changeFont");
+    connect(this.get("text align tabs"),      "activeTab", this, "changeTextAlign");
     connect(this.get("copy style button"),      "fire", this, "copyStyle");
     connect(this.get("paste style button"),      "fire", this, "pasteStyle");
+    connect(this.get("clear style button"),      "fire", this, "clearStyle");
   }
 
   relayout() {
+    // this.height = 30;
     var offset = 3;
-    var l = this.height-2*offset
+    var h = this.innerBounds().height;
+    var l = Math.max(h-2*offset, 22);
     var btns = [
       this.getSubmorphNamed("bold button"),
       this.getSubmorphNamed("italic button"),
       this.getSubmorphNamed("underline button"),
       this.getSubmorphNamed("link button"),
       this.getSubmorphNamed("fontcolor button"),
+
+      this.getSubmorphNamed("divider 1"),
+
       this.getSubmorphNamed("inc fontsize button"),
       this.getSubmorphNamed("dec fontsize button"),
       this.getSubmorphNamed("font button"),
+      this.getSubmorphNamed("text align tabs"),
+
+      this.getSubmorphNamed("divider 2"),
+
       this.getSubmorphNamed("copy style button"),
-      this.getSubmorphNamed("paste style button")
+      this.getSubmorphNamed("paste style button"),
+      this.getSubmorphNamed("clear style button")
     ]
     var arrow = this.getSubmorphNamed("arrow");
+
     btns[0].topLeft = pt(offset, offset); btns[0].extent = pt(l,l);
-    btns[1].topLeft = btns[0].topRight.addXY(offset, 0); btns[1].extent = pt(l,l);
-    btns[2].topLeft = btns[1].topRight.addXY(offset, 0); btns[2].extent = pt(l,l);
-    btns[3].topLeft = btns[2].topRight.addXY(offset, 0); btns[3].extent = pt(l,l);
-    btns[4].topLeft = btns[3].topRight.addXY(offset, 0); btns[4].extent = pt(l,l);
-    btns[5].topLeft = btns[4].topRight.addXY(offset, 0); btns[5].extent = pt(l,l);
-    btns[6].topLeft = btns[5].topRight.addXY(offset, 0); btns[6].extent = pt(l,l);
-    btns[7].topLeft = btns[6].topRight.addXY(offset, 0); btns[7].extent = pt(100, l);
-    btns[8].topLeft = btns[7].topRight.addXY(offset, 0); btns[8].extent = pt(l, l);
-    btns[9].topLeft = btns[8].topRight.addXY(offset, 0); btns[9].extent = pt(l, l);
+    btns[1].topLeft = pt(btns[0].right + offset, offset); btns[1].extent = pt(l,l);
+    btns[2].topLeft = pt(btns[1].right + offset, offset); btns[2].extent = pt(l,l);
+    btns[3].topLeft = pt(btns[2].right + offset, offset); btns[3].extent = pt(l,l);
+    btns[4].topLeft = pt(btns[3].right + offset, offset); btns[4].extent = pt(l,l);
+
+    btns[5].topLeft = pt(btns[4].right + 2*offset, 0); btns[5].extent = pt(2,h);
+
+    btns[6].topLeft = pt(btns[5].right + 2*offset, offset); btns[6].extent = pt(l,l);
+    btns[7].topLeft = pt(btns[6].right + offset, offset); btns[7].extent = pt(l,l);
+    btns[8].topLeft = pt(btns[7].right + offset, offset); btns[8].extent = pt(100, l);
+    btns[9].bottomLeft = btns[8].bottomRight.addXY(offset, 0);
+
+    btns[10].topLeft = pt(btns[9].right + 2*offset, 0); btns[10].extent = pt(2,h);
+
+    btns[11].topLeft = pt(btns[10].right + 2*offset, offset); btns[11].extent = pt(l, l);
+    btns[12].topLeft = pt(btns[11].right + offset, offset); btns[12].extent = pt(l, l);
+    btns[13].topLeft = pt(btns[12].right + offset, offset); btns[13].extent = pt(l, l);
     if (arrow) {
       arrow.extent = pt(this.width/10, this.width/10);
       arrow.bottomCenter = pt(this.width/2, 1);
       if (this.width != arr.last(btns).right+offset)
         this.width = arr.last(btns).right+offset;
     }
-    this.extent = btns[9].bottomRight.addXY(offset, offset);
+    this.extent = btns[13].bottomRight.addXY(offset, offset);
   }
 
   basicFontItems() {
@@ -181,9 +234,11 @@ export class RichTextControl extends Morph {
   setFontFromTarget() {
     // this.reset();
     // this.target.resetTextAttributes()
-    let fb = this.get("font button"),
-        fontFamily = this.target.getStyleInRange().fontFamily
-                  || this.target.fontFamily,
+    
+    let {target} = this, sel = target.selection,
+        fb = this.get("font button"),
+        attr = sel.isEmpty() ? target.textAttributeAt(sel.start) : target.getStyleInRange(sel),
+        fontFamily = (attr && attr.fontFamily) || target.fontFamily,
         existing = fb.items.find(ea =>
           ea.value.toLowerCase() === fontFamily.toLowerCase());
 
@@ -201,6 +256,29 @@ export class RichTextControl extends Morph {
         fb.selection = arr.last(fb.items);
       }
     });
+  }
+
+  changeTextAlign(textAlign) {
+    let morph = this.target;
+    morph.undoManager.group();
+    morph.changeStyleProperty("textAlign", _ => textAlign);
+    morph.undoManager.group();
+  }
+
+  setTextAlignFromTarget() {
+    // this.reset();
+    // this.target.resetTextAttributes()
+
+    let {target} = this, sel = target.selection,
+        tabs = this.get("text align tabs"),        
+        attr = sel.isEmpty() ? target.textAttributeAt(sel.start) : target.getStyleInRange(sel),
+        textAlign = (attr && attr.textAlign) || target.textAlign,
+        tab = tabs.submorphs.find(ea => ea.name === textAlign);
+
+    noUpdate({
+      sourceObj: tabs, sourceAttribute: "activeTab",
+      targetObj: this.get("rich-text-control"), targetAttribute: "changeTextAlign"
+    }, () => tabs.activeTab = tab);
   }
 
   async changeLink() {
@@ -266,7 +344,7 @@ export class RichTextControl extends Morph {
     morph.undoManager.group();
   }
 
-  decFontSize() {    
+  decFontSize() {
     let morph = this.target,
         defaultFontSize = morph.fontSize;
     morph.undoManager.group();
@@ -285,9 +363,18 @@ export class RichTextControl extends Morph {
     this.setStatusMessage(`Copied style\n${styleString}`);
     this.getSubmorphNamed("paste style button").tooltip = "paste style\n" + styleString;
   }
-  
+
   pasteStyle() {
     let morph = this.target;
-    morph.addTextAttribute(this.copiedStyle, morph.selection);
+    morph.selections.forEach(sel => 
+      morph.addTextAttribute(this.copiedStyle, sel));
+  }
+
+  clearStyle() {
+    let morph = this.target;
+    morph.selections.forEach(sel => 
+      morph.resetStyleInRange(sel));
+    this.setFontFromTarget();
+    this.setTextAlignFromTarget();
   }
 }
