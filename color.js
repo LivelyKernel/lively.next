@@ -372,6 +372,19 @@ export class Color {
 }
 
 class Gradient {
+
+  static create(offsetAndColors) {
+    /* 
+     Create a linear gradient by specifying only the
+     stops in a less cumbersome fashion:
+       LinearGradient.create({"0": Color.red, ".5": Color.green, ...)
+    */
+    let parsedStops = [];
+    for (let offset in offsetAndColors) {
+      parsedStops.push({offset: Number(offset), color: offsetAndColors[offset]});
+    }
+    return new this({stops: parsedStops})
+  }
   
   constructor(stops) {
     this.stops = stops.map(s => s) || [];
