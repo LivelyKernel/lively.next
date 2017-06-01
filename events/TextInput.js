@@ -43,6 +43,7 @@ export default class TextInput {
     var doc = newRootNode.ownerDocument,
         textareaNode = domState.textareaNode = doc.createElement("textarea");
 
+
     textareaNode.setAttribute("style", `
       position: absolute;
       /*extent cannot be 0, input won't work correctly in Chrome 52.0*/
@@ -281,9 +282,15 @@ export default class TextInput {
 
   ensureBeingAtCursorOfText(textMorph) {
     // move the textarea to the text cursor
+
     if (!textMorph.world()) return;
-    let localCursorPos = textMorph.textLayout.pixelPositionFor(textMorph, textMorph.cursorPosition),
+
+    let {startRow, endRow} = textMorph.whatsVisible,
+        {row, column} = textMorph.cursorPosition;
+    row = Math.max(startRow, Math.min(row, endRow));
+    let localCursorPos = textMorph.charBoundsFromTextPosition({row, column}).topLeft(),
         globalCursorPos = textMorph.worldPoint(localCursorPos.subPt(textMorph.scroll));
+
     this.setPosition(globalCursorPos);
   }
 }
