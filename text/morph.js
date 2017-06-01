@@ -1186,7 +1186,7 @@ export class Text extends Morph {
         args: [attr, range],
       }
     }, () => {
-      this.document.mixoutTextAttribute(attr);
+      this.document.mixoutTextAttribute(attr, range);
       this.onAttributesChanged(range);
       this.consistencyCheck();
     });
