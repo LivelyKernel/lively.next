@@ -1103,6 +1103,8 @@ export class DropDownList extends Button {
       padding:      {defaultValue: Rectangle.inset(3,2)},
       listHeight: {defaultValue: 100},
 
+      listAlign: {defaultValue: "bottom"/*or "top"*/},
+
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
@@ -1158,7 +1160,12 @@ export class DropDownList extends Button {
             var item = this.listMorph.find(value);
             if (!item) return;
             let label = item.label || [item.string, null];
-            this.label = [...label, " ", null, ...Icon.textAttribute("caret-down")];
+            this.label = [
+              ...label, " ", null,
+              ...Icon.textAttribute(
+                "caret-" + (this.listAlign === "bottom" ?
+                            "down" : "up"))
+            ];
             this.listMorph.selection = value;
           }
         }
@@ -1177,8 +1184,11 @@ export class DropDownList extends Button {
 
   removeWhenFocusLost(evt) {
     setTimeout(() => {
-      if (!this.listMorph.withAllSubmorphsDetect(m => m == $world.focusedMorph))
-         this.listMorph.fadeOut(200);
+      let list = this.listMorph,
+          focused = this.world() && this.world().focusedMorph;
+      if (list !== focused
+      &&  !list.withAllSubmorphsDetect(m => m == focused))
+         list.fadeOut(200);
     }, 100);
   }
 
@@ -1191,10 +1201,14 @@ export class DropDownList extends Button {
     } else {
       signal(this, "activated");
       this.addMorph(list);
-      once(list, 'onItemMorphClicked', this, 'toggleList');
-      once(list, 'onBlur', this, 'removeWhenFocusLost');
-      list.topLeft = this.innerBounds().bottomLeft();
       list.extent = pt(this.width, this.listHeight);
+      if (this.listAlign === "top") {
+        list.bottomLeft = this.innerBounds().topLeft();
+      } else {
+        list.topLeft = this.innerBounds().bottomLeft();
+      }
+      once(list, 'onItemMorphClicked', this, 'toggleList');
+      // once(list, 'onBlur', this, 'removeWhenFocusLost');
       list.focus();
     }
   }
