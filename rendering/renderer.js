@@ -181,14 +181,12 @@ export class Renderer {
           draggable: false,
           style: {
             "pointer-events": "none",
-            position: "relative",
-            top: "-3px",
-            left: "-4px",
-            width: "100%", height: "100%"
+            width: "100%", height: "100%",
+            position: "absolute"
           }
         }),
         this.renderSubmorphs(checkbox)
-      ]);
+    ]);
   }
 
   // FIXME: The gradient handling is inconsistent to the way its handled in "vanilla" morphs
