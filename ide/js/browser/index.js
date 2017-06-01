@@ -927,7 +927,7 @@ export default class Browser extends Window {
 
   async save() {
     let {ui: {moduleList, sourceEditor}, state} = this,
-        module = this.ui.moduleList.selection;
+        module = moduleList.selection;
 
     if (!module) return this.setStatusMessage("Cannot save, no module selected", Color.red);
 
