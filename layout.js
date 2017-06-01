@@ -10,7 +10,7 @@ import { isNumber } from "lively.lang/object.js";
 
 class Layout {
 
-  constructor({spacing, border, container, autoResize, ignore} = {}) {
+  constructor({spacing, border, container, autoResize, ignore, onScheduleApply} = {}) {
     this.applyRequests = [];
     this.border = {top: 0, left: 0, right: 0, bottom: 0, ...border};
     this.spacing = spacing || 0;
@@ -19,6 +19,7 @@ class Layout {
     this.active = false;
     this.container = container;
     this.autoResize = autoResize != undefined ? autoResize : true;
+    this.onScheduleApply = onScheduleApply || (() => {});
   }
 
   copy() {
@@ -65,6 +66,7 @@ class Layout {
   }
 
   scheduleApply(submorph, animation, change = {}) {
+    this.onScheduleApply(submorph, animation, change);
     if (this.active) return;
     if (!this.applyRequests) this.applyRequests = [];
     if (animation) this.lastAnim = animation;
@@ -144,6 +146,8 @@ export class CustomLayout extends Layout {
      this.relayout = config.relayout;
      super(config);
   }
+
+  name() { return "Custom Layout"; }
 
   apply(animate) {
      if (this.active || !this.container) return;
