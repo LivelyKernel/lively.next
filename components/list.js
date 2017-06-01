@@ -263,7 +263,10 @@ export class List extends Morph {
       },
       ".List.default": {
         padding: Rectangle.inset(2, 0)
-      }
+      },
+      // ".List.default .ListItemMorph": {
+      //   fontFamily: "Monaco, monospace",
+      // }
     });
   }
 
@@ -279,14 +282,7 @@ export class List extends Morph {
       nonSelectionFontColor: {isStyleProp: true, defaultValue: Color.rgbHex("333")},
       fontColor:             {isStyleProp: true, defaultValue: Color.rgbHex("333")},
 
-      theme: {
-        after: ['styleClasses'],
-        set(val) {
-          this.removeStyleClass(this.theme);
-          this.setProperty('theme', val);
-          this.addStyleClass(val);
-        }
-      },
+      styleClasses: {defaultValue: ['default']},
 
       styleSheets: {
         initialize() {
@@ -688,6 +684,7 @@ export class FilterableList extends Morph {
 
       theme: {
         after: ['styleClasses', 'listMorph'],
+        defaultValue: 'default',
         set(val) {
           this.removeStyleClass(this.theme);
           this.listMorph.removeStyleClass(this.theme);

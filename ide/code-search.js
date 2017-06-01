@@ -70,7 +70,7 @@ export class CodeSearcher extends FilterableList {
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
-            ".list .ListItemMorph": {
+            ".List .ListItemMorph": {
               fontFamily: "Monaco, monospace"
             }
           });

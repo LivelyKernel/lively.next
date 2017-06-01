@@ -101,7 +101,7 @@ export default class Workspace extends Window {
           name: "pickFileButton",
           nativeCursor: "pointer",
           fontSize: 14,
-          fill: Color.rgbHex("#DDD"),
+          fill: Color.transparent,
           tooltip: "set file for workspace"
         }));
       connect(label, 'onHoverIn', label, 'fontSize', {converter: () => 16});
