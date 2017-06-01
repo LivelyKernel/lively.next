@@ -391,11 +391,10 @@ class DOMTextMeasure {
         for (let i = 0; i < lineNodes.length; i++) {
           if (results[i]) continue;
           let node = lineNodes[i],
-              {left, top, width, height} = node.getBoundingClientRect(),
-              {scrollTop, scrollLeft} = document.body;
+              {left, top, width, height} = node.getBoundingClientRect();
           this.lineBBoxCache[styleKey + "_" + lines[i].text] = results[i] = {
-            x: left - node.offsetLeft + offsetX + scrollLeft - textNodeOffsetLeft,
-            y: top - node.offsetTop + offsetY + scrollTop - textNodeOffsetTop,
+            x: left - node.offsetLeft + offsetX - textNodeOffsetLeft,
+            y: top - node.offsetTop + offsetY - textNodeOffsetTop,
             width, height
           };
         }
@@ -418,8 +417,6 @@ class DOMTextMeasure {
         let lineNode = renderLineFn(line),
             _ = textNode.appendChild(lineNode),
             {doc: document} = this,
-            {scrollTop, scrollLeft} = document.body,
-
             result = (line.stringSize > 1000
 
                    && charBoundsOfBigMonospacedLine(
@@ -429,8 +426,8 @@ class DOMTextMeasure {
                     styleOpts, renderTextLayerFn))
 
                 || charBoundsOfLine(line, lineNode,
-                    -lineNode.offsetLeft + offsetX + scrollLeft - textNodeOffsetLeft,
-                    -lineNode.offsetTop + offsetY + scrollTop - textNodeOffsetTop);
+                    -lineNode.offsetLeft + offsetX - textNodeOffsetLeft,
+                    -lineNode.offsetTop + offsetY - textNodeOffsetTop);
 
         if (!this.debug)
           lineNode.parentNode.removeChild(lineNode);
