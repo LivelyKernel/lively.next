@@ -1644,13 +1644,16 @@ export class Text extends Morph {
 
   onMouseDown(evt) {
     if (evt.rightMouseButtonPressed()) return;
-
     this.activeMark && (this.activeMark = null);
 
-    var {position, state: {clickedOnMorph, clickedOnPosition, clickCount}} = evt;
+    var {
+      position,
+      state: {clickedOnMorph, clickedOnPosition, clickCount}
+    } = evt;
+
     if (clickedOnMorph !== this) return;
 
-    var maxClicks = 3, normedClickCount = ((clickCount - 1) % maxClicks) + 1,
+    var maxClicks = 3, normedClickCount = (clickCount - 1) % maxClicks + 1,
         clickPos = this.localize(position),
         clickTextPos = this.textPositionFromPoint(clickPos);
 
@@ -1669,14 +1672,16 @@ export class Text extends Morph {
     } else {
       this.selection.disableMultiSelect();
       if (normedClickCount === 1) {
-        if (!evt.isShiftDown()) this.selection = {start: clickTextPos, end: clickTextPos};
-        else this.selection.lead = clickTextPos
+        if (!evt.isShiftDown()) {
+          this.priorSelectionRange = this.selection.range.copy();
+          this.selection = {start: clickTextPos, end: clickTextPos};
+        } else this.selection.lead = clickTextPos;
       }
       else if (normedClickCount === 2) this.execCommand("select word", null, 1, evt);
       else if (normedClickCount === 3) this.execCommand("select line", null, 1, evt);
     }
-
-    if (this.isFocused()) this.ensureKeyInputHelperAtCursor();
+    if (this.isFocused())
+      this.ensureKeyInputHelperAtCursor();
   }
 
   callTextAttributeDoitFromMouseEvent(evt, clickPos) {
@@ -1706,17 +1711,17 @@ export class Text extends Morph {
     this.selection.lead = this.textPositionFromPoint(this.localize(evt.position))
   }
 
-  onMouseUp(evt) { 
+  onMouseUp(evt) {
     let empty = this.selection.isEmpty();
     let equal = this.selection.range.equals(this.priorSelectionRange);
     if (empty && equal) {
-      let indexPair = this.selectMatchingBrackets(this.textString, 
+      let indexPair = this.selectMatchingBrackets(this.textString,
                           this.positionToIndex(this.selection.range.start));
       if (indexPair) this.selection = {start: indexPair[0], end: indexPair[1] + 1}
     }
-  } 
+  }
 
-  selectMatchingBrackets(str, i1) { 
+  selectMatchingBrackets(str, i1) {
     //  Selection caret before is char i1
     //  Returns an array[startIndex, endIndex] if it finds matching brackets
     //  This code matches bracket-like characters, and also
@@ -1725,7 +1730,7 @@ export class Text extends Morph {
     //  '/*' - selects a JS long comment
     //  begin or end of line - selects the line
     //  begin or end of entire string - selects the whole string
-    
+
     //  PRELUDE definitions.  See below for start of code
     var rightBrackets = "*)}]>'\"`";
     var leftBrackets = "*({[<'\"`";
@@ -1742,7 +1747,7 @@ export class Text extends Morph {
     function matchBrackets(str, chin, chout, start, dir) {
         // starting at index start, look right (dir = -1) or left (dir = -1)
         // for matching bracket chracters. chin is the open-bracket character
-        // that takes us into a deeper level, chout is the close-bracket 
+        // that takes us into a deeper level, chout is the close-bracket
         // character that takes us out a level and untimately ends the match
         var i = start;
         var depth = 1;
@@ -1770,7 +1775,7 @@ export class Text extends Morph {
     }
     // look left for open backets
     var i2 = i1 - 1;
-    if (i1 > 0) { 
+    if (i1 > 0) {
         if(str[i1-1] == "\n" || str[i1-1] == "\r") return findLine(str, i1, 1, str[i1-1]);
         var i = leftBrackets.indexOf(str[i1-1]);
         if (str[i1 - 1] == "*" && (i1-2 < 0 || str[i1-2] != "/"))
@@ -1781,7 +1786,7 @@ export class Text extends Morph {
         }
     }
     // look right for close brackets
-    if (i1 < str.length) { 
+    if (i1 < str.length) {
         if(str[i1] == "\n" || str[i1] == "\r") return findLine(str, i1, -1, str[i1]);
         var i = rightBrackets.indexOf(str[i1]);
         if (str[i1]== "*" && (i1+1 >= str.length || str[i1+1] != "/"))
@@ -1814,7 +1819,7 @@ export class Text extends Morph {
     }
     return [i1, i2];
     }
-  
+
   onContextMenu(evt) {
     var posClicked = this.textPositionFromPoint(this.localize(evt.position));
     var sels = this.selection.selections || [this.selection];
