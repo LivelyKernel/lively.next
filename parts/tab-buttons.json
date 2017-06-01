@@ -1,8 +1,8 @@
 {
-  "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
+  "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
   "snapshot": {
-    "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7": {
-      "rev": 122209,
+    "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92": {
+      "rev": 1726722,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -13,37 +13,37 @@
           "value": [
             {
               "__ref__": true,
-              "id": "487A5BB5-EFF4-482C-8B40-8F5FCDD5B8D1",
+              "id": "FF4BBFA4-0E98-4DF4-8980-6C05AC1A836A",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "78DA99A9-D99C-43E1-976D-CF89F59E450C",
+              "id": "F7A81940-7A14-4D43-8BF2-80DB5758DAFE",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "357ECF5A-779A-4432-95DD-EA5EDF379042",
+              "id": "36C20EA5-3661-4CF5-A057-83DD8FD01DF4",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "A38015EA-F76A-4F97-927D-30B3BD6D23F6",
+              "id": "445405E1-D47D-483F-A690-48579CEAA974",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "11D589D0-28D6-4AB4-B011-803BFBC4950E",
+              "id": "B0633E6B-E4BA-47D8-8120-EF2B5F812612",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "77E0ABA9-D67A-4F50-9053-9C6E610CC034",
+              "id": "0BBB8B57-7CAB-486A-9D33-14A6A4983B71",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "5D399917-3642-4F7D-8849-A0667DF884BB",
+              "id": "69C0404C-C3D9-416D-8792-419FBE4897F3",
               "rev": 0
             }
           ]
@@ -54,7 +54,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(1140.3,132.7)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(681.5,593.0)"
         },
         "origin": {
           "key": "origin",
@@ -73,18 +73,18 @@
           "value": [
             {
               "__ref__": true,
-              "id": "Label_CF7E9957_0D87_4932_982E_54880A2399EA",
-              "rev": 113667
+              "id": "label_D8D02065_E736_49E1_80C9_9F7445D9C204",
+              "rev": 1726726
             },
             {
               "__ref__": true,
-              "id": "Label_1C80815C_1226_4B80_A097_D40462929A78",
-              "rev": 113668
+              "id": "label_131AE6D3_46A7_41E5_B1D2_20DEF592A734",
+              "rev": 1726719
             },
             {
               "__ref__": true,
-              "id": "Label_66CFD871_F8FC_4F4E_9221_618A971F517F",
-              "rev": 113669
+              "id": "label_CC3E0C97_08CD_4E69_95D2_4E877A977DE0",
+              "rev": 1726721
             }
           ]
         },
@@ -120,34 +120,29 @@
           "key": "padding",
           "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,5,0,0)"
         },
-        "fontFamily": {
-          "key": "fontFamily",
-          "value": "sans-serif"
-        },
         "fontSize": {
           "key": "fontSize",
           "value": 14
         },
         "activeTab": {
           "key": "activeTab",
-          "value": null
-        },
-        "theme": {
-          "key": "theme",
-          "value": "light"
+          "value": "tab 1"
         }
       },
       "lively.serializer-class-info": {
         "className": "TabButtons",
         "module": {
           "package": {
-            "name": "tab-buttons"
+            "name": "tab-buttons",
+            "version": "0.1.0"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1496284873557,
+          "lastSuperclassChange": 1496123936319
         }
       }
     },
-    "487A5BB5-EFF4-482C-8B40-8F5FCDD5B8D1": {
+    "FF4BBFA4-0E98-4DF4-8980-6C05AC1A836A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -166,8 +161,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "sourceAttrName": {
@@ -178,8 +173,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "targetMethodName": {
@@ -190,7 +185,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "92285894-ABAB-4FA0-9200-E17A16BADDEB",
+            "id": "970022AE-CB99-46A3-9021-43F536A5E5AE",
             "rev": 0
           }
         },
@@ -210,36 +205,34 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1496123936264,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "92285894-ABAB-4FA0-9200-E17A16BADDEB": {
+    "970022AE-CB99-46A3-9021-43F536A5E5AE": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         }
       }
     },
-    "78DA99A9-D99C-43E1-976D-CF89F59E450C": {
+    "F7A81940-7A14-4D43-8BF2-80DB5758DAFE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -258,8 +251,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "sourceAttrName": {
@@ -270,8 +263,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "targetMethodName": {
@@ -282,7 +275,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "445617F7-57D0-4EE9-B0F7-A3CEBD2AC803",
+            "id": "F7BF38F7-573D-4D00-AC53-FE1157194B01",
             "rev": 0
           }
         },
@@ -302,36 +295,34 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1496123936264,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "445617F7-57D0-4EE9-B0F7-A3CEBD2AC803": {
+    "F7BF38F7-573D-4D00-AC53-FE1157194B01": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         }
       }
     },
-    "357ECF5A-779A-4432-95DD-EA5EDF379042": {
+    "36C20EA5-3661-4CF5-A057-83DD8FD01DF4": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -350,8 +341,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "sourceAttrName": {
@@ -362,8 +353,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "targetMethodName": {
@@ -374,7 +365,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "AF537106-9857-494A-9901-06FBB68FCAD5",
+            "id": "AAFA5418-CE73-476F-A247-1D9586632CB8",
             "rev": 0
           }
         },
@@ -394,36 +385,34 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1496123936264,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "AF537106-9857-494A-9901-06FBB68FCAD5": {
+    "AAFA5418-CE73-476F-A247-1D9586632CB8": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         }
       }
     },
-    "A38015EA-F76A-4F97-927D-30B3BD6D23F6": {
+    "445405E1-D47D-483F-A690-48579CEAA974": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -442,8 +431,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "sourceAttrName": {
@@ -454,8 +443,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "targetMethodName": {
@@ -466,7 +455,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "3C825A3F-5F55-43DF-9483-F70DE600291F",
+            "id": "C1F36DD7-D3C0-4CF7-87F4-1621058955E4",
             "rev": 0
           }
         },
@@ -486,36 +475,34 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1496123936264,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "3C825A3F-5F55-43DF-9483-F70DE600291F": {
+    "C1F36DD7-D3C0-4CF7-87F4-1621058955E4": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         }
       }
     },
-    "11D589D0-28D6-4AB4-B011-803BFBC4950E": {
+    "B0633E6B-E4BA-47D8-8120-EF2B5F812612": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -534,8 +521,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "sourceAttrName": {
@@ -546,8 +533,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "targetMethodName": {
@@ -558,7 +545,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "F7273AF4-7EFF-4E23-AD4A-8547F98AC8CB",
+            "id": "357E908D-2D51-4D07-A74E-5622B0CB831E",
             "rev": 0
           }
         },
@@ -578,36 +565,34 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1496123936264,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "F7273AF4-7EFF-4E23-AD4A-8547F98AC8CB": {
+    "357E908D-2D51-4D07-A74E-5622B0CB831E": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         }
       }
     },
-    "77E0ABA9-D67A-4F50-9053-9C6E610CC034": {
+    "0BBB8B57-7CAB-486A-9D33-14A6A4983B71": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -626,8 +611,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "sourceAttrName": {
@@ -638,8 +623,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "targetMethodName": {
@@ -650,7 +635,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "7BD838B4-36B4-4740-928D-AD76BCC93DAB",
+            "id": "94A47670-38FE-49B7-8F51-263C8B4EC21B",
             "rev": 0
           }
         },
@@ -670,36 +655,34 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1496123936264,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "7BD838B4-36B4-4740-928D-AD76BCC93DAB": {
+    "94A47670-38FE-49B7-8F51-263C8B4EC21B": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         }
       }
     },
-    "5D399917-3642-4F7D-8849-A0667DF884BB": {
+    "69C0404C-C3D9-416D-8792-419FBE4897F3": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -718,8 +701,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "sourceAttrName": {
@@ -730,8 +713,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "targetMethodName": {
@@ -742,7 +725,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "62C00CD5-AAC7-4399-A64E-A3D145FB546D",
+            "id": "726E5D17-4739-4025-915E-26DD44D208F1",
             "rev": 0
           }
         },
@@ -762,37 +745,35 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1496123936264,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "62C00CD5-AAC7-4399-A64E-A3D145FB546D": {
+    "726E5D17-4739-4025-915E-26DD44D208F1": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         }
       }
     },
-    "Label_CF7E9957_0D87_4932_982E_54880A2399EA": {
-      "rev": 113667,
+    "label_D8D02065_E736_49E1_80C9_9F7445D9C204": {
+      "rev": 1726726,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -803,14 +784,14 @@
           "value": [
             {
               "__ref__": true,
-              "id": "C12A452A-6FE4-4057-9B4C-0073C225DCC8",
+              "id": "382F81B7-E754-4AF8-86EE-B7F637DF2885",
               "rev": 0
             }
           ]
         },
         "name": {
           "key": "name",
-          "value": "aLabel"
+          "value": "tab 1"
         },
         "nativeCursor": {
           "key": "nativeCursor",
@@ -820,13 +801,17 @@
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(47.1,26.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": {
+            "__ref__": true,
+            "id": "28530174-642B-4091-B9F4-A6B3CC076C83",
+            "rev": 0
+          }
         },
         "submorphs": {
           "key": "submorphs",
@@ -842,7 +827,7 @@
         },
         "borderColorBottom": {
           "key": "borderColorBottom",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(242,133,0)"
         },
         "borderColorLeft": {
           "key": "borderColorLeft",
@@ -866,7 +851,7 @@
         },
         "borderWidthBottom": {
           "key": "borderWidthBottom",
-          "value": 1
+          "value": 4
         },
         "borderWidthLeft": {
           "key": "borderWidthLeft",
@@ -884,11 +869,7 @@
           "key": "textAndAttributes",
           "value": [
             "tab 1",
-            {
-              "__ref__": true,
-              "id": "7FD741FD-3A5B-4A6A-B0DE-7B81CE0FB29E",
-              "rev": 0
-            }
+            null
           ]
         },
         "padding": {
@@ -915,17 +896,15 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "text/label.js"
+          "pathInPackage": "text/label.js",
+          "lastChange": 1496123936280,
+          "lastSuperclassChange": 1496123936319
         }
       }
     },
-    "C12A452A-6FE4-4057-9B4C-0073C225DCC8": {
+    "382F81B7-E754-4AF8-86EE-B7F637DF2885": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -938,8 +917,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_CF7E9957_0D87_4932_982E_54880A2399EA",
-            "rev": 113667
+            "id": "label_D8D02065_E736_49E1_80C9_9F7445D9C204",
+            "rev": 1726726
           }
         },
         "sourceAttrName": {
@@ -950,8 +929,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "targetMethodName": {
@@ -962,7 +941,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "D4ED2FF0-F10A-46A0-8857-03D3E132A9B0",
+            "id": "13556A39-079A-47DB-ABD8-B3A554E3609A",
             "rev": 0
           }
         },
@@ -989,46 +968,97 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1496123936264,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "D4ED2FF0-F10A-46A0-8857-03D3E132A9B0": {
+    "13556A39-079A-47DB-ABD8-B3A554E3609A": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_CF7E9957_0D87_4932_982E_54880A2399EA",
-            "rev": 113667
+            "id": "label_D8D02065_E736_49E1_80C9_9F7445D9C204",
+            "rev": 1726726
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         }
       }
     },
-    "7FD741FD-3A5B-4A6A-B0DE-7B81CE0FB29E": {
+    "28530174-642B-4091-B9F4-A6B3CC076C83": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
+        "stops": {
+          "key": "stops",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "46D3E93A-D7B4-4E0D-A143-EABAA836A787",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "C1581DB9-4230-4F31-BC09-E8DCB865CCF1",
+              "rev": 0
+            }
+          ]
+        },
+        "_vector": {
+          "key": "_vector",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,1)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "LinearGradient",
+        "module": {
+          "package": {
+            "name": "lively.graphics",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "color.js",
+          "lastChange": 1496123936206,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "46D3E93A-D7B4-4E0D-A143-EABAA836A787": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "offset": {
+          "key": "offset",
           "value": 0
         }
       }
     },
-    "Label_1C80815C_1226_4B80_A097_D40462929A78": {
-      "rev": 113668,
+    "C1581DB9-4230-4F31-BC09-E8DCB865CCF1": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(236,240,241)"
+        },
+        "offset": {
+          "key": "offset",
+          "value": 1
+        }
+      }
+    },
+    "label_131AE6D3_46A7_41E5_B1D2_20DEF592A734": {
+      "rev": 1726719,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1039,14 +1069,14 @@
           "value": [
             {
               "__ref__": true,
-              "id": "4BCD71C6-FE49-43D6-BEED-6869E2101F60",
+              "id": "A83C40BD-E836-424C-B1EC-4AEBFC97867A",
               "rev": 0
             }
           ]
         },
         "name": {
           "key": "name",
-          "value": "aLabel"
+          "value": "tab 2"
         },
         "nativeCursor": {
           "key": "nativeCursor",
@@ -1056,13 +1086,17 @@
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(47.0,0.0)"
         },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(47.1,26.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": {
+            "__ref__": true,
+            "id": "FBEE7D3E-99FB-4711-B78B-D5E2AE11CFD6",
+            "rev": 0
+          }
         },
         "submorphs": {
           "key": "submorphs",
@@ -1112,11 +1146,7 @@
           "key": "textAndAttributes",
           "value": [
             "tab 2",
-            {
-              "__ref__": true,
-              "id": "75A1A80E-06C9-444A-812B-56A1EE1DB864",
-              "rev": 0
-            }
+            null
           ]
         },
         "padding": {
@@ -1143,17 +1173,15 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "text/label.js"
+          "pathInPackage": "text/label.js",
+          "lastChange": 1496123936280,
+          "lastSuperclassChange": 1496123936319
         }
       }
     },
-    "4BCD71C6-FE49-43D6-BEED-6869E2101F60": {
+    "A83C40BD-E836-424C-B1EC-4AEBFC97867A": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -1166,8 +1194,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_1C80815C_1226_4B80_A097_D40462929A78",
-            "rev": 113668
+            "id": "label_131AE6D3_46A7_41E5_B1D2_20DEF592A734",
+            "rev": 1726719
           }
         },
         "sourceAttrName": {
@@ -1178,8 +1206,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "targetMethodName": {
@@ -1190,7 +1218,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "30070687-F9AB-4E6A-BFEB-EA2608B8B285",
+            "id": "01756924-E0D5-4091-A1F4-7F3384ACA5C6",
             "rev": 0
           }
         },
@@ -1217,46 +1245,97 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1496123936264,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "30070687-F9AB-4E6A-BFEB-EA2608B8B285": {
+    "01756924-E0D5-4091-A1F4-7F3384ACA5C6": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_1C80815C_1226_4B80_A097_D40462929A78",
-            "rev": 113668
+            "id": "label_131AE6D3_46A7_41E5_B1D2_20DEF592A734",
+            "rev": 1726719
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         }
       }
     },
-    "75A1A80E-06C9-444A-812B-56A1EE1DB864": {
+    "FBEE7D3E-99FB-4711-B78B-D5E2AE11CFD6": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
+        "stops": {
+          "key": "stops",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "48D3DDD8-A197-40DC-B406-0F26E0936FF7",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "722932B5-CB77-4C50-B137-0AD7DDE177B9",
+              "rev": 0
+            }
+          ]
+        },
+        "_vector": {
+          "key": "_vector",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,1)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "LinearGradient",
+        "module": {
+          "package": {
+            "name": "lively.graphics",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "color.js",
+          "lastChange": 1496123936206,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "48D3DDD8-A197-40DC-B406-0F26E0936FF7": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "offset": {
+          "key": "offset",
           "value": 0
         }
       }
     },
-    "Label_66CFD871_F8FC_4F4E_9221_618A971F517F": {
-      "rev": 113669,
+    "722932B5-CB77-4C50-B137-0AD7DDE177B9": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(236,240,241)"
+        },
+        "offset": {
+          "key": "offset",
+          "value": 1
+        }
+      }
+    },
+    "label_CC3E0C97_08CD_4E69_95D2_4E877A977DE0": {
+      "rev": 1726721,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1267,14 +1346,14 @@
           "value": [
             {
               "__ref__": true,
-              "id": "F7F927D4-3F22-47E3-B51E-20BEE0C12ADB",
+              "id": "E6C724A2-7FEC-4E0F-8189-C0E189B62024",
               "rev": 0
             }
           ]
         },
         "name": {
           "key": "name",
-          "value": "aLabel"
+          "value": "tab 3"
         },
         "nativeCursor": {
           "key": "nativeCursor",
@@ -1284,13 +1363,17 @@
           "key": "position",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(94.0,0.0)"
         },
-        "origin": {
-          "key": "origin",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
-        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(47.1,26.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": {
+            "__ref__": true,
+            "id": "957B9F5C-42DF-4548-9A5F-AF8763ABF308",
+            "rev": 0
+          }
         },
         "submorphs": {
           "key": "submorphs",
@@ -1348,11 +1431,7 @@
           "key": "textAndAttributes",
           "value": [
             "tab 3",
-            {
-              "__ref__": true,
-              "id": "DA8DFCA7-D840-49DE-9FAE-132AED409D7E",
-              "rev": 0
-            }
+            null
           ]
         },
         "padding": {
@@ -1379,17 +1458,15 @@
             "name": "lively.morphic",
             "version": "0.1.0"
           },
-          "pathInPackage": "text/label.js"
+          "pathInPackage": "text/label.js",
+          "lastChange": 1496123936280,
+          "lastSuperclassChange": 1496123936319
         }
       }
     },
-    "F7F927D4-3F22-47E3-B51E-20BEE0C12ADB": {
+    "E6C724A2-7FEC-4E0F-8189-C0E189B62024": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "doNotSerialize": {
           "key": "doNotSerialize",
           "value": [
@@ -1402,8 +1479,8 @@
           "key": "sourceObj",
           "value": {
             "__ref__": true,
-            "id": "Label_66CFD871_F8FC_4F4E_9221_618A971F517F",
-            "rev": 113669
+            "id": "label_CC3E0C97_08CD_4E69_95D2_4E877A977DE0",
+            "rev": 1726721
           }
         },
         "sourceAttrName": {
@@ -1414,8 +1491,8 @@
           "key": "targetObj",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         },
         "targetMethodName": {
@@ -1426,7 +1503,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "EFB70AB8-21C0-4FF7-8A1A-07857E04249E",
+            "id": "299E6DDD-A2E2-46EC-B0F2-0B8FEDE6C44D",
             "rev": 0
           }
         },
@@ -1453,41 +1530,92 @@
             "name": "lively.bindings",
             "version": "0.1.1"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1496123936264,
+          "lastSuperclassChange": 0
         }
       }
     },
-    "EFB70AB8-21C0-4FF7-8A1A-07857E04249E": {
+    "299E6DDD-A2E2-46EC-B0F2-0B8FEDE6C44D": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "source": {
           "key": "source",
           "value": {
             "__ref__": true,
-            "id": "Label_66CFD871_F8FC_4F4E_9221_618A971F517F",
-            "rev": 113669
+            "id": "label_CC3E0C97_08CD_4E69_95D2_4E877A977DE0",
+            "rev": 1726721
           }
         },
         "target": {
           "key": "target",
           "value": {
             "__ref__": true,
-            "id": "TabButtons_5ACB4E34_0493_4BA7_A990_91EAD5E7BED7",
-            "rev": 122209
+            "id": "TabButtons_A44B9B8B_5C90_41A9_B82D_81C2BDB3AE92",
+            "rev": 1726722
           }
         }
       }
     },
-    "DA8DFCA7-D840-49DE-9FAE-132AED409D7E": {
+    "957B9F5C-42DF-4548-9A5F-AF8763ABF308": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
+        "stops": {
+          "key": "stops",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "AA333CBA-98BB-4627-8242-58C9DC89A92A",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "9FBAB5BD-903C-4900-B57F-547FCFBFE21A",
+              "rev": 0
+            }
+          ]
+        },
+        "_vector": {
+          "key": "_vector",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,1)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "LinearGradient",
+        "module": {
+          "package": {
+            "name": "lively.graphics",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "color.js",
+          "lastChange": 1496123936206,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "AA333CBA-98BB-4627-8242-58C9DC89A92A": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "offset": {
+          "key": "offset",
           "value": 0
+        }
+      }
+    },
+    "9FBAB5BD-903C-4900-B57F-547FCFBFE21A": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(236,240,241)"
+        },
+        "offset": {
+          "key": "offset",
+          "value": 1
         }
       }
     }
@@ -1497,9 +1625,9 @@
     "local://lively-object-modules/": {
       "tab-buttons": {
         "package.json": "{\n  \"name\": \"tab-buttons\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
-        "index.js": "import { Morph } from \"lively.morphic/morph.js\";\nimport { pt, Color, Rectangle } from \"lively.graphics/index.js\";\nimport { disconnect, connect, signal } from \"lively.bindings/index.js\";\nimport { arr } from \"lively.lang/index.js\";\nimport { show } from \"lively.morphic/index.js\";\n\nexport default class TabButtons extends Morph {\n\n  static get properties() {\n    return {\n      equalWidth: {defaultValue: true},\n      tabs: {defaultValue: []},\n      padding: {defaultValue: Rectangle.inset(8, 5)},\n      fontFamily: {defaultValue: \"sans-serif\"},\n      fontSize: {defaultValue: \"14\"},\n      activeTab: {},\n      theme: {defaultValue: \"light\"},\n      buttons: {\n        derived: true, after: [\"submorphs\"],\n        get() { return this.submorphs; },\n        set() {\n          this.buttons.forEach(ea => {\n            disconnect(ea, \"onMouseUp\", this, \"onTabClicked\");\n          });\n          this.submorphs = [];\n        }\n      }\n    }\n  }\n\n  reset() {\n    this.fill = null;\n    this.fontSize = 14\n    this.theme = \"light\";\n\n    // let props = this.constructor.properties, keys = Object.keys(props);\n    // keys.forEach(key => typeof this[key] === \"undefined\" && (this[key] = props[key].defaultValue))\n\n    this.buttons = [];\n    connect(this, 'activeTab', this, 'activateTab');\n    connect(this, 'tabs', this, 'update');\n    connect(this, 'theme', this, 'update');\n    connect(this, 'equalWidth', this, 'update');\n    connect(this, 'fontFamily', this, 'update');\n    connect(this, 'fontSize', this, 'update');\n    connect(this, 'padding', this, 'update');\n    this.tabs = [\"tab 1\", \"tab 2\", \"tab 3\"]\n  }\n\n  styleForTheme(theme = \"light\") {\n    let {padding, fontFamily, fontSize} = this,\n        base = {\n          padding, fontSize, fontFamily, borderRadius: 0,\n          nativeCursor: \"pointer\",\n          border: {width: 1, color: Color.gray}\n        };\n    if (theme === \"light\") {\n      return {\n        ...base,\n        fontColor: Color.rgbHex(\"666\"),\n        fill: Color.white\n      }\n    }\n    if (theme === \"dark\") {\n      return {\n        ...base,\n        fontColor: Color.white,\n        fill: Color.rgbHex(\"777\"),\n        border: {width: 0}\n      }\n    }\n    return base;\n  }\n\n  update() {\n    let {tabs} = this;\n    \n\n    if (!tabs.length) {\n      this.extent = pt(20, 20);\n      this.buttons = [];\n      return;\n    }\n\n    let {buttons, padding, fontFamily, fontSize} = this;\n\n    buttons.slice(tabs.length).forEach(ea => {\n      disconnect(ea, \"onMouseUp\", this, \"onTabClicked\");\n      ea.remove();\n    });\n\n    let x = 0, maxWidth = 0, maxHeight = 0;\n\n    tabs.forEach((tabName, i) => {\n      let btn = buttons[i],\n          props = {...this.styleForTheme(this.theme), value: tabName, left: x};\n      if (btn) {\n        Object.assign(buttons[i], props);\n      } else {\n        btn = this.addMorph({type: \"label\", ...props});\n        connect(btn, \"onMouseUp\", this, \"onTabClicked\",\n          {converter: function() { return this.sourceObj; }});\n      }\n      btn.fit();\n      x += Math.round(btn.width);\n      maxWidth = Math.round(Math.max(maxWidth, btn.width));\n      maxHeight = Math.round(Math.max(maxHeight, btn.height));\n    });\n\n    this.height = maxHeight;\n    if (this.equalWidth) {\n      this.width = this.submorphs.reduce((left, ea) => {\n        ea.left = left;\n        ea.width = maxWidth\n        return ea.right;\n      }, 0);\n    } else {\n      this.width = x;\n    }\n\n    \n    let first = this.buttons[0],\n        last = arr.last(this.buttons);\n\n    first.borderRadiusLeft = 10;\n    first.borderRadiusTop = 10;\n    first.borderRadiusBottom = 0;\n    first.borderRadiusRight = 0;\n    last.borderRadiusLeft = 0;\n    last.borderRadiusTop = 10;\n    last.borderRadiusBottom = 0;\n    last.borderRadiusRight = 10;\n\n    this.setProperty(\"activeTab\", null);\n  }\n\n  onTabClicked(tabButton) {\n    this.activateTab(tabButton);\n  }\n\n  activateTab(tab) {\n    let {buttons} = this,\n        tabButton = !tab ? null : tab.isMorph ?\n          tab : buttons.find(ea => ea.textString === tab),\n        baseBorder = this.styleForTheme(this.theme).border;\n    arr.without(buttons, tabButton).forEach(ea => {\n      ea.borderBottom = baseBorder;\n    });\n    if (tabButton) {\n      this.activeTab = tabButton.textString;\n      tabButton.borderBottom = {width: 4, color: Color.tangerine};\n    } else {\n      this.activeTab = null\n    }\n  }\n\n}\n\n"
+        "index.js": "import { Morph } from \"lively.morphic/morph.js\";\nimport { pt, LinearGradient, Color, Rectangle } from \"lively.graphics/index.js\";\nimport { disconnect, connect, signal } from \"lively.bindings/index.js\";\nimport { arr } from \"lively.lang/index.js\";\nimport { show, StyleSheet } from \"lively.morphic/index.js\";\n\nexport default class TabButtons extends Morph {\n\n  static get properties() {\n    return {\n      equalWidth: {defaultValue: true},\n      tabs: {defaultValue: []},\n      padding: {defaultValue: Rectangle.inset(8, 5)},\n      fontFamily: {defaultValue: \"sans-serif\"},\n      fontSize: {defaultValue: \"14\"},\n      activeTab: {},\n      theme: {defaultValue: \"light\"},\n      buttons: {\n        derived: true, after: [\"submorphs\"],\n        get() { return this.submorphs; },\n        set() {\n          this.buttons.forEach(ea => {\n            disconnect(ea, \"onMouseUp\", this, \"onTabClicked\");\n          });\n          this.submorphs = [];\n        }\n      }\n    }\n  }\n\n  reset() {\n    // this.reset()\n\n    this.fill = null;\n    this.fontSize = 14\n    this.theme = \"light\";\n\n    // let props = this.constructor.properties, keys = Object.keys(props);\n    // keys.forEach(key => typeof this[key] === \"undefined\" && (this[key] = props[key].defaultValue))\n\n    this.buttons = [];\n    connect(this, 'activeTab', this, 'activateTab');\n    connect(this, 'tabs', this, 'update');\n    connect(this, 'theme', this, 'update');\n    connect(this, 'equalWidth', this, 'update');\n    connect(this, 'fontFamily', this, 'update');\n    connect(this, 'fontSize', this, 'update');\n    connect(this, 'padding', this, 'update');\n    this.tabs = [\"tab 1\", \"tab 2\", \"tab 3\"]\n  }\n\n  styleForTheme(theme = \"light\") {\n    let {padding, fontFamily, fontSize} = this,\n        base = {\n          padding, fontSize, fontFamily, borderRadius: 0,\n          nativeCursor: \"pointer\",\n          border: {width: 1, color: Color.gray}\n        };\n    if (theme === \"light\") {\n      return {\n        ...base,\n        fontColor: Color.rgbHex(\"666\"),\n        fill: new LinearGradient({\n          stops: [\n          {color: Color.white, offset: 0},\n          {color: Color.rgb(236,240,241), offset: 1}\n        ]\n      })\n      }\n    }\n    if (theme === \"dark\") {\n      return {\n        ...base,\n        fontColor: Color.white,\n        fill: Color.rgbHex(\"777\"),\n        border: {width: 0}\n      }\n    }\n    return base;\n  }\n\n  update() {\n    let {tabs} = this;\n    \n\n    if (!tabs.length) {\n      this.extent = pt(20, 20);\n      this.buttons = [];\n      return;\n    }\n\n    let tabSpecs = tabs.map(ea => {\n      if (ea && ea.name) return {name: ea.name, label: ea.label || ea.name};\n      return {name: String(ea), label: String(ea)};\n    });\n\n    let {buttons, padding, fontFamily, fontSize} = this;\n\n    buttons.slice(tabs.length).forEach(ea => {\n      disconnect(ea, \"onMouseUp\", this, \"onTabClicked\");\n      ea.remove();\n    });\n\n    let x = 0, maxWidth = 0, maxHeight = 0;\n\n    tabSpecs.forEach(({name, label}, i) => {\n      let btn = buttons[i],\n          props = {\n            ...this.styleForTheme(this.theme),\n            value: label, left: x, name};\n      if (btn) {\n        Object.assign(buttons[i], props);\n      } else {\n        btn = this.addMorph({type: \"label\", ...props});\n        connect(btn, \"onMouseUp\", this, \"onTabClicked\",\n          {converter: function() { return this.sourceObj; }});\n      }\n      btn.fit();\n      x += Math.round(btn.width);\n      maxWidth = Math.round(Math.max(maxWidth, btn.width));\n      maxHeight = Math.round(Math.max(maxHeight, btn.height));\n    });\n\n    this.height = maxHeight;\n    if (this.equalWidth) {\n      this.width = this.submorphs.reduce((left, ea) => {\n        ea.left = left;\n        ea.width = maxWidth\n        return ea.right;\n      }, 0);\n    } else {\n      this.width = x;\n    }\n\n    \n    let first = this.buttons[0],\n        last = arr.last(this.buttons);\n\n    first.borderRadiusLeft = 10;\n    first.borderRadiusTop = 10;\n    first.borderRadiusBottom = 0;\n    first.borderRadiusRight = 0;\n    last.borderRadiusLeft = 0;\n    last.borderRadiusTop = 10;\n    last.borderRadiusBottom = 0;\n    last.borderRadiusRight = 10;\n\n    this.setProperty(\"activeTab\", null);\n  }\n\n  onTabClicked(tabButton) {\n    this.activateTab(tabButton);\n  }\n\n  activateTab(tab) {\n    let {buttons} = this,\n        tabButton = !tab ? null : tab.isMorph ?\n          tab : buttons.find(ea => ea.name === tab || ea.textString === tab),\n        baseBorder = this.styleForTheme(this.theme).border;\n    arr.without(buttons, tabButton).forEach(ea => {\n      ea.borderBottom = baseBorder;\n    });\n    if (tabButton) {\n      this.activeTab = tabButton.name;\n      tabButton.borderBottom = {width: 4, color: Color.tangerine};\n    } else {\n      this.activeTab = null\n    }\n  }\n\n}\n\n\n"
       }
     }
   },
-  "preview": "data:image/png;base64,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"
+  "preview": "data:image/png;base64,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"
 }
