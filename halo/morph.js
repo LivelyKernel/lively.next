@@ -492,7 +492,6 @@ class HaloPropertyDisplay extends Text {
 // Placeholder for halot.target when multiple morphs are selected
 class MultiSelectionTarget extends Morph {
 
-
   static get properties() {
     return {
       visible:                {defaultValue: false},
@@ -857,6 +856,7 @@ class GrabHaloItem extends HaloItem {
     this.hand = hand;
     halo.target.onGrab({hand});
     halo.state.activeButton = this;
+    this.opacity = .3
   }
 
   update() {
@@ -878,6 +878,7 @@ class GrabHaloItem extends HaloItem {
     halo.toggleMorphHighlighter(false, prevDropTarget);
     MorphHighlighterForHalo.removeHighlightersFromHalo(halo);
     halo.target.undoStop("grab-halo");
+    this.opacity = 1;
   }
 
   onDragStart(evt) {
@@ -1455,7 +1456,7 @@ class MorphHighlighterForHalo extends Morph {
       this.addMorph(this.layoutHalo);
       if (this.halo.get('grab').hand.grabbedMorphs) this.layoutHalo.previewDrop(this.halo.get('grab').hand.grabbedMorphs);
     } else {
-      this.fill = Color.orange.withA(0.5);
+      this.fill = Color.orange.withA(0.3);
       this.opacity = 1;
       this.alignWithHalo();
     }
