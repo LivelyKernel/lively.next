@@ -1837,17 +1837,32 @@ export class Text extends Morph {
     this.insertText([morphs[0], null], textPos);
   }
 
-  onDropHoverIn(evt) {
-    let grabbed = evt.hand.grabbedMorphs[0];
-    if (grabbed) { grabbed.opacity = .3; }
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // drop preview:
+  // Indicate where the grabbed morph would end up when dropped.
+  // 1. Build a "drop grid" on hover to indicate the char positions the morph
+  // could be dropped into
+  // 2. When the grabbed morph hovers over the text, create a placeholder of it
+  // and insert it into the text
+  // 
+  // state tracking:
+  // state.dropHover: WeakMap(Text morph => dropHoverCache (text specific state))
+  // dropHoverCache.dropGrid
+  // dropHoverCache.placeholder
+
+  buildDropHoverGrid(dropConfig) {
+    if (dropConfig.simpleDrop) return null;
 
     let {startRow, endRow} = this.whatsVisible,
         realEndRow = Math.min(this.documentEndPosition.row, endRow),
-        {bounds: dropGrid} = arr.range(startRow, realEndRow).reduce(({bounds, offset}, row) => {
+        doc = this.document,
+        padLeft = this.padding.left(),
+        padTop = this.padding.top();
+
+    let grid = arr.range(startRow, realEndRow).reduce((bounds, row) => {
           let charBounds = this.textLayout.charBoundsOfRow(this, row).slice();
           if (charBounds.length >= 1 && arr.last(charBounds).width == 0)
             arr.last(charBounds).width = 12;
-          // if (charBounds.length === 1 && charBounds[0].width == 0) charBounds[0].width = 12
           if (charBounds.length > 1) {
             let last = arr.last(charBounds);
             charBounds.push({
@@ -1858,30 +1873,46 @@ export class Text extends Morph {
             });
           }
           let rowBounds = charBounds.map((ea, column) => {
-            let bounds = Rectangle.fromLiteral(ea).translatedBy(offset),
+            let bounds = Rectangle.fromLiteral(ea)
+                  .translatedBy(pt(padLeft, padTop + doc.computeVerticalOffsetOf(row))),
                 globalBounds = this.getGlobalTransform().transformRectToRect(bounds);
             return {
               textPos: {row, column}, bounds, globalBounds,
-              morph: morph({
+              morph: dropConfig.showDropGrid ? morph({
                 reactsToPointer: false,
                 acceptsDrops: false,
                 bounds: bounds,
                 border: {width: 1, color: Color.green},
                 fill: null,
-              })
+              }) : null
             }
-          }), maxHeight = arr.max(rowBounds, ea => ea.bounds.height).bounds.height;
-          return {
-            bounds: bounds.concat(rowBounds),
-            offset: offset.addXY(0, maxHeight)
-          }
-        }, {bounds: [], offset: pt(this.padding.left(), this.padding.top())});
+          });
+          return bounds.concat(rowBounds)
+        }, []);
 
-    let dropHoverCache = evt.state.dropHover || (evt.state.dropHover = new WeakMap()),
+    grid.forEach(ea => ea.morph && this.addMorph(ea.morph));
+
+    return grid;
+  }
+
+  onDropHoverIn(evt) {
+    let dropConfig = {
+      simpleDrop: window.hasOwnProperty("simpleDrop") ? window.simpleDrop : true,
+      showDropGrid: window.hasOwnProperty("showDropGrid") ? window.showDropGrid : false,
+      useTextFlowPlaceholder: window.hasOwnProperty("useTextFlowPlaceholder") ? window.useTextFlowPlaceholder : false
+    }
+
+    let grabbed = evt.hand.grabbedMorphs[0];
+    if (grabbed) { grabbed.opacity = .3; }
+    
+    // build a "drop grid" of the visible lines
+
+    let dropGrid = this.buildDropHoverGrid(dropConfig),
+        dropHoverCache = evt.state.dropHover || (evt.state.dropHover = new WeakMap()),
         dropHoverState = dropHoverCache.get(this);
     if (!dropHoverState) { dropHoverState = {}; dropHoverCache.set(this, dropHoverState); }
+    dropHoverState.config = dropConfig;
     dropHoverState.dropGrid = dropGrid;
-    dropGrid.forEach(ea => this.addMorph(ea.morph));
   }
 
   onDropHoverUpdate(evt) {
@@ -1890,7 +1921,21 @@ export class Text extends Morph {
     let dropHoverCache = evt.state.dropHover;
     if (!dropHoverCache) return;
     let dropHoverState = dropHoverCache.get(this);
-    if (!dropHoverState || !dropHoverState.dropGrid) return;
+    if (!dropHoverState) return;
+
+    if (!dropHoverState.dropGrid) {
+      let textPos = this.textPositionFromPoint(evt.positionIn(this));
+
+      this.focus();
+      this.cursorPosition = textPos;
+      // let immediateDropAt = this.charBoundsFromTextPosition(textPos).topLeft();
+      // let grabbedPos = this.transformToMorph(evt.hand).transformPoint(immediateDropAt);
+      // grabbed.position = grabbedPos
+      
+      return;
+    }
+
+    let config = dropHoverState.config;
 
     let pos = evt.positionIn(this),
         dropAt, minSpec, minDist = Infinity;
@@ -1916,11 +1961,11 @@ export class Text extends Morph {
     }
     placeholder.position = dropAt.bounds.topLeft();
 
-    // placeholder.remove();
-    // placeholder._textPos = dropAt.textPos;
-    // this.insertText([placeholder, null], dropAt.textPos);
-    // if (placeholder.owner === this) placeholder.remove();
-    // this.
+    if (config && config.useTextFlowPlaceholder) {
+      placeholder.remove();
+      placeholder._textPos = dropAt.textPos;
+      this.insertText([placeholder, null], dropAt.textPos);
+    }
   }
 
   onDropHoverOut(evt) {
@@ -1933,7 +1978,7 @@ export class Text extends Morph {
     if (!dropHoverState) return;
     dropHoverCache.delete(this);
     if (dropHoverState.dropGrid) {
-      dropHoverState.dropGrid.forEach(ea => ea.morph.remove());
+      dropHoverState.dropGrid.forEach(ea => ea.morph && ea.morph.remove());
       dropHoverState.dropGrid = null
     }
     if (dropHoverState.placeholder) {
