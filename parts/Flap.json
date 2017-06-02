@@ -1,0 +1,1833 @@
+{
+  "id": "Flap_B197AC41_1B39_4BD8_A070_F442431AD153",
+  "snapshot": {
+    "Flap_B197AC41_1B39_4BD8_A070_F442431AD153": {
+      "rev": 44520,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "Flap"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,1058.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2212.0,100.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": {
+            "__ref__": true,
+            "id": "B54DC60C-2FFC-450D-B2FD-ECA8249D02E6",
+            "rev": 0
+          }
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+              "rev": 2154
+            }
+          ]
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Flap",
+            "Morph",
+            "morph"
+          ]
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Flap",
+        "module": {
+          "package": {
+            "name": "Flap",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js",
+          "lastChange": 1496440276294,
+          "lastSuperclassChange": 1496439176326
+        }
+      }
+    },
+    "B54DC60C-2FFC-450D-B2FD-ECA8249D02E6": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "stops": {
+          "key": "stops",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "78935F8A-E8FF-4B70-BF4E-506F0D7BE7EC",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "32E8B06D-E41F-4DC0-A6E1-B01272BDEB4C",
+              "rev": 0
+            }
+          ]
+        },
+        "_vector": {
+          "key": "_vector",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,1)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "LinearGradient",
+        "module": {
+          "package": {
+            "name": "lively.graphics",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "color.js",
+          "lastChange": 1496439176158,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "78935F8A-E8FF-4B70-BF4E-506F0D7BE7EC": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(127,140,141)"
+        },
+        "offset": {
+          "key": "offset",
+          "value": 0
+        }
+      }
+    },
+    "32E8B06D-E41F-4DC0-A6E1-B01272BDEB4C": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(194,188,188)"
+        },
+        "offset": {
+          "key": "offset",
+          "value": 1
+        }
+      }
+    },
+    "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B": {
+      "rev": 2154,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "777B9253-772E-4839-B396-C80190C92FAD",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "032320C0-76A7-476C-B18D-882334BF3C30",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "9A010AD9-9B59-4717-B974-3243266B549B",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "BD73C313-338C-478A-8C14-84700B81AE94",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "0BAD0027-A952-49FD-BF3B-6516F9D36A73",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "FABBDB58-ACE0-4EB1-BCE2-AB71AEDC2F6F",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "E4059497-D124-4E6B-B9B0-B0A6DF9A37E1",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "Handle"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,24.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(141.0,26.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": null
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "Label_F1174520_6BDB_479D_89E6_986B4C1A3B88",
+              "rev": 2151
+            },
+            {
+              "__ref__": true,
+              "id": "Label_E36C0160_21AF_4074_BDAF_285891244043",
+              "rev": 2153
+            },
+            {
+              "__ref__": true,
+              "id": "Label_2F74FCCF_C61C_4889_99B6_911B90D8A1CE",
+              "rev": 2158
+            }
+          ]
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "TabButtons",
+            "Morph",
+            "morph"
+          ]
+        },
+        "equalWidth": {
+          "key": "equalWidth",
+          "value": false
+        },
+        "tabs": {
+          "key": "tabs",
+          "value": [
+            "tab 1",
+            "tab 2",
+            "tab 3"
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,5,0,0)"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 14
+        },
+        "activeTab": {
+          "key": "activeTab",
+          "value": "tab 3"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "TabButtons",
+        "module": {
+          "package": {
+            "name": "tab-buttons",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "index.js",
+          "lastChange": 1496439221452,
+          "lastSuperclassChange": 1496439176326
+        }
+      }
+    },
+    "777B9253-772E-4839-B396-C80190C92FAD": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "tabs"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "update"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "3B613872-D6B6-4C27-9D79-C951DA0979B7",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js",
+          "lastChange": 1496439176267,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "3B613872-D6B6-4C27-9D79-C951DA0979B7": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        }
+      }
+    },
+    "032320C0-76A7-476C-B18D-882334BF3C30": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "equalWidth"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "update"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "87AF2252-4019-4466-BB93-1704A4E3B977",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js",
+          "lastChange": 1496439176267,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "87AF2252-4019-4466-BB93-1704A4E3B977": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        }
+      }
+    },
+    "9A010AD9-9B59-4717-B974-3243266B549B": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fontFamily"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "update"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "2A00FFB2-BC5D-43F1-A555-D0632BB04293",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js",
+          "lastChange": 1496439176267,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "2A00FFB2-BC5D-43F1-A555-D0632BB04293": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        }
+      }
+    },
+    "BD73C313-338C-478A-8C14-84700B81AE94": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fontSize"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "update"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "999A79C7-E3ED-44DF-93DF-8D83DD1FE305",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js",
+          "lastChange": 1496439176267,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "999A79C7-E3ED-44DF-93DF-8D83DD1FE305": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        }
+      }
+    },
+    "0BAD0027-A952-49FD-BF3B-6516F9D36A73": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "padding"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "update"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "CC6E66CC-E8E1-4859-9710-767534BF1D8B",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js",
+          "lastChange": 1496439176267,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "CC6E66CC-E8E1-4859-9710-767534BF1D8B": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        }
+      }
+    },
+    "FABBDB58-ACE0-4EB1-BCE2-AB71AEDC2F6F": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "activeTab"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "activateTab"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "E83BE49E-BC5A-475C-AA5F-AFB7BDB8C311",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js",
+          "lastChange": 1496439176267,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "E83BE49E-BC5A-475C-AA5F-AFB7BDB8C311": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        }
+      }
+    },
+    "E4059497-D124-4E6B-B9B0-B0A6DF9A37E1": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "theme"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "update"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "D53B4A74-6923-4D7B-BC7B-F068E507FC40",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js",
+          "lastChange": 1496439176267,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "D53B4A74-6923-4D7B-BC7B-F068E507FC40": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        }
+      }
+    },
+    "Label_F1174520_6BDB_479D_89E6_986B4C1A3B88": {
+      "rev": 2151,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "343DAC46-5693-4893-8773-B17606ADBC09",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "tab 1"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,-24.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(47.1,26.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": {
+            "__ref__": true,
+            "id": "5427EDB7-6079-4CC2-BC19-A32A4080CFD5",
+            "rev": 0
+          }
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 10
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 10
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 1
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "tab 1",
+            null
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,5,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "sans-serif"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 14
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Label",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/label.js",
+          "lastChange": 1496439176289,
+          "lastSuperclassChange": 1496439176326
+        }
+      }
+    },
+    "343DAC46-5693-4893-8773-B17606ADBC09": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Label_F1174520_6BDB_479D_89E6_986B4C1A3B88",
+            "rev": 2151
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseUp"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "onTabClicked"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "215C4E43-2729-4D28-9310-C34A47A4F5D3",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "function () {\n                      return this.sourceObj;\n                    }"
+        },
+        "converter": {
+          "key": "converter"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js",
+          "lastChange": 1496439176267,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "215C4E43-2729-4D28-9310-C34A47A4F5D3": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Label_F1174520_6BDB_479D_89E6_986B4C1A3B88",
+            "rev": 2151
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        }
+      }
+    },
+    "5427EDB7-6079-4CC2-BC19-A32A4080CFD5": {
+      "rev": 0,
+      "props": {
+        "stops": {
+          "key": "stops",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "D57D3B80-9C9D-477E-B7D6-CB9C6BCC1481",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "74C763F1-F0AE-47A6-86F6-8C9BBF133A84",
+              "rev": 0
+            }
+          ]
+        },
+        "_vector": {
+          "key": "_vector",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,1)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "LinearGradient",
+        "module": {
+          "package": {
+            "name": "lively.graphics",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "color.js",
+          "lastChange": 1496439176158,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "D57D3B80-9C9D-477E-B7D6-CB9C6BCC1481": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "offset": {
+          "key": "offset",
+          "value": 0
+        }
+      }
+    },
+    "74C763F1-F0AE-47A6-86F6-8C9BBF133A84": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(236,240,241)"
+        },
+        "offset": {
+          "key": "offset",
+          "value": 1
+        }
+      }
+    },
+    "Label_E36C0160_21AF_4074_BDAF_285891244043": {
+      "rev": 2153,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "FE05ACBC-DD16-40EC-870E-555C2B3A39D3",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "tab 2"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(47.0,-24.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(47.1,26.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": {
+            "__ref__": true,
+            "id": "6275BB09-00E8-41E3-8659-BB274D96B70F",
+            "rev": 0
+          }
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 1
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "tab 2",
+            null
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,5,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "sans-serif"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 14
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Label",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/label.js",
+          "lastChange": 1496439176289,
+          "lastSuperclassChange": 1496439176326
+        }
+      }
+    },
+    "FE05ACBC-DD16-40EC-870E-555C2B3A39D3": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Label_E36C0160_21AF_4074_BDAF_285891244043",
+            "rev": 2153
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseUp"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "onTabClicked"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "25D67CC3-318A-43F4-960D-56AFD75DB200",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "function () {\n                      return this.sourceObj;\n                    }"
+        },
+        "converter": {
+          "key": "converter"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js",
+          "lastChange": 1496439176267,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "25D67CC3-318A-43F4-960D-56AFD75DB200": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Label_E36C0160_21AF_4074_BDAF_285891244043",
+            "rev": 2153
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        }
+      }
+    },
+    "6275BB09-00E8-41E3-8659-BB274D96B70F": {
+      "rev": 0,
+      "props": {
+        "stops": {
+          "key": "stops",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "DDC33C90-21FB-45C0-AD34-4605E80A951F",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "B4E03DD3-9CCD-4025-910C-E156AE32E0D9",
+              "rev": 0
+            }
+          ]
+        },
+        "_vector": {
+          "key": "_vector",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,1)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "LinearGradient",
+        "module": {
+          "package": {
+            "name": "lively.graphics",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "color.js",
+          "lastChange": 1496439176158,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "DDC33C90-21FB-45C0-AD34-4605E80A951F": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "offset": {
+          "key": "offset",
+          "value": 0
+        }
+      }
+    },
+    "B4E03DD3-9CCD-4025-910C-E156AE32E0D9": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(236,240,241)"
+        },
+        "offset": {
+          "key": "offset",
+          "value": 1
+        }
+      }
+    },
+    "Label_2F74FCCF_C61C_4889_99B6_911B90D8A1CE": {
+      "rev": 2158,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "D7D0CF5F-D1A9-4774-ACF5-14A14B3009B2",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "tab 3"
+        },
+        "nativeCursor": {
+          "key": "nativeCursor",
+          "value": "pointer"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(94.0,-24.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(47.1,26.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": {
+            "__ref__": true,
+            "id": "793E0914-70A4-48F8-9153-BA74FBBCD60B",
+            "rev": 0
+          }
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderColorBottom": {
+          "key": "borderColorBottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(242,133,0)"
+        },
+        "borderColorLeft": {
+          "key": "borderColorLeft",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorRight": {
+          "key": "borderColorRight",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderColorTop": {
+          "key": "borderColorTop",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 10
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 10
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 4
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 1
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 1
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 1
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "tab 3",
+            null
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(8,5,0,0)"
+        },
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "sans-serif"
+        },
+        "fontSize": {
+          "key": "fontSize",
+          "value": 14
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Label",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/label.js",
+          "lastChange": 1496439176289,
+          "lastSuperclassChange": 1496439176326
+        }
+      }
+    },
+    "D7D0CF5F-D1A9-4774-ACF5-14A14B3009B2": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "Label_2F74FCCF_C61C_4889_99B6_911B90D8A1CE",
+            "rev": 2158
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseUp"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "onTabClicked"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "A589472C-C73A-478D-8F45-61B96D9517A3",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "function () {\n                      return this.sourceObj;\n                    }"
+        },
+        "converter": {
+          "key": "converter"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js",
+          "lastChange": 1496439176267,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "A589472C-C73A-478D-8F45-61B96D9517A3": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "Label_2F74FCCF_C61C_4889_99B6_911B90D8A1CE",
+            "rev": 2158
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "TabButtons_4A2EEEB8_2646_43CB_BAD5_183831DC248B",
+            "rev": 2154
+          }
+        }
+      }
+    },
+    "793E0914-70A4-48F8-9153-BA74FBBCD60B": {
+      "rev": 0,
+      "props": {
+        "stops": {
+          "key": "stops",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "6494D20C-A519-4571-83F3-827ACFC5C0AA",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "175E776F-5E9B-476E-8F98-C92D8B0CC547",
+              "rev": 0
+            }
+          ]
+        },
+        "_vector": {
+          "key": "_vector",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,1)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "LinearGradient",
+        "module": {
+          "package": {
+            "name": "lively.graphics",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "color.js",
+          "lastChange": 1496439176158,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "6494D20C-A519-4571-83F3-827ACFC5C0AA": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "offset": {
+          "key": "offset",
+          "value": 0
+        }
+      }
+    },
+    "175E776F-5E9B-476E-8F98-C92D8B0CC547": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(236,240,241)"
+        },
+        "offset": {
+          "key": "offset",
+          "value": 1
+        }
+      }
+    }
+  },
+  "requiredVersion": "~0.1",
+  "packages": {
+    "local://lively-object-modules/": {
+      "Flap": {
+        "package.json": "{\n  \"name\": \"Flap\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
+        "index.js": "import { Morph } from \"lively.morphic\";\nimport { pt } from \"lively.graphics/index.js\";\n\nexport default class Flap extends Morph {\n  onLoad(){\n    this.Handle = this.getSubmorphNamed('Handle');    \n    this.relayout();\n  }\n  relayout(){    \n    this.position = $world.visibleBounds().bottomLeft().subPt(pt(0,this.Handle.height))\n    var x = $world.visibleBounds().width, y = this.extent.y\n    this.extent = pt(x,y)\n  }  \n}\n\n\n\n\n"
+      },
+      "tab-buttons": {
+        "package.json": "{\n  \"name\": \"tab-buttons\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
+        "index.js": "import { Morph } from \"lively.morphic/morph.js\";\nimport { pt, LinearGradient, Color, Rectangle } from \"lively.graphics/index.js\";\nimport { disconnect, connect, signal } from \"lively.bindings/index.js\";\nimport { arr } from \"lively.lang/index.js\";\nimport { show, StyleSheet } from \"lively.morphic/index.js\";\n\nexport default class TabButtons extends Morph {\n\n  static get properties() {\n    return {\n      equalWidth: {defaultValue: true},\n      tabs: {defaultValue: []},\n      padding: {defaultValue: Rectangle.inset(8, 5)},\n      fontFamily: {defaultValue: \"sans-serif\"},\n      fontSize: {defaultValue: \"14\"},\n      activeTab: {},\n      theme: {defaultValue: \"light\"},\n      buttons: {\n        derived: true, after: [\"submorphs\"],\n        get() { return this.submorphs; },\n        set() {\n          this.buttons.forEach(ea => {\n            disconnect(ea, \"onMouseUp\", this, \"onTabClicked\");\n          });\n          this.submorphs = [];\n        }\n      }\n    }\n  }\n\n  onLoad() {\n    this.whenRendered().then(() =>\n      setTimeout(() => this.update(), 1000));\n  }\n\n  reset() {\n    // this.reset()\n\n    this.fill = null;\n    this.fontSize = 14\n    this.theme = \"light\";\n\n    // let props = this.constructor.properties, keys = Object.keys(props);\n    // keys.forEach(key => typeof this[key] === \"undefined\" && (this[key] = props[key].defaultValue))\n\n    this.buttons = [];\n    connect(this, 'activeTab', this, 'activateTab');\n    connect(this, 'tabs', this, 'update');\n    connect(this, 'theme', this, 'update');\n    connect(this, 'equalWidth', this, 'update');\n    connect(this, 'fontFamily', this, 'update');\n    connect(this, 'fontSize', this, 'update');\n    connect(this, 'padding', this, 'update');\n    this.tabs = [\"tab 1\", \"tab 2\", \"tab 3\"]\n  }\n\n  styleForTheme(theme = \"light\") {\n    let {padding, fontFamily, fontSize} = this,\n        base = {\n          padding, fontSize, fontFamily, borderRadius: 0,\n          nativeCursor: \"pointer\",\n          border: {width: 1, color: Color.gray}\n        };\n    if (theme === \"light\") {\n      return {\n        ...base,\n        fontColor: Color.rgbHex(\"666\"),\n        fill: new LinearGradient({\n          stops: [\n          {color: Color.white, offset: 0},\n          {color: Color.rgb(236,240,241), offset: 1}\n        ]\n      })\n      }\n    }\n    if (theme === \"dark\") {\n      return {\n        ...base,\n        fontColor: Color.white,\n        fill: Color.rgbHex(\"777\"),\n        border: {width: 0}\n      }\n    }\n    return base;\n  }\n\n  update() {\n    let {tabs} = this;\n\n    if (!tabs.length) {\n      this.extent = pt(20, 20);\n      this.buttons = [];\n      return;\n    }\n\n    let tabSpecs = tabs.map(ea => {\n      if (ea && ea.name) return {name: ea.name, label: ea.label || ea.name};\n      return {name: String(ea), label: String(ea)};\n    });\n\n    let {buttons, padding, fontFamily, fontSize} = this;\n\n    buttons.slice(tabs.length).forEach(ea => {\n      disconnect(ea, \"onMouseUp\", this, \"onTabClicked\");\n      ea.remove();\n    });\n\n    let x = 0, maxWidth = 0, maxHeight = 0;\n\n    tabSpecs.forEach(({name, label}, i) => {\n      let btn = buttons[i],\n          props = {\n            ...this.styleForTheme(this.theme),\n            value: label, left: x, name};\n      if (btn) {\n        Object.assign(buttons[i], props);\n      } else {\n        btn = this.addMorph({type: \"label\", ...props});\n        connect(btn, \"onMouseUp\", this, \"onTabClicked\",\n          {converter: function() { return this.sourceObj; }});\n      }\n      btn.fit();\n      x += Math.round(btn.width);\n      maxWidth = Math.round(Math.max(maxWidth, btn.width));\n      maxHeight = Math.round(Math.max(maxHeight, btn.height));\n    });\n\n    this.height = maxHeight;\n    if (this.equalWidth) {\n      this.width = this.submorphs.reduce((left, ea) => {\n        ea.left = left;\n        ea.width = maxWidth\n        return ea.right;\n      }, 0);\n    } else {\n      this.width = x;\n    }\n\n    \n    let first = this.buttons[0],\n        last = arr.last(this.buttons);\n\n    first.borderRadiusLeft = 10;\n    first.borderRadiusTop = 10;\n    first.borderRadiusBottom = 0;\n    first.borderRadiusRight = 0;\n    last.borderRadiusLeft = 0;\n    last.borderRadiusTop = 10;\n    last.borderRadiusBottom = 0;\n    last.borderRadiusRight = 10;\n\n    this.setProperty(\"activeTab\", null);\n  }\n\n  onTabClicked(tabButton) {\n    this.activateTab(tabButton);\n  }\n\n  activateTab(tab) {\n    let {buttons} = this,\n        tabButton = !tab ? null : tab.isMorph ?\n          tab : buttons.find(ea => ea.name === tab || ea.textString === tab),\n        baseBorder = this.styleForTheme(this.theme).border;\n    arr.without(buttons, tabButton).forEach(ea => {\n      ea.borderBottom = baseBorder;\n    });\n    if (tabButton) {\n      this.activeTab = tabButton.name;\n      tabButton.borderBottom = {width: 4, color: Color.tangerine};\n    } else {\n      this.activeTab = null\n    }\n  }\n\n}\n\n\n"
+      }
+    }
+  },
+  "preview": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAACKQAAABkCAYAAACynnqwAAAgAElEQVR4Xu3dabRdZZkn8GcH2mBZDGpB2UDGmwkCNmCDfmiRAhwIk0SQDDIkgQwMusTqecKvVW13dTWBhCEDwkrCKKDBqqWAWksoCpXMQCZCgMyHA5Ep9+aeXvsga1HlvSEczr7s9+7f+ZSVe/a7n/f3vDfnw/nn2Vl4ESBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIEGijQNbGtSxFgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAIARSHAICBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAIG2CgiktJXTYgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgIpzgABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgEBbBQRS2sppMQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAYEUZ4AAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQKCtAgIpbeW0GAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAgECKM0CAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQINBWAYGUtnJajMA7AmvXrv2rsll0dXUfdOC/OuDzLdfVaPyi5Wv3ceHe7u4RXXv3Hj/wYx+rtbR+QXW1VEtEvP3226O6u2PXZz973LRW13AdAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIEUhcQSEm9g+ovpcCy5cv3HnbYYQPKVtzvd++OPz344FKVtXfv3qjt2hWHH3FEqepqtZjXX389Gt3dd4wdO/aSVtdwHQECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBFIXEEhJvYPqL6XAihUr9o4dO7ZUgZTu7u58ckuMHj26VGZvv/12rFq1Kk466aRS1dVqMVu2bImurq7rhwwZ8v1W13AdAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIEUhcQSEm9g+ovpcDy5cv3jj3uuNIFUtatXRujShhIWb1qVZzYjwIpnXv2XD9s2DCBlFL+diqKAAECBAgQIECA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gAABAgQIECBAgAABAgQIECBAgAABAlUUyLL61Eu+ZUJKFXtvz4UKCKQUymvxqgrM/+EdtYiGD62qHgD7JkCAAAECBAgQIECAAAECBAgQIECAAAECBAgQSEcgy+pTviWQkk7DVJqKgEBKKp1SZ1ICC+64oxaNEEhJqmuKJUCAAAECBAgQIECAAAECBAgQIECAAAECBAgQqKJAlmX1y7412Xd7VWy+PRcqIJBSKK/Fqyqw8I47axECKVXtv30TIECAAAECBAgQIECAAAECBAgQIECAAAECBAikI5BlUb90skBKOh1TaSoCAimpdEqdSQncfuedtYZASlI9UywBAgQIECBAgAABAgQIECBAgAABAgQIECBAgEA1BbLI6pdOnmRCSjXbb9cFCgikFIhr6eoK3H7nolpEw4dWdY+AnRMgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECCQikE9IuWSSQEoi7VJmQgICKQk1S6npCPxw0aJaNARS0umYSgkQIECAAAECBAgQIECAAAECBAgQIECAAAECBKoqkE9I+dakif6zeVUPgH0XJiCQUhithasscMeixQIpVT4A9k6AAAECBAgQIECAAAECBAgQIECAAAECBAgQIJCMQD4hZfJEgZRkGqbQZAQEUpJplUJTErhzsUBKSv1SKwECBAgQIECAAAECBAgQIECAAAECBAgQIECAQIUFsqw+ecIEE1IqfARsvRgBgZRiXK1acYFFS5bUGh7ZU/FTYPsECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQJpCGT1SRMuFkhJo1mqTEhAICWhZik1HYF3AinhQyudlqmUAAECBAgQIECAAAECBAgQIECAAAECBAgQIECgogL5I3smXiyQUtH223aBAgIpBeJauroCi++6y4SU6rbfzgkQIECAAAECBAgQIECAAAECBAgQIECAAAECBBISyCKrT7j4m/6zeUI9U2oaAgIpafRJlYkJLLnrboGUxHqmXAIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAgWoK5BNSLv6mQEo1u2/XRQoIpBSpa+3KCtx1t0BKZZtv4wQIECBAgAABAgQIECBAgAABAgQIECBAgAABAokJZPWLv3mRCSmJdU255RcQSCl/j1SYoMBdd99Ti2j40Eqwd0omQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBConED9mxcJpFSu6zZcuIBASuHEblBFgbvvuacWjRBIqWLz7ZkAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQCA1gfpFF13ou73Uuqbe0gsIpJS+RQpMUeCee+6tNUxISbF1aiZAgAABAgQIECBAgAABAgQIECBAgAABAgQIEKiYQBZRv/BCgZSKtd12+0BAIKUPkN2iegL33ntvrWFCSvUab8cECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQLpCWRRv/Ab3zAhJb3OqbjkAgIpJW+Q8tIUuO/e+0xISbN1qiZAgAABAgQIECBAgAABAgQIECBAgAABAgQIEKieQP0bAinV67odFy4gkFI4sRtUUeC+++6rRYQUZRWbb88ECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQKpCdTHjx/vu73Uuqbe0gsIpJS+RQpMUeD++++vRaPhQyvF5qmZAAECBAgQIECAAAECBAgQIECAAAECBAgQIECgYgJZ/YLxF/hur2Jdt93iBQRSijd2hwoK/CgPpJiQUsHO2zIBAgQIECBAgAABAgQIECBAgAABAgQIECBAgEBqAllE/fwLBFJS65t6yy8gkFL+HqkwQYEHfvSjWqPhkT0Jtk7JBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECFRPIIquff8H5JqRUrO+2W7yAQErxxu5QQYE8kGJCSgUbb8sECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQLJCWRZVj/vfIGU5Bqn4NILCKSUvkUKTFHgwQceEEhJsXFqJkCAAAECBAgQIECAAAECBAgQIECAAAECBAgQqJxAHkg597zzTEipXOdtuGgBgZSiha1fSYGHHniwFtHwoVXJ7ts0AQIECBAgQIAAAQIECBAgQIAAAQIECBAgQIBASgJ5IOUcgZSUWqbWRAQEUhJplDLTEvjxg3kgJQRS0mqbagkQIECAAAECBAgQIECAAAECBAgQIECAAAECBKookAdSzj3Xd3tV7L09FyogkFIor8WrKrD0wYdqDYGUqrbfvgkQIECAAAECBAgQIECAAAECBAgQIECAAAECBFISyKJ+tkBKSh1TayICAimJNEqZaQksfUggJa2OqZYAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgQKCqAvkje8adc44JKVU9APZdmIBASmG0Fq6ywMM//rEJKVU+APZOgAABAgQIECBAgAABAgQIECBAgAABAgQIECCQjEAWUT9LICWZfik0HQGBlHR6pdKEBH4qkJJQt5RKgAABAgQIECBAgAABAgQIECBAgAABAgQIECBQZYF8QsrXzj7bhJQqHwJ7L0RAIKUQVotWXeDvli6tNRoNH1pVP0tZIB4AAACtSURBVAj2T4AAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgkIBAHkgZ57u9BDqlxLQEBFLS6pdqExHIAykhkJJIt5RJgAABAgQIECBAgAABAgQIECBAgAABAgQIECBQaYEsq391nEBKpc+AzRciIJBSCKtFqy7w9w8/LJBS9UNg/wQIECBAgAABAgQIECBAgAABAgQIECBAgAABAmkIZFn9K2edZUJKGt1SZUIC/x+oey/Oq8hCWAAAAABJRU5ErkJggg=="
+}
