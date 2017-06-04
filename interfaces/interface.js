@@ -280,14 +280,14 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
 
   packageConfChange(source, confFile) {
     return this.runEvalAndStringify(`
-      var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
+      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface"));
       await livelySystem.localInterface.packageConfChange(${JSON.stringify(source)}, ${JSON.stringify(confFile)})`);
   }
 
   async resourcesOfPackage(packageOrAddress, exclude = [".git", "node_modules", ".module_cache", "lively.next-node_modules"]) {
     if (packageOrAddress.address) packageOrAddress = packageOrAddress.address;
     return this.runEvalAndStringify(`
-      var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
+      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface"));
       await livelySystem.localInterface.resourcesOfPackage(${JSON.stringify(packageOrAddress)}, ${JSON.stringify(exclude)});`);
   }
 
@@ -327,7 +327,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
 
   keyValueListOfVariablesInModule(moduleName, sourceOrAst) {
     return this.runEvalAndStringify(`
-      var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
+      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface"));
       await livelySystem.localInterface.keyValueListOfVariablesInModule(${JSON.stringify(moduleName)}, ${JSON.stringify(sourceOrAst)})`);
   }
 
@@ -343,7 +343,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
 
   exportsOfModules(options) {
     return this.runEvalAndStringify(`
-      var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
+      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface"));
       await livelySystem.localInterface.exportsOfModules(${JSON.stringify(options)})`);
   }
 
@@ -352,7 +352,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   searchInPackage(packageURL, searchString, options) {
     return this.runEvalAndStringify(`
-      var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
+      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface"));
       await livelySystem.localInterface.searchInPackage(${JSON.stringify(packageURL)}, ${JSON.stringify(searchString)}, ${JSON.stringify(options)})`);
   }
 
@@ -363,7 +363,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
 
   async loadMochaTestFile(file, testsByFile = []) {
     return this.runEvalAndStringify(`
-      var livelySystem = System.get(System.decanonicalize("lively-system-interface")),
+      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface")),
           {testsByFile} = await livelySystem.localInterface.loadMochaTestFile(${JSON.stringify(file)}, ${JSON.stringify(testsByFile)}), result;
       result = {testsByFile}`);
   }
@@ -375,7 +375,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
       var grep = ${JSON.stringify(grep)};
       if (grep && grep.isRegExp)
         grep = new RegExp(grep.value);
-      var livelySystem = System.get(System.decanonicalize("lively-system-interface")),
+      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface")),
           {testsByFile, isError, value: error} = await livelySystem.localInterface.runMochaTests(grep, ${JSON.stringify(testsByFile || [])}), result;
       error = error ? String(error.stack || error) : null;
       if (testsByFile) {
