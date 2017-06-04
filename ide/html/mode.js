@@ -117,6 +117,7 @@ defineMode("htmlmixed", function (config, parserConfig) {
     return style;
   };
 
+
   return {
     startState: function () {
       var state = startState(htmlMode);
@@ -148,7 +149,12 @@ defineMode("htmlmixed", function (config, parserConfig) {
 
     innerMode: function (state) {
       return {state: state.localState || state.htmlState, mode: state.localMode || htmlMode};
-    }
+    },
+
+    electricInput: htmlMode.electricInput,
+    blockCommentStart: htmlMode.blockCommentStart,
+    blockCommentEnd: htmlMode.blockCommentEnd,
+    skipAttribute: htmlMode.skipAttribute
   };
 }, "xml", "javascript", "css");
 
