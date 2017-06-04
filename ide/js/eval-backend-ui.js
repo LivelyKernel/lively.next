@@ -100,22 +100,26 @@ export class EvalBackendButton extends Button {
     if (!this.currentBackendName || !this.currentBackendName.startsWith("l2l")) return;
 
     // only for l2l connection
-    let {currentBackend: {targetId: id, targetInfo: info}} = this,
+    let {currentBackend: {coreInterface: {targetId: id, targetInfo: info}}} = this,
         l2lBackends = await this.evalbackendChooser.l2lEvalBackends();
 
-    if (l2lBackends.some(ea => ea.targetId === id)) return;
+    if (l2lBackends.some(ea => ea.coreInterface.targetId === id)) return;
 
     let similar;
     if (info && info.type) {
       similar = l2lBackends.find(ea => {
-        if (!ea.targetInfo) return false;
-        if (ea.targetInfo.type !== info.type) return false;
-        if (info.user) return ea.targetInfo.user === info.user;
+        if (!ea.coreInterface.targetInfo) return false;
+        if (ea.coreInterface.targetInfo.type !== info.type) return false;
+        if (info.user) return ea.coreInterface.targetInfo.user === info.user;
         return true;
       });
     }
 
-    if (similar) this.currentBackend = similar;
+    if (similar) {
+      let focused = $world.focusedMorph;
+      this.currentBackend = similar;
+      focused && setTimeout(() => focused.focus(), 0);
+    }
   }
 
   updateFromTarget() {
@@ -209,10 +213,10 @@ export default class EvalBackendChooser {
       if (!info.known) {
         Promise.resolve().then(async () => {
           let source = `let isNode = typeof System !== "undefined"`
-                       `  ? System.get("@system-env").node`
-                       `  : typeof require !== "undefined" && typeof process !== "undefined"`
-                       `      ? require("os").hostname()`
-                       `      : String(document.location.href);`,
+                     + `  ? System.get("@system-env").node`
+                     + `  : typeof require !== "undefined" && typeof process !== "undefined"`
+                     + `      ? require("os").hostname()`
+                     + `      : String(document.location.href);`,
               {data: {value: location}} = await l2lClient.sendToAndWait(
                                             id, "remote-eval", {source});
           info.location = location;
