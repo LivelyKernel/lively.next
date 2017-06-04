@@ -59,10 +59,7 @@ export class AbstractCoreInterface {
     return (await this.getPackages()).find(ea => ea.address === name || ea.name === name);
   }
   
-  async getPackageForModule(name) {
-    return (await this.getPackages())
-      .find(ea => ea.modules.some(mod => mod.name === name));
-  }
+  async getPackageForModule(name) { todo("getPackageForModule"); }
   
   systemConfChange(source) {
     var jso = parseJsonLikeObj(source),
@@ -237,7 +234,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
     options = {excluded: [], ...options};
     options.excluded = options.excluded.map(String);
     return this.runEvalAndStringify(`
-      var livelySystem = System.get(System.decanonicalize("lively-system-interface")),
+      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface")),
           options = ${JSON.stringify(options)};
       options.excluded = options.excluded.map(ea => {
         let evaled = lively.vm.syncEval(ea).value;
@@ -245,6 +242,12 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
       });
       await livelySystem.localInterface.getPackages(options)
         .map(ea => Object.assign({}, ea, {System: null}));`);
+  }
+
+  getPackageForModule(moduleId) {
+    return this.runEvalAndStringify(`
+      var livelySystem = (typeof lively !== "undefined" && lively.systemInterface) || System.get(System.decanonicalize("lively-system-interface"));
+      await livelySystem.localInterface.getPackageForModule(${JSON.stringify(moduleId)})`);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

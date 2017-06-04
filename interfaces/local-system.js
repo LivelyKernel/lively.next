@@ -123,6 +123,11 @@ export class LocalCoreInterface extends AbstractCoreInterface {
     }
   }
 
+  getPackageForModule(moduleId) {
+    let p = modules.getPackageOfModule(moduleId);
+    return p ? p.asSpec() : p;
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // module related
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
