@@ -6,8 +6,6 @@ export var commands = [
     name: "toggle comment",
     exec: function(morph) {
       var comment = morph.pluginInvokeFirst("getComment");
-      if (!comment || !comment.lineCommentStart) return true;
-
       if (!comment) return true;
       if (!comment.lineCommentStart) {
         if (comment.blockCommentStart) return morph.execCommand("toggle block comment");
@@ -92,7 +90,7 @@ export var commands = [
       morph.insertText(cend, morph.selection.end);
       morph.undoManager.group();
       var select = !morph.selection.isEmpty();
-      morph.selection.growLeft(2);
+      morph.selection.growLeft(cend.length);
       if (!select) morph.selection.collapse();
 
       return true;
