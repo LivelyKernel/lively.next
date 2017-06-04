@@ -379,7 +379,8 @@ class ModuleInterface {
       "global", "self",
       "_moduleExport", "_moduleImport",
       "localStorage", // for Firefox, see fetch
-      "prompt", "alert", "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
+      // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
+      "prompt", "alert", "fetch", "getComputedStyle"
     ].concat(query.knownGlobals);
   }
 
