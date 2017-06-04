@@ -312,6 +312,7 @@ function removePackage(packageURL) { return _removePackage(defaultSystem, packag
 function reloadPackage(packageURL, opts) { return _reloadPackage(defaultSystem, packageURL, opts); }
 function getPackages() { return getPackageSpecs(defaultSystem); }
 function getPackage(packageURL, isNormalized = false) { return _getPackage(defaultSystem, packageURL, isNormalized); }
+function getPackageOfModule(moduleId) { return Package.forModuleId(defaultSystem, moduleId); }
 function ensurePackage(packageURL) { return _ensurePackage(defaultSystem, packageURL); }
 function applyPackageConfig(packageConfig, packageURL) { return _applyPackageConfig(defaultSystem, packageConfig, packageURL); }
 
@@ -322,6 +323,7 @@ export {
   reloadPackage,
   getPackages,
   getPackage,
+  getPackageOfModule,
   ensurePackage,
   applyPackageConfig
 };
@@ -375,6 +377,11 @@ import {
 function wrapModuleLoad() { _wrapModuleLoad(defaultSystem); }
 function unwrapModuleLoad() { _unwrapModuleLoad(defaultSystem); }
 export { wrapModuleLoad, unwrapModuleLoad };
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// export / import tooling
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+export { default as ExportLookup } from "./src/export-lookup.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // cjs
