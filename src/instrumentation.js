@@ -40,6 +40,7 @@ export class ModuleTranslationCache {
 
   cacheModuleSource(moduleId, hash, source) { throw new Error("not yet implemented"); }
   fetchStoredModuleSource(moduleId) { throw new Error("not yet implemented"); }
+  deleteCachedData(moduleId) { throw new Error("not yet implemented"); }
 }
 
 var nodejsCacheDir = null;
@@ -108,6 +109,16 @@ export class NodeModuleTranslationCache extends ModuleTranslationCache {
     await this.moduleCacheDir.join(moduleId).write(source);
     await this.moduleCacheDir.join(fpath + "/.hash_" + fname).write(hash);
   }
+
+  async deleteCachedData(moduleId) {
+    moduleId = moduleId.replace("file://", "");
+    var fname = moduleId.match(/([^\/]*.)\.js/)[0],
+        fpath = moduleId.replace(fname, ""),
+        r = this.moduleCacheDir.join(moduleId);
+    if (!await r.exists()) return false;
+    await r.remove()
+    return true;
+  }
 }
 
 export class BrowserModuleTranslationCache extends ModuleTranslationCache {
@@ -167,6 +178,17 @@ export class BrowserModuleTranslationCache extends ModuleTranslationCache {
         req = objectStore.get(moduleId);
       req.onerror = reject;
       req.onsuccess = evt => resolve(req.result)
+    });
+  }
+
+  async deleteCachedData(moduleId) {
+    var db = await this.db;
+    return new Promise((resolve, reject) => {
+      let transaction = db.transaction([this.sourceCodeCacheStoreName], "readwrite"),
+          objectStore = transaction.objectStore(this.sourceCodeCacheStoreName),
+          req = objectStore.delete(moduleId);
+      req.onerror = reject;
+      req.onsuccess = evt => resolve(req.result);
     });
   }
 }

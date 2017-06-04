@@ -202,18 +202,23 @@ class ModuleInterface {
     });
   }
 
-  unload(opts) {
-    opts = obj.merge({reset: true, forgetDeps: true, forgetEnv: true}, opts);
+  async unload(opts) {
+    opts = {reset: true, forgetDeps: true, forgetEnv: true, ...opts};
+    let {System, id} = this;
     if (opts.reset) this.reset();
     if (opts.forgetDeps) this.unloadDeps(opts);
-    this.System.delete(this.id);
-    if (this.System.loads) {
-      delete this.System.loads[this.id];
+    this.System.delete(id);
+    if (System.loads) {
+      delete System.loads[id];
     }
-    if (this.System.meta)
-      delete this.System.meta[this.id];
+    if (System.meta)
+      delete System.meta[id];
     if (opts.forgetEnv)
       this.unloadEnv();
+
+    let cache = System._livelyModulesTranslationCache;
+    if (cache) await cache.deleteCachedData(id);
+
     emit("lively.modules/moduleunloaded", {module: this.id}, Date.now(), this.System);
   }
 
@@ -221,7 +226,7 @@ class ModuleInterface {
     opts = obj.merge({reloadDeps: true, resetEnv: true}, opts);
     var toBeReloaded = [this];
     if (opts.reloadDeps) toBeReloaded = this.dependents().concat(toBeReloaded);
-    this.unload({forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv});
+    await this.unload({forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv});
     await Promise.all(toBeReloaded.map(ea => ea.id !== this.id && ea.load()));
     await this.load();
   }
