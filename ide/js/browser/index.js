@@ -1,5 +1,5 @@
 import { Color, rect, LinearGradient, pt, Rectangle } from "lively.graphics";
-import { arr, obj, fun, promise, string } from "lively.lang";
+import { arr, Path, obj, fun, promise, string } from "lively.lang";
 import { connect, disconnect, noUpdate } from "lively.bindings";
 import { morph, StyleSheet, show, Label, HorizontalLayout, GridLayout,
          DropDownList, config, Window } from "lively.morphic";
@@ -542,23 +542,35 @@ export default class Browser extends Window {
 
   async setEvalBackend(newRemote) {
     newRemote = newRemote || "local";
-    let {selectedPackage, selectedModule, systemInterface} = this,
+    let {selectedPackage, selectedModule, systemInterface: oldSystemInterface} = this,
         p = selectedPackage && selectedPackage.name,
         mod = selectedModule && selectedModule.nameInPackage;
-    if (newRemote !== systemInterface.name) {
+    if (newRemote !== oldSystemInterface.name) {
       this.editorPlugin.setSystemInterfaceNamed(newRemote);
       this.reset();
-      p && await this.selectPackageNamed(p);
-      mod && await this.selectModuleNamed(mod);
+      let {systemInterface: newSystemInterface} = this;
+      let packages = await newSystemInterface.getPackages(),
+          pSpec = p && packages.find(ea => ea.name === p);
+      if (pSpec) {
+        await this.selectPackageNamed(p);
+        let modFound = pSpec.modules.find(
+          ea => newSystemInterface.shortModuleName(ea.name, pSpec) === mod);
+        await this.selectModuleNamed(modFound ? mod : pSpec.main);
+      } else {
+        await this.selectPackageNamed(packages[0].name);
+        await this.selectModuleNamed(packages[0].main);
+      }
       this.relayout();
     }
   }
 
   async packageResources(p) {
-    // await this.packageResources(this.selectedPackage)
+    let excluded = (Path("lively.ide.exclude").get(p) || []).map(ea =>
+             ea.includes("*") ? new RegExp(ea.replace(/\*/g, ".*")): ea);
     try {
       return (await this.systemInterface.resourcesOfPackage(p.address))
-        .filter(({url}) => url.endsWith(".js") || url.endsWith(".json"))
+        .filter(({url}) => (url.endsWith(".js") || url.endsWith(".json"))
+                        && !excluded.some(ex => ex instanceof RegExp ? ex.test(url): url.includes(ex)))
         .map((ea) => { ea.name = ea.url; return ea; });
     } catch (e) { this.showError(e); return []; }
   }

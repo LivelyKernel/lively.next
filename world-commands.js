@@ -1,6 +1,6 @@
 /*global System*/
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
-import { tree, arr, string, obj } from "lively.lang";
+import { tree, Path, arr, string, obj } from "lively.lang";
 import { show, inspect, Text, config } from "./index.js";
 import KeyHandler from "./events/KeyHandler.js";
 import { saveWorldToResource, loadWorldFromResource } from "./serialization.js";
@@ -579,8 +579,10 @@ var commands = [
           items = [];
 
       for (let p of pkgs) {
+        let excluded = (Path("lively.ide.exclude").get(p) || []).map(ea =>
+                 ea.includes("*") ? new RegExp(ea.replace(/\*/g, ".*")): ea);
         items.push(...(await systemInterface.resourcesOfPackage(p))
-          .filter(({url}) => !url.endsWith("/"))
+          .filter(({url}) => !url.endsWith("/") && !excluded.some(ex => ex instanceof RegExp ? ex.test(url): url.includes(ex)))
           .sort((a, b) => {
             if (a.isLoaded && !b.isLoaded) return -1;
             if (!a.isLoaded && b.isLoaded) return 1;
@@ -637,7 +639,10 @@ var commands = [
           items = [];
 
       for (let p of pkgs) {
+        let excluded = Path("lively.ide.exclude").get(p) || [];
+        excluded = excluded.map(ea => ea.includes("*") ? new RegExp(ea.replace(/\*/g, ".*")): ea)
         for (let m of p.modules) {
+          if (excluded.some(ex => ex instanceof RegExp ? ex.test(m.name): m.name.includes(ex))) continue;
           var shortName = systemInterface.shortModuleName(m.name, p);
           items.push({
             isListItem: true,
