@@ -2,7 +2,6 @@ import { obj, string, arr } from "lively.lang";
 import { resource, createFiles } from "lively.resources";
 import * as ast from "lively.ast";
 import * as modules from "lively.modules";
-import ExportLookup from "lively.modules/src/export-lookup.js";
 import * as vm from "lively.vm";
 
 import { loadMochaTestFile, runMochaTests } from "../commands/mocha-tests.js";
@@ -69,7 +68,6 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   }
 
   getPackages(options) {
-    typeof lively.vm.syncEval("url => url").valuee
     let {excluded = []} = {...options},
         excludedURLs = excluded.filter(ea => typeof ea === "string"),
         excludeFns = excluded.filter(ea => typeof ea === "function");
@@ -218,7 +216,7 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   }
 
   exportsOfModules(options) {
-    return ExportLookup.run(modules.System, options);
+    return modules.ExportLookup.run(modules.System, options);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
