@@ -165,19 +165,12 @@ export default function browserCommands(browser) {
     {
       name: "reload module",
       exec: async (_, opts = {hard: false}) => {
-        var m = browser.selectedModule;
-        if (!m) return browser.world().inform("No module selected", {requester: browser});
-        try {
-          let reloadDeps = opts.hard ? true : false,
-              resetEnv = opts.hard ? true : false;
-          await browser.systemInterface.interactivelyReloadModule(
-            null, m.name, reloadDeps, resetEnv);
-        } catch(err) {
-          browser.world().inform(`Error while reloading ${m.name}:\n${err.stack || err}`, {requester: browser});
-          return true;
-        }
-        browser.setStatusMessage(`Reloaded ${m.name}`);
-        browser.selectModuleNamed(m.nameInPackage);
+        let result = await browser.reloadModule(opts.hard);
+        if (!result)
+          return browser.world().inform("No module selected", {requester: browser});
+        if (result instanceof Error)
+          return browser.world().inform(result.message, {requester: browser});
+        browser.setStatusMessage(`Reloaded ${result.name}`);
         return true;
       }
     },

@@ -784,7 +784,7 @@ export default class Browser extends Window {
         }
       }
 
-      this.get("moduleList").scrollSelectionIntoView();
+      this.ui.moduleList.scrollSelectionIntoView();
       this.title = `browser - [${pack.name}] ${m.nameInPackage}`;
       var source = await system.moduleRead(m.name);
       this.updateSource(source, {row: 0, column: 0});
@@ -925,7 +925,7 @@ export default class Browser extends Window {
     moduleCommands.layout.apply();
   }
 
-  async save() {
+  async save(attempt = 0) {
     let {ui: {moduleList, sourceEditor}, state} = this,
         module = moduleList.selection;
 
@@ -979,13 +979,43 @@ export default class Browser extends Window {
       await this.updateCodeEntities(module);
       await this.updateTestUI(module);
 
-    }
-    catch(err) { return this.showError(err); }
-    finally { this.state.isSaving = false; }
+    } catch(err) {
+
+      if (attempt > 0 || err instanceof SyntaxError)
+        return this.showError(err);
+      
+      // try to reload the module, sometimes format changes (global => esm etc need a reload)
+      let result = await this.reloadModule(false);
+      sourceEditor.textString = content;
+      return !result || result instanceof Error ?
+        this.showError(err) : this.save(attempt+1);
+
+    } finally { this.state.isSaving = false; }
 
     this.setStatusMessage("saved " + module.nameInPackage, Color.green);
   }
 
+  async reloadModule(hard = false) {
+    // hard reload: reset module environment and (hard) reload all module
+    // dependencies.  Most of the time this is undesired as it completely
+    // recreates the modules and variables (classes etc) therein, meaining that
+    // existing instances might orphan
+    let {selectedModule: m, systemInterface, ui: {sourceEditor}} = this,
+        {scroll, cursorPosition} = sourceEditor;
+    if (!m) return null;
+    let reloadDeps = hard ? true : false,
+        resetEnv = hard ? true : false;
+    try {
+      await systemInterface.interactivelyReloadModule(
+        null, m.name, reloadDeps, resetEnv);      
+      await this.selectModuleNamed(m.nameInPackage);
+      sourceEditor.scroll = scroll;
+      sourceEditor.cursorPosition = cursorPosition;
+    } catch(err) {
+      return new Error(`Error while reloading ${m.name}:\n${err.stack || err}`);
+    }
+    return m;
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // history
