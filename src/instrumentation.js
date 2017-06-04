@@ -416,6 +416,9 @@ async function customTranslate(proceed, load) {
   var options = {};
 
   if (isEsm) {
+    mod.recorderName = "__lvVarRecorder";
+    if (mod.recorder === System.global)
+      mod.unloadEnv();
     load.metadata.format = "esm";
     var {options, source} = prepareCodeForCustomCompile(System, load.source, load.name, mod, debug);
     load.source = source;
@@ -513,8 +516,15 @@ function instrumentSourceOfEsmModuleLoad(System, load) {
     // });
 
     var parsed            = parse(translated),
-        registerCall      = parsed.body[0].expression,
-        depNames          = arr.pluck(registerCall["arguments"][0].elements, "value"),
+        callExpression    = parsed.body.find(
+                              ea =>
+                                ea.expression &&
+                                ea.expression.type === "CallExpression" &&
+                                ea.expression.callee.property.name === "register");
+    if (!callExpression) throw new Error(`Cannot find register call in translated source of ${load.name}`);
+
+    var registerCall      = callExpression.expression,
+        depNames          = registerCall["arguments"][0].elements.map(ea => ea.value),
         declareFuncNode   = registerCall["arguments"][1],
         declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end),
         declare           = eval(`var __moduleName = "${load.name}";(${declareFuncSource});\n//# sourceURL=${load.name}\n`);
