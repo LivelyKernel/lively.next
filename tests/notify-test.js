@@ -85,7 +85,7 @@ describe("notify", () => {
   it("when module gets unloaded", async () => {
     expect(moduleunloaded).to.deep.equal([]);
     await module(system, module1).load();
-    module(system, module1).unload();
+    await module(system, module1).unload();
     expect(moduleunloaded).to.containSubset([{
       type: "lively.modules/moduleunloaded",
       module: module1
