@@ -67324,14 +67324,14 @@ var slicedToArray = function () {
 }();
 
 var customTranslate = function () {
-  var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(proceed, load) {
-    var _this6 = this;
+  var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(proceed, load) {
+    var _this7 = this;
 
     var System, debug, meta, ignored, start, format, mod, instrumented, isEsm, isCjs, isGlobal, useCache, indexdb, hashForCache, cache, stored, options, _prepareCodeForCustom, source, _prepareCodeForCustom2;
 
-    return regeneratorRuntime.wrap(function _callee9$(_context9) {
+    return regeneratorRuntime.wrap(function _callee11$(_context11) {
       while (1) {
-        switch (_context9.prev = _context9.next) {
+        switch (_context11.prev = _context11.next) {
           case 0:
             // load like
             // {
@@ -67346,21 +67346,21 @@ var customTranslate = function () {
             });
 
             if (!ignored) {
-              _context9.next = 4;
+              _context11.next = 4;
               break;
             }
 
             debug && console.log("[lively.modules customTranslate ignoring] %s", load.name);
-            return _context9.abrupt("return", proceed(load));
+            return _context11.abrupt("return", proceed(load));
 
           case 4:
             if (!(isNode$1 && addNodejsWrapperSource(System, load))) {
-              _context9.next = 7;
+              _context11.next = 7;
               break;
             }
 
             debug && console.log("[lively.modules] loaded %s from nodejs cache", load.name);
-            return _context9.abrupt("return", proceed(load));
+            return _context11.abrupt("return", proceed(load));
 
           case 7:
             start = Date.now();
@@ -67371,28 +67371,28 @@ var customTranslate = function () {
 
             // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
             // cache experiment part 1
-            _context9.prev = 10;
+            _context11.prev = 10;
             useCache = System.useModuleTranslationCache, indexdb = System.global.indexedDB, hashForCache = useCache && String(lively_lang.string.hashCode(load.source));
 
             if (!(useCache && indexdb && isEsm)) {
-              _context9.next = 25;
+              _context11.next = 25;
               break;
             }
 
             cache = System._livelyModulesTranslationCache || (System._livelyModulesTranslationCache = new BrowserModuleTranslationCache());
-            _context9.next = 16;
+            _context11.next = 16;
             return cache.fetchStoredModuleSource(load.name);
 
           case 16:
-            stored = _context9.sent;
+            stored = _context11.sent;
 
             if (!(stored && stored.hash == hashForCache && stored.timestamp >= BrowserModuleTranslationCache.earliestDate)) {
-              _context9.next = 23;
+              _context11.next = 23;
               break;
             }
 
             if (!stored.source) {
-              _context9.next = 23;
+              _context11.next = 23;
               break;
             }
 
@@ -67403,32 +67403,32 @@ var customTranslate = function () {
             // undefined entry later!
 
             debug && console.log("[lively.modules customTranslate] loaded %s from browser cache after %sms", load.name, Date.now() - start);
-            return _context9.abrupt("return", Promise.resolve(stored.source));
+            return _context11.abrupt("return", Promise.resolve(stored.source));
 
           case 23:
-            _context9.next = 36;
+            _context11.next = 36;
             break;
 
           case 25:
             if (!(isNode$1 && useCache && isEsm)) {
-              _context9.next = 36;
+              _context11.next = 36;
               break;
             }
 
             cache = System._livelyModulesTranslationCache || (System._livelyModulesTranslationCache = new NodeModuleTranslationCache());
-            _context9.next = 29;
+            _context11.next = 29;
             return cache.fetchStoredModuleSource(load.name);
 
           case 29:
-            stored = _context9.sent;
+            stored = _context11.sent;
 
             if (!(stored && stored.hash == hashForCache && stored.timestamp >= NodeModuleTranslationCache.earliestDate)) {
-              _context9.next = 36;
+              _context11.next = 36;
               break;
             }
 
             if (!stored.source) {
-              _context9.next = 36;
+              _context11.next = 36;
               break;
             }
 
@@ -67439,17 +67439,17 @@ var customTranslate = function () {
             // undefined entry later!
 
             debug && console.log("[lively.modules customTranslate] loaded %s from filesystem cache after %sms", load.name, Date.now() - start);
-            return _context9.abrupt("return", Promise.resolve(stored.source));
+            return _context11.abrupt("return", Promise.resolve(stored.source));
 
           case 36:
-            _context9.next = 41;
+            _context11.next = 41;
             break;
 
           case 38:
-            _context9.prev = 38;
-            _context9.t0 = _context9["catch"](10);
+            _context11.prev = 38;
+            _context11.t0 = _context11["catch"](10);
 
-            console.error("[lively.modules customTranslate] error reading module translation cache: " + _context9.t0.stack);
+            console.error("[lively.modules customTranslate] error reading module translation cache: " + _context11.t0.stack);
 
           case 41:
             // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -67458,6 +67458,8 @@ var customTranslate = function () {
 
 
             if (isEsm) {
+              mod.recorderName = "__lvVarRecorder";
+              if (mod.recorder === System.global) mod.unloadEnv();
               load.metadata.format = "esm";
               _prepareCodeForCustom = prepareCodeForCustomCompile(System, load.source, load.name, mod, debug), options = _prepareCodeForCustom.options, source = _prepareCodeForCustom.source;
 
@@ -67493,12 +67495,12 @@ var customTranslate = function () {
               debug && console.log("[lively.modules] customTranslate ignoring %s b/c don't know how to handle format %s", load.name, load.metadata.format);
             }
 
-            return _context9.abrupt("return", proceed(load).then(function () {
-              var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(translated) {
+            return _context11.abrupt("return", proceed(load).then(function () {
+              var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(translated) {
                 var cache;
-                return regeneratorRuntime.wrap(function _callee8$(_context8) {
+                return regeneratorRuntime.wrap(function _callee10$(_context10) {
                   while (1) {
-                    switch (_context8.prev = _context8.next) {
+                    switch (_context10.prev = _context10.next) {
                       case 0:
                         if (translated.indexOf("System.register(") === 0) {
                           debug && console.log("[lively.modules customTranslate] Installing System.register setter captures for %s", load.name);
@@ -67509,81 +67511,81 @@ var customTranslate = function () {
                         // cache experiment part 2
 
                         if (!(isNode$1 && useCache && isEsm)) {
-                          _context8.next = 14;
+                          _context10.next = 14;
                           break;
                         }
 
                         cache = System._livelyModulesTranslationCache || (System._livelyModulesTranslationCache = new NodeModuleTranslationCache());
-                        _context8.prev = 3;
-                        _context8.next = 6;
+                        _context10.prev = 3;
+                        _context10.next = 6;
                         return cache.cacheModuleSource(load.name, hashForCache, translated);
 
                       case 6:
                         debug && console.log("[lively.modules customTranslate] stored cached version in filesystem for %s", load.name);
-                        _context8.next = 12;
+                        _context10.next = 12;
                         break;
 
                       case 9:
-                        _context8.prev = 9;
-                        _context8.t0 = _context8["catch"](3);
+                        _context10.prev = 9;
+                        _context10.t0 = _context10["catch"](3);
 
-                        console.error("[lively.modules customTranslate] failed storing module cache: " + _context8.t0.stack);
+                        console.error("[lively.modules customTranslate] failed storing module cache: " + _context10.t0.stack);
 
                       case 12:
-                        _context8.next = 25;
+                        _context10.next = 25;
                         break;
 
                       case 14:
                         if (!(useCache && indexdb && isEsm)) {
-                          _context8.next = 25;
+                          _context10.next = 25;
                           break;
                         }
 
                         cache = System._livelyModulesTranslationCache || (System._livelyModulesTranslationCache = new BrowserModuleTranslationCache());
-                        _context8.prev = 16;
-                        _context8.next = 19;
+                        _context10.prev = 16;
+                        _context10.next = 19;
                         return cache.cacheModuleSource(load.name, hashForCache, translated);
 
                       case 19:
                         debug && console.log("[lively.modules customTranslate] stored cached version for %s", load.name);
-                        _context8.next = 25;
+                        _context10.next = 25;
                         break;
 
                       case 22:
-                        _context8.prev = 22;
-                        _context8.t1 = _context8["catch"](16);
+                        _context10.prev = 22;
+                        _context10.t1 = _context10["catch"](16);
 
-                        console.error("[lively.modules customTranslate] failed storing module cache: " + _context8.t1.stack);
+                        console.error("[lively.modules customTranslate] failed storing module cache: " + _context10.t1.stack);
 
                       case 25:
                         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
                         debug && console.log("[lively.modules customTranslate] done %s after %sms", load.name, Date.now() - start);
-                        return _context8.abrupt("return", translated);
+                        return _context10.abrupt("return", translated);
 
                       case 27:
                       case "end":
-                        return _context8.stop();
+                        return _context10.stop();
                     }
                   }
-                }, _callee8, _this6, [[3, 9], [16, 22]]);
+                }, _callee10, _this7, [[3, 9], [16, 22]]);
               }));
 
-              return function (_x13) {
-                return _ref10.apply(this, arguments);
+              return function (_x15) {
+                return _ref12.apply(this, arguments);
               };
             }()));
 
           case 45:
           case "end":
-            return _context9.stop();
+            return _context11.stop();
         }
       }
-    }, _callee9, this, [[10, 38]]);
+    }, _callee11, this, [[10, 38]]);
   }));
 
-  return function customTranslate(_x11, _x12) {
-    return _ref9.apply(this, arguments);
+  return function customTranslate(_x13, _x14) {
+    return _ref11.apply(this, arguments);
   };
 }();
 
@@ -67619,6 +67621,11 @@ var ModuleTranslationCache = function () {
   }, {
     key: "fetchStoredModuleSource",
     value: function fetchStoredModuleSource(moduleId) {
+      throw new Error("not yet implemented");
+    }
+  }, {
+    key: "deleteCachedData",
+    value: function deleteCachedData(moduleId) {
       throw new Error("not yet implemented");
     }
   }], [{
@@ -67935,6 +67942,49 @@ var NodeModuleTranslationCache = function (_ModuleTranslationCac) {
       return cacheModuleSource;
     }()
   }, {
+    key: "deleteCachedData",
+    value: function () {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(moduleId) {
+        var fname, fpath, r;
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                moduleId = moduleId.replace("file://", "");
+                fname = moduleId.match(/([^\/]*.)\.js/)[0], fpath = moduleId.replace(fname, ""), r = this.moduleCacheDir.join(moduleId);
+                _context5.next = 4;
+                return r.exists();
+
+              case 4:
+                if (_context5.sent) {
+                  _context5.next = 6;
+                  break;
+                }
+
+                return _context5.abrupt("return", false);
+
+              case 6:
+                _context5.next = 8;
+                return r.remove();
+
+              case 8:
+                return _context5.abrupt("return", true);
+
+              case 9:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+
+      function deleteCachedData(_x6) {
+        return _ref6.apply(this, arguments);
+      }
+
+      return deleteCachedData;
+    }()
+  }, {
     key: "moduleCacheDir",
     get: function get() {
       if (!nodejsCacheDir) prepareNodejsCaching();
@@ -67994,19 +68044,19 @@ var BrowserModuleTranslationCache = function (_ModuleTranslationCac2) {
   }, {
     key: "closeDb",
     value: function () {
-      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
         var db, req;
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
-            switch (_context5.prev = _context5.next) {
+            switch (_context6.prev = _context6.next) {
               case 0:
-                _context5.next = 2;
+                _context6.next = 2;
                 return this.db;
 
               case 2:
-                db = _context5.sent;
+                db = _context6.sent;
                 req = db.close();
-                return _context5.abrupt("return", new Promise(function (resolve, reject) {
+                return _context6.abrupt("return", new Promise(function (resolve, reject) {
                   req.onsuccess = function (evt) {
                     resolve(this.result);
                   };
@@ -68017,14 +68067,14 @@ var BrowserModuleTranslationCache = function (_ModuleTranslationCac2) {
 
               case 5:
               case "end":
-                return _context5.stop();
+                return _context6.stop();
             }
           }
-        }, _callee5, this);
+        }, _callee6, this);
       }));
 
       function closeDb() {
-        return _ref6.apply(this, arguments);
+        return _ref7.apply(this, arguments);
       }
 
       return closeDb;
@@ -68032,47 +68082,8 @@ var BrowserModuleTranslationCache = function (_ModuleTranslationCac2) {
   }, {
     key: "cacheModuleSource",
     value: function () {
-      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(moduleId, hash, source) {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(moduleId, hash, source) {
         var _this4 = this;
-
-        var db;
-        return regeneratorRuntime.wrap(function _callee6$(_context6) {
-          while (1) {
-            switch (_context6.prev = _context6.next) {
-              case 0:
-                _context6.next = 2;
-                return this.db;
-
-              case 2:
-                db = _context6.sent;
-                return _context6.abrupt("return", new Promise(function (resolve, reject) {
-                  var transaction = db.transaction([_this4.sourceCodeCacheStoreName], "readwrite"),
-                      store = transaction.objectStore(_this4.sourceCodeCacheStoreName),
-                      timestamp = Date.now();
-                  store.put({ moduleId: moduleId, hash: hash, source: source, timestamp: timestamp });
-                  transaction.oncomplete = resolve;
-                  transaction.onerror = reject;
-                }));
-
-              case 4:
-              case "end":
-                return _context6.stop();
-            }
-          }
-        }, _callee6, this);
-      }));
-
-      function cacheModuleSource(_x7, _x8, _x9) {
-        return _ref7.apply(this, arguments);
-      }
-
-      return cacheModuleSource;
-    }()
-  }, {
-    key: "fetchStoredModuleSource",
-    value: function () {
-      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(moduleId) {
-        var _this5 = this;
 
         var db;
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
@@ -68085,6 +68096,45 @@ var BrowserModuleTranslationCache = function (_ModuleTranslationCac2) {
               case 2:
                 db = _context7.sent;
                 return _context7.abrupt("return", new Promise(function (resolve, reject) {
+                  var transaction = db.transaction([_this4.sourceCodeCacheStoreName], "readwrite"),
+                      store = transaction.objectStore(_this4.sourceCodeCacheStoreName),
+                      timestamp = Date.now();
+                  store.put({ moduleId: moduleId, hash: hash, source: source, timestamp: timestamp });
+                  transaction.oncomplete = resolve;
+                  transaction.onerror = reject;
+                }));
+
+              case 4:
+              case "end":
+                return _context7.stop();
+            }
+          }
+        }, _callee7, this);
+      }));
+
+      function cacheModuleSource(_x8, _x9, _x10) {
+        return _ref8.apply(this, arguments);
+      }
+
+      return cacheModuleSource;
+    }()
+  }, {
+    key: "fetchStoredModuleSource",
+    value: function () {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(moduleId) {
+        var _this5 = this;
+
+        var db;
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+          while (1) {
+            switch (_context8.prev = _context8.next) {
+              case 0:
+                _context8.next = 2;
+                return this.db;
+
+              case 2:
+                db = _context8.sent;
+                return _context8.abrupt("return", new Promise(function (resolve, reject) {
                   var transaction = db.transaction([_this5.sourceCodeCacheStoreName]),
                       objectStore = transaction.objectStore(_this5.sourceCodeCacheStoreName),
                       req = objectStore.get(moduleId);
@@ -68096,17 +68146,57 @@ var BrowserModuleTranslationCache = function (_ModuleTranslationCac2) {
 
               case 4:
               case "end":
-                return _context7.stop();
+                return _context8.stop();
             }
           }
-        }, _callee7, this);
+        }, _callee8, this);
       }));
 
-      function fetchStoredModuleSource(_x10) {
-        return _ref8.apply(this, arguments);
+      function fetchStoredModuleSource(_x11) {
+        return _ref9.apply(this, arguments);
       }
 
       return fetchStoredModuleSource;
+    }()
+  }, {
+    key: "deleteCachedData",
+    value: function () {
+      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(moduleId) {
+        var _this6 = this;
+
+        var db;
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+          while (1) {
+            switch (_context9.prev = _context9.next) {
+              case 0:
+                _context9.next = 2;
+                return this.db;
+
+              case 2:
+                db = _context9.sent;
+                return _context9.abrupt("return", new Promise(function (resolve, reject) {
+                  var transaction = db.transaction([_this6.sourceCodeCacheStoreName], "readwrite"),
+                      objectStore = transaction.objectStore(_this6.sourceCodeCacheStoreName),
+                      req = objectStore.delete(moduleId);
+                  req.onerror = reject;
+                  req.onsuccess = function (evt) {
+                    return resolve(req.result);
+                  };
+                }));
+
+              case 4:
+              case "end":
+                return _context9.stop();
+            }
+          }
+        }, _callee9, this);
+      }));
+
+      function deleteCachedData(_x12) {
+        return _ref10.apply(this, arguments);
+      }
+
+      return deleteCachedData;
     }()
   }]);
   return BrowserModuleTranslationCache;
@@ -68246,8 +68336,15 @@ function instrumentSourceOfEsmModuleLoad(System, load) {
     // });
 
     var parsed = lively_ast.parse(translated),
-        registerCall = parsed.body[0].expression,
-        depNames = lively_lang.arr.pluck(registerCall["arguments"][0].elements, "value"),
+        callExpression = parsed.body.find(function (ea) {
+      return ea.expression && ea.expression.type === "CallExpression" && ea.expression.callee.property.name === "register";
+    });
+    if (!callExpression) throw new Error("Cannot find register call in translated source of " + load.name);
+
+    var registerCall = callExpression.expression,
+        depNames = registerCall["arguments"][0].elements.map(function (ea) {
+      return ea.value;
+    }),
         declareFuncNode = registerCall["arguments"][1],
         declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end),
         declare = eval("var __moduleName = \"" + load.name + "\";(" + declareFuncSource + ");\n//# sourceURL=" + load.name + "\n");
@@ -70326,13 +70423,7 @@ function getPackageSpecs(System) {
   // }, ... ]
   // ```
   return Package.allPackages(System).map(function (p) {
-    return _extends({}, lively_lang.obj.select(p, ["name", "main", "map", "meta", "url", "address", "version"]), {
-      modules: p.modules().map(function (m) {
-        return { name: m.id, deps: m.directRequirements().map(function (ea) {
-            return ea.id;
-          }) };
-      })
-    });
+    return p.asSpec();
   });
 }
 
@@ -70415,6 +70506,21 @@ var Package = function () {
       if (!isURL(this.url)) this.url = join(System.baseURL, this.url);
       this.registerWithConfig();
       return this;
+    }
+  }, {
+    key: "asSpec",
+    value: function asSpec() {
+      return _extends({}, lively_lang.obj.select(this, ["name", "main", "map", "meta", "url", "address", "version"]), {
+        lively: this.config ? this.config.lively : undefined,
+        modules: this.modules().map(function (m) {
+          return {
+            name: m.id,
+            deps: m.directRequirements().map(function (ea) {
+              return ea.id;
+            })
+          };
+        })
+      });
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -72079,44 +72185,40 @@ var ModuleInterface = function () {
     }
   }, {
     key: "unload",
-    value: function unload(opts) {
-      opts = lively_lang.obj.merge({ reset: true, forgetDeps: true, forgetEnv: true }, opts);
-      if (opts.reset) this.reset();
-      if (opts.forgetDeps) this.unloadDeps(opts);
-      this.System.delete(this.id);
-      if (this.System.loads) {
-        delete this.System.loads[this.id];
-      }
-      if (this.System.meta) delete this.System.meta[this.id];
-      if (opts.forgetEnv) this.unloadEnv();
-      lively_notifications.emit("lively.modules/moduleunloaded", { module: this.id }, Date.now(), this.System);
-    }
-  }, {
-    key: "reload",
     value: function () {
       var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(opts) {
-        var _this4 = this;
-
-        var toBeReloaded;
+        var System, id, cache;
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
               case 0:
-                opts = lively_lang.obj.merge({ reloadDeps: true, resetEnv: true }, opts);
-                toBeReloaded = [this];
+                opts = _extends({ reset: true, forgetDeps: true, forgetEnv: true }, opts);
+                System = this.System, id = this.id;
 
-                if (opts.reloadDeps) toBeReloaded = this.dependents().concat(toBeReloaded);
-                this.unload({ forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv });
-                _context6.next = 6;
-                return Promise.all(toBeReloaded.map(function (ea) {
-                  return ea.id !== _this4.id && ea.load();
-                }));
+                if (opts.reset) this.reset();
+                if (opts.forgetDeps) this.unloadDeps(opts);
+                this.System.delete(id);
+                if (System.loads) {
+                  delete System.loads[id];
+                }
+                if (System.meta) delete System.meta[id];
+                if (opts.forgetEnv) this.unloadEnv();
 
-              case 6:
-                _context6.next = 8;
-                return this.load();
+                cache = System._livelyModulesTranslationCache;
 
-              case 8:
+                if (!cache) {
+                  _context6.next = 12;
+                  break;
+                }
+
+                _context6.next = 12;
+                return cache.deleteCachedData(id);
+
+              case 12:
+
+                lively_notifications.emit("lively.modules/moduleunloaded", { module: this.id }, Date.now(), this.System);
+
+              case 13:
               case "end":
                 return _context6.stop();
             }
@@ -72124,40 +72226,41 @@ var ModuleInterface = function () {
         }, _callee6, this);
       }));
 
-      function reload(_x6) {
+      function unload(_x6) {
         return _ref6.apply(this, arguments);
       }
 
-      return reload;
+      return unload;
     }()
   }, {
-    key: "copyTo",
+    key: "reload",
     value: function () {
-      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(newId) {
-        var System, recorderName, sourceAccessorName, _recorder, _source, _ast, _scope, _observersOfTopLevelState, newM, state;
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(opts) {
+        var _this4 = this;
 
+        var toBeReloaded;
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
               case 0:
-                _context7.t0 = this.System.resource(newId);
-                _context7.next = 3;
-                return this.source();
+                opts = lively_lang.obj.merge({ reloadDeps: true, resetEnv: true }, opts);
+                toBeReloaded = [this];
 
-              case 3:
-                _context7.t1 = _context7.sent;
-                _context7.next = 6;
-                return _context7.t0.write.call(_context7.t0, _context7.t1);
+                if (opts.reloadDeps) toBeReloaded = this.dependents().concat(toBeReloaded);
+                _context7.next = 5;
+                return this.unload({ forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv });
 
-              case 6:
-                System = this.System, recorderName = this.recorderName, sourceAccessorName = this.sourceAccessorName, _recorder = this._recorder, _source = this._source, _ast = this._ast, _scope = this._scope, _observersOfTopLevelState = this._observersOfTopLevelState, newM = module$2(System, newId), state = lively_lang.obj.select(this, ["_observersOfTopLevelState", "_scope", "_ast", "_source", "_recorder", "sourceAccessorName", "recorderName"]);
+              case 5:
+                _context7.next = 7;
+                return Promise.all(toBeReloaded.map(function (ea) {
+                  return ea.id !== _this4.id && ea.load();
+                }));
 
+              case 7:
+                _context7.next = 9;
+                return this.load();
 
-                Object.assign(newM, state);
-                System.set(newId, System.newModule(System.get(this.id)));
-                return _context7.abrupt("return", newM);
-
-              case 10:
+              case 9:
               case "end":
                 return _context7.stop();
             }
@@ -72165,55 +72268,40 @@ var ModuleInterface = function () {
         }, _callee7, this);
       }));
 
-      function copyTo(_x7) {
+      function reload(_x7) {
         return _ref7.apply(this, arguments);
       }
 
-      return copyTo;
+      return reload;
     }()
   }, {
-    key: "renameTo",
+    key: "copyTo",
     value: function () {
       var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(newId) {
-        var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-        var _opts$unload, unload, _opts$removeFile, removeFile, newM;
+        var System, recorderName, sourceAccessorName, _recorder, _source, _ast, _scope, _observersOfTopLevelState, newM, state;
 
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
             switch (_context8.prev = _context8.next) {
               case 0:
-                _opts$unload = opts.unload;
-                unload = _opts$unload === undefined ? true : _opts$unload;
-                _opts$removeFile = opts.removeFile;
-                removeFile = _opts$removeFile === undefined ? true : _opts$removeFile;
+                _context8.t0 = this.System.resource(newId);
+                _context8.next = 3;
+                return this.source();
+
+              case 3:
+                _context8.t1 = _context8.sent;
                 _context8.next = 6;
-                return this.copyTo(newId);
+                return _context8.t0.write.call(_context8.t0, _context8.t1);
 
               case 6:
-                newM = _context8.sent;
+                System = this.System, recorderName = this.recorderName, sourceAccessorName = this.sourceAccessorName, _recorder = this._recorder, _source = this._source, _ast = this._ast, _scope = this._scope, _observersOfTopLevelState = this._observersOfTopLevelState, newM = module$2(System, newId), state = lively_lang.obj.select(this, ["_observersOfTopLevelState", "_scope", "_ast", "_source", "_recorder", "sourceAccessorName", "recorderName"]);
 
-                if (!unload) {
-                  _context8.next = 10;
-                  break;
-                }
 
-                _context8.next = 10;
-                return this.unload({ reset: true, forgetDeps: false, forgetEnv: true });
-
-              case 10:
-                if (!removeFile) {
-                  _context8.next = 13;
-                  break;
-                }
-
-                _context8.next = 13;
-                return this.System.resource(this.id).remove();
-
-              case 13:
+                Object.assign(newM, state);
+                System.set(newId, System.newModule(System.get(this.id)));
                 return _context8.abrupt("return", newM);
 
-              case 14:
+              case 10:
               case "end":
                 return _context8.stop();
             }
@@ -72221,8 +72309,64 @@ var ModuleInterface = function () {
         }, _callee8, this);
       }));
 
-      function renameTo(_x8) {
+      function copyTo(_x8) {
         return _ref8.apply(this, arguments);
+      }
+
+      return copyTo;
+    }()
+  }, {
+    key: "renameTo",
+    value: function () {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(newId) {
+        var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+        var _opts$unload, unload, _opts$removeFile, removeFile, newM;
+
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+          while (1) {
+            switch (_context9.prev = _context9.next) {
+              case 0:
+                _opts$unload = opts.unload;
+                unload = _opts$unload === undefined ? true : _opts$unload;
+                _opts$removeFile = opts.removeFile;
+                removeFile = _opts$removeFile === undefined ? true : _opts$removeFile;
+                _context9.next = 6;
+                return this.copyTo(newId);
+
+              case 6:
+                newM = _context9.sent;
+
+                if (!unload) {
+                  _context9.next = 10;
+                  break;
+                }
+
+                _context9.next = 10;
+                return this.unload({ reset: true, forgetDeps: false, forgetEnv: true });
+
+              case 10:
+                if (!removeFile) {
+                  _context9.next = 13;
+                  break;
+                }
+
+                _context9.next = 13;
+                return this.System.resource(this.id).remove();
+
+              case 13:
+                return _context9.abrupt("return", newM);
+
+              case 14:
+              case "end":
+                return _context9.stop();
+            }
+          }
+        }, _callee9, this);
+      }));
+
+      function renameTo(_x9) {
+        return _ref9.apply(this, arguments);
       }
 
       return renameTo;
@@ -72501,36 +72645,6 @@ var ModuleInterface = function () {
   }, {
     key: "imports",
     value: function () {
-      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
-        return regeneratorRuntime.wrap(function _callee9$(_context9) {
-          while (1) {
-            switch (_context9.prev = _context9.next) {
-              case 0:
-                _context9.t0 = lively_ast.query;
-                _context9.next = 3;
-                return this.scope();
-
-              case 3:
-                _context9.t1 = _context9.sent;
-                return _context9.abrupt("return", _context9.t0.imports.call(_context9.t0, _context9.t1));
-
-              case 5:
-              case "end":
-                return _context9.stop();
-            }
-          }
-        }, _callee9, this);
-      }));
-
-      function imports() {
-        return _ref9.apply(this, arguments);
-      }
-
-      return imports;
-    }()
-  }, {
-    key: "exports",
-    value: function () {
       var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10() {
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
@@ -72542,7 +72656,7 @@ var ModuleInterface = function () {
 
               case 3:
                 _context10.t1 = _context10.sent;
-                return _context10.abrupt("return", _context10.t0.exports.call(_context10.t0, _context10.t1));
+                return _context10.abrupt("return", _context10.t0.imports.call(_context10.t0, _context10.t1));
 
               case 5:
               case "end":
@@ -72552,8 +72666,38 @@ var ModuleInterface = function () {
         }, _callee10, this);
       }));
 
-      function exports() {
+      function imports() {
         return _ref10.apply(this, arguments);
+      }
+
+      return imports;
+    }()
+  }, {
+    key: "exports",
+    value: function () {
+      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11() {
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+          while (1) {
+            switch (_context11.prev = _context11.next) {
+              case 0:
+                _context11.t0 = lively_ast.query;
+                _context11.next = 3;
+                return this.scope();
+
+              case 3:
+                _context11.t1 = _context11.sent;
+                return _context11.abrupt("return", _context11.t0.exports.call(_context11.t0, _context11.t1));
+
+              case 5:
+              case "end":
+                return _context11.stop();
+            }
+          }
+        }, _callee11, this);
+      }));
+
+      function exports() {
+        return _ref11.apply(this, arguments);
       }
 
       return exports;
@@ -72561,22 +72705,22 @@ var ModuleInterface = function () {
   }, {
     key: "addImports",
     value: function () {
-      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(specs) {
+      var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(specs) {
         var source, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, spec, fromModule, fromPackage, importData, alias, _ImportInjector$run, standAloneImport;
 
-        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+        return regeneratorRuntime.wrap(function _callee12$(_context12) {
           while (1) {
-            switch (_context11.prev = _context11.next) {
+            switch (_context12.prev = _context12.next) {
               case 0:
-                _context11.next = 2;
+                _context12.next = 2;
                 return this.source();
 
               case 2:
-                source = _context11.sent;
+                source = _context12.sent;
                 _iteratorNormalCompletion = true;
                 _didIteratorError = false;
                 _iteratorError = undefined;
-                _context11.prev = 6;
+                _context12.prev = 6;
 
 
                 for (_iterator = specs[Symbol.iterator](); !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
@@ -72590,53 +72734,53 @@ var ModuleInterface = function () {
                   }, alias = spec.local, _ImportInjector$run = ImportInjector.run(this.System, this.id, this.package(), source, importData, alias), source = _ImportInjector$run.newSource, standAloneImport = _ImportInjector$run.standAloneImport;
                 }
 
-                _context11.next = 14;
+                _context12.next = 14;
                 break;
 
               case 10:
-                _context11.prev = 10;
-                _context11.t0 = _context11["catch"](6);
+                _context12.prev = 10;
+                _context12.t0 = _context12["catch"](6);
                 _didIteratorError = true;
-                _iteratorError = _context11.t0;
+                _iteratorError = _context12.t0;
 
               case 14:
-                _context11.prev = 14;
-                _context11.prev = 15;
+                _context12.prev = 14;
+                _context12.prev = 15;
 
                 if (!_iteratorNormalCompletion && _iterator.return) {
                   _iterator.return();
                 }
 
               case 17:
-                _context11.prev = 17;
+                _context12.prev = 17;
 
                 if (!_didIteratorError) {
-                  _context11.next = 20;
+                  _context12.next = 20;
                   break;
                 }
 
                 throw _iteratorError;
 
               case 20:
-                return _context11.finish(17);
+                return _context12.finish(17);
 
               case 21:
-                return _context11.finish(14);
+                return _context12.finish(14);
 
               case 22:
-                _context11.next = 24;
+                _context12.next = 24;
                 return this.changeSource(source);
 
               case 24:
               case "end":
-                return _context11.stop();
+                return _context12.stop();
             }
           }
-        }, _callee11, this, [[6, 10, 14, 22], [15,, 17, 21]]);
+        }, _callee12, this, [[6, 10, 14, 22], [15,, 17, 21]]);
       }));
 
-      function addImports(_x12) {
-        return _ref11.apply(this, arguments);
+      function addImports(_x13) {
+        return _ref12.apply(this, arguments);
       }
 
       return addImports;
@@ -72644,36 +72788,36 @@ var ModuleInterface = function () {
   }, {
     key: "removeImports",
     value: function () {
-      var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(specs) {
+      var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(specs) {
         var _this10 = this;
 
-        var oldSource, _ref13, source, removedImports;
+        var oldSource, _ref14, source, removedImports;
 
-        return regeneratorRuntime.wrap(function _callee12$(_context12) {
+        return regeneratorRuntime.wrap(function _callee13$(_context13) {
           while (1) {
-            switch (_context12.prev = _context12.next) {
+            switch (_context13.prev = _context13.next) {
               case 0:
                 if (specs.length) {
-                  _context12.next = 2;
+                  _context13.next = 2;
                   break;
                 }
 
-                return _context12.abrupt("return");
+                return _context13.abrupt("return");
 
               case 2:
-                _context12.next = 4;
+                _context13.next = 4;
                 return this.source();
 
               case 4:
-                oldSource = _context12.sent;
-                _context12.next = 7;
+                oldSource = _context13.sent;
+                _context13.next = 7;
                 return ImportRemover.removeImports(oldSource, specs);
 
               case 7:
-                _ref13 = _context12.sent;
-                source = _ref13.source;
-                removedImports = _ref13.removedImports;
-                _context12.next = 12;
+                _ref14 = _context13.sent;
+                source = _ref14.source;
+                removedImports = _ref14.removedImports;
+                _context13.next = 12;
                 return this.changeSource(source);
 
               case 12:
@@ -72683,14 +72827,14 @@ var ModuleInterface = function () {
 
               case 13:
               case "end":
-                return _context12.stop();
+                return _context13.stop();
             }
           }
-        }, _callee12, this);
+        }, _callee13, this);
       }));
 
-      function removeImports(_x13) {
-        return _ref12.apply(this, arguments);
+      function removeImports(_x14) {
+        return _ref13.apply(this, arguments);
       }
 
       return removeImports;
@@ -72703,40 +72847,8 @@ var ModuleInterface = function () {
   }, {
     key: "_localDeclForRefAt",
     value: function () {
-      var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(pos) {
+      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(pos) {
         var scope, ref;
-        return regeneratorRuntime.wrap(function _callee13$(_context13) {
-          while (1) {
-            switch (_context13.prev = _context13.next) {
-              case 0:
-                _context13.next = 2;
-                return this.resolvedScope();
-
-              case 2:
-                scope = _context13.sent;
-                ref = lively_ast.query.refWithDeclAt(pos, scope);
-                return _context13.abrupt("return", ref && { decl: ref.decl, id: ref.declId, declModule: this });
-
-              case 5:
-              case "end":
-                return _context13.stop();
-            }
-          }
-        }, _callee13, this);
-      }));
-
-      function _localDeclForRefAt(_x14) {
-        return _ref14.apply(this, arguments);
-      }
-
-      return _localDeclForRefAt;
-    }()
-  }, {
-    key: "_localDeclForName",
-    value: function () {
-      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(nameOfRef) {
-        var scope, found, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, ref, name;
-
         return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
             switch (_context14.prev = _context14.next) {
@@ -72746,90 +72858,28 @@ var ModuleInterface = function () {
 
               case 2:
                 scope = _context14.sent;
-                found = void 0;
-                _iteratorNormalCompletion2 = true;
-                _didIteratorError2 = false;
-                _iteratorError2 = undefined;
-                _context14.prev = 7;
-                _iterator2 = scope.resolvedRefMap.values()[Symbol.iterator]();
+                ref = lively_ast.query.refWithDeclAt(pos, scope);
+                return _context14.abrupt("return", ref && { decl: ref.decl, id: ref.declId, declModule: this });
 
-              case 9:
-                if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
-                  _context14.next = 18;
-                  break;
-                }
-
-                ref = _step2.value;
-                name = ref.ref.name;
-
-                if (!(nameOfRef === name)) {
-                  _context14.next = 15;
-                  break;
-                }
-
-                found = ref;return _context14.abrupt("break", 18);
-
-              case 15:
-                _iteratorNormalCompletion2 = true;
-                _context14.next = 9;
-                break;
-
-              case 18:
-                _context14.next = 24;
-                break;
-
-              case 20:
-                _context14.prev = 20;
-                _context14.t0 = _context14["catch"](7);
-                _didIteratorError2 = true;
-                _iteratorError2 = _context14.t0;
-
-              case 24:
-                _context14.prev = 24;
-                _context14.prev = 25;
-
-                if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                  _iterator2.return();
-                }
-
-              case 27:
-                _context14.prev = 27;
-
-                if (!_didIteratorError2) {
-                  _context14.next = 30;
-                  break;
-                }
-
-                throw _iteratorError2;
-
-              case 30:
-                return _context14.finish(27);
-
-              case 31:
-                return _context14.finish(24);
-
-              case 32:
-                return _context14.abrupt("return", found && { decl: found.decl, id: found.declId, declModule: this });
-
-              case 33:
+              case 5:
               case "end":
                 return _context14.stop();
             }
           }
-        }, _callee14, this, [[7, 20, 24, 32], [25,, 27, 31]]);
+        }, _callee14, this);
       }));
 
-      function _localDeclForName(_x15) {
+      function _localDeclForRefAt(_x15) {
         return _ref15.apply(this, arguments);
       }
 
-      return _localDeclForName;
+      return _localDeclForRefAt;
     }()
   }, {
-    key: "_importForNSRefAt",
+    key: "_localDeclForName",
     value: function () {
-      var _ref16 = asyncToGenerator(regeneratorRuntime.mark(function _callee15(pos) {
-        var scope, ast, nodes$$1, id, member, _ref17, decl, name, spec;
+      var _ref16 = asyncToGenerator(regeneratorRuntime.mark(function _callee15(nameOfRef) {
+        var scope, found, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, ref, name;
 
         return regeneratorRuntime.wrap(function _callee15$(_context15) {
           while (1) {
@@ -72840,105 +72890,137 @@ var ModuleInterface = function () {
 
               case 2:
                 scope = _context15.sent;
-                ast = scope.node;
-                nodes$$1 = lively_ast.query.nodesAtIndex(ast, pos);
+                found = void 0;
+                _iteratorNormalCompletion2 = true;
+                _didIteratorError2 = false;
+                _iteratorError2 = undefined;
+                _context15.prev = 7;
+                _iterator2 = scope.resolvedRefMap.values()[Symbol.iterator]();
 
-                if (!(nodes$$1.length < 2)) {
-                  _context15.next = 7;
+              case 9:
+                if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
+                  _context15.next = 18;
                   break;
                 }
 
-                return _context15.abrupt("return", [null, null]);
+                ref = _step2.value;
+                name = ref.ref.name;
 
-              case 7:
-                id = nodes$$1[nodes$$1.length - 1], member = nodes$$1[nodes$$1.length - 2];
-
-                if (!(id.type != "Identifier" || member.type != "MemberExpression" || member.computed || member.object.type !== "Identifier")) {
-                  _context15.next = 10;
+                if (!(nameOfRef === name)) {
+                  _context15.next = 15;
                   break;
                 }
 
-                return _context15.abrupt("return", [null, null]);
-
-              case 10:
-                _ref17 = scope.resolvedRefMap.get(member.object) || {}, decl = _ref17.decl;
-
-                if (!(!decl || decl.type !== "ImportDeclaration")) {
-                  _context15.next = 13;
-                  break;
-                }
-
-                return _context15.abrupt("return", [null, null]);
-
-              case 13:
-                name = member.object.name, spec = decl.specifiers.find(function (s) {
-                  return s.local.name === name;
-                });
-                return _context15.abrupt("return", spec.type !== "ImportNamespaceSpecifier" ? [null, null] : [decl, spec.local, id.name]);
+                found = ref;return _context15.abrupt("break", 18);
 
               case 15:
+                _iteratorNormalCompletion2 = true;
+                _context15.next = 9;
+                break;
+
+              case 18:
+                _context15.next = 24;
+                break;
+
+              case 20:
+                _context15.prev = 20;
+                _context15.t0 = _context15["catch"](7);
+                _didIteratorError2 = true;
+                _iteratorError2 = _context15.t0;
+
+              case 24:
+                _context15.prev = 24;
+                _context15.prev = 25;
+
+                if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                  _iterator2.return();
+                }
+
+              case 27:
+                _context15.prev = 27;
+
+                if (!_didIteratorError2) {
+                  _context15.next = 30;
+                  break;
+                }
+
+                throw _iteratorError2;
+
+              case 30:
+                return _context15.finish(27);
+
+              case 31:
+                return _context15.finish(24);
+
+              case 32:
+                return _context15.abrupt("return", found && { decl: found.decl, id: found.declId, declModule: this });
+
+              case 33:
               case "end":
                 return _context15.stop();
             }
           }
-        }, _callee15, this);
+        }, _callee15, this, [[7, 20, 24, 32], [25,, 27, 31]]);
       }));
 
-      function _importForNSRefAt(_x16) {
+      function _localDeclForName(_x16) {
         return _ref16.apply(this, arguments);
       }
 
-      return _importForNSRefAt;
+      return _localDeclForName;
     }()
   }, {
-    key: "_resolveImportedDecl",
+    key: "_importForNSRefAt",
     value: function () {
-      var _ref18 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(decl) {
-        var _decl$id, start, name, type, imports, im, imM;
+      var _ref17 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(pos) {
+        var scope, ast, nodes$$1, id, member, _ref18, decl, name, spec;
 
         return regeneratorRuntime.wrap(function _callee16$(_context16) {
           while (1) {
             switch (_context16.prev = _context16.next) {
               case 0:
-                if (decl) {
-                  _context16.next = 2;
-                  break;
-                }
-
-                return _context16.abrupt("return", []);
+                _context16.next = 2;
+                return this.resolvedScope();
 
               case 2:
-                _decl$id = decl.id;
-                start = _decl$id.start;
-                name = _decl$id.name;
-                type = _decl$id.type;
-                _context16.next = 8;
-                return this.imports();
+                scope = _context16.sent;
+                ast = scope.node;
+                nodes$$1 = lively_ast.query.nodesAtIndex(ast, pos);
 
-              case 8:
-                imports = _context16.sent;
-                im = imports.find(function (i) {
-                  return i.local == name;
-                });
-
-                if (!im) {
-                  _context16.next = 17;
+                if (!(nodes$$1.length < 2)) {
+                  _context16.next = 7;
                   break;
                 }
 
-                imM = module$2(this.System, im.fromModule, this.id);
-                _context16.t0 = [decl];
-                _context16.next = 15;
-                return imM.bindingPathForExport(im.imported);
+                return _context16.abrupt("return", [null, null]);
+
+              case 7:
+                id = nodes$$1[nodes$$1.length - 1], member = nodes$$1[nodes$$1.length - 2];
+
+                if (!(id.type != "Identifier" || member.type != "MemberExpression" || member.computed || member.object.type !== "Identifier")) {
+                  _context16.next = 10;
+                  break;
+                }
+
+                return _context16.abrupt("return", [null, null]);
+
+              case 10:
+                _ref18 = scope.resolvedRefMap.get(member.object) || {}, decl = _ref18.decl;
+
+                if (!(!decl || decl.type !== "ImportDeclaration")) {
+                  _context16.next = 13;
+                  break;
+                }
+
+                return _context16.abrupt("return", [null, null]);
+
+              case 13:
+                name = member.object.name, spec = decl.specifiers.find(function (s) {
+                  return s.local.name === name;
+                });
+                return _context16.abrupt("return", spec.type !== "ImportNamespaceSpecifier" ? [null, null] : [decl, spec.local, id.name]);
 
               case 15:
-                _context16.t1 = _context16.sent;
-                return _context16.abrupt("return", _context16.t0.concat.call(_context16.t0, _context16.t1));
-
-              case 17:
-                return _context16.abrupt("return", [decl]);
-
-              case 18:
               case "end":
                 return _context16.stop();
             }
@@ -72946,39 +73028,61 @@ var ModuleInterface = function () {
         }, _callee16, this);
       }));
 
-      function _resolveImportedDecl(_x17) {
-        return _ref18.apply(this, arguments);
+      function _importForNSRefAt(_x17) {
+        return _ref17.apply(this, arguments);
       }
 
-      return _resolveImportedDecl;
+      return _importForNSRefAt;
     }()
   }, {
-    key: "bindingPathFor",
+    key: "_resolveImportedDecl",
     value: function () {
-      var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee17(nameOfRef) {
-        var decl;
+      var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee17(decl) {
+        var _decl$id, start, name, type, imports, im, imM;
+
         return regeneratorRuntime.wrap(function _callee17$(_context17) {
           while (1) {
             switch (_context17.prev = _context17.next) {
               case 0:
-                _context17.next = 2;
-                return this._localDeclForName(nameOfRef);
-
-              case 2:
-                decl = _context17.sent;
-
-                if (!decl) {
-                  _context17.next = 7;
+                if (decl) {
+                  _context17.next = 2;
                   break;
                 }
 
-                _context17.next = 6;
-                return this._resolveImportedDecl(decl);
+                return _context17.abrupt("return", []);
 
-              case 6:
-                return _context17.abrupt("return", _context17.sent);
+              case 2:
+                _decl$id = decl.id;
+                start = _decl$id.start;
+                name = _decl$id.name;
+                type = _decl$id.type;
+                _context17.next = 8;
+                return this.imports();
 
-              case 7:
+              case 8:
+                imports = _context17.sent;
+                im = imports.find(function (i) {
+                  return i.local == name;
+                });
+
+                if (!im) {
+                  _context17.next = 17;
+                  break;
+                }
+
+                imM = module$2(this.System, im.fromModule, this.id);
+                _context17.t0 = [decl];
+                _context17.next = 15;
+                return imM.bindingPathForExport(im.imported);
+
+              case 15:
+                _context17.t1 = _context17.sent;
+                return _context17.abrupt("return", _context17.t0.concat.call(_context17.t0, _context17.t1));
+
+              case 17:
+                return _context17.abrupt("return", [decl]);
+
+              case 18:
               case "end":
                 return _context17.stop();
             }
@@ -72986,59 +73090,39 @@ var ModuleInterface = function () {
         }, _callee17, this);
       }));
 
-      function bindingPathFor(_x18) {
+      function _resolveImportedDecl(_x18) {
         return _ref19.apply(this, arguments);
       }
 
-      return bindingPathFor;
+      return _resolveImportedDecl;
     }()
   }, {
-    key: "bindingPathForExport",
+    key: "bindingPathFor",
     value: function () {
-      var _ref20 = asyncToGenerator(regeneratorRuntime.mark(function _callee18(name) {
-        var exports, ex, imM, decl;
+      var _ref20 = asyncToGenerator(regeneratorRuntime.mark(function _callee18(nameOfRef) {
+        var decl;
         return regeneratorRuntime.wrap(function _callee18$(_context18) {
           while (1) {
             switch (_context18.prev = _context18.next) {
               case 0:
                 _context18.next = 2;
-                return this.resolvedScope();
+                return this._localDeclForName(nameOfRef);
 
               case 2:
-                _context18.next = 4;
-                return this.exports();
+                decl = _context18.sent;
 
-              case 4:
-                exports = _context18.sent;
-                ex = exports.find(function (e) {
-                  return e.exported === name;
-                });
-
-                if (!ex.fromModule) {
-                  _context18.next = 17;
+                if (!decl) {
+                  _context18.next = 7;
                   break;
                 }
 
-                imM = module$2(this.System, ex.fromModule, this.id);
-                decl = { decl: ex.node, id: ex.declId };
+                _context18.next = 6;
+                return this._resolveImportedDecl(decl);
 
-                decl.declModule = this;
-                _context18.t0 = [decl];
-                _context18.next = 13;
-                return imM.bindingPathForExport(ex.imported);
+              case 6:
+                return _context18.abrupt("return", _context18.sent);
 
-              case 13:
-                _context18.t1 = _context18.sent;
-                return _context18.abrupt("return", _context18.t0.concat.call(_context18.t0, _context18.t1));
-
-              case 17:
-                return _context18.abrupt("return", this._resolveImportedDecl({
-                  decl: ex.decl,
-                  id: ex.declId,
-                  declModule: ex && ex.decl ? this : null
-                }));
-
-              case 18:
+              case 7:
               case "end":
                 return _context18.stop();
             }
@@ -73046,68 +73130,59 @@ var ModuleInterface = function () {
         }, _callee18, this);
       }));
 
-      function bindingPathForExport(_x19) {
+      function bindingPathFor(_x19) {
         return _ref20.apply(this, arguments);
       }
 
-      return bindingPathForExport;
+      return bindingPathFor;
     }()
   }, {
-    key: "bindingPathForRefAt",
+    key: "bindingPathForExport",
     value: function () {
-      var _ref21 = asyncToGenerator(regeneratorRuntime.mark(function _callee19(pos) {
-        var decl, _ref22, _ref23, imDecl, id, name, imM;
-
+      var _ref21 = asyncToGenerator(regeneratorRuntime.mark(function _callee19(name) {
+        var exports, ex, imM, decl;
         return regeneratorRuntime.wrap(function _callee19$(_context19) {
           while (1) {
             switch (_context19.prev = _context19.next) {
               case 0:
                 _context19.next = 2;
-                return this._localDeclForRefAt(pos);
+                return this.resolvedScope();
 
               case 2:
-                decl = _context19.sent;
+                _context19.next = 4;
+                return this.exports();
 
-                if (!decl) {
-                  _context19.next = 7;
+              case 4:
+                exports = _context19.sent;
+                ex = exports.find(function (e) {
+                  return e.exported === name;
+                });
+
+                if (!ex.fromModule) {
+                  _context19.next = 17;
                   break;
                 }
 
-                _context19.next = 6;
-                return this._resolveImportedDecl(decl);
+                imM = module$2(this.System, ex.fromModule, this.id);
+                decl = { decl: ex.node, id: ex.declId };
 
-              case 6:
-                return _context19.abrupt("return", _context19.sent);
+                decl.declModule = this;
+                _context19.t0 = [decl];
+                _context19.next = 13;
+                return imM.bindingPathForExport(ex.imported);
 
-              case 7:
-                _context19.next = 9;
-                return this._importForNSRefAt(pos);
-
-              case 9:
-                _ref22 = _context19.sent;
-                _ref23 = slicedToArray(_ref22, 3);
-                imDecl = _ref23[0];
-                id = _ref23[1];
-                name = _ref23[2];
-
-                if (imDecl) {
-                  _context19.next = 16;
-                  break;
-                }
-
-                return _context19.abrupt("return", []);
-
-              case 16:
-                imM = module$2(this.System, imDecl.source.value, this.id);
-                _context19.t0 = [{ decl: imDecl, declModule: this, id: id }];
-                _context19.next = 20;
-                return imM.bindingPathForExport(name);
-
-              case 20:
+              case 13:
                 _context19.t1 = _context19.sent;
                 return _context19.abrupt("return", _context19.t0.concat.call(_context19.t0, _context19.t1));
 
-              case 22:
+              case 17:
+                return _context19.abrupt("return", this._resolveImportedDecl({
+                  decl: ex.decl,
+                  id: ex.declId,
+                  declModule: ex && ex.decl ? this : null
+                }));
+
+              case 18:
               case "end":
                 return _context19.stop();
             }
@@ -73115,29 +73190,68 @@ var ModuleInterface = function () {
         }, _callee19, this);
       }));
 
-      function bindingPathForRefAt(_x20) {
+      function bindingPathForExport(_x20) {
         return _ref21.apply(this, arguments);
       }
 
-      return bindingPathForRefAt;
+      return bindingPathForExport;
     }()
   }, {
-    key: "definitionForRefAt",
+    key: "bindingPathForRefAt",
     value: function () {
-      var _ref24 = asyncToGenerator(regeneratorRuntime.mark(function _callee20(pos) {
-        var path;
+      var _ref22 = asyncToGenerator(regeneratorRuntime.mark(function _callee20(pos) {
+        var decl, _ref23, _ref24, imDecl, id, name, imM;
+
         return regeneratorRuntime.wrap(function _callee20$(_context20) {
           while (1) {
             switch (_context20.prev = _context20.next) {
               case 0:
                 _context20.next = 2;
-                return this.bindingPathForRefAt(pos);
+                return this._localDeclForRefAt(pos);
 
               case 2:
-                path = _context20.sent;
-                return _context20.abrupt("return", path.length < 1 ? null : path[path.length - 1].decl);
+                decl = _context20.sent;
 
-              case 4:
+                if (!decl) {
+                  _context20.next = 7;
+                  break;
+                }
+
+                _context20.next = 6;
+                return this._resolveImportedDecl(decl);
+
+              case 6:
+                return _context20.abrupt("return", _context20.sent);
+
+              case 7:
+                _context20.next = 9;
+                return this._importForNSRefAt(pos);
+
+              case 9:
+                _ref23 = _context20.sent;
+                _ref24 = slicedToArray(_ref23, 3);
+                imDecl = _ref24[0];
+                id = _ref24[1];
+                name = _ref24[2];
+
+                if (imDecl) {
+                  _context20.next = 16;
+                  break;
+                }
+
+                return _context20.abrupt("return", []);
+
+              case 16:
+                imM = module$2(this.System, imDecl.source.value, this.id);
+                _context20.t0 = [{ decl: imDecl, declModule: this, id: id }];
+                _context20.next = 20;
+                return imM.bindingPathForExport(name);
+
+              case 20:
+                _context20.t1 = _context20.sent;
+                return _context20.abrupt("return", _context20.t0.concat.call(_context20.t0, _context20.t1));
+
+              case 22:
               case "end":
                 return _context20.stop();
             }
@@ -73145,8 +73259,38 @@ var ModuleInterface = function () {
         }, _callee20, this);
       }));
 
-      function definitionForRefAt(_x21) {
-        return _ref24.apply(this, arguments);
+      function bindingPathForRefAt(_x21) {
+        return _ref22.apply(this, arguments);
+      }
+
+      return bindingPathForRefAt;
+    }()
+  }, {
+    key: "definitionForRefAt",
+    value: function () {
+      var _ref25 = asyncToGenerator(regeneratorRuntime.mark(function _callee21(pos) {
+        var path;
+        return regeneratorRuntime.wrap(function _callee21$(_context21) {
+          while (1) {
+            switch (_context21.prev = _context21.next) {
+              case 0:
+                _context21.next = 2;
+                return this.bindingPathForRefAt(pos);
+
+              case 2:
+                path = _context21.sent;
+                return _context21.abrupt("return", path.length < 1 ? null : path[path.length - 1].decl);
+
+              case 4:
+              case "end":
+                return _context21.stop();
+            }
+          }
+        }, _callee21, this);
+      }));
+
+      function definitionForRefAt(_x22) {
+        return _ref25.apply(this, arguments);
       }
 
       return definitionForRefAt;
@@ -73200,14 +73344,14 @@ var ModuleInterface = function () {
   }, {
     key: "search",
     value: function () {
-      var _ref25 = asyncToGenerator(regeneratorRuntime.mark(function _callee21(searchStr, options) {
+      var _ref26 = asyncToGenerator(regeneratorRuntime.mark(function _callee22(searchStr, options) {
         var _this11 = this;
 
         var src, re, flags, match, res, i, j, line, lineStart, _res$j, idx, length, lineEnd, p;
 
-        return regeneratorRuntime.wrap(function _callee21$(_context21) {
+        return regeneratorRuntime.wrap(function _callee22$(_context22) {
           while (1) {
-            switch (_context21.prev = _context21.next) {
+            switch (_context22.prev = _context22.next) {
               case 0:
                 options = _extends({ excludedModules: [] }, options);
 
@@ -73217,18 +73361,18 @@ var ModuleInterface = function () {
                   if (typeof ex === "function") return ex(_this11.id);
                   return false;
                 })) {
-                  _context21.next = 3;
+                  _context22.next = 3;
                   break;
                 }
 
-                return _context21.abrupt("return", []);
+                return _context22.abrupt("return", []);
 
               case 3:
-                _context21.next = 5;
+                _context22.next = 5;
                 return this.source();
 
               case 5:
-                src = _context21.sent;
+                src = _context22.sent;
                 re = void 0;
 
                 if (searchStr instanceof RegExp) {
@@ -73249,7 +73393,7 @@ var ModuleInterface = function () {
 
               case 11:
                 if (!(i < src.length && j < res.length)) {
-                  _context21.next = 24;
+                  _context22.next = 24;
                   break;
                 }
 
@@ -73260,11 +73404,11 @@ var ModuleInterface = function () {
                 _res$j = slicedToArray(res[j], 2), idx = _res$j[0], length = _res$j[1];
 
                 if (!(i !== idx)) {
-                  _context21.next = 16;
+                  _context22.next = 16;
                   break;
                 }
 
-                return _context21.abrupt("continue", 21);
+                return _context22.abrupt("continue", 21);
 
               case 16:
                 lineEnd = src.slice(lineStart).indexOf("\n");
@@ -73285,22 +73429,22 @@ var ModuleInterface = function () {
 
               case 21:
                 i++;
-                _context21.next = 11;
+                _context22.next = 11;
                 break;
 
               case 24:
-                return _context21.abrupt("return", res);
+                return _context22.abrupt("return", res);
 
               case 25:
               case "end":
-                return _context21.stop();
+                return _context22.stop();
             }
           }
-        }, _callee21, this);
+        }, _callee22, this);
       }));
 
-      function search(_x22, _x23) {
-        return _ref25.apply(this, arguments);
+      function search(_x23, _x24) {
+        return _ref26.apply(this, arguments);
       }
 
       return search;
@@ -73314,8 +73458,8 @@ var ModuleInterface = function () {
     key: "dontTransform",
     get: function get() {
       return [this.recorderName, this.sourceAccessorName, "global", "self", "_moduleExport", "_moduleImport", "localStorage", // for Firefox, see fetch
-      "prompt", "alert", "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
-      ].concat(lively_ast.query.knownGlobals);
+      // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
+      "prompt", "alert", "fetch", "getComputedStyle"].concat(lively_ast.query.knownGlobals);
     }
 
     // FIXME... better to make this read-only, currently needed for loading
@@ -73959,6 +74103,307 @@ function knownModuleNames(System) {
   return lively_lang.arr.uniq(fromSystem.concat(Object.keys(loadedModules$1(System))));
 }
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// lookup exports of modules
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+// Computes exports of all modules
+// 
+// Returns a list of objects like
+// {
+//   exported: "Interface",
+//   fromModule: null, // if re-exported
+//   isMain: true,     // is the exporting module the main module of its package?
+//   local: "Interface",
+//   moduleId: "http://localhost:9001/node_modules/lively-system-interface/index.js",
+//   packageName: "lively-system-interface",
+//   packageURL: "http://localhost:9001/node_modules/lively-system-interface",
+//   packageVersion: "0.2.0",
+//   pathInPackage: "index.js",
+//   type: "class"
+// }
+// 
+// Usage
+// var exports = await ExportLookup.run(System)
+// ExportLookup._forSystemMap.has(System)
+
+var ExportLookup = function () {
+  createClass(ExportLookup, null, [{
+    key: "forSystem",
+    value: function forSystem(System) {
+      if (!this._forSystemMap) this._forSystemMap = new WeakMap();
+      var lookup = this._forSystemMap.get(System);
+      if (lookup) return lookup;
+      lookup = new this(System);
+      this._forSystemMap.set(System, lookup);
+      return lookup;
+    }
+  }, {
+    key: "run",
+    value: function run() {
+      var _System = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : System;
+
+      var options = arguments[1];
+
+      return this.forSystem(_System).systemExports(options);
+    }
+  }, {
+    key: "findExportOfValue",
+    value: function () {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(value) {
+        var _System = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : System;
+
+        var exports;
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                _context.next = 2;
+                return this.run(_System);
+
+              case 2:
+                exports = _context.sent;
+                return _context.abrupt("return", exports.find(function (_ref2) {
+                  var local = _ref2.local,
+                      moduleId = _ref2.moduleId;
+
+                  var m = module$2(_System, moduleId),
+                      values = m.recorder || _System.get(m.id) || {};
+                  try {
+                    return values[local] === value;
+                  } catch (e) {
+                    return false;
+                  }
+                }));
+
+              case 4:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function findExportOfValue(_x2) {
+        return _ref.apply(this, arguments);
+      }
+
+      return findExportOfValue;
+    }()
+  }]);
+
+  function ExportLookup(System) {
+    classCallCheck(this, ExportLookup);
+
+    this.System = System;
+    this.subscribeToSystemChanges();
+  }
+
+  createClass(ExportLookup, [{
+    key: "subscribeToSystemChanges",
+    value: function subscribeToSystemChanges() {
+      var _this = this;
+
+      if (this._notificationHandlers) return;
+      var S = this.System;
+      this._notificationHandlers = [lively_notifications.subscribe("lively.modules/moduleloaded", function (evt) {
+        return _this.clearCacheFor(evt.module);
+      }, S), lively_notifications.subscribe("lively.modules/modulechanged", function (evt) {
+        return _this.clearCacheFor(evt.module);
+      }, S), lively_notifications.subscribe("lively.vm/doitresult", function (evt) {
+        return _this.clearCacheFor(evt.targetModule);
+      }, S)];
+    }
+  }, {
+    key: "unsubscribeFromSystemChanges",
+    value: function unsubscribeFromSystemChanges() {
+      if (!this._notificationHandlers) return;
+      var S = this.System;
+      lively_notifications.unsubscribe("lively.modules/moduleloaded", this._notificationHandlers[0], S);
+      lively_notifications.unsubscribe("lively.modules/modulechanged", this._notificationHandlers[1], S);
+      lively_notifications.unsubscribe("lively.vm/doitresult", this._notificationHandlers[2], S);
+      this._notificationHandlers = null;
+    }
+  }, {
+    key: "clearCacheFor",
+    value: function clearCacheFor(moduleId) {
+      this.exportByModuleCache[moduleId] = null;
+    }
+  }, {
+    key: "systemExports",
+    value: function () {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(options) {
+        var _this2 = this;
+
+        var exportsByModule;
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                _context2.next = 2;
+                return this.rawExportsByModule(options);
+
+              case 2:
+                exportsByModule = _context2.sent;
+
+                Object.keys(exportsByModule).forEach(function (id) {
+                  return _this2.resolveExportsOfModule(id, exportsByModule);
+                });
+
+                return _context2.abrupt("return", lively_lang.arr.flatmap(Object.keys(exportsByModule), function (id) {
+                  return exportsByModule[id].resolvedExports || exportsByModule[id].rawExports;
+                }));
+
+              case 5:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function systemExports(_x4) {
+        return _ref3.apply(this, arguments);
+      }
+
+      return systemExports;
+    }()
+  }, {
+    key: "rawExportsByModule",
+    value: function () {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(options) {
+        var System, excludedPackages, excludedURLs, excludeFns, excludedPackageURLs, livelyEnv, mods, cache, exportsByModule;
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                options = options || {};
+                System = this.System, excludedPackages = options.excludedPackages || [], excludedURLs = excludedPackages.filter(function (ea) {
+                  return typeof ea === "string";
+                }), excludeFns = excludedPackages.filter(function (ea) {
+                  return typeof ea === "function";
+                }), excludedPackageURLs = excludedURLs.concat(excludedURLs.map(function (url) {
+                  return System.decanonicalize(url.replace(/\/?$/, "/")).replace(/\/$/, "");
+                })), livelyEnv = System.get("@lively-env") || {}, mods = Object.keys(livelyEnv.loadedModules || {}), cache = this.exportByModuleCache, exportsByModule = {};
+                _context3.next = 4;
+                return Promise.all(mods.map(function (moduleId) {
+                  if (cache[moduleId]) {
+                    var result = cache[moduleId].rawExports;
+                    return excludedPackageURLs.includes(result.packageURL) || excludeFns.some(function (fn) {
+                      return fn(result.packageURL);
+                    }) ? null : exportsByModule[moduleId] = cache[moduleId];
+                  }
+
+                  var mod = module$2(System, moduleId),
+                      pathInPackage = mod.pathInPackage(),
+                      p = mod.package(),
+                      isMain = p && p.main && pathInPackage === p.main,
+                      packageURL = p ? p.url : "",
+                      packageName = p ? p.name : "",
+                      packageVersion = p ? p.version : "",
+                      result = {
+                    moduleId: moduleId, isMain: isMain,
+                    pathInPackage: pathInPackage, packageName: packageName, packageURL: packageURL, packageVersion: packageVersion,
+                    exports: []
+                  };
+
+                  if (excludedPackageURLs.includes(packageURL) || excludeFns.some(function (fn) {
+                    return fn(packageURL);
+                  })) return;
+
+                  var format = mod.format();
+                  if (["register", "es6", "esm"].includes(format)) {
+                    return mod.exports().then(function (exports) {
+                      return result.exports = exports;
+                    }).catch(function (e) {
+                      result.error = e;return result;
+                    }).then(function () {
+                      return cache[moduleId] = exportsByModule[moduleId] = { rawExports: result };
+                    });
+                  }
+
+                  return mod.load().then(function (values) {
+                    result.exports = [];
+                    for (var key in values) {
+                      if (key === "__useDefault" || key === "default") continue;
+                      result.exports.push({ exported: key, local: key, type: "id" });
+                    }
+                  }).catch(function (e) {
+                    result.error = e;return result;
+                  }).then(function () {
+                    return cache[moduleId] = exportsByModule[moduleId] = { rawExports: result };
+                  });
+                }));
+
+              case 4:
+                return _context3.abrupt("return", exportsByModule);
+
+              case 5:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function rawExportsByModule(_x5) {
+        return _ref4.apply(this, arguments);
+      }
+
+      return rawExportsByModule;
+    }()
+  }, {
+    key: "resolveExportsOfModule",
+    value: function resolveExportsOfModule(moduleId, exportsByModule) {
+      var _this3 = this;
+
+      var locked = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+      // takes the `rawExports` in `exportsByModule` that was produced by
+      // `rawExportsByModule` and resolves all "* from" exports. Extends the
+      // `rawExportsByModule` map woth a `resolvedExports` property
+
+      // prevent endless recursion
+      if (locked[moduleId]) return;
+      locked[moduleId] = true;
+
+      var data = exportsByModule[moduleId];
+      if (!data || data.resolvedExports) return;
+      var System = this.System;
+      var base = lively_lang.obj.select(data.rawExports, ["moduleId", "isMain", "packageName", "packageURL", "packageVersion", "pathInPackage"]);
+
+      data.resolvedExports = lively_lang.arr.flatmap(data.rawExports.exports, function (_ref5) {
+        var type = _ref5.type,
+            exported = _ref5.exported,
+            local = _ref5.local,
+            fromModule = _ref5.fromModule;
+
+        if (type !== "all") return [_extends({}, base, { type: type, exported: exported, local: local, fromModule: fromModule })];
+
+        // resolve "* from"
+        var fromId = System.decanonicalize(fromModule, moduleId);
+        _this3.resolveExportsOfModule(fromId, exportsByModule, locked);
+        return (exportsByModule[fromId].resolvedExports || []).map(function (resolvedExport) {
+          var type = resolvedExport.type,
+              exported = resolvedExport.exported,
+              local = resolvedExport.local,
+              resolvedFromModule = resolvedExport.fromModule;
+
+          return _extends({}, base, { type: type, exported: exported, local: local, fromModule: resolvedFromModule || fromModule });
+        });
+      });
+
+      locked[moduleId] = false;
+    }
+  }, {
+    key: "exportByModuleCache",
+    get: function get() {
+      return this._exportByModuleCache || (this._exportByModuleCache = {});
+    }
+  }]);
+  return ExportLookup;
+}();
+
 var buildPackageMap = function () {
   var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(dir) {
     var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { maxDepth: 0, excludes: [] };
@@ -74480,6 +74925,9 @@ function getPackage$$1(packageURL) {
   var isNormalized = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
   return getPackage$1(exports.System, packageURL, isNormalized);
 }
+function getPackageOfModule(moduleId) {
+  return Package.forModuleId(exports.System, moduleId);
+}
 function ensurePackage$$1(packageURL) {
   return ensurePackage$1(exports.System, packageURL);
 }
@@ -74539,6 +74987,7 @@ exports.removePackage = removePackage$1;
 exports.reloadPackage = reloadPackage$$1;
 exports.getPackages = getPackages;
 exports.getPackage = getPackage$$1;
+exports.getPackageOfModule = getPackageOfModule;
 exports.ensurePackage = ensurePackage$$1;
 exports.applyPackageConfig = applyPackageConfig;
 exports.moduleSourceChange = moduleSourceChange$$1;
@@ -74550,6 +74999,7 @@ exports.wrapModuleLoad = wrapModuleLoad$$1;
 exports.unwrapModuleLoad = unwrapModuleLoad$$1;
 exports.cjs = dependencies;
 exports.PackageRegistry = PackageRegistry$$1;
+exports.ExportLookup = ExportLookup;
 exports.semver = semver;
 
 }((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.notifications,lively.vm,lively.resources,lively.classes,semver));
