@@ -104,16 +104,7 @@ function getPackageSpecs(System) {
   //   version: semver version number
   // }, ... ]
   // ```
-  return Package.allPackages(System).map(p => {
-    return {
-      ...obj.select(p, [
-        "name", "main", "map", "meta",
-        "url", "address", "version"
-      ]),
-      modules: p.modules().map(m =>
-        ({name: m.id, deps: m.directRequirements().map(ea => ea.id)}))
-    }
-  })
+  return Package.allPackages(System).map(p => p.asSpec());
 }
 
 
@@ -184,6 +175,22 @@ class Package {
       this.url = join(System.baseURL, this.url);
     this.registerWithConfig();
     return this;
+  }
+
+  asSpec() {
+    return {
+      ...obj.select(this, [
+        "name", "main", "map", "meta",
+        "url", "address", "version"
+      ]),
+      lively: this.config ? this.config.lively : undefined,
+      modules: this.modules().map(m => {
+        return {
+          name: m.id,
+          deps: m.directRequirements().map(ea => ea.id)
+        }
+      })
+    }
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
