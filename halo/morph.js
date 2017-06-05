@@ -47,9 +47,9 @@ export default class Halo extends Morph {
       grid: [
           ["menu",   null,   "grab", null,  "drag", null,   "close"  ],
           [null,     null,   null,   null,  null,   null,   null     ],
-          ["copy",   null,   null,   null,  null,   null,   "edit"   ],
+          ["menu",   null,   null,   null,  null,   null,   "edit"   ],
           [null,     null,   null,   null,  null,   null,   null     ],
-          ["style",  null,   null,   null,  null,   null,   "inspect"],
+          ["copy",  null,   null,   null,  null,   null,   "inspect"],
           [null,     null,   null,   null,  null,   null,   null     ],
           ["rotate", null,   null,   null,  null,   null,   "resize" ],
           [null,     "name", "name", "name","name", "name", null     ]]});
@@ -70,7 +70,6 @@ export default class Halo extends Morph {
         this.editHalo(),
         this.copyHalo(),
         this.rotateHalo(),
-        this.styleHalo(),
         this.nameHalo(),
         this.originHalo()
       ]
@@ -200,7 +199,6 @@ export default class Halo extends Morph {
   rotateHalo() { return RotateHaloItem.for(this); }
   copyHalo() { return CopyHaloItem.for(this); }
   originHalo() { return OriginHaloItem.for(this); }
-  styleHalo() { return StyleHaloItem.for(this); }
 
   get buttonControls() { return this.submorphs.filter(m => m.isHaloItem && !m.isResizeHandle); }
 
@@ -1229,23 +1227,6 @@ class OriginHaloItem extends HaloItem {
   onDragStart(evt) { this.init(); }
   onDragEnd(evt) { this.stop(); }
   onDrag(evt) { this.update(evt.state.dragDelta); }
-
-}
-
-
-class StyleHaloItem extends HaloItem {
-
-  static get morphName() { return "style"; }
-  get styleClasses() { return [...super.styleClasses, "fa", "fa-picture-o"]; }
-  get tooltip() { return "Open stylize editor"; }
-
-  onMouseDown(evt) {
-    var {halo} = this;
-    const styleHalo = styleHaloFor(halo.target, halo.state.pointerId);
-    halo.world().addMorph(styleHalo);
-    // connect(halo.world(), 'onMouseDown', styleHalo, 'remove');
-    halo.remove();
-  }
 
 }
 
