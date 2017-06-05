@@ -224,8 +224,8 @@ describe("flat packages", function() {
       let {packageMap, newPackages} = await addDependencyToPackage(
         baseDir.join("package-install-dir/foo").path(),
         "strip-ansi@^2",
-        baseDir.join("package-install-dir").path()
-      );
+        baseDir.join("package-install-dir").path(),
+        undefined, undefined, true/*save*/);
 
       expect(await baseDir.join("package-install-dir/foo/package.json").readJson())
         .containSubset({dependencies: {"strip-ansi": "^2"}});

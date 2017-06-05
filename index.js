@@ -170,6 +170,7 @@ function addDependencyToPackage(
   packageDepDir,
   packageMap,
   dependencyField,
+  save = true,
   verbose = false
 ) {
 
@@ -198,6 +199,7 @@ function addDependencyToPackage(
     false/*isDev*/,
     verbose
   ).then(result => {
+    if (!save) return result;
     let dep = result.packageMap.lookup(depName, depVersionRange);
     if (!depVersionRange) depVersionRange = dep.version;
     let isRange = semver.validRange(depVersionRange, true);
@@ -215,10 +217,6 @@ function addDependencyToPackage(
     }
     return result;
   });
-
-    !semver.parse("^3.1.2", true)
-    semver.validRange("3.1.2", true)
-    semver.validRange("^3.1.2")
 }
 
 

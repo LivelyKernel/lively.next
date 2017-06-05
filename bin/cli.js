@@ -222,8 +222,7 @@ function doInstall(genericArgs, args) {
   unexpectedArgs(
     cmdArgs,
     ["save-dev", "D", "save", "S", "no-build", "nb", "force-build", "fb"],
-    "install"
-  );
+    "install");
   let {packageCollectionDirs, individualPackageDirs, devPackageDirs} = readGenericArgs(genericArgs);
   flatn.setPackageDirsOfEnv(packageCollectionDirs, individualPackageDirs, devPackageDirs);
 
@@ -305,6 +304,11 @@ function doInstall(genericArgs, args) {
   }
 
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // if a package name to install was given we add this to the package collection dir
+  // if save or save-dev specified we will also update the package.json of the
+  // package. in activeDir
+
   packagesToInstall.reduce((installP, pNameAndRange) =>
       installP.then(() =>
         flatn.addDependencyToPackage(
@@ -316,6 +320,7 @@ function doInstall(genericArgs, args) {
             individualPackageDirs,
             devPackageDirs),
           cmdArgs["save-dev"] ? "dev-dependencies" : "dependencies",
+          cmdArgs["save-dev"] || cmdArgs["save"], /*add to package.json?*/
           false/*verbose*/)),
     Promise.resolve())
   .then(() => process.exit(0))
