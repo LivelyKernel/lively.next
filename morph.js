@@ -157,6 +157,7 @@ export class Morph {
       opacity:            {isStyleProp: true, defaultValue: 1},
       fill:               {isStyleProp: true, defaultValue: Color.white},
       visible:            {isStyleProp: true, defaultValue: true},
+      
 
       submorphs: {
         defaultValue: [],
@@ -417,7 +418,11 @@ export class Morph {
       epiMorph: {
         doc: "epi morphs are 'transient' morphs, i.e. meta objects that should not be serialized like halo items, menus, etc.",
         defaultValue: false
-      }
+      },
+      respondsToVisibleWindow:  {
+        doc: "Morphs will respond to changes in visible window and a call will be made to the morph's relayout function, supplying the event generated",
+        defaultValue: false
+      },
     }
   }
 
