@@ -14,26 +14,27 @@ module.exports = function start(hostname, port, rootDirectory, serverDir) {
   var step = 1;
   console.log(`Lively server starting with root dir ${rootDirectory}`);
 
-  return (
-    setupLivelyModulesTestSystem(rootDirectory)
-      .then(() => console.log(`[lively.server] ${step++}. preparing system...`))
-      .then(() => lively.modules.registerPackage(serverDir))
-      // 1. This loads the lively system
-      .then(() => livelySystem.import("lively.resources"))
-      .then(resources => resources.ensureFetch())
-      .then(() => livelySystem.import("lively.storage"))
-      .then(() => livelySystem.import("lively-system-interface"))
-      // 2. this loads and starts the server
-      .then(() => console.log(`[lively.server] ${step++}. starting server...`))
-      .then(() => livelySystem.import(serverDir + "/server.js"))
-      .then(serverMod => startServer(serverMod, serverDir, port, hostname, rootDirectory))
-      .then(server => console.log(`[lively.server] ${step++}. ${server} running`))
-      .catch(err => {
-        console.error(`Error starting server: ${err.stack}`);
-        console.log(err)
-        process.exit(1);
-      })
-  );
+  return setupLivelyModulesTestSystem(rootDirectory)
+    .then(() => console.log(`[lively.server] ${step++}. preparing system...`))
+    .then(() => lively.modules.registerPackage(serverDir))
+    // 1. This loads the lively system
+    .then(() => livelySystem.import("lively.resources"))
+    .then(resources => resources.ensureFetch())
+    .then(() => livelySystem.import("lively.storage"))
+    .then(() => livelySystem.import("lively-system-interface"))
+    // 2. this loads and starts the server
+    .then(() => console.log(`[lively.server] ${step++}. starting server...`))
+    .then(() => livelySystem.import(serverDir + "/server.js"))
+    .then(serverMod => startServer(serverMod, serverDir, port, hostname, rootDirectory))
+    .then(server => {
+      console.log(`[lively.server] ${step++}. ${server} running`);
+      return server;
+    })
+    .catch(err => {
+      console.error(`Error starting server: ${err.stack}`);
+      console.log(err)
+      process.exit(1);
+    });
 };
 
 
