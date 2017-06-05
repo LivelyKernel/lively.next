@@ -207,7 +207,7 @@ function addDependencyToPackage(
     if (!isRange) depVersionRange = "*";
     else if (!isRealRange) depVersionRange = "^" + depVersionRange;
     if (dep) {
-      if (!depVersion || !semver.satisfies(depVersion, depVersionRange, true)) {
+      if (!depVersion || !semver.parse(depVersion, true) || !semver.satisfies(depVersion, depVersionRange, true)) {
         packageSpec[dependencyField][depName] = depVersionRange;
         let config = JSON.parse(String(fs.readFileSync(j(location, "package.json"))));
         if (!config[dependencyField]) config[dependencyField] = {}

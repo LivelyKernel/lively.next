@@ -1470,6 +1470,7 @@ function addDependencyToPackage(
   packageDepDir,
   packageMap,
   dependencyField,
+  save = true,
   verbose = false
 ) {
 
@@ -1498,6 +1499,7 @@ function addDependencyToPackage(
     false/*isDev*/,
     verbose
   ).then(result => {
+    if (!save) return result;
     let dep = result.packageMap.lookup(depName, depVersionRange);
     if (!depVersionRange) depVersionRange = dep.version;
     let isRange = semver.validRange(depVersionRange, true);
@@ -1505,7 +1507,7 @@ function addDependencyToPackage(
     if (!isRange) depVersionRange = "*";
     else if (!isRealRange) depVersionRange = "^" + depVersionRange;
     if (dep) {
-      if (!depVersion || !semver.satisfies(depVersion, depVersionRange, true)) {
+      if (!depVersion || !semver.parse(depVersion, true) || !semver.satisfies(depVersion, depVersionRange, true)) {
         packageSpec[dependencyField][depName] = depVersionRange;
         let config = JSON.parse(String(fs.readFileSync(j(location, "package.json"))));
         if (!config[dependencyField]) config[dependencyField] = {}
@@ -1515,10 +1517,6 @@ function addDependencyToPackage(
     }
     return result;
   });
-
-    !semver.parse("^3.1.2", true)
-    semver.validRange("3.1.2", true)
-    semver.validRange("^3.1.2")
 }
 
 
