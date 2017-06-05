@@ -105,6 +105,7 @@ div.text-layer span {
 
 .Label span {
   white-space: nowrap;
+  float: left;
 }
 
 .Label .annotation {
