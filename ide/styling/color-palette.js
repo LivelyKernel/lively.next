@@ -203,17 +203,19 @@ class HarmonyPalette extends Morph {
   }
  
   harmonyControl() {
-     return new Morph({
+    var selector,
+        controls = new Morph({
          name: "harmonyControl",
          submorphs: [new HarmonyVisualizer({name: "harmony visualizer"}),
                      new Slider({
                        target: this, min: 0, max: 1, tooltip: "Adjust Brightness",
                        property: "pivotBrightness", width: 100
                      }),
-                     new DropDownSelector({
-                       name: "harmonySelector", target: this,
-                       property: "harmony", isHaloItem: true,
-                       getCurrentValue() { return this.value.name },
+                     selector = new DropDownSelector({
+                       name: "harmonySelector", isHaloItem: true,
+                       padding: 4,
+                       selectedValue: this.harmony,
+                       getCurrentValue() { return this.selectedValue.name },
                        values: {Complement: new Complementary(),
                                 Triadic: new Triadic(),
                                 Tetradic: new Tetradic(),
@@ -221,7 +223,9 @@ class HarmonyPalette extends Morph {
                                 Analogous: new Analogous(),
                                 Neutral: new Neutral()}
                    })]
-     })
+     });
+    connect(selector, 'selectedValue', this, 'harmony');
+    return controls;
   }
 }
 
@@ -496,17 +500,21 @@ export class ColorPalette extends Morph {
    }
 
    paletteConfig() {
-      return {
+      var selector,
+          config = {
          name: "paletteConfig", styleClasses: ['paletteFormatter'],
-         submorphs: [new DropDownSelector({
+         submorphs: [
+           selector = new DropDownSelector({
              isHaloItem: true, name: "paletteSelector",
-             target: this, property: "colorPalette",
+             selectedValue: 'flatDesign', padding: 4,
              tooltip: this.getPaletteDescription(this.colorPalette),
              values: {"Flat Design" : "flatDesign",
                       "Material Design" : "materialDesign",
                       "Web Safe" : "webSafe"}
        })]
-      }
+      };
+     connect(selector, 'selectedValue', this, 'colorPalette');
+     return config;
    }
 
 }

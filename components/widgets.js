@@ -573,38 +573,68 @@ export class ModeSelector extends Morph {
 }
 
 export class DropDownSelector extends Morph {
-  constructor(props) {
-    const {target, property, values} = props;
-    super({
-      border: {radius: 3, color: Color.gray.darker(), style: "solid"},
-      layout: new HorizontalLayout({spacing: 4}),
-      ...props
+
+  static get properties() {
+    return {
+      selectedValue: {
+        after: ['submorphs'],
+        set(v) {
+          this.setProperty('selectedValue', v);
+          this.relayout();
+        }
+      },
+      fontSize: {isStyleProp: true, defaultValue: 12},
+      fontFamily: {isStyleProp: true, defaultValue: 'Sans-Serif'},
+      border: {defaultValue: {radius: 3, color: Color.gray.darker(), style: "solid"}},
+      layout: {
+        initialize() {
+          this.layout = new HorizontalLayout({spacing: 1});
+        }
+      },
+      styleSheets: {
+        after: ['fontFamily', 'fontSize'],
+        initialize() {
+          this.updateStyleSheet();  
+        }
+      },
+      submorphs: {
+        initialize() {
+          this.build();
+        }
+      }
+    }
+  }
+
+  updateStyleSheet() {
+    this.styleSheets = new StyleSheet({
+      ".Label": {
+        fontSize: this.fontSize,
+        fontFamily: this.fontFamily
+      },
+      "[name=dropDownIcon]": {
+        padding: rect(5,1,0,0),
+        opacity: .8
+      }
     });
-    this.build();
   }
 
   build() {
     this.dropDownLabel = Icon.makeLabel("chevron-circle-down", {
-      opacity: 0,
-      fontSize: 16,
-      fontColor: Color.gray.darker()
+      opacity: 0, name: 'dropDownIcon'
     });
     this.submorphs = [
       {
-        type: "text",
+        type: "label",
         name: "currentValue",
-        padding: Rectangle.inset(0),
-        readOnly: true
       },
       this.dropDownLabel
     ];
-    this.relayout();
   }
 
   getMenuEntries() {
-    const currentValue = this.getNameFor(this.value);
+    const currentValue = this.getNameFor(this.selectedValue);
     return [
-      ...(this.value ? [{command: currentValue, target: this}] : []),
+      ...(this.selectedValue ? [{command: currentValue, target: this}] : []),
       ...arr.compact(
         this.commands.map(c => {
           return c.name != currentValue && {command: c.name, target: this};
@@ -619,7 +649,7 @@ export class DropDownSelector extends Morph {
         return {
           name: v,
           exec: () => {
-            this.value = v;
+            this.selectedValue = v;
           }
         };
       });
@@ -628,7 +658,7 @@ export class DropDownSelector extends Morph {
         return {
           name,
           exec: () => {
-            this.value = v;
+            this.selectedValue = v;
           }
         };
       });
@@ -644,26 +674,14 @@ export class DropDownSelector extends Morph {
     }
   }
 
-  get value() {
-    return this.target[this.property];
-  }
-
-  set value(v) {
-    if (obj.isFunction(v)) {
-      v();
-    } else {
-      this.target[this.property] = v;
-    }
-    this.relayout();
-  }
-
   relayout() {
-    const vPrinted = this.getNameFor(this.value), valueLabel = this.get("currentValue");
+    const vPrinted = this.getNameFor(this.selectedValue), 
+          valueLabel = this.get("currentValue");
     if (vPrinted == "undefined") {
-      valueLabel.textString = "Not set";
+      valueLabel.value = "Not set";
       valueLabel.fontColor = Color.gray;
     } else {
-      valueLabel.textString = vPrinted;
+      valueLabel.value = vPrinted;
       valueLabel.fontColor = Color.black;
     }
   }
