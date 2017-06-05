@@ -1095,7 +1095,7 @@ var dir = typeof __dirname !== "undefined"
 var _npmEnv;
 function npmEnv() {
   return _npmEnv || (_npmEnv = (() => {
-    let cacheFile = j(tmpdir(), "npm-env.json"), env;
+    let cacheFile = j(tmpdir(), "npm-env.json"), env = {};
     if (fs.existsSync(cacheFile)) {
       let cached = JSON.parse(String(fs.readFileSync(cacheFile)))
       if (Date.now() - cached.time < 1000*60) return cached.env;
@@ -1106,7 +1106,13 @@ function npmEnv() {
       fs.writeFileSync(j(dir, "package.json"), `{"scripts": {"print-env": "${process.env.npm_node_execpath || "node"} ./print-env.js"}}`);
       fs.writeFileSync(j(dir, "print-env.js"), `console.log(JSON.stringify(process.env))`);
       let PATH = process.env.PATH.split(":").filter(ea => ea !== helperBinDir).join(":")
-      env = JSON.parse(String(execSync(`npm --silent run print-env`, {cwd: dir, env: Object.assign({}, process.env, {PATH})})));
+      Object.keys(process.env).forEach(ea => {
+        if (ea.toLowerCase().startsWith("npm_config_"))
+          env[ea] = process.env[ea];
+      });
+      env = Object.assign({},
+        JSON.parse(String(execSync(`npm --silent run print-env`, {cwd: dir, env: Object.assign({}, process.env, {PATH})}))),
+        env);
       for (let key in env)
         if (!key.toLowerCase().startsWith("npm") || key.toLowerCase().startsWith("npm_package"))
           delete env[key];
