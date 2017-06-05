@@ -3,7 +3,7 @@ import { Rectangle, Color, pt } from "lively.graphics";
 import { arr, obj, promise } from "lively.lang";
 import { once, signal } from "lively.bindings";
 import { StatusMessage, StatusMessageForMorph } from './components/markers.js';
-import { Morph, FilterableList, inspect, config, MorphicEnv, Window, Menu, Button } from "./index.js";
+import { Morph, List, FilterableList, inspect, config, MorphicEnv, Window, Menu, Button } from "./index.js";
 import { TooltipViewer } from "./components/tooltips.js";
 
 import {
@@ -26,7 +26,6 @@ import LoadingIndicator from "./components/loading-indicator.js";
 import { StyleEditor } from "./ide/styling/style-editor.js";
 import { GradientEditor } from "./ide/styling/gradient-editor.js";
 
-
 export class World extends Morph {
 
   static get properties() {
@@ -39,6 +38,7 @@ export class World extends Morph {
             StatusMessage.styleSheet,
             Window.styleSheet,
             FilterableList.styleSheet,
+            List.styleSheet,
             LoadingIndicator.styleSheet,
             StyleEditor.styleSheet,
             GradientEditor.styleSheet

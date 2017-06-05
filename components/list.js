@@ -407,7 +407,17 @@ export class List extends Morph {
           if (padding) h += padding.top() + padding.bottom();
           return this._itemHeight = h;
         }
-      }
+      },
+      
+      theme: {
+        after: ['styleClasses'],
+        defaultValue: 'default',
+        set(val) {
+          this.removeStyleClass(this.theme);
+          this.addStyleClass(val);
+          this.setProperty('theme', val);
+        }
+      },
 
     }
   }
