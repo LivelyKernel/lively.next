@@ -237,106 +237,6 @@ export class Slider extends Morph {
   }
 }
 
-export class PropertyInspector extends Morph {
-
-  static get properties() {
-
-    return {
-      target: {},
-      property: {},
-      min: {defaultValue: -Infinity},
-      max: {defaultValue: Infinity},
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            ".PropertyInspector .Button": {
-              clipMode: "hidden",
-              borderWidth: 0,
-              fill: Color.transparent,
-            },
-            ".PropertyInspector .Button.activeStyle [name=label]": {
-              fontColor: Color.white.darker()
-            },
-            ".Button.triggerStyle [name=label]": {
-              fontColor: Color.black
-            },
-            ".PropertyInspector": {
-              extent: pt(55, 25),
-              borderRadius: 5,
-              borderWidth: 1,
-              borderColor: Color.gray,
-              clipMode: "hidden"
-            },
-            ".PropertyInspector [name=down]": {padding: rect(0, -5, 0, 10)},
-            ".PropertyInspector [name=up]": {padding: rect(0, 0, 0, -5)},
-            ".PropertyInspector [name=value]": {
-              fill: Color.white,
-              padding: Rectangle.inset(4),
-              fontSize: 15
-            }
-          });
-        }
-      },
-      layout: {
-        initialize() {
-          this.layout = new GridLayout({
-            columns: [1, {paddingLeft: 5, paddingRight: 5, fixed: 25}],
-            grid: [["value", "up"], ["value", "down"]]
-          });
-        }
-      },
-      submorphs: {
-        after: ["target", "property", "defaultValue", "min", "max"],
-        initialize() {
-          this.submorphs = [
-            new ValueScrubber({
-              name: "value",
-              value: (this.target && this.target[this.property]) || this.defaultValue || 0,
-              min: this.min,
-              max: this.max
-            }),
-            {
-              type: "button",
-              name: "down", styleClasses: ['buttonStyle'],
-              label: Icon.makeLabel("sort-desc", {padding: rect(2, 2, 0, 0), fontSize: 12})
-            },
-            {
-              type: "button",
-              name: "up", styleClasses: ['buttonStyle'], autofit: true,
-              label: Icon.makeLabel("sort-asc", {padding: rect(2, 2, 0, 0), fontSize: 12})
-            }
-          ];
-          connect(this.get("value"), "scrub", this.target, this.property);
-          connect(this.get("up"), "fire", this, "increment");
-          connect(this.get("down"), "fire", this, "decrement");
-        }
-      }
-    };
-
-  }
-
-  __deserialize__(snapshot, objRef) {
-    super.__deserialize__(snapshot, objRef);
-    if (!this.target) this.setProperty("target", {});
-  }
-
-  update() {
-    this.get("value").value = this.target[this.property];
-  }
-
-  increment() {
-    if (this.max != undefined && this.target[this.property] >= this.max) return;
-    this.target[this.property] = (this.target[this.property] || this.defaultValue) + 1;
-    this.update();
-  }
-
-  decrement() {
-    if (this.min != undefined && this.target[this.property] <= this.min) return;
-    this.target[this.property] = (this.target[this.property] || this.defaultValue) - 1;
-    this.update();
-  }
-}
-
 export class ValueScrubber extends Text {
   static get properties() {
     return {
@@ -344,7 +244,8 @@ export class ValueScrubber extends Text {
       fill: {defaultValue: Color.transparent},
       draggable: {defaultValue: true},
       min: {defaultValue: -Infinity},
-      max: {defaultValue: Infinity}
+      max: {defaultValue: Infinity},
+      baseFactor: {defaultValue: 1}
     };
   }
 
@@ -396,14 +297,15 @@ export class ValueScrubber extends Text {
 
   getScaleAndOffset(evt) {
     const {x, y} = evt.position.subPt(this.initPos),
-          scale = num.roundTo(Math.exp(-y / $world.height * 4), 0.01);
+          scale = num.roundTo(Math.exp(-y / $world.height * 4), 0.01) * this.baseFactor;
     return {offset: x, scale};
   }
 
   onDrag(evt) {
     // x delta is the offset to the original value
     // y is the scale
-    const {scale, offset} = this.getScaleAndOffset(evt), v = this.getCurrentValue(offset, scale);
+    const {scale, offset} = this.getScaleAndOffset(evt), 
+          v = this.getCurrentValue(offset, scale);
     signal(this, "scrub", v);
     this.textString = obj.safeToString(v);
     if (this.unit) this.textString += " " + this.unit;
