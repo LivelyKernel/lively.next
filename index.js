@@ -7,6 +7,8 @@ import { basename, dirname, isAbsolute, normalize as normPath, join as j } from 
 import fs from "fs";
 import { inspect } from "util";
 
+import semver from "./deps/semver.min.js"
+
 // FIXME for resources
 import node_fetch from "./deps/node-fetch.js";
 if (!global.fetch) {
@@ -187,13 +189,6 @@ function addDependencyToPackage(
   if (!packageSpec[dependencyField]) packageSpec[dependencyField] = {};
   let [depName, depVersionRange] = depNameAndRange.split("@"),
       depVersion = packageSpec[dependencyField][depName];
-  if (!depVersion || depVersion !== depVersionRange) {
-    packageSpec[dependencyField][depName] = depVersionRange;
-    let config = JSON.parse(String(fs.readFileSync(j(location, "package.json"))));
-    if (!config[dependencyField]) config[dependencyField] = {}
-    config[dependencyField][depName] = depVersionRange;
-    fs.writeFileSync(j(location, "package.json"), JSON.stringify(config, null, 2));
-  }
 
   return installPackage(
     depNameAndRange,
@@ -202,7 +197,28 @@ function addDependencyToPackage(
     [dependencyField]/*dependencyFields*/,
     false/*isDev*/,
     verbose
-  );
+  ).then(result => {
+    let dep = result.packageMap.lookup(depName, depVersionRange);
+    if (!depVersionRange) depVersionRange = dep.version;
+    let isRange = semver.validRange(depVersionRange, true);
+    let isRealRange = !semver.parse(depVersionRange, true);
+    if (!isRange) depVersionRange = "*";
+    else if (!isRealRange) depVersionRange = "^" + depVersionRange;
+    if (dep) {
+      if (!depVersion || !semver.satisfies(depVersion, depVersionRange, true)) {
+        packageSpec[dependencyField][depName] = depVersionRange;
+        let config = JSON.parse(String(fs.readFileSync(j(location, "package.json"))));
+        if (!config[dependencyField]) config[dependencyField] = {}
+        config[dependencyField][depName] = depVersionRange;
+        fs.writeFileSync(j(location, "package.json"), JSON.stringify(config, null, 2));
+      }
+    }
+    return result;
+  });
+
+    !semver.parse("^3.1.2", true)
+    semver.validRange("3.1.2", true)
+    semver.validRange("^3.1.2")
 }
 
 
