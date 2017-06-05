@@ -1,4 +1,4 @@
-/*global require*/
+/*global require,process,__dirname*/
 "format cjs";
 var path = require("path");
 var fs = require("fs");
@@ -8,6 +8,8 @@ var { ensurePackageMap, packageDirsFromEnv } = require("./flatn-cjs.js");
 
 var originalResolve;
 installResolver();
+
+process.execPath = process.argv[0] = path.join(__dirname, "bin/node");
 
 let counter = 0;
 function installResolver() {
