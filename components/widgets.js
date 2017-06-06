@@ -576,8 +576,9 @@ export class DropDownSelector extends Morph {
 
   static get properties() {
     return {
+      values: {defaultValue: []},
       selectedValue: {
-        after: ['submorphs'],
+        after: ['submorphs', 'values'],
         set(v) {
           this.setProperty('selectedValue', v);
           this.relayout();
@@ -586,9 +587,10 @@ export class DropDownSelector extends Morph {
       fontSize: {isStyleProp: true, defaultValue: 12},
       fontFamily: {isStyleProp: true, defaultValue: 'Sans-Serif'},
       border: {defaultValue: {radius: 3, color: Color.gray.darker(), style: "solid"}},
+      padding: {defaultValue: 1},
       layout: {
         initialize() {
-          this.layout = new HorizontalLayout({spacing: 1});
+          this.layout = new HorizontalLayout({spacing: this.padding});
         }
       },
       styleSheets: {
