@@ -564,8 +564,9 @@ export class DropDownSelector extends Morph {
   static get properties() {
     return {
       values: {defaultValue: []},
+      getCurrentValue: {defaultValue: undefined},
       selectedValue: {
-        after: ['submorphs', 'values'],
+        after: ['submorphs', 'values', 'getCurrentValue'],
         set(v) {
           this.setProperty('selectedValue', v);
           this.relayout();
