@@ -1,11 +1,12 @@
-import { Morph, StyleSheet, CustomLayout, morph, HorizontalLayout, VerticalLayout } from "lively.morphic";
-import { ModeSelector, SearchField, CheckBox } from "../../components/widgets.js";
+import { Morph, GridLayout, TilingLayout, StyleSheet, CustomLayout, morph, HorizontalLayout, VerticalLayout } from "lively.morphic";
+import { ModeSelector, DropDownSelector, SearchField, CheckBox } from "../../components/widgets.js";
 import { connect, signal } from "lively.bindings";
-import { arr } from "lively.lang";
-import { Color, LinearGradient, Rectangle, pt } from "lively.graphics";
+import { arr, obj } from "lively.lang";
+import { Color, Rectangle, pt } from "lively.graphics";
 import { GradientEditor } from "./gradient-editor.js";
 import { ColorPickerField } from "./color-picker.js";
 import { Icons } from "../../components/icons.js";
+import KeyHandler from "../../events/KeyHandler.js";
 
 const duration = 200;
 
@@ -93,7 +94,8 @@ export class Popover extends Morph {
         clipMode: "hidden"
       },
       "[name=arrow]": {
-        fill: this.popoverColor,
+        fill: this.popoverColor.isGradient ? 
+          this.popoverColor.stops[0].color : this.popoverColor,
         dropShadow: {blur: 3, color: Color.black.withA(0.4)}
       },
     });
@@ -303,10 +305,113 @@ export class IconPopover extends StylePopover {
 
 }
 
+export class LayoutPopover extends StylePopover {
+
+  static get properties() {
+    return {
+      container: {},
+      popoverColor: {defaultValue: Color.gray.lighter()}
+    }
+  }
+  
+  getLayoutObjects() {
+    return [
+      null,
+      new HorizontalLayout({autoResize: false}),
+      new VerticalLayout({autoResize: false}),
+      new TilingLayout(),
+      new GridLayout({grid: [[null], [null], [null]]})
+    ];
+  }
+
+  close() {
+    super.close();
+    this.clearLayoutHalo();
+  }
+
+  controls() {
+    this.showLayoutHaloFor(this.container)
+    return [{
+      fill: Color.transparent,
+      layout: new VerticalLayout({spacing: 5}),
+      submorphs: [this.layoutPicker(), this.layoutControls()]
+    }];
+  }
+
+  updateControls() {
+    if (this.layoutHalo) {
+      this.getSubmorphNamed("controlContainer").animate({
+        submorphs: this.layoutHalo.optionControls(),
+        duration: 300
+      });
+    } else {
+      this.getSubmorphNamed("controlContainer").animate({
+        extent: pt(0, 0), submorphs: [],
+        duration: 300
+      });
+    }
+  }
+
+  showLayoutHaloFor(morph) {
+    this.clearLayoutHalo();
+    if (!morph || !morph.layout) return;
+    this.layoutHalo = $world.showLayoutHaloFor(morph);
+  }
+
+  clearLayoutHalo() {
+    if (this.layoutHalo) {
+      this.layoutHalo.remove();
+      this.layoutHalo = null;
+    }
+  }
+
+  getCurrentLayoutName() {
+    return this.getLayoutName(this.container.layout);
+  }
+
+  getLayoutName(l) {
+    return l ? l.name() + " Layout" : "No Layout";
+  }
+
+  update() {}
+
+  layoutPicker() {
+    const items = this.getLayoutObjects().map(l => {
+      return {
+        [this.getLayoutName(l)]: () => {
+          this.container.animate({layout: l});
+          this.showLayoutHaloFor(this.container);
+          this.updateControls(this.controls());
+          signal(this, 'layoutChanged', this.container.layout);
+        }
+      };
+    });
+    let layoutSelector = this.get("Layout Type") || new DropDownSelector({
+            name: "Layout Type",
+            borderRadius: 2, padding: 3,
+            getCurrentValue: () => this.getCurrentLayoutName(),
+            selectedValue: this.container.layout,
+            values: obj.merge(items)
+          });
+    connect(layoutSelector, 'selectedValue', this.container, 'layout');
+    return layoutSelector;
+  }
+
+  layoutControls() {
+    return {
+      name: 'controlContainer',
+      fill: Color.transparent,
+      layout: new VerticalLayout(),
+      submorphs: this.layoutHalo ? this.layoutHalo.optionControls() : []
+    };
+  }
+}
+
 export class FillPopover extends StylePopover {
 
   static get properties() {
     return {
+      gradientEnabled: {defaultValue: true},
       fillValue: {defaultValue: Color.blue},
       popoverColor: {defaultValue: Color.gray.lighter()}
     }

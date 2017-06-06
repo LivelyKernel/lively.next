@@ -388,8 +388,11 @@ export class TilingLayout extends Layout {
     return new TilingLayoutHalo(this.container, pointerId);
   }
 
+  get spacing() { return this._spacing; }
+  set spacing(offset) { this._spacing = offset; this.apply(); }
+
   apply(animate = false) {
-    if (this.active) return;
+    if (this.active || !this.container) return;
     this.active = true;
     super.apply(animate);
     var width = this.getOptimalWidth(this.container),

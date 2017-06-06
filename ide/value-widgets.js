@@ -31,16 +31,22 @@ class ShortcutWidget extends ContextSensitiveWidget {
   
   static get properties() {
     return {
-      title: {defaultValue: 'No Title' /* Name denoting the shortcut */ },
+      title: {
+        defaultValue: 'No Title', /* Name denoting the shortcut */ 
+        after: ['submorphs'],
+        set(t) {
+          this.setProperty('title', t);
+          this.getSubmorphNamed('valueString').value = t;
+        }
+      },
       nativeCursor: {defaultValue: 'pointer'},
       submorphs: {
-        after: ['title'],
         initialize() {
           this.submorphs = [
             Icon.makeLabel('arrow-right', {fontSize: 15, padding: rect(1,1,4,1)}),
             {type: "label", value: this.title, fontSize: 14, 
              fontWeight: 'bold',
-             name: 'valueString', fill: Color.transparent, opacity: .8,
+             name: 'valueString', opacity: .8,
              borderRadius: 5, padding: rect(0,1,0,0), 
              nativeCursor: 'pointer', fontSize: 12,
              borderWidth: 0}
@@ -99,18 +105,23 @@ export class LayoutWidget extends ShortcutWidget {
   static get properties() {
     return {
       title: {
-        after: ['context'],
         initialize() {
           this.title = this.context.layout ? 
-            'Configure ' + this.context.layout.name : 'No Layout';
+            'Configure ' + this.context.layout.name() + ' Layout' : 'No Layout';
         }
       }
     }
   }
 
+  layoutChanged() {
+    this.title = this.context.layout ? 
+            'Configure ' + this.context.layout.name() + ' Layout' : 'No Layout';
+  }
+
   openPopover() {
     let editor = new LayoutPopover({container: this.context})
     editor.fadeIntoWorld(this.globalBounds().center());
+    connect(editor, 'layoutChanged', this, 'layoutChanged');
     signal(this, "openWidget", editor);
   }
   
@@ -292,6 +303,7 @@ export class NumberWidget extends Morph {
       },
       min: {defaultValue: -Infinity},
       max: {defaultValue: Infinity},
+      padding: {defaultValue: rect(0)},
       baseFactor: {
         after: ['submorphs'],
         derived: true,
@@ -311,7 +323,7 @@ export class NumberWidget extends Morph {
         }
       },
       fontFamily: {
-        defaultValue: 'Sans Serif',
+        defaultValue: 'Sans-Serif',
         set(v) {
           this.setProperty('fontFamily', v);
           this.updateStyleSheet();
@@ -395,12 +407,13 @@ export class NumberWidget extends Morph {
             },
             ".NumberWidget": {
               extent: pt(55, 25),
-              fill: Color.transparent,
+              fill: this.fill || Color.transparent,
               clipMode: "hidden"
             },
             "[name=down]": {padding: rect(0, -3)},
             "[name=up]": {padding: rect(0, -5)},
             "[name=value]": {
+              padding: this.padding,
               fill: Color.transparent,
               fontSize: this.fontSize,
               fontColor: this.fontColor,
