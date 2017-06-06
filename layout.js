@@ -66,7 +66,7 @@ class Layout {
   }
 
   scheduleApply(submorph, animation, change = {}) {
-    this.onScheduleApply(submorph, animation, change);
+    this.onScheduleApply && this.onScheduleApply(submorph, animation, change);
     if (this.active) return;
     if (!this.applyRequests) this.applyRequests = [];
     if (animation) this.lastAnim = animation;
