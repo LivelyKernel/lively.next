@@ -562,7 +562,7 @@ export class PropertyAnimation {
      if (this.needsAnimation[type]) {
        this.needsAnimation[type] = false;
        const [before, after] = this.getAnimationProps(type);
-       this.tween(svgNode, {attr: before}, {attr: after});
+       this.tween(svgNode, {attr: before}, {attr: after}, false);
      }
   }
 
@@ -583,8 +583,9 @@ export class PropertyAnimation {
     }
   }
 
-  tween(node, before, after) {
+  tween(node, before, after, remove=true) {
       const onComplete = () => {
+         if (!remove) return;
          this.finish();
          this.morph.makeDirty();
       };

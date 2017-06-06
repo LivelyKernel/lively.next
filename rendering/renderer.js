@@ -220,7 +220,7 @@ export class Renderer {
 
     return h("div",
       {
-        ...obj.dissoc(defaultAttributes(morph, this), ['animation']),
+        ...defaultAttributes(morph, this),
         style: {
           transform,
           transformOrigin,
