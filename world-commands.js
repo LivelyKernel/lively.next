@@ -45,7 +45,6 @@ var commands = [
             `${targetName}`, {
               fontSize: "80%",
               textStyleClasses: ["v-center-text"],
-              top: "-8%",
               paddingRight: "10px"
             },
             `${name}`, null
