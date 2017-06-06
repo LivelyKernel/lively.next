@@ -377,6 +377,13 @@ export class LabeledCheckBox extends Morph {
     return {
       name: {defaultValue: "LabeledCheckBox"},
       alignCheckBox: {defaultValue: "left"},
+      layout: {
+        initialize() {
+          this.layout = new HorizontalLayout({
+            direction: this.alignCheckBox == 'left' ? 'leftToRight' : 'rightToLeft'
+          });  
+        }
+      },
       label: {
         defaultValue: "label",
         after: ["submorphs"],
@@ -431,34 +438,14 @@ export class LabeledCheckBox extends Morph {
             new Label({
               nativeCursor: "pointer",
               name: "label",
-              padding: Rectangle.inset(3, 0)
+              padding: Rectangle.inset(5, 3)
             })
           ];
+          connect(this, "alignCheckBox", this, "extent");
+          connect(this.checkboxMorph, "checked", this, "checked");
         }
       }
     };
-  }
-
-  constructor(props) {
-    super(props);
-    connect(this, "alignCheckBox", this, "extent");
-    connect(this, "alignCheckBox", this, "relayout");
-    connect(this.labelMorph, "value", this, "relayout");
-    connect(this.checkboxMorph, "checked", this, "checked");
-    this.relayout();
-    setTimeout(() => this.relayout(), 0);
-  }
-
-  relayout() {
-    var l = this.labelMorph, cb = this.checkboxMorph;
-    if (this.alignCheckBox === "left") {
-      cb.leftCenter = pt(0, Math.max(this.height, l.height) / 2);
-      l.leftCenter = cb.rightCenter;
-    } else {
-      l.position = pt(0, 0);
-      cb.leftCenter = pt(l.width, l.height / 2);
-    }
-    this.extent = this.submorphBounds().extent();
   }
 
   trigger() {
