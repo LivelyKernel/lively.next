@@ -132,7 +132,7 @@ export class ColorPickerField extends Morph {
   }
 
    async openPicker(evt) {
-      const p = this.picker || new ColorPicker({color: this.targetProperty});
+      const p = this.picker || new ColorPicker({color: this.colorValue});
       p.position = pt(0, -p.height / 2);
       connect(p, "color", this, "update");
       this.picker = await p.fadeIntoWorld(this.globalBounds().bottomCenter());
@@ -146,8 +146,8 @@ export class ColorPickerField extends Morph {
   async openPalette(evt) {
     const p =
       this.palette ||
-      new Popover({name: "Color Palette", targetMorph: new ColorPalette({color: Color.red})});
-    connect(p, "color", this, "update");
+      new Popover({name: "Color Palette", targetMorph: new ColorPalette({color: this.colorValue})});
+    connect(p.targetMorph, "color", this, "update");
     p.topLeft = pt(0,0);
     this.palette = await p.fadeIntoWorld(this.globalBounds().insetBy(10).bottomCenter());
     this.removePicker();

@@ -174,13 +174,11 @@ export class StyleEditor extends Morph {
 
   getColorField({target, property}) {
     const colorField = new ColorPickerField({
-      target,
       name: "colorPicker",
-      property,
-      defaultValue: this.defaultPropertyValues[property]
+      colorValue: target[property]
     });
-    connect(this, "remove", colorField, "remove");
     connect(this, "onMouseDown", colorField, "removeWidgets");
+    connect(colorField, 'update', target, property);
     return colorField;
   }
 
@@ -757,7 +755,6 @@ export class LayoutStyleEditor extends StyleEditor {
       null,
       new HorizontalLayout({autoResize: false}),
       new VerticalLayout({autoResize: false}),
-      // new FillLayout(),
       new TilingLayout(),
       new GridLayout({grid: [[null], [null], [null]]})
     ];
@@ -808,7 +805,7 @@ export class LayoutStyleEditor extends StyleEditor {
     return l ? l.name() + " Layout" : "No Layout";
   }
 
-   update() {}
+  update() {}
 
   layoutPicker() {
     const items = this.getLayoutObjects().map(l => {
