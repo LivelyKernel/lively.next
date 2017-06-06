@@ -12,6 +12,7 @@ import { last } from "lively.lang/array.js";
 import { GridLayout } from "../../layout.js";
 
 import { NumberWidget, StyleSheetWidget, BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
+import { RichTextControl } from "../../text/ui.js";
 
 var inspectorCommands = [
 
@@ -154,65 +155,120 @@ function propertiesOf(target) {
 }
 
 export class PropertyControl extends Label {
-
-  static render({
-        target, property, keyString, 
-        valueString, value
-     }) {
-     let propertyControl = new this({
-        keyString,
-        valueString
+  
+  static render({target, property, keyString, valueString, value}) {
+    let propertyControl = new this({
+      keyString,
+      valueString
+    });
+    // TODO:  this dispatch logic should be defined through the property
+    // definition interface (i.e. static get properties()) where properties
+    // also can define their 'type' and how this type is supposed to be
+    // controlled by the inspector or style sheet editor
+    if (value && (value.isColor || value.isGradient)) {
+      let colorWidget = new ColorWidget({
+        color: value,
+        gradientEnabled: value.isGradient
       });
-     // TODO:  this dispatch logic should be defined through the property
-     // definition interface (i.e. static get properties()) where properties
-     // also can define their 'type' and how this type is supposed to be
-     // controlled by the inspector or style sheet editor
-     if (value && (value.isColor || value.isGradient)) {
-        let colorWidget = new ColorWidget({
-          color: value, 
-          gradientEnabled: value.isGradient
-        });
-        connect(colorWidget, 'color', propertyControl, 'propertyValue');
-        propertyControl.control = colorWidget;
-     } if (property == 'layout') {
-        propertyControl.control = new LayoutWidget({context: target});
-     } else if (property == 'clipMode') {
-        let selector = new DropDownSelector({
-          fill: Color.white.withA(.5),
-          name: 'valueString',
-          selectedValue: value,
-          values: ["visible", "hidden", "scroll", 'auto']
-        });
-        // hack: since derived properties that are parametrized by a style sheet do not
-        //       yet take effect in a morph such as the drop down selector, we need to
-        //       manually trigger an update at render time
-        selector.whenRendered().then(() => selector.updateStyleSheet());
-        connect(selector, 'selectedValue', propertyControl, 'propertyValue');
-        propertyControl.control = selector;
-     } else if (isBoolean(value)) {
-       propertyControl.control = new BooleanWidget({
-         name: 'valueString',
-         boolean: value
-       });
-       connect(propertyControl.control, 'boolean', propertyControl, 'propertyValue');
-     } else if (isNumber(value)) {
-       propertyControl.control = new NumberWidget({
-           name: 'valueString',
-           height: 17, baseFactor: .5,
-           fontFamily: config.codeEditor.defaultStyle.fontFamily,
-           number: value,
-        });
-       connect(propertyControl.control, 'number', propertyControl, 'propertyValue');
-     } else if (isString(value)) {
-       //controlClass = StringPropertyControl;
-     } else if (keyString == 'styleSheets') { 
-       propertyControl.control = new StyleSheetWidget({context: target});
-     }
+      connect(colorWidget, "color", propertyControl, "propertyValue");
+      propertyControl.control = colorWidget;
+    }
+    if (property == "layout") {
+      propertyControl.control = new LayoutWidget({context: target});
+      connect(propertyControl.control, 'layoutChanged', PropertyControl, 'propertyValue')
+    } else if (property == "fontFamily") {
+      this.renderValueSelector(
+        propertyControl,
+        value,
+        RichTextControl.basicFontItems().map(f => f.value)
+      );
+    } else if (property == "fontWeight") {
+      this.renderValueSelector(propertyControl, value, ["bold", "bolder", "light", "lighter"]);
+    } else if (property.includes('borderStyle')) {
+      this.renderValueSelector(propertyControl, value, ["none", "hidden", "dotted", "dashed", "solid", "double", "groove", "ridge", "inset", "outset"]);
+    } else if (property == "nativeCursor") {
+      this.renderValueSelector(propertyControl, value, [
+        "auto",
+        "default",
+        "none",
+        "context-menu",
+        "help",
+        "pointer",
+        "progress",
+        "wait",
+        "cell",
+        "crosshair",
+        "text",
+        "vertical-text",
+        "alias",
+        "copy",
+        "move",
+        "no-drop",
+        "not-allowed",
+        "e-resize",
+        "n-resize",
+        "ne-resize",
+        "nw-resize",
+        "s-resize",
+        "se-resize",
+        "sw-resize",
+        "w-resize",
+        "ew-resize",
+        "ns-resize",
+        "nesw-resize",
+        "nwse-resize",
+        "col-resize",
+        "row-resize",
+        "all-scroll",
+        "zoom-in",
+        "zoom-out",
+        "grab",
+        "grabbing"
+      ]);
+    } else if (property == "fontStyle") {      this.renderValueSelector(propertyControl, value, ['normal', 'italic', 'oblique']);
+    } else if (property == "clipMode") {
+      this.renderValueSelector(propertyControl, value, ["visible", "hidden", "scroll", "auto"]);
+    } else if (isBoolean(value)) {
+      propertyControl.control = new BooleanWidget({
+        name: "valueString",
+        boolean: value
+      });
+      connect(propertyControl.control, "boolean", propertyControl, "propertyValue");
+    } else if (isNumber(value)) {
+      propertyControl.control = new NumberWidget({
+        name: "valueString",
+        height: 17,
+        baseFactor: 0.5,
+        fontFamily: config.codeEditor.defaultStyle.fontFamily,
+        number: value
+      });
+      connect(propertyControl.control, "number", propertyControl, "propertyValue");
+    } else if (isString(value)) {
+      //controlClass = StringPropertyControl;
+    } else if (keyString == "styleSheets") {
+      propertyControl.control = new StyleSheetWidget({context: target});
+    }
     if (propertyControl.control) {
-      connect(propertyControl.control, "openWidget", propertyControl, 'openWidget');
+      connect(propertyControl.control, "openWidget", propertyControl, "openWidget");
       return propertyControl;
     }
     return false;
+  }
+  
+  static renderValueSelector(propertyControl, selectedValue, values) {
+    let selector = new DropDownSelector({
+      opacity: 0.8,
+      fill: Color.white.withA(0.5),
+      name: "valueString",
+      selectedValue,
+      values
+    });
+    // hack: since derived properties that are parametrized by a style sheet do not
+    //       yet take effect in a morph such as the drop down selector, we need to
+    //       manually trigger an update at render time
+    selector.whenRendered().then(() => selector.updateStyleSheet());
+    connect(selector, "selectedValue", propertyControl, "propertyValue");
+    propertyControl.control = selector;
   }
 
   static get properties() {
