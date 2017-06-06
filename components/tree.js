@@ -96,7 +96,7 @@ export class TreeNode extends Morph {
         set(m) {
           var prev = this.displayedMorph;
           if (m != this.label) this.label.value = '';
-          this.submorphs = arr.uniq(arr.compact([this.getSubmorphNamed('toggle'), this.label, m]))
+          this.submorphs = arr.uniq(arr.compact([this.getSubmorphNamed('toggle'), this.label, m]));
         }
       },
 
@@ -114,7 +114,7 @@ export class TreeNode extends Morph {
           this.setProperty("fontSize", fontSize);
           (this.displayedMorph || this.label).fontSize = fontSize;
           var toggle = this.getSubmorphNamed("toggle");
-          if (toggle) toggle.fontSize = fontSize-3;
+          if (toggle) toggle.fontSize = fontSize;
         }
       },
 
@@ -183,39 +183,36 @@ export class TreeNode extends Morph {
     this.isCollapsable = isCollapsable;
     this.isCollapsed = isCollapsed;
 
-    var toggle = this.getSubmorphNamed("toggle"),
-        displayedMorph;
+    var toggle = this.getSubmorphNamed("toggle"), displayedMorph;
 
-    if (!isCollapsable && toggle) { toggle.remove(); }
+    if (!isCollapsable && toggle) {
+      toggle.remove();
+    }
     if (displayedNode && displayedNode.isMorph) {
       displayedMorph = this.displayedMorph = displayedNode;
+      displayedMorph.layout && displayedMorph.layout.forceLayout(); 
     } else {
       let {label} = this;
       displayedMorph = this.displayedMorph = label;
       this.labelValue = displayedNode;
-      displayedMorph.fit()
+      displayedMorph.fit();
       if (goalWidth) {
-        displayedMorph.width = Math.max(
-          displayedMorph.textBounds().width,
-          goalWidth - defaultToggleWidth);
+        displayedMorph.width = Math.max(displayedMorph.textBounds().width, goalWidth - defaultToggleWidth);
       }
     }
 
-    this.styleClasses = isSelected ? ['selected'] : ['deselected'];
-    
+    this.styleClasses = isSelected ? ["selected"] : ["deselected"];
 
     if (toggle) {
       toggle.fit();
       var toggleWidth = toggle.right + toggle.padding.right(),
-          {y: height} = this.extent = displayedMorph.extent.addXY(toggleWidth, 0);
-      toggle.leftCenter = pt(0, height/2+toggle.padding.top()/2);
+          {y: height} = (this.extent = displayedMorph.extent.addXY(toggleWidth, 0));
+      toggle.leftCenter = pt(0, height / 2 + toggle.padding.top() / 2);
       displayedMorph.topLeft = pt(toggleWidth, 0);
     } else {
       displayedMorph.topLeft = pt(defaultToggleWidth, 0);
-      this.extent = displayedMorph.extent.addXY(defaultToggleWidth, 0)
+      this.extent = displayedMorph.extent.addXY(defaultToggleWidth, 0);
     }
-
-// if (this.owner) this.width = this.owner.width;
 
     this.myNode = node;
     if (this.myNode) this.myNode.renderedNode = this;
@@ -389,7 +386,7 @@ export class Tree extends Morph {
 
   updateStyleSheet() {
     this.styleSheets = new StyleSheet({
-      ".TreeNode [name=keyString]": {
+      ".TreeNode .PropertyControl": {
         fontSize: this.fontSize,
         fontColor: this.fontColor
       },      

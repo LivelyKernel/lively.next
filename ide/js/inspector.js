@@ -1,16 +1,17 @@
 /* globals Power4 */
 import { Color, rect, pt } from "lively.graphics";
-import { obj, num, arr, promise, string } from "lively.lang";
-import { connect, disconnect, once, signal } from "lively.bindings";
-import { Morph, ShadowObject, Icon, StyleSheet, HorizontalLayout, config } from "lively.morphic";
+import { obj, arr, promise, string } from "lively.lang";
+import { connect, disconnect, once } from "lively.bindings";
+import { Morph, CustomLayout, Label, Icon, StyleSheet, config } from "lively.morphic";
 import { Tree, TreeData } from "lively.morphic/components/tree.js";
-import { ColorPicker } from "../styling/color-picker.js";
+
 import { isBoolean, isString, isNumber } from "lively.lang/object.js";
-import { ValueScrubber, SearchField, LabeledCheckBox } from "../../components/widgets.js";
+import { DropDownSelector, SearchField, LabeledCheckBox } from "../../components/widgets.js";
 import { last } from "lively.lang/array.js";
-import { StyleSheetEditor } from "../../style-rules.js";
+
 import { GridLayout } from "../../layout.js";
-import { FillEditor } from "../styling/style-editor.js";
+
+import { NumberWidget, StyleSheetWidget, BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
 
 var inspectorCommands = [
 
@@ -152,52 +153,110 @@ function propertiesOf(target) {
   return props;
 }
 
-export class PropertyControl extends Morph {
+export class PropertyControl extends Label {
 
   static render({
         target, property, keyString, 
         valueString, value
      }) {
-     var controlClass;
+     let propertyControl = new this({
+        keyString,
+        valueString
+      });
      // TODO:  this dispatch logic should be defined through the property
      // definition interface (i.e. static get properties()) where properties
      // also can define their 'type' and how this type is supposed to be
      // controlled by the inspector or style sheet editor
-     if (value && value.isColor) {
-       controlClass = ColorPropertyControl;
-     } if (value && value.isGradient) {
-       controlClass = GradientPropertyControl;
+     if (value && (value.isColor || value.isGradient)) {
+        let colorWidget = new ColorWidget({
+          color: value, 
+          gradientEnabled: value.isGradient
+        });
+        connect(colorWidget, 'color', propertyControl, 'propertyValue');
+        propertyControl.control = colorWidget;
+     } if (property == 'layout') {
+        propertyControl.control = new LayoutWidget({context: target});
+     } else if (property == 'clipMode') {
+        let selector = new DropDownSelector({
+          fill: Color.white.withA(.5),
+          name: 'valueString',
+          selectedValue: value,
+          values: ["visible", "hidden", "scroll", 'auto']
+        });
+        // hack: since derived properties that are parametrized by a style sheet do not
+        //       yet take effect in a morph such as the drop down selector, we need to
+        //       manually trigger an update at render time
+        selector.whenRendered().then(() => selector.updateStyleSheet());
+        connect(selector, 'selectedValue', propertyControl, 'propertyValue');
+        propertyControl.control = selector;
      } else if (isBoolean(value)) {
-       controlClass = BooleanPropertyControl;
+       propertyControl.control = new BooleanWidget({
+         name: 'valueString',
+         boolean: value
+       });
+       connect(propertyControl.control, 'boolean', propertyControl, 'propertyValue');
      } else if (isNumber(value)) {
-       controlClass = NumberPropertyControl;
+       propertyControl.control = new NumberWidget({
+           name: 'valueString',
+           height: 17, baseFactor: .5,
+           fontFamily: config.codeEditor.defaultStyle.fontFamily,
+           number: value,
+        });
+       connect(propertyControl.control, 'number', propertyControl, 'propertyValue');
      } else if (isString(value)) {
-       controlClass = StringPropertyControl;
+       //controlClass = StringPropertyControl;
      } else if (keyString == 'styleSheets') { 
-       controlClass = StyleSheetsPropertyControl;
-     } else if (keyString == 'styleClasses') {
-       // controlClass = StyleClassesPropertyControl;
+       propertyControl.control = new StyleSheetWidget({context: target});
      }
-    if (controlClass) {
-      return new controlClass({
-        keyString,
-        valueString,
-        value
-      });
+    if (propertyControl.control) {
+      connect(propertyControl.control, "openWidget", propertyControl, 'openWidget');
+      return propertyControl;
     }
-     return false;
+    return false;
   }
 
   static get properties() {
     return {
+      control: {
+        after: ['submorphs'],
+        derived: true,
+        get() {
+          return this.submorphs[0] || false;
+        },
+        set(c) {
+          this.submorphs = [c];
+        }
+      },
       root: {},
       keyString: {},
       valueString: {},
-      target: {},
-      property: {},
-      value: {},
-      layout: {initialize() {this.layout = new HorizontalLayout()}},
+      propertyValue: {},
+      fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
       fill:  {defaultValue: Color.transparent},
+      padding: {defaultValue: rect(0,0,10,0)},
+      layout: {
+        initialize() {
+          this.layout = new CustomLayout({
+            relayout(self) {
+              self.relayout();
+            }
+          });
+        }
+      },
+      submorphs: {
+        initialize() {
+          this.value = this.keyString + ":";
+          this.submorphs = [];
+        }
+      }
+    }
+  }
+
+  relayout() {
+    this.fit();
+    if (this.control) {
+      this.control.leftCenter = this.textBounds().rightCenter();
+      this.width = this.textBounds().width + this.control.bounds().width;
     }
   }
 
@@ -215,373 +274,6 @@ export class PropertyControl extends Morph {
    hl.fadeOut(2000);
   }
 }
-
-class NumberPropertyControl extends PropertyControl {
-
-  static get properties() {
-    return {
-      submorphs: {
-        initialize() {
-          this.submorphs = [{
-            type: "label", value: this.keyString + ':', name: 'keyString',
-            padding: rect(0,0,10,0), fontSize: 14, 
-            fontFamily: config.codeEditor.defaultStyle.fontFamily},
-            new ValueScrubber({
-               fontSize: 14, name: 'valueString', nativeCursor: '-webkit-grab',
-               fontColor: Color.rgbHex("#0086b3"), 
-               fontFamily: config.codeEditor.defaultStyle.fontFamily,
-               target: this.target, extent: pt(20, 15),
-               value: this.value || this.valueString, fill: Color.transparent,
-            })];
-           connect(this.get('valueString'), 'scrub', this, 'value')
-        }
-      }
-    }
-  }
-}
-
-class BooleanPropertyControl extends PropertyControl {
-  
-  static get properties() {
-    return {
-      keyString: {
-        after: ["submorphs"],
-        derived: true,
-        set(v) {
-          this.setProperty("keyString", v);
-          this.get("keyString").value = v + ":";
-        }
-      },
-      valueString: {
-        derived: true,
-        after: ["submorphs"],
-        set(v) {
-          this.setProperty("valueString", v);
-          this.get("valueString").value = v;
-        }
-      },
-      value: {
-        derived: true,
-        after: ["submorphs"],
-        set(v) {
-          this.setProperty("value", v);
-          this.get("valueString").fontColor = v ? Color.green : Color.red;
-        }
-      },
-      submorphs: {
-        initialize() {
-          this.submorphs = [
-            {
-              type: "label",
-              name: "keyString",
-              padding: rect(0, 0, 10, 0),
-              fontSize: 14,
-              fontFamily: config.codeEditor.defaultStyle.fontFamily
-            },
-            {
-              type: "label",
-              fontSize: 14,
-              name: "valueString",
-              nativeCursor: "pointer",
-              onMouseDown: evt => {
-                this.value = !this.value;
-              },
-              fontFamily: config.codeEditor.defaultStyle.fontFamily
-            }
-          ];
-        }
-      }
-    };
-  }
-
-}
-
-class StringPropertyControl extends PropertyControl {
-
-  static get properties() {
-    return {
-      submorphs: {
-        initialize() {
-          this.submorphs = [
-            {
-              type: "label",
-              value: this.keyString + ":",
-              name: "keyString",
-              padding: rect(0, 0, 10, 0),
-              fontSize: 14,
-              fontFamily: config.codeEditor.defaultStyle.fontFamily
-            },
-            {
-              type: "label",
-              value: this.valueString,
-              fontSize: 14,
-              name: "valueString",
-              fill: Color.white.withA(0.7),
-              fontColor: Color.rgbHex("#183691"),
-              fontFamily: config.codeEditor.defaultStyle.fontFamily
-            }
-          ];
-        }
-      }
-    }
-  }
-  
-}
-
-class GradientPropertyControl extends PropertyControl {
-
-   static get properties() {
-    return {
-      keyString: {
-        after: ['submorphs'],
-        derived: true,
-        set(v) {
-          this.setProperty('keyString', v);
-          this.get('keyString').value = v + ":";
-          this.get('keyString').fit();
-        },
-      },
-      value: {},
-      fontColor: {
-        after: ['submorphs'],
-        set(c) {
-          this.get('keyString').fontColor = c;
-          this.get('valueString').fontColor = c.withA(.7);
-        }
-      },
-      fontSize: {defaultValue: 15},
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            "[name=stops] .Label": {
-              opacity:.6,
-              nativeCursor: 'pointer',
-              fontFamily: config.codeEditor.defaultStyle.fontFamily,
-              fontSize: 14
-            },
-            ".colorValue": {
-              nativeCursor: 'pointer',
-              borderColor: Color.gray.darker(),
-              borderWidth: 1
-            },
-            "[name=keyString]": {
-              fontFamily: config.codeEditor.defaultStyle.fontFamily,
-              fontSize: 15
-            }
-          })
-        }
-      },
-      submorphs: {
-        initialize() {
-          this.submorphs = [
-            {
-              type: "label",
-              value: this.keyString + ":",
-              name: "keyString",
-              padding: rect(1, 1, 10, 0),
-            },
-            {
-              name: 'stops',
-              layout: new HorizontalLayout({direction: "centered", spacing: 1}),
-              fill: Color.transparent,
-              nativeCursor: 'pointer',
-              submorphs: [
-                {
-                  type: "label",
-                  value: this.value.type + "(",
-                  name: "valueString",
-                },
-                ...this.renderStops(),
-                {
-                  type: 'label',
-                  value: ')'
-                }
-              ]
-            }
-          ];
-          connect(this.getSubmorphNamed('stops'), 'onMouseDown', this, 'openFillEditor');
-        }
-      }
-    }
-  }
-
-  renderStops() {
-    let stops = [{
-       type: 'label',
-       padding: rect(0,0,5,0),
-       value: num.toDegrees(this.value.vectorAsAngle()).toFixed() + "°,"
-    }];
-    for (let i in this.value.stops) {
-      var {color, offset} = this.value.stops[i];
-      stops.push({
-        extent: pt(15, 15),
-        fill: Color.transparent,
-        submorphs: [
-          {
-            styleClasses: ["colorValue"],
-            center: pt(5, 7.5),
-            fill: color
-          }
-        ]
-      });
-      stops.push({
-        type: "label",
-        padding: rect(0,0,5,0),
-        value: (offset * 100).toFixed() + "%" + (i < this.value.stops.length - 1 ? ',' : '')
-      });
-    }
-    return stops;
-  }
-
-  openFillEditor() {
-     let editor = new FillEditor({value: this.value, title: 'Fill Control'}).open().openInWorld();
-     connect(editor, 'value', this, 'value');
-  }
-  
-}
-
-class ColorPropertyControl extends PropertyControl {
-
-  static get properties() {
-    return {
-      keyString: {
-        after: ['submorphs'],
-        derived: true,
-        set(v) {
-          this.setProperty('keyString', v);
-          this.get('keyString').value = v + ":";
-          this.get('keyString').fit();
-        },
-      },
-      valueString: {
-        derived: true,
-        after: ['submorphs'],
-        set(v) {
-          this.setProperty('valueString', v);
-          this.get('valueString').value = v;
-        }
-      },
-      value: {
-        derived: true,
-        after: ['submorphs'],
-        set(v) {
-          this.setProperty('value', v);
-          this.get('colorValue').fill = v;
-          this.valueString = obj.safeToString(v);
-        }
-      },
-      fontColor: {
-        after: ['submorphs'],
-        set(c) {
-          this.get('keyString').fontColor = c;
-          this.get('valueString').fontColor = c.withA(.7);
-        }
-      },
-      submorphs: {
-        initialize() {
-          this.submorphs = [
-            {
-              type: "label",
-              value: this.keyString + ":",
-              name: "keyString",
-              padding: rect(0, 0, 10, 0),
-              fontFamily: config.codeEditor.defaultStyle.fontFamily
-            },
-            {
-              layout: new HorizontalLayout({direction: "centered"}),
-              fill: Color.transparent,
-              submorphs: [
-                {
-                  extent: pt(15, 15),
-                  fill: Color.transparent,
-                  submorphs: [
-                    {
-                      name: "colorValue",
-                      center: pt(5, 7.5),
-                      fill: this.value,
-                      borderColor: Color.gray.darker(),
-                      nativeCursor: "pointer",
-                      borderWidth: 1,
-                      onMouseDown: evt => {
-                        evt.stop();
-                        this.openPicker();
-                      }
-                    }
-                  ]
-                },
-                {
-                  type: "label",
-                  value: this.valueString,
-                  fontSize: 14,
-                  name: "valueString",
-                  fontColor: Color.black.withA(0.6),
-                  fontFamily: config.codeEditor.defaultStyle.fontFamily
-                }
-              ]
-            }
-          ];
-        }
-      }
-    }
-  }
-
-  async openPicker(evt) {
-      const p = new ColorPicker({color: this.value});
-      p.position = pt(0, -p.height / 2);
-      connect(p, "color", this, "value");
-      await p.fadeIntoWorld($world.center);
-   }
-}
-
-class PropertyToolShortcut extends PropertyControl {
-  static get properties() {
-    return {
-      submorphs: {
-        initialize() {
-          this.submorphs = [{
-            type: "label", value: this.keyString + ':', name: 'keyString',
-            padding: rect(0,0,10,0), fontSize: 14, 
-            fontFamily: config.codeEditor.defaultStyle.fontFamily},
-            Icon.makeLabel('arrow-right', {fontSize: 15, padding: rect(1,1,4,1)}),
-            {type: "label", value: this.title, fontSize: 14, 
-             fontWeight: 'bold',
-             name: 'valueString', fill: Color.transparent, opacity: .8,
-             borderRadius: 5, padding: rect(0,1,0,0), nativeCursor: 'pointer', fontSize: 12,
-             borderWidth: 0}];
-          connect(this.get('valueString'), 'onMouseDown', this, 'openTool');
-        }
-      }
-    };
-  }
-}
-
-class StyleSheetsPropertyControl extends PropertyToolShortcut {
-  // shortcut for widgets to edit style sheets in a reasonable manner
-  static get properties() {
-     return {
-        title: {defaultValue: 'Edit Style Sheets'}
-     }
-  }
-
-  openTool() {
-     new StyleSheetEditor({target: this.get('inspector').targetObject}).open();
-  }
-  
-}
-
-class StyleClassesPropertyControl extends PropertyToolShortcut {
-  // shortcut to widget that allows to edit style classes more conveniently
-    static get properties() {
-     return {
-        title: {defaultValue: 'Edit Style Classes'}
-     }
-  }
-
-  openTool() {
-  
-  }
-}
-
 
 class InspectorTreeData extends TreeData {
 
@@ -623,9 +315,9 @@ class InspectorTreeData extends TreeData {
          value = node.value,
          controlClass;
      if (node._propertyWidget){
+        if (typeof node._propertyWidget == 'string') return node._propertyWidget;
         node._propertyWidget.keyString = keyString;
         node._propertyWidget.valueString = valueString;
-        //node._propertyWidget.value = value;
         return node._propertyWidget;
      }
      
@@ -641,11 +333,17 @@ class InspectorTreeData extends TreeData {
         !this.isInternalProperty(keyString) && 
         !(this.targetPropertyInfo[property] && this.targetPropertyInfo[property].readOnly)
       ) {
-        connect(node._propertyWidget, "value", target, property);
-      }
+        connect(node._propertyWidget, "propertyValue", target, property);
+        connect(node._propertyWidget, "openWidget", this, "onWidgetOpened", {
+          converter: widget => {
+            return {widget, node};
+          },
+          varMapping: {node: node._propertyWidget}
+        });      
+       }
      }
-     return node._propertyWidget || `${keyString}: ${valueString}`;
-  }  
+     return node._propertyWidget || (node._propertyWidget = `${keyString}: ${valueString}`);
+  }
   
   isCollapsed(node) { return node.isCollapsed; }
 
@@ -723,6 +421,10 @@ export default class Inspector extends Morph {
               fill: Color.gray.lighter(),
               nativeCursor: 'ns-resize'
             },
+            "[name=valueString]": {
+              fontFamily: config.codeEditor.defaultStyle.fontFamily,
+              fontSize: 15
+            }, 
             ".toggle": {
               nativeCursor: 'pointer',
               fill: Color.black.withA(.5), 
@@ -757,10 +459,11 @@ export default class Inspector extends Morph {
       if (!this.targetObject || !this.targetObject.isMorph) return;
       let change = last(this.targetObject.env.changeManager.changesFor(this.targetObject));
       if (change == this.lastChange) return;
+      if (this.focusedNode && this.focusedNode.keyString == change.prop) return;
       this.lastChange = change;
       this.prepareForNewTargetObject(this.targetObject);
    }
-    if (!this.targetObject.isWorld) this.startStepping(50, 'refreshProperties');
+    //if (!this.targetObject.isWorld) this.startStepping(50, 'refreshProperties');
   }
 
   get isInspector() { return true; }
@@ -851,7 +554,6 @@ export default class Inspector extends Morph {
       },
       new Tree({
         name: "propertyTree", ...treeStyle,
-        //bounds: propertyTreeBounds.withTopLeft(searchBarBounds.bottomLeft()),
         treeData: InspectorTreeData.forObject(null)
       }),
       Icon.makeLabel('keyboard-o', {
@@ -883,6 +585,7 @@ export default class Inspector extends Morph {
     ).catch(err => $world.logError(err));
 
     this.editorOpen = false;
+    connect(this.get('propertyTree'), 'onScroll', this, 'repositionOpenWidget');
     connect(this.get('resizer'), 'onDrag', this, 'adjustProportions');
     connect(this.get('terminal toggler'), 'onMouseDown', this, 'toggleCodeEditor');
     connect(this, "extent", this, "relayout");
@@ -891,6 +594,37 @@ export default class Inspector extends Morph {
     connect(searchField, 'searchInput', this, 'filterProperties');
   }
 
+  closeOpenWidget() {
+    this.openWidget.close();
+    disconnect(this.getWindow(), 'bringToFront', this.openWidget, 'openInWorld');
+  }
+
+  onWidgetOpened({node, widget}) {
+    debugger;
+    if (this.openWidget) {
+      this.openWidget.fadeOut();
+    }
+    this.focusedNode = node;
+    this.openWidget = widget;
+    once(this.get("propertyTree"), "onMouseDown", this, "closeOpenWidget");
+    connect(this.getWindow(), 'bringToFront', widget, 'openInWorld', {
+      converter: () => widget.globalPosition, varMapping: {widget}
+    });
+  }
+
+  repositionOpenWidget(evt) {
+    if (this.openWidget) {
+      let pos = this.focusedNode.globalBounds().center(),
+          treeBounds = this.get("propertyTree").globalBounds();
+      if (pos.y < treeBounds.top()) {
+        pos = treeBounds.topCenter()
+      } else if (treeBounds.bottom() - 20 < pos.y) {
+        pos = treeBounds.bottomCenter().addXY(0, -20);
+      }
+      this.openWidget.position = pos.withX(treeBounds.center().x);
+    }
+  }
+  
   adjustProportions(evt) {
     this.layout.row(1).height += evt.state.dragDelta.y;
   }
@@ -921,6 +655,7 @@ export default class Inspector extends Morph {
         tree = this.get('propertyTree');
     if (!this.originalData) {
       this.originalData = tree.treeData;
+      connect(this.originalData, 'onWidgetOpened', this, 'onWidgetOpened');
     }
     tree.treeData = this.originalData.filter({
        maxDepth: 2, showUnknown: this.get('unknowns').checked,
