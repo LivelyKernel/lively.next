@@ -335,7 +335,7 @@ export class NumberWidget extends Morph {
             columns: [1, {paddingLeft: 5, paddingRight: 5, fixed: 25}],
             grid: [["value", "up"], ["value", "down"]]
           });
-          this.update();
+          this.update(this.number);
         }
       },
       submorphs: {
