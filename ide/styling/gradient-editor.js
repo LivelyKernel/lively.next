@@ -9,6 +9,7 @@ import {num, obj, arr} from "lively.lang";
 import {Icon} from "lively.morphic/components/icons.js";
 import {StyleSheet} from "../../style-rules.js";
 import {connect, signal, once} from "lively.bindings";
+import { Popover } from "./style-popover.js";
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
 
@@ -75,17 +76,28 @@ class GradientTypeSelector extends Morph {
 }
 
 export class GradientEditor extends Morph {
+  static get properties() {
+    return {
+      gradientValue: {
+        set(v) {
+          if (!(v && v.isGradient)) {
+            v = false;
+          }
+          this.setProperty("gradientValue", v);
+        }
+      },
+      submorphs: {
+        initialize() {
+          this.build();
+        }
+      }
+    };
+  }
 
-   constructor(props) {
-      if (!props.target) throw Error("No target provided!");
-      super(props);
-      this.build();
-   }
-
-   remove() {
-      super.remove();
-      this.gradientHandle && this.gradientHandle.remove();
-   }
+  remove() {
+    super.remove();
+    this.gradientHandle && this.gradientHandle.remove();
+  }
 
   static get styleSheet() {
     return new StyleSheet({
@@ -130,7 +142,7 @@ export class GradientEditor extends Morph {
         tooltip: "Open Color Palette"
       },
       ".GradientEditor [name=typeSelector]": {fill: Color.transparent, extent: pt(180, 40)},
-      ".GradientEditor .modeButton": {nativeCursor: 'pointer', extent: pt(30, 30), borderWidth: 2},
+      ".GradientEditor .modeButton": {nativeCursor: "pointer", extent: pt(30, 30), borderWidth: 2},
       ".GradientEditor [name=instruction]": {
         fontSize: 15,
         padding: Rectangle.inset(15),
@@ -152,79 +164,85 @@ export class GradientEditor extends Morph {
     });
   }
 
-   get targetProperty() { return this.target[this.property]; }
-   set targetProperty(v) { this.target[this.property] = v; signal(this, "targetProperty", v); }
+  async selectRadialGradient() {
+    this.gradientClass = RadialGradient;
+    this.get("linearMode").borderColor = Color.gray.darker();
+    this.get("radialMode").borderColor = Color.orange;
+    await this.applyGradient(this.gradientClass);
+    await this.updateGradientHandles(this.gradientClass);
+  }
 
-   async selectRadialGradient() {
-      this.gradientClass = RadialGradient;
-      this.get("linearMode").borderColor = Color.gray.darker();
-      this.get("radialMode").borderColor = Color.orange;
-      await this.applyGradient(this.gradientClass);
-      await this.updateGradientHandles(this.gradientClass);
-   }
+  async selectLinearGradient() {
+    this.gradientClass = LinearGradient;
+    this.get("radialMode").borderColor = Color.gray.darker();
+    this.get("linearMode").borderColor = Color.orange;
+    await this.applyGradient(this.gradientClass);
+    await this.updateGradientHandles(this.gradientClass);
+  }
 
-   async selectLinearGradient() {
-      this.gradientClass = LinearGradient;
-      this.get("radialMode").borderColor = Color.gray.darker();
-      this.get("linearMode").borderColor = Color.orange;
-      await this.applyGradient(this.gradientClass);
-      await this.updateGradientHandles(this.gradientClass);
-   }
+  async applyGradient(gradientClass) {
+    const prevGradient = this.gradientValue, gradientEditor = this.get("gradientEditor");
+    if (prevGradient && prevGradient.isGradient) {
+      const {stops, focus, vector} = prevGradient;
+      this.gradientValue = new gradientClass({
+        stops,
+        bounds: this.gradientBounds,
+        focus,
+        vector
+      });
+    } else {
+      this.gradientValue = new gradientClass({
+        stops: [{color: Color.white, offset: 0}, {color: Color.black, offset: 1}],
+        bounds: this.gradientBounds
+      });
+    }
+    this.update(this.gradientValue);
+  }
 
-   async applyGradient(gradientClass) {
-      const prevGradient = this.targetProperty,
-            gradientEditor = this.get("gradientEditor");
-      if (prevGradient && prevGradient.isGradient) {
-         const {stops,focus, vector} = prevGradient;
-         await this.target.animate({[this.property]: new gradientClass({
-               stops, bounds: this.target.innerBounds(), focus, vector}), duration: 500});
-      } else {
-         await this.target.animate({[this.property]: new gradientClass({
-            stops: [
-              {color: Color.white, offset: 0},
-              {color: Color.black, offset: 1}
-            ],
-            bounds: this.target.innerBounds()}
-          ), duration: 500});
-      }
-      this.update();
-   }
+  showGradientHandlesOn(aMorph) {
+    this.handleMorph = aMorph;
+    this.updateGradientHandles();
+  }
 
-   async updateGradientHandles(gradientClass) {
-        const duration = 300;
-        this.gradientHandle && await this.gradientHandle.fadeOut(duration);
-        if (gradientClass == RadialGradient) {
-           this.gradientHandle = new GradientFocusHandle({target: this.target})
-        } else if (gradientClass == LinearGradient) {
-           this.gradientHandle = new GradientDirectionHandle({target: this.target})
-        }
-        if (this.gradientHandle) {
-           signal(this, "openHandle", this.gradientHandle);
-           this.gradientHandle.opacity = 0;
-           this.gradientHandle.animate({opacity: 1, duration});
-        }
-   }
+  async updateGradientHandles(gradientClass = this.gradientClass) {
+    // gradient handles need to be requested from the user of
+    // a gradient editor. It is not the responsibility of
+    // the gradient editor to know of the target at hand.
+    const duration = 300;
+    if (!this.handleMorph) return;
+    this.gradientHandle && (await this.gradientHandle.fadeOut(duration));
+    if (gradientClass == RadialGradient) {
+      this.gradientHandle = new GradientFocusHandle({target: this.handleMorph});
+    } else if (gradientClass == LinearGradient) {
+      this.gradientHandle = new GradientDirectionHandle({target: this.handleMorph});
+    }
+    if (this.gradientHandle) {
+      signal(this, "openHandle", this.gradientHandle);
+      this.gradientHandle.opacity = 0;
+      this.gradientHandle.animate({opacity: 1, duration});
+    }
+  }
 
-   update(g = this.targetProperty) {
-      if (g && g.isGradient) {
-        this.get("gradientEditor").update(g);
-      }
-   }
+  update(g = this.gradientValue) {
+    if (g && g.isGradient) {
+      this.get("gradientEditor").update(g);
+    }
+  }
 
-   build() {
-       var selector;
-       this.submorphs = [selector = new GradientTypeSelector({name: "typeSelector"}), this.gradientEditor()];
-       connect(selector, "radial", this, "selectRadialGradient");
-       connect(selector, "linear", this, "selectLinearGradient");
-       connect(this, "targetProperty", this, "update");
-       this.update();
-       selector.update(this.targetProperty);
-       this.targetProperty && this.updateGradientHandles(this.targetProperty.__proto__.constructor);
-   }
+  build() {
+    var selector;
+    this.submorphs = [(selector = new GradientTypeSelector({name: "typeSelector"})), this.gradientEditor()];
+    connect(selector, "radial", this, "selectRadialGradient");
+    connect(selector, "linear", this, "selectLinearGradient");
+    connect(this, "gradientValue", this, "update");
+    this.update(this.gradientValue);
+    selector.update(this.gradientValue);
+    this.gradientValue && this.updateGradientHandles(this.gradientValue.__proto__.constructor);
+  }
 
-   gradientEditor() {
-      return new GradientStopVisualizer({name: "gradientEditor", gradientEditor: this});
-   }
+  gradientEditor() {
+    return new GradientStopVisualizer({name: "gradientEditor", gradientEditor: this});
+  }
 }
 
 class StopControlHead extends Morph {
@@ -249,13 +267,16 @@ class StopControlHead extends Morph {
       if (!paletteField) {
          this.submorphs = [paletteField = this.paletteField(pt(10,10))];
       }
-      pickerField && pickerField.update(gradient);
-      paletteField.update(gradient);
+      paletteField.fill = this.stopColor = gradient.stops[this.index].color;
    }
    
    onHoverIn() {
       const color = this.targetProperty.stops[this.index].color;
-      this.palette = this.palette || new ColorPalette({color}),
+      this.palette = this.palette || new Popover({
+        name: "Color Palette",
+        targetMorph: new ColorPalette({color})
+      });
+      connect(this.palette.targetMorph, 'color', this.palette, 'color');
       this.picker = this.picker || new ColorPicker({color}),
       this.picker.color = color;
       this.scheduleExpand();
@@ -294,17 +315,25 @@ class StopControlHead extends Morph {
       this.submorphs = [this.closeButton(), palette, this.pickerField()];
       this.openInWorld(this.globalPosition);
       palette.animate({extent: pt(15,15), duration: 200});
-      await this.animate({layout: new HorizontalLayout({spacing: 3}), center: oldCenter, duration: 200});
+      await this.animate({
+        layout: new HorizontalLayout({spacing: 3}), 
+        center: oldCenter, duration: 200
+      });
       this.stopVisualizer.gradientEditor.update();
    }
            
    async shrink() {
       if (this.submorphs.length < 3) return;
       const oldCenter = this.center,
-            [close, palette, picker] = [this.get("close"), this.get("paletteField"), this.get("pickerField")];
+            [close, palette, picker] = [
+              this.get("close"), this.get("paletteField"), this.get("pickerField")
+            ];
       palette.animate({extent: pt(10,10), duration: 200});
       this.layout = null; close.remove(); picker.remove();
-      await this.animate({layout: new HorizontalLayout({spacing: 3}), center: oldCenter, duration: 200});
+      await this.animate({
+        layout: new HorizontalLayout({spacing: 3}), 
+        center: oldCenter, duration: 200
+      });
       this.stopControl.addMorph(this);
    }
            
@@ -331,12 +360,25 @@ class StopControlHead extends Morph {
            
    openColorWidget(name) {
        this.stopVisualizer.stopControls.forEach(c => c.head.closeAllWidgets());
-       this[name].position = pt(0,0);
+       this[name].topLeft = pt(0, 0);
        connect(this[name], "color", this, "updateColor");
        connect(this[name], "close", this, "onWidgetClosed");
        connect(this.stopVisualizer, "remove", this[name], "remove");
-       connect(this.stopVisualizer.gradientEditor, "onMouseDown", this[name], "remove");
+       connect(this[name], 'onBlur', this, 'removeWhenLostFocus', {
+         converter: () => name, varMapping: {name}
+       });
        this[name].fadeIntoWorld(this.globalBounds().bottomCenter());
+       this[name].focus();
+   }
+
+   removeWhenLostFocus(name) {
+    setTimeout(() => {
+      if (!$world.focusedMorph.ownerChain().includes(this[name])) {
+       this.closeColorWidget(name);
+     } else {
+       this[name].focus();
+     }
+    }, 100);
    }
    
    closeColorWidget(name) {
@@ -349,32 +391,30 @@ class StopControlHead extends Morph {
    }
    
    paletteField(extent) {
-       const stopControl = this;
-       return morph({
+       const stopControl = this,
+             paletteField = morph({
           type: "ellipse", name: "paletteField", extent,
           styleClasses: ['paletteField'],
-          update(gradient) {
-             this.fill = stopControl.stopColor = gradient.stops[stopControl.index].color;
-          },
-          onMouseDown: () => {
-             this.openColorWidget("palette");
-             this.closeColorWidget("picker");
-          }
-       })
+       });
+     connect(
+       paletteField, 'onMouseDown', 
+       this, 'openColorWidget', {
+         converter: () => 'palette'
+       }
+     );
+     return paletteField;
    }
            
    pickerField() {
-       return new Image({
+       let pickerField = new Image({
           name: "pickerField",
-          styleClasses: ['pickerField'],
-          update: (gradient) => {
-             this.stopColor = gradient.stops[this.index].color
-          },
-          onMouseDown: () => {
-             this.openColorWidget("picker");
-             this.closeColorWidget("palette");
-          }
+          styleClasses: ['pickerField']
        });
+      connect(pickerField, 'onMouseDown', 
+              this, 'openColorWidget', {
+        converter: () => 'picker'
+      });
+     return pickerField;
    }
 }
 
@@ -386,10 +426,10 @@ class GradientStopVisualizer extends Morph {
          gradientEditor: {},
          targetProperty: {
            get() {
-             return this.gradientEditor.targetProperty;
+             return this.gradientEditor.gradientValue;
            },
            set(v) {
-             this.gradientEditor.targetProperty = v;
+             this.gradientEditor.gradientValue = v;
            }
          },
          submorphs: {
@@ -791,9 +831,9 @@ class GradientDirectionHandle extends Ellipse {
   get isHaloItem() { return true }
 
   relayout() {
-      if (this.owner)
-        this.position = this.owner.localizePointFrom(this.target.extent.scaleBy(.5), this.target);
-      this.rotationPoint.relayout();
+    if (this.owner)
+      this.position = this.owner.localizePointFrom(this.target.extent.scaleBy(0.5), this.target);
+    this.rotationPoint.relayout();
   }
 
   initRotationPoint() {
