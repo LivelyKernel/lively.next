@@ -394,9 +394,9 @@ export class Morph {
       styleProperties: {
         derived: true, readOnly: true,
         get() {
-          let p = this.propertiesAndPropertySettings().properties,
+          var p = this.propertiesAndPropertySettings().properties,
               styleProps = [];
-          for (let prop in p)
+          for (var prop in p)
             if (p[prop].isStyleProp)
               styleProps.push(prop);
           return styleProps;
