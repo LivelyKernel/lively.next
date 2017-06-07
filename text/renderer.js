@@ -61,7 +61,7 @@ function installCSS(domEnv) {
 
     .newtext-text-layer.wrap-by-chars {
       white-space: pre-wrap;
-      word-break: break-word;
+      word-break: break-all;
     }
 
     .newtext-text-layer.no-wrapping {
