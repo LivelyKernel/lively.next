@@ -995,8 +995,11 @@ var commands = [
     name: "toggle line wrapping",
     scrollCursorIntoView: false,
     multiSelectAction: "single",
-    exec: function(morph) {
-      morph.keepPosAtSameScrollOffsetWhile(() => morph.lineWrapping = !morph.lineWrapping);
+    exec: function(morph) {      
+      morph.keepPosAtSameScrollOffsetWhile(() =>
+        morph.lineWrapping = morph.lineWrapping
+          ? false : morph.fontMetric.isProportional(morph.fontFamily)
+            ? true : "by-chars");
       return true;
     }
   },
