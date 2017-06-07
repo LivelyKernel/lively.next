@@ -1,8 +1,8 @@
-import { Morph, Label, HorizontalLayout, StyleSheet, Icon, GridLayout, config } from "lively.morphic";
+import { Morph, Text, morph, Label, HorizontalLayout, StyleSheet, Icon, GridLayout, config } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 import { Color, LinearGradient, pt, rect } from "lively.graphics";
 import { ValueScrubber } from "../components/widgets.js";
-import { FillPopover, VerticesPopover, LayoutPopover, Popover } from "./styling/style-popover.js";
+import { FillPopover, ShadowPopover, PointPopover, VerticesPopover, LayoutPopover, Popover } from "./styling/style-popover.js";
 import { num, obj } from "lively.lang";
 import { StyleSheetEditor } from "../style-rules.js";
 
@@ -303,7 +303,7 @@ export class NumberWidget extends Morph {
       },
       min: {defaultValue: -Infinity},
       max: {defaultValue: Infinity},
-      padding: {defaultValue: rect(0)},
+      padding: {isStyleProp: true, defaultValue: rect(5,3,0,0)},
       baseFactor: {
         after: ['submorphs'],
         derived: true,
@@ -392,34 +392,34 @@ export class NumberWidget extends Morph {
 
   updateStyleSheet() {
     this.styleSheets = new StyleSheet({
-            ".Button": {
-              clipMode: "hidden",
-              fill: Color.transparent,
-              borderWidth: 0
-            },
-            ".focused .Button": {visible: true},
-            ".unfocused .Button": {visible: false},
-            ".PropertyInspector .Button.activeStyle [name=label]": {
-              fontColor: Color.white.darker()
-            },
-            ".Button.triggerStyle [name=label]": {
-              fontColor: Color.black
-            },
-            ".NumberWidget": {
-              extent: pt(55, 25),
-              fill: this.fill || Color.transparent,
-              clipMode: "hidden"
-            },
-            "[name=down]": {padding: rect(0, -3)},
-            "[name=up]": {padding: rect(0, -5)},
-            "[name=value]": {
-              padding: this.padding,
-              fill: Color.transparent,
-              fontSize: this.fontSize,
-              fontColor: this.fontColor,
-              fontFamily: this.fontFamily,
-            }
-          });
+      ".Button": {
+        clipMode: "hidden",
+        fill: Color.transparent,
+        borderWidth: 0
+      },
+      ".focused .Button": {visible: true},
+      ".unfocused .Button": {visible: false},
+      ".PropertyInspector .Button.activeStyle [name=label]": {
+        fontColor: Color.white.darker()
+      },
+      ".Button.triggerStyle [name=label]": {
+        fontColor: Color.black
+      },
+      ".NumberWidget": {
+        extent: pt(55, 25),
+        fill: this.fill || Color.transparent,
+        clipMode: "hidden"
+      },
+      "[name=down]": {padding: rect(0, -3)},
+      "[name=up]": {padding: rect(0, -5)},
+      "[name=value]": {
+        padding: this.padding,
+        fill: Color.transparent,
+        fontSize: this.fontSize,
+        fontColor: this.fontColor,
+        fontFamily: this.fontFamily
+      }
+    });
   }
 
   update(v, fromScrubber = true) {
@@ -445,4 +445,94 @@ export class NumberWidget extends Morph {
     if (this.min != undefined && this.number <= this.min) return;
     this.update(this.number - 1, false);
   }
+}
+
+export class ShadowWidget extends Morph {
+
+  static get properties() {
+    return {
+      shadowValue: {},
+      fill: {defaultValue: Color.transparent},
+      nativeCursor: {defaultValue: 'pointer'},
+      fontSize: {defaultValue: 12},
+      layout: {
+        initialize() {
+          this.layout = new HorizontalLayout();
+        }
+      },
+      submorphs: {
+        initialize() {
+          this.update();
+        }
+      }
+    }
+  }
+
+  onMouseDown(evt) {
+    this.openPopover();
+  }
+
+  openPopover() {
+    let shadowEditor = new ShadowPopover({shadowValue: this.shadowValue});
+    shadowEditor.fadeIntoWorld(this.globalBounds().center());
+    connect(shadowEditor, 'shadowValue', this, 'shadowValue');
+    connect(this, 'shadowValue', this, 'update');
+    signal(this, "openWidget", shadowEditor);
+  }
+
+  update() {
+    if (!this.shadowValue) {
+      this.submorphs = [{opacity: .8, reactsToPointer: false, 
+                         name: 'valueString', type: 'label', value: 'No Shadow'}];
+      return;
+    }
+    let {inset, blur, spread, distance, color} = this.shadowValue;
+    this.submorphs = [
+      {name: 'valueString', opacity: .7, reactsToPointer: false,
+       type: 'label', value: `${this.shadowValue.inset ? "inset" : "drop"}-shadow(`},
+      morph({
+        fill: Color.transparent,
+        extent: pt(this.fontSize + 6, this.fontSize + 4),
+        submorphs: [
+          {
+            extent: pt(this.fontSize, this.fontSize),
+            position: pt(2, 2),
+            fill: color,
+            borderColor: Color.black,
+            borderWidth: 1
+          }
+        ]
+      }),
+      {name: 'valueString', type: 'label', opacity: .7,reactsToPointer: false,
+       value: `, ${blur}px, ${distance}px, ${spread}px)`}
+    ];
+  }  
+}
+
+export class PointWidget extends Label {
+
+  static get properties() {
+    return {
+      fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
+      nativeCursor: {defaultValue: 'pointer'},
+      pointValue: {
+        set(p) {
+          this.setProperty('pointValue', p);
+          this.value = obj.safeToString(p);
+        }
+      }    
+    }
+  }
+
+  onMouseDown(evt) {
+    this.openPopover();
+  }
+
+  openPopover() {
+    let editor = new PointPopover({pointValue: this.pointValue});
+    editor.fadeIntoWorld(this.globalBounds().center());
+    connect(editor, 'pointValue', this, 'pointValue');
+    signal(this, "openWidget", editor);
+  }
+  
 }
