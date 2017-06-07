@@ -98,7 +98,6 @@ export class ColorPickerField extends Morph {
                   type: "image",
                   autoResize: false,
                   imageUrl: WHEEL_URL,
-                  onMouseDown: evt => this.openPicker(evt)
                 }
               ]
             }
