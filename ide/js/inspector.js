@@ -11,8 +11,9 @@ import { last } from "lively.lang/array.js";
 
 import { GridLayout } from "../../layout.js";
 
-import { NumberWidget, StyleSheetWidget, BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
+import { NumberWidget, ShadowWidget, PointWidget, StyleSheetWidget, BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
 import { RichTextControl } from "../../text/ui.js";
+import { Point } from "lively.graphics/geometry-2d.js";
 
 var inspectorCommands = [
 
@@ -168,22 +169,28 @@ export class PropertyControl extends Label {
     if (value && (value.isColor || value.isGradient)) {
       let colorWidget = new ColorWidget({
         color: value,
-        gradientEnabled: value.isGradient
+        gradientEnabled: property == 'fill'
       });
       connect(colorWidget, "color", propertyControl, "propertyValue");
       propertyControl.control = colorWidget;
     }
     if (property == "layout") {
       propertyControl.control = new LayoutWidget({context: target});
-      connect(propertyControl.control, 'layoutChanged', PropertyControl, 'propertyValue')
+      connect(propertyControl.control, 'layoutChanged', propertyControl, 'propertyValue')
     } else if (property == "fontFamily") {
       this.renderValueSelector(
         propertyControl,
         value,
         RichTextControl.basicFontItems().map(f => f.value)
       );
+    } else if (value && value.isPoint) {
+      propertyControl.control = new PointWidget({name: "valueString", pointValue: value});
+      connect(propertyControl.control, 'pointValue', propertyControl, 'propertyValue')
     } else if (property == "fontWeight") {
       this.renderValueSelector(propertyControl, value, ["bold", "bolder", "light", "lighter"]);
+    } else if (property == 'dropShadow') {
+      propertyControl.control = new ShadowWidget({name: 'valueString', shadowValue: value});
+      connect(propertyControl.control, 'shadowValue', propertyControl, 'propertyValue');
     } else if (property.includes('borderStyle')) {
       this.renderValueSelector(propertyControl, value, ["none", "hidden", "dotted", "dashed", "solid", "double", "groove", "ridge", "inset", "outset"]);
     } else if (property == "nativeCursor") {
@@ -239,6 +246,8 @@ export class PropertyControl extends Label {
         name: "valueString",
         height: 17,
         baseFactor: 0.5,
+        fill: Color.transparent,
+        padding: rect(0),
         fontFamily: config.codeEditor.defaultStyle.fontFamily,
         number: value
       });
@@ -527,6 +536,7 @@ export default class Inspector extends Morph {
   get targetObject() { return this.state.targetObject; }
   set targetObject(obj) {
     this.state.targetObject = obj;
+    this.originalData = null;
     this.prepareForNewTargetObject(obj);
   }
 
