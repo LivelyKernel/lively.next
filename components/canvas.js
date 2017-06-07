@@ -1,4 +1,4 @@
-import { pt, Color } from "lively.graphics";
+import { pt, rect, Color } from "lively.graphics";
 import { Morph } from "lively.morphic";
 import { connect } from "lively.bindings/index.js";
 
@@ -43,7 +43,7 @@ export class Canvas extends Morph {
       this.__canvas_init__(new_canvas);
       delete this.__canvas_init__;
     } else if (this.preserveContents && this.contextType == "2d" && old_canvas && old_canvas !== new_canvas) {
-      new_canvas.getContext(this.contextType).drawImage(old_canvas, 0, 0);
+      this.context.drawImage(old_canvas, 0, 0);
     }
   }
   get _canvas() { return this.__canvas__; }
@@ -97,5 +97,48 @@ export class Canvas extends Morph {
       this.context.drawImage(img, 0, 0);
     }
     img.src = uri;
+  }
+
+  imageData(bounds) {
+    if (!bounds) bounds = this.canvasBounds;
+    let {x, y, width, height} = bounds;
+    return this.context.getImageData(x, y, width, height);
+  }
+
+  nonTransparentArea() {
+    let imageData = this.imageData();
+    let {data, width, height} = imageData;
+    let minX = width, minY = height;
+    for (let y = 0; y < height; y++)
+      for (let x = 0; x < minX; x++)
+        if (data[(y * width + x) * 4 + 3] > 0) {
+          minX = x;
+          if (minY > y) minY = y;
+        }
+    if (minX === width) return rect(0, 0, 0, 0);
+    let maxX = minX, maxY = minY;
+    for (let y = height - 1; y > minY; y--)
+      for (let x = width - 1; x > maxX; x--)
+        if (data[(y * width + x) * 4 + 3] > 0) {
+          maxX = x;
+          if (maxY < y) maxY = y;
+        }
+    return {
+      imageData,
+      bounds: rect(minX, minY, maxX - minX + 1, maxY - minY + 1),
+    }
+  }
+
+  trimNonTransparent() {
+    let {imageData, bounds} = this.nonTransparentArea();
+    if (!bounds.topLeft().equals(pt(0,0))) {
+      let {context} = this,
+          {x, y, width, height} = bounds;
+      context.putImageData(imageData, -x, -y, x, y, width, height);
+      this.position = this.position.addPt(bounds.topLeft());
+    }
+    if (!bounds.extent().equals(this.extent)) {
+      this.extent = bounds.extent();
+    }
   }
 }
