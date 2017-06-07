@@ -1,5 +1,5 @@
 import { Color } from "lively.graphics";
-import { Morph, Label, HorizontalLayout, config } from "lively.morphic";
+import { Morph, StyleSheet, Label, HorizontalLayout, config } from "lively.morphic";
 
 export class TooltipViewer {
 
@@ -65,16 +65,23 @@ export class TooltipViewer {
 
 export class Tooltip extends Morph {
 
+  static get styleSheet() {
+    return new StyleSheet({
+      ".Tooltip": {
+        draggable: false,
+        fill: Color.black.withA(0.5),
+        borderRadius: 4,
+        fontColor: Color.white,
+        layout: new HorizontalLayout({spacing: 5})
+      },
+      '.Tooltip .Label': {
+        fontColor: Color.white
+      }
+    })
+  }
+
   static get properties() {
     return {
-      draggable: {defaultValue: false},
-      fill: {defaultValue: Color.black.withA(.5)},
-      borderRadius: {defaultValue: 4},
-      layout: {
-        initialize() {
-          this.layout = new HorizontalLayout({spacing: 5});
-        }
-      },
       description: {
         after: ['submorphs'],
         derived: true,
@@ -86,7 +93,6 @@ export class Tooltip extends Morph {
           const [descriptor] = this.submorphs;
           descriptor.fixedWidth = stringOrAttributes.length > 40;
           descriptor.value = stringOrAttributes;
-          //descriptor.fit();
         }
       },
       submorphs: {
@@ -94,9 +100,6 @@ export class Tooltip extends Morph {
           this.submorphs = [
             new Label({
               width: 200,
-              autofit: true,
-              fill: Color.transparent,
-              fontColor: Color.white
             })
           ];
         }
