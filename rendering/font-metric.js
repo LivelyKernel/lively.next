@@ -435,8 +435,8 @@ class DOMTextMeasure {
 
                    && charBoundsOfBigMonospacedLine(
                     morph, fontMetric, line, lineNode,
-                    offsetX - textNodeOffsetLeft,
-                    offsetY - textNodeOffsetTop,
+                    offsetX,
+                    offsetY,
                     styleOpts, renderTextLayerFn))
 
                 || charBoundsOfLine(line, lineNode,
@@ -512,7 +512,7 @@ function charBoundsOfBigMonospacedLine(
   let textLength = line.text.length,
       index = 0;
 
-  if (textLength < 500 || !(typeof GLOBAL.getComputedStyle === "function")
+  if (textLength < 500 || typeof GLOBAL.getComputedStyle !== "function"
    || fontMetric.isProportional(GLOBAL.getComputedStyle(lineNode).fontFamily)) return null;
 
   let lineWidth = Infinity,
@@ -523,7 +523,7 @@ function charBoundsOfBigMonospacedLine(
     ({width: lineWidth, height: lineHeight} = lineNode.getBoundingClientRect());
 
   let {width, height} = fontMetric._domMeasure.defaultCharExtent(
-        morph, {defaultTextStyle, width: 10000}, directRenderTextLayerFn),
+        morph, {defaultTextStyle}, directRenderTextLayerFn),
       x = offsetX,
       y = offsetY,
       result = new Array(textLength);
@@ -570,6 +570,7 @@ function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
         ({left, top, width, height} = measureCharInner(document, textNode, i, "right")),
         x = left + offsetX;
         y = top + offsetY;
+
         result[index++] = {x,y,width,height};
       }
 
