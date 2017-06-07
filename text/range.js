@@ -99,6 +99,8 @@ export class Range {
 
   copy() { return new Range(this); }
 
+  toLiteral() { return {start: this.start, end: this.end}; }
+
   merge(otherRange) {
     if (!otherRange.isRange) otherRange = new Range(otherRange);
     if (lessPosition(this.end, otherRange.start) || lessPosition(otherRange.end, this.start))

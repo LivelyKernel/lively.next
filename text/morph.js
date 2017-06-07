@@ -774,7 +774,6 @@ export class Text extends Morph {
     return this.pluginCollect("getCommands", (this._commands || []).concat(commands));
   }
 
-
   execCommand(commandOrName, args, count, evt) {
     var {name, command} = this.lookupCommand(commandOrName) || {};
     if (!command) return undefined;
@@ -1155,19 +1154,20 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   addTextAttribute(attr, range = this.selection) {
+    let plainRange = {start: range.start, end: range.end};
     this.undoManager.undoStart(this, "addTextAttribute");
     this.addMethodCallChangeDoing({
       target: this,
       selector: "addTextAttribute",
-      args: [attr, range],
+      args: [attr, plainRange],
       undo: {
         target: this,
         selector: "removeTextAttribute",
-        args: [attr, range],
+        args: [attr, plainRange],
       }
     }, () => {
-      this.document.mixinTextAttribute(attr, range);
-      this.onAttributesChanged(range);
+      this.document.mixinTextAttribute(attr, plainRange);
+      this.onAttributesChanged(plainRange);
       this.consistencyCheck();
     });
     this.undoManager.undoStop();
@@ -1175,19 +1175,20 @@ export class Text extends Morph {
   }
 
   removeTextAttribute(attr, range = this.selection) {
+    let plainRange = {start: range.start, end: range.end};
     this.undoManager.undoStart(this, "removeTextAttribute");
     this.addMethodCallChangeDoing({
       target: this,
       selector: "removeTextAttribute",
-      args: [attr, range],
+      args: [attr, plainRange],
       undo: {
         target: this,
         selector: "addTextAttribute",
-        args: [attr, range],
+        args: [attr, plainRange],
       }
     }, () => {
-      this.document.mixoutTextAttribute(attr, range);
-      this.onAttributesChanged(range);
+      this.document.mixoutTextAttribute(attr, plainRange);
+      this.onAttributesChanged(plainRange);
       this.consistencyCheck();
     });
     this.undoManager.undoStop();
