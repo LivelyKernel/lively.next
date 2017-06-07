@@ -131,11 +131,12 @@ export class ShadowObject {
 
     constructor(args) {
         if (obj.isBoolean(args)) args = config.defaultShadow;
-        const {rotation, distance, blur, color, morph, inset} = args;
+        const {rotation, distance, blur, color, morph, inset, spread} = args;
         this.rotation = obj.isNumber(rotation) ? rotation : 45; // in degrees
         this.distance = obj.isNumber(distance) ? distance : 2;
         this.blur = obj.isNumber(blur) ? blur : 6;
         this.inset = inset || false;
+        this.spread = spread || 0;
         this.color = color || Color.gray.darker();
         this.morph = morph;
     }
@@ -183,7 +184,7 @@ export class ShadowObject {
 
     toCss() {
        const {x, y} = Point.polar(this.distance, num.toRadians(this.rotation));
-       return `${this.inset ? 'inset' : ''} ${this.color.toString()} ${x}px ${y}px ${this.blur}px`
+       return `${this.inset ? 'inset' : ''} ${this.color.toString()} ${x}px ${y}px ${this.blur}px ${this.spread}px`
     }
 
     toFilterCss() {
