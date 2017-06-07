@@ -337,22 +337,36 @@ class DOMTextMeasure {
         {defaultCharWidthHeightCache} = this,
         found = defaultCharWidthHeightCache[styleKey];
 
-    if (found) return found;
+    // if (found) return found;
 
-    let {doc} = this,
-        testString = "abcdefghijklmnopqrstufwxyz ABCDEFGHIJKLMNOPQRSTUFWXYZ 1234567890 {}[];,./<>?'\"!@#$%^&*()-=_+";
+    var {doc} = this,
+        testStringW = "abcdefghijklmnopqrstufwxyz ABCDEFGHIJKLMNOPQRSTUFWXYZ 1234567890 {}[];,./<>?'\"!@#$%^&*()-=_+",
+        testStringH = "H\ne\nll\no";
 
     return this.withTextLayerNodeDo(
       morph,
       rendertTextLayerFn, styleOpts, styleKey,
       textNode => {
-        let span = doc.createElement("span");
-        span.className = "line";
-        textNode.appendChild(span);
-        span.textContent = testString;
-        let {width, height} = span.getBoundingClientRect();
-        if (!this.debug) textNode.removeChild(span);
-        return defaultCharWidthHeightCache[styleKey] = {width: width/testString.length, height};
+        var spanW = doc.createElement("span");
+        spanW.className = "line";
+        spanW.style.whiteSpace = "pre";
+        textNode.appendChild(spanW);
+        spanW.textContent = testStringW;
+        var {width} = spanW.getBoundingClientRect();
+
+        var spanH = doc.createElement("span");
+        spanH.className = "line";
+        spanH.style.whiteSpace = "pre";
+        textNode.appendChild(spanH);
+        spanH.textContent = testStringH;
+        var {height} = spanH.getBoundingClientRect();
+
+        textNode.removeChild(spanW);
+        textNode.removeChild(spanH);
+        return defaultCharWidthHeightCache[styleKey] = {
+          width: width/testStringW.length,
+          height: Math.ceil(height/4)
+        };
       });
   }
 
