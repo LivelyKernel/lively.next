@@ -848,6 +848,12 @@ export class Morph {
       this.innerBounds().union(this.submorphBounds()) :
       this.innerBounds()).extent().addPt(this.scrollbarOffset);
   }
+  
+  scrollBounds() {
+    let {x, y} = this.scroll,
+        {x: w, y: h} = this.scrollExtent;
+    return new Rectangle(x,y, w,h);
+  }
 
   scrollDown(n) { this.scroll = this.scroll.addXY(0, n); }
   scrollUp(n) { this.scrollDown(-n); }
