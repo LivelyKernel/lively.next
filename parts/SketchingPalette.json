@@ -1,0 +1,4281 @@
+{
+  "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+  "snapshot": {
+    "Palette_EBA1A592_5893_450A_B1F9_61F14789B907": {
+      "rev": 490855,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "Palette"
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "E9CE6B5C-8012-4150-A62E-F18EB511BDED",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(493.0,369.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(617.3,135.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(60,60,60)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+              "rev": 491227
+            },
+            {
+              "__ref__": true,
+              "id": "morph_98C54C6E_1B4F_4C8A_9057_122B4522257E",
+              "rev": 495295
+            },
+            {
+              "__ref__": true,
+              "id": "morph_3DDF4756_1207_4E10_85A3_16AB81ACDE34",
+              "rev": 495296
+            },
+            {
+              "__ref__": true,
+              "id": "morph_A4BAE1B0_F1E8_44D0_B5B2_050BD3FFA90F",
+              "rev": 495297
+            },
+            {
+              "__ref__": true,
+              "id": "morph_26031749_FFC9_41D8_BFA0_1CBC16DEF260",
+              "rev": 495298
+            },
+            {
+              "__ref__": true,
+              "id": "ellipse_F5B859EF_5798_4DEA_A6B6_766325C1FF90",
+              "rev": 495302
+            },
+            {
+              "__ref__": true,
+              "id": "ellipse_328821BD_4897_4762_B090_7BA56FC99985",
+              "rev": 495306
+            },
+            {
+              "__ref__": true,
+              "id": "ellipse_ACDA641E_303E_4A4C_821F_3A4DE05A9A7F",
+              "rev": 495310
+            },
+            {
+              "__ref__": true,
+              "id": "ellipse_06690B4E_74C0_4888_82BF_C74FDF250FAE",
+              "rev": 495314
+            },
+            {
+              "__ref__": true,
+              "id": "ellipse_5CEDBDE2_D922_42DE_A248_53E2EE99A795",
+              "rev": 495318
+            },
+            {
+              "__ref__": true,
+              "id": "ellipse_98787D20_FDC4_4390_A5DC_2C9B12C63F83",
+              "rev": 495322
+            },
+            {
+              "__ref__": true,
+              "id": "ellipse_6304050D_50CB_4946_BDF3_CF616C7B478D",
+              "rev": 495326
+            },
+            {
+              "__ref__": true,
+              "id": "ellipse_5C63A1C5_A6E8_4C0F_8F69_CCA968C59ABB",
+              "rev": 495330
+            },
+            {
+              "__ref__": true,
+              "id": "ellipse_BBB1D03A_EF77_4BBA_9A88_846384692255",
+              "rev": 495334
+            }
+          ]
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Palette",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 10
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 10
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 10
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 10
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Palette",
+        "module": {
+          "package": {
+            "name": "Palette"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "E9CE6B5C-8012-4150-A62E-F18EB511BDED": {
+      "rev": 0,
+      "props": {
+        "_rev": {
+          "key": "_rev",
+          "value": 0
+        },
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 6
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": false
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0.6)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        },
+        "onChange": {
+          "key": "onChange"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    },
+    "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972": {
+      "rev": 491227,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "7A4B1859-34CF-46A1-93D8-E26426B8ACB0",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "97FC5D31-12D1-4556-B5F3-0784773A9126",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "085CF753-68E7-4A23-96E3-AC8F89C192D0",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "6F795486-489B-4691-A31F-3B38E42DA457",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "3EB06B40-2022-41D5-AE45-0C6BAB193CD5",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "okButton"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,84.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(69.4,40.0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "label_F9B0BE54_1B64_4DC8_9EF3_969409897F44",
+              "rev": 490861
+            },
+            {
+              "__ref__": true,
+              "id": "label_555E1324_2953_4E22_A751_2E0064EDD4C2",
+              "rev": 490862
+            }
+          ]
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Button",
+            "Morph",
+            "morph",
+            "activeStyle"
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(4,2,0,0)"
+        },
+        "activeMode": {
+          "key": "activeMode",
+          "value": "active"
+        },
+        "labelMorph": {
+          "key": "labelMorph",
+          "value": {
+            "__ref__": true,
+            "id": "label_F9B0BE54_1B64_4DC8_9EF3_969409897F44",
+            "rev": 490861
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Button",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "components/buttons.js"
+        }
+      }
+    },
+    "7A4B1859-34CF-46A1-93D8-E26426B8ACB0": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "extent"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "BD738625-BFA3-4D4D-A6B0-25B70C864C66",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "BD738625-BFA3-4D4D-A6B0-25B70C864C66": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        }
+      }
+    },
+    "97FC5D31-12D1-4556-B5F3-0784773A9126": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "padding"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "9A049746-CCEB-42DE-86D6-119F369D618E",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "9A049746-CCEB-42DE-86D6-119F369D618E": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        }
+      }
+    },
+    "085CF753-68E7-4A23-96E3-AC8F89C192D0": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fontSize"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "89B438B4-AC24-46C1-818A-55B200F202AA",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "89B438B4-AC24-46C1-818A-55B200F202AA": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        }
+      }
+    },
+    "6F795486-489B-4691-A31F-3B38E42DA457": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fontFamily"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "9307FFBC-F4F6-47B5-968E-7CBFE1CCD109",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "9307FFBC-F4F6-47B5-968E-7CBFE1CCD109": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        }
+      }
+    },
+    "3EB06B40-2022-41D5-AE45-0C6BAB193CD5": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "fire"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "accept"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "AA00207B-DBBE-47A9-BE7F-9DEC0CBD3C3F",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "AA00207B-DBBE-47A9-BE7F-9DEC0CBD3C3F": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        }
+      }
+    },
+    "label_F9B0BE54_1B64_4DC8_9EF3_969409897F44": {
+      "rev": 490861,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "A92E64BE-D9F3-444A-9BAF-FC9216928B3B",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "label"
+        },
+        "reactsToPointer": {
+          "key": "reactsToPointer",
+          "value": false
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(26.0,13.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(17.3,14.0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "OK",
+            null
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Label",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/label.js"
+        }
+      }
+    },
+    "A92E64BE-D9F3-444A-9BAF-FC9216928B3B": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "label_F9B0BE54_1B64_4DC8_9EF3_969409897F44",
+            "rev": 490861
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "extent"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "relayout"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "0330D4D3-80CC-4966-AEE1-577576E2C145",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "0330D4D3-80CC-4966-AEE1-577576E2C145": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "label_F9B0BE54_1B64_4DC8_9EF3_969409897F44",
+            "rev": 490861
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "button_9BC8E4F8_26A3_4960_BF9E_33FB39AEC972",
+            "rev": 491227
+          }
+        }
+      }
+    },
+    "label_555E1324_2953_4E22_A751_2E0064EDD4C2": {
+      "rev": 490862,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "iconMorph"
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "origin": {
+          "key": "origin",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Label",
+            "Morph",
+            "morph"
+          ]
+        },
+        "textAndAttributes": {
+          "key": "textAndAttributes",
+          "value": [
+            "",
+            null
+          ]
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,0)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Label",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "text/label.js"
+        }
+      }
+    },
+    "morph_98C54C6E_1B4F_4C8A_9057_122B4522257E": {
+      "rev": 495295,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "8F0851D5-4938-4DF5-B80E-0F24D88059E1",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "width0"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "AC42F3D5-CCC1-4343-81D0-1E40BBD12C04",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(100.0,22.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(36.0,100.0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "morph_DFC12E91_6529_44FD_A9A8_76E1CE6404BC",
+              "rev": 495335
+            }
+          ]
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 10
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 10
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 10
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Morph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "8F0851D5-4938-4DF5-B80E-0F24D88059E1": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "morph_98C54C6E_1B4F_4C8A_9057_122B4522257E",
+            "rev": 495295
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseDown"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "selectWidthMorph"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "BA1BD8C4-40DA-4493-8C68-C0F29F97AECD",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "() => source"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "BA1BD8C4-40DA-4493-8C68-C0F29F97AECD": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "morph_98C54C6E_1B4F_4C8A_9057_122B4522257E",
+            "rev": 495295
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        }
+      }
+    },
+    "AC42F3D5-CCC1-4343-81D0-1E40BBD12C04": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 6
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": true
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "morph_98C54C6E_1B4F_4C8A_9057_122B4522257E",
+            "rev": 495295
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    },
+    "morph_DFC12E91_6529_44FD_A9A8_76E1CE6404BC": {
+      "rev": 495335,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "aMorph"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "365D298E-F640-4FD2-B6CA-30867A2F4B04",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(16.0,8.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(4.0,84.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 4
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 4
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 4
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 4
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Morph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "365D298E-F640-4FD2-B6CA-30867A2F4B04": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 6
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": false
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0.6)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "morph_DFC12E91_6529_44FD_A9A8_76E1CE6404BC",
+            "rev": 495335
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    },
+    "morph_3DDF4756_1207_4E10_85A3_16AB81ACDE34": {
+      "rev": 495296,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "721607D6-68AE-4581-8D70-B87343B09832",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "width1"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "D1B2E0C0-6B3A-4424-BD57-E7ABB334320C",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(136.0,22.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(40.0,100.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "morph_A0FA4886_13A2_45A7_9A02_DD9AA5CCC129",
+              "rev": 495336
+            }
+          ]
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Morph",
+            "morph"
+          ]
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Morph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "721607D6-68AE-4581-8D70-B87343B09832": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "morph_3DDF4756_1207_4E10_85A3_16AB81ACDE34",
+            "rev": 495296
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseDown"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "selectWidthMorph"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "0EA46648-B89D-44B8-AA3E-83D2E7586EB9",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "() => source"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "0EA46648-B89D-44B8-AA3E-83D2E7586EB9": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "morph_3DDF4756_1207_4E10_85A3_16AB81ACDE34",
+            "rev": 495296
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        }
+      }
+    },
+    "D1B2E0C0-6B3A-4424-BD57-E7ABB334320C": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 6
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": true
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "morph_3DDF4756_1207_4E10_85A3_16AB81ACDE34",
+            "rev": 495296
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    },
+    "morph_A0FA4886_13A2_45A7_9A02_DD9AA5CCC129": {
+      "rev": 495336,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "aMorph"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "7E9B18CC-20A0-4689-8A39-B4A360D34CBF",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(16.0,8.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(8.0,84.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(212,69,3)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 8
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 8
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 8
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 8
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Morph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "7E9B18CC-20A0-4689-8A39-B4A360D34CBF": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 6
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": false
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0.6)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "morph_A0FA4886_13A2_45A7_9A02_DD9AA5CCC129",
+            "rev": 495336
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    },
+    "morph_A4BAE1B0_F1E8_44D0_B5B2_050BD3FFA90F": {
+      "rev": 495297,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "39795E07-24B5-4C7A-A1C8-04EAAC99702A",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "width2"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "56A42C40-153E-4339-BC02-EDF1421684C4",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(176.0,22.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(48.0,100.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "morph_260E40E4_0810_417D_8B7C_E237DE28DECB",
+              "rev": 495337
+            }
+          ]
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Morph",
+            "morph"
+          ]
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Morph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "39795E07-24B5-4C7A-A1C8-04EAAC99702A": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "morph_A4BAE1B0_F1E8_44D0_B5B2_050BD3FFA90F",
+            "rev": 495297
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseDown"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "selectWidthMorph"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "4FA3058A-06CF-4F89-8084-351756945FB7",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "() => source"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "4FA3058A-06CF-4F89-8084-351756945FB7": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "morph_A4BAE1B0_F1E8_44D0_B5B2_050BD3FFA90F",
+            "rev": 495297
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        }
+      }
+    },
+    "56A42C40-153E-4339-BC02-EDF1421684C4": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 6
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": true
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "morph_A4BAE1B0_F1E8_44D0_B5B2_050BD3FFA90F",
+            "rev": 495297
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    },
+    "morph_260E40E4_0810_417D_8B7C_E237DE28DECB": {
+      "rev": 495337,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "aMorph"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "9F8E05EB-1A4D-4B5C-A19A-35021589C937",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(16.0,8.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(16.0,84.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(236,168,31)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 16
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 16
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 16
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 16
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Morph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "9F8E05EB-1A4D-4B5C-A19A-35021589C937": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 6
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": false
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0.6)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "morph_260E40E4_0810_417D_8B7C_E237DE28DECB",
+            "rev": 495337
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    },
+    "morph_26031749_FFC9_41D8_BFA0_1CBC16DEF260": {
+      "rev": 495298,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "D5040D6D-7CDB-4F17-93D4-5EBB29D987E2",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "width3"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "0AAC36D1-27C8-4CA0-BCCC-F607EF20BA8A",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(224.0,22.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(64.0,100.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "morph_BDA4C720_FC4B_46A6_AA82_D64CAC224A2D",
+              "rev": 495338
+            }
+          ]
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 10
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 10
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 10
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Morph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "D5040D6D-7CDB-4F17-93D4-5EBB29D987E2": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "morph_26031749_FFC9_41D8_BFA0_1CBC16DEF260",
+            "rev": 495298
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseDown"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "selectWidthMorph"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "EFEF9C60-8436-46F3-B0E6-3AF414DC5A0D",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "() => source"
+        },
+        "converter": {
+          "key": "converter"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "EFEF9C60-8436-46F3-B0E6-3AF414DC5A0D": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "morph_26031749_FFC9_41D8_BFA0_1CBC16DEF260",
+            "rev": 495298
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        }
+      }
+    },
+    "0AAC36D1-27C8-4CA0-BCCC-F607EF20BA8A": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 6
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": true
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "morph_26031749_FFC9_41D8_BFA0_1CBC16DEF260",
+            "rev": 495298
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    },
+    "morph_BDA4C720_FC4B_46A6_AA82_D64CAC224A2D": {
+      "rev": 495338,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
+        },
+        "name": {
+          "key": "name",
+          "value": "aMorph"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "AFA2ADBC-4976-4297-B8B8-2C31F86E90AD",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(16.0,8.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(32.0,84.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(79,124,129)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 32
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 32
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 32
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 32
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Morph",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "AFA2ADBC-4976-4297-B8B8-2C31F86E90AD": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 6
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": false
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0.6)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "morph_BDA4C720_FC4B_46A6_AA82_D64CAC224A2D",
+            "rev": 495338
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    },
+    "ellipse_F5B859EF_5798_4DEA_A6B6_766325C1FF90": {
+      "rev": 495302,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "CF97D695-1B67-4A86-A92D-E72F3F67A9DC",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "color0"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "D10D7816-DF28-4AAC-BCC2-4A5927CF338E",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(304.0,74.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(50.0,50.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(212,69,3)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Ellipse",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 50
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 50
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 50
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 50
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Ellipse",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "CF97D695-1B67-4A86-A92D-E72F3F67A9DC": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_F5B859EF_5798_4DEA_A6B6_766325C1FF90",
+            "rev": 495302
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseDown"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "selectColorMorph"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "255A4D6D-33C4-4A8F-BDDB-37E510FFBEDA",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "() => source"
+        },
+        "converter": {
+          "key": "converter"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "255A4D6D-33C4-4A8F-BDDB-37E510FFBEDA": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_F5B859EF_5798_4DEA_A6B6_766325C1FF90",
+            "rev": 495302
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        }
+      }
+    },
+    "D10D7816-DF28-4AAC-BCC2-4A5927CF338E": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 2
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": true
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_F5B859EF_5798_4DEA_A6B6_766325C1FF90",
+            "rev": 495302
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    },
+    "ellipse_328821BD_4897_4762_B090_7BA56FC99985": {
+      "rev": 495306,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "D4C6D32E-B99A-4798-B2A3-E1EC095367DB",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "color1"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "130AF517-D0A2-4E67-9001-8D4A0EFAC288",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(334.0,14.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(50.0,50.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Ellipse",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 50
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 50
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 50
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 50
+        },
+        "borderWidthBottom": {
+          "key": "borderWidthBottom",
+          "value": 4
+        },
+        "borderWidthLeft": {
+          "key": "borderWidthLeft",
+          "value": 4
+        },
+        "borderWidthRight": {
+          "key": "borderWidthRight",
+          "value": 4
+        },
+        "borderWidthTop": {
+          "key": "borderWidthTop",
+          "value": 4
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Ellipse",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "D4C6D32E-B99A-4798-B2A3-E1EC095367DB": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_328821BD_4897_4762_B090_7BA56FC99985",
+            "rev": 495306
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseDown"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "selectColorMorph"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "E02EA6CA-4666-4B63-A1A3-C6C45A6C7637",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "() => source"
+        },
+        "converter": {
+          "key": "converter"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "E02EA6CA-4666-4B63-A1A3-C6C45A6C7637": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_328821BD_4897_4762_B090_7BA56FC99985",
+            "rev": 495306
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        }
+      }
+    },
+    "130AF517-D0A2-4E67-9001-8D4A0EFAC288": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 2
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": true
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_328821BD_4897_4762_B090_7BA56FC99985",
+            "rev": 495306
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    },
+    "ellipse_ACDA641E_303E_4A4C_821F_3A4DE05A9A7F": {
+      "rev": 495310,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "32038D02-A07C-43B9-B6C5-89A56E8A62D6",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "color2"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "1B0379FC-5FF5-419E-88BE-0BB80886A136",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(364.0,74.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(50.0,50.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(236,168,31)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Ellipse",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 50
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 50
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 50
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 50
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Ellipse",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "32038D02-A07C-43B9-B6C5-89A56E8A62D6": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_ACDA641E_303E_4A4C_821F_3A4DE05A9A7F",
+            "rev": 495310
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseDown"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "selectColorMorph"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "D828146A-84FF-486F-BDA5-94CD018DC37E",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "() => source"
+        },
+        "converter": {
+          "key": "converter"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "D828146A-84FF-486F-BDA5-94CD018DC37E": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_ACDA641E_303E_4A4C_821F_3A4DE05A9A7F",
+            "rev": 495310
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        }
+      }
+    },
+    "1B0379FC-5FF5-419E-88BE-0BB80886A136": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 2
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": true
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_ACDA641E_303E_4A4C_821F_3A4DE05A9A7F",
+            "rev": 495310
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    },
+    "ellipse_06690B4E_74C0_4888_82BF_C74FDF250FAE": {
+      "rev": 495314,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "0810943F-CB7F-4B41-B70C-7F27F905F684",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "color3"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "CB8D1308-27D4-41C1-9A20-9354533E500B",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(394.0,14.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(50.0,50.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(177,173,162)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Ellipse",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 50
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 50
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 50
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 50
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Ellipse",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "0810943F-CB7F-4B41-B70C-7F27F905F684": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_06690B4E_74C0_4888_82BF_C74FDF250FAE",
+            "rev": 495314
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseDown"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "selectColorMorph"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "CE9E22ED-3515-4660-ACC2-E3FFA6197EAB",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "() => source"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "CE9E22ED-3515-4660-ACC2-E3FFA6197EAB": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_06690B4E_74C0_4888_82BF_C74FDF250FAE",
+            "rev": 495314
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        }
+      }
+    },
+    "CB8D1308-27D4-41C1-9A20-9354533E500B": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 2
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": true
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_06690B4E_74C0_4888_82BF_C74FDF250FAE",
+            "rev": 495314
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    },
+    "ellipse_5CEDBDE2_D922_42DE_A248_53E2EE99A795": {
+      "rev": 495318,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "61361194-E7BF-4623-AAB4-25C25F767CEB",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "color4"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "2D27E666-A84F-4CBD-B515-1BA81C106B7C",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(424.0,74.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(50.0,50.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(79,124,129)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Ellipse",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 50
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 50
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 50
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 50
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Ellipse",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "61361194-E7BF-4623-AAB4-25C25F767CEB": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_5CEDBDE2_D922_42DE_A248_53E2EE99A795",
+            "rev": 495318
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseDown"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "selectColorMorph"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "570110B8-204E-4577-B163-5B7B25D2E2A9",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "() => source"
+        },
+        "converter": {
+          "key": "converter"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "570110B8-204E-4577-B163-5B7B25D2E2A9": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_5CEDBDE2_D922_42DE_A248_53E2EE99A795",
+            "rev": 495318
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        }
+      }
+    },
+    "2D27E666-A84F-4CBD-B515-1BA81C106B7C": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 2
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": true
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_5CEDBDE2_D922_42DE_A248_53E2EE99A795",
+            "rev": 495318
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    },
+    "ellipse_98787D20_FDC4_4390_A5DC_2C9B12C63F83": {
+      "rev": 495322,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "E6317535-546A-4F83-ADFE-9B3BE5B081FE",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "color5"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "7378F96C-A9EE-4229-9320-66D7B2FC4E89",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(454.0,14.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(50.0,50.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(246,246,246)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Ellipse",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 50
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 50
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 50
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 50
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Ellipse",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "E6317535-546A-4F83-ADFE-9B3BE5B081FE": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_98787D20_FDC4_4390_A5DC_2C9B12C63F83",
+            "rev": 495322
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseDown"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "selectColorMorph"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "BC5208F7-4C2C-4A78-9B9A-CD04AC95A79B",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "() => source"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "BC5208F7-4C2C-4A78-9B9A-CD04AC95A79B": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_98787D20_FDC4_4390_A5DC_2C9B12C63F83",
+            "rev": 495322
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        }
+      }
+    },
+    "7378F96C-A9EE-4229-9320-66D7B2FC4E89": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 2
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": true
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_98787D20_FDC4_4390_A5DC_2C9B12C63F83",
+            "rev": 495322
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    },
+    "ellipse_6304050D_50CB_4946_BDF3_CF616C7B478D": {
+      "rev": 495326,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "EBE9B605-CA50-4327-BB31-F10B287F7436",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "color6"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "AA93725E-7669-4501-A9E1-9E6D6AB7EA34",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(484.0,74.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(50.0,50.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(145,161,112)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Ellipse",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 50
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 50
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 50
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 50
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Ellipse",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "EBE9B605-CA50-4327-BB31-F10B287F7436": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_6304050D_50CB_4946_BDF3_CF616C7B478D",
+            "rev": 495326
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseDown"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "selectColorMorph"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "5F4F6A04-A7CC-4B73-8055-80F50BF9D1AF",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "() => source"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "5F4F6A04-A7CC-4B73-8055-80F50BF9D1AF": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_6304050D_50CB_4946_BDF3_CF616C7B478D",
+            "rev": 495326
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        }
+      }
+    },
+    "AA93725E-7669-4501-A9E1-9E6D6AB7EA34": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 2
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": true
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_6304050D_50CB_4946_BDF3_CF616C7B478D",
+            "rev": 495326
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    },
+    "ellipse_5C63A1C5_A6E8_4C0F_8F69_CCA968C59ABB": {
+      "rev": 495330,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "A7A89618-3461-4AEA-944B-89E59CDB8432",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "color7"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "0243390B-B335-4343-87FC-4062E224E480",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(514.0,14.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(50.0,50.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(171,127,88)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Ellipse",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 50
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 50
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 50
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 50
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Ellipse",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "A7A89618-3461-4AEA-944B-89E59CDB8432": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_5C63A1C5_A6E8_4C0F_8F69_CCA968C59ABB",
+            "rev": 495330
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseDown"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "selectColorMorph"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "63EAB196-B5EF-4FD3-A332-AA01AC78303A",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "() => source"
+        },
+        "converter": {
+          "key": "converter"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "63EAB196-B5EF-4FD3-A332-AA01AC78303A": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_5C63A1C5_A6E8_4C0F_8F69_CCA968C59ABB",
+            "rev": 495330
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        }
+      }
+    },
+    "0243390B-B335-4343-87FC-4062E224E480": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 2
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": true
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_5C63A1C5_A6E8_4C0F_8F69_CCA968C59ABB",
+            "rev": 495330
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    },
+    "ellipse_BBB1D03A_EF77_4BBA_9A88_846384692255": {
+      "rev": 495334,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "C4D164E2-5280-4ACD-AA0B-56130C0E05C6",
+              "rev": 0
+            }
+          ]
+        },
+        "name": {
+          "key": "name",
+          "value": "color8"
+        },
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "dropShadow": {
+          "key": "dropShadow",
+          "value": {
+            "__ref__": true,
+            "id": "5D5D78BC-8A58-404B-8B3C-A2482528750E",
+            "rev": 0
+          }
+        },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(544.0,74.0)"
+        },
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(50.0,50.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(183,143,170)"
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
+        },
+        "styleClasses": {
+          "key": "styleClasses",
+          "value": [
+            "Ellipse",
+            "Morph",
+            "morph"
+          ]
+        },
+        "borderRadiusBottom": {
+          "key": "borderRadiusBottom",
+          "value": 50
+        },
+        "borderRadiusLeft": {
+          "key": "borderRadiusLeft",
+          "value": 50
+        },
+        "borderRadiusRight": {
+          "key": "borderRadiusRight",
+          "value": 50
+        },
+        "borderRadiusTop": {
+          "key": "borderRadiusTop",
+          "value": 50
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "Ellipse",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "morph.js"
+        }
+      }
+    },
+    "C4D164E2-5280-4ACD-AA0B-56130C0E05C6": {
+      "rev": 0,
+      "props": {
+        "doNotSerialize": {
+          "key": "doNotSerialize",
+          "value": [
+            "isActive",
+            "converter",
+            "updater"
+          ]
+        },
+        "sourceObj": {
+          "key": "sourceObj",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_BBB1D03A_EF77_4BBA_9A88_846384692255",
+            "rev": 495334
+          }
+        },
+        "sourceAttrName": {
+          "key": "sourceAttrName",
+          "value": "onMouseDown"
+        },
+        "targetObj": {
+          "key": "targetObj",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        },
+        "targetMethodName": {
+          "key": "targetMethodName",
+          "value": "selectColorMorph"
+        },
+        "varMapping": {
+          "key": "varMapping",
+          "value": {
+            "__ref__": true,
+            "id": "591ECDEC-BFAE-4F65-9D46-37573C76CC52",
+            "rev": 0
+          }
+        },
+        "garbageCollect": {
+          "key": "garbageCollect",
+          "value": true
+        },
+        "signalOnAssignment": {
+          "key": "signalOnAssignment",
+          "value": true
+        },
+        "converterString": {
+          "key": "converterString",
+          "value": "() => source"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "AttributeConnection",
+        "module": {
+          "package": {
+            "name": "lively.bindings",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "index.js"
+        }
+      }
+    },
+    "591ECDEC-BFAE-4F65-9D46-37573C76CC52": {
+      "rev": 0,
+      "props": {
+        "source": {
+          "key": "source",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_BBB1D03A_EF77_4BBA_9A88_846384692255",
+            "rev": 495334
+          }
+        },
+        "target": {
+          "key": "target",
+          "value": {
+            "__ref__": true,
+            "id": "Palette_EBA1A592_5893_450A_B1F9_61F14789B907",
+            "rev": 490855
+          }
+        }
+      }
+    },
+    "5D5D78BC-8A58-404B-8B3C-A2482528750E": {
+      "rev": 0,
+      "props": {
+        "_rotation": {
+          "key": "_rotation",
+          "value": 45
+        },
+        "_distance": {
+          "key": "_distance",
+          "value": 2
+        },
+        "_blur": {
+          "key": "_blur",
+          "value": 2
+        },
+        "_inset": {
+          "key": "_inset",
+          "value": true
+        },
+        "_color": {
+          "key": "_color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "morph": {
+          "key": "morph",
+          "value": {
+            "__ref__": true,
+            "id": "ellipse_BBB1D03A_EF77_4BBA_9A88_846384692255",
+            "rev": 495334
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "ShadowObject",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "rendering/morphic-default.js"
+        }
+      }
+    }
+  },
+  "requiredVersion": "~0.1",
+  "packages": {
+    "local://lively-object-modules/": {
+      "Palette": {
+        "package.json": "{\n  \"name\": \"Palette\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
+        "index.js": "import { Morph, Canvas } from \"lively.morphic\";\nimport { pt, Color } from \"lively.graphics/index.js\";\nimport { connect } from \"lively.bindings/index.js\";\nimport { promise } from \"lively.lang/index.js\";\n\nexport default class Palette extends Morph {\n\n  beforePublish() {\n    this.hideCanvas();\n    let w = this.widthMorphs();\n    let c = this.colorMorphs();\n    this.selectColorMorph(c[1]);\n    this.selectWidthMorph(w[0]);\n    w[0].submorphs[0].fill = c[1].fill;\n    w[1].submorphs[0].fill = c[0].fill;\n    w[2].submorphs[0].fill = c[2].fill;\n    w[3].submorphs[0].fill = c[4].fill;\n  }\n\n  onLoad(snapshot, rev) {\n    promise.waitFor(500, () => this.world())\n       .then(() => this.showCanvas());\n  }\n\n  /***************************************************************/\n  \n  reset() {\n    const widths = [4, 8, 16, 32];\n    const colors = [\n      Color.rgb(212,69,3),     // red\n      Color.rgb(0,0,0),        // black\n      Color.rgb(236,168,31),   // yellow\n      Color.rgb(177,173,162),  // grey\n      Color.rgb(79,124,129),   // cyan\n      Color.rgb(246,246,246),  // white\n      Color.rgb(145,161,112),  // green\n      Color.rgb(171,127,88),   // brown\n      Color.rgb(183,143,170),  // purple\n    ];\n    this.removeAllMorphs();\n    this.buildButtons();\n    this.buildWidths(widths);\n    this.buildColors(colors);\n    this.beforePublish();\n  }\n\n  /***************************************************************/\n  /* Drawing Canvas\n  /***************************************************************/\n\n  hideCanvas() {\n    if (this.canvas) {\n      this.canvas.remove();\n      this.canvas = null;\n    }\n  }\n\n  showCanvas() {\n    this.hideCanvas();\n    this.bringToFront();\n    this.canvas = new Canvas({\n      extent: this.world().extent,\n      fill: Color.white.withA(0.8),\n      onDragStart: (evt) => this.canvas_onDragStart(evt),\n      onDrag: (evt) => this.canvas_onDrag(evt),\n    });\n    this.world().addMorph(this.canvas, this);\n  }\n\n  canvas_onDragStart(evt) {    \n  }\n\n  canvas_onDrag(evt) {\n    if (evt.leftMouseButtonPressed()) {\n      this.drawLine(\n        this.canvas.localize(evt.state.lastDragPosition),\n        this.canvas.localize(evt.position),\n        this.penColor,\n        this.penWidth * evt.pressure);\n    }\n  }\n\n  drawLine(from, to, color, width) {\n    let c = this.canvas.context;\n    c.save();\n    c.globalCompositeOperation = \"darken\";\n    c.strokeStyle = color;\n    c.beginPath();\n    c.lineWidth = width;\n    c.lineJoin = \"round\";\n    c.lineCap = \"round\";\n    c.moveTo(from.x, from.y);\n    c.lineTo(to.x, to.y);\n    c.stroke();\n    c.closePath();\n    c.restore();\n  }\n\n  get penColor() {\n     return this.selectedWidthMorph().submorphs[0].fill;\n  }\n\n  set penColor(color) {\n     this.selectedWidthMorph().submorphs[0].fill = color;\n  }\n\n  get penWidth() {\n     return this.selectedWidthMorph().submorphs[0].width;\n  }\n\n  createSketch() {\n    let {canvas} = this;\n    canvas.trimNonTransparent();\n    Object.assign(canvas, {\n      name: 'Sketch',\n      fill: null,\n    });\n    delete canvas.onDragStart;\n    delete canvas.onDrag;\n    this.canvas = null;\n  }\n\n  /***************************************************************/\n  /* Buttons\n  /***************************************************************/\n\n  buildButtons() {\n    this.addMorph({\n      type: \"button\",\n      name: 'okButton',\n      position: pt(15, 84),\n      extent: pt(40, 40),\n      label: 'OK',\n    });\n    connect(this.okButton, \"fire\", this, \"accept\");\n  }\n\n  get okButton() { return this.getSubmorphNamed('okButton')}\n\n  accept() {\n    this.createSketch();\n    this.remove();\n  }\n\n  /***************************************************************/\n  /* Color Palette \n  /***************************************************************/\n\n  buildColors(colors) {\n    colors.forEach((color, i) =>\n      this.addMorph({\n        type: \"ellipse\",\n        name: `color${i}`,\n        position: pt(304 + i * 30, 74 - (i&1) * 60),\n        extent: pt(50, 50),\n        fill: color,\n        draggable: false,\n        dropShadow: {inset: true, blur: 2},\n        borderColor: Color.white,\n      }));\n    this.colorMorphs().forEach(\n      (m) => connect(m, \"onMouseDown\", this, \"selectColorMorph\",\n         {converter: '() => source'}));\n  }\n  \n  selectedColorMorph() {\n    return this.colorMorphs().find((m) => m.borderWidth > 0);\n  }\n\n  selectColorMorph(cMorph) {\n    this.colorMorphs().forEach((m) => m.borderWidth = (m === cMorph) ? 4 : 0);\n    this.penColor = this.selectedColorMorph().fill;\n  }\n\n  selectColor(color) {\n    this.colorMorphs().forEach((m) => m.borderWidth = color.equals(m.fill) ? 4 : 0);\n  }\n  \n  colorMorphs() {\n    return this.submorphs.filter(({name}) => /^color[0-9]+$/.test(name));\n  }\n\n  /***************************************************************/\n  /* Width Palette\n  /***************************************************************/\n  \n  buildWidths(widths) {\n    var x = 100;\n    widths.forEach((width, i) => {\n      this.addMorph({\n        name: `width${i}`,\n        position: pt(x, 22),\n        extent: pt(width + 32, 100),\n        borderRadiusLeft: [0].includes(i) ? 10 : 0,\n        borderRadiusRight: [3].includes(i) ? 10 : 0,\n        borderRadiusBottom: [0,3].includes(i) ? 10 : 0,\n        borderRadiusTop: [0,3].includes(i) ? 10 : 0,\n        dropShadow: {inset: true},\n        draggable: false,\n        submorphs: [\n          {\n              extent: pt(width, 100-16),\n              borderRadius: width,\n              position: pt(16, 8),\n              fill: Color.black,\n              dropShadow: true,\n              draggable: false,\n          }\n        ] \n      });\n      x += width + 32;\n    });\n    this.widthMorphs().forEach(\n      (m) => connect(m, \"onMouseDown\", this, \"selectWidthMorph\",\n         {converter: '() => source'}));    \n  }\n  \n  selectedWidthMorph() {\n    return this.widthMorphs().find((m) => m.fill.r === Color.white.r);\n  }\n  \n  selectWidthMorph(wMorph) {\n    this.widthMorphs().forEach((m) =>\n      m.fill = (m === wMorph) ? Color.white : Color.darkGray);\n    this.selectColor(this.penColor);\n  }\n\n  widthMorphs() {\n    return this.submorphs.filter(({name}) => /^width[0-9]+$/.test(name));\n  }\n\n}"
+      }
+    }
+  },
+  "preview": "data:image/png;base64,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"
+}
