@@ -994,7 +994,7 @@ export default class Browser extends Window {
     } catch(err) {
 
       if (attempt > 0 || err instanceof SyntaxError)
-        return this.showError(err);
+        return sourceEditor.showError(err);
       
       // try to reload the module, sometimes format changes (global => esm etc need a reload)
       let result = await this.reloadModule(false);
