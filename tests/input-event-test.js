@@ -188,10 +188,10 @@ describe("pointer event related", function() {
         {type: "pointermove", target: submorph2, position: morphPos.addXY(15,15)},
         {type: "pointermove", target: submorph2, position: morphPos.addXY(20,20)},
         {type: "pointerup", target: world, position: morphPos.addXY(20,20)});
-      assertEventLogContains(["onMouseMove-world", "onMouseMove-world", "onMouseUp-world", "onDrop-world"]);
+      assertEventLogContains(["onMouseMove-world", "onMouseMove-world", "onMouseUp-world", "onDrop-submorph1"]);
       expect(world.hands[0].carriesMorphs()).equals(false);
-      expect(submorph2.owner).equals(world);
-      expect(submorph2.position).equals(morphPos.addXY(10,10));
+      expect(submorph2.owner).equals(submorph1);
+      expect(submorph2.position).equals({x: 15,y: 20});
     });
 
     it("dropped morph has correct position", async () => {
@@ -216,7 +216,7 @@ describe("pointer event related", function() {
       expect(m2.globalPosition).equals(pt(45,45));
       env.eventDispatcher.simulateDOMEvents(
         {type: "pointerup", target: m1, position: (pt(2,2))});
-      expect(m2.owner).equals(m1);
+      expect(m2.owner).equals(world);
       expect(m2.globalPosition).equals(pt(45,45));
     });
 
