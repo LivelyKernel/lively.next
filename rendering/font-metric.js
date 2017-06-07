@@ -337,7 +337,7 @@ class DOMTextMeasure {
         {defaultCharWidthHeightCache} = this,
         found = defaultCharWidthHeightCache[styleKey];
 
-    // if (found) return found;
+    if (found) return found;
 
     var {doc} = this,
         testStringW = "abcdefghijklmnopqrstufwxyz ABCDEFGHIJKLMNOPQRSTUFWXYZ 1234567890 {}[];,./<>?'\"!@#$%^&*()-=_+",
@@ -415,7 +415,7 @@ class DOMTextMeasure {
         // if (!this.debug)
           for (let i = 0; i < lineNodes.length; i++)
             textNode.removeChild(lineNodes[i]);
-  
+
         return results;
       });
   }
