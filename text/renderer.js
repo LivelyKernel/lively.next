@@ -670,7 +670,7 @@ export default class Renderer {
       // lines in the middle
       for (var row = start.row+1; row <= end.row-1; row++) {
         let {start: lineStart, end: lineEnd} = morph.lineRange(row);
-        parts.push(this.renderMarkerPart(textLayout, morph, lineStart, lineEnd, style));
+        parts.push(this.renderMarkerPart(textLayout, morph, lineStart, lineEnd, style, true));
       }
       // last line
       parts.push(this.renderMarkerPart(textLayout, morph, {row: end.row, column: 0}, end, style));
@@ -679,15 +679,27 @@ export default class Renderer {
     return parts;
   }
 
-  renderMarkerPart(textLayouter, morph, start, end, style) {
-    var {x,y} = textLayouter.boundsFor(morph, start),
-        {height, x: endX} = textLayouter.boundsFor(morph, end);
+  renderMarkerPart(textLayouter, morph, start, end, style, entireLine = false) {
+    var startX = 0, endX = 0, y = 0, height = 0,
+        {document: doc} = morph,
+        line = doc.getLine(start.row)
+    height = line.height;
+    if (entireLine) {
+      var {padding} = morph;
+      startX = padding.left();
+      y = padding.top() + doc.computeVerticalOffsetOf(start.row);
+      endX = startX + line.width;
+    } else {
+      ({x: startX, y} = textLayouter.boundsFor(morph, start));
+      ({x: endX} = textLayouter.boundsFor(morph, end));
+    }
+    height = Math.ceil(height);
     return h("div.newtext-marker-layer", {
       style: {
         ...style,
-        left: x + "px", top: y + "px",
+        left: startX + "px", top: y + "px",
         height: height + "px",
-        width: endX-x + "px"
+        width: endX - startX + "px"
       }
     });
   }
