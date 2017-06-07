@@ -832,8 +832,10 @@ export default class Inspector extends Morph {
           fontSize: 14, fontFamily: config.codeEditor.defaultStyle.fontFamily
         },
         textStyle = {
+          type: "text",
           borderWidth: 1, borderColor: Color.gray,
-          type: "text", ...config.codeEditor.defaultStyle,
+          lineWrapping: "by-chars",
+          ...config.codeEditor.defaultStyle,
           textString: ""
         };
     var searchBarBounds = rect(0,0,this.width, 30);

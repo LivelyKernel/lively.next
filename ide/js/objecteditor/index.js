@@ -325,7 +325,7 @@ export class ObjectEditor extends Morph {
           borderLeft: {width: 1, color: Color.gray},
           borderRight: {width: 1, color: Color.gray},
           borderBottom: {width: 1, color: Color.gray},
-          lineWrapping: true,
+          lineWrapping: "by-chars",
           type: "text",
           ...config.codeEditor.defaultStyle,
         },

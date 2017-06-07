@@ -264,7 +264,7 @@ export default class Browser extends Window {
         },
         textStyle = {
           borderWidth: 1, borderColor: Color.gray,
-          lineWrapping: true,
+          lineWrapping: "by-chars",
           type: "text",
           ...config.codeEditor.defaultStyle
         },
