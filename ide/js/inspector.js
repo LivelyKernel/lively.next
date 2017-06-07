@@ -2,7 +2,7 @@
 import { Color, rect, pt } from "lively.graphics";
 import { obj, arr, promise, string } from "lively.lang";
 import { connect, disconnect, once } from "lively.bindings";
-import { Morph, CustomLayout, Label, Icon, StyleSheet, config } from "lively.morphic";
+import { Morph, morph, CustomLayout, Label, Icon, StyleSheet, config } from "lively.morphic";
 import { Tree, TreeData } from "lively.morphic/components/tree.js";
 
 import { isBoolean, isString, isNumber } from "lively.lang/object.js";
@@ -470,11 +470,33 @@ export default class Inspector extends Morph {
 
   static get properties() {
     return {
-       extent: {defaultValue: pt(400,500)},
-       fill: {defaultValue: Color.transparent},
-       styleSheets: {
-          initialize() {
+      extent: {defaultValue: pt(400, 500)},
+      fill: {defaultValue: Color.transparent},
+      morphHighlighter: {
+        defaultValue: new Morph({
+          fill: Color.orange.withA(0.3),
+          borderColor: Color.orange,
+          reactsToPointer: false,
+          borderWidth: 2
+        })
+      },
+      styleSheets: {
+        initialize() {
           this.styleSheets = new StyleSheet({
+            "[name=selectionInstruction]": {
+              fill: Color.black.withA(.7),
+              borderRadius: 4,
+              fontColor: Color.white,
+              fontSize: 14,
+              padding: rect(10,10)
+            },
+            "[name=escapeKey]": {
+              opacity: .7,
+              fill: Color.white,
+              padding: rect(5,1,5,1),
+              borderRadius: 4,
+              fontWeight: 'bold'
+            },
             "[name=searchBar]": {
               fill: Color.transparent,
               draggable: false
@@ -482,33 +504,37 @@ export default class Inspector extends Morph {
             "[name=searchBar] .LabeledCheckBox": {
               fill: Color.transparent
             },
+            "[name=targetPicker]": {
+              fontSize: 18,
+              padding: rect(2, 2),
+              nativeCursor: "pointer"
+            },
             "[name=resizer]": {
               fill: Color.gray.lighter(),
-              nativeCursor: 'ns-resize'
+              nativeCursor: "ns-resize"
             },
             "[name=valueString]": {
               fontFamily: config.codeEditor.defaultStyle.fontFamily,
               fontSize: 15
-            }, 
+            },
             ".toggle": {
-              nativeCursor: 'pointer',
-              fill: Color.black.withA(.5), 
+              nativeCursor: "pointer",
+              fill: Color.black.withA(0.5),
               draggable: false,
               fontSize: 15,
-              borderRadius: 5, 
-              padding: rect(5,2,1,1)
+              borderRadius: 5,
+              padding: rect(5, 2, 1, 1)
             },
-            '.toggle.inactive': {
-              fontColor: Color.white,
+            ".toggle.inactive": {
+              fontColor: Color.white
             },
-            '.toggle.active': {
-              fontColor: Color.rgbHex('00e0ff')
+            ".toggle.active": {
+              fontColor: Color.rgbHex("00e0ff")
             }
           });
-          }
-       }
-    }
-  }
+        }
+      }
+    };  }
 
   constructor(props = {}) {
     var {targetObject} = props;
@@ -607,13 +633,17 @@ export default class Inspector extends Morph {
       {
         name: "searchBar",
         layout: new GridLayout({
-          grid: [["searchField", "internals", "unknowns"]],
+          grid: [["searchField", "targetPicker", "internals", "unknowns"]],
           rows: [0, {paddingTop: 5, paddingBottom: 5}],
-          columns: [0, {paddingLeft: 5, paddingRight: 5}, 1, {fixed: 75}, 2, {fixed: 80}]
+          columns: [0, {paddingLeft: 5, paddingRight: 5}, 
+                    1, {fixed: 25},
+                    2, {fixed: 75}, 3, {fixed: 80}]
         }),
         height: 30,
         submorphs: [
           searchField,
+          Icon.makeLabel('crosshairs', {name: 'targetPicker', 
+                                        tooltip: 'Change Inspection Target'}),
           new LabeledCheckBox({label: "Internals", name: "internals"}),
           new LabeledCheckBox({label: "Unknowns", name: "unknowns"})
         ]
@@ -651,6 +681,7 @@ export default class Inspector extends Morph {
     ).catch(err => $world.logError(err));
 
     this.editorOpen = false;
+    connect(this.get('targetPicker'), 'onMouseDown', this, 'selectNewTarget');
     connect(this.get('propertyTree'), 'onScroll', this, 'repositionOpenWidget');
     connect(this.get('resizer'), 'onDrag', this, 'adjustProportions');
     connect(this.get('terminal toggler'), 'onMouseDown', this, 'toggleCodeEditor');
@@ -660,13 +691,88 @@ export default class Inspector extends Morph {
     connect(searchField, 'searchInput', this, 'filterProperties');
   }
 
+  selectNewTarget() {
+    this.get('targetPicker').fontColor = Color.orange;
+    this.selectorMorph = Icon.makeLabel('crosshairs', {fontSize: 20}).openInWorld();
+    connect($world.firstHand, 'position', this, 'scanForTargetAt');
+    once(this.selectorMorph, 'onMouseDown', this, 'selectTarget');
+    once(this.selectorMorph, 'onKeyDown', this, 'stopSelect');
+    this.toggleSelectionInstructions(true);
+    this.selectorMorph.focus();
+    this.morphHighlighter.visible = false;
+    this.morphHighlighter.openInWorld();
+    this.scanForTargetAt($world.firstHand.position);
+  }
+
+  scanForTargetAt(pos) {
+    this.selectorMorph.center = pos;
+    var target = this.selectorMorph.morphBeneath(pos);
+    if (this.morphHighlighter == target) {
+      target = this.morphHighlighter.morphBeneath(pos);
+    }
+    if (target != this.possibleTarget 
+        && !target.ownerChain().includes(this.getWindow())) {
+      this.possibleTarget = target;
+      if (this.possibleTarget && !this.possibleTarget.isWorld) {
+        this.highlightMorph(this.possibleTarget)
+      } else {
+        this.morphHighlighter.visible = false;
+      }
+    }
+  }
+
+  highlightMorph(morph) {
+    this.morphHighlighter.visible = true;
+    this.morphHighlighter.setBounds(morph.globalBounds());
+  }
+
+  selectTarget() {
+    this.targetObject = this.possibleTarget;
+    this.stopSelect()
+  }
+  
+  stopSelect() {
+    this.toggleSelectionInstructions(false);
+    this.morphHighlighter.remove();
+    this.get('targetPicker').fontColor = Color.black;
+    disconnect($world.firstHand, 'position', this, 'scanForTargetAt');
+    this.selectorMorph.remove();
+  }
+
+  toggleSelectionInstructions(active) {
+    if (active && !this.instructionWidget) {
+      let esc = morph({
+        type: "label",
+        name: "escapeKey",
+        value: "esc"
+      });
+      esc.whenRendered().then(() => esc.fit());
+      this.instructionWidget = this.addMorph({
+        type: "text",
+        opacity: 0,
+        center: this.extent.scaleBy(0.5),
+        width: 120,
+        fixedWidth: true,
+        lineWrapping: true,
+        name: "selectionInstruction",
+        textAndAttributes: [
+          "Select a new morph to inspect by hovering over it and clicking left. You can exit this mode by pressing ",
+          {},
+          esc
+        ]
+      });
+      this.instructionWidget.animate({opacity: 1, duration: 200});
+    } else {
+      this.instructionWidget.fadeOut(200);
+      this.instructionWidget = null;
+    }
+  }
   closeOpenWidget() {
     this.openWidget.close();
     disconnect(this.getWindow(), 'bringToFront', this.openWidget, 'openInWorld');
   }
 
   onWidgetOpened({node, widget}) {
-    debugger;
     if (this.openWidget) {
       this.openWidget.fadeOut();
     }
