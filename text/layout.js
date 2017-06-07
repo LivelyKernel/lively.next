@@ -291,14 +291,15 @@ export default class TextLayout {
     let {x, y} = point,
         {document: doc, padding} = morph,
         padL = padding.left(),
-        padT = padding.top(),
-        found = doc.findLineByVerticalOffset(y-padT);
+        padT = padding.top();
 
-    if (!found) {
-      if (y >= doc.height+padT) found = {line: {row: doc.rowCount-1}}
-      else if (y <= padL) found = {line: {row: 0}}
-      else return {row: 0, column: 0};/*????*/
-    }
+    if (y > doc.height+padT) return doc.endPosition;
+    else if (y < padT) return {row: 0, column: 0};
+
+    let found = doc.findLineByVerticalOffset(y-padT);
+
+    if (!found) // shouldn't happen...
+      return {row: 0, column: 0};
 
     let {line: {row}} = found,
         charBounds = this.charBoundsOfRow(morph, row),
