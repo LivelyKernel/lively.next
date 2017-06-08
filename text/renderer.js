@@ -385,7 +385,7 @@ export default class Renderer {
     if (textDecoration)  style.textDecoration =  textDecoration;
     if (fontSize)        style.fontSize =        fontSize + "px";
     if (textAlign)       style.textAlign =       textAlign;
-    if (fontColor)       style.color =           fontColor;
+    if (fontColor)       style.color =           String(fontColor);
     if (backgroundColor) style.backgroundColor = backgroundColor;
 
     let textAttrs = {className: textLayerClasses, style};
@@ -529,8 +529,8 @@ export default class Renderer {
         if (fontWeight) nodeStyle.fontWeight           = fontWeight;
         if (fontStyle) nodeStyle.fontStyle             = fontStyle;
         if (textDecoration) nodeStyle.textDecoration   = textDecoration;
-        if (fontColor) nodeStyle.color                 = fontColor ? String(fontColor) : "";
-        if (backgroundColor) nodeStyle.backgroundColor = backgroundColor ? String(backgroundColor) : "";
+        if (fontColor) nodeStyle.color                 = String(fontColor);
+        if (backgroundColor) nodeStyle.backgroundColor = String(backgroundColor);
         if (nativeCursor) nodeStyle.cursor             = nativeCursor;
 
         if (textStyleClasses && textStyleClasses.length)
