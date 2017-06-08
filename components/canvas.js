@@ -29,7 +29,7 @@ export class Canvas extends Morph {
 
       _serializedContents: {
         get() { return this.preserveContents && this.toDataURI(); },
-        set(s) { this.withCanvasDo(() => this.fromDataURI(s)); },
+        set(s) { this.withContextDo(() => this.fromDataURI(s)); },
       },
      }
   }
@@ -40,7 +40,7 @@ export class Canvas extends Morph {
     const old_canvas = this.__canvas__;
     this.__canvas__ = new_canvas;
     if (this.__canvas_init__) {
-      this.__canvas_init__(new_canvas);
+      this.__canvas_init__();
       delete this.__canvas_init__;
     } else if (this.preserveContents && this.contextType == "2d" && old_canvas && old_canvas !== new_canvas) {
       this.context.drawImage(old_canvas, 0, 0);
@@ -82,9 +82,9 @@ export class Canvas extends Morph {
 
   render(renderer) { return renderer.renderCanvas(this); }
 
-  withCanvasDo(func) {
-    if (this._canvas) func(this._canvas);
-    else this.__canvas_init__ = func;
+  withContextDo(func) {
+    if (this._canvas) func(this.context);
+    else this.__canvas_init__ = () => func(this.context);
   }
 
   toDataURI() { return this._canvas && this._canvas.toDataURL(); }
