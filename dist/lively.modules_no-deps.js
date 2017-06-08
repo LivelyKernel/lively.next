@@ -1,5 +1,5 @@
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
+// INLINED /home/lively/lively-web.org/lively.next/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -212,12 +212,12 @@
 
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
+// INLINED END /home/lively/lively-web.org/lively.next/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
-// INLINED /Users/robert/Lively/lively-dev2/lively.next-node_modules/semver/5.3.0/semver.js
+// INLINED /home/lively/lively-web.org/lively.next/lively.next-node_modules/semver/5.3.0/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -1422,7 +1422,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.next-node_modules/semver/5.3.0/semver.js
+// INLINED END /home/lively/lively-web.org/lively.next/lively.next-node_modules/semver/5.3.0/semver.js
 semver = exports;
 })({}, {});
 

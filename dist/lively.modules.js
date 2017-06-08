@@ -1,5 +1,5 @@
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
+// INLINED /home/lively/lively-web.org/lively.next/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -658,9 +658,9 @@
   typeof self === "object" ? self : this
 );
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
+// INLINED END /home/lively/lively-web.org/lively.next/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
+// INLINED /home/lively/lively-web.org/lively.next/lively.lang/dist/lively.lang.js
 
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -8433,9 +8433,9 @@ exports.uninstallGlobals = uninstallGlobals;
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.lang;
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
+// INLINED END /home/lively/lively-web.org/lively.next/lively.lang/dist/lively.lang.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
+// INLINED /home/lively/lively-web.org/lively.next/lively.notifications/dist/lively.notifications.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -8593,9 +8593,9 @@ exports.stopLogging = stopLogging;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
+// INLINED END /home/lively/lively-web.org/lively.next/lively.notifications/dist/lively.notifications.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
+// INLINED /home/lively/lively-web.org/lively.next/lively.ast/dist/lively.ast.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -23556,9 +23556,9 @@ exports.fuzzyParse = fuzzyParse;
   if (__define_suckz__) { GLOBAL.define = __define_suckz__; }
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
+// INLINED END /home/lively/lively-web.org/lively.next/lively.ast/dist/lively.ast.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
+// INLINED /home/lively/lively-web.org/lively.next/lively.classes/dist/lively.classes.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -24598,9 +24598,9 @@ exports.classToFunctionTransform = classToFunctionTransform;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
+// INLINED END /home/lively/lively-web.org/lively.next/lively.classes/dist/lively.classes.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
+// INLINED /home/lively/lively-web.org/lively.next/lively.source-transform/dist/lively.source-transform.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -25550,9 +25550,9 @@ exports.stringifyFunctionWithoutToplevelRecorder = stringifyFunctionWithoutTople
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.sourceTransform;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
+// INLINED END /home/lively/lively-web.org/lively.next/lively.source-transform/dist/lively.source-transform.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
+// INLINED /home/lively/lively-web.org/lively.next/lively.vm/dist/lively.vm.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -27286,9 +27286,9 @@ exports.evalCodeTransformOfSystemRegisterSetters = evalCodeTransformOfSystemRegi
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
+// INLINED END /home/lively/lively-web.org/lively.next/lively.vm/dist/lively.vm.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
+// INLINED /home/lively/lively-web.org/lively.next/lively.resources/dist/lively.resources_no-deps.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -27538,7 +27538,21 @@ var Resource$$1 = function () {
   }, {
     key: "name",
     value: function name() {
-      return this.path().replace(/\/$/, "").split("/").slice(-1)[0];
+      var path = this.path(),
+          queryIndex = path.lastIndexOf("?");
+      if (queryIndex > -1) path = path.slice(0, queryIndex);
+      if (path.endsWith("/")) path = path.slice(0, -1);
+      var parts = path.split("/"),
+          lastPart = parts[parts.length - 1];
+      return decodeURIComponent(lastPart);
+    }
+  }, {
+    key: "nameWithoutExt",
+    value: function nameWithoutExt() {
+      var name = this.name(),
+          extIndex = name.indexOf(".");
+      if (extIndex > 0) name = name.slice(0, extIndex);
+      return name;
     }
   }, {
     key: "scheme",
@@ -29918,9 +29932,9 @@ exports.Resource = Resource$$1;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.resources;
 })();
-// INLINED END /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
+// INLINED END /home/lively/lively-web.org/lively.next/lively.resources/dist/lively.resources_no-deps.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.storage/dist/lively.storage_with-pouch.js
+// INLINED /home/lively/lively-web.org/lively.next/lively.storage/dist/lively.storage_with-pouch.js
 
 (function() {
 
@@ -65597,9 +65611,9 @@ exports.Database = Database;
 
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.storage/dist/lively.storage_with-pouch.js
+// INLINED END /home/lively/lively-web.org/lively.next/lively.storage/dist/lively.storage_with-pouch.js
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
+// INLINED /home/lively/lively-web.org/lively.next/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -65812,12 +65826,12 @@ exports.Database = Database;
 
 })();
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
+// INLINED END /home/lively/lively-web.org/lively.next/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
-// INLINED /Users/robert/Lively/lively-dev2/lively.next-node_modules/semver/5.3.0/semver.js
+// INLINED /home/lively/lively-web.org/lively.next/lively.next-node_modules/semver/5.3.0/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -67022,7 +67036,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.next-node_modules/semver/5.3.0/semver.js
+// INLINED END /home/lively/lively-web.org/lively.next/lively.next-node_modules/semver/5.3.0/semver.js
 semver = exports;
 })({}, {});
 
