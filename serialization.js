@@ -34,7 +34,7 @@ export async function loadWorldFromResource(fromResource) {
 
 export async function saveWorldToResource(world = World.defaultWorld(), toResource, options) {
 
-  let {prettyPrint = true, showIndicator = true} = options || {};
+  let {prettyPrint = true, showIndicator = true, changeName = true} = options || {};
 
   if (!toResource) {
     var htmlResource = resource(document.location.href),
@@ -46,6 +46,11 @@ export async function saveWorldToResource(world = World.defaultWorld(), toResour
 
   if (typeof toResource === "string")
     toResource = resource(toResource);
+
+  if (changeName) {
+    var oldName = world.name;
+    world.name = toResource.nameWithoutExt();
+  }
 
   // pretty printing bloats 2x!
   let i;
@@ -60,7 +65,7 @@ export async function saveWorldToResource(world = World.defaultWorld(), toResour
     i.label = "Uploading..."
     await i.whenRendered();
     return toResource.writeJson(snap);
-  } finally { i && i.remove() }
+  } finally { i && i.remove();  oldName && (world.name = oldName); }
 }
 
 
