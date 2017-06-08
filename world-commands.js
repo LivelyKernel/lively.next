@@ -842,7 +842,7 @@ var commands = [
       if (relayed) return relayed;
 
       let dialog = await loadObjectFromPartsbinFolder("save world dialog"),
-          {destination, name} = await world.openPrompt(dialog);
+          {destination, name} = await $world.openPrompt(dialog, {targetWorld: world});
 
       if (!name) return null;      
 
