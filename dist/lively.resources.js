@@ -905,7 +905,21 @@ var Resource$$1 = function () {
   }, {
     key: "name",
     value: function name() {
-      return this.path().replace(/\/$/, "").split("/").slice(-1)[0];
+      var path = this.path(),
+          queryIndex = path.lastIndexOf("?");
+      if (queryIndex > -1) path = path.slice(0, queryIndex);
+      if (path.endsWith("/")) path = path.slice(0, -1);
+      var parts = path.split("/"),
+          lastPart = parts[parts.length - 1];
+      return decodeURIComponent(lastPart);
+    }
+  }, {
+    key: "nameWithoutExt",
+    value: function nameWithoutExt() {
+      var name = this.name(),
+          extIndex = name.indexOf(".");
+      if (extIndex > 0) name = name.slice(0, extIndex);
+      return name;
     }
   }, {
     key: "scheme",

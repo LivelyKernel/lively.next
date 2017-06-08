@@ -60,7 +60,20 @@ export default class Resource {
   }
 
   name() {
-    return this.path().replace(/\/$/, "").split("/").slice(-1)[0];
+    let path = this.path(),
+        queryIndex = path.lastIndexOf("?");
+    if (queryIndex > -1) path = path.slice(0, queryIndex);
+    if (path.endsWith("/")) path = path.slice(0, -1);
+    let parts = path.split("/"),
+        lastPart = parts[parts.length-1];
+    return decodeURIComponent(lastPart);
+  }
+
+  nameWithoutExt() {
+    let name = this.name(),
+        extIndex = name.indexOf(".");
+    if (extIndex > 0) name = name.slice(0, extIndex);
+    return name;
   }
 
   scheme() { return this.url.split(":")[0]; }
