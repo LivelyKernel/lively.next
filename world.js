@@ -31,6 +31,7 @@ export class World extends Morph {
 
   static get properties() {
     return {
+      worldType: { defaultValue: 'rigid'},
       styleSheets: {
         initialize() {
           this.styleSheets = [
@@ -338,8 +339,8 @@ export class World extends Morph {
   }
 
   onWindowResize(evt) {
-    this._cachedWindowBounds = null;
-    this.execCommand("resize to fit window");
+    this._cachedWindowBounds = null;    
+    if (this.worldType != 'rigid') { this.execCommand("resize to fit window"); }
     this.updateVisibleWindowMorphs(evt);
   }
 
