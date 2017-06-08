@@ -31,7 +31,7 @@ export class World extends Morph {
 
   static get properties() {
     return {
-      worldType: { defaultValue: 'rigid'},
+      worldType: { defaultValue: 'elastic'},
       styleSheets: {
         initialize() {
           this.styleSheets = [
