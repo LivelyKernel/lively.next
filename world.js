@@ -563,7 +563,7 @@ export class World extends Morph {
        await animator.animate({scale: 1, opacity: 1, duration: 500});
        animator.remove(); promptMorph.openInWorld();
     }
-    return promise.finally(promptMorph.activate(), () => focused && focused.focus());
+    return promise.finally(promptMorph.activate(opts), () => focused && focused.focus());
   }
 
   inform(label = "no message", opts = {fontSize: 16, requester: null, animated: true}) {
