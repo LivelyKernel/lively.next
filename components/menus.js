@@ -220,6 +220,13 @@ export class Menu extends Morph {
       if (!actionOrList || typeof actionOrList === "function")
         return {label: name, action: actionOrList || show.bind(null, name)};
 
+      if (typeof actionOrList === "object" && actionOrList.getItems)
+        return {
+          label: name,
+          submenu: actionOrList.getItems,
+          annotation: [" ", {textStyleClasses: ["fa", "fa-caret-right"]}]
+        };
+
       if (Array.isArray(actionOrList))
         return {
           label: name,
@@ -322,6 +329,8 @@ export class Menu extends Morph {
       if (this.morphsContainingPoint(evt.position).includes(existingSubMenu)) return;
       this.removeSubMenu();
     }
+
+    if (typeof items === "function") items = items();
 
     var m = this.submenu = this.addMorph(
       new Menu({items, ownerItemMorph: itemMorph, ownerMenu: this}));

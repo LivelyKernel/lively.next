@@ -45,7 +45,7 @@ export default class Halo extends Morph {
         7, {fixed: 36, paddingTop: 10}
       ],
       grid: [
-          [null,     null,   "grab", null,  "drag", null,   "close"  ],
+          ["menu",   null,   "grab", null,  "drag", null,   "close"  ],
           [null,     null,   null,   null,  null,   null,   null     ],
           ["copy",   null,   null,   null,  null,   null,   "edit"   ],
           [null,     null,   null,   null,  null,   null,   null     ],
@@ -65,6 +65,7 @@ export default class Halo extends Morph {
         this.closeHalo(),
         this.dragHalo(),
         this.grabHalo(),
+        this.menuHalo(),
         this.inspectHalo(),
         this.editHalo(),
         this.copyHalo(),
@@ -193,6 +194,7 @@ export default class Halo extends Morph {
   closeHalo() { return CloseHaloItem.for(this); }
   grabHalo() { return GrabHaloItem.for(this); }
   dragHalo() { return DragHaloItem.for(this); }
+  menuHalo() { return MenuHaloItem.for(this); }
   inspectHalo() { return InspectHaloItem.for(this); }
   editHalo() { return EditHaloItem.for(this); }
   rotateHalo() { return RotateHaloItem.for(this); }
@@ -1395,6 +1397,25 @@ class ResizeHandle extends HaloItem {
     return mesh;
   }
 }
+
+
+class MenuHaloItem extends HaloItem {
+
+  static get morphName() { return "menu"; }
+
+  get styleClasses() { return [...super.styleClasses, "fa", "fa-navicon"]; }
+  get draggable() { return false; }
+  get tooltip() { return "Opens the morph menu"; }
+
+  async onMouseDown(evt) {
+    let target = this.halo.target;
+    this.halo.remove();
+    let menuItems = await target.menuItems();
+    target.world().openMenu(menuItems);
+  }
+
+}
+
 
 
 // The orange thing that indicates a drop target when a grabbed morph is

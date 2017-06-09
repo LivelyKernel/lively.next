@@ -1642,7 +1642,137 @@ export class Morph {
   openMenu(items, optEvt) {
     return items && items.length ? this.world().openWorldMenu(optEvt, items) : null;
   }
-  menuItems() {}
+  menuItems() {
+    var world = this.world(),
+        items = [], self = this;
+
+    // items.push(['Select all submorphs', function(evt) { self.world().setSelectedMorphs(self.submorphs.clone()); }]);
+    
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // morphic hierarchy / windows
+
+    items.push(['Open in...', [
+      ['Window', () => { this.openInWindow(); }]
+    ]]);
+    
+    // Drilling into scene to addMorph or get a halo
+    // whew... this is expensive...
+    function menuItemsForMorphsBeneathMe(itemCallback) {
+      var morphs = world.morphsContainingPoint(self.worldPoint(pt(0,0)));
+      morphs.pop(); // remove world
+      var selfInList = morphs.indexOf(self);
+      // remove self and other morphs over self (the menu)
+      morphs = morphs.slice(selfInList + 1);
+      return morphs.map(ea => [String(ea), itemCallback.bind(this, ea)]);
+    }
+    
+    items.push(["Add morph to...", {
+      getItems: menuItemsForMorphsBeneathMe.bind(this, morph => morph.addMorph(self))
+    }]);
+    
+    items.push(["Get halo on...", {
+      getItems: menuItemsForMorphsBeneathMe.bind(this, morph => morph.world().showHaloFor(morph))
+    }]);
+
+    if (this.owner && this.owner.submorphs.length > 1) {
+      items.push(["Arrange morph", [
+        ["Bring to front", () => this.owner.addMorph(this)],
+        ["Send to back", () => this.owner.addMorphBack(this)]
+      ]]);
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // stepping scripts
+    var steppingItems = [];
+
+    if (this.startSteppingScripts) {
+      steppingItems.push(["Start stepping", function(){self.startSteppingScripts()}])
+    }
+    if (this.tickingScripts.length != 0) {
+      steppingItems.push(["Stop stepping", () => self.stopStepping()])
+    }
+    if (steppingItems.length != 0) {
+      items.push(["Stepping", steppingItems])
+    }
+    
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // lively bindings
+    // var connectionNames = Properties.own(this.getConnectionPoints());
+    // items.push(["Connect ...", connectionNames.collect(function(name) {
+    //   return [name, function() {
+    //     var builder = self.getVisualBindingsBuilderFor(name);
+    //     builder.openInHand();
+    //     builder.setPosition(pt(0,0));
+    //   }]
+    // }).concat([['Custom ...', function() {
+    //   world.prompt('Name of custom connection start?', function(name) {
+    //     if (!name) return;
+    //     var builder = self.getVisualBindingsBuilderFor(name);
+    //     builder.openInHand();
+    //     builder.setPosition(pt(0,0));
+    //   });
+    // }]])
+    //            ]);
+
+    // items.push(["Connections...", {
+    //   getConnections: function() {
+    //     if (!this.connections) {
+    //       this.connections = !self.attributeConnections ? [] :
+    //       self.attributeConnections
+    //       // rk: come on, this is a mess!
+    //         .reject(function(ea) { return ea.dependedBy }) // Meta connection
+    //         .reject(function(ea) { return ea.targetMethodName == 'alignToMagnet'}) // Meta connection
+    //     }
+    //     return this.connections;
+    //   },
+    //   condition: function() {
+    //     return this.getConnections().length > 0;
+    //   },
+    //   getItems: function() {
+    //     return this.getConnections()
+    //       .collect(function(ea) {
+    //       var s = ea.sourceAttrName + " -> " + ea.targetObj  + "." + ea.targetMethodName
+    //       return [s, [
+    //         ["Disconnect", function() { alertOK("disconnecting " + ea); ea.disconnect(); }],
+    //         ["Edit converter", function() { var window = lively.bindings.editConnection(ea); }],
+    //         ["Show", function() { lively.bindings.showConnection(ea); }],
+    //         ["Hide", function() { if (ea.visualConnector) ea.visualConnector.remove(); }]]];
+    //     });
+    //   }
+    // }]);
+    
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // morphic properties
+    var morphicMenuItems = ['Morphic properties', []];
+    items.push(morphicMenuItems);
+    // morphicMenuItems[1].push(['display serialization info', function() {
+    //   require('lively.persistence.Debugging').toRun(function() {
+    //     var json = self.copy(true),
+    //         printer = lively.persistence.Debugging.Helper.listObjects(json);
+    //     var text = world.addTextWindow({content: printer.toString(),
+    //                                     extent: pt(600, 200),
+    //                                     title: 'Objects in this world'});
+    //     text.setFontFamily('Monaco,monospace');
+    //     text.setFontSize(10);
+    //   })}]);
+
+    ['grabbable', 'draggable', 'acceptsDrops', 'halosEnabled'].forEach(propName =>
+      morphicMenuItems[1].push(
+        [`[${this[propName] ? "x" : " "}] ` + propName,
+         () => this[propName] = !this[propName]]));
+
+    // if (this.hasFixedPosition()) {
+    //   morphicMenuItems[1].push(["set unfixed", function() {
+    //     self.disableFixedPositioning();
+    //   }]);
+    // } else {
+    //   morphicMenuItems[1].push(["set fixed", function() {
+    //     self.enableFixedPositioning()
+    //   }]);
+    // }
+    
+    return items;
+  }
 
   onCut(evt) {}
   onCopy(evt) {}
