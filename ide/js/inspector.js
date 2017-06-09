@@ -11,7 +11,7 @@ import { last } from "lively.lang/array.js";
 
 import { GridLayout } from "../../layout.js";
 
-import { NumberWidget, ShadowWidget, PointWidget, StyleSheetWidget, BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
+import { NumberWidget, VerticesWidget, ShadowWidget, PointWidget, StyleSheetWidget, BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
 import { RichTextControl } from "../../text/ui.js";
 import { Point } from "lively.graphics/geometry-2d.js";
 
@@ -177,6 +177,9 @@ export class PropertyControl extends Label {
     if (property == "layout") {
       propertyControl.control = new LayoutWidget({context: target});
       connect(propertyControl.control, 'layoutChanged', propertyControl, 'propertyValue')
+    } else if (property == 'vertices') {
+      propertyControl.control = new VerticesWidget({context: target});
+      connect(propertyControl.control, 'vertices', propertyControl, 'propertyValue')
     } else if (property == "fontFamily") {
       this.renderValueSelector(
         propertyControl,
@@ -464,8 +467,9 @@ export default class Inspector extends Morph {
     return i;
   }
 
-  onWindowClosed() {
+  onWindowClose() {
     this.stopStepping();
+    this.openWidget && this.closeOpenWidget();
   }
 
   static get properties() {

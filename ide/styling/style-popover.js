@@ -9,6 +9,7 @@ import { Icons } from "../../components/icons.js";
 import KeyHandler from "../../events/KeyHandler.js";
 import { NumberWidget } from "../value-widgets.js";
 import { range, flatten } from "lively.lang/array.js";
+import { SvgStyleHalo } from "../../halo/vertices.js";
 
 const duration = 200;
 
@@ -699,27 +700,32 @@ export class VerticesPopover extends StylePopover {
   
   static get properties() {
     return {
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            '.modeLabel': {
-              fontColor: Color.white,
-              fontWeight: "bold",
-              fill: Color.transparent
-            },
-            '.modeBox': {borderRadius: 5, nativeCursor: "pointer"},
-            '.addMode': {fill: Color.rgb(39, 174, 96)},
-            '.deleteMode': {fill: Color.rgb(231, 76, 60)},
-            '.transformMode': {fill: Color.rgb(52, 152, 219)}
-          });
-        }
-      },
-      submorphs: {
-        initialize() {
-          this.vertexEditModes(this.targetMorph)
-        }
-      }
+      pathOrPolygon: {},
+      popoverColor: {defaultValue: Color.gray.lighter()}
     }
+  }
+
+  controls() {
+    this.showVertexHaloFor(this.pathOrPolygon)
+    this.whenRendered().then(() => {
+      signal(this, "add vertices");
+      this.focus()
+    });
+    return this.vertexEditModes(this.pathOrPolygon);
+  }
+
+  showVertexHaloFor(pathOrPolygon) {
+    if (!this.vertexHalo) this.vertexHalo = new SvgStyleHalo({target: pathOrPolygon}).openInWorld();
+    this.vertexHalo.relayout();
+    connect(this, "add vertices", this.vertexHalo, "startAddingVertices");
+    connect(this, "delete vertices", this.vertexHalo, "startDeletingVertices");
+    connect(this, "transform vertices", this.vertexHalo, "startTransformingVertices");
+  }
+
+  close() {
+    super.close();
+    this.vertexHalo.remove();
+    this.vertexHalo = null;
   }
 
   get keybindings() {
@@ -751,14 +757,25 @@ export class VerticesPopover extends StylePopover {
   }
 
   vertexEditModes(target) {
-    return this.createControl("Edit Modes", {
-      styleClasses: ["controlWrapper"],
+    return [{
+      fill: Color.transparent,
       layout: new VerticalLayout({spacing: 5}),
-      styleSheets: this.vertexModeStyles,
-      submorphs: KeyHandler.generateCommandToKeybindingMap(this).map(ea => {
+      styleSheets: new StyleSheet({
+        ".modeLabel": {
+          fontColor: Color.white,
+          fontWeight: "bold",
+          fill: Color.transparent,
+        },
+        '.inactive': {opacity: .5}, 
+        ".modeBox": {borderRadius: 5, nativeCursor: "pointer"},
+        ".addMode": {fill: Color.rgb(39, 174, 96)},
+        ".deleteMode": {fill: Color.rgb(231, 76, 60)},
+        ".transformMode": {fill: Color.rgb(52, 152, 219)}
+      }),
+      submorphs: this.modes = KeyHandler.generateCommandToKeybindingMap(this).map(ea => {
         return this.newVertexMode(ea);
       })
-    });
+    }];
   }
 
   newVertexMode(cmd) {
@@ -767,18 +784,9 @@ export class VerticesPopover extends StylePopover {
       m = new Morph({
         styleClasses: this.commandToMorphClasses(cmd.command),
         layout: new HorizontalLayout({spacing: 5}),
-        onMouseDown: () => {
-          this.execCommand(cmd.command);
-        },
-        activate() {
-          signal(self, "reset modes");
-          this.opacity = 1;
-        },
-        deactivate() {
-          this.opacity = 0.5;
-        },
         submorphs: [
-          {type: "label", value: doc, styleClasses: ["modeLabel"]},
+          {type: "label", value: doc, 
+           reactsToPointer: false, styleClasses: ["modeLabel"]},
           {
             type: "label",
             value: prettyKeys.join(" "),
@@ -786,9 +794,16 @@ export class VerticesPopover extends StylePopover {
           }
         ]
       });
-    connect(this, name, m, "activate");
-    connect(this, "reset modes", m, "deactivate");
+    connect(m, 'onMouseDown', this, 'execCommand', {converter: () => cmd.command, varMapping: {cmd}});
+    connect(this, name, this, "activate", {converter: () => m, varMapping: {m}});
     return m;
+  }
+
+  activate(mode) {
+    this.modes.forEach(m => {
+      m.addStyleClass('inactive');
+    })
+    mode.removeStyleClass('inactive');
   }
 
   commandToMorphClasses(cmd) {

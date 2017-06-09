@@ -75,8 +75,9 @@ export class VerticesWidget extends ShortcutWidget {
   }
 
   openPopover() {
-     let editor = new VerticesPopover({targetMorph: this.context});
+     let editor = new VerticesPopover({pathOrPolygon: this.context});
      editor.fadeIntoWorld(this.globalBounds().center());
+     connect(editor, 'vertices', this, 'vertices');
      signal(this, "openWidget", editor);
   }
   
