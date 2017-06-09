@@ -288,6 +288,7 @@ var config = {
 
   codeEditor: {
     defaultTheme: "default",
+    collapseSelection: false,
     defaultStyle: {
       fontFamily: "Monaco, Inconsolata, monospace",
       padding: Rectangle.inset(4, 2, 4, 2),

@@ -2095,9 +2095,11 @@ export class Text extends Morph {
     // copy as text
     evt.domEvt.clipboardData.setData("text/plain", sel.text);
 
-    this.execCommand(
-      "manual clipboard copy",
-      {delete: deleteCopiedText, dontTryNativeClipboard: true});
+    this.execCommand("manual clipboard copy", {
+      collapseSelection: config.codeEditor.collapseSelection || false,
+      delete: deleteCopiedText,
+      dontTryNativeClipboard: true
+    });
   }
 
   onPaste(evt) {
