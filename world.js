@@ -340,7 +340,8 @@ export class World extends Morph {
 
   onWindowResize(evt) {
     this._cachedWindowBounds = null;    
-    if (this.worldType != 'rigid') { this.execCommand("resize to fit window"); }
+    if (this.worldType != 'rigid')
+      this.execCommand("resize to fit window");
     this.updateVisibleWindowMorphs(evt);
   }
 
