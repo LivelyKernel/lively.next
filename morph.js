@@ -426,7 +426,8 @@ export class Morph {
     }
   }
 
-  constructor(props = {}) {
+  constructor(props) {
+    if (!props) props = {};
     var env = props.env || MorphicEnv.default();
     this._env = env;
     this._rev = env.changeManager.revision;

@@ -538,6 +538,7 @@ export class Text extends Morph {
      || change.prop === "fixedHeight"
      || change.prop === "fixedWidth"
      || change.prop === "lineWrapping"
+     || change.prop === "tabWidth"
     ) this.invalidateTextLayout(true/*reset char bounds*/);
 
     if (change.prop === "padding")

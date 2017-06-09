@@ -351,7 +351,8 @@ export default class Renderer {
           lineHeight,
           wordSpacing,
           letterSpacing,
-          document: doc
+          document: doc,
+          tabWidth
         } = morph,
         padRight = padLeft + padWidth,
         padBottom = padTop + padHeight,
@@ -387,6 +388,7 @@ export default class Renderer {
     if (textAlign)       style.textAlign =       textAlign;
     if (fontColor)       style.color =           String(fontColor);
     if (backgroundColor) style.backgroundColor = backgroundColor;
+    if (tabWidth !== 8)  style.tabSize =         tabWidth;
 
     let textAttrs = {className: textLayerClasses, style};
 
