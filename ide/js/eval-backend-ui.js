@@ -267,12 +267,16 @@ export default class EvalBackendChooser {
       console.warn(`Called EvalBackendChooser.changeEvalBackend without requester!`);
       return;
     }
-    if (!choice) choice = localInterface;
-    if (requester.systemInterface !== choice) {
-      requester.setStatusMessage(`Eval backend is now ${choice.name}`);
-      requester.setEvalBackend(choice);
+    try {
+      if (!choice) choice = localInterface;
+      if (requester.systemInterface !== choice) {
+        requester.setStatusMessage(`Eval backend is now ${choice.name}`);
+        requester.setEvalBackend(choice);
+      }
+      requester.focus();
+    } catch (err) {
+      console.warn(`changeEvalBackend error: ${err}`);
     }
-    requester.focus();
   }
 
   activateEvalBackendCommand(requester) {

@@ -1180,7 +1180,7 @@ export default class Browser extends Window {
     var m = module(evt.module),
         {selectedModule, selectedPackage} = this;
 
-    if (!selectedPackage || m.package().address !== selectedPackage.address)
+    if (!selectedPackage || !m.package() || m.package().address !== selectedPackage.address)
       return;
 
     // add new module to list

@@ -603,7 +603,7 @@ export class ObjectEditor extends Morph {
 
     let tree = this.ui.classTree,
         parentNode = tree.treeData.parentNode(node),
-        isClick = !!this.env.eventDispatcher.eventState.clickedOnMorph;
+        isClick = !!Path("env.eventDispatcher.eventState.clickedOnMorph").get(this);
     this.selectMethod(parentNode.target, node.target, isClick);
   }
 
