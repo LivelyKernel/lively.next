@@ -8,7 +8,7 @@ export class Selection {
 
   constructor(textMorph, range) {
     this.textMorph = textMorph;
-    this.initialize(range)
+    this.initialize(range);
   }
 
   get isSelection() { return true; }
@@ -226,11 +226,25 @@ export class Selection {
   cursorBlinkStart() {
     this.cursorBlinkStop();
     let timeout = config.text.cursorBlinkPeriod;
-    if (timeout)
+    if (timeout) {
+      let m = this.textMorph,
+          node = m.env.renderer.getNodeForMorph(m);
       this.cursorBlinkProcess = setInterval(() => {
+        if (!node) node = m.env.renderer.getNodeForMorph(m);
+        if (!node) return;
         this._cursorVisible = !this._cursorVisible;
-        this.textMorph.makeDirty();
+        let classNames = node.className.split(" "),
+            hiddenCursorIndex = classNames.indexOf("hidden-cursor");
+        if (this._cursorVisible && hiddenCursorIndex > -1) {
+          classNames.splice(hiddenCursorIndex, 1);
+          node.className = classNames.join(" ");
+        }
+        if (!this._cursorVisible && hiddenCursorIndex === -1) {
+          node.className = [...classNames, "hidden-cursor"].join(" ");
+        }
+        // this.textMorph.makeDirty();
       }, timeout*1000);
+    }
   }
 
   cursorBlinkStop() {
@@ -238,6 +252,17 @@ export class Selection {
       clearInterval(this.cursorBlinkProcess);
     this.cursorBlinkProcess = null;
     this._cursorVisible = true;
+
+    let m = this.textMorph,
+        node = m.env.renderer.getNodeForMorph(m);
+    if (node) {
+      let classNames = node.className.split(" "),
+          hiddenCursorIndex = classNames.indexOf("hidden-cursor");
+      if (hiddenCursorIndex > -1) {
+        classNames.splice(hiddenCursorIndex, 1);
+        node.className = classNames.join(" ");
+      }
+    }
   }
 
   toString() {
@@ -333,22 +358,6 @@ export class MultiSelection extends Selection {
   goRight(n) { return this.defaultSelection.goRight(n); return this; }
 
   get cursorVisible() { return this.defaultSelection.cursorVisible; }
-
-  cursorBlinkStart() {
-    this.cursorBlinkStop();
-    let timeout = config.text.cursorBlinkPeriod;
-    if (timeout)
-      this.cursorBlinkProcess = setInterval(() => {
-        this._cursorVisible = !this._cursorVisible;
-        this.selections.forEach(sel => sel._cursorVisible = this._cursorVisible);
-        this.textMorph.makeDirty();
-      }, timeout*1000);
-  }
-
-  cursorBlinkStop() {
-    super.cursorBlinkStop();
-    this.selections.forEach(sel => sel._cursorVisible = true);
-  }
 
   set style(style) { this.defaultSelection.style = style; }
 

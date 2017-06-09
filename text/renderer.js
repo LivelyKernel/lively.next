@@ -28,6 +28,10 @@ function installCSS(domEnv) {
       background-color: black;
     }
 
+    .hidden-cursor .newtext-cursor {
+      background-color: transparent !important;
+    }
+
     .newtext-cursor.diminished {
       background-color: gray;
     }
@@ -267,12 +271,15 @@ export default class Renderer {
 
     morph.textLayout.estimateLineHeights(morph, false);
 
+    let sel = morph.selection;
     if (morph.inMultiSelectMode()) {
-      let sels = morph.selection.selections, i = 0;
+      let sels = sel.selections, i = 0;
       for (; i < sels.length-1; i++)
         selectionLayer.push(...this.renderSelectionLayer(morph, sels[i], true/*diminished*/, 2))
       selectionLayer.push(...this.renderSelectionLayer(morph, sels[i], false/*diminished*/, 4))
-    } else selectionLayer = this.renderSelectionLayer(morph, morph.selection, false, cursorWidth);
+    } else {
+      selectionLayer = this.renderSelectionLayer(morph, sel, false, cursorWidth)
+    };
 
     let textLayer = this.renderTextLayer(morph, renderer),
         textLayerForFontMeasure = this.renderJustTextLayerNode(h, morph, null, []),
@@ -632,7 +639,8 @@ export default class Renderer {
   }
 
   cursor(pos, height, visible, diminished, width) {
-    return h('div.newtext-cursor' + (diminished ? ".diminished" : ""), {
+    return h('div', {
+      className: "newtext-cursor" + (diminished ? " diminished" : ""),
       style: {
         left: pos.x-Math.ceil(width/2) + "px", top: pos.y + "px",
         width: width + "px", height: height + "px",
