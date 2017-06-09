@@ -21,7 +21,8 @@ import {roundTo} from "lively.lang/number.js";
 
 class LeashEndpoint extends Ellipse {
   onDrag(evt) {
-    this.leash.onEndpointDrag(this, evt);
+    evt.state.endpoint = this;
+    this.leash.onEndpointDrag(evt);
   }
 
   getConnectionPoint() {
@@ -94,22 +95,18 @@ export class Leash extends Path {
     return {
       start: {},
       end: {},
+      endpointStyle: {
+        isStyleProp: true,
+        defaultValue: {
+          //fill: Color.black,
+          origin: pt(3.5, 3.5),
+          extent: pt(10, 10),
+          nativeCursor: "-webkit-grab"
+        }
+      },
       borderWidth: {defaultValue: 2},
       borderColor: {defaultValue: Color.black},
       fill: {defaultValue: Color.transparent},
-      styleSheets: {
-        after: ["endpointStyle"],
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            ".Leash .LeashEndpoint": {
-              fill: Color.black,
-              origin: pt(3.5, 3.5),
-              extent: pt(10, 10),
-              nativeCursor: "-webkit-grab"
-            }
-          });
-        }
-      },
       vertices: {
         after: ["start", "end"],
         initialize() {
@@ -124,9 +121,20 @@ export class Leash extends Path {
           ];
           connect(this, "extent", this, "relayout");
           connect(this, "position", this, "relayout");
+          this.whenRendered().then(() => this.updateEndpointStyles());
         }
       }
     };
+  }
+
+  onMouseDown(evt) {
+    this.updateEndpointStyles();
+  }
+
+  updateEndpointStyles() {
+    Object.assign(this.startPoint, this.endpointStyle.start);
+    Object.assign(this.endPoint, this.endpointStyle.end);
+    this.relayout();
   }
 
   remove() {
@@ -135,9 +143,9 @@ export class Leash extends Path {
     this.endPoint.clearConnection();
   }
 
-  onEndpointDrag(endpoint, evt) {
-    const v = endpoint.vertex, {x, y} = v;
-    endpoint.vertex = {...v, ...pt(x, y).addPt(evt.state.dragDelta)};
+  onEndpointDrag(evt) {
+    const v = evt.state.endpoint.vertex, {x, y} = v;
+    evt.state.endpoint.vertex = {...v, ...pt(x, y).addPt(evt.state.dragDelta)};
     this.relayout();
   }
 
