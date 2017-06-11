@@ -1,6 +1,6 @@
 /* global System */
 import {
-  Morph, HorizontalLayout,
+  Morph, StyleSheet, HorizontalLayout,
   Path,
   Text,
   GridLayout,
@@ -10,7 +10,6 @@ import { Color, pt, rect, Rectangle, LinearGradient } from "lively.graphics";
 import { obj, properties, num, arr } from "lively.lang";
 import { connect, signal, disconnect, disconnectAll, once } from "lively.bindings";
 import { Icon } from "lively.morphic/components/icons.js";
-import { styleHaloFor } from "./stylization.js";
 import { createMorphSnapshot } from "../serialization.js";
 
 
@@ -365,9 +364,9 @@ export default class Halo extends Morph {
   }
 
   toggleMorphHighlighter(active, target, showLayout = false) {
-    const h = MorphHighlighterForHalo.for(this, target, showLayout);
+    const h = MorphHighlighter.for(this, target, showLayout);
     if (active && target && target != this.world()) h && h.show(target);
-    else h && h.deactivate(target)
+    else h && h.deactivate();
   }
 
 
@@ -870,13 +869,13 @@ class GrabHaloItem extends HaloItem {
           hand.position,
           [halo.target],
           m => !m.isHaloItem && !m.ownerChain().some(m => m.isHaloItem));
-    MorphHighlighterForHalo.interceptDrop(halo, dropTarget, halo.target);
+    MorphHighlighter.interceptDrop(halo, dropTarget, halo.target);
     undo.addTarget(dropTarget);
     dropTarget.onDrop({hand});
     halo.state.activeButton = null;
     halo.alignWithTarget();
     halo.toggleMorphHighlighter(false, prevDropTarget);
-    MorphHighlighterForHalo.removeHighlightersFromHalo(halo);
+    MorphHighlighter.removeHighlightersFrom(halo);
     halo.target.undoStop("grab-halo");
     this.opacity = 1;
   }
@@ -1403,41 +1402,59 @@ class MenuHaloItem extends HaloItem {
 // hovered over another morph. For some reason it doubles as the container for
 // the "layout halo" items
 
-class MorphHighlighterForHalo extends Morph {
+export class MorphHighlighter extends Morph {
 
   static get properties() {
     return {
       draggable: {defaultValue: false},
-      fill:      {defaultValue: Color.transparent},
       name: {defaultValue: "morphHighlighter"},
+      styleClasses: {defaultValue: ['inactive']},
+      reactsToPointer: {defaultValue: false},
       halo: {},
-      showLayout: {},
+      showLayout: {defaultValue: false},
+      styleSheets: {
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            '.inactive': {
+               opacity: 0,
+            },
+            '.active': {
+               fill: Color.orange.withA(0.3),
+               opacity: 1,
+               borderWidth: 2,
+              borderColor: Color.orange
+            }
+          })
+        }
+      },
       targetId: {},
       target: {
         readOnly: true, derived: true,
         get() {
-          var w = this.world() || this.halo.world() || this.env.world;
-          return w ? w.getMorphWithId(this.targetId) : null;
+          return $world.getMorphWithId(this.targetId);
         }
       }
     }
   }
 
-  static removeHighlightersFromHalo(halo) {
-    let store = halo.state.morphHighlighters;
-    for (let id in store) { store[id].remove(); delete store[id]; }
+  static removeHighlightersFrom(halo=$world) {
+    let store = halo._morphHighlighters;
+    for (let id in store) { store[id].remove(); }
+    delete halo._morphHighlighters;
   }
 
   static for(halo, morph, showLayout) {
-    var store = halo.state.morphHighlighters = halo.state.morphHighlighters || {};
+    var store = (halo._morphHighlighters = halo._morphHighlighters || {});
     properties.forEachOwn(store, (_, h) => h.alignWithHalo());
     if (!morph || morph.ownerChain().find(owner => owner.isHaloItem)) return null;
-    store[morph.id] = store[morph.id] || halo.addMorphBack(new this({opacity: 0, targetId: morph.id, halo, showLayout}));
+    store[morph.id] =
+      store[morph.id] ||
+      halo.addMorph(new this({targetId: morph.id, halo, showLayout}));
     return store[morph.id];
   }
-
+  
   static interceptDrop(halo, target, morph) {
-     var store = halo.state.morphHighlighters = halo.state.morphHighlighters || {};
+     var store = halo._morphHighlighters = halo._morphHighlighters || {};
      store && store[target.id].handleDrop(morph)
   }
 
@@ -1450,20 +1467,18 @@ class MorphHighlighterForHalo extends Morph {
 
   show() {
     if (this.target.layout && this.showLayout) {
-      this.layoutHalo = this.layoutHalo ||
-        this.world().showLayoutHaloFor(this.target, this.pointerId);
-      this.opacity = 1;
-      this.fill = Color.transparent;
+      this.layoutHalo =
+        this.layoutHalo || this.world().showLayoutHaloFor(this.target, this.pointerId);
+      this.styleClasses = ['inactive'];
       this.alignWithHalo();
       this.addMorph(this.layoutHalo);
-      if (this.halo.get('grab').hand.grabbedMorphs) this.layoutHalo.previewDrop(this.halo.get('grab').hand.grabbedMorphs);
+      if (this.halo.get("grab").hand.grabbedMorphs)
+        this.layoutHalo.previewDrop(this.halo.get("grab").hand.grabbedMorphs);
     } else {
-      this.fill = Color.orange.withA(0.3);
-      this.opacity = 1;
+      this.styleClasses = ['active'];
       this.alignWithHalo();
     }
   }
-
   handleDrop(morph) {
     this.layoutHalo && this.layoutHalo.handleDrop(morph);
   } 
@@ -1473,7 +1488,7 @@ class MorphHighlighterForHalo extends Morph {
       this.layoutHalo.remove();
       this.layoutHalo = null;
     }
-    this.opacity = 0;
+    this.styleClasses = ['inactive'];
     this.alignWithHalo();
   }
 
