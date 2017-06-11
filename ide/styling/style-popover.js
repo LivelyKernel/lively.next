@@ -435,6 +435,7 @@ export class FillPopover extends StylePopover {
     const colorField = new ColorPickerField({
       name: "colorPicker", colorValue
     });
+    connect(this, 'close', colorField, 'remove');
     connect(colorField, 'update', this, 'fillValue');
     connect(this, "onMouseDown", colorField, "removeWidgets");
     return colorField;
