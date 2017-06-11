@@ -2,7 +2,7 @@
 import { Color, rect, pt } from "lively.graphics";
 import { obj, arr, promise, string } from "lively.lang";
 import { connect, disconnect, once } from "lively.bindings";
-import { Morph, morph, CustomLayout, Label, Icon, StyleSheet, config } from "lively.morphic";
+import { Morph, HorizontalLayout, morph, CustomLayout, Label, Icon, StyleSheet, config } from "lively.morphic";
 import { Tree, TreeData } from "lively.morphic/components/tree.js";
 
 import { isBoolean, isString, isNumber } from "lively.lang/object.js";
@@ -14,6 +14,7 @@ import { GridLayout } from "../../layout.js";
 import { NumberWidget, VerticesWidget, ShadowWidget, PointWidget, StyleSheetWidget, BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
 import { RichTextControl } from "../../text/ui.js";
 import { Point } from "lively.graphics/geometry-2d.js";
+import { MorphHighlighter } from "../../halo/morph.js";
 
 var inspectorCommands = [
 
@@ -155,12 +156,64 @@ function propertiesOf(target) {
   return props;
 }
 
+class DraggedProp extends Morph {
+
+  static get properties() {
+    return {
+      control: {},
+      borderColor: {defaultValue: Color.rgb(169,204,227)},
+      fill: {defaultValue: Color.rgb(235, 245, 251).withA(.8)},
+      borderWidth: {defaultValue: 2},
+      borderRadius: {defaultValue: 4},
+      submorphs: {
+        after: ['control'],
+        initialize() {
+          this.submorphs = [this.control];
+          this.height = 22;
+          this.control.top = 0;
+          this.control.fontSize = 14;
+          this.control.relayout();
+          this.width = this.control.width + 20;
+          this.adjustOrigin(pt(10,10));
+        }
+      }
+    }
+  }
+
+  applyToTarget() {
+    let {keyString, propertyValue} = this.control;
+    this.remove();
+    MorphHighlighter.removeHighlightersFrom($world);
+    this.currentTarget[keyString] = propertyValue;
+  }
+
+  update(handPosition) {
+    let target = this.morphBeneath(handPosition);
+    if (target == this.morphHighlighter) {
+      target = this.morphHighlighter.morphBeneath(handPosition);
+    }
+    if (target != this.currentTarget) {
+      this.currentTarget = target;
+      if (this.morphHighlighter) this.morphHighlighter.deactivate();
+      if (target.isWorld) return;
+      this.morphHighlighter = MorphHighlighter.for($world, target);
+      this.morphHighlighter.show();
+    }
+    this.position = handPosition;
+  }
+}
+
 export class PropertyControl extends Label {
+  
+  get __only_serialize__() {
+    return arr.without(super.__only_serialize__, 'attributeConnections');
+  }
   
   static render({target, property, keyString, valueString, value}) {
     let propertyControl = new this({
       keyString,
-      valueString
+      valueString,
+      propertyValue: value
     });
     // TODO:  this dispatch logic should be defined through the property
     // definition interface (i.e. static get properties()) where properties
@@ -295,6 +348,8 @@ export class PropertyControl extends Label {
           this.submorphs = [c];
         }
       },
+      draggable: {defaultValue: true},
+      nativeCursor: {defaultValue: '-webkit-grab'},
       root: {},
       keyString: {},
       valueString: {},
@@ -305,7 +360,7 @@ export class PropertyControl extends Label {
       layout: {
         initialize() {
           this.layout = new CustomLayout({
-            relayout(self) {
+            relayout: (self) => {
               self.relayout();
             }
           });
@@ -318,6 +373,22 @@ export class PropertyControl extends Label {
         }
       }
     }
+  }
+
+  onDragStart(evt) {
+    this.draggedProp = new DraggedProp({
+      control: this.copy()
+    });
+    this.draggedProp.openInWorld();
+    connect(evt.hand, 'position', this.draggedProp, 'update');
+    connect(evt.hand, 'position', this.draggedProp, 'update');
+  }
+
+  onDrag(evt) {}
+
+  onDragEnd(evt) {
+    disconnect(evt.hand, 'position', this.draggedProp, 'update');
+    this.draggedProp.applyToTarget();
   }
 
   relayout() {
@@ -454,7 +525,7 @@ class InspectorTreeData extends TreeData {
 }
 
 
-// inspect(this)
+
 export function inspect(targetObject) {
   return Inspector.openInWindow({targetObject});
 }
@@ -476,14 +547,6 @@ export default class Inspector extends Morph {
     return {
       extent: {defaultValue: pt(400, 500)},
       fill: {defaultValue: Color.transparent},
-      morphHighlighter: {
-        defaultValue: new Morph({
-          fill: Color.orange.withA(0.3),
-          borderColor: Color.orange,
-          reactsToPointer: false,
-          borderWidth: 2
-        })
-      },
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
@@ -538,7 +601,8 @@ export default class Inspector extends Morph {
           });
         }
       }
-    };  }
+    };  
+  }
 
   constructor(props = {}) {
     var {targetObject} = props;
@@ -556,9 +620,10 @@ export default class Inspector extends Morph {
       if (change == this.lastChange) return;
       if (this.focusedNode && this.focusedNode.keyString == change.prop) return;
       this.lastChange = change;
-      this.prepareForNewTargetObject(this.targetObject);
+      this.targetObject = this.targetObject;
    }
-    //if (!this.targetObject.isWorld) this.startStepping(50, 'refreshProperties');
+    // slow!
+   //if (!this.targetObject.isWorld) this.startStepping(50, 'refreshProperties');
   }
 
   get isInspector() { return true; }
@@ -703,8 +768,6 @@ export default class Inspector extends Morph {
     once(this.selectorMorph, 'onKeyDown', this, 'stopSelect');
     this.toggleSelectionInstructions(true);
     this.selectorMorph.focus();
-    this.morphHighlighter.visible = false;
-    this.morphHighlighter.openInWorld();
     this.scanForTargetAt($world.firstHand.position);
   }
 
@@ -716,18 +779,13 @@ export default class Inspector extends Morph {
     }
     if (target != this.possibleTarget 
         && !target.ownerChain().includes(this.getWindow())) {
+      if (this.morphHighlighter) this.morphHighlighter.deactivate();
       this.possibleTarget = target;
       if (this.possibleTarget && !this.possibleTarget.isWorld) {
-        this.highlightMorph(this.possibleTarget)
-      } else {
-        this.morphHighlighter.visible = false;
+        let h = this.morphHighlighter = MorphHighlighter.for($world, target);
+        h && h.show();
       }
     }
-  }
-
-  highlightMorph(morph) {
-    this.morphHighlighter.visible = true;
-    this.morphHighlighter.setBounds(morph.globalBounds());
   }
 
   selectTarget() {
@@ -736,8 +794,8 @@ export default class Inspector extends Morph {
   }
   
   stopSelect() {
+    MorphHighlighter.removeHighlightersFrom($world);
     this.toggleSelectionInstructions(false);
-    this.morphHighlighter.remove();
     this.get('targetPicker').fontColor = Color.black;
     disconnect($world.firstHand, 'position', this, 'scanForTargetAt');
     this.selectorMorph.remove();
