@@ -1,5 +1,5 @@
 import { pt, rect } from "lively.graphics";
-import { arr, num, grid, obj } from "lively.lang";
+import { arr, Closure, num, grid, obj } from "lively.lang";
 import {
   GridLayoutHalo,
   FlexLayoutHalo,
@@ -144,6 +144,8 @@ export class CustomLayout extends Layout {
   
   constructor(config = {}) {
      this.relayout = config.relayout;
+     this.layouterString = String(config.relayout);
+     this.varMapping = config.varMapping || {};
      super(config);
   }
 
@@ -153,6 +155,9 @@ export class CustomLayout extends Layout {
      if (this.active || !this.container) return;
      super.apply(animate);
      this.active = true;
+     if (!this.relayout) {
+       this.relayout = Closure.fromSource(this.layouterString, this.varMapping).recreateFunc()
+     }
      this.relayout(this.container, animate);
      this.lastBoundsExtent = this.container && this.container.bounds().extent();
      this.active = false;
