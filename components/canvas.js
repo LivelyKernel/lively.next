@@ -36,7 +36,9 @@ export class Canvas extends Morph {
 
   //get canvasBounds() { return this._canvas && this.canvasExtent.extentAsRectangle(); }
   get context() { return this._canvas && this._canvas.getContext(this.contextType); }
-  set _canvas(new_canvas) { 
+
+  set _canvas(new_canvas) {
+    // renderer created a new HTMLCanvasElement for us
     const old_canvas = this.__canvas__;
     this.__canvas__ = new_canvas;
     if (this.__canvas_init__) {
