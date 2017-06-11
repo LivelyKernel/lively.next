@@ -479,11 +479,34 @@ export class ShadowPopover extends StylePopover {
       cachedShadow: {defaultValue: new ShadowObject({})},
       popoverColor: {defaultValue: Color.gray.lighter()}
     }
+  }  
+  
+  controls() {
+    let selectedValue = (this.shadowValue ? (this.shadowValue.inset ? 'Inset Shadow' : "Drop Shadow") : 'No Shadow');
+    var shadowSelector,
+        controls = [
+          {
+            layout: new VerticalLayout({resizeContainer: true, spacing:5}),
+            fill: Color.transparent,
+            name: 'control container',
+            submorphs: [
+              (shadowSelector = new DropDownSelector({
+                name: "shadow type",
+                borderRadius: 2,
+                padding: 3,
+                selectedValue,
+                values: ["No Shadow", "Drop Shadow", "Inset Shadow"]
+              })),
+            ].concat(this.shadowValue ? this.shadowControls() : [])
+          }
+        ];
+    connect(shadowSelector, "selectedValue", this, "changeShadowType");
+    return controls;
   }
 
-  shadowControl() {
-    const value = this.shadowValue;
-    const distanceInspector = new NumberWidget({
+  shadowControls() {
+    let value = this.shadowValue,
+          distanceInspector = new NumberWidget({
       min: 0,
       name: "distanceSlider",
       number: value.distance,
@@ -496,13 +519,9 @@ export class ShadowPopover extends StylePopover {
             number: value.rotation
           }),
           spreadInspector = new NumberWidget({
-            name: 'spreadSlider',
+            name: "spreadSlider",
             min: 0,
             number: value.spread
-          }),
-          insetToggle = new CheckBox({
-            name: "insetToggle",
-            checked: value.inset
           }),
           blurInspector = new NumberWidget({
             name: "blurSlider",
@@ -510,14 +529,19 @@ export class ShadowPopover extends StylePopover {
             number: value.blur
           }),
           colorField = new ColorPickerField({
-            name: 'colorPicker', colorValue: value.color
+            name: "colorPicker",
+            colorValue: value.color
           });
-    connect(colorField, 'colorValue', this, 'updateShadow', {converter: (color) => ({color})});
-    connect(spreadInspector, 'number', this, 'updateShadow', {converter: (spread) => ({spread})});
-    connect(distanceInspector, 'number', this, 'updateShadow', {converter: (distance) => ({distance})});
-    connect(blurInspector, 'number', this, 'updateShadow', {converter: (blur) => ({blur})});
-    connect(angleSlider, 'number', this, 'updateShadow', {converter: (rotation) => ({rotation})});
-    connect(insetToggle, "toggle", this, "updateShadow", {converter: (inset) => ({inset})});
+    connect(colorField, "colorValue", this, "updateShadow", {converter: color => ({color})});
+    connect(this, 'onMouseDown', colorField, 'removeWidgets');
+    connect(this, 'close', colorField, 'remove');
+    connect(spreadInspector, "number", this, "updateShadow", {converter: spread => ({spread})});
+    connect(distanceInspector, "number", this, "updateShadow", {
+      converter: distance => ({distance})
+    });
+    connect(blurInspector, "number", this, "updateShadow", {converter: blur => ({blur})});
+    connect(angleSlider, "number", this, "updateShadow", {converter: rotation => ({rotation})});
+    
     return new Morph({
       layout: new GridLayout({
         autoAssign: false,
@@ -529,55 +553,58 @@ export class ShadowPopover extends StylePopover {
           ["distanceLabel", null, "distanceSlider"],
           ["blurLabel", null, "blurSlider"],
           ["angleLabel", null, "angleSlider"],
-                    ["insetLabel", null, "insetToggle"],
           ["colorLabel", null, "colorPicker"]
         ]
       }),
       width: 120,
-      height: 185,
+      height: 145,
       fill: Color.transparent,
       styleSheets: new StyleSheet({
-        '.controlName': {
+        ".controlName": {
           fontSize: 14,
-          padding: rect(0,3,0,0),
-          opacity: .9
+          padding: rect(0, 3, 0, 0),
+          opacity: 0.9
         }
       }),
-      submorphs: arr.flatten([
-        ["inset",
-        insetToggle],
-        ["distance",
-        distanceInspector],
-        ["spread",
-        spreadInspector],
-        ["blur",
-        blurInspector],
-        ['angle',
-        angleSlider],
-        ["color",
-        colorField]
-      ].map(([value, control]) => {
-        return [{type: 'label', styleClasses: ['controlName'],
-                 value: string.capitalize(value) + ":", name: value + 'Label'}, control]
-      }))
+      submorphs: arr.flatten(
+        [
+          ["distance", distanceInspector],
+          ["spread", spreadInspector],
+          ["blur", blurInspector],
+          ["angle", angleSlider],
+          ["color", colorField]
+        ].map(([value, control]) => {
+          return [
+            {
+              type: "label",
+              styleClasses: ["controlName"],
+              value: string.capitalize(value) + ":",
+              name: value + "Label"
+            },
+            control
+          ];
+        })
+      )
     });
   }
-  controls() {
-    var shadowToggle, controls = [{
-      layout: new VerticalLayout({resizeContainer: true}),
-      fill: Color.transparent,
-      submorphs: [shadowToggle = new ToggledControl({
-        checked: !!this.shadowValue,
-        title: 'Drop Shadow',
-        toggledControl: (checked) => {
-          this.toggleShadow(checked);
-          return checked && this.shadowControl();
-         }
-      })]
-    }];
-    return controls;
-  }
 
+  changeShadowType(type) {
+    console.log(this);
+    if (type == 'No Shadow') {
+      this.toggleShadow(false)
+    } else if (type == 'Inset Shadow') {
+      this.toggleShadow(true)
+      this.shadowValue.inset = true;
+    } else {
+      this.toggleShadow(true)
+      this.shadowValue.inset = false;
+    }
+    this.get('control container').animate({
+      submorphs: [this.get('shadow type')].concat(this.shadowValue ? this.shadowControls() : []),
+      duration: 300
+    })
+  }
+  
   updateShadow(args) {
     let {color, spread, blur, distance, rotation, inset} = this.shadowValue,
         shadow = {color, spread, blur, distance, rotation, inset, ...args};
