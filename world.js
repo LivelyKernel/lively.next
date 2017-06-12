@@ -23,7 +23,6 @@ import { uploadFile } from "./events/html-drop-handler.js";
 import worldCommands from "./world-commands.js";
 import { loadWorldFromURL, loadWorld } from "./world-loading.js";
 import LoadingIndicator from "./components/loading-indicator.js";
-import { StyleEditor } from "./ide/styling/style-editor.js";
 import { GradientEditor } from "./ide/styling/gradient-editor.js";
 
 export class World extends Morph {
@@ -40,7 +39,6 @@ export class World extends Morph {
             FilterableList.styleSheet,
             List.styleSheet,
             LoadingIndicator.styleSheet,
-            StyleEditor.styleSheet,
             GradientEditor.styleSheet,
             Tooltip.styleSheet
           ];
