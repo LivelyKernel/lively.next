@@ -1,4 +1,4 @@
-import { Morph, Text, morph, Label, HorizontalLayout, StyleSheet, Icon, GridLayout, config } from "lively.morphic";
+import { Morph, morph, Label, HorizontalLayout, StyleSheet, Icon, GridLayout, config } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 import { Color, LinearGradient, pt, rect } from "lively.graphics";
 import { ValueScrubber } from "../components/widgets.js";
