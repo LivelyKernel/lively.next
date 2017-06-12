@@ -1,17 +1,16 @@
-import { Morph, Text, Ellipse, Polygon, Button,
-         Icon, Image, Path, HTMLMorph, morph} from "../index.js";
-import { VerticalLayout, HorizontalLayout, FillLayout,
-         TilingLayout, GridLayout} from '../layout.js';
-import { Color, pt, rect, Line, Rectangle} from "lively.graphics";
+import {
+  Morph,
+  Path
+} from "../index.js";
+
+import { Color, pt } from "lively.graphics";
 import { intersect, shape, bezier } from 'svg-intersections';
-import { arr, num } from "lively.lang";
-import { connect, disconnect } from "lively.bindings";
-import { BorderStyleEditor, BodyStyleEditor, ButtonBodyEditor, ButtonBorderEditor,
-         LayoutStyleEditor, HTMLEditor, PathEditor, PolygonEditor,
-         ImageEditor, NoEditor } from "../ide/styling/style-editor.js";
+import { arr } from "lively.lang";
+import { connect } from "lively.bindings";
+
 import { Leash } from "../components/widgets.js";
 import { StyleSheet } from "../style-rules.js";
-import { Event } from "../events/Event.js";
+
 import { pathAttributes } from "../rendering/morphic-default.js";
 
 /* rms: I tried doing this via polymorphic dispatch
@@ -352,33 +351,4 @@ export class SvgStyleHalo extends Path {
     ph.visible = true;
     ph.insertionIndex = vs.indexOf(v1);
   }
-}
-
-class PathStyleHalo extends SvgStyleHalo {
-
-  getBodyStyler() {
-    return new NoEditor({target: this.target});
-  }
-
-  showBorderStyler() {
-    super.showBorderStyler();
-    this.borderStyler.center = this.target.center;
-  }
-
-  openBorderStyler() {
-    this.borderColor = Color.transparent;
-    if (this.borderStyler.opened)
-      return;
-    super.openBorderStyler();
-  }
-
-  borderHaloShape(props) {
-    return {...super.borderHaloShape(props), type: "path"};
-  }
-
-  getBorderStyler() {
-    const borderStyler = new PathEditor({target: this.target});
-    return borderStyler;
-  }
-
 }
