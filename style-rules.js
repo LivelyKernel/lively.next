@@ -6,7 +6,7 @@ import { Color, pt, rect } from "lively.graphics";
 import { connect, once, signal, disconnect } from "lively.bindings";
 import { TreeData, Tree } from "./components/tree.js";
 import { PropertyControl } from "./ide/js/inspector.js";
-import { safeToString } from "lively.lang/object.js";
+import { safeToString, isObject } from "lively.lang/object.js";
 import { LinearGradient } from "lively.graphics/color.js";
 import { CompletionController } from "./text/completion.js";
 
@@ -27,7 +27,7 @@ class StylePropCompleter {
   constructor(propertiesAndSettings) {
     this.propertiesAndSettings = propertiesAndSettings
   }
-  
+
   compute(_, prefix) {
     let stylePropNames = [];
     for (let p in this.propertiesAndSettings) {
@@ -38,7 +38,7 @@ class StylePropCompleter {
       return {completion, priority};
     });
   }
-  
+
 }
 
 class StyleRuleDraft extends Morph {
@@ -102,7 +102,7 @@ class StyleRuleDraft extends Morph {
     let rule = this.get('ruleInput').textString;
     if (evt.key == 'Enter') {
       this.get('ruleInput').textString = rule.replace(/\r?\n|\r/g, '');
-      this.focus(); 
+      this.focus();
     }
   }
 
@@ -188,7 +188,7 @@ class PropertyDraft extends Morph {
   startEnterValue() {
     this.get('value input').textString = '';
   }
-  
+
   enterValue(evt) {
     if (evt.key == 'Enter') {
       this.focus();
@@ -215,7 +215,7 @@ class PropertyDraft extends Morph {
       this.getSubmorphNamed("error") && this.getSubmorphNamed("error").remove();
     }
   }
-  
+
   async onPropNameInput(evt) {
     // if enter or tab is pressed, enter check
     // prop name for validity and move over to value
@@ -251,7 +251,7 @@ class PropertyDraft extends Morph {
     if (propName) {
       this.toggleUnknownPropertyIndicator(!this.isValidProperty(propName))
       this.get('key input').fit();
-    } else if (!this.get('key input').isFocused()) { 
+    } else if (!this.get('key input').isFocused()) {
       this.get('key input').addStyleClass('empty');
       this.get('key input').textString = 'name';
     }
@@ -295,7 +295,7 @@ class PropertyDraft extends Morph {
     this.get('value input').textString = 'value';
     this.get('value input').styleClasses = ['empty'];
   }
-  
+
 }
 
 class DroppableStyleSheet extends Morph {
@@ -329,8 +329,8 @@ class DroppableStyleSheet extends Morph {
 
   isValidDropTarget(morph) {
     return (
-      morph != this.toolContext && 
-      !morph.ownerChain().includes(this.toolContext) && 
+      morph != this.toolContext &&
+      !morph.ownerChain().includes(this.toolContext) &&
       morph != this.dropTargetHighlighter
     );
   }
@@ -540,7 +540,7 @@ class StyleRuleControl extends Morph {
     }
     refreshTextMorph(this.get('rule'));
   }
-  
+
   compileRule() {
     let ruleInput = this.getSubmorphNamed('rule');
     ruleInput.textString = ruleInput.textString.replace(/\r?\n|\r/g, '');
@@ -647,11 +647,10 @@ class StyleSheetData extends TreeData {
   }
 
   replaceRule({styleSheet, rule, matcher}) {
-  
+
   }
 
   removeStyleSheet(node) {
-    debugger;
     let styleSheets = this.root.children;
     this.targetMorph.styleSheets = arr.without(this.targetMorph.styleSheets, node.value)
     arr.remove(styleSheets, styleSheets.find((n) => n.displayedMorph == node));
@@ -661,7 +660,7 @@ class StyleSheetData extends TreeData {
   addStyleSheet({styleSheet, styledMorph}) {
     let styleSheets = this.root.children;
     styledMorph.styleSheets = [...styledMorph.styleSheets || [], styleSheet];
-    arr.replaceAt(styleSheets, this.parseStyleSheet(styleSheet), 
+    arr.replaceAt(styleSheets, this.parseStyleSheet(styleSheet),
        arr.findIndex(styleSheets, n => n.type == 'new-style-sheet'));
     signal(this, 'update');
   }
@@ -1015,7 +1014,7 @@ export class StyleSheetEditor extends Morph {
       submorphs: {
         after: ['styleSheets'],
         initialize() {
-          var bounds = rect(0,0,200,250), 
+          var bounds = rect(0,0,200,250),
               td = new StyleSheetData(this),
               tree;
           this.submorphs = [
@@ -1088,12 +1087,11 @@ export class StyleSheet {
 
   get context() { return this._context }
 
-  unwrapNestedProps(props) {
+  unwrapFoldedProps(props) {
     ["borderRadius", "borderWidth", "borderColor", 'borderStyle'].forEach(p => {
       if (p in props) {
-        ["Right", 'Left', 'Top', 'Bottom'].forEach(side => {
-           props[p + side] = props[p];
-        })
+        let v = props[p], {top, bottom, right, left} = v;
+        props[p] = top && bottom && right && left ? v : {top: v, bottom: v, right: v, left: v};
       }
     });
   }
@@ -1129,7 +1127,7 @@ export class StyleSheet {
         props = obj.dissoc({...props, ...this.rules[rule]}, ['_deactivated']);
       }
     }
-    this.unwrapNestedProps(props)
+    this.unwrapFoldedProps(props)
     if ("layout" in props) {
       let layout = props.layout.copy();
       layout.container = morph;
@@ -1140,7 +1138,7 @@ export class StyleSheet {
       props.dropShadow.morph = morph;
     }
     if ("padding" in props) {
-      props.padding = props.padding.isRect ? 
+      props.padding = props.padding.isRect ?
         props.padding : rect(props.padding, props.padding);
     }
     props.layout && props.layout.scheduleApply();
