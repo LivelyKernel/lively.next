@@ -5,7 +5,6 @@ import { expect } from "mocha-es6";
 import { morph, Button, World } from "../../index.js";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { num, promise, fun } from "lively.lang";
-import { styleHaloFor } from "../../halo/stylization.js";
 
 var button, world, eventLog, env;
 const inactiveColor = Color.blue, activeColor = Color.red, triggerColor = Color.green;
