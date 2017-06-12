@@ -188,6 +188,9 @@ export class Text extends Morph {
       },
 
       padding: {
+        spec: {
+          type: 'Rectangle'
+        },
         isStyleProp: true,
         after: ["textLayout", "viewState"],
         defaultValue: Rectangle.inset(0),
@@ -313,34 +316,63 @@ export class Text extends Morph {
       nativeCursor: {defaultValue: "", isDefaultTextStyleProp: true},
 
       fontFamily: {
+        spec: {
+          type: "Enum",
+          values: RichTextControl.basicFontItems().map(f => f.value)
+        },
         defaultValue: "Sans-Serif",
         isStyleProp: true, isDefaultTextStyleProp: true,
         after: ["defaultTextStyle"]
       },
+      
       fontSize: {
+        spec: {
+          type: 'Number',
+          min: 1,
+          unit: 'pt'
+        },
         defaultValue: 12,
         isStyleProp: true, isDefaultTextStyleProp: true,
         after: ["defaultTextStyle"]
       },
+      
       selectionColor: {
+        spec: {
+          type: 'Color'
+        },
         isStyleProp: true,
         after: ["defaultTextStyle"]
       },
+      
       fontColor: {
+        spec: {
+          type: 'Color'
+        },
         defaultValue: Color.black,
         isStyleProp: true, isDefaultTextStyleProp: true,
         after: ["defaultTextStyle"]
       },
+      
       fontWeight: {
+        spec: {
+          type: 'Enum',
+          values: ["bold", "bolder", "light", "lighter"]
+        },
         defaultValue: "normal",
         isStyleProp: true, isDefaultTextStyleProp: true,
         after: ["defaultTextStyle"]
       },
+      
       fontStyle: {
+        spec: {
+          type: 'Enum',
+          values: ['normal', 'italic', 'oblique']
+        },
         defaultValue: "normal",
         isStyleProp: true, isDefaultTextStyleProp: true,
         after: ["defaultTextStyle"]
       },
+      
       textDecoration: {
         defaultValue: "none",
         isStyleProp: true, isDefaultTextStyleProp: true,
@@ -351,12 +383,17 @@ export class Text extends Morph {
         after: ["defaultTextStyle"]
       },
       backgroundColor: {
+        spec: {
+          type: 'Color'
+        },
         isStyleProp: true, isDefaultTextStyleProp: true,
         after: ["defaultTextStyle"]
       },
       textAlign: {
-        // values:
-        // center, justify, left, right
+        spec: {
+          type: 'Enum',
+          values: ['center', 'justify', 'left', 'right']
+        },
         isStyleProp: true, isDefaultTextStyleProp: true,
         after: ["document", "defaultTextStyle", "viewState"],
       },
