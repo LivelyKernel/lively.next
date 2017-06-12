@@ -116,6 +116,8 @@ function propertiesOf(target) {
 
   var seen = {}, props = [],
       isCollapsed = true,
+      context = target.isMorph ? 
+        {target, propertiesAndSettings: target.propertiesAndPropertySettings()} : {},
       customProps = typeof target.livelyCustomInspect === "function" ?
         target.livelyCustomInspect() : {},
       options = {
@@ -128,7 +130,7 @@ function propertiesOf(target) {
       seen[key] = true;
       if (hidden) continue;
       props.push({
-        priority,
+        priority, context,
         key, keyString: keyString || safeToString(key),
         value, valueString,
         isCollapsed
@@ -141,12 +143,12 @@ function propertiesOf(target) {
     for (let key of defaultProps) {
       if (key in seen) continue;
       var value = target[key], valueString = printValue(value);
-      props.push({key, value, valueString, isCollapsed})
+      props.push({key, value, valueString, isCollapsed, context})
     }
     if (options.includeSymbols) {
       for (let key of Object.getOwnPropertySymbols(target)) {
         var keyString = safeToString(key), value = target[key], valueString = printValue(value);
-        props.push({key, keyString, value, valueString, isCollapsed});
+        props.push({key, keyString, value, valueString, isCollapsed, context});
       }
     }
   }
@@ -208,119 +210,74 @@ export class PropertyControl extends Label {
   get __only_serialize__() {
     return arr.without(super.__only_serialize__, 'attributeConnections');
   }
-  
-  static render({target, property, keyString, valueString, value}) {
-    let propertyControl = new this({
-      keyString,
-      valueString,
-      propertyValue: value
-    });
-    // TODO:  this dispatch logic should be defined through the property
-    // definition interface (i.e. static get properties()) where properties
-    // also can define their 'type' and how this type is supposed to be
-    // controlled by the inspector or style sheet editor
+
+  static inferSpec({keyString, value}) {
     if (value && (value.isColor || value.isGradient)) {
-      let colorWidget = new ColorWidget({
-        color: value,
-        gradientEnabled: property == 'fill'
-      });
-      connect(colorWidget, "color", propertyControl, "propertyValue");
-      propertyControl.control = colorWidget;
-    }
-    if (property == "layout") {
-      propertyControl.control = new LayoutWidget({context: target});
-      connect(propertyControl.control, 'layoutChanged', propertyControl, 'propertyValue')
-    } else if (property == 'vertices') {
-      propertyControl.control = new VerticesWidget({context: target});
-      connect(propertyControl.control, 'vertices', propertyControl, 'propertyValue')
-    } else if (property == "fontFamily") {
-      this.renderValueSelector(
-        propertyControl,
-        value,
-        RichTextControl.basicFontItems().map(f => f.value)
-      );
+      return {type: 'Color'}
     } else if (value && value.isPoint) {
-      propertyControl.control = new PointWidget({name: "valueString", pointValue: value});
-      connect(propertyControl.control, 'pointValue', propertyControl, 'propertyValue')
-    } else if (property == "fontWeight") {
-      this.renderValueSelector(propertyControl, value, ["bold", "bolder", "light", "lighter"]);
-    } else if (property == 'dropShadow') {
-      propertyControl.control = new ShadowWidget({name: 'valueString', shadowValue: value});
-      connect(propertyControl.control, 'shadowValue', propertyControl, 'propertyValue');
-    } else if (property.includes('borderStyle')) {
-      this.renderValueSelector(propertyControl, value, ["none", "hidden", "dotted", "dashed", "solid", "double", "groove", "ridge", "inset", "outset"]);
-    } else if (property == "nativeCursor") {
-      this.renderValueSelector(propertyControl, value, [
-        "auto",
-        "default",
-        "none",
-        "context-menu",
-        "help",
-        "pointer",
-        "progress",
-        "wait",
-        "cell",
-        "crosshair",
-        "text",
-        "vertical-text",
-        "alias",
-        "copy",
-        "move",
-        "no-drop",
-        "not-allowed",
-        "e-resize",
-        "n-resize",
-        "ne-resize",
-        "nw-resize",
-        "s-resize",
-        "se-resize",
-        "sw-resize",
-        "w-resize",
-        "ew-resize",
-        "ns-resize",
-        "nesw-resize",
-        "nwse-resize",
-        "col-resize",
-        "row-resize",
-        "all-scroll",
-        "zoom-in",
-        "zoom-out",
-        "grab",
-        "grabbing"
-      ]);
-    } else if (property == "fontStyle") {      this.renderValueSelector(propertyControl, value, ['normal', 'italic', 'oblique']);
-    } else if (property == "clipMode") {
-      this.renderValueSelector(propertyControl, value, ["visible", "hidden", "scroll", "auto"]);
+      return {type: 'Point'}
     } else if (isBoolean(value)) {
-      propertyControl.control = new BooleanWidget({
-        name: "valueString",
-        boolean: value
-      });
-      connect(propertyControl.control, "boolean", propertyControl, "propertyValue");
+      return {type: 'Boolean'}
     } else if (isNumber(value)) {
-      propertyControl.control = new NumberWidget({
-        name: "valueString",
-        height: 17,
-        baseFactor: 0.5,
-        fill: Color.transparent,
-        padding: rect(0),
-        fontFamily: config.codeEditor.defaultStyle.fontFamily,
-        number: value
-      });
-      connect(propertyControl.control, "number", propertyControl, "propertyValue");
+      return {type: 'Number'}
     } else if (isString(value)) {
-      //controlClass = StringPropertyControl;
-    } else if (keyString == "styleSheets") {
-      propertyControl.control = new StyleSheetWidget({context: target});
+      return {type: 'String'}
     }
+    return {}
+  }
+  
+  static render(args) {
+    let propertyControl = this.baseControl(args);
+    
+    if (!args.spec) args.spec = this.inferSpec(args);
+
+    if (args.spec.foldable) {
+      propertyControl.asFoldable();
+    }
+    
+    switch (args.spec.type) {
+        // 12.6.17
+        // rms: not sure wether a string based spec is that effective in the long run
+        //      it may require too much dedicated maintenance
+      case "Icon":
+        propertyControl.renderIconControl(args); break;
+      case "Color":
+        propertyControl.renderColorControl(args); break;
+      case "ColorGradient":
+        propertyControl.renderColorControl(args, true); break;
+      case "Number":
+        propertyControl.renderNumberControl(args); break;
+      case "String":
+        propertyControl.renderStringControl(args); break;
+      case "RichText":
+        propertyControl.renderRichTextControl(args); break;
+      case "Layout":
+        propertyControl.renderLayoutControl(args); break;
+      case "Enum":
+        propertyControl.renderEnumControl(args); break;
+      case "Vertices":
+        propertyControl.renderVertexControl(args); break;
+      case "Shadow":
+        propertyControl.renderShadowControl(args); break;
+      case "Point":
+        propertyControl.renderPointControl(args); break;
+      case "StyleSheets":
+        propertyControl.renderStyleSheetControl(args); break;
+      case "Rectangle": 
+        propertyControl.renderRectangleControl(args); break;
+      case "Boolean":
+        propertyControl.renderBooleanControl(args); break;
+    }
+
     if (propertyControl.control) {
       connect(propertyControl.control, "openWidget", propertyControl, "openWidget");
       return propertyControl;
     }
+    
     return false;
   }
   
-  static renderValueSelector(propertyControl, selectedValue, values) {
+  renderValueSelector(propertyControl, selectedValue, values) {
     let selector = new DropDownSelector({
       opacity: 0.8,
       fill: Color.white.withA(0.5),
@@ -334,6 +291,7 @@ export class PropertyControl extends Label {
     selector.whenRendered().then(() => selector.updateStyleSheet());
     connect(selector, "selectedValue", propertyControl, "propertyValue");
     propertyControl.control = selector;
+    return propertyControl;
   }
 
   static get properties() {
@@ -375,12 +333,104 @@ export class PropertyControl extends Label {
     }
   }
 
+  static baseControl({keyString, valueString, value}) {
+    return new this({
+      keyString,
+      valueString,
+      propertyValue: value
+    });
+  }
+
+  asFoldable() {
+    // TODO: adjust the widget to display folded value or non reconciled "..." when folded values vary
+  }
+
+  renderEnumControl({value, spec: {values}}) {
+    return this.renderValueSelector(this, value, values);
+  }
+
+  renderIconControl(args) {
+    
+  }
+
+  renderStringControl(args) {
+    
+  }
+
+  renderRichTextControl(args) {
+    
+  }
+
+  renderRectangleControl(args) {
+    
+  }
+
+  renderVertexControl({target}) {
+    this.control = new VerticesWidget({context: target});
+    connect(this.control, "vertices", this, "propertyValue");
+    return this;
+  }
+
+  renderBooleanControl(args) {
+    this.control = new BooleanWidget({
+      name: "valueString",
+      boolean: args.value
+    });
+    connect(this.control, "boolean", this, "propertyValue");
+    return this;
+  }
+
+  renderNumberControl({value}) {
+    this.control = new NumberWidget({
+      name: "valueString",
+      height: 17,
+      baseFactor: 0.5,
+      fill: Color.transparent,
+      padding: rect(0),
+      fontFamily: config.codeEditor.defaultStyle.fontFamily,
+      number: value
+    });
+    connect(this.control, "number", this, "propertyValue");
+    return this;
+  }
+
+  renderShadowControl(args) {
+    this.control = new ShadowWidget({name: 'valueString', shadowValue: args.value});
+    connect(this.control, 'shadowValue', this, 'propertyValue');
+    return this;
+  }
+
+  renderStyleSheetControl({target}) {
+    this.control = new StyleSheetWidget({context: target});
+    return this;
+  }
+
+  renderPointControl(args) {
+    this.control = new PointWidget({name: "valueString", pointValue: args.value});
+    connect(this.control, "pointValue", this, "propertyValue");
+    return this;
+  }
+
+  renderLayoutControl({target}) {
+    this.control = new LayoutWidget({context: target});
+    connect(this.control, "layoutChanged", this, "propertyValue");
+    return this;
+  }
+
+  renderColorControl(args, gradientEnabled = false) {
+    this.control = new ColorWidget({
+          color: args.value,
+          gradientEnabled
+        });
+    connect(this.control, "color", this, "propertyValue");
+    return this;
+  }
+
   onDragStart(evt) {
     this.draggedProp = new DraggedProp({
       control: this.copy()
     });
     this.draggedProp.openInWorld();
-    connect(evt.hand, 'position', this.draggedProp, 'update');
     connect(evt.hand, 'position', this.draggedProp, 'update');
   }
 
@@ -423,15 +473,26 @@ class InspectorTreeData extends TreeData {
     
     var [root, ...nodes] = arr.sortBy(nodes, ({i}) => i);
     root = {...root.node, children: []}; // create new node
-    var stack = [], prev = root;
+    var stack = [], prev = root, morphStack = [];
     for(let {node, depth} of nodes) {
       if (stack.length < depth) {
         stack.push(prev);
+        if (node.value && node.value.isMorph) {
+          morphStack.push({
+            target: node.value,
+            propertiesAndSettings: node.value.propertiesAndPropertySettings()
+          }); // push a new morph context        
+        } else {
+          morphStack.push(arr.last(morphStack)) // morph context stays the same
+        }
       }
       if (stack.length > depth) {
         stack.pop();
+        morphStack.pop();
       }
-      stack[depth - 1].children.push(prev = {...node, children: []});
+      stack[depth - 1].children.push(prev = {
+        ...node, context: morphStack[depth - 1], children: []
+      });
     }
     return new this(root)
   }
@@ -449,10 +510,11 @@ class InspectorTreeData extends TreeData {
         color, numbers (float, int) */
      var keyString = node.keyString || node.key,
          valueString = node.valueString || printValue(node.value),
-         target = this.root.value.inspectee,
-         property = node.key || node.keyString,
+         {target, propertiesAndSettings} = node.context || {},
+         {spec} = (propertiesAndSettings && propertiesAndSettings.properties[keyString]) || {spec: {}},
          value = node.value,
          controlClass;
+    
      if (node._propertyWidget){
         if (typeof node._propertyWidget == 'string') return node._propertyWidget;
         node._propertyWidget.keyString = keyString;
@@ -461,18 +523,17 @@ class InspectorTreeData extends TreeData {
      }
      
      node._propertyWidget = PropertyControl.render({
-        target, property, keyString, 
-        valueString, value
+        target, keyString, 
+        valueString, value, spec
      });
-     
      if (node._propertyWidget) {
         node.isSelected = false; // should be replaced by a better selection style
-        this.targetPropertyInfo = this.targetPropertyInfo || target.propertiesAndPropertySettings().properties;
+        this.targetPropertyInfo = propertiesAndSettings.properties;
       if (
         !this.isInternalProperty(keyString) && 
-        !(this.targetPropertyInfo[property] && this.targetPropertyInfo[property].readOnly)
+        !(this.targetPropertyInfo[keyString] && this.targetPropertyInfo[keyString].readOnly)
       ) {
-        connect(node._propertyWidget, "propertyValue", target, property);
+        connect(node._propertyWidget, "propertyValue", target, keyString);
         connect(node._propertyWidget, "openWidget", this, "onWidgetOpened", {
           converter: widget => {
             return {widget, node};
@@ -618,7 +679,10 @@ export default class Inspector extends Morph {
       if (!this.targetObject || !this.targetObject.isMorph) return;
       let change = last(this.targetObject.env.changeManager.changesFor(this.targetObject));
       if (change == this.lastChange) return;
-      if (this.focusedNode && this.focusedNode.keyString == change.prop) return;
+      if (this.focusedNode && this.focusedNode.keyString == change.prop) {
+        this.repositionOpenWidget();
+        return; 
+      }
       this.lastChange = change;
       this.targetObject = this.targetObject;
    }
