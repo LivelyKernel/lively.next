@@ -1139,7 +1139,7 @@ export class DropDownList extends Button {
       },
 
       label: {
-        readOnly: true, after: ["submorphs"],
+        readOnly: true, after: ["labelMorph"],
         get() { return this.getSubmorphNamed("label"); }
       },
 
