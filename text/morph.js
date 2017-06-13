@@ -15,10 +15,11 @@ import { Snippet } from "./snippets.js";
 import { UndoManager } from "../undo.js";
 import { TextSearcher } from "./search.js";
 import TextLayout from "./layout.js";
-import Renderer from "./renderer.js";
+import Renderer, { extractHTMLFromTextMorph } from "./renderer.js";
 import commands from "./commands.js";
 import { RichTextControl } from "./ui.js";
 import { textAndAttributesWithSubRanges } from "./attributes.js";
+import { serializeMorph, deserializeMorph } from "../serialization.js";
 
 
 export class Text extends Morph {
@@ -760,6 +761,7 @@ export class Text extends Morph {
   }
 
   textBounds() { return this.textLayout.textBounds(this); }
+
   defaultCharExtent() { return this.textLayout.defaultCharExtent(this); }
 
   get scrollExtent() {
@@ -1835,7 +1837,7 @@ export class Text extends Morph {
   // could be dropped into
   // 2. When the grabbed morph hovers over the text, create a placeholder of it
   // and insert it into the text
-  // 
+  //
   // state tracking:
   // state.dropHover: WeakMap(Text morph => dropHoverCache (text specific state))
   // dropHoverCache.dropGrid
@@ -1895,7 +1897,7 @@ export class Text extends Morph {
 
     let grabbed = evt.hand.grabbedMorphs[0];
     if (grabbed) { grabbed.opacity = .3; }
-    
+
     // build a "drop grid" of the visible lines
 
     let dropGrid = this.buildDropHoverGrid(dropConfig),
@@ -1922,7 +1924,7 @@ export class Text extends Morph {
       // let immediateDropAt = this.charBoundsFromTextPosition(textPos).topLeft();
       // let grabbedPos = this.transformToMorph(evt.hand).transformPoint(immediateDropAt);
       // grabbed.position = grabbedPos
-      
+
       return;
     }
 
@@ -2047,38 +2049,25 @@ export class Text extends Morph {
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // copy as html
-    if (window.doHTMLTextCopy) { // WIP
-      let html = this.document.lines.map(line => {
-  // line = this.document.lines[1]
-  // [text, attr] = lively.lang.arr.toTuples(line.textAndAttributes, 2)[0]
-        let tuples = lively.lang.arr.toTuples(line.textAndAttributes, 2);
-        if (!tuples.length || !tuples[0].length) return "<br>";
-        return '<span class="line">' + tuples.map(([text, attr]) => {
-          let tagname = null, style = "", attrs = {};
-          if (attr) {
-            style = `style="`;
-            // this.defaultTextStyleProps.join("\n")
-            if (attr.nativeCursor)     style += `native-cursor: ${attr.nativeCursor};`;
-            if (attr.fontFamily)       style += `font-family: ${attr.fontFamily};`;
-            if (attr.fontSize)         style += `font-size: ${attr.fontSize}px;`;
-            if (attr.fontColor)        style += `font-color: ${attr.fontColor};`;
-            if (attr.fontWeight)       style += `font-weight: ${attr.fontWeight};`;
-            if (attr.fontStyle)        style += `font-style: ${attr.fontStyle};`;
-            if (attr.textDecoration)   style += `text-decoration: ${attr.textDecoration};`;
-            if (attr.textStyleClasses) style += `text-style-classes: ${attr.textStyleClasses};`;
-            if (attr.backgroundColor)  style += `background-color: ${attr.backgroundColor};`;
-            if (attr.textAlign)        style += `text-align: ${attr.textAlign};`;
-            if (attr.link)             { tagname = "a"; attrs.href = attr.link; };
-            style += `" `;
-          }
-          tagname = tagname || "span";
-          let attrString = Object.keys(attrs).reduce((attrString, key) =>
-            `${key}="${attrs[key]}" ${attrString}`, "");
-          return `<${tagname} ${style} ${attrString}>${text}</${tagname}>`;
-        }).join("") + "</span>"
-      }).join("\n<br>\n")
-      console.log(html)
-      evt.domEvt.clipboardData.setData("text/html", html);
+    if (true || !this.editorPlugin) { // WIP
+      try {
+        let textAndAttributes = this.textAndAttributesInRange(this.selection.range),
+            defaultTextStyle = this.defaultTextStyle,
+            copyMap = {};
+        for (let i = 0; i < textAndAttributes.length; i= i+2) {
+          let content = textAndAttributes[i];
+          if (!content.isMorph) continue;
+          let snap = copyMap[i] = serializeMorph(textAndAttributes[i]);
+          textAndAttributes[i] = deserializeMorph(snap, {reinitializeIds: true});
+        }
+
+        let html = extractHTMLFromTextMorph(this, textAndAttributes);
+        evt.domEvt.clipboardData.setData("text/html", html);
+
+        for (let i in copyMap) textAndAttributes[i] = copyMap[i];
+        let data = JSON.stringify({textAndAttributes, defaultTextStyle});
+        evt.domEvt.clipboardData.setData("application/x-lively-text", data);
+      } catch (err) { $world.logError(err); }
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -2095,16 +2084,38 @@ export class Text extends Morph {
   onPaste(evt) {
     if (this.rejectsInput()) return;
     evt.stop();
-    var data = evt.domEvt.clipboardData.getData("text");
-    this.undoManager.group();
-    var sel = this.selection,
+
+    
+    // read clipboard
+    var lvData, textData = "";
+
+    try {
+      textData = evt.domEvt.clipboardData.getData("text");
+    } catch (err) { console.warn(err); }
+
+    if (!this.editorPlugin) { // "rich text" paste
+      try {
+        var raw = evt.domEvt.clipboardData.getData("application/x-lively-text");
+        lvData = raw && JSON.parse(raw);
+        var attrs = lvData.textAndAttributes;
+        for (let i = 0; i < attrs.length; i = i+2) {
+          if (typeof attrs[i] === "string") continue;
+          attrs[i] = deserializeMorph(attrs[i], {reinitializeIds: true});
+        }
+      } catch (err) { console.warn(err); }
+    }
+
+    let sel = this.selection,
         sels = sel.isMultiSelection ? sel.selections : [sel];
+
+    lvData && this.undoManager.group();
     sels.forEach(sel => {
-      sel.text = data;
+      if (lvData) this.replace(sel.range, lvData.textAndAttributes, false, true, true)
+      else sel.text = textData;
       this.saveMark(sel.start);
       sel.collapseToEnd();
     });
-    this.undoManager.group();
+    lvData && this.undoManager.group();
   }
 
   onFocus(evt) {
