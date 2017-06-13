@@ -41,12 +41,7 @@ export class Canvas extends Morph {
     // renderer created a new HTMLCanvasElement for us
     const old_canvas = this.__canvas__;
     this.__canvas__ = new_canvas;
-    if (this.__canvas_init__) {
-      this.__canvas_init__();
-      delete this.__canvas_init__;
-    } else if (this.preserveContents && this.contextType == "2d" && old_canvas && old_canvas !== new_canvas) {
-      this.context.drawImage(old_canvas, 0, 0);
-    }
+    this.restoreContent(old_canvas);
   }
   get _canvas() { return this.__canvas__; }
 
@@ -55,8 +50,17 @@ export class Canvas extends Morph {
     connect(this, 'extent', this, 'onExtentChanged');
   }
 
+  restoreContent(old_canvas) {
+    if (this.__canvas_init__) {
+      this.__canvas_init__();
+      delete this.__canvas_init__;
+    } else if (this.preserveContents && this.contextType == "2d" && old_canvas && old_canvas !== new_canvas) {
+      this.context.drawImage(old_canvas, 0, 0);
+    }
+  }
+  
   onExtentChanged() {
-    if (this.preserveContents) {
+    if (this._canvas && this.preserveContents) {
       const {width: w, height: h} = this._canvas;
       const contents = this.context.getImageData(0, 0, w, h);
       this.__canvas_init__ = () => {
