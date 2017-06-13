@@ -1153,7 +1153,7 @@ class ImportController extends Morph {
   static get properties() {
     return {
       extent: {defaultValue: pt(300,600)},
-      
+
       module: {
         get() {
           let id = this.getProperty("module");
@@ -1249,8 +1249,10 @@ class ImportController extends Morph {
           return null;
         }
         let {fromModule, local} = importSpec || {};
+        if (fromModule.startsWith("."))
+          fromModule = System.decanonicalize(fromModule, this.module.id);
         return this.world().execCommand("open browser",
-          {moduleName: fromModule, codeEntity: {name: local}});
+          {moduleName: fromModule, codeEntity: local});
       }
     }]
   }
