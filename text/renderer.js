@@ -693,15 +693,15 @@ export default class Renderer {
     var startX = 0, endX = 0, y = 0, height = 0,
         {document: doc} = morph,
         line = doc.getLine(start.row)
-    height = line.height;
     if (entireLine) {
       var {padding} = morph;
       startX = padding.left();
       y = padding.top() + doc.computeVerticalOffsetOf(start.row);
       endX = startX + line.width;
+      height = line.height;
     } else {
       ({x: startX, y} = textLayouter.boundsFor(morph, start));
-      ({x: endX} = textLayouter.boundsFor(morph, end));
+      ({x: endX, height} = textLayouter.boundsFor(morph, end));
     }
     height = Math.ceil(height);
     return h("div.newtext-marker-layer", {
