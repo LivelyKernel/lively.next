@@ -2,7 +2,7 @@
   "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
   "snapshot": {
     "Palette_45A69745_A462_4145_8F84_1368825DB1D7": {
-      "rev": 47118,
+      "rev": 400191,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -19,13 +19,13 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "8AB1C5FE-FF0C-4F67-AE82-7FAEFFFB3888",
+            "id": "37928D2A-BD18-4AFA-BC9A-F299AFC7EE65",
             "rev": 0
           }
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(4.5,732.8)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.5,730.8)"
         },
         "origin": {
           "key": "origin",
@@ -33,7 +33,7 @@
         },
         "extent": {
           "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(701.0,135.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(40.0,40.0)"
         },
         "fill": {
           "key": "fill",
@@ -45,87 +45,87 @@
             {
               "__ref__": true,
               "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-              "rev": 47119
+              "rev": 400192
             },
             {
               "__ref__": true,
               "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-              "rev": 47120
+              "rev": 400193
             },
             {
               "__ref__": true,
               "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-              "rev": 47121
+              "rev": 400194
             },
             {
               "__ref__": true,
               "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-              "rev": 47122
+              "rev": 400195
             },
             {
               "__ref__": true,
               "id": "Morph_84EEFFF3_3AF3_4890_B0F0_72C09583A3EE",
-              "rev": 49028
+              "rev": 400923
             },
             {
               "__ref__": true,
               "id": "Morph_0C6DB9E4_A94A_4441_93FC_5E66C927EE23",
-              "rev": 49029
+              "rev": 400924
             },
             {
               "__ref__": true,
               "id": "Morph_21CB5B21_8AB5_4B9B_BC7C_4440CA8C8EE3",
-              "rev": 49030
+              "rev": 400925
             },
             {
               "__ref__": true,
               "id": "Morph_639B4D77_3345_4DDA_97B6_0170AC73B2CC",
-              "rev": 49031
+              "rev": 400926
             },
             {
               "__ref__": true,
               "id": "Ellipse_DA0CED8E_BE0C_41F8_A15D_9EE4722ACF47",
-              "rev": 49035
+              "rev": 400930
             },
             {
               "__ref__": true,
               "id": "Ellipse_A75280CC_E71C_4BA9_9075_6A75685E6860",
-              "rev": 49039
+              "rev": 400934
             },
             {
               "__ref__": true,
               "id": "Ellipse_1D051FBB_F40B_4198_9BC7_72FD072E9C87",
-              "rev": 49043
+              "rev": 400938
             },
             {
               "__ref__": true,
               "id": "Ellipse_A7694264_DCB4_4247_9E1B_296A6890FCDD",
-              "rev": 49047
+              "rev": 400942
             },
             {
               "__ref__": true,
               "id": "Ellipse_0E03C740_92D3_49CB_AC6E_A50880882321",
-              "rev": 49051
+              "rev": 400946
             },
             {
               "__ref__": true,
               "id": "Ellipse_E9E7E695_A446_4B9E_96D9_A3A429BA953F",
-              "rev": 49055
+              "rev": 400950
             },
             {
               "__ref__": true,
               "id": "Ellipse_5E67F957_F172_4C2A_95E5_C135FD1A0310",
-              "rev": 49059
+              "rev": 400954
             },
             {
               "__ref__": true,
               "id": "Ellipse_8CC7B534_7DB2_4711_AB75_E32D2CEF3FEE",
-              "rev": 49063
+              "rev": 400958
             },
             {
               "__ref__": true,
               "id": "Ellipse_CD0C2FE1_D5BB_4DD7_8292_994E2D117AC6",
-              "rev": 49067
+              "rev": 400962
             }
           ]
         },
@@ -166,7 +166,8 @@
           "value": 10
         },
         "uncollapsedExtent": {
-          "key": "uncollapsedExtent"
+          "key": "uncollapsedExtent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(701.0,135.0)"
         }
       },
       "lively.serializer-class-info": {
@@ -177,12 +178,12 @@
             "version": "0.1.0"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1497362702972,
+          "lastChange": 1497371930888,
           "lastSuperclassChange": 1497362535742
         }
       }
     },
-    "8AB1C5FE-FF0C-4F67-AE82-7FAEFFFB3888": {
+    "37928D2A-BD18-4AFA-BC9A-F299AFC7EE65": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -214,7 +215,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "onChange": {
@@ -235,7 +236,7 @@
       }
     },
     "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432": {
-      "rev": 47119,
+      "rev": 400192,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -246,27 +247,27 @@
           "value": [
             {
               "__ref__": true,
-              "id": "FF33DD12-77EA-4079-9B1D-B26FF5F33959",
+              "id": "EBCA839E-5485-4CF2-B753-2F13186836CA",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "CF32A8AA-4C8B-4238-8078-A66F5F15A3D5",
+              "id": "CD088F78-A800-47E3-8B29-DD368B0389BB",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "48103B4B-CD03-447E-95B5-88D5EFE1D125",
+              "id": "C242D1FA-6CC8-4C5F-8179-845D240D4D93",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "C5A9AA2F-823E-496A-ACF8-92B03529A85B",
+              "id": "DDFE25B7-1CE4-48D6-9BCC-909B0F5A1049",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "53080E49-DC12-40FF-97B7-61804D200920",
+              "id": "7ED8BB6A-274C-42BE-B136-D3688CFBD531",
               "rev": 0
             }
           ]
@@ -283,18 +284,22 @@
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(69.4,40.0)"
         },
+        "visible": {
+          "key": "visible",
+          "value": false
+        },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
               "id": "Label_2ABBD862_55AA_4633_B635_006B75E8EE90",
-              "rev": 10106
+              "rev": 262930
             },
             {
               "__ref__": true,
               "id": "Label_7AC76218_5747_4FBE_AA8D_BF26375770C7",
-              "rev": 10107
+              "rev": 262931
             }
           ]
         },
@@ -304,7 +309,6 @@
             "Button",
             "Morph",
             "morph",
-            "activeStyle",
             "activeStyle"
           ]
         },
@@ -317,7 +321,7 @@
           "value": {
             "__ref__": true,
             "id": "Label_2ABBD862_55AA_4633_B635_006B75E8EE90",
-            "rev": 10106
+            "rev": 262930
           }
         }
       },
@@ -334,7 +338,7 @@
         }
       }
     },
-    "FF33DD12-77EA-4079-9B1D-B26FF5F33959": {
+    "EBCA839E-5485-4CF2-B753-2F13186836CA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -354,7 +358,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         },
         "sourceAttrName": {
@@ -366,7 +370,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         },
         "targetMethodName": {
@@ -377,7 +381,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "6A8FDD28-4E87-44AF-8265-19D5C6883D49",
+            "id": "12D60BBC-45EF-4EEA-B25A-FD03FF99FD3E",
             "rev": 0
           }
         },
@@ -403,7 +407,7 @@
         }
       }
     },
-    "6A8FDD28-4E87-44AF-8265-19D5C6883D49": {
+    "12D60BBC-45EF-4EEA-B25A-FD03FF99FD3E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -415,7 +419,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         },
         "target": {
@@ -423,12 +427,12 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         }
       }
     },
-    "CF32A8AA-4C8B-4238-8078-A66F5F15A3D5": {
+    "CD088F78-A800-47E3-8B29-DD368B0389BB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -448,7 +452,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         },
         "sourceAttrName": {
@@ -460,7 +464,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         },
         "targetMethodName": {
@@ -471,7 +475,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "150643CE-0FBB-4212-9DDB-10DDE80EADAE",
+            "id": "C6203784-594D-417B-BB67-49DE10C523D3",
             "rev": 0
           }
         },
@@ -497,7 +501,7 @@
         }
       }
     },
-    "150643CE-0FBB-4212-9DDB-10DDE80EADAE": {
+    "C6203784-594D-417B-BB67-49DE10C523D3": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -509,7 +513,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         },
         "target": {
@@ -517,12 +521,12 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         }
       }
     },
-    "48103B4B-CD03-447E-95B5-88D5EFE1D125": {
+    "C242D1FA-6CC8-4C5F-8179-845D240D4D93": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -542,7 +546,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         },
         "sourceAttrName": {
@@ -554,7 +558,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         },
         "targetMethodName": {
@@ -565,7 +569,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "F863D11E-6D67-47DF-9393-3E9AD8A30C56",
+            "id": "7C25FB0B-0B82-4A15-B2FD-380C92B81DAB",
             "rev": 0
           }
         },
@@ -591,7 +595,7 @@
         }
       }
     },
-    "F863D11E-6D67-47DF-9393-3E9AD8A30C56": {
+    "7C25FB0B-0B82-4A15-B2FD-380C92B81DAB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -603,7 +607,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         },
         "target": {
@@ -611,12 +615,12 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         }
       }
     },
-    "C5A9AA2F-823E-496A-ACF8-92B03529A85B": {
+    "DDFE25B7-1CE4-48D6-9BCC-909B0F5A1049": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -636,7 +640,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         },
         "sourceAttrName": {
@@ -648,7 +652,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         },
         "targetMethodName": {
@@ -659,7 +663,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "25030FAD-97A5-4434-AD7E-4C73BFD0DEC3",
+            "id": "29F052AE-C86A-4105-935A-2CC87E3350DE",
             "rev": 0
           }
         },
@@ -685,7 +689,7 @@
         }
       }
     },
-    "25030FAD-97A5-4434-AD7E-4C73BFD0DEC3": {
+    "29F052AE-C86A-4105-935A-2CC87E3350DE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -697,7 +701,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         },
         "target": {
@@ -705,12 +709,12 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         }
       }
     },
-    "53080E49-DC12-40FF-97B7-61804D200920": {
+    "7ED8BB6A-274C-42BE-B136-D3688CFBD531": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -730,7 +734,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         },
         "sourceAttrName": {
@@ -742,7 +746,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "targetMethodName": {
@@ -753,7 +757,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "3750DE64-8444-414B-8BE2-3A64F159CAC8",
+            "id": "31016DE6-F01D-47F7-B0A7-14C020F6F413",
             "rev": 0
           }
         },
@@ -779,7 +783,7 @@
         }
       }
     },
-    "3750DE64-8444-414B-8BE2-3A64F159CAC8": {
+    "31016DE6-F01D-47F7-B0A7-14C020F6F413": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -791,7 +795,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         },
         "target": {
@@ -799,13 +803,13 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         }
       }
     },
     "Label_2ABBD862_55AA_4633_B635_006B75E8EE90": {
-      "rev": 10106,
+      "rev": 262930,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -816,7 +820,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "581E1E1C-1E10-4DFD-9B16-0D05184D5EED",
+              "id": "90641F7C-E131-4FDA-8CAE-99F46CC4769B",
               "rev": 0
             }
           ]
@@ -874,7 +878,7 @@
         }
       }
     },
-    "581E1E1C-1E10-4DFD-9B16-0D05184D5EED": {
+    "90641F7C-E131-4FDA-8CAE-99F46CC4769B": {
       "rev": 0,
       "props": {
         "doNotSerialize": {
@@ -890,7 +894,7 @@
           "value": {
             "__ref__": true,
             "id": "Label_2ABBD862_55AA_4633_B635_006B75E8EE90",
-            "rev": 10106
+            "rev": 262930
           }
         },
         "sourceAttrName": {
@@ -902,7 +906,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         },
         "targetMethodName": {
@@ -913,7 +917,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "85BBEBAB-01BB-4EFC-8F6D-A26A334A3D4E",
+            "id": "C85D93A4-AA0D-4F39-975E-AC8F7D099B66",
             "rev": 0
           }
         },
@@ -939,7 +943,7 @@
         }
       }
     },
-    "85BBEBAB-01BB-4EFC-8F6D-A26A334A3D4E": {
+    "C85D93A4-AA0D-4F39-975E-AC8F7D099B66": {
       "rev": 0,
       "props": {
         "source": {
@@ -947,7 +951,7 @@
           "value": {
             "__ref__": true,
             "id": "Label_2ABBD862_55AA_4633_B635_006B75E8EE90",
-            "rev": 10106
+            "rev": 262930
           }
         },
         "target": {
@@ -955,13 +959,13 @@
           "value": {
             "__ref__": true,
             "id": "Button_479C762E_3F8A_4D92_B555_C0AC38CF8432",
-            "rev": 47119
+            "rev": 400192
           }
         }
       }
     },
     "Label_7AC76218_5747_4FBE_AA8D_BF26375770C7": {
-      "rev": 10107,
+      "rev": 262931,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1016,7 +1020,7 @@
       }
     },
     "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0": {
-      "rev": 47120,
+      "rev": 400193,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1027,27 +1031,27 @@
           "value": [
             {
               "__ref__": true,
-              "id": "9AE44C82-E8AE-464B-B6C0-629D293053D6",
+              "id": "F318BE73-A35D-4C9D-826D-9A4466F17D4D",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "B525EF96-E240-4DEB-A10D-A013D647FC0B",
+              "id": "98D4414D-0521-44D8-B5BD-1F575442920A",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "9202DFBF-AAAD-4B1D-861B-5390243AF4ED",
+              "id": "4A46F39B-04D3-4171-BA8F-D9349768C8B8",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "13005D08-2A8B-4BCE-A30E-81D8DF60D581",
+              "id": "DD2FC4E1-DD66-4109-BDA5-B45C5E3025E6",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "F06795AB-4866-495B-B812-3702E1A18DFA",
+              "id": "BA40C8F5-B861-4124-89F2-9723FBDA8D9D",
               "rev": 0
             }
           ]
@@ -1064,18 +1068,22 @@
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(69.4,40.0)"
         },
+        "visible": {
+          "key": "visible",
+          "value": false
+        },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
               "id": "Label_CC408146_2FB5_42D5_99F5_6A008393F70D",
-              "rev": 10109
+              "rev": 157511
             },
             {
               "__ref__": true,
               "id": "Label_180F1A9A_B822_476B_89C8_EEB803B4D051",
-              "rev": 10110
+              "rev": 157512
             }
           ]
         },
@@ -1085,7 +1093,6 @@
             "Button",
             "Morph",
             "morph",
-            "activeStyle",
             "activeStyle"
           ]
         },
@@ -1098,7 +1105,7 @@
           "value": {
             "__ref__": true,
             "id": "Label_CC408146_2FB5_42D5_99F5_6A008393F70D",
-            "rev": 10109
+            "rev": 157511
           }
         }
       },
@@ -1115,7 +1122,7 @@
         }
       }
     },
-    "9AE44C82-E8AE-464B-B6C0-629D293053D6": {
+    "F318BE73-A35D-4C9D-826D-9A4466F17D4D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1135,7 +1142,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         },
         "sourceAttrName": {
@@ -1147,7 +1154,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         },
         "targetMethodName": {
@@ -1158,7 +1165,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "8ED558F8-E8B4-4236-8914-6A8FA004B6C9",
+            "id": "2B475A0C-DAC4-4436-AB83-FC9B4F27FE67",
             "rev": 0
           }
         },
@@ -1184,7 +1191,7 @@
         }
       }
     },
-    "8ED558F8-E8B4-4236-8914-6A8FA004B6C9": {
+    "2B475A0C-DAC4-4436-AB83-FC9B4F27FE67": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1196,7 +1203,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         },
         "target": {
@@ -1204,12 +1211,12 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         }
       }
     },
-    "B525EF96-E240-4DEB-A10D-A013D647FC0B": {
+    "98D4414D-0521-44D8-B5BD-1F575442920A": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1229,7 +1236,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         },
         "sourceAttrName": {
@@ -1241,7 +1248,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         },
         "targetMethodName": {
@@ -1252,7 +1259,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "F53D471E-2701-48D3-AEF9-63BF6581CC37",
+            "id": "D15226C5-4F1D-4842-944A-8F5DF3587C2F",
             "rev": 0
           }
         },
@@ -1278,7 +1285,7 @@
         }
       }
     },
-    "F53D471E-2701-48D3-AEF9-63BF6581CC37": {
+    "D15226C5-4F1D-4842-944A-8F5DF3587C2F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1290,7 +1297,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         },
         "target": {
@@ -1298,12 +1305,12 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         }
       }
     },
-    "9202DFBF-AAAD-4B1D-861B-5390243AF4ED": {
+    "4A46F39B-04D3-4171-BA8F-D9349768C8B8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1323,7 +1330,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         },
         "sourceAttrName": {
@@ -1335,7 +1342,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         },
         "targetMethodName": {
@@ -1346,7 +1353,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "C90ACF2C-77A5-4EF6-AB4C-2BC8E38479DD",
+            "id": "FA518F56-0362-44FD-BBCB-80DA6460F7E1",
             "rev": 0
           }
         },
@@ -1372,7 +1379,7 @@
         }
       }
     },
-    "C90ACF2C-77A5-4EF6-AB4C-2BC8E38479DD": {
+    "FA518F56-0362-44FD-BBCB-80DA6460F7E1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1384,7 +1391,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         },
         "target": {
@@ -1392,12 +1399,12 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         }
       }
     },
-    "13005D08-2A8B-4BCE-A30E-81D8DF60D581": {
+    "DD2FC4E1-DD66-4109-BDA5-B45C5E3025E6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1417,7 +1424,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         },
         "sourceAttrName": {
@@ -1429,7 +1436,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         },
         "targetMethodName": {
@@ -1440,7 +1447,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "A070B0A8-49D8-45C7-A386-7724ABF44247",
+            "id": "01A6D5F9-6ED7-4A8A-9560-73008A6D9CB5",
             "rev": 0
           }
         },
@@ -1466,7 +1473,7 @@
         }
       }
     },
-    "A070B0A8-49D8-45C7-A386-7724ABF44247": {
+    "01A6D5F9-6ED7-4A8A-9560-73008A6D9CB5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1478,7 +1485,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         },
         "target": {
@@ -1486,12 +1493,12 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         }
       }
     },
-    "F06795AB-4866-495B-B812-3702E1A18DFA": {
+    "BA40C8F5-B861-4124-89F2-9723FBDA8D9D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1511,7 +1518,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         },
         "sourceAttrName": {
@@ -1523,7 +1530,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "targetMethodName": {
@@ -1534,7 +1541,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "838122DC-AB13-45A0-B018-833F7F0292C5",
+            "id": "FB746DBA-1598-4A0E-86B7-95705E4A40C9",
             "rev": 0
           }
         },
@@ -1560,7 +1567,7 @@
         }
       }
     },
-    "838122DC-AB13-45A0-B018-833F7F0292C5": {
+    "FB746DBA-1598-4A0E-86B7-95705E4A40C9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1572,7 +1579,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         },
         "target": {
@@ -1580,13 +1587,13 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         }
       }
     },
     "Label_CC408146_2FB5_42D5_99F5_6A008393F70D": {
-      "rev": 10109,
+      "rev": 157511,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1597,7 +1604,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "F523DEDE-2D2A-4C8C-8219-E409A1DBE945",
+              "id": "30C54DDF-EFB2-4EE1-9EC9-F31F58F4457D",
               "rev": 0
             }
           ]
@@ -1655,7 +1662,7 @@
         }
       }
     },
-    "F523DEDE-2D2A-4C8C-8219-E409A1DBE945": {
+    "30C54DDF-EFB2-4EE1-9EC9-F31F58F4457D": {
       "rev": 0,
       "props": {
         "doNotSerialize": {
@@ -1671,7 +1678,7 @@
           "value": {
             "__ref__": true,
             "id": "Label_CC408146_2FB5_42D5_99F5_6A008393F70D",
-            "rev": 10109
+            "rev": 157511
           }
         },
         "sourceAttrName": {
@@ -1683,7 +1690,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         },
         "targetMethodName": {
@@ -1694,7 +1701,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "33006C0E-071C-4E24-B3CD-1B8F757F1FE2",
+            "id": "FBDD8F3D-B403-45C2-BB89-140D39235985",
             "rev": 0
           }
         },
@@ -1720,7 +1727,7 @@
         }
       }
     },
-    "33006C0E-071C-4E24-B3CD-1B8F757F1FE2": {
+    "FBDD8F3D-B403-45C2-BB89-140D39235985": {
       "rev": 0,
       "props": {
         "source": {
@@ -1728,7 +1735,7 @@
           "value": {
             "__ref__": true,
             "id": "Label_CC408146_2FB5_42D5_99F5_6A008393F70D",
-            "rev": 10109
+            "rev": 157511
           }
         },
         "target": {
@@ -1736,13 +1743,13 @@
           "value": {
             "__ref__": true,
             "id": "Button_EE4B36F4_7A84_419D_BB71_AA59597EBAA0",
-            "rev": 47120
+            "rev": 400193
           }
         }
       }
     },
     "Label_180F1A9A_B822_476B_89C8_EEB803B4D051": {
-      "rev": 10110,
+      "rev": 157512,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1797,7 +1804,7 @@
       }
     },
     "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4": {
-      "rev": 47121,
+      "rev": 400194,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -1808,27 +1815,27 @@
           "value": [
             {
               "__ref__": true,
-              "id": "08CC105F-8676-4590-9725-E78E96A1583D",
+              "id": "0562D579-C969-4420-AFE3-F4B793976501",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "0C42F8C2-B87E-4EA7-BE6C-7BAE46737338",
+              "id": "EB668EAD-4D9E-426A-9EA5-D04667B1B4E0",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "1F855050-33E7-43C0-AC6D-FDDD35F6E1F1",
+              "id": "D5320E42-9B20-4D2B-92C1-5AF94DE9AE33",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "FC8524CA-E2A8-4BAF-A6BE-6B54573448AA",
+              "id": "67409575-1C47-4022-8697-84A58F8752DF",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "93A60BF3-31FE-49F9-9607-1DA57CA0531E",
+              "id": "10D2A4CA-F130-43FA-9B86-D54A75B7C182",
               "rev": 0
             }
           ]
@@ -1845,18 +1852,22 @@
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(69.4,40.0)"
         },
+        "visible": {
+          "key": "visible",
+          "value": false
+        },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
               "id": "Label_3C522C36_4317_4A48_8A1E_08431D084980",
-              "rev": 10112
+              "rev": 268509
             },
             {
               "__ref__": true,
               "id": "Label_ACE4A8B1_4595_4AAC_AC9C_F0B2EBE61A30",
-              "rev": 10113
+              "rev": 268510
             }
           ]
         },
@@ -1866,7 +1877,6 @@
             "Button",
             "Morph",
             "morph",
-            "activeStyle",
             "activeStyle"
           ]
         },
@@ -1879,7 +1889,7 @@
           "value": {
             "__ref__": true,
             "id": "Label_3C522C36_4317_4A48_8A1E_08431D084980",
-            "rev": 10112
+            "rev": 268509
           }
         }
       },
@@ -1896,7 +1906,7 @@
         }
       }
     },
-    "08CC105F-8676-4590-9725-E78E96A1583D": {
+    "0562D579-C969-4420-AFE3-F4B793976501": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1916,7 +1926,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         },
         "sourceAttrName": {
@@ -1928,7 +1938,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         },
         "targetMethodName": {
@@ -1939,7 +1949,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "EFD464B2-2E87-4E1F-A857-2A64547980C0",
+            "id": "F992B55E-30E7-416F-B6F7-1DED19FF7B24",
             "rev": 0
           }
         },
@@ -1965,7 +1975,7 @@
         }
       }
     },
-    "EFD464B2-2E87-4E1F-A857-2A64547980C0": {
+    "F992B55E-30E7-416F-B6F7-1DED19FF7B24": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -1977,7 +1987,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         },
         "target": {
@@ -1985,12 +1995,12 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         }
       }
     },
-    "0C42F8C2-B87E-4EA7-BE6C-7BAE46737338": {
+    "EB668EAD-4D9E-426A-9EA5-D04667B1B4E0": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2010,7 +2020,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         },
         "sourceAttrName": {
@@ -2022,7 +2032,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         },
         "targetMethodName": {
@@ -2033,7 +2043,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "405B556B-1DA4-4527-AFE2-5B65CC4E9A0B",
+            "id": "0016F7EF-606C-4D4A-A100-69288AFAAFCE",
             "rev": 0
           }
         },
@@ -2059,7 +2069,7 @@
         }
       }
     },
-    "405B556B-1DA4-4527-AFE2-5B65CC4E9A0B": {
+    "0016F7EF-606C-4D4A-A100-69288AFAAFCE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2071,7 +2081,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         },
         "target": {
@@ -2079,12 +2089,12 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         }
       }
     },
-    "1F855050-33E7-43C0-AC6D-FDDD35F6E1F1": {
+    "D5320E42-9B20-4D2B-92C1-5AF94DE9AE33": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2104,7 +2114,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         },
         "sourceAttrName": {
@@ -2116,7 +2126,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         },
         "targetMethodName": {
@@ -2127,7 +2137,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "A0D2FB11-6A95-4162-9D73-26C1ADF0B23D",
+            "id": "13DAFC3A-F019-47ED-848C-A7D5E5E4DF70",
             "rev": 0
           }
         },
@@ -2153,7 +2163,7 @@
         }
       }
     },
-    "A0D2FB11-6A95-4162-9D73-26C1ADF0B23D": {
+    "13DAFC3A-F019-47ED-848C-A7D5E5E4DF70": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2165,7 +2175,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         },
         "target": {
@@ -2173,12 +2183,12 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         }
       }
     },
-    "FC8524CA-E2A8-4BAF-A6BE-6B54573448AA": {
+    "67409575-1C47-4022-8697-84A58F8752DF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2198,7 +2208,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         },
         "sourceAttrName": {
@@ -2210,7 +2220,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         },
         "targetMethodName": {
@@ -2221,7 +2231,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "6F17B597-FC8C-4E9C-B90E-6E4A09DD4B1B",
+            "id": "D38CC380-8E9F-48DF-A804-F55948DC2A06",
             "rev": 0
           }
         },
@@ -2247,7 +2257,7 @@
         }
       }
     },
-    "6F17B597-FC8C-4E9C-B90E-6E4A09DD4B1B": {
+    "D38CC380-8E9F-48DF-A804-F55948DC2A06": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2259,7 +2269,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         },
         "target": {
@@ -2267,12 +2277,12 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         }
       }
     },
-    "93A60BF3-31FE-49F9-9607-1DA57CA0531E": {
+    "10D2A4CA-F130-43FA-9B86-D54A75B7C182": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2292,7 +2302,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         },
         "sourceAttrName": {
@@ -2304,7 +2314,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "targetMethodName": {
@@ -2315,7 +2325,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "B64D9FD1-C281-49BA-888F-ED83E507D3B4",
+            "id": "951EAEB3-C5B0-40E9-8135-66418F665C52",
             "rev": 0
           }
         },
@@ -2341,7 +2351,7 @@
         }
       }
     },
-    "B64D9FD1-C281-49BA-888F-ED83E507D3B4": {
+    "951EAEB3-C5B0-40E9-8135-66418F665C52": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2353,7 +2363,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         },
         "target": {
@@ -2361,13 +2371,13 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         }
       }
     },
     "Label_3C522C36_4317_4A48_8A1E_08431D084980": {
-      "rev": 10112,
+      "rev": 268509,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -2378,7 +2388,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "3E9740E4-F741-4C0A-9DCA-8BD2EDA88F69",
+              "id": "4130C6C2-F421-42BD-A3E3-1D43921CAD50",
               "rev": 0
             }
           ]
@@ -2436,7 +2446,7 @@
         }
       }
     },
-    "3E9740E4-F741-4C0A-9DCA-8BD2EDA88F69": {
+    "4130C6C2-F421-42BD-A3E3-1D43921CAD50": {
       "rev": 0,
       "props": {
         "doNotSerialize": {
@@ -2452,7 +2462,7 @@
           "value": {
             "__ref__": true,
             "id": "Label_3C522C36_4317_4A48_8A1E_08431D084980",
-            "rev": 10112
+            "rev": 268509
           }
         },
         "sourceAttrName": {
@@ -2464,7 +2474,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         },
         "targetMethodName": {
@@ -2475,7 +2485,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "4D33ED58-3A27-477C-B4E5-E5553994CE36",
+            "id": "9B873CEF-D260-48F2-971B-852BACA43E6C",
             "rev": 0
           }
         },
@@ -2501,7 +2511,7 @@
         }
       }
     },
-    "4D33ED58-3A27-477C-B4E5-E5553994CE36": {
+    "9B873CEF-D260-48F2-971B-852BACA43E6C": {
       "rev": 0,
       "props": {
         "source": {
@@ -2509,7 +2519,7 @@
           "value": {
             "__ref__": true,
             "id": "Label_3C522C36_4317_4A48_8A1E_08431D084980",
-            "rev": 10112
+            "rev": 268509
           }
         },
         "target": {
@@ -2517,13 +2527,13 @@
           "value": {
             "__ref__": true,
             "id": "Button_9F20B26C_83F7_4BAB_9CEE_184078D101E4",
-            "rev": 47121
+            "rev": 400194
           }
         }
       }
     },
     "Label_ACE4A8B1_4595_4AAC_AC9C_F0B2EBE61A30": {
-      "rev": 10113,
+      "rev": 268510,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -2578,7 +2588,7 @@
       }
     },
     "Button_45EBB15E_37CD_4660_9421_53EA33852543": {
-      "rev": 47122,
+      "rev": 400195,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -2589,27 +2599,27 @@
           "value": [
             {
               "__ref__": true,
-              "id": "A04D23F6-B66D-4E97-AE84-76689C42418D",
+              "id": "E1C3BEAD-4F29-44CB-925C-576C09F4FE3F",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "31AA80B8-CCE7-40A9-A917-1F3C24086C7B",
+              "id": "0B533618-5E3F-4970-8750-8E77FB574F56",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "FE223F9F-A1CC-4D62-A20C-A1074E7AC82D",
+              "id": "33515E21-F3FE-47F3-B6A0-4E2455959C8F",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "4C40609E-A93E-4FF5-81B3-5D7BC52AA342",
+              "id": "1403B0D3-7F78-4C6A-B954-C5DEF83B46E2",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "6FEFA20A-C185-4D43-BDF9-9FBD9122D87D",
+              "id": "21796025-C563-4E4B-869E-1BE9679F6CED",
               "rev": 0
             }
           ]
@@ -2626,18 +2636,22 @@
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(69.4,40.0)"
         },
+        "visible": {
+          "key": "visible",
+          "value": false
+        },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
               "id": "Label_EE7EE7C1_1D77_445D_B12F_A26935EC4873",
-              "rev": 10115
+              "rev": 400210
             },
             {
               "__ref__": true,
               "id": "Label_2708F3AE_57CC_4E77_9903_B99A5D447698",
-              "rev": 10116
+              "rev": 400211
             }
           ]
         },
@@ -2647,7 +2661,6 @@
             "Button",
             "Morph",
             "morph",
-            "activeStyle",
             "activeStyle"
           ]
         },
@@ -2660,7 +2673,7 @@
           "value": {
             "__ref__": true,
             "id": "Label_EE7EE7C1_1D77_445D_B12F_A26935EC4873",
-            "rev": 10115
+            "rev": 400210
           }
         }
       },
@@ -2677,7 +2690,7 @@
         }
       }
     },
-    "A04D23F6-B66D-4E97-AE84-76689C42418D": {
+    "E1C3BEAD-4F29-44CB-925C-576C09F4FE3F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2697,7 +2710,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         },
         "sourceAttrName": {
@@ -2709,7 +2722,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         },
         "targetMethodName": {
@@ -2720,7 +2733,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "4362D387-AEF4-4E47-933E-09317392E965",
+            "id": "42801E2F-6D1C-4462-AD32-550EF660F412",
             "rev": 0
           }
         },
@@ -2746,7 +2759,7 @@
         }
       }
     },
-    "4362D387-AEF4-4E47-933E-09317392E965": {
+    "42801E2F-6D1C-4462-AD32-550EF660F412": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2758,7 +2771,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         },
         "target": {
@@ -2766,12 +2779,12 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         }
       }
     },
-    "31AA80B8-CCE7-40A9-A917-1F3C24086C7B": {
+    "0B533618-5E3F-4970-8750-8E77FB574F56": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2791,7 +2804,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         },
         "sourceAttrName": {
@@ -2803,7 +2816,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         },
         "targetMethodName": {
@@ -2814,7 +2827,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "0DF221E8-EF50-4809-AABB-457D9B87C050",
+            "id": "D8758D7D-6474-47C1-939C-3023330714F1",
             "rev": 0
           }
         },
@@ -2840,7 +2853,7 @@
         }
       }
     },
-    "0DF221E8-EF50-4809-AABB-457D9B87C050": {
+    "D8758D7D-6474-47C1-939C-3023330714F1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2852,7 +2865,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         },
         "target": {
@@ -2860,12 +2873,12 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         }
       }
     },
-    "FE223F9F-A1CC-4D62-A20C-A1074E7AC82D": {
+    "33515E21-F3FE-47F3-B6A0-4E2455959C8F": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2885,7 +2898,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         },
         "sourceAttrName": {
@@ -2897,7 +2910,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         },
         "targetMethodName": {
@@ -2908,7 +2921,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "E49C3A1B-DAC2-4126-8006-3D8C7DEA2499",
+            "id": "B12CEEC5-8671-4DA4-B84F-6E0A862384A5",
             "rev": 0
           }
         },
@@ -2934,7 +2947,7 @@
         }
       }
     },
-    "E49C3A1B-DAC2-4126-8006-3D8C7DEA2499": {
+    "B12CEEC5-8671-4DA4-B84F-6E0A862384A5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2946,7 +2959,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         },
         "target": {
@@ -2954,12 +2967,12 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         }
       }
     },
-    "4C40609E-A93E-4FF5-81B3-5D7BC52AA342": {
+    "1403B0D3-7F78-4C6A-B954-C5DEF83B46E2": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -2979,7 +2992,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         },
         "sourceAttrName": {
@@ -2991,7 +3004,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         },
         "targetMethodName": {
@@ -3002,7 +3015,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "1F5BA44C-EEAD-4995-838D-B13C8D309147",
+            "id": "A18B5F26-1F4A-4CE4-8DF8-5791D47C2A78",
             "rev": 0
           }
         },
@@ -3028,7 +3041,7 @@
         }
       }
     },
-    "1F5BA44C-EEAD-4995-838D-B13C8D309147": {
+    "A18B5F26-1F4A-4CE4-8DF8-5791D47C2A78": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3040,7 +3053,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         },
         "target": {
@@ -3048,12 +3061,12 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         }
       }
     },
-    "6FEFA20A-C185-4D43-BDF9-9FBD9122D87D": {
+    "21796025-C563-4E4B-869E-1BE9679F6CED": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3073,7 +3086,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         },
         "sourceAttrName": {
@@ -3085,7 +3098,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "targetMethodName": {
@@ -3096,7 +3109,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "1978355B-9B49-4102-9412-5FF40C1603BE",
+            "id": "2B8BE59E-11A1-4D8C-93CD-B8D64F8CBBB5",
             "rev": 0
           }
         },
@@ -3122,7 +3135,7 @@
         }
       }
     },
-    "1978355B-9B49-4102-9412-5FF40C1603BE": {
+    "2B8BE59E-11A1-4D8C-93CD-B8D64F8CBBB5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3134,7 +3147,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         },
         "target": {
@@ -3142,13 +3155,13 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         }
       }
     },
     "Label_EE7EE7C1_1D77_445D_B12F_A26935EC4873": {
-      "rev": 10115,
+      "rev": 400210,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -3159,7 +3172,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "ED7CF5B9-7126-4B5E-BFD5-483BBEE2EE18",
+              "id": "7C245874-A033-4900-AA8D-091455E9983E",
               "rev": 0
             }
           ]
@@ -3217,7 +3230,7 @@
         }
       }
     },
-    "ED7CF5B9-7126-4B5E-BFD5-483BBEE2EE18": {
+    "7C245874-A033-4900-AA8D-091455E9983E": {
       "rev": 0,
       "props": {
         "doNotSerialize": {
@@ -3233,7 +3246,7 @@
           "value": {
             "__ref__": true,
             "id": "Label_EE7EE7C1_1D77_445D_B12F_A26935EC4873",
-            "rev": 10115
+            "rev": 400210
           }
         },
         "sourceAttrName": {
@@ -3245,7 +3258,7 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         },
         "targetMethodName": {
@@ -3256,7 +3269,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "77CB361B-C56C-4B2E-9D83-30476EBBB6BE",
+            "id": "7E5D1BD5-5DFC-4FB6-877C-728686E4D2AC",
             "rev": 0
           }
         },
@@ -3282,7 +3295,7 @@
         }
       }
     },
-    "77CB361B-C56C-4B2E-9D83-30476EBBB6BE": {
+    "7E5D1BD5-5DFC-4FB6-877C-728686E4D2AC": {
       "rev": 0,
       "props": {
         "source": {
@@ -3290,7 +3303,7 @@
           "value": {
             "__ref__": true,
             "id": "Label_EE7EE7C1_1D77_445D_B12F_A26935EC4873",
-            "rev": 10115
+            "rev": 400210
           }
         },
         "target": {
@@ -3298,13 +3311,13 @@
           "value": {
             "__ref__": true,
             "id": "Button_45EBB15E_37CD_4660_9421_53EA33852543",
-            "rev": 47122
+            "rev": 400195
           }
         }
       }
     },
     "Label_2708F3AE_57CC_4E77_9903_B99A5D447698": {
-      "rev": 10116,
+      "rev": 400211,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -3359,7 +3372,7 @@
       }
     },
     "Morph_84EEFFF3_3AF3_4890_B0F0_72C09583A3EE": {
-      "rev": 49028,
+      "rev": 400923,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -3370,7 +3383,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "0554512C-8A18-4D91-95B9-501BB3C9F6F0",
+              "id": "DF484D9F-028B-4EBE-BAD7-1AB1413CD184",
               "rev": 0
             }
           ]
@@ -3387,7 +3400,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "F6A85D86-6098-4A22-B419-A97747DDB368",
+            "id": "1F2621FF-0EF0-4E40-90DD-91E417DF471B",
             "rev": 0
           }
         },
@@ -3399,13 +3412,17 @@
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(34.0,100.0)"
         },
+        "visible": {
+          "key": "visible",
+          "value": false
+        },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
               "id": "Morph_CD5DB00E_230A_422D_9AD9_ADB2E5F66F8C",
-              "rev": 49068
+              "rev": 400963
             }
           ]
         },
@@ -3442,7 +3459,7 @@
         }
       }
     },
-    "0554512C-8A18-4D91-95B9-501BB3C9F6F0": {
+    "DF484D9F-028B-4EBE-BAD7-1AB1413CD184": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3462,7 +3479,7 @@
           "value": {
             "__ref__": true,
             "id": "Morph_84EEFFF3_3AF3_4890_B0F0_72C09583A3EE",
-            "rev": 49028
+            "rev": 400923
           }
         },
         "sourceAttrName": {
@@ -3474,7 +3491,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "targetMethodName": {
@@ -3485,7 +3502,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "A8995520-956A-4D44-BC63-0456B7C16437",
+            "id": "511D3F0D-B45D-4200-904A-CC5F920DD4EF",
             "rev": 0
           }
         },
@@ -3518,7 +3535,7 @@
         }
       }
     },
-    "A8995520-956A-4D44-BC63-0456B7C16437": {
+    "511D3F0D-B45D-4200-904A-CC5F920DD4EF": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3530,7 +3547,7 @@
           "value": {
             "__ref__": true,
             "id": "Morph_84EEFFF3_3AF3_4890_B0F0_72C09583A3EE",
-            "rev": 49028
+            "rev": 400923
           }
         },
         "target": {
@@ -3538,12 +3555,12 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         }
       }
     },
-    "F6A85D86-6098-4A22-B419-A97747DDB368": {
+    "1F2621FF-0EF0-4E40-90DD-91E417DF471B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3575,7 +3592,7 @@
           "value": {
             "__ref__": true,
             "id": "Morph_84EEFFF3_3AF3_4890_B0F0_72C09583A3EE",
-            "rev": 49028
+            "rev": 400923
           }
         }
       },
@@ -3593,7 +3610,7 @@
       }
     },
     "Morph_CD5DB00E_230A_422D_9AD9_ADB2E5F66F8C": {
-      "rev": 49068,
+      "rev": 400963,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -3614,7 +3631,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "2C20A925-217A-41C5-AC32-BEA89DB31793",
+            "id": "23D48454-590A-4FAB-BADF-1633CE4634CE",
             "rev": 0
           }
         },
@@ -3671,7 +3688,7 @@
         }
       }
     },
-    "2C20A925-217A-41C5-AC32-BEA89DB31793": {
+    "23D48454-590A-4FAB-BADF-1633CE4634CE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3703,7 +3720,7 @@
           "value": {
             "__ref__": true,
             "id": "Morph_CD5DB00E_230A_422D_9AD9_ADB2E5F66F8C",
-            "rev": 49068
+            "rev": 400963
           }
         }
       },
@@ -3721,7 +3738,7 @@
       }
     },
     "Morph_0C6DB9E4_A94A_4441_93FC_5E66C927EE23": {
-      "rev": 49029,
+      "rev": 400924,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -3732,7 +3749,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "8B294CEC-7669-451A-859A-747DEAB7AD03",
+              "id": "068EE4D9-CED3-4B76-9474-A5F818771A93",
               "rev": 0
             }
           ]
@@ -3749,7 +3766,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "DE4C4859-5BD8-4795-8711-50E4B54EC703",
+            "id": "04E5C687-007F-44AE-973D-7F6BCCCE38E1",
             "rev": 0
           }
         },
@@ -3765,13 +3782,17 @@
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
         },
+        "visible": {
+          "key": "visible",
+          "value": false
+        },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
               "id": "Morph_C731A662_953B_45E6_B118_DC8B1B9332F8",
-              "rev": 49069
+              "rev": 400964
             }
           ]
         },
@@ -3796,7 +3817,7 @@
         }
       }
     },
-    "8B294CEC-7669-451A-859A-747DEAB7AD03": {
+    "068EE4D9-CED3-4B76-9474-A5F818771A93": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3816,7 +3837,7 @@
           "value": {
             "__ref__": true,
             "id": "Morph_0C6DB9E4_A94A_4441_93FC_5E66C927EE23",
-            "rev": 49029
+            "rev": 400924
           }
         },
         "sourceAttrName": {
@@ -3828,7 +3849,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "targetMethodName": {
@@ -3839,7 +3860,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "A561F7B3-16C6-497D-90BC-60BA3422C9CF",
+            "id": "7BEB9622-3DCD-47EE-A23B-F26F3C55F5BE",
             "rev": 0
           }
         },
@@ -3869,7 +3890,7 @@
         }
       }
     },
-    "A561F7B3-16C6-497D-90BC-60BA3422C9CF": {
+    "7BEB9622-3DCD-47EE-A23B-F26F3C55F5BE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3881,7 +3902,7 @@
           "value": {
             "__ref__": true,
             "id": "Morph_0C6DB9E4_A94A_4441_93FC_5E66C927EE23",
-            "rev": 49029
+            "rev": 400924
           }
         },
         "target": {
@@ -3889,12 +3910,12 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         }
       }
     },
-    "DE4C4859-5BD8-4795-8711-50E4B54EC703": {
+    "04E5C687-007F-44AE-973D-7F6BCCCE38E1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -3926,7 +3947,7 @@
           "value": {
             "__ref__": true,
             "id": "Morph_0C6DB9E4_A94A_4441_93FC_5E66C927EE23",
-            "rev": 49029
+            "rev": 400924
           }
         }
       },
@@ -3944,7 +3965,7 @@
       }
     },
     "Morph_C731A662_953B_45E6_B118_DC8B1B9332F8": {
-      "rev": 49069,
+      "rev": 400964,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -3965,7 +3986,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "8CE012DF-F085-4A7D-B8AE-5E8C863D49BD",
+            "id": "5F857860-A68B-4BA2-A2FD-6C245323185E",
             "rev": 0
           }
         },
@@ -4022,7 +4043,7 @@
         }
       }
     },
-    "8CE012DF-F085-4A7D-B8AE-5E8C863D49BD": {
+    "5F857860-A68B-4BA2-A2FD-6C245323185E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4054,7 +4075,7 @@
           "value": {
             "__ref__": true,
             "id": "Morph_C731A662_953B_45E6_B118_DC8B1B9332F8",
-            "rev": 49069
+            "rev": 400964
           }
         }
       },
@@ -4072,7 +4093,7 @@
       }
     },
     "Morph_21CB5B21_8AB5_4B9B_BC7C_4440CA8C8EE3": {
-      "rev": 49030,
+      "rev": 400925,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -4083,7 +4104,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "6ED6A72F-E782-4EAE-9C42-EFAF9E88EB57",
+              "id": "F85EB17E-AA5D-47D8-B663-08DB8A159E81",
               "rev": 0
             }
           ]
@@ -4100,7 +4121,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "FF0813FE-2F2E-4D16-9450-DFCE14085E45",
+            "id": "0AD3CDFF-D5BF-42C4-BA0D-711E58F75329",
             "rev": 0
           }
         },
@@ -4116,13 +4137,17 @@
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
         },
+        "visible": {
+          "key": "visible",
+          "value": false
+        },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
               "id": "Morph_C2B93EA4_2F57_4E82_AC39_E6E9C1344D9F",
-              "rev": 49070
+              "rev": 400965
             }
           ]
         },
@@ -4147,7 +4172,7 @@
         }
       }
     },
-    "6ED6A72F-E782-4EAE-9C42-EFAF9E88EB57": {
+    "F85EB17E-AA5D-47D8-B663-08DB8A159E81": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4167,7 +4192,7 @@
           "value": {
             "__ref__": true,
             "id": "Morph_21CB5B21_8AB5_4B9B_BC7C_4440CA8C8EE3",
-            "rev": 49030
+            "rev": 400925
           }
         },
         "sourceAttrName": {
@@ -4179,7 +4204,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "targetMethodName": {
@@ -4190,7 +4215,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "F916FCD0-26AF-4945-8C34-588F56C23EB1",
+            "id": "840A6AEF-9093-4157-A4A4-8378A971968B",
             "rev": 0
           }
         },
@@ -4205,6 +4230,9 @@
         "converterString": {
           "key": "converterString",
           "value": "() => source"
+        },
+        "converter": {
+          "key": "converter"
         }
       },
       "lively.serializer-class-info": {
@@ -4220,7 +4248,7 @@
         }
       }
     },
-    "F916FCD0-26AF-4945-8C34-588F56C23EB1": {
+    "840A6AEF-9093-4157-A4A4-8378A971968B": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4232,7 +4260,7 @@
           "value": {
             "__ref__": true,
             "id": "Morph_21CB5B21_8AB5_4B9B_BC7C_4440CA8C8EE3",
-            "rev": 49030
+            "rev": 400925
           }
         },
         "target": {
@@ -4240,12 +4268,12 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         }
       }
     },
-    "FF0813FE-2F2E-4D16-9450-DFCE14085E45": {
+    "0AD3CDFF-D5BF-42C4-BA0D-711E58F75329": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4277,7 +4305,7 @@
           "value": {
             "__ref__": true,
             "id": "Morph_21CB5B21_8AB5_4B9B_BC7C_4440CA8C8EE3",
-            "rev": 49030
+            "rev": 400925
           }
         }
       },
@@ -4295,7 +4323,7 @@
       }
     },
     "Morph_C2B93EA4_2F57_4E82_AC39_E6E9C1344D9F": {
-      "rev": 49070,
+      "rev": 400965,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -4316,7 +4344,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "8B4D7CCF-C474-4517-940A-B13DF27FEE29",
+            "id": "7623223F-F1A9-4882-854B-7BBA9EF95AAC",
             "rev": 0
           }
         },
@@ -4373,7 +4401,7 @@
         }
       }
     },
-    "8B4D7CCF-C474-4517-940A-B13DF27FEE29": {
+    "7623223F-F1A9-4882-854B-7BBA9EF95AAC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4405,7 +4433,7 @@
           "value": {
             "__ref__": true,
             "id": "Morph_C2B93EA4_2F57_4E82_AC39_E6E9C1344D9F",
-            "rev": 49070
+            "rev": 400965
           }
         }
       },
@@ -4423,7 +4451,7 @@
       }
     },
     "Morph_639B4D77_3345_4DDA_97B6_0170AC73B2CC": {
-      "rev": 49031,
+      "rev": 400926,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -4434,7 +4462,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "692D5EA9-2F7D-46C5-BD73-5C7CB906882F",
+              "id": "46705A6A-F908-4D91-B66D-EF9963E6E32E",
               "rev": 0
             }
           ]
@@ -4451,7 +4479,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "819C789D-8F8F-45E5-B801-3E60DB88E9C5",
+            "id": "5503760D-C796-4663-9226-EDA7977EFCD5",
             "rev": 0
           }
         },
@@ -4467,13 +4495,17 @@
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
         },
+        "visible": {
+          "key": "visible",
+          "value": false
+        },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
               "id": "Morph_5346B5FA_47A2_42DB_8688_DB4DF3A9EEBD",
-              "rev": 49071
+              "rev": 400966
             }
           ]
         },
@@ -4510,7 +4542,7 @@
         }
       }
     },
-    "692D5EA9-2F7D-46C5-BD73-5C7CB906882F": {
+    "46705A6A-F908-4D91-B66D-EF9963E6E32E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4530,7 +4562,7 @@
           "value": {
             "__ref__": true,
             "id": "Morph_639B4D77_3345_4DDA_97B6_0170AC73B2CC",
-            "rev": 49031
+            "rev": 400926
           }
         },
         "sourceAttrName": {
@@ -4542,7 +4574,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "targetMethodName": {
@@ -4553,7 +4585,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "C428223E-982B-42A9-BD67-3708F544907A",
+            "id": "C42D857B-4C9C-46C3-A810-364DD7E5B815",
             "rev": 0
           }
         },
@@ -4586,7 +4618,7 @@
         }
       }
     },
-    "C428223E-982B-42A9-BD67-3708F544907A": {
+    "C42D857B-4C9C-46C3-A810-364DD7E5B815": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4598,7 +4630,7 @@
           "value": {
             "__ref__": true,
             "id": "Morph_639B4D77_3345_4DDA_97B6_0170AC73B2CC",
-            "rev": 49031
+            "rev": 400926
           }
         },
         "target": {
@@ -4606,12 +4638,12 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         }
       }
     },
-    "819C789D-8F8F-45E5-B801-3E60DB88E9C5": {
+    "5503760D-C796-4663-9226-EDA7977EFCD5": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4643,7 +4675,7 @@
           "value": {
             "__ref__": true,
             "id": "Morph_639B4D77_3345_4DDA_97B6_0170AC73B2CC",
-            "rev": 49031
+            "rev": 400926
           }
         }
       },
@@ -4661,7 +4693,7 @@
       }
     },
     "Morph_5346B5FA_47A2_42DB_8688_DB4DF3A9EEBD": {
-      "rev": 49071,
+      "rev": 400966,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -4682,7 +4714,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "357D6864-44D6-457B-9CFF-5E342886B5B0",
+            "id": "8BF65466-49B6-43A4-B8AD-F6A892801AD1",
             "rev": 0
           }
         },
@@ -4739,7 +4771,7 @@
         }
       }
     },
-    "357D6864-44D6-457B-9CFF-5E342886B5B0": {
+    "8BF65466-49B6-43A4-B8AD-F6A892801AD1": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4771,7 +4803,7 @@
           "value": {
             "__ref__": true,
             "id": "Morph_5346B5FA_47A2_42DB_8688_DB4DF3A9EEBD",
-            "rev": 49071
+            "rev": 400966
           }
         }
       },
@@ -4789,7 +4821,7 @@
       }
     },
     "Ellipse_DA0CED8E_BE0C_41F8_A15D_9EE4722ACF47": {
-      "rev": 49035,
+      "rev": 400930,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -4800,7 +4832,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "8E83D7CB-FD69-4CD9-809E-0E88FD047933",
+              "id": "B86A5992-8FF7-4BA7-AC44-118BE8FAABB8",
               "rev": 0
             }
           ]
@@ -4817,7 +4849,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "90D754CE-A463-4BBA-B918-2AC67D1FBC88",
+            "id": "F1416791-E674-4BAD-94FF-E9087E1A8C6C",
             "rev": 0
           }
         },
@@ -4832,6 +4864,10 @@
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(212,69,3)"
+        },
+        "visible": {
+          "key": "visible",
+          "value": false
         },
         "submorphs": {
           "key": "submorphs",
@@ -4875,7 +4911,7 @@
         }
       }
     },
-    "8E83D7CB-FD69-4CD9-809E-0E88FD047933": {
+    "B86A5992-8FF7-4BA7-AC44-118BE8FAABB8": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4895,7 +4931,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_DA0CED8E_BE0C_41F8_A15D_9EE4722ACF47",
-            "rev": 49035
+            "rev": 400930
           }
         },
         "sourceAttrName": {
@@ -4907,7 +4943,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "targetMethodName": {
@@ -4918,7 +4954,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "09FD063E-BE7A-4827-A23B-42F990917CF8",
+            "id": "B4563282-12D2-45BB-8503-193F1CD500AE",
             "rev": 0
           }
         },
@@ -4948,7 +4984,7 @@
         }
       }
     },
-    "09FD063E-BE7A-4827-A23B-42F990917CF8": {
+    "B4563282-12D2-45BB-8503-193F1CD500AE": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -4960,7 +4996,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_DA0CED8E_BE0C_41F8_A15D_9EE4722ACF47",
-            "rev": 49035
+            "rev": 400930
           }
         },
         "target": {
@@ -4968,12 +5004,12 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         }
       }
     },
-    "90D754CE-A463-4BBA-B918-2AC67D1FBC88": {
+    "F1416791-E674-4BAD-94FF-E9087E1A8C6C": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5005,7 +5041,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_DA0CED8E_BE0C_41F8_A15D_9EE4722ACF47",
-            "rev": 49035
+            "rev": 400930
           }
         }
       },
@@ -5023,7 +5059,7 @@
       }
     },
     "Ellipse_A75280CC_E71C_4BA9_9075_6A75685E6860": {
-      "rev": 49039,
+      "rev": 400934,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -5034,7 +5070,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "FDAD960E-9807-43AF-9064-FA8C211EB4F7",
+              "id": "D327FBAE-FA2C-48FC-BC87-EA5EF39C3D5E",
               "rev": 0
             }
           ]
@@ -5051,7 +5087,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "E23D507A-C7D3-44A0-81F9-5C5C3FB894EB",
+            "id": "54E48140-2856-4428-BFAE-3B7321C7D478",
             "rev": 0
           }
         },
@@ -5066,6 +5102,10 @@
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
+        },
+        "visible": {
+          "key": "visible",
+          "value": false
         },
         "submorphs": {
           "key": "submorphs",
@@ -5125,7 +5165,7 @@
         }
       }
     },
-    "FDAD960E-9807-43AF-9064-FA8C211EB4F7": {
+    "D327FBAE-FA2C-48FC-BC87-EA5EF39C3D5E": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5145,7 +5185,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_A75280CC_E71C_4BA9_9075_6A75685E6860",
-            "rev": 49039
+            "rev": 400934
           }
         },
         "sourceAttrName": {
@@ -5157,7 +5197,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "targetMethodName": {
@@ -5168,7 +5208,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "15D25236-33CB-4F98-9EC5-C95455FA4414",
+            "id": "CD661E29-F175-4ED1-8824-59E1994AB9EC",
             "rev": 0
           }
         },
@@ -5198,7 +5238,7 @@
         }
       }
     },
-    "15D25236-33CB-4F98-9EC5-C95455FA4414": {
+    "CD661E29-F175-4ED1-8824-59E1994AB9EC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5210,7 +5250,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_A75280CC_E71C_4BA9_9075_6A75685E6860",
-            "rev": 49039
+            "rev": 400934
           }
         },
         "target": {
@@ -5218,12 +5258,12 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         }
       }
     },
-    "E23D507A-C7D3-44A0-81F9-5C5C3FB894EB": {
+    "54E48140-2856-4428-BFAE-3B7321C7D478": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5255,7 +5295,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_A75280CC_E71C_4BA9_9075_6A75685E6860",
-            "rev": 49039
+            "rev": 400934
           }
         }
       },
@@ -5273,7 +5313,7 @@
       }
     },
     "Ellipse_1D051FBB_F40B_4198_9BC7_72FD072E9C87": {
-      "rev": 49043,
+      "rev": 400938,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -5284,7 +5324,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "8F938DF1-00A2-4824-BF0C-1D4AF3D2144D",
+              "id": "C3ABB29E-7127-4ACE-8E08-6F7C62211ADB",
               "rev": 0
             }
           ]
@@ -5301,7 +5341,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "38E66A9D-B6C0-45F0-8E81-3651DE1DA0FF",
+            "id": "F70CFD9E-538F-41DA-BB1E-836232D57593",
             "rev": 0
           }
         },
@@ -5316,6 +5356,10 @@
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(236,168,31)"
+        },
+        "visible": {
+          "key": "visible",
+          "value": false
         },
         "submorphs": {
           "key": "submorphs",
@@ -5359,7 +5403,7 @@
         }
       }
     },
-    "8F938DF1-00A2-4824-BF0C-1D4AF3D2144D": {
+    "C3ABB29E-7127-4ACE-8E08-6F7C62211ADB": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5379,7 +5423,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_1D051FBB_F40B_4198_9BC7_72FD072E9C87",
-            "rev": 49043
+            "rev": 400938
           }
         },
         "sourceAttrName": {
@@ -5391,7 +5435,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "targetMethodName": {
@@ -5402,7 +5446,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "9C9268E9-C316-4500-BF7A-94B8F56CA5F8",
+            "id": "622C3015-AFAB-4F70-9877-791BD38C3070",
             "rev": 0
           }
         },
@@ -5432,7 +5476,7 @@
         }
       }
     },
-    "9C9268E9-C316-4500-BF7A-94B8F56CA5F8": {
+    "622C3015-AFAB-4F70-9877-791BD38C3070": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5444,7 +5488,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_1D051FBB_F40B_4198_9BC7_72FD072E9C87",
-            "rev": 49043
+            "rev": 400938
           }
         },
         "target": {
@@ -5452,12 +5496,12 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         }
       }
     },
-    "38E66A9D-B6C0-45F0-8E81-3651DE1DA0FF": {
+    "F70CFD9E-538F-41DA-BB1E-836232D57593": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5489,7 +5533,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_1D051FBB_F40B_4198_9BC7_72FD072E9C87",
-            "rev": 49043
+            "rev": 400938
           }
         }
       },
@@ -5507,7 +5551,7 @@
       }
     },
     "Ellipse_A7694264_DCB4_4247_9E1B_296A6890FCDD": {
-      "rev": 49047,
+      "rev": 400942,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -5518,7 +5562,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "65CF0288-C00F-4299-A640-C9007AE06CEA",
+              "id": "225C9460-09E1-4B7C-B92C-26D40F794D56",
               "rev": 0
             }
           ]
@@ -5535,7 +5579,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "46C89831-B458-4C0D-BF54-744A443AA445",
+            "id": "25FF3DF9-DD0F-4480-B40F-B0B2E47ADECC",
             "rev": 0
           }
         },
@@ -5550,6 +5594,10 @@
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(177,173,162)"
+        },
+        "visible": {
+          "key": "visible",
+          "value": false
         },
         "submorphs": {
           "key": "submorphs",
@@ -5593,7 +5641,7 @@
         }
       }
     },
-    "65CF0288-C00F-4299-A640-C9007AE06CEA": {
+    "225C9460-09E1-4B7C-B92C-26D40F794D56": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5613,7 +5661,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_A7694264_DCB4_4247_9E1B_296A6890FCDD",
-            "rev": 49047
+            "rev": 400942
           }
         },
         "sourceAttrName": {
@@ -5625,7 +5673,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "targetMethodName": {
@@ -5636,7 +5684,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "E89F511F-BE77-4647-9A4A-F904A02AB984",
+            "id": "B57E6486-F9BE-48A7-92F9-67626FD86795",
             "rev": 0
           }
         },
@@ -5666,7 +5714,7 @@
         }
       }
     },
-    "E89F511F-BE77-4647-9A4A-F904A02AB984": {
+    "B57E6486-F9BE-48A7-92F9-67626FD86795": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5678,7 +5726,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_A7694264_DCB4_4247_9E1B_296A6890FCDD",
-            "rev": 49047
+            "rev": 400942
           }
         },
         "target": {
@@ -5686,12 +5734,12 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         }
       }
     },
-    "46C89831-B458-4C0D-BF54-744A443AA445": {
+    "25FF3DF9-DD0F-4480-B40F-B0B2E47ADECC": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5723,7 +5771,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_A7694264_DCB4_4247_9E1B_296A6890FCDD",
-            "rev": 49047
+            "rev": 400942
           }
         }
       },
@@ -5741,7 +5789,7 @@
       }
     },
     "Ellipse_0E03C740_92D3_49CB_AC6E_A50880882321": {
-      "rev": 49051,
+      "rev": 400946,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -5752,7 +5800,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "7002A47C-1AAE-46E0-A6DF-973B1A2EFEA5",
+              "id": "4B563AE9-CC06-4EE6-985F-C6D07E606CF7",
               "rev": 0
             }
           ]
@@ -5769,7 +5817,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "33536E35-3A25-49A1-9879-86DC3C6A5690",
+            "id": "DCDAA77A-5561-44F8-AB3F-495C1519CC74",
             "rev": 0
           }
         },
@@ -5784,6 +5832,10 @@
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(79,124,129)"
+        },
+        "visible": {
+          "key": "visible",
+          "value": false
         },
         "submorphs": {
           "key": "submorphs",
@@ -5827,7 +5879,7 @@
         }
       }
     },
-    "7002A47C-1AAE-46E0-A6DF-973B1A2EFEA5": {
+    "4B563AE9-CC06-4EE6-985F-C6D07E606CF7": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5847,7 +5899,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_0E03C740_92D3_49CB_AC6E_A50880882321",
-            "rev": 49051
+            "rev": 400946
           }
         },
         "sourceAttrName": {
@@ -5859,7 +5911,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "targetMethodName": {
@@ -5870,7 +5922,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "FD13D3E7-0E05-476E-B8BC-C32D50C0924E",
+            "id": "C92CCDDA-0D29-41BA-8778-C0DAE51BFAC4",
             "rev": 0
           }
         },
@@ -5900,7 +5952,7 @@
         }
       }
     },
-    "FD13D3E7-0E05-476E-B8BC-C32D50C0924E": {
+    "C92CCDDA-0D29-41BA-8778-C0DAE51BFAC4": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5912,7 +5964,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_0E03C740_92D3_49CB_AC6E_A50880882321",
-            "rev": 49051
+            "rev": 400946
           }
         },
         "target": {
@@ -5920,12 +5972,12 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         }
       }
     },
-    "33536E35-3A25-49A1-9879-86DC3C6A5690": {
+    "DCDAA77A-5561-44F8-AB3F-495C1519CC74": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -5957,7 +6009,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_0E03C740_92D3_49CB_AC6E_A50880882321",
-            "rev": 49051
+            "rev": 400946
           }
         }
       },
@@ -5975,7 +6027,7 @@
       }
     },
     "Ellipse_E9E7E695_A446_4B9E_96D9_A3A429BA953F": {
-      "rev": 49055,
+      "rev": 400950,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -5986,7 +6038,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "3B90729E-A76B-4DE2-890D-B0D25797E5DB",
+              "id": "5B468779-05F5-4E6A-839B-6F32FF97E082",
               "rev": 0
             }
           ]
@@ -6003,7 +6055,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "215BE96D-B3ED-4651-BD32-C54B34B2002C",
+            "id": "44E799C8-2D79-45A9-84F9-9AC0D1443A87",
             "rev": 0
           }
         },
@@ -6018,6 +6070,10 @@
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(246,246,246)"
+        },
+        "visible": {
+          "key": "visible",
+          "value": false
         },
         "submorphs": {
           "key": "submorphs",
@@ -6061,7 +6117,7 @@
         }
       }
     },
-    "3B90729E-A76B-4DE2-890D-B0D25797E5DB": {
+    "5B468779-05F5-4E6A-839B-6F32FF97E082": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6081,7 +6137,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_E9E7E695_A446_4B9E_96D9_A3A429BA953F",
-            "rev": 49055
+            "rev": 400950
           }
         },
         "sourceAttrName": {
@@ -6093,7 +6149,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "targetMethodName": {
@@ -6104,7 +6160,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "86E8F549-429F-4B70-83E6-A864EBB57210",
+            "id": "12EA9811-BB88-4662-84A2-2C290268FB07",
             "rev": 0
           }
         },
@@ -6134,7 +6190,7 @@
         }
       }
     },
-    "86E8F549-429F-4B70-83E6-A864EBB57210": {
+    "12EA9811-BB88-4662-84A2-2C290268FB07": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6146,7 +6202,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_E9E7E695_A446_4B9E_96D9_A3A429BA953F",
-            "rev": 49055
+            "rev": 400950
           }
         },
         "target": {
@@ -6154,12 +6210,12 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         }
       }
     },
-    "215BE96D-B3ED-4651-BD32-C54B34B2002C": {
+    "44E799C8-2D79-45A9-84F9-9AC0D1443A87": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6191,7 +6247,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_E9E7E695_A446_4B9E_96D9_A3A429BA953F",
-            "rev": 49055
+            "rev": 400950
           }
         }
       },
@@ -6209,7 +6265,7 @@
       }
     },
     "Ellipse_5E67F957_F172_4C2A_95E5_C135FD1A0310": {
-      "rev": 49059,
+      "rev": 400954,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -6220,7 +6276,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "A13A1141-F74E-4B74-9545-3905E7C858E5",
+              "id": "1B916B55-65C1-45E8-90C9-3D9EF98211C9",
               "rev": 0
             }
           ]
@@ -6237,7 +6293,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "E4C0604C-B735-4F9E-B280-4A9DA77FFE46",
+            "id": "EEE62310-7EEE-483C-8190-BE05836520D6",
             "rev": 0
           }
         },
@@ -6252,6 +6308,10 @@
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(145,161,112)"
+        },
+        "visible": {
+          "key": "visible",
+          "value": false
         },
         "submorphs": {
           "key": "submorphs",
@@ -6295,7 +6355,7 @@
         }
       }
     },
-    "A13A1141-F74E-4B74-9545-3905E7C858E5": {
+    "1B916B55-65C1-45E8-90C9-3D9EF98211C9": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6315,7 +6375,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_5E67F957_F172_4C2A_95E5_C135FD1A0310",
-            "rev": 49059
+            "rev": 400954
           }
         },
         "sourceAttrName": {
@@ -6327,7 +6387,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "targetMethodName": {
@@ -6338,7 +6398,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "23120EC6-6A41-442C-B015-38B0FD23F77F",
+            "id": "40636AF6-700A-4AD7-A74A-B2B0EA01AE7D",
             "rev": 0
           }
         },
@@ -6368,7 +6428,7 @@
         }
       }
     },
-    "23120EC6-6A41-442C-B015-38B0FD23F77F": {
+    "40636AF6-700A-4AD7-A74A-B2B0EA01AE7D": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6380,7 +6440,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_5E67F957_F172_4C2A_95E5_C135FD1A0310",
-            "rev": 49059
+            "rev": 400954
           }
         },
         "target": {
@@ -6388,12 +6448,12 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         }
       }
     },
-    "E4C0604C-B735-4F9E-B280-4A9DA77FFE46": {
+    "EEE62310-7EEE-483C-8190-BE05836520D6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6425,7 +6485,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_5E67F957_F172_4C2A_95E5_C135FD1A0310",
-            "rev": 49059
+            "rev": 400954
           }
         }
       },
@@ -6443,7 +6503,7 @@
       }
     },
     "Ellipse_8CC7B534_7DB2_4711_AB75_E32D2CEF3FEE": {
-      "rev": 49063,
+      "rev": 400958,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -6454,7 +6514,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "BF760743-868A-4546-8566-C11154EBAE3C",
+              "id": "E8AD39B5-630D-4893-A856-E8D3B53B16CA",
               "rev": 0
             }
           ]
@@ -6471,7 +6531,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "BCB615FC-743C-4C89-B69F-777533442A5A",
+            "id": "7DFB6602-C171-42F3-9FA7-A4F8B0D10032",
             "rev": 0
           }
         },
@@ -6486,6 +6546,10 @@
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(171,127,88)"
+        },
+        "visible": {
+          "key": "visible",
+          "value": false
         },
         "submorphs": {
           "key": "submorphs",
@@ -6529,7 +6593,7 @@
         }
       }
     },
-    "BF760743-868A-4546-8566-C11154EBAE3C": {
+    "E8AD39B5-630D-4893-A856-E8D3B53B16CA": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6549,7 +6613,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_8CC7B534_7DB2_4711_AB75_E32D2CEF3FEE",
-            "rev": 49063
+            "rev": 400958
           }
         },
         "sourceAttrName": {
@@ -6561,7 +6625,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "targetMethodName": {
@@ -6572,7 +6636,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "01554234-4524-4082-9FA9-12D5F650CCCA",
+            "id": "D25E8DE5-3EAA-4E16-BC54-B9D653F75648",
             "rev": 0
           }
         },
@@ -6602,7 +6666,7 @@
         }
       }
     },
-    "01554234-4524-4082-9FA9-12D5F650CCCA": {
+    "D25E8DE5-3EAA-4E16-BC54-B9D653F75648": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6614,7 +6678,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_8CC7B534_7DB2_4711_AB75_E32D2CEF3FEE",
-            "rev": 49063
+            "rev": 400958
           }
         },
         "target": {
@@ -6622,12 +6686,12 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         }
       }
     },
-    "BCB615FC-743C-4C89-B69F-777533442A5A": {
+    "7DFB6602-C171-42F3-9FA7-A4F8B0D10032": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6659,7 +6723,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_8CC7B534_7DB2_4711_AB75_E32D2CEF3FEE",
-            "rev": 49063
+            "rev": 400958
           }
         }
       },
@@ -6677,7 +6741,7 @@
       }
     },
     "Ellipse_CD0C2FE1_D5BB_4DD7_8292_994E2D117AC6": {
-      "rev": 49067,
+      "rev": 400962,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -6688,7 +6752,7 @@
           "value": [
             {
               "__ref__": true,
-              "id": "F0D7D150-6CC7-4C8F-87BE-87A2A7FDD2B0",
+              "id": "A1AD38F7-B172-4B07-964D-7920E2A9BA70",
               "rev": 0
             }
           ]
@@ -6705,7 +6769,7 @@
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "FC218BAF-4E51-4648-999C-5750FECF96E3",
+            "id": "9DC18253-E392-4604-B302-6D646B5504E6",
             "rev": 0
           }
         },
@@ -6720,6 +6784,10 @@
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(183,143,170)"
+        },
+        "visible": {
+          "key": "visible",
+          "value": false
         },
         "submorphs": {
           "key": "submorphs",
@@ -6763,7 +6831,7 @@
         }
       }
     },
-    "F0D7D150-6CC7-4C8F-87BE-87A2A7FDD2B0": {
+    "A1AD38F7-B172-4B07-964D-7920E2A9BA70": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6783,7 +6851,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_CD0C2FE1_D5BB_4DD7_8292_994E2D117AC6",
-            "rev": 49067
+            "rev": 400962
           }
         },
         "sourceAttrName": {
@@ -6795,7 +6863,7 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         },
         "targetMethodName": {
@@ -6806,7 +6874,7 @@
           "key": "varMapping",
           "value": {
             "__ref__": true,
-            "id": "7EE06281-94B1-4BAD-9EC8-590B6F72E178",
+            "id": "9B0E7B18-4E82-4C76-9355-52AB89E31186",
             "rev": 0
           }
         },
@@ -6836,7 +6904,7 @@
         }
       }
     },
-    "7EE06281-94B1-4BAD-9EC8-590B6F72E178": {
+    "9B0E7B18-4E82-4C76-9355-52AB89E31186": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6848,7 +6916,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_CD0C2FE1_D5BB_4DD7_8292_994E2D117AC6",
-            "rev": 49067
+            "rev": 400962
           }
         },
         "target": {
@@ -6856,12 +6924,12 @@
           "value": {
             "__ref__": true,
             "id": "Palette_45A69745_A462_4145_8F84_1368825DB1D7",
-            "rev": 47118
+            "rev": 400191
           }
         }
       }
     },
-    "FC218BAF-4E51-4648-999C-5750FECF96E3": {
+    "9DC18253-E392-4604-B302-6D646B5504E6": {
       "rev": 0,
       "props": {
         "_rev": {
@@ -6893,7 +6961,7 @@
           "value": {
             "__ref__": true,
             "id": "Ellipse_CD0C2FE1_D5BB_4DD7_8292_994E2D117AC6",
-            "rev": 49067
+            "rev": 400962
           }
         }
       },
@@ -6916,9 +6984,9 @@
     "local://lively-object-modules/": {
       "Palette": {
         "package.json": "{\n  \"name\": \"Palette\",\n  \"version\": \"0.1.0\",\n  \"lively\": {\n    \"isObjectPackage\": true\n  }\n}",
-        "index.js": "import { Morph, Canvas } from \"lively.morphic\";\nimport { pt, Color } from \"lively.graphics/index.js\";\nimport { connect } from \"lively.bindings/index.js\";\nimport { promise } from \"lively.lang/index.js\";\nimport { loadObjectFromPartsbinFolder } from \"lively.morphic/partsbin.js\";\nimport ObjectPackage from \"lively.classes/object-classes.js\";\n\n\n\nexport default class Palette extends Morph {\n  static get properties() {\n    return {\n      uncollapsedExtent: {defaultValue: null},\n    }\n  }\n\n  beforePublish() {\n    this.hideSketch();\n    let w = this.widthMorphs();\n    let c = this.colorMorphs();\n    this.selectColorMorph(c[1]);\n    this.selectWidthMorph(w[0]);\n    w[0].submorphs[0].fill = c[1].fill;\n    w[1].submorphs[0].fill = c[0].fill;\n    w[2].submorphs[0].fill = c[2].fill;\n    w[3].submorphs[0].fill = c[4].fill;\n  }\n\n  onLoad(snapshot, rev) {\n    const sketchPkg = ObjectPackage.packageStore[\"Sketch\"];\n    if (sketchPkg) {\n      this.sketchClass = sketchPkg.objectClass;  \n    } else {\n      loadObjectFromPartsbinFolder(\"Sketch\").then(\n        (sketch) => this.sketchClass = sketch.constructor);\n    }\n  }\n\n  get isSketchingPalette() { return true; }\n  \n  /***************************************************************/\n  \n  reset() {\n    const widths = [2, 8, 16, 32];\n    const colors = [\n      Color.rgb(212,69,3),     // red\n      Color.rgb(0,0,0),        // black\n      Color.rgb(236,168,31),   // yellow\n      Color.rgb(177,173,162),  // grey\n      Color.rgb(79,124,129),   // cyan\n      Color.rgb(246,246,246),  // white\n      Color.rgb(145,161,112),  // green\n      Color.rgb(171,127,88),   // brown\n      Color.rgb(183,143,170),  // purple\n    ];\n    this.removeAllMorphs();\n    this.buildButtons();\n    this.buildWidths(widths);\n    this.buildColors(colors);\n    this.beforePublish();\n  }\n\n  /***************************************************************/\n  /* Drawing Sketch\n  /***************************************************************/\n\n  hideSketch() {\n    if (this.sketch) {\n      this.sketch.remove();\n      this.sketch = null;\n    }\n  }\n\n  showSketch() {\n    this.hideSketch();\n    this.bringToFront();\n    this.sketch = new this.sketchClass({\n      extent: this.world().extent,\n      fill: Color.white.withA(0.8),\n      onDragStart: (evt) => this.sketch_onDragStart(evt),\n      onDrag: (evt) => this.sketch_onDrag(evt),\n      onDragEnd: (evt) => this.sketch_onDragEnd(evt),\n    });\n    this.world().addMorph(this.sketch, this);\n  }\n\n  sketch_onDragStart(evt) {\n    if (evt.leftMouseButtonPressed()) {\n      const {x, y} = this.sketch.localize(evt.position);\n      this.sketch.strokes.push({\n        color: this.penColor,\n        width: this.penWidth,\n        vertices: [x, y],\n      });\n    }\n  }\n\n  sketch_onDrag(evt) {\n    if (evt.leftMouseButtonPressed()) {\n      let from = this.sketch.localize(evt.state.lastDragPosition),\n          to = this.sketch.localize(evt.position);\n      this.drawLine(\n        from,\n        to,\n        this.penColor,\n        this.penWidth * evt.pressure * 2);\n      let {strokes} = this.sketch,\n          {vertices} = strokes[strokes.length - 1],\n          {x, y} = to;\n      vertices.push(x, y);\n    }\n  }\n\n  sketch_onDragEnd(evt) {\n    if (evt.leftMouseButtonPressed()) {\n      this.sketch.redraw();\n    }\n  }\n  \n  drawLine(from, to, color, width) {\n    let c = this.sketch.context;\n    c.save();\n    c.globalCompositeOperation = \"darken\";\n    c.strokeStyle = color;\n    c.beginPath();\n    c.lineWidth = width;\n    c.lineJoin = \"round\";\n    c.lineCap = \"round\";\n    c.moveTo(from.x, from.y);\n    c.lineTo(to.x, to.y);\n    c.stroke();\n    c.restore();\n  }\n\n  get penColor() {\n     return this.selectedWidthMorph().submorphs[0].fill;\n  }\n\n  set penColor(color) {\n     this.selectedWidthMorph().submorphs[0].fill = color;\n  }\n\n  get penWidth() {\n     return this.selectedWidthMorph().submorphs[0].width;\n  }\n\n  createSketch() {\n    let {sketch} = this;\n    sketch.trimNonTransparent();\n    Object.assign(sketch, {\n      name: 'Sketch',\n      fill: null,\n    });\n    delete sketch.onDragStart;\n    delete sketch.onDrag;\n    this.sketch = null;\n  }\n\n  /***************************************************************/\n  /* Buttons\n  /***************************************************************/\n\n  buildButtons() {\n    this.addMorph({\n      type: \"button\",\n      name: 'newButton',\n      position: pt(15, 24),\n      extent: pt(40, 40),\n      label: 'New',\n    });\n    this.addMorph({\n      type: \"button\",\n      name: 'clearButton',\n      position: pt(95, 24),\n      extent: pt(40, 40),\n      label: 'Clear',\n    });\n    this.addMorph({\n      type: \"button\",\n      name: 'cancelButton',\n      position: pt(95, 74),\n      extent: pt(40, 40),\n      label: 'Cancel',\n    });\n    this.addMorph({\n      type: \"button\",\n      name: 'okButton',\n      position: pt(15, 74),\n      extent: pt(50, 40),\n      label: 'OK',\n    });\n    connect(this.newButton,    \"fire\", this, \"doNew\");\n    connect(this.clearButton,  \"fire\", this, \"doClear\");\n    connect(this.okButton,     \"fire\", this, \"doOk\");\n    connect(this.cancelButton, \"fire\", this, \"doCancel\");\n  }\n\n  get newButton()    { return this.getSubmorphNamed('newButton')}\n  get clearButton()  { return this.getSubmorphNamed('clearButton')}\n  get okButton()     { return this.getSubmorphNamed('okButton')}\n  get cancelButton() { return this.getSubmorphNamed('cancelButton')}\n\n  doNew() {\n    if (this.sketch) return;\n    this.showSketch();\n  }\n\n  doClear() {\n    if (!this.sketch) return;\n    this.sketch.clear();\n  }\n\n  doOk() {\n    if (!this.sketch) return;\n    this.createSketch();\n    this.collapse();\n  }\n\n  doCancel() {\n    this.hideSketch();\n    this.collapse();\n  }\n\n  edit(sketch) {\n    this.showSketch();\n    let {position: {x, y}, context: {canvas}} = sketch;\n    this.sketch.withContextDo((c) => c.drawImage(canvas, x, y));    \n  }\n  \n  /***************************************************************/\n  /* Color Palette \n  /***************************************************************/\n\n  buildColors(colors) {\n    colors.forEach((color, i) =>\n      this.addMorph({\n        type: \"ellipse\",\n        name: `color${i}`,\n        position: pt(400 + i * 30, 74 - (i&1) * 60),\n        extent: pt(50, 50),\n        fill: color,\n        draggable: false,\n        dropShadow: {inset: true, blur: 2},\n        borderColor: Color.white,\n      }));\n    this.colorMorphs().forEach(\n      (m) => connect(m, \"onMouseDown\", this, \"selectColorMorph\",\n         {converter: '() => source'}));\n  }\n  \n  selectedColorMorph() {\n    return this.colorMorphs().find((m) => m.borderWidth > 0);\n  }\n\n  selectColorMorph(cMorph) {\n    this.colorMorphs().forEach((m) => m.borderWidth = (m === cMorph) ? 4 : 0);\n    this.penColor = this.selectedColorMorph().fill;\n  }\n\n  selectColor(color) {\n    this.colorMorphs().forEach((m) => m.borderWidth = color.equals(m.fill) ? 4 : 0);\n  }\n  \n  colorMorphs() {\n    return this.submorphs.filter(({name}) => /^color[0-9]+$/.test(name));\n  }\n\n  /***************************************************************/\n  /* Width Palette\n  /***************************************************************/\n  \n  buildWidths(widths) {\n    var x = 190;\n    widths.forEach((width, i) => {\n      this.addMorph({\n        name: `width${i}`,\n        position: pt(x, 22),\n        extent: pt(width + 32, 100),\n        borderRadiusLeft: [0].includes(i) ? 10 : 0,\n        borderRadiusRight: [3].includes(i) ? 10 : 0,\n        borderRadiusBottom: [0,3].includes(i) ? 10 : 0,\n        borderRadiusTop: [0,3].includes(i) ? 10 : 0,\n        dropShadow: {inset: true},\n        draggable: false,\n        submorphs: [\n          {\n              extent: pt(width, 100-16),\n              borderRadius: width,\n              position: pt(16, 8),\n              fill: Color.black,\n              dropShadow: true,\n              draggable: false,\n          }\n        ] \n      });\n      x += width + 32;\n    });\n    this.widthMorphs().forEach(\n      (m) => connect(m, \"onMouseDown\", this, \"selectWidthMorph\",\n         {converter: '() => source'}));    \n  }\n  \n  selectedWidthMorph() {\n    return this.widthMorphs().find((m) => m.fill.r === Color.white.r);\n  }\n  \n  selectWidthMorph(wMorph) {\n    this.widthMorphs().forEach((m) =>\n      m.fill = (m === wMorph) ? Color.white : Color.darkGray);\n    this.selectColor(this.penColor);\n  }\n\n  widthMorphs() {\n    return this.submorphs.filter(({name}) => /^width[0-9]+$/.test(name));\n  }\n\n  /***************************************************************/\n  /* Collapsing\n  /***************************************************************/\n\n  get isCollapsed() { return !!this.uncollapsedExtent; }\n\n  collapse() {\n    if (this.isCollapsed) return;\n    this.uncollapsedExtent = this.extent;\n    this.extent = pt(40, 40);\n    for (let m of this.submorphs) m.visible = false;\n  }\n  \n  uncollapse() {\n    if (!this.isCollapsed) return;\n    this.extent = this.uncollapsedExtent;\n    this.uncollapsedExtent = null;\n    for (let m of this.submorphs) m.visible = true;\n  }\n\n  onMouseDown(evt) {\n    if (this.isCollapsed)\n      this.uncollapse();\n    else if (evt.state.clickCount === 2)\n      this.collapse();\n  }\n}"
+        "index.js": "import { Morph, Canvas } from \"lively.morphic\";\nimport { pt, Color } from \"lively.graphics/index.js\";\nimport { connect } from \"lively.bindings/index.js\";\nimport { promise } from \"lively.lang/index.js\";\nimport { loadObjectFromPartsbinFolder } from \"lively.morphic/partsbin.js\";\nimport ObjectPackage from \"lively.classes/object-classes.js\";\n\n\n\nexport default class Palette extends Morph {\n  static get properties() {\n    return {\n      uncollapsedExtent: {defaultValue: null},\n    }\n  }\n\n  beforePublish() {\n    this.hideSketch();\n    let w = this.widthMorphs();\n    let c = this.colorMorphs();\n    this.selectColorMorph(c[1]);\n    this.selectWidthMorph(w[0]);\n    w[0].submorphs[0].fill = c[1].fill;\n    w[1].submorphs[0].fill = c[0].fill;\n    w[2].submorphs[0].fill = c[2].fill;\n    w[3].submorphs[0].fill = c[4].fill;\n  }\n\n  onLoad(snapshot, rev) {\n    const sketchPkg = ObjectPackage.packageStore[\"Sketch\"];\n    if (sketchPkg) {\n      this.sketchClass = sketchPkg.objectClass;  \n    } else {\n      loadObjectFromPartsbinFolder(\"Sketch\").then(\n        (sketch) => this.sketchClass = sketch.constructor);\n    }\n  }\n\n  get isSketchingPalette() { return true; }\n  \n  /***************************************************************/\n  \n  reset() {\n    const widths = [2, 8, 16, 32];\n    const colors = [\n      Color.rgb(212,69,3),     // red\n      Color.rgb(0,0,0),        // black\n      Color.rgb(236,168,31),   // yellow\n      Color.rgb(177,173,162),  // grey\n      Color.rgb(79,124,129),   // cyan\n      Color.rgb(246,246,246),  // white\n      Color.rgb(145,161,112),  // green\n      Color.rgb(171,127,88),   // brown\n      Color.rgb(183,143,170),  // purple\n    ];\n    this.removeAllMorphs();\n    this.buildButtons();\n    this.buildWidths(widths);\n    this.buildColors(colors);\n    this.beforePublish();\n  }\n\n  /***************************************************************/\n  /* Drawing Sketch\n  /***************************************************************/\n\n  hideSketch() {\n    if (this.sketch) {\n      this.sketch.remove();\n      this.sketch = null;\n    }\n  }\n\n  showSketch() {\n    this.hideSketch();\n    this.bringToFront();\n    this.sketch = new this.sketchClass({\n      extent: this.world().extent,\n      fill: Color.white.withA(0.8),\n      onDragStart: (evt) => this.sketch_onDragStart(evt),\n      onDrag: (evt) => this.sketch_onDrag(evt),\n      onDragEnd: (evt) => this.sketch_onDragEnd(evt),\n    });\n    this.world().addMorph(this.sketch, this);\n  }\n\n  sketch_onDragStart(evt) {\n    if (evt.leftMouseButtonPressed()) {\n      const {x, y} = this.sketch.localize(evt.position);\n      this.sketch.strokes.push({\n        color: this.penColor,\n        width: this.penWidth,\n        vertices: [x, y],\n      });\n    }\n  }\n\n  sketch_onDrag(evt) {\n    if (evt.leftMouseButtonPressed()) {\n      let from = this.sketch.localize(evt.state.lastDragPosition),\n          to = this.sketch.localize(evt.position);\n      this.drawLine(\n        from,\n        to,\n        this.penColor,\n        this.penWidth * evt.pressure * 2);\n      let {strokes} = this.sketch,\n          {vertices} = strokes[strokes.length - 1],\n          {x, y} = to;\n      vertices.push(x, y);\n    }\n  }\n\n  sketch_onDragEnd(evt) {\n    if (evt.leftMouseButtonPressed()) {\n      this.sketch.redraw();\n    }\n  }\n  \n  drawLine(from, to, color, width) {\n    let c = this.sketch.context;\n    c.save();\n    c.globalCompositeOperation = \"darken\";\n    c.strokeStyle = color;\n    c.beginPath();\n    c.lineWidth = width;\n    c.lineJoin = \"round\";\n    c.lineCap = \"round\";\n    c.moveTo(from.x, from.y);\n    c.lineTo(to.x, to.y);\n    c.stroke();\n    c.restore();\n  }\n\n  get penColor() {\n     return this.selectedWidthMorph().submorphs[0].fill;\n  }\n\n  set penColor(color) {\n     this.selectedWidthMorph().submorphs[0].fill = color;\n  }\n\n  get penWidth() {\n     return this.selectedWidthMorph().submorphs[0].width;\n  }\n\n  createSketch() {\n    let {sketch} = this;\n    sketch.trimNonTransparent();\n    Object.assign(sketch, {\n      name: 'Sketch',\n      fill: null,\n    });\n    delete sketch.onDragStart;\n    delete sketch.onDrag;\n    this.sketch = null;\n  }\n\n  /***************************************************************/\n  /* Buttons\n  /***************************************************************/\n\n  buildButtons() {\n    this.addMorph({\n      type: \"button\",\n      name: 'newButton',\n      position: pt(15, 24),\n      extent: pt(40, 40),\n      label: 'New',\n    });\n    this.addMorph({\n      type: \"button\",\n      name: 'clearButton',\n      position: pt(95, 24),\n      extent: pt(40, 40),\n      label: 'Clear',\n    });\n    this.addMorph({\n      type: \"button\",\n      name: 'cancelButton',\n      position: pt(95, 74),\n      extent: pt(40, 40),\n      label: 'Cancel',\n    });\n    this.addMorph({\n      type: \"button\",\n      name: 'okButton',\n      position: pt(15, 74),\n      extent: pt(50, 40),\n      label: 'OK',\n    });\n    connect(this.newButton,    \"fire\", this, \"doNew\");\n    connect(this.clearButton,  \"fire\", this, \"doClear\");\n    connect(this.okButton,     \"fire\", this, \"doOk\");\n    connect(this.cancelButton, \"fire\", this, \"doCancel\");\n  }\n\n  get newButton()    { return this.getSubmorphNamed('newButton')}\n  get clearButton()  { return this.getSubmorphNamed('clearButton')}\n  get okButton()     { return this.getSubmorphNamed('okButton')}\n  get cancelButton() { return this.getSubmorphNamed('cancelButton')}\n\n  doNew() {\n    if (this.sketch) return;\n    this.showSketch();\n  }\n\n  doClear() {\n    if (!this.sketch) return;\n    this.sketch.clear();\n  }\n\n  doOk() {\n    if (!this.sketch) return;\n    this.createSketch();\n    this.collapse();\n  }\n\n  doCancel() {\n    this.hideSketch();\n    this.collapse();\n  }\n\n  edit(sketch) {\n    this.showSketch();\n    let {position: {x, y}, context: {canvas}} = sketch;\n    this.sketch.strokes = sketch.strokes.slice();\n    this.sketch.moveStrokes(sketch.topLeft);\n    //this.sketch.withContextDo((c) => c.drawImage(canvas, x, y));    \n  }\n  \n  /***************************************************************/\n  /* Color Palette \n  /***************************************************************/\n\n  buildColors(colors) {\n    colors.forEach((color, i) =>\n      this.addMorph({\n        type: \"ellipse\",\n        name: `color${i}`,\n        position: pt(400 + i * 30, 74 - (i&1) * 60),\n        extent: pt(50, 50),\n        fill: color,\n        draggable: false,\n        dropShadow: {inset: true, blur: 2},\n        borderColor: Color.white,\n      }));\n    this.colorMorphs().forEach(\n      (m) => connect(m, \"onMouseDown\", this, \"selectColorMorph\",\n         {converter: '() => source'}));\n  }\n  \n  selectedColorMorph() {\n    return this.colorMorphs().find((m) => m.borderWidth > 0);\n  }\n\n  selectColorMorph(cMorph) {\n    this.colorMorphs().forEach((m) => m.borderWidth = (m === cMorph) ? 4 : 0);\n    this.penColor = this.selectedColorMorph().fill;\n  }\n\n  selectColor(color) {\n    this.colorMorphs().forEach((m) => m.borderWidth = color.equals(m.fill) ? 4 : 0);\n  }\n  \n  colorMorphs() {\n    return this.submorphs.filter(({name}) => /^color[0-9]+$/.test(name));\n  }\n\n  /***************************************************************/\n  /* Width Palette\n  /***************************************************************/\n  \n  buildWidths(widths) {\n    var x = 190;\n    widths.forEach((width, i) => {\n      this.addMorph({\n        name: `width${i}`,\n        position: pt(x, 22),\n        extent: pt(width + 32, 100),\n        borderRadiusLeft: [0].includes(i) ? 10 : 0,\n        borderRadiusRight: [3].includes(i) ? 10 : 0,\n        borderRadiusBottom: [0,3].includes(i) ? 10 : 0,\n        borderRadiusTop: [0,3].includes(i) ? 10 : 0,\n        dropShadow: {inset: true},\n        draggable: false,\n        submorphs: [\n          {\n              extent: pt(width, 100-16),\n              borderRadius: width,\n              position: pt(16, 8),\n              fill: Color.black,\n              dropShadow: true,\n              draggable: false,\n          }\n        ] \n      });\n      x += width + 32;\n    });\n    this.widthMorphs().forEach(\n      (m) => connect(m, \"onMouseDown\", this, \"selectWidthMorph\",\n         {converter: '() => source'}));    \n  }\n  \n  selectedWidthMorph() {\n    return this.widthMorphs().find((m) => m.fill.r === Color.white.r);\n  }\n  \n  selectWidthMorph(wMorph) {\n    this.widthMorphs().forEach((m) =>\n      m.fill = (m === wMorph) ? Color.white : Color.darkGray);\n    this.selectColor(this.penColor);\n  }\n\n  widthMorphs() {\n    return this.submorphs.filter(({name}) => /^width[0-9]+$/.test(name));\n  }\n\n  /***************************************************************/\n  /* Collapsing\n  /***************************************************************/\n\n  get isCollapsed() { return !!this.uncollapsedExtent; }\n\n  collapse() {\n    if (this.isCollapsed) return;\n    this.uncollapsedExtent = this.extent;\n    this.extent = pt(40, 40);\n    for (let m of this.submorphs) m.visible = false;\n  }\n  \n  uncollapse() {\n    if (!this.isCollapsed) return;\n    this.extent = this.uncollapsedExtent;\n    this.uncollapsedExtent = null;\n    for (let m of this.submorphs) m.visible = true;\n  }\n\n  onMouseDown(evt) {\n    if (this.isCollapsed)\n      this.uncollapse();\n    else if (evt.state.clickCount === 2)\n      this.collapse();\n  }\n}"
       }
     }
   },
-  "preview": "data:image/png;base64,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"
+  "preview": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAACg0lEQVRYR+1Yz4sSYRh+vvllTpOJRoeUsCWKkXBFUWbQa8f+haA61Gmp6BAVdNzrLkTsIYou3SKiIOrU1VxYFhZBI5wERVaSYVdXx3HH+GAWuq3sNyMd5oOXOcz7/PgeXr7DSwBw/5QAQAQgLS8v35AkKSMIgs5xnEoIOQMPz2w22z88PGzYtl0djUa1Wq32FYANwAIwcWtKAFBTvPsNqaqaj0ajazzPpz30cyzVdDr92e12nxuGsQ1gBGBMixoMueZOFYvFJ5IkPTyWzceG4XD4emtr6wWAAYAhNSgDoOaeSZL0wEftualN03y5s7PzBsAeNRhVVbUQj8e/zc2wgMZms3mv3W5vUoPndV3/zvO8ugDduSVs2zYqlcptkslk7kQikVdzIxfY2Ol0VkmhUFgPhUIrC9SdW8o0zfdE1/UfPM8X5kYtsNGyrDoplUp7Xj/CXt3BcZwRKZfLM68I/eAJDLKmGiQYJMiaACs+mMEgQdYEWPHBDAYJsibAig9mMEiQNQFW/P8/g6VSaZ8QorDe1A+84zhjomnapiAIeT8EWDnH4/EvksvlNmRZvstK5ge+3+9/Iel0eiUWi637IcDK2Wq1Nujy6KqmaZ8FQbjMSugl3rKsTrVafUoNXkqlUloymXznpQArV71eX+31etvU4AW6I8xms48URbnFSuwFfnd390Oj0fgI4A81eA4AXZBTk/cVRbnphchJOVxznwCYAPrUYATAaQD0LTybSCTyyWTysSiKqZOKnARHZ84wjLe9Xq9OV7+uQfNoR00X6WHXJE0zsrS0dF2W5SvhcPiaKIoXOY6j/z079BGeTCbtg4ODxmAw+N1qtSrudn8IYP+o/gL1a+UFDRXZ5QAAAABJRU5ErkJggg=="
 }
