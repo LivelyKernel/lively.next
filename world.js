@@ -687,11 +687,13 @@ export class Hand extends Morph {
     this.carriesMorphs() && evt.halo && evt.halo.grabHalo().update();
   }
 
-  async cancelGrab(animate = true) {
+  async cancelGrab(animate = true, causingEvent) {
     if (!this.grabbedMorphs.length) return;
+    this.env.eventDispatcher.cancelGrab(this, causingEvent);
     let anims = []
     for (let m of this.grabbedMorphs) {
-      let {prevOwner, prevIndex, prevPosition, pointerAndShadow} = this._grabbedMorphProperties.get(m) || {};
+      let {prevOwner, prevIndex, prevPosition, pointerAndShadow} =
+        this._grabbedMorphProperties.get(m) || {};
       Object.assign(m, pointerAndShadow);
       if (!prevOwner) { m.remove(); continue; }
       prevOwner.addMorphAt(m, prevIndex);

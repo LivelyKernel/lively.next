@@ -405,9 +405,11 @@ export default class EventDispatcher {
             // FIXME should grab really be triggered through drag?
             if (dragTarget.grabbable) {
               events.push(new Event("grab", domEvt, this, [dragTarget], hand, halo, layoutHalo));
+
             } else if (dragTarget.draggable) {
               events.push(dragStartEvent(domEvt, this, dragTarget, state, hand, halo, layoutHalo));
             }
+
             defaultEvent.targetMorphs = [this.world];
           }
         }
@@ -635,5 +637,16 @@ export default class EventDispatcher {
   }
 
   doPaste() { return this.keyInputHelper.doPaste(); }
+
+  cancelGrab(hand, causingEvent) {
+    let cleanupEvents = [],
+        state = this.eventState;
+    state.clickedOnMorph = null;
+    if (state.dropHoverTarget) {
+      cleanupEvents.push(new Event("morphicdrophoverout", causingEvent.domEvt, this, [state.dropHoverTarget], hand, null, null));
+      state.dropHoverTarget = null;
+    }
+    cleanupEvents.forEach(evt => this.dispatchEvent(evt));
+  }
 
 }

@@ -136,12 +136,12 @@ var commands = [
 
   {
     name: "escape",
-    exec: (world) => {
+    exec: (world, _1, _2, evt) => {    
       var eventState =  world.env.eventDispatcher.eventState;
       if (eventState.menu) eventState.menu.remove();
       var halos = world.halos();
       halos.forEach(h => h.remove());
-      world.hands.forEach(ea => ea.cancelGrab());
+      world.hands.forEach(ea => ea.cancelGrab(true, evt));
       var focusTarget = (arr.last(halos) && arr.last(halos).target) || world.focusedMorph || world;
       focusTarget.focus();
       return false;
