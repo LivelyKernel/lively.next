@@ -1,4 +1,4 @@
-import { Color, RadialGradient, LinearGradient, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
+import { Color, Point, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree, fun } from "lively.lang";
 import {
   renderRootMorph,
