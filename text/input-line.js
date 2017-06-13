@@ -354,18 +354,20 @@ export default class InputLine extends Text {
   }
   
 
-  onFocus() {
-     this.highlightWhenFocused && this.animate({
+  onFocus(evt) {
+    super.onFocus(evt);
+    this.highlightWhenFocused && this.animate({
       dropShadow: this.haloShadow,
       duration: 200
     });
   }
 
-  onBlur() {
-   this.highlightWhenFocused && this.animate({
-     dropShadow: false,
-     duration: 200
-   });
+  onBlur(evt) {
+    super.onBlur(evt);
+    this.highlightWhenFocused && this.animate({
+      dropShadow: false,
+      duration: 200
+    });
   }
 }
 
