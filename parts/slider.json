@@ -1,28 +1,57 @@
 {
-  "id": "Morph_40992F4D_0D27_4D7D_AB0E_23BCF8555621",
+  "id": "Slider_50C00D62_C898_4B5C_9AF7_5A24BA879642",
   "snapshot": {
-    "Morph_40992F4D_0D27_4D7D_AB0E_23BCF8555621": {
-      "rev": 735589,
+    "Slider_50C00D62_C898_4B5C_9AF7_5A24BA879642": {
+      "rev": 822848,
       "props": {
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(179.3,41.0)"
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
         },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(236,240,241)"
+        "attributeConnections": {
+          "key": "attributeConnections"
         },
         "name": {
           "key": "name",
           "value": "slider"
         },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(365.8,697.8)"
+        },
         "origin": {
           "key": "origin",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(238.2,886.4)"
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(237.3,44.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": {
+            "__ref__": true,
+            "id": "3B40566B-C7C6-4D50-9829-527758D0D35A",
+            "rev": 0
+          }
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "SliderKnob_DB9C2CB9_BF9B_417C_B5D6_367A4F1636C4",
+              "rev": 819790
+            }
+          ]
+        },
+        "scroll": {
+          "key": "scroll",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
+        },
+        "scrollbarOffset": {
+          "key": "scrollbarOffset",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(15.0,15.0)"
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -32,16 +61,6 @@
             "morph"
           ]
         },
-        "submorphs": {
-          "key": "submorphs",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "Morph_CBF7F59C_73BE_4531_A372_7D7F8DDF5BC1",
-              "rev": 735591
-            }
-          ]
-        },
         "borderColorBottom": {
           "key": "borderColorBottom",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(189,195,199)"
@@ -90,36 +109,9 @@
           "key": "borderWidthTop",
           "value": 1
         },
-        "min": {
-          "key": "min",
-          "value": null
-        },
-        "max": {
-          "key": "max",
-          "value": null
-        },
-        "mss": {
-          "key": "mss",
-          "value": 12
-        },
         "value": {
           "key": "value",
-          "value": 0.1053
-        },
-        "valueScale": {
-          "key": "valueScale",
-          "value": 1
-        },
-        "sliderExtent": {
-          "key": "sliderExtent",
-          "value": 0.1
-        },
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections"
+          "value": 0.8225
         }
       },
       "lively.serializer-class-info": {
@@ -127,22 +119,121 @@
         "module": {
           "package": {
             "name": "Slider",
-            "version": null
+            "version": "0.1.0"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1497014066835,
+          "lastSuperclassChange": 1497013100993
         }
       }
     },
-    "Morph_CBF7F59C_73BE_4531_A372_7D7F8DDF5BC1": {
-      "rev": 735591,
+    "3B40566B-C7C6-4D50-9829-527758D0D35A": {
+      "rev": 0,
       "props": {
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(17.9,41.0)"
+        "stops": {
+          "key": "stops",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "86B14D71-3089-40A4-A8F6-4B4961E88B31",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "31C5A2F9-2B0C-4FE0-A7E7-FA0C9B7629ED",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "C00C07C1-82BD-4E08-B079-5081F5811B47",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "5B887E6E-6388-44DA-9794-8E86199B6BCE",
+              "rev": 0
+            }
+          ]
         },
-        "fill": {
-          "key": "fill",
+        "_vector": {
+          "key": "_vector",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,1)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "LinearGradient",
+        "module": {
+          "package": {
+            "name": "lively.graphics",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "color.js",
+          "lastChange": 1497013100866,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "86B14D71-3089-40A4-A8F6-4B4961E88B31": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(253,254,254)"
+        },
+        "offset": {
+          "key": "offset",
+          "value": 0
+        }
+      }
+    },
+    "31C5A2F9-2B0C-4FE0-A7E7-FA0C9B7629ED": {
+      "rev": 0,
+      "props": {
+        "offset": {
+          "key": "offset",
+          "value": 0.09549014406895506
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(229,231,233)"
+        }
+      }
+    },
+    "C00C07C1-82BD-4E08-B079-5081F5811B47": {
+      "rev": 0,
+      "props": {
+        "offset": {
+          "key": "offset",
+          "value": 0.9160783793630726
+        },
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(242,243,244)"
+        }
+      }
+    },
+    "5B887E6E-6388-44DA-9794-8E86199B6BCE": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(253,254,254)"
+        },
+        "offset": {
+          "key": "offset",
+          "value": 1
+        }
+      }
+    },
+    "SliderKnob_DB9C2CB9_BF9B_417C_B5D6_367A4F1636C4": {
+      "rev": 819790,
+      "props": {
+        "_tickingScripts": {
+          "key": "_tickingScripts",
+          "value": []
+        },
+        "attributeConnections": {
+          "key": "attributeConnections"
         },
         "name": {
           "key": "name",
@@ -152,13 +243,29 @@
           "key": "nativeCursor",
           "value": "pointer"
         },
+        "position": {
+          "key": "position",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(176.0,0.0)"
+        },
         "origin": {
           "key": "origin",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(0.0,0.0)"
         },
-        "position": {
-          "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(17.0,0.0)"
+        "extent": {
+          "key": "extent",
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(23.7,44.0)"
+        },
+        "fill": {
+          "key": "fill",
+          "value": {
+            "__ref__": true,
+            "id": "8F7DB9EE-BC45-4421-A26E-155E778F1E59",
+            "rev": 0
+          }
+        },
+        "submorphs": {
+          "key": "submorphs",
+          "value": []
         },
         "styleClasses": {
           "key": "styleClasses",
@@ -167,10 +274,6 @@
             "Morph",
             "morph"
           ]
-        },
-        "submorphs": {
-          "key": "submorphs",
-          "value": []
         },
         "borderColorBottom": {
           "key": "borderColorBottom",
@@ -190,19 +293,19 @@
         },
         "borderRadiusBottom": {
           "key": "borderRadiusBottom",
-          "value": 18
+          "value": 5
         },
         "borderRadiusLeft": {
           "key": "borderRadiusLeft",
-          "value": 18
+          "value": 5
         },
         "borderRadiusRight": {
           "key": "borderRadiusRight",
-          "value": 18
+          "value": 5
         },
         "borderRadiusTop": {
           "key": "borderRadiusTop",
-          "value": 18
+          "value": 5
         },
         "borderWidthBottom": {
           "key": "borderWidthBottom",
@@ -219,13 +322,6 @@
         "borderWidthTop": {
           "key": "borderWidthTop",
           "value": 1
-        },
-        "_tickingScripts": {
-          "key": "_tickingScripts",
-          "value": []
-        },
-        "attributeConnections": {
-          "key": "attributeConnections"
         }
       },
       "lively.serializer-class-info": {
@@ -233,9 +329,73 @@
         "module": {
           "package": {
             "name": "SliderKnob",
-            "version": null
+            "version": "0.1.0"
           },
-          "pathInPackage": "index.js"
+          "pathInPackage": "index.js",
+          "lastChange": 1497014066951,
+          "lastSuperclassChange": 1497013100993
+        }
+      }
+    },
+    "8F7DB9EE-BC45-4421-A26E-155E778F1E59": {
+      "rev": 0,
+      "props": {
+        "stops": {
+          "key": "stops",
+          "value": [
+            {
+              "__ref__": true,
+              "id": "7C8BC695-8E59-4E25-B6B7-E05C57880833",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "A008B02B-27AB-4C73-9765-45D076E9E6E4",
+              "rev": 0
+            }
+          ]
+        },
+        "_vector": {
+          "key": "_vector",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,1)"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "LinearGradient",
+        "module": {
+          "package": {
+            "name": "lively.graphics",
+            "version": "0.1.1"
+          },
+          "pathInPackage": "color.js",
+          "lastChange": 1497013100866,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "7C8BC695-8E59-4E25-B6B7-E05C57880833": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "offset": {
+          "key": "offset",
+          "value": 0.029411764705882353
+        }
+      }
+    },
+    "A008B02B-27AB-4C73-9765-45D076E9E6E4": {
+      "rev": 0,
+      "props": {
+        "color": {
+          "key": "color",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(229,231,233)"
+        },
+        "offset": {
+          "key": "offset",
+          "value": 1
         }
       }
     }
@@ -253,5 +413,5 @@
       }
     }
   },
-  "preview": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAFKklEQVR4Xu2a22sjZRjG35lJZibnprFNp6dsVxcKokW0LO4isnhRrDe6/4Gw4I2C9/4H3ggrXqqweCW4N4Ii7o3Luu2WrPawRduC2mPapt1MDpNmDslIUlqiTdNNY+CVfXLb+b488/t9zyT9vgiEFysCAqs0CEMQwmwRQAiEMCPALA4aAiHMCDCLg4ZACDMCzOKgIRDCjACzOGgIhDAjwCwOGgIhzAgwi4OGQAgzAszioCEQwowAszhoCIQwI8AsDhoCIcwIMIuDhkAIMwLM4qAhEMKMALM4aAiEMCPALA4aAiHMCDCLg4ZACDMCzOKgIRDCjACzOGgIhDAjwCwOGvJ/EHL7zp1YWA7GSaSBrlBgTCCxqz63adt9RG5IkiRvxSnrqqpsVSous1vjGadccXQ9b/zq9dCmbprb71y7ptcnPdGQqeTcDX/Id0P2eCKKrIzKXolc9/AyxymTUSxSVyREPlUhcolKpkV6Lkeq6iPZ6+FJgVGqKkrHdqhklpYcu6xn9PzHr7/68u2jiMdCvk0m/X0e9VZPT3QiGAgG/30PtuNQoWBQYrCfJFE8cYurGyny+WTyemVGt88/Sq5QKKTT+9/spzbem5ycNGtCvl5clJ916e6g1ndZkhqv8t30Hl0aSZDYQMbRba/8uUrd0SiJIj6aWlkK1cW+mdqeeeWF5y/XyE0/nP9kaFD7UFEar26jYFD1bz2x7qbvo+fypGfzFImEWsmDa4moVDJpd2f/pnBvav5NbSD2ZSQcjJ9GJpvNUSzaRaFgoCk8o3hAO3t7FO36x3cAAH9CAvuZTFqYSs7fTAz3fyDL3lOHZXXdjffGyafKTZ9Flm27axtbFIt145n1hBLqLyuZJgkzswv3RhJDVwXhdIa6rrt9vT3kU9XmQizbXduEkHO4qA0pl8skzP72+8ygpo03mwRCzou49XHCo+WV5b7e3ksQ0jq8ToyAkE5QbWNOCGkDXieGQkgnqLYxJ4S0Aa8TQyGkE1TbmBNC2oDXiaHCwtLynBaPv4ivvZ3A2/qc1f/Uf754YfgKhLQO778eUalUSJj65dGniSHt/WaHS5nM4daJ39d868R2HPev9U16BntZ53JlWiYJd+8n3x4e7v8qGAycupWrZ7MUi0YpfMZub/GgRNu7aYpGsdt7HiO5XN6obRbOzC58MTQ48K7XIzWcp2AYpCoK9XRHm75PJpujbD5PkXD4PHme6jGmaVFqO32rJuTHZDISUwM/DQ1oY412fV3XpeqJ4ehzF5tC+2N1ncLhIJ126vhUE29y89XPjrXN1MLuunf8eDv9u+npcEzxf69pvVf8qu/E8OrzzTRtSgxoDaeubrtXz1QURQX3FggYhlHYTe/ff7yzdX1iYuLwkVX/mno491E4EryueDyjXlnx1z/GLMuiglGsHeVWH2HVn52Ylk2P9WztiFeR8QOHM124RNUzdMu2iqZpLWVyhc9fG3/ps6NxDQ+cfnjwYMRTKmv+QGBMlKQLrlA+XvZuxRXK5Uq/Inv7ySW3ZFk7HlHcFjyifWYYXECSKB2UigeLJcdcsUwh9dYbV1frseColdkigRAIYUaAWRw0BEKYEWAWBw2BEGYEmMVBQyCEGQFmcdAQCGFGgFkcNARCmBFgFgcNgRBmBJjFQUMghBkBZnHQEAhhRoBZHDQEQpgRYBYHDYEQZgSYxUFDIIQZAWZx0BAIYUaAWRw0BEKYEWAWBw2BEGYEmMVBQyCEGQFmcdAQCGFGgFkcNARCmBFgFudvdWjwGiUjN4QAAAAASUVORK5CYII="
+  "preview": "data:image/png;base64,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"
 }
