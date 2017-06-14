@@ -7,7 +7,7 @@ import { subscribe, unsubscribe } from "lively.notifications";
 import module from "./module.js";
 
 // Computes exports of all modules
-// 
+//
 // Returns a list of objects like
 // {
 //   exported: "Interface",
@@ -21,7 +21,7 @@ import module from "./module.js";
 //   pathInPackage: "index.js",
 //   type: "class"
 // }
-// 
+//
 // Usage
 // var exports = await ExportLookup.run(System)
 // ExportLookup._forSystemMap.has(System)
@@ -81,7 +81,7 @@ export default class ExportLookup {
   clearCacheFor(moduleId) {
     this.exportByModuleCache[moduleId] = null;
   }
-  
+
   async systemExports(options) {
     var exportsByModule = await this.rawExportsByModule(options);
     Object.keys(exportsByModule).forEach(id =>
@@ -94,68 +94,78 @@ export default class ExportLookup {
   async rawExportsByModule(options) {
     options = options || {}
     var System = this.System,
-        excludedPackages = options.excludedPackages || [],
-        excludedURLs = excludedPackages.filter(ea => typeof ea === "string"),
-        excludeFns = excludedPackages.filter(ea => typeof ea === "function"),
-        excludedPackageURLs = excludedURLs.concat(excludedURLs.map(url =>
-          System.decanonicalize(url.replace(/\/?$/, "/")).replace(/\/$/, ""))),
         livelyEnv = System.get("@lively-env") || {},
         mods = Object.keys(livelyEnv.loadedModules || {}),
         cache = this.exportByModuleCache,
-        exportsByModule = {}
+        exportsByModule = {};
 
-    await Promise.all(mods.map(moduleId => {
-      if (cache[moduleId]) {
-        var result = cache[moduleId].rawExports;
-        return excludedPackageURLs.includes(result.packageURL)
-            || excludeFns.some(fn => fn(result.packageURL))
-             ? null : exportsByModule[moduleId] = cache[moduleId];
-      }
-
-      var mod = module(System, moduleId),
-          pathInPackage = mod.pathInPackage(),
-          p = mod.package(),
-          isMain = p && p.main && pathInPackage === p.main,
-          packageURL = p ? p.url : "",
-          packageName = p ? p.name : "",
-          packageVersion = p ? p.version : "",
-          result = {
-            moduleId, isMain,
-            pathInPackage, packageName, packageURL, packageVersion,
-            exports: []
-          };
-
-      if (excludedPackageURLs.includes(packageURL)
-          || excludeFns.some(fn => fn(packageURL))) return;
-
-      var format = mod.format();
-      if (["register", "es6", "esm"].includes(format)) {
-        return mod.exports()
-          .then(exports => result.exports = exports)
-          .catch(e => { result.error = e; return result; })
-          .then(() => cache[moduleId] = exportsByModule[moduleId] = {rawExports: result})
-      }
-
-      return mod.load()
-        .then(values => {
-          result.exports = [];
-          for (var key in values) {
-            if (key === "__useDefault" || key === "default") continue;
-            result.exports.push({exported: key, local: key, type: "id"})
-          }
-        })
-        .catch(e => { result.error = e; return result; })
-        .then(() => cache[moduleId] = exportsByModule[moduleId] = {rawExports: result})
-
-    }))
+    await Promise.all(mods.map(moduleId =>
+     this.rawExportsOfModule(moduleId, options, exportsByModule)));
 
     return exportsByModule;
+  }
+
+  rawExportsOfModule(moduleId, opts = {}, exportsByModule = {}) {
+    var System = this.System,
+        excludedPackages = opts.excludedPackages || [],
+        excludedURLs = opts.excludedURLs
+                    || (opts.excludedURLs = excludedPackages.filter(ea => typeof ea === "string")),
+        excludeFns = opts.excludeFns
+                  || (opts.excludeFns = excludedPackages.filter(ea => typeof ea === "function")),
+        excludedPackageURLs = opts.excludedPackageURLs
+                           || (opts.excludedPackageURLs = excludedURLs.concat(excludedURLs.map(url =>
+                                System.decanonicalize(url.replace(/\/?$/, "/")).replace(/\/$/, "")))),
+        livelyEnv = opts.livelyEnv || (opts.livelyEnv = System.get("@lively-env") || {}),
+        mods = opts.modes || (opts.modes = Object.keys(livelyEnv.loadedModules || {})),
+        cache = this.exportByModuleCache;
+
+    if (cache[moduleId]) {
+      var result = cache[moduleId].rawExports;
+      return excludedPackageURLs.includes(result.packageURL)
+      || excludeFns.some(fn => fn(result.packageURL))
+        ? null : exportsByModule[moduleId] = cache[moduleId];
+    }
+
+    var mod = module(System, moduleId),
+        pathInPackage = mod.pathInPackage(),
+        p = mod.package(),
+        isMain = p && p.main && pathInPackage === p.main,
+        packageURL = p ? p.url : "",
+        packageName = p ? p.name : "",
+        packageVersion = p ? p.version : "",
+        result = {
+          moduleId, isMain,
+          pathInPackage, packageName, packageURL, packageVersion,
+          exports: []
+        };
+
+    if (excludedPackageURLs.includes(packageURL)
+        || excludeFns.some(fn => fn(packageURL))) return;
+
+    var format = mod.format();
+    if (["register", "es6", "esm"].includes(format)) {
+      return mod.exports()
+        .then(exports => result.exports = exports)
+        .catch(e => { result.error = e; return result; })
+        .then(() => cache[moduleId] = exportsByModule[moduleId] = {rawExports: result})
+    }
+
+    return mod.load()
+        .then(values => {
+        result.exports = [];
+        for (var key in values) {
+          if (key === "__useDefault" || key === "default") continue;
+          result.exports.push({exported: key, local: key, type: "id"})
+        }
+      })
+      .catch(e => { result.error = e; return result; })
+      .then(() => cache[moduleId] = exportsByModule[moduleId] = {rawExports: result})
   }
 
   resolveExportsOfModule(moduleId, exportsByModule, locked = {}) {
     // takes the `rawExports` in `exportsByModule` that was produced by
     // `rawExportsByModule` and resolves all "* from" exports. Extends the
-    // `rawExportsByModule` map woth a `resolvedExports` property
+    // `rawExportsByModule` map with a `resolvedExports` property
 
     // prevent endless recursion
     if (locked[moduleId]) return;

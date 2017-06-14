@@ -14076,7 +14076,7 @@ module.exports = function(acorn) {
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v7.7.3',
+        version: 'v7.10.0',
         browser: true,
         env: {},
         argv: [],
@@ -15666,11 +15666,14 @@ module.exports = function(acorn) {
           return parenthesize(result, Precedence.Member, precedence);
         },
         MetaProperty: function (expr, precedence, flags) {
-          var result;
-          result = [];
-          result.push(expr.meta);
-          result.push('.');
-          result.push(expr.property);
+          var result, meta, property;
+          meta = typeof expr.meta.type === 'string' && expr.meta.type === Syntax.Identifier ? expr.meta.name : expr.meta;
+          property = typeof expr.property.type === 'string' && expr.property.type === Syntax.Identifier ? expr.property.name : expr.property;
+          result = [
+            meta,
+            '.',
+            property
+          ];
           return parenthesize(result, Precedence.Member, precedence);
         },
         UnaryExpression: function (expr, precedence, flags) {
@@ -15897,13 +15900,13 @@ module.exports = function(acorn) {
           multiline = false;
           if (expr.properties.length === 1) {
             property = expr.properties[0];
-            if (property.value.type !== Syntax.Identifier) {
+            if (property.type !== 'RestElement' && property.value.type !== Syntax.Identifier) {
               multiline = true;
             }
           } else {
             for (i = 0, iz = expr.properties.length; i < iz; ++i) {
               property = expr.properties[i];
-              if (!property.shorthand) {
+              if (property.type !== 'RestElement' && !property.shorthand) {
                 multiline = true;
                 break;
               }
@@ -21226,12 +21229,11 @@ walk.visitors = {
       c(node.property, st, "Expression");
     }
   }, walk.base)
-};
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-
-// from lively.ast.AstHelper
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-
-function findNodeByAstIndex(parsed, astIndexToFind, addIndex) {
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // from lively.ast.AstHelper
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-
+};function findNodeByAstIndex(parsed, astIndexToFind, addIndex) {
   addIndex = addIndex == null ? true : !!addIndex;
   if (!parsed.astIndex && addIndex) addAstIndex(parsed);
   // we need to visit every node, forEachNode is highly
@@ -21783,15 +21785,9 @@ var methods = {
     visitor.accept(parsed2);
   }
 
-};
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-var withMozillaAstDo = methods.withMozillaAstDo;
-var printAst = methods.printAst;
-var compareAst = methods.compareAst;
-var pathToNode = methods.pathToNode;
-var rematchAstWithSource = methods.rematchAstWithSource;
+};var withMozillaAstDo = methods.withMozillaAstDo; var printAst = methods.printAst; var compareAst = methods.compareAst; var pathToNode = methods.pathToNode; var rematchAstWithSource = methods.rematchAstWithSource;
 
 
 
@@ -22003,6 +21999,15 @@ function ifStmt(test) {
   };
 }
 
+function forIn(varDeclOrName, objExprOrName, body) {
+  return {
+    type: "ForInStatement",
+    left: typeof varDeclOrName === "string" ? varDecl(varDeclOrName) : varDeclOrName,
+    right: typeof objExprOrName === "string" ? id(objExprOrName) : objExprOrName,
+    body: body
+  };
+}
+
 function conditional(test) {
   var consequent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : id("undefined");
   var alternate = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : id("undefined");
@@ -22042,6 +22047,7 @@ var nodes = Object.freeze({
 	program: program,
 	tryStmt: tryStmt,
 	ifStmt: ifStmt,
+	forIn: forIn,
 	conditional: conditional,
 	logical: logical
 });
@@ -22050,16 +22056,19 @@ var nodes = Object.freeze({
 
 var helpers = {
   declIds: function declIds(nodes) {
-    return lively_lang.arr.flatmap(nodes, function (ea) {
-      if (!ea) return [];
-      if (ea.type === "Identifier") return [ea];
-      if (ea.type === "RestElement") return [ea.argument];
+    var result = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (!node) continue;else if (node.type === "Identifier") result.push(node);else if (node.type === "RestElement") result.push(node.argument);
       // AssignmentPattern: default arg like function(local = defaultVal) {}
-      if (ea.type === "AssignmentPattern") return helpers.declIds([ea.left]);
-      if (ea.type === "ObjectPattern") return helpers.declIds(lively_lang.arr.pluck(ea.properties, "value"));
-      if (ea.type === "ArrayPattern") return helpers.declIds(ea.elements);
-      return [];
-    });
+      else if (node.type === "AssignmentPattern") result.push.apply(result, toConsumableArray(helpers.declIds([node.left])));else if (node.type === "ObjectPattern") {
+          for (var j = 0; j < node.properties.length; j++) {
+            var prop = node.properties[j];
+            result.push.apply(result, toConsumableArray(helpers.declIds([prop.value || prop])));
+          }
+        } else if (node.type === "ArrayPattern") result.push.apply(result, toConsumableArray(helpers.declIds(node.elements)));
+    }
+    return result;
   },
   varDecls: function varDecls(scope) {
     return lively_lang.arr.flatmap(scope.varDecls, function (varDecl) {
@@ -22304,11 +22313,10 @@ function topLevelDeclsAndRefs(parsed, options) {
     undeclaredNames: undeclared,
     refs: refs,
     thisRefs: scope.thisRefs
-  };
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function findUndeclaredReferences(scope) {
+  };function findUndeclaredReferences(scope) {
     var names = _declaredVarNames(scope, useComments);
     return scope.subScopes.map(findUndeclaredReferences).reduce(function (refs, ea) {
       return refs.concat(ea);
@@ -23062,7 +23070,8 @@ function extractComments(astOrCode, optCode) {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function isInObjectMethod(comment) {
-    return lively_lang.arr.equals(comment.path.slice(-2), ["value", "body"]); // obj expr
+    return lively_lang.arr.equals(comment.path.slice(-2), ["value", "body"] // obj expr
+    );
   }
 
   function isInAssignedMethod(comment) {
@@ -23299,8 +23308,8 @@ function findDecls(parsed, options) {
               var def = _step2.value;
 
               if (def.parent && filtered.includes(def.parent) || // parent is in
-              (def.node.source || "").includes("\n") // more than one line
-              ) filtered.push(def);
+              (def.node.source || "").includes("\n" // more than one line
+              )) filtered.push(def);
             }
           } catch (err) {
             _didIteratorError2 = true;
@@ -65781,7 +65790,7 @@ exports.Database = Database;
       // is lively.modules loaded? Use it's node_modules folder
       var index1 = src.indexOf("lively.modules/");
       if (index1 > -1) {
-        pluginBabelPath = src.slice(0, index1) + "lively.modules/node_modules/systemjs-plugin-babel";
+        pluginBabelPath = src.slice(0, index1) + "lively.next-node_modules/systemjs-plugin-babel";
         break;
       }
 
@@ -69984,13 +69993,13 @@ var PackageRegistry$$1 = function () {
         var preferedLocation = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "individualPackageDirs";
         var existingPackageMap = arguments[2];
 
-        var urlString, discovered, _url, _discovered$_url, pkg, config, covered;
+        var urlString, discovered, discoveredURL, _discovered$discovere, pkg, config, covered;
 
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                urlString = typeof url === "string" ? url : url.url;
+                urlString = url.isResource ? url.url : url;
 
                 if (urlString.endsWith("/")) urlString.slice(0, -1);
 
@@ -70015,9 +70024,9 @@ var PackageRegistry$$1 = function () {
                   break;
                 }
 
-                _url = _context2.t1.value;
+                discoveredURL = _context2.t1.value;
 
-                if (!this.byURL[_url]) {
+                if (!this.byURL[discoveredURL]) {
                   _context2.next = 12;
                   break;
                 }
@@ -70025,9 +70034,9 @@ var PackageRegistry$$1 = function () {
                 return _context2.abrupt("continue", 8);
 
               case 12:
-                _discovered$_url = discovered[_url], pkg = _discovered$_url.pkg, config = _discovered$_url.config, covered = this._addPackageDir(_url, preferedLocation, true /*uniqCheck*/);
+                _discovered$discovere = discovered[discoveredURL], pkg = _discovered$discovere.pkg, config = _discovered$discovere.config, covered = this._addPackageDir(discoveredURL, preferedLocation, true /*uniqCheck*/);
 
-                this._addPackageWithConfig(pkg, config, _url + "/", covered);
+                this._addPackageWithConfig(pkg, config, discoveredURL + "/", covered);
                 _context2.next = 8;
                 break;
 
@@ -74057,7 +74066,7 @@ function instantiate_triggerOnLoadCallbacks(proceed, load) {
     // resolve to the loaded module, trigger + remove them
 
     var timeout = {};
-    lively_lang.promise.waitFor(10 * 1000, function () {
+    lively_lang.promise.waitFor(60 * 1000, function () {
       return System.get(load.name);
     }, timeout).then(function (result) {
       if (result === timeout) {
@@ -74122,7 +74131,7 @@ function knownModuleNames(System) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 // Computes exports of all modules
-// 
+//
 // Returns a list of objects like
 // {
 //   exported: "Interface",
@@ -74136,7 +74145,7 @@ function knownModuleNames(System) {
 //   pathInPackage: "index.js",
 //   type: "class"
 // }
-// 
+//
 // Usage
 // var exports = await ExportLookup.run(System)
 // ExportLookup._forSystemMap.has(System)
@@ -74286,67 +74295,18 @@ var ExportLookup = function () {
     key: "rawExportsByModule",
     value: function () {
       var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(options) {
-        var System, excludedPackages, excludedURLs, excludeFns, excludedPackageURLs, livelyEnv, mods, cache, exportsByModule;
+        var _this3 = this;
+
+        var System, livelyEnv, mods, cache, exportsByModule;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
                 options = options || {};
-                System = this.System, excludedPackages = options.excludedPackages || [], excludedURLs = excludedPackages.filter(function (ea) {
-                  return typeof ea === "string";
-                }), excludeFns = excludedPackages.filter(function (ea) {
-                  return typeof ea === "function";
-                }), excludedPackageURLs = excludedURLs.concat(excludedURLs.map(function (url) {
-                  return System.decanonicalize(url.replace(/\/?$/, "/")).replace(/\/$/, "");
-                })), livelyEnv = System.get("@lively-env") || {}, mods = Object.keys(livelyEnv.loadedModules || {}), cache = this.exportByModuleCache, exportsByModule = {};
+                System = this.System, livelyEnv = System.get("@lively-env") || {}, mods = Object.keys(livelyEnv.loadedModules || {}), cache = this.exportByModuleCache, exportsByModule = {};
                 _context3.next = 4;
                 return Promise.all(mods.map(function (moduleId) {
-                  if (cache[moduleId]) {
-                    var result = cache[moduleId].rawExports;
-                    return excludedPackageURLs.includes(result.packageURL) || excludeFns.some(function (fn) {
-                      return fn(result.packageURL);
-                    }) ? null : exportsByModule[moduleId] = cache[moduleId];
-                  }
-
-                  var mod = module$2(System, moduleId),
-                      pathInPackage = mod.pathInPackage(),
-                      p = mod.package(),
-                      isMain = p && p.main && pathInPackage === p.main,
-                      packageURL = p ? p.url : "",
-                      packageName = p ? p.name : "",
-                      packageVersion = p ? p.version : "",
-                      result = {
-                    moduleId: moduleId, isMain: isMain,
-                    pathInPackage: pathInPackage, packageName: packageName, packageURL: packageURL, packageVersion: packageVersion,
-                    exports: []
-                  };
-
-                  if (excludedPackageURLs.includes(packageURL) || excludeFns.some(function (fn) {
-                    return fn(packageURL);
-                  })) return;
-
-                  var format = mod.format();
-                  if (["register", "es6", "esm"].includes(format)) {
-                    return mod.exports().then(function (exports) {
-                      return result.exports = exports;
-                    }).catch(function (e) {
-                      result.error = e;return result;
-                    }).then(function () {
-                      return cache[moduleId] = exportsByModule[moduleId] = { rawExports: result };
-                    });
-                  }
-
-                  return mod.load().then(function (values) {
-                    result.exports = [];
-                    for (var key in values) {
-                      if (key === "__useDefault" || key === "default") continue;
-                      result.exports.push({ exported: key, local: key, type: "id" });
-                    }
-                  }).catch(function (e) {
-                    result.error = e;return result;
-                  }).then(function () {
-                    return cache[moduleId] = exportsByModule[moduleId] = { rawExports: result };
-                  });
+                  return _this3.rawExportsOfModule(moduleId, options, exportsByModule);
                 }));
 
               case 4:
@@ -74367,15 +74327,83 @@ var ExportLookup = function () {
       return rawExportsByModule;
     }()
   }, {
+    key: "rawExportsOfModule",
+    value: function rawExportsOfModule(moduleId) {
+      var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var exportsByModule = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+      var System = this.System,
+          excludedPackages = opts.excludedPackages || [],
+          excludedURLs = opts.excludedURLs || (opts.excludedURLs = excludedPackages.filter(function (ea) {
+        return typeof ea === "string";
+      })),
+          excludeFns = opts.excludeFns || (opts.excludeFns = excludedPackages.filter(function (ea) {
+        return typeof ea === "function";
+      })),
+          excludedPackageURLs = opts.excludedPackageURLs || (opts.excludedPackageURLs = excludedURLs.concat(excludedURLs.map(function (url) {
+        return System.decanonicalize(url.replace(/\/?$/, "/")).replace(/\/$/, "");
+      }))),
+          livelyEnv = opts.livelyEnv || (opts.livelyEnv = System.get("@lively-env") || {}),
+          mods = opts.modes || (opts.modes = Object.keys(livelyEnv.loadedModules || {})),
+          cache = this.exportByModuleCache;
+
+      if (cache[moduleId]) {
+        var result = cache[moduleId].rawExports;
+        return excludedPackageURLs.includes(result.packageURL) || excludeFns.some(function (fn) {
+          return fn(result.packageURL);
+        }) ? null : exportsByModule[moduleId] = cache[moduleId];
+      }
+
+      var mod = module$2(System, moduleId),
+          pathInPackage = mod.pathInPackage(),
+          p = mod.package(),
+          isMain = p && p.main && pathInPackage === p.main,
+          packageURL = p ? p.url : "",
+          packageName = p ? p.name : "",
+          packageVersion = p ? p.version : "",
+          result = {
+        moduleId: moduleId, isMain: isMain,
+        pathInPackage: pathInPackage, packageName: packageName, packageURL: packageURL, packageVersion: packageVersion,
+        exports: []
+      };
+
+      if (excludedPackageURLs.includes(packageURL) || excludeFns.some(function (fn) {
+        return fn(packageURL);
+      })) return;
+
+      var format = mod.format();
+      if (["register", "es6", "esm"].includes(format)) {
+        return mod.exports().then(function (exports) {
+          return result.exports = exports;
+        }).catch(function (e) {
+          result.error = e;return result;
+        }).then(function () {
+          return cache[moduleId] = exportsByModule[moduleId] = { rawExports: result };
+        });
+      }
+
+      return mod.load().then(function (values) {
+        result.exports = [];
+        for (var key in values) {
+          if (key === "__useDefault" || key === "default") continue;
+          result.exports.push({ exported: key, local: key, type: "id" });
+        }
+      }).catch(function (e) {
+        result.error = e;return result;
+      }).then(function () {
+        return cache[moduleId] = exportsByModule[moduleId] = { rawExports: result };
+      });
+    }
+  }, {
     key: "resolveExportsOfModule",
     value: function resolveExportsOfModule(moduleId, exportsByModule) {
-      var _this3 = this;
+      var _this4 = this;
 
       var locked = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
       // takes the `rawExports` in `exportsByModule` that was produced by
       // `rawExportsByModule` and resolves all "* from" exports. Extends the
-      // `rawExportsByModule` map woth a `resolvedExports` property
+      // `rawExportsByModule` map with a `resolvedExports` property
 
       // prevent endless recursion
       if (locked[moduleId]) return;
@@ -74396,7 +74424,7 @@ var ExportLookup = function () {
 
         // resolve "* from"
         var fromId = System.decanonicalize(fromModule, moduleId);
-        _this3.resolveExportsOfModule(fromId, exportsByModule, locked);
+        _this4.resolveExportsOfModule(fromId, exportsByModule, locked);
         return (exportsByModule[fromId].resolvedExports || []).map(function (resolvedExport) {
           var type = resolvedExport.type,
               exported = resolvedExport.exported,
