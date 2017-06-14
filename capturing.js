@@ -813,7 +813,29 @@ function transformObjectPattern(pattern, transformState) {
   for (var i = 0; i < pattern.properties.length; i++) {
     var prop = pattern.properties[i];
 
-    if (prop.value.type == "Identifier") {
+    if (prop.type == "RestElement") {
+
+      let knownKeys = pattern.properties.map(ea => ea.key && ea.key.name).filter(Boolean);
+      var decl = nodes.varDecl(prop.argument.name, nodes.objectLiteral([]));
+      var captureDecl = nodes.varDecl(prop.argument.name, id(prop.argument.name));
+      var defCall = nodes.exprStmt(nodes.funcCall(nodes.funcExpr({}, [],
+        nodes.forIn("__key", transformState.parent,
+          nodes.block(
+            ...(knownKeys.length ?
+              knownKeys.map(knownKey =>
+                            nodes.ifStmt(
+                             nodes.binaryExpr(nodes.id("__key"), "===", nodes.literal(knownKey)),
+                             {type: "ContinueStatement", label: null}, null)) : []),
+            nodes.exprStmt(
+              nodes.assign(
+                nodes.member(prop.argument.name, nodes.id("__key"), true),
+                nodes.member(transformState.parent, nodes.id("__key"), true)))
+          )))));
+
+      captureDecl[p] = {capture: true};
+      transformed.push(decl, captureDecl, defCall);
+    
+    } else if (prop.value.type == "Identifier") {
       // like {x: y}
       var decl = varDecl(prop.value, member(transformState.parent, prop.key));
       decl[p] = {capture: true};
@@ -832,11 +854,15 @@ function transformObjectPattern(pattern, transformState) {
 
     } else {
       // like {x: {z}} or {x: [a]}
-      var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
+      var helperVarId = id(generateUniqueName(
+                            declaredNames,
+                            transformState.parent.name + "$" + prop.key.name)),
           helperVar = varDecl(helperVarId, member(transformState.parent, prop.key));
       helperVar[p] = {capture: false};
       declaredNames.push(helperVarId.name);
-      transformed.push(...[helperVar].concat(transformPattern(prop.value, {parent: helperVarId, declaredNames: declaredNames})));
+      transformed.push(
+        ...[helperVar].concat(
+          transformPattern(prop.value, {parent: helperVarId, declaredNames: declaredNames})));
     }
 
   }

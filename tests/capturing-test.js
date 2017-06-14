@@ -322,6 +322,23 @@ describe("ast.capturing", function() {
                + "var destructured_1$0$b = destructured_1$0.b;\n"
                + "var destructured_1$0$b$c = destructured_1$0$b.c;\n"
                + "_rec.a = destructured_1$0$b$c[0];");
+      
+      testVarTfm("captures rest prop",
+                 "var {...rest, a, b} = foo;",
+                 `var destructured_1 = _rec.foo;\n`
+               + `var rest = {};\n`
+               + `_rec.rest = rest;\n`
+               + `(function () {\n`
+               + `  for (var __key in destructured_1) {\n`
+               + `    if (__key === "a")\n`
+               + `      continue;\n`
+               + `    if (__key === "b")\n`
+               + `      continue;\n`
+               + `    rest[__key] = destructured_1[__key];\n`
+               + `  }\n`
+               + `}());\n`
+               + `_rec.a = destructured_1.a;\n`
+               + `_rec.b = destructured_1.b;`);
     });
 
     describe("async", () => {
