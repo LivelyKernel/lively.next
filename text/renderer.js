@@ -56,16 +56,19 @@ function installCSS(domEnv) {
     .newtext-text-layer.wrap-by-words {
       white-space: pre-wrap;
       overflow-wrap: break-word;
+      max-width: 100%;
     }
 
     .newtext-text-layer.only-wrap-by-words {
       white-space: pre-wrap;
       overflow-wrap: break-all;
+      max-width: 100%;
     }
 
     .newtext-text-layer.wrap-by-chars {
       white-space: pre-wrap;
       word-break: break-all;
+      max-width: 100%;
     }
 
     .newtext-text-layer.no-wrapping {
