@@ -39,6 +39,7 @@ module.exports = new Promise((resolve, reject) => {
 
 
 function patchAcornSource(src) {
+  src = String(src);
   // rk 2017-06-14: support object rest prop
   return src.replace(
     "this$1.checkLVal(expr.properties[i].value, isBinding, checkClashes)",

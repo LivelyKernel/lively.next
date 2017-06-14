@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "acorn": "^4.0.3",
-    "acorn-es7-plugin": "^1.1.3",
+    "acorn-es7-plugin": "^1.1.7",
     "acorn-object-spread": "LivelyKernel/acorn-object-spread#0da456",
     "babel-core": "^6.16.0",
     "babel-plugin-external-helpers": "^6.8.0",
