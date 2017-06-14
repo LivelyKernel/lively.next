@@ -165,7 +165,7 @@
       // is lively.modules loaded? Use it's node_modules folder
       var index1 = src.indexOf("lively.modules/");
       if (index1 > -1) {
-        pluginBabelPath = src.slice(0, index1) + "lively.modules/node_modules/systemjs-plugin-babel";
+        pluginBabelPath = src.slice(0, index1) + "lively.next-node_modules/systemjs-plugin-babel";
         break;
       }
 

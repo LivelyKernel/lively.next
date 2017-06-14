@@ -357,17 +357,17 @@ export class PackageRegistry {
   }
 
   async addPackageAt(url, preferedLocation = "individualPackageDirs", existingPackageMap) {
-    let urlString = typeof url === "string" ? url : url.url;
+    let urlString = url.isResource ? url.url : url;
     if (urlString.endsWith("/")) urlString.slice(0, -1);
     if (this.byURL[urlString])
       throw new Error(`package in ${urlString} already added to registry`);
 
     let discovered = await this._discoverPackagesIn(ensureResource(url).asDirectory(), {}, undefined, existingPackageMap);
-    for (let url in discovered) {
-      if (this.byURL[url]) continue;
-      let {pkg, config} = discovered[url],
-          covered = this._addPackageDir(url, preferedLocation, true/*uniqCheck*/);
-      this._addPackageWithConfig(pkg, config, url + "/", covered);
+    for (var discoveredURL in discovered) {
+      if (this.byURL[discoveredURL]) continue;
+      let {pkg, config} = discovered[discoveredURL],
+          covered = this._addPackageDir(discoveredURL, preferedLocation, true/*uniqCheck*/);
+      this._addPackageWithConfig(pkg, config, discoveredURL + "/", covered);
     }
 
     this.resetByURL();
