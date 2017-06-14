@@ -1675,7 +1675,6 @@ export class Text extends Morph {
       this.selection.disableMultiSelect();
       if (normedClickCount === 1) {
         if (!evt.isShiftDown()) {
-          this.priorSelectionRange = this.selection.range.copy();
           this.selection = {start: clickTextPos, end: clickTextPos};
         } else this.selection.lead = clickTextPos;
       }
@@ -1711,16 +1710,6 @@ export class Text extends Morph {
     if (!evt.leftMouseButtonPressed() || !this.selectable
      || evt.state.clickedOnMorph !== this) return;
     this.selection.lead = this.textPositionFromPoint(this.localize(evt.position))
-  }
-
-  onMouseUp(evt) {
-    let empty = this.selection.isEmpty();
-    let equal = this.selection.range.equals(this.priorSelectionRange);
-    if (empty && equal) {
-      let indexPair = this.selectMatchingBrackets(this.textString,
-                          this.positionToIndex(this.selection.range.start));
-      if (indexPair) this.selection = {start: indexPair[0], end: indexPair[1] + 1}
-    }
   }
 
   selectMatchingBrackets(str, i1) {

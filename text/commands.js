@@ -658,10 +658,22 @@ var commands = [
   },
 
   {
-    name: "select word",
+    name: "old select word",
     exec: function(morph) {
       var sel = morph.selection;
       sel.range = morph.wordAt(sel.lead).range;
+      return true;
+    }
+  },
+
+  {
+    name: "select word",
+    exec: function(morph) {
+      var sel = morph.selection;
+      // Now selects word, line, body, or matching brackets
+      let indexPair = morph.selectMatchingBrackets(morph.textString, 
+                          morph.positionToIndex(sel.lead));
+      if (indexPair) sel.range = {start: indexPair[0], end: indexPair[1] + 1}
       return true;
     }
   },
