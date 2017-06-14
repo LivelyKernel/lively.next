@@ -399,7 +399,7 @@ function instantiate_triggerOnLoadCallbacks(proceed, load) {
     // resolve to the loaded module, trigger + remove them
 
     let timeout = {};
-    promise.waitFor(10*1000, () => System.get(load.name), timeout).then(result => {
+    promise.waitFor(60*1000, () => System.get(load.name), timeout).then(result => {
       if (result === timeout) {
         console.warn(`[lively.modules] instantiate_triggerOnLoadCallbacks for ${load.name} timed out`);
         return;
