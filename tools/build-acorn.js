@@ -13,7 +13,7 @@ module.exports = new Promise((resolve, reject) => {
       looseSrc = fs.readFileSync(path.join(acornDir, "dist/acorn_loose.js")),
       acornAsyncSrc = `(function(acorn) {
   var module = {exports: {}};
-  ${fs.readFileSync(require.resolve("acorn-es7-plugin/acorn-v4.js"))}
+  ${patchAcornSource(fs.readFileSync(require.resolve("acorn-es7-plugin/acorn-v4.js")))}
   acorn.plugins.asyncawait = module.exports;
 })(this.acorn);`,
       acornObjectSpreadSrc = `(function(acorn) {
@@ -36,3 +36,12 @@ module.exports = new Promise((resolve, reject) => {
   console.log(`acorn bundled into ${process.cwd()}/${targetFile}`);
   return resolve();
 });
+
+
+function patchAcornSource(src) {
+  // rk 2017-06-14: support object rest prop
+  return src.replace(
+    "this$1.checkLVal(expr.properties[i].value, isBinding, checkClashes)",
+    `if (expr.properties[i].type !== "RestElement")\n      `
+  + `  this$1.checkLVal(expr.properties[i].value, isBinding, checkClashes);`);
+}
