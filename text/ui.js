@@ -211,6 +211,22 @@ export class RichTextControl extends Morph {
     this.extent = btns[13].bottomRight.addXY(offset, offset);
   }
 
+  changeAttributeInSelectionOrMorph(name, valueOrFn) {
+    let {target} = this,
+        sel = target.selection;
+    if (sel.isEmpty()) {
+      target[name] = typeof valueOrFn === "function"
+                      ? valueOrFn(target[name])
+                      : valueOrFn
+    } else {
+      target.undoManager.group();
+      target.changeStyleProperty(name,
+        oldVal => typeof valueOrFn === "function"
+          ? valueOrFn(oldVal) : valueOrFn);
+      target.undoManager.group();
+    }
+  }
+
   basicFontItems() {
     return [
       "Sans-serif",
@@ -227,10 +243,7 @@ export class RichTextControl extends Morph {
   }
 
   changeFont(fontFamily) {
-    let morph = this.target;
-    morph.undoManager.group();
-    morph.changeStyleProperty("fontFamily", _ => fontFamily);
-    morph.undoManager.group();
+    this.changeAttributeInSelectionOrMorph("fontFamily", fontFamily);
   }
 
   setFontFromTarget() {
@@ -261,10 +274,7 @@ export class RichTextControl extends Morph {
   }
 
   changeTextAlign(textAlign) {
-    let morph = this.target;
-    morph.undoManager.group();
-    morph.changeStyleProperty("textAlign", _ => textAlign);
-    morph.undoManager.group();
+    this.changeAttributeInSelectionOrMorph("textAlign", textAlign);
   }
 
   setTextAlignFromTarget() {
@@ -294,31 +304,22 @@ export class RichTextControl extends Morph {
     this.autoRemove && this.remove();
   }
 
-  toggleUnderline() {
-    let morph = this.target;
-    morph.undoManager.group();
-    morph.changeStyleProperty(
+  toggleUnderline() {    
+    this.changeAttributeInSelectionOrMorph(
       "textDecoration",
-      textDecoration => textDecoration === "underline" ? "none" : "underline")
-    morph.undoManager.group();
+      textDecoration => (textDecoration === "underline" ? "none" : "underline"));
   }
 
   toggleItalic() {
-    let morph = this.target;
-    morph.undoManager.group();
-    morph.changeStyleProperty(
+    this.changeAttributeInSelectionOrMorph(
       "fontStyle",
       fontStyle => fontStyle === "italic" ? "normal" : "italic");
-    morph.undoManager.group();
   }
 
   toggleBold() {
-    let morph = this.target;
-    morph.undoManager.group();
-    morph.changeStyleProperty(
+    this.changeAttributeInSelectionOrMorph(
       "fontWeight",
       fontWeight => fontWeight === "bold" || fontWeight === "700" ? "normal" : "bold");
-    morph.undoManager.group();
   }
 
   async openFontColorChooser() {
@@ -329,32 +330,23 @@ export class RichTextControl extends Morph {
   }
 
   changeFontColor(color) {
-    let morph = this.target;
-    morph.undoManager.group();
-    morph.changeStyleProperty("fontColor", oldFontColor => color);
-    morph.undoManager.group();
+    this.changeAttributeInSelectionOrMorph("fontColor", color);
   }
 
-  incFontSize() {
-    let morph = this.target,
-        defaultFontSize = morph.fontSize;
-    morph.undoManager.group();
-    morph.changeStyleProperty("fontSize", oldSize => {
+  incFontSize() {    
+    let defaultFontSize = this.target.fontSize;
+    this.changeAttributeInSelectionOrMorph("fontSize", oldSize => {
       oldSize = oldSize || defaultFontSize;
       return oldSize + (oldSize >= 18 ? 2 : 1);
     });
-    morph.undoManager.group();
   }
 
   decFontSize() {
-    let morph = this.target,
-        defaultFontSize = morph.fontSize;
-    morph.undoManager.group();
-    morph.changeStyleProperty("fontSize", oldSize => {
+    let defaultFontSize = this.target.fontSize;
+    this.changeAttributeInSelectionOrMorph("fontSize", oldSize => {
       oldSize = oldSize || defaultFontSize;
-      return oldSize-(oldSize <= 18 ? 1 : 2);
+      return oldSize - (oldSize <= 18 ? 1 : 2);
     });
-    morph.undoManager.group();
   }
 
   copyStyle() {
@@ -368,7 +360,7 @@ export class RichTextControl extends Morph {
 
   pasteStyle() {
     let morph = this.target;
-    morph.selections.forEach(sel => 
+    morph.selections.forEach(sel =>
       morph.addTextAttribute(this.copiedStyle, sel));
   }
 
