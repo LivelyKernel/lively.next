@@ -209,7 +209,8 @@ export default class EvalBackendChooser {
         {data: clients} = await new Promise((resolve, reject) =>
           l2lClient.sendTo(l2lClient.trackerId, "getClients", {}, resolve));
     clients = clients.filter(ea => ea[0] !== l2lClient.id)
-    return await Promise.all(clients.map(async ([id, {info = {}}]) => {
+    return await Promise.all(clients.map(async ([id, {info}]) => {
+      if (!info) info = {};
       if (!info.known) {
         Promise.resolve().then(async () => {
           let source = `let isNode = typeof System !== "undefined"`
