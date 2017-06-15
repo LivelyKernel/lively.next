@@ -150,8 +150,12 @@ export default class TextInput {
     if (bowser.firefox) // FF needs an extra invitation...
       Promise.resolve().then(() => node.ownerDocument.activeElement !== node && node.focus());
 
-    if (morph && morph.isText) this.ensureBeingAtCursorOfText(morph);
-    else if (world) this.ensureBeingInVisibleBoundsOfWorld(world);
+    if (morph && morph.isText) {
+      // need this even if node === activeElement
+      // to bring up virtual keyboard on iPad
+      node.focus();
+      this.ensureBeingAtCursorOfText(morph);
+    } else if (world) this.ensureBeingInVisibleBoundsOfWorld(world);
   }
 
   blur() {
