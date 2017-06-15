@@ -647,6 +647,7 @@ export class DropDownSelector extends Morph {
         return {
           name: v,
           exec: () => {
+            signal(this, 'update', v);
             this.selectedValue = v;
           }
         };
@@ -656,6 +657,7 @@ export class DropDownSelector extends Morph {
         return {
           name,
           exec: () => {
+            signal(this, 'update', v);
             this.selectedValue = v;
           }
         };
@@ -819,7 +821,7 @@ export class SearchField extends Text {
               padding: rect(6, 3, 2, 2)
             },
             Icon.makeLabel("times-circle", {
-              padding: rect(2,2,4,2),
+              padding: rect(2,4,3,0),
               fontSize: 14,
               visible: false,
               name: "placeholder icon",
