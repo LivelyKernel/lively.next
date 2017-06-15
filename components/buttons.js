@@ -55,6 +55,7 @@ export class Button extends Morph {
         },
         isStyleProps: true,
         defaultValue: 12,
+        after: ['labelMorph', 'iconMorph'],
         set(s) {
           this.setProperty('fontSize', s);
           this.labelMorph.fontSize = s;
@@ -65,6 +66,7 @@ export class Button extends Morph {
       fontColor: {
         isStyleProps: true,
         defaultValue: Color.black,
+        after: ['labelMorph', 'iconMorph'],
         set(c) {
           this.setProperty('fontColor', c);
           this.labelMorph.fontColor = c;
