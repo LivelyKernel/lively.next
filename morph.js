@@ -215,7 +215,13 @@ export class Morph {
         get()   { return this.bounds().rightCenter(); },
         set(v)  { return this.align(this.rightCenter, v); }
       },
-      rotation:           {isStyleProp: true, defaultValue:  0},
+      rotation:           {
+        spec: {
+          type: 'Number',
+          min: 0,
+          max: 2 * Math.PI          
+        },
+        isStyleProp: true, defaultValue:  0},
       scale: {spec: {type: "Number", min: 0}, isStyleProp: true, defaultValue: 1},
       opacity:            {
         spec: {
@@ -383,7 +389,7 @@ export class Morph {
         derived: true,
         spec: {
           type: 'Number',
-          foldable: true,
+          foldable: ['top', 'left', 'right', 'bottom'],
           min: 0
         },
         defaultValue: {top: 0, bottom: 0, left: 0, right: 0},
@@ -408,7 +414,7 @@ export class Morph {
         spec: {
           type: 'Number',
           min: 0,
-          foldable: true
+          foldable: ['top', 'left', 'right', 'bottom']
         },
         defaultValue: {top: 0, bottom: 0, right: 0, left: 0},
         get() {
@@ -440,7 +446,7 @@ export class Morph {
         derived: true,
         spec: {
           type: 'Enum',
-          foldable: true,
+          foldable: ['top', 'left', 'right', 'bottom'],
           values: ["none", "hidden", "dotted", "dashed",
                    "solid", "double", "groove", "ridge", "inset", "outset"]
         },
@@ -462,21 +468,22 @@ export class Morph {
 
       borderColor: {
         isStyleProp: true,
+        derived: true,
         spec: {
-          type: 'Color',
-          foldable: true
+          type: "Color",
+          foldable: ["top", "left", "right", "bottom"]
         },
         defaultValue: {top: Color.white, left: Color.white, bottom: Color.white, right: Color.white},
         get() {
-          let v = this.getProperty('borderColor');
-          return {...v, valueOf: () => v.left}
+          let v = this.getProperty("borderColor");
+          return {...v, valueOf: () => v.left};
         },
         set(value) {
           if (!value) value = Color.white;
           if (value.isColor) {
             value = {top: value, left: value, right: value, bottom: value};
           }
-          this.setProperty('borderColor', value);
+          this.setProperty("borderColor", value);
         }
       },
 

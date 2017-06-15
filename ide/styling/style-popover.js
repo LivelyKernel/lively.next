@@ -111,6 +111,7 @@ export class Popover extends Morph {
   }
 
   close() {
+    debugger;
     this.openInWorld(this.position);
     this.fadeOut(300);
   }
@@ -355,11 +356,13 @@ export class LayoutPopover extends StylePopover {
   updateControls() {
     if (this.layoutHalo) {
       this.getSubmorphNamed("controlContainer").animate({
+        isLayoutable: true,
         submorphs: this.layoutHalo.optionControls(),
         duration: 300
       });
     } else {
       this.getSubmorphNamed("controlContainer").animate({
+        isLayoutable: false,
         extent: pt(0, 0), submorphs: [],
         duration: 300
       });
@@ -416,6 +419,7 @@ export class LayoutPopover extends StylePopover {
       name: 'controlContainer',
       fill: Color.transparent,
       layout: new VerticalLayout(),
+      isLayoutable: !!this.layoutHalo,
       submorphs: this.layoutHalo ? this.layoutHalo.optionControls() : []
     };
   }
@@ -535,12 +539,12 @@ export class ShadowPopover extends StylePopover {
     connect(colorField, "colorValue", this, "updateShadow", {converter: color => ({color})});
     connect(this, 'onMouseDown', colorField, 'removeWidgets');
     connect(this, 'close', colorField, 'remove');
-    connect(spreadInspector, "number", this, "updateShadow", {converter: spread => ({spread})});
-    connect(distanceInspector, "number", this, "updateShadow", {
+    connect(spreadInspector, "update", this, "updateShadow", {converter: spread => ({spread})});
+    connect(distanceInspector, "update", this, "updateShadow", {
       converter: distance => ({distance})
     });
-    connect(blurInspector, "number", this, "updateShadow", {converter: blur => ({blur})});
-    connect(angleSlider, "number", this, "updateShadow", {converter: rotation => ({rotation})});
+    connect(blurInspector, "update", this, "updateShadow", {converter: blur => ({blur})});
+    connect(angleSlider, "update", this, "updateShadow", {converter: rotation => ({rotation})});
     
     return new Morph({
       layout: new GridLayout({
@@ -606,6 +610,7 @@ export class ShadowPopover extends StylePopover {
   }
   
   updateShadow(args) {
+    console.log(args)
     let {color, spread, blur, distance, rotation, inset} = this.shadowValue,
         shadow = {color, spread, blur, distance, rotation, inset, ...args};
     this.shadowValue = new ShadowObject(shadow);
