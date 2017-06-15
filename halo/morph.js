@@ -1183,7 +1183,8 @@ class OriginHaloItem extends HaloItem {
   static get properties() {
     return {
       borderColor: {defaultValue: Color.black},
-      borderWidth: {defaultValue: 2},
+      borderWidth: {defaultValue: 1},
+      nativeCursor: {defaultValue: '-webkit-grab'}
     };
   }
 
