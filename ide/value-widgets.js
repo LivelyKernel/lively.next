@@ -171,16 +171,29 @@ export class ColorWidget extends Morph {
       },
       submorphs: {
         initialize() {
-          connect(this, "color", this, "update");
-          this.update();
+          connect(this, "color", this, "relayout", {
+            converter: (prev, next) => {
+              return prev.isColor != next.isColor 
+            }
+          });
+          this.relayout(true);
         }
       }
     }
   }
 
-  update() {
-    this.submorphs = this.color.isGradient ? 
-        this.renderGradientValue() : this.renderColorValue();
+  relayout(reset) {
+    if (reset) {
+      this.submorphs = this.color.isGradient ? 
+        this.renderGradientValue() : this.renderColorValue(); 
+    } else {
+      this.color.isGradient ? 
+        this.updateGradientValue() : this.updateColorValue();
+    }
+  }
+
+  updateGradientValue() {
+    this.submorphs = this.renderGradientValue();
   }
 
   renderGradientValue() {
@@ -198,6 +211,11 @@ export class ColorWidget extends Morph {
      ];
   }
 
+  updateColorValue() {
+     this.get('color box').fill = this.color;
+     this.get('valueString').value = obj.safeToString(this.color);  
+  }
+
   renderColorValue() {
     return [
         {
@@ -205,6 +223,7 @@ export class ColorWidget extends Morph {
           fill: Color.transparent,
           submorphs: [{
               styleClasses: ["colorValue"],
+              name: 'color box',
               center: pt(5, 7.5),
               fill: this.color,
               borderColor: Color.gray.darker(),
@@ -259,6 +278,10 @@ export class ColorWidget extends Morph {
     this.openFillEditor();
   }
 
+  update(color) {
+    this.color = color;
+  }
+
   openFillEditor() {
     let editor = new FillPopover({
       fillValue: this.color,
@@ -266,7 +289,7 @@ export class ColorWidget extends Morph {
       gradientEnabled: this.gradientEnabled
     });    
     editor.fadeIntoWorld(this.globalBounds().center());
-    connect(editor, "fillValue", this, "color");
+    connect(editor, "fillValue", this, "update");
     signal(this, "openWidget", editor);
   }
 
@@ -300,10 +323,15 @@ export class NumberWidget extends Morph {
 
     return {
       number: {
-        defaultValue: 0
+        defaultValue: 0,
+        set(v) {
+          this.setProperty('number', v);
+          this.get('value') && this.relayout(false);
+        }
       },
       min: {defaultValue: -Infinity},
       max: {defaultValue: Infinity},
+      floatingPoint: {defaultValue: false}, // infer that indirectly by looking at the floating point of the passed number value
       padding: {isStyleProp: true, defaultValue: rect(5,3,0,0)},
       baseFactor: {
         after: ['submorphs'],
@@ -386,6 +414,7 @@ export class NumberWidget extends Morph {
           connect(this.get("value"), "scrub", this, 'update');
           connect(this.get("up"), "fire", this, "increment");
           connect(this.get("down"), "fire", this, "decrement");
+          connect(this, 'number', this, 'relayout');
         }
       }
     };
@@ -424,8 +453,12 @@ export class NumberWidget extends Morph {
   }
 
   update(v, fromScrubber = true) {
-    this.number = v;
-    if (!fromScrubber) this.get("value").value = v;
+    this.setProperty('number', v);
+    this.relayout(fromScrubber);
+  }
+
+  relayout(fromScrubber) {
+    if (!fromScrubber) this.get("value").value = this.number;
     this.layout.col(0).width = this.get('value').textBounds().width;
   }
 
@@ -487,6 +520,22 @@ export class ShadowWidget extends Morph {
                          name: 'valueString', type: 'label', value: 'No Shadow'}];
       return;
     }
+    if (this.submorphs.length > 1) {
+      this.updateShadowDisplay();
+    } else {
+      this.initShadowDisplay()
+    }
+  }
+
+  updateShadowDisplay() {
+    let {inset, blur, spread, distance, color} = this.shadowValue,
+        [nameLabel, {submorphs: [shadowColor]}, paramLabel] = this.submorphs;
+    nameLabel.value  = `${this.shadowValue.inset ? "inset" : "drop"}-shadow(`;
+    shadowColor.fill = color;
+    paramLabel.value = `, ${blur}px, ${distance}px, ${spread}px)`;
+  }
+
+  initShadowDisplay() {
     let {inset, blur, spread, distance, color} = this.shadowValue;
     this.submorphs = [
       {name: 'valueString', opacity: .7, reactsToPointer: false,
@@ -507,7 +556,8 @@ export class ShadowWidget extends Morph {
       {name: 'valueString', type: 'label', opacity: .7,reactsToPointer: false,
        value: `, ${blur}px, ${distance}px, ${spread}px)`}
     ];
-  }  
+  }
+  
 }
 
 export class PointWidget extends Label {
