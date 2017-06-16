@@ -147,9 +147,9 @@ export class World extends Morph {
     this._tooltipViewer.mouseMove(evt);
   }
 
-  onMouseDown(evt) {
+  onMouseDown(evt, forceHalo) {
     var target = evt.state.clickedOnMorph,
-        isCommandKey = evt.isCommandKey(),
+        isCommandKey = evt.isCommandKey() || forceHalo,
         isShiftKey = evt.isShiftDown();
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -193,6 +193,10 @@ export class World extends Morph {
       console.log(`Set global "that" to ${target}`);
       return;
     }
+  }
+
+  onLongClick(evt) {
+    this.onMouseDown(evt, true);
   }
 
   onMouseWheel(evt) {

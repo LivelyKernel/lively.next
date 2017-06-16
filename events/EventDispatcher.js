@@ -37,6 +37,7 @@ const typeToMethodMap = {
   "pointerdown":            "onMouseDown",
   "pointerup":              "onMouseUp",
   "pointermove":            "onMouseMove",
+  "longclick":              "onLongClick",
   "hoverin":                "onHoverIn",
   "hoverout":               "onHoverOut",
   "morphicdrag":            "onDrag",
@@ -194,6 +195,7 @@ export default class EventDispatcher {
       clickedOnMorph: null,
       clickCount: 0,
       prevClick: null,
+      longClickTimer: null,
       draggedMorph: null,
       dragDelta: null,
       lastDragPosition: null,
@@ -309,6 +311,8 @@ export default class EventDispatcher {
           } catch (e) {}
         }
 
+        this.startLongClickTimer(domEvt, eventTargets, hand, halo, layoutHalo);
+
         // we manually manage focus on clicks
         defaultEvent.onDispatch(() => {
           this.focusMorph(targetMorph);
@@ -332,6 +336,7 @@ export default class EventDispatcher {
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       case "pointerup":
+        this.cancelLongClickTimer();
         defaultEvent.onAfterDispatch(() => {
           let { clickedOnMorph, clickedOnPosition, clickCount } = state,
               clickedAtTime = Date.now();
@@ -371,6 +376,11 @@ export default class EventDispatcher {
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       case "pointermove":
+        if (state.clickedOnPosition
+            && state.clickedOnPosition.dist(defaultEvent.position) < 10) {
+          this.cancelLongClickTimer();              
+        }
+
         // Are we dragging a morph? If so the move gets only send to the world
         // and the drag only send to the dragged morph
 
@@ -649,4 +659,22 @@ export default class EventDispatcher {
     cleanupEvents.forEach(evt => this.dispatchEvent(evt));
   }
 
+  startLongClickTimer(domEvt, eventTargets, hand, halo, layoutHalo) {
+    let state = this.eventState;
+    this.cancelLongClickTimer();
+    state.longClickTimer = setTimeout(
+      () => this.doLongClick(domEvt, eventTargets, hand, halo, layoutHalo),
+      config.longClickTimeout);
+  }
+
+  cancelLongClickTimer() {
+    let state = this.eventState;
+    clearTimeout(state.longClickTimer);
+    state.longClickTimer = null;
+  }
+
+  doLongClick(domEvt, eventTargets, hand, halo, layoutHalo) {
+    let evt = new Event("longclick", domEvt, this, eventTargets, hand, halo, layoutHalo);
+    this.dispatchEvent(evt);
+  }
 }
