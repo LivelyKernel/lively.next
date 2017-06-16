@@ -377,8 +377,8 @@ export default class EventDispatcher {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       case "pointermove":
         if (state.clickedOnPosition
-            && state.clickedOnPosition.dist(defaultEvent.position) < 10) {
-          this.cancelLongClickTimer();              
+            && state.clickedOnPosition.dist(defaultEvent.position) > 4) {
+          this.cancelLongClickTimer();
         }
 
         // Are we dragging a morph? If so the move gets only send to the world
