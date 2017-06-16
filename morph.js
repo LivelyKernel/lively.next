@@ -125,12 +125,12 @@ export class Morph {
       bottomRight: {
         derived: true, after: ['extent'],
         get()   { return this.bounds().bottomRight(); },
-        set(v)  { return this.align(this.bottomRight, v); }  
+        set(v)  { return this.align(this.bottomRight, v); }
       },
       bottomLeft: {
         derived: true, after: ['extent', 'submorphs'],
         get()    { return this.bounds().bottomLeft(); },
-        set(v)   { return this.align(this.bottomLeft, v); } 
+        set(v)   { return this.align(this.bottomLeft, v); }
       },
       bottomCenter: {
         derived: true, after: ['extent', 'submorphs'],
@@ -157,7 +157,7 @@ export class Morph {
       opacity:            {isStyleProp: true, defaultValue: 1},
       fill:               {isStyleProp: true, defaultValue: Color.white},
       visible:            {isStyleProp: true, defaultValue: true},
-      
+
 
       submorphs: {
         defaultValue: [],
@@ -210,7 +210,7 @@ export class Morph {
       },
 
       layout: {
-        isStyleProp: true, 
+        isStyleProp: true,
         after: ["submorphs", "extent", "origin", "position", "isLayoutable"],
         set(value) {
           if (value) value.container = this;
@@ -414,7 +414,7 @@ export class Morph {
           return style;
         }
       },
-    
+
       epiMorph: {
         doc: "epi morphs are 'transient' morphs, i.e. meta objects that should not be serialized like halo items, menus, etc.",
         defaultValue: false
@@ -550,7 +550,7 @@ export class Morph {
     spec.type = this.constructor.name.toLowerCase();
     return spec;
   }
-  
+
   printSpec(spec = null, depth = 0) {
     spec = spec || this.spec();
     let priority = {name: true, type: true, submorphs: true};
@@ -610,7 +610,7 @@ export class Morph {
   defaultProperty(key) { return this.defaultProperties[key]; }
   getProperty(key) {
     this._defaultStyleProperties = this._defaultStyleProperties || this.styleProperties;
-    const v = this._morphicState[key], 
+    const v = this._morphicState[key],
           dv = this.defaultProperty(key),
           isGeoObj = v && [Rectangle, Point, Color].includes(v.constructor);
     if (this._defaultStyleProperties.includes(key) && (isGeoObj ? v.equals(dv) : v == dv)) {
@@ -630,8 +630,8 @@ export class Morph {
     }
     return v;
   }
-  setProperty(key, value, meta) { 
-    return this.addValueChange(key, value, meta); 
+  setProperty(key, value, meta) {
+    return this.addValueChange(key, value, meta);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -723,7 +723,7 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   onChange(change) {
-  
+
     const anim = change.meta && change.meta.animation;
     if (['position', 'rotation', 'scale', 'origin', 'reactsToPointer'].includes(change.prop))
         this.updateTransform({[change.prop]: change.value});
@@ -767,7 +767,7 @@ export class Morph {
   }
 
   onOwnerChange(newOwner) {
-    
+
   }
 
   get changes() { return this.env.changeManager.changesFor(this); }
@@ -849,7 +849,7 @@ export class Morph {
       this.innerBounds().union(this.submorphBounds()) :
       this.innerBounds()).extent().addPt(this.scrollbarOffset);
   }
-  
+
   scrollBounds() {
     let {x, y} = this.scroll,
         {x: w, y: h} = this.scrollExtent;
@@ -1649,14 +1649,14 @@ export class Morph {
         items = [], self = this;
 
     // items.push(['Select all submorphs', function(evt) { self.world().setSelectedMorphs(self.submorphs.clone()); }]);
-    
+
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // morphic hierarchy / windows
 
     items.push(['Open in...', [
       ['Window', () => { this.openInWindow(); }]
     ]]);
-    
+
     // Drilling into scene to addMorph or get a halo
     // whew... this is expensive...
     function menuItemsForMorphsBeneathMe(itemCallback) {
@@ -1667,11 +1667,11 @@ export class Morph {
       morphs = morphs.slice(selfInList + 1);
       return morphs.map(ea => [String(ea), itemCallback.bind(this, ea)]);
     }
-    
+
     items.push(["Add morph to...", {
       getItems: menuItemsForMorphsBeneathMe.bind(this, morph => morph.addMorph(self))
     }]);
-    
+
     items.push(["Get halo on...", {
       getItems: menuItemsForMorphsBeneathMe.bind(this, morph => morph.world().showHaloFor(morph))
     }]);
@@ -1696,7 +1696,7 @@ export class Morph {
     if (steppingItems.length != 0) {
       items.push(["Stepping", steppingItems])
     }
-    
+
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // lively bindings
     // var connectionNames = Properties.own(this.getConnectionPoints());
@@ -1742,7 +1742,7 @@ export class Morph {
     //     });
     //   }
     // }]);
-    
+
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // morphic properties
     var morphicMenuItems = ['Morphic properties', []];
@@ -1772,7 +1772,7 @@ export class Morph {
     //     self.enableFixedPositioning()
     //   }]);
     // }
-    
+
     return items;
   }
 
@@ -1780,10 +1780,10 @@ export class Morph {
   onCopy(evt) {}
   onPaste(evt) {}
 
-  onDragStart(evt) { 
+  onDragStart(evt) {
     this.undoStart("drag-move");
     let {lastDragPosition, clickedOnPosition} = evt.state;
-    this.moveBy(lastDragPosition.subPt(clickedOnPosition)); 
+    this.moveBy(lastDragPosition.subPt(clickedOnPosition));
   }
   onDragEnd(evt) { this.undoStop("drag-move"); }
   onDrag(evt) { this.moveBy(evt.state.dragDelta); }
@@ -1970,7 +1970,7 @@ return ;
   needsRerender() { return this._dirty; }
 
   aboutToRender(renderer) {
-    this._dirty = false; this._rendering = true; 
+    this._dirty = false; this._rendering = true;
   }
   onAfterRender(node) {}
 
@@ -1980,7 +1980,7 @@ return ;
       .then(() => this);
   }
 
-  render(renderer) { 
+  render(renderer) {
     return renderer.renderMorph(this);
   }
 
@@ -1992,9 +1992,9 @@ return ;
      this.layout && this.layout.forceLayout();
   }
 
-  renderAsRoot(renderer) { 
+  renderAsRoot(renderer) {
      this.applyLayoutIfNeeded();
-     return renderRootMorph(this, renderer); 
+     return renderRootMorph(this, renderer);
   }
 
   renderPreview(opts = {}) {
@@ -2274,7 +2274,7 @@ export class Image extends Morph {
 
   render(renderer) { return renderer.renderImage(this); }
 
-  
+
   clear() {
     // transparent gif:
     return this.loadUrl("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", false);
@@ -2348,7 +2348,7 @@ export class Image extends Morph {
     // This doesn't work in all browsers. Alternative would be:
     // var dataDownloadURL = url.replace(/^data:image\/[^;]/, 'data:application/octet-stream')
     // window.open(dataDownloadURL);
-    // however this wouldn't allow to set a file name...  
+    // however this wouldn't allow to set a file name...
     // this.downloadImage();
     var url = this.imageUrl, name;
     if (url.match(/^data:image/)) { // data url
@@ -2363,7 +2363,7 @@ export class Image extends Morph {
     link.href = url;
     link.click();
   }
-  
+
   convertTo(type, quality) {
     // this.convertTo("image/jpeg", 0.8)
     // this.convertTo(); 123

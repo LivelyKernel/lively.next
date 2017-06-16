@@ -301,8 +301,8 @@ var config = {
   remotes: {
     server: System.get("@system-env").browser ? `${document.location.origin}/eval` : null
   }
-  
+
 }
-    
+
 
 export default config;

@@ -585,7 +585,7 @@ export default class EventDispatcher {
     events.forEach(evt => this.dispatchEvent(evt, morphMethod));
 
     if (this.world && this.world.needsRerender()) {
-      this.world.env.renderer.renderStep(); 
+      this.world.env.renderer.renderStep();
     }
   }
 

@@ -260,7 +260,7 @@ export class World extends Morph {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // html5 drag - drop
-  
+
   async onNativeDragover(evt) {
     if (!this._cachedDragIndicator)
       this._cachedDragIndicator = loadObjectFromPartsbinFolder("upload-indicator");
@@ -343,7 +343,7 @@ export class World extends Morph {
   }
 
   onWindowResize(evt) {
-    this._cachedWindowBounds = null;    
+    this._cachedWindowBounds = null;
     if (this.resizePolicy  != 'rigid')
       this.execCommand("resize to fit window");
     this.updateVisibleWindowMorphs(evt);
@@ -354,15 +354,15 @@ export class World extends Morph {
     Currently checks all morphs to see if an update is required.  Could possibly be streamlined by having a discrete
     list of morphs to be updated instead of traversing tree or moving to a CSS method if necessary.
     */
-    this.withAllSubmorphsDo((aMorph) => {      
-      if (aMorph.respondsToVisibleWindow && aMorph.relayout && (typeof aMorph.relayout == 'function')) {        
+    this.withAllSubmorphsDo((aMorph) => {
+      if (aMorph.respondsToVisibleWindow && aMorph.relayout && (typeof aMorph.relayout == 'function')) {
         aMorph.relayout(evt);
       } else if (aMorph.respondsToVisibleWindow) {
         aMorph.showError(new Error(aMorph + " listed as responding to visible window change, but has no relayout insctruction"));
       };
     });
   }
-  
+
   async onPaste(evt) {
     try {
       let data = evt.domEvt.clipboardData;
@@ -725,7 +725,7 @@ export class Hand extends Morph {
   dropMorphsOn(dropTarget) {
     this.grabbedMorphs.forEach(morph => {
       try {
-        dropTarget.addMorph(morph);      
+        dropTarget.addMorph(morph);
         let {pointerAndShadow} = this._grabbedMorphProperties.get(morph) || {}
         Object.assign(morph, pointerAndShadow);
         signal(this, "drop", morph);
