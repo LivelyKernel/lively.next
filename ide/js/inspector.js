@@ -334,7 +334,7 @@ function propertiesOf(node) {
   let target = node.value;
   if (!target) return [];
 
-  var seen = {}, props = [],
+  var seen = {_rev: true}, props = [],
       isCollapsed = true,
       customProps = typeof target.livelyCustomInspect === "function" ?
         target.livelyCustomInspect() : {},
@@ -603,13 +603,16 @@ export class PropertyControl extends Label {
 
   toggleFoldableValue(newValue) {
     if (!this.foldableProperties) return;
-    if (arr.uniq(this.foldableProperties.map(p => newValue[p])).length > 1) {
-      this.toggleMultiValuePlaceholder(true);
-    } else {
+    if (
+      arr.every(this.foldableProperties.map(p => newValue[p]), v =>
+        obj.equals(v, newValue.valueOf())
+      )
+    ) {
       this.toggleMultiValuePlaceholder(false);
+    } else {
+      this.toggleMultiValuePlaceholder(true);
     }
   }
-
   asFoldable(foldableProperties) {
     this.foldableProperties = foldableProperties;
     connect(this, 'update', this, 'toggleFoldableValue');
