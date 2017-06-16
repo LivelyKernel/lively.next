@@ -29,7 +29,16 @@ export class World extends Morph {
 
   static get properties() {
     return {
-      resizePolicy : { defaultValue: 'elastic'},
+
+      resizePolicy : {
+        doc: "how the world behaves on window size changes 'elastic': resizes to window extent, 'static': leaves its extent unchanged",
+        defaultValue: 'elastic',
+        set(val) {
+          this.setProperty("resizePolicy", val);
+          this.clipMode = val === "static" ? "auto" : "hidden";
+        }
+      },
+
       styleSheets: {
         initialize() {
           this.styleSheets = [
@@ -44,6 +53,7 @@ export class World extends Morph {
           ];
         }
       }
+
     };
   }
 
