@@ -253,7 +253,8 @@ export class ValueScrubber extends Text {
       draggable: {defaultValue: true},
       min: {defaultValue: -Infinity},
       max: {defaultValue: Infinity},
-      baseFactor: {defaultValue: 1}
+      baseFactor: {defaultValue: 1},
+      floatingPoint: {defaultValue: false}
     };
   }
 
@@ -315,15 +316,16 @@ export class ValueScrubber extends Text {
     const {scale, offset} = this.getScaleAndOffset(evt), 
           v = this.getCurrentValue(offset, scale);
     signal(this, "scrub", v);
-    this.textString = obj.safeToString(v);
+    this.textString = this.floatingPoint ? v.toFixed(3) : obj.safeToString(v);
     if (this.unit) this.textString += " " + this.unit;
-    this.factorLabel.description = scale + "x";
+    this.factorLabel.description = scale.toFixed(3) + "x";
     this.factorLabel.position = evt.hand.position.addXY(10, 10);
     this.relayout();
   }
 
   getCurrentValue(delta, s) {
-    const v = this.scrubbedValue + Math.round(delta * s);
+    console.log(this.scrubbedValue)
+    const v = this.scrubbedValue + (this.floatingPoint ? delta * s : Math.round(delta * s));
     return Math.max(this.min, Math.min(this.max, v));
   }
 
@@ -336,7 +338,7 @@ export class ValueScrubber extends Text {
   set value(v) {
     v = Math.max(this.min, Math.min(this.max, v));
     this.scrubbedValue = v;
-    this.textString = obj.safeToString(v) || "";
+    this.textString = this.floatingPoint ? v.toFixed(3) : obj.safeToString(v);
     if (this.unit) this.textString += " " + this.unit;
     this.relayout();
   }
@@ -818,12 +820,15 @@ export class SearchField extends Text {
               opacity: .3,
               value: this.placeHolder,
               reactsToPointer: false,
-              padding: rect(6, 3, 2, 2)
+              padding: rect(6, 4, 0, 0)
             },
             Icon.makeLabel("times-circle", {
               padding: rect(2,4,3,0),
               fontSize: 14,
               visible: false,
+              fixedHeight: true,
+              autofit: false,
+              extent: pt(20,22),
               name: "placeholder icon",
               fontColor: Color.gray,
               nativeCursor: 'pointer'

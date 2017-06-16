@@ -1,4 +1,5 @@
-import { Morph, morph, Label, HorizontalLayout, StyleSheet, Icon, GridLayout, config } from "lively.morphic";
+import { Morph, Text, morph, Label, HorizontalLayout, 
+        StyleSheet, Icon, GridLayout, config } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 import { Color, LinearGradient, pt, rect } from "lively.graphics";
 import { ValueScrubber } from "../components/widgets.js";
@@ -386,6 +387,7 @@ export class NumberWidget extends Morph {
             new ValueScrubber({
               name: "value",
               value: this.number,
+              floatingPoint: this.floatingPoint,
               min: this.min,
               max: this.max
             }),
