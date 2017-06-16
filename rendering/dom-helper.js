@@ -166,8 +166,8 @@ export const hyperscriptFnForDocument = (function() {
   
   return function hyperscriptFnForDocument(document = window.document) {
     // h() function that renders using document instead of virtual nodes
-  
-    if (document.lines) debugger;
+    return h_dom;
+
     let existing = h_dom_cache.get(document);
     if (!existing) h_dom_cache.set(document, h_dom);
     return existing || h_dom;
@@ -214,14 +214,19 @@ export const hyperscriptFnForDocument = (function() {
           else for (var dsKey in dataset) el.setAttribute("data-" + dsKey, dataset[dsKey]);
         }
       }
-  
+
+      if (!children) children = "";
       if (typeof children === "string") {
         el.appendChild(document.createTextNode(children));
-      } else if (children && Array.isArray(children)) {
+      } else if (Array.isArray(children)) {
         for (var i = 0; i < children.length; i++) {
           var child = children[i];
-          el.appendChild(typeof child === "string" ? document.createTextNode(child) : child);
+          el.appendChild(typeof child === "string"
+            ? document.createTextNode(child) : child);
         }
+      } else {
+        el.appendChild(typeof children === "string"
+          ? document.createTextNode(children) : children);
       }
   
       return el;

@@ -440,11 +440,12 @@ class DOMTextMeasure {
                     styleOpts, renderTextLayerFn))
 
                 || charBoundsOfLine(line, lineNode,
-                    -lineNode.offsetLeft + offsetX - textNodeOffsetLeft,
-                    -lineNode.offsetTop + offsetY - textNodeOffsetTop);
+                    offsetX - textNodeOffsetLeft,
+                    offsetY - textNodeOffsetTop);
 
         if (!this.debug)
           lineNode.parentNode.removeChild(lineNode);
+
         return result;
       });
   }
@@ -503,6 +504,11 @@ const GLOBAL = typeof System !== "undefined"
   ? System.global
   : window || global || self || this;
 
+const getComputedFontFamily = typeof GLOBAL.getComputedStyle === "function" ?
+        node => GLOBAL.getComputedStyle(node).fontFamily : () => "",
+      getComputedMarginLeft = typeof GLOBAL.getComputedStyle === "function" ?
+        node => parseInt(GLOBAL.getComputedStyle(node).marginLeft) || 0 : () => 0;
+
 function charBoundsOfBigMonospacedLine(
   morph, fontMetric, line, lineNode,
   offsetX = 0, offsetY = 0,
@@ -512,8 +518,8 @@ function charBoundsOfBigMonospacedLine(
   let textLength = line.text.length,
       index = 0;
 
-  if (textLength < 500 || typeof GLOBAL.getComputedStyle !== "function"
-   || fontMetric.isProportional(GLOBAL.getComputedStyle(lineNode).fontFamily)) return null;
+  if (textLength < 500 || fontMetric.isProportional(getComputedFontFamily(lineNode)))
+    return null;
 
   let lineWidth = Infinity,
       lineHeight = Infinity,
@@ -539,16 +545,29 @@ function charBoundsOfBigMonospacedLine(
 
 function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
   const {ELEMENT_NODE, TEXT_NODE, childNodes} = lineNode,
-        maxLength = Infinity;
+        maxLength = Infinity,
+        document = lineNode.ownerDocument,
+        result = [];
 
-  let document = lineNode.ownerDocument,
-      node = childNodes[0],
-      result = [],
-      textLength = line.text.length,
-      index = 0;
+  var index = 0,
+      textNode, left, top, width, height, x, y,
+      emptyNodeFill, node;
 
-  let textNode, left, top, width, height, x, y,
-      emptyNodeFill;
+  if (!lineNode) node = null;
+  else if (lineNode.className.includes("line")) {
+    offsetX = offsetX - lineNode.offsetLeft;
+    offsetY = offsetY - lineNode.offsetTop;
+    node = lineNode.childNodes[0];
+  }
+  else {
+    let realLineNode = lineNode.getElementsByClassName("line")[0];
+    node = realLineNode.childNodes[0];
+    let offsetNode = node;
+
+    offsetX = offsetX - lineNode.offsetLeft + getComputedMarginLeft(lineNode);
+    offsetY = offsetY - lineNode.offsetTop;
+  }
+
   if (!node) {
     emptyNodeFill = node = document.createElement("br");
     lineNode.appendChild(emptyNodeFill);
@@ -558,8 +577,9 @@ function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
 
     if (index > maxLength) break;
 
-    textNode = node.nodeType === ELEMENT_NODE && node.childNodes[0] ?
-      node.childNodes[0] : node;
+    textNode = (node.tagName !== "BR"
+            && node.nodeType === ELEMENT_NODE
+            && node.childNodes[0]) || node;
 
     if (textNode.nodeType === TEXT_NODE) {
       let length = textNode.length;
@@ -590,7 +610,6 @@ function charBoundsOfLine(line, lineNode, offsetX = 0, offsetY = 0) {
 
   return result;
 }
-
 
 
 function measureCharInner(document, node, index, bias = "left") {

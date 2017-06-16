@@ -98,6 +98,19 @@ function installCSS(domEnv) {
       vertical-align: middle !important;
     }
 
+    blockquote {
+      margin: 0;
+      -webkit-margin-start: 0;
+      -webkit-margin-end: 0;
+    }
+
+    .newtext-text-layer blockquote {
+      margin-left: 2em;
+      margin-right: 2em;
+      border-left: 2px lightgray solid;
+      padding-left: 2%;
+    }
+
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
     /* debug styling */
 
@@ -188,31 +201,26 @@ AfterTextRenderHook.prototype.updateExtentsOfLines = function(textlayerNode) {
   viewState.dom_nodeFirstRow = 0;
 
   viewState.textWidth = textlayerNode.scrollWidth;
-  let lineNode;
-  for (let i in textlayerNode.childNodes) {
-    if (textlayerNode.childNodes[i].className === "line") {
-      lineNode = textlayerNode.childNodes[i]; break;
-    }
-  }
-  let firstLineNode = lineNode,
-      lastLineNode = lineNode;
+  let lineNodes = Array.from(textlayerNode.getElementsByClassName("line")),
+      firstLineNode = lineNodes[0],
+      lastLineNode = lineNodes[lineNodes.length-1];
 
-  if (!lineNode) return;
+  if (!firstLineNode) return;
 
-  let row = Number(lineNode.dataset ? lineNode.dataset.row : lineNode.getAttribute("data-row"));
+  let ds = firstLineNode.dataset,
+      row = Number(ds ? ds.row : firstLineNode.getAttribute("data-row"));
   if (typeof row !== "number" || isNaN(row)) return;
   viewState.dom_nodeFirstRow = row;
   let actualTextHeight = 0,
       line = morph.document.getLine(row);
 
-  while (lineNode) {
-    lastLineNode = lineNode;
-    viewState.dom_nodes.push(lineNode);
+  for (let i = 0; i < lineNodes.length; i++) {
+    let node = lineNodes[i];
+    viewState.dom_nodes.push(node);
     if (line) {
-      actualTextHeight = actualTextHeight + this.updateLineHeightOfNode(morph, line, lineNode);
+      actualTextHeight = actualTextHeight + this.updateLineHeightOfNode(morph, line, node);
       line = line.nextLine();
     }
-    lineNode = lineNode.nextSibling;
   }
 
   if (this.needsRerender) {
@@ -382,11 +390,11 @@ export default class Renderer {
     }
 
     // ...and now other attribues
-    let style = {height:          textHeight + "px"}    
-    if (padLeft > 0)     style.paddingLeft = padLeft + "px";
-    if (padRight > 0)    style.paddingRight = padRight + "px";
-    if (padTop > 0)      style.paddingTop = padTop + "px";
-    if (padBottom > 0)   style.paddingBottom = padBottom + "px";
+    let style = {height: textHeight + "px"};
+    if (padLeft > 0)     style.paddingLeft =     padLeft + "px";
+    if (padRight > 0)    style.paddingRight =    padRight + "px";
+    if (padTop > 0)      style.paddingTop =      padTop + "px";
+    if (padBottom > 0)   style.paddingBottom =   padBottom + "px";
     if (letterSpacing)   style.letterSpacing =   letterSpacing;
     if (wordSpacing)     style.wordSpacing =     wordSpacing;
     if (lineHeight)      style.lineHeight =      lineHeight;
@@ -494,7 +502,7 @@ export default class Renderer {
         fontSize, fontFamily, fontWeight, fontStyle, textDecoration, fontColor,
         backgroundColor, nativeCursor, textStyleClasses, link,
         tagname, nodeStyle, nodeAttrs,
-        lineHeight, textAlign, wordSpacing, letterSpacing;
+        lineHeight, textAlign, wordSpacing, letterSpacing, quote, nested;
 
     if (size > 0) {
       for (let i = 0; i < size; i = i+2) {
@@ -525,6 +533,7 @@ export default class Renderer {
         textAlign =        attr.textAlign || textAlign;
         wordSpacing =      attr.wordSpacing || wordSpacing;
         letterSpacing =    attr.letterSpacing || letterSpacing;
+        quote =            attr.quote || quote;
 
         tagname = "span";
         nodeStyle = {};
@@ -554,14 +563,23 @@ export default class Renderer {
     } else renderedChunks.push(h("br"));
 
     var lineStyle = {};
+    // var lineTag = quote ? "blockquote" : "div";
+    var lineTag = "div";
     if (lineHeight) lineStyle.lineHeight = lineHeight;
     if (textAlign) lineStyle.textAlign = textAlign;
     if (letterSpacing) lineStyle.letterSpacing = letterSpacing;
     if (wordSpacing) lineStyle.wordSpacing = wordSpacing;
 
-    return h("div",
+    let node = h(lineTag,
       {className: "line", style: lineStyle, dataset: {row: line.row}},
       renderedChunks);
+
+    if (quote) {
+      if (typeof quote !== "number") quote = 1;
+      for (let i = quote; i--;) node = h("blockquote", {}, node);
+    }
+
+    return node;
   }
 
   renderEmbeddedSubmorph(h, renderer, morph) {
@@ -776,4 +794,34 @@ export default class Renderer {
 
     return debugHighlights
   }
+}
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// DOM extraction from text morph
+
+export function extractHTMLFromTextMorph(
+  textMorph,
+  textAndAttributes = textMorph.textAndAttributesInRange(textMorph.selection.range)
+) {
+  let text = new textMorph.constructor({
+        ...textMorph.defaultTextStyle,
+        width: textMorph.width,
+        textAndAttributes: textAndAttributes
+      }),
+      render = text.textRenderer.directRenderTextLayerFn(text),
+      renderLine = text.textRenderer.directRenderLineFn(text),
+      textLayerNode = render();
+  let style = System.global && System.global.getComputedStyle ? System.global.getComputedStyle(textLayerNode) : null;
+  if (style) {
+    textLayerNode.ownerDocument.body.appendChild(textLayerNode);
+    textLayerNode.style.whiteSpace = style.whiteSpace;
+    textLayerNode.style.overflowWrap = style.overflowWrap;
+    textLayerNode.style.wordBreak = style.wordBreak;
+    textLayerNode.style.minWidth = style.minWidth;
+    textLayerNode.parentNode.removeChild(textLayerNode);
+  }
+  for (let line of text.document.lines)
+    textLayerNode.appendChild(renderLine(line));
+  return textLayerNode.outerHTML;
 }
