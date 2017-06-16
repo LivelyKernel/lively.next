@@ -559,7 +559,7 @@ export class PropertyControl extends Label {
     });
     connect(propertyControl, 'update', propertyControl.control, 'selectedValue', {
       updater: function ($upd, val) {
-        val = val.valueOf ? val.valueOf() : val;
+        val = (val && val.valueOf) ? val.valueOf() : val;
         if (this.targetObj.propertyValue != val) $upd(val);
       }
     });
@@ -602,7 +602,6 @@ export class PropertyControl extends Label {
   }
 
   toggleFoldableValue(newValue) {
-    debugger;
     if (!this.foldableProperties) return;
     if (arr.uniq(this.foldableProperties.map(p => newValue[p])).length > 1) {
       this.toggleMultiValuePlaceholder(true);
@@ -652,20 +651,29 @@ export class PropertyControl extends Label {
   }
 
   renderNumberControl({value, spec, keyString}) {
+    var baseFactor = .5, floatingPoint = false;
+    if ("max" in spec && "min" in spec 
+        && spec.min != -Infinity && spec.max != Infinity) {
+      baseFactor = (spec.max - spec.min) / 100;
+      floatingPoint = true;
+    }
     this.control = new NumberWidget({
       name: "valueString",
       height: 17,
-      baseFactor: 0.5,
+      baseFactor,
+      floatingPoint,
+      borderWidth: 0,
+      borderColor: Color.transparent,
       fill: Color.transparent,
       padding: rect(0),
       fontFamily: config.codeEditor.defaultStyle.fontFamily,
       number: value,
-      ...('max' in spec ? {max: spec.max} : {}),
-      ...('min' in spec ? {min: spec.min} : {})
+      ...("max" in spec ? {max: spec.max} : {}),
+      ...("min" in spec ? {min: spec.min} : {})
     });
     connect(this.control, "update", this, "propertyValue");
-    connect(this, 'update', this.control, 'number', {
-      updater: function ($upd, val) {
+    connect(this, "update", this.control, "number", {
+      updater: function($upd, val) {
         val = val.valueOf ? val.valueOf() : val;
         if (this.targetObj.number != val) $upd(val);
       }
@@ -704,13 +712,13 @@ export class PropertyControl extends Label {
 
   renderColorControl(args, gradientEnabled = false) {
     this.control = new ColorWidget({
-          color: args.value.valueOf ? args.value.valueOf() : args.value,
+          color: (args.value && args.value.valueOf) ? args.value.valueOf() : args.value,
           gradientEnabled
         });
     connect(this.control, "update", this, "propertyValue");
     connect(this, 'update', this.control, 'color', {
       updater: function ($upd, val) {
-        val = val.valueOf ? val.valueOf() : val;
+        val = (val && val.valueOf )? val.valueOf() : val;
         if (!this.targetObj.color.equals(val)) $upd(val);
       }
     });
@@ -1138,7 +1146,7 @@ export default class Inspector extends Morph {
         textAndAttributes: [
           "Select a new morph to inspect by hovering over it and clicking left. You can exit this mode by pressing ",
           {},
-          esc
+          esc, {}
         ]
       });
       this.instructionWidget.animate({opacity: 1, duration: 200});

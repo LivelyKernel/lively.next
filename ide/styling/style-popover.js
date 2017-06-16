@@ -73,6 +73,7 @@ export class Popover extends Morph {
             {
               type: "polygon",
               name: "arrow",
+              borderColor: Color.transparent,
               extent: pt(20,20),
               vertices: [pt(-1, 0), pt(0, -0.5), pt(1, 0)]
             },
@@ -354,6 +355,7 @@ export class LayoutPopover extends StylePopover {
   }
 
   updateControls() {
+    this.get('Layout Type').relayout();
     if (this.layoutHalo) {
       this.getSubmorphNamed("controlContainer").animate({
         isLayoutable: true,
@@ -593,7 +595,6 @@ export class ShadowPopover extends StylePopover {
   }
 
   changeShadowType(type) {
-    console.log(this);
     if (type == 'No Shadow') {
       this.toggleShadow(false)
     } else if (type == 'Inset Shadow') {
@@ -610,7 +611,6 @@ export class ShadowPopover extends StylePopover {
   }
   
   updateShadow(args) {
-    console.log(args)
     let {color, spread, blur, distance, rotation, inset} = this.shadowValue,
         shadow = {color, spread, blur, distance, rotation, inset, ...args};
     this.shadowValue = new ShadowObject(shadow);
@@ -685,13 +685,19 @@ export class PointPopover extends StylePopover {
           imageUrl: milimeter,
           autoResize: true,
         },
+        {
+          extent: pt(200,200),
+          draggable: false,
+          dropShadow: {inset: true, spread: 5, color: Color.gray},
+          fill: Color.transparent
+        },
         scroller = morph({
           name: 'scroller',
           extent: pt(200,200),
           clipMode: 'scroll',
-          dropShadow: {inset: true, spread: 5, color: Color.gray},
-          fill: Color.transparent,
-          submorphs: [{fill: Color.transparent, height: 200 + 2.75 * 160, width: 10}]
+          draggable: false,
+          opacity: 0.01,
+          submorphs: [{height: 200 + 2.66 * 160, width: 10}]
         }),
         grabber = morph({
           name: 'knob',

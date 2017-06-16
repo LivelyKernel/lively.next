@@ -173,8 +173,8 @@ export class ColorWidget extends Morph {
       submorphs: {
         initialize() {
           connect(this, "color", this, "relayout", {
-            converter: (prev, next) => {
-              return prev.isColor != next.isColor 
+            converter: (next, prev) => {
+              return (prev && prev.isColor) != (next && next.isColor) 
             }
           });
           this.relayout(true);
@@ -185,6 +185,10 @@ export class ColorWidget extends Morph {
 
   relayout(reset) {
     if (reset) {
+      if (!this.color) {
+        this.submorphs = this.renderNoColor();
+        return;
+      }
       this.submorphs = this.color.isGradient ? 
         this.renderGradientValue() : this.renderColorValue(); 
     } else {
@@ -194,7 +198,20 @@ export class ColorWidget extends Morph {
   }
 
   updateGradientValue() {
-    this.submorphs = this.renderGradientValue();
+    let gradient = this.color;
+    if (gradient.stops.length * 2 == this.submorphs.length - 3) {
+      // patch the stops
+      var stopLabel;
+      for (let i in this.color.stops) {
+        let {color, offset} = gradient.stops[i];
+        let {submorphs: [stopColor]} = this.submorphs[2 + i * 2];
+        stopLabel = this.submorphs[3 + i * 2];
+        stopColor.fill = color;
+        stopLabel.value = (offset * 100).toFixed() + "%" + (i < gradient.stops.length - 1 ? "," : "");
+      }
+    } else {
+      this.submorphs = this.renderGradientValue(); 
+    }
   }
 
   renderGradientValue() {
@@ -213,9 +230,41 @@ export class ColorWidget extends Morph {
   }
 
   updateColorValue() {
-     this.get('color box').fill = this.color;
-     this.get('valueString').value = obj.safeToString(this.color);  
+     this.getSubmorphNamed('color box').fill = this.color;
+     this.getSubmorphNamed('valueString').value = obj.safeToString(this.color);  
   }
+
+  renderNoColor() {
+    return [
+      {
+        extent: pt(15, 15),
+        fill: Color.transparent,
+        submorphs: [
+          {
+            styleClasses: ["colorValue"],
+            name: "color box",
+            center: pt(5, 7.5),
+            fill: Color.white,
+            borderColor: Color.gray.darker(),
+            borderWidth: 1,
+            submorphs: [
+              {
+                type: 'path',
+                name: 'no fill',
+                vertices: [pt(0,0), pt(10,10)],
+                borderColor: Color.red
+              }
+            ]
+          }
+        ]
+      },
+      {
+        type: "label",
+        value: "No Color",
+        fontSize: 14,
+        name: "valueString"
+      }
+    ];  }
 
   renderColorValue() {
     return [
@@ -562,16 +611,27 @@ export class ShadowWidget extends Morph {
   
 }
 
-export class PointWidget extends Label {
+export class PointWidget extends Text {
 
   static get properties() {
     return {
       fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
       nativeCursor: {defaultValue: 'pointer'},
+      fill: {defaultValue: Color.transparent},
+      readOnly: {defaultValue: true},
       pointValue: {
+        after: ['textAndAttributes'],
         set(p) {
+          let fontColor = Color.rgbHex("#0086b3");
           this.setProperty('pointValue', p);
-          this.value = obj.safeToString(p);
+          this.textAndAttributes = ['pt(', {}, 
+                                     p.x.toFixed(), {fontColor}, 
+                                     ',', {}, 
+                                     p.y.toFixed(), {fontColor}, ')', {}];
+          this.fixedWidth = true;
+          this.fixedHeight = true;
+          this.height = 20;
+          this.width = this.textString.length * this.fontSize;
         }
       }    
     }
