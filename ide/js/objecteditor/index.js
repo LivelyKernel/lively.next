@@ -1,4 +1,4 @@
-import { arr, t, Path, string, fun } from "lively.lang";
+import { arr, obj, t, Path, string, fun } from "lively.lang";
 import { Morph, HorizontalLayout, GridLayout, config } from "lively.morphic";
 import { pt, Color } from "lively.graphics";
 import JavaScriptEditorPlugin from "../editor-plugin.js";
@@ -98,9 +98,30 @@ class ClassTreeData extends TreeData {
 export class ObjectEditor extends Morph {
 
   static async open(options = {}) {
-    var ed = new this(options),
+    let {
+      title,
+      target,
+      selectedClass,
+      selectedMethod,
+      textPosition,
+      scroll,
+      classTreeScroll,
+      backend
+    } = options;
+
+    var ed = new this(obj.dissoc(options, "title", "class", "method")),
         winOpts = {name: "ObjectEditor window", title: options.title || "ObjectEditor"},
         win = (await ed.openInWindow(winOpts)).activate();
+    if (target) ed.browse({
+      title,
+      target,
+      selectedClass,
+      selectedMethod,
+      textPosition,
+      scroll,
+      classTreeScroll,
+      backend
+    });
     return win;
   }
 
@@ -582,6 +603,7 @@ export class ObjectEditor extends Morph {
 
     if (target) await this.selectTarget(this.target);
 
+    if (selectedMethod && !selectedClass) selectedClass = this.target.constructor;
     if (selectedClass && selectedMethod) await this.selectMethod(selectedClass, selectedMethod, false);
     else if (selectedClass) await this.selectClass(selectedClass);
 

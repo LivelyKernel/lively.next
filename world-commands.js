@@ -520,14 +520,15 @@ var commands = [
 
   {
     name: "open object editor",
-    exec: async (world, args = {target: null}) => {
+    exec: async (world, args = {target: null, selectedClass: null, selectedMethod: null}) => {
       if (!args.target) {
         world.setStatusMessage("no target for ObjectEditor");
         return null;
       }
-      var { ObjectEditor } = await System.import("lively.morphic/ide/js/objecteditor/index.js"),
-          editor = await ObjectEditor.open({target: args.target});
-      return editor;
+      var { ObjectEditor } = await System.import(
+            "lively.morphic/ide/js/objecteditor/index.js"),
+          { target, className, methodName } = args;
+      return await ObjectEditor.open(args);
     }
   },
 
