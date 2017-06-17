@@ -1,7 +1,7 @@
 /* globals Power4 */
 import { Color, rect, pt } from "lively.graphics";
 import { obj, arr, promise, string } from "lively.lang";
-import { connect, signal, disconnect, once } from "lively.bindings";
+import { connect, disconnectAll, signal, disconnect, once } from "lively.bindings";
 import { Morph, HorizontalLayout, morph, CustomLayout, Label, Icon, StyleSheet, config } from "lively.morphic";
 import { Tree, TreeData } from "lively.morphic/components/tree.js";
 
@@ -266,7 +266,7 @@ class PropertyNode extends InspectionNode {
   }
 
   refreshProperty(v) {
-    this.target[this.keyString] = v;
+    if (this.target[this.keyString] != v) this.target[this.keyString] = v;
     this.value = this.target[this.keyString];
     signal(this._propertyWidget, 'update', this.value);
     if (this.isFoldable) {
@@ -654,7 +654,7 @@ export class PropertyControl extends Label {
   }
 
   renderNumberControl({value, spec, keyString}) {
-    var baseFactor = .5, floatingPoint = false;
+    var baseFactor = .5, floatingPoint = spec.isFloat;
     if ("max" in spec && "min" in spec 
         && spec.min != -Infinity && spec.max != Infinity) {
       baseFactor = (spec.max - spec.min) / 100;
@@ -868,6 +868,7 @@ export default class Inspector extends Morph {
 
   onWindowClose() {
     this.stopStepping();
+    //disconnect(this.targetObject, 'onChange', this, 'refreshAllProperties');
     this.openWidget && this.closeOpenWidget();
   }
 
@@ -942,8 +943,8 @@ export default class Inspector extends Morph {
     this.build();
     this.state = {targetObject: undefined, updateInProgress: false};
     this.targetObject = targetObject || null;
-    // slow!
-   //if (!this.targetObject.isWorld) this.startStepping(50, 'refreshProperties');
+    if (!this.targetObject.isWorld) this.startStepping(10,'refreshAllProperties');
+    //if (!this.targetObject.isWorld) connect(this.targetObject, 'onChange', this, 'refreshAllProperties');
   }
 
   refreshAllProperties() {
@@ -955,7 +956,12 @@ export default class Inspector extends Morph {
       return;
     }
     this.lastChange = change;
-    this.targetObject = this.targetObject;
+    this.originalData.asListWithIndexAndDepth().forEach(({node}) => {
+      let v = this.targetObject[node.key];
+      if (v != node.value && node.refreshProperty) {
+         node.refreshProperty(v); 
+      }
+    });
   }
 
   get isInspector() { return true; }
@@ -978,11 +984,11 @@ export default class Inspector extends Morph {
           prevTd = tree.treeData;
       td.collapse(td.root, false);
       td.collapse(td.root.children[0], false);
-      var updatedData = this.originalData && this.originalData.patch(td);
-      if (updatedData) {
-        this.originalData = updatedData;
-        this.filterProperties();
-        tree.highlightChangedNodes(prevTd);
+      var changedNodes = this.originalData && this.originalData.diff(td);
+      if (changedNodes) {
+        for (let [curr, upd] of changedNodes) {
+          curr.refreshProperty(upd.value);
+        }
       } else {
         tree.treeData = td;
         this.filterProperties();
