@@ -151,7 +151,7 @@ export class Button extends Morph {
         set(codeOrIconMorph) {
           this.setProperty('icon', codeOrIconMorph);
           if (!this.iconMorph) return;
-          if (codeOrIconMorph.isMorph) {
+          if (codeOrIconMorph && codeOrIconMorph.isMorph) {
             this.iconMorph = codeOrIconMorph;
           } else {
             this.iconMorph.value = codeOrIconMorph;

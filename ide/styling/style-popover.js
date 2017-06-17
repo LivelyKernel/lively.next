@@ -112,7 +112,6 @@ export class Popover extends Morph {
   }
 
   close() {
-    debugger;
     this.openInWorld(this.position);
     this.fadeOut(300);
   }
