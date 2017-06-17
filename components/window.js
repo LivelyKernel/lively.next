@@ -121,9 +121,9 @@ export default class Window extends Morph {
         }
       },
 
-      nonMinizedBounds: {},
-      nonMaximizedBounds: {},
       minimizedBounds: {},
+      nonMinizedBounds: {serialize: false},
+      nonMaximizedBounds: {},
       minimized: {},
       maximized: {}
     };
@@ -163,16 +163,24 @@ export default class Window extends Morph {
       ? (title.center = labelBounds.center())
       : (title.leftCenter = minLabelBounds.leftCenter());
   }
+  
+  ensureNotOverTheTop() {
+    let world = this.world();
+    if (!world) return;
+    let bounds = this.globalBounds();
+    if (bounds.top() < world.innerBounds().top())
+      this.moveBy(pt(0, world.innerBounds().top() - bounds.top()))
+  }
 
   getControls() {
     return [
-            morph({
-              name: "button wrapper",
-              styleClasses: ["buttonGroup"],
-              submorphs: this.buttons()
-            }),
-            this.titleLabel()
-          ];
+      morph({
+        name: "button wrapper",
+        styleClasses: ["buttonGroup"],
+        submorphs: this.buttons()
+      }),
+      this.titleLabel()
+    ];
   }
 
   buttons() {
@@ -323,11 +331,17 @@ export default class Window extends Morph {
     next && next.activate();
 
     signal(this, "windowClosed", this);
-    if (this.targetMorph && typeof this.targetMorph.onWindowClose === "function") this.targetMorph.onWindowClose();
+    if (this.targetMorph && typeof this.targetMorph.onWindowClose === "function")
+      this.targetMorph.onWindowClose();
   }
 
   onMouseDown(evt) {
     this.activate(evt);
+  }
+
+  onDrag(evt) {
+    super.onDrag(evt);
+    this.ensureNotOverTheTop();
   }
 
   focus() {

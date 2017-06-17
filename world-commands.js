@@ -754,12 +754,11 @@ var commands = [
         });
 
       if (reuse) {
-        let ea = world.getWindows().slice(-2)[0]
-        
-        let editor = arr.findAndGet(world.getWindows(), ea => {
-          let t = ea.targetMorph;
-          return t && t.isTextEditor && t.location.split(":")[0] === url ? t : null;
-        });
+        let ea = world.getWindows().slice(-2)[0],
+            editor = arr.findAndGet(world.getWindows(), ea => {
+              let t = ea.targetMorph;
+              return t && t.isTextEditor && t.location.split(":")[0] === url ? t : null;
+            });
         if (editor) {
           if (typeof lineNumber === "number")
             editor.lineNumber = lineNumber;

@@ -126,11 +126,13 @@ export class World extends Morph {
   getPrompts() { return this.submorphs.filter(ea => ea.isPrompt); }
 
   openInWindow(morph, opts = {title: morph.name, name: "window for " + morph.name}) {
-    return new Window({
+    let win = new Window({
       ...opts,
       extent: morph.extent.addXY(0, 25),
       targetMorph: morph
     }).openInWorld();
+    win.ensureNotOverTheTop();
+    return win;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
