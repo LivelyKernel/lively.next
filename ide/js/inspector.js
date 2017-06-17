@@ -818,10 +818,13 @@ class InspectorTreeData extends TreeData {
     node.isCollapsed = bool;
     if (bool || this.isLeaf(node)) return;
 
-    node.children = propertiesOf(node).map(node => {
-      this.parentMap.set(node, node); return node; });
+    if (!node.children.length) {
+      node.children = propertiesOf(node).map(node => {
+        this.parentMap.set(node, node);
+        return node;
+      });
+    }
   }
-
   getChildren(node) { return node.children; }
 
   isLeaf(node) { return obj.isPrimitive(node.value); }
