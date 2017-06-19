@@ -1,7 +1,7 @@
 /* globals Power4 */
 import { arr, tree, obj } from "lively.lang";
 import { Sizzle, SizzleExpression } from "./sizzle.js";
-import { ShadowObject, Button, Text, Icon, HorizontalLayout, morph, Morph, config} from "./index.js";
+import { ShadowObject, CustomLayout, Button, Text, Icon, HorizontalLayout, morph, Morph, config} from "./index.js";
 import { Color, pt, rect } from "lively.graphics";
 import { connect, once, signal, disconnect } from "lively.bindings";
 import { TreeData, Tree } from "./components/tree.js";
@@ -11,11 +11,6 @@ import { LinearGradient } from "lively.graphics/color.js";
 import { CompletionController } from "./text/completion.js";
 
 // TOOLING
-
-function refreshTextMorph(textMorph) {
-  textMorph.selectAll();
-  textMorph.whenRendered().then(() => textMorph.selection.collapseToEnd());
-}
 
 function validRule(rule) {
     let expr = new SizzleExpression(rule, $world);
@@ -31,7 +26,8 @@ class StylePropCompleter {
   compute(_, prefix) {
     let stylePropNames = [];
     for (let p in this.propertiesAndSettings) {
-      if (this.propertiesAndSettings[p].isStyleProp) stylePropNames.push(p);
+      let {isStyleProp, derived, spec} = this.propertiesAndSettings[p];
+      if (isStyleProp && !(derived && !(spec && spec.foldable))) stylePropNames.push(p);
     }
     // todo: fuzzy match these props
     return stylePropNames.filter(p => p.includes(prefix)).map((completion, priority) => {
@@ -48,7 +44,7 @@ class StyleRuleDraft extends Morph {
       styleSheet: {},
       submorphs: {
         initialize() {
-          var ruleInput;
+          var ruleInput, cancelButton;
           this.layout = new HorizontalLayout({spacing: 2});
           this.submorphs = [
             ruleInput = morph({
@@ -56,8 +52,15 @@ class StyleRuleDraft extends Morph {
               type: "text",
               styleClasses: ["empty"],
               textString: "Sizzle Expression"
+            }),
+            cancelButton = Icon.makeLabel('close',{
+              styleClasses: ['empty'],
+              fontColor: Color.rgbHex("5499c7"),
+              fontSize: 14, padding: 2,
+              nativeCursor: 'pointer'
             })
           ];
+          connect(cancelButton, 'onMouseDown', this, 'cancel');
           connect(ruleInput, "onMouseDown", this, "startRuleInput");
           connect(ruleInput, "onKeyDown", this, "onRuleInput");
           connect(ruleInput, "onBlur", this, "submitRule");
@@ -65,7 +68,7 @@ class StyleRuleDraft extends Morph {
       }
     };
   }
-
+  
   compileRule() {
     let ruleInput = this.getSubmorphNamed('ruleInput');
     ruleInput.textString = ruleInput.textString.replace(/\r?\n|\r/g, '');
@@ -88,14 +91,12 @@ class StyleRuleDraft extends Morph {
     } else {
       input.styleClasses = ['default'];
     }
-    refreshTextMorph(input);
   }
 
   startRuleInput() {
     let input = this.get('ruleInput');
     input.textString = '';
     input.styleClasses = ['default'];
-    refreshTextMorph(input);
   }
 
   onRuleInput(evt) {
@@ -113,7 +114,6 @@ class StyleRuleDraft extends Morph {
     if (!input.textString) {
       input.styleClasses = ['empty'];
       input.textString = 'Sizzle Expression';
-      refreshTextMorph(input);
     } else {
       this.compileRule();
     }
@@ -127,29 +127,7 @@ class PropertyDraft extends Morph {
       styleSheet: {},
       rule: {},
       styleClasses: {defaultValue: ["createProp"]},
-      styledClasses: {
-        after: ['rule'],
-        initialize() {
-          this.styledClasses = arr.union(
-               [Morph, Text, Button],
-               new Sizzle($world).select(this.rule)
-                   .map(m => m.constructor));
-        }
-      },
-      globalPropertySettings: {
-        after: ['styledClasses'],
-        initialize() {
-          this.globalPropertySettings = obj.merge(
-            this.styledClasses.map(klass => {
-              let notStyleProps = obj
-                .keys(klass.properties)
-                .filter(p => !klass.properties[p].isStyleProp);
-              return obj.dissoc(klass.properties, notStyleProps);
-            })
-          );
-        }
-      },
-
+      globalPropertySettings: {},
       layout: {
         initialize() {
           this.layout = new HorizontalLayout();
@@ -255,17 +233,15 @@ class PropertyDraft extends Morph {
       this.get('key input').addStyleClass('empty');
       this.get('key input').textString = 'name';
     }
-    // rms: 18.5.17 hack due to text morph rendering bug
-    refreshTextMorph(this.get('key input'))
 
     if (this.isValidProperty(propName)) {
-      let {defaultValue, propertyControl} = this.globalPropertySettings[propName];
-      if (!defaultValue) {
+      let {defaultValue, spec} = this.globalPropertySettings[propName];
+      if (defaultValue == undefined) {
         this.get('value input').readOnly = false;
         this.get('value input').nativeCursor = 'auto';
         this.get('value input').focus();
       } else {
-        this.submit(propName, defaultValue);
+        this.submit(propName, defaultValue, spec);
       }
     }
   }
@@ -284,11 +260,16 @@ class PropertyDraft extends Morph {
     }
   }
 
-  submit(prop, value) {
-    signal(this, 'addProperty', {styleSheet: this.styleSheet, rule: this.rule, prop, value});
+  submit(prop, value, spec) {
+    signal(this, "addProperty", {
+      styleSheet: this.styleSheet,
+      rule: this.rule,
+      prop,
+      value,
+      spec
+    });
     this.reset();
   }
-
   reset() {
     this.get('key input').textString = 'name';
     this.get('key input').styleClasses = ['empty'];
@@ -463,7 +444,6 @@ class StyleSheetControl extends Morph {
   }
 
   removeStyleSheet() {
-    $world.logError('remove')
     signal(this, 'removeStyleSheet', this);
   }
 
@@ -538,7 +518,6 @@ class StyleRuleControl extends Morph {
       this.removeStyleClass("error");
       this.getSubmorphNamed("error") && this.getSubmorphNamed("error").remove();
     }
-    refreshTextMorph(this.get('rule'));
   }
 
   compileRule() {
@@ -590,6 +569,8 @@ class StyleSheetData extends TreeData {
     });
   }
 
+  get globalPropertySettings() { return this.editor.globalPropertySettings }
+  
   parseStyleSheet(styleSheet) {
     return {type: 'sheet',
             isCollapsed: true,
@@ -640,8 +621,8 @@ class StyleSheetData extends TreeData {
     signal(this, 'update');
   }
 
-  cancleRuleDraft(styleSheet, draft) {
-    let rules = this.root.children.find(n => n.value == styleSheet).children;
+  removeRuleDraft(draft) {
+    let rules = this.root.children.find(n => n.value == draft.styleSheet).children;
     arr.remove(rules, draft);
     signal(this, "update");
   }
@@ -672,20 +653,21 @@ class StyleSheetData extends TreeData {
 
   addProperty(args) {
     let rules = this.root.children.find(n => n.value == args.styleSheet).children,
-        props = rules.find(n => n.value == args.rule).children;
+        props = rules.find(n => n.value == args.rule).children,
+        node = {
+          type: "property",
+          styleSheet: args.styleSheet,
+          rule: args.rule,
+          value: args.value,
+          key: args.prop,
+          spec: args.spec,
+          isCollapsed: !!args.spec.foldable,
+        };
     if (args.prop in args.styleSheet.rules[args.rule]) return;
-    arr.pushAt(
-      props,
-      {
-        type: "property",
-        styleSheet: args.styleSheet,
-        rule: args.rule,
-        value: args.value,
-        key: args.prop
-      },
-      -1
-    );
-    this.updateRule(args);
+    node.children = args.spec.foldable ? this.getFoldedMembers(node) : [];
+    arr.pushAt(props, node, -1);
+    [...node.children, node].forEach(n => this.renderProperty(n));
+    this.updateRule(node);
   }
 
   addRule(args) {
@@ -704,38 +686,80 @@ class StyleSheetData extends TreeData {
       },
       -1
     );
+    signal(this, 'update');
     this.updateRule(args);
   }
 
-  updateRule({styleSheet, rule, prop, value}) {
+  updateRule(node) {
+    let {styleSheet, rule, key: prop, foldedProperty, value, spec, 
+         children, parent} = node;
     let props = styleSheet.rules[rule];
-    styleSheet.setRule(rule, props ? {...props, [prop]: value} : {});
+    if (foldedProperty) {
+      value = {...props[foldedProperty], [prop]: value};
+      styleSheet.setRule(rule, props ? {...props, [foldedProperty]: value} : {});
+      // update the node for the foldedProperty display   
+      parent && parent.displayedMorph && signal(parent.displayedMorph, 'update', value);     
+    } else {
+      styleSheet.setRule(rule, props ? {...props, [prop]: value} : {});
+      signal(node.displayedMorph, "update", styleSheet.rules[rule][prop]);
+      if (spec && spec.foldable) {
+        // refresh all the folded member nodes
+        for (let n of children) {
+            signal(n.displayedMorph, "update", value.valueOf ? value.valueOf() : value);
+        }
+      }
+    }
     signal(this, 'update');
   }
 
-  parseProps(styleSheet, rule) {
-    let children = [],
-        props = styleSheet.rules[rule] || {};
-    for (let prop in props) {
-      if (prop == '_deactivated') continue;
-      children.push({type: "property", styleSheet, rule,
-                     value: props[prop], key: prop});
+  getFoldedMembers(node) {
+    let {spec, styleSheet, rule, key, value} = node,
+        children = [];
+    for (let m of spec.foldable) {
+      children.push({type: "property", foldedProperty: key, styleSheet, 
+                     spec: obj.dissoc(spec, 'foldable'),
+                     value: value[m], key: m, rule, parent: node})
     }
-    return [...children, {type: 'prop-adder', styleSheet, rule}];
+    return children;
+  }
+
+  parseProps(styleSheet, rule) {
+    let children = [], props = styleSheet.rules[rule] || {};
+    for (let prop in props) {
+      if (prop == "_deactivated") continue;
+      let {spec} = this.globalPropertySettings[prop] || {},
+          value = spec.foldable ? {...props[prop], valueOf: () => props[prop].left} : value,
+          node = {
+            type: "property",
+            styleSheet,
+            rule,
+            spec,
+            isCollapsed: true,
+            value,
+            key: prop
+          };
+      node.children = spec.foldable ? this.getFoldedMembers(node) : [];
+      children.push(node);
+    }
+    return [...children, {type: "prop-adder", styleSheet, rule}];
   }
 
   renderProperty(node) {
     if (node.displayedMorph) return node.displayedMorph;
     var control = PropertyControl.render({
-       target: node.styleSheet, value: node.value,
+       target: node.styleSheet, value: node.value, spec: node.spec,
        valueString: node.value.toString(), keyString: node.key});
     if (control) {
       node.displayedMorph = control;
-      connect(control, "value", this, "updateRule", {
+      connect(control, "propertyValue", this, "updateRule", {
         converter: v => {
-          return {styleSheet, rule, prop, value: v};
+          return {...node, value: v};
         },
-        varMapping: {styleSheet: node.styleSheet, rule: node.rule, prop: node.key}
+        varMapping: {node}
+      });
+      connect(control, "openWidget", this, "onWidgetOpened", {
+        converter: widget => ({widget, node}),
+        varMapping: {node}
       });
     }
     return control ? node.displayedMorph : `${node.key}: ${safeToString(node.value)}`;
@@ -761,7 +785,9 @@ class StyleSheetData extends TreeData {
         if (!node.displayedMorph) {
           let draft = node.displayedMorph = new StyleRuleDraft(node);
           connect(draft, "cancel", this, "removeRuleDraft", {
-            converter: () => node,
+            updater: function($upd) {
+              $upd(node); 
+            },
             varMapping: {node}
           });
           connect(draft, "addRule", this, "addRule");
@@ -771,6 +797,7 @@ class StyleSheetData extends TreeData {
         return this.renderProperty(node);
       case "prop-adder":
         if (!node.displayedMorph) {
+          node.globalPropertySettings = this.globalPropertySettings;
           node.displayedMorph = new PropertyDraft(node);
           connect(node.displayedMorph, "addProperty", this, "addProperty");
         }
@@ -876,11 +903,11 @@ export class StyleSheetEditor extends Morph {
         fontSize: 14,
         fontFamily: config.codeEditor.defaultStyle.fontFamily
       },
-      ".StyleRuleDraft .Text.empty": {
+      ".StyleRuleDraft .empty": {
         fill: Color.transparent,
         fontColor: Color.rgbHex("5499c7").withA(.7)
       },
-      ".StyleRuleDraft .Text.default": {
+      ".StyleRuleDraft .default": {
         fill: Color.transparent,
         fontColor: Color.rgbHex("5499c7")
       },
@@ -945,7 +972,7 @@ export class StyleSheetEditor extends Morph {
       },
       ".createProp .Text.empty": {
         fill: Color.transparent,
-        fontColor: Color.gray,
+        fontColor: Color.gray.darker().withA(.8),
         fontFamily: config.codeEditor.defaultStyle.fontFamily,
         fontSize: 14
       },
@@ -1011,6 +1038,36 @@ export class StyleSheetEditor extends Morph {
           this.styleSheets = StyleSheetEditor.styleSheet;
         }
       },
+      styledClasses: {
+        //after: ['rule'],
+        initialize() {
+          this.styledClasses = arr.union(
+               [Morph, Text, Button],
+               // new Sizzle($world).select(this.rule)
+               //     .map(m => m.constructor)
+            []);
+        }
+      },
+      globalPropertySettings: {
+        after: ['styledClasses'],
+        initialize() {
+          this.globalPropertySettings = obj.merge(
+            this.styledClasses.map(klass => {
+              let notStyleProps = obj
+                .keys(klass.properties)
+                .filter(p => !klass.properties[p].isStyleProp);
+              return obj.dissoc(klass.properties, notStyleProps);
+            })
+          );
+        }
+      },
+      layout: {
+        initialize() {
+          this.layout = new CustomLayout({
+            relayout: () => this.relayout()
+          })
+        }
+      },
       submorphs: {
         after: ['styleSheets'],
         initialize() {
@@ -1024,16 +1081,50 @@ export class StyleSheetEditor extends Morph {
               selectionFontColor: Color.black,
               name: "propertyTree",
               bounds, treeData: td,
-            })
+            }),
+            {name: 'resizer', 
+             fill: Color.transparent,
+             nativeCursor: 'nwse-resize'}
           ];
           tree.keyhandlers[0].unbindKey('Right');
           tree.keyhandlers[0].unbindKey('Left');
+          connect(td, 'onWidgetOpened', this, 'onWidgetOpened');
           connect(td, 'update', tree, 'update');
-          connect(this, 'extent', tree, 'extent');
+          connect(this.get('resizer'), 'onDrag', this, 'resizeBy', {
+            converter: (evt) => evt.state.dragDelta
+          })
           tree.update();
+          this.height = tree.nodeItemContainer.height;
         }
       }
     }
+  }
+
+  onWidgetOpened({node, widget}) {
+    if (this.openWidget) {
+      this.openWidget.fadeOut();
+    }
+    this.focusedNode = node;
+    this.openWidget = widget;
+    once(this, "onMouseDown", this, "closeOpenWidget");
+    connect(this, 'openInWorld', widget, 'openInWorld', {
+      converter: () => widget.globalPosition, varMapping: {widget}
+    });
+  }
+
+   closeOpenWidget() {
+     this.openWidget && this.openWidget.close();
+   }
+
+  relayout() {
+    let tree = this.get('propertyTree'),
+        treeItemBounds = tree.nodeItemContainer.bounds();
+    if (treeItemBounds.height > this.height && this.height < 300) {
+      this.height = Math.min(treeItemBounds.height, 300);
+    }
+    this.width = tree.width = treeItemBounds.width + 10;
+    tree.height = this.height;
+    this.get('resizer').bottomRight = this.extent;
   }
 
   open() {
@@ -1091,9 +1182,11 @@ export class StyleSheet {
     ["borderRadius", "borderWidth", "borderColor", 'borderStyle'].forEach(p => {
       if (p in props) {
         let v = props[p], {top, bottom, right, left} = v;
-        props[p] = top && bottom && right && left ? v : {top: v, bottom: v, right: v, left: v};
+        props[p] = top && bottom && right && left ? v : {top: v, bottom: v, right: v, left: v, 
+                                                         valueOf: () => v}
       }
     });
+    return props;
   }
 
   refreshMorphsFor(rule) {
@@ -1110,7 +1203,7 @@ export class StyleSheet {
   }
 
   setRule(rule, props) {
-    this.rules[rule] = props;
+    this.rules[rule] = this.unwrapFoldedProps(props);
     this.refreshMorphsFor(rule);
   }
 
