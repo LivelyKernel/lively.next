@@ -268,9 +268,9 @@ class StyleMapper {
         fill = path.fill
              ? path.fill.isGradient ? "url(#gradient-fill" + id + ")" : fill.toString()
              : "transparent",
-        stroke = borderColor.isGradient
+        stroke = borderColor.valueOf().isGradient
           ? "url(#gradient-borderColor" + id + ")"
-          : borderColor.toString(),
+          : borderColor.valueOf().toString(),
         d = `M${startX}, ${startY} C `
           + `${startNext.x}, ${startNext.y} `
           + interVertices.map(({x, y, controlPoints: {previous: p, next: n}}) => {
@@ -279,7 +279,7 @@ class StyleMapper {
           + ` ${endPrev.x},${endPrev.y} ${endX},${endY}`;
 
     return {
-      "stroke-width": borderWidth,
+      "stroke-width": borderWidth.valueOf(),
       ...this.getSvgBorderStyle(path),
       "paint-order": "stroke",
       fill, stroke, d
@@ -287,12 +287,13 @@ class StyleMapper {
   }
 
   static getSvgBorderStyle(svg) {
-      const style = {
+      const bw = svg.borderWidth.valueOf(),
+            style = {
           solid: {},
-          dashed: {"stroke-dasharray": svg.borderWidth * 1.61 + " " + svg.borderWidth},
-          dotted: {"stroke-dasharray": "1 " + svg.borderWidth * 2,"stroke-linecap": "round", "stroke-linejoin": "round",}
+          dashed: {"stroke-dasharray": bw * 1.61 + " " + bw},
+          dotted: {"stroke-dasharray": "1 " + bw * 2,"stroke-linecap": "round", "stroke-linejoin": "round",}
       }
-      return style[svg.borderStyle];
+      return style[svg.borderStyle.valueOf()];
   }
 
   static getStyleProps(morph) {
@@ -730,7 +731,7 @@ function shadowCss(morph) {
 }
 
 export function renderGradient(morph, prop) {
-  const gradient = morph[prop],
+  const gradient = morph[prop].valueOf(),
         {bounds, focus, vector} = gradient;
   return h(gradient.type, {
                namespace: "http://www.w3.org/2000/svg",
