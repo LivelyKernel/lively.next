@@ -15,7 +15,7 @@ export class Button extends Morph {
 
   static get styleSheet() {
     return new StyleSheet('Button Style', {
-      ".Button": {borderWidth: 1, borderRadius: 5, extent: pt(100,24)},
+      ".Button": {borderWidth: 1, borderRadius: 5, extent: pt(100,)},
       ".Button.activeStyle": {
         borderColor: Color.gray,
         fill: new LinearGradient({
@@ -154,7 +154,7 @@ export class Button extends Morph {
           if (codeOrIconMorph && codeOrIconMorph.isMorph) {
             this.iconMorph = codeOrIconMorph;
           } else {
-            this.iconMorph.value = codeOrIconMorph;
+            this.iconMorph.value = codeOrIconMorph || "";
           }
         }
       },

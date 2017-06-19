@@ -115,7 +115,7 @@ describe("buttons", function() {
       expect(button.iconMorph.leftCenter).equals(button.labelMorph.rightCenter);
 
       button.icon = null;
-      expect(button.iconMorph.value).equals(null);
+      expect(button.iconMorph.value).equals('');
     });
     
     it("active style restored on mouse up", () => {
