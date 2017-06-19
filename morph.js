@@ -218,11 +218,11 @@ export class Morph {
       rotation:           {
         spec: {
           type: 'Number',
-          min: 0,
-          max: 2 * Math.PI          
+          isFloat: true          
         },
         isStyleProp: true, defaultValue:  0},
-      scale: {spec: {type: "Number", min: 0}, isStyleProp: true, defaultValue: 1},
+      scale: {spec: {type: "Number", min: 0, isFloat: true}, 
+              isStyleProp: true, defaultValue: 1},
       opacity:            {
         spec: {
           type: 'Number',
@@ -392,7 +392,7 @@ export class Morph {
           foldable: ['top', 'left', 'right', 'bottom'],
           min: 0
         },
-        defaultValue: {top: 0, bottom: 0, left: 0, right: 0},
+        defaultValue: {top: 0, bottom: 0, left: 0, right: 0, valueOf: () => 0},
         get() { 
           let v = this.getProperty('borderWidth');
           return {...v, valueOf: () => v.left } 
@@ -416,7 +416,7 @@ export class Morph {
           min: 0,
           foldable: ['top', 'left', 'right', 'bottom']
         },
-        defaultValue: {top: 0, bottom: 0, right: 0, left: 0},
+        defaultValue: {top: 0, bottom: 0, right: 0, left: 0, valueOf: () => 0},
         get() {
           let v = this.getProperty('borderRadius');
           return {...v, valueOf: () => v.left }
@@ -450,7 +450,10 @@ export class Morph {
           values: ["none", "hidden", "dotted", "dashed",
                    "solid", "double", "groove", "ridge", "inset", "outset"]
         },
-        defaultValue: {top: 'solid', left: 'solid', bottom: 'solid', right: 'solid'},
+        defaultValue: {
+          top: 'solid', left: 'solid', bottom: 'solid',              
+          right: 'solid', valueOf: () => 'solid'
+        },
         get() {
           let v = this.getProperty('borderStyle');
           return {...v, valueOf: () => v.left}
@@ -473,7 +476,10 @@ export class Morph {
           type: "Color",
           foldable: ["top", "left", "right", "bottom"]
         },
-        defaultValue: {top: Color.white, left: Color.white, bottom: Color.white, right: Color.white},
+        defaultValue: {
+          top: Color.white, left: Color.white, bottom: Color.white, 
+          right: Color.white, valueOf: () => Color.white
+        },
         get() {
           let v = this.getProperty("borderColor");
           return {...v, valueOf: () => v.left};
@@ -740,8 +746,8 @@ export class Morph {
     this._defaultStyleProperties = this._defaultStyleProperties || this.styleProperties;
     const v = this._morphicState[key],
           dv = this.defaultProperty(key),
-          isGeoObj = v && [Rectangle, Point, Color].includes(v.constructor);
-    if (this._defaultStyleProperties.includes(key) && (isGeoObj ? v.equals(dv) : v == dv)) {
+          isGeoObj = v && [Rectangle, Point, Color, Object].includes(v.constructor);
+    if (this._defaultStyleProperties.includes(key) && (isGeoObj ? obj.equals(v, dv) : v == dv)) {
       if (!this._styleSheetProps) {
         this._styleSheetsInScope = this.getStyleSheetsInScope();
         this._styleSheetProps = {};
@@ -2642,6 +2648,21 @@ export class Path extends Morph {
 
   static get properties() {
     return {
+      borderColor: {
+        isStyleProp: true,
+        derived: true,
+        spec: {
+          type: "ColorGradient",
+          foldable: ["top", "left", "right", "bottom"]
+        },
+        set(value) {
+          if (!value) value = Color.white;
+          if (value.isColor || value.isGradient) {
+            value = {top: value, left: value, right: value, bottom: value};
+          }
+          this.setProperty("borderColor", value);
+        }
+      },
       vertices: {
         defaultValue: [],
         spec: {
