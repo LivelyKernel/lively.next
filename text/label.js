@@ -423,7 +423,7 @@ export class Label extends Morph {
         attrs = {style};
     if (backgroundColor) style.backgroundColor = String(backgroundColor);
     if (fontFamily) style.fontFamily = fontFamily;
-    if (fontColor) style.fontColor = String(fontColor);
+    if (fontColor) style.color = String(fontColor);
     if (fontWeight !== "normal") style.fontWeight = fontWeight;
     if (fontStyle !== "normal") style.fontStyle = fontStyle;
     if (textDecoration !== "none") style.textDecoration = textDecoration;
