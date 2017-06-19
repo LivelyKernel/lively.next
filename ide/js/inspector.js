@@ -265,8 +265,8 @@ class PropertyNode extends InspectionNode {
     }); 
   }
 
-  refreshProperty(v) {
-    if (this.target[this.keyString] != v) this.target[this.keyString] = v;
+  refreshProperty(v, updateTarget = false) {
+    if (updateTarget) this.target[this.keyString] = v;
     this.value = this.target[this.keyString];
     signal(this._propertyWidget, 'update', this.value);
     if (this.isFoldable) {
@@ -297,7 +297,11 @@ class PropertyNode extends InspectionNode {
 
       if (this._propertyWidget) {
         if (!this.isInternalProperty && !spec.readOnly) {
-          connect(this._propertyWidget, "propertyValue", this, "refreshProperty");
+          connect(this._propertyWidget, "propertyValue", this, "refreshProperty", {
+            updater: function($upd, val) {
+              $upd(val, true); 
+            }
+          });
           connect(this._propertyWidget, "openWidget", this.root, "onWidgetOpened", {
             converter: widget => {
               return {widget, node};
@@ -324,8 +328,8 @@ class FoldedNode extends PropertyNode {
     this.foldedProp = foldableNode.key + string.capitalize(this.key);
   }
 
-  refreshProperty(v) {
-    this.foldableNode.refreshProperty({...this.target[this.foldableNode.key], [this.key]: v})
+  refreshProperty(v, updateTarget) {
+    this.foldableNode.refreshProperty({...this.target[this.foldableNode.key], [this.key]: v}, updateTarget);
   }
   
 }
@@ -944,10 +948,14 @@ export default class Inspector extends Morph {
     this.state = {targetObject: undefined, updateInProgress: false};
     this.targetObject = targetObject || null;
     if (!this.targetObject.isWorld) this.startStepping(10,'refreshAllProperties');
-    //if (!this.targetObject.isWorld) connect(this.targetObject, 'onChange', this, 'refreshAllProperties');
   }
 
   refreshAllProperties() {
+    if (this.targetObject._styleSheetProps != this.lastStyleSheetProps) {
+      this.refreshTreeView();
+      this.lastStyleSheetProps = this.targetObject._styleSheetProps;
+      return;
+    }
     if (!this.targetObject || !this.targetObject.isMorph) return;
     let change = last(this.targetObject.env.changeManager.changesFor(this.targetObject));
     if (change == this.lastChange) return;
@@ -956,7 +964,11 @@ export default class Inspector extends Morph {
       return;
     }
     this.lastChange = change;
-    this.originalData.asListWithIndexAndDepth().forEach(({node}) => {
+    this.refreshTreeView()
+  }
+
+  refreshTreeView() {
+    this.originalData.asListWithIndexAndDepth(false).forEach(({node}) => {
       let v = this.targetObject[node.key];
       if (v != node.value && node.refreshProperty) {
          node.refreshProperty(v); 
