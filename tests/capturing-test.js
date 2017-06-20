@@ -95,6 +95,19 @@ describe("ast.capturing", function() {
     expect(result).equals(expected);
   });
 
+  it("keep var decls when requested", function() {
+    var code     = "var x = 2, y = 3; baz(x, y)",
+        expected = `foo.x = 2;\n`
+                 + `var x = foo.x;\n`
+                 + `foo.y = 3;\n`
+                 + `var y = foo.y;\n`
+                 + `foo.baz(foo.x, foo.y);`,
+        recorder = {name: "foo", type: "Identifier"},
+        result   = stringify(rewriteToCaptureTopLevelVariables(
+                    parse(code), recorder, {keepTopLevelVarDecls: true}));
+    expect(result).equals(expected);
+  });
+
   describe("try-catch", () => {
 
     testVarTfm("isn't transformed",

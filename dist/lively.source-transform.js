@@ -414,6 +414,7 @@ function replaceVarDecls(parsed, options) {
 
       // This is rewriting normal vars
       replaced.push(assignExpr(options.captureObj, decl.id, initWrapped, false));
+      if (options.keepTopLevelVarDecls) replaced.push(varDecl(decl.id, member(options.captureObj, decl.id)));
     }
 
     return replaced;
@@ -910,7 +911,7 @@ function declarationWrapperCall(declarationWrapperNode, declNode, varNameLiteral
     if (evalId !== undefined) keyVals.push("evalId", lively_ast.nodes.literal(evalId));
     if (sourceAccessorName) keyVals.push("moduleSource", lively_ast.nodes.id(sourceAccessorName));
     if (addMeta) {
-      return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder, lively_ast.nodes.objectLiteral(keyVals) /*meta node*/);
+      return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder, lively_ast.nodes.objectLiteral(keyVals /*meta node*/));
     }
   }
 

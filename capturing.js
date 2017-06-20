@@ -361,6 +361,8 @@ function replaceVarDecls(parsed, options) {
 
       // This is rewriting normal vars
       replaced.push(assignExpr(options.captureObj, decl.id, initWrapped, false));
+      if (options.keepTopLevelVarDecls)
+        replaced.push(varDecl(decl.id, member(options.captureObj, decl.id)));
     }
 
     return replaced;
