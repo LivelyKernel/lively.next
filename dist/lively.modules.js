@@ -14076,7 +14076,7 @@ module.exports = function(acorn) {
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v7.7.3',
+        version: 'v7.10.0',
         browser: true,
         env: {},
         argv: [],
@@ -15666,11 +15666,14 @@ module.exports = function(acorn) {
           return parenthesize(result, Precedence.Member, precedence);
         },
         MetaProperty: function (expr, precedence, flags) {
-          var result;
-          result = [];
-          result.push(expr.meta);
-          result.push('.');
-          result.push(expr.property);
+          var result, meta, property;
+          meta = typeof expr.meta.type === 'string' && expr.meta.type === Syntax.Identifier ? expr.meta.name : expr.meta;
+          property = typeof expr.property.type === 'string' && expr.property.type === Syntax.Identifier ? expr.property.name : expr.property;
+          result = [
+            meta,
+            '.',
+            property
+          ];
           return parenthesize(result, Precedence.Member, precedence);
         },
         UnaryExpression: function (expr, precedence, flags) {
@@ -15897,13 +15900,13 @@ module.exports = function(acorn) {
           multiline = false;
           if (expr.properties.length === 1) {
             property = expr.properties[0];
-            if (property.value.type !== Syntax.Identifier) {
+            if (property.type !== 'RestElement' && property.value.type !== Syntax.Identifier) {
               multiline = true;
             }
           } else {
             for (i = 0, iz = expr.properties.length; i < iz; ++i) {
               property = expr.properties[i];
-              if (!property.shorthand) {
+              if (property.type !== 'RestElement' && !property.shorthand) {
                 multiline = true;
                 break;
               }
@@ -21226,12 +21229,11 @@ walk.visitors = {
       c(node.property, st, "Expression");
     }
   }, walk.base)
-};
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-
-// from lively.ast.AstHelper
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-
-function findNodeByAstIndex(parsed, astIndexToFind, addIndex) {
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // from lively.ast.AstHelper
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-
+};function findNodeByAstIndex(parsed, astIndexToFind, addIndex) {
   addIndex = addIndex == null ? true : !!addIndex;
   if (!parsed.astIndex && addIndex) addAstIndex(parsed);
   // we need to visit every node, forEachNode is highly
@@ -21783,15 +21785,9 @@ var methods = {
     visitor.accept(parsed2);
   }
 
-};
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-var withMozillaAstDo = methods.withMozillaAstDo;
-var printAst = methods.printAst;
-var compareAst = methods.compareAst;
-var pathToNode = methods.pathToNode;
-var rematchAstWithSource = methods.rematchAstWithSource;
+};var withMozillaAstDo = methods.withMozillaAstDo; var printAst = methods.printAst; var compareAst = methods.compareAst; var pathToNode = methods.pathToNode; var rematchAstWithSource = methods.rematchAstWithSource;
 
 
 
@@ -22003,6 +21999,15 @@ function ifStmt(test) {
   };
 }
 
+function forIn(varDeclOrName, objExprOrName, body) {
+  return {
+    type: "ForInStatement",
+    left: typeof varDeclOrName === "string" ? varDecl(varDeclOrName) : varDeclOrName,
+    right: typeof objExprOrName === "string" ? id(objExprOrName) : objExprOrName,
+    body: body
+  };
+}
+
 function conditional(test) {
   var consequent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : id("undefined");
   var alternate = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : id("undefined");
@@ -22042,6 +22047,7 @@ var nodes = Object.freeze({
 	program: program,
 	tryStmt: tryStmt,
 	ifStmt: ifStmt,
+	forIn: forIn,
 	conditional: conditional,
 	logical: logical
 });
@@ -22050,16 +22056,19 @@ var nodes = Object.freeze({
 
 var helpers = {
   declIds: function declIds(nodes) {
-    return lively_lang.arr.flatmap(nodes, function (ea) {
-      if (!ea) return [];
-      if (ea.type === "Identifier") return [ea];
-      if (ea.type === "RestElement") return [ea.argument];
+    var result = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (!node) continue;else if (node.type === "Identifier") result.push(node);else if (node.type === "RestElement") result.push(node.argument);
       // AssignmentPattern: default arg like function(local = defaultVal) {}
-      if (ea.type === "AssignmentPattern") return helpers.declIds([ea.left]);
-      if (ea.type === "ObjectPattern") return helpers.declIds(lively_lang.arr.pluck(ea.properties, "value"));
-      if (ea.type === "ArrayPattern") return helpers.declIds(ea.elements);
-      return [];
-    });
+      else if (node.type === "AssignmentPattern") result.push.apply(result, toConsumableArray(helpers.declIds([node.left])));else if (node.type === "ObjectPattern") {
+          for (var j = 0; j < node.properties.length; j++) {
+            var prop = node.properties[j];
+            result.push.apply(result, toConsumableArray(helpers.declIds([prop.value || prop])));
+          }
+        } else if (node.type === "ArrayPattern") result.push.apply(result, toConsumableArray(helpers.declIds(node.elements)));
+    }
+    return result;
   },
   varDecls: function varDecls(scope) {
     return lively_lang.arr.flatmap(scope.varDecls, function (varDecl) {
@@ -22304,11 +22313,10 @@ function topLevelDeclsAndRefs(parsed, options) {
     undeclaredNames: undeclared,
     refs: refs,
     thisRefs: scope.thisRefs
-  };
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function findUndeclaredReferences(scope) {
+  };function findUndeclaredReferences(scope) {
     var names = _declaredVarNames(scope, useComments);
     return scope.subScopes.map(findUndeclaredReferences).reduce(function (refs, ea) {
       return refs.concat(ea);
@@ -23062,7 +23070,8 @@ function extractComments(astOrCode, optCode) {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function isInObjectMethod(comment) {
-    return lively_lang.arr.equals(comment.path.slice(-2), ["value", "body"]); // obj expr
+    return lively_lang.arr.equals(comment.path.slice(-2), ["value", "body"] // obj expr
+    );
   }
 
   function isInAssignedMethod(comment) {
@@ -23299,8 +23308,8 @@ function findDecls(parsed, options) {
               var def = _step2.value;
 
               if (def.parent && filtered.includes(def.parent) || // parent is in
-              (def.node.source || "").includes("\n") // more than one line
-              ) filtered.push(def);
+              (def.node.source || "").includes("\n" // more than one line
+              )) filtered.push(def);
             }
           } catch (err) {
             _didIteratorError2 = true;
@@ -28190,7 +28199,7 @@ var Resource$$1 = function () {
   }, {
     key: "__serialize__",
     value: function __serialize__() {
-      return { __expr__: "resource(\"" + this.url + "\")", bindings: { "lively.resources": ["resource"] } };
+      return { __expr__: "var r = null; try { r = resource(\"" + this.url + "\");} catch (err) {}; r", bindings: { "lively.resources": ["resource"] } };
     }
   }, {
     key: "isResource",
@@ -28661,6 +28670,8 @@ var WebDAVResource = function (_Resource) {
                 return makeRequest(this, "PROPFIND", null, // propfindRequestPayload(),
                 {
                   'Content-Type': 'text/xml'
+                  // rk 2016-06-24: jsDAV does not support PROPFIND via depth: 'infinity'
+                  // 'Depth': String(depth)
                 });
 
               case 2:
