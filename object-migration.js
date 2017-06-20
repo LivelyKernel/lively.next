@@ -1,6 +1,8 @@
-import { Color, pt } from "lively.graphics";
-import { morph } from "lively.morphic";
+import { Color, rect, pt } from "lively.graphics";
+import { morph, Icon } from "lively.morphic";
 import { removeUnreachableObjects } from "lively.serializer2/snapshot-navigation.js";
+import { obj } from "lively.lang";
+import { connect } from "lively.bindings";
 
 export var migrations = [
 
@@ -46,8 +48,9 @@ to
 A recent change in the structure of windows, that now adds a "button wrapper"
 morph breaks old windows without it.
 `,
-    objectConverter: ({snapshot, id}, pool) => {
-      let rootMorph = pool.refForId(id).realObj;
+    objectConverter: (idAndSnapshot, pool) => {
+      let {snapshot, id} = idAndSnapshot,
+          rootMorph = pool.refForId(id).realObj;
       if (rootMorph && rootMorph.isMorph)
         rootMorph.withAllSubmorphsDo(win => {
           if (!win.isWindow || win.submorphs.some(m => m.name === "button wrapper")) return;
@@ -64,6 +67,7 @@ morph breaks old windows without it.
           win.buttons().forEach(ea => ea.extent = pt(14,14));
           win.getWindow().relayoutWindowControls();
         });
+      return idAndSnapshot;
     }
   },
 
@@ -110,6 +114,54 @@ For now only a simple default theme...
           delete serialized["lively.serializer-class-info"]
         }
       }
+      return idAndSnapshot;
+    }
+  },
+
+  {
+    date: "2017-06-20",
+    name: "Window Menu Button",
+    description: `Requested by Dan, Windows now come with an additional window button.`,
+    objectConverter: (idAndSnapshot, pool) => {
+      let {id, snapshot} = idAndSnapshot;
+      let rootMorph = pool.refForId(id).realObj;
+      if (rootMorph && rootMorph.isMorph)
+        rootMorph.withAllSubmorphsDo(win => {
+          if (!win.isWindow || win.submorphs.some(m => m.name === "window menu button")) return;
+          let menuButton = Icon.makeLabel("list", {
+            styleClasses: ["windowTitleLabel"],
+            fontSize: 15,
+            nativeCursor: "pointer",
+            padding: rect(5, 0, 0, 0),
+            name: "window menu button"
+          });
+          win.controls = [...win.controls, menuButton];
+          connect(menuButton, 'onMouseDown', win, 'openWindowMenu');
+          if (win.resizable) win.controls.push(win.resizer());
+          win.submorphs = [...win.submorphs, ...win.controls];
+          win.buttons().forEach(ea => ea.extent = pt(14,14));
+          win.getWindow().relayoutWindowControls();
+        });
+      return idAndSnapshot;
+    }
+  },
+
+  {
+    date: "2017-06-20",
+    name: "Unwrapped Style Sheet Props",
+    description: `Style Sheets now store foldable props in their nested format.`,
+    objectConverter: (idAndSnapshot, pool) => {
+      let {id, snapshot} = idAndSnapshot;
+      let rootMorph = pool.refForId(id).realObj;
+      if (rootMorph && rootMorph.isMorph)
+        rootMorph.withAllSubmorphsDo(m => {
+          if (m.styleSheets && m.styleSheets.length > 0) {
+            m.styleSheets.forEach(ss => {
+              for (let rule in obj.dissoc(ss.rules, ['_rev'])) 
+                ss.rules[rule] = ss.unwrapFoldedProps(ss.rules[rule]);
+            }) 
+          }
+        });
       return idAndSnapshot;
     }
   }
