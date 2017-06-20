@@ -202,7 +202,8 @@ export class ObjectEditor extends Morph {
   get ui() {
     return {
       addImportButton:     this.getSubmorphNamed("addImportButton"),
-      addMethodButton:     this.getSubmorphNamed("addMethodButton"),
+      addButton:           this.getSubmorphNamed("addButton"),
+      removeButton:        this.getSubmorphNamed("removeButton"),
       classTree:           this.getSubmorphNamed("classTree"),
       chooseTargetButton:  this.getSubmorphNamed("chooseTargetButton"),
       cleanupButton:       this.getSubmorphNamed("cleanupButton"),
@@ -237,7 +238,8 @@ export class ObjectEditor extends Morph {
 
     let {
       addImportButton,
-      addMethodButton,
+      addButton,
+      removeButton,
       chooseTargetButton,
       classTree,
       cleanupButton,
@@ -257,7 +259,8 @@ export class ObjectEditor extends Morph {
     connect(chooseTargetButton, "fire", this, "execCommand", {converter: () => "choose target"});
 
     connect(classTree, "selection", this, "onClassTreeSelection");
-    connect(addMethodButton, "fire", this, "interactivelyAddMethod");
+    connect(addButton, "fire", this, "interactivelyAddMethod");
+    connect(removeButton, "fire", this, "interactivelyRemoveMethodOrClass");
     connect(forkPackageButton, "fire", this, "interactivelyForkPackage");
     connect(openInBrowserButton, "fire", this, "execCommand",
       {updater: function($upd) { $upd("open class in system browser", {klass: this.targetObj.selectedClass}); }});
@@ -337,6 +340,13 @@ export class ObjectEditor extends Morph {
     }
   }
 
+  rebuild() {
+    let spec = this.browseSpec();
+    this.submorphs = this.build();
+    this.reset();
+    this.browse(spec);
+  }
+
   build() {
     var listStyle = {
           // borderWidth: 1, borderColor: Color.gray,
@@ -391,7 +401,8 @@ export class ObjectEditor extends Morph {
 
       {name: "classAndMethodControls",
        layout: new HorizontalLayout({autoResize: false, direction: "centered", spacing: 2}), submorphs: [
-         {...btnStyle, name: "addMethodButton", label: Icon.makeLabel("plus"), tooltip: "add a new method"},
+         {...btnStyle, name: "addButton", label: Icon.makeLabel("plus"), tooltip: "add a new method"},
+         {...btnStyle, name: "removeButton", label: Icon.makeLabel("minus"), tooltip: "remove a method or class"},
          {...btnStyle, name: "forkPackageButton", fontSize: 14, label: Icon.makeLabel("code-fork"), tooltip: "fork package"},
          {...btnStyle, name: "openInBrowserButton", fontSize: 14, label: Icon.makeLabel("external-link"), tooltip: "open selected class in system browser"},
        ]},
@@ -605,6 +616,27 @@ export class ObjectEditor extends Morph {
     return this;
   }
 
+  browseSpec(complete = true) {
+    let {
+      target,
+      selectedClass,
+      selectedMethod,
+      backend,
+      ui: {
+        classTree: {scroll: classTreeScroll},
+        sourceEditor: {scroll, cursorPosition: textPosition}
+      }
+    } = this;
+
+    return {
+      target,
+      selectedClass,
+      selectedMethod,
+      backend,
+      ...complete ? {scroll, textPosition, classTreeScroll} : {}
+    };
+  }
+
   onClassTreeSelection(node) {
     if (!node) { return; }
 
@@ -627,17 +659,41 @@ export class ObjectEditor extends Morph {
       node.target.owner && isClass(node.target.owner) ? node.target.owner :
         null;
 
-    let items = [], t = this.target;
-    if (klass) {
+    let items = [],
+        t = this.target,
+        pkg = ObjectPackage.lookupPackageForObject(t);
+    
+    if (klass && pkg && pkg.objectClass === klass) {
       // FIXME!!!!
       if (t.constructor === klass && klass.name !== "Morph") {
         items.push([`remove ${klass.name}`, async () => {
           let nextClass = withSuperclasses(t.constructor)[1],
               {package: {name: packageName}} = klass[Symbol.for("lively-module-meta")],
-              really = await $world.confirm(`Do you really want to make ${t} an instance of ${nextClass.name} and remove class ${klass.name} and its package ${packageName}?`)
+              really = await this.world().confirm(`Do you really want to make ${t} an instance of `
+                                                + `${nextClass.name} and remove class ${klass.name} `
+                                                + `and its package ${packageName}?`);
           if (!really) return;
           adoptObject(t, nextClass);
           this.refresh();
+        }]);
+        
+        items.push([`fork ${klass.name}`, async () => {
+          let nextClass = withSuperclasses(t.constructor)[1],
+              {package: {name: packageName}} = klass[Symbol.for("lively-module-meta")],
+              forkedName = await this.world().prompt("Enter a name for the forked class and its package", {
+                requester: this,
+                input: klass.name + "Fork",
+                historyId: "lively.morphic-object-editor-fork-names",
+                useLastInput: false
+              });
+
+          if (!forkedName) return;
+
+          adoptObject(t, nextClass);
+          let {baseURL, System} = pkg,
+              forkedPackage = await pkg.fork(forkedName, {baseURL, System});
+          await adoptObject(t, forkedPackage.objectClass);
+          await this.browse({target: t, selectedClass: forkedPackage.objectClass});
         }]);
 
       }
@@ -825,19 +881,14 @@ export class ObjectEditor extends Morph {
           pkg = ObjectPackage.lookupPackageForObject(t);
 
       if (!pkg) {
-        let objPkgName = await this.world()
-          .prompt(
-            `No object package exists yet for object ${t}.\n` +
-              `Enter a name for a new package:`,
-            {
-              historyId: "object-package-name-hist",
-              input: string.capitalize(t.name).replace(/\s/g, "-")
-            }
-          );
-        if (!objPkgName) {
-          this.setStatusMessage("Canceled");
-          return;
-        }
+        let objPkgName = await this.world().prompt(
+          `No object package exists yet for object ${t}.\n`
+        + `Enter a name for a new package:`, {
+          historyId: "object-package-name-hist",
+          input: string.capitalize(t.name).replace(/\s/g, "-")
+        });
+
+        if (!objPkgName) { this.setStatusMessage("Canceled"); return; }
         pkg = ObjectPackage.withId(objPkgName);
         await pkg.adoptObject(t);
       }
@@ -849,6 +900,38 @@ export class ObjectEditor extends Morph {
     } catch (e) {
       this.showError(e);
     }
+  }
+
+  async interactivelyRemoveMethodOrClass() {
+    $world.inform("work in progress");
+    // try {
+    //   // let input = await this.world().prompt("Enter method name",
+    //   //                   {historyId: "object-editor-method-name-hist"});
+    //   // if (!input) return;
+    //   let t = this.target,
+    //       pkg = ObjectPackage.lookupPackageForObject(t);
+    // 
+    //   if (!pkg) {
+    //     let objPkgName = await this.world().prompt(
+    //       `No object package exists yet for object ${t}.\n`
+    //     + `Enter a name for a new package:`, {
+    //       historyId: "object-package-name-hist",
+    //       input: string.capitalize(t.name).replace(/\s/g, "-")
+    //     });
+    // 
+    //     if (!objPkgName) { this.setStatusMessage("Canceled"); return; }
+    //     pkg = ObjectPackage.withId(objPkgName);
+    //     await pkg.adoptObject(t);
+    //   }
+    // 
+    //   let {methodName} = await addScript(t, "function() {}", "newMethod");
+    //   await this.refresh();
+    //   await this.selectMethod(t.constructor, {name: methodName}, true, true);
+    //   this.focus();
+    // } catch (e) {
+    //   this.showError(e);
+    // }
+
   }
 
   async interactivelyCreateObjectPackage() {
