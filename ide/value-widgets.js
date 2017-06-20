@@ -3,14 +3,29 @@ import { Morph, Text, morph, Label, HorizontalLayout,
 import { connect, signal } from "lively.bindings";
 import { Color, LinearGradient, pt, rect } from "lively.graphics";
 import { ValueScrubber } from "../components/widgets.js";
-import { FillPopover, ShadowPopover, PointPopover, VerticesPopover, LayoutPopover, Popover } from "./styling/style-popover.js";
+import { FillPopover, RectanglePopover, ShadowPopover, PointPopover, VerticesPopover, LayoutPopover, Popover } from "./styling/style-popover.js";
 import { num, obj } from "lively.lang";
 import { StyleSheetEditor } from "../style-rules.js";
 
+/*
 
-//new NumberWidget().openInWorld()
+Value Widgets are the default visual elements in lively.morphic to modify certain
+types of values via direct manipulation.
+The idea is to make frequently reappearing types of values within the morphic system (such as Points, Gradients, Colors etc...) easily recognizable by the user in various different context (i.e. tools).
+The widgets are designed to be easily embeddable into a variety of different context both in a programmatic and visual (that is aesthetic) way.
 
-// these only work if supplied together with a single morph as context
+Developers conceiving new tools in lively are therefore encouraged to make use of these existing and/or add their own for new types of values as they please.
+
+*/
+
+/* 
+
+  About Context Sensitive Widgets:
+
+  It so happens that some properties of morphs can not be inspected in a meaningful way without taking into account to which morph the current property belongs to.
+  Take for instance the example of the layout property: Parametrizing layouts in a visual ways often requires us to directly interact with the morph the layout is attached to. For instance adding and removing morphs to and from cells of a GridLayout can not be done via direct manipulation without referring top a concrete morph instance that the GridLayout is attached to. Though these types of properties are (fortnunately rare), the widgets that modify these properties require a certain context (that is a morph) they can bind the change requests by the user.
+
+*/
 
 class ContextSensitiveWidget extends Morph {
   
@@ -93,13 +108,14 @@ export class StyleSheetWidget extends ShortcutWidget {
   }
   
   openPopover() {
-     let editor = new Popover({
-       popoverColor: LinearGradient.create({0: Color.gray.lighter(), 1: Color.gray}),
-       targetMorph: new StyleSheetEditor({target: this.context})});
-     editor.fadeIntoWorld(this.globalBounds().center());
-     signal(this, "openWidget", editor);
-  }
-  
+    let editor = new Popover({
+      popoverColor: LinearGradient.create({0: Color.gray.lighter(), 1: Color.gray}),
+      targetMorph: new StyleSheetEditor({target: this.context})
+    });
+    editor.fadeIntoWorld(this.globalBounds().center());
+    connect(editor, "fadeOut", editor.targetMorph, "closeOpenWidget");
+    signal(this, "openWidget", editor);
+  }  
 }
 
 export class LayoutWidget extends ShortcutWidget {
@@ -611,14 +627,12 @@ export class ShadowWidget extends Morph {
   
 }
 
-export class PointWidget extends Text {
+export class PointWidget extends Label {
 
   static get properties() {
     return {
       fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
       nativeCursor: {defaultValue: 'pointer'},
-      fill: {defaultValue: Color.transparent},
-      readOnly: {defaultValue: true},
       pointValue: {
         after: ['textAndAttributes'],
         set(p) {
@@ -648,4 +662,31 @@ export class PointWidget extends Text {
     signal(this, "openWidget", editor);
   }
   
+}
+
+export class PaddingWidget extends Label {
+
+  static get properties() {
+    return {
+      nativeCursor: {defaultValue: 'pointer'},
+      rectangle: {
+        defaultValue: rect(0),
+        set(r) {
+          this.setProperty('rectangle', r);
+          this.value = obj.safeToString(r);
+        }
+      }
+    }
+  }
+  
+  onMouseDown(evt) {
+    this.openPopover();
+  }
+
+  openPopover() {
+    let editor = new RectanglePopover({rectangle: this.rectangle});
+    editor.fadeIntoWorld(this.globalBounds().center());
+    connect(editor, 'rectangle', this, 'rectangle');
+    signal(this, "openWidget", editor);
+  }
 }

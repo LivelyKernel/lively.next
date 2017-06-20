@@ -97,6 +97,12 @@ export class Popover extends Morph {
         borderRadius: 4,
         clipMode: "hidden"
       },
+      ".controlName": {
+          fontSize: 14,
+          padding: rect(0, 3, 0, 0),
+          opacity: 0.5,
+          fontWeight: 'bold'
+        },
       ".NumberWidget": {
             padding: rect(5,3,0,0),
             borderRadius: 3,
@@ -564,13 +570,6 @@ export class ShadowPopover extends StylePopover {
       width: 120,
       height: 145,
       fill: Color.transparent,
-      styleSheets: new StyleSheet({
-        ".controlName": {
-          fontSize: 14,
-          padding: rect(0, 3, 0, 0),
-          opacity: 0.9
-        }
-      }),
       submorphs: arr.flatten(
         [
           ["distance", distanceInspector],
@@ -851,4 +850,57 @@ export class VerticesPopover extends StylePopover {
       "transform vertices": ["modeBox", "transformMode"]
     }[cmd.name];
   } 
+}
+
+export class RectanglePopover extends StylePopover {
+
+  static get properties() {
+    return {
+      popoverColor: {defaultValue: Color.gray.lighter()},
+      rectangle: {defaultValue: rect(0)}
+    }
+  }
+
+  controls() {
+    return [
+      {
+        fill: Color.transparent,
+        extent: pt(120,100),
+        layout: new GridLayout({
+          grid: [['top', 'top scrubber'],
+                 ['right', 'right scrubber'],
+                 ['left', 'left scrubber'],
+                 ['bottom', 'bottom scrubber']],
+          columns: [0, {paddingLeft: 2}, 1, {paddingRight: 2, fixed: true, width: 40}],
+          rows: arr.flatten(arr.range(0,3).map(i => [i, {paddingTop: 2, paddingBottom: 2}]))
+        }),
+        submorphs: arr.flatten([["top", "y"], 
+                                ["right", "width"], 
+                                ["bottom", "height"], 
+                                ["left", 'x']].map(([side, prop]) => {
+          let widget = new NumberWidget({
+            name: side + ' scrubber',
+            number: this.rectangle.partNamed(side)
+          });
+          connect(widget, "update", this, "rectangle", {
+            updater: function($upd, val) {
+              let r = this.targetObj.rectangle.toLiteral();
+              $upd(Rectangle.fromLiteral({...r, [prop]: val}));
+            },
+            varMapping: {prop, Rectangle}
+          });
+          return [
+              {
+                type: "label",
+                styleClasses: ['controlName'],
+                name: side,
+                value: side,
+                padding: 3
+              },
+              widget
+            ];
+        }))
+      }
+    ];  
+  }
 }

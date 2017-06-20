@@ -11,7 +11,7 @@ import { last } from "lively.lang/array.js";
 
 import { GridLayout } from "../../layout.js";
 
-import { NumberWidget, VerticesWidget, ShadowWidget, PointWidget, StyleSheetWidget, BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
+import { NumberWidget, PaddingWidget, VerticesWidget, ShadowWidget, PointWidget, StyleSheetWidget, BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
 import { RichTextControl } from "../../text/ui.js";
 import { Point } from "lively.graphics/geometry-2d.js";
 import { MorphHighlighter } from "../../halo/morph.js";
@@ -210,7 +210,7 @@ class MorphNode extends InspectionNode {
   }
 
   getSubNode(nodeArgs) {
-    let {spec = false} = this.propertyInfo[nodeArgs.keyString] || {};
+    let spec = this.propertyInfo[nodeArgs.keyString] || {};
     if (nodeArgs.value && nodeArgs.value.isMorph) return new MorphNode(nodeArgs)
     return new PropertyNode({
       ...nodeArgs,
@@ -476,25 +476,27 @@ export class PropertyControl extends Label {
     }
   }
 
-  static inferSpec({keyString, value}) {
+  static inferType({keyString, value}) {
     if (value && (value.isColor || value.isGradient)) {
-      return {type: 'Color'}
+      return 'Color'
     } else if (value && value.isPoint) {
-      return {type: 'Point'}
+      return 'Point'
     } else if (isBoolean(value)) {
-      return {type: 'Boolean'}
+      return 'Boolean'
     } else if (isNumber(value)) {
-      return {type: 'Number'}
+      return 'Number'
     } else if (isString(value)) {
-      return {type: 'String'}
+      return 'String'
+    } else if (value && value.isRectangle) {
+      return 'Rectangle'
     }
-    return {}
+    return false
   }
   
   static render(args) {
     let propertyControl = this.baseControl(args);
     
-    if (!args.spec) args.spec = this.inferSpec(args);
+    if (!args.spec.type) args.spec = {...args.spec, type: this.inferType(args)}; // non mutating
 
     if (args.spec.foldable) {
       propertyControl.asFoldable(args.spec.foldable);
@@ -638,8 +640,10 @@ export class PropertyControl extends Label {
     
   }
 
-  renderRectangleControl(args) {
-    
+  renderRectangleControl({value}) {
+    this.control = new PaddingWidget({name: 'valueString', rectangle: value});
+    connect(this.control, "rectangle", this, "propertyValue");
+    return this;    
   }
 
   renderVertexControl({target}) {
