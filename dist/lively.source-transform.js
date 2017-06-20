@@ -807,7 +807,20 @@ function transformObjectPattern(pattern, transformState) {
   for (var i = 0; i < pattern.properties.length; i++) {
     var prop = pattern.properties[i];
 
-    if (prop.value.type == "Identifier") {
+    if (prop.type == "RestElement") {
+
+      var knownKeys = pattern.properties.map(function (ea) {
+        return ea.key && ea.key.name;
+      }).filter(Boolean);
+      var decl = lively_ast.nodes.varDecl(prop.argument.name, lively_ast.nodes.objectLiteral([]));
+      var captureDecl = lively_ast.nodes.varDecl(prop.argument.name, id(prop.argument.name));
+      var defCall = lively_ast.nodes.exprStmt(lively_ast.nodes.funcCall(lively_ast.nodes.funcExpr({}, [], lively_ast.nodes.forIn("__key", transformState.parent, lively_ast.nodes.block.apply(lively_ast.nodes, toConsumableArray(knownKeys.length ? knownKeys.map(function (knownKey) {
+        return lively_ast.nodes.ifStmt(lively_ast.nodes.binaryExpr(lively_ast.nodes.id("__key"), "===", lively_ast.nodes.literal(knownKey)), { type: "ContinueStatement", label: null }, null);
+      }) : []).concat([lively_ast.nodes.exprStmt(lively_ast.nodes.assign(lively_ast.nodes.member(prop.argument.name, lively_ast.nodes.id("__key"), true), lively_ast.nodes.member(transformState.parent, lively_ast.nodes.id("__key"), true)))]))))));
+
+      captureDecl[p] = { capture: true };
+      transformed.push(decl, captureDecl, defCall);
+    } else if (prop.value.type == "Identifier") {
       // like {x: y}
       var decl = varDecl(prop.value, member(transformState.parent, prop.key));
       decl[p] = { capture: true };
