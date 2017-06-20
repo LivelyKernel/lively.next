@@ -259,7 +259,6 @@ var commands = [
     }
   },
 
-
   {
     name: "transpose chars",
     exec: function(morph) {
@@ -271,6 +270,23 @@ var commands = [
             right = line[column];
         if (left && right) morph.replace(range, right + left, true);
       }
+      return true;
+    }
+  },
+
+  {
+    name: "cycle selection contents",
+    documentation: "If there are multiple selections, will take the text of the first one and replace the second one with it, the text of the second will replace the third, the last selection contents will replace the contents of the first.",
+    multiSelectAction: "single",
+    exec(ed) {
+      let sels = ed.selection.selections;
+      ed.undoManager.group();
+      sels.reduce((newContent, sel) => {
+        let oldContent = sel.text;
+        sel.text = newContent;
+        return oldContent;
+      }, arr.last(sels).text);
+      ed.undoManager.group();
       return true;
     }
   },
