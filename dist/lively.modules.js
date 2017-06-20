@@ -1,5 +1,5 @@
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -658,9 +658,9 @@
   typeof self === "object" ? self : this
 );
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.lang/dist/lively.lang.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
 
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -8433,9 +8433,9 @@ exports.uninstallGlobals = uninstallGlobals;
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.lang;
 })();
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.lang/dist/lively.lang.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.notifications/dist/lively.notifications.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -8593,9 +8593,9 @@ exports.stopLogging = stopLogging;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /home/lively/lively-web.org/lively.next/lively.notifications/dist/lively.notifications.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.notifications/dist/lively.notifications.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.ast/dist/lively.ast.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -14076,7 +14076,7 @@ module.exports = function(acorn) {
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v7.10.0',
+        version: 'v7.7.3',
         browser: true,
         env: {},
         argv: [],
@@ -15666,14 +15666,11 @@ module.exports = function(acorn) {
           return parenthesize(result, Precedence.Member, precedence);
         },
         MetaProperty: function (expr, precedence, flags) {
-          var result, meta, property;
-          meta = typeof expr.meta.type === 'string' && expr.meta.type === Syntax.Identifier ? expr.meta.name : expr.meta;
-          property = typeof expr.property.type === 'string' && expr.property.type === Syntax.Identifier ? expr.property.name : expr.property;
-          result = [
-            meta,
-            '.',
-            property
-          ];
+          var result;
+          result = [];
+          result.push(expr.meta);
+          result.push('.');
+          result.push(expr.property);
           return parenthesize(result, Precedence.Member, precedence);
         },
         UnaryExpression: function (expr, precedence, flags) {
@@ -15900,13 +15897,13 @@ module.exports = function(acorn) {
           multiline = false;
           if (expr.properties.length === 1) {
             property = expr.properties[0];
-            if (property.type !== 'RestElement' && property.value.type !== Syntax.Identifier) {
+            if (property.value.type !== Syntax.Identifier) {
               multiline = true;
             }
           } else {
             for (i = 0, iz = expr.properties.length; i < iz; ++i) {
               property = expr.properties[i];
-              if (property.type !== 'RestElement' && !property.shorthand) {
+              if (!property.shorthand) {
                 multiline = true;
                 break;
               }
@@ -21229,11 +21226,12 @@ walk.visitors = {
       c(node.property, st, "Expression");
     }
   }, walk.base)
+};
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // from lively.ast.AstHelper
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-
-};function findNodeByAstIndex(parsed, astIndexToFind, addIndex) {
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-
+// from lively.ast.AstHelper
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-
+function findNodeByAstIndex(parsed, astIndexToFind, addIndex) {
   addIndex = addIndex == null ? true : !!addIndex;
   if (!parsed.astIndex && addIndex) addAstIndex(parsed);
   // we need to visit every node, forEachNode is highly
@@ -21785,9 +21783,15 @@ var methods = {
     visitor.accept(parsed2);
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+};
 
-};var withMozillaAstDo = methods.withMozillaAstDo; var printAst = methods.printAst; var compareAst = methods.compareAst; var pathToNode = methods.pathToNode; var rematchAstWithSource = methods.rematchAstWithSource;
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var withMozillaAstDo = methods.withMozillaAstDo;
+var printAst = methods.printAst;
+var compareAst = methods.compareAst;
+var pathToNode = methods.pathToNode;
+var rematchAstWithSource = methods.rematchAstWithSource;
 
 
 
@@ -21999,15 +22003,6 @@ function ifStmt(test) {
   };
 }
 
-function forIn(varDeclOrName, objExprOrName, body) {
-  return {
-    type: "ForInStatement",
-    left: typeof varDeclOrName === "string" ? varDecl(varDeclOrName) : varDeclOrName,
-    right: typeof objExprOrName === "string" ? id(objExprOrName) : objExprOrName,
-    body: body
-  };
-}
-
 function conditional(test) {
   var consequent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : id("undefined");
   var alternate = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : id("undefined");
@@ -22047,7 +22042,6 @@ var nodes = Object.freeze({
 	program: program,
 	tryStmt: tryStmt,
 	ifStmt: ifStmt,
-	forIn: forIn,
 	conditional: conditional,
 	logical: logical
 });
@@ -22056,19 +22050,16 @@ var nodes = Object.freeze({
 
 var helpers = {
   declIds: function declIds(nodes) {
-    var result = [];
-    for (var i = 0; i < nodes.length; i++) {
-      var node = nodes[i];
-      if (!node) continue;else if (node.type === "Identifier") result.push(node);else if (node.type === "RestElement") result.push(node.argument);
+    return lively_lang.arr.flatmap(nodes, function (ea) {
+      if (!ea) return [];
+      if (ea.type === "Identifier") return [ea];
+      if (ea.type === "RestElement") return [ea.argument];
       // AssignmentPattern: default arg like function(local = defaultVal) {}
-      else if (node.type === "AssignmentPattern") result.push.apply(result, toConsumableArray(helpers.declIds([node.left])));else if (node.type === "ObjectPattern") {
-          for (var j = 0; j < node.properties.length; j++) {
-            var prop = node.properties[j];
-            result.push.apply(result, toConsumableArray(helpers.declIds([prop.value || prop])));
-          }
-        } else if (node.type === "ArrayPattern") result.push.apply(result, toConsumableArray(helpers.declIds(node.elements)));
-    }
-    return result;
+      if (ea.type === "AssignmentPattern") return helpers.declIds([ea.left]);
+      if (ea.type === "ObjectPattern") return helpers.declIds(lively_lang.arr.pluck(ea.properties, "value"));
+      if (ea.type === "ArrayPattern") return helpers.declIds(ea.elements);
+      return [];
+    });
   },
   varDecls: function varDecls(scope) {
     return lively_lang.arr.flatmap(scope.varDecls, function (varDecl) {
@@ -22313,10 +22304,11 @@ function topLevelDeclsAndRefs(parsed, options) {
     undeclaredNames: undeclared,
     refs: refs,
     thisRefs: scope.thisRefs
+  };
 
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  };function findUndeclaredReferences(scope) {
+  function findUndeclaredReferences(scope) {
     var names = _declaredVarNames(scope, useComments);
     return scope.subScopes.map(findUndeclaredReferences).reduce(function (refs, ea) {
       return refs.concat(ea);
@@ -23070,8 +23062,7 @@ function extractComments(astOrCode, optCode) {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function isInObjectMethod(comment) {
-    return lively_lang.arr.equals(comment.path.slice(-2), ["value", "body"] // obj expr
-    );
+    return lively_lang.arr.equals(comment.path.slice(-2), ["value", "body"]); // obj expr
   }
 
   function isInAssignedMethod(comment) {
@@ -23308,8 +23299,8 @@ function findDecls(parsed, options) {
               var def = _step2.value;
 
               if (def.parent && filtered.includes(def.parent) || // parent is in
-              (def.node.source || "").includes("\n" // more than one line
-              )) filtered.push(def);
+              (def.node.source || "").includes("\n") // more than one line
+              ) filtered.push(def);
             }
           } catch (err) {
             _didIteratorError2 = true;
@@ -23565,9 +23556,9 @@ exports.fuzzyParse = fuzzyParse;
   if (__define_suckz__) { GLOBAL.define = __define_suckz__; }
 })();
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.ast/dist/lively.ast.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.ast/dist/lively.ast.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.classes/dist/lively.classes.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -24607,9 +24598,9 @@ exports.classToFunctionTransform = classToFunctionTransform;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.classes;
 })();
-// INLINED END /home/lively/lively-web.org/lively.next/lively.classes/dist/lively.classes.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.classes/dist/lively.classes.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.source-transform/dist/lively.source-transform.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
 
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
@@ -25026,6 +25017,7 @@ function replaceVarDecls(parsed, options) {
 
       // This is rewriting normal vars
       replaced.push(assignExpr(options.captureObj, decl.id, initWrapped, false));
+      if (options.keepTopLevelVarDecls) replaced.push(varDecl(decl.id, member(options.captureObj, decl.id)));
     }
 
     return replaced;
@@ -25418,7 +25410,20 @@ function transformObjectPattern(pattern, transformState) {
   for (var i = 0; i < pattern.properties.length; i++) {
     var prop = pattern.properties[i];
 
-    if (prop.value.type == "Identifier") {
+    if (prop.type == "RestElement") {
+
+      var knownKeys = pattern.properties.map(function (ea) {
+        return ea.key && ea.key.name;
+      }).filter(Boolean);
+      var decl = lively_ast.nodes.varDecl(prop.argument.name, lively_ast.nodes.objectLiteral([]));
+      var captureDecl = lively_ast.nodes.varDecl(prop.argument.name, id(prop.argument.name));
+      var defCall = lively_ast.nodes.exprStmt(lively_ast.nodes.funcCall(lively_ast.nodes.funcExpr({}, [], lively_ast.nodes.forIn("__key", transformState.parent, lively_ast.nodes.block.apply(lively_ast.nodes, toConsumableArray(knownKeys.length ? knownKeys.map(function (knownKey) {
+        return lively_ast.nodes.ifStmt(lively_ast.nodes.binaryExpr(lively_ast.nodes.id("__key"), "===", lively_ast.nodes.literal(knownKey)), { type: "ContinueStatement", label: null }, null);
+      }) : []).concat([lively_ast.nodes.exprStmt(lively_ast.nodes.assign(lively_ast.nodes.member(prop.argument.name, lively_ast.nodes.id("__key"), true), lively_ast.nodes.member(transformState.parent, lively_ast.nodes.id("__key"), true)))]))))));
+
+      captureDecl[p] = { capture: true };
+      transformed.push(decl, captureDecl, defCall);
+    } else if (prop.value.type == "Identifier") {
       // like {x: y}
       var decl = varDecl(prop.value, member(transformState.parent, prop.key));
       decl[p] = { capture: true };
@@ -25522,7 +25527,7 @@ function declarationWrapperCall(declarationWrapperNode, declNode, varNameLiteral
     if (evalId !== undefined) keyVals.push("evalId", lively_ast.nodes.literal(evalId));
     if (sourceAccessorName) keyVals.push("moduleSource", lively_ast.nodes.id(sourceAccessorName));
     if (addMeta) {
-      return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder, lively_ast.nodes.objectLiteral(keyVals) /*meta node*/);
+      return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder, lively_ast.nodes.objectLiteral(keyVals /*meta node*/));
     }
   }
 
@@ -25559,9 +25564,9 @@ exports.stringifyFunctionWithoutToplevelRecorder = stringifyFunctionWithoutTople
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.sourceTransform;
 })();
-// INLINED END /home/lively/lively-web.org/lively.next/lively.source-transform/dist/lively.source-transform.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.source-transform/dist/lively.source-transform.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.vm/dist/lively.vm.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -25753,7 +25758,43 @@ var set = function set(object, property, value, receiver) {
   return value;
 };
 
+var slicedToArray = function () {
+  function sliceIterator(arr$$1, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
 
+    try {
+      for (var _i = arr$$1[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"]) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  return function (arr$$1, i) {
+    if (Array.isArray(arr$$1)) {
+      return arr$$1;
+    } else if (Symbol.iterator in Object(arr$$1)) {
+      return sliceIterator(arr$$1, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
 
 
 
@@ -26063,6 +26104,20 @@ var member = lively_ast.nodes.member;
 var defaultDeclarationWrapperName = "lively.capturing-declaration-wrapper";
 var defaultClassToFunctionConverterName = "initializeES6ClassForLively";
 
+function processInlineCodeTransformOptions(parsed, options) {
+  if (!parsed.comments) return options;
+  var livelyComment = parsed.comments.find(function (ea) {
+    return ea.text.startsWith("lively.vm ");
+  });
+  if (!livelyComment) return options;
+  try {
+    var inlineOptions = eval("inlineOptions = {" + livelyComment.text.slice("lively.vm ".length) + "};");
+    return Object.assign(options, inlineOptions);
+  } catch (err) {
+    return options;
+  }
+}
+
 function evalCodeTransform(code, options) {
   // variable declaration and references in the the source code get
   // transformed so that they are bound to `varRecorderName` aren't local
@@ -26072,7 +26127,9 @@ function evalCodeTransform(code, options) {
 
   // 1. Allow evaluation of function expressions and object literals
   code = lively_ast.transform.transformSingleExpression(code);
-  var parsed = lively_ast.parse(code);
+  var parsed = lively_ast.parse(code, { withComments: true });
+
+  options = processInlineCodeTransformOptions(parsed, options);
 
   // 2. Annotate definitions with code location. This is being used by the
   // function-wrapper-source transform.
@@ -26162,7 +26219,8 @@ function evalCodeTransform(code, options) {
       declarationWrapper: options.declarationWrapper || undefined,
       classToFunction: es6ClassToFunctionOptions,
       evalId: options.evalId,
-      sourceAccessorName: options.sourceAccessorName
+      sourceAccessorName: options.sourceAccessorName,
+      keepTopLevelVarDecls: options.keepTopLevelVarDecls
     });
   }
 
@@ -27101,42 +27159,56 @@ var HttpEvalStrategy = function (_RemoteEvalStrategy) {
     key: "basicRemoteEval_web",
     value: function () {
       var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(payload, url) {
-        var res;
+        var _ref13, _ref14, domain, crossDomain, res;
+
         return regeneratorRuntime.wrap(function _callee12$(_context12) {
           while (1) {
             switch (_context12.prev = _context12.next) {
               case 0:
-                _context12.prev = 0;
-                _context12.next = 3;
+                _ref13 = url.match(/[^:]+:\/\/[^\/]+/) || [url], _ref14 = slicedToArray(_ref13, 1), domain = _ref14[0], crossDomain = document.location.origin !== domain;
+
+
+                if (crossDomain) {
+                  // use lively.server proxy plugin
+                  payload.headers = _extends({}, payload.headers, {
+                    'pragma': 'no-cache',
+                    'cache-control': 'no-cache',
+                    "x-lively-proxy-request": url
+                  });
+                  url = document.location.origin;
+                }
+
+                _context12.prev = 2;
+                _context12.next = 5;
                 return window.fetch(url, payload);
 
-              case 3:
+              case 5:
                 res = _context12.sent;
-                _context12.next = 9;
+                _context12.next = 11;
                 break;
 
-              case 6:
-                _context12.prev = 6;
-                _context12.t0 = _context12["catch"](0);
+              case 8:
+                _context12.prev = 8;
+                _context12.t0 = _context12["catch"](2);
                 throw new Error("Cannot reach server at " + url + ": " + _context12.t0.message);
 
-              case 9:
+              case 11:
                 if (res.ok) {
-                  _context12.next = 11;
+                  _context12.next = 13;
                   break;
                 }
 
                 throw new Error("Server at " + url + ": " + res.statusText);
 
-              case 11:
+              case 13:
                 return _context12.abrupt("return", res.text());
 
-              case 12:
+              case 14:
               case "end":
                 return _context12.stop();
             }
           }
-        }, _callee12, this, [[0, 6]]);
+        }, _callee12, this, [[2, 8]]);
       }));
 
       function basicRemoteEval_web(_x23, _x24) {
@@ -27148,7 +27220,7 @@ var HttpEvalStrategy = function (_RemoteEvalStrategy) {
   }, {
     key: "basicRemoteEval_node",
     value: function () {
-      var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(payload, url) {
+      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(payload, url) {
         var urlParse, http, opts;
         return regeneratorRuntime.wrap(function _callee13$(_context13) {
           while (1) {
@@ -27184,7 +27256,7 @@ var HttpEvalStrategy = function (_RemoteEvalStrategy) {
       }));
 
       function basicRemoteEval_node(_x25, _x26) {
-        return _ref13.apply(this, arguments);
+        return _ref15.apply(this, arguments);
       }
 
       return basicRemoteEval_node;
@@ -27209,29 +27281,28 @@ var L2LEvalStrategy = function (_RemoteEvalStrategy2) {
   createClass(L2LEvalStrategy, [{
     key: "basicRemoteEval",
     value: function () {
-      var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(source, options) {
-        var l2lClient, targetId, _ref15, evalResult;
+      var _ref16 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(source, options) {
+        var l2lClient, targetId, _ref17, evalResult;
 
         return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
             switch (_context14.prev = _context14.next) {
               case 0:
-                inspect({ source: source, options: options });
                 l2lClient = this.l2lClient;
                 targetId = this.targetId;
-                _context14.next = 5;
+                _context14.next = 4;
                 return new Promise(function (resolve, reject) {
                   return l2lClient.sendTo(targetId, "remote-eval", { source: source }, resolve);
                 });
 
-              case 5:
-                _ref15 = _context14.sent;
-                evalResult = _ref15.data;
+              case 4:
+                _ref17 = _context14.sent;
+                evalResult = _ref17.data;
 
                 if (evalResult && evalResult.value && evalResult.value.isEvalResult) evalResult = evalResult.value;
                 return _context14.abrupt("return", evalResult);
 
-              case 9:
+              case 8:
               case "end":
                 return _context14.stop();
             }
@@ -27240,7 +27311,7 @@ var L2LEvalStrategy = function (_RemoteEvalStrategy2) {
       }));
 
       function basicRemoteEval(_x27, _x28) {
-        return _ref14.apply(this, arguments);
+        return _ref16.apply(this, arguments);
       }
 
       return basicRemoteEval;
@@ -27295,9 +27366,9 @@ exports.evalCodeTransformOfSystemRegisterSetters = evalCodeTransformOfSystemRegi
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
 })();
-// INLINED END /home/lively/lively-web.org/lively.next/lively.vm/dist/lively.vm.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.vm/dist/lively.vm.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.resources/dist/lively.resources_no-deps.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -29941,9 +30012,9 @@ exports.Resource = Resource$$1;
 
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.resources;
 })();
-// INLINED END /home/lively/lively-web.org/lively.next/lively.resources/dist/lively.resources_no-deps.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.resources/dist/lively.resources_no-deps.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.storage/dist/lively.storage_with-pouch.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.storage/dist/lively.storage_with-pouch.js
 
 (function() {
 
@@ -65620,9 +65691,9 @@ exports.Database = Database;
 
 })();
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.storage/dist/lively.storage_with-pouch.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.storage/dist/lively.storage_with-pouch.js
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.modules/systemjs-init.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -65835,12 +65906,12 @@ exports.Database = Database;
 
 })();
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.modules/systemjs-init.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
-// INLINED /home/lively/lively-web.org/lively.next/lively.next-node_modules/semver/5.3.0/semver.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.next-node_modules/semver/5.3.0/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -67045,7 +67116,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.next-node_modules/semver/5.3.0/semver.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.next-node_modules/semver/5.3.0/semver.js
 semver = exports;
 })({}, {});
 
@@ -67489,8 +67560,10 @@ var customTranslate = function () {
               load.source = source;
               load.metadata["lively.modules instrumented"] = true;
               instrumented = true;
-              debug && console.log("[lively.modules] loaded %s as es6 module", load.name);
+              debug && console.log("[lively.modules] loaded %s as es6 module", load.name
               // debug && console.log(load.source)
+
+              );
             } else if (load.metadata.format === "global") {
               mod.recorderName = "System.global";
               mod.recorder = System.global;
@@ -70583,8 +70656,8 @@ var Package = function () {
                 url = this.url;
                 allPackages = Package.allPackageURLs(System);
                 packagesToIgnore = allPackages.filter(function (purl) {
-                  return purl !== url && !url.startsWith(purl);
-                } /*parent packages*/);
+                  return purl !== url && !url.startsWith(purl /*parent packages*/);
+                });
                 _context.next = 6;
                 return lively_resources.resource(url).dirList('infinity', { exclude: exclude });
 
@@ -73695,10 +73768,9 @@ if (!SystemClass.systems) SystemClass.systems = {};
 
 var defaultOptions = {
   notificationLimit: null
-};
 
-// Accessible system-wide via System.get("@lively-env")
-function livelySystemEnv(System) {
+  // Accessible system-wide via System.get("@lively-env")
+};function livelySystemEnv(System) {
   return {
     moduleEnv: function moduleEnv(id) {
       return module$2(System, id);

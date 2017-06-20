@@ -1,5 +1,5 @@
 
-// INLINED /home/lively/lively-web.org/lively.next/lively.modules/systemjs-init.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 "format global";
 (function configure() {
 
@@ -212,12 +212,12 @@
 
 })();
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.modules/systemjs-init.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.modules/systemjs-init.js
 (function() {
 
 var semver;
 (function(exports, module) {
-// INLINED /home/lively/lively-web.org/lively.next/lively.next-node_modules/semver/5.3.0/semver.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.next-node_modules/semver/5.3.0/semver.js
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -1422,7 +1422,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-// INLINED END /home/lively/lively-web.org/lively.next/lively.next-node_modules/semver/5.3.0/semver.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.next-node_modules/semver/5.3.0/semver.js
 semver = exports;
 })({}, {});
 
@@ -1866,8 +1866,10 @@ var customTranslate = function () {
               load.source = source;
               load.metadata["lively.modules instrumented"] = true;
               instrumented = true;
-              debug && console.log("[lively.modules] loaded %s as es6 module", load.name);
+              debug && console.log("[lively.modules] loaded %s as es6 module", load.name
               // debug && console.log(load.source)
+
+              );
             } else if (load.metadata.format === "global") {
               mod.recorderName = "System.global";
               mod.recorder = System.global;
@@ -4960,8 +4962,8 @@ var Package = function () {
                 url = this.url;
                 allPackages = Package.allPackageURLs(System);
                 packagesToIgnore = allPackages.filter(function (purl) {
-                  return purl !== url && !url.startsWith(purl);
-                } /*parent packages*/);
+                  return purl !== url && !url.startsWith(purl /*parent packages*/);
+                });
                 _context.next = 6;
                 return lively_resources.resource(url).dirList('infinity', { exclude: exclude });
 
@@ -8072,10 +8074,9 @@ if (!SystemClass.systems) SystemClass.systems = {};
 
 var defaultOptions = {
   notificationLimit: null
-};
 
-// Accessible system-wide via System.get("@lively-env")
-function livelySystemEnv(System) {
+  // Accessible system-wide via System.get("@lively-env")
+};function livelySystemEnv(System) {
   return {
     moduleEnv: function moduleEnv(id) {
       return module$2(System, id);

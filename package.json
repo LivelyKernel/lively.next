@@ -1,6 +1,6 @@
 {
   "name": "lively.modules",
-  "version": "0.8.9",
+  "version": "0.8.11",
   "main": "dist/lively.modules.js",
   "repository": "https://github.com/LivelyKernel/lively.modules",
   "author": "Robert Krahn <robert.krahn@gmail.com>",
