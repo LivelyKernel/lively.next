@@ -1,7 +1,7 @@
 /* global Expo */
 import { arr, string } from "lively.lang";
-import { pt, Color, Rectangle } from "lively.graphics";
-import { Label, morph, Morph, ShadowObject } from "lively.morphic";
+import { pt, rect, Color, Rectangle } from "lively.graphics";
+import { Label, Icon, morph, Morph, ShadowObject } from "lively.morphic";
 import { connect, signal } from "lively.bindings";
 import {StyleSheet} from '../style-rules.js';
 import {HorizontalLayout} from '../layout.js';
@@ -133,9 +133,25 @@ export default class Window extends Morph {
     super(props);
     this.relayoutWindowControls();
     connect(this, "extent", this, "relayoutWindowControls");
-    connect(this.titleLabel(), "value", this, "relayoutWindowControls");
+    connect(this.titleLabel(), "extent", this, "relayoutWindowControls");
+    connect(this.getSubmorphNamed("window menu button"), "onMouseDown", this, "openWindowMenu");
   }
 
+  async openWindowMenu() {
+    let menuItems = [
+      [
+        "Change Window Title",
+        async () => {
+          let newTitle = await $world.prompt("Enter New Name", {input: this.title});
+          if (newTitle) this.title = newTitle;
+        }
+      ],
+      {isDivider: true},
+      ...(await this.targetMorph.menuItems())
+    ];
+    this.targetMorph.world().openMenu(menuItems);
+  }
+  
   get isWindow() {
     return true;
   }
@@ -148,6 +164,7 @@ export default class Window extends Morph {
     var innerB = this.innerBounds(),
         title = this.titleLabel(),
         labelBounds = innerB.withHeight(25),
+        windowMenuButton = this.getSubmorphNamed('window menu button'),
         lastButtonOrWrapper = this.getSubmorphNamed("button wrapper") || arr.last(this.buttons()),
         buttonOffset = lastButtonOrWrapper.bounds().right() + 3,
         minLabelBounds = labelBounds.withLeftCenter(pt(buttonOffset, labelBounds.height / 2));
@@ -162,19 +179,27 @@ export default class Window extends Morph {
     title.textBounds().width < labelBounds.width - 2 * buttonOffset
       ? (title.center = labelBounds.center())
       : (title.leftCenter = minLabelBounds.leftCenter());
+
+    windowMenuButton.leftCenter = title.rightCenter;
   }
 
   getControls() {
     return [
-            morph({
-              name: "button wrapper",
-              styleClasses: ["buttonGroup"],
-              submorphs: this.buttons()
-            }),
-            this.titleLabel()
-          ];
+      morph({
+        name: "button wrapper",
+        styleClasses: ["buttonGroup"],
+        submorphs: this.buttons()
+      }),
+      this.titleLabel(),
+      Icon.makeLabel("list", {
+        styleClasses: ["windowTitleLabel"],
+        fontSize: 15,
+        nativeCursor: 'pointer',
+        padding: rect(5,0,0,0),
+        name: "window menu button"
+      })
+    ];
   }
-
   buttons() {
     let closeButton =
       this.getSubmorphNamed("close") ||

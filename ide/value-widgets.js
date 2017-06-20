@@ -172,6 +172,7 @@ export class ColorWidget extends Morph {
               nativeCursor: 'pointer',
               borderColor: Color.gray.darker(),
               borderWidth: 1,
+              draggable: false,
               extent: pt(this.fontSize - 3, this.fontSize - 3)
             },
             "[name=valueString]": {
