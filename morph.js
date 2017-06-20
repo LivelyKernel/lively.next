@@ -73,9 +73,7 @@ export class Morph {
 
       acceptsDrops: {isStyleProp: true, defaultValue: true},
       dropShadow: {
-        spec: {
-          type: 'Shadow'
-        },
+        type: 'Shadow',
         isStyleProp: true,
         defaultValue: null,
         set(value) {
@@ -90,56 +88,54 @@ export class Morph {
       tooltip:            {defaultValue: null},
       focusable:          {defaultValue: true},
       nativeCursor: {
-        spec: {
-          type: "Enum",
-          values: [
-            "auto",
-            "default",
-            "none",
-            "context-menu",
-            "help",
-            "pointer",
-            "progress",
-            "wait",
-            "cell",
-            "crosshair",
-            "text",
-            "vertical-text",
-            "alias",
-            "copy",
-            "move",
-            "no-drop",
-            "not-allowed",
-            "e-resize",
-            "n-resize",
-            "ne-resize",
-            "nw-resize",
-            "s-resize",
-            "se-resize",
-            "sw-resize",
-            "w-resize",
-            "ew-resize",
-            "ns-resize",
-            "nesw-resize",
-            "nwse-resize",
-            "col-resize",
-            "row-resize",
-            "all-scroll",
-            "zoom-in",
-            "zoom-out",
-            "grab",
-            "grabbing"
-          ]
-        },
+        type: "Enum",
+        values: [
+          "auto",
+          "default",
+          "none",
+          "context-menu",
+          "help",
+          "pointer",
+          "progress",
+          "wait",
+          "cell",
+          "crosshair",
+          "text",
+          "vertical-text",
+          "alias",
+          "copy",
+          "move",
+          "no-drop",
+          "not-allowed",
+          "e-resize",
+          "n-resize",
+          "ne-resize",
+          "nw-resize",
+          "s-resize",
+          "se-resize",
+          "sw-resize",
+          "w-resize",
+          "ew-resize",
+          "ns-resize",
+          "nesw-resize",
+          "nwse-resize",
+          "col-resize",
+          "row-resize",
+          "all-scroll",
+          "zoom-in",
+          "zoom-out",
+          "grab",
+          "grabbing"
+        ],
         isStyleProp: true,
         defaultValue: "auto"
       },
       halosEnabled:       {isStyleProp: true, defaultValue: !!config.halosEnabled},
       reactsToPointer:    {defaultValue: true},
 
-      position: {spec: {type: "Point"}, isStyleProp: true, defaultValue: pt(0, 0)},
-      origin:   {spec: {type: 'Point'}, isStyleProp: true, defaultValue: pt(0,0)},
-      extent:   {spec: {type: 'Point'}, isStyleProp: true, defaultValue: pt(10, 10)},
+      position: {type: "Point", isStyleProp: true, defaultValue: pt(0, 0)},
+      origin:   {type: 'Point', isStyleProp: true, defaultValue: pt(0,0)},
+      extent:   {type: 'Point', isStyleProp: true, defaultValue: pt(10, 10)},
       width: {
         derived: true, after: ['extent'], before: ['submorphs'],
         get()         { return this.extent.x; },
@@ -215,24 +211,20 @@ export class Morph {
         get()   { return this.bounds().rightCenter(); },
         set(v)  { return this.align(this.rightCenter, v); }
       },
-      rotation:           {
-        spec: {
-          type: 'Number',
-          isFloat: true          
-        },
+      rotation: {
+        type: 'Number',
+        isFloat: true,
         isStyleProp: true, defaultValue:  0},
-      scale: {spec: {type: "Number", min: 0, isFloat: true}, 
+      scale: {type: "Number", min: 0, isFloat: true,
               isStyleProp: true, defaultValue: 1},
-      opacity:            {
-        spec: {
-          type: 'Number',
-          min: 0,
-          max: 1
-        },
+      opacity: {
+        type: 'Number',
+        min: 0,
+        max: 1,
         isStyleProp: true, defaultValue: 1
       },
       fill:               {
-        spec: {type: 'ColorGradient'},
+        type: 'ColorGradient',
         isStyleProp: true, defaultValue: Color.white
       },
       visible:            {isStyleProp: true, defaultValue: true},
@@ -255,10 +247,8 @@ export class Morph {
       },
 
       clipMode: {
-        spec: {
-          type: 'Enum',
-          values: ["visible", "hidden", "scroll", "auto"]
-        },
+        type: 'Enum',
+        values: ["visible", "hidden", "scroll", "auto"],
         isStyleProp: true,
         defaultValue: "visible",
         set(value) {
@@ -269,9 +259,7 @@ export class Morph {
 
       scroll: {
         defaultValue: pt(0, 0),
-        spec: {
-          type: 'Point'
-        },
+        type: 'Point',
         set({x, y}) {
           if (!this.isClip()) return;
           var {x: maxScrollX, y: maxScrollY} = this.scrollExtent.subPt(this.extent);
@@ -297,9 +285,7 @@ export class Morph {
 
       layout: {
         isStyleProp: true,
-        spec: {
-          type: 'Layout'
-        },
+        type: 'Layout',
         after: ["submorphs", "extent", "origin", "position", "isLayoutable"],
         set(value) {
           if (value) value.container = this;
@@ -387,15 +373,13 @@ export class Morph {
       borderWidth: {
         isStyleProp: true,
         derived: true,
-        spec: {
-          type: 'Number',
-          foldable: ['top', 'left', 'right', 'bottom'],
-          min: 0
-        },
+        type: 'Number',
+        foldable: ['top', 'left', 'right', 'bottom'],
+        min: 0,
         defaultValue: {top: 0, bottom: 0, left: 0, right: 0, valueOf: () => 0},
-        get() { 
+        get() {
           let v = this.getProperty('borderWidth');
-          return {...v, valueOf: () => v.left } 
+          return {...v, valueOf: () => v.left }
         },
         set(value) {
           if (isNumber(value)) {
@@ -411,11 +395,9 @@ export class Morph {
       borderRadius: {
         isStyleProp: true,
         derived: true,
-        spec: {
-          type: 'Number',
-          min: 0,
-          foldable: ['top', 'left', 'right', 'bottom']
-        },
+        type: 'Number',
+        min: 0,
+        foldable: ['top', 'left', 'right', 'bottom'],
         defaultValue: {top: 0, bottom: 0, right: 0, left: 0, valueOf: () => 0},
         get() {
           let v = this.getProperty('borderRadius');
@@ -444,14 +426,12 @@ export class Morph {
       borderStyle: {
         isStyleProp: true,
         derived: true,
-        spec: {
-          type: 'Enum',
-          foldable: ['top', 'left', 'right', 'bottom'],
-          values: ["none", "hidden", "dotted", "dashed",
-                   "solid", "double", "groove", "ridge", "inset", "outset"]
-        },
+        type: 'Enum',
+        foldable: ['top', 'left', 'right', 'bottom'],
+        values: ["none", "hidden", "dotted", "dashed",
+                 "solid", "double", "groove", "ridge", "inset", "outset"],
         defaultValue: {
-          top: 'solid', left: 'solid', bottom: 'solid',              
+          top: 'solid', left: 'solid', bottom: 'solid',
           right: 'solid', valueOf: () => 'solid'
         },
         get() {
@@ -472,12 +452,10 @@ export class Morph {
       borderColor: {
         isStyleProp: true,
         derived: true,
-        spec: {
-          type: "Color",
-          foldable: ["top", "left", "right", "bottom"]
-        },
+        type: "Color",
+        foldable: ["top", "left", "right", "bottom"],
         defaultValue: {
-          top: Color.white, left: Color.white, bottom: Color.white, 
+          top: Color.white, left: Color.white, bottom: Color.white,
           right: Color.white, valueOf: () => Color.white
         },
         get() {
@@ -512,9 +490,7 @@ export class Morph {
 
       styleSheets: {
         before: ['submorphs'],
-        spec: {
-          type: 'StyleSheets'
-        },
+        type: 'StyleSheets',
         set(sheets) {
           if (!obj.isArray(sheets)) {
             sheets = [sheets];
@@ -2641,20 +2617,16 @@ class PathPoint {
     }
     this.path.onVertexChanged(this);
   }
-
 }
 
 export class Path extends Morph {
-
   static get properties() {
     return {
       borderColor: {
         isStyleProp: true,
         derived: true,
-        spec: {
-          type: "ColorGradient",
-          foldable: ["top", "left", "right", "bottom"]
-        },
+        type: "ColorGradient",
+        foldable: ["top", "left", "right", "bottom"],
         set(value) {
           if (!value) value = Color.white;
           if (value.isColor || value.isGradient) {
@@ -2665,15 +2637,13 @@ export class Path extends Morph {
       },
       vertices: {
         defaultValue: [],
-        spec: {
-          type: 'Vertices'
-        },
+        type: "Vertices",
         set(vs) {
           vs = vs.map(v => new PathPoint(this, {...v, borderWidth: this.borderWidth}));
           this.setProperty("vertices", vs);
         }
       }
-    }
+    };
   }
 
   constructor(props = {}) {

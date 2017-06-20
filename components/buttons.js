@@ -49,10 +49,8 @@ export class Button extends Morph {
       draggable:    {defaultValue: false},
 
       fontSize: {
-        spec: {
-          type: 'Number',
-          min: 0
-        },
+        type: "Number",
+        min: 0,
         isStyleProps: true,
         defaultValue: 12,
         after: ['labelMorph', 'iconMorph'],
@@ -142,9 +140,7 @@ export class Button extends Morph {
       icon: {
         after: ['labelMorph', 'iconMorph'], 
         isStyleProp: true,
-        spec: {
-          type: 'Icon' // "" -> no icon, else a valid font awesome icon code
-        },
+        type: "Icon", // "" -> no icon, else a valid font awesome icon code
         initialize() {
           this.icon = "";
         },
@@ -160,19 +156,15 @@ export class Button extends Morph {
       },
 
       iconPosition: {
-        defaultValue: 'left',  
-        spec: {
-          type: 'Enum',
-          values: ['left', 'right', 'bottom', 'top']
-        }        
+        defaultValue: "left",
+        type: "Enum",
+        values: ["left", "right", "bottom", "top"]
       },
 
       label: {
         after: ["labelMorph"], 
         isStyleProp: true,
-        spec: {
-          type: 'RichText' // this includes an attributes Array
-        },
+        type: "RichText", // this includes an attributes Array
         set(stringOrAttributesOrMorph) {
           if (stringOrAttributesOrMorph.isMorph) {
             this.setProperty('label', stringOrAttributesOrMorph.value)

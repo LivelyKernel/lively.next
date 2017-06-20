@@ -121,10 +121,8 @@ export class Label extends Morph {
       },
 
       padding: {
-        spec: {
-          type: 'Rectangle'
-        },
-        isStyleProp: true, 
+        type: "Rectangle",
+        isStyleProp: true,
         defaultValue: Rectangle.inset(0),
         initialize(value) { this.padding = value; /*for num -> rect conversion*/},
         set(value) {
@@ -137,10 +135,8 @@ export class Label extends Morph {
 
       fontFamily: {
         isStyleProp: true,
-        spec: {
-          type: "Enum",
-          values: RichTextControl.basicFontItems().map(f => f.value)
-        },
+        type: "Enum",
+        values: RichTextControl.basicFontItems().map(f => f.value),
         defaultValue: "Sans-Serif",
         set(fontFamily) {
           this._cachedTextBounds = null;
@@ -150,10 +146,8 @@ export class Label extends Morph {
       },
 
       fontSize: {
-        spec: {
-          type: 'Number',
-          min: 1
-        },
+        type: "Number",
+        min: 1,
         isStyleProp: true,
         defaultValue: 12,
         set(fontSize) {
@@ -163,13 +157,11 @@ export class Label extends Morph {
         }
       },
 
-      fontColor: {spec: {type: 'Color'}, isStyleProp: true, defaultValue: Color.black},
+      fontColor: {type: "Color", isStyleProp: true, defaultValue: Color.black},
 
       fontWeight: {
-        spec: {
-          type: 'Enum',
-          values: ["bold", "bolder", "light", "lighter"]
-        },
+        type: "Enum",
+        values: ["bold", "bolder", "light", "lighter"],
         isStyleProp: true,
         defaultValue: "normal",
         set(fontWeight) {
@@ -180,10 +172,8 @@ export class Label extends Morph {
       },
 
       fontStyle: {
-        spec: {
-          type: 'Enum',
-          values: ['normal', 'italic', 'oblique']
-        },
+        type: "Enum",
+        values: ["normal", "italic", "oblique"],
         isStyleProp: true,
         defaultValue: "normal",
         set(fontStyle) {
