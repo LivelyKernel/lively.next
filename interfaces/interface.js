@@ -187,11 +187,17 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   evalWithResource(url, method, arg) {
-    return this.runEvalAndStringify(`var {resource} = await System.import("lively.resources"); await resource("${url}").${method}(${arg ? JSON.stringify(arg) : ""})`);
+    return this.runEvalAndStringify(`
+      var {resource} = (typeof lively !== "undefined" && lively.resources)
+                    || await System.import("lively.resources");
+      await resource("${url}").${method}(${arg ? JSON.stringify(arg) : ""});
+    `);
   }
 
   resourceExists(url) { return this.evalWithResource(url, "exists"); }
-  resourceEnsureExistance(url, optContent) { return this.evalWithResource(url, "ensureExistance", optContent); }
+  resourceEnsureExistance(url, optContent) {
+    return this.evalWithResource(url, "ensureExistance", optContent);
+  }
   resourceMkdir(url) { return this.evalWithResource(url, "mkdir"); }
   resourceRead(url) { return this.evalWithResource(url, "read");}
   resourceRemove(url) { return this.evalWithResource(url, "remove");}
