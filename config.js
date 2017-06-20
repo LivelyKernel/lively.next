@@ -38,7 +38,7 @@ var config = {
     {keys: "Alt-Shift-C", command: "toggle minimize active window"},
     {keys: {mac: "Meta-O", win: "Ctrl-O"}, command: "open status message of focused morph"},
 
-    {keys: {win: "Ctrl-K", mac: "Meta-K"}, command: {command: "open workspace", onlyWhenFocused: false}},
+    {keys: {win: "Ctrl-K", mac: "Meta-K"}, command: {command: "open workspace", onlyWhenFocused: false, args: {askForMode: true}}},
     {keys: "Alt-Shift-1", command: {command: "open shell terminal", onlyWhenFocused: false}},
     {keys: {win: "Ctrl-B", mac: "Meta-B"}, command: {command: "open browser", onlyWhenFocused: false}},
     {keys: {win: "Ctrl-P", mac: "Meta-P"}, command: {command: "open PartsBin", onlyWhenFocused: true}},

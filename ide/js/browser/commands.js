@@ -302,10 +302,9 @@ export default function browserCommands(browser) {
 
     {
       name: "open browse snippet",
-      exec: browser => {
-        let snip = browser.browseSnippetForSelection();
-        return browser.world().execCommand("open workspace", {content: snip});
-      }
+      exec: browser =>
+        browser.world().execCommand("open workspace",
+          {content: browser.browseSnippetForSelection(), language: "javascript"})
     },
 
     {
