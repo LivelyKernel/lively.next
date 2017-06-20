@@ -1155,7 +1155,7 @@ class CopyHaloItem extends HaloItem {
 
     try {
       for (let m of morphsToCopy) {
-        let snap = await createMorphSnapshot(m, {addPreview: false, testLoad: true});
+        let snap = await createMorphSnapshot(m, {addPreview: false, testLoad: false});
         snap.copyMeta = {offset: m.worldPoint(pt(0,0)).subPt(origin)};
         snapshots.push(snap)
         html += m.renderPreview();
