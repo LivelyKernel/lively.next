@@ -121,8 +121,8 @@ export default class Window extends Morph {
         }
       },
 
-      minimizedBounds: {},
-      nonMinizedBounds: {serialize: false},
+      minimizedBounds: {serialize: false},
+      nonMinizedBounds: {},
       nonMaximizedBounds: {},
       minimized: {},
       maximized: {}
