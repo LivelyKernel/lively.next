@@ -1477,7 +1477,7 @@ var Resource$$1 = function () {
   }, {
     key: "__serialize__",
     value: function __serialize__() {
-      return { __expr__: "resource(\"" + this.url + "\")", bindings: { "lively.resources": ["resource"] } };
+      return { __expr__: "var r = null; try { r = resource(\"" + this.url + "\");} catch (err) {}; r", bindings: { "lively.resources": ["resource"] } };
     }
   }, {
     key: "isResource",
@@ -1948,6 +1948,8 @@ var WebDAVResource = function (_Resource) {
                 return makeRequest(this, "PROPFIND", null, // propfindRequestPayload(),
                 {
                   'Content-Type': 'text/xml'
+                  // rk 2016-06-24: jsDAV does not support PROPFIND via depth: 'infinity'
+                  // 'Depth': String(depth)
                 });
 
               case 2:

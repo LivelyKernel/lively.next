@@ -281,7 +281,7 @@ export default class Resource {
   // serialization
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   __serialize__() {
-    return {__expr__: `resource("${this.url}")`, bindings: {"lively.resources": ["resource"]}}
+    return {__expr__: `var r = null; try { r = resource("${this.url}");} catch (err) {}; r`, bindings: {"lively.resources": ["resource"]}}
   }
 
 }
