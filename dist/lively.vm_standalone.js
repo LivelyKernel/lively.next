@@ -1,5 +1,5 @@
 
-// INLINED /Users/robert/Lively/lively-dev2/lively.vm/node_modules/babel-regenerator-runtime/runtime.js
+// INLINED /Users/robert/Lively/lively-dev2/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -658,7 +658,7 @@
   typeof self === "object" ? self : this
 );
 
-// INLINED END /Users/robert/Lively/lively-dev2/lively.vm/node_modules/babel-regenerator-runtime/runtime.js
+// INLINED END /Users/robert/Lively/lively-dev2/lively.next-node_modules/babel-regenerator-runtime/6.5.0/runtime.js
 
 // INLINED /Users/robert/Lively/lively-dev2/lively.lang/dist/lively.lang.js
 
@@ -4604,16 +4604,18 @@ function joinPath() /*paths*/{
 // -=-=-=-=-=-=-=-=-
 // ids and hashing
 // -=-=-=-=-=-=-=-=-
+var newUUIDTemplate = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx';
+var newUUIDRe = /[xy]/g;
+var newUUIDReplacer = function newUUIDReplacer(c) {
+  var r = Math.random() * 16 | 0,
+      v = c == 'x' ? r : r & 0x3 | 0x8;
+  return v.toString(16);
+};
 
 function newUUID() {
   // Example:
-  //   string.newUUID() // => "3B3E74D0-85EA-45F2-901C-23ECF3EAB9FB"
-  var id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    var r = Math.random() * 16 | 0,
-        v = c == 'x' ? r : r & 0x3 | 0x8;
-    return v.toString(16);
-  }).toUpperCase();
-  return id;
+  //   newUUID() // => "3B3E74D0-85EA-45F2-901C-23ECF3EAB9FB"
+  return newUUIDTemplate.replace(newUUIDRe, newUUIDReplacer).toUpperCase();
 }
 
 function createDataURI(content, mimeType) {
@@ -5875,17 +5877,21 @@ function timeout(ms, promise) {
   });
 }
 
-function waitFor$1(ms, tester) {
+function waitFor$1(ms, tester, timeoutObj) {
   // Tests for a condition calling function `tester` until the result is
   // truthy. Resolves with last return value of `tester`. If `ms` is defined
   // and `ms` milliseconds passed, reject with timeout error
+  // if timeoutObj is passed will resolve(!) with this object instead of raise
+  // an error
 
+  if (typeof ms === "function") {
+    tester = ms;ms = undefined;
+  }
   return new Promise(function (resolve, reject) {
-    if (typeof ms === "function") {
-      tester = ms;ms = undefined;
-    }
     var stopped = false,
-        error = null,
+        timedout = false,
+        timeoutValue = undefined,
+        error = undefined,
         value = undefined,
         i = setInterval(function () {
       if (stopped) {
@@ -5896,17 +5902,16 @@ function waitFor$1(ms, tester) {
       } catch (e) {
         error = e;
       }
-      if (value || error) {
-        stopped = true;
-        clearInterval(i);
-        error ? reject(error) : resolve(value);
-      }
+      if (!value && !error && !timedout) return;
+      stopped = true;
+      clearInterval(i);
+      if (error) return reject(error);
+      if (timedout) return typeof timeoutObj === "undefined" ? reject(new Error("timeout")) : resolve(timeoutObj);
+      return resolve(value);
     }, 10);
-    if (typeof ms === "number") {
-      setTimeout(function () {
-        error = new Error('timeout');
-      }, ms);
-    }
+    if (typeof ms === "number") setTimeout(function () {
+      return timedout = true;
+    }, ms);
   });
 }
 
@@ -8251,7 +8256,7 @@ var GLOBAL = typeof window !== "undefined" ? window : typeof global !== "undefin
 
 var isNode = typeof process !== "undefined" && process.env && typeof process.exit === "function";
 
-var globalInterfaceSpec = [{ action: "installMethods", target: "Array", sources: ["arr"], methods: ["genN", "range", "withN"] }, { action: "installMethods", target: "Array.prototype", sources: ["arr"], methods: ["all", "any", "batchify", "clear", "clone", "collect", "compact", "delimWith", "detect", "doAndContinue", "each", "equals", "filterByKey", "findAll", "first", "flatten", "forEachShowingProgress", "grep", "groupBy", "groupByKey", "histogram", "include", "inject", "intersect", "invoke", "last", "mapAsync", "mapAsyncSeries", "mask", "max", "min", "mutableCompact", "nestedDelay", "partition", "pluck", "pushAll", "pushAllAt", "pushAt", "pushIfNotIncluded", "reMatches", "reject", "rejectByKey", "remove", "removeAt", "replaceAt", "rotate", "shuffle", "size", "sortBy", "sortByKey", "sum", "swap", "toArray", "toTuples", "union", "uniq", "uniqBy", "without", "withoutAll", "zip"], alias: [["select", "filter"]] }, { action: "installMethods", target: "Date", sources: ["date"], methods: [/*"parse"*/] }, { action: "installMethods", target: "Date.prototype", sources: ["date"], methods: ["equals", "format", "relativeTo"] }, { action: "installMethods", target: "Function", sources: ["fun"], methods: ["fromString"] }, { action: "installMethods", target: "Function.prototype", sources: ["fun"], methods: [/*"addProperties",*/"addToObject", "argumentNames", "asScript", "asScriptOf", "binds", "curry", "delay", "functionNames", "localFunctionNames", "getOriginal", "getVarMapping", "logCalls", "logCompletion", "logErrors", "qualifiedMethodName", "setProperty", "traceCalls", "wrap"] }, { action: "installMethods", target: "Number", sources: ["num"], methods: [] }, { action: "installMethods", target: "Number.prototype", sources: ["num"], methods: ["detent", "randomSmallerInteger", "roundTo", "toDegrees", "toRadians"] }, { action: "installMethods", target: "Object", sources: ["obj"], methods: ["addScript", "clone", "deepCopy", "extend", "inherit", "isArray", "isBoolean", "isElement", "isEmpty", "isFunction", "isNumber", "isObject", "isRegExp", "isString", "isUndefined", "merge", "mergePropertyInHierarchy", "values", "valuesInPropertyHierarchy"] }, { action: "installMethods", target: "Object.prototype", sources: ["obj"], methods: [] }, { action: "installMethods", target: "String.prototype", sources: ["string"], methods: ["camelize", "capitalize", "digitValue", "empty", "hashCode", "include", "pad", "regExpEscape", "startsWithVowel", "succ", "times", "toArray", "toQueryParams", "truncate"] }, { action: "installMethods", target: "Function.prototype", sources: ["klass"], methods: ["create", "addMethods", "isSubclassOf", "superclasses", "categoryNameFor", "remove"], alias: [["subclass", "create"]] }, { action: "installObject", target: "Numbers", source: "num", methods: ["average", "between", "convertLength", "humanReadableByteSize", "median", "normalRandom", "parseLength", "random", "sort"] }, { action: "installObject", target: "Properties", source: "properties", methods: ["all", "allOwnPropertiesOrFunctions", "allProperties", "any", "forEachOwn", "hash", "nameFor", "own", "ownValues", "values"] }, { action: "installObject", target: "Strings", source: "string", methods: ["camelCaseString", "createDataURI", "diff", "format", "formatFromArray", "indent", "lineIndexComputer", "lines", "md5", "newUUID", "nonEmptyLines", "pad", "paragraphs", "peekLeft", "peekRight", "print", "printNested", "printTable", "printTree", "quote", "reMatches", "stringMatch", "tableize", "tokens", "unescapeCharacterEntities", "withDecimalPrecision"] }, { action: "installObject", target: "Objects", source: "obj", methods: ["asObject", "equals", "inspect", "isMutableType", "safeToString", "shortPrintStringOf", "typeStringOf"] }, { action: "installObject", target: "Functions", source: "fun", methods: ["all", "compose", "composeAsync", "createQueue", "debounce", "debounceNamed", "either", "extractBody", "flip", "notYetImplemented", "once", "own", "throttle", "throttleNamed", "timeToRun", "timeToRunN", "waitFor", "workerWithCallbackQueue", "wrapperChain"] }, { action: "installObject", target: "Grid", source: "grid" }, { action: "installObject", target: "Interval", source: "interval" }, { action: "installObject", target: "lively.ArrayProjection", source: "arrayProjection" }, { action: "installObject", target: "lively.Closure", source: "Closure" }, { action: "installObject", target: "lively.Grouping", source: "Group" }, { action: "installObject", target: "lively.PropertyPath", source: "Path" }, { action: "installObject", target: "lively.Worker", source: "worker" }, { action: "installObject", target: "lively.Class", source: "classHelper" }];
+var globalInterfaceSpec = [{ action: "installMethods", target: "Array", sources: ["arr"], methods: ["from", "genN", "range", "withN"] }, { action: "installMethods", target: "Array.prototype", sources: ["arr"], methods: ["all", "any", "batchify", "clear", "clone", "collect", "compact", "delimWith", "detect", "doAndContinue", "each", "equals", "filterByKey", "findAll", "first", "flatten", "forEachShowingProgress", "grep", "groupBy", "groupByKey", "histogram", "include", "inject", "intersect", "invoke", "last", "mapAsync", "mapAsyncSeries", "mask", "max", "min", "mutableCompact", "nestedDelay", "partition", "pluck", "pushAll", "pushAllAt", "pushAt", "pushIfNotIncluded", "reMatches", "reject", "rejectByKey", "remove", "removeAt", "replaceAt", "rotate", "shuffle", "size", "sortBy", "sortByKey", "sum", "swap", "toArray", "toTuples", "union", "uniq", "uniqBy", "without", "withoutAll", "zip"], alias: [["select", "filter"]] }, { action: "installMethods", target: "Date", sources: ["date"], methods: [/*"parse"*/] }, { action: "installMethods", target: "Date.prototype", sources: ["date"], methods: ["equals", "format", "relativeTo"] }, { action: "installMethods", target: "Function", sources: ["fun"], methods: ["fromString"] }, { action: "installMethods", target: "Function.prototype", sources: ["fun"], methods: [/*"addProperties",*/"addToObject", "argumentNames", "asScript", "asScriptOf", "binds", "curry", "delay", "functionNames", "localFunctionNames", "getOriginal", "getVarMapping", "logCalls", "logCompletion", "logErrors", "qualifiedMethodName", "setProperty", "traceCalls", "wrap"] }, { action: "installMethods", target: "Number", sources: ["num"], methods: [] }, { action: "installMethods", target: "Number.prototype", sources: ["num"], methods: ["detent", "randomSmallerInteger", "roundTo", "toDegrees", "toRadians"] }, { action: "installMethods", target: "Object", sources: ["obj"], methods: ["addScript", "clone", "deepCopy", "extend", "inherit", "isArray", "isBoolean", "isElement", "isEmpty", "isFunction", "isNumber", "isObject", "isRegExp", "isString", "isUndefined", "merge", "mergePropertyInHierarchy", "values", "valuesInPropertyHierarchy"] }, { action: "installMethods", target: "Object.prototype", sources: ["obj"], methods: [] }, { action: "installMethods", target: "String.prototype", sources: ["string"], methods: ["camelize", "capitalize", "digitValue", "empty", "hashCode", "include", "pad", "regExpEscape", "startsWithVowel", "succ", "times", "toArray", "toQueryParams", "truncate"] }, { action: "installObject", target: "Numbers", source: "num", methods: ["average", "between", "convertLength", "humanReadableByteSize", "median", "normalRandom", "parseLength", "random", "sort"] }, { action: "installObject", target: "Properties", source: "properties", methods: ["all", "allOwnPropertiesOrFunctions", "allProperties", "any", "forEachOwn", "hash", "nameFor", "own", "ownValues", "values"] }, { action: "installObject", target: "Strings", source: "string", methods: ["camelCaseString", "createDataURI", "diff", "format", "formatFromArray", "indent", "lineIndexComputer", "lines", "md5", "newUUID", "nonEmptyLines", "pad", "paragraphs", "peekLeft", "peekRight", "print", "printNested", "printTable", "printTree", "quote", "reMatches", "stringMatch", "tableize", "tokens", "unescapeCharacterEntities", "withDecimalPrecision"] }, { action: "installObject", target: "Objects", source: "obj", methods: ["asObject", "equals", "inspect", "isMutableType", "safeToString", "shortPrintStringOf", "typeStringOf"] }, { action: "installObject", target: "Functions", source: "fun", methods: ["all", "compose", "composeAsync", "createQueue", "debounce", "debounceNamed", "either", "extractBody", "flip", "notYetImplemented", "once", "own", "throttle", "throttleNamed", "timeToRun", "timeToRunN", "waitFor", "workerWithCallbackQueue", "wrapperChain"] }, { action: "installObject", target: "Grid", source: "grid" }, { action: "installObject", target: "Interval", source: "interval" }, { action: "installObject", target: "lively.ArrayProjection", source: "arrayProjection" }, { action: "installObject", target: "lively.Closure", source: "Closure" }, { action: "installObject", target: "lively.Grouping", source: "Group" }, { action: "installObject", target: "lively.PropertyPath", source: "Path" }, { action: "installObject", target: "lively.Worker", source: "worker" }, { action: "installObject", target: "lively.Class", source: "classHelper" }];
 
 function createLivelyLangObject() {
   return {
@@ -8311,6 +8316,27 @@ function noConflict() {
 }
 
 function installGlobals() {
+  Object.assign(livelyLang, {
+    worker: worker,
+    messenger: messenger,
+    events: events,
+    tree: tree,
+    grid: grid,
+    arrayProjection: arrayProjection,
+    interval: interval,
+    graph: graph,
+    date: date,
+    properties: properties,
+    obj: obj,
+    arr: arr,
+    fun: fun,
+    num: num,
+    string: string,
+    Closure: Closure,
+    promise: promise,
+    Path: Path,
+    Group: Group
+  });
   globalInterfaceSpec.forEach(function (ea) {
     if (ea.action === "installMethods") {
       var targetPath = Path(ea.target);
@@ -24099,7 +24125,16 @@ function installMethods(klass, instanceMethods, classMethods) {
       writable: true,
       value: function value() {}
     });
+    klass.prototype[initializeSymbol].isDefaultInitializer = true;
     klass.prototype[initializeSymbol].displayName = "lively-initialize";
+  } else {
+    if (Object.getOwnPropertySymbols(klass.prototype).includes(initializeSymbol)) {
+      if (klass.prototype[initializeSymbol].isDefaultInitializer) {
+        if (klass[superclassSymbol].prototype[initializeSymbol]) {
+          delete klass.prototype[initializeSymbol];
+        }
+      }
+    }
   }
 
   // 5. undefine properties that were removed form class definition
@@ -24178,9 +24213,13 @@ function initializeClass(constructorFunc, superclassSpec) {
   // (de)serialize class instances in lively.serializer
   if (currentModule) {
     var p = currentModule.package();
+    var prevMeta = klass[moduleMetaSymbol];
+    var t = Date.now();
     klass[moduleMetaSymbol] = {
       package: p ? { name: p.name, version: p.version } : {},
-      pathInPackage: currentModule.pathInPackage()
+      pathInPackage: p ? currentModule.pathInPackage() : currentModule.id,
+      lastChange: prevMeta && prevMeta.lastChange && t <= prevMeta.lastChange ? prevMeta.lastChange + 1 : t,
+      lastSuperclassChange: 0
     };
 
     // if we have a module, we can listen to toplevel changes of it in case the
@@ -24196,6 +24235,14 @@ function initializeClass(constructorFunc, superclassSpec) {
       klass[moduleSubscribeToToplevelChangesSym] = currentModule.subscribeToToplevelDefinitionChanges(function (name, val) {
         if (name !== superclassSpec.referencedAs) return;
         // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''} was defined via module bindings`)
+
+        // Only run through the (expensive) updates if superclass really has changes
+        var superMeta = val && val[moduleMetaSymbol],
+            myMeta = klass[moduleMetaSymbol];
+        if (superMeta) {
+          if (superMeta.lastChange === myMeta.lastSuperclassChange) return;
+          myMeta.lastSuperclassChange = superMeta.lastChange;
+        }
         setSuperclass(klass, val);
         installMethods(klass, instanceMethods, classMethods);
         prepareClassForManagedPropertiesAfterCreation(klass);
@@ -24970,6 +25017,7 @@ function replaceVarDecls(parsed, options) {
 
       // This is rewriting normal vars
       replaced.push(assignExpr(options.captureObj, decl.id, initWrapped, false));
+      if (options.keepTopLevelVarDecls) replaced.push(varDecl(decl.id, member(options.captureObj, decl.id)));
     }
 
     return replaced;
@@ -25362,7 +25410,20 @@ function transformObjectPattern(pattern, transformState) {
   for (var i = 0; i < pattern.properties.length; i++) {
     var prop = pattern.properties[i];
 
-    if (prop.value.type == "Identifier") {
+    if (prop.type == "RestElement") {
+
+      var knownKeys = pattern.properties.map(function (ea) {
+        return ea.key && ea.key.name;
+      }).filter(Boolean);
+      var decl = lively_ast.nodes.varDecl(prop.argument.name, lively_ast.nodes.objectLiteral([]));
+      var captureDecl = lively_ast.nodes.varDecl(prop.argument.name, id(prop.argument.name));
+      var defCall = lively_ast.nodes.exprStmt(lively_ast.nodes.funcCall(lively_ast.nodes.funcExpr({}, [], lively_ast.nodes.forIn("__key", transformState.parent, lively_ast.nodes.block.apply(lively_ast.nodes, toConsumableArray(knownKeys.length ? knownKeys.map(function (knownKey) {
+        return lively_ast.nodes.ifStmt(lively_ast.nodes.binaryExpr(lively_ast.nodes.id("__key"), "===", lively_ast.nodes.literal(knownKey)), { type: "ContinueStatement", label: null }, null);
+      }) : []).concat([lively_ast.nodes.exprStmt(lively_ast.nodes.assign(lively_ast.nodes.member(prop.argument.name, lively_ast.nodes.id("__key"), true), lively_ast.nodes.member(transformState.parent, lively_ast.nodes.id("__key"), true)))]))))));
+
+      captureDecl[p] = { capture: true };
+      transformed.push(decl, captureDecl, defCall);
+    } else if (prop.value.type == "Identifier") {
       // like {x: y}
       var decl = varDecl(prop.value, member(transformState.parent, prop.key));
       decl[p] = { capture: true };
@@ -25466,7 +25527,7 @@ function declarationWrapperCall(declarationWrapperNode, declNode, varNameLiteral
     if (evalId !== undefined) keyVals.push("evalId", lively_ast.nodes.literal(evalId));
     if (sourceAccessorName) keyVals.push("moduleSource", lively_ast.nodes.id(sourceAccessorName));
     if (addMeta) {
-      return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder, lively_ast.nodes.objectLiteral(keyVals) /*meta node*/);
+      return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder, lively_ast.nodes.objectLiteral(keyVals /*meta node*/));
     }
   }
 
@@ -25695,7 +25756,43 @@ var set = function set(object, property, value, receiver) {
   return value;
 };
 
+var slicedToArray = function () {
+  function sliceIterator(arr$$1, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
 
+    try {
+      for (var _i = arr$$1[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"]) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  return function (arr$$1, i) {
+    if (Array.isArray(arr$$1)) {
+      return arr$$1;
+    } else if (Symbol.iterator in Object(arr$$1)) {
+      return sliceIterator(arr$$1, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
 
 
 
@@ -26005,6 +26102,20 @@ var member = lively_ast.nodes.member;
 var defaultDeclarationWrapperName = "lively.capturing-declaration-wrapper";
 var defaultClassToFunctionConverterName = "initializeES6ClassForLively";
 
+function processInlineCodeTransformOptions(parsed, options) {
+  if (!parsed.comments) return options;
+  var livelyComment = parsed.comments.find(function (ea) {
+    return ea.text.startsWith("lively.vm ");
+  });
+  if (!livelyComment) return options;
+  try {
+    var inlineOptions = eval("inlineOptions = {" + livelyComment.text.slice("lively.vm ".length) + "};");
+    return Object.assign(options, inlineOptions);
+  } catch (err) {
+    return options;
+  }
+}
+
 function evalCodeTransform(code, options) {
   // variable declaration and references in the the source code get
   // transformed so that they are bound to `varRecorderName` aren't local
@@ -26014,7 +26125,9 @@ function evalCodeTransform(code, options) {
 
   // 1. Allow evaluation of function expressions and object literals
   code = lively_ast.transform.transformSingleExpression(code);
-  var parsed = lively_ast.parse(code);
+  var parsed = lively_ast.parse(code, { withComments: true });
+
+  options = processInlineCodeTransformOptions(parsed, options);
 
   // 2. Annotate definitions with code location. This is being used by the
   // function-wrapper-source transform.
@@ -26104,7 +26217,8 @@ function evalCodeTransform(code, options) {
       declarationWrapper: options.declarationWrapper || undefined,
       classToFunction: es6ClassToFunctionOptions,
       evalId: options.evalId,
-      sourceAccessorName: options.sourceAccessorName
+      sourceAccessorName: options.sourceAccessorName,
+      keepTopLevelVarDecls: options.keepTopLevelVarDecls
     });
   }
 
@@ -27043,42 +27157,56 @@ var HttpEvalStrategy = function (_RemoteEvalStrategy) {
     key: "basicRemoteEval_web",
     value: function () {
       var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(payload, url) {
-        var res;
+        var _ref13, _ref14, domain, crossDomain, res;
+
         return regeneratorRuntime.wrap(function _callee12$(_context12) {
           while (1) {
             switch (_context12.prev = _context12.next) {
               case 0:
-                _context12.prev = 0;
-                _context12.next = 3;
+                _ref13 = url.match(/[^:]+:\/\/[^\/]+/) || [url], _ref14 = slicedToArray(_ref13, 1), domain = _ref14[0], crossDomain = document.location.origin !== domain;
+
+
+                if (crossDomain) {
+                  // use lively.server proxy plugin
+                  payload.headers = _extends({}, payload.headers, {
+                    'pragma': 'no-cache',
+                    'cache-control': 'no-cache',
+                    "x-lively-proxy-request": url
+                  });
+                  url = document.location.origin;
+                }
+
+                _context12.prev = 2;
+                _context12.next = 5;
                 return window.fetch(url, payload);
 
-              case 3:
+              case 5:
                 res = _context12.sent;
-                _context12.next = 9;
+                _context12.next = 11;
                 break;
 
-              case 6:
-                _context12.prev = 6;
-                _context12.t0 = _context12["catch"](0);
+              case 8:
+                _context12.prev = 8;
+                _context12.t0 = _context12["catch"](2);
                 throw new Error("Cannot reach server at " + url + ": " + _context12.t0.message);
 
-              case 9:
+              case 11:
                 if (res.ok) {
-                  _context12.next = 11;
+                  _context12.next = 13;
                   break;
                 }
 
                 throw new Error("Server at " + url + ": " + res.statusText);
 
-              case 11:
+              case 13:
                 return _context12.abrupt("return", res.text());
 
-              case 12:
+              case 14:
               case "end":
                 return _context12.stop();
             }
           }
-        }, _callee12, this, [[0, 6]]);
+        }, _callee12, this, [[2, 8]]);
       }));
 
       function basicRemoteEval_web(_x23, _x24) {
@@ -27090,7 +27218,7 @@ var HttpEvalStrategy = function (_RemoteEvalStrategy) {
   }, {
     key: "basicRemoteEval_node",
     value: function () {
-      var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(payload, url) {
+      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(payload, url) {
         var urlParse, http, opts;
         return regeneratorRuntime.wrap(function _callee13$(_context13) {
           while (1) {
@@ -27126,7 +27254,7 @@ var HttpEvalStrategy = function (_RemoteEvalStrategy) {
       }));
 
       function basicRemoteEval_node(_x25, _x26) {
-        return _ref13.apply(this, arguments);
+        return _ref15.apply(this, arguments);
       }
 
       return basicRemoteEval_node;
@@ -27151,29 +27279,28 @@ var L2LEvalStrategy = function (_RemoteEvalStrategy2) {
   createClass(L2LEvalStrategy, [{
     key: "basicRemoteEval",
     value: function () {
-      var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(source, options) {
-        var l2lClient, targetId, _ref15, evalResult;
+      var _ref16 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(source, options) {
+        var l2lClient, targetId, _ref17, evalResult;
 
         return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
             switch (_context14.prev = _context14.next) {
               case 0:
-                inspect({ source: source, options: options });
                 l2lClient = this.l2lClient;
                 targetId = this.targetId;
-                _context14.next = 5;
+                _context14.next = 4;
                 return new Promise(function (resolve, reject) {
                   return l2lClient.sendTo(targetId, "remote-eval", { source: source }, resolve);
                 });
 
-              case 5:
-                _ref15 = _context14.sent;
-                evalResult = _ref15.data;
+              case 4:
+                _ref17 = _context14.sent;
+                evalResult = _ref17.data;
 
                 if (evalResult && evalResult.value && evalResult.value.isEvalResult) evalResult = evalResult.value;
                 return _context14.abrupt("return", evalResult);
 
-              case 9:
+              case 8:
               case "end":
                 return _context14.stop();
             }
@@ -27182,7 +27309,7 @@ var L2LEvalStrategy = function (_RemoteEvalStrategy2) {
       }));
 
       function basicRemoteEval(_x27, _x28) {
-        return _ref14.apply(this, arguments);
+        return _ref16.apply(this, arguments);
       }
 
       return basicRemoteEval;

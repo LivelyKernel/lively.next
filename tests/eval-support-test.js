@@ -52,5 +52,10 @@ describe("eval code transform", function() {
              + `  moduleSource: __source\n`
              + `});`));
 
+  it("allows for inline options", () =>
+    expect(evalCodeTransform(`/*lively.vm varRecorderName:"foo"*/var x = 23;`, {
+      topLevelVarRecorder: {}
+    })).equals(`foo.x = 23;`));
+
   
 });

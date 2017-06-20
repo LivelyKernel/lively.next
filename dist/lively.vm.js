@@ -189,7 +189,43 @@ var set = function set(object, property, value, receiver) {
   return value;
 };
 
+var slicedToArray = function () {
+  function sliceIterator(arr$$1, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
 
+    try {
+      for (var _i = arr$$1[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"]) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  return function (arr$$1, i) {
+    if (Array.isArray(arr$$1)) {
+      return arr$$1;
+    } else if (Symbol.iterator in Object(arr$$1)) {
+      return sliceIterator(arr$$1, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
 
 
 
@@ -499,6 +535,20 @@ var member = lively_ast.nodes.member;
 var defaultDeclarationWrapperName = "lively.capturing-declaration-wrapper";
 var defaultClassToFunctionConverterName = "initializeES6ClassForLively";
 
+function processInlineCodeTransformOptions(parsed, options) {
+  if (!parsed.comments) return options;
+  var livelyComment = parsed.comments.find(function (ea) {
+    return ea.text.startsWith("lively.vm ");
+  });
+  if (!livelyComment) return options;
+  try {
+    var inlineOptions = eval("inlineOptions = {" + livelyComment.text.slice("lively.vm ".length) + "};");
+    return Object.assign(options, inlineOptions);
+  } catch (err) {
+    return options;
+  }
+}
+
 function evalCodeTransform(code, options) {
   // variable declaration and references in the the source code get
   // transformed so that they are bound to `varRecorderName` aren't local
@@ -508,7 +558,9 @@ function evalCodeTransform(code, options) {
 
   // 1. Allow evaluation of function expressions and object literals
   code = lively_ast.transform.transformSingleExpression(code);
-  var parsed = lively_ast.parse(code);
+  var parsed = lively_ast.parse(code, { withComments: true });
+
+  options = processInlineCodeTransformOptions(parsed, options);
 
   // 2. Annotate definitions with code location. This is being used by the
   // function-wrapper-source transform.
@@ -598,7 +650,8 @@ function evalCodeTransform(code, options) {
       declarationWrapper: options.declarationWrapper || undefined,
       classToFunction: es6ClassToFunctionOptions,
       evalId: options.evalId,
-      sourceAccessorName: options.sourceAccessorName
+      sourceAccessorName: options.sourceAccessorName,
+      keepTopLevelVarDecls: options.keepTopLevelVarDecls
     });
   }
 
@@ -1537,42 +1590,56 @@ var HttpEvalStrategy = function (_RemoteEvalStrategy) {
     key: "basicRemoteEval_web",
     value: function () {
       var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(payload, url) {
-        var res;
+        var _ref13, _ref14, domain, crossDomain, res;
+
         return regeneratorRuntime.wrap(function _callee12$(_context12) {
           while (1) {
             switch (_context12.prev = _context12.next) {
               case 0:
-                _context12.prev = 0;
-                _context12.next = 3;
+                _ref13 = url.match(/[^:]+:\/\/[^\/]+/) || [url], _ref14 = slicedToArray(_ref13, 1), domain = _ref14[0], crossDomain = document.location.origin !== domain;
+
+
+                if (crossDomain) {
+                  // use lively.server proxy plugin
+                  payload.headers = _extends({}, payload.headers, {
+                    'pragma': 'no-cache',
+                    'cache-control': 'no-cache',
+                    "x-lively-proxy-request": url
+                  });
+                  url = document.location.origin;
+                }
+
+                _context12.prev = 2;
+                _context12.next = 5;
                 return window.fetch(url, payload);
 
-              case 3:
+              case 5:
                 res = _context12.sent;
-                _context12.next = 9;
+                _context12.next = 11;
                 break;
 
-              case 6:
-                _context12.prev = 6;
-                _context12.t0 = _context12["catch"](0);
+              case 8:
+                _context12.prev = 8;
+                _context12.t0 = _context12["catch"](2);
                 throw new Error("Cannot reach server at " + url + ": " + _context12.t0.message);
 
-              case 9:
+              case 11:
                 if (res.ok) {
-                  _context12.next = 11;
+                  _context12.next = 13;
                   break;
                 }
 
                 throw new Error("Server at " + url + ": " + res.statusText);
 
-              case 11:
+              case 13:
                 return _context12.abrupt("return", res.text());
 
-              case 12:
+              case 14:
               case "end":
                 return _context12.stop();
             }
           }
-        }, _callee12, this, [[0, 6]]);
+        }, _callee12, this, [[2, 8]]);
       }));
 
       function basicRemoteEval_web(_x23, _x24) {
@@ -1584,7 +1651,7 @@ var HttpEvalStrategy = function (_RemoteEvalStrategy) {
   }, {
     key: "basicRemoteEval_node",
     value: function () {
-      var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(payload, url) {
+      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(payload, url) {
         var urlParse, http, opts;
         return regeneratorRuntime.wrap(function _callee13$(_context13) {
           while (1) {
@@ -1620,7 +1687,7 @@ var HttpEvalStrategy = function (_RemoteEvalStrategy) {
       }));
 
       function basicRemoteEval_node(_x25, _x26) {
-        return _ref13.apply(this, arguments);
+        return _ref15.apply(this, arguments);
       }
 
       return basicRemoteEval_node;
@@ -1645,29 +1712,28 @@ var L2LEvalStrategy = function (_RemoteEvalStrategy2) {
   createClass(L2LEvalStrategy, [{
     key: "basicRemoteEval",
     value: function () {
-      var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(source, options) {
-        var l2lClient, targetId, _ref15, evalResult;
+      var _ref16 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(source, options) {
+        var l2lClient, targetId, _ref17, evalResult;
 
         return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
             switch (_context14.prev = _context14.next) {
               case 0:
-                inspect({ source: source, options: options });
                 l2lClient = this.l2lClient;
                 targetId = this.targetId;
-                _context14.next = 5;
+                _context14.next = 4;
                 return new Promise(function (resolve, reject) {
                   return l2lClient.sendTo(targetId, "remote-eval", { source: source }, resolve);
                 });
 
-              case 5:
-                _ref15 = _context14.sent;
-                evalResult = _ref15.data;
+              case 4:
+                _ref17 = _context14.sent;
+                evalResult = _ref17.data;
 
                 if (evalResult && evalResult.value && evalResult.value.isEvalResult) evalResult = evalResult.value;
                 return _context14.abrupt("return", evalResult);
 
-              case 9:
+              case 8:
               case "end":
                 return _context14.stop();
             }
@@ -1676,7 +1742,7 @@ var L2LEvalStrategy = function (_RemoteEvalStrategy2) {
       }));
 
       function basicRemoteEval(_x27, _x28) {
-        return _ref14.apply(this, arguments);
+        return _ref16.apply(this, arguments);
       }
 
       return basicRemoteEval;
