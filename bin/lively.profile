@@ -1,5 +1,7 @@
 # sourced for lively commands
 
+eval $( node -e 'let pathParts = process.env.PATH.split(":"); let found = pathParts.findIndex(ea => ea.endsWith("flatn/bin")); if (found > 0) console.log("export PATH=" + [...pathParts.splice(found, 1), ...pathParts].join(":"));' )
+
 function normalize_path {
   echo $(builtin cd "$1"; pwd);
 }
