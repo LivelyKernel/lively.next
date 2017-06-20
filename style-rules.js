@@ -26,8 +26,8 @@ class StylePropCompleter {
   compute(_, prefix) {
     let stylePropNames = [];
     for (let p in this.propertiesAndSettings) {
-      let {isStyleProp, derived, spec} = this.propertiesAndSettings[p];
-      if (isStyleProp && !(derived && !(spec && spec.foldable))) stylePropNames.push(p);
+      let spec = this.propertiesAndSettings[p];
+      if (spec.isStyleProp && !(spec.derived && !spec.foldable)) stylePropNames.push(p);
     }
     // todo: fuzzy match these props
     return stylePropNames.filter(p => p.includes(prefix)).map((completion, priority) => {
@@ -235,13 +235,13 @@ class PropertyDraft extends Morph {
     }
 
     if (this.isValidProperty(propName)) {
-      let {defaultValue, spec} = this.globalPropertySettings[propName];
-      if (defaultValue == undefined) {
+      let spec = this.globalPropertySettings[propName];
+      if (spec.defaultValue == undefined) {
         this.get('value input').readOnly = false;
         this.get('value input').nativeCursor = 'auto';
         this.get('value input').focus();
       } else {
-        this.submit(propName, defaultValue, spec);
+        this.submit(propName, spec.defaultValue, spec);
       }
     }
   }
@@ -575,13 +575,13 @@ class StyleSheetData extends TreeData {
     return {type: 'sheet',
             isCollapsed: true,
             value: styleSheet,
-            key: styleSheet.name || Object.keys(styleSheet.rules)[0],
+            key: styleSheet.name || obj.keys(obj.dissoc(styleSheet.rules, ['_rev']))[0],
             children: this.parseRules(styleSheet)}
   }
 
   parseRules(styleSheet) {
     let children = [],
-        rules = styleSheet.rules;
+        rules = obj.dissoc(styleSheet.rules, ['_rev']);
     for (let rule in rules) {
       children.push({
         type: "rule",
@@ -727,8 +727,8 @@ class StyleSheetData extends TreeData {
     let children = [], props = styleSheet.rules[rule] || {};
     for (let prop in props) {
       if (prop == "_deactivated") continue;
-      let {spec} = this.globalPropertySettings[prop] || {},
-          value = spec.foldable ? {...props[prop], valueOf: () => props[prop].left} : value,
+      let spec = this.globalPropertySettings[prop] || {},
+          value = spec.foldable ? {...props[prop], valueOf: () => props[prop].left} : props[prop],
           node = {
             type: "property",
             styleSheet,
@@ -1152,6 +1152,7 @@ export class StyleSheet {
       name = null;
     }
     this.rules = rules;
+    for (let rule in rules) rules[rule] = this.unwrapFoldedProps(rules[rule]);
     this.name = name;
   }
 
@@ -1182,7 +1183,7 @@ export class StyleSheet {
     ["borderRadius", "borderWidth", "borderColor", 'borderStyle'].forEach(p => {
       if (p in props) {
         let v = props[p], {top, bottom, right, left} = v;
-        props[p] = top && bottom && right && left ? v : {top: v, bottom: v, right: v, left: v, 
+        props[p] = (top && bottom && right && left) ? v : {top: v, bottom: v, right: v, left: v, 
                                                          valueOf: () => v}
       }
     });
@@ -1220,7 +1221,6 @@ export class StyleSheet {
         props = obj.dissoc({...props, ...this.rules[rule]}, ['_deactivated']);
       }
     }
-    this.unwrapFoldedProps(props)
     if ("layout" in props) {
       let layout = props.layout.copy();
       layout.container = morph;
