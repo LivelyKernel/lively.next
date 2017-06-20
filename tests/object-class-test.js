@@ -4,9 +4,10 @@ import { string } from "lively.lang";
 import { expect } from "mocha-es6";
 import ObjectPackage, { ensureLocalPackage, addScript, ensureObjectClass } from "../object-classes.js";
 import { createFiles, resource } from "lively.resources";
-import { getSystem, removeSystem } from "lively.modules";
-import { importPackage } from "lively.modules/src/packages/package.js";
+import { getSystem, registerPackage, removeSystem } from "lively.modules";
+import { importPackage, lookupPackage } from "lively.modules/src/packages/package.js";
 import module from "lively.modules/src/module.js";
+import { RuntimeSourceDescriptor } from "../source-descriptors.js";
 
 
 var testBaseURL = "local://object-scripting-test",
@@ -132,39 +133,21 @@ describe("object package", function() {
 
   describe("forking", () => {
 
-    xit("forks from package", async () => {
+    it("forks from package", async () => {
       let obj = {name: "testObject"},
-          p = ObjectPackage.forObject(obj, opts);
-      expect(p).equals(ObjectPackage.forObject(obj, opts));
-      await addScript(obj, "function() { return 1; }", "foo", opts);
+          p = ObjectPackage.withId("TestObject", opts);
+      await p.adoptObject(obj);
+
+      await addScript(obj, "function() { return 1; }", "foo", {...opts, package: p});
       expect(obj.foo()).equals(1, "obj.foo 1");
-      let obj2 = new obj.constructor();
-      expect(obj2.foo()).equals(1, "obj2.foo 1");
+      // let obj2 = new obj.constructor();
+      // expect(obj2.foo()).equals(1, "obj2.foo 1");
 
-// p.id
-// 3FDA5A48-CD7D-4FCF-8E3C-AEA70C4F78FA
-// p.id
-// 3FDA5A48-CD7D-4FCF-8E3C-AEA70C4F78FA
-// p2.id
-// 3FDA5A48-CD7D-4FCF-8E3C-AEA70C4F78FA
-// ObjectPackage.forObject(obj2, opts).id
-// F27FE081-3CC6-40AC-9FE9-E8F280AA973D
-// obj[Symbol.for("lively-object-package-data")]
-
-      var p2 = await p.fork(opts);
-      expect(p).not.equals(p2);
-      var res = await p2.resource().dirList("infinity");
-      await res[0].read()
-
-      ObjectPackage.forObject(obj2, opts).id === p.id
-
-
-      await p2.resource().dirList("infinity");
-
-      await addScript(obj, "function() { return 2; }", "foo", opts);
-
-      expect(obj.foo()).equals(2, "obj.foo 2");
-      expect(obj2.foo()).equals(1, "obj2.foo 2");
+      var p2 = await p.fork("TestObject2", opts);
+      expect(p2.objectClass.name).equals("TestObject2");
+      await p2.adoptObject(obj)
+      expect(obj.constructor).equals(p2.objectClass);
+      expect(obj.foo()).equals(1, "obj.foo 1");
     });
 
   });

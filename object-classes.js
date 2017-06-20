@@ -3,7 +3,7 @@ import { parse, isValidIdentifier, stringify, parseFunction } from "lively.ast";
 import { resource } from "lively.resources";
 import { runEval } from "lively.vm";
 import { RuntimeSourceDescriptor } from "./source-descriptors.js";
-import { ensurePackage, importPackage, lookupPackage } from "lively.modules/src/packages/package.js";
+import { ensurePackage, registerPackage, importPackage, lookupPackage } from "lively.modules/src/packages/package.js";
 import module from "lively.modules/src/module.js";
 import { toJsIdentifier } from "./util.js";
 import { ImportInjector } from "lively.modules/src/import-modification.js";
@@ -26,7 +26,7 @@ function normalizeOptions(options) {
 }
 
 export function addScript(object, funcSource, name, options = {}) {
-  var p = ObjectPackage.lookupPackageForObject(object, options)
+  var p = options.package || ObjectPackage.lookupPackageForObject(object, options);
   if (!p) throw new Error(`Object is not part of an object package: ${object}`);
   return p.addScript(object, funcSource, name);
 }
@@ -159,12 +159,18 @@ export default class ObjectPackage {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // forking
-  // fork(opts) {
-  //   var {System, baseURL, object} = this;
-  //   opts = {System, baseURL, ...opts};
-  //   var newPackage = ObjectPackage.forObject(object, opts);
-  //   return newPackage;
-  // }
+  async fork(forkedPackageName, opts) {
+    var {System, baseURL, objectClass} = this;
+    opts = {System, baseURL, ...opts};
+    let descr = RuntimeSourceDescriptor.for(objectClass),
+        {moduleSource} = descr._renamedSource(forkedPackageName),
+        newPackage = ObjectPackage.withId(forkedPackageName, opts);
+    await newPackage.ensureExistance();
+    let {objectModule: {systemModule}} = newPackage;
+    await systemModule.load({format: "esm"});
+    await systemModule.changeSource(moduleSource);
+    return newPackage;
+  }
 
 }
 
@@ -253,7 +259,8 @@ class ObjectModule {
     } else if (!globalSuperClass) {
       var exportForClass = await ExportLookup.findExportOfValue(superClass, System);
       if (exportForClass) {
-        var {standaloneImport} = ImportInjector.run(System, module.id, module.package(), "", exportForClass);
+        var {standaloneImport} = ImportInjector.run(
+          System, module.id, module.package(), "", exportForClass);
         source += standaloneImport + '\n\n';
       } else {
         bindings = {[superClassName]: superClass};

@@ -247,6 +247,14 @@ export class RuntimeSourceDescriptor {
 
   get type() { return this.ast.type; }
 
+  get name() {
+    if (this.type === "ClassDeclaration") {
+      let {start, end} = this.ast.id
+      return this.source.slice(start, end);
+    }
+    return "unknown";
+  }
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   changeSourceSync(newSource) {
@@ -269,7 +277,7 @@ export class RuntimeSourceDescriptor {
     return this;
   }
 
-  withModifiedSource(newSource) {
+  _modifiedSource(newSource) {
     var {moduleSource, sourceLocation: {start, end}} = this;
     return {
       moduleSource: moduleSource.slice(0, start) + newSource + moduleSource.slice(end),
@@ -277,9 +285,19 @@ export class RuntimeSourceDescriptor {
     }
   }
 
+  _renamedSource(newName) {
+    let {type, id: {start, end}} = this.ast;
+    if (type !== "ClassDeclaration")
+      throw new Error(`Don't know how to rename ${type}`);
+    return this._modifiedSource(
+        this.source.slice(0, start)
+      + newName
+      + this.source.slice(end));
+  }
+
   _basicChangeSource(newSource) {
     var {meta} = this,
-        {moduleSource, sourceLocation} = this.withModifiedSource(newSource);
+        {moduleSource, sourceLocation} = this._modifiedSource(newSource);
     this.reset();
     this.meta = {...meta, moduleSource, ...sourceLocation};
     this._sourceLocation = sourceLocation;
