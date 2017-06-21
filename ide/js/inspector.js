@@ -882,8 +882,74 @@ export default class Inspector extends Morph {
 
   static get properties() {
     return {
+
       extent: {defaultValue: pt(400, 500)},
       fill: {defaultValue: Color.transparent},
+      name: {defaultValue: "inspector"},
+
+      targetObject: {
+        after: ["submorphs"],
+        serialize: false,
+        set(obj) {
+          this.setProperty("targetObject", obj);
+          this.originalTreeData = null;
+          this.prepareForNewTargetObject(obj);
+        }
+      },
+
+      originalTreeData: {
+        // for filering
+        serialize: false
+      },
+
+      editorOpen: {defaultValue: false},
+
+      selectedObject: {
+        readOnly: true, derived: true,
+        get() {
+          var sel = this.ui.propertyTree.selection;
+          return sel ? sel.value : this.state.targetObject
+        }
+      },
+
+      submorphs: {initialize() { this.build(); }},
+
+      layout: {
+        after: ["submorphs"],
+        initialize() {
+          this.layout = new GridLayout({
+            grid: [['searchBar'],
+                   ['propertyTree'],
+                   ['resizer'],
+                   ['codeEditor']],
+            rows: [0, {fixed: 30}, 
+                   2, {fixed: 1},
+                   3, {height: 0}]
+          });          
+        }
+      },
+
+      ui: {
+        readOnly: true, derived: true, after: ["submorphs"],
+        get() {
+          return {
+            codeEditor:       this.getSubmorphNamed("codeEditor"),
+            terminalToggler:  this.getSubmorphNamed("terminal toggler"),
+            propertyTree:     this.getSubmorphNamed("propertyTree"),
+            unknowns:         this.getSubmorphNamed("unknowns"),
+            internals:        this.getSubmorphNamed("internals"),
+            targetPicker:     this.getSubmorphNamed("targetPicker"),
+            searchBar:        this.getSubmorphNamed("searchBar"),
+            searchField:      this.getSubmorphNamed("searchField"),
+            resizer:          this.getSubmorphNamed("resizer")
+          }
+        }
+      },
+
+      updateInProgress: {
+        defaultValue: false, serialize: false
+      },
+
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
@@ -938,20 +1004,43 @@ export default class Inspector extends Morph {
           });
         }
       }
+
     };  
   }
 
-  constructor(props = {}) {
-    var {targetObject} = props;
-    props = obj.dissoc(props, ["targetObject"])
-    super({
-      name: "inspector",
-      ...props
-    });
-    this.build();
-    this.state = {targetObject: undefined, updateInProgress: false};
-    this.targetObject = targetObject || null;
-    if (!this.targetObject.isWorld) this.startStepping(10,'refreshAllProperties');
+  constructor(props) {
+    super(props);
+
+    let {
+      ui: {
+        targetPicker,
+        propertyTree,
+        resizer,
+        terminalToggler,
+        unknowns,
+        internals,
+        searchField,
+        codeEditor
+      }
+    } = this;
+
+    // FIXME? how to specify that directly??
+    codeEditor.changeEditorMode("js").then(() =>
+      codeEditor.evalEnvironment = {
+        targetModule: "lively://lively.morphic/inspector",
+        get context() { return codeEditor.owner.selectedObject },
+        format: "esm"
+      }
+    ).catch(err => $world.logError(err));
+
+    connect(targetPicker,    'onMouseDown', this, 'selectNewTarget');
+    connect(propertyTree,    'onScroll',    this, 'repositionOpenWidget');
+    connect(resizer,         'onDrag',      this, 'adjustProportions');
+    connect(terminalToggler, 'onMouseDown', this, 'toggleCodeEditor');
+    connect(unknowns,        'trigger',     this, 'filterProperties');
+    connect(internals,       'trigger',     this, 'filterProperties');
+    connect(searchField,     'searchInput', this, 'filterProperties');
+    connect(this,            "extent",      this, "relayout");
   }
 
   refreshAllProperties() {
@@ -972,7 +1061,7 @@ export default class Inspector extends Morph {
   }
 
   refreshTreeView() {
-    this.originalData.asListWithIndexAndDepth(false).forEach(({node}) => {
+    this.originalTreeData && this.originalTreeData.asListWithIndexAndDepth(false).forEach(({node}) => {
       let v = this.targetObject[node.key];
       if (v != node.value && node.refreshProperty) {
          node.refreshProperty(v); 
@@ -982,29 +1071,21 @@ export default class Inspector extends Morph {
 
   get isInspector() { return true; }
 
-  get targetObject() { return this.state.targetObject; }
-  set targetObject(obj) {
-    this.state.targetObject = obj;
-    this.originalData = null;
-    this.prepareForNewTargetObject(obj);
-  }
-
   async prepareForNewTargetObject(target) {
     if (this.isUpdating()) await this.whenUpdated();
 
     var {promise: p, resolve} = promise.deferred();
-    this.state.updateInProgress = p;
+    this.updateInProgress = p;
     try {
       var td = InspectorTreeData.forObject(target),
-          tree = this.get("propertyTree"),
+          tree = this.ui.propertyTree,
           prevTd = tree.treeData;
       td.collapse(td.root, false);
       td.collapse(td.root.children[0], false);
-      var changedNodes = this.originalData && this.originalData.diff(td);
+      var changedNodes = this.originalTreeData && this.originalTreeData.diff(td);
       if (changedNodes) {
-        for (let [curr, upd] of changedNodes) {
+        for (let [curr, upd] of changedNodes)
           curr.refreshProperty(upd.value);
-        }
       } else {
         tree.treeData = td;
         this.filterProperties();
@@ -1016,21 +1097,16 @@ export default class Inspector extends Morph {
       }
     } catch (e) { this.showError(e); }
 
-    this.state.updateInProgress = null;
-
+    this.startStepping(10,'refreshAllProperties');
+    this.updateInProgress = null;
   }
 
   isUpdating() { return !!this.updateInProgress; }
 
   whenUpdated() { return this.updateInProgress || Promise.resolve(); }
 
-  get selectedObject() {
-    var sel = this.get("propertyTree").selection;
-    return sel ? sel.value : this.state.targetObject
-  }
-
   focus() {
-    this.get("codeEditor").focus();
+    this.ui.codeEditor.focus();
   }
 
   build() {
@@ -1044,13 +1120,12 @@ export default class Inspector extends Morph {
           lineWrapping: "by-chars",
           ...config.codeEditor.defaultStyle,
           textString: ""
-        };
-    var searchBarBounds = rect(0,0,this.width, 30);
-
-    let searchField = new SearchField({
-      styleClasses: ["idle"],
-      name: "searchField",
-    });
+        },
+        searchBarBounds = rect(0,0,this.width, 30),
+        searchField = new SearchField({
+          styleClasses: ["idle"],
+          name: "searchField",
+        });
 
     this.submorphs = [
       {
@@ -1076,46 +1151,16 @@ export default class Inspector extends Morph {
         treeData: InspectorTreeData.forObject(null)
       }),
       Icon.makeLabel('keyboard-o', {
-          name: 'terminal toggler',
-          styleClasses: ['toggle', 'inactive']
+        name: 'terminal toggler',
+        styleClasses: ['toggle', 'inactive']
       }),
       {name: "resizer"},
       {name: "codeEditor", ...textStyle}
     ];
-
-    this.layout = new GridLayout({
-      grid: [['searchBar'],
-             ['propertyTree'],
-             ['resizer'],
-             ['codeEditor']],
-      rows: [0, {fixed: 30}, 
-             2, {fixed: 1},
-             3, {height: 0}]
-    });
-
-    // FIXME? how to specify that directly??
-    let ed = this.getSubmorphNamed("codeEditor");
-    ed.changeEditorMode("js").then(() =>
-      ed.evalEnvironment = {
-        targetModule: "lively://lively.morphic/inspector",
-        get context() { return ed.owner.selectedObject },
-        format: "esm"
-      }
-    ).catch(err => $world.logError(err));
-
-    this.editorOpen = false;
-    connect(this.get('targetPicker'), 'onMouseDown', this, 'selectNewTarget');
-    connect(this.get('propertyTree'), 'onScroll', this, 'repositionOpenWidget');
-    connect(this.get('resizer'), 'onDrag', this, 'adjustProportions');
-    connect(this.get('terminal toggler'), 'onMouseDown', this, 'toggleCodeEditor');
-    connect(this, "extent", this, "relayout");
-    connect(this.get('unknowns'), 'trigger', this, 'filterProperties');
-    connect(this.get('internals'), 'trigger', this, 'filterProperties');
-    connect(searchField, 'searchInput', this, 'filterProperties');
   }
 
   selectNewTarget() {
-    this.get('targetPicker').fontColor = Color.orange;
+    this.ui.targetPicker.fontColor = Color.orange;
     this.selectorMorph = Icon.makeLabel('crosshairs', {fontSize: 20}).openInWorld();
     connect($world.firstHand, 'position', this, 'scanForTargetAt');
     once(this.selectorMorph, 'onMouseDown', this, 'selectTarget');
@@ -1150,7 +1195,7 @@ export default class Inspector extends Morph {
   stopSelect() {
     MorphHighlighter.removeHighlightersFrom($world);
     this.toggleSelectionInstructions(false);
-    this.get('targetPicker').fontColor = Color.black;
+    this.ui.targetPicker.fontColor = Color.black;
     disconnect($world.firstHand, 'position', this, 'scanForTargetAt');
     this.selectorMorph.remove();
   }
@@ -1194,7 +1239,7 @@ export default class Inspector extends Morph {
     }
     this.focusedNode = node;
     this.openWidget = widget;
-    once(this.get("propertyTree"), "onMouseDown", this, "closeOpenWidget");
+    once(this.ui.propertyTree, "onMouseDown", this, "closeOpenWidget");
     connect(this.getWindow(), 'bringToFront', widget, 'openInWorld', {
       converter: () => widget.globalPosition, varMapping: {widget}
     });
@@ -1203,7 +1248,7 @@ export default class Inspector extends Morph {
   repositionOpenWidget(evt) {
     if (this.openWidget) {
       let pos = this.focusedNode.control.globalBounds().center(),
-          treeBounds = this.get("propertyTree").globalBounds();
+          treeBounds = this.ui.propertyTree.globalBounds();
       if (pos.y < treeBounds.top()) {
         pos = treeBounds.topCenter().withX(pos.x)
       } else if (treeBounds.bottom() - 20 < pos.y) {
@@ -1218,46 +1263,45 @@ export default class Inspector extends Morph {
   }
 
   async toggleCodeEditor() {
-    let resizer = this.getSubmorphNamed('resizer'),
+    let resizer = this.ui.resizer,
         prevExtent = this.extent;
      this.layout.disable();
     if (this.editorOpen) {
       this.editorOpen = false;
-      this.get('terminal toggler').styleClasses = ['inactive', 'toggle'];
+      this.ui.terminalToggler.styleClasses = ['inactive', 'toggle'];
       this.layout.row(3).height = this.layout.row(2).height = 0;
     } else {
       this.editorOpen = true;
-      this.get('terminal toggler').styleClasses = ['active', 'toggle'];
+      this.ui.terminalToggler.styleClasses = ['active', 'toggle'];
       this.layout.row(3).height = 180;
       this.layout.row(2).height = 5;
     }
     this.extent = prevExtent;
     this.layout.enable({duration: 300});
     this.relayout({duration: 300});
-    this.get('codeEditor').focus();
+    this.ui.codeEditor.focus();
   }
 
 
   filterProperties() {
-    let searchField = this.get('searchField'),
-        tree = this.get('propertyTree');
-    if (!this.originalData) {
-      this.originalData = tree.treeData;
-    }
+    let searchField = this.ui.searchField,
+        tree = this.ui.propertyTree;
+    if (!this.originalTreeData)
+      this.originalTreeData = tree.treeData;
     disconnect(tree.treeData, 'onWidgetOpened', this, 'onWidgetOpened');
-    this.originalData.filter({
-       maxDepth: 2, showUnknown: this.get('unknowns').checked,
-       showInternal: this.get('internals').checked,
+    this.originalTreeData.filter({
+       maxDepth: 2, showUnknown: this.ui.unknowns.checked,
+       showInternal: this.ui.internals.checked,
        iterator: (node) => searchField.matches(node.key)
     });
-    tree.treeData = this.originalData;
+    tree.treeData = this.originalTreeData;
     connect(tree.treeData, 'onWidgetOpened', this, 'onWidgetOpened');
   }
 
   relayout(animated) {
     this.layout.forceLayout(); // removes "sluggish" button alignment
-    var tree = this.get("propertyTree"),
-        toggler = this.get('terminal toggler'),
+    var tree = this.ui.propertyTree,
+        toggler = this.ui.terminalToggler,
         bottomRight = tree.bounds().insetBy(5).bottomRight();
     if (animated.duration) {
       toggler.animate({bottomRight, ...animated})
@@ -1278,3 +1322,4 @@ export default class Inspector extends Morph {
   get commands() { return inspectorCommands; }
 
 }
+
