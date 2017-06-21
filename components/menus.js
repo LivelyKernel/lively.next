@@ -50,7 +50,7 @@ export class MenuItem extends Label {
       label: {
         get() {
           var {value} = this.valueAndAnnotation,
-              label = value.map(([string], i) => (i % 2 === 0 ? string : "")).join("\n");
+              label = value.map((string, i) => (i % 2 === 0 ? string : "")).join("\n");
           return label;
         },
         set(value) {

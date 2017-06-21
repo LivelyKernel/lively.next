@@ -105,6 +105,7 @@ div.text-layer span {
 
 .Label span {
   white-space: nowrap;
+  float: left;
 }
 
 .Label .annotation {
@@ -130,11 +131,12 @@ export class ShadowObject {
 
     constructor(args) {
         if (obj.isBoolean(args)) args = config.defaultShadow;
-        const {rotation, distance, blur, color, morph, inset} = args;
+        const {rotation, distance, blur, color, morph, inset, spread} = args;
         this.rotation = obj.isNumber(rotation) ? rotation : 45; // in degrees
         this.distance = obj.isNumber(distance) ? distance : 2;
         this.blur = obj.isNumber(blur) ? blur : 6;
         this.inset = inset || false;
+        this.spread = spread || 0;
         this.color = color || Color.gray.darker();
         this.morph = morph;
     }
@@ -182,7 +184,7 @@ export class ShadowObject {
 
     toCss() {
        const {x, y} = Point.polar(this.distance, num.toRadians(this.rotation));
-       return `${this.inset ? 'inset' : ''} ${this.color.toString()} ${x}px ${y}px ${this.blur}px`
+       return `${this.inset ? 'inset' : ''} ${this.color.toString()} ${x}px ${y}px ${this.blur}px ${this.spread}px`
     }
 
     toFilterCss() {
@@ -266,9 +268,9 @@ class StyleMapper {
         fill = path.fill
              ? path.fill.isGradient ? "url(#gradient-fill" + id + ")" : fill.toString()
              : "transparent",
-        stroke = borderColor.isGradient
+        stroke = borderColor.valueOf().isGradient
           ? "url(#gradient-borderColor" + id + ")"
-          : borderColor.toString(),
+          : borderColor.valueOf().toString(),
         d = `M${startX}, ${startY} C `
           + `${startNext.x}, ${startNext.y} `
           + interVertices.map(({x, y, controlPoints: {previous: p, next: n}}) => {
@@ -277,7 +279,7 @@ class StyleMapper {
           + ` ${endPrev.x},${endPrev.y} ${endX},${endY}`;
 
     return {
-      "stroke-width": borderWidth,
+      "stroke-width": borderWidth.valueOf(),
       ...this.getSvgBorderStyle(path),
       "paint-order": "stroke",
       fill, stroke, d
@@ -285,12 +287,13 @@ class StyleMapper {
   }
 
   static getSvgBorderStyle(svg) {
-      const style = {
+      const bw = svg.borderWidth.valueOf(),
+            style = {
           solid: {},
-          dashed: {"stroke-dasharray": svg.borderWidth * 1.61 + " " + svg.borderWidth},
-          dotted: {"stroke-dasharray": "1 " + svg.borderWidth * 2,"stroke-linecap": "round", "stroke-linejoin": "round",}
+          dashed: {"stroke-dasharray": bw * 1.61 + " " + bw},
+          dotted: {"stroke-dasharray": "1 " + bw * 2,"stroke-linecap": "round", "stroke-linejoin": "round",}
       }
-      return style[svg.borderStyle];
+      return style[svg.borderStyle.valueOf()];
   }
 
   static getStyleProps(morph) {
@@ -362,7 +365,7 @@ export class PropertyAnimation {
      // which requires us to do some magic in order to let the animations
      // play nicely. This usually involves that we capture the original
      // value of a property, before it was animated
-     return ['fill']
+     return ['fill', 'origin']
   }
 
   asPromise() {
@@ -543,7 +546,7 @@ export class PropertyAnimation {
     }
     return [obj.isEmpty(before) ? false : before, obj.isEmpty(after) ? false : after]
   }
-
+  
   gatherAnimationProps() {
      return {css: StyleMapper.getStyleProps(this.morph),
              svg: this.morph.isSvgMorph && StyleMapper.getSvgAttributes(this.morph),
@@ -561,7 +564,7 @@ export class PropertyAnimation {
      if (this.needsAnimation[type]) {
        this.needsAnimation[type] = false;
        const [before, after] = this.getAnimationProps(type);
-       this.tween(svgNode, {attr: before}, {attr: after});
+       this.tween(svgNode, {attr: before}, {attr: after}, false);
      }
   }
 
@@ -570,11 +573,21 @@ export class PropertyAnimation {
       this.active = true;
       let [before, after] = this.getAnimationProps("css");
       this.tween(node, before, after);
+      if (this.config.origin) {
+        let b = this.capturedProperties.origin,
+            a = this.config.origin;
+        this.tween(node.childNodes[0], {
+          transform: `translate3d(${b.x}px, ${b.y}px, 0px)`
+        },{
+          transform: `translate3d(${a.x}px, ${a.y}px, 0px)`
+       });
+      }
     }
   }
 
-  tween(node, before, after) {
+  tween(node, before, after, remove=true) {
       const onComplete = () => {
+         if (!remove) return;
          this.finish();
          this.morph.makeDirty();
       };
@@ -718,7 +731,7 @@ function shadowCss(morph) {
 }
 
 export function renderGradient(morph, prop) {
-  const gradient = morph[prop],
+  const gradient = morph[prop].valueOf(),
         {bounds, focus, vector} = gradient;
   return h(gradient.type, {
                namespace: "http://www.w3.org/2000/svg",

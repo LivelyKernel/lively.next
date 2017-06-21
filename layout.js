@@ -1,5 +1,5 @@
 import { pt, rect } from "lively.graphics";
-import { arr, num, grid, obj } from "lively.lang";
+import { arr, Closure, num, grid, obj } from "lively.lang";
 import {
   GridLayoutHalo,
   FlexLayoutHalo,
@@ -10,15 +10,16 @@ import { isNumber } from "lively.lang/object.js";
 
 class Layout {
 
-  constructor({spacing, border, container, autoResize, ignore} = {}) {
+  constructor({spacing, border, container, autoResize, ignore, onScheduleApply} = {}) {
     this.applyRequests = [];
     this.border = {top: 0, left: 0, right: 0, bottom: 0, ...border};
     this.spacing = spacing || 0;
     this.ignore = ignore || [];
-    this.lastBounds = this.container && this.container.bounds();
+    this.lastBoundsExtent = this.container && this.container.bounds().extent();
     this.active = false;
     this.container = container;
     this.autoResize = autoResize != undefined ? autoResize : true;
+    this.onScheduleApply = onScheduleApply || (() => {});
   }
 
   copy() {
@@ -36,8 +37,10 @@ class Layout {
     this.apply(animation);
   }
 
-  boundsChanged(container) { return !container.bounds().equals(this.lastBounds); }
-
+  boundsChanged(container) {
+    return !(this.lastBoundsExtent && container.bounds().extent().equals(this.lastBoundsExtent));
+  }
+  
   get layoutableSubmorphs() {
     return this.container.submorphs.filter(m => m.isLayoutable && !this.ignore.includes(m.name));
   }
@@ -63,6 +66,7 @@ class Layout {
   }
 
   scheduleApply(submorph, animation, change = {}) {
+    this.onScheduleApply && this.onScheduleApply(submorph, animation, change);
     if (this.active) return;
     if (!this.applyRequests) this.applyRequests = [];
     if (animation) this.lastAnim = animation;
@@ -131,7 +135,7 @@ class Layout {
   apply(animated) {
     if (this.active) return;
     this.active = true;
-    this.lastBounds = this.container && this.container.bounds();
+    this.lastBoundsExtent = this.container && this.container.bounds().extent();
     this.active = false;
   }
 }
@@ -140,14 +144,22 @@ export class CustomLayout extends Layout {
   
   constructor(config = {}) {
      this.relayout = config.relayout;
+     this.layouterString = String(config.relayout);
+     this.varMapping = config.varMapping || {};
      super(config);
   }
+
+  name() { return "Custom Layout"; }
 
   apply(animate) {
      if (this.active || !this.container) return;
      super.apply(animate);
      this.active = true;
+     if (!this.relayout) {
+       this.relayout = Closure.fromSource(this.layouterString, this.varMapping).recreateFunc()
+     }
      this.relayout(this.container, animate);
+     this.lastBoundsExtent = this.container && this.container.bounds().extent();
      this.active = false;
   }
   
@@ -286,9 +298,10 @@ export class VerticalLayout extends FloatLayout {
         this.container.extent = newExtent;
       }
     }
+    this.lastBoundsExtent = this.container.bounds().extent();
     this.active = false;
   }
-
+   
 }
 
 export class HorizontalLayout extends FloatLayout {
@@ -353,7 +366,7 @@ export class HorizontalLayout extends FloatLayout {
       var newExtent = pt(Math.max(minExtent.x, w), minExtent.y + 2 * spacing);
       this.changePropertyAnimated(container, "extent", newExtent, animate);
     }
-
+    this.lastBoundsExtent = this.container.bounds().extent();
     this.active = false;
   }
 
@@ -380,8 +393,11 @@ export class TilingLayout extends Layout {
     return new TilingLayoutHalo(this.container, pointerId);
   }
 
+  get spacing() { return this._spacing; }
+  set spacing(offset) { this._spacing = offset; this.apply(); }
+
   apply(animate = false) {
-    if (this.active) return;
+    if (this.active || !this.container) return;
     this.active = true;
     super.apply(animate);
     var width = this.getOptimalWidth(this.container),
@@ -1209,6 +1225,7 @@ export class GridLayout extends Layout {
     this.cellGroups.forEach(g => {
       g && g.apply(animate);
     });
+    this.lastBoundsExtent = this.container.bounds().extent();
     this.active = false;
   }
 

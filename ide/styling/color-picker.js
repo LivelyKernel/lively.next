@@ -8,92 +8,116 @@ import {pt, Rectangle, Color, LinearGradient, rect} from "lively.graphics";
 import {signal, connect, disconnect} from "lively.bindings";
 import {Slider} from "../../components/widgets.js";
 import { obj } from "lively.lang";
-import {ColorPalette, Popover} from "./color-palette.js";
+import {ColorPalette} from "./color-palette.js";
 import { StyleSheet } from '../../style-rules.js';
 import { zip } from "lively.lang/array.js";
+import { Popover } from "./style-popover.js";
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
 
 export class ColorPickerField extends Morph {
 
-   constructor(props) {
-      const {property, target, defaultValue} = props;
-      super({
-         extent: pt(70,30), layout: new HorizontalLayout(),
-         borderRadius: 5, fill: Color.gray, clipMode: "hidden",
-         borderWidth: 1, borderColor: Color.gray.darker(),
-         ...props
-      })
-      this.build();
-   }
-
-  build() {
-    const topRight = this.innerBounds().topRight(),
-          bottomLeft = this.innerBounds().bottomLeft(),
-          colorFieldExtent = pt(40, 25);
-
-    this.submorphs = [
-      {
-        extent: colorFieldExtent,
-        clipMode: "hidden",
-        onMouseDown: evt => this.openPalette(evt),
-        onHoverIn() {
-          this.get("dropDownIndicator").animate({opacity: 1, duration: 300});
-        },
-        onHoverOut() {
-          this.get("dropDownIndicator").animate({opacity: 0, duration: 300});
-        },
-        submorphs: [
-          {
-            name: "topLeft",
-            extent: colorFieldExtent
-          },
-          {
-            name: "bottomRight",
-            type: "polygon",
-            extent: colorFieldExtent,
-            origin: pt(0, 0),
-            vertices: [pt(0, 0), colorFieldExtent.withX(0), colorFieldExtent]
-          },
-          Icon.makeLabel("chevron-down", {
-            opacity: 0,
-            name: "dropDownIndicator",
-            center: pt(30, 12.5)
-          })
-        ]
-      },
-      {
-        fill: Color.transparent,
-        extent: pt(25, 25),
-        onHoverIn() {
-          this.fill = Color.black.withA(0.2);
-        },
-        onHoverOut() {
-          this.fill = Color.transparent;
-        },
-        submorphs: [
-          {
-            type: "image",
-            autoResize: false,
-            imageUrl: WHEEL_URL,
-            extent: pt(20, 20),
-            nativeCursor: "pointer",
-            fill: Color.transparent,
-            position: pt(3, 3),
-            onMouseDown: evt => this.openPicker(evt)
+   static get properties() {
+     return {
+      colorValue: {
+        set(v) {
+          if (!(v && v.isColor)) {
+            v = Color.blue;
           }
-        ]
-      }
-    ];
-    this.update();
-    connect(this.target, "onChange", this, "update");
-  }
+          this.setProperty('colorValue', v);
+        }
+      },
+      styleSheets: {
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            '.ColorPickerField': {
+              extent: pt(70,30), 
+              layout: new HorizontalLayout(),
+              borderRadius: 5, fill: Color.gray, clipMode: "hidden",
+              borderWidth: 1, borderColor: Color.gray.darker(),
+            },
+            '[name=pickerButton]': {
+              extent: pt(20, 20),
+              nativeCursor: "pointer",
+              fill: Color.transparent,
+              position: pt(3, 3),
+            }
+          })  
+        }
+      },
+      submorphs: {
+        initialize() {
+          const topRight = this.innerBounds().topRight(),
+                bottomLeft = this.innerBounds().bottomLeft(),
+                colorFieldExtent = pt(40, 25);
 
-   onHoverIn() {
-      if (!this.palette)
-           this.palette = new Popover({name: 'Color Palette', targetMorph: new ColorPalette({color: Color.red})});
+          this.submorphs = [
+            {
+              extent: colorFieldExtent,
+              clipMode: "hidden",
+              name: 'paletteButton',
+              onHoverIn() {
+                this.get("dropDownIndicator").animate({opacity: 1, duration: 300});
+              },
+              onHoverOut() {
+                this.get("dropDownIndicator").animate({opacity: 0, duration: 300});
+              },
+              submorphs: [
+                {
+                  name: "topLeft",
+                  extent: colorFieldExtent,
+                  fill: this.colorValue
+                },
+                {
+                  name: "bottomRight",
+                  type: "polygon",
+                  extent: colorFieldExtent,
+                  fill: this.colorValue.withA(1),
+                  origin: pt(0, 0),
+                  vertices: [pt(0, 0), colorFieldExtent.withX(0), colorFieldExtent]
+                },
+                Icon.makeLabel("chevron-down", {
+                  opacity: 0,
+                  name: "dropDownIndicator",
+                  center: pt(30, 12.5)
+                })
+              ]
+            },
+            {
+              fill: Color.transparent,
+              extent: pt(25, 25),
+              onHoverIn() {
+                this.fill = Color.black.withA(0.2);
+              },
+              onHoverOut() {
+                this.fill = Color.transparent;
+              },
+              submorphs: [
+                {
+                  name: 'pickerButton',
+                  type: "image",
+                  autoResize: false,
+                  imageUrl: WHEEL_URL,
+                }
+              ]
+            }
+          ];
+          connect(this.getSubmorphNamed('pickerButton'), 'onMouseDown', this, 'openPicker');
+          connect(this.getSubmorphNamed('paletteButton'), 'onMouseDown', this, 'openPalette');
+          connect(this, 'remove', this, 'removeWidgets');
+        }
+      }
+     }
    }
 
+  onHoverIn() {
+    if (!this.palette)
+      this.palette = new Popover({
+        name: "Color Palette",
+        targetMorph: new ColorPalette({color: Color.red})
+      });
+  }
+  
    onKeyDown(evt) {
       if (evt.key == "Escape") {
          this.picker && this.picker.remove();
@@ -101,29 +125,19 @@ export class ColorPickerField extends Morph {
       }
    }
 
-   get targetProperty() {
-      const v  = (this.target && this.target[this.property]) || this.defaultValue;
-      if (v && v.isGradient) return Color.blue
-      return v;
-   }
+  update(color) {
+    this.colorValue = color;
+    this.get("topLeft").fill = color;
+    this.get("bottomRight").fill = color.withA(1);
+  }
 
-   set targetProperty(v) {
-      this.target[this.property] = v;
-   }
-
-   update() {
-      this.get("topLeft").fill = this.targetProperty;
-      this.get("bottomRight").fill = this.targetProperty.withA(1);
-   }
-
-   async openPicker(evt) {
-      const p = this.picker || new ColorPicker({color: this.targetProperty});
-      p.position = pt(0, -p.height / 2);
-      connect(p, "color", this.target, this.property);
-      connect(p, "color", this, "update");
-      this.picker = await p.fadeIntoWorld(this.globalBounds().bottomCenter());
-      this.removePalette();
-   }
+  async openPicker(evt) {
+    const p = this.picker || new ColorPicker({color: this.colorValue});
+    p.position = pt(0, -p.height / 2);
+    connect(p, "color", this, "update");
+    this.picker = await p.fadeIntoWorld(this.globalBounds().bottomCenter());
+    this.removePalette();
+  }
 
    removePicker() {
       this.picker && this.picker.remove();
@@ -132,13 +146,17 @@ export class ColorPickerField extends Morph {
   async openPalette(evt) {
     const p =
       this.palette ||
-      new Popover({name: "Color Palette", targetMorph: new ColorPalette({color: Color.red})});
-    connect(p, "color", this.target, this.property);
-    connect(p, "color", this, "update");
+      new Popover({
+        name: "Color Palette", 
+        targetMorph: new ColorPalette({color: this.colorValue})
+      });
+    connect(p.targetMorph, "color", this, "update");
     p.topLeft = pt(0,0);
+    p.isLayoutable = false; 
     this.palette = await p.fadeIntoWorld(this.globalBounds().insetBy(10).bottomCenter());
     this.removePicker();
   }
+  
    removePalette() {
      this.palette && this.palette.remove();
    }
@@ -146,12 +164,6 @@ export class ColorPickerField extends Morph {
    removeWidgets() {
       this.removePalette();
       this.removePicker();
-   }
-
-   remove() {
-      super.remove();
-      this.removeWidgets();
-      disconnect(this.target, "onChange", this, "update");
    }
 
 }

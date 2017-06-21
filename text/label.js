@@ -7,6 +7,7 @@ import { Icon, Icons } from "../components/icons.js";
 import { signal } from "lively.bindings";
 
 import { splitTextAndAttributesIntoLines } from "./attributes.js";
+import { RichTextControl } from "./ui.js";
 
 
 export class Label extends Morph {
@@ -120,7 +121,8 @@ export class Label extends Morph {
       },
 
       padding: {
-        isStyleProp: true, 
+        type: "Rectangle",
+        isStyleProp: true,
         defaultValue: Rectangle.inset(0),
         initialize(value) { this.padding = value; /*for num -> rect conversion*/},
         set(value) {
@@ -133,6 +135,8 @@ export class Label extends Morph {
 
       fontFamily: {
         isStyleProp: true,
+        type: "Enum",
+        values: RichTextControl.basicFontItems().map(f => f.value),
         defaultValue: "Sans-Serif",
         set(fontFamily) {
           this._cachedTextBounds = null;
@@ -142,6 +146,8 @@ export class Label extends Morph {
       },
 
       fontSize: {
+        type: "Number",
+        min: 1,
         isStyleProp: true,
         defaultValue: 12,
         set(fontSize) {
@@ -151,9 +157,11 @@ export class Label extends Morph {
         }
       },
 
-      fontColor: {isStyleProp: true, defaultValue: Color.black},
+      fontColor: {type: "Color", isStyleProp: true, defaultValue: Color.black},
 
       fontWeight: {
+        type: "Enum",
+        values: ["bold", "bolder", "light", "lighter"],
         isStyleProp: true,
         defaultValue: "normal",
         set(fontWeight) {
@@ -164,6 +172,8 @@ export class Label extends Morph {
       },
 
       fontStyle: {
+        type: "Enum",
+        values: ["normal", "italic", "oblique"],
         isStyleProp: true,
         defaultValue: "normal",
         set(fontStyle) {
@@ -403,7 +413,7 @@ export class Label extends Morph {
         attrs = {style};
     if (backgroundColor) style.backgroundColor = String(backgroundColor);
     if (fontFamily) style.fontFamily = fontFamily;
-    if (fontColor) style.fontColor = String(fontColor);
+    if (fontColor) style.color = String(fontColor);
     if (fontWeight !== "normal") style.fontWeight = fontWeight;
     if (fontStyle !== "normal") style.fontStyle = fontStyle;
     if (textDecoration !== "none") style.textDecoration = textDecoration;

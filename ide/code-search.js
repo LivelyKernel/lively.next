@@ -1,5 +1,5 @@
 import { fun, arr, obj, string } from 'lively.lang';
-import { pt, LinearGradient, Color, Rectangle } from "lively.graphics";
+import { pt, rect, LinearGradient, Color, Rectangle } from "lively.graphics";
 import { config, StyleSheet, Text, show, Window } from '../index.js';
 import { FilterableList, List } from "lively.morphic/components/list.js";
 import { LabeledCheckBox } from "lively.morphic/components/widgets.js";
@@ -70,7 +70,11 @@ export class CodeSearcher extends FilterableList {
       styleSheets: {
         initialize() {
           this.styleSheets = new StyleSheet({
-            ".list .ListItemMorph": {
+            "[name=searchInUnloadedModulesCheckbox] .Label": {
+              padding: rect(2,2,0,0),
+              fontColor: Color.gray.darker()
+            },
+            ".List .ListItemMorph": {
               fontFamily: "Monaco, monospace"
             }
           });

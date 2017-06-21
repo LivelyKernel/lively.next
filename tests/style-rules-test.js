@@ -135,7 +135,7 @@ describe("Style Rules", function() {
     expect(m1.fill).equals(Color.orange);
     expect(m2.fill).equals(Color.black);
     expect(m3.fill).equals(Color.black);
-    expect(m3.borderColor).equals(Color.red);
+    expect(m3.borderColor.left).equals(Color.red);
   });
 
   it("updates layouts on changing submorphs", async () => {

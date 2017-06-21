@@ -5,7 +5,6 @@ import { expect } from "mocha-es6";
 import { morph, Button, World } from "../../index.js";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { num, promise, fun } from "lively.lang";
-import { styleHaloFor } from "../../halo/stylization.js";
 
 var button, world, eventLog, env;
 const inactiveColor = Color.blue, activeColor = Color.red, triggerColor = Color.green;
@@ -85,16 +84,16 @@ describe("buttons", function() {
   describe("button mode styles", () => {
 
     it('styles icon as labels correctly', () => {
-       var b = new Button({label: Icon.makeLabel("times-circle-o")});
+       var b = new Button({icon: Icon.makeLabel("times-circle-o")});
        b.styleSheets = new StyleSheet({
           '.activeStyle [name=label]': {
             fontSize: 22
           }
        })
-       expect(b.label).equals(Icon.makeLabel("times-circle-o").textString);
+       expect(b.icon.value[0]).equals(Icon.makeLabel("times-circle-o").value[0]);
        expect(b.labelMorph.fontSize).equals(22);
        b.activeMode = 'triggered';
-       expect(b.label).equals(Icon.makeLabel("times-circle-o").textString);
+       expect(b.icon.value[0]).equals(Icon.makeLabel("times-circle-o").value[0]);
        expect(b.labelMorph.fontSize).equals(12);
     });
 
@@ -102,6 +101,21 @@ describe("buttons", function() {
        button.label = "Hello!";
        button.activeMode = "triggered";
        expect(button.label).equals("Hello!");
+    });
+
+    it('allows to mix labels and icons', () => {
+      button.label = 'Hello';
+      button.icon = Icon.makeLabel('times-circle-o').value;
+      button.iconPosition = 'bottom';
+
+      expect(button.submorphs.length).equals(2);
+      expect(button.iconMorph.topCenter).equals(button.labelMorph.bottomCenter);
+
+      button.iconPosition = 'right';
+      expect(button.iconMorph.leftCenter).equals(button.labelMorph.rightCenter);
+
+      button.icon = null;
+      expect(button.iconMorph.value).equals('');
     });
     
     it("active style restored on mouse up", () => {

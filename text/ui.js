@@ -56,7 +56,7 @@ export class RichTextControl extends Morph {
   }
 
   reset() {
-    this.get("font button").items = this.basicFontItems();
+    this.get("font button").items = RichTextControl.basicFontItems();
     this.get("font button").selection = this.get("font button").items[0].value;
 
     connect(this.target, "selectionChange", this, "setFontFromTarget");
@@ -111,7 +111,7 @@ export class RichTextControl extends Morph {
     this.addMorph({name: "inc fontsize button", ...btnStyle, label: Icon.makeLabel("plus"), tooltip: "increase font size"});
     this.addMorph({name: "dec fontsize button", ...btnStyle, label: Icon.makeLabel("minus"), tooltip: "decrease font size"});
     // this.addMorph({name: "font button",      ...btnStyle, label: Icon.makeLabel("font"), tooltip: ""});
-    let fontItems = this.basicFontItems();
+    let fontItems = RichTextControl.basicFontItems();
     this.addMorph(new DropDownList({
       selection: fontItems[0], items: fontItems,
       width: 100, name: "font button", fill,
@@ -227,7 +227,7 @@ export class RichTextControl extends Morph {
     }
   }
 
-  basicFontItems() {
+  static basicFontItems() {
     return [
       "Sans-serif",
       "serif",

@@ -15,7 +15,7 @@ export class Button extends Morph {
 
   static get styleSheet() {
     return new StyleSheet('Button Style', {
-      ".Button": {borderWidth: 1, borderRadius: 5, extent: pt(100,24)},
+      ".Button": {borderWidth: 1, borderRadius: 5, extent: pt(100,)},
       ".Button.activeStyle": {
         borderColor: Color.gray,
         fill: new LinearGradient({
@@ -48,6 +48,30 @@ export class Button extends Morph {
       padding:      {isStyleProp: true, defaultValue: Rectangle.inset(4,2)},
       draggable:    {defaultValue: false},
 
+      fontSize: {
+        type: "Number",
+        min: 0,
+        isStyleProps: true,
+        defaultValue: 12,
+        after: ['labelMorph', 'iconMorph'],
+        set(s) {
+          this.setProperty('fontSize', s);
+          this.labelMorph.fontSize = s;
+          this.iconMorph && (this.iconMorph.fontSize = s);
+        }
+      },
+
+      fontColor: {
+        isStyleProps: true,
+        defaultValue: Color.black,
+        after: ['labelMorph', 'iconMorph'],
+        set(c) {
+          this.setProperty('fontColor', c);
+          this.labelMorph.fontColor = c;
+          this.iconMorph && (this.iconMorph.fontColor = c);
+        }
+      },
+
       activeMode: {
         after: ["labelMorph"],
         get() {
@@ -68,14 +92,35 @@ export class Button extends Morph {
            this._buttonMode = m;
         }
       },
+      iconMorph: {
+        after: ['submorphs'],
+        initialize() {
+          this.iconMorph = this.addMorph({
+            type: "label", name: "icon",
+            value: ""
+          });
+        },
+        get() { return this.getSubmorphNamed('icon') },
+        set(iconMorph) {
+          var existing = this.iconMorph;
+          if (existing) {
+            disconnect(this.iconMorph, "extent", this, "relayout");
+            existing.remove();
+          }
+          if (!iconMorph) return;
+          iconMorph.name = "icon";
+          iconMorph.reactsToPointer = false;
+          this.addMorphAt(iconMorph, 0);
+          connect(this.iconMorph, 'extent', this, 'relayout');
+        }
+      },
       // button label
       labelMorph: {
         after: ["submorphs"],
         initialize() {
           this.labelMorph = this.addMorph({
             type: "label", name: "label",
-            value: "no label yet", fill: Color.transparent,
-            padding: Rectangle.inset(0)
+            value: "no label yet"
           });
         },
         get() { return this.getSubmorphNamed("label"); },
@@ -93,32 +138,39 @@ export class Button extends Morph {
       },
 
       icon: {
-        after: ['labelMorph'], 
-        derived: true,
+        after: ['labelMorph', 'iconMorph'], 
+        isStyleProp: true,
+        type: "Icon", // "" -> no icon, else a valid font awesome icon code
         initialize() {
-          this.iconMorph = this.addMorph({
-            type: "label", name: "iconMorph",
-            value: "", fill: Color.transparent,
-            padding: Rectangle.inset(0)
-          });
+          this.icon = "";
         },
-        get() { return this.iconMorph.textString },
         set(codeOrIconMorph) {
-          if (codeOrIconMorph.isMorph) {
-            this.labelMorph = codeOrIconMorph;
+          this.setProperty('icon', codeOrIconMorph);
+          if (!this.iconMorph) return;
+          if (codeOrIconMorph && codeOrIconMorph.isMorph) {
+            this.iconMorph = codeOrIconMorph;
           } else {
-            this.labelMorph.value = codeOrIconMorph;
+            this.iconMorph.value = codeOrIconMorph || "";
           }
         }
       },
 
+      iconPosition: {
+        defaultValue: "left",
+        type: "Enum",
+        values: ["left", "right", "bottom", "top"]
+      },
+
       label: {
-        after: ["labelMorph"], derived: true,
-        get() { return this.labelMorph.textString; },
+        after: ["labelMorph"], 
+        isStyleProp: true,
+        type: "RichText", // this includes an attributes Array
         set(stringOrAttributesOrMorph) {
           if (stringOrAttributesOrMorph.isMorph) {
+            this.setProperty('label', stringOrAttributesOrMorph.value)
             this.labelMorph = stringOrAttributesOrMorph;
           } else {
+            this.setProperty('label', stringOrAttributesOrMorph)
             this.labelMorph.value = stringOrAttributesOrMorph;
           }
         }
@@ -137,6 +189,7 @@ export class Button extends Morph {
     this.activeMode = 'active';
     this.relayout();
     connect(this, 'extent', this, 'relayout');
+    connect(this, 'iconPosition', this, 'relayout');
     connect(this, 'padding', this, 'relayout');
     connect(this, 'fontSize', this, 'relayout');
     connect(this, 'fontFamily', this, 'relayout');
@@ -145,7 +198,8 @@ export class Button extends Morph {
   get isButton() { return true }
 
   relayout() {
-    var label = this.labelMorph;
+    var label = this.labelMorph,
+        icon = this.iconMorph;
     if (!label) return;
     var padding = this.padding,
         padT = padding.top(),
@@ -156,7 +210,27 @@ export class Button extends Morph {
         minWidth = label.width + padL + padR;
     if (minHeight > this.height) this.height = minHeight;
     if (minWidth > this.width) this.width = minWidth;
-    label.center = this.innerBounds().insetByRect(padding).center();
+    let innerPadding = this.innerBounds().insetByRect(padding);
+    label.center = innerPadding.center();
+    if (!icon || !this.iconMorph.value) return this;
+    switch (this.iconPosition) {
+      case 'left':
+        label.rightCenter = innerPadding.rightCenter();
+        icon.rightCenter = label.leftCenter;
+        return this;
+      case 'right':
+        label.leftCenter = innerPadding.leftCenter();
+        icon.leftCenter = label.rightCenter;
+        return this;
+      case 'top':
+        label.bottomCenter = innerPadding.bottomCenter();
+        icon.bottomCenter = label.topCenter;
+        return this;
+      case 'bottom':
+        label.topCenter = innerPadding.topCenter();
+        icon.topCenter = label.bottomCenter;  
+        return this;        
+    }
     return this;
   }
   

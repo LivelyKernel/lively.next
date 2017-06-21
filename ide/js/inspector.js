@@ -1,16 +1,20 @@
 /* globals Power4 */
 import { Color, rect, pt } from "lively.graphics";
-import { obj, num, arr, promise, string } from "lively.lang";
-import { connect } from "lively.bindings";
-import { Morph, ShadowObject, Icon, StyleSheet, HorizontalLayout, config } from "lively.morphic";
+import { obj, arr, promise, string } from "lively.lang";
+import { connect, disconnectAll, signal, disconnect, once } from "lively.bindings";
+import { Morph, HorizontalLayout, morph, CustomLayout, Label, Icon, StyleSheet, config } from "lively.morphic";
 import { Tree, TreeData } from "lively.morphic/components/tree.js";
-import { ColorPicker } from "../styling/color-picker.js";
+
 import { isBoolean, isString, isNumber } from "lively.lang/object.js";
-import { ValueScrubber, SearchField, LabeledCheckBox } from "../../components/widgets.js";
+import { DropDownSelector, SearchField, LabeledCheckBox } from "../../components/widgets.js";
 import { last } from "lively.lang/array.js";
-import { StyleSheetEditor } from "../../style-rules.js";
+
 import { GridLayout } from "../../layout.js";
-import { FillEditor } from "../styling/style-editor.js";
+
+import { NumberWidget, PaddingWidget, VerticesWidget, ShadowWidget, PointWidget, StyleSheetWidget, BooleanWidget, LayoutWidget, ColorWidget } from "../value-widgets.js";
+import { RichTextControl } from "../../text/ui.js";
+import { Point } from "lively.graphics/geometry-2d.js";
+import { MorphHighlighter } from "../../halo/morph.js";
 
 var inspectorCommands = [
 
@@ -107,10 +111,234 @@ var defaultPropertyOptions = {
   sortFunction: (target, props) => Array.isArray(target) ? props : props.sort(defaultSort)
 }
 
-function propertiesOf(target) {
+/*
+
+When using trees as a means to simply display information to the user
+it is sufficient to just supply anonymous objects as nodes in order to 
+define a tree structure that can then be rendered by components/tree.js.
+
+This changes, once we allow the user to also interact with the tree nodes
+and modify the data being dispalyed. Nodes now need to be aware of how they relate
+to the object that they are being retrieved from, and also which datafields
+they need to updated and/or check for an updated value.
+
+Furthermore, in order to reduce the total number of nodes that need to be 
+rendered again in response to a change in the observed data structure it
+is nessecary for the nodes to make precise and easy to perform updates inside
+the rendered tree.
+
+The inspector therefore comes with a set of different node types that are
+represented as first class objects. These nodes are aware of what kind of
+data they are inspecting and also know how they react to changes in the system.
+
+*/
+
+class InspectionNode {
+
+  /* This node type is used for datapoints that do not provide any
+     context information whatsoever, that is: They are not a Morph,
+     a property of a morph or a member of a folded property.
+     Plain Inspection nodes do not provide interactiveness (they are read only), 
+     so they do not store a target that they poll or propagate changes from and to. */
+
+  constructor({
+        root, // the tree data object that serves as the root of the node tree
+        priority, // order inside the tree
+        key, //property on the object
+        keyString, //a printed version of the property, sometimes different to key i.e. [INTERNAL] ...
+        value, //the value of the inspected datafield
+        valueString, // the value of the datafield printed safely to a string
+        isCollapsed, // wether or not the node is dispalying its child nodes,
+        children = [],
+        isSelected = false,
+        visible = true
+      }) {
+    this.priority = priority;
+    this.key = key;
+    this.keyString = keyString || String(key);
+    this.value = value;
+    this.valueString = valueString || printValue(value);
+    this.isCollapsed = isCollapsed;
+    this.children = children;
+    this.isSelected = isSelected;
+    this.visible = visible;
+    this.root = root;
+  }
+
+  get isInspectionNode() { return true }
+
+  static for(node, root = null) {
+    // if is morph -> MorphContext
+    if (node.value && node.value.isMorph) return new MorphNode({root, ...node});
+    return new InspectionNode({root, ...node});
+  }
+
+  getSubNode(node) {
+    return InspectionNode.for(node, this.root);
+  }
+
+  display() {
+    let {keyString, valueString} = this;
+    return this._propertyWidget || (this._propertyWidget = `${keyString}: ${valueString}`);
+  }
+  
+}
+
+class MorphNode extends InspectionNode {
+
+    /* Used for properties that store a morph as a value and thereby
+       give rise to a new target context that subsequent properties need
+       to be mapped against:
+
+           MorphA : {
+              position: ... (position of A),
+              fill: ... (fill of A),
+              b: (new morph context) {
+                  position: ... (position of B)
+                  fill: ... (fill of B)
+              }
+           }
+
+        Morph nodes cache the propertyInfo from propertiesAndSettings() in order
+        to supply their subnode with meta information about the property values.
+    */
+
+  constructor(args) {
+    super(args);
+    this.target = this.value; // target changes to the value of the node
+    this.propertyInfo = this.target.propertiesAndPropertySettings().properties;
+  }
+
+  getSubNode(nodeArgs) {
+    let spec = this.propertyInfo[nodeArgs.keyString] || {};
+    if (nodeArgs.value && nodeArgs.value.isMorph) return new MorphNode(nodeArgs)
+    return new PropertyNode({
+      ...nodeArgs,
+      root: this.root,
+      target: this.target,
+      spec
+    });  
+  }
+}
+
+class PropertyNode extends InspectionNode {
+
+  /* Used for properties attached to a morph.
+     Also come with a spec object that is retrieved from
+     the previous morph node's propertyInfo dictionary.
+     The spec object is used to render the direct manipulation
+     widgets for the property value correctly. */
+
+  constructor(args) {
+    super(args);
+    let {
+      spec, // spec providing information about the inspected values type etc...
+      target // target is passed from previous morph context  
+    } = args;
+    this.target = target;
+    this.spec = spec;
+    this.foldedNodes = {};
+  }
+
+  get isFoldable() {
+    return !!this.spec.foldable
+  }
+
+  get isInternalProperty() {
+     return this.keyString == 'id' || this.keyString.includes('internal'); 
+  }
+
+  getSubNode(nodeArgs) {
+    if (this.isFoldable) {
+      return this.getFoldedContext(nodeArgs)
+    }
+    return super.getSubNode(nodeArgs);
+  }
+
+  getFoldedContext(node) {
+    return this.foldedNodes[node.key] = new FoldedNode({
+      ...node,
+      root: this.root,
+      target: this.target, 
+      foldableNode: this,
+      spec: obj.dissoc(this.spec, ['foldable'])
+    }); 
+  }
+
+  refreshProperty(v, updateTarget = false) {
+    if (updateTarget) this.target[this.keyString] = v;
+    this.value = this.target[this.keyString];
+    signal(this._propertyWidget, 'update', this.value);
+    if (this.isFoldable) {
+      for (let m in this.foldedNodes) {
+        this.foldedNodes[m].value = this.value[m];
+        signal(this.foldedNodes[m]._propertyWidget, 'update', this.value[m])
+      }
+    }
+  }
+
+  display() {
+    let {keyString, valueString, target, value, spec} = this;
+    if (this._propertyWidget) {
+      // recycle widget
+      if (typeof this._propertyWidget == 'string') return this._propertyWidget;
+      this._propertyWidget.keyString = keyString;
+      this._propertyWidget.valueString = valueString;
+      return this._propertyWidget;
+    } else {
+      // create a new widget
+      this._propertyWidget = PropertyControl.render({
+        target,
+        keyString,
+        valueString,
+        value,
+        spec
+      });
+
+      if (this._propertyWidget) {
+        if (!this.isInternalProperty && !spec.readOnly) {
+          connect(this._propertyWidget, "propertyValue", this, "refreshProperty", {
+            updater: function($upd, val) {
+              $upd(val, true); 
+            }
+          });
+          connect(this._propertyWidget, "openWidget", this.root, "onWidgetOpened", {
+            converter: widget => {
+              return {widget, node};
+            },
+            varMapping: {node: this._propertyWidget}
+          });
+        }
+      }
+    }
+    return this._propertyWidget || super.display();    
+  }  
+}
+
+class FoldedNode extends PropertyNode {
+
+  constructor(args) {
+    super(args);
+    let {foldableNode} = args;
+    this.foldableNode = foldableNode;
+    /* key and keyString will be just the member name (i.e. .left, or .right).
+       In order to update a folded property correctly the accessor that triggers the
+       update correctly is needed. This is synthesized from the parent nodes
+       keyString and the folded nodes keyString */
+    this.foldedProp = foldableNode.key + string.capitalize(this.key);
+  }
+
+  refreshProperty(v, updateTarget) {
+    this.foldableNode.refreshProperty({...this.target[this.foldableNode.key], [this.key]: v}, updateTarget);
+  }
+  
+}
+
+function propertiesOf(node) {
+  let target = node.value;
   if (!target) return [];
 
-  var seen = {}, props = [],
+  var seen = {_rev: true}, props = [],
       isCollapsed = true,
       customProps = typeof target.livelyCustomInspect === "function" ?
         target.livelyCustomInspect() : {},
@@ -123,26 +351,30 @@ function propertiesOf(target) {
     for (let {key, hidden, priority, keyString, value, valueString} of customProps.properties) {
       seen[key] = true;
       if (hidden) continue;
-      props.push({
+      props.push(node.getSubNode({
         priority,
-        key, keyString: keyString || safeToString(key),
-        value, valueString,
+        key,
+        keyString: keyString || safeToString(key),
+        value,
+        valueString,
         isCollapsed
-      });
+      }));
     }
   }
-
   if (options.includeDefault) {
     var defaultProps = propertyNamesOf(target);
     for (let key of defaultProps) {
       if (key in seen) continue;
-      var value = target[key], valueString = printValue(value);
-      props.push({key, value, valueString, isCollapsed})
+      var value = target[key], valueString = printValue(value),
+          nodeArgs = {key, keyString: key, value, valueString, isCollapsed};
+      props.push(node.getSubNode(nodeArgs));
     }
     if (options.includeSymbols) {
       for (let key of Object.getOwnPropertySymbols(target)) {
-        var keyString = safeToString(key), value = target[key], valueString = printValue(value);
-        props.push({key, keyString, value, valueString, isCollapsed});
+        var keyString = safeToString(key), value = target[key], 
+            valueString = printValue(value),
+            nodeArgs = {key, keyString, value, valueString, isCollapsed};
+        props.push(node.getSubNode(nodeArgs));
       }
     }
   }
@@ -152,52 +384,382 @@ function propertiesOf(target) {
   return props;
 }
 
-export class PropertyControl extends Morph {
+class DraggedProp extends Morph {
 
-  static render({
-        target, property, keyString, 
-        valueString, value
-     }) {
-     var controlClass;
-     // TODO:  this dispatch logic should be defined through the property
-     // definition interface (i.e. static get properties()) where properties
-     // also can define their 'type' and how this type is supposed to be
-     // controlled by the inspector or style sheet editor
-     if (value && value.isColor) {
-       controlClass = ColorPropertyControl;
-     } if (value && value.isGradient) {
-       controlClass = GradientPropertyControl;
-     } else if (isBoolean(value)) {
-       controlClass = BooleanPropertyControl;
-     } else if (isNumber(value)) {
-       controlClass = NumberPropertyControl;
-     } else if (isString(value)) {
-       controlClass = StringPropertyControl;
-     } else if (keyString == 'styleSheets') { 
-       controlClass = StyleSheetsPropertyControl;
-     } else if (keyString == 'styleClasses') {
-       // controlClass = StyleClassesPropertyControl;
-     }
-    if (controlClass) {
-      return new controlClass({
-        keyString,
-        valueString,
-        value
-      });
+  static get properties() {
+    return {
+      control: {},
+      borderColor: {defaultValue: Color.rgb(169,204,227)},
+      fill: {defaultValue: Color.rgb(235, 245, 251).withA(.8)},
+      borderWidth: {defaultValue: 2},
+      borderRadius: {defaultValue: 4},
+      submorphs: {
+        after: ['control'],
+        initialize() {
+          this.submorphs = [this.control];
+          this.height = 22;
+          this.control.top = 0;
+          this.control.fontSize = 14;
+          this.control.relayout();
+          this.width = this.control.width + 20;
+          this.adjustOrigin(pt(10,10));
+        }
+      }
     }
-     return false;
+  }
+
+  applyToTarget() {
+    let {keyString, propertyValue} = this.control;
+    this.remove();
+    MorphHighlighter.removeHighlightersFrom($world);
+    this.currentTarget[keyString] = propertyValue;
+  }
+
+  update(handPosition) {
+    let target = this.morphBeneath(handPosition);
+    if (target == this.morphHighlighter) {
+      target = this.morphHighlighter.morphBeneath(handPosition);
+    }
+    if (target != this.currentTarget) {
+      this.currentTarget = target;
+      if (this.morphHighlighter) this.morphHighlighter.deactivate();
+      if (target.isWorld) return;
+      this.morphHighlighter = MorphHighlighter.for($world, target);
+      this.morphHighlighter.show();
+    }
+    this.position = handPosition;
+  }
+}
+
+export class PropertyControl extends Label {
+  
+  get __only_serialize__() {
+    return arr.without(super.__only_serialize__, 'attributeConnections');
   }
 
   static get properties() {
     return {
+      control: {
+        after: ['submorphs'],
+        derived: true,
+        get() {
+          return this.submorphs[0] || false;
+        },
+        set(c) {
+          this.submorphs = [c];
+        }
+      },
+      draggable: {defaultValue: true},
+      nativeCursor: {defaultValue: '-webkit-grab'},
       root: {},
       keyString: {},
       valueString: {},
-      target: {},
-      property: {},
-      value: {},
-      layout: {initialize() {this.layout = new HorizontalLayout()}},
+      propertyValue: {},
+      fontFamily: {defaultValue: config.codeEditor.defaultStyle.fontFamily},
       fill:  {defaultValue: Color.transparent},
+      padding: {defaultValue: rect(0,0,10,0)},
+      layout: {
+        initialize() {
+          this.layout = new CustomLayout({
+            relayout: (self) => {
+              self.relayout();
+            }
+          });
+        }
+      },
+      submorphs: {
+        initialize() {
+          this.value = this.keyString + ":";
+          this.submorphs = [];
+        }
+      }
+    }
+  }
+
+  static inferType({keyString, value}) {
+    if (value && (value.isColor || value.isGradient)) {
+      return 'Color'
+    } else if (value && value.isPoint) {
+      return 'Point'
+    } else if (isBoolean(value)) {
+      return 'Boolean'
+    } else if (isNumber(value)) {
+      return 'Number'
+    } else if (isString(value)) {
+      return 'String'
+    } else if (value && value.isRectangle) {
+      return 'Rectangle'
+    }
+    return false
+  }
+  
+  static render(args) {
+    let propertyControl = this.baseControl(args);
+    
+    if (!args.spec.type) args.spec = {...args.spec, type: this.inferType(args)}; // non mutating
+
+    if (args.spec.foldable) {
+      propertyControl.asFoldable(args.spec.foldable);
+    }
+    
+    switch (args.spec.type) {
+        // 12.6.17
+        // rms: not sure wether a string based spec is that effective in the long run
+        //      it may require too much dedicated maintenance
+      case "Icon":
+        propertyControl.renderIconControl(args); break;
+      case "Color":
+        propertyControl.renderColorControl(args); break;
+      case "ColorGradient":
+        propertyControl.renderColorControl(args, true); break;
+      case "Number":
+        propertyControl.renderNumberControl(args); break;
+      case "String":
+        propertyControl.renderStringControl(args); break;
+      case "RichText":
+        propertyControl.renderRichTextControl(args); break;
+      case "Layout":
+        propertyControl.renderLayoutControl(args); break;
+      case "Enum":
+        propertyControl.renderEnumControl(args); break;
+      case "Vertices":
+        propertyControl.renderVertexControl(args); break;
+      case "Shadow":
+        propertyControl.renderShadowControl(args); break;
+      case "Point":
+        propertyControl.renderPointControl(args); break;
+      case "StyleSheets":
+        propertyControl.renderStyleSheetControl(args); break;
+      case "Rectangle": 
+        propertyControl.renderRectangleControl(args); break;
+      case "Boolean":
+        propertyControl.renderBooleanControl(args); break;
+    }
+
+    if (propertyControl.control) {
+      connect(propertyControl.control, "openWidget", propertyControl, "openWidget");
+      propertyControl.toggleFoldableValue(args.value);
+      return propertyControl;
+    }
+    
+    return false;
+  }
+  
+  renderValueSelector(propertyControl, selectedValue, values) {
+    propertyControl.control = new DropDownSelector({
+      opacity: 0.8,
+      fill: Color.white.withA(0.5),
+      name: "valueString",
+      selectedValue,
+      values
+    });
+    // hack: since derived properties that are parametrized by a style sheet do not
+    //       yet take effect in a morph such as the drop down selector, we need to
+    //       manually trigger an update at render time
+    propertyControl.control.whenRendered().then(() => 
+       propertyControl.control.updateStyleSheet());
+    connect(propertyControl.control, "update", propertyControl, "propertyValue", {
+      updater: function ($upd, val) {
+        if (this.targetObj.propertyValue != val) $upd(val);
+      }
+    });
+    connect(propertyControl, 'update', propertyControl.control, 'selectedValue', {
+      updater: function ($upd, val) {
+        val = (val && val.valueOf) ? val.valueOf() : val;
+        if (this.targetObj.propertyValue != val) $upd(val);
+      }
+    });
+    return propertyControl;
+  }
+
+  static baseControl({keyString, valueString, value}) {
+    return new this({
+      keyString,
+      valueString,
+      propertyValue: value
+    });
+  }
+
+  toggleMultiValuePlaceholder(active) {
+     this.multiValuePlaceholder = this.multiValuePlaceholder || this.addMorph({
+        fill: Color.transparent,
+        layout: new HorizontalLayout({spacing: 3}),
+        name: 'multi value placeholder',
+        nativeCursor: 'pointer',
+        submorphs: arr.range(0,2).map(i => ({
+          type: 'ellipse',
+          fill: Color.gray.withA(.5),
+          reactsToPointer: false,
+          extent: pt(7,7)
+        }))
+      });
+    if (active) {
+      connect(this.multiValuePlaceholder, 'onMouseDown', this, 'propertyValue', {
+        converter: () => self.propertyValue.valueOf(), varMapping: {self: this}
+      });
+      this.control.opacity = 0;
+      this.multiValuePlaceholder.visible = true;
+    } else {
+      disconnect(this.multiValuePlaceholder, 'onMouseDown', this, 'propertyValue');
+      this.control.opacity = 1;
+      this.multiValuePlaceholder.visible = false;
+    }
+    
+  }
+
+  toggleFoldableValue(newValue) {
+    if (!this.foldableProperties) return;
+    if (
+      arr.every(this.foldableProperties.map(p => newValue[p]), v =>
+        obj.equals(v, newValue.valueOf())
+      )
+    ) {
+      this.toggleMultiValuePlaceholder(false);
+    } else {
+      this.toggleMultiValuePlaceholder(true);
+    }
+  }
+  asFoldable(foldableProperties) {
+    this.foldableProperties = foldableProperties;
+    connect(this, 'update', this, 'toggleFoldableValue');
+  }
+
+  renderEnumControl({value, spec: {values}}) {
+    return this.renderValueSelector(this, value.valueOf ? value.valueOf() : value, values);
+  }
+
+  renderIconControl(args) {
+    
+  }
+
+  renderStringControl(args) {
+    
+  }
+
+  renderRichTextControl(args) {
+    
+  }
+
+  renderRectangleControl({value}) {
+    this.control = new PaddingWidget({name: 'valueString', rectangle: value});
+    connect(this.control, "rectangle", this, "propertyValue");
+    return this;    
+  }
+
+  renderVertexControl({target}) {
+    this.control = new VerticesWidget({context: target});
+    connect(this.control, "vertices", this, "propertyValue");
+    return this;
+  }
+
+  renderBooleanControl(args) {
+    this.control = new BooleanWidget({
+      name: "valueString",
+      boolean: args.value
+    });
+    connect(this.control, "boolean", this, "propertyValue");
+    return this;
+  }
+
+  renderNumberControl({value, spec, keyString}) {
+    var baseFactor = .5, floatingPoint = spec.isFloat;
+    if ("max" in spec && "min" in spec 
+        && spec.min != -Infinity && spec.max != Infinity) {
+      baseFactor = (spec.max - spec.min) / 100;
+      floatingPoint = true;
+    }
+    this.control = new NumberWidget({
+      name: "valueString",
+      height: 17,
+      baseFactor,
+      floatingPoint,
+      borderWidth: 0,
+      borderColor: Color.transparent,
+      fill: Color.transparent,
+      padding: rect(0),
+      fontFamily: config.codeEditor.defaultStyle.fontFamily,
+      number: value,
+      ...("max" in spec ? {max: spec.max} : {}),
+      ...("min" in spec ? {min: spec.min} : {})
+    });
+    connect(this.control, "update", this, "propertyValue");
+    connect(this, "update", this.control, "number", {
+      updater: function($upd, val) {
+        val = val.valueOf ? val.valueOf() : val;
+        if (this.targetObj.number != val) $upd(val);
+      }
+    });
+    return this;
+  }
+
+  renderShadowControl(args) {
+    this.control = new ShadowWidget({name: 'valueString', shadowValue: args.value});
+    connect(this.control, 'shadowValue', this, 'propertyValue');
+    return this;
+  }
+
+  renderStyleSheetControl({target}) {
+    this.control = new StyleSheetWidget({context: target});
+    return this;
+  }
+
+  renderPointControl(args) {
+    this.control = new PointWidget({name: "valueString", pointValue: args.value});
+    connect(this.control, "pointValue", this, "propertyValue");
+    connect(this, 'update', this.control, 'pointValue', {
+      updater: function ($upd, val) {
+        val = val.valueOf ? val.valueOf() : val;
+        if (!this.targetObj.pointValue.equals(val)) $upd(val);
+      }
+    });
+    return this;
+  }
+
+  renderLayoutControl({target}) {
+    this.control = new LayoutWidget({context: target});
+    connect(this.control, "layoutChanged", this, "propertyValue");
+    return this;
+  }
+
+  renderColorControl(args, gradientEnabled = false) {
+    this.control = new ColorWidget({
+          color: (args.value && args.value.valueOf) ? args.value.valueOf() : args.value,
+          gradientEnabled
+        });
+    connect(this.control, "update", this, "propertyValue");
+    connect(this, 'update', this.control, 'color', {
+      updater: function ($upd, val) {
+        val = (val && val.valueOf )? val.valueOf() : val;
+        if (!this.targetObj.color.equals(val)) $upd(val);
+      }
+    });
+    return this;
+  }
+
+  onDragStart(evt) {
+    this.draggedProp = new DraggedProp({
+      control: this.copy()
+    });
+    this.draggedProp.openInWorld();
+    connect(evt.hand, 'position', this.draggedProp, 'update');
+  }
+
+  onDrag(evt) {}
+
+  onDragEnd(evt) {
+    disconnect(evt.hand, 'position', this.draggedProp, 'update');
+    this.draggedProp.applyToTarget();
+  }
+
+  relayout() {
+    this.fit();
+    if (this.control) {
+      this.control.leftCenter = this.textBounds().rightCenter();
+      this.width = this.textBounds().width + this.control.bounds().width;
+    }
+
+    if (this.multiValuePlaceholder) {
+      this.multiValuePlaceholder.leftCenter = this.textBounds().rightCenter();
     }
   }
 
@@ -216,389 +778,36 @@ export class PropertyControl extends Morph {
   }
 }
 
-class NumberPropertyControl extends PropertyControl {
-
-  static get properties() {
-    return {
-      submorphs: {
-        initialize() {
-          this.submorphs = [{
-            type: "label", value: this.keyString + ':', name: 'keyString',
-            padding: rect(0,0,10,0), fontSize: 14, 
-            fontFamily: config.codeEditor.defaultStyle.fontFamily},
-            new ValueScrubber({
-               fontSize: 14, name: 'valueString', nativeCursor: '-webkit-grab',
-               fontColor: Color.rgbHex("#0086b3"), fontFamily: config.codeEditor.defaultStyle.fontFamily,
-               target: this.target, extent: pt(20, 15),
-               value: this.value || this.valueString, fill: Color.transparent,
-            })];
-           connect(this.get('valueString'), 'scrub', this, 'value')
-        }
-      }
-    }
-  }
-}
-
-class BooleanPropertyControl extends PropertyControl {
-  
-  static get properties() {
-    return {
-      keyString: {
-        after: ["submorphs"],
-        derived: true,
-        set(v) {
-          this.setProperty("keyString", v);
-          this.get("keyString").value = v + ":";
-        }
-      },
-      valueString: {
-        derived: true,
-        after: ["submorphs"],
-        set(v) {
-          this.setProperty("valueString", v);
-          this.get("valueString").value = v;
-        }
-      },
-      value: {
-        derived: true,
-        after: ["submorphs"],
-        set(v) {
-          this.setProperty("value", v);
-          this.get("valueString").fontColor = v ? Color.green : Color.red;
-        }
-      },
-      submorphs: {
-        initialize() {
-          this.submorphs = [
-            {
-              type: "label",
-              name: "keyString",
-              padding: rect(0, 0, 10, 0),
-              fontSize: 14,
-              fontFamily: config.codeEditor.defaultStyle.fontFamily
-            },
-            {
-              type: "label",
-              fontSize: 14,
-              name: "valueString",
-              nativeCursor: "pointer",
-              onMouseDown: evt => {
-                this.value = !this.value;
-              },
-              fontFamily: config.codeEditor.defaultStyle.fontFamily
-            }
-          ];
-        }
-      }
-    };
-  }
-
-}
-
-class StringPropertyControl extends PropertyControl {
-
-  static get properties() {
-    return {
-      submorphs: {
-        initialize() {
-          this.submorphs = [
-            {
-              type: "label",
-              value: this.keyString + ":",
-              name: "keyString",
-              padding: rect(0, 0, 10, 0),
-              fontSize: 14,
-              fontFamily: config.codeEditor.defaultStyle.fontFamily
-            },
-            {
-              type: "label",
-              value: this.valueString,
-              fontSize: 14,
-              name: "valueString",
-              fill: Color.white.withA(0.7),
-              fontColor: Color.rgbHex("#183691"),
-              fontFamily: config.codeEditor.defaultStyle.fontFamily
-            }
-          ];
-        }
-      }
-    }
-  }
-  
-}
-
-class GradientPropertyControl extends PropertyControl {
-
-   static get properties() {
-    return {
-      keyString: {
-        after: ['submorphs'],
-        derived: true,
-        set(v) {
-          this.setProperty('keyString', v);
-          this.get('keyString').value = v + ":";
-          this.get('keyString').fit();
-        },
-      },
-      value: {},
-      fontColor: {
-        after: ['submorphs'],
-        set(c) {
-          this.get('keyString').fontColor = c;
-          this.get('valueString').fontColor = c.withA(.7);
-        }
-      },
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            "[name=stops] .Label": {
-              opacity:.6,
-              nativeCursor: 'pointer',
-              fontFamily: config.codeEditor.defaultStyle.fontFamily,
-              fontSize: 14
-            },
-            ".colorValue": {
-              nativeCursor: 'pointer',
-              borderColor: Color.gray.darker(),
-              borderWidth: 1
-            },
-            "[name=keyString]": {
-              fontFamily: config.codeEditor.defaultStyle.fontFamily,
-              fontSize: 15
-            }
-          })
-        }
-      },
-      submorphs: {
-        initialize() {
-          this.submorphs = [
-            {
-              type: "label",
-              value: this.keyString + ":",
-              name: "keyString",
-              padding: rect(1, 1, 10, 0),
-            },
-            {
-              name: 'stops',
-              layout: new HorizontalLayout({direction: "centered", spacing: 1}),
-              fill: Color.transparent,
-              nativeCursor: 'pointer',
-              submorphs: [
-                {
-                  type: "label",
-                  value: this.value.type + "(",
-                  name: "valueString",
-                },
-                ...this.renderStops(),
-                {
-                  type: 'label',
-                  value: ')'
-                }
-              ]
-            }
-          ];
-          connect(this.getSubmorphNamed('stops'), 'onMouseDown', this, 'openFillEditor');
-        }
-      }
-    }
-  }
-
-  renderStops() {
-    let stops = [{
-       type: 'label',
-       padding: rect(0,0,5,0),
-       value: num.toDegrees(this.value.vectorAsAngle()).toFixed() + "°,"
-    }];
-    for (let i in this.value.stops) {
-      var {color, offset} = this.value.stops[i];
-      stops.push({
-        extent: pt(15, 15),
-        fill: Color.transparent,
-        submorphs: [
-          {
-            styleClasses: ["colorValue"],
-            center: pt(5, 7.5),
-            fill: color
-          }
-        ]
-      });
-      stops.push({
-        type: "label",
-        padding: rect(0,0,5,0),
-        value: (offset * 100).toFixed() + "%" + (i < this.value.stops.length - 1 ? ',' : '')
-      });
-    }
-    return stops;
-  }
-
-  openFillEditor() {
-     let editor = new FillEditor({value: this.value, title: 'Fill Control'}).open().openInWorld();
-     connect(editor, 'value', this, 'value');
-  }
-  
-}
-
-class ColorPropertyControl extends PropertyControl {
-
-  static get properties() {
-    return {
-      keyString: {
-        after: ['submorphs'],
-        derived: true,
-        set(v) {
-          this.setProperty('keyString', v);
-          this.get('keyString').value = v + ":";
-          this.get('keyString').fit();
-        },
-      },
-      valueString: {
-        derived: true,
-        after: ['submorphs'],
-        set(v) {
-          this.setProperty('valueString', v);
-          this.get('valueString').value = v;
-        }
-      },
-      value: {
-        derived: true,
-        after: ['submorphs'],
-        set(v) {
-          this.setProperty('value', v);
-          this.get('colorValue').fill = v;
-          this.valueString = obj.safeToString(v);
-        }
-      },
-      fontColor: {
-        after: ['submorphs'],
-        set(c) {
-          this.get('keyString').fontColor = c;
-          this.get('valueString').fontColor = c.withA(.7);
-        }
-      },
-      submorphs: {
-        initialize() {
-          this.submorphs = [
-            {
-              type: "label",
-              value: this.keyString + ":",
-              name: "keyString",
-              padding: rect(0, 0, 10, 0),
-              fontFamily: config.codeEditor.defaultStyle.fontFamily
-            },
-            {
-              layout: new HorizontalLayout({direction: "centered"}),
-              fill: Color.transparent,
-              submorphs: [
-                {
-                  extent: pt(15, 15),
-                  fill: Color.transparent,
-                  submorphs: [
-                    {
-                      name: "colorValue",
-                      center: pt(5, 7.5),
-                      fill: this.value,
-                      borderColor: Color.gray.darker(),
-                      nativeCursor: "pointer",
-                      borderWidth: 1,
-                      onMouseDown: evt => {
-                        evt.stop();
-                        this.openPicker();
-                      }
-                    }
-                  ]
-                },
-                {
-                  type: "label",
-                  value: this.valueString,
-                  fontSize: 14,
-                  name: "valueString",
-                  fontColor: Color.black.withA(0.6),
-                  fontFamily: config.codeEditor.defaultStyle.fontFamily
-                }
-              ]
-            }
-          ];
-        }
-      }
-    }
-  }
-
-  async openPicker(evt) {
-      const p = new ColorPicker({color: this.value});
-      p.position = pt(0, -p.height / 2);
-      connect(p, "color", this, "value");
-      await p.fadeIntoWorld($world.center);
-   }
-}
-
-class PropertyToolShortcut extends PropertyControl {
-  static get properties() {
-    return {
-      submorphs: {
-        initialize() {
-          this.submorphs = [{
-            type: "label", value: this.keyString + ':', name: 'keyString',
-            padding: rect(0,0,10,0), fontSize: 14, 
-            fontFamily: config.codeEditor.defaultStyle.fontFamily},
-            Icon.makeLabel('arrow-right', {fontSize: 15, padding: rect(1,1,4,1)}),
-            {type: "label", value: this.title, fontSize: 14, 
-             fontWeight: 'bold',
-             name: 'valueString', fill: Color.transparent, opacity: .8,
-             borderRadius: 5, padding: rect(0,1,0,0), nativeCursor: 'pointer', fontSize: 12,
-             borderWidth: 0}];
-          connect(this.get('valueString'), 'onMouseDown', this, 'openTool');
-        }
-      }
-    };
-  }
-}
-
-class StyleSheetsPropertyControl extends PropertyToolShortcut {
-  // shortcut for widgets to edit style sheets in a reasonable manner
-  static get properties() {
-     return {
-        title: {defaultValue: 'Edit Style Sheets'}
-     }
-  }
-
-  openTool() {
-     new StyleSheetEditor({target: this.get('inspector').targetObject}).open();
-  }
-  
-}
-
-class StyleClassesPropertyControl extends PropertyToolShortcut {
-  // shortcut to widget that allows to edit style classes more conveniently
-    static get properties() {
-     return {
-        title: {defaultValue: 'Edit Style Classes'}
-     }
-  }
-
-  openTool() {
-  
-  }
-}
-
-
 class InspectorTreeData extends TreeData {
+
+  constructor(args) {
+    super(args);
+    if (!this.root.isInspectionNode)
+       this.root = InspectionNode.for(this.root, this);
+  }
+
+  asListWithIndexAndDepth(filtered = true) {
+    let nodes = super.asListWithIndexAndDepth();
+    return filtered ? nodes.filter(({node}) => node.visible) : nodes;
+  }
 
   static fromListWithDepthAndIndexes(nodes) {
     // ensure that the nodes are sorted by index, 
     // or else the parent child relationship
     // will be inferred incorrectly
-    
     var [root, ...nodes] = arr.sortBy(nodes, ({i}) => i);
-    root = {...root.node, children: []}; // create new node
+    root = root.node // create new node
+    root.children = [];
     var stack = [], prev = root;
     for(let {node, depth} of nodes) {
       if (stack.length < depth) {
-        stack.push(prev);
+        stack.push(prev); 
       }
       if (stack.length > depth) {
         stack.pop();
       }
-      stack[depth - 1].children.push(prev = {...node, children: []});
+      node.children = [];
+      stack[depth - 1].children.push(prev = node);
     }
     return new this(root)
   }
@@ -607,43 +816,9 @@ class InspectorTreeData extends TreeData {
     return new this({key: "inspectee", value: {inspectee: obj}, isCollapsed: true});
   }
 
-  isInternalProperty(key) {
-     return key == 'id' || key.includes('internal'); 
-  }
-
   display(node) {
-     /* Special display mode on certain data types:
-        color, numbers (float, int) */
-     var keyString = node.keyString || node.key,
-         valueString = node.valueString || printValue(node.value),
-         target = this.root.value.inspectee,
-         property = node.key || node.keyString,
-         value = node.value,
-         controlClass;
-     if (node._propertyWidget){
-        node._propertyWidget.keyString = keyString;
-        node._propertyWidget.valueString = valueString;
-        //node._propertyWidget.value = value;
-        return node._propertyWidget;
-     }
-     
-     node._propertyWidget = PropertyControl.render({
-        target, property, keyString, 
-        valueString, value
-     });
-     
-     if (node._propertyWidget) {
-        node.isSelected = false; // should be replaced by a better selection style
-        this.targetPropertyInfo = this.targetPropertyInfo || target.propertiesAndPropertySettings().properties;
-      if (
-        !this.isInternalProperty(keyString) && 
-        !(this.targetPropertyInfo[property] && this.targetPropertyInfo[property].readOnly)
-      ) {
-        connect(node._propertyWidget, "value", target, property);
-      }
-     }
-     return node._propertyWidget || `${keyString}: ${valueString}`;
-  }  
+    return node.display();
+  }
   
   isCollapsed(node) { return node.isCollapsed; }
 
@@ -651,10 +826,13 @@ class InspectorTreeData extends TreeData {
     node.isCollapsed = bool;
     if (bool || this.isLeaf(node)) return;
 
-    node.children = propertiesOf(node.value).map(node => {
-      this.parentMap.set(node, node); return node; });
+    if (!node.children.length) {
+      node.children = propertiesOf(node).map(node => {
+        this.parentMap.set(node, node);
+        return node;
+      });
+    }
   }
-
   getChildren(node) { return node.children; }
 
   isLeaf(node) { return obj.isPrimitive(node.value); }
@@ -673,20 +851,17 @@ class InspectorTreeData extends TreeData {
     this.uncollapseAll(
       (node, depth) => maxDepth > depth && (node == this.root || node.value.submorphs)
     );
-    let filteredItems = this.asListWithIndexAndDepth().filter(({node, depth}) => {
-      if (depth == 0) return true;
-      if (depth > maxDepth) return false;
-      if (!showUnknown && node.keyString && node.keyString.includes("UNKNOWN PROPERTY")) return false;
-      if (!showInternal && node.keyString && node.keyString.includes("internal")) return false;
-      if (node.value && node.value.submorphs) return true;
-      return iterator(node);
+    this.asListWithIndexAndDepth(false).forEach(({node, depth}) => {
+      if (depth == 0) return (node.visible = true);
+      if (depth > maxDepth) return (node.visible = false);
+      if (!showUnknown && node.keyString && node.keyString.includes("UNKNOWN PROPERTY")) return (node.visible = false);
+      if (!showInternal && node.keyString && node.keyString.includes("internal")) return (node.visible = false);
+      if (node.value && node.value.submorphs) return (node.visible = true);
+      return (node.visible = iterator(node));
     });
-    return InspectorTreeData.fromListWithDepthAndIndexes(filteredItems);
   }
 }
 
-
-// inspect(this)
 export function inspect(targetObject) {
   return Inspector.openInWindow({targetObject});
 }
@@ -699,17 +874,33 @@ export default class Inspector extends Morph {
     return i;
   }
 
-  onWindowClosed() {
+  onWindowClose() {
     this.stopStepping();
+    //disconnect(this.targetObject, 'onChange', this, 'refreshAllProperties');
+    this.openWidget && this.closeOpenWidget();
   }
 
   static get properties() {
     return {
-       extent: {defaultValue: pt(400,500)},
-       fill: {defaultValue: Color.transparent},
-       styleSheets: {
-          initialize() {
+      extent: {defaultValue: pt(400, 500)},
+      fill: {defaultValue: Color.transparent},
+      styleSheets: {
+        initialize() {
           this.styleSheets = new StyleSheet({
+            "[name=selectionInstruction]": {
+              fill: Color.black.withA(.7),
+              borderRadius: 4,
+              fontColor: Color.white,
+              fontSize: 14,
+              padding: rect(10,10)
+            },
+            "[name=escapeKey]": {
+              opacity: .7,
+              fill: Color.white,
+              padding: rect(5,1,5,1),
+              borderRadius: 4,
+              fontWeight: 'bold'
+            },
             "[name=searchBar]": {
               fill: Color.transparent,
               draggable: false
@@ -717,41 +908,37 @@ export default class Inspector extends Morph {
             "[name=searchBar] .LabeledCheckBox": {
               fill: Color.transparent
             },
-            "[name=searchBar] [name=searchField]": {
-              borderRadius: 15,
-              borderWidth: 1,
-              borderColor: Color.gray,
-              padding: rect(6,3,0,0)
-            },
-            '[name=searchBar] .idle': {
-              fontColor: Color.gray.darker()
-            },
-            "[name=searchBar] .selected": {
-              fontColor: Color.black,
-              dropShadow: new ShadowObject({blur: 6, color: Color.rgb(52,152,219), distance: 0})
+            "[name=targetPicker]": {
+              fontSize: 18,
+              padding: rect(2, 2),
+              nativeCursor: "pointer"
             },
             "[name=resizer]": {
               fill: Color.gray.lighter(),
-              nativeCursor: 'ns-resize'
+              nativeCursor: "ns-resize"
+            },
+            "[name=valueString]": {
+              fontFamily: config.codeEditor.defaultStyle.fontFamily,
+              fontSize: 15
             },
             ".toggle": {
-              nativeCursor: 'pointer',
-              fill: Color.black.withA(.5), 
+              nativeCursor: "pointer",
+              fill: Color.black.withA(0.5),
               draggable: false,
               fontSize: 15,
-              borderRadius: 5, 
-              padding: rect(5,2,1,1)
+              borderRadius: 5,
+              padding: rect(5, 2, 1, 1)
             },
-            '.toggle.inactive': {
-              fontColor: Color.white,
+            ".toggle.inactive": {
+              fontColor: Color.white
             },
-            '.toggle.active': {
-              fontColor: Color.rgbHex('00e0ff')
+            ".toggle.active": {
+              fontColor: Color.rgbHex("00e0ff")
             }
           });
-          }
-       }
-    }
+        }
+      }
+    };  
   }
 
   constructor(props = {}) {
@@ -764,14 +951,33 @@ export default class Inspector extends Morph {
     this.build();
     this.state = {targetObject: undefined, updateInProgress: false};
     this.targetObject = targetObject || null;
-    this.refreshProperties = () => {
-      if (!this.targetObject || !this.targetObject.isMorph) return;
-      let change = last(this.targetObject.env.changeManager.changesFor(this.targetObject));
-      if (change == this.lastChange) return;
-      this.lastChange = change;
-      this.prepareForNewTargetObject(this.targetObject);
-   }
-    if (!this.targetObject.isWorld) this.startStepping(50, 'refreshProperties');
+    if (!this.targetObject.isWorld) this.startStepping(10,'refreshAllProperties');
+  }
+
+  refreshAllProperties() {
+    if (this.targetObject._styleSheetProps != this.lastStyleSheetProps) {
+      this.refreshTreeView();
+      this.lastStyleSheetProps = this.targetObject._styleSheetProps;
+      return;
+    }
+    if (!this.targetObject || !this.targetObject.isMorph) return;
+    let change = last(this.targetObject.env.changeManager.changesFor(this.targetObject));
+    if (change == this.lastChange) return;
+    if (this.focusedNode && this.focusedNode.keyString == change.prop) {
+      this.repositionOpenWidget();
+      return;
+    }
+    this.lastChange = change;
+    this.refreshTreeView()
+  }
+
+  refreshTreeView() {
+    this.originalData.asListWithIndexAndDepth(false).forEach(({node}) => {
+      let v = this.targetObject[node.key];
+      if (v != node.value && node.refreshProperty) {
+         node.refreshProperty(v); 
+      }
+    });
   }
 
   get isInspector() { return true; }
@@ -779,6 +985,7 @@ export default class Inspector extends Morph {
   get targetObject() { return this.state.targetObject; }
   set targetObject(obj) {
     this.state.targetObject = obj;
+    this.originalData = null;
     this.prepareForNewTargetObject(obj);
   }
 
@@ -793,11 +1000,11 @@ export default class Inspector extends Morph {
           prevTd = tree.treeData;
       td.collapse(td.root, false);
       td.collapse(td.root.children[0], false);
-      var updatedData = this.originalData && this.originalData.patch(td);
-      if (updatedData) {
-        this.originalData = updatedData;
-        this.filterProperties();
-        tree.highlightChangedNodes(prevTd);
+      var changedNodes = this.originalData && this.originalData.diff(td);
+      if (changedNodes) {
+        for (let [curr, upd] of changedNodes) {
+          curr.refreshProperty(upd.value);
+        }
       } else {
         tree.treeData = td;
         this.filterProperties();
@@ -849,20 +1056,23 @@ export default class Inspector extends Morph {
       {
         name: "searchBar",
         layout: new GridLayout({
-          grid: [["searchField", "internals", "unknowns"]],
+          grid: [["searchField", "targetPicker", "internals", "unknowns"]],
           rows: [0, {paddingTop: 5, paddingBottom: 5}],
-          columns: [0, {paddingLeft: 5, paddingRight: 5}, 1, {fixed: 75}, 2, {fixed: 80}]
+          columns: [0, {paddingLeft: 5, paddingRight: 5}, 
+                    1, {fixed: 25},
+                    2, {fixed: 75}, 3, {fixed: 80}]
         }),
         height: 30,
         submorphs: [
           searchField,
+          Icon.makeLabel('crosshairs', {name: 'targetPicker', 
+                                        tooltip: 'Change Inspection Target'}),
           new LabeledCheckBox({label: "Internals", name: "internals"}),
           new LabeledCheckBox({label: "Unknowns", name: "unknowns"})
         ]
       },
       new Tree({
         name: "propertyTree", ...treeStyle,
-        //bounds: propertyTreeBounds.withTopLeft(searchBarBounds.bottomLeft()),
         treeData: InspectorTreeData.forObject(null)
       }),
       Icon.makeLabel('keyboard-o', {
@@ -894,6 +1104,8 @@ export default class Inspector extends Morph {
     ).catch(err => $world.logError(err));
 
     this.editorOpen = false;
+    connect(this.get('targetPicker'), 'onMouseDown', this, 'selectNewTarget');
+    connect(this.get('propertyTree'), 'onScroll', this, 'repositionOpenWidget');
     connect(this.get('resizer'), 'onDrag', this, 'adjustProportions');
     connect(this.get('terminal toggler'), 'onMouseDown', this, 'toggleCodeEditor');
     connect(this, "extent", this, "relayout");
@@ -902,6 +1114,105 @@ export default class Inspector extends Morph {
     connect(searchField, 'searchInput', this, 'filterProperties');
   }
 
+  selectNewTarget() {
+    this.get('targetPicker').fontColor = Color.orange;
+    this.selectorMorph = Icon.makeLabel('crosshairs', {fontSize: 20}).openInWorld();
+    connect($world.firstHand, 'position', this, 'scanForTargetAt');
+    once(this.selectorMorph, 'onMouseDown', this, 'selectTarget');
+    once(this.selectorMorph, 'onKeyDown', this, 'stopSelect');
+    this.toggleSelectionInstructions(true);
+    this.selectorMorph.focus();
+    this.scanForTargetAt($world.firstHand.position);
+  }
+
+  scanForTargetAt(pos) {
+    this.selectorMorph.center = pos;
+    var target = this.selectorMorph.morphBeneath(pos);
+    if (this.morphHighlighter == target) {
+      target = this.morphHighlighter.morphBeneath(pos);
+    }
+    if (target != this.possibleTarget 
+        && !target.ownerChain().includes(this.getWindow())) {
+      if (this.morphHighlighter) this.morphHighlighter.deactivate();
+      this.possibleTarget = target;
+      if (this.possibleTarget && !this.possibleTarget.isWorld) {
+        let h = this.morphHighlighter = MorphHighlighter.for($world, target);
+        h && h.show();
+      }
+    }
+  }
+
+  selectTarget() {
+    this.targetObject = this.possibleTarget;
+    this.stopSelect()
+  }
+  
+  stopSelect() {
+    MorphHighlighter.removeHighlightersFrom($world);
+    this.toggleSelectionInstructions(false);
+    this.get('targetPicker').fontColor = Color.black;
+    disconnect($world.firstHand, 'position', this, 'scanForTargetAt');
+    this.selectorMorph.remove();
+  }
+
+  toggleSelectionInstructions(active) {
+    if (active && !this.instructionWidget) {
+      let esc = morph({
+        type: "label",
+        name: "escapeKey",
+        value: "esc"
+      });
+      esc.whenRendered().then(() => esc.fit());
+      this.instructionWidget = this.addMorph({
+        type: "text",
+        opacity: 0,
+        center: this.extent.scaleBy(0.5),
+        width: 120,
+        fixedWidth: true,
+        lineWrapping: true,
+        name: "selectionInstruction",
+        textAndAttributes: [
+          "Select a new morph to inspect by hovering over it and clicking left. You can exit this mode by pressing ",
+          {},
+          esc, {}
+        ]
+      });
+      this.instructionWidget.animate({opacity: 1, duration: 200});
+    } else {
+      this.instructionWidget.fadeOut(200);
+      this.instructionWidget = null;
+    }
+  }
+  closeOpenWidget() {
+    this.openWidget.close();
+    disconnect(this.getWindow(), 'bringToFront', this.openWidget, 'openInWorld');
+  }
+
+  onWidgetOpened({node, widget}) {
+    if (this.openWidget) {
+      this.openWidget.fadeOut();
+    }
+    this.focusedNode = node;
+    this.openWidget = widget;
+    once(this.get("propertyTree"), "onMouseDown", this, "closeOpenWidget");
+    connect(this.getWindow(), 'bringToFront', widget, 'openInWorld', {
+      converter: () => widget.globalPosition, varMapping: {widget}
+    });
+  }
+
+  repositionOpenWidget(evt) {
+    if (this.openWidget) {
+      let pos = this.focusedNode.control.globalBounds().center(),
+          treeBounds = this.get("propertyTree").globalBounds();
+      if (pos.y < treeBounds.top()) {
+        pos = treeBounds.topCenter().withX(pos.x)
+      } else if (treeBounds.bottom() - 20 < pos.y) {
+        pos = treeBounds.bottomCenter().addXY(0, -20).withX(pos.x);
+      }
+      this.openWidget.position = pos;
+    }
+  }
+  
   adjustProportions(evt) {
     this.layout.row(1).height += evt.state.dragDelta.y;
   }
@@ -933,11 +1244,14 @@ export default class Inspector extends Morph {
     if (!this.originalData) {
       this.originalData = tree.treeData;
     }
-    tree.treeData = this.originalData.filter({
+    disconnect(tree.treeData, 'onWidgetOpened', this, 'onWidgetOpened');
+    this.originalData.filter({
        maxDepth: 2, showUnknown: this.get('unknowns').checked,
        showInternal: this.get('internals').checked,
        iterator: (node) => searchField.matches(node.key)
     });
+    tree.treeData = this.originalData;
+    connect(tree.treeData, 'onWidgetOpened', this, 'onWidgetOpened');
   }
 
   relayout(animated) {

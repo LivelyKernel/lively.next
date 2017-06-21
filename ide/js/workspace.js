@@ -72,6 +72,22 @@ export default class Workspace extends Window {
     }
   }
 
+  async openWindowMenu() {
+    let menuItems = [
+      [
+        "Change Window Title",
+        async () => {
+          let newTitle = await $world.prompt("Enter New Name", {input: this.title});
+          if (newTitle) this.title = newTitle;
+        }
+      ],
+      {isDivider: true},
+      ['Set Workspace File...', () => this.execCommand("[workspace] query for file")],
+      ...(await this.targetMorph.menuItems())
+    ];
+    this.targetMorph.world().openMenu(menuItems);
+  }
+
   onLoad() {
     this.jsPlugin.requestHighlight();
   }
@@ -89,26 +105,22 @@ export default class Workspace extends Window {
       list.topRight = this.innerBounds().topRight().addXY(-5, 2);
       if (list.left < title.right + 3) list.left = title.right + 3;
     }
-    var fileButton = this.getSubmorphNamed("pickFileButton");
-    if (fileButton) {
-      fileButton.leftCenter = title.rightCenter.addXY(6,0);
-    }
   }
 
-  getControls() {
-    let label = this.addMorph(
-        Object.assign(Icon.makeLabel("file-o"), {
-          name: "pickFileButton",
-          nativeCursor: "pointer",
-          fontSize: 14,
-          fill: Color.rgbHex("#DDD"),
-          tooltip: "set file for workspace"
-        }));
-      connect(label, 'onHoverIn', label, 'fontSize', {converter: () => 16});
-      connect(label, 'onHoverOut', label, 'fontSize', {converter: () => 14});
-      connect(label, 'onMouseDown', this, 'execCommand', {converter: () => "[workspace] query for file"});
-    return [...super.getControls(), label];
-  }
+  // getControls() {
+  //   let label = this.addMorph(
+  //       Object.assign(Icon.makeLabel("file-o"), {
+  //         name: "pickFileButton",
+  //         nativeCursor: "pointer",
+  //         fontSize: 14,
+  //         fill: Color.transparent,
+  //         tooltip: "set file for workspace"
+  //       }));
+  //     connect(label, 'onHoverIn', label, 'fontSize', {converter: () => 16});
+  //     connect(label, 'onHoverOut', label, 'fontSize', {converter: () => 14});
+  //     connect(label, 'onMouseDown', this, 'execCommand', {converter: () => "[workspace] query for file"});
+  //   return [...super.getControls(), label];
+  // }
 
   get commands() {
     return [
@@ -131,11 +143,9 @@ export default class Workspace extends Window {
           workspace.file = f;
           if (!f) {
             workspace.setStatusMessage("workspace file cleared");
-            workspace.getSubmorphNamed("pickFileButton").tooltip = "set file for workspace";
             return;
           }
           workspace.setStatusMessage(`workspace saves content to ${workspace.file.url}`);
-          workspace.getSubmorphNamed("pickFileButton").tooltip = `workspace file; ${workspace.file.url}`;
           if (await workspace.world().confirm(`Load content from ${f}?`, {requester: workspace}))
             workspace.content = await workspace.file.read();
         }

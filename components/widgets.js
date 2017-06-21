@@ -2,7 +2,7 @@ import {obj, string, num, arr, properties} from "lively.lang";
 import {pt, Color, Rectangle, rect} from "lively.graphics";
 import {signal, connect, disconnect} from "lively.bindings";
 import {
-  Morph, CustomLayout,
+  Morph, ShadowObject, CustomLayout,
   Button,
   List,
   Text,
@@ -21,7 +21,8 @@ import {roundTo} from "lively.lang/number.js";
 
 class LeashEndpoint extends Ellipse {
   onDrag(evt) {
-    this.leash.onEndpointDrag(this, evt);
+    evt.state.endpoint = this;
+    this.leash.onEndpointDrag(evt);
   }
 
   getConnectionPoint() {
@@ -94,22 +95,18 @@ export class Leash extends Path {
     return {
       start: {},
       end: {},
+      endpointStyle: {
+        isStyleProp: true,
+        defaultValue: {
+          //fill: Color.black,
+          origin: pt(3.5, 3.5),
+          extent: pt(10, 10),
+          nativeCursor: "-webkit-grab"
+        }
+      },
       borderWidth: {defaultValue: 2},
       borderColor: {defaultValue: Color.black},
       fill: {defaultValue: Color.transparent},
-      styleSheets: {
-        after: ["endpointStyle"],
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            ".Leash .LeashEndpoint": {
-              fill: Color.black,
-              origin: pt(3.5, 3.5),
-              extent: pt(10, 10),
-              nativeCursor: "-webkit-grab"
-            }
-          });
-        }
-      },
       vertices: {
         after: ["start", "end"],
         initialize() {
@@ -124,9 +121,20 @@ export class Leash extends Path {
           ];
           connect(this, "extent", this, "relayout");
           connect(this, "position", this, "relayout");
+          this.whenRendered().then(() => this.updateEndpointStyles());
         }
       }
     };
+  }
+
+  onMouseDown(evt) {
+    this.updateEndpointStyles();
+  }
+
+  updateEndpointStyles() {
+    Object.assign(this.startPoint, this.endpointStyle.start);
+    Object.assign(this.endPoint, this.endpointStyle.end);
+    this.relayout();
   }
 
   remove() {
@@ -135,9 +143,9 @@ export class Leash extends Path {
     this.endPoint.clearConnection();
   }
 
-  onEndpointDrag(endpoint, evt) {
-    const v = endpoint.vertex, {x, y} = v;
-    endpoint.vertex = {...v, ...pt(x, y).addPt(evt.state.dragDelta)};
+  onEndpointDrag(evt) {
+    const v = evt.state.endpoint.vertex, {x, y} = v;
+    evt.state.endpoint.vertex = {...v, ...pt(x, y).addPt(evt.state.dragDelta)};
     this.relayout();
   }
 
@@ -237,106 +245,6 @@ export class Slider extends Morph {
   }
 }
 
-export class PropertyInspector extends Morph {
-
-  static get properties() {
-
-    return {
-      target: {},
-      property: {},
-      min: {defaultValue: -Infinity},
-      max: {defaultValue: Infinity},
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            ".PropertyInspector .Button": {
-              clipMode: "hidden",
-              borderWidth: 0,
-              fill: Color.transparent,
-            },
-            ".PropertyInspector .Button.activeStyle [name=label]": {
-              fontColor: Color.white.darker()
-            },
-            ".Button.triggerStyle [name=label]": {
-              fontColor: Color.black
-            },
-            ".PropertyInspector": {
-              extent: pt(55, 25),
-              borderRadius: 5,
-              borderWidth: 1,
-              borderColor: Color.gray,
-              clipMode: "hidden"
-            },
-            ".PropertyInspector [name=down]": {padding: rect(0, -5, 0, 10)},
-            ".PropertyInspector [name=up]": {padding: rect(0, 0, 0, -5)},
-            ".PropertyInspector [name=value]": {
-              fill: Color.white,
-              padding: Rectangle.inset(4),
-              fontSize: 15
-            }
-          });
-        }
-      },
-      layout: {
-        initialize() {
-          this.layout = new GridLayout({
-            columns: [1, {paddingLeft: 5, paddingRight: 5, fixed: 25}],
-            grid: [["value", "up"], ["value", "down"]]
-          });
-        }
-      },
-      submorphs: {
-        after: ["target", "property", "defaultValue", "min", "max"],
-        initialize() {
-          this.submorphs = [
-            new ValueScrubber({
-              name: "value",
-              value: (this.target && this.target[this.property]) || this.defaultValue || 0,
-              min: this.min,
-              max: this.max
-            }),
-            {
-              type: "button",
-              name: "down", styleClasses: ['buttonStyle'],
-              label: Icon.makeLabel("sort-desc", {padding: rect(2, 2, 0, 0), fontSize: 12})
-            },
-            {
-              type: "button",
-              name: "up", styleClasses: ['buttonStyle'], autofit: true,
-              label: Icon.makeLabel("sort-asc", {padding: rect(2, 2, 0, 0), fontSize: 12})
-            }
-          ];
-          connect(this.get("value"), "scrub", this.target, this.property);
-          connect(this.get("up"), "fire", this, "increment");
-          connect(this.get("down"), "fire", this, "decrement");
-        }
-      }
-    };
-
-  }
-
-  __deserialize__(snapshot, objRef) {
-    super.__deserialize__(snapshot, objRef);
-    if (!this.target) this.setProperty("target", {});
-  }
-
-  update() {
-    this.get("value").value = this.target[this.property];
-  }
-
-  increment() {
-    if (this.max != undefined && this.target[this.property] >= this.max) return;
-    this.target[this.property] = (this.target[this.property] || this.defaultValue) + 1;
-    this.update();
-  }
-
-  decrement() {
-    if (this.min != undefined && this.target[this.property] <= this.min) return;
-    this.target[this.property] = (this.target[this.property] || this.defaultValue) - 1;
-    this.update();
-  }
-}
-
 export class ValueScrubber extends Text {
   static get properties() {
     return {
@@ -344,7 +252,9 @@ export class ValueScrubber extends Text {
       fill: {defaultValue: Color.transparent},
       draggable: {defaultValue: true},
       min: {defaultValue: -Infinity},
-      max: {defaultValue: Infinity}
+      max: {defaultValue: Infinity},
+      baseFactor: {defaultValue: 1},
+      floatingPoint: {defaultValue: false}
     };
   }
 
@@ -396,24 +306,26 @@ export class ValueScrubber extends Text {
 
   getScaleAndOffset(evt) {
     const {x, y} = evt.position.subPt(this.initPos),
-          scale = num.roundTo(Math.exp(-y / $world.height * 4), 0.01);
+          scale = num.roundTo(Math.exp(-y / $world.height * 4), 0.01) * this.baseFactor;
     return {offset: x, scale};
   }
 
   onDrag(evt) {
     // x delta is the offset to the original value
     // y is the scale
-    const {scale, offset} = this.getScaleAndOffset(evt), v = this.getCurrentValue(offset, scale);
+    const {scale, offset} = this.getScaleAndOffset(evt), 
+          v = this.getCurrentValue(offset, scale);
     signal(this, "scrub", v);
-    this.textString = obj.safeToString(v);
+    this.textString = this.floatingPoint ? v.toFixed(3) : obj.safeToString(v);
     if (this.unit) this.textString += " " + this.unit;
-    this.factorLabel.description = scale + "x";
+    this.factorLabel.description = scale.toFixed(3) + "x";
     this.factorLabel.position = evt.hand.position.addXY(10, 10);
     this.relayout();
   }
 
   getCurrentValue(delta, s) {
-    const v = this.scrubbedValue + Math.round(delta * s);
+    console.log(this.scrubbedValue)
+    const v = this.scrubbedValue + (this.floatingPoint ? delta * s : Math.round(delta * s));
     return Math.max(this.min, Math.min(this.max, v));
   }
 
@@ -426,7 +338,7 @@ export class ValueScrubber extends Text {
   set value(v) {
     v = Math.max(this.min, Math.min(this.max, v));
     this.scrubbedValue = v;
-    this.textString = obj.safeToString(v) || "";
+    this.textString = this.floatingPoint ? v.toFixed(3) : obj.safeToString(v);
     if (this.unit) this.textString += " " + this.unit;
     this.relayout();
   }
@@ -475,6 +387,13 @@ export class LabeledCheckBox extends Morph {
     return {
       name: {defaultValue: "LabeledCheckBox"},
       alignCheckBox: {defaultValue: "left"},
+      layout: {
+        initialize() {
+          this.layout = new HorizontalLayout({
+            direction: this.alignCheckBox == 'left' ? 'leftToRight' : 'rightToLeft'
+          });  
+        }
+      },
       label: {
         defaultValue: "label",
         after: ["submorphs"],
@@ -529,34 +448,14 @@ export class LabeledCheckBox extends Morph {
             new Label({
               nativeCursor: "pointer",
               name: "label",
-              padding: Rectangle.inset(3, 0)
+              padding: Rectangle.inset(5, 3)
             })
           ];
+          connect(this, "alignCheckBox", this, "extent");
+          connect(this.checkboxMorph, "checked", this, "checked");
         }
       }
     };
-  }
-
-  constructor(props) {
-    super(props);
-    connect(this, "alignCheckBox", this, "extent");
-    connect(this, "alignCheckBox", this, "relayout");
-    connect(this.labelMorph, "value", this, "relayout");
-    connect(this.checkboxMorph, "checked", this, "checked");
-    this.relayout();
-    setTimeout(() => this.relayout(), 0);
-  }
-
-  relayout() {
-    var l = this.labelMorph, cb = this.checkboxMorph;
-    if (this.alignCheckBox === "left") {
-      cb.leftCenter = pt(0, Math.max(this.height, l.height) / 2);
-      l.leftCenter = cb.rightCenter;
-    } else {
-      l.position = pt(0, 0);
-      cb.leftCenter = pt(l.width, l.height / 2);
-    }
-    this.extent = this.submorphBounds().extent();
   }
 
   trigger() {
@@ -610,12 +509,10 @@ export class ModeSelector extends Morph {
         initialize() {
           this.layout = new GridLayout({
             rows: [0, {paddingBottom: 10}],
-            grid: [[...arr.interpose(this.keys.map(k => k + "Label"), null)]],
+            columns: [0, {fixed: 5}, this.keys.length + 2, {fixed: 5}],
+            grid: [[null, ...arr.interpose(this.keys.map(k => k + "Label"), null), null]],
             autoAssign: false,
             fitToCell: false
-          });
-          this.layout.row(0).items.forEach(c => {
-            c.group.align = "center";
           });
         }
       },
@@ -625,12 +522,12 @@ export class ModeSelector extends Morph {
             {name: "typeMarker"},
             ...this.createLabels(this.keys, this.values, this.tooltips)
           ];
+          connect(this, "extent", this, "relayout", {converter: () => false});
           this.update(
             this.init ? this.init : this.keys[0],
             this.values[this.keys.includes(this.init) ? this.keys.indexOf(this.init) : 0],
             true
           );
-          connect(this, "extent", this, "relayout", {converter: () => false});
         }
       }
     };
@@ -657,8 +554,7 @@ export class ModeSelector extends Morph {
     this.layout.forceLayout();
     let tm = this.get("typeMarker"),
         bounds = this.currentLabel.bounds();
-    this.currentLabel && animated ? await tm.animate({bounds, duration: 200}) : tm.setBounds(bounds);
-     
+    animated ? await tm.animate({bounds, duration: 200}) : tm.setBounds(bounds); 
   }
 
   async update(label, value, silent = false) {
@@ -667,46 +563,78 @@ export class ModeSelector extends Morph {
     if (this.currentLabel) this.currentLabel.fontColor = Color.black;
     this.currentLabel = newLabel;
     newLabel.fontColor = Color.white;
-    await this.whenRendered();
-    await this.relayout(!silent);
+    this.relayout(!silent);
     !silent && signal(this, label, value);
     !silent && signal(this, "switchLabel", value);
   }
 }
 
 export class DropDownSelector extends Morph {
-  constructor(props) {
-    const {target, property, values} = props;
-    super({
-      border: {radius: 3, color: Color.gray.darker(), style: "solid"},
-      layout: new HorizontalLayout({spacing: 4}),
-      ...props
+
+  static get properties() {
+    return {
+      values: {defaultValue: []},
+      getCurrentValue: {defaultValue: undefined},
+      selectedValue: {
+        after: ['submorphs', 'values', 'getCurrentValue'],
+        set(v) {
+          this.setProperty('selectedValue', v);
+          this.relayout();
+        }
+      },
+      fontSize: {isStyleProp: true, defaultValue: 12},
+      fontFamily: {isStyleProp: true, defaultValue: 'Sans-Serif'},
+      border: {defaultValue: {radius: 3, color: Color.gray.darker(), style: "solid"}},
+      padding: {defaultValue: 1},
+      layout: {
+        initialize() {
+          this.layout = new HorizontalLayout({spacing: this.padding});
+        }
+      },
+      styleSheets: {
+        after: ['fontFamily', 'fontSize'],
+        initialize() {
+          this.updateStyleSheet();  
+        }
+      },
+      submorphs: {
+        initialize() {
+          this.build();
+        }
+      }
+    }
+  }
+
+  updateStyleSheet() {
+    this.styleSheets = new StyleSheet({
+      ".Label": {
+        fontSize: this.fontSize,
+        fontFamily: this.fontFamily
+      },
+      "[name=dropDownIcon]": {
+        padding: rect(5,1,0,0),
+        opacity: .8
+      }
     });
-    this.build();
   }
 
   build() {
     this.dropDownLabel = Icon.makeLabel("chevron-circle-down", {
-      opacity: 0,
-      fontSize: 16,
-      fontColor: Color.gray.darker()
+      opacity: 0, name: 'dropDownIcon'
     });
     this.submorphs = [
       {
-        type: "text",
+        type: "label",
         name: "currentValue",
-        padding: Rectangle.inset(0),
-        readOnly: true
       },
       this.dropDownLabel
     ];
-    this.relayout();
   }
 
   getMenuEntries() {
-    const currentValue = this.getNameFor(this.value);
+    const currentValue = this.getNameFor(this.selectedValue);
     return [
-      ...(this.value ? [{command: currentValue, target: this}] : []),
+      ...(this.selectedValue ? [{command: currentValue, target: this}] : []),
       ...arr.compact(
         this.commands.map(c => {
           return c.name != currentValue && {command: c.name, target: this};
@@ -721,7 +649,8 @@ export class DropDownSelector extends Morph {
         return {
           name: v,
           exec: () => {
-            this.value = v;
+            signal(this, 'update', v);
+            this.selectedValue = v;
           }
         };
       });
@@ -730,7 +659,8 @@ export class DropDownSelector extends Morph {
         return {
           name,
           exec: () => {
-            this.value = v;
+            signal(this, 'update', v);
+            this.selectedValue = v;
           }
         };
       });
@@ -746,26 +676,14 @@ export class DropDownSelector extends Morph {
     }
   }
 
-  get value() {
-    return this.target[this.property];
-  }
-
-  set value(v) {
-    if (obj.isFunction(v)) {
-      v();
-    } else {
-      this.target[this.property] = v;
-    }
-    this.relayout();
-  }
-
   relayout() {
-    const vPrinted = this.getNameFor(this.value), valueLabel = this.get("currentValue");
+    const vPrinted = this.getNameFor(this.selectedValue), 
+          valueLabel = this.get("currentValue");
     if (vPrinted == "undefined") {
-      valueLabel.textString = "Not set";
+      valueLabel.value = "Not set";
       valueLabel.fontColor = Color.gray;
     } else {
-      valueLabel.textString = vPrinted;
+      valueLabel.value = vPrinted;
       valueLabel.fontColor = Color.black;
     }
   }
@@ -790,6 +708,29 @@ export class SearchField extends Text {
   static get properties() {
     return {
       fixedWidth: {defaultValue: true},
+      styleSheets: {
+        initialize() {
+          this.styleSheets = new StyleSheet({
+            ".SearchField": {
+              borderRadius: 15,
+              borderWidth: 1,
+              borderColor: Color.gray,
+              padding: rect(6, 3, 0, 0)
+            },
+            ".idle": {
+              fontColor: Color.gray.darker()
+            },
+            ".selected": {
+              fontColor: Color.black,
+              dropShadow: {
+                blur: 6,
+                color: Color.rgb(52, 152, 219),
+                distance: 0
+              }
+            }
+          });        
+        }
+      },
       layout: {
         initialize() {
           this.layout = new HorizontalLayout({direction: 'rightToLeft'})
@@ -867,6 +808,7 @@ export class SearchField extends Text {
           });
         }
       },
+      placeHolder: {defaultValue: 'Search'},
       submorphs: {
         after: ['placeHolder'],
         initialize() {
@@ -876,14 +818,17 @@ export class SearchField extends Text {
               name: 'placeholder',
               isLayoutable: false,
               opacity: .3,
-              value: "Search",
+              value: this.placeHolder,
               reactsToPointer: false,
-              padding: rect(6, 3, 2, 2)
+              padding: rect(6, 4, 0, 0)
             },
             Icon.makeLabel("times-circle", {
-              padding: rect(2,2,4,2),
+              padding: rect(2,4,3,0),
               fontSize: 14,
               visible: false,
+              fixedHeight: true,
+              autofit: false,
+              extent: pt(20,22),
               name: "placeholder icon",
               fontColor: Color.gray,
               nativeCursor: 'pointer'

@@ -214,13 +214,13 @@ export class Renderer {
           defs = h("defs", {namespace: "http://www.w3.org/2000/svg"}, [
             morph.fill && morph.fill.isGradient ?
               [renderGradient(morph, "fill")] : null,
-            morph.borderColor && morph.borderColor.isGradient ?
+            morph.borderColor && morph.borderColor.valueOf().isGradient ?
               [renderGradient(morph, "borderColor")] : null
           ]);
 
     return h("div",
       {
-        ...obj.dissoc(defaultAttributes(morph, this), ['animation']),
+        ...defaultAttributes(morph, this),
         style: {
           transform,
           transformOrigin,

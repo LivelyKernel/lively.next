@@ -13,6 +13,8 @@ import CommandHandler from "./CommandHandler.js";
 import KeyHandler, { findKeysForPlatform } from "./events/KeyHandler.js";
 import { TargetScript } from "./ticking.js";
 import { copyMorph } from "./serialization.js";
+import { isNumber, isString } from "lively.lang/object.js";
+import { capitalize } from "lively.lang/string.js";
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -21,6 +23,20 @@ export function newMorphId(classOrClassName) {
     classOrClassName.name : typeof classOrClassName === "string" ?
       classOrClassName.toLowerCase() : "";
   return prefix + "_" + string.newUUID().replace(/-/g, "_");
+}
+
+function generateUnfolded(propName, members=['top', 'left', 'right', 'bottom']) {
+  // generate the accessors for members of a folded property
+  let propertyDeclarations = {};
+  for (let m of members) {
+    propertyDeclarations[propName + capitalize(m)] = {
+      derived: true,
+      after: [propName],
+      get() { return this.getProperty(propName)[m] },
+      set(v) { this[propName] = {...this.getProperty(propName), [m]: v} }
+    }
+  }
+  return propertyDeclarations
 }
 
 export class Morph {
@@ -57,8 +73,9 @@ export class Morph {
 
       acceptsDrops: {isStyleProp: true, defaultValue: true},
       dropShadow: {
+        type: 'Shadow',
         isStyleProp: true,
-        defaultValue: false,
+        defaultValue: null,
         set(value) {
           if (value && !value.isShadowObject) {
             value = new ShadowObject(value);
@@ -70,13 +87,55 @@ export class Morph {
 
       tooltip:            {defaultValue: null},
       focusable:          {defaultValue: true},
-      nativeCursor:       {isStyleProp: true, defaultValue: "auto"},
+      nativeCursor: {
+        type: "Enum",
+        values: [
+          "auto",
+          "default",
+          "none",
+          "context-menu",
+          "help",
+          "pointer",
+          "progress",
+          "wait",
+          "cell",
+          "crosshair",
+          "text",
+          "vertical-text",
+          "alias",
+          "copy",
+          "move",
+          "no-drop",
+          "not-allowed",
+          "e-resize",
+          "n-resize",
+          "ne-resize",
+          "nw-resize",
+          "s-resize",
+          "se-resize",
+          "sw-resize",
+          "w-resize",
+          "ew-resize",
+          "ns-resize",
+          "nesw-resize",
+          "nwse-resize",
+          "col-resize",
+          "row-resize",
+          "all-scroll",
+          "zoom-in",
+          "zoom-out",
+          "grab",
+          "grabbing"
+        ],
+        isStyleProp: true,
+        defaultValue: "auto"
+      },
       halosEnabled:       {isStyleProp: true, defaultValue: !!config.halosEnabled},
       reactsToPointer:    {defaultValue: true},
 
-      position:           {isStyleProp: true, defaultValue: pt(0,0)},
-      origin:             {isStyleProp: true, defaultValue: pt(0,0)},
-      extent:             {isStyleProp: true, defaultValue: pt(10, 10)},
+      position: {type: "Point", isStyleProp: true, defaultValue: pt(0, 0)},
+      origin:   {type: 'Point', isStyleProp: true, defaultValue: pt(0,0)},
+      extent:   {type: 'Point', isStyleProp: true, defaultValue: pt(10, 10)},
       width: {
         derived: true, after: ['extent'], before: ['submorphs'],
         get()         { return this.extent.x; },
@@ -152,10 +211,22 @@ export class Morph {
         get()   { return this.bounds().rightCenter(); },
         set(v)  { return this.align(this.rightCenter, v); }
       },
-      rotation:           {isStyleProp: true, defaultValue:  0},
-      scale:              {isStyleProp: true, defaultValue:  1},
-      opacity:            {isStyleProp: true, defaultValue: 1},
-      fill:               {isStyleProp: true, defaultValue: Color.white},
+      rotation: {
+        type: 'Number',
+        isFloat: true,
+        isStyleProp: true, defaultValue:  0},
+      scale: {type: "Number", min: 0, isFloat: true,
+              isStyleProp: true, defaultValue: 1},
+      opacity: {
+        type: 'Number',
+        min: 0,
+        max: 1,
+        isStyleProp: true, defaultValue: 1
+      },
+      fill:               {
+        type: 'ColorGradient',
+        isStyleProp: true, defaultValue: Color.white
+      },
       visible:            {isStyleProp: true, defaultValue: true},
 
 
@@ -176,6 +247,8 @@ export class Morph {
       },
 
       clipMode: {
+        type: 'Enum',
+        values: ["visible", "hidden", "scroll", "auto"],
         isStyleProp: true,
         defaultValue: "visible",
         set(value) {
@@ -186,6 +259,7 @@ export class Morph {
 
       scroll: {
         defaultValue: pt(0, 0),
+        type: 'Point',
         set({x, y}) {
           if (!this.isClip()) return;
           var {x: maxScrollX, y: maxScrollY} = this.scrollExtent.subPt(this.extent);
@@ -211,6 +285,7 @@ export class Morph {
 
       layout: {
         isStyleProp: true,
+        type: 'Layout',
         after: ["submorphs", "extent", "origin", "position", "isLayoutable"],
         set(value) {
           if (value) value.container = this;
@@ -218,23 +293,6 @@ export class Morph {
         }
       },
       isLayoutable: {isStyleProp: true, defaultValue: true},
-
-      borderColorBottom:  {isStyleProp: true, defaultValue: Color.white},
-      borderColorLeft:    {isStyleProp: true, defaultValue: Color.white},
-      borderColorRight:   {isStyleProp: true, defaultValue: Color.white},
-      borderColorTop:     {isStyleProp: true, defaultValue: Color.white},
-      borderRadiusBottom: {isStyleProp: true, defaultValue: 0},
-      borderRadiusLeft:   {isStyleProp: true, defaultValue: 0},
-      borderRadiusRight:  {isStyleProp: true, defaultValue: 0},
-      borderRadiusTop:    {isStyleProp: true, defaultValue: 0},
-      borderStyleBottom:  {isStyleProp: true, defaultValue: "solid"},
-      borderStyleLeft:    {isStyleProp: true, defaultValue: "solid"},
-      borderStyleRight:   {isStyleProp: true, defaultValue: "solid"},
-      borderStyleTop:     {isStyleProp: true, defaultValue: "solid"},
-      borderWidthBottom:  {isStyleProp: true, defaultValue: 0},
-      borderWidthLeft:    {isStyleProp: true, defaultValue: 0},
-      borderWidthRight:   {isStyleProp: true, defaultValue: 0},
-      borderWidthTop:     {isStyleProp: true, defaultValue: 0},
 
       borderLeft: {
         isStyleProp: true,
@@ -315,54 +373,105 @@ export class Morph {
       borderWidth: {
         isStyleProp: true,
         derived: true,
-        after: ["borderWidthLeft", "borderWidthRight", "borderWidthTop", "borderWidthBottom"],
-        get()       { return this.borderWidthLeft; },
+        type: 'Number',
+        foldable: ['top', 'left', 'right', 'bottom'],
+        min: 0,
+        defaultValue: {top: 0, bottom: 0, left: 0, right: 0, valueOf: () => 0},
+        get() {
+          let v = this.getProperty('borderWidth');
+          return {...v, valueOf: () => v.left }
+        },
         set(value) {
-          this.borderWidthLeft = this.borderWidthRight =
-            this.borderWidthTop = this.borderWidthBottom = value;
+          if (isNumber(value)) {
+             var left = value, right = value, top = value, bottom = value;
+             value = {left, right, top, bottom};
+          }
+          this.setProperty('borderWidth', value);
         }
       },
+
+      ...generateUnfolded('borderWidth'),
 
       borderRadius: {
         isStyleProp: true,
         derived: true,
-        after: ["borderRadiusLeft","borderRadiusRight","borderRadiusTop","borderRadiusBottom"],
-        get()      { return this.borderRadiusLeft; },
+        type: 'Number',
+        min: 0,
+        foldable: ['top', 'left', 'right', 'bottom'],
+        defaultValue: {top: 0, bottom: 0, right: 0, left: 0, valueOf: () => 0},
+        get() {
+          let v = this.getProperty('borderRadius');
+          return {...v, valueOf: () => v.left }
+        },
         set(value) {
           if (!value) value = 0;
-          var left = value, right = value, top = value, bottom = value;
-          if (value.isRectangle) {
-            left = value.left();
-            right = value.right();
-            top = value.top();
-            bottom = value.bottom();
+          if (isNumber(value)) {
+             var left = value, right = value, top = value, bottom = value;
+             value = {left, right, top, bottom};
           }
-          this.borderRadiusLeft = left;
-          this.borderRadiusRight = right;
-          this.borderRadiusTop = top;
-          this.borderRadiusBottom = bottom;
+          if (value.isRectangle) {
+            value = {
+              left: value.left(),
+              right: value.right(),
+              top: value.top(),
+              bottom: value.bottom()
+            };
+          }
+          this.setProperty('borderRadius', value);
         }
       },
+
+      ...generateUnfolded('borderRadius'),
 
       borderStyle: {
         isStyleProp: true,
         derived: true,
-        after: ["borderStyleLeft", "borderStyleRight", "borderStyleTop", "borderStyleBottom"],
-        get()       { return this.borderStyleLeft; },
+        type: 'Enum',
+        foldable: ['top', 'left', 'right', 'bottom'],
+        values: ["none", "hidden", "dotted", "dashed",
+                 "solid", "double", "groove", "ridge", "inset", "outset"],
+        defaultValue: {
+          top: 'solid', left: 'solid', bottom: 'solid',
+          right: 'solid', valueOf: () => 'solid'
+        },
+        get() {
+          let v = this.getProperty('borderStyle');
+          return {...v, valueOf: () => v.left}
+        },
         set(value) {
-          this.borderStyleLeft = this.borderStyleRight = this.borderStyleTop = this.borderStyleBottom = value;
+          if (isString(value)) {
+             var left = value, right = value, top = value, bottom = value;
+             value = {left, right, top, bottom};
+          }
+          this.setProperty('borderStyle', value);
         }
       },
+
+      ...generateUnfolded('borderStyle'),
 
       borderColor: {
         isStyleProp: true,
         derived: true,
-        after:      ["borderColorLeft", "borderColorRight", "borderColorTop", "borderColorBottom"],
-        get()       { return this.borderColorLeft; },
+        type: "Color",
+        foldable: ["top", "left", "right", "bottom"],
+        defaultValue: {
+          top: Color.white, left: Color.white, bottom: Color.white,
+          right: Color.white, valueOf: () => Color.white
+        },
+        get() {
+          let v = this.getProperty("borderColor");
+          return {...v, valueOf: () => v.left};
+        },
         set(value) {
-          this.borderColorLeft = this.borderColorRight = this.borderColorTop = this.borderColorBottom = value;
+          if (!value) value = Color.white;
+          if (value.isColor) {
+            value = {top: value, left: value, right: value, bottom: value};
+          }
+          this.setProperty("borderColor", value);
         }
       },
+
+      ...generateUnfolded('borderColor'),
 
       border: {
         isStyleProp: true,
@@ -381,6 +490,7 @@ export class Morph {
 
       styleSheets: {
         before: ['submorphs'],
+        type: 'StyleSheets',
         set(sheets) {
           if (!obj.isArray(sheets)) {
             sheets = [sheets];
@@ -394,9 +504,9 @@ export class Morph {
       styleProperties: {
         derived: true, readOnly: true,
         get() {
-          let p = this.propertiesAndPropertySettings().properties,
+          var p = this.propertiesAndPropertySettings().properties,
               styleProps = [];
-          for (let prop in p)
+          for (var prop in p)
             if (p[prop].isStyleProp)
               styleProps.push(prop);
           return styleProps;
@@ -612,8 +722,8 @@ export class Morph {
     this._defaultStyleProperties = this._defaultStyleProperties || this.styleProperties;
     const v = this._morphicState[key],
           dv = this.defaultProperty(key),
-          isGeoObj = v && [Rectangle, Point, Color].includes(v.constructor);
-    if (this._defaultStyleProperties.includes(key) && (isGeoObj ? v.equals(dv) : v == dv)) {
+          isGeoObj = v && [Rectangle, Point, Color, Object].includes(v.constructor);
+    if (this._defaultStyleProperties.includes(key) && (isGeoObj ? obj.equals(v, dv) : v == dv)) {
       if (!this._styleSheetProps) {
         this._styleSheetsInScope = this.getStyleSheetsInScope();
         this._styleSheetProps = {};
@@ -2508,21 +2618,33 @@ class PathPoint {
     }
     this.path.onVertexChanged(this);
   }
-
 }
 
 export class Path extends Morph {
-
   static get properties() {
     return {
+      borderColor: {
+        isStyleProp: true,
+        derived: true,
+        type: "ColorGradient",
+        foldable: ["top", "left", "right", "bottom"],
+        set(value) {
+          if (!value) value = Color.white;
+          if (value.isColor || value.isGradient) {
+            value = {top: value, left: value, right: value, bottom: value};
+          }
+          this.setProperty("borderColor", value);
+        }
+      },
       vertices: {
         defaultValue: [],
+        type: "Vertices",
         set(vs) {
           vs = vs.map(v => new PathPoint(this, {...v, borderWidth: this.borderWidth}));
           this.setProperty("vertices", vs);
         }
       }
-    }
+    };
   }
 
   constructor(props = {}) {

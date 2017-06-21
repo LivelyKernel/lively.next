@@ -328,18 +328,19 @@ export class TextPrompt extends AbstractPrompt {
 
     const l = this.layout = new GridLayout({
       columns: [
-        0, {paddingLeft: 2.5},
-        1, {fixed: 100},
-        2, {paddingRight: 2.5, fixed: 100}
+        0, {paddingLeft: 5},
+        1, {paddingLeft: 5, paddingRight: 2.5, fixed: 100},
+        2, {paddingRight: 5, paddingLeft: 2.5, fixed: 100},
+        3, {paddingRight: 5}
       ],
       rows: [
         0, {fixed: label.height, paddingBottom: 2.5},
-        2, {paddingTop: 2.5, paddingBottom: 2.5},
+        2, {fixed: 35, paddingTop: 5, paddingBottom: 5},
       ],
       grid: [
-        ["label", "label", "label"],
-        ["input", "input", "input"],
-        [null, "ok button", "cancel button"]
+        ["label","label", "label", "label"],
+        ["input", "input", "input", "input"],
+        [null, "ok button", "cancel button", null]
       ]
     });
   }

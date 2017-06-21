@@ -203,17 +203,19 @@ class HarmonyPalette extends Morph {
   }
  
   harmonyControl() {
-     return new Morph({
+    var selector,
+        controls = new Morph({
          name: "harmonyControl",
          submorphs: [new HarmonyVisualizer({name: "harmony visualizer"}),
                      new Slider({
                        target: this, min: 0, max: 1, tooltip: "Adjust Brightness",
                        property: "pivotBrightness", width: 100
                      }),
-                     new DropDownSelector({
-                       name: "harmonySelector", target: this,
-                       property: "harmony", isHaloItem: true,
-                       getCurrentValue() { return this.value.name },
+                     selector = new DropDownSelector({
+                       name: "harmonySelector", isHaloItem: true,
+                       padding: 4,
+                       selectedValue: this.harmony,
+                       getCurrentValue() { return this.selectedValue.name },
                        values: {Complement: new Complementary(),
                                 Triadic: new Triadic(),
                                 Tetradic: new Tetradic(),
@@ -221,7 +223,9 @@ class HarmonyPalette extends Morph {
                                 Analogous: new Analogous(),
                                 Neutral: new Neutral()}
                    })]
-     })
+     });
+    connect(selector, 'selectedValue', this, 'harmony');
+    return controls;
   }
 }
 
@@ -496,17 +500,21 @@ export class ColorPalette extends Morph {
    }
 
    paletteConfig() {
-      return {
+      var selector,
+          config = {
          name: "paletteConfig", styleClasses: ['paletteFormatter'],
-         submorphs: [new DropDownSelector({
+         submorphs: [
+           selector = new DropDownSelector({
              isHaloItem: true, name: "paletteSelector",
-             target: this, property: "colorPalette",
+             selectedValue: 'flatDesign', padding: 4,
              tooltip: this.getPaletteDescription(this.colorPalette),
              values: {"Flat Design" : "flatDesign",
                       "Material Design" : "materialDesign",
                       "Web Safe" : "webSafe"}
        })]
-      }
+      };
+     connect(selector, 'selectedValue', this, 'colorPalette');
+     return config;
    }
 
 }
@@ -561,88 +569,3 @@ relayout() {
       }
    }
 */
-
-export class Popover extends Morph {
-  static get properties() {
-    return {
-      targetMorph: {
-        defaultValue: {
-          extent: pt(200, 200),
-          fill: Color.transparent,
-          submorphs: [
-            {
-              name: "placeholder",
-              type: "label",
-              value: "No Target Specified"
-            }
-          ]
-        }
-      },
-      styleSheets: {
-        initialize() {
-          this.styleSheets = new StyleSheet({
-            ".Popover": {
-              dropShadow: true,
-              fill: Color.transparent,
-              borderRadius: 4
-            },
-            "[name=body]": {
-              layout: new VerticalLayout({resizeContainer: true}),
-              fill: Color.rgbHex('c9c9c9'),
-              borderRadius: 4,
-              clipMode: 'hidden'
-            },
-            "[name=arrow]": {
-              fill: Color.rgbHex('c9c9c9'),
-              dropShadow: {blur: 3, color: Color.black.withA(.4)}
-            },
-            "[name=placeholder]": {
-              fontColor: Color.gray.darker(),
-              padding: 50,
-              fontWeight: "bold",
-              fontSize: 15
-            }
-          });
-        }
-      },
-      layout: {
-        initialize() {
-          this.layout = new CustomLayout({
-            relayout(self, animated) {
-              let body = self.get('body'),
-                  arrow = self.get('arrow'),
-                  offset = arrow.height;
-              
-              if (animated) {
-                let duration = animated.duration;
-                self.animate({extent: body.extent, duration});
-                self.origin = pt(self.width/2,-offset);
-                body.animate({topCenter: pt(0,offset), duration})
-                arrow.animate({bottomCenter: pt(0,offset), duration});
-              } else {
-                self.extent = body.extent;
-                self.origin = pt(self.width/2,-offset);
-                body.topCenter = pt(0,offset);
-                arrow.bottomCenter = pt(0,offset);
-              }
-            }
-          })
-        }
-      },
-      submorphs: {
-        after: ["targetMorph"],
-        initialize() {
-          this.submorphs = [
-            {
-              type: "polygon",
-              name: "arrow",
-              extent: pt(20,20),
-              vertices: [pt(-1, 0), pt(0, -0.5), pt(1, 0)]
-            },
-            {name: "body", submorphs: [this.targetMorph]},
-          ];
-        }
-      }
-    };
-  }
-}

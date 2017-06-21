@@ -1,8 +1,8 @@
 {
-  "id": "EmptyWorld_F54D68AF_6B16_49B1_9B86_55DCFC3EBA98",
+  "id": "EmptyWorld_1805428D_C540_4C6F_9BF8_960AB76B43E3",
   "snapshot": {
-    "EmptyWorld_F54D68AF_6B16_49B1_9B86_55DCFC3EBA98": {
-      "rev": 5560,
+    "EmptyWorld_1805428D_C540_4C6F_9BF8_960AB76B43E3": {
+      "rev": 20902,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -25,15 +25,15 @@
         },
         "extent": {
           "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2498.0,1351.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(1280.0,800.0)"
         },
         "submorphs": {
           "key": "submorphs",
           "value": [
             {
               "__ref__": true,
-              "id": "Image_752081DA_6E5E_44E6_B199_A21D4D4784E1",
-              "rev": 54
+              "id": "Image_9FA7101C_673D_460E_8615_85369B5ACF9C",
+              "rev": 57
             }
           ]
         },
@@ -59,37 +59,42 @@
           "value": [
             {
               "__ref__": true,
-              "id": "98ACEDBB-3428-4BC7-AE9B-AA8F144E97B1",
+              "id": "F321CC61-14F0-492B-8DB9-C19A8DE48526",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "EB53EAFC-8484-440A-8869-CF01D2CDED9B",
+              "id": "E9A1E8F5-DAD0-49C9-919B-CBF18437A883",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "712B93B9-4A4B-458D-87BC-3AADED055B01",
+              "id": "73B12CC9-6B15-4B96-A4DC-92A9BACD1ED6",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "0963DE26-1751-4D9E-A461-8C5956C54180",
+              "id": "D1842AE0-62AB-4FF1-AAC7-31EAB1773144",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "7744AB39-A79D-4626-BAC6-0251CFBE6FC4",
+              "id": "2F637DFA-56C9-4A84-A70A-A84890C13F20",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "21011A76-66CC-41F3-9F8A-11C9792E30F6",
+              "id": "AA762A9F-6131-4547-B3A9-C9A0236B86B2",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "ED81C264-3193-4CE7-BBA8-63B0E84B344C",
+              "id": "1A91DB99-DB4F-4538-B661-A77BC1CEECA8",
+              "rev": 0
+            },
+            {
+              "__ref__": true,
+              "id": "7E946748-B0FF-4F38-8585-F7E2B4A827A4",
               "rev": 0
             }
           ]
@@ -103,13 +108,13 @@
             "version": "0.1.0"
           },
           "pathInPackage": "index.js",
-          "lastChange": 1497022630835,
-          "lastSuperclassChange": 1497022607219
+          "lastChange": 1497971834124,
+          "lastSuperclassChange": 1497971833968
         }
       }
     },
-    "Image_752081DA_6E5E_44E6_B199_A21D4D4784E1": {
-      "rev": 54,
+    "Image_9FA7101C_673D_460E_8615_85369B5ACF9C": {
+      "rev": 57,
       "props": {
         "_tickingScripts": {
           "key": "_tickingScripts",
@@ -132,7 +137,7 @@
         },
         "position": {
           "key": "position",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(1219.0,669.5)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(622.2,396.4)"
         },
         "origin": {
           "key": "origin",
@@ -144,7 +149,7 @@
         },
         "scale": {
           "key": "scale",
-          "value": 6.004444444444444
+          "value": 3.555555555555555
         },
         "opacity": {
           "key": "opacity",
@@ -183,19 +188,19 @@
             "version": "0.1.0"
           },
           "pathInPackage": "morph.js",
-          "lastChange": 1497022606962,
+          "lastChange": 1497971833362,
           "lastSuperclassChange": 0
         }
       }
     },
-    "98ACEDBB-3428-4BC7-AE9B-AA8F144E97B1": {
+    "F321CC61-14F0-492B-8DB9-C19A8DE48526": {
       "rev": 0,
       "props": {
         "rules": {
           "key": "rules",
           "value": {
             "__ref__": true,
-            "id": "2E7C1654-B013-41D3-BE6A-5C9E99382879",
+            "id": "A9F8B939-8815-4DCC-92BD-BA022C7987E1",
             "rev": 0
           }
         },
@@ -203,8 +208,8 @@
           "key": "context",
           "value": {
             "__ref__": true,
-            "id": "EmptyWorld_F54D68AF_6B16_49B1_9B86_55DCFC3EBA98",
-            "rev": 5560
+            "id": "EmptyWorld_1805428D_C540_4C6F_9BF8_960AB76B43E3",
+            "rev": 20902
           }
         }
       },
@@ -216,23 +221,19 @@
             "version": "0.1.0"
           },
           "pathInPackage": "style-rules.js",
-          "lastChange": 1497022607191,
+          "lastChange": 1497971833601,
           "lastSuperclassChange": 0
         }
       }
     },
-    "2E7C1654-B013-41D3-BE6A-5C9E99382879": {
+    "A9F8B939-8815-4DCC-92BD-BA022C7987E1": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         ".Button": {
           "key": ".Button",
           "value": {
             "__ref__": true,
-            "id": "BEC7774D-BBB4-447E-85BA-3A25020C5C5A",
+            "id": "DCFACD54-126E-4519-BCD6-3BA5DC98E3CE",
             "rev": 0
           }
         },
@@ -240,7 +241,7 @@
           "key": ".Button.activeStyle",
           "value": {
             "__ref__": true,
-            "id": "E9A5FF3E-1860-4EDD-9EBA-738428D2E7DB",
+            "id": "F4B5E840-2F01-4694-A07B-9E454D6502D2",
             "rev": 0
           }
         },
@@ -248,7 +249,7 @@
           "key": ".Button.triggerStyle",
           "value": {
             "__ref__": true,
-            "id": "99C82D94-A2D2-4D6B-B2EC-94D0BD94BF2F",
+            "id": "64B2E116-6950-449A-86F3-3B4BD75E96D7",
             "rev": 0
           }
         },
@@ -256,7 +257,7 @@
           "key": ".Button.inactiveStyle",
           "value": {
             "__ref__": true,
-            "id": "F4702CF0-DC5A-4FB0-BABB-55073AAE14AE",
+            "id": "1DA10B4E-0440-4B36-A858-3280D59E418F",
             "rev": 0
           }
         },
@@ -264,7 +265,7 @@
           "key": ".Button.activeStyle [name=label]",
           "value": {
             "__ref__": true,
-            "id": "D81C2B9D-7997-46D8-AF6B-CBA6825E50A2",
+            "id": "7522C854-5331-4D91-9BCE-1CD765E80D78",
             "rev": 0
           }
         },
@@ -272,7 +273,7 @@
           "key": ".Button.triggerStyle [name=label]",
           "value": {
             "__ref__": true,
-            "id": "5714AB5A-67DC-406C-89F0-6B6B0FE57BAB",
+            "id": "9D6F93A3-943A-478F-BA0C-28616273D4B2",
             "rev": 0
           }
         },
@@ -280,49 +281,101 @@
           "key": ".Button.inactiveStyle [name=label]",
           "value": {
             "__ref__": true,
-            "id": "BC855401-E459-42D3-9084-E161D8BA38A6",
+            "id": "A335C371-C680-4B98-A243-7B1AEFCB0342",
             "rev": 0
           }
         }
       }
     },
-    "BEC7774D-BBB4-447E-85BA-3A25020C5C5A": {
+    "DCFACD54-126E-4519-BCD6-3BA5DC98E3CE": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "borderWidth": {
           "key": "borderWidth",
-          "value": 1
+          "value": {
+            "__ref__": true,
+            "id": "F4C694D7-CA4C-4B1F-B0B2-1F9F41ECF28A",
+            "rev": 0
+          }
         },
         "borderRadius": {
           "key": "borderRadius",
-          "value": 5
+          "value": {
+            "__ref__": true,
+            "id": "B04FC42C-84BA-411D-B204-F918AE761BBF",
+            "rev": 0
+          }
         },
         "extent": {
           "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(100.0,24.0)"
+          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(100.0,0.0)"
         }
       }
     },
-    "E9A5FF3E-1860-4EDD-9EBA-738428D2E7DB": {
+    "F4C694D7-CA4C-4B1F-B0B2-1F9F41ECF28A": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "top": {
+          "key": "top",
+          "value": 1
         },
+        "bottom": {
+          "key": "bottom",
+          "value": 1
+        },
+        "right": {
+          "key": "right",
+          "value": 1
+        },
+        "left": {
+          "key": "left",
+          "value": 1
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "B04FC42C-84BA-411D-B204-F918AE761BBF": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 5
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 5
+        },
+        "right": {
+          "key": "right",
+          "value": 5
+        },
+        "left": {
+          "key": "left",
+          "value": 5
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "F4B5E840-2F01-4694-A07B-9E454D6502D2": {
+      "rev": 0,
+      "props": {
         "borderColor": {
           "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+          "value": {
+            "__ref__": true,
+            "id": "E9C58F91-1FA0-41CE-B367-3DB6750E92A2",
+            "rev": 0
+          }
         },
         "fill": {
           "key": "fill",
           "value": {
             "__ref__": true,
-            "id": "237ADBF7-C203-4853-8A9B-899A743F6015",
+            "id": "01AD03C2-5205-4244-9F80-6186E24DAD41",
             "rev": 0
           }
         },
@@ -332,24 +385,44 @@
         }
       }
     },
-    "237ADBF7-C203-4853-8A9B-899A743F6015": {
+    "E9C58F91-1FA0-41CE-B367-3DB6750E92A2": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
         },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "01AD03C2-5205-4244-9F80-6186E24DAD41": {
+      "rev": 0,
+      "props": {
         "stops": {
           "key": "stops",
           "value": [
             {
               "__ref__": true,
-              "id": "0FA5BF17-9F68-4BAE-BC8A-98EABC2305ED",
+              "id": "75238855-F92A-4818-8D59-D9EFF1EE2856",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "8261E510-AE9C-418E-89D8-5E229FCA247A",
+              "id": "C6417C72-300C-43A1-A660-D08AAEBE4F6D",
               "rev": 0
             }
           ]
@@ -367,18 +440,14 @@
             "version": "0.1.1"
           },
           "pathInPackage": "color.js",
-          "lastChange": 1497022606825,
+          "lastChange": 1497971833125,
           "lastSuperclassChange": 0
         }
       }
     },
-    "0FA5BF17-9F68-4BAE-BC8A-98EABC2305ED": {
+    "75238855-F92A-4818-8D59-D9EFF1EE2856": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "offset": {
           "key": "offset",
           "value": 0
@@ -389,13 +458,9 @@
         }
       }
     },
-    "8261E510-AE9C-418E-89D8-5E229FCA247A": {
+    "C6417C72-300C-43A1-A660-D08AAEBE4F6D": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "offset": {
           "key": "offset",
           "value": 1
@@ -406,16 +471,16 @@
         }
       }
     },
-    "99C82D94-A2D2-4D6B-B2EC-94D0BD94BF2F": {
+    "64B2E116-6950-449A-86F3-3B4BD75E96D7": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "borderColor": {
           "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+          "value": {
+            "__ref__": true,
+            "id": "453292B2-A1CC-4B21-B35F-C013E271436E",
+            "rev": 0
+          }
         },
         "fill": {
           "key": "fill",
@@ -427,16 +492,40 @@
         }
       }
     },
-    "F4702CF0-DC5A-4FB0-BABB-55073AAE14AE": {
+    "453292B2-A1CC-4B21-B35F-C013E271436E": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
         },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "1DA10B4E-0440-4B36-A858-3280D59E418F": {
+      "rev": 0,
+      "props": {
         "borderColor": {
           "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+          "value": {
+            "__ref__": true,
+            "id": "FBDB284F-E16D-41D8-9D39-5AE6271A6460",
+            "rev": 0
+          }
         },
         "opacity": {
           "key": "opacity",
@@ -446,7 +535,7 @@
           "key": "fill",
           "value": {
             "__ref__": true,
-            "id": "6A4911CD-B0C5-4BDA-A952-D57A0FED881E",
+            "id": "14781C0A-4C36-40DA-8F62-56D6755DDA52",
             "rev": 0
           }
         },
@@ -456,24 +545,44 @@
         }
       }
     },
-    "6A4911CD-B0C5-4BDA-A952-D57A0FED881E": {
+    "FBDB284F-E16D-41D8-9D39-5AE6271A6460": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
         },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "14781C0A-4C36-40DA-8F62-56D6755DDA52": {
+      "rev": 0,
+      "props": {
         "stops": {
           "key": "stops",
           "value": [
             {
               "__ref__": true,
-              "id": "2397E961-BEC6-4B1B-B2AA-8F24200676B0",
+              "id": "526D8B94-2360-4F63-9F33-4F87EC6AD749",
               "rev": 0
             },
             {
               "__ref__": true,
-              "id": "FD9F83CF-6093-4D66-9B5A-3FDFCA304940",
+              "id": "E24B66D8-6364-48CA-BEE0-432E81504A7F",
               "rev": 0
             }
           ]
@@ -491,18 +600,14 @@
             "version": "0.1.1"
           },
           "pathInPackage": "color.js",
-          "lastChange": 1497022606825,
+          "lastChange": 1497971833125,
           "lastSuperclassChange": 0
         }
       }
     },
-    "2397E961-BEC6-4B1B-B2AA-8F24200676B0": {
+    "526D8B94-2360-4F63-9F33-4F87EC6AD749": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "offset": {
           "key": "offset",
           "value": 0
@@ -513,13 +618,9 @@
         }
       }
     },
-    "FD9F83CF-6093-4D66-9B5A-3FDFCA304940": {
+    "E24B66D8-6364-48CA-BEE0-432E81504A7F": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "offset": {
           "key": "offset",
           "value": 1
@@ -530,13 +631,9 @@
         }
       }
     },
-    "D81C2B9D-7997-46D8-AF6B-CBA6825E50A2": {
+    "7522C854-5331-4D91-9BCE-1CD765E80D78": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "fontSize": {
           "key": "fontSize",
           "value": 12
@@ -547,13 +644,9 @@
         }
       }
     },
-    "5714AB5A-67DC-406C-89F0-6B6B0FE57BAB": {
+    "9D6F93A3-943A-478F-BA0C-28616273D4B2": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "fontSize": {
           "key": "fontSize",
           "value": 12
@@ -564,13 +657,9 @@
         }
       }
     },
-    "BC855401-E459-42D3-9084-E161D8BA38A6": {
+    "A335C371-C680-4B98-A243-7B1AEFCB0342": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "fontSize": {
           "key": "fontSize",
           "value": 12
@@ -581,14 +670,14 @@
         }
       }
     },
-    "EB53EAFC-8484-440A-8869-CF01D2CDED9B": {
+    "E9A1E8F5-DAD0-49C9-919B-CBF18437A883": {
       "rev": 0,
       "props": {
         "rules": {
           "key": "rules",
           "value": {
             "__ref__": true,
-            "id": "C3FC4ECB-4991-4253-9123-EF26D8C8B84A",
+            "id": "B8D0A768-C795-4154-9240-880EF4427CDB",
             "rev": 0
           }
         },
@@ -596,8 +685,8 @@
           "key": "context",
           "value": {
             "__ref__": true,
-            "id": "EmptyWorld_F54D68AF_6B16_49B1_9B86_55DCFC3EBA98",
-            "rev": 5560
+            "id": "EmptyWorld_1805428D_C540_4C6F_9BF8_960AB76B43E3",
+            "rev": 20902
           }
         }
       },
@@ -609,23 +698,19 @@
             "version": "0.1.0"
           },
           "pathInPackage": "style-rules.js",
-          "lastChange": 1497022607191,
+          "lastChange": 1497971833601,
           "lastSuperclassChange": 0
         }
       }
     },
-    "C3FC4ECB-4991-4253-9123-EF26D8C8B84A": {
+    "B8D0A768-C795-4154-9240-880EF4427CDB": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         ".StatusMessage [name=messageText]": {
           "key": ".StatusMessage [name=messageText]",
           "value": {
             "__ref__": true,
-            "id": "1AA14959-77EA-4455-B69D-7BFD5BB82FDC",
+            "id": "3B20106F-8066-4139-A5B8-AA2C0F35B848",
             "rev": 0
           }
         },
@@ -633,7 +718,7 @@
           "key": ".StatusMessage .Button",
           "value": {
             "__ref__": true,
-            "id": "66896EFD-D394-44A2-88B9-6AC27780E91D",
+            "id": "CCCE19C4-8987-4B5D-BF2D-8A17563BF694",
             "rev": 0
           }
         },
@@ -641,19 +726,15 @@
           "key": ".StatusMessage .Button.activeStyle",
           "value": {
             "__ref__": true,
-            "id": "4ACB2F29-6217-4BE7-8730-CE7EBFAC4B61",
+            "id": "F2A16009-3670-44E4-BDE6-9BB5DCF81095",
             "rev": 0
           }
         }
       }
     },
-    "1AA14959-77EA-4455-B69D-7BFD5BB82FDC": {
+    "3B20106F-8066-4139-A5B8-AA2C0F35B848": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "draggable": {
           "key": "draggable",
           "value": false
@@ -688,40 +769,60 @@
         }
       }
     },
-    "66896EFD-D394-44A2-88B9-6AC27780E91D": {
+    "CCCE19C4-8987-4B5D-BF2D-8A17563BF694": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "borderRadius": {
           "key": "borderRadius",
-          "value": 15
+          "value": {
+            "__ref__": true,
+            "id": "C7DD1929-5BF4-4EA3-B4A5-917E6CCCF45D",
+            "rev": 0
+          }
         }
       }
     },
-    "4ACB2F29-6217-4BE7-8730-CE7EBFAC4B61": {
+    "C7DD1929-5BF4-4EA3-B4A5-917E6CCCF45D": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "top": {
+          "key": "top",
+          "value": 15
         },
+        "bottom": {
+          "key": "bottom",
+          "value": 15
+        },
+        "right": {
+          "key": "right",
+          "value": 15
+        },
+        "left": {
+          "key": "left",
+          "value": 15
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "F2A16009-3670-44E4-BDE6-9BB5DCF81095": {
+      "rev": 0,
+      "props": {
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
         }
       }
     },
-    "712B93B9-4A4B-458D-87BC-3AADED055B01": {
+    "73B12CC9-6B15-4B96-A4DC-92A9BACD1ED6": {
       "rev": 0,
       "props": {
         "rules": {
           "key": "rules",
           "value": {
             "__ref__": true,
-            "id": "9FF7BB15-A625-4346-8912-6ADD0A33C7F1",
+            "id": "D0B6D741-E2FE-4827-A6AE-3FD26253D0D7",
             "rev": 0
           }
         },
@@ -729,8 +830,8 @@
           "key": "context",
           "value": {
             "__ref__": true,
-            "id": "EmptyWorld_F54D68AF_6B16_49B1_9B86_55DCFC3EBA98",
-            "rev": 5560
+            "id": "EmptyWorld_1805428D_C540_4C6F_9BF8_960AB76B43E3",
+            "rev": 20902
           }
         }
       },
@@ -742,23 +843,19 @@
             "version": "0.1.0"
           },
           "pathInPackage": "style-rules.js",
-          "lastChange": 1497022607191,
+          "lastChange": 1497971833601,
           "lastSuperclassChange": 0
         }
       }
     },
-    "9FF7BB15-A625-4346-8912-6ADD0A33C7F1": {
+    "D0B6D741-E2FE-4827-A6AE-3FD26253D0D7": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         ".Window .buttonGroup": {
           "key": ".Window .buttonGroup",
           "value": {
             "__ref__": true,
-            "id": "9F740C23-4BEF-403B-8AD0-6F178DC08CB5",
+            "id": "02E56402-E8FF-4FEB-8415-AAE6DD92CF3D",
             "rev": 0
           }
         },
@@ -766,7 +863,7 @@
           "key": ".Window.inactive",
           "value": {
             "__ref__": true,
-            "id": "122B3EF0-2809-4207-BACD-ACBACD8176FF",
+            "id": "EB01EBD7-D0C1-48E3-9A4B-8D8D369CDB1D",
             "rev": 0
           }
         },
@@ -774,7 +871,7 @@
           "key": ".Window.inactive .windowButton",
           "value": {
             "__ref__": true,
-            "id": "517A90EF-6656-4516-8DAE-A7AE4EDADAA1",
+            "id": "EC8A99B9-1540-4A4A-B177-137F451F0828",
             "rev": 0
           }
         },
@@ -782,7 +879,7 @@
           "key": ".Window .defaultLabelStyle",
           "value": {
             "__ref__": true,
-            "id": "3F11DF9E-C804-4269-BD93-B5661CABF248",
+            "id": "551CEAAD-54D8-4256-A04D-F6F471734A57",
             "rev": 0
           }
         },
@@ -790,7 +887,7 @@
           "key": ".Window.active .closeButton",
           "value": {
             "__ref__": true,
-            "id": "4F7A481C-A2B5-465B-B312-4F9F67690630",
+            "id": "DC66B38F-A32A-4C59-B65F-B8CFB80D969E",
             "rev": 0
           }
         },
@@ -798,7 +895,7 @@
           "key": ".Window.active .minimizeButton",
           "value": {
             "__ref__": true,
-            "id": "974E800C-439F-4043-96F8-BEDB40AE45FE",
+            "id": "A92A5605-22B6-46AA-97A4-965037663BCE",
             "rev": 0
           }
         },
@@ -806,7 +903,7 @@
           "key": ".Window.active .maximizeButton",
           "value": {
             "__ref__": true,
-            "id": "39A41EA2-C82C-4FC1-8F06-272F7CDE7061",
+            "id": "64BC7395-E6EE-4E6D-A53B-D8A75E5FB220",
             "rev": 0
           }
         },
@@ -814,7 +911,7 @@
           "key": ".Window .windowTitleLabel",
           "value": {
             "__ref__": true,
-            "id": "A1BF9874-6DBF-4FA7-9F0B-4C033788DE1D",
+            "id": "5C60105B-E600-46B6-A031-CB438C303937",
             "rev": 0
           }
         },
@@ -822,19 +919,15 @@
           "key": ".Window.active",
           "value": {
             "__ref__": true,
-            "id": "901AFD68-4B9C-4109-959C-DF91A1CEE72A",
+            "id": "64A30535-991C-4834-98FE-D132BD2B1A3C",
             "rev": 0
           }
         }
       }
     },
-    "9F740C23-4BEF-403B-8AD0-6F178DC08CB5": {
+    "02E56402-E8FF-4FEB-8415-AAE6DD92CF3D": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "draggable": {
           "key": "draggable",
           "value": false
@@ -851,19 +944,15 @@
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "D2FFF601-01CE-4045-B8AD-44AF2A5DA171",
+            "id": "A46D7CC1-845F-4FDD-8BC1-CC5A5F85D218",
             "rev": 0
           }
         }
       }
     },
-    "D2FFF601-01CE-4045-B8AD-44AF2A5DA171": {
+    "A46D7CC1-845F-4FDD-8BC1-CC5A5F85D218": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "applyRequests": {
           "key": "applyRequests",
           "value": []
@@ -872,7 +961,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "F7A1696B-155F-4218-BF79-F647E6149F90",
+            "id": "2FF6A8C8-455B-47E5-9EC1-C2FCA14FB8F3",
             "rev": 0
           }
         },
@@ -884,8 +973,8 @@
           "key": "ignore",
           "value": []
         },
-        "lastBounds": {
-          "key": "lastBounds"
+        "lastBoundsExtent": {
+          "key": "lastBoundsExtent"
         },
         "active": {
           "key": "active",
@@ -897,6 +986,9 @@
         "_autoResize": {
           "key": "_autoResize",
           "value": true
+        },
+        "onScheduleApply": {
+          "key": "onScheduleApply"
         },
         "_direction": {
           "key": "_direction",
@@ -911,18 +1003,14 @@
             "version": "0.1.0"
           },
           "pathInPackage": "layout.js",
-          "lastChange": 1497022607048,
+          "lastChange": 1497971833756,
           "lastSuperclassChange": 0
         }
       }
     },
-    "F7A1696B-155F-4218-BF79-F647E6149F90": {
+    "2FF6A8C8-455B-47E5-9EC1-C2FCA14FB8F3": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "top": {
           "key": "top",
           "value": 0
@@ -941,46 +1029,122 @@
         }
       }
     },
-    "122B3EF0-2809-4207-BACD-ACBACD8176FF": {
+    "EB01EBD7-D0C1-48E3-9A4B-8D8D369CDB1D": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(243,243,243)"
         },
         "borderRadius": {
           "key": "borderRadius",
-          "value": 7
+          "value": {
+            "__ref__": true,
+            "id": "F8B3EE5E-66FB-41A8-8944-36ADF90B0220",
+            "rev": 0
+          }
         },
         "borderColor": {
           "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+          "value": {
+            "__ref__": true,
+            "id": "1469F87D-6E68-469C-8049-96E1AABA7382",
+            "rev": 0
+          }
         },
         "borderWidth": {
           "key": "borderWidth",
-          "value": 1
+          "value": {
+            "__ref__": true,
+            "id": "FBBE3FDC-ABFA-4209-92F4-A8AE505741DF",
+            "rev": 0
+          }
         },
         "dropShadow": {
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "D1C99BAA-BEA1-46B1-A6DD-B5FDE617E98F",
+            "id": "F646872D-AF87-4450-AD39-E30831063F16",
             "rev": 0
           }
         }
       }
     },
-    "D1C99BAA-BEA1-46B1-A6DD-B5FDE617E98F": {
+    "F8B3EE5E-66FB-41A8-8944-36ADF90B0220": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "top": {
+          "key": "top",
+          "value": 7
         },
+        "bottom": {
+          "key": "bottom",
+          "value": 7
+        },
+        "right": {
+          "key": "right",
+          "value": 7
+        },
+        "left": {
+          "key": "left",
+          "value": 7
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "1469F87D-6E68-469C-8049-96E1AABA7382": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "FBBE3FDC-ABFA-4209-92F4-A8AE505741DF": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 1
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 1
+        },
+        "right": {
+          "key": "right",
+          "value": 1
+        },
+        "left": {
+          "key": "left",
+          "value": 1
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "F646872D-AF87-4450-AD39-E30831063F16": {
+      "rev": 0,
+      "props": {
         "distance": {
           "key": "distance",
           "value": 10
@@ -995,16 +1159,16 @@
         }
       }
     },
-    "517A90EF-6656-4516-8DAE-A7AE4EDADAA1": {
+    "EC8A99B9-1540-4A4A-B177-137F451F0828": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "borderColor": {
           "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+          "value": {
+            "__ref__": true,
+            "id": "E9012630-07B2-4BA6-80F5-B2FF07B1A4CA",
+            "rev": 0
+          }
         },
         "fill": {
           "key": "fill",
@@ -1012,7 +1176,11 @@
         },
         "borderRadius": {
           "key": "borderRadius",
-          "value": 14
+          "value": {
+            "__ref__": true,
+            "id": "D7715DA8-E5C0-4F1F-9554-0B89C3C3034B",
+            "rev": 0
+          }
         },
         "extent": {
           "key": "extent",
@@ -1020,13 +1188,57 @@
         }
       }
     },
-    "3F11DF9E-C804-4269-BD93-B5661CABF248": {
+    "E9012630-07B2-4BA6-80F5-B2FF07B1A4CA": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
         },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "D7715DA8-E5C0-4F1F-9554-0B89C3C3034B": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 14
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 14
+        },
+        "right": {
+          "key": "right",
+          "value": 14
+        },
+        "left": {
+          "key": "left",
+          "value": 14
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "551CEAAD-54D8-4256-A04D-F6F471734A57": {
+      "rev": 0,
+      "props": {
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
@@ -1045,20 +1257,24 @@
         }
       }
     },
-    "4F7A481C-A2B5-465B-B312-4F9F67690630": {
+    "DC66B38F-A32A-4C59-B65F-B8CFB80D969E": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "borderWidth": {
           "key": "borderWidth",
-          "value": 1
+          "value": {
+            "__ref__": true,
+            "id": "465F1475-8D38-4FF8-B909-125D5A220F0D",
+            "rev": 0
+          }
         },
         "borderRadius": {
           "key": "borderRadius",
-          "value": 14
+          "value": {
+            "__ref__": true,
+            "id": "24C9327B-586A-4403-AE12-9C1CB81143BA",
+            "rev": 0
+          }
         },
         "extent": {
           "key": "extent",
@@ -1066,7 +1282,11 @@
         },
         "borderColor": {
           "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(223,75,75)"
+          "value": {
+            "__ref__": true,
+            "id": "1767D21B-CE68-4603-957F-319944B7DA89",
+            "rev": 0
+          }
         },
         "fill": {
           "key": "fill",
@@ -1074,20 +1294,96 @@
         }
       }
     },
-    "974E800C-439F-4043-96F8-BEDB40AE45FE": {
+    "465F1475-8D38-4FF8-B909-125D5A220F0D": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "top": {
+          "key": "top",
+          "value": 1
         },
+        "bottom": {
+          "key": "bottom",
+          "value": 1
+        },
+        "right": {
+          "key": "right",
+          "value": 1
+        },
+        "left": {
+          "key": "left",
+          "value": 1
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "24C9327B-586A-4403-AE12-9C1CB81143BA": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 14
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 14
+        },
+        "right": {
+          "key": "right",
+          "value": 14
+        },
+        "left": {
+          "key": "left",
+          "value": 14
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "1767D21B-CE68-4603-957F-319944B7DA89": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(223,75,75)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(223,75,75)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(223,75,75)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(223,75,75)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "A92A5605-22B6-46AA-97A4-965037663BCE": {
+      "rev": 0,
+      "props": {
         "borderWidth": {
           "key": "borderWidth",
-          "value": 1
+          "value": {
+            "__ref__": true,
+            "id": "0A384BAF-DEAE-4942-944B-606EF44F88E3",
+            "rev": 0
+          }
         },
         "borderRadius": {
           "key": "borderRadius",
-          "value": 14
+          "value": {
+            "__ref__": true,
+            "id": "A7D850B5-E7B4-49B6-9AF4-C144F07091AC",
+            "rev": 0
+          }
         },
         "extent": {
           "key": "extent",
@@ -1095,7 +1391,11 @@
         },
         "borderColor": {
           "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(224,177,77)"
+          "value": {
+            "__ref__": true,
+            "id": "9BE53B14-470D-4946-BBFE-327155031080",
+            "rev": 0
+          }
         },
         "fill": {
           "key": "fill",
@@ -1103,20 +1403,96 @@
         }
       }
     },
-    "39A41EA2-C82C-4FC1-8F06-272F7CDE7061": {
+    "0A384BAF-DEAE-4942-944B-606EF44F88E3": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "top": {
+          "key": "top",
+          "value": 1
         },
+        "bottom": {
+          "key": "bottom",
+          "value": 1
+        },
+        "right": {
+          "key": "right",
+          "value": 1
+        },
+        "left": {
+          "key": "left",
+          "value": 1
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "A7D850B5-E7B4-49B6-9AF4-C144F07091AC": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 14
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 14
+        },
+        "right": {
+          "key": "right",
+          "value": 14
+        },
+        "left": {
+          "key": "left",
+          "value": 14
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "9BE53B14-470D-4946-BBFE-327155031080": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(224,177,77)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(224,177,77)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(224,177,77)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(224,177,77)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "64BC7395-E6EE-4E6D-A53B-D8A75E5FB220": {
+      "rev": 0,
+      "props": {
         "borderWidth": {
           "key": "borderWidth",
-          "value": 1
+          "value": {
+            "__ref__": true,
+            "id": "5AF8833F-E33C-4AF5-B3EB-CAE93F4ADE34",
+            "rev": 0
+          }
         },
         "borderRadius": {
           "key": "borderRadius",
-          "value": 14
+          "value": {
+            "__ref__": true,
+            "id": "A890DA01-9454-4FFE-AAC3-3B1A81BABC1B",
+            "rev": 0
+          }
         },
         "extent": {
           "key": "extent",
@@ -1124,7 +1500,11 @@
         },
         "borderColor": {
           "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(91,181,91)"
+          "value": {
+            "__ref__": true,
+            "id": "7514E3D3-C52D-4476-827C-5018C056738A",
+            "rev": 0
+          }
         },
         "fill": {
           "key": "fill",
@@ -1132,13 +1512,81 @@
         }
       }
     },
-    "A1BF9874-6DBF-4FA7-9F0B-4C033788DE1D": {
+    "5AF8833F-E33C-4AF5-B3EB-CAE93F4ADE34": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "top": {
+          "key": "top",
+          "value": 1
         },
+        "bottom": {
+          "key": "bottom",
+          "value": 1
+        },
+        "right": {
+          "key": "right",
+          "value": 1
+        },
+        "left": {
+          "key": "left",
+          "value": 1
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "A890DA01-9454-4FFE-AAC3-3B1A81BABC1B": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 14
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 14
+        },
+        "right": {
+          "key": "right",
+          "value": 14
+        },
+        "left": {
+          "key": "left",
+          "value": 14
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "7514E3D3-C52D-4476-827C-5018C056738A": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(91,181,91)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(91,181,91)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(91,181,91)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(91,181,91)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "5C60105B-E600-46B6-A031-CB438C303937": {
+      "rev": 0,
+      "props": {
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
@@ -1149,46 +1597,122 @@
         }
       }
     },
-    "901AFD68-4B9C-4109-959C-DF91A1CEE72A": {
+    "64A30535-991C-4834-98FE-D132BD2B1A3C": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
         },
         "borderRadius": {
           "key": "borderRadius",
-          "value": 7
+          "value": {
+            "__ref__": true,
+            "id": "CF01E17E-A9DF-4BE5-B02A-0BA30286E6CB",
+            "rev": 0
+          }
         },
         "borderColor": {
           "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+          "value": {
+            "__ref__": true,
+            "id": "06375F87-E9CE-442B-8805-DFAE0B9E3D2C",
+            "rev": 0
+          }
         },
         "borderWidth": {
           "key": "borderWidth",
-          "value": 1
+          "value": {
+            "__ref__": true,
+            "id": "9A201241-E5A8-420D-B509-31EB37A0155E",
+            "rev": 0
+          }
         },
         "dropShadow": {
           "key": "dropShadow",
           "value": {
             "__ref__": true,
-            "id": "D5D5264F-FC08-4713-B3DF-EA288C2B4BB0",
+            "id": "1E1CC866-3CB8-4EC7-A5B6-0566F1CF164B",
             "rev": 0
           }
         }
       }
     },
-    "D5D5264F-FC08-4713-B3DF-EA288C2B4BB0": {
+    "CF01E17E-A9DF-4BE5-B02A-0BA30286E6CB": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "top": {
+          "key": "top",
+          "value": 7
         },
+        "bottom": {
+          "key": "bottom",
+          "value": 7
+        },
+        "right": {
+          "key": "right",
+          "value": 7
+        },
+        "left": {
+          "key": "left",
+          "value": 7
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "06375F87-E9CE-442B-8805-DFAE0B9E3D2C": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "9A201241-E5A8-420D-B509-31EB37A0155E": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 1
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 1
+        },
+        "right": {
+          "key": "right",
+          "value": 1
+        },
+        "left": {
+          "key": "left",
+          "value": 1
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "1E1CC866-3CB8-4EC7-A5B6-0566F1CF164B": {
+      "rev": 0,
+      "props": {
         "distance": {
           "key": "distance",
           "value": 10
@@ -1203,14 +1727,14 @@
         }
       }
     },
-    "0963DE26-1751-4D9E-A461-8C5956C54180": {
+    "D1842AE0-62AB-4FF1-AAC7-31EAB1773144": {
       "rev": 0,
       "props": {
         "rules": {
           "key": "rules",
           "value": {
             "__ref__": true,
-            "id": "F06FC31C-9464-4E30-AF14-153FE01DF07F",
+            "id": "02AFD2A0-880F-42E3-8A49-F5B82CC69790",
             "rev": 0
           }
         },
@@ -1218,8 +1742,8 @@
           "key": "context",
           "value": {
             "__ref__": true,
-            "id": "EmptyWorld_F54D68AF_6B16_49B1_9B86_55DCFC3EBA98",
-            "rev": 5560
+            "id": "EmptyWorld_1805428D_C540_4C6F_9BF8_960AB76B43E3",
+            "rev": 20902
           }
         }
       },
@@ -1231,23 +1755,19 @@
             "version": "0.1.0"
           },
           "pathInPackage": "style-rules.js",
-          "lastChange": 1497022607191,
+          "lastChange": 1497971833601,
           "lastSuperclassChange": 0
         }
       }
     },
-    "F06FC31C-9464-4E30-AF14-153FE01DF07F": {
+    "02AFD2A0-880F-42E3-8A49-F5B82CC69790": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         ".FilterableList.dark [name=input]": {
           "key": ".FilterableList.dark [name=input]",
           "value": {
             "__ref__": true,
-            "id": "BCDFE000-582F-4D98-B60A-EFA2666ED026",
+            "id": "5D5BE99E-F71A-4FC7-983F-9D175711FEF0",
             "rev": 0
           }
         },
@@ -1255,26 +1775,30 @@
           "key": ".FilterableList.default [name=input]",
           "value": {
             "__ref__": true,
-            "id": "DC98A7F9-F45E-4AAA-877E-05A3F29F96DF",
+            "id": "BC3F26B5-3999-4610-9E1E-0602764A225C",
             "rev": 0
           }
         }
       }
     },
-    "BCDFE000-582F-4D98-B60A-EFA2666ED026": {
+    "5D5BE99E-F71A-4FC7-983F-9D175711FEF0": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "borderWidth": {
           "key": "borderWidth",
-          "value": 0
+          "value": {
+            "__ref__": true,
+            "id": "809B0E49-13A9-4438-9F26-9E83C2F80CEF",
+            "rev": 0
+          }
         },
         "borderRadius": {
           "key": "borderRadius",
-          "value": 20
+          "value": {
+            "__ref__": true,
+            "id": "35A25578-83E2-44BA-9C1C-EB27C0B42364",
+            "rev": 0
+          }
         },
         "fill": {
           "key": "fill",
@@ -1290,31 +1814,131 @@
         }
       }
     },
-    "DC98A7F9-F45E-4AAA-877E-05A3F29F96DF": {
+    "809B0E49-13A9-4438-9F26-9E83C2F80CEF": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
+        "top": {
+          "key": "top",
           "value": 0
         },
-        "borderWidth": {
-          "key": "borderWidth",
+        "bottom": {
+          "key": "bottom",
           "value": 0
         },
-        "borderColor": {
-          "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
         }
       }
     },
-    "7744AB39-A79D-4626-BAC6-0251CFBE6FC4": {
+    "35A25578-83E2-44BA-9C1C-EB27C0B42364": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 20
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 20
+        },
+        "right": {
+          "key": "right",
+          "value": 20
+        },
+        "left": {
+          "key": "left",
+          "value": 20
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "BC3F26B5-3999-4610-9E1E-0602764A225C": {
+      "rev": 0,
+      "props": {
+        "borderWidth": {
+          "key": "borderWidth",
+          "value": {
+            "__ref__": true,
+            "id": "014EDC7E-52F6-4830-AACC-D41CBBE40286",
+            "rev": 0
+          }
+        },
+        "borderColor": {
+          "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "B2E4AFA1-592F-4712-8937-AB02D934B984",
+            "rev": 0
+          }
+        }
+      }
+    },
+    "014EDC7E-52F6-4830-AACC-D41CBBE40286": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "B2E4AFA1-592F-4712-8937-AB02D934B984": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "2F637DFA-56C9-4A84-A70A-A84890C13F20": {
       "rev": 0,
       "props": {
         "rules": {
           "key": "rules",
           "value": {
             "__ref__": true,
-            "id": "7E7609F6-645C-4923-A02B-B061EC352B9E",
+            "id": "6BB81522-2BC4-4152-9C58-DC97F627EA98",
             "rev": 0
           }
         },
@@ -1322,8 +1946,8 @@
           "key": "context",
           "value": {
             "__ref__": true,
-            "id": "EmptyWorld_F54D68AF_6B16_49B1_9B86_55DCFC3EBA98",
-            "rev": 5560
+            "id": "EmptyWorld_1805428D_C540_4C6F_9BF8_960AB76B43E3",
+            "rev": 20902
           }
         }
       },
@@ -1335,23 +1959,128 @@
             "version": "0.1.0"
           },
           "pathInPackage": "style-rules.js",
-          "lastChange": 1497022607191,
+          "lastChange": 1497971833601,
           "lastSuperclassChange": 0
         }
       }
     },
-    "7E7609F6-645C-4923-A02B-B061EC352B9E": {
+    "6BB81522-2BC4-4152-9C58-DC97F627EA98": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        ".List.dark": {
+          "key": ".List.dark",
+          "value": {
+            "__ref__": true,
+            "id": "93533F26-3902-4415-9536-4805F1D556A6",
+            "rev": 0
+          }
         },
+        ".List.dark .ListItemMorph": {
+          "key": ".List.dark .ListItemMorph",
+          "value": {
+            "__ref__": true,
+            "id": "2884E0C7-0CF7-40D2-89D6-5B385EF2BE5F",
+            "rev": 0
+          }
+        },
+        ".List.default": {
+          "key": ".List.default",
+          "value": {
+            "__ref__": true,
+            "id": "A51223AA-EA97-4F81-94C5-05AE26A1E0F3",
+            "rev": 0
+          }
+        }
+      }
+    },
+    "93533F26-3902-4415-9536-4805F1D556A6": {
+      "rev": 0,
+      "props": {
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
+        },
+        "hideScrollbars": {
+          "key": "hideScrollbars",
+          "value": true
+        },
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(2,0,0,0)"
+        }
+      }
+    },
+    "2884E0C7-0CF7-40D2-89D6-5B385EF2BE5F": {
+      "rev": 0,
+      "props": {
+        "fontFamily": {
+          "key": "fontFamily",
+          "value": "Monaco, monospace"
+        },
+        "nonSelectionFontColor": {
+          "key": "nonSelectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
+        },
+        "selectionFontColor": {
+          "key": "selectionFontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
+        },
+        "selectionColor": {
+          "key": "selectionColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
+        }
+      }
+    },
+    "A51223AA-EA97-4F81-94C5-05AE26A1E0F3": {
+      "rev": 0,
+      "props": {
+        "padding": {
+          "key": "padding",
+          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(2,0,0,0)"
+        }
+      }
+    },
+    "AA762A9F-6131-4547-B3A9-C9A0236B86B2": {
+      "rev": 0,
+      "props": {
+        "rules": {
+          "key": "rules",
+          "value": {
+            "__ref__": true,
+            "id": "43706791-D863-43F8-A990-BC46AD0AF07B",
+            "rev": 0
+          }
+        },
+        "context": {
+          "key": "context",
+          "value": {
+            "__ref__": true,
+            "id": "EmptyWorld_1805428D_C540_4C6F_9BF8_960AB76B43E3",
+            "rev": 20902
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "StyleSheet",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "style-rules.js",
+          "lastChange": 1497971833601,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "43706791-D863-43F8-A990-BC46AD0AF07B": {
+      "rev": 0,
+      "props": {
         ".LoadingIndicator [name=spinner]": {
           "key": ".LoadingIndicator [name=spinner]",
           "value": {
             "__ref__": true,
-            "id": "7331B259-E00C-48E5-A239-8B17E8160379",
+            "id": "CB6048C6-5767-47C3-82BA-473CA049716F",
             "rev": 0
           }
         },
@@ -1359,7 +2088,7 @@
           "key": ".LoadingIndicator .center-text",
           "value": {
             "__ref__": true,
-            "id": "5FF85581-2CF1-42DA-A5BB-875AB8937E1F",
+            "id": "1D1A9DE9-DE2B-4416-9E96-FFBC0284F01B",
             "rev": 0
           }
         },
@@ -1367,7 +2096,7 @@
           "key": ".LoadingIndicator [name=closeButton] [name=label]",
           "value": {
             "__ref__": true,
-            "id": "BBBED5B7-E9AA-484E-88DF-DFF95B05F099",
+            "id": "1204DC71-64BF-4CF7-B774-8F45F10A7E0A",
             "rev": 0
           }
         },
@@ -1375,19 +2104,15 @@
           "key": ".LoadingIndicator [name=closeButton]",
           "value": {
             "__ref__": true,
-            "id": "6F066973-F3A0-4BAA-A425-73CEF9737520",
+            "id": "D7B5D94E-CF82-4A4A-A71D-611A4A4597E8",
             "rev": 0
           }
         }
       }
     },
-    "7331B259-E00C-48E5-A239-8B17E8160379": {
+    "CB6048C6-5767-47C3-82BA-473CA049716F": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
@@ -1406,13 +2131,9 @@
         }
       }
     },
-    "5FF85581-2CF1-42DA-A5BB-875AB8937E1F": {
+    "1D1A9DE9-DE2B-4416-9E96-FFBC0284F01B": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "fontSize": {
           "key": "fontSize",
           "value": 16
@@ -1431,13 +2152,9 @@
         }
       }
     },
-    "BBBED5B7-E9AA-484E-88DF-DFF95B05F099": {
+    "1204DC71-64BF-4CF7-B774-8F45F10A7E0A": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
@@ -1448,13 +2165,9 @@
         }
       }
     },
-    "6F066973-F3A0-4BAA-A425-73CEF9737520": {
+    "D7B5D94E-CF82-4A4A-A71D-611A4A4597E8": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(20.0,20.0)"
@@ -1465,7 +2178,11 @@
         },
         "borderWidth": {
           "key": "borderWidth",
-          "value": 0
+          "value": {
+            "__ref__": true,
+            "id": "6475C1AF-AAF8-458E-99EF-814886438213",
+            "rev": 0
+          }
         },
         "fontColor": {
           "key": "fontColor",
@@ -1473,14 +2190,38 @@
         }
       }
     },
-    "21011A76-66CC-41F3-9F8A-11C9792E30F6": {
+    "6475C1AF-AAF8-458E-99EF-814886438213": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "1A91DB99-DB4F-4538-B661-A77BC1CEECA8": {
       "rev": 0,
       "props": {
         "rules": {
           "key": "rules",
           "value": {
             "__ref__": true,
-            "id": "28866579-C6FE-4816-AEB4-482B4BE452E4",
+            "id": "A615C749-3098-4A8B-84AC-316A110EF95D",
             "rev": 0
           }
         },
@@ -1488,8 +2229,8 @@
           "key": "context",
           "value": {
             "__ref__": true,
-            "id": "EmptyWorld_F54D68AF_6B16_49B1_9B86_55DCFC3EBA98",
-            "rev": 5560
+            "id": "EmptyWorld_1805428D_C540_4C6F_9BF8_960AB76B43E3",
+            "rev": 20902
           }
         }
       },
@@ -1501,349 +2242,19 @@
             "version": "0.1.0"
           },
           "pathInPackage": "style-rules.js",
-          "lastChange": 1497022607191,
+          "lastChange": 1497971833601,
           "lastSuperclassChange": 0
         }
       }
     },
-    "28866579-C6FE-4816-AEB4-482B4BE452E4": {
+    "A615C749-3098-4A8B-84AC-316A110EF95D": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        ".StyleEditor .closeStylerButton": {
-          "key": ".StyleEditor .closeStylerButton",
-          "value": {
-            "__ref__": true,
-            "id": "BC2060EE-E51C-4370-8C0E-C9411D42E704",
-            "rev": 0
-          }
-        },
-        ".StyleEditor .closeStylerButton [name=label]": {
-          "key": ".StyleEditor .closeStylerButton [name=label]",
-          "value": {
-            "__ref__": true,
-            "id": "A83E509C-BAE0-4D70-9D0C-87358624B491",
-            "rev": 0
-          }
-        },
-        ".StyleEditor.closed": {
-          "key": ".StyleEditor.closed",
-          "value": {
-            "__ref__": true,
-            "id": "B758F4B8-A259-4359-967F-1BC92019EC27",
-            "rev": 0
-          }
-        },
-        ".StyleEditor.opened": {
-          "key": ".StyleEditor.opened",
-          "value": {
-            "__ref__": true,
-            "id": "C8244CE8-4820-411F-9B03-2F4234E990E4",
-            "rev": 0
-          }
-        },
-        ".StyleEditor .controlLabel": {
-          "key": ".StyleEditor .controlLabel",
-          "value": {
-            "__ref__": true,
-            "id": "30177F09-7A8B-49FF-B231-C7D49A3E152D",
-            "rev": 0
-          }
-        },
-        ".StyleEditor .controlWrapper": {
-          "key": ".StyleEditor .controlWrapper",
-          "value": {
-            "__ref__": true,
-            "id": "AF09D295-9F2F-42B4-848F-92BBC091E4AB",
-            "rev": 0
-          }
-        }
-      }
-    },
-    "BC2060EE-E51C-4370-8C0E-C9411D42E704": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "nativeCursor": {
-          "key": "nativeCursor",
-          "value": "pointer"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
-        },
-        "extent": {
-          "key": "extent",
-          "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(20.0,25.0)"
-        },
-        "borderWidth": {
-          "key": "borderWidth",
-          "value": 0
-        }
-      }
-    },
-    "A83E509C-BAE0-4D70-9D0C-87358624B491": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
-        },
-        "fontSize": {
-          "key": "fontSize",
-          "value": 22
-        }
-      }
-    },
-    "B758F4B8-A259-4359-967F-1BC92019EC27": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "dropShadow": {
-          "key": "dropShadow",
-          "value": true
-        },
-        "draggable": {
-          "key": "draggable",
-          "value": true
-        },
-        "borderColor": {
-          "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        },
-        "borderWidth": {
-          "key": "borderWidth",
-          "value": 4
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0.7)"
-        },
-        "borderRadius": {
-          "key": "borderRadius",
-          "value": 15
-        }
-      }
-    },
-    "C8244CE8-4820-411F-9B03-2F4234E990E4": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "fill": {
-          "key": "fill",
-          "value": {
-            "__ref__": true,
-            "id": "9D836122-9BBD-4A7F-A1E7-69D3E246340E",
-            "rev": 0
-          }
-        },
-        "dropShadow": {
-          "key": "dropShadow",
-          "value": true
-        },
-        "borderWidth": {
-          "key": "borderWidth",
-          "value": 1
-        },
-        "borderRadius": {
-          "key": "borderRadius",
-          "value": 7
-        },
-        "borderColor": {
-          "key": "borderColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(204,204,204)"
-        }
-      }
-    },
-    "9D836122-9BBD-4A7F-A1E7-69D3E246340E": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "stops": {
-          "key": "stops",
-          "value": [
-            {
-              "__ref__": true,
-              "id": "19BA27D3-2D8C-41A0-A1E8-3A2EBF7667BF",
-              "rev": 0
-            },
-            {
-              "__ref__": true,
-              "id": "E535CDD5-6C4F-4CCF-94D4-FE6AF6B895F5",
-              "rev": 0
-            }
-          ]
-        },
-        "_vector": {
-          "key": "_vector",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(0,0,0,1)"
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "LinearGradient",
-        "module": {
-          "package": {
-            "name": "lively.graphics",
-            "version": "0.1.1"
-          },
-          "pathInPackage": "color.js",
-          "lastChange": 1497022606825,
-          "lastSuperclassChange": 0
-        }
-      }
-    },
-    "19BA27D3-2D8C-41A0-A1E8-3A2EBF7667BF": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "color": {
-          "key": "color",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(242,243,244)"
-        },
-        "offset": {
-          "key": "offset",
-          "value": 0
-        }
-      }
-    },
-    "E535CDD5-6C4F-4CCF-94D4-FE6AF6B895F5": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "color": {
-          "key": "color",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(229,231,233)"
-        },
-        "offset": {
-          "key": "offset",
-          "value": 1
-        }
-      }
-    },
-    "30177F09-7A8B-49FF-B231-C7D49A3E152D": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "readOnly": {
-          "key": "readOnly",
-          "value": true
-        },
-        "fontSize": {
-          "key": "fontSize",
-          "value": 12
-        },
-        "fontWeight": {
-          "key": "fontWeight",
-          "value": "bold"
-        },
-        "fontColor": {
-          "key": "fontColor",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(0,0,0)"
-        },
-        "padding": {
-          "key": "padding",
-          "value": "__lv_expr__:{rect}:lively.graphics/geometry-2d.js:rect(5,0,0,0)"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
-        }
-      }
-    },
-    "AF09D295-9F2F-42B4-848F-92BBC091E4AB": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
-        "clipMode": {
-          "key": "clipMode",
-          "value": "hidden"
-        },
-        "fill": {
-          "key": "fill",
-          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
-        },
-        "reactsToPointer": {
-          "key": "reactsToPointer",
-          "value": false
-        }
-      }
-    },
-    "ED81C264-3193-4CE7-BBA8-63B0E84B344C": {
-      "rev": 0,
-      "props": {
-        "rules": {
-          "key": "rules",
-          "value": {
-            "__ref__": true,
-            "id": "2AD8D0C2-1241-41E8-8FC2-272A2FC388A8",
-            "rev": 0
-          }
-        },
-        "context": {
-          "key": "context",
-          "value": {
-            "__ref__": true,
-            "id": "EmptyWorld_F54D68AF_6B16_49B1_9B86_55DCFC3EBA98",
-            "rev": 5560
-          }
-        }
-      },
-      "lively.serializer-class-info": {
-        "className": "StyleSheet",
-        "module": {
-          "package": {
-            "name": "lively.morphic",
-            "version": "0.1.0"
-          },
-          "pathInPackage": "style-rules.js",
-          "lastChange": 1497022607191,
-          "lastSuperclassChange": 0
-        }
-      }
-    },
-    "2AD8D0C2-1241-41E8-8FC2-272A2FC388A8": {
-      "rev": 0,
-      "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         ".GradientEditor": {
           "key": ".GradientEditor",
           "value": {
             "__ref__": true,
-            "id": "F5922234-F15E-4953-B8B8-7A46086DB484",
+            "id": "25251024-DFBD-4EB5-A110-4E2F0F2B8876",
             "rev": 0
           }
         },
@@ -1851,7 +2262,7 @@
           "key": ".GradientEditor [name=addStopLabel]",
           "value": {
             "__ref__": true,
-            "id": "EE25CFF3-DDB8-444E-AF3D-7C2B2740B812",
+            "id": "8A67D825-A4BB-4B67-B9CF-4B361F8AF548",
             "rev": 0
           }
         },
@@ -1859,7 +2270,7 @@
           "key": ".GradientEditor [name=stopControlPreview]",
           "value": {
             "__ref__": true,
-            "id": "FC8F2F94-7F65-4B34-A5BB-83BA618DD689",
+            "id": "E9BF0FF7-EE9A-4654-A5AD-3F39CF447625",
             "rev": 0
           }
         },
@@ -1867,7 +2278,7 @@
           "key": ".propertyView",
           "value": {
             "__ref__": true,
-            "id": "B92F14EA-A466-422D-ABAA-FC55B7DD1BA4",
+            "id": "D7C85B1E-E7BE-46F8-A944-C3333E43FC44",
             "rev": 0
           }
         },
@@ -1875,7 +2286,7 @@
           "key": ".GradientEditor .stopControlLine",
           "value": {
             "__ref__": true,
-            "id": "C56F8BAD-B5F8-44D9-AAEF-E63506A3F96B",
+            "id": "15E26075-8712-4968-84FD-085998359552",
             "rev": 0
           }
         },
@@ -1883,7 +2294,7 @@
           "key": ".StopControlHead",
           "value": {
             "__ref__": true,
-            "id": "C6909B53-0380-4695-9548-A938739B627B",
+            "id": "6577FA36-EA31-4D35-B176-A6D8C46D90C5",
             "rev": 0
           }
         },
@@ -1891,7 +2302,7 @@
           "key": ".pickerField",
           "value": {
             "__ref__": true,
-            "id": "2A866C2D-FD72-442B-8D5C-FE192C893B77",
+            "id": "E4A3A213-0D76-4259-BD9E-3BE64916447B",
             "rev": 0
           }
         },
@@ -1899,7 +2310,7 @@
           "key": ".GradientEditor .paletteField",
           "value": {
             "__ref__": true,
-            "id": "1B4E73D1-63A3-4BD5-A44B-60A63F9CC483",
+            "id": "A72AFBD0-3D89-4BCE-9307-BC0BAC8416B4",
             "rev": 0
           }
         },
@@ -1907,7 +2318,7 @@
           "key": ".GradientEditor [name=typeSelector]",
           "value": {
             "__ref__": true,
-            "id": "4F447E58-1DC3-4025-A1C0-262A123C90DB",
+            "id": "91A9BEB8-7CD0-41BD-AD40-E2B990035D5A",
             "rev": 0
           }
         },
@@ -1915,7 +2326,7 @@
           "key": ".GradientEditor .modeButton",
           "value": {
             "__ref__": true,
-            "id": "1D6A4FE3-B851-4B75-B4A6-0A67D956CF6F",
+            "id": "BC3B797F-8F0A-45A7-ABE7-C45AE6B3DCB4",
             "rev": 0
           }
         },
@@ -1923,7 +2334,7 @@
           "key": ".GradientEditor [name=instruction]",
           "value": {
             "__ref__": true,
-            "id": "C2FDF165-1C71-47D6-A923-078BABD7786B",
+            "id": "29229741-6563-4E8B-B8BD-A92687C2297B",
             "rev": 0
           }
         },
@@ -1931,7 +2342,7 @@
           "key": ".closeButton",
           "value": {
             "__ref__": true,
-            "id": "473A4D85-3003-4EA7-900A-7CE42C0C71DC",
+            "id": "32284CEE-0B97-450F-A459-7ADF111F3AC4",
             "rev": 0
           }
         },
@@ -1939,24 +2350,20 @@
           "key": ".GradientEditor [name=gradientEditor]",
           "value": {
             "__ref__": true,
-            "id": "0ED10145-DDF4-4C04-94B3-9BAA645D56EC",
+            "id": "5C5A3B6A-0456-4293-B94D-7A3F09659BDF",
             "rev": 0
           }
         }
       }
     },
-    "F5922234-F15E-4953-B8B8-7A46086DB484": {
+    "25251024-DFBD-4EB5-A110-4E2F0F2B8876": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "layout": {
           "key": "layout",
           "value": {
             "__ref__": true,
-            "id": "0425E89C-2376-4387-89AD-BFE4A9F3754C",
+            "id": "AE87F99F-D91F-43FE-9E81-785295A9575C",
             "rev": 0
           }
         },
@@ -1966,13 +2373,9 @@
         }
       }
     },
-    "0425E89C-2376-4387-89AD-BFE4A9F3754C": {
+    "AE87F99F-D91F-43FE-9E81-785295A9575C": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "applyRequests": {
           "key": "applyRequests",
           "value": []
@@ -1981,7 +2384,7 @@
           "key": "border",
           "value": {
             "__ref__": true,
-            "id": "439FA374-BA7B-4345-8128-C9162BBDA9A3",
+            "id": "966693D6-2263-4FE7-8C51-6C44299CC1B2",
             "rev": 0
           }
         },
@@ -1993,8 +2396,8 @@
           "key": "ignore",
           "value": []
         },
-        "lastBounds": {
-          "key": "lastBounds"
+        "lastBoundsExtent": {
+          "key": "lastBoundsExtent"
         },
         "active": {
           "key": "active",
@@ -2006,6 +2409,9 @@
         "_autoResize": {
           "key": "_autoResize",
           "value": true
+        },
+        "onScheduleApply": {
+          "key": "onScheduleApply"
         }
       },
       "lively.serializer-class-info": {
@@ -2016,18 +2422,14 @@
             "version": "0.1.0"
           },
           "pathInPackage": "layout.js",
-          "lastChange": 1497022607046,
+          "lastChange": 1497971833753,
           "lastSuperclassChange": 0
         }
       }
     },
-    "439FA374-BA7B-4345-8128-C9162BBDA9A3": {
+    "966693D6-2263-4FE7-8C51-6C44299CC1B2": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "top": {
           "key": "top",
           "value": 0
@@ -2046,13 +2448,9 @@
         }
       }
     },
-    "EE25CFF3-DDB8-444E-AF3D-7C2B2740B812": {
+    "8A67D825-A4BB-4B67-B9CF-4B361F8AF548": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "fontSize": {
           "key": "fontSize",
           "value": 18
@@ -2083,13 +2481,9 @@
         }
       }
     },
-    "FC8F2F94-7F65-4B34-A5BB-83BA618DD689": {
+    "E9BF0FF7-EE9A-4654-A5AD-3F39CF447625": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2.0,50.0)"
@@ -2100,20 +2494,20 @@
         }
       }
     },
-    "B92F14EA-A466-422D-ABAA-FC55B7DD1BA4": {
+    "D7C85B1E-E7BE-46F8-A944-C3333E43FC44": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0.7)"
         },
         "borderRadius": {
           "key": "borderRadius",
-          "value": 5
+          "value": {
+            "__ref__": true,
+            "id": "3953C480-C731-4EF5-927D-809052CEF92E",
+            "rev": 0
+          }
         },
         "padding": {
           "key": "padding",
@@ -2125,13 +2519,33 @@
         }
       }
     },
-    "C56F8BAD-B5F8-44D9-AAEF-E63506A3F96B": {
+    "3953C480-C731-4EF5-927D-809052CEF92E": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "top": {
+          "key": "top",
+          "value": 5
         },
+        "bottom": {
+          "key": "bottom",
+          "value": 5
+        },
+        "right": {
+          "key": "right",
+          "value": 5
+        },
+        "left": {
+          "key": "left",
+          "value": 5
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "15E26075-8712-4968-84FD-085998359552": {
+      "rev": 0,
+      "props": {
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(2.0,50.0)"
@@ -2146,20 +2560,20 @@
         }
       }
     },
-    "C6909B53-0380-4695-9548-A938739B627B": {
+    "6577FA36-EA31-4D35-B176-A6D8C46D90C5": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0.3)"
         },
         "borderRadius": {
           "key": "borderRadius",
-          "value": 20
+          "value": {
+            "__ref__": true,
+            "id": "3747812C-46A1-4E59-95DD-6D0FF4163E79",
+            "rev": 0
+          }
         },
         "extent": {
           "key": "extent",
@@ -2171,13 +2585,33 @@
         }
       }
     },
-    "2A866C2D-FD72-442B-8D5C-FE192C893B77": {
+    "3747812C-46A1-4E59-95DD-6D0FF4163E79": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "top": {
+          "key": "top",
+          "value": 20
         },
+        "bottom": {
+          "key": "bottom",
+          "value": 20
+        },
+        "right": {
+          "key": "right",
+          "value": 20
+        },
+        "left": {
+          "key": "left",
+          "value": 20
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "E4A3A213-0D76-4259-BD9E-3BE64916447B": {
+      "rev": 0,
+      "props": {
         "imageUrl": {
           "key": "imageUrl",
           "value": "https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png"
@@ -2200,13 +2634,9 @@
         }
       }
     },
-    "1B4E73D1-63A3-4BD5-A44B-60A63F9CC483": {
+    "A72AFBD0-3D89-4BCE-9307-BC0BAC8416B4": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "nativeCursor": {
           "key": "nativeCursor",
           "value": "pointer"
@@ -2221,13 +2651,9 @@
         }
       }
     },
-    "4F447E58-1DC3-4025-A1C0-262A123C90DB": {
+    "91A9BEB8-7CD0-41BD-AD40-E2B990035D5A": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "fill": {
           "key": "fill",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0)"
@@ -2238,13 +2664,9 @@
         }
       }
     },
-    "1D6A4FE3-B851-4B75-B4A6-0A67D956CF6F": {
+    "BC3B797F-8F0A-45A7-ABE7-C45AE6B3DCB4": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "nativeCursor": {
           "key": "nativeCursor",
           "value": "pointer"
@@ -2255,17 +2677,41 @@
         },
         "borderWidth": {
           "key": "borderWidth",
-          "value": 2
+          "value": {
+            "__ref__": true,
+            "id": "39DA59D7-7656-42EC-8194-7470DE281E36",
+            "rev": 0
+          }
         }
       }
     },
-    "C2FDF165-1C71-47D6-A923-078BABD7786B": {
+    "39DA59D7-7656-42EC-8194-7470DE281E36": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
+        "top": {
+          "key": "top",
+          "value": 2
         },
+        "bottom": {
+          "key": "bottom",
+          "value": 2
+        },
+        "right": {
+          "key": "right",
+          "value": 2
+        },
+        "left": {
+          "key": "left",
+          "value": 2
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "29229741-6563-4E8B-B8BD-A92687C2297B": {
+      "rev": 0,
+      "props": {
         "fontSize": {
           "key": "fontSize",
           "value": 15
@@ -2284,13 +2730,9 @@
         }
       }
     },
-    "473A4D85-3003-4EA7-900A-7CE42C0C71DC": {
+    "32284CEE-0B97-450F-A459-7ADF111F3AC4": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "fontColor": {
           "key": "fontColor",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(230,230,230)"
@@ -2309,28 +2751,307 @@
         }
       }
     },
-    "0ED10145-DDF4-4C04-94B3-9BAA645D56EC": {
+    "5C5A3B6A-0456-4293-B94D-7A3F09659BDF": {
       "rev": 0,
       "props": {
-        "_rev": {
-          "key": "_rev",
-          "value": 0
-        },
         "extent": {
           "key": "extent",
           "value": "__lv_expr__:{pt}:lively.graphics/geometry-2d.js:pt(180.0,50.0)"
         },
         "borderRadius": {
           "key": "borderRadius",
-          "value": 5
+          "value": {
+            "__ref__": true,
+            "id": "7880CBA8-EF35-4D6C-9FB5-1C6179C37197",
+            "rev": 0
+          }
         },
         "borderWidth": {
           "key": "borderWidth",
-          "value": 1
+          "value": {
+            "__ref__": true,
+            "id": "9D11B5AE-066A-4AE4-8B7C-A4836371D670",
+            "rev": 0
+          }
         },
         "borderColor": {
           "key": "borderColor",
+          "value": {
+            "__ref__": true,
+            "id": "4348F76D-A566-477D-9859-21CBA75861D4",
+            "rev": 0
+          }
+        }
+      }
+    },
+    "7880CBA8-EF35-4D6C-9FB5-1C6179C37197": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 5
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 5
+        },
+        "right": {
+          "key": "right",
+          "value": 5
+        },
+        "left": {
+          "key": "left",
+          "value": 5
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "9D11B5AE-066A-4AE4-8B7C-A4836371D670": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 1
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 1
+        },
+        "right": {
+          "key": "right",
+          "value": 1
+        },
+        "left": {
+          "key": "left",
+          "value": 1
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "4348F76D-A566-477D-9859-21CBA75861D4": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
           "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "right": {
+          "key": "right",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "left": {
+          "key": "left",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(102,102,102)"
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "7E946748-B0FF-4F38-8585-F7E2B4A827A4": {
+      "rev": 0,
+      "props": {
+        "rules": {
+          "key": "rules",
+          "value": {
+            "__ref__": true,
+            "id": "FB3E2512-C17C-424C-98D9-2B1EDE865BB6",
+            "rev": 0
+          }
+        },
+        "context": {
+          "key": "context",
+          "value": {
+            "__ref__": true,
+            "id": "EmptyWorld_1805428D_C540_4C6F_9BF8_960AB76B43E3",
+            "rev": 20902
+          }
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "StyleSheet",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "style-rules.js",
+          "lastChange": 1497971833601,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "FB3E2512-C17C-424C-98D9-2B1EDE865BB6": {
+      "rev": 0,
+      "props": {
+        ".Tooltip": {
+          "key": ".Tooltip",
+          "value": {
+            "__ref__": true,
+            "id": "E65720CF-CAC2-438A-83B8-CA20AEDF3505",
+            "rev": 0
+          }
+        },
+        ".Tooltip .Label": {
+          "key": ".Tooltip .Label",
+          "value": {
+            "__ref__": true,
+            "id": "EA4DA0D7-EFE4-49CD-8D1E-7B2552F01B88",
+            "rev": 0
+          }
+        }
+      }
+    },
+    "E65720CF-CAC2-438A-83B8-CA20AEDF3505": {
+      "rev": 0,
+      "props": {
+        "draggable": {
+          "key": "draggable",
+          "value": false
+        },
+        "fill": {
+          "key": "fill",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgba(0,0,0,0.5)"
+        },
+        "borderRadius": {
+          "key": "borderRadius",
+          "value": {
+            "__ref__": true,
+            "id": "AF53E0F9-C77F-4635-9FF0-703B8EF08348",
+            "rev": 0
+          }
+        },
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
+        },
+        "layout": {
+          "key": "layout",
+          "value": {
+            "__ref__": true,
+            "id": "317E0AAC-8DA9-4829-B090-BA9F13F9D955",
+            "rev": 0
+          }
+        }
+      }
+    },
+    "AF53E0F9-C77F-4635-9FF0-703B8EF08348": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 4
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 4
+        },
+        "right": {
+          "key": "right",
+          "value": 4
+        },
+        "left": {
+          "key": "left",
+          "value": 4
+        },
+        "valueOf": {
+          "key": "valueOf"
+        }
+      }
+    },
+    "317E0AAC-8DA9-4829-B090-BA9F13F9D955": {
+      "rev": 0,
+      "props": {
+        "applyRequests": {
+          "key": "applyRequests",
+          "value": []
+        },
+        "border": {
+          "key": "border",
+          "value": {
+            "__ref__": true,
+            "id": "5970861D-3303-4439-A98F-2EDC20C5DEC2",
+            "rev": 0
+          }
+        },
+        "_spacing": {
+          "key": "_spacing",
+          "value": 5
+        },
+        "ignore": {
+          "key": "ignore",
+          "value": []
+        },
+        "lastBoundsExtent": {
+          "key": "lastBoundsExtent"
+        },
+        "active": {
+          "key": "active",
+          "value": false
+        },
+        "container": {
+          "key": "container"
+        },
+        "_autoResize": {
+          "key": "_autoResize",
+          "value": true
+        },
+        "onScheduleApply": {
+          "key": "onScheduleApply"
+        },
+        "_direction": {
+          "key": "_direction",
+          "value": "leftToRight"
+        }
+      },
+      "lively.serializer-class-info": {
+        "className": "HorizontalLayout",
+        "module": {
+          "package": {
+            "name": "lively.morphic",
+            "version": "0.1.0"
+          },
+          "pathInPackage": "layout.js",
+          "lastChange": 1497971833756,
+          "lastSuperclassChange": 0
+        }
+      }
+    },
+    "5970861D-3303-4439-A98F-2EDC20C5DEC2": {
+      "rev": 0,
+      "props": {
+        "top": {
+          "key": "top",
+          "value": 0
+        },
+        "left": {
+          "key": "left",
+          "value": 0
+        },
+        "right": {
+          "key": "right",
+          "value": 0
+        },
+        "bottom": {
+          "key": "bottom",
+          "value": 0
+        }
+      }
+    },
+    "EA4DA0D7-EFE4-49CD-8D1E-7B2552F01B88": {
+      "rev": 0,
+      "props": {
+        "fontColor": {
+          "key": "fontColor",
+          "value": "__lv_expr__:{Color}:lively.graphics/color.js:Color.rgb(255,255,255)"
         }
       }
     }
@@ -2344,5 +3065,5 @@
       }
     }
   },
-  "preview": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAANtUlEQVR4Xu2dv28c1xHH5/ibFEnToqRYkQB1dBEYSOAuXRAgQYIgZdImlVoB+kOCpEiaFEmp2u7TRU3cpTIggIEFK7Eoy5aOv0QeL5g9rny627c7826PR2k+BxAQdPN2dz7zvvd+zHtvO8IHAhBIEujABgIQSBNAINQOCNQQQCBUDwggEOoABPII0ILkcaNUEAIIJEigcTOPAALJ40apIAQQSJBA42YeAQSSx41SQQggkCCBxs08AggkjxulghBAIEECjZt5BBBIHjdKBSGAQIIEGjfzCCCQPG6UCkIAgQQJNG7mEUAgedwoFYQAAgkSaNzMI4BA8rhRKggBBBIk0LiZRwCB5HGjVBACCCRIoHEzjwACyeNGqSAEEEiQQONmHgEEkseNUkEIIJAggcbNPAIIJI8bpYIQQCBBAo2beQQQSB43SgUhgECCBBo38wggkDxulApCAIEECTRu5hFAIHncKBWEAAIJEmjczCOAQPK4USoIAQQSJNC4mUcAgeRxo1QQAggkSKBxM48AAsnjRqkgBBBIkEDjZh4BBJLHjVJBCCCQIIHGzTwCCCSPG6WCEEAgQQKNm3kEEEgeN0oFIdDp9/v9IL7iJgTcBBCIGxkFIhFAIJGija9uAgjEjYwCkQggkEjRxlc3AQTiRkaBSAQQSKRo46ubAAJxI6NAJAIIJFK08dVNAIG4kVEgEgEEEina+OomgEDcyCgQiQACiRRtfHUTQCBuZBSIRACBRIo2vroJIBA3MgpEIoBAIkUbX90EEIgbGQUiEUAgly3aZ6cixy9Feqci/VORzoLI/KLIwrLIwopIh13SFxkyBHKRtJvu9Wpf5PhFvZUKZmltIJi5haYr8v2EBBDIhABbK35yKHL0je9ynflBq6KCQSw+dkZrBGIENVUzPTej+z8RmeD8jPklkZX3EErLgUIgLQPNulxO61F5o47IlWuIJCsI1YUQSIswsy/V/Uqk3xsp3hHpzFX8f9NdOiIbHzQZ8b2RAAIxgpqamc5a7T8dv/ziusjKhshZT6T3SuT0aPBn+axsiSyuWiyxaSCAQGZdRY5eiJzsjz/F+gfjU7o6VimFUicWHY+sbc/as3fi/gjEE8by11xnjzQ30UZOoqp7pVO569frn0zFcnJQPS2sz7d+w+MZtgkCCMRSNbQbdPB8kLgb/hQzR1sic/OWq4zbqOD2v0p3r5qumiqv5TZuNpXmewMBBNIEyTLDtLQhsrzedKXx71OJwSvXbTNRqfJ0sfyxoAXJYGYRR3lZ7RatXfW1Jt2n462SOGahDp9XD9yXN0WWrmQ4TJFRArQgqTqRml2qrUOdQbLOMoOU6h4trIqsbtlq6ssn1XZXbviEartbSCsEUhV2HQDr1OtYbsJYR3T5h45N6gbxqe7RyvsiiyvNNzo5Ejl6Pm5nGeA3Xx2LcwIIpKoqHDwb5B4m+ehMUtHlSiwonLR7lZoeXrwisrI5yZNTdogAAhmtDpYVtZ4qVDWAV/GpCEc/nu5VZfZdRKwDfI8PgW0RyHDwi3HH3mSLBqsq0/B0sHbfDr+ubqE0uae2TZ/U+IX8RxM59/cIZBhZZbenganOGPVOzmeTGlbj6vhAV+xWjW08lTvVynlaIHdViVkAgZRxP3opctL11YLh/n4qmWi9omf9VGp61zrAtz4TdoJAykrw8r++rlVqtig1eK6rbJ6Zp2LviD7r6MeRP6HimwkgEEXVPzvfsGTlpvsuNNudWGJSDMK/Ngqu4Vqjj5Sa3qV7ZQ2eyw6BKC5vUtDSldFf+uPu+UrdxNgkJ/ue6gp6umiuKhLbGIF4BeLNM+iMky5N14F8OTjXjVCaTLRk3EfrZypHQ/Z8KkpGIIVAEqtqx7r584OuVRvL3HPDmRIIq3dzidaWQyCeQbo1TzGVUJ1f9PAbkdPD8Ttoy7a8MVvxTtPvGV0bgZTgU4Pf4cBchlWybWX6hxOS88uD9V8cHTQ+N9jv62iST0HAsrxdK9bq1dn9UrdxRFAq3LP27RJWQ1qQsWlUPcDt24Yp2s5gIaJlWcg0gp6T1LQ+h2b0Zz3Osj7rBdghkCrIOmjXPMboFttR29ydhG0ENjUWaePa5FReU0QgdRXKkhWfZbdEx016lm/uvpU635kVK+ggkKZfXEtWXBN+eqLhrKZ/NdH5Sme2+iJnJ/UeaT7GcsTp+vcGB9cF/yAQSwWoW6JelncclPDw4UN59qxiP0jFs9y8eVOuXbsmd+7csTxps411/MK+ElqQ5to0YtFUuYzLPe7evVt5652FJ8Vv++7pdTmR73Yi7uzsyP37992PW1mgyYeyEAJBIFk1rm5TlXFV7rBAfrXymTzubcvnp9+XP2z9rXikTw8/lk+OPn79eAgkK1KtFKKLlYOx7lCHqiNDR+5RCuTqXFd+vfIveXa2ITsLX8oXvW354eKu/GX/58W/yw8CyQlSO2UQSC7HVObdsBylFMhq55X8bu0f8veDn8hBf7DV9sfLn8vO/JeyPd+VP3Z/Kaf9OUEguUGavBwCyWWYyro7BKK3/nDxSSGI4S6V/v/99U/krwc/lW/P1hBIboxaKIdAciDWjUMM+YO6FkS7WPq3PfdS/tT9RTFYb7UFsaw5UyYM0hmk52hDigqm7xKsWMKmezxW32+8bCmQG/Mv5KOF/4h2tX60tCt/7v6sEIcO2BmDNGK8EANaECtmHZjrGq2qpeblNQzdKzUdnsX6zeo/C0Hon/774cmHY12uVlsQpnmtEacFMZOynFji2GmYyoP8YOELWZrryb9f3W43D6LiLjLoumJ53/amKrpYCMQkEMv+C+fiPhXI5sJ+/7e/v9dZW1uTg4MD2dzclG63K9vb29Lr9WR3d1cePHhQPGJtC6ILK/UZdYnJpMelDgNhqQkCqRVI0aXS3XsN7wUs3yVoUtvA6N69e3J4+N2uwFu3bsne3p4cHx8X329tbRVCefToUVogxaEQepZXxevbHM9SbcoRQiUXxiBVNaToUuly99E3zw4Z674JfU1Bxp4QbTEeP35srsa3b98WbWne+OScAmm9Y4borZd+2+wQyGjELF2qWa/etSzDz62Js/Yt97mnVA6BDIO1bkIyTudOJWbWE1jcN++IFAc/rM9u2b77madfAIGUjC0tx3A8LIfHTSN+dc+pv/4qXs9nbm7wxt6MrqLnNm+rLQIpI5d6nVkysh2RYqanc7GxT52LZVxqf7EP+/bfDYFoDHO7Ld6uls48TSooDo67UNUhkEIg+uKcp3ngm87K0kWNOlX8xnRxZ9AV0oPevO9YTwnEsMw+z8HYpRDIpALR8lVZZ03a6aC/9kAFfSvulu2lnWU9Tc1gzWpM9I7rB4FogN2vPxipFcNnSeUk8DzLOnj9wYVKEoGUuFMvxbSGQ2eQtMuUcwyP57C2upMV6WZZo2W2QyAlKsuxo2asGYae7HUqX8NMVgb4+iIIZJhPG+9HT/HWVkIH5jomqVrf5XmJZ/I10rb9KK3Xonf4gghkOLjFdK/OZrV8nvfoqwnaeAlnKm9DN6tVuSKQUZzWLammMCQOuU5NK1uWzWvrodn01CpjZrNMkbEaIZAqUtY1WXWUm87srVyNm8jOF0eLHgxE0XQOr0Vk1tqBHWfzVtaB4tyrvebT3VMVqCl5qOVSW1/Lwbq2ZK8TjJ4uH3s52tQ1LUiKZt3JJXUDcX1viOVNTZNk75tqAN2sJkLm7xFIHSrPeES7Nivv+dZaTZp7ST27Y3+8uaYENUQgTYFvzI9kLBcp7zmtjU+Ok+ab3I/+PQKx1ADtDumRP28citDCBqOpdbMYh1jCarFBIBZKpY3mSXQWSZN63lW4qftMo5vlSTp6/A9oi0BmHfRpdLPoYrUWVQTSGsrMC02jm2WZZs583GjFEMhliHib3SzjS3wug9tvwzMgkMsQJet5uU3P2pS9byrP92MEEMhlqBR1ezwsz6eDct2LsrhqscbGQQCBOGBN1bQx3zJ69/N97bqEftF51M9UHXm3Lo5ALlM8G0WCKC46XAjkook33W/4tPbSdm5JZGnVtsar6fp87yKAQFy4MI5GAIFEizj+ugggEBcujKMRQCDRIo6/LgIIxIUL42gEEEi0iOOviwACceHCOBoBBBIt4vjrIoBAXLgwjkYAgUSLOP66CCAQFy6MoxFAINEijr8uAgjEhQvjaAQQSLSI46+LAAJx4cI4GgEEEi3i+OsigEBcuDCORgCBRIs4/roIdFzWGEMgGAEEEizguOsjgEB8vLAORgCBBAs47voIIBAfL6yDEUAgwQKOuz4CCMTHC+tgBBBIsIDjro8AAvHxwjoYAQQSLOC46yOAQHy8sA5GAIEECzju+gggEB8vrIMRQCDBAo67PgIIxMcL62AEEEiwgOOujwAC8fHCOhgBBBIs4LjrI4BAfLywDkYAgQQLOO76CCAQHy+sgxFAIMECjrs+AgjExwvrYAQQSLCA466PAALx8cI6GAEEEizguOsjgEB8vLAORgCBBAs47voIIBAfL6yDEUAgwQKOuz4CCMTHC+tgBBBIsIDjro8AAvHxwjoYAQQSLOC46yOAQHy8sA5GAIEECzju+gggEB8vrIMRQCDBAo67PgIIxMcL62AEEEiwgOOujwAC8fHCOhgBBBIs4LjrI4BAfLywDkYAgQQLOO76CCAQHy+sgxFAIMECjrs+Av8HlCMYZMQENjcAAAAASUVORK5CYII="
+  "preview": "data:image/png;base64,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"
 }

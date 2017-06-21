@@ -1,10 +1,18 @@
-import { Ellipse, Morph, Path, Text,
-         HorizontalLayout, GridLayout,
-         VerticalLayout, morph, Menu } from "../index.js";
-import { Color, pt, rect, Line, Rectangle } from "lively.graphics";
-import { string, obj, arr, num, grid } from "lively.lang";
-import { CheckBox, ValueScrubber, PropertyInspector } from "../components/widgets.js";
+import {
+  Ellipse,
+  Morph,
+  Path,
+  Text,
+  HorizontalLayout,
+  VerticalLayout,
+  morph,
+  Menu
+} from "../index.js";
+import { Color, pt, rect, Rectangle } from "lively.graphics";
+import { arr } from "lively.lang";
+import { LabeledCheckBox } from "../components/widgets.js";
 import { connect } from "lively.bindings";
+import { NumberWidget } from "../ide/value-widgets.js";
 
 class AxisHalo extends Morph {
 
@@ -397,24 +405,17 @@ export class GridLayoutHalo extends Morph {
 
   optionControls() {
       const layout = this.target,
-            compensateOrigin = new CheckBox({
-                name: "compensateOrigin",
+            compensateOrigin = new LabeledCheckBox({
+                name: "compensateOrigin", label: 'Compensate Origin',
+                fill: Color.transparent,
                 checked: layout.compensateOrigin}),
-            fitToCell = new CheckBox({
+            fitToCell = new LabeledCheckBox({
+              label: 'Resize Submorphs', fill: Color.transparent,
                 name: "fitToCell", checked: layout.fitToCell});
-      connect(compensateOrigin, "toggle", layout, "compensateOrigin");
-      connect(fitToCell, "toggle", layout, "fitToCell");
-      connect(compensateOrigin, "toggle", this, "alignWithTarget");
-      return [[{type: "text", textString: "Compensate Origin",
-               padding: rect(5,0,10,10), fill: Color.transparent,
-               fontColor: Color.gray.darker(),
-               readOnly: true}, compensateOrigin],
-               [{type: "text", textString: "Fit morphs to cell",
-               padding: rect(5,0,10,10), fill: Color.transparent,
-               fontColor: Color.gray.darker(),
-               readOnly: true}, fitToCell]]
-              .map(x => { return {submorphs: x, fill: Color.transparent,
-                                  layout: new HorizontalLayout({spacing: 3})}})
+      connect(compensateOrigin, "checked", layout, "compensateOrigin");
+      connect(fitToCell, "checked", layout, "fitToCell");
+      connect(compensateOrigin, "checked", this, "alignWithTarget");
+      return [compensateOrigin, fitToCell];
   }
 
   get isLayoutHalo() { return false }
@@ -666,18 +667,37 @@ export class TilingLayoutHalo extends Morph {
   }
 
   optionControls() {
-      const layout = this.target,
-            spacing = new PropertyInspector({
-                              min: 0, target: layout,
-                              unit: "px", property: "spacing"});
-      return [[{type: "text", textString: "Submorph Spacing",
-               padding: Rectangle.inset(5), fill: Color.transparent,
-               fontColor: Color.gray.darker(),
-               readOnly: true}, spacing]]
-              .map(x => { return {submorphs: x, fill: Color.transparent,
-                                  layout: new HorizontalLayout({spacing: 3})}})
+    const layout = this.target,
+          spacing = new NumberWidget({
+            min: 0,
+            number: layout.spacing,
+            padding: rect(5,3,0,0),
+            borderRadius: 3,
+            borderWidth: 1,
+            borderColor: Color.gray,
+            unit: "px"
+          });
+    connect(spacing, 'number', layout, 'spacing');
+    return [
+      [
+        {
+          type: "text",
+          textString: "Submorph Spacing",
+          padding: rect(0,5,5,5),
+          fill: Color.transparent,
+          fontColor: Color.gray.darker(),
+          readOnly: true
+        },
+        spacing
+      ]
+    ].map(x => {
+      return {
+        submorphs: x,
+        fill: Color.transparent,
+        layout: new HorizontalLayout({spacing: 3})
+      };
+    });
   }
-
 
 }
 
@@ -766,64 +786,41 @@ export class FlexLayoutHalo extends Morph {
 
   optionControls() {
     const layout = this.target,
-          spacing = new PropertyInspector({
+          spacing = new NumberWidget({
+            fill: Color.white,
+            borderWidth: 1,
+            borderRadius: 4,
+            padding: rect(5,4,0,0),
+            borderColor: Color.gray,
             min: 0,
-            target: layout,
-            defaultValue: 0,
+            number: layout.spacing,
             unit: "px",
-            property: "spacing"
           }),
-          autoResizeCb = new CheckBox({
-            name: "autoResize",
+          autoResizeCb = new LabeledCheckBox({
+            name: "autoResize", label: 'Resize Container',
+            alignCheckBox: 'right',
+            fill: Color.transparent,
             checked: layout.autoResize
           }),
-          resizeSubmorphsCb = new CheckBox({
+          resizeSubmorphsCb = new LabeledCheckBox({
+            label: 'Resize Submorphs',
             name: "resizeSubmorphs",
+            alignCheckBox: 'right',
+            fill: Color.transparent,
             checked: layout.resizeSubmorphs
           });
-    connect(autoResizeCb, "toggle", this, "updateAutoResizePolicy");
-    connect(resizeSubmorphsCb, "toggle", this, "updateResizeSubmorphsPolicy");
+    connect(spacing, 'number', layout, 'spacing');
+    connect(autoResizeCb, "checked", this, "updateAutoResizePolicy");
+    connect(resizeSubmorphsCb, "checked", this, "updateResizeSubmorphsPolicy");
     return [
-      [
-        {
-          type: "text",
-          textString: "Resize container",
-          padding: rect(5, 0, 10, 10),
-          fill: Color.transparent,
-          fontColor: Color.gray.darker(),
-          readOnly: true
-        },
-        autoResizeCb
-      ],
-      [
-        {
-          type: "text",
-          textString: "Resize submorphs",
-          padding: rect(5, 0, 10, 10),
-          fill: Color.transparent,
-          fontColor: Color.gray.darker(),
-          readOnly: true
-        },
-        resizeSubmorphsCb
-      ],
-      [
-        {
-          type: "text",
-          textString: "Submorph Spacing",
-          padding: Rectangle.inset(5),
-          fill: Color.transparent,
-          fontColor: Color.gray.darker(),
-          readOnly: true
-        },
-        spacing
-      ]
-    ].map(x => {
-      return {
-        submorphs: x,
-        fill: Color.transparent,
-        layout: new HorizontalLayout({spacing: 3})
-      };
-    });
+        autoResizeCb,
+        resizeSubmorphsCb,
+        {fill: Color.transparent, layout: new HorizontalLayout(),
+         submorphs: [
+           {type: 'label', value: 'Submorph Spacing', 
+            fontColor: Color.gray.darker(),
+            padding: rect(0,5,5,5)}, spacing]}
+    ];
   }
 
 }
