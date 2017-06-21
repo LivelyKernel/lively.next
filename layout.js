@@ -455,7 +455,7 @@ export class CenteredTilingLayout extends TilingLayout {
   description() { return "Similar to TilingLayout but center the rows." }
 
   apply(animate = false) {
-    if (this.active) return;
+    if (this.active || !this.container) return;
 
     this.active = true;
     super.apply(animate);
