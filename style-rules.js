@@ -1180,16 +1180,22 @@ export class StyleSheet {
   get context() { return this._context }
 
   unwrapFoldedProps(props) {
-    ["borderRadius", "borderWidth", "borderColor", 'borderStyle'].forEach(p => {
+    ["borderRadius", "borderWidth", "borderColor", "borderStyle"].forEach(p => {
       if (p in props) {
-        let v = props[p], {top, bottom, right, left} = v;
-        props[p] = (top && bottom && right && left) ? v : {top: v, bottom: v, right: v, left: v, 
-                                                         valueOf: () => v}
+        let v = props[p];
+        props[p] = arr.intersect(obj.keys(v), ["top", "left", "bottom", "right"]).length == 4
+          ? v
+          : {
+              top: v,
+              bottom: v,
+              right: v,
+              left: v,
+              valueOf: () => v
+            };
       }
     });
     return props;
   }
-
   refreshMorphsFor(rule) {
     for (let morph of this.sizzle.select(rule)) {
        morph._styleSheetProps = null;
