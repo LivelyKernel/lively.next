@@ -12,8 +12,11 @@ var commands = [
   {
     name: "undo",
     exec: world => {
-      if (world.focusedMorph && world.focusedMorph !== world && world.focusedMorph.undoManager)
-        return false;
+      if (
+        world.focusedMorph &&
+        world.focusedMorph !== world &&
+        world.focusedMorph.undoManager
+      ) return false;
       world.env.undoManager.undo();
       return true;
     }
@@ -22,8 +25,11 @@ var commands = [
   {
     name: "redo",
     exec: world => {
-      if (world.focusedMorph && world.focusedMorph !== world && world.focusedMorph.undoManager)
-        return false;
+      if (
+        world.focusedMorph &&
+        world.focusedMorph !== world &&
+        world.focusedMorph.undoManager
+      ) return false;
       world.env.undoManager.redo();
       return true;
     }
@@ -33,11 +39,11 @@ var commands = [
     name: "run command",
     handlesCount: true,
     exec: async (world, args, count) => {
-      let target = world.focusedMorph || world;
-      let items = KeyHandler.generateCommandToKeybindingMap(target, true).map(ea => {
-        var {prettyKeys, target, command: {name}} = ea,
-            targetName = target.constructor.name,
-            keysPrinted = prettyKeys ? prettyKeys.join(", ") : "";
+      let target = world.focusedMorph || world,
+          items = KeyHandler.generateCommandToKeybindingMap(target, true).map(ea => {
+            var {prettyKeys, target, command: {name}} = ea,
+                targetName = target.constructor.name,
+                keysPrinted = prettyKeys ? prettyKeys.join(", ") : "";
         return {
           isListItem: true,
           value: ea,
@@ -105,9 +111,11 @@ var commands = [
               return {
                 isListItem: true,
                 label: [
-                  `${String(++i)}${"\u2003".repeat(depth)}`, {fontSize: "80%", textStyleClasses: ["v-center-text"], top: "-8%", paddingRight: "10px"},
-									`${m}`, null
-                ],
+                  `${String(++i)}${"\u2003".repeat(depth)}`, {
+                    fontSize: "80%",
+                    textStyleClasses: ["v-center-text"],
+                    paddingRight: "10px"
+                  }, `${m}`, null],
                 value: m
               }
             },
@@ -141,7 +149,8 @@ var commands = [
       var halos = world.halos();
       halos.forEach(h => h.remove());
       world.hands.forEach(ea => ea.cancelGrab(true, evt));
-      var focusTarget = (arr.last(halos) && arr.last(halos).target) || world.focusedMorph || world;
+      var focusTarget = (arr.last(halos) && arr.last(halos).target)
+                      || world.focusedMorph || world;
       focusTarget.focus();
       return false;
     }
