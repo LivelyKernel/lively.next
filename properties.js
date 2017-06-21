@@ -189,11 +189,11 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
     let key = sortedKeys[i],
         descriptor = properties[key];
 
-    let derived = descriptor.derived,
+    let derived = descriptor.derived, foldable = !!descriptor.foldable,
         defaultValue = descriptor.hasOwnProperty("defaultValue") ?
                         descriptor.defaultValue : undefined;
     if (Array.isArray(defaultValue)) defaultValue = defaultValue.slice();
-    if (!derived) instance[valueStoreProperty][key] = defaultValue;
+    if (!derived && !foldable) instance[valueStoreProperty][key] = defaultValue;
 
     let initAction;
     if (descriptor.hasOwnProperty("initialize")) {
@@ -201,6 +201,9 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
       propsNeedingInitialize.push(key);
     } else if (derived && defaultValue !== undefined) {
       initAction = initActions[key] = {derived: defaultValue}
+      propsNeedingInitialize.push(key);
+    } else if (foldable && defaultValue !== undefined) {
+      initAction = initActions[key] = {folded: defaultValue}
       propsNeedingInitialize.push(key);
     }
 
@@ -241,6 +244,10 @@ function prepareInstanceForProperties(instance, propertySettings, properties, va
     // value or the value from values
     else if (actions.hasOwnProperty("derived")) {
       instance[key] = hasValue ? actions.value : actions.derived;
+    }
+
+    else  if (actions.hasOwnProperty("folded")) {
+      instance[key] = hasValue ? actions.value : actions.folded;
     }
 
     // if we only have the value from values we simply call the setter with it

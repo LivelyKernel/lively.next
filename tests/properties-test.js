@@ -1,8 +1,10 @@
 /*global beforeEach, afterEach, describe, it*/
 
-import { expect } from "mocha-es6";
+import { expect, assert } from "mocha-es6";
 import { initializeClass } from "../runtime.js";
 import "../properties.js";
+import { arr } from "lively.lang";
+import { keys } from "lively.lang/object.js";
 
 // FIXME ???
 var m = lively.modules.module("lively.classes/properties.js")
@@ -11,9 +13,6 @@ var  {
   prepareInstanceForProperties,
   propertiesAndSettingsInHierarchyOf
 } = m.recorder;
-
-
-
 
 describe("properties", function() {
 
@@ -119,6 +118,27 @@ describe("properties", function() {
       expect(obj).property("b", 23);
       expect(obj._state).have.property("a");
       expect(obj._state).not.have.property("b");
+    })
+
+    it("sets default value of foldable property via setter", () => {
+      var obj = new classA();
+      var props = {
+        f: {
+          foldable: ['x', 'y', 'z'],
+          defaultValue: 23,
+          set(val) {
+            this._f = arr.intersect(keys(val), ['x', 'y', 'z']).length == 3 ? val : {x: val, y: val, z: val};
+          },          
+          get() { return this._f }
+        }
+      }
+      var {propertySettings} = propertiesAndSettingsInHierarchyOf(classA)
+      prepareClassForProperties(classA, propertySettings, props);
+      prepareInstanceForProperties(obj, propertySettings, props);
+      expect(Array.from(obj.f)).equals(Array.from({x: 23, y: 23, z: 23}));
+      expect(obj).have.property("_f");
+      obj.f = {x: 20, y: 23, z: 23};
+      expect(Array.from(obj.f)).equals(Array.from({x: 20, y: 23, z: 23}));
     })
 
     it("runs initialize", () => {
