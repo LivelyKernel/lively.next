@@ -44,11 +44,11 @@ export default class Halo extends Morph {
         7, {fixed: 36, paddingTop: 10}
       ],
       grid: [
-          [null,   null,   "grab", null,  "drag", null,   "close"  ],
+          ["menu",   null,   "grab", null,  "drag", null,   "close"  ],
           [null,     null,   null,   null,  null,   null,   null     ],
-          ["menu",   null,   null,   null,  null,   null,   "edit"   ],
+          ["copy",   null,   null,   null,  null,   null,   "edit"   ],
           [null,     null,   null,   null,  null,   null,   null     ],
-          ["copy",  null,   null,   null,  null,   null,   "inspect"],
+          [null,  null,   null,   null,  null,   null,   "inspect"],
           [null,     null,   null,   null,  null,   null,   null     ],
           ["rotate", null,   null,   null,  null,   null,   "resize" ],
           [null,     "name", "name", "name","name", "name", null     ]]});
