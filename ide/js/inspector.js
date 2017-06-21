@@ -1302,11 +1302,11 @@ export default class Inspector extends Morph {
     this.layout.forceLayout(); // removes "sluggish" button alignment
     var tree = this.ui.propertyTree,
         toggler = this.ui.terminalToggler,
-        bottomRight = tree.bounds().insetBy(5).bottomRight();
+        bottomLeft = tree.bounds().insetBy(5).bottomLeft();
     if (animated.duration) {
-      toggler.animate({bottomRight, ...animated})
+      toggler.animate({bottomLeft, ...animated})
     } else {
-      toggler.bottomRight = bottomRight
+      toggler.bottomLeft = bottomLeft;
     }
   }
 
