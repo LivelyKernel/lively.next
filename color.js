@@ -389,6 +389,13 @@ class Gradient {
   constructor(stops) {
     this.stops = stops.map(s => s) || [];
   }
+
+  equals(other) {
+    if (other && other.isGradient) {
+      return this.toString() == other.toString()
+    }
+    return false;
+  }
   
   getStopsLighter(n) {
       return arr.collect(this.stops, function(ea) {
