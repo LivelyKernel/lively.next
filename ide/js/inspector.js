@@ -676,7 +676,7 @@ export class PropertyControl extends Label {
     connect(this.control, "update", this, "propertyValue");
     connect(this, "update", this.control, "number", {
       updater: function($upd, val) {
-        val = val.valueOf ? val.valueOf() : val;
+        val = (val && val.valueOf ? val.valueOf() : val) || 0;
         if (this.targetObj.number != val) $upd(val);
       }
     });
@@ -699,7 +699,7 @@ export class PropertyControl extends Label {
     connect(this.control, "pointValue", this, "propertyValue");
     connect(this, 'update', this.control, 'pointValue', {
       updater: function ($upd, val) {
-        val = val.valueOf ? val.valueOf() : val;
+        val = val && val.valueOf ? val.valueOf() : val;
         if (!this.targetObj.pointValue.equals(val)) $upd(val);
       }
     });
@@ -1027,11 +1027,14 @@ export default class Inspector extends Morph {
     connect(propertyTree,    'onScroll',    this, 'repositionOpenWidget');
     connect(resizer,         'onDrag',      this, 'adjustProportions');
     connect(terminalToggler, 'onMouseDown', this, 'toggleCodeEditor');
-    connect(fixImportButton, 'fire',        codeEditor, 'execCommand', {converter: () => "[javascript] fix undeclared variables"});
     connect(unknowns,        'trigger',     this, 'filterProperties');
     connect(internals,       'trigger',     this, 'filterProperties');
     connect(searchField,     'searchInput', this, 'filterProperties');
     connect(this,            "extent",      this, "relayout");
+    connect(fixImportButton, 'fire',        codeEditor, 'execCommand', {
+      updater: ($upd) => $upd(
+        "[javascript] fix undeclared variables",
+        {autoApplyIfSingleChoice: true})});
   }
 
   refreshAllProperties() {
@@ -1149,7 +1152,7 @@ export default class Inspector extends Morph {
       {name: "codeEditor", ...textStyle},
       {
         name: 'fix import button', type: "button",
-        label: "fix imports", extent: pt(100, 20)
+        label: "fix undeclared vars", extent: pt(100, 20)
       }
     ];
   }

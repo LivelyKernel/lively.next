@@ -220,9 +220,16 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
   // step-by-step selects an undeclared var and asks the user what to do with it.
   // choices are ignore, declare as global (via /*global*/ comment) or add an import.
   //
-  // opts = {ignore: ARRAY?, requester: MORPH?, sourceUpdater: FUNCTION?}
-  // `ignore` is a list of var names not to ask for
-  // if sourceUpdater is specified, it can be an async function that is called
+  // opts = {
+  //   ignore: ARRAY?,
+  //   requester: MORPH?,
+  //   sourceUpdater: FUNCTION?,
+  //   autoApplyIfSingleChoice: BOOLEAN  default: false
+  // }
+  // `ignore` is a list of var names not to ask for.
+  // if `autoApplyIfSingleChoice` is true will insert import without asking if
+  // there is only one choice
+  // if `sourceUpdater` is specified, it can be an async function that is called
   // with either "global", [varNameToMakeGlobal] or "import", [importSpec]
   // This is useful when simply modifying the textString of a morph is not the
   // action to take for declaring the import (e.g. when only showing a method and
@@ -234,6 +241,7 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
     requester,
     keepTextPosition = true,
     ignore = [],
+    autoApplyIfSingleChoice = false,
     knownGlobals = textMorph.evalEnvironment.knownGlobals || []
   } = opts || {};
 
@@ -255,7 +263,7 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
   textMorph.collapseSelection()
 
   if (keepTextPosition) {
-    var {scroll, cursorPosition} = textMorph
+    var {scroll, cursorPosition} = textMorph;
   }
 
   while (true) {
@@ -270,14 +278,21 @@ export async function interactivlyFixUndeclaredVariables(textMorph, opts) {
     textMorph.selection = range;
     textMorph.centerRange(range);
 
-    let choices = ["ignore for now", "declare as global",
-                   ...matchingExportsForUndeclared(undeclared, exports).map(
-                     ea => ({isListItem: true, value: ea, label: labelForExport(ea)}))];
+    let imports = matchingExportsForUndeclared(undeclared, exports),
+        choices = ["ignore for now", "declare as global"].concat(
+          imports.map(ea => ({isListItem: true, value: ea, label: labelForExport(ea)})));
 
-    let {selected: [choice]} = await $world.filterableListPrompt(`Found undeclared variable ${name}.  How should it be handled?`,
-      choices, {requester, theme: "dark", preselect: choices.length > 2 ? 2 : 0});
+    var choice;
+    if (autoApplyIfSingleChoice && imports.length === 1) {
+      choice = imports[0];
 
-    if (!choice) break;
+    } else {
+      // ask user
+      ({selected: [choice]} = await $world.filterableListPrompt(
+        `Found undeclared variable ${name}.  How should it be handled?`,
+        choices, {requester, theme: "dark", preselect: choices.length > 2 ? 2 : 0}));
+      if (!choice) break;
+    }
 
     if (choice === choices[0]) { ignore.push(name); continue; }
 
