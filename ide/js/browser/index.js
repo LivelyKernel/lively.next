@@ -981,6 +981,12 @@ export default class Browser extends Window {
 
       // js save
       } else {
+
+        if (config.systemBrowser.fixUndeclaredVarsOnSave) {
+          await sourceEditor.execCommand("[javascript] fix undeclared variables");
+          content = this.ui.sourceEditor.textString;
+        }
+
         if (module.isLoaded) { // is loaded in runtime
           await system.interactivelyChangeModule(
             module.name, content, {targetModule: module.name, doEval: true});

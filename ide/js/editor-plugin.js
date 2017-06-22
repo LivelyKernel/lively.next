@@ -70,12 +70,14 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
       {command: "print inspectit", alias: "print inspect", target: editor, showKeyShortcuts: true},
       {command: "eval all", target: editor, showKeyShortcuts: true},
       {command: "text completion", alias: "code completion", target: editor, showKeyShortcuts: true},
+      {command: "[javascript] list errors and warnings", alias: "list errors and warnings", target: editor, showKeyShortcuts: true},
       {isDivider: true},
     ];
 
     if (this.evalEnvironment.targetModule)
       jsItems.push(
         {command: "[javascript] inject import", alias: `add import`, target: editor},
+        {command: "[javascript] fix undeclared variables", alias: `fix undeclared variables`, target: editor},
         {command: "[javascript] remove unused imports", alias: `remove unused imports`, target: editor});
 
     var nav = this.getNavigator();

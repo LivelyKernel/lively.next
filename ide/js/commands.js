@@ -1,3 +1,4 @@
+/*global System*/
 import { arr, string } from "lively.lang";
 import { show } from "../../index.js";
 import { Range } from "../../text/range.js";
@@ -272,6 +273,16 @@ export var jsIdeCommands = [
       var result = await interactivelyInjectImportIntoText(text, opts);
       if (!result) text.setStatusMessage("canceled");
       return result;
+    }
+  },
+
+  {
+    name: "[javascript] fix undeclared variables",
+    exec: async (text, opts = {ignore: []}) => {
+      var {interactivlyFixUndeclaredVariables} =
+        await System.import("lively.morphic/ide/js/import-helper.js");
+      await interactivlyFixUndeclaredVariables(text, opts.ignore, opts);
+      text.focus();
     }
   },
 

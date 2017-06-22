@@ -1,3 +1,4 @@
+/*global System,localStorage*/
 import { arr, obj, t, Path, string, fun } from "lively.lang";
 import { Morph, HorizontalLayout, GridLayout, config } from "lively.morphic";
 import { pt, Color } from "lively.graphics";
@@ -8,7 +9,7 @@ import { TreeData, Tree } from "lively.morphic/components/tree.js";
 import { connect } from "lively.bindings";
 import { RuntimeSourceDescriptor } from "lively.classes/source-descriptors.js";
 import ObjectPackage, { addScript, isObjectClass, isObjectClassFor } from "lively.classes/object-classes.js";
-import { chooseUnusedImports, interactivelyChooseImports } from "../import-helper.js";
+import { chooseUnusedImports, interactivlyFixUndeclaredVariables, interactivelyChooseImports } from "../import-helper.js";
 import { module } from "lively.modules";
 import { interactivelySaveObjectToPartsBinFolder } from "../../../partsbin.js";
 import { emit } from "lively.notifications/index.js";
@@ -495,28 +496,21 @@ export class ObjectEditor extends Morph {
   }
 
   async updateKnownGlobals() {
-    var declaredNames = [], klass = this.state.selectedClass;
+    let declaredNames = [],
+        klass = this.selectedClass;
+
     if (klass) {
-      var descr = this.sourceDescriptorFor(klass);
+      let descr = this.sourceDescriptorFor(klass);
       ({declaredNames} = await descr.declaredAndUndeclaredNames);
     }
-    Object.assign(this.editorPlugin.evalEnvironment, {
-      knownGlobals: declaredNames,
-    });
+    Object.assign(this.editorPlugin.evalEnvironment, {knownGlobals: declaredNames});
     this.editorPlugin.highlight();
   }
 
   async updateSource(source, targetModule = "lively://object-editor/" + this.id) {
-    // targetModule = ed.evalEnvironment.targetModule
-
     let ed = this.get("sourceEditor"),
         system = await this.systemInterface(),
         format = (await system.moduleFormat(targetModule)) || "esm";
-        // [_, ext] = moduleId.match(/\.([^\.]+)$/) || [];
-// await lively.modules.module(targetModule).reset()
-// await lively.modules.module(targetModule).source()
-// await system.moduleRead(targetModule)
-
     if (ed.textString != source)
       ed.textString = source;
     Object.assign(this.editorPlugin.evalEnvironment, {targetModule, format});
@@ -526,19 +520,15 @@ export class ObjectEditor extends Morph {
   }
 
   indicateUnsavedChanges() {
-    Object.assign(this.get("sourceEditor"), {
-      border: {width: 1, color: Color.red}
-    })
+    Object.assign(this.ui.sourceEditor, {border: {width: 1, color: Color.red}})
   }
 
   indicateNoUnsavedChanges() {
-    Object.assign(this.get("sourceEditor"), {
-      border: {width: 1, color: Color.gray},
-    });
+    Object.assign(this.ui.sourceEditor, {border: {width: 1, color: Color.gray}});
   }
 
   hasUnsavedChanges() {
-    return this.state.sourceHash !== string.hashCode(this.get("sourceEditor").textString);
+    return this.state.sourceHash !== string.hashCode(this.ui.sourceEditor.textString);
   }
 
   updateUnsavedChangeIndicatorDebounced() {
@@ -649,7 +639,7 @@ export class ObjectEditor extends Morph {
           adoptObject(t, nextClass);
           this.refresh();
         }]);
-      
+
       }
     }
 
@@ -679,7 +669,7 @@ export class ObjectEditor extends Morph {
 
     if (isObjectClass(klass)) this.ui.forkPackageButton.enable();
     else this.ui.forkPackageButton.disable();
-    
+
     this.updateTitle();
   }
 
@@ -740,7 +730,7 @@ export class ObjectEditor extends Morph {
       // ed.alignRowAtTop(undefined, pt(0, -20))
     }
   }
-  
+
   updateTitle() {
     let win = this.getWindow();
     if (!win) return;
@@ -753,11 +743,11 @@ export class ObjectEditor extends Morph {
 
     if (selectedClass) {
       title += ` - ${selectedClass.name}`;
-      if (selectedMethod) title += `>>${selectedMethod.name}`;      
+      if (selectedMethod) title += `>>${selectedMethod.name}`;
     } else if (selectedModule) {
       title += ` - ${selectedModule.shortName()}`;
     }
-    
+
     win.title = title;
     win.relayoutWindowControls();
   }
@@ -770,6 +760,9 @@ export class ObjectEditor extends Morph {
     let {selectedModule, selectedClass, selectedMethod} = this;
 
     if (!selectedClass) throw new Error("No class selected");
+
+    if (config.objectEditor.fixUndeclaredVarsOnSave)
+      await this.execCommand("[javascript] fix undeclared variables");
 
     let editor = this.get("sourceEditor"),
         descr = this.sourceDescriptorFor(selectedClass),
@@ -815,7 +808,7 @@ export class ObjectEditor extends Morph {
       });
     } finally { this.state.isSaving = false; }
   }
-  
+
   backupSourceInLocalStorage(source) {
     var store = JSON.parse(localStorage["oe helper"] || '{"saves": []}')
     store.saves.push(source);
@@ -878,6 +871,44 @@ export class ObjectEditor extends Morph {
   }
 
   async interactivelyForkPackage() {
+  }
+
+  async interactivlyFixUndeclaredVariables() {
+    try {
+      let {state: {selectedClass, selectedMethod}, ui: {sourceEditor}} = this;
+      if (!selectedClass) {
+        this.showError(new Error("No class selected"));
+        return;
+      }
+
+      let m = this.selectedModule,
+          descr = this.sourceDescriptorFor(selectedClass),
+          origSource = await m.source();
+
+      this.state.isSaving = true;
+
+      let changes = await interactivlyFixUndeclaredVariables(sourceEditor, {
+        requester: sourceEditor,
+        sourceUpdater: async (type, arg) => {
+          if (type === "import") await m.addImports(arg);
+          else if (type === "global") await m.addGlobalDeclaration(arg);
+          else throw new Error(`Cannot handle fixUndeclaredVar type ${type}`);
+          descr.resetIfChanged();
+          await this.ui.importController.updateImports();
+          await this.updateKnownGlobals();
+        },
+        sourceRetriever: () => descr.moduleSource
+      });
+
+    } catch (e) {
+      origSource && await m.changeSource(origSource);
+      this.showError(e);
+    } finally {
+      this.state.isSaving = false;
+      await this.ui.importController.updateImports();
+      await this.updateKnownGlobals();
+      this.ui.sourceEditor.focus();
+    }
   }
 
   async interactivelyAddImport() {
@@ -1005,6 +1036,7 @@ export class ObjectEditor extends Morph {
       {keys: "Alt-Shift-T", command: "choose target"},
       {keys: "Alt-J", command: "jump to definition"},
       {keys: "Ctrl-C I", command: "[javascript] inject import"},
+      {keys: "Ctrl-C C I", command: "[javascript] fix undeclared variables"},
     ].concat(super.keybindings);
   }
 
@@ -1043,6 +1075,11 @@ export class ObjectEditor extends Morph {
       {
         name: "[javascript] inject import",
         exec: async ed => { await ed.interactivelyAddImport(); return true; }
+      },
+
+      {
+        name: "[javascript] fix undeclared variables",
+        exec: async ed => { await ed.interactivlyFixUndeclaredVariables(); return true; }
       },
 
       {
@@ -1179,7 +1216,7 @@ class ImportController extends Morph {
       module: {
         get() {
           let id = this.getProperty("module");
-          return id ? lively.modules.module(id) : null;
+          return id ? module(id) : null;
         },
         set(moduleOrId) {
           var id = !moduleOrId ? null : typeof moduleOrId === "string" ? moduleOrId : moduleOrId.id;

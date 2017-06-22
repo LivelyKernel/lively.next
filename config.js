@@ -261,6 +261,7 @@ var config = {
       {keys: {mac: "Meta-Shift-L L I N T F", win: "Ctrl-Shift-L L I N T F"}, command: "[javascript] eslint fix"},
       {keys: {mac: "Meta-Shift-L M O D E", win: "Ctrl-Shift-L M O D E"}, command: "change editor mode"},
       {keys: "Ctrl-C I", command: "[javascript] inject import"},
+      {keys: "Ctrl-C C I", command: "[javascript] fix undeclared variables"},
 
       {keys: {win: 'Shift-Ctrl-S|Ctrl-Alt-Space', mac: 'Ctrl-Command-space|Ctrl-Alt-Space'},      command: 'contractRegion'},
       {keys: {win: 'Shift-Ctrl-E|Ctrl-Shift-Space', mac: 'Shift-Command-Space|Ctrl-Shift-Space'}, command: 'expandRegion'},
@@ -296,6 +297,14 @@ var config = {
       fontSize: 12,
       clipMode: "auto",
     }
+  },
+
+  systemBrowser: {
+    fixUndeclaredVarsOnSave: true
+  },
+
+  objectEditor: {
+    fixUndeclaredVarsOnSave: true
   },
 
   remotes: {
