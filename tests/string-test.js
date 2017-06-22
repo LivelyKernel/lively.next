@@ -203,6 +203,7 @@ describe('string', function() {
       expect(joinPath("foo", "bar", "/baz")).to.equal("foo/bar/baz");
       expect(joinPath("foo", "bar/", "/baz")).to.equal("foo/bar/baz");
       expect(joinPath("/foo/", "/bar/", "/baz/")).to.equal("/foo/bar/baz/");
+      expect(joinPath("file:///foo/bar", "/baz/")).to.equal("file:///foo/bar/baz/");
     });
 
     it("normalizes slashes", function() {

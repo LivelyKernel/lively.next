@@ -1,4 +1,4 @@
-/*global btoa*/
+/*global btoa,JsDiff*/
 
 // String utility methods for printing, parsing, and converting strings.
 
@@ -387,9 +387,12 @@ function toQueryParams(s, separator) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-
 const pathDotRe = /\/\.\//g,
       pathDoubleDotRe = /\/[^\/]+\/\.\./,
-      pathDoubleSlashRe = /(^|[^:])[\/]+/g;
+      pathDoubleSlashRe = /(^|[^:])[\/]+/g,
+      urlStartRe = /^[a-z0-9-_\.]+:\/\//;
 function normalizePath(pathString) {
-  var result = pathString;
+  var urlStartMatch = pathString.match(urlStartRe),
+      urlStart = urlStartMatch ? urlStartMatch[0] : null,
+      result = urlStart ? pathString.slice(urlStart.length) : pathString;
   // /foo/../bar --> /bar
   do {
     pathString = result;
@@ -399,6 +402,7 @@ function normalizePath(pathString) {
   result = result.replace(pathDoubleSlashRe, '$1/');
   // foo/./bar --> foo/bar
   result = result.replace(pathDotRe, '/');
+  if (urlStart) result = urlStart + result;
   return result;
 }
 
