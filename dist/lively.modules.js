@@ -4193,7 +4193,7 @@ var obj = Object.freeze({
 	newKeyIn: newKeyIn
 });
 
-/*global btoa*/
+/*global btoa,JsDiff*/
 
 // String utility methods for printing, parsing, and converting strings.
 
@@ -4591,8 +4591,11 @@ function toQueryParams(s, separator) {
 var pathDotRe = /\/\.\//g;
 var pathDoubleDotRe = /\/[^\/]+\/\.\./;
 var pathDoubleSlashRe = /(^|[^:])[\/]+/g;
+var urlStartRe = /^[a-z0-9-_\.]+:\/\//;
 function normalizePath$1(pathString) {
-  var result = pathString;
+  var urlStartMatch = pathString.match(urlStartRe),
+      urlStart = urlStartMatch ? urlStartMatch[0] : null,
+      result = urlStart ? pathString.slice(urlStart.length) : pathString;
   // /foo/../bar --> /bar
   do {
     pathString = result;
@@ -4602,6 +4605,7 @@ function normalizePath$1(pathString) {
   result = result.replace(pathDoubleSlashRe, '$1/');
   // foo/./bar --> foo/bar
   result = result.replace(pathDotRe, '/');
+  if (urlStart) result = urlStart + result;
   return result;
 }
 
