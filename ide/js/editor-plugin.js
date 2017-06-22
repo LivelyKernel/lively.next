@@ -1,3 +1,4 @@
+/*global System*/
 import { string } from "lively.lang";
 import JavaScriptChecker from "./checker.js";
 import JavaScriptNavigator from "./navigator.js";
@@ -23,6 +24,7 @@ import {
 import "./mode.js"
 import { getMode } from "../editor-modes.js";
 
+
 export default class JavaScriptEditorPlugin extends EditorPlugin {
 
   static get shortName() { return "js"; }
@@ -32,8 +34,6 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
   constructor() {
     super()
     this.checker = new JavaScriptChecker();
-    this._tokens = [];
-    this._ast = null;
     this.evalEnvironment = {format: "esm", targetModule: null, context: null}
   }
 
@@ -143,17 +143,17 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
       // "l2l FA3V-ASBDFD3-..."
       if (typeof interfaceSpec === "string" && interfaceSpec.startsWith("l2l "))
         interfaceSpec = {type: "l2l", id: interfaceSpec.split(" ")[1]}
-  
+
       if (typeof interfaceSpec !== "string") {
         if (interfaceSpec.type === "l2l")
           systemInterface = l2lInterfaceFor(interfaceSpec.id, interfaceSpec.info)
       }
-  
+
       if (typeof interfaceSpec !== "string") {
         $world.setStatusMessage(`Unknown system interface ${interfaceSpec}`)
         interfaceSpec = "local";
       }
-  
+
       if (!systemInterface)
         systemInterface = !interfaceSpec || interfaceSpec === "local" ?
           localInterface :
@@ -168,4 +168,43 @@ export default class JavaScriptEditorPlugin extends EditorPlugin {
         endpoint = this.systemInterface(env);
     return endpoint.runEval(code, env);
   }
+
+  get parser() {
+    return System.get(System.decanonicalize("lively.ast"));
+  }
+
+  parse(astType = null) {
+    // astType = 'FunctionExpression' || astType == 'FunctionDeclaration' || null
+
+    if (this._ast && this._ast._astType === astType) return this._ast;
+
+    // FIXME!
+    let {parser, textMorph: {textString: src}} = this;
+    if (!parser) return null;
+
+    let options = {withComments: true, allowReturnOutsideFunction: true};
+    if (astType) options.type = astType;
+    // executable script?
+    if (src.startsWith("#!")) {
+      let firstLineEnd = src.indexOf("\n");
+      src = " ".repeat(firstLineEnd) + src.slice(firstLineEnd);
+    }
+    let parsed = parser.fuzzyParse(src, options);
+    parsed._astType = astType;
+    return parsed;
+  }
+
+  undeclaredVariables(astType = null) {
+    let {textMorph: morph, parser} = this,
+        doc = morph.document,
+        knownGlobals = this.evalEnvironment.knownGlobals || [],
+        parsed = this.parse(astType);
+
+    if (!parser || !parsed) return [];
+
+    // "warnings" such as undeclared vars
+    return parser.query.findGlobalVarRefs(parsed, {jslintGlobalComment: true})
+      .filter(ea => !knownGlobals.includes(ea.name));
+  }
+
 }

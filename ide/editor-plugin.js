@@ -110,6 +110,7 @@ export default class EditorPlugin {
   onTextChange(change) {
     // update _tokenizerValidBefore, set it to the start of the change so we
     // now that all token states thereafter are invalid
+    this._ast = null;
     if (change) {
       let {_tokenizerValidBefore: validMarker} = this, row, column;
       if (change.selector === "replace") ({row, column} = change.args[0].start);
