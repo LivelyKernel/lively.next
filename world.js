@@ -1,4 +1,4 @@
-/*global System*/
+/*global System,WeakMap*/
 import { Rectangle, Color, pt } from "lively.graphics";
 import { arr, obj, promise } from "lively.lang";
 import { once, signal } from "lively.bindings";

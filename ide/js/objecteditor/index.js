@@ -964,9 +964,9 @@ export class ObjectEditor extends Morph {
         return;
       }
 
-      let m = this.selectedModule,
-          descr = this.sourceDescriptorFor(selectedClass),
-          origSource = await m.source();
+      let descr = this.sourceDescriptorFor(selectedClass),
+          m = descr.module,
+          origSource = descr.moduleSource;
 
       this.state.isSaving = true;
 
@@ -980,7 +980,7 @@ export class ObjectEditor extends Morph {
           await this.ui.importController.updateImports();
           await this.updateKnownGlobals();
         },
-        sourceRetriever: () => descr.moduleSource
+        sourceRetriever: () => descr._modifiedSource(sourceEditor.textString).moduleSource
       });
 
     } catch (e) {
